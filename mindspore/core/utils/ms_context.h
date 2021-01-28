@@ -41,6 +41,7 @@ const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
 const char kAscendDevice[] = "Ascend";
 const char kDavinciInferenceDevice[] = "AscendInference";
+const char kGpuInferenceDevice[] = "GpuInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
@@ -51,7 +52,7 @@ const float kDefaultMaxDeviceMemory = 1024;
 
 // enum definition for MindSpore Context Parameter
 enum MsCtxParam : unsigned {
-  // paramater of type bool
+  // parameter of type bool
   MS_CTX_TYPE_BOOL_BEGIN,
   MS_CTX_ENABLE_AUTO_MIXED_PRECISION = MS_CTX_TYPE_BOOL_BEGIN,
   MS_CTX_CHECK_BPROP_FLAG,
@@ -74,14 +75,15 @@ enum MsCtxParam : unsigned {
   MS_CTX_ENABLE_PROFILING,
   MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_ENABLE_PARALLEL_SPLIT,
+  MS_CTX_ENABLE_INFER_OPT,
   MS_CTX_TYPE_BOOL_END,
 
-  // paramater of type int
+  // parameter of type int
   MS_CTX_TYPE_INT_BEGIN = MS_CTX_TYPE_BOOL_END,
   MS_CTX_EXECUTION_MODE = MS_CTX_TYPE_INT_BEGIN,
   MS_CTX_TYPE_INT_END,
 
-  // paramater of type uint32
+  // parameter of type uint32
   MS_CTX_TYPE_UINT32_BEGIN = MS_CTX_TYPE_INT_END,
   MS_CTX_DEVICE_ID = MS_CTX_TYPE_UINT32_BEGIN,
   MS_CTX_GE_REF,
@@ -89,12 +91,12 @@ enum MsCtxParam : unsigned {
   MS_CTX_TSD_REF,
   MS_CTX_TYPE_UINT32_END,
 
-  // paramater of type float
+  // parameter of type float
   MS_CTX_TYPE_FLOAT_BEGIN = MS_CTX_TYPE_UINT32_END,
   MS_CTX_MAX_DEVICE_MEMORY = MS_CTX_TYPE_FLOAT_BEGIN,
   MS_CTX_TYPE_FLOAT_END,
 
-  // paramater of type string
+  // parameter of type string
   MS_CTX_TYPE_STRING_BEGIN = MS_CTX_TYPE_FLOAT_END,
   MS_CTX_DEVICE_TARGET = MS_CTX_TYPE_STRING_BEGIN,
   MS_CTX_GRAPH_MEMORY_MAX_SIZE,

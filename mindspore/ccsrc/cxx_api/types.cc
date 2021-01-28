@@ -21,6 +21,7 @@
 namespace mindspore::api {
 const char *kDeviceTypeAscend310 = "Ascend310";
 const char *kDeviceTypeAscend910 = "Ascend910";
+const char *kDeviceTypeGpu = "GPU";
 
 class DataImpl {
  public:

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_CXX_API_GRAPH_MS_MS_GRAPH_IMPL_H
-#define MINDSPORE_CCSRC_CXX_API_GRAPH_MS_MS_GRAPH_IMPL_H
+#ifndef MINDSPORE_CCSRC_CXX_API_GRAPH_MS_ASCEND_GRAPH_IMPL_H
+#define MINDSPORE_CCSRC_CXX_API_GRAPH_MS_ASCEND_GRAPH_IMPL_H
 #include <functional>
 #include <map>
 #include <string>
@@ -28,12 +28,13 @@
 #include "ir/anf.h"
 #include "cxx_api/model/model_impl.h"
 #include "runtime/context.h"
+#include "cxx_api/graph/graph_utils.h"
 
 namespace mindspore::api {
-class MsGraphImpl : public GraphCell::GraphImpl {
+class AscendGraphImpl : public GraphCell::GraphImpl {
  public:
-  MsGraphImpl();
-  ~MsGraphImpl() override;
+  AscendGraphImpl();
+  ~AscendGraphImpl() override;
 
   Status Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) override;
   Status Load() override;
@@ -63,4 +64,4 @@ class MsGraphImpl : public GraphCell::GraphImpl {
   bool load_flag_;
 };
 }  // namespace mindspore::api
-#endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_MS_MS_GRAPH_IMPL_H
+#endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_MS_ASCEND_GRAPH_IMPL_H

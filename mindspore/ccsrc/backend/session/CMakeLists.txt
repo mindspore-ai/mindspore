@@ -13,7 +13,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 if(ENABLE_GPU)
-    file(GLOB_RECURSE _GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "gpu_session.cc")
+    file(GLOB_RECURSE _GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "gpu_session.cc" "gpu_inference_session.cc")
     list(APPEND _SESSION_SRC_LIST ${_GPU_SRC_LIST})
 endif()
 

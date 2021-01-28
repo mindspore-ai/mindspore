@@ -15,9 +15,11 @@
  */
 #include "backend/session/gpu_session.h"
 
+#include <string>
 #include "backend/optimizer/common/helper.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
+#include "backend/optimizer/common/common_backend_optimization.h"
 #include "backend/optimizer/gpu/adam_weight_decay_fusion.h"
 #include "backend/optimizer/gpu/adam_fusion.h"
 #include "backend/optimizer/gpu/apply_momentum_weight_scale_fusion.h"
@@ -298,16 +300,31 @@ void GPUSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph) const
 
 GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   // Construct graph, if successfully, graph_sum_ + 1
-  auto graph_id = graph_sum_;
   auto graph = ConstructKernelGraph(lst, outputs);
   MS_EXCEPTION_IF_NULL(graph);
+  return CompileGraphImpl(graph);
+}
+
+GraphId GPUSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
+  std::vector<KernelGraphPtr> all_graphs;
+  auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
+  MS_EXCEPTION_IF_NULL(root_graph);
+  if (all_graphs.size() != 1) {
+    MS_LOG(EXCEPTION) << "Gpu backend does not support multi-graph schedule. graph num" << all_graphs.size();
+  }
+
+  opt::BackendCommonOptimization(root_graph);
+  return CompileGraphImpl(root_graph);
+}
+
+GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   // Prepare ms context info for dump .pb graph
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   // Dump .pb graph before graph optimization
   if (save_graphs) {
-    DumpIRProto(graph, "before_opt_" + std::to_string(graph_id));
+    DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
   }
   // Graph optimization irrelevant to device data format
   Optimize(graph);
@@ -326,7 +343,7 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   AssignStream(graph);
   // Dump .pb graph before remove nop nodes
   if (save_graphs) {
-    DumpIRProto(graph, "before_removeNop_" + std::to_string(graph_id));
+    DumpIRProto(graph, "before_removeNop_" + std::to_string(graph->graph_id()));
   }
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
@@ -343,7 +360,7 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   SetSummaryNodes(graph.get());
   // Dump .pb graph after graph optimization
   if (save_graphs) {
-    DumpIRProto(graph, "after_opt_" + std::to_string(graph_id));
+    DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
   }
   // Set graph manager.
   MS_EXCEPTION_IF_NULL(context_);
@@ -361,9 +378,8 @@ GraphId GPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
     debugger_->LoadGraphs(graph);
   }
 #endif
-  MS_LOG(INFO) << "CompileGraph graph_id: " << graph_id;
-
-  return graph_id;
+  MS_LOG(INFO) << "CompileGraph graph_id: " << graph->graph_id();
+  return graph->graph_id();
 }
 
 void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,

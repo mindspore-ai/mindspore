@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace api {
 API_FACTORY_REG(ModelImpl, Ascend910, MsModel);
+API_FACTORY_REG(ModelImpl, GPU, MsModel);
 
 Status MsModel::Build(const std::map<std::string, std::string> &) {
   MS_LOG(INFO) << "Start build model.";
