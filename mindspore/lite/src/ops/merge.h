@@ -24,6 +24,7 @@
 
 namespace mindspore {
 namespace lite {
+enum InferStatus { Able, NotAble, HasZeroShape };
 
 class Merge : public PrimitiveC {
  public:
@@ -37,6 +38,10 @@ class Merge : public PrimitiveC {
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
+
+ private:
+  static InferStatus AbleToInfer(const std::vector<lite::Tensor *> &inputs);
+  static int Infer(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs);
 };
 }  // namespace lite
 }  // namespace mindspore

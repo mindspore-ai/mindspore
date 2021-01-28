@@ -116,12 +116,12 @@ int Reshape::CalNewShape(const Tensor *in_tensor, std::vector<int> *out_shape) c
   for (size_t i = 0; i < in_tensor->shape().size(); i++) {
     in_shape_size *= in_tensor->shape().at(i);
   }
-  int64_t inferIndex = -1;
-  size_t out_shapeSize = 1;
+  int64_t infer_index = -1;
+  size_t out_shape_size = 1;
   for (size_t i = 0; i < out_shape->size(); i++) {
     if (out_shape->at(i) == -1) {
-      if (inferIndex == -1) {
-        inferIndex = i;
+      if (infer_index == -1) {
+        infer_index = i;
       } else {
         MS_LOG(ERROR) << "output shape should has no more than one dim which need infer";
         return RET_INFER_ERR;
@@ -130,18 +130,23 @@ int Reshape::CalNewShape(const Tensor *in_tensor, std::vector<int> *out_shape) c
       MS_LOG(ERROR) << "output shape dim should be non-negative";
       return RET_INFER_ERR;
     } else if (out_shape->at(i) == 0) {
-      out_shape->at(i) = in_tensor->shape().at(i);
-      out_shapeSize *= out_shape->at(i);
+      if (in_tensor->ElementsNum() != 0) {
+        out_shape->at(i) = in_tensor->shape().at(i);
+        out_shape_size *= out_shape->at(i);
+      } else {
+        out_shape_size = 0;
+        break;
+      }
     } else {
-      out_shapeSize *= out_shape->at(i);
+      out_shape_size *= out_shape->at(i);
     }
   }
-  if (inferIndex == -1 && out_shapeSize != in_shape_size) {
-    MS_LOG(ERROR) << "output shapeSize: " << out_shapeSize << " should be equal to input shapeSize: " << in_shape_size;
+  if (infer_index == -1 && out_shape_size != in_shape_size) {
+    MS_LOG(ERROR) << "output shapeSize: " << out_shape_size << " should be equal to input shapeSize: " << in_shape_size;
     return RET_INFER_ERR;
   }
-  if (inferIndex != -1) {
-    out_shape->at(inferIndex) = in_shape_size / out_shapeSize;
+  if (infer_index != -1) {
+    out_shape->at(infer_index) = in_shape_size / out_shape_size;
   }
   return RET_OK;
 }

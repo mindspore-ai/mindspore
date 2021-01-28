@@ -23,7 +23,7 @@ namespace lite {
 lite::PrimitiveC *OnnxNonZeroParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
                                                         const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx NonZeroParser";
-  auto attr = std::make_unique<schema::NonZeroT>();
+  auto attr = std::make_unique<schema::WhereT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return nullptr;
@@ -33,7 +33,7 @@ lite::PrimitiveC *OnnxNonZeroParser::ParseLitePrimitive(const onnx::GraphProto &
     MS_LOG(ERROR) << "new primitive failed";
     return nullptr;
   }
-  primitive->value.type = schema::PrimitiveType_NonZero;
+  primitive->value.type = schema::PrimitiveType_Where;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());
 }
