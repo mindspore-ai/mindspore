@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_TAN_H_
-#define MINDSPORE_CORE_C_OPS_TAN_H_
+#ifndef MINDSPORE_CORE_OPS_TAN_H_
+#define MINDSPORE_CORE_OPS_TAN_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -40,4 +40,4 @@ using PrimTanPtr = std::shared_ptr<Tan>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_TAN_H_
+#endif  // MINDSPORE_CORE_OPS_TAN_H_

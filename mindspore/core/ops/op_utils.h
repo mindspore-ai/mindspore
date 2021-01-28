@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_OP_UTILS_H
-#define MINDSPORE_CORE_C_OPS_OP_UTILS_H
+#ifndef MINDSPORE_CORE_OPS_OP_UTILS_H
+#define MINDSPORE_CORE_OPS_OP_UTILS_H
 #include <string>
 #include <set>
 #include <vector>
@@ -230,4 +230,4 @@ const std::set<TypeId> all_types = {
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_OP_UTILS_H
+#endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

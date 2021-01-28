@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_C_OPS_RETURN_H_
-#define MINDSPORE_CORE_C_OPS_RETURN_H_
+#ifndef MINDSPORE_CORE_OPS_RETURN_H_
+#define MINDSPORE_CORE_OPS_RETURN_H_
 
 #include <memory>
 
@@ -37,4 +37,4 @@ using PrimReturnPtr = std::shared_ptr<Return>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_RETURN_H_
+#endif  // MINDSPORE_CORE_OPS_RETURN_H_

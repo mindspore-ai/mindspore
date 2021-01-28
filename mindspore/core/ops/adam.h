@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ADAM_H_
-#define MINDSPORE_CORE_C_OPS_ADAM_H_
+#ifndef MINDSPORE_CORE_OPS_ADAM_H_
+#define MINDSPORE_CORE_OPS_ADAM_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -44,4 +44,4 @@ using PrimAdamPtr = std::shared_ptr<Adam>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ADAM_H_
+#endif  // MINDSPORE_CORE_OPS_ADAM_H_

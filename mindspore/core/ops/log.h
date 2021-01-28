@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_LOG_H_
-#define MINDSPORE_CORE_C_OPS_LOG_H_
+#ifndef MINDSPORE_CORE_OPS_LOG_H_
+#define MINDSPORE_CORE_OPS_LOG_H_
 #include <vector>
 #include <memory>
 
@@ -37,4 +37,4 @@ AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
 using PrimLogPtr = std::shared_ptr<Log>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_LOG_H_
+#endif  // MINDSPORE_CORE_OPS_LOG_H_

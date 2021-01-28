@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_EMBEDDING_LOOKUP_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_EMBEDDING_LOOKUP_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_EMBEDDING_LOOKUP_FUSION_H_
+#define MINDSPORE_CORE_OPS_EMBEDDING_LOOKUP_FUSION_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -41,4 +41,4 @@ class EmbeddingLookupFusion : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_EMBEDDING_LOOKUP_FUSION_H_
+#endif  // MINDSPORE_CORE_OPS_EMBEDDING_LOOKUP_FUSION_H_

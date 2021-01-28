@@ -29,7 +29,7 @@ OpParameter *PopulateStackParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_Stack();
   stack_param->op_parameter_.type_ = primitive->value_type();
-  stack_param->axis_ = static_cast<int>(*(value->axis()->begin()));
+  stack_param->axis_ = static_cast<int>(value->axis());
   return reinterpret_cast<OpParameter *>(stack_param);
 }
 }  // namespace

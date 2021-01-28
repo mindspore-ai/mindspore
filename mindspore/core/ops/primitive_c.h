@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
-#define MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
+#ifndef MINDSPORE_CORE_OPS_PRIMITIVE_C_H_
+#define MINDSPORE_CORE_OPS_PRIMITIVE_C_H_
 #include <string>
 #include <vector>
 #include <map>
@@ -65,4 +65,4 @@ class OpPrimCRegisterHelper {
   OpPrimCRegisterHelper primc_gen_##kname(kname, GetDefaultPrimC##primc);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_PRIMITIVE_C_H_
+#endif  // MINDSPORE_CORE_OPS_PRIMITIVE_C_H_

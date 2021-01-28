@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_LRN_H_
-#define MINDSPORE_CORE_C_OPS_LRN_H_
+#ifndef MINDSPORE_CORE_OPS_LRN_H_
+#define MINDSPORE_CORE_OPS_LRN_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -50,4 +50,4 @@ AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
 using PrimLrn = std::shared_ptr<Lrn>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_LRN_H_
+#endif  // MINDSPORE_CORE_OPS_LRN_H_

@@ -740,7 +740,7 @@ table SquaredDifference {
 }
 
 table Stack {
-    axis: [long];
+    axis: long;
 }
 
 table StridedSlice {

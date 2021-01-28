@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_PACK_H_
-#define MINDSPORE_CORE_C_OPS_PACK_H_
+#ifndef MINDSPORE_CORE_OPS_PACK_H_
+#define MINDSPORE_CORE_OPS_PACK_H_
 
 #include <map>
 #include <vector>
@@ -45,4 +45,4 @@ AbstractBasePtr PackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 using PrimPackPtr = std::shared_ptr<Pack>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_PACK_H_
+#endif  // MINDSPORE_CORE_OPS_PACK_H_

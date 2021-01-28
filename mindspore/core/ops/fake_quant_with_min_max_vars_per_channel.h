@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_PER_CHANNEL_H_
-#define MINDSPORE_CORE_C_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_PER_CHANNEL_H_
+#ifndef MINDSPORE_CORE_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_PER_CHANNEL_H_
+#define MINDSPORE_CORE_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_PER_CHANNEL_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -46,4 +46,4 @@ using PrimFakeQuantWithMinMaxVarsPerChannelPtr = std::shared_ptr<FakeQuantWithMi
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_PER_CHANNEL_H_
+#endif  // MINDSPORE_CORE_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_PER_CHANNEL_H_

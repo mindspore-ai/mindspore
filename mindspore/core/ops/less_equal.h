@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_LESS_EQUAL_H_
-#define MINDSPORE_CORE_C_OPS_LESS_EQUAL_H_
+#ifndef MINDSPORE_CORE_OPS_LESS_EQUAL_H_
+#define MINDSPORE_CORE_OPS_LESS_EQUAL_H_
 #include <vector>
 #include <memory>
 
@@ -40,4 +40,4 @@ using PrimLessEqualPtr = std::shared_ptr<LessEqual>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_LESS_EQUAL_H_
+#endif  // MINDSPORE_CORE_OPS_LESS_EQUAL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_POOL_GRAD_H_
-#define MINDSPORE_CORE_C_OPS_POOL_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_POOL_GRAD_H_
+#define MINDSPORE_CORE_OPS_POOL_GRAD_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -50,4 +50,4 @@ class PoolGrad : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_POOL_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_POOL_GRAD_H_

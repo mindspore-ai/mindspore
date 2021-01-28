@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONSTANT_OF_SHAPE_H_
-#define MINDSPORE_CORE_C_OPS_CONSTANT_OF_SHAPE_H_
+#ifndef MINDSPORE_CORE_OPS_CONSTANT_OF_SHAPE_H_
+#define MINDSPORE_CORE_OPS_CONSTANT_OF_SHAPE_H_
 #include <memory>
 #include <vector>
 #include "ops/primitive_c.h"
@@ -43,4 +43,4 @@ using PrimConstantOfShapePtr = std::shared_ptr<ConstantOfShape>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_CONSTANT_OF_SHAPE_H_
+#endif  // MINDSPORE_CORE_OPS_CONSTANT_OF_SHAPE_H_

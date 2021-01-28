@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SPARSE_SOFTMAX_CROSS_ENTROPY_H_
-#define MINDSPORE_CORE_C_OPS_SPARSE_SOFTMAX_CROSS_ENTROPY_H_
+#ifndef MINDSPORE_CORE_OPS_SPARSE_SOFTMAX_CROSS_ENTROPY_H_
+#define MINDSPORE_CORE_OPS_SPARSE_SOFTMAX_CROSS_ENTROPY_H_
 #include <memory>
 #include <vector>
 #include "ops/primitive_c.h"
@@ -40,4 +40,4 @@ using PrimSparseSoftmaxCrossEntropyPtr = std::shared_ptr<SparseSoftmaxCrossEntro
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_SPARSE_SOFTMAX_CROSS_ENTROPY_H_
+#endif  // MINDSPORE_CORE_OPS_SPARSE_SOFTMAX_CROSS_ENTROPY_H_

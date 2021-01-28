@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_FFT_REAL_H_
-#define MINDSPORE_CORE_C_OPS_FFT_REAL_H_
+#ifndef MINDSPORE_CORE_OPS_FFT_REAL_H_
+#define MINDSPORE_CORE_OPS_FFT_REAL_H_
 #include <vector>
 #include <memory>
 
@@ -40,4 +40,4 @@ using PrimFftRealPtr = std::shared_ptr<FftReal>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_FFT_REAL_H_
+#endif  // MINDSPORE_CORE_OPS_FFT_REAL_H_

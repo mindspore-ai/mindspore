@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONV2D_TRANSPOSE_H_
-#define MINDSPORE_CORE_C_OPS_CONV2D_TRANSPOSE_H_
+#ifndef MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_H_
+#define MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -71,4 +71,4 @@ AbstractBasePtr Conv2dTransposeInfer(const abstract::AnalysisEnginePtr &, const 
 using PrimConv2dTransposePtr = std::shared_ptr<Conv2dTranspose>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_CONV2D_TRANSPOSE_H_
+#endif  // MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_H_

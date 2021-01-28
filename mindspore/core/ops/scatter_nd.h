@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SCATTER_ND_H_
-#define MINDSPORE_CORE_C_OPS_SCATTER_ND_H_
+#ifndef MINDSPORE_CORE_OPS_SCATTER_ND_H_
+#define MINDSPORE_CORE_OPS_SCATTER_ND_H_
 #include <vector>
 #include <memory>
 
@@ -39,4 +39,4 @@ using PrimScatterNdPtr = std::shared_ptr<ScatterNd>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_SCATTER_ND_H_
+#endif  // MINDSPORE_CORE_OPS_SCATTER_ND_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_REDUCE_ALL_H_
-#define MINDSPORE_CORE_C_OPS_REDUCE_ALL_H_
+#ifndef MINDSPORE_CORE_OPS_REDUCE_ALL_H_
+#define MINDSPORE_CORE_OPS_REDUCE_ALL_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -36,4 +36,4 @@ class ReduceAll : public Reduce {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_REDUCE_ALL_H_
+#endif  // MINDSPORE_CORE_OPS_REDUCE_ALL_H_

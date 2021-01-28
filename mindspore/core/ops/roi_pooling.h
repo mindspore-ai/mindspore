@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ROI_POOLING_H_
-#define MINDSPORE_CORE_C_OPS_ROI_POOLING_H_
+#ifndef MINDSPORE_CORE_OPS_ROI_POOLING_H_
+#define MINDSPORE_CORE_OPS_ROI_POOLING_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -46,4 +46,4 @@ using PrimROIPoolingPtr = std::shared_ptr<ROIPooling>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ROI_POOLING_H_
+#endif  // MINDSPORE_CORE_OPS_ROI_POOLING_H_

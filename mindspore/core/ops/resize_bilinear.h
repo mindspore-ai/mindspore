@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_RESIZE_BILINEAR_H_
-#define MINDSPORE_CORE_C_OPS_RESIZE_BILINEAR_H_
+#ifndef MINDSPORE_CORE_OPS_RESIZE_BILINEAR_H_
+#define MINDSPORE_CORE_OPS_RESIZE_BILINEAR_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -44,4 +44,4 @@ using PrimResizeBilinearPtr = std::shared_ptr<ResizeBilinear>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_RESIZE_BILINEAR_H_
+#endif  // MINDSPORE_CORE_OPS_RESIZE_BILINEAR_H_

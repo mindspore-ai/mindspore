@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ONE_HOT_H_
-#define MINDSPORE_CORE_C_OPS_ONE_HOT_H_
+#ifndef MINDSPORE_CORE_OPS_ONE_HOT_H_
+#define MINDSPORE_CORE_OPS_ONE_HOT_H_
 #include <vector>
 #include <memory>
 
@@ -42,4 +42,4 @@ using PrimOneHotPtr = std::shared_ptr<OneHot>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ONE_HOT_H_
+#endif  // MINDSPORE_CORE_OPS_ONE_HOT_H_

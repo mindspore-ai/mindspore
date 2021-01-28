@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_TOPK_H_
-#define MINDSPORE_CORE_C_OPS_TOPK_H_
+#ifndef MINDSPORE_CORE_OPS_TOPK_H_
+#define MINDSPORE_CORE_OPS_TOPK_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -43,4 +43,4 @@ using PrimTopKPtr = std::shared_ptr<TopK>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_TOPK_H_
+#endif  // MINDSPORE_CORE_OPS_TOPK_H_

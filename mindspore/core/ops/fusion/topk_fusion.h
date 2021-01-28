@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_TOPK_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_TOPK_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_TOPK_FUSION_H_
+#define MINDSPORE_CORE_OPS_TOPK_FUSION_H_
 #include <vector>
 
 #include "ops/topk.h"
@@ -38,4 +38,4 @@ class TopKFusion : public TopK {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_TOPK_FUSION_H_
+#endif  // MINDSPORE_CORE_OPS_TOPK_FUSION_H_

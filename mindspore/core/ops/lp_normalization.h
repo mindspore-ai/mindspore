@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_LP_NORMALIZATION_H_
-#define MINDSPORE_CORE_C_OPS_LP_NORMALIZATION_H_
+#ifndef MINDSPORE_CORE_OPS_LP_NORMALIZATION_H_
+#define MINDSPORE_CORE_OPS_LP_NORMALIZATION_H_
 #include <memory>
 
 #include "ops/primitive_c.h"
@@ -41,4 +41,4 @@ using PrimLpNormalizationPtr = std::shared_ptr<LpNormalization>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_LP_NORMALIZATION_H_
+#endif  // MINDSPORE_CORE_OPS_LP_NORMALIZATION_H_

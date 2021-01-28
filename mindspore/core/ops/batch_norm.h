@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_BATCH_NORMAL_H_
-#define MINDSPORE_CORE_C_OPS_BATCH_NORMAL_H_
+#ifndef MINDSPORE_CORE_OPS_BATCH_NORMAL_H_
+#define MINDSPORE_CORE_OPS_BATCH_NORMAL_H_
 #include <map>
 #include <vector>
 #include <memory>
@@ -54,4 +54,4 @@ using PrimBatchNormPtr = std::shared_ptr<BatchNorm>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_BatchNorm_H_
+#endif  // MINDSPORE_CORE_OPS_BatchNorm_H_

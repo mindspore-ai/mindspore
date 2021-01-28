@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_NON_MAX_SUPPRESSION_H_
-#define MINDSPORE_CORE_C_OPS_NON_MAX_SUPPRESSION_H_
+#ifndef MINDSPORE_CORE_OPS_NON_MAX_SUPPRESSION_H_
+#define MINDSPORE_CORE_OPS_NON_MAX_SUPPRESSION_H_
 
 #include <map>
 #include <vector>
@@ -46,4 +46,4 @@ using PrimNonMaxSuppressionPtr = std::shared_ptr<NonMaxSuppression>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_NON_MAX_SUPPRESSION_H_
+#endif  // MINDSPORE_CORE_OPS_NON_MAX_SUPPRESSION_H_

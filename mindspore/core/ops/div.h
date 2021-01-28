@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DIV_H_
-#define MINDSPORE_CORE_C_OPS_DIV_H_
+#ifndef MINDSPORE_CORE_OPS_DIV_H_
+#define MINDSPORE_CORE_OPS_DIV_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -40,4 +40,4 @@ using PrimDivPtr = std::shared_ptr<Div>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_DIV_H_
+#endif  // MINDSPORE_CORE_OPS_DIV_H_

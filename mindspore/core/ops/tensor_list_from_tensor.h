@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_TENSOR_LIST_FROM_TENSOR_H_
-#define MINDSPORE_CORE_C_OPS_TENSOR_LIST_FROM_TENSOR_H_
+#ifndef MINDSPORE_CORE_OPS_TENSOR_LIST_FROM_TENSOR_H_
+#define MINDSPORE_CORE_OPS_TENSOR_LIST_FROM_TENSOR_H_
 #include <memory>
 #include <vector>
 #include "ops/primitive_c.h"
@@ -42,4 +42,4 @@ using PrimTensorListFromTensorPtr = std::shared_ptr<TensorListFromTensor>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_TENSOR_LIST_FROM_TENSOR_H_
+#endif  // MINDSPORE_CORE_OPS_TENSOR_LIST_FROM_TENSOR_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_PERMUTE_H_
-#define MINDSPORE_CORE_C_OPS_PERMUTE_H_
+#ifndef MINDSPORE_CORE_OPS_PERMUTE_H_
+#define MINDSPORE_CORE_OPS_PERMUTE_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -40,4 +40,4 @@ class Permute : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_PERMUTE_H_
+#endif  // MINDSPORE_CORE_OPS_PERMUTE_H_

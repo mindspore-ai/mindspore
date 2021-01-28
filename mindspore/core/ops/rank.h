@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_RANK_H_
-#define MINDSPORE_CORE_C_OPS_RANK_H_
+#ifndef MINDSPORE_CORE_OPS_RANK_H_
+#define MINDSPORE_CORE_OPS_RANK_H_
 #include <vector>
 #include <memory>
 
@@ -39,4 +39,4 @@ AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 using PrimRankPtr = std::shared_ptr<Rank>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_RANK_H_
+#endif  // MINDSPORE_CORE_OPS_RANK_H_

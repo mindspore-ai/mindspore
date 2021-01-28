@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ARG_MAX_H_
-#define MINDSPORE_CORE_C_OPS_ARG_MAX_H_
+#ifndef MINDSPORE_CORE_OPS_ARG_MAX_H_
+#define MINDSPORE_CORE_OPS_ARG_MAX_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -47,4 +47,4 @@ using PrimArgMaxPtr = std::shared_ptr<ArgMax>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ARG_MAX_H_
+#endif  // MINDSPORE_CORE_OPS_ARG_MAX_H_

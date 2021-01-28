@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_C_OPS_MUL_GRAD_H_
-#define MINDSPORE_CORE_C_OPS_MUL_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_MUL_GRAD_H_
+#define MINDSPORE_CORE_OPS_MUL_GRAD_H_
 #include <memory>
 
 #include "ops/primitive_c.h"
@@ -36,4 +36,4 @@ using PrimMulGradPtr = std::shared_ptr<MulGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_MUL_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_MUL_GRAD_H_

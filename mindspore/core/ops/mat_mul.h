@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_MAT_MUL_H_
-#define MINDSPORE_CORE_C_OPS_MAT_MUL_H_
+#ifndef MINDSPORE_CORE_OPS_MAT_MUL_H_
+#define MINDSPORE_CORE_OPS_MAT_MUL_H_
 #include <vector>
 #include <memory>
 
@@ -43,4 +43,4 @@ AbstractBasePtr MatMulInfer(const abstract::AnalysisEnginePtr &, const Primitive
 using PrimMatMulPtr = std::shared_ptr<MatMul>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_MAT_MUL_H_
+#endif  // MINDSPORE_CORE_OPS_MAT_MUL_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_REAL_DIV_H_
-#define MINDSPORE_CORE_C_OPS_REAL_DIV_H_
+#ifndef MINDSPORE_CORE_OPS_REAL_DIV_H_
+#define MINDSPORE_CORE_OPS_REAL_DIV_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -39,4 +39,4 @@ using PrimRealDivPtr = std::shared_ptr<RealDiv>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_REAL_DIV_H_
+#endif  // MINDSPORE_CORE_OPS_REAL_DIV_H_

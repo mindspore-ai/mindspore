@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SMOOTH_L1_LOSS_H_
-#define MINDSPORE_CORE_C_OPS_SMOOTH_L1_LOSS_H_
+#ifndef MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_H_
+#define MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_H_
 #include <memory>
 #include <vector>
 #include "ops/primitive_c.h"
@@ -40,4 +40,4 @@ using PrimSmoothL1LossPtr = std::shared_ptr<SmoothL1Loss>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_SMOOTH_L1_LOSS_H_
+#endif  // MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_H_

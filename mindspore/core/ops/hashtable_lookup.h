@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_C_OPS_HASHTABLE_LOOKUP_H_
-#define MINDSPORE_CORE_C_OPS_HASHTABLE_LOOKUP_H_
+#ifndef MINDSPORE_CORE_OPS_HASHTABLE_LOOKUP_H_
+#define MINDSPORE_CORE_OPS_HASHTABLE_LOOKUP_H_
 #include <vector>
 #include <memory>
 
@@ -39,4 +39,4 @@ using PrimHashtableLookupPtr = std::shared_ptr<HashtableLookup>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_HASHTABLE_LOOKUP_H_
+#endif  // MINDSPORE_CORE_OPS_HASHTABLE_LOOKUP_H_

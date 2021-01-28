@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_TENSOR_LIST_SET_ITEM_H_
-#define MINDSPORE_CORE_C_OPS_TENSOR_LIST_SET_ITEM_H_
+#ifndef MINDSPORE_CORE_OPS_TENSOR_LIST_SET_ITEM_H_
+#define MINDSPORE_CORE_OPS_TENSOR_LIST_SET_ITEM_H_
 #include <memory>
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
@@ -36,4 +36,4 @@ class TensorListSetItem : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_TENSOR_LIST_SET_ITEM_H_
+#endif  // MINDSPORE_CORE_OPS_TENSOR_LIST_SET_ITEM_H_

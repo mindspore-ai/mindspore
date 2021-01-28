@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_H
-#define MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_H
+#ifndef MINDSPORE_CORE_OPS_DEPTHWISE_CONV2D_H
+#define MINDSPORE_CORE_OPS_DEPTHWISE_CONV2D_H
 #include <map>
 #include <vector>
 #include <string>
@@ -64,4 +64,4 @@ using PrimDepthWiseConv2DPtr = std::shared_ptr<DepthWiseConv2D>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_H
+#endif  // MINDSPORE_CORE_OPS_DEPTHWISE_CONV2D_H

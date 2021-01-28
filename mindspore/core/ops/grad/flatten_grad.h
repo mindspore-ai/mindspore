@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_FLATTEN_GRAD_H_
-#define MINDSPORE_CORE_C_OPS_FLATTEN_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_FLATTEN_GRAD_H_
+#define MINDSPORE_CORE_OPS_FLATTEN_GRAD_H_
 #include <vector>
 #include <memory>
 
@@ -39,4 +39,4 @@ AbstractBasePtr FlattenGradInfer(const abstract::AnalysisEnginePtr &, const Prim
 using PrimFlattenGrad = std::shared_ptr<FlattenGrad>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_FlattenGrad_H_
+#endif  // MINDSPORE_CORE_OPS_FlattenGrad_H_

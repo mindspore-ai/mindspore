@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONCAT_H_
-#define MINDSPORE_CORE_C_OPS_CONCAT_H_
+#ifndef MINDSPORE_CORE_OPS_CONCAT_H_
+#define MINDSPORE_CORE_OPS_CONCAT_H_
 #include <vector>
 #include <memory>
 
@@ -41,4 +41,4 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
 using PrimConcatPtr = std::shared_ptr<Concat>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_CONCAT_H_
+#endif  // MINDSPORE_CORE_OPS_CONCAT_H_

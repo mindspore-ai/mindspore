@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_GROUP_CONV2D_GRAD_INPUT_H_
-#define MINDSPORE_CORE_C_OPS_GROUP_CONV2D_GRAD_INPUT_H_
+#ifndef MINDSPORE_CORE_OPS_GROUP_CONV2D_GRAD_INPUT_H_
+#define MINDSPORE_CORE_OPS_GROUP_CONV2D_GRAD_INPUT_H_
 #include <vector>
 #include <memory>
 
@@ -71,4 +71,4 @@ using PrimGroupConv2DGradInputPtr = std::shared_ptr<GroupConv2DGradInput>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_GROUP_CONV2D_GRAD_INPUT_H_
+#endif  // MINDSPORE_CORE_OPS_GROUP_CONV2D_GRAD_INPUT_H_

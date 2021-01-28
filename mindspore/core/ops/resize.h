@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_RESIZE_H_
-#define MINDSPORE_CORE_C_OPS_RESIZE_H_
+#ifndef MINDSPORE_CORE_OPS_RESIZE_H_
+#define MINDSPORE_CORE_OPS_RESIZE_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -62,4 +62,4 @@ using PrimResizePtr = std::shared_ptr<Resize>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_RESIZE_H_
+#endif  // MINDSPORE_CORE_OPS_RESIZE_H_

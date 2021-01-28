@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
-#define MINDSPORE_CORE_C_OPS_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
+#ifndef MINDSPORE_CORE_OPS_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
+#define MINDSPORE_CORE_OPS_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -40,4 +40,4 @@ using PrimSoftmaxCrossEntropyWithLogitsPtr = std::shared_ptr<SoftmaxCrossEntropy
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_
+#endif  // MINDSPORE_CORE_OPS_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_H_

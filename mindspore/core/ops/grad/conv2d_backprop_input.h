@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_INPUT_H_
-#define MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_INPUT_H_
+#ifndef MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_H_
+#define MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -63,4 +63,4 @@ class Conv2DBackpropInput : public PrimitiveC {
 using PrimConv2DBackpropInputPtr = std::shared_ptr<Conv2DBackpropInput>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_INPUT_H_
+#endif  // MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_H_

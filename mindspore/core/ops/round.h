@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ROUND_H_
-#define MINDSPORE_CORE_C_OPS_ROUND_H_
+#ifndef MINDSPORE_CORE_OPS_ROUND_H_
+#define MINDSPORE_CORE_OPS_ROUND_H_
 #include <vector>
 #include <memory>
 
@@ -40,4 +40,4 @@ using PrimRoundPtr = std::shared_ptr<Round>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ROUND_H_
+#endif  // MINDSPORE_CORE_OPS_ROUND_H_

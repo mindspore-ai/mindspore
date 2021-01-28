@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CUSTOM_H_
-#define MINDSPORE_CORE_C_OPS_CUSTOM_H_
+#ifndef MINDSPORE_CORE_OPS_CUSTOM_H_
+#define MINDSPORE_CORE_OPS_CUSTOM_H_
 #include <memory>
 
 #include <vector>
@@ -40,4 +40,4 @@ using PrimCustomPtr = std::shared_ptr<Custom>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_CUSTOM_H_
+#endif  // MINDSPORE_CORE_OPS_CUSTOM_H_

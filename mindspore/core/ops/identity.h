@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_IDENTITY_H_
-#define MINDSPORE_CORE_C_OPS_IDENTITY_H_
+#ifndef MINDSPORE_CORE_OPS_IDENTITY_H_
+#define MINDSPORE_CORE_OPS_IDENTITY_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -38,4 +38,4 @@ using PrimIdentityPtr = std::shared_ptr<Identity>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_IDENTITY_H_
+#endif  // MINDSPORE_CORE_OPS_IDENTITY_H_
