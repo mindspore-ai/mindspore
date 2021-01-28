@@ -274,7 +274,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
   MS_EXCEPTION_IF_NULL(inputs_ptr);
   auto nodes = TopoSort(fg->get_return());
 
-  std::map<ValuePtr, AnfNodePtrList> vmap;
+  OrderedMap<ValuePtr, AnfNodePtrList> vmap;
   for (const auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -590,7 +590,7 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     op_nodes = nodes;
   } else {
     // When there are basic and composite ops, the composite ops should be inline to the basic ones' graph,
-    // so a new graph generation should be done (beacuse they may in the main graph!).
+    // so a new graph generation should be done (because they may in the main graph!).
     // If address_node_map is wanted, we should map the new node in new graph to the old nodes. But... not support now.
     MS_LOG(EXCEPTION) << "No support mixed with basic and composite ops now!";
   }
@@ -1015,6 +1015,17 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
 
   func_graph->AddNode(cnode);
   return cnode;
+}
+
+void MakeCNodeSafeForAttr(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return;
+  }
+  AnfNodePtrList new_inputs = {NewValueNode(AnfAlgo::GetCNodePrimitive(cnode)->Clone())};
+  auto inputs = cnode->inputs();
+  new_inputs.insert(new_inputs.end(), inputs.begin() + 1, inputs.end());
+  cnode->set_inputs(new_inputs);
 }
 }  // namespace opt
 }  // namespace mindspore

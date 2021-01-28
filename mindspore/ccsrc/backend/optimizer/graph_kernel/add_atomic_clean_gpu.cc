@@ -133,8 +133,10 @@ bool AtomicCleanInsertter::CanActivateAtomicAdd(const AnfNodePtr &anf_node) {
     if (reduce_cnt != 1) {
       return false;
     }
+    real_output_num_ = inputs.size() - 1;
   } else if (IsPrimitiveCNode(real_return_node, prim::kPrimReduceSum)) {
     atomic_add_node_ = real_return_node->cast<CNodePtr>();
+    real_output_num_ = 1;
   } else {
     return false;
   }
@@ -200,7 +202,6 @@ void AtomicCleanInsertter::CreateInplaceAssignNodeAndCorrectReturn(const FuncGra
   auto retrun_node = sub_graph->get_return()->input(kFirstDataInputIndex);
   if (IsPrimitiveCNode(retrun_node, prim::kPrimMakeTuple)) {
     const auto &outs = retrun_node->cast<CNodePtr>()->inputs();
-    real_output_num_ = outs.size() - 1;
     for (size_t i = 1; i < outs.size(); ++i) {
       if (i != reduce_real_output_index_ + 1) {
         out_node = outs[i];
@@ -209,7 +210,6 @@ void AtomicCleanInsertter::CreateInplaceAssignNodeAndCorrectReturn(const FuncGra
       }
     }
   } else {
-    real_output_num_ = 1;
     out_node = atomic_add_node_;  // Use result data itself, and set attr "fake_out" true.
     fake_out = true;
   }
@@ -456,7 +456,7 @@ std::vector<std::pair<AnfNodePtr, int> > AtomicCleanInsertter::FindOriginCNodeUs
       }
     }
     for (auto &pair : getitem_user_nodes) {
-      // dirctory to find real user.
+      // Directory to find real user.
       auto real_users = mng->node_users()[pair.first];
       reduce_user_nodes.insert(reduce_user_nodes.end(), real_users.begin(), real_users.end());
     }
