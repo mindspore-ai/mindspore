@@ -30,7 +30,7 @@ ops::PrimitiveC *OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph, co
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "ratio") {
-      primitive_c->set_ratio(onnx_node_attr.f());
+      primitive_c->set_keep_prob(onnx_node_attr.f());
     }
   }
 

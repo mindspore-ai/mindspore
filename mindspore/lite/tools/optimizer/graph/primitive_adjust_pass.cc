@@ -401,10 +401,11 @@ int MoveAttrMapResize(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::Resize>();
+  MS_ASSERT(dst_prim != nullptr);
   auto size = GetValue<std::vector<int64_t>>(src_prim->GetAttr(ops::kSize));
   dst_prim->set_new_height(size[0]);
   dst_prim->set_new_width(size[1]);
-  if (dst_prim->GetAttr(ops::kAlignCorners) != nullptr && GetValue<bool>(dst_prim->GetAttr(ops::kAlignCorners))) {
+  if (src_prim->GetAttr(ops::kAlignCorners) != nullptr && GetValue<bool>(src_prim->GetAttr(ops::kAlignCorners))) {
     dst_prim->set_coordinate_transform_mode(mindspore::ALIGN_CORNERS);
   }
   if (src_prim->name() == kNameResizeBilinear) {
