@@ -136,6 +136,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   py::object Run(const py::object &cell, const py::tuple &args, const py::object &phase);
+  void RunInner(const py::object &cell, const py::tuple &args, const py::object &phase, py::object *ret);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
@@ -277,10 +278,10 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void ReplaceGraphParams(const FuncGraphPtr &df_builder, const FuncGraphPtr &forward_graph,
                           const std::string &cell_id);
   void SetNestedTopGraph(const py::object &cell, const py::args &args, const std::string &cell_id);
-  void MakeNestedCnode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
+  void MakeNestedCNode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
                        const py::object &out, bool has_sens);
   void RecoverGraphParams(const FuncGraphPtr &newfg, const std::string &cell_id, std::vector<AnfNodePtr> *inputs);
-  bool MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id);
+  bool MakeBpropNestedCNode(const py::object &cell, const py::object &out, const std::string &cell_id);
 
   // Hold graph(forward and grad) info
   std::string GetCellOpInfo();
