@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 #if defined(_WIN32) || defined(_WIN64)
 #include <stdlib.h>
 #endif
-#include <securec.h>
-#include <algorithm>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
-#include <limits>
 #include <random>
 #include <utility>
 
@@ -30,7 +27,6 @@
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
@@ -290,12 +286,6 @@ Status ShuffleOp::InitShuffleBuffer() {
 Status ShuffleOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status ShuffleOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<ShuffleOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

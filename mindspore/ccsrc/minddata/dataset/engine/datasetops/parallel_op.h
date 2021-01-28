@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,26 +66,6 @@ class ParallelOp : public DatasetOp {
   friend std::ostream &operator<<(std::ostream &out, const ParallelOp &po) {
     po.Print(out, false);
     return out;
-  }
-
-  // During tree prepare phase, operators may have specific pre-operations to perform depending on
-  // their role.
-  // @notes Derived versions of this function should always call it's superclass version first
-  // before providing their own implementations.
-  // @return Status - The error return code
-  Status PrepareNodePreAction() override {
-    // Run common code from super class before adding ParallelOp specific logic
-    return (DatasetOp::PrepareNodePreAction());
-  }
-
-  // During tree prepare phase, operators may have specific post-operations to perform depending on
-  // their role.
-  // @notes Derived versions of this function should always call it's superclass version first
-  // before providing their own implementations.
-  // @return Status - The error return code
-  Status PrepareNodePostAction() override {
-    // Run common code from super class before adding ParallelOp specific logic
-    return (DatasetOp::PrepareNodePostAction());
   }
 
   // Override base class reset to provide reset actions specific to the ParallelOp class.

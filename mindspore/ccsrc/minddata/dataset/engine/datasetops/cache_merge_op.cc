@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/system_pool.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -205,10 +204,10 @@ Status CacheMergeOp::Cleaner() {
   return Status::OK();
 }
 
-Status CacheMergeOp::PrepareNodePostAction() {  // Run any common code from super class first before adding our own
-                                                // specific logic
+Status CacheMergeOp::PrepareOperator() {  // Run any common code from super class first before adding our own
+                                          // specific logic
   CHECK_FAIL_RETURN_UNEXPECTED(child_.size() == 2, "Incorrect number of children");
-  RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
+  RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
   // Get the computed check sum from all ops in the cache miss class
   uint32_t cache_crc = DatasetOp::GenerateCRC(child_[kCacheMissChildIdx]);
   // This is a mappable cache op so the id's need to be generated.
@@ -261,18 +260,6 @@ Status CacheMergeOp::Builder::Build(std::shared_ptr<CacheMergeOp> *ptr) {
   *ptr = std::make_shared<CacheMergeOp>(build_num_workers_, build_op_connector_size_, build_num_cleaners_,
                                         build_cache_client_, build_sampler_);
   return Status::OK();
-}
-
-// Pre-Visitor accept method for NodePass
-Status CacheMergeOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call the pre-visitation
-  return p->PreRunOnNode(shared_from_base<CacheMergeOp>(), modified);
-}
-
-// Visitor accept method for NodePass
-Status CacheMergeOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<CacheMergeOp>(), modified);
 }
 
 Status CacheMergeOp::EoeReceived(int32_t worker_id) {

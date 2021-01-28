@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,10 @@
 
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 
-#include <iomanip>
 #include <iostream>
 #include <memory>
-#include <utility>
-#include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/dataset_iterator.h"
-#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
-#include "minddata/dataset/engine/opt/pass.h"
-#include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
 
@@ -488,12 +481,6 @@ void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
     // Then show any custom derived-internal stuff
     out << "\nChannel name: " << channel_name_ << "\nPrefetch size: " << prefetch_size_ << "\n\n";
   }
-}
-
-// Visitor accept method for NodePass
-Status DeviceQueueOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<DeviceQueueOp>(), modified);
 }
 
 void DeviceQueueOp::ProfilingRecorder(bool isProfilingEnable, std::shared_ptr<DeviceQueueTracing> profiling_node,

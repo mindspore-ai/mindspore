@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ class CacheMergeOp : public ParallelOp {
   /// \param numWorkers Number of parallel workers as a derived class of ParallelOp
   /// \param opConnector Size Connector size as a derived class of ParallelOp
   /// \param numCleaners Number of cleaners to move cache miss rows into the cache server
-  /// \param cache_client CacheClient to commmunicate with the Cache server
+  /// \param cache_client CacheClient to communicate with the Cache server
   /// \param sampler as a derived class of ParallelOp
   CacheMergeOp(int32_t numWorkers, int32_t opConnectorSize, int32_t numCleaners,
                std::shared_ptr<CacheClient> cache_client, const std::shared_ptr<SamplerRT> &sampler);
@@ -157,30 +157,23 @@ class CacheMergeOp : public ParallelOp {
     return out;
   }
   /// \brief Master thread responsible to spawn all the necessary worker threads for the two streams and
-  /// the threads for the cleaners.
+  ///     the threads for the cleaners.
   /// \return
   Status operator()() override;
+
   /// \brief Entry function for worker thread that fetch rows from CacheLookupOp
   /// \param workerId
   /// \return Status object
   Status WorkerEntry(int32_t workerId) override;
-  Status PrepareNodePostAction() override;
+
+  /// \brief Perform specific post-operations on CacheOp
+  /// \return Status The status code returned
+  Status PrepareOperator() override;
+
   /// \brief Entry function for worker thread that fetch rows from the cache miss stream
   /// \param workerId
   /// \return Status object
   Status CacheMissWorkerEntry(int32_t workerId);
-
-  /// \brief Base-class override for NodePass pre-visit acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status PreAccept(NodePass *p, bool *const modified) override;
-
-  /// \brief Base-class override for NodePass visitor acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *const modified) override;
 
   /// \brief Base-class override for eoe handling
   /// \param worker_id

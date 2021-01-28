@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "proto/example.pb.h"
-#include "./securec.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_schema.h"
@@ -34,7 +33,6 @@
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/jagged_connector.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -1020,12 +1018,6 @@ int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &file
   return rows_read;
 }
 
-// Visitor accept method for NodePass
-Status TFReaderOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<TFReaderOp>(), modified);
-}
-
 Status TFReaderOp::ComputeColMap() {
   // Construct the column name map for this operator (base class field)
   if (column_name_id_map_.empty()) {
@@ -1035,27 +1027,6 @@ Status TFReaderOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
-  return Status::OK();
-}
-
-// During tree prepare phase, operators may have specific post-operations to perform depending on
-// their role.
-Status TFReaderOp::PrepareNodePostAction() {
-  // Run common code from super class before adding TFReaderOp specific handling
-  RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
-
-  // Now that the sampler has been saved for the cache, we need to adjust the TFReaderOp to turn it into
-  // a simpler producer of all data (no shuffling or sharding or anything)
-  if (!BitTest(tree_->PrepareFlags(), ExecutionTree::kDePrepCache)) {
-    // This sanity check had been delayed until now in the prepare loop.
-    // If we are not in a cache path, then we can validate the file-based sharding config.
-    // If we are in a cache path, there is no file-based sharding so the check is not correct in that
-    // situation.
-    if (!equal_rows_per_shard_ && dataset_files_list_.size() < static_cast<uint32_t>(num_devices_)) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, not enough tfrecord files provided.\n");
-    }
-  }
-
   return Status::OK();
 }
 

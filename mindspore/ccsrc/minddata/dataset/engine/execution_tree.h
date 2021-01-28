@@ -39,19 +39,11 @@ class Pass;
 using OptPass = std::vector<std::unique_ptr<Pass>>;
 class ExecutionTree {
  public:
-  // Prepare flags used during tree prepare phase
-  enum PrepareFlags {
-    kDePrepNone = 0,
-    kDePrepRepeat = 1,  //  Processing a repeat operation
-    kDePrepCache = 2    //  Processing a cache operation
-  };
-
   // State flags for the lifecycle of the tree
   enum TreeState {
     kDeTStateInit = 0,   // The freshly initialized state after construction
     kDeTStateBuilding,   // The tree is being built, nodes are being added
-    kDeTStatePrepare,    // The tree has been assigned a root node and is pending prepare
-    kDeTStateReady,      // The tree has been prepared and is ready to be launched
+    kDeTStatePrepared,   // The tree has been prepared and is ready to be launched
     kDeTStateExecuting,  // The tree has been launched and is executing
     kDeTStateEpochEnd,   // The tree has been received end of epoch signal, just for profiling
     kDeTStateFinished    // The tree has been drained, dataset iterator received EOF
@@ -111,122 +103,101 @@ class ExecutionTree {
   // Destructor
   ~ExecutionTree();
 
-  // Associates a DatasetOp with this tree. This assigns a valid node id to the operator and
-  // provides it with a link to the tree. A node cannot form any relationships (parent/child) with
-  // other nodes unless they are associated with the same tree.
-  // @param op - The operator to associate
-  // @return Status The status code returned
+  /// \brief Associates a DatasetOp with this tree. This assigns a valid node id to the operator and
+  ///     provides it with a link to the tree. A node cannot form any relationships (parent/child) with
+  ///     other nodes unless they are associated with the same tree.
+  /// \param op - The operator to associate
+  /// \return Status The status code returned
   Status AssociateNode(const std::shared_ptr<DatasetOp> &op);
 
-  // Sets the root node of the tree
-  // @param op - The operator to assign as root
-  // @return Status The status code returned
+  /// \brief Set the root node of the tree
+  /// \param op - The operator to assign as root
+  /// \return Status The status code returned
   Status AssignRoot(const std::shared_ptr<DatasetOp> &op);
 
-  // Start the execution of the tree
-  // @return Status The status code returned
+  /// \brief Start the execution of the tree
+  /// \return Status The status code returned
   Status Launch();
 
-  /// A print method typically used for debugging
+  /// /brief A print method typically used for debugging
   /// \param out - The output stream to write output to
   void Print(std::ostream &out, const std::shared_ptr<DatasetOp> &op = nullptr) const;
 
-  // Returns an iterator positioned at the start
-  // @return Iterator - The iterator
+  /// \brief Return an iterator positioned at the start
+  /// \return Iterator - The iterator
   ExecutionTree::Iterator begin(const std::shared_ptr<DatasetOp> &root = nullptr) const {
     return Iterator(root == nullptr ? root_ : root);
   }
 
-  // Returns an iterator positioned at the end
-  // @return Iterator - The iterator
+  /// \brief Return an iterator positioned at the end
+  /// \return Iterator - The iterator
   ExecutionTree::Iterator end() const { return Iterator(nullptr); }
 
-  // << Stream output operator overload
-  // @notes This allows you to write the debug print info using stream operators
-  // @param out - reference to the output stream being overloaded
-  // @param exe_tree - reference to the execution tree to display
-  // @return - the output stream must be returned
+  /// \brief << Stream output operator overload
+  /// \notes This allows you to write the debug print info using stream operators
+  /// \param out - reference to the output stream being overloaded
+  /// \param exe_tree - reference to the execution tree to display
+  /// \return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, ExecutionTree &exe_tree) {
     exe_tree.Print(out);
     return out;
   }
 
-  // Given the number of workers, launches the worker entry function for each. Essentially a
-  // wrapper for the TaskGroup handling that is stored inside the execution tree.
-  // @param num_workers - The number of workers to launch
-  // @param func - The function entry point that workers will execute
-  // @param name - The description of worker to launch
-  // @param op_id - The id of corresponding operator, if not inherit from dataset op then it is -1.
-  // @return Status The status code returned
+  /// \brief Given the number of workers, launches the worker entry function for each. Essentially a
+  ///     wrapper for the TaskGroup handling that is stored inside the execution tree.
+  /// \param num_workers - The number of workers to launch
+  /// \param func - The function entry point that workers will execute
+  /// \param name - The description of worker to launch
+  /// \param op_id - The id of corresponding operator, if not inherit from dataset op then it is -1.
+  /// \return Status The status code returned
   Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name = "",
                        int32_t operator_id = -1);
 
-  // Getter method
-  // @return shared_ptr to the root operator
+  /// \brief Getter method
+  /// \return shared_ptr to the root operator
   std::shared_ptr<DatasetOp> root() const { return root_; }
 
-  // Getter method
-  // @return the prepare flags
-  uint32_t PrepareFlags() const { return prepare_flags_; }
-
-  // Compulsory transformation/action pre optimization.
-  // @return Status The status code returned
-  Status PreAction();
-
-  // Compulsory transformation/action post optimization.
-  // @return Status The status code returned
-  Status PostAction();
-
-  // The DEPRECATED driver of the prepare phase of the execution tree. The prepare phase will recursively
-  // walk the tree to perform modifications to the tree or specific nodes within the tree to get
-  // it ready for execution.
-  // @param Total number of epochs that will be run on this tree
-  // @return Status The status code returned
+  /// \brief The prepare phase walks the tree in post-order to perform modifications to get it ready for execution.
+  /// \return Status The status code returned
   Status Prepare();
 
-  // Recursive function used during prepare phase to visit a node and drive any pre- and post-
-  // node actions during a tree walk.
-  // @param op - The dataset op to work on
-  // @return Status The status code returned
-  Status PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op);
-
-  // Return the pointer to the TaskGroup
-  // @return raw pointer to the TaskGroup
+  /// \brief Return the pointer to the TaskGroup
+  /// \return raw pointer to the TaskGroup
   TaskGroup *const AllTasks() const { return tg_.get(); }
 
-  // Return if the ExecutionTree is at end of epoch status
-  // @return bool - true is ExecutionTree is end of epoch status
+  /// \brief Return if the ExecutionTree is at end of epoch status
+  /// \return bool - true is ExecutionTree is end of epoch status
   bool IsEpochEnd() const { return tree_state_ == TreeState::kDeTStateEpochEnd; }
 
-  // Set the ExecutionTree to EOE state
+  /// \brief Set the ExecutionTree to EOE state
   void SetEpochEnd() { tree_state_ = TreeState::kDeTStateEpochEnd; }
 
-  // Set the ExecutionTree to executing state
+  /// \brief Set the ExecutionTree to executing state
   void SetExecuting() { tree_state_ = TreeState::kDeTStateExecuting; }
 
-  // Return if the ExecutionTree is finished (iterator receives EOF).
-  // @return Bool - true is ExecutionTree is finished
-  bool isFinished() const { return tree_state_ == TreeState::kDeTStateFinished; }
-
-  // Return if the ExecutionTree is ready.
-  // @return Bool - true is ExecutionTree is ready
-  bool isPrepared() const {
-    return tree_state_ == TreeState::kDeTStateReady || tree_state_ == kDeTStateExecuting ||
-           tree_state_ == kDeTStateFinished;
-  }
-
-  // Set the ExecutionTree to Finished state.
+  /// \brief Set the ExecutionTree to Finished state.
   void SetFinished() { tree_state_ = TreeState::kDeTStateFinished; }
 
-  // Getter for profiling manager, no ownership
+  /// \brief Return if the ExecutionTree is finished (iterator receives EOF).
+  /// \return Bool - true is ExecutionTree is finished
+  bool isFinished() const { return tree_state_ == TreeState::kDeTStateFinished; }
+
+  /// \brief Return if the ExecutionTree is ready.
+  /// \return Bool - true is ExecutionTree is ready
+  bool isPrepared() const {
+    return tree_state_ == TreeState::kDeTStatePrepared || tree_state_ == TreeState::kDeTStateExecuting ||
+           tree_state_ == TreeState::kDeTStateFinished;
+  }
+
+  /// \brief Getter for profiling manager, no ownership
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
 
  private:
-  // A helper functions for doing the recursive printing
-  // @param dataset_op - The dataset op to print
-  // @param indent - an indent string for aligning child levels in output
-  // @param last - an indicator if it's the last child or not
-  // @param detailed - should it display the detailed node output or the summary line
+  /// \brief A helper functions for doing the recursive printing
+  /// \param dataset_op - The dataset op to print
+  /// \param indent - an indent string for aligning child levels in output
+  /// \param last - an indicator if it's the last child or not
+  /// \param detailed - should it display the detailed node output or the summary line
   void PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp> &dataset_op, std::string indent, bool last,
                  bool detailed) const;
 

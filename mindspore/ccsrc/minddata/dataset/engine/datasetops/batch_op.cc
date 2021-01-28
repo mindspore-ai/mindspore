@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 
 #include <utility>
-#include <iomanip>
 
 #include "utils/ms_utils.h"
 #ifdef ENABLE_PYTHON
@@ -24,7 +23,6 @@
 #endif
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 #include "minddata/dataset/util/status.h"
 
@@ -496,18 +494,6 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
     }
   }
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status BatchOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<BatchOp>(), modified);
-}
-
-// Visitor pre-accept method for NodePass
-Status BatchOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->PreRunOnNode(shared_from_base<BatchOp>(), modified);
 }
 
 Status BatchOp::ComputeColMap() {

@@ -19,7 +19,6 @@
 
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/data_buffer.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -102,17 +101,6 @@ Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
   return Status::OK();
 }
 
-// Pre-Visitor accept method for NodePass
-Status EpochCtrlOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call the pre-visitation
-  return p->PreRunOnNode(shared_from_base<EpochCtrlOp>(), modified);
-}
-
-// Visitor accept method for NodePass
-Status EpochCtrlOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call the pre-visitation
-  return p->RunOnNode(shared_from_base<EpochCtrlOp>(), modified);
-}
 int64_t EpochCtrlOp::GetTreeRepeatCount() { return child_[0]->GetTreeRepeatCount(); }
 }  // namespace dataset
 }  // namespace mindspore

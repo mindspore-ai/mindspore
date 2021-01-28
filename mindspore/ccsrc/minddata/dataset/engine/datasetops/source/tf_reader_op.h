@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,12 +222,6 @@ class TFReaderOp : public ParallelOp {
   static Status CountTotalRows(int64_t *out_total_rows, const std::vector<std::string> &filenames, int64_t threads = 1,
                                bool estimate = false);
 
-  // Base-class override for NodePass visitor acceptor.
-  // @param p - Pointer to the NodePass to be accepted.
-  // @param modified - Whether this node visit modified the pipeline.
-  // @return - Status of the node visit.
-  Status Accept(NodePass *p, bool *const modified) override;
-
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "TFReaderOp"; }
@@ -235,12 +229,6 @@ class TFReaderOp : public ParallelOp {
   // File names getter
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return dataset_files_list_; }
-
-  // During tree prepare phase, operators may have specific post-operations to perform depending on
-  // their role.
-  // @notes Derived versions of this function should always call it's superclass version first
-  // before providing their own implementations.
-  Status PrepareNodePostAction() override;
 
   static bool ValidateFirstRowCrc(const std::string &filename);
 

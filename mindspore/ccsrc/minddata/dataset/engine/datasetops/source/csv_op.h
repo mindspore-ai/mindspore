@@ -298,12 +298,6 @@ class CsvOp : public ParallelOp {
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return csv_files_list_; }
 
-  // Base-class override for NodePass visitor acceptor.
-  // @param p - Pointer to the NodePass to be accepted.
-  // @param modified - Whether this node visit modified the pipeline.
-  // @return - Status of the node visit.
-  Status Accept(NodePass *p, bool *const modified) override;
-
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "CsvOp"; }

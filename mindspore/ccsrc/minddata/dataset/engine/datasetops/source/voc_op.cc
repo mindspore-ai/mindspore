@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -493,12 +492,6 @@ Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_t
   return Status::OK();
 }
 #endif
-
-// Visitor accept method for NodePass
-Status VOCOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<VOCOp>(), modified);
-}
 
 Status VOCOp::ComputeColMap() {
   // Set the column name map (base class field)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -70,6 +69,13 @@ void ConcatOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
+// This definition is added to pass the cyclomatic complexity rule of <= 20 units
+// The NOLINT directive is to disable cpplint check.
+// Clang format and cpplint give conflicting recommendations on this line below.
+#define f(fv, sv, shard_index)                                                                     \
+  (((fv) == -1 && (sv) == -1) || ((fv) < (sv) && (shard_index) >= (fv) && (shard_index) < (sv)) || \
+   ((fv) > (sv) && ((shard_index) >= (fv) || (shard_index) < (sv))))  // NOLINT
+
 // Main entry point for Concat
 Status ConcatOp::operator()() {
   children_num_ = static_cast<int32_t>(child_.size());
@@ -78,6 +84,7 @@ Status ConcatOp::operator()() {
   int eof_count = 0;
   int sample_number = 0;
   bool is_not_mappable = true;
+  bool is_not_mappable_or_second_ne_zero = true;
   int num_shard = 1;
   int shard_index = 0;
   std::shared_ptr<DistributedSamplerRT> distribute_sampler = std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_);
@@ -99,26 +106,28 @@ Status ConcatOp::operator()() {
         RETURN_IF_NOT_OK(Verify(i, buf));
       }
       // 3. Put the data into output_connector
-      if (!children_flag_and_nums_.empty()) is_not_mappable = children_flag_and_nums_[i].first;
+      if (!children_flag_and_nums_.empty()) {
+        is_not_mappable = children_flag_and_nums_[i].first;
+        is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[i].second);
+      }
       while (!buf->eoe() && !buf->eof()) {
         // if dataset is not mappable or generator dataset which source is yield, cannot get the number of samples in
         // python layer), we use filtering to get data
-        if (sample_number % num_shard == shard_index && (is_not_mappable || !children_flag_and_nums_[i].second)) {
+        if (sample_number % num_shard == shard_index && is_not_mappable_or_second_ne_zero) {
           RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
-        } else if (!is_not_mappable && children_flag_and_nums_[i].second) {  // if dataset is mappable or generator
-                                                                             // dataset which source is not yield
+        } else if (!is_not_mappable_or_second_ne_zero) {
+          // if dataset is mappable or generator dataset which source is not yield,
           // get the start and end subscripts of valid values
           int fv = children_start_end_index_[i].first, sv = children_start_end_index_[i].second;
 
           // determine whether the data allocated to the current shard id is false data
-          if ((fv == -1 && sv == -1) || (fv < sv && shard_index >= fv && shard_index < sv) ||
-              (fv > sv && (shard_index >= fv || shard_index < sv))) {
+          if (f(fv, sv, shard_index)) {
             RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
           }
         }
 
-        // if dataSet is no mappable or generator dataset` which source is yeild, sample_number+=1
-        if (is_not_mappable || !children_flag_and_nums_[i].second) {
+        // if dataset is not mappable or generator dataset which source is yield, sample_number+=1
+        if (is_not_mappable_or_second_ne_zero) {
           sample_number++;
         }
 
@@ -127,7 +136,7 @@ Status ConcatOp::operator()() {
 
       // if dataset is mappable,We don't use filtering to pick data.
       // so sample_number plus the length of the entire dataset
-      if (!is_not_mappable && children_flag_and_nums_[i].second) {
+      if (!is_not_mappable_or_second_ne_zero) {
         sample_number += children_flag_and_nums_[i].second;
       }
     }
@@ -188,12 +197,6 @@ Status ConcatOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
-}
-
-// Visitor pre-accept method for NodePass
-Status ConcatOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->PreRunOnNode(shared_from_base<ConcatOp>(), modified);
 }
 
 // Gets the number of classes

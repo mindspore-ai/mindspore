@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,12 +167,6 @@ class BuildVocabOp : public ParallelOp {
   int32_t num_consumers() const override { return 1; }
 
   Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildVocabOp"); }
-
-  /// \brief Base-class override for NodePass pre-visit acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status PreAccept(NodePass *p, bool *const modified) override;
 
  private:
   const int32_t interval_;

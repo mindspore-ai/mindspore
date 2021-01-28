@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
 #else
@@ -588,12 +587,6 @@ Status AlbumOp::LaunchThreadsAndInitOp() {
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(this->InitSampler());  // pass numRows to Sampler
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status AlbumOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<AlbumOp>(), modified);
 }
 
 Status AlbumOp::ComputeColMap() {

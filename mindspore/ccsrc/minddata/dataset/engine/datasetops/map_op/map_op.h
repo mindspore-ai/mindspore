@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,18 +176,6 @@ class MapOp : public ParallelOp {
   // Getter
   // @return the number of threads consuming data from previous op's output Connector.
   int32_t num_consumers() const override;
-
-  /// \brief Base-class override for NodePass pre-visit acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status PreAccept(NodePass *p, bool *const modified) override;
-
-  /// \brief Base-class override for NodePass visitor acceptor.
-  /// \param[in] p Pointer to the NodePass to be accepted.
-  /// \param[out] modified Whether this node visit modified the pipeline.
-  /// \return - Status of the node visit.
-  Status Accept(NodePass *p, bool *const modified) override;
 
   // Op name getter
   // @return Name of the current Op

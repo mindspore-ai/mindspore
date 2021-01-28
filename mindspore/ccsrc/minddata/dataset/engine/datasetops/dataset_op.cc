@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
-#include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #ifndef ENABLE_ANDROID
 #include "utils/system/crc32c.h"
 #include "utils/log_adapter.h"
@@ -338,13 +336,8 @@ Status DatasetOp::EofReceived(int32_t worker_id) {
   return (out_connector_->Add(static_cast<int>(worker_id), std::move(eof_buffer)));
 }
 
-// During tree prepare phase, operators may have specific pre-operations to perform depending on
-// their role.
-Status DatasetOp::PrepareNodePreAction() { return Status::OK(); }
-
-// During tree prepare phase, operators may have specific post-operations to perform depending on
-// their role.
-Status DatasetOp::PrepareNodePostAction() {
+// During tree prepare phase, operators may have specific post-operations to perform depending on their role.
+Status DatasetOp::PrepareOperator() {
   // Creating Connector object for each op.
   // The consumer of the root node is assumed to be one thread.
   // If multiple threads are consuming from the root node, they will get the ordered data in round robin fashion.
@@ -363,9 +356,6 @@ Status DatasetOp::PrepareNodePostAction() {
 
   return Status::OK();
 }
-
-// Getter function.  Base class does not have any special flags setting.
-uint32_t DatasetOp::PrepareFlags() const { return ExecutionTree::kDePrepNone; }
 
 // Derived classes may implement the reset function if the operator is stateful and needs
 // specific reset handling that is not contained in this common code version of the reset.
@@ -400,18 +390,6 @@ Status DatasetOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
-}
-
-Status DatasetOp::PreAccept(NodePass *p, bool *const modified) {
-  // DatasetOp is the base class of visitor target pre-visit.
-  // This method will only be called if its derived class does not implement one.
-  return p->PreRunOnNode(shared_from_this(), modified);
-}
-
-Status DatasetOp::Accept(NodePass *p, bool *const modified) {
-  // DatasetOp is the base class of visitor target.
-  // This method will only be called if its derived class does not implement one.
-  return p->RunOnNode(shared_from_this(), modified);
 }
 
 // Getter for the sampler, and it also removes the sampler from the op

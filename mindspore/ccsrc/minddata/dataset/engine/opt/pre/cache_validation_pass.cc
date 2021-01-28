@@ -23,6 +23,7 @@
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
 
@@ -153,6 +154,22 @@ Status CacheValidationPass::VisitAfter(std::shared_ptr<RepeatNode> node, bool *c
   MS_LOG(DEBUG) << "CacheValidationPass::VisitAfter(<RepeatNode>): visiting " << node->Name() << ".";
   if (is_cached_ && is_mappable_) {
     RETURN_STATUS_UNEXPECTED("A cache over a RepeatNode of a mappable dataset is not supported.");
+  }
+  return Status::OK();
+}
+
+Status CacheValidationPass::VisitAfter(std::shared_ptr<TFRecordNode> node, bool *const modified) {
+  MS_LOG(DEBUG) << "CacheValidationPass::VisitAfter(<TFRecordNode>): visiting " << node->Name() << ".";
+  if (!is_cached_) {
+    // If we are not in a cache path, then we must validate the file-based sharding config.
+    // If we are in a cache path, there is no file-based sharding so the check is not required.
+    if (!node->shard_equal_rows_ && node->dataset_files_.size() < static_cast<uint32_t>(node->num_shards_)) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, not enough tfrecord files provided.\n");
+    }
+  }
+  // Reset the flag when this node is cached and is already visited
+  if (node->IsCached()) {
+    is_cached_ = false;
   }
   return Status::OK();
 }

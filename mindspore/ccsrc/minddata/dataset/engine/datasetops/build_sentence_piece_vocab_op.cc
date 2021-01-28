@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 
 #include <iomanip>
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -158,12 +157,6 @@ void BuildSentencePieceVocabOp::Next(std::string *sentence) {
   std::string st{sentence_v};
   *sentence = st;
   ret_status_ = Status::OK();
-}
-
-// Pre-Visitor accept method for NodePass
-Status BuildSentencePieceVocabOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call the pre-visitation
-  return p->PreRunOnNode(shared_from_base<BuildSentencePieceVocabOp>(), modified);
 }
 
 Status BuildSentencePieceVocabOp::Builder::Build(std::shared_ptr<BuildSentencePieceVocabOp> *op) {

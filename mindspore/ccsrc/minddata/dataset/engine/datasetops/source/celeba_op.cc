@@ -1,6 +1,6 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
-
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,7 +23,6 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
 #else
@@ -438,12 +437,6 @@ Status CelebAOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
   RETURN_IF_NOT_OK(sampler_->ResetSampler());
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status CelebAOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<CelebAOp>(), modified);
 }
 
 Status CelebAOp::ComputeColMap() {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "minddata/dataset/engine/datasetops/cache_lookup_op.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
@@ -132,12 +131,6 @@ Status CacheLookupOp::ComputeColMap() {
   // to fetch the schema but the cache server may not have it at this point either.
   // So we will just return OK and let MergeOp (our parent) to handle it.
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status CacheLookupOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<CacheLookupOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore
