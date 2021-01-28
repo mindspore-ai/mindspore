@@ -62,7 +62,7 @@ int ResizeBaseCPUKernel::CheckParameters() {
       MS_LOG(INFO) << "Out shape is not assigned";
       const_shape_ = false;
     } else {
-      auto ret = CalculateNewHeightWidth();
+      auto ret = CalculateLinearNewHeightWidth();
       if (ret != RET_OK) {
         return ret;
       }
@@ -78,7 +78,10 @@ int ResizeBaseCPUKernel::CheckParameters() {
   return RET_OK;
 }
 
-int ResizeBaseCPUKernel::CalculateNewHeightWidth() {
+int ResizeBaseCPUKernel::CalculateLinearNewHeightWidth() {
+  if (method_ != static_cast<int>(schema::ResizeMethod_LINEAR)) {
+    return RET_OK;
+  }
   if (in_tensors_.size() != 2) {
     return RET_ERROR;
   }

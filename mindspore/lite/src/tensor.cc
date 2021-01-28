@@ -282,8 +282,7 @@ int Tensor::set_root_tensor(Tensor *tensor) {
     return RET_OK;
   }
   if (this->root_tensor_ == nullptr) {
-    MS_LOG(ERROR) << "root tensor is nullptr";
-    return RET_NULL_PTR;
+    return RET_OK;
   }
   this->shape_ = this->root_tensor_->shape_;
   this->format_ = this->root_tensor_->format_;
