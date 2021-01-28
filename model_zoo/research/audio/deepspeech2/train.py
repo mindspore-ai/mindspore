@@ -81,8 +81,8 @@ if __name__ == '__main__':
     optimizer = Adam(weights, learning_rate=config.OptimConfig.learning_rate, eps=config.OptimConfig.epsilon,
                      loss_scale=config.OptimConfig.loss_scale)
     train_net = TrainOneStepCell(loss_net, optimizer)
-
-    if args.pre_trained_model_path is not None:
+    train_net.set_train(True)
+    if args.pre_trained_model_path != '':
         param_dict = load_checkpoint(args.pre_trained_model_path)
         load_param_into_net(train_net, param_dict)
         print('Successfully loading the pre-trained model')

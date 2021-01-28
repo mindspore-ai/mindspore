@@ -81,6 +81,7 @@ if __name__ == '__main__':
                 last_id += 1
                 start = count
                 count += 1
+        split_targets.append(list(targets[start:]))
         out, output_sizes = model(inputs, input_length)
         decoded_output, _ = decoder.decode(out, output_sizes)
         target_strings = target_decoder.convert_to_strings(split_targets)
