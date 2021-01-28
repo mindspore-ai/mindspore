@@ -71,11 +71,8 @@ class TimeDistributed(Cell):
         time_axis(int): The axis of time_step.
         reshape_with_axis(int): The axis which time_axis will be reshaped with. Default: 'None'.
 
-    Raises:
-        TypeError: If cell is not a Cell or Primitive.
-
-    inputs:
-        -**input**(Tensor)-Tensor of shape: math:'(N, T, *)'
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, T, *)`.
 
     Outputs:
         Tensor of shape: math:'(N, T, *)'
@@ -83,10 +80,13 @@ class TimeDistributed(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
+    Raises:
+        TypeError: If layer is not a Cell or Primitive.
+
     Examples:
         >>> input = Tensor(np.random.random([32, 10, 3]), mindspore.float32)
         >>> dense = nn.Dense(3, 6)
-        >>> net = TimeDistributed(dense, time_axis=1, reshape_with_axis=0)
+        >>> net = nn.TimeDistributed(dense, time_axis=1, reshape_with_axis=0)
         >>> output = net(input)
         >>> print(output.shape)
         (32, 10, 6)
