@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+void TileOneDimensionFp16(const float16_t *inData, float16_t *outData, int dim, size_t ndim, const int *inShape,
+                          const int *inStrides, const int *outStrides, const int *multiple);
+void TileDimensionsFp16(const float16_t *data0, const float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
+                        ArithmeticParameter *param);
+
 int ElementOptMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param);
 int ElementOptMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
@@ -84,6 +90,8 @@ int ElementMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
 int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int BroadcastAddFp16(const float16_t *in0, const float16_t *in1, float16_t *tile_in0, float16_t *tile_in1,
+                     float16_t *out, int size, ArithmeticParameter *param);
 
 int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
 int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
@@ -111,8 +119,6 @@ int ElementLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, 
 int ElementGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 
-void TileDimensionsFp16(float16_t *data0, float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
-                        ArithmeticParameter *param);
 #ifdef __cplusplus
 }
 #endif

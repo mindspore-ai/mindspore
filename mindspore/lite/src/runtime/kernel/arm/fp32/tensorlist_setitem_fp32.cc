@@ -28,7 +28,14 @@ using mindspore::schema::PrimitiveType_TensorListSetItem;
 
 namespace mindspore::kernel {
 
-int TensorListSetItemCPUKernel::Init() { return RET_OK; }
+int TensorListSetItemCPUKernel::Init() {
+#ifdef ENABLE_FP16
+  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
+    dtype_ = kNumberTypeFloat16;
+  }
+#endif
+  return RET_OK;
+}
 
 int TensorListSetItemCPUKernel::CheckParam() {
   if (dtype_ != kTypeUnknown && dtype_ != input0_->tensors_data_type()) {
@@ -143,5 +150,6 @@ int TensorListSetItemCPUKernel::Run() {
 int TensorListSetItemCPUKernel::ReSize() { return RET_OK; }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListSetItem, LiteKernelCreator<TensorListSetItemCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TensorListSetItem, LiteKernelCreator<TensorListSetItemCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListSetItem, LiteKernelCreator<TensorListSetItemCPUKernel>)
 }  // namespace mindspore::kernel

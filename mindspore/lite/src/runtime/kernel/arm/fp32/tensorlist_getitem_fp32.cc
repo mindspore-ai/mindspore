@@ -31,11 +31,11 @@ namespace mindspore::kernel {
 int TensorListGetItemCPUKernel::Init() {
   MS_ASSERT(in_tensors_.size() >= 2);
   MS_ASSERT(in_tensors_.at(0) != nullptr);
-  auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_.at(0));
-  if (dtype_ != input0->tensors_data_type()) {
-    MS_LOG(ERROR) << "op dtype: " << dtype_ << " is not equal in_tensor[0] dtype: " << input0->tensors_data_type();
-    return RET_ERROR;
+#ifdef ENABLE_FP16
+  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
+    dtype_ = kNumberTypeFloat16;
   }
+#endif
   return RET_OK;
 }
 
@@ -45,6 +45,10 @@ int TensorListGetItemCPUKernel::Run() {
   MS_ASSERT(in_tensors_.at(1) != nullptr);
   MS_ASSERT(out_tensors_.at(0) != nullptr);
   auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_.at(0));
+  if (dtype_ != input0->tensors_data_type()) {
+    MS_LOG(ERROR) << "op dtype: " << dtype_ << " is not equal in_tensor[0] dtype: " << input0->tensors_data_type();
+    return RET_ERROR;
+  }
   MS_ASSERT(in_tensors_.at(1)->data_c() != nullptr);
   index_ = reinterpret_cast<int *>(in_tensors_.at(1)->data_c())[0];
   int dim0 = input0->ElementsNum() - 1;
@@ -66,8 +70,7 @@ int TensorListGetItemCPUKernel::Run() {
       return RET_ERROR;
     }
   } else {
-    // reset 0 and dtype = dtype_
-    // TODO(DT_VARIANT): dtype = DT_VARIANT is not handle
+    // reset data buffer is zero
     auto out_data = out_tensors_[0]->data_c();
     if (out_data == nullptr) {
       MS_LOG(ERROR) << "data of out_tensors_[0] is nullptr";
@@ -80,30 +83,7 @@ int TensorListGetItemCPUKernel::Run() {
 
 int TensorListGetItemCPUKernel::ReSize() { return RET_OK; }
 
-kernel::LiteKernel *CpuTensorListGetItemFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                          const std::vector<lite::Tensor *> &outputs,
-                                                          OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                          const kernel::KernelKey &desc,
-                                                          const mindspore::lite::PrimitiveC *primitive) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "Input context is nullptr!";
-    free(op_parameter);
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_TensorListGetItem);
-  auto *kernel = new (std::nothrow) TensorListGetItemCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new TensorListGetItemCPUKernel fail!";
-    free(op_parameter);
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListGetItem, CpuTensorListGetItemFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListGetItem, CpuTensorListGetItemFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListGetItem, LiteKernelCreator<TensorListGetItemCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TensorListGetItem, LiteKernelCreator<TensorListGetItemCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListGetItem, LiteKernelCreator<TensorListGetItemCPUKernel>)
 }  // namespace mindspore::kernel

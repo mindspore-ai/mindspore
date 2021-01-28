@@ -21,6 +21,7 @@
 #include "src/lite_kernel.h"
 #include "src/tensorlist.h"
 #include "schema/model_generated.h"
+#include "nnacl/tensorlist_parameter.h"
 
 namespace mindspore::kernel {
 class TensorListFromTensorCPUKernel : public LiteKernel {
@@ -28,7 +29,8 @@ class TensorListFromTensorCPUKernel : public LiteKernel {
   TensorListFromTensorCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                 const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive),
+        dtype_(reinterpret_cast<TensorListParameter *>(parameter)->element_dtype_) {}
   ~TensorListFromTensorCPUKernel() = default;
 
   int Init() override;
@@ -41,6 +43,7 @@ class TensorListFromTensorCPUKernel : public LiteKernel {
   lite::Tensor *output0_ = nullptr;
   lite::Tensor *input0_ = nullptr;
   lite::Tensor *input1_ = nullptr;
+  TypeId dtype_ = kTypeUnknown;
 };
 }  // namespace mindspore::kernel
 

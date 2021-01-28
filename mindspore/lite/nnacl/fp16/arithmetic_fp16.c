@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,14 @@
 #include "nnacl/common_func.h"
 #include "nnacl/nnacl_utils.h"
 
-void TileOneDimensionFp16(float16_t *inData, float16_t *outData, int dim, size_t ndim, int *inShape, int *inStrides,
-                          int *outStrides, int *multiple) {
+int BroadcastAddFp16(const float16_t *in0, const float16_t *in1, float16_t *tile_in0, float16_t *tile_in1,
+                     float16_t *out, int size, ArithmeticParameter *param) {
+  TileDimensionsFp16(in0, in1, tile_in0, tile_in1, param);
+  return ElementAddFp16(tile_in0, tile_in1, out, size);
+}
+
+void TileOneDimensionFp16(const float16_t *inData, float16_t *outData, int dim, size_t ndim, const int *inShape,
+                          const int *inStrides, const int *outStrides, const int *multiple) {
   int srcDimSize = inShape[dim];
   if (dim == ndim - 1) {
     for (int i = 0; i < multiple[dim]; i++) {
@@ -37,7 +43,7 @@ void TileOneDimensionFp16(float16_t *inData, float16_t *outData, int dim, size_t
   }
 }
 
-void TileDimensionsFp16(float16_t *data0, float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
+void TileDimensionsFp16(const float16_t *data0, const float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
                         ArithmeticParameter *param) {
   CalcMultiplesAndStrides(param);
   TileOneDimensionFp16(data0, tile_data0, 0, param->ndim_, param->in_shape0_, param->in_strides0_, param->out_strides_,
@@ -219,6 +225,12 @@ int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
     float16x8_t vout = vaddq_f16(vin0, vin1);
     vst1q_f16(output + index, vout);
   }
+  for (; index <= element_size - 4; index += C4NUM) {
+    float16x4_t vin0 = vld1_f16(input0 + index);
+    float16x4_t vin1 = vld1_f16(input1 + index);
+    float16x4_t vout = vadd_f16(vin0, vin1);
+    vst1_f16(output + index, vout);
+  }
 #endif
   for (; index < element_size; index++) {
     output[index] = input0[index] + input1[index];
@@ -269,6 +281,14 @@ int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
     float16x8_t vout = vaddq_f16(vin0, vin1);
     vout = vmaxq_f16(vout, zeros);
     vst1q_f16(output + index, vout);
+  }
+  float16x4_t zeros1 = vdup_n_f16(0.0f);
+  for (; index <= element_size - 4; index += C4NUM) {
+    float16x4_t vin0 = vld1_f16(input0 + index);
+    float16x4_t vin1 = vld1_f16(input1 + index);
+    float16x4_t vout = vadd_f16(vin0, vin1);
+    vout = vmax_f16(vout, zeros1);
+    vst1_f16(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
@@ -327,6 +347,15 @@ int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
     float16x8_t vout = vaddq_f16(vin0, vin1);
     vout = vminq_f16(vmaxq_f16(vout, zeros), bounds);
     vst1q_f16(output + index, vout);
+  }
+  float16x4_t zeros1 = vdup_n_f16(0.0);
+  float16x4_t bounds1 = vdup_n_f16(6.0);
+  for (; index <= element_size - 4; index += C4NUM) {
+    float16x4_t vin0 = vld1_f16(input0 + index);
+    float16x4_t vin1 = vld1_f16(input1 + index);
+    float16x4_t vout = vadd_f16(vin0, vin1);
+    vout = vmin_f16(vmax_f16(vout, zeros1), bounds1);
+    vst1_f16(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {
