@@ -23,7 +23,7 @@ from src.bert_for_finetune import BertFinetuneCell, BertNER
 from src.finetune_eval_config import optimizer_cfg, bert_net_cfg
 from src.dataset import create_ner_dataset
 from src.utils import make_directory, LossCallBack, LoadNewestCkpt, BertLearningRate, convert_labels_to_index
-from src.assessment_method import Accuracy, F1, MCC, Spearman_Correlation
+from src.assessment_method import Accuracy, F1, MCC, Spearman_Correlation, SpanF1
 import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore import log as logger
@@ -86,7 +86,7 @@ def eval_result_print(assessment_method="accuracy", callback=None):
     if assessment_method == "accuracy":
         print("acc_num {} , total_num {}, accuracy {:.6f}".format(callback.acc_num, callback.total_num,
                                                                   callback.acc_num / callback.total_num))
-    elif assessment_method == "f1":
+    elif assessment_method in ("f1", "spanf1"):
         print("Precision {:.6f} ".format(callback.TP / (callback.TP + callback.FP)))
         print("Recall {:.6f} ".format(callback.TP / (callback.TP + callback.FN)))
         print("F1 {:.6f} ".format(2 * callback.TP / (2 * callback.TP + callback.FP + callback.FN)))
@@ -118,6 +118,8 @@ def do_eval(dataset=None, network=None, use_crf="", num_class=41, assessment_met
             callback = Accuracy()
         elif assessment_method == "f1":
             callback = F1((use_crf.lower() == "true"), num_class)
+        elif assessment_method == "spanf1":
+            callback = SpanF1((use_crf.lower() == "true"), tag_to_index)
         elif assessment_method == "mcc":
             callback = MCC()
         elif assessment_method == "spearman_correlation":
@@ -143,8 +145,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="run ner")
     parser.add_argument("--device_target", type=str, default="Ascend", choices=["Ascend", "GPU"],
                         help="Device type, default is Ascend")
-    parser.add_argument("--assessment_method", type=str, default="F1", choices=["F1", "clue_benchmark"],
-                        help="assessment_method include: [F1, clue_benchmark], default is F1")
+    parser.add_argument("--assessment_method", type=str, default="F1", choices=["F1", "clue_benchmark", "SpanF1"],
+                        help="assessment_method include: [F1, clue_benchmark, SpanF1], default is F1")
     parser.add_argument("--do_train", type=str, default="false", choices=["true", "false"],
                         help="Eable train, default is false")
     parser.add_argument("--do_eval", type=str, default="false", choices=["true", "false"],
@@ -169,6 +171,8 @@ def parse_args():
                         help="Data path, it is better to use absolute path")
     parser.add_argument("--eval_data_file_path", type=str, default="",
                         help="Data path, it is better to use absolute path")
+    parser.add_argument("--dataset_format", type=str, default="mindrecord", choices=["mindrecord", "tfrecord"],
+                        help="Dataset format, support mindrecord or tfrecord")
     parser.add_argument("--schema_file_path", type=str, default="",
                         help="Schema path, it is better to use absolute path")
     args_opt = parser.parse_args()
@@ -225,7 +229,7 @@ def run_ner():
                               tag_to_index=tag_to_index, dropout_prob=0.1)
         ds = create_ner_dataset(batch_size=args_opt.train_batch_size, repeat_count=1,
                                 assessment_method=assessment_method, data_file_path=args_opt.train_data_file_path,
-                                schema_file_path=args_opt.schema_file_path,
+                                schema_file_path=args_opt.schema_file_path, dataset_format=args_opt.dataset_format,
                                 do_shuffle=(args_opt.train_data_shuffle.lower() == "true"))
         do_train(ds, netwithloss, load_pretrain_checkpoint_path, save_finetune_checkpoint_path, epoch_num)
 
@@ -240,7 +244,7 @@ def run_ner():
     if args_opt.do_eval.lower() == "true":
         ds = create_ner_dataset(batch_size=args_opt.eval_batch_size, repeat_count=1,
                                 assessment_method=assessment_method, data_file_path=args_opt.eval_data_file_path,
-                                schema_file_path=args_opt.schema_file_path,
+                                schema_file_path=args_opt.schema_file_path, dataset_format=args_opt.dataset_format,
                                 do_shuffle=(args_opt.eval_data_shuffle.lower() == "true"))
         do_eval(ds, BertNER, args_opt.use_crf, number_labels, assessment_method,
                 args_opt.eval_data_file_path, load_finetune_checkpoint_path, args_opt.vocab_file_path,

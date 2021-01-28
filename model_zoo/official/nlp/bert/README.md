@@ -25,6 +25,7 @@
         - [Evaluation](#evaluation)
             - [evaluation on cola dataset when running on Ascend](#evaluation-on-cola-dataset-when-running-on-ascend)
             - [evaluation on cluener dataset when running on Ascend](#evaluation-on-cluener-dataset-when-running-on-ascend)
+            - [evaluation on msra dataset when running on Ascend](#evaluation-on-msra-dataset-when-running-on-ascend)
             - [evaluation on squad v1.1 dataset when running on Ascend](#evaluation-on-squad-v11-dataset-when-running-on-ascend)
     - [Model Description](#model-description)
     - [Performance](#performance)
@@ -213,7 +214,7 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─bert_for_finetune.py                    # backbone code of network
     ├─bert_for_pre_training.py                # backbone code of network
     ├─bert_model.py                           # backbone code of network
-    ├─clue_classification_dataset_precess.py  # data preprocessing
+    ├─finetune_data_preprocess.py             # data preprocessing
     ├─cluner_evaluation.py                    # evaluation for cluner
     ├─config.py                               # parameter configuration for pretraining
     ├─CRF.py                                  # assessment method for clue dataset
@@ -297,6 +298,7 @@ options:
     --load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
     --train_data_file_path            ner tfrecord for training. E.g., train.tfrecord
     --eval_data_file_path             ner tfrecord for predictions if f1 is used to evaluate result, ner json for predictions if clue_benchmark is used to evaluate result
+    --dataset_format                  dataset format, support mindrecord or tfrecord
     --schema_file_path                path to datafile schema file
 
 usage: run_squad.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----do_eval DO_EVAL]
@@ -537,6 +539,30 @@ If you choose F1 as assessment method, the result will be as follows:
 Precision 0.920507
 Recall 0.948683
 F1 0.920507
+```
+
+#### evaluation on msra dataset when running on Ascend
+
+For preprocess, you can first convert the original txt format of MSRA dataset into mindrecord by run the command as below:
+
+```python
+python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len
+```
+
+For finetune and evaluation, just do
+
+```bash
+bash scripts/ner.sh
+```
+
+The command above will run in the background, you can view training logs in ner_log.txt.
+
+If you choose SpanF1 as assessment method and mode use_crf is set to be "true", the result will be as follows if evaluation is done after finetuning 10 epoches:
+
+```text
+Precision 0.953826
+Recall 0.957749
+F1 0.955784
 ```
 
 #### evaluation on squad v1.1 dataset when running on Ascend
