@@ -53,25 +53,24 @@ int TensorListFromTensorCPUKernel::IsCompatibleShape() {
 }
 
 int TensorListFromTensorCPUKernel::Init() {
-  input0_ = in_tensors_[0];  // row tensor
-  input1_ = in_tensors_[1];  // element_shape tensor
-  output0_ = out_tensors_[0];
-  return IsCompatibleShape();
-}
-
-int TensorListFromTensorCPUKernel::ReSize() {
-  auto ret = this->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed!";
-    return ret;
+#ifdef ENABLE_FP16
+  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && dtype_ == kNumberTypeFloat32) {
+    dtype_ = kNumberTypeFloat16;
   }
+#endif
   return RET_OK;
 }
+
+int TensorListFromTensorCPUKernel::ReSize() { return RET_OK; }
 
 int TensorListFromTensorCPUKernel::Run() {
   input0_ = in_tensors_[0];  // row tensor
   input1_ = in_tensors_[1];  // element_shape tensor
   output0_ = out_tensors_[0];
+  if (IsCompatibleShape() != RET_OK) {
+    MS_LOG(ERROR) << "IsNotCompatibleShape!";
+    return RET_ERROR;
+  }
   if (input0_->shape().size() == 0) {
     MS_LOG(ERROR) << "input0_->shape().size():" << input0_->shape().size() << " must be greater than 0";
   }
@@ -86,7 +85,9 @@ int TensorListFromTensorCPUKernel::Run() {
     return RET_ERROR;
   }
   int devision_dim0 = input0_->ElementsNum() / dim0;
-  auto in_ptr = reinterpret_cast<float *>(input0_->data_c());
+  auto data_offset = devision_dim0 * lite::DataTypeSize(dtype_);
+  auto in_data = reinterpret_cast<char *>(input0_->data_c());
+  MS_ASSERT(in_data != nullptr);
   // copy data from input0(tensor) to output(tensorlist) vector<*tensor>
   for (int i = 0; i < dim0; ++i) {
     auto out_ptr = output0->GetTensor(i);
@@ -96,37 +97,17 @@ int TensorListFromTensorCPUKernel::Run() {
                     << " must be euqal to devision_dim0:" << devision_dim0;
       return RET_ERROR;
     }
-    memcpy(reinterpret_cast<float *>(out_ptr->MutableData()), in_ptr, devision_dim0 * sizeof(float));
-    in_ptr += devision_dim0;
+    auto out_data = out_ptr->MutableData();
+    MS_ASSERT(out_data != nullptr);
+    memcpy(out_data, in_data, data_offset);
+    in_data += data_offset;
   }
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuTensorListFromTensorFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                             const std::vector<lite::Tensor *> &outputs,
-                                                             OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                             const kernel::KernelKey &desc,
-                                                             const mindspore::lite::PrimitiveC *primitive) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "Input context is nullptr!";
-    free(op_parameter);
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_TensorListFromTensor);
-  op_parameter->thread_num_ = ctx->thread_num_;
-  auto *kernel = new (std::nothrow) TensorListFromTensorCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new TensorListFromTensorCPUKernel fail!";
-    free(op_parameter);
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListFromTensor, CpuTensorListFromTensorFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListFromTensor, CpuTensorListFromTensorFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListFromTensor,
+           LiteKernelCreator<TensorListFromTensorCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListFromTensor, LiteKernelCreator<TensorListFromTensorCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TensorListFromTensor,
+           LiteKernelCreator<TensorListFromTensorCPUKernel>)
 }  // namespace mindspore::kernel

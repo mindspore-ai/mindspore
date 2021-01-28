@@ -27,7 +27,14 @@ using mindspore::schema::PrimitiveType_TensorListReserve;
 
 namespace mindspore::kernel {
 
-int TensorListReserveCPUKernel::Init() { return RET_OK; }
+int TensorListReserveCPUKernel::Init() {
+#ifdef ENABLE_FP16
+  if (lite::IsSupportFloat16() && context_->IsCpuFloat16Enabled() && element_dtype_ == kNumberTypeFloat32) {
+    element_dtype_ = kNumberTypeFloat16;
+  }
+#endif
+  return RET_OK;
+}
 
 int TensorListReserveCPUKernel::Run() {
   auto input0 = in_tensors_.at(0);
@@ -48,5 +55,6 @@ int TensorListReserveCPUKernel::Run() {
 int TensorListReserveCPUKernel::ReSize() { return RET_OK; }
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListReserve, LiteKernelCreator<TensorListReserveCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TensorListReserve, LiteKernelCreator<TensorListReserveCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListReserve, LiteKernelCreator<TensorListReserveCPUKernel>)
 }  // namespace mindspore::kernel

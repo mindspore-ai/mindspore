@@ -125,11 +125,6 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   MS_ASSERT(inputs_.at(1) != nullptr);
   MS_ASSERT(inputs_.at(2) != nullptr);
   auto input0 = reinterpret_cast<TensorList *>(inputs_.at(0));
-  if (input0->tensors_data_type() != GetElementDType()) {
-    MS_LOG(ERROR) << "op dtype: " << GetElementDType()
-                  << " is not equal in_tensor[0] dtype: " << input0->tensors_data_type();
-    return RET_ERROR;
-  }
   auto get_index = inputs_.at(1);
   MS_ASSERT(get_index != nullptr);
   if (get_index->ElementsNum() != 1) {
@@ -184,7 +179,7 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
       MS_LOG(ERROR) << "element_shape_ is not fullyDefined!";
       return RET_ERROR;
     }
-    output->set_data_type(GetElementDType());
+    output->set_data_type(input0->data_type());
     output->set_shape(element_shape_);
   }
   output->set_format(input0->GetTensor(index_)->format());
