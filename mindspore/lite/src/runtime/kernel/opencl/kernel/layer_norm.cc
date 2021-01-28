@@ -33,13 +33,22 @@ namespace mindspore::kernel {
 
 int LayerNormOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
-  if (in_tensors_.at(0)->shape().size() != 4 || out_tensors_.size() != 1) {
-    MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << in_tensors_.at(0)->shape().size()
+  if (in_tensors_.size() != 3 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "UnSupported in_tensors_.size: " << in_tensors_.size()
                   << " out_tensors_.size(): " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (param->normalized_dims_ != 1) {
-    MS_LOG(ERROR) << "UnSupported normalized_shape_ size: " << param->normalized_dims_;
+  if (in_tensors_.at(0)->shape().size() != 4) {
+    MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << in_tensors_.at(0)->shape().size();
+    return RET_ERROR;
+  }
+  normalized_axis_ = param->begin_params_axis_;
+  epsilon_ = param->epsilon_;
+  if (normalized_axis_ < 0) {
+    normalized_axis_ += in_tensors_.at(0)->shape().size();
+  }
+  if (normalized_axis_ != 3) {
+    MS_LOG(ERROR) << "UnSupported normalized_axis_ : " << param->normalized_dims_;
     return RET_ERROR;
   }
   return RET_OK;
@@ -61,15 +70,11 @@ void LayerNormGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t
 
 void LayerNormOpenCLKernel::SetConstArgs() {
   int arg_cn = 6;
+  GpuTensorInfo img_info(in_tensors_.at(0));
+  in_shape_.s[0] = img_info.N, in_shape_.s[1] = img_info.H, in_shape_.s[2] = img_info.W, in_shape_.s[3] = img_info.C;
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_shape_);
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, epsilon_);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, normalized_dims_);
-  if (elementwise_affine_) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, 1);
-  } else {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, 0);
-  }
-
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn++, normalized_axis_);
   ocl_runtime_->SetKernelArg(kernel_mean_var_, 3, in_shape_);
   ocl_runtime_->SetKernelArg(kernel_mean_var_, 4, normalized_shape_size_);
 }
@@ -91,32 +96,13 @@ void LayerNormOpenCLKernel::SetGlobalLocal() {
   const std::vector<size_t> &max_global = ocl_runtime_->GetWorkItemSize();
   LayerNormGetWorkGroup(global_size_, &local_size_, max_global[0]);
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
-  if (normalized_dims_ != in_tensors_.at(0)->shape().size()) {
-    if (normalized_dims_ == 1) {
-      OH = in_shape_.s[0] * in_shape_.s[1];
-      OW = in_shape_.s[2];
-      OC = 1;
-    } else if (normalized_dims_ == 2) {
-      OH = in_shape_.s[0] * in_shape_.s[1];
-      OW = 1;
-      OC = 1;
-    } else {
-      OH = in_shape_.s[0];
-      OW = 1;
-      OC = 1;
-    }
-  } else {
-    OH = 1;
-    OW = 1;
-    OC = 1;
-  }
-  AlignMeanVarGlobalLocal({static_cast<int>(OH), static_cast<int>(OW), static_cast<int>(OC)}, {1, 1, 1},
-                          &global_mean_var_, &local_mean_var_);
+  AlignMeanVarGlobalLocal({static_cast<int>(OH), static_cast<int>(OW), 1}, {1, 1, 1}, &global_mean_var_,
+                          &local_mean_var_);
 }
 
 int LayerNormOpenCLKernel::Initweight() {
   auto allocator = ocl_runtime_->GetAllocator();
-  GpuTensorInfo img_info(in_tensors_.at(1));  // gamma
+  GpuTensorInfo img_info(in_tensors_.at(1));
   auto weight_tensor = in_tensors_.at(1);
   size_t weight_size = img_info.Image2DSize;
   // allocated memory for weight and init value
@@ -165,40 +151,28 @@ int LayerNormOpenCLKernel::Initweight() {
 
 int LayerNormOpenCLKernel::Prepare() {
   use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
-  auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
-  elementwise_affine_ = true;  // param->elementwise_mode_;
-  normalized_dims_ = param->normalized_dims_;
-  epsilon_ = param->epsilon_;
-  if (elementwise_affine_) {
-    int ret = Initweight();
-    if (ret) {
-      MS_LOG(ERROR) << "Initweight failed ";
-      return RET_ERROR;
-    }
+  int ret = Initweight();
+  if (ret) {
+    MS_LOG(ERROR) << "Initweight failed ";
+    return RET_ERROR;
   }
+  normalized_shape_size_ = in_tensors_.at(0)->shape().at(normalized_axis_);
   auto allocator = ocl_runtime_->GetAllocator();
   size_t mean_size = 1;
-  size_t size = in_tensors_.at(0)->shape().size() - normalized_dims_;
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; i < normalized_axis_; ++i) {
     mean_size *= in_tensors_.at(0)->shape()[i];
   }
   size_t size_dtype = use_fp16_enable_ ? sizeof(float16_t) : sizeof(float);
   mean_size *= size_dtype;
   mean_ = allocator->Malloc(mean_size);
   var_ = allocator->Malloc(mean_size);
-  GpuTensorInfo img_info(in_tensors_.at(0));
-  in_shape_.s[0] = img_info.N, in_shape_.s[1] = img_info.H, in_shape_.s[2] = img_info.W, in_shape_.s[3] = img_info.C;
-
-  for (int i = 0; i < normalized_dims_; ++i) {
-    normalized_shape_size_ *= param->normalized_shape_[i];
-  }
   std::string kernel_name = "LayerNormalization_NHWC4";
   std::string kernel_name_mean_var = "ComputeMeanVar";
   std::string source = layer_norm_source;
   std::string program_name = "LayerNormalization";
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
-  kernel_name_mean_var += "Dim" + std::to_string(normalized_dims_) + "NHWC4";
+  kernel_name_mean_var += "Axis" + std::to_string(normalized_axis_) + "NHWC4";
   ocl_runtime_->BuildKernel(kernel_mean_var_, program_name, kernel_name_mean_var);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
