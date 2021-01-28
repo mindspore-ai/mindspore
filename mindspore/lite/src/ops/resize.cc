@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,6 +122,8 @@ Registry ResizeRegistry(schema::PrimitiveType_Resize, ResizeCreator);
 namespace {
 constexpr int kInputRank = 4;
 }  // namespace
+int64_t Resize::new_height() const { return new_height_; }
+int64_t Resize::new_width() const { return new_width_; }
 int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
@@ -145,15 +147,27 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
 
   std::vector<int> output_shape;
   output_shape.push_back(input->Batch());
-  if (inputs_.size() == kDoubleNum) {
-    auto shape_tensor = inputs_.at(1);
+  auto ret = CalculateNewHeightAndWidth(inputs_);
+  if (ret == RET_OK) {
+    output_shape.push_back(new_height_);
+    output_shape.push_back(new_width_);
+    output_shape.push_back(input->Channel());
+    output->set_shape(output_shape);
+  }
+  return ret;
+}
+
+int Resize::CalculateNewHeightAndWidth(const std::vector<lite::Tensor *> &inputs) {
+  auto input = inputs.front();
+  if (inputs.size() == kDoubleNum) {
+    auto shape_tensor = inputs.at(1);
     if (shape_tensor->data_c() == nullptr) {
       MS_LOG(INFO) << "Do infer shape in runtime.";
       return RET_INFER_INVALID;
     }
     size_t shape_size = shape_tensor->ElementsNum();
     switch (shape_size) {
-      case kInputRank: {
+      case kQuadrupleNum: {
         if (shape_tensor->data_type() == kNumberTypeInt32) {
           auto data = reinterpret_cast<int32_t *>(shape_tensor->data_c());
           if (data == nullptr) {
@@ -162,12 +176,12 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
           }
           switch (shape_tensor->format()) {
             case schema::Format_NCHW:
-              output_shape.push_back(data[2]);
-              output_shape.push_back(data[3]);
+              new_height_ = data[2];
+              new_width_ = data[3];
               break;
             case schema::Format_NHWC:
-              output_shape.push_back(data[1]);
-              output_shape.push_back(data[2]);
+              new_height_ = data[1];
+              new_width_ = data[2];
               break;
             default:
               MS_LOG(INFO) << "Resize don't support tensor format.";
@@ -181,12 +195,12 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
           }
           switch (shape_tensor->format()) {
             case schema::Format_NCHW:
-              output_shape.push_back(data[2] * input->Height());
-              output_shape.push_back(data[3] * input->Width());
+              new_height_ = data[2] * input->Height();
+              new_width_ = data[3] * input->Width();
               break;
             case schema::Format_NHWC:
-              output_shape.push_back(data[1] * input->Height());
-              output_shape.push_back(data[2] * input->Width());
+              new_height_ = data[1] * input->Height();
+              new_width_ = data[2] * input->Width();
               break;
             default:
               MS_LOG(INFO) << "Resize don't support tensor format.";
@@ -195,36 +209,52 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
         }
         break;
       }
-      default: {
+      case kDoubleNum: {
         auto data = reinterpret_cast<int32_t *>(shape_tensor->data_c());
         if (data == nullptr) {
           MS_LOG(INFO) << "Resize op size can't cast float.";
           return RET_INFER_INVALID;
         }
-        for (size_t i = 0; i < shape_size; i++) {
-          output_shape.push_back(data[i]);
-        }
+        new_height_ = data[0];
+        new_width_ = data[1];
         break;
       }
+      case kSingleNum: {
+        // caffe zoom_factor
+        int scale;
+        if (shape_tensor->data_type() == kNumberTypeInt32) {
+          auto data = reinterpret_cast<int *>(shape_tensor->data_c());
+          if (data == nullptr) {
+            MS_LOG(INFO) << "Resize op size can't cast int.";
+            return RET_INFER_INVALID;
+          }
+          scale = data[0];
+        } else {
+          MS_LOG(ERROR) << "Unsupported data type:" << shape_tensor->data_type();
+          return RET_INFER_ERR;
+        }
+        new_height_ = input->Height() + (input->Height() - 1) * (scale - 1);
+        new_width_ = input->Width() + (input->Width() - 1) * (scale - 1);
+        break;
+      }
+      default: {
+        MS_LOG(ERROR) << "Unsupported shape size:" << shape_size;
+        return RET_INFER_ERR;
+      }
     }
-  } else if (inputs_.size() == kSingleNum) {
-    auto new_height = GetNewHeight();
-    auto new_width = GetNewWidth();
-    output_shape.push_back(new_height);
-    output_shape.push_back(new_width);
-  } else if (inputs_.size() == kQuadrupleNum) {
-    if (inputs_[3]->data_c() == nullptr) {
+  } else if (inputs.size() == kSingleNum) {
+    new_height_ = GetNewHeight();
+    new_width_ = GetNewWidth();
+  } else if (inputs.size() == kQuadrupleNum) {
+    if (inputs[3]->data_c() == nullptr) {
       return RET_INFER_INVALID;
     }
-    output_shape.push_back(static_cast<int *>(inputs_.at(3)->data_c())[0]);
-    output_shape.push_back(static_cast<int *>(inputs_.at(3)->data_c())[1]);
+    new_height_ = static_cast<int *>(inputs.at(3)->data_c())[0];
+    new_height_ = static_cast<int *>(inputs.at(3)->data_c())[1];
   } else {
     MS_LOG(ERROR) << "inputs tensor size invalid.";
     return RET_INFER_ERR;
   }
-  output_shape.push_back(input->Channel());
-  output->set_shape(output_shape);
-
   return RET_OK;
 }
 }  // namespace lite

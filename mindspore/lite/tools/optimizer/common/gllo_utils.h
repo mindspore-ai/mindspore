@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "src/ops/primitive_c.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -39,6 +40,8 @@ bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_ty
 bool IsRealCNodeKernel(const AnfNodePtr &node);
 
 bool IsGraphKernel(const AnfNodePtr &node);
+
+bool CheckInputs(const CNodePtr &cnode);
 
 int CheckIfFuncGraphIsNull(const FuncGraphPtr &graph);
 
@@ -121,6 +124,19 @@ template <typename T>
 static lite::STATUS TransFilterFormat(const ParamValueLitePtr &tensor, kTransFilterType type);
 
 STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_format);
+
+ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
+                                        const std::string &node_name);
+
+ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
+                                      const std::string &node_name);
+
+ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const std::vector<std::vector<int32_t>> &data,
+                                        const std::string &node_name);
+
+ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
+                                          const std::string &node_name);
+
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_

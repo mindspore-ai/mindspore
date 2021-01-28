@@ -74,6 +74,8 @@ class SubGraphNpuKernel : public SubGraphKernel {
   std::vector<ge::Operator> subgraph_input_op_;
 
   std::vector<ge::Operator> subgraph_output_op_;
+
+  std::vector<lite::Tensor *> out_tensor_sorted_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_SUBGRAPH_NPU_KERNEL_H_

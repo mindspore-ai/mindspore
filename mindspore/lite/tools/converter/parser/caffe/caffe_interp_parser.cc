@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
     return nullptr;
   }
 
-  const caffe::InterpParameter &interpParam = proto.interp_param();
-  if (interpParam.has_height()) {
-    int64_t height = interpParam.height();
+  const caffe::InterpParameter &interp_param = proto.interp_param();
+  if (interp_param.has_height()) {
+    int64_t height = interp_param.height();
     if (height < 0) {
       MS_LOG(ERROR) << "Interp height must be > 0";
       return nullptr;
@@ -37,8 +37,8 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
     attr->newHeight = height;
   }
 
-  if (interpParam.has_width()) {
-    int64_t width = interpParam.width();
+  if (interp_param.has_width()) {
+    int64_t width = interp_param.width();
     if (width < 0) {
       MS_LOG(ERROR) << "Interp width must be > 0";
       return nullptr;
@@ -50,7 +50,11 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
   auto primitive = std::make_unique<schema::PrimitiveT>();
   primitive->value.type = schema::PrimitiveType_Resize;
   primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  auto primitive_c = PrimitiveC::Create(primitive.release());
+  if (interp_param.has_zoom_factor()) {
+    primitive_c->AddAttr("zoom_factor", MakeValue(interp_param.zoom_factor()));
+  }
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeInterpParser("Interp", new CaffeInterpParser());

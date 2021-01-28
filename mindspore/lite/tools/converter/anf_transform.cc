@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@
 #include "tools/optimizer/graph/while_pass.h"
 #include "tools/optimizer/graph/if_pass.h"
 #include "tools/optimizer/graph/functionalize_control_op_pass.h"
+#include "tools/optimizer/graph/inputs_adjust_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/huffman_encode.h"
@@ -124,6 +125,7 @@ int AnfTransform::AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optim
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
+  graph_pm->AddPass(std::make_shared<opt::InputAdjustPass>());
   optimizer->AddPassManager(graph_pm);
   return RET_OK;
 }

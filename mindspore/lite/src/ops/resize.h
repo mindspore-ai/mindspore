@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,14 @@ class Resize : public PrimitiveC {
   int64_t GetNewWidth() const;
   bool GetPreserveAspectRatio() const;
   int GetCoordinateTransformMode() const;
+
+  int64_t new_height() const;
+  int64_t new_width() const;
+
+ private:
+  int CalculateNewHeightAndWidth(const std::vector<lite::Tensor *> &inputs);
+  int64_t new_height_;
+  int64_t new_width_;
 };
 }  // namespace lite
 }  // namespace mindspore

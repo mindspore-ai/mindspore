@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,9 @@ int ScaleNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
   op_->set_attr_axis(scale_parameter_->axis_);
   op_->set_input_x(*npu_inputs[0]);
   op_->set_input_scale(*npu_inputs[1]);
-  op_->set_input_bias(*npu_inputs[2]);
+  if (npu_inputs[2] != nullptr) {
+    op_->set_input_bias(*npu_inputs[2]);
+  }
   return RET_OK;
 }
 

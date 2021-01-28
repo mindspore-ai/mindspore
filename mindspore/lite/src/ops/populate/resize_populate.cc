@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitiv
   resize_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::Resize *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   resize_param->method_ = static_cast<int>(param->GetMethod());
-  resize_param->new_height_ = param->GetNewHeight();
-  resize_param->new_width_ = param->GetNewWidth();
+  resize_param->new_height_ = param->new_height();
+  resize_param->new_width_ = param->new_width();
   resize_param->coordinate_transform_mode_ = param->GetCoordinateTransformMode();
   resize_param->preserve_aspect_ratio_ = param->GetPreserveAspectRatio();
   return reinterpret_cast<OpParameter *>(resize_param);
