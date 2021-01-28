@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,20 +44,56 @@ class DynamicRangeGpuKernel : public GpuKernel {
     T *range_delta = GetDeviceAddress<T>(inputs, 2);
     T *output_device_address = GetDeviceAddress<T>(outputs, 0);
     int64_t *output_shape_device_address = GetDeviceAddress<int64_t>(workspace, 0);
+    DynamicRangeErrorCode *error_code_device_address = GetDeviceAddress<DynamicRangeErrorCode>(workspace, 1);
 
     stream_ptr_ = stream_ptr;
 
-    CalRange(range_start, range_end, range_delta, output_device_address, output_shape_device_address,
-             max_output_length_, reinterpret_cast<cudaStream_t>(stream_ptr));
+    CudaValidateInputAndInferShape(range_start, range_end, range_delta, output_shape_device_address,
+                                   error_code_device_address, max_output_length_,
+                                   reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    DynamicRangeErrorCode error_code = DynamicRangeErrorCode::kOk;
+
+    CHECK_CUDA_RET_WITH_ERROR(c_node_ptr_,
+                              cudaMemcpyAsync(&error_code, error_code_device_address, sizeof(DynamicRangeErrorCode),
+                                              cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                              "Failed to copy error code to host.");
+    CHECK_CUDA_RET_WITH_EXCEPT(c_node_ptr_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
 
     // use workspace[0] for actual output shape, we know it must be 1d
     CHECK_CUDA_RET_WITH_ERROR(c_node_ptr_,
                               cudaMemcpyAsync(&output_shape_, output_shape_device_address, sizeof(int64_t),
                                               cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
-                              "Failed to copy gpu memory.");
+                              "Failed to copy output_shape to host.");
     CHECK_CUDA_RET_WITH_EXCEPT(c_node_ptr_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed");
 
+    LogExceptionIfNotOk(error_code);
+
+    CalRange(range_start, range_end, range_delta, output_device_address, output_shape_device_address,
+             error_code_device_address, max_output_length_, reinterpret_cast<cudaStream_t>(stream_ptr));
+
     return true;
+  }
+
+  void LogExceptionIfNotOk(DynamicRangeErrorCode error_code) {
+    switch (error_code) {
+      case DynamicRangeErrorCode::kOk:
+        return;
+      case DynamicRangeErrorCode::kDeltaIsZero:
+        MS_LOG(EXCEPTION) << "gpu RangeOp input error: delta cannot be equal to zero";
+        break;
+      case DynamicRangeErrorCode::kInvalidPositiveDelta:
+        MS_LOG(EXCEPTION) << "gpu RangeOp input error: delta cannot be positive when limit < start";
+        break;
+      case DynamicRangeErrorCode::kInvalidNegativeDelta:
+        MS_LOG(EXCEPTION) << "gpu RangeOp input error: delta cannot be negative when limit > start";
+        break;
+      case DynamicRangeErrorCode::kMaxSizeExceeded:
+        MS_LOG(EXCEPTION) << "gpu RangeOp memory error: the number of elements in the output exceeds maxlen";
+        break;
+      default:
+        MS_LOG(EXCEPTION) << "gpu RangeOp unknown error";
+    }
   }
 
   void PostExecute() override {
@@ -103,6 +139,7 @@ class DynamicRangeGpuKernel : public GpuKernel {
 
     // this op outputs a 1d tensor, size of one int64_t is enough space to hold the shape.
     workspace_size_list_.push_back(sizeof(int64_t));
+    workspace_size_list_.push_back(sizeof(DynamicRangeErrorCode));
     return;
   }
 

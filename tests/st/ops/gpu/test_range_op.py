@@ -22,12 +22,12 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 
 class RangeNet(nn.Cell):
-    def __init__(self):
+    def __init__(self, maxlen=10000):
         super(RangeNet, self).__init__()
-        self.range = P.Range()
+        self.range = P.Range(maxlen)
 
-    def construct(self, s, e, d):
-        return self.range(s, e, d)
+    def construct(self, start, limit, delta):
+        return self.range(start, limit, delta)
 
 
 @pytest.mark.level0
@@ -91,3 +91,27 @@ def test_range_invalid_max_output_length():
         _ = P.Range(-1)
         _ = P.Range(None)
         _ = P.Range('5')
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_range_invalid_input():
+    with pytest.raises(RuntimeError) as info:
+        range_net = RangeNet(3500)
+        _ = range_net(Tensor(0, mstype.int32), Tensor(5, mstype.int32), Tensor(0, mstype.int32)).asnumpy()
+    assert "delta cannot be equal to zero" in str(info.value)
+
+    with pytest.raises(RuntimeError) as info:
+        range_net = RangeNet(2)
+        _ = range_net(Tensor(2, mstype.int32), Tensor(5, mstype.int32), Tensor(1, mstype.int32)).asnumpy()
+    assert "number of elements in the output exceeds maxlen" in str(info.value)
+
+    with pytest.raises(RuntimeError) as info:
+        range_net = RangeNet(3500)
+        _ = range_net(Tensor(20, mstype.int32), Tensor(5, mstype.int32), Tensor(1, mstype.int32)).asnumpy()
+    assert "delta cannot be positive when limit < start" in str(info.value)
+
+    with pytest.raises(RuntimeError) as info:
+        range_net = RangeNet(3500)
+        _ = range_net(Tensor(2, mstype.int32), Tensor(5, mstype.int32), Tensor(-4, mstype.int32)).asnumpy()
+    assert "delta cannot be negative when limit > start" in str(info.value)
