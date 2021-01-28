@@ -116,7 +116,7 @@ class _BitwiseBinaryOp(_MathBinaryOp):
 
 
 class Add(_MathBinaryOp):
-    """
+    r"""
     Adds two input tensors element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
@@ -125,6 +125,10 @@ class Add(_MathBinaryOp):
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
+
+    .. math::
+
+        out_{i} = x_{i} + y_{i}
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
@@ -696,7 +700,7 @@ class CumProd(PrimitiveWithInfer):
 
 
 class MatMul(PrimitiveWithInfer):
-    """
+    r"""
     Multiplies matrix `a` and matrix `b`.
 
     The rank of input tensors must equal to `2`.
@@ -1267,6 +1271,10 @@ class Mul(_MathBinaryOp):
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
 
+    .. math::
+
+        out_{i} = x_{i} * y_{i}
+
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
           a bool or a tensor whose data type is number or bool.
@@ -1554,8 +1562,12 @@ class Pow(_MathBinaryOp):
 
 
 class Exp(PrimitiveWithInfer):
-    """
+    r"""
     Returns exponential of a tensor element-wise.
+
+    .. math::
+
+        out_i = e^{x_i}
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
@@ -1596,8 +1608,12 @@ class Exp(PrimitiveWithInfer):
 
 
 class Expm1(PrimitiveWithInfer):
-    """
+    r"""
     Returns exponential then minus 1 of a tensor element-wise.
+
+    .. math::
+
+        out_i = e^{x_i} - 1
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. With float16 or float32 data type.
@@ -1758,7 +1774,7 @@ class Erf(PrimitiveWithInfer):
 
     .. math::
 
-        \text{erf}(x) = \frac{2}{\sqrt{\pi}}$\int$_{0}^{x}\exp(-t**2)dt
+        erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
@@ -1793,6 +1809,10 @@ class Erf(PrimitiveWithInfer):
 class Erfc(PrimitiveWithInfer):
     r"""
     Computes the complementary error function of `input_x` element-wise.
+
+    .. math::
+
+        erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
@@ -1954,7 +1974,7 @@ class RealDiv(_MathBinaryOp):
 
 
 class Div(_MathBinaryOp):
-    """
+    r"""
     Computes the quotient of dividing the first input tensor by the second input tensor element-wise.
 
     Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
@@ -1963,6 +1983,10 @@ class Div(_MathBinaryOp):
     dtypes of them cannot be both bool, and the shapes of them could be broadcast.
     When the inputs are one tensor and one scalar,
     the scalar could only be a constant.
+
+    .. math::
+
+        out_{i} = \frac{x_i}{y_i}
 
     Inputs:
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number or
@@ -2191,8 +2215,12 @@ class Mod(_MathBinaryOp):
 
 
 class Floor(PrimitiveWithInfer):
-    """
+    r"""
     Rounds a tensor down to the closest integer element-wise.
+
+    .. math::
+
+        out_i = \lfloor x_i \rfloor
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. Its element data type must be float.
@@ -2258,12 +2286,12 @@ class FloorMod(_MathBinaryOp):
 
 
 class Ceil(PrimitiveWithInfer):
-    """
+    r"""
     Rounds a tensor up to the closest integer element-wise.
 
     .. math::
 
-        out_i = [input_i] = [input_i] + 1
+        out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. It's element data type must be float16 or float32.
@@ -2442,7 +2470,7 @@ class Cosh(PrimitiveWithInfer):
 
 
 class Asinh(PrimitiveWithInfer):
-    """
+    r"""
     Computes inverse hyperbolic sine of the input element-wise.
 
     .. math::
@@ -3270,12 +3298,12 @@ class Cos(PrimitiveWithInfer):
 
 
 class ACos(PrimitiveWithInfer):
-    """
+    r"""
     Computes arccosine of input tensors element-wise.
 
     .. math::
 
-        out_i = cos^{-1}(input_i)
+        out_i = cos^{-1}(x_i)
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -3340,8 +3368,12 @@ class Sin(PrimitiveWithInfer):
 
 
 class Asin(PrimitiveWithInfer):
-    """
+    r"""
     Computes arcsine of input tensors element-wise.
+
+    .. math::
+
+        out_i = sin^{-1}(x_i)
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -3438,12 +3470,12 @@ class NMSWithMask(PrimitiveWithInfer):
 
 
 class Abs(PrimitiveWithInfer):
-    """
+    r"""
     Returns absolute value of a tensor element-wise.
 
     .. math::
 
-        out_i = |input_i|
+        out_i = |x_i|
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -3591,12 +3623,12 @@ class Tan(PrimitiveWithInfer):
 
 
 class Atan(PrimitiveWithInfer):
-    """
+    r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
     .. math::
 
-        out_i = tan^{-1}(input_i)
+        out_i = tan^{-1}(x_i)
 
     Inputs:
         - **input_x** (Tensor): The input tensor. The data type should be one of the following types: float16, float32.

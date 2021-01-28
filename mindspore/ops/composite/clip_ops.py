@@ -32,11 +32,20 @@ def _check_shape(input_shape, out_shape):
 
 
 def clip_by_value(x, clip_value_min, clip_value_max):
-    """
+    r"""
     Clips tensor values to a specified min and max.
 
     Limits the value of :math:`x` to a range, whose lower limit is 'clip_value_min'
     and upper limit is 'clip_value_max'.
+
+    .. math::
+
+        out_i= \left\{
+        \begin{array}{align}
+            clip\_value_{max} & \text{ if } x_i\ge  clip\_value_{max} \\
+            x_i & \text{ if } clip\_value_{min} \lt x_i \lt clip\_value_{max} \\
+            clip\_value_{min} & \text{ if } x_i \le clip\_value_{min} \\
+        \end{array}\right.
 
     Note:
         'clip_value_min' needs to be less than or equal to 'clip_value_max'.
