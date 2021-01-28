@@ -2096,14 +2096,13 @@ class Concat(PrimitiveWithInfer):
 
     Connect input tensors along with the given axis.
 
-    Note:
-        The input data is a tuple of tensors. These tensors have the same rank `R`. Set the given axis as `m`, and
-        :math:`0 \le m < R`. Set the number of input tensors as `N`. For the :math:`i`-th tensor :math:`t_i`, it has
-        the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
-        :math:`i`-th tensor. Then, the shape of the output tensor is
+    The input data is a tuple of tensors. These tensors have the same rank `R`. Set the given axis as `m`, and
+    :math:`0 \le m < R`. Set the number of input tensors as `N`. For the :math:`i`-th tensor :math:`t_i`, it has
+    the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
+    :math:`i`-th tensor. Then, the shape of the output tensor is
 
-        .. math::
-            (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
+    .. math::
+        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
 
     Args:
         axis (int): The specified axis. Default: 0.
@@ -2980,14 +2979,24 @@ class Eye(PrimitiveWithInfer):
 
 
 class ScatterNd(PrimitiveWithInfer):
-    """
+    r"""
     Scatters a tensor into a new tensor depending on the specified indices.
 
-    Creates an empty tensor, and set values by scattering the update tensor depending on indices.
+    Creates an empty tensor with the given `shape`, and set values by scattering the update tensor depending on indices.
+
+    The empty tensor has rank P and `indices` has rank Q where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of the empty tensor.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is: :math:`(i_0, i_1, ..., i_{Q-2}, shape_N, ..., shape_{P-1})`.
 
     Inputs:
         - **indices** (Tensor) - The index of scattering in the new tensor with int32 data type.
-        - **update** (Tensor) - The source Tensor to be scattered.
+          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
+        - **updates** (Tensor) - The source Tensor to be scattered.
+          It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
         - **shape** (tuple[int]) - Define the shape of the output tensor, has the same type as indices.
 
     Outputs:
@@ -2999,9 +3008,9 @@ class ScatterNd(PrimitiveWithInfer):
     Examples:
         >>> op = ops.ScatterNd()
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
-        >>> update = Tensor(np.array([3.2, 1.1]), mindspore.float32)
+        >>> updates = Tensor(np.array([3.2, 1.1]), mindspore.float32)
         >>> shape = (3, 3)
-        >>> output = op(indices, update, shape)
+        >>> output = op(indices, updates, shape)
         >>> print(output)
         [[0.  3.2 0. ]
          [0.  1.1 0. ]
@@ -3167,10 +3176,16 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
 
 class ScatterUpdate(_ScatterOp_Dynamic):
-    """
+    r"""
     Updates tensor values by using input indices and value.
 
     Using given values to update tensor value, along with the input indices.
+
+    .. math::
+        \begin{array}{l}
+            \text {for each i, ..., j in indices.shape:} \\
+            input\_x[indices[i, ..., j], :] = updates[i, ..., j, :]
+        \end{array}
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3214,10 +3229,19 @@ class ScatterUpdate(_ScatterOp_Dynamic):
 
 
 class ScatterNdUpdate(_ScatterNdOp):
-    """
+    r"""
     Updates tensor values by using input indices and value.
 
     Using given values to update tensor value, along with the input indices.
+
+    `input_x` has rank P and `indices` has rank Q where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3230,7 +3254,9 @@ class ScatterNdUpdate(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
         - **indices** (Tensor) - The index of input tensor, with int32 data type.
-        - **update** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
+          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
+        - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
+          the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
@@ -3242,9 +3268,9 @@ class ScatterNdUpdate(_ScatterNdOp):
         >>> np_x = np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
         >>> input_x = mindspore.Parameter(Tensor(np_x, mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> update = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
         >>> op = ops.ScatterNdUpdate()
-        >>> output = op(input_x, indices, update)
+        >>> output = op(input_x, indices, updates)
         >>> print(output)
         [[ 1.   0.3  3.6]
          [ 0.4  2.2 -3.2]]
@@ -3264,11 +3290,17 @@ class ScatterNdUpdate(_ScatterNdOp):
 
 
 class ScatterMax(_ScatterOp):
-    """
+    r"""
     Updates the value of the input tensor through the maximum operation.
 
     Using given values to update tensor value through the max operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    .. math::
+        \begin{array}{l}
+            \text {for each i, ..., j in indices.shape:} \\
+            input\_x[indices[i, ..., j], :] = max(input\_x[indices[i, ..., j], :], updates[i, ..., j, :])
+        \end{array}
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3293,9 +3325,9 @@ class ScatterMax(_ScatterOp):
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
-        >>> update = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
+        >>> updates = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
         >>> scatter_max = ops.ScatterMax()
-        >>> output = scatter_max(input_x, indices, update)
+        >>> output = scatter_max(input_x, indices, updates)
         >>> print(output)
         [[88. 88. 88.]
          [88. 88. 88.]]
@@ -3309,11 +3341,17 @@ class ScatterMax(_ScatterOp):
 
 
 class ScatterMin(_ScatterOp):
-    """
+    r"""
     Updates the value of the input tensor through the minimum operation.
 
     Using given values to update tensor value through the min operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    .. math::
+        \begin{array}{l}
+            \text {for each i, ..., j in indices.shape:} \\
+            input\_x[indices[i, ..., j], :] = min(input\_x[indices[i, ..., j], :], updates[i, ..., j, :])
+        \end{array}
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3348,11 +3386,17 @@ class ScatterMin(_ScatterOp):
 
 
 class ScatterAdd(_ScatterOp_Dynamic):
-    """
+    r"""
     Updates the value of the input tensor through the addition operation.
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    .. math::
+        \begin{array}{l}
+            \text {for each i, ..., j in indices.shape:} \\
+            input\_x[indices[i, ..., j], :] \mathrel{+}= updates[i, ..., j, :]
+        \end{array}
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3393,11 +3437,17 @@ class ScatterAdd(_ScatterOp_Dynamic):
 
 
 class ScatterSub(_ScatterOp):
-    """
+    r"""
     Updates the value of the input tensor through the subtraction operation.
 
     Using given values to update tensor value through the subtraction operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    .. math::
+        \begin{array}{l}
+            \text {for each i, ..., j in indices.shape:} \\
+            input\_x[indices[i, ..., j], :] \mathrel{-}= updates[i, ..., j, :]
+        \end{array}
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3433,11 +3483,17 @@ class ScatterSub(_ScatterOp):
 
 
 class ScatterMul(_ScatterOp):
-    """
+    r"""
     Updates the value of the input tensor through the multiply operation.
 
     Using given values to update tensor value through the mul operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    .. math::
+        \begin{array}{l}
+            \text {for each i, ..., j in indices.shape:} \\
+            input\_x[indices[i, ..., j], :] \mathrel{*}= updates[i, ..., j, :]
+        \end{array}
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3472,11 +3528,17 @@ class ScatterMul(_ScatterOp):
 
 
 class ScatterDiv(_ScatterOp):
-    """
+    r"""
     Updates the value of the input tensor through the divide operation.
 
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    .. math::
+        \begin{array}{l}
+            \text {for each i, ..., j in indices.shape:} \\
+            input\_x[indices[i, ..., j], :] \mathrel{/}= updates[i, ..., j, :]
+        \end{array}
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3511,11 +3573,20 @@ class ScatterDiv(_ScatterOp):
 
 
 class ScatterNdAdd(_ScatterNdOp):
-    """
+    r"""
     Applies sparse addition to individual values or slices in a tensor.
 
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    `input_x` has rank P and `indices` has rank Q where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3528,6 +3599,7 @@ class ScatterNdAdd(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do add operation whose data type must be mindspore.int32.
+          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor doing the add operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
@@ -3549,11 +3621,20 @@ class ScatterNdAdd(_ScatterNdOp):
 
 
 class ScatterNdSub(_ScatterNdOp):
-    """
+    r"""
     Applies sparse subtraction to individual values or slices in a tensor.
 
     Using given values to update tensor value through the subtraction operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    `input_x` has rank P and `indices` has rank Q where `Q >= 2`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+
+    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of `input_x`.
+
+    `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
+    :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3566,6 +3647,7 @@ class ScatterNdSub(_ScatterNdOp):
     Inputs:
         - **input_x** (Parameter) - The target parameter.
         - **indices** (Tensor) - The index to do add operation whose data type must be mindspore.int32.
+          The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor that performs the subtraction operation with `input_x`,
           the data type is the same as `input_x`, the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
