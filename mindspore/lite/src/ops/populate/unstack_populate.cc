@@ -27,11 +27,11 @@ OpParameter *PopulateUnstackParameter(const void *prim) {
   }
   memset(unstack_param, 0, sizeof(UnstackParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_Unpack();
+  auto value = primitive->value_as_Unstack();
   unstack_param->op_parameter_.type_ = primitive->value_type();
   unstack_param->axis_ = value->axis();
   return reinterpret_cast<OpParameter *>(unstack_param);
 }
-Registry UnstackParameterRegistry(schema::PrimitiveType_Unpack, PopulateUnstackParameter, SCHEMA_CUR);
+Registry UnstackParameterRegistry(schema::PrimitiveType_Unstack, PopulateUnstackParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

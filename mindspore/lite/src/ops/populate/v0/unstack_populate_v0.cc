@@ -31,7 +31,7 @@ OpParameter *PopulateUnstackParameter(const void *prim) {
   }
   memset(unstack_param, 0, sizeof(UnstackParameter));
 
-  unstack_param->op_parameter_.type_ = schema::PrimitiveType_Unpack;
+  unstack_param->op_parameter_.type_ = schema::PrimitiveType_Unstack;
   unstack_param->axis_ = unstack_prim->axis();
   return reinterpret_cast<OpParameter *>(unstack_param);
 }

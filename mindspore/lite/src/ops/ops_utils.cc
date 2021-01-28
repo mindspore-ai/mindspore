@@ -630,8 +630,8 @@ schema::PrimitiveT *UniquePrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Unique>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
-schema::PrimitiveT *UnpackPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Unpack>>(node);
+schema::PrimitiveT *UnstackPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Unstack>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 schema::PrimitiveT *UnsortedSegmentSumPrimitiveCreator(const AnfNodePtr &node) {
@@ -824,7 +824,7 @@ RegistryMSOps g_topKPrimitiveCreatorRegistry("TopK", TopKFusionPrimitiveCreator)
 RegistryMSOps g_topKFusionPrimitiveCreatorRegistry("TopKFusion", TopKFusionPrimitiveCreator);
 RegistryMSOps g_transposePrimitiveCreatorxRegistry("Transpose", TransposePrimitiveCreator);
 RegistryMSOps g_uniquePrimitiveCreatorRegistry("Unique", UniquePrimitiveCreator);
-RegistryMSOps g_unpackPrimitiveCreatorRegistry("Unpack", UnpackPrimitiveCreator);
+RegistryMSOps g_unstackPrimitiveCreatorRegistry("Unstack", UnstackPrimitiveCreator);
 RegistryMSOps g_unsortedSegmentSumPrimitiveCreatorRegistry("UnsortedSegmentSum", UnsortedSegmentSumPrimitiveCreator);
 RegistryMSOps g_unsqueezePrimitiveCreatorRegistry("Unsqueeze", UnsqueezePrimitiveCreator);
 RegistryMSOps g_wherePrimitiveCreatorRegistry("Where", WherePrimitiveCreator);

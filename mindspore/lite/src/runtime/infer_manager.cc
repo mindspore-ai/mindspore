@@ -385,7 +385,7 @@ static RegistryInferShape g_PowerInferShape(mindspore::schema::PrimitiveType_Pow
 static RegistryInferShape g_RangeInferShape(mindspore::schema::PrimitiveType_Range, RangeInferShape);
 static RegistryInferShape g_SgdInferShape(mindspore::schema::PrimitiveType_SGD, SgdInferShape);
 static RegistryInferShape g_ArgminInferShape(mindspore::schema::PrimitiveType_ArgMinFusion, ArgminInferShape);
-static RegistryInferShape g_UnstackInferShape(mindspore::schema::PrimitiveType_Unpack, UnstackInferShape);
+static RegistryInferShape g_UnstackInferShape(mindspore::schema::PrimitiveType_Unstack, UnstackInferShape);
 static RegistryInferShape g_AudioSpectrogramInferShape(mindspore::schema::PrimitiveType_AudioSpectrogram,
                                                        AudioSpectrogramInferShape);
 

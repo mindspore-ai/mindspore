@@ -29,12 +29,12 @@ TEST_F(TestTfliteParserUnstack, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Unpack) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Unstack) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserUnstack, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnpack(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsUnpack();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnstack(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsUnstack();
   ASSERT_EQ(val->axis, 1);
 }
 }  // namespace mindspore
