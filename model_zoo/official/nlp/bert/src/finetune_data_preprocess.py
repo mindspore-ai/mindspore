@@ -18,12 +18,14 @@ sample script of processing CLUE classification dataset using mindspore.dataset.
 """
 
 import os
+import argparse
 import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
 import mindspore.dataset.transforms.c_transforms as ops
+from utils import convert_labels_to_index
 
 
 def process_tnews_clue_dataset(data_dir, label_list, bert_vocab_path, data_usage='train', shuffle_dataset=False,
@@ -135,3 +137,93 @@ def process_cmnli_clue_dataset(data_dir, label_list, bert_vocab_path, data_usage
     dataset = dataset.map(operations=ops.Mask(ops.Relational.NE, 0, mstype.int32), input_columns=["mask_ids"])
     dataset = dataset.batch(batch_size, drop_remainder=drop_remainder)
     return dataset
+
+
+def process_cluener_msra(data_file):
+    """process MSRA dataset for CLUE"""
+    content = []
+    labels = []
+    for line in open(data_file):
+        line = line.strip()
+        if line:
+            word = line.split("\t")[0]
+            if len(line.split("\t")) == 1:
+                label = "O"
+            else:
+                label = line.split("\t")[1].split("\n")[0]
+                if label[0] != "O":
+                    label = label[0] + "_" + label[2:]
+                if label[0] == "I":
+                    label = "M" + label[1:]
+            content.append(word)
+            labels.append(label)
+        else:
+            for i in range(1, len(labels) - 1):
+                if labels[i][0] == "B" and labels[i+1][0] != "M":
+                    labels[i] = "S" + labels[i][1:]
+                elif labels[i][0] == "M" and labels[i+1][0] != labels[i][0]:
+                    labels[i] = "E" + labels[i][1:]
+            last = len(labels) - 1
+            if labels[last][0] == "B":
+                labels[last] = "S" + labels[last][1:]
+            elif labels[last][0] == "M":
+                labels[last] = "E" + labels[last][1:]
+
+            yield (np.array("".join(content)), np.array(list(labels)))
+            content.clear()
+            labels.clear()
+            continue
+
+
+def process_msra_clue_dataset(data_dir, label_list, bert_vocab_path, max_seq_len=128):
+    """Process MSRA dataset"""
+    ### Loading MSRA from CLUEDataset
+    dataset = ds.GeneratorDataset(process_cluener_msra(data_dir), column_names=['text', 'label'])
+
+    ### Processing label
+    label_vocab = text.Vocab.from_list(label_list)
+    label_lookup = text.Lookup(label_vocab)
+    dataset = dataset.map(operations=label_lookup, input_columns="label", output_columns="label_ids")
+    dataset = dataset.map(operations=ops.Concatenate(prepend=np.array([0], dtype='i')),
+                          input_columns=["label_ids"])
+    dataset = dataset.map(operations=ops.Slice(slice(0, max_seq_len)), input_columns=["label_ids"])
+    dataset = dataset.map(operations=ops.PadEnd([max_seq_len], 0), input_columns=["label_ids"])
+    ### Processing sentence
+    vocab = text.Vocab.from_file(bert_vocab_path)
+    lookup = text.Lookup(vocab, unknown_token='[UNK]')
+    unicode_char_tokenizer = text.UnicodeCharTokenizer()
+    dataset = dataset.map(operations=unicode_char_tokenizer, input_columns=["text"], output_columns=["sentence"])
+    dataset = dataset.map(operations=ops.Slice(slice(0, max_seq_len-2)), input_columns=["sentence"])
+    dataset = dataset.map(operations=ops.Concatenate(prepend=np.array(["[CLS]"], dtype='S'),
+                                                     append=np.array(["[SEP]"], dtype='S')), input_columns=["sentence"])
+    dataset = dataset.map(operations=lookup, input_columns=["sentence"], output_columns=["input_ids"])
+    dataset = dataset.map(operations=ops.PadEnd([max_seq_len], 0), input_columns=["input_ids"])
+    dataset = dataset.map(operations=ops.Duplicate(), input_columns=["input_ids"],
+                          output_columns=["input_ids", "input_mask"],
+                          column_order=["input_ids", "input_mask", "label_ids"])
+    dataset = dataset.map(operations=ops.Mask(ops.Relational.NE, 0, mstype.int32), input_columns=["input_mask"])
+    dataset = dataset.map(operations=ops.Duplicate(), input_columns=["input_ids"],
+                          output_columns=["input_ids", "segment_ids"],
+                          column_order=["input_ids", "input_mask", "segment_ids", "label_ids"])
+    dataset = dataset.map(operations=ops.Fill(0), input_columns=["segment_ids"])
+    return dataset
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="create mindrecord")
+    parser.add_argument("--data_dir", type=str, default="", help="dataset path")
+    parser.add_argument("--vocab_file", type=str, default="", help="Vocab file path")
+    parser.add_argument("--max_seq_len", type=int, default=128, help="Sequence length")
+    parser.add_argument("--save_path", type=str, default="./my.mindrecord", help="Path to save mindrecord")
+    parser.add_argument("--label2id", type=str, default="",
+                        help="Label2id file path, must be set for cluener2020 task")
+    args_opt = parser.parse_args()
+    if args_opt.label2id == "":
+        raise ValueError("label2id should not be empty")
+    labels_list = []
+    with open(args_opt.label2id) as f:
+        for tag in f:
+            labels_list.append(tag.strip())
+    tag_to_index = list(convert_labels_to_index(labels_list).keys())
+    ds = process_msra_clue_dataset(args_opt.data_dir, tag_to_index, args_opt.vocab_file, args_opt.max_seq_len)
+    ds.save(args_opt.save_path)

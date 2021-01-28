@@ -15,10 +15,10 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash scripts/run_ner.sh"
 echo "for example: bash scripts/run_ner.sh"
-echo "assessment_method include: [F1, clue_benchmark]"
+echo "assessment_method include: [F1, SpanF1, clue_benchmark]"
 echo "=============================================================================================================="
 
 mkdir -p ms_log
@@ -46,4 +46,5 @@ python ${PROJECT_DIR}/../run_ner.py  \
     --load_finetune_checkpoint_path="" \
     --train_data_file_path="" \
     --eval_data_file_path="" \
+    --dataset_format="tfrecord" \
     --schema_file_path="" > ner_log.txt 2>&1 &
