@@ -138,6 +138,16 @@ class Somas {
                                    const std::vector<SomasTensorPtr> &all_tensors_list,
                                    const vector<DynamicBitSet> &nodes_dependency,
                                    std::vector<DynamicBitSet> *tensor_relation) const;
+  void UpdateTensorDestinations();
+  void UpdateRefTensorsConflict();
+  void UpdateRefOverlapTensorsConflicts();
+  void UpdateRefTensorsOffset();
+  void UpdateContiguousTensorsOffset(const std::map<size_t, size_t> &contiguous_ref_list_map);
+  void DumpParameters(std::ofstream &ofs) const;
+  void DumpTensors(std::ofstream &ofs) const;
+  void DumpNodes(std::ofstream &ofs) const;
+  std::map<size_t, size_t> GetContiguousListContainRefTensor();
+  std::map<size_t, size_t> GetRefTensorsInContiguousList();
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
