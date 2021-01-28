@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Cast();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Cast failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Cast>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -44,7 +40,7 @@ ops::PrimitiveC *TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT
   auto dstT = GetTfliteDataType(out_tensor->type);
   prim->AddAttr("to", MakeValue(static_cast<int32_t>(dstT)));
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteCastParser(tflite::BuiltinOperator_CAST, new TfliteCastParser());

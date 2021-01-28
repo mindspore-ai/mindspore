@@ -23,13 +23,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteRankParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Rank();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Rank failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Rank>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteRankParser(tflite::BuiltinOperator_RANK, new TfliteRankParser());

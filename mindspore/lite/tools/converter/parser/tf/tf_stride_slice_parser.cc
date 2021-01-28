@@ -27,42 +27,38 @@ namespace lite {
 ops::PrimitiveC *TFStrideSliceParser::Parse(const tensorflow::NodeDef &tf_op,
                                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                             std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::StridedSlice;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new StridedSlice failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::StridedSlice>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "begin_mask", &attr_value)) {
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
     return nullptr;
   }
-  primitive_c->set_begin_mask(attr_value.i());
+  prim->set_begin_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "end_mask", &attr_value)) {
     MS_LOG(ERROR) << "The end_mask attr should be specified";
     return nullptr;
   }
-  primitive_c->set_end_mask(attr_value.i());
+  prim->set_end_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "ellipsis_mask", &attr_value)) {
     MS_LOG(ERROR) << "The ellipsis_mask attr should be specified";
     return nullptr;
   }
-  primitive_c->set_ellipsis_mask(attr_value.i());
+  prim->set_ellipsis_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "new_axis_mask", &attr_value)) {
     MS_LOG(ERROR) << "The new_axis_mask attr should be specified";
     return nullptr;
   }
-  primitive_c->set_new_axis_mask(attr_value.i());
+  prim->set_new_axis_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "shrink_axis_mask", &attr_value)) {
     MS_LOG(ERROR) << "The shrink_axis_mask attr should be specified";
     return nullptr;
   }
-  primitive_c->set_shrink_axis_mask(attr_value.i());
+  prim->set_shrink_axis_mask(attr_value.i());
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK ||
@@ -71,7 +67,7 @@ ops::PrimitiveC *TFStrideSliceParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfStrideSliceParser("StridedSlice", new TFStrideSliceParser());

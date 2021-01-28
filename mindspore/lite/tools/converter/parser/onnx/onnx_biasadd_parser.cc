@@ -21,13 +21,8 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::BiasAdd;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new BiasAdd failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::BiasAdd>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxBiasAddParser("BiasAdd", new OnnxBiasAddParser());

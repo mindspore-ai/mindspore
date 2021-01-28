@@ -26,19 +26,15 @@ namespace lite {
 ops::PrimitiveC *TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Split;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Split failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Split>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "num_split", &attr_value)) {
     MS_LOG(ERROR) << "The attribute num_split should be specified";
     return nullptr;
   }
-  auto numberSplit = attr_value.i();
-  primitive_c->set_output_num(numberSplit);
+  auto number_split = attr_value.i();
+  prim->set_output_num(number_split);
 
   int split_dim_index = 2;
   int input_index = 0;
@@ -57,7 +53,7 @@ ops::PrimitiveC *TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
   auto splitDim = attr_value.tensor().int_val(0);
-  primitive_c->set_axis(splitDim);
+  prim->set_axis(splitDim);
 
   if (tf_op.op() == "SplitV") {
     auto size_splits_node = GetConstInputNode(tf_node_map, tf_op.input(1));
@@ -80,16 +76,16 @@ ops::PrimitiveC *TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
       MS_LOG(ERROR) << "memcpy_s failed";
       return nullptr;
     }
-    primitive_c->set_size_splits(sizeSplits);
+    prim->set_size_splits(sizeSplits);
   }
 
-  *output_size = numberSplit;
+  *output_size = number_split;
   if (AddOpInput(tf_op, input_index, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfSplitParser("Split", new TFSplitParser());

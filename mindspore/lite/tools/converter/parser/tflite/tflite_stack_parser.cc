@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteStackParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Stack();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Stack failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Stack>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -44,7 +40,7 @@ ops::PrimitiveC *TfliteStackParser::Parse(const std::unique_ptr<tflite::Operator
   }
   prim->set_axis({tflite_attr->axis});
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteStackParser(tflite::BuiltinOperator_PACK, new TfliteStackParser());

@@ -25,11 +25,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::AvgPoolFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new AvgPoolFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::AvgPoolFusion>();
 
   prim->set_format(mindspore::Format::NHWC);
   prim->set_round_mode(mindspore::RoundMode::FLOOR);
@@ -65,16 +61,12 @@ ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::Operat
     prim->set_pad(params);
   }
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::MaxPoolFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new MaxPoolFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::MaxPoolFusion>();
 
   prim->set_format(mindspore::Format::NHWC);
   prim->set_round_mode(mindspore::RoundMode::FLOOR);
@@ -110,7 +102,7 @@ ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::Operat
     prim->set_pad(params);
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteMeanPoolingParser(tflite::BuiltinOperator_AVERAGE_POOL_2D, new TfliteAvgPoolParser());

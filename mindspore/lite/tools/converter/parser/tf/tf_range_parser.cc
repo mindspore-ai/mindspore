@@ -33,23 +33,19 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  auto primitive_c = new (std::nothrow) ops::Range;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "New Range failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Range>();
 
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "start", &attr_value)) {
-    primitive_c->set_start(static_cast<int64_t>(attr_value.i()));
+    prim->set_start(static_cast<int64_t>(attr_value.i()));
   }
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "limit", &attr_value)) {
-    primitive_c->set_limit(static_cast<int64_t>(attr_value.i()));
+    prim->set_limit(static_cast<int64_t>(attr_value.i()));
   }
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "delta", &attr_value)) {
-    primitive_c->set_delta(static_cast<int64_t>(attr_value.i()));
+    prim->set_delta(static_cast<int64_t>(attr_value.i()));
   }
 
   *output_size = 1;
@@ -60,7 +56,8 @@ ops::PrimitiveC *TFRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "add op input failed!";
     return nullptr;
   }
-  return primitive_c;
+
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfRangeParser("Range", new TFRangeParser());

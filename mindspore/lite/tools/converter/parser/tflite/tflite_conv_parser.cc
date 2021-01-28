@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Conv2DFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Conv2DFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Conv2DFusion>();
 
   prim->set_pad({0, 0, 0, 0});
   prim->set_group(1);
@@ -74,12 +70,12 @@ ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT
     prim->set_pad_list(params);
   }
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Conv2DFusion();
+  auto prim = std::make_unique<ops::Conv2DFusion>();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "new Conv2DFusion failed";
     return nullptr;
@@ -138,7 +134,7 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
   }
   prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteConv2DParser(tflite::BuiltinOperator_CONV_2D, new TfliteConvParser());

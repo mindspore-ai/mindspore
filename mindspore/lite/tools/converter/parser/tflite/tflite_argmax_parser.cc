@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::ArgMaxFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ArgMaxFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ArgMaxFusion>();
 
   prim->set_keep_dims(false);
   prim->set_out_max_value(false);
@@ -58,7 +54,7 @@ ops::PrimitiveC *TfliteArgmaxParser::Parse(const std::unique_ptr<tflite::Operato
   }
   prim->set_axis(*(static_cast<int64_t *>(static_cast<void *>(data_ptr))));
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteArgmaxParser(tflite::BuiltinOperator_ARG_MAX, new TfliteArgmaxParser());

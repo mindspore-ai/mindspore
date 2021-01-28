@@ -26,11 +26,7 @@ namespace lite {
 ops::PrimitiveC *TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::TileFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new TileFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::TileFusion>();
 
   tensorflow::AttrValue attr_value;
   std::vector<int64_t> dims;
@@ -45,14 +41,14 @@ ops::PrimitiveC *TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
       dims.push_back(i);
     }
   }
-  primitive_c->set_dims(dims);
+  prim->set_dims(dims);
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfTileParser("Tile", new TFTileParser());

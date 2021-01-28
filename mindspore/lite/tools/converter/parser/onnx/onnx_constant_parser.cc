@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *primitive_c) {
+STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *prim) {
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
   if (param_value == nullptr) {
     MS_LOG(ERROR) << "new a paramValueLite failed.";
@@ -48,16 +48,12 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
     MS_LOG(ERROR) << "get value failed.";
     return RET_ERROR;
   }
-  primitive_c->set_attr("const_data", param_value);
+  prim->set_attr("const_data", param_value);
   return RET_OK;
 }
 
 ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Constant;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Constant failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Constant>();
 
   for (const auto &attr : onnx_node.attribute()) {
     if (attr.name() == "sparse_value") {
@@ -66,18 +62,16 @@ ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, c
     }
     if (attr.name() == "value") {
       const auto &const_tensor = attr.t();
-      if (AddDataInfoAttr(const_tensor, primitive_c) != RET_OK) {
+      if (AddDataInfoAttr(const_tensor, prim.get()) != RET_OK) {
         MS_LOG(ERROR) << "add basic attr failed.";
-        delete primitive_c;
         return nullptr;
       }
     } else {
       MS_LOG(ERROR) << "processing Constant op attr " << attr.name() << " not implemented";
-      delete primitive_c;
       return nullptr;
     }
   }
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxConstantParser("Constant", new OnnxConstantParser());

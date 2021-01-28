@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSkipGramParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::SkipGram();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new SkipGram failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::SkipGram>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsSkipGramOptions();
@@ -39,7 +35,7 @@ ops::PrimitiveC *TfliteSkipGramParser::Parse(const std::unique_ptr<tflite::Opera
   prim->set_max_skip_size(tflite_attr->max_skip_size);
   prim->set_ngram_size(tflite_attr->ngram_size);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSkiGramParser(tflite::BuiltinOperator_SKIP_GRAM, new TfliteSkipGramParser());

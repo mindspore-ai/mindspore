@@ -50,297 +50,160 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::AddFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new AddFusion failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::AddFusion>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxSubParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::SubFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new SubFusion failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::SubFusion>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxDivParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::DivFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new DivFusion failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::DivFusion>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxMulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::MulFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new MulFusion failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::MulFusion>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Equal;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Equal failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Equal>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxLessParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Less;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Less failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Less>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxGreaterParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Greater;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Greater failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Greater>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxFloorParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Floor;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Floor failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Floor>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxAbsParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Abs;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Abs failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Abs>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::ExpFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ExpFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ExpFusion>();
 
-  primitive_c->set_base(-1.0);
-  primitive_c->set_scale(1.0);
-  primitive_c->set_shift(0.0);
+  prim->set_base(-1.0);
+  prim->set_scale(1.0);
+  prim->set_shift(0.0);
 
-  return primitive_c;
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxCosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Cos;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Cos failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Cos>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxCeilParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Ceil;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Ceil failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Ceil>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxLogParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Log;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Log failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Log>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Atan;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Atan failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Atan>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxAsinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Asin;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Asin failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Asin>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxAndParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::LogicalAnd;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new LogicalAnd failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::LogicalAnd>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxOrParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::LogicalOr;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new LogicalOr failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::LogicalOr>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxNotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::LogicalNot;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new LogicalNot failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::LogicalNot>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxNegParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Neg;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Neg failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Neg>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxRoundParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Round;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Round failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Round>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Sin;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new sin failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Sin>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Tan;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Tan failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Tan>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxSqrtParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Sqrt;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Sqrt failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Sqrt>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxPowParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::PowFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new PowFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::PowFusion>();
 
-  primitive_c->set_scale(1.0);
-  primitive_c->set_shift(0.0);
+  prim->set_scale(1.0);
+  prim->set_shift(0.0);
 
-  return primitive_c;
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxMinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Minimum;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Minimum failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Minimum>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Maximum;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Maximum failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Maximum>();
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Eltwise;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Eltwise failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Eltwise>();
 
   if (onnx_node.op_type() == "Sum") {
-    primitive_c->set_mode(mindspore::EltwiseMode::SUM);
+    prim->set_mode(mindspore::EltwiseMode::SUM);
   } else {
     MS_LOG(ERROR) << "unsupported Eltwise type";
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxReciprocalParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Reciprocal;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Reciprocal failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Reciprocal>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());

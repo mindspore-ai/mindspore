@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
                                             const std::unique_ptr<tflite::ModelT> &tfliteModel) {
-  auto prim = new (std::nothrow) ops::Reshape();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Reshape failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Reshape>();
 
   MS_ASSERT(tfliteOp != nullptr);
   MS_ASSERT(tfliteModel != nullptr);
@@ -46,7 +42,7 @@ ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::Operat
     prim->AddAttr("shape", MakeValue(shape));
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteReshapeParser(tflite::BuiltinOperator_RESHAPE, new TfliteReshapeParser());

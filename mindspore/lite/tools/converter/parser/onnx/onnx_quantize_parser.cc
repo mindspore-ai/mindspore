@@ -21,24 +21,20 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::QuantDTypeCast;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new QuantDTypeCast failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::QuantDTypeCast>();
 
   if (onnx_node.op_type() == "Int8Quantize") {
-    primitive_c->set_src_t(kNumberTypeFloat32);
-    primitive_c->set_dst_t(kNumberTypeUInt8);
+    prim->set_src_t(kNumberTypeFloat32);
+    prim->set_dst_t(kNumberTypeUInt8);
   } else if (onnx_node.op_type() == "Int8Dequantize") {
-    primitive_c->set_src_t(kNumberTypeUInt8);
-    primitive_c->set_dst_t(kNumberTypeFloat32);
+    prim->set_src_t(kNumberTypeUInt8);
+    prim->set_dst_t(kNumberTypeFloat32);
   } else {
     MS_LOG(ERROR) << "Unsupported nodeType: " << onnx_node.op_type().c_str();
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxQuantizeParser());

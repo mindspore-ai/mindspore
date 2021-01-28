@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Conv2dTransposeFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Conv2dTransposeFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
 
   prim->set_pad({0, 0, 0, 0});
   prim->set_group(1);
@@ -74,7 +70,7 @@ ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::Operato
     prim->set_pad_list(params);
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteDeConv2DParser(tflite::BuiltinOperator_TRANSPOSE_CONV, new TfliteDeConvParser());

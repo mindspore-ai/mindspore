@@ -21,20 +21,16 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxDepthToSpaceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::DepthToSpace;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new DepthToSpace failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::DepthToSpace>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "blocksize") {
-      primitive_c->set_block_size(onnx_node_attr.i());
+      prim->set_block_size(onnx_node_attr.i());
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxDepthToSpaceParser("DepthToSpace", new OnnxDepthToSpaceParser());

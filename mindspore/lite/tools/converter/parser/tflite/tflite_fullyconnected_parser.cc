@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::FullConnection();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new FullConnection failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::FullConnection>();
 
   prim->set_axis(1);
   prim->set_use_axis(false);
@@ -41,7 +37,7 @@ ops::PrimitiveC *TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite:
   }
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteFullyConnectedParser(tflite::BuiltinOperator_FULLY_CONNECTED,

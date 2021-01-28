@@ -21,22 +21,18 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Softmax();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Softmax failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Softmax>();
 
   if (proto.has_softmax_param() && proto.softmax_param().has_axis()) {
     if (proto.softmax_param().axis() == -1) {
       MS_LOG(DEBUG) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
     }
-    primitive_c->set_axis({proto.softmax_param().axis()});
+    prim->set_axis({proto.softmax_param().axis()});
   } else {
-    primitive_c->set_axis({1});
+    prim->set_axis({1});
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeSoftmaxParser("Softmax", new CaffeSoftmaxParser());

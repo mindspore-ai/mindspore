@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::ReverseV2();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ReverseV2 failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ReverseV2>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -43,7 +39,7 @@ ops::PrimitiveC *TfliteReverseParser::Parse(const std::unique_ptr<tflite::Operat
   }
   prim->set_axis(axis);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteReverseParser(tflite::BuiltinOperator_REVERSE_V2, new TfliteReverseParser());

@@ -21,16 +21,12 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Split();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Split failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Split>();
 
   const caffe::SliceParameter &slice_param = proto.slice_param();
-  primitive_c->set_output_num(2);
+  prim->set_output_num(2);
   if (!slice_param.slice_point().empty()) {
-    primitive_c->set_output_num(slice_param.slice_point_size() + 1);
+    prim->set_output_num(slice_param.slice_point_size() + 1);
     std::vector<int64_t> size_splits;
     for (int i = 0; i < slice_param.slice_point_size(); ++i) {
       if (i == 0) {
@@ -40,16 +36,16 @@ ops::PrimitiveC *CaffeSliceParser::Parse(const caffe::LayerParameter &proto, con
       }
     }
     size_splits.push_back(-1);
-    primitive_c->set_size_splits(size_splits);
+    prim->set_size_splits(size_splits);
   }
 
   if (slice_param.has_axis()) {
-    primitive_c->set_axis(slice_param.axis());
+    prim->set_axis(slice_param.axis());
   } else if (slice_param.has_slice_dim()) {
-    primitive_c->set_axis(slice_param.slice_dim());
+    prim->set_axis(slice_param.slice_dim());
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeSliceParser("Slice", new CaffeSliceParser());

@@ -70,11 +70,7 @@ ops::PrimitiveC *TfliteCustomParser::Parse(const std::unique_ptr<tflite::Operato
 
 ops::PrimitiveC *TfliteCustomParser::DetectPostProcess(const std::vector<uint8_t> &custom_attr,
                                                        const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  auto prim = new (std::nothrow) ops::DetectionPostProcess();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new DetectionPostProcess failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::DetectionPostProcess>();
 
   prim->set_format(mindspore::Format::NHWC);
   prim->set_input_size(tflite_op->inputs.size());
@@ -103,30 +99,22 @@ ops::PrimitiveC *TfliteCustomParser::DetectPostProcess(const std::vector<uint8_t
     prim->set_out_quantized(attr_map["_output_quantized"].AsBool());
   }
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::AudioSpectrogram(const std::vector<uint8_t> &custom_attr) {
-  auto prim = new (std::nothrow) ops::AudioSpectrogram();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new AudioSpectrogram failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::AudioSpectrogram>();
 
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
   prim->set_window_size(attr_map["window_size"].AsInt64());
   prim->set_stride(attr_map["stride"].AsInt64());
   prim->set_mag_square(attr_map["magnitude_squared"].AsBool());
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::Mfcc(const std::vector<uint8_t> &custom_attr) {
-  auto prim = new (std::nothrow) ops::Mfcc();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Mfcc failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Mfcc>();
 
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
   prim->set_freq_upper_limit(attr_map["upper_frequency_limit"].AsFloat());
@@ -134,50 +122,32 @@ ops::PrimitiveC *TfliteCustomParser::Mfcc(const std::vector<uint8_t> &custom_att
   prim->set_filter_bank_channel_num(attr_map["filterbank_channel_count"].AsInt64());
   prim->set_dct_coeff_num(attr_map["dct_coefficient_count"].AsInt64());
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_attr) {
-  auto prim = new (std::nothrow) ops::CustomPredict();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new CustomPredict failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::CustomPredict>();
 
   prim->set_output_num(reinterpret_cast<const int64_t *>(custom_attr.data())[0]);
   prim->set_weight_threshold(reinterpret_cast<const float *>(custom_attr.data())[1]);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::Normalize() {
-  auto prim = new (std::nothrow) ops::CustomNormalize();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new CustomNormalize failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::CustomNormalize>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::ExtractFeatures() {
-  auto prim = new (std::nothrow) ops::CustomExtractFeatures();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new CustomExtractFeatures failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::CustomExtractFeatures>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_attr,
                                           const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Rfft();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Rfft failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Rfft>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -193,37 +163,22 @@ ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_att
   }
   prim->set_fft_length(fft_length[0]);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::FftReal() {
-  auto prim = new (std::nothrow) ops::FftReal();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new FftReal failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::FftReal>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::FftImag() {
-  auto prim = new (std::nothrow) ops::FftImag();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new FftImag failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::FftImag>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCustomParser::Identity() {
-  auto prim = new (std::nothrow) ops::Identity();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Identity failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Identity>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteCustomParser(tflite::BuiltinOperator_CUSTOM, new TfliteCustomParser());

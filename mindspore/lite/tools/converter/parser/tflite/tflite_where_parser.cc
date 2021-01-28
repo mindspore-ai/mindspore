@@ -24,13 +24,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteWhereParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Where();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Where failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Where>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteWhereParser(tflite::BuiltinOperator_WHERE, new TfliteWhereParser());

@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Concat();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Concat failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Concat>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsConcatenationOptions();
@@ -37,7 +33,7 @@ ops::PrimitiveC *TfliteConcatParser::Parse(const std::unique_ptr<tflite::Operato
   }
   prim->set_axis(tflite_attr->axis);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteConcatParser(tflite::BuiltinOperator_CONCATENATION, new TfliteConcatParser());

@@ -23,14 +23,10 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::AvgPoolFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new AvgPoolFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::AvgPoolFusion>();
 
-  primitive_c->set_format(mindspore::Format::NCHW);
-  primitive_c->set_pad_mode(mindspore::PadMode::PAD);
+  prim->set_format(mindspore::Format::NCHW);
+  prim->set_pad_mode(mindspore::PadMode::PAD);
   mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
   std::vector<int64_t> strides;
@@ -41,7 +37,7 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
       if (onnx_node_attr.ints_size() == 2) {
         kernels.push_back(onnx_node_attr.ints(0));
         kernels.push_back(onnx_node_attr.ints(1));
-        primitive_c->set_kernel_size(kernels);
+        prim->set_kernel_size(kernels);
       }
     }
     if (attribute_name == "strides") {
@@ -52,7 +48,7 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
     }
     if (attribute_name == "auto_pad") {
       if (onnx_node_attr.s() == "SAME_UPPER") {
-        primitive_c->set_pad_mode(mindspore::PadMode::SAME);
+        prim->set_pad_mode(mindspore::PadMode::SAME);
       } else if (onnx_node_attr.s() == "SAME_LOWER") {
         MS_LOG(ERROR) << "PadMode_SAME_LOWER is not supported now";
         return nullptr;
@@ -78,34 +74,30 @@ ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
       return nullptr;
     }
   }
-  primitive_c->set_round_mode(roundMode);
+  prim->set_round_mode(roundMode);
 
   if (strides.empty()) {
     strides.push_back(1);
     strides.push_back(1);
   }
-  primitive_c->set_strides(strides);
+  prim->set_strides(strides);
   if (pads.empty()) {
     pads = {0, 0, 0, 0};
   }
-  primitive_c->set_pad(pads);
+  prim->set_pad(pads);
   if (onnx_node.op_type() == "GlobalAveragePool") {
-    primitive_c->set_global(true);
+    prim->set_global(true);
   } else {
-    primitive_c->set_global(false);
+    prim->set_global(false);
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::MaxPoolFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new MaxPoolFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::MaxPoolFusion>();
 
-  primitive_c->set_format(mindspore::Format::NCHW);
+  prim->set_format(mindspore::Format::NCHW);
   mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
   std::vector<int64_t> kernels;
   std::vector<int64_t> strides;
@@ -116,7 +108,7 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
       if (onnx_node_attr.ints_size() == 2) {
         kernels.push_back(onnx_node_attr.ints(0));
         kernels.push_back(onnx_node_attr.ints(1));
-        primitive_c->set_kernel_size(kernels);
+        prim->set_kernel_size(kernels);
       }
     }
     if (attribute_name == "strides") {
@@ -127,7 +119,7 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
     }
     if (attribute_name == "auto_pad") {
       if (onnx_node_attr.s() == "SAME_UPPER") {
-        primitive_c->set_pad_mode(mindspore::PadMode::SAME);
+        prim->set_pad_mode(mindspore::PadMode::SAME);
       } else if (onnx_node_attr.s() == "SAME_LOWER") {
         MS_LOG(ERROR) << "PadMode_SAME_LOWER is not supported now";
         return nullptr;
@@ -135,7 +127,7 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
     }
     if (attribute_name == "pads") {
       if (onnx_node_attr.ints_size() == 4) {
-        primitive_c->set_pad_mode(mindspore::PadMode::PAD);
+        prim->set_pad_mode(mindspore::PadMode::PAD);
         pads.push_back(onnx_node_attr.ints(0));
         pads.push_back(onnx_node_attr.ints(2));
         pads.push_back(onnx_node_attr.ints(1));
@@ -154,22 +146,22 @@ ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, co
       return nullptr;
     }
   }
-  primitive_c->set_round_mode(roundMode);
+  prim->set_round_mode(roundMode);
 
   if (pads.empty()) {
     pads = {0, 0, 0, 0};
   }
-  primitive_c->set_pad(pads);
+  prim->set_pad(pads);
 
   if (strides.empty()) {
     strides.push_back(1);
     strides.push_back(1);
   }
-  primitive_c->set_strides(strides);
+  prim->set_strides(strides);
 
-  primitive_c->set_global(onnx_node.op_type() == "GlobalMaxPool");
+  prim->set_global(onnx_node.op_type() == "GlobalMaxPool");
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxAveragePoolParser("AveragePool", new OnnxAvgPoolParser());

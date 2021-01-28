@@ -20,26 +20,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeScaleParser::GetAxisIndex(const int32_t &axis, uint32_t *axis_index) {
-  if (axis < -4 || axis >= 4) {
-    MS_LOG(ERROR) << "Scale axis value(" << axis << ") is not correct";
-    return RET_ERROR;
-  }
-
-  if (axis == -1) {
-    MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
-  }
-
-  *axis_index = (axis + 4) % 4;
-  return RET_OK;
-}
-
 ops::PrimitiveC *CaffeScaleParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::ScaleFusion();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ScaleFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ScaleFusion>();
 
   if (weight.blobs_size() + weight.bottom_size() < 2) {
     MS_LOG(ERROR) << "Scale bottom size:" << weight.bottom_size() << ", blobs size:" << weight.blobs_size()
@@ -58,9 +40,9 @@ ops::PrimitiveC *CaffeScaleParser::Parse(const caffe::LayerParameter &proto, con
       MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
     }
   }
-  primitive_c->set_axis(1);
+  prim->set_axis(1);
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeScaleParser("Scale", new CaffeScaleParser());

@@ -26,18 +26,14 @@ namespace lite {
 ops::PrimitiveC *TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Cast;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Cast failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Cast>();
 
   auto dst_type = TensorFlowUtils::ParseAttrDataType(tf_op, "DstT");
   if (dst_type == kTypeUnknown) {
     MS_LOG(ERROR) << "Get attr DstT failed";
     return nullptr;
   }
-  primitive_c->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
+  prim->AddAttr("to", MakeValue(static_cast<int32_t>(dst_type)));
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
@@ -45,7 +41,7 @@ ops::PrimitiveC *TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfCastParser("Cast", new TFCastParser());

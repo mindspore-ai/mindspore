@@ -26,11 +26,7 @@ namespace lite {
 ops::PrimitiveC *TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Round;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Round failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Round>();
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
@@ -38,7 +34,7 @@ ops::PrimitiveC *TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfRoundParser("Round", new TFRoundParser());

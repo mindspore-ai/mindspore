@@ -43,7 +43,7 @@ class TfliteModelParser : public ModelParser {
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
   STATUS ConvertConstTensor(const tflite::TensorT *tensor, Parameter *parameter, const std::string &tensor_name);
   STATUS ConvertOutputTensor(const tflite::OperatorT *op, const CNodePtr &dst_cnode);
-  STATUS ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *primitive_c);
+  STATUS ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *prim);
   STATUS ConvertOps();
   STATUS ConvertGraphInputs();
   STATUS ConvertGraphOutputs();

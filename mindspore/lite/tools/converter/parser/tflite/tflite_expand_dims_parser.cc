@@ -23,13 +23,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteExpandDimsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::ExpandDims();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ExpandDims failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::ExpandDims>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteExpandDimsParser(tflite::BuiltinOperator_EXPAND_DIMS, new TfliteExpandDimsParser());

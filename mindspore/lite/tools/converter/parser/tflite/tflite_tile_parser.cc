@@ -24,13 +24,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteTileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::TileFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new TileFusion failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::TileFusion>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteTileParser(tflite::BuiltinOperator_TILE, new TfliteTileParser());

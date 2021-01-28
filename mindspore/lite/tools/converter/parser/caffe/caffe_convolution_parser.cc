@@ -22,61 +22,52 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &proto,
                                                const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Conv2DFusion();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Conv2DFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Conv2DFusion>();
 
-  primitive_c->set_pad({0, 0, 0, 0});
-  primitive_c->set_pad_mode(mindspore::PadMode::PAD);
-  primitive_c->set_format(mindspore::Format::NCHW);
-  primitive_c->set_activation_type(mindspore::NO_ACTIVATION);
+  prim->set_pad({0, 0, 0, 0});
+  prim->set_pad_mode(mindspore::PadMode::PAD);
+  prim->set_format(mindspore::Format::NCHW);
+  prim->set_activation_type(mindspore::NO_ACTIVATION);
 
   const caffe::ConvolutionParameter &convParam = proto.convolution_param();
   // parse kernel
   std::vector<int64_t> kernel(2, 0);
   if (CaffeConvBaseParser::ParseKernels(convParam, &kernel) != RET_OK) {
-    MS_LOG(ERROR) << "ParseKernels for " << proto.name().c_str() << " failed";
     return nullptr;
   }
-  primitive_c->set_kernel_size(kernel);
+  prim->set_kernel_size(kernel);
 
   // parse stride
   std::vector<int64_t> stride(2, 0);
   if (CaffeConvBaseParser::ParseStrides(convParam, &stride) != RET_OK) {
-    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
     return nullptr;
   }
-  primitive_c->set_stride(stride);
+  prim->set_stride(stride);
 
   // parse dilation
   std::vector<int64_t> dilation(2, 0);
   if (CaffeConvBaseParser::ParseDilations(convParam, &dilation) != RET_OK) {
-    MS_LOG(ERROR) << "ParseDilations for " << proto.name().c_str() << " failed";
     return nullptr;
   }
-  primitive_c->set_dilation(dilation);
+  prim->set_dilation(dilation);
 
   // parse pad
   std::vector<int64_t> pad(4, 0);
   if (CaffeConvBaseParser::ParsePads(convParam, &pad) != RET_OK) {
-    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
     return nullptr;
   }
-  primitive_c->set_pad_list(pad);
+  prim->set_pad_list(pad);
 
   // parse channelOut
   int channel_out = 0;
   if (CaffeConvBaseParser::ParseChannelOut(convParam, &channel_out) != RET_OK) {
-    MS_LOG(ERROR) << "conv channel out failed";
     return nullptr;
   }
-  primitive_c->set_out_channel(channel_out);
+  prim->set_out_channel(channel_out);
 
   // parse group
   auto group = CaffeConvBaseParser::ParseGroup(convParam, proto.type());
-  primitive_c->set_group(group);
+  prim->set_group(group);
 
   // parse channelIn
   if (weight.blobs_size() < 1) {
@@ -85,11 +76,13 @@ ops::PrimitiveC *CaffeConvolutionParser::Parse(const caffe::LayerParameter &prot
   }
   auto &weightBlob = weight.blobs(0);
   auto channelIn = weightBlob.has_shape() ? weightBlob.shape().dim(1) * group : weightBlob.channels() * group;
-  primitive_c->set_in_channel(channelIn);
+  prim->set_in_channel(channelIn);
+
   if (group != 1) {
-    primitive_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
-  return primitive_c;
+
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeConvolutionParser("Convolution", new CaffeConvolutionParser());

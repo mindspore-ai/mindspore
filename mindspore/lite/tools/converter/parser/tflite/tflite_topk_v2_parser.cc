@@ -24,15 +24,11 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::TopKFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new TopKFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::TopKFusion>();
 
   prim->set_sorted(true);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteTopKV2Parser(tflite::BuiltinOperator_TOPK_V2, new TfliteTopKV2Parser());

@@ -21,28 +21,24 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::ArgMaxFusion();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ArgMaxFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ArgMaxFusion>();
 
-  primitive_c->set_keep_dims(true);
-  primitive_c->set_out_max_value(false);
-  primitive_c->set_top_k(1);
+  prim->set_keep_dims(true);
+  prim->set_out_max_value(false);
+  prim->set_top_k(1);
 
   const caffe::ArgMaxParameter &argmaxParam = proto.argmax_param();
   if (argmaxParam.has_out_max_val()) {
-    primitive_c->set_out_max_value(argmaxParam.out_max_val());
+    prim->set_out_max_value(argmaxParam.out_max_val());
   }
   if (argmaxParam.has_top_k()) {
-    primitive_c->set_top_k(argmaxParam.top_k());
+    prim->set_top_k(argmaxParam.top_k());
   }
   if (argmaxParam.has_axis()) {
-    primitive_c->set_axis(argmaxParam.axis());
+    prim->set_axis(argmaxParam.axis());
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeArgMaxParser("ArgMax", new CaffeArgMaxParser());

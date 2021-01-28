@@ -21,22 +21,18 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxInstanceNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::LayerNormFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new LayerNormFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::LayerNormFusion>();
 
-  primitive_c->set_elementwise_affine(true);
+  prim->set_elementwise_affine(true);
 
   if (!onnx_node.attribute().empty()) {
     auto onnx_node_attr = onnx_node.attribute().at(0);
     if (onnx_node_attr.name() == "epsilon") {
-      primitive_c->set_epsilon(onnx_node_attr.f());
+      prim->set_epsilon(onnx_node_attr.f());
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxInstanceNormParser("InstanceNormalization", new OnnxInstanceNormParser());

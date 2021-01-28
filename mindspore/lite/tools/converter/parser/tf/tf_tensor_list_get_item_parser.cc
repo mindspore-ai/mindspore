@@ -26,11 +26,7 @@ namespace lite {
 ops::PrimitiveC *TFTensorListGetItemParser::Parse(const tensorflow::NodeDef &tf_op,
                                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                                   std::vector<std::string> *inputs, int *output_size) {
-  auto primitive = new (std::nothrow) ops::TensorListGetItem;
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New TensorListGetItem failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::TensorListGetItem>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "element_dtype", &attr_value)) {
@@ -42,7 +38,7 @@ ops::PrimitiveC *TFTensorListGetItemParser::Parse(const tensorflow::NodeDef &tf_
     MS_LOG(ERROR) << "tensor_list_get_item element_dtype must be known type";
     return nullptr;
   }
-  primitive->set_element_dtype((int64_t)(type));
+  prim->set_element_dtype((int64_t)(type));
 
   *output_size = 1;
   for (int i = 0; i < 3; ++i) {
@@ -52,7 +48,7 @@ ops::PrimitiveC *TFTensorListGetItemParser::Parse(const tensorflow::NodeDef &tf_
     }
   }
 
-  return primitive;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfTensorListGetItemParser("TensorListGetItem", new TFTensorListGetItemParser());

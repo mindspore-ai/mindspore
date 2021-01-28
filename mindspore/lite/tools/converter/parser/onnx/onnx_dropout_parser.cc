@@ -21,20 +21,16 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Dropout;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Dropout failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Dropout>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "ratio") {
-      primitive_c->set_keep_prob(onnx_node_attr.f());
+      prim->set_keep_prob(onnx_node_attr.f());
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxDropoutParser("Dropout", new OnnxDropoutParser());

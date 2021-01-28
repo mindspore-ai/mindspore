@@ -21,11 +21,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Gather;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Gather failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Gather>();
 
   int32_t axis = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -34,9 +30,9 @@ ops::PrimitiveC *OnnxGatherParser::Parse(const onnx::GraphProto &onnx_graph, con
       axis = static_cast<int32_t>(onnx_node_attr.i());
     }
   }
-  primitive_c->AddAttr("axis", MakeValue(axis));
+  prim->AddAttr("axis", MakeValue(axis));
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxGatherParser("Gather", new OnnxGatherParser());

@@ -32,30 +32,26 @@ ops::PrimitiveC *TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  auto primitive = new (std::nothrow) ops::Range;
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New RaggedRange failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Range>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "starts", &attr_value)) {
     MS_LOG(ERROR) << "The starts attr should be specified";
     return nullptr;
   }
-  primitive->set_start(static_cast<int64_t>(attr_value.i()));
+  prim->set_start(static_cast<int64_t>(attr_value.i()));
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "limits", &attr_value)) {
     MS_LOG(ERROR) << "The limits attr should be specified";
     return nullptr;
   }
-  primitive->set_limit(static_cast<int64_t>(attr_value.i()));
+  prim->set_limit(static_cast<int64_t>(attr_value.i()));
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "deltas", &attr_value)) {
     MS_LOG(ERROR) << "The deltas attr should be specified";
     return nullptr;
   }
-  primitive->set_delta(static_cast<int64_t>(attr_value.i()));
+  prim->set_delta(static_cast<int64_t>(attr_value.i()));
 
   *output_size = 1;
   auto status = AddOpInput(tf_op, 0, inputs);
@@ -63,7 +59,7 @@ ops::PrimitiveC *TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "add op input is failed!";
     return nullptr;
   }
-  return primitive;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfRaggedRangeParser("RaggedRange", new TFRaggedRangeParser());

@@ -23,15 +23,12 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Conv2dTransposeFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Conv2dTransposeFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
 
-  primitive_c->set_pad({0, 0, 0, 0});
+  prim->set_pad({0, 0, 0, 0});
   mindspore::Format format = mindspore::Format::NCHW;
-  mindspore::PadMode padMode = mindspore::PadMode::PAD;
+  mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
+
   int64_t group = 1;
   std::vector<int64_t> kernel;
   std::vector<int64_t> dilate;
@@ -47,7 +44,7 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       }
       dilate.push_back(onnx_node_attr.ints(0));
       dilate.push_back(onnx_node_attr.ints(1));
-      primitive_c->set_dilation(dilate);
+      prim->set_dilation(dilate);
     } else if (onnx_node_attr.name() == "kernels") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
@@ -55,7 +52,7 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       }
       kernel.push_back(onnx_node_attr.ints(0));
       kernel.push_back(onnx_node_attr.ints(1));
-      primitive_c->set_kernel_size(kernel);
+      prim->set_kernel_size(kernel);
     } else if (onnx_node_attr.name() == "kernel_shape") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
@@ -63,9 +60,9 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       }
       kernel.push_back(onnx_node_attr.ints(0));
       kernel.push_back(onnx_node_attr.ints(1));
-      primitive_c->set_kernel_size(kernel);
+      prim->set_kernel_size(kernel);
     } else if (onnx_node_attr.name() == "auto_pad") {
-      padMode = GetOnnxPadMode(onnx_node_attr);
+      pad_mode = GetOnnxPadMode(onnx_node_attr);
     } else if (onnx_node_attr.name() == "pads") {
       if (onnx_node_attr.ints().size() != 4) {
         MS_LOG(ERROR) << "pads size " << onnx_node_attr.ints().size() << " is not 4";
@@ -75,7 +72,7 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       pads.push_back(onnx_node_attr.ints(2));
       pads.push_back(onnx_node_attr.ints(1));
       pads.push_back(onnx_node_attr.ints(3));
-      primitive_c->set_pad_list(pads);
+      prim->set_pad_list(pads);
     } else if (onnx_node_attr.name() == "strides") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 2";
@@ -83,7 +80,7 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       }
       stride.push_back(onnx_node_attr.ints(0));
       stride.push_back(onnx_node_attr.ints(1));
-      primitive_c->set_stride(stride);
+      prim->set_stride(stride);
     } else if (onnx_node_attr.name() == "order") {
       if (onnx_node_attr.s() == "NHWC") {
         format = mindspore::Format::NHWC;
@@ -96,9 +93,9 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       return nullptr;
     }
   }
-  primitive_c->set_format(format);
-  primitive_c->set_group(group);
-  primitive_c->set_pad_mode(padMode);
+  prim->set_format(format);
+  prim->set_group(group);
+  prim->set_pad_mode(pad_mode);
 
   const auto &onnx_conv_weight = onnx_node.input(1);
   auto node_iter =
@@ -118,12 +115,14 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
     MS_LOG(ERROR) << "weight_shape.size() should be 4, but is " << weight_shape.size();
     return nullptr;
   }
-  primitive_c->set_in_channel(weight_shape[0]);
-  primitive_c->set_out_channel(weight_shape[1] * group);
+  prim->set_in_channel(weight_shape[0]);
+  prim->set_out_channel(weight_shape[1] * group);
+
   if (group != 1 && weight_shape[1] == 1) {
-    primitive_c->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
-  return primitive_c;
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxDeConvParser("ConvTranspose", new OnnxDeConvParser());

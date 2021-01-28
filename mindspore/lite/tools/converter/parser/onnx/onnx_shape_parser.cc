@@ -21,13 +21,8 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxShapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Shape;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Shape failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Shape>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxShapeParser("Shape", new OnnxShapeParser());

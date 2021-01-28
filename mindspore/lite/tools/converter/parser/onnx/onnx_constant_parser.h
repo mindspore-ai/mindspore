@@ -29,7 +29,7 @@ class OnnxConstantParser : public OnnxNodeParser {
 
   ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 
-  STATUS AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *primitive_c);
+  STATUS AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *prim);
 };
 }  // namespace lite
 }  // namespace mindspore

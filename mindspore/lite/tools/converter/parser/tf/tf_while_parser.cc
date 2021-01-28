@@ -26,11 +26,7 @@ namespace lite {
 ops::PrimitiveC *TFWhileParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::While;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new While failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::While>();
 
   *output_size = tf_op.input_size();
   for (int i = 0; i < tf_op.input_size(); ++i) {
@@ -40,7 +36,7 @@ ops::PrimitiveC *TFWhileParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfStatelessWhileParser("StatelessWhile", new TFWhileParser());

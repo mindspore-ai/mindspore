@@ -236,19 +236,19 @@ STATUS TfliteModelParser::SetTensorQuantParam(const tflite::TensorT *tflite_tens
   return RET_OK;
 }
 
-STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *primitive_c) {
+STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *prim) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "tflite op is null, get quant params failed.";
     return RET_NULL_PTR;
   }
 
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "prim is null, get quant params failed.";
     return RET_NULL_PTR;
   }
 
   int round_type = 1;
-  if (primitive_c->name() == "Conv2D" || primitive_c->name() == "Conv2DFusion") {
+  if (prim->name() == "Conv2D" || prim->name() == "Conv2DFusion") {
     round_type = 2;
   }
   const auto &tflite_subgraph = tflite_model_->subgraphs.front();
@@ -279,7 +279,7 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, ops:
     }
     quant_params_holder->AddOutputQuantParam(quant_params);
   }
-  primitive_c->AddAttr("quant_params", quant_params_holder);
+  prim->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
 

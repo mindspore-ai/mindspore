@@ -26,18 +26,14 @@ namespace lite {
 ops::PrimitiveC *TFAssertParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Assert;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "New Assert failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Assert>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "summarize", &attr_value)) {
     MS_LOG(ERROR) << "The keep_dims attr should be specified";
     return nullptr;
   }
-  primitive_c->set_summarize((int64_t)(attr_value.i()));
+  prim->set_summarize((int64_t)(attr_value.i()));
 
   *output_size = 0;  // Assert not have output
   for (int i = 0; i < tf_op.input_size(); ++i) {
@@ -47,7 +43,7 @@ ops::PrimitiveC *TFAssertParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfAssertParser("Assert", new TFAssertParser());

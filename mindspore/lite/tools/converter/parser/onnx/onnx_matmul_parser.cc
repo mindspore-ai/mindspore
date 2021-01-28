@@ -21,20 +21,16 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::MatMul;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new MatMul failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::MatMul>();
 
   float alpha = 1.0f;
   float beta = 1.0f;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "transA") {
-      primitive_c->set_transpose_a(static_cast<bool>(onnx_node_attr.i()));
+      prim->set_transpose_a(static_cast<bool>(onnx_node_attr.i()));
     } else if (attribute_name == "transB") {
-      primitive_c->set_transpose_b(static_cast<bool>(onnx_node_attr.i()));
+      prim->set_transpose_b(static_cast<bool>(onnx_node_attr.i()));
     } else if (attribute_name == "alpha") {
       alpha = onnx_node_attr.f();
     } else if (attribute_name == "beta") {
@@ -46,7 +42,7 @@ ops::PrimitiveC *OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, con
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxMatmulParser("MatMul", new OnnxMatmulParser());

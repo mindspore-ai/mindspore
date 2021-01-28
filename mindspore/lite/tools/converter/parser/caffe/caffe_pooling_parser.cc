@@ -124,31 +124,23 @@ ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, c
   auto roundMode = ParseRoundMode(poolingParam);
 
   if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
-    auto primitive_c = new (std::nothrow) ops::MaxPoolFusion();
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new MaxPoolFusion failed";
-      return nullptr;
-    }
-    primitive_c->set_format(mindspore::Format::NCHW);
-    primitive_c->set_pad_mode(mindspore::PadMode::PAD);
-    primitive_c->set_kernel_size(windows);
-    primitive_c->set_strides(strides);
-    primitive_c->set_pad(pad);
-    primitive_c->set_round_mode(roundMode);
-    return primitive_c;
+    auto prim = std::make_unique<ops::MaxPoolFusion>();
+    prim->set_format(mindspore::Format::NCHW);
+    prim->set_pad_mode(mindspore::PadMode::PAD);
+    prim->set_kernel_size(windows);
+    prim->set_strides(strides);
+    prim->set_pad(pad);
+    prim->set_round_mode(roundMode);
+    return prim.release();
   } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
-    auto primitive_c = new (std::nothrow) ops::AvgPoolFusion();
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new AvgPoolFusion failed";
-      return nullptr;
-    }
-    primitive_c->set_format(mindspore::Format::NCHW);
-    primitive_c->set_pad_mode(mindspore::PadMode::PAD);
-    primitive_c->set_kernel_size(windows);
-    primitive_c->set_strides(strides);
-    primitive_c->set_pad(pad);
-    primitive_c->set_round_mode(roundMode);
-    return primitive_c;
+    auto prim = std::make_unique<ops::AvgPoolFusion>();
+    prim->set_format(mindspore::Format::NCHW);
+    prim->set_pad_mode(mindspore::PadMode::PAD);
+    prim->set_kernel_size(windows);
+    prim->set_strides(strides);
+    prim->set_pad(pad);
+    prim->set_round_mode(roundMode);
+    return prim.release();
   } else {
     MS_LOG(ERROR) << "poolingParam.pool() is not MAX or AVE";
     return nullptr;

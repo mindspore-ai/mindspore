@@ -21,22 +21,18 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxArgMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::ArgMaxFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ArgMax failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ArgMaxFusion>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      primitive_c->set_axis(onnx_node_attr.i());
+      prim->set_axis(onnx_node_attr.i());
     } else if (attribute_name == "keepdims") {
-      primitive_c->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
+      prim->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxArgMaxParser("ArgMax", new OnnxArgMaxParser());

@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::StridedSlice();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new StridedSlice failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::StridedSlice>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsStridedSliceOptions();
@@ -41,7 +37,7 @@ ops::PrimitiveC *TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::O
   prim->set_new_axis_mask(tflite_attr->new_axis_mask);
   prim->set_shrink_axis_mask(tflite_attr->shrink_axis_mask);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteStridedSliceParser(tflite::BuiltinOperator_STRIDED_SLICE, new TfliteStridedSliceParser());

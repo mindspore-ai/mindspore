@@ -18,7 +18,6 @@
 #include <memory>
 #include <vector>
 #include "tools/converter/parser/tflite/tflite_util.h"
-#include "ops/leaky_relu.h"
 #include "ops/fusion/prelu_fusion.h"
 #include "ops/fusion/activation.h"
 
@@ -26,37 +25,27 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Activation();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ReLU failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
   prim->set_activation_type(mindspore::ActivationType::RELU);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Activation();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Relu6 failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
   prim->set_activation_type(mindspore::ActivationType::RELU6);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Activation();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new LeakyRelu failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
+
+  prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsLeakyReluOptions();
@@ -66,61 +55,43 @@ ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::Oper
   }
   prim->set_alpha(tflite_attr->alpha);
 
-  prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
-
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TflitePReLUParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::PReLUFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new PReLUFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::PReLUFusion>();
 
   prim->set_channel_shared(true);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Activation();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Tanh failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
   prim->set_activation_type(mindspore::ActivationType::TANH);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteHardSwishParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Activation();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new HardSwish failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
   prim->set_activation_type(mindspore::ActivationType::HSWISH);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteLogisticParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Activation();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Sigmoid failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
   prim->set_activation_type(mindspore::ActivationType::SIGMOID);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_TfliteReluParser(tflite::BuiltinOperator_RELU, new TfliteReluParser());

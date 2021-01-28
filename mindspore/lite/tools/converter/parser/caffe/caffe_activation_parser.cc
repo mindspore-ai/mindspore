@@ -21,59 +21,43 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Activation();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ReLU failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
-  primitive_c->set_activation_type(mindspore::ActivationType::RELU);
+  prim->set_activation_type(mindspore::ActivationType::RELU);
 
   if (proto.has_relu_param() && proto.relu_param().has_negative_slope()) {
     float negative_slope = proto.relu_param().negative_slope();
     if (negative_slope != 0) {
-      primitive_c->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
-      primitive_c->set_alpha(negative_slope);
+      prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
+      prim->set_alpha(negative_slope);
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 ops::PrimitiveC *CaffeRelu6Parser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Activation();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Relu6 failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
-  primitive_c->set_activation_type(mindspore::ActivationType::RELU6);
+  prim->set_activation_type(mindspore::ActivationType::RELU6);
 
-  return primitive_c;
+  return prim.release();
 }
 
 ops::PrimitiveC *CaffeSigmoidParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Activation();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Sigmoid failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
-  primitive_c->set_activation_type(mindspore::ActivationType::SIGMOID);
+  prim->set_activation_type(mindspore::ActivationType::SIGMOID);
 
-  return primitive_c;
+  return prim.release();
 }
 
 ops::PrimitiveC *CaffeTanhParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Activation();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Tanh failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
-  primitive_c->set_activation_type(mindspore::ActivationType::TANH);
+  prim->set_activation_type(mindspore::ActivationType::TANH);
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeReluParser("ReLU", new CaffeReluParser());

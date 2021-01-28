@@ -22,13 +22,9 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::ReduceFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ReduceFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ReduceFusion>();
 
-  primitive_c->set_keep_dims(true);
+  prim->set_keep_dims(true);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes") {
@@ -37,30 +33,30 @@ ops::PrimitiveC *OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, con
       for (int i = 0; i < size; ++i) {
         axes.push_back(onnx_node_attr.ints(i));
       }
-      primitive_c->AddAttr("axes", MakeValue(axes));
+      prim->AddAttr("axes", MakeValue(axes));
     } else if (attribute_name == "keepdims") {
-      primitive_c->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
+      prim->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
     }
   }
   const auto &type = onnx_node.op_type();
   if (type == "ReduceMean") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Mean);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Mean);
   } else if (type == "ReduceMax") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Max);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Max);
   } else if (type == "ReduceMin") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Min);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Min);
   } else if (type == "ReduceSum") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Sum);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Sum);
   } else if (type == "ReduceProd") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Prod);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Prod);
   } else if (type == "ReduceSumSquare") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Sum_Square);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Sum_Square);
   } else {
     MS_LOG(ERROR) << "unsupported reduce type: " << type;
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxReduceMeanParser("ReduceMean", new OnnxReduceParser());

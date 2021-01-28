@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteRangeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Range();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Range failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Range>();
 
   prim->set_d_type(0);
 
@@ -57,7 +53,7 @@ ops::PrimitiveC *TfliteRangeParser::Parse(const std::unique_ptr<tflite::Operator
     prim->set_delta(delta.front());
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteRangeParser(tflite::BuiltinOperator_RANGE, new TfliteRangeParser());

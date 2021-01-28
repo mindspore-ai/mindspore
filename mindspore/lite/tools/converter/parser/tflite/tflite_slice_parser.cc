@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::SliceFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new SliceFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::SliceFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -47,7 +43,7 @@ ops::PrimitiveC *TfliteSliceParser::Parse(const std::unique_ptr<tflite::Operator
   }
   prim->set_axes(axes);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSliceParser(tflite::BuiltinOperator_SLICE, new TfliteSliceParser());

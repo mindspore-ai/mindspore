@@ -21,13 +21,9 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Flatten();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Flatten failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Flatten>();
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_CaffeFlattenParser("Flatten", new CaffeFlattenParser());

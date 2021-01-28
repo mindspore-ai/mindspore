@@ -22,11 +22,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Eltwise();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Eltwise failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Eltwise>();
 
   if (proto.bottom_size() < 2) {
     MS_LOG(ERROR) << "Eltwise Op " << proto.name() << " need at least 2 inputs,but input size is "
@@ -55,23 +51,23 @@ ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, c
   if (proto.has_eltwise_param() && eltwiseParam.has_operation()) {
     switch (eltwiseParam.operation()) {
       case caffe::EltwiseParameter::PROD:
-        primitive_c->set_mode(mindspore::EltwiseMode::PROD);
+        prim->set_mode(mindspore::EltwiseMode::PROD);
         break;
       case caffe::EltwiseParameter::SUM:
-        primitive_c->set_mode(mindspore::EltwiseMode::SUM);
+        prim->set_mode(mindspore::EltwiseMode::SUM);
         break;
       case caffe::EltwiseParameter::MAX:
-        primitive_c->set_mode(mindspore::EltwiseMode::MAXIMUM);
+        prim->set_mode(mindspore::EltwiseMode::MAXIMUM);
         break;
       default:
         MS_LOG(ERROR) << "Eltwise parse params fail, unsupported operation: " << eltwiseParam.operation();
         return nullptr;
     }
   } else {
-    primitive_c->set_mode(mindspore::EltwiseMode::SUM);
+    prim->set_mode(mindspore::EltwiseMode::SUM);
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeEltwiseParser("Eltwise", new CaffeEltwiseParser());

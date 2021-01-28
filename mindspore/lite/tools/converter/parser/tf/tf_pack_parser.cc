@@ -26,18 +26,14 @@ namespace lite {
 ops::PrimitiveC *TFPackParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Stack;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Stack failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Stack>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "axis", &attr_value)) {
     MS_LOG(ERROR) << "The axis attr should be specified";
     return nullptr;
   }
-  primitive_c->set_axis({attr_value.i()});
+  prim->set_axis({attr_value.i()});
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); ++i) {
@@ -47,7 +43,7 @@ ops::PrimitiveC *TFPackParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfPackParser("Pack", new TFPackParser());

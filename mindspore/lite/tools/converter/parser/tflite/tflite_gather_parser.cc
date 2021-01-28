@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Gather();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Gather failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Gather>();
 
   MS_ASSERT(tfliteOp != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsGatherOptions();
@@ -37,7 +33,7 @@ ops::PrimitiveC *TfliteGatherParser::Parse(const std::unique_ptr<tflite::Operato
   }
   prim->AddAttr("axis", MakeValue(static_cast<int32_t>(tflite_attr->axis)));
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteGatherParser(tflite::BuiltinOperator_GATHER, new TfliteGatherParser());

@@ -21,15 +21,11 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxRangeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Range;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Range failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Range>();
 
-  primitive_c->set_d_type(0);
+  prim->set_d_type(0);
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxRangeParser("Range", new OnnxRangeParser());

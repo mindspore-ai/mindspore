@@ -22,11 +22,9 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto,
                                                 const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::FullConnection();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new FullConnection failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::FullConnection>();
+
+  prim->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);
 
   const caffe::InnerProductParameter &innerProductParam = proto.inner_product_param();
   if (!innerProductParam.has_num_output()) {
@@ -35,19 +33,17 @@ ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &pro
   }
 
   if (innerProductParam.axis() == 1) {
-    primitive_c->set_axis(1);
-    primitive_c->set_use_axis(true);
+    prim->set_axis(1);
+    prim->set_use_axis(true);
   } else {
     MS_LOG(ERROR) << "InnerProduct Parse axis only support default 1, but actually " << innerProductParam.axis();
     return nullptr;
   }
   if (innerProductParam.bias_term()) {
-    primitive_c->set_has_bias(true);
+    prim->set_has_bias(true);
   }
 
-  primitive_c->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);
-
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeInnerProductParser("InnerProduct", new CaffeInnerProductParser());

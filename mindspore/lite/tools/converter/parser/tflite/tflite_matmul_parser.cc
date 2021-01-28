@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteMatMulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::MatMul();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new MatMul failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::MatMul>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsBatchMatMulOptions();
@@ -39,7 +35,7 @@ ops::PrimitiveC *TfliteMatMulParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_transpose_a(tflite_attr->adj_x);
   prim->set_transpose_b(tflite_attr->adj_y);
 
-  return prim;
+  return prim.release();
 }
 
 }  // namespace lite

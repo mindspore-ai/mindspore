@@ -26,11 +26,7 @@ namespace lite {
 ops::PrimitiveC *TFTensorListStackParser::Parse(const tensorflow::NodeDef &tf_op,
                                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                                 std::vector<std::string> *inputs, int *output_size) {
-  auto primitive = new (std::nothrow) ops::TensorListStack;
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New TensorListStack failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::TensorListStack>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "element_dtype", &attr_value)) {
@@ -42,13 +38,13 @@ ops::PrimitiveC *TFTensorListStackParser::Parse(const tensorflow::NodeDef &tf_op
     MS_LOG(ERROR) << "tensor_list_stack element_dtype must be known type";
     return nullptr;
   }
-  primitive->set_element_dtype((int64_t)(type));
+  prim->set_element_dtype((int64_t)(type));
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "num_elements", &attr_value)) {
     MS_LOG(ERROR) << "The element_dtype attr should be specified";
     return nullptr;
   }
-  primitive->set_num_elements(attr_value.i());
+  prim->set_num_elements(attr_value.i());
 
   *output_size = 1;
   for (int i = 0; i < 2; ++i) {
@@ -58,7 +54,7 @@ ops::PrimitiveC *TFTensorListStackParser::Parse(const tensorflow::NodeDef &tf_op
     }
   }
 
-  return primitive;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfTensorListStackParser("TensorListStack", new TFTensorListStackParser());
