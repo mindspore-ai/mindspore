@@ -25,7 +25,7 @@ namespace mindspore::kernel {
 int ScaleNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                               OpParameter *opParameter) {
   if (scale_parameter_->axis_ < 0) {
-    scale_parameter_->axis_ = scale_parameter_->axis_ + inputs.size();
+    scale_parameter_->axis_ = scale_parameter_->axis_ + inputs[0]->shape().size();
   }
   if (scale_parameter_->axis_ != 1) {
     MS_LOG(ERROR) << "Npu scale axis attr only support 1, now is " << scale_parameter_->axis_;

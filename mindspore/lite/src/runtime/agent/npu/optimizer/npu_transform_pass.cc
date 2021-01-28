@@ -82,7 +82,7 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
     auto nhwc_shape = kernel->out_tensors()[0]->shape();
     std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
     auto tensor =
-      new (std::nothrow) Tensor(kernel->out_tensors()[0]->data_type(), nchw_shape, schema::Format_NHWC, Tensor::VAR);
+      new (std::nothrow) Tensor(kernel->out_tensors()[0]->data_type(), nchw_shape, schema::Format_NCHW, Tensor::VAR);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "New nchw tensor failed when inserting post nchw2nhwc kernel.";
       return RET_ERROR;

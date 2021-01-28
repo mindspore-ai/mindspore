@@ -38,7 +38,24 @@ int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
   return RET_OK;
 }
 
-bool IsSameShapeTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
+std::vector<int> GetNpuTensorShape(int dim, std::shared_ptr<hiai::AiTensor> npu_tensor) {
+  std::vector<int> npu_shape;
+  if (dim > 0) {
+    npu_shape.push_back(npu_tensor->GetTensorDimension().GetNumber());
+  }
+  if (dim > 1) {
+    npu_shape.push_back(npu_tensor->GetTensorDimension().GetChannel());
+  }
+  if (dim > 2) {
+    npu_shape.push_back(npu_tensor->GetTensorDimension().GetHeight());
+  }
+  if (dim > 3) {
+    npu_shape.push_back(npu_tensor->GetTensorDimension().GetWidth());
+  }
+  return npu_shape;
+}
+
+bool IsSameShapeInTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
   if (tensor->shape().size() > 4) {
     MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
     return false;
@@ -49,18 +66,15 @@ bool IsSameShapeTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tenso
            tensor->Height() == npu_tensor->GetTensorDimension().GetHeight() &&
            tensor->Width() == npu_tensor->GetTensorDimension().GetWidth();
   }
-  std::vector<int> npu_shape;
-  auto dim = tensor->shape().size();
-  if (dim > 0) {
-    npu_shape.push_back(npu_tensor->GetTensorDimension().GetNumber());
+  return GetNpuTensorShape(tensor->shape().size(), npu_tensor) == tensor->shape();
+}
+
+bool IsSameShapeOutTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
+  if (tensor->shape().size() > 4) {
+    MS_LOG(ERROR) << "Npu does not support output tensor dims greater than 4";
+    return false;
   }
-  if (dim > 1) {
-    npu_shape.push_back(npu_tensor->GetTensorDimension().GetChannel());
-  }
-  if (dim > 2) {
-    npu_shape.push_back(npu_tensor->GetTensorDimension().GetHeight());
-  }
-  return npu_shape == tensor->shape();
+  return GetNpuTensorShape(tensor->shape().size(), npu_tensor) == tensor->shape();
 }
 
 int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -72,10 +86,10 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
   for (int i = 0; i < npu_input_tensors_.size(); ++i) {
     int index = 0;
     for (; index < in_tensors.size(); index++) {
-      if (!inputs_visited[index] && IsSameShapeTensor(in_tensors[index], npu_input_tensors_[i])) {
+      if (!inputs_visited[index] && IsSameShapeInTensor(in_tensors[index], npu_input_tensors_[i])) {
         void *data = in_tensors[index]->data_c();
         if (data == nullptr) {
-          MS_LOG(ERROR) << model_name_ << " Inputs data is nullptr";
+          MS_LOG(ERROR) << "For " << model_name_ << ", the " << i << "th input data is nullptr";
           return RET_ERROR;
         }
 
@@ -106,14 +120,28 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
     return RET_ERROR;
   }
 
+  std::vector<bool> outputs_visited(out_tensors.size(), false);
   for (int i = 0; i < npu_output_tensors_.size(); ++i) {
-    void *data = out_tensors[i]->MutableData();
-    if (data == nullptr) {
-      MS_LOG(ERROR) << "Malloc buffer failed.";
-      return RET_ERROR;
+    int index = 0;
+    for (; index < out_tensors.size(); index++) {
+      if (!outputs_visited[index] && IsSameShapeOutTensor(out_tensors[index], npu_output_tensors_[i])) {
+        void *data = out_tensors[index]->MutableData();
+        if (data == nullptr) {
+          MS_LOG(ERROR) << "For " << model_name_ << ", the " << i << "th output data is nullptr";
+          return RET_ERROR;
+        }
+
+        memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
+        out_tensors[index]->ResetRefCount();
+        outputs_visited[index] = true;
+        break;
+      }
+      if (index == out_tensors.size()) {
+        MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of " << i << " output tensor for npu executor "
+                      << model_name_;
+        return RET_ERROR;
+      }
     }
-    memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
-    out_tensors[i]->ResetRefCount();
   }
   return RET_OK;
 }
