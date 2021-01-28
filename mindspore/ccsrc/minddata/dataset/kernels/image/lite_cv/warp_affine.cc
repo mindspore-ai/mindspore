@@ -20,13 +20,6 @@
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"
 
-#ifdef ENABLE_ANDROID
-#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
-#define USE_NEON
-#include <arm_neon.h>
-#endif
-#endif
-
 #define BITS 5
 #define BITS1 15
 #define TAB_SZ (1 << BITS)
@@ -125,6 +118,134 @@ static int BorderPolate(int value, int length, PaddBorderType borderType) {
   return value;
 }
 
+static void RemapBilinearNotCur1C(int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
+                                  size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr) {
+  int shx = HW[dx * 2];
+  int shy = HW[dx * 2 + 1];
+  const int16_t *w_ptr = wblock + FHW[dx] * 4;
+  const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx;
+  *dst_ptr = CastToFixed(reinterpret_cast<int>(t_src_ptr[0] * w_ptr[0] + t_src_ptr[1] * w_ptr[1] +
+                                               t_src_ptr[src_step] * w_ptr[2] + t_src_ptr[src_step + 1] * w_ptr[3]));
+}
+
+static void RemapBilinearNotCur2C(int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
+                                  size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr) {
+  int shx = HW[dx * 2];
+  int shy = HW[dx * 2 + 1];
+  const int16_t *w_ptr = wblock + FHW[dx] * 4;
+  const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * 2;
+  int v0 = t_src_ptr[0] * w_ptr[0] + t_src_ptr[2] * w_ptr[1] + t_src_ptr[src_step] * w_ptr[2] +
+           t_src_ptr[src_step + 2] * w_ptr[3];
+  int v1 = t_src_ptr[1] * w_ptr[0] + t_src_ptr[3] * w_ptr[1] + t_src_ptr[src_step + 1] * w_ptr[2] +
+           t_src_ptr[src_step + 3] * w_ptr[3];
+  dst_ptr[0] = CastToFixed(v0);
+  dst_ptr[1] = CastToFixed(v1);
+}
+
+static void RemapBilinearNotCur3C(int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
+                                  size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr) {
+  int shx = HW[dx * 2];
+  int shy = HW[dx * 2 + 1];
+  const int16_t *w_ptr = wblock + FHW[dx] * 4;
+  const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * 3;
+  int v0 = t_src_ptr[0] * w_ptr[0] + t_src_ptr[3] * w_ptr[1] + t_src_ptr[src_step] * w_ptr[2] +
+           t_src_ptr[src_step + 3] * w_ptr[3];
+  int v1 = t_src_ptr[1] * w_ptr[0] + t_src_ptr[4] * w_ptr[1] + t_src_ptr[src_step + 1] * w_ptr[2] +
+           t_src_ptr[src_step + 4] * w_ptr[3];
+  int v2 = t_src_ptr[2] * w_ptr[0] + t_src_ptr[5] * w_ptr[1] + t_src_ptr[src_step + 2] * w_ptr[2] +
+           t_src_ptr[src_step + 5] * w_ptr[3];
+  dst_ptr[0] = CastToFixed(v0);
+  dst_ptr[1] = CastToFixed(v1);
+  dst_ptr[2] = CastToFixed(v2);
+}
+
+static void RemapBilinearNotCur4C(int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
+                                  size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr) {
+  int shx = HW[dx * 2];
+  int shy = HW[dx * 2 + 1];
+  const int16_t *w_ptr = wblock + FHW[dx] * 4;
+  const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * 4;
+  int v0 = t_src_ptr[0] * w_ptr[0] + t_src_ptr[4] * w_ptr[1] + t_src_ptr[src_step] * w_ptr[2] +
+           t_src_ptr[src_step + 4] * w_ptr[3];
+  int v1 = t_src_ptr[1] * w_ptr[0] + t_src_ptr[5] * w_ptr[1] + t_src_ptr[src_step + 1] * w_ptr[2] +
+           t_src_ptr[src_step + 5] * w_ptr[3];
+  dst_ptr[0] = CastToFixed(v0);
+  dst_ptr[1] = CastToFixed(v1);
+  v0 = t_src_ptr[2] * w_ptr[0] + t_src_ptr[6] * w_ptr[1] + t_src_ptr[src_step + 2] * w_ptr[2] +
+       t_src_ptr[src_step + 6] * w_ptr[3];
+  v1 = t_src_ptr[3] * w_ptr[0] + t_src_ptr[7] * w_ptr[1] + t_src_ptr[src_step + 3] * w_ptr[2] +
+       t_src_ptr[src_step + 7] * w_ptr[3];
+  dst_ptr[2] = CastToFixed(v0);
+  dst_ptr[3] = CastToFixed(v1);
+}
+
+static void RemapBilinearNotCurMoreC(int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
+                                     size_t src_step, int cn, const uint8_t *src_ptr, uint8_t *dst_ptr) {
+  int shx = HW[dx * 2];
+  int shy = HW[dx * 2 + 1];
+  const int16_t *w_ptr = wblock + FHW[dx] * 4;
+  const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * cn;
+  for (int k = 0; k < cn; k++) {
+    int v0 = t_src_ptr[k] * w_ptr[0] + t_src_ptr[k + cn] * w_ptr[1] + t_src_ptr[src_step + k] * w_ptr[2] +
+             t_src_ptr[src_step + k + cn] * w_ptr[3];
+    dst_ptr[k] = CastToFixed(v0);
+  }
+}
+
+static void RemapBilinearCur1C(LiteMat _src, int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
+                               size_t src_step, const uint8_t *src_ptr, uint8_t *dst_ptr, PaddBorderType borderType,
+                               const std::vector<uint8_t> &borderValue) {
+  int shx = HW[dx * 2];
+  int shy = HW[dx * 2 + 1];
+  if (borderType == PADD_BORDER_CONSTANT && (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
+    dst_ptr[0] = borderValue[0];
+  } else {
+    int sv0;
+    int sv1;
+    int su0;
+    int su1;
+    const int16_t *w_ptr = wblock + FHW[dx] * 4;
+
+    sv0 = BorderPolate(shx, _src.width_, borderType);
+    sv1 = BorderPolate(shx + 1, _src.width_, borderType);
+    su0 = BorderPolate(shy, _src.height_, borderType);
+    su1 = BorderPolate(shy + 1, _src.height_, borderType);
+    uint8_t v0 = sv0 >= 0 && su0 >= 0 ? src_ptr[su0 * src_step + sv0] : borderValue[0];
+    uint8_t v1 = sv1 >= 0 && su0 >= 0 ? src_ptr[su0 * src_step + sv1] : borderValue[0];
+    uint8_t v2 = sv0 >= 0 && su1 >= 0 ? src_ptr[su1 * src_step + sv0] : borderValue[0];
+    uint8_t v3 = sv1 >= 0 && su1 >= 0 ? src_ptr[su1 * src_step + sv1] : borderValue[0];
+    dst_ptr[0] = CastToFixed(reinterpret_cast<int>(v0 * w_ptr[0] + v1 * w_ptr[1] + v2 * w_ptr[2] + v3 * w_ptr[3]));
+  }
+}
+
+static void RemapBilinearCurMoreC(LiteMat _src, int dx, const int16_t *HW, const uint16_t *FHW, const int16_t *wblock,
+                                  size_t src_step, int cn, const uint8_t *src_ptr, uint8_t *dst_ptr,
+                                  PaddBorderType borderType, const std::vector<uint8_t> &borderValue) {
+  int shx = HW[dx * 2];
+  int shy = HW[dx * 2 + 1];
+  if (borderType == PADD_BORDER_CONSTANT && (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
+    for (int k = 0; k < cn; k++) dst_ptr[k] = borderValue[k];
+  } else {
+    int sv0;
+    int sv1;
+    int su0;
+    int su1;
+    const int16_t *w_ptr = wblock + FHW[dx] * 4;
+    sv0 = BorderPolate(shx, _src.width_, borderType);
+    sv1 = BorderPolate(shx + 1, _src.width_, borderType);
+    su0 = BorderPolate(shy, _src.height_, borderType);
+    su1 = BorderPolate(shy + 1, _src.height_, borderType);
+    const uint8_t *v0 = sv0 >= 0 && su0 >= 0 ? src_ptr + su0 * src_step + sv0 * cn : &borderValue[0];
+    const uint8_t *v1 = sv1 >= 0 && su0 >= 0 ? src_ptr + su0 * src_step + sv1 * cn : &borderValue[0];
+    const uint8_t *v2 = sv0 >= 0 && su1 >= 0 ? src_ptr + su1 * src_step + sv0 * cn : &borderValue[0];
+    const uint8_t *v3 = sv1 >= 0 && su1 >= 0 ? src_ptr + su1 * src_step + sv1 * cn : &borderValue[0];
+
+    for (int k = 0; k < cn; k++)
+      dst_ptr[k] =
+        CastToFixed(reinterpret_cast<int>(v0[k] * w_ptr[0] + v1[k] * w_ptr[1] + v2[k] * w_ptr[2] + v3[k] * w_ptr[3]));
+  }
+}
+
 static void RemapBilinear(const LiteMat &_src, LiteMat &_dst, const LiteMat &_hw, const LiteMat &_fhw,  // NOLINT
                           const void *_wblock, const PaddBorderType borderType,
                           const std::vector<uint8_t> &borderValue) {
@@ -159,128 +280,33 @@ static void RemapBilinear(const LiteMat &_src, LiteMat &_dst, const LiteMat &_hw
 
         if (cn == 1) {
           for (; dx < H1; dx++, dst_ptr++) {
-            int shx = HW[dx * 2];
-            int shy = HW[dx * 2 + 1];
-            const int16_t *w_ptr = wblock + FHW[dx] * 4;
-            const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx;
-            *dst_ptr =
-              CastToFixed(reinterpret_cast<int>(t_src_ptr[0] * w_ptr[0] + t_src_ptr[1] * w_ptr[1] +
-                                                t_src_ptr[src_step] * w_ptr[2] + t_src_ptr[src_step + 1] * w_ptr[3]));
+            RemapBilinearNotCur1C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
           }
         } else if (cn == 2) {
           for (; dx < H1; dx++, dst_ptr += 2) {
-            int shx = HW[dx * 2];
-            int shy = HW[dx * 2 + 1];
-            const int16_t *w_ptr = wblock + FHW[dx] * 4;
-            const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * 2;
-            int v0 = t_src_ptr[0] * w_ptr[0] + t_src_ptr[2] * w_ptr[1] + t_src_ptr[src_step] * w_ptr[2] +
-                     t_src_ptr[src_step + 2] * w_ptr[3];
-            int v1 = t_src_ptr[1] * w_ptr[0] + t_src_ptr[3] * w_ptr[1] + t_src_ptr[src_step + 1] * w_ptr[2] +
-                     t_src_ptr[src_step + 3] * w_ptr[3];
-            dst_ptr[0] = CastToFixed(v0);
-            dst_ptr[1] = CastToFixed(v1);
+            RemapBilinearNotCur2C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
           }
         } else if (cn == 3) {
           for (; dx < H1; dx++, dst_ptr += 3) {
-            int shx = HW[dx * 2];
-            int shy = HW[dx * 2 + 1];
-            const int16_t *w_ptr = wblock + FHW[dx] * 4;
-            const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * 3;
-            int v0 = t_src_ptr[0] * w_ptr[0] + t_src_ptr[3] * w_ptr[1] + t_src_ptr[src_step] * w_ptr[2] +
-                     t_src_ptr[src_step + 3] * w_ptr[3];
-            int v1 = t_src_ptr[1] * w_ptr[0] + t_src_ptr[4] * w_ptr[1] + t_src_ptr[src_step + 1] * w_ptr[2] +
-                     t_src_ptr[src_step + 4] * w_ptr[3];
-            int v2 = t_src_ptr[2] * w_ptr[0] + t_src_ptr[5] * w_ptr[1] + t_src_ptr[src_step + 2] * w_ptr[2] +
-                     t_src_ptr[src_step + 5] * w_ptr[3];
-            dst_ptr[0] = CastToFixed(v0);
-            dst_ptr[1] = CastToFixed(v1);
-            dst_ptr[2] = CastToFixed(v2);
+            RemapBilinearNotCur3C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
           }
         } else if (cn == 4) {
           for (; dx < H1; dx++, dst_ptr += 4) {
-            int shx = HW[dx * 2];
-            int shy = HW[dx * 2 + 1];
-            const int16_t *w_ptr = wblock + FHW[dx] * 4;
-            const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * 4;
-            int v0 = t_src_ptr[0] * w_ptr[0] + t_src_ptr[4] * w_ptr[1] + t_src_ptr[src_step] * w_ptr[2] +
-                     t_src_ptr[src_step + 4] * w_ptr[3];
-            int v1 = t_src_ptr[1] * w_ptr[0] + t_src_ptr[5] * w_ptr[1] + t_src_ptr[src_step + 1] * w_ptr[2] +
-                     t_src_ptr[src_step + 5] * w_ptr[3];
-            dst_ptr[0] = CastToFixed(v0);
-            dst_ptr[1] = CastToFixed(v1);
-            v0 = t_src_ptr[2] * w_ptr[0] + t_src_ptr[6] * w_ptr[1] + t_src_ptr[src_step + 2] * w_ptr[2] +
-                 t_src_ptr[src_step + 6] * w_ptr[3];
-            v1 = t_src_ptr[3] * w_ptr[0] + t_src_ptr[7] * w_ptr[1] + t_src_ptr[src_step + 3] * w_ptr[2] +
-                 t_src_ptr[src_step + 7] * w_ptr[3];
-            dst_ptr[2] = CastToFixed(v0);
-            dst_ptr[3] = CastToFixed(v1);
+            RemapBilinearNotCur4C(dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr);
           }
         } else {
           for (; dx < H1; dx++, dst_ptr += cn) {
-            int shx = HW[dx * 2];
-            int shy = HW[dx * 2 + 1];
-            const int16_t *w_ptr = wblock + FHW[dx] * 4;
-            const uint8_t *t_src_ptr = src_ptr + shy * src_step + shx * cn;
-            for (int k = 0; k < cn; k++) {
-              int v0 = t_src_ptr[k] * w_ptr[0] + t_src_ptr[k + cn] * w_ptr[1] + t_src_ptr[src_step + k] * w_ptr[2] +
-                       t_src_ptr[src_step + k + cn] * w_ptr[3];
-              dst_ptr[k] = CastToFixed(v0);
-            }
+            RemapBilinearNotCurMoreC(dx, HW, FHW, wblock, src_step, cn, src_ptr, dst_ptr);
           }
         }
       } else {
         if (cn == 1) {
           for (; dx < H1; dx++, dst_ptr++) {
-            int shx = HW[dx * 2];
-            int shy = HW[dx * 2 + 1];
-            if (borderType == PADD_BORDER_CONSTANT &&
-                (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
-              dst_ptr[0] = borderValue[0];
-            } else {
-              int sv0;
-              int sv1;
-              int su0;
-              int su1;
-              const int16_t *w_ptr = wblock + FHW[dx] * 4;
-
-              sv0 = BorderPolate(shx, _src.width_, borderType);
-              sv1 = BorderPolate(shx + 1, _src.width_, borderType);
-              su0 = BorderPolate(shy, _src.height_, borderType);
-              su1 = BorderPolate(shy + 1, _src.height_, borderType);
-              uint8_t v0 = sv0 >= 0 && su0 >= 0 ? src_ptr[su0 * src_step + sv0] : borderValue[0];
-              uint8_t v1 = sv1 >= 0 && su0 >= 0 ? src_ptr[su0 * src_step + sv1] : borderValue[0];
-              uint8_t v2 = sv0 >= 0 && su1 >= 0 ? src_ptr[su1 * src_step + sv0] : borderValue[0];
-              uint8_t v3 = sv1 >= 0 && su1 >= 0 ? src_ptr[su1 * src_step + sv1] : borderValue[0];
-              dst_ptr[0] =
-                CastToFixed(reinterpret_cast<int>(v0 * w_ptr[0] + v1 * w_ptr[1] + v2 * w_ptr[2] + v3 * w_ptr[3]));
-            }
+            RemapBilinearCur1C(_src, dx, HW, FHW, wblock, src_step, src_ptr, dst_ptr, borderType, borderValue);
           }
         } else {
           for (; dx < H1; dx++, dst_ptr += cn) {
-            int shx = HW[dx * 2];
-            int shy = HW[dx * 2 + 1];
-            if (borderType == PADD_BORDER_CONSTANT &&
-                (shx >= _src.width_ || shx + 1 < 0 || shy >= _src.height_ || shy + 1 < 0)) {
-              for (int k = 0; k < cn; k++) dst_ptr[k] = borderValue[k];
-            } else {
-              int sv0;
-              int sv1;
-              int su0;
-              int su1;
-              const int16_t *w_ptr = wblock + FHW[dx] * 4;
-              sv0 = BorderPolate(shx, _src.width_, borderType);
-              sv1 = BorderPolate(shx + 1, _src.width_, borderType);
-              su0 = BorderPolate(shy, _src.height_, borderType);
-              su1 = BorderPolate(shy + 1, _src.height_, borderType);
-              const uint8_t *v0 = sv0 >= 0 && su0 >= 0 ? src_ptr + su0 * src_step + sv0 * cn : &borderValue[0];
-              const uint8_t *v1 = sv1 >= 0 && su0 >= 0 ? src_ptr + su0 * src_step + sv1 * cn : &borderValue[0];
-              const uint8_t *v2 = sv0 >= 0 && su1 >= 0 ? src_ptr + su1 * src_step + sv0 * cn : &borderValue[0];
-              const uint8_t *v3 = sv1 >= 0 && su1 >= 0 ? src_ptr + su1 * src_step + sv1 * cn : &borderValue[0];
-
-              for (int k = 0; k < cn; k++)
-                dst_ptr[k] = CastToFixed(
-                  reinterpret_cast<int>(v0[k] * w_ptr[0] + v1[k] * w_ptr[1] + v2[k] * w_ptr[2] + v3[k] * w_ptr[3]));
-            }
+            RemapBilinearCurMoreC(_src, dx, HW, FHW, wblock, src_step, cn, src_ptr, dst_ptr, borderType, borderValue);
           }
         }
       }
