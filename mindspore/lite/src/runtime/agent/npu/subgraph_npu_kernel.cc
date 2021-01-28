@@ -78,7 +78,8 @@ domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
 }
 
 int SubGraphNpuKernel::Run() {
-  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)->Run(in_tensors_, out_tensors_, out_nodes_, nodes_);
+  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)
+    ->Run(in_tensors_, out_tensor_sorted_, out_nodes_, nodes_);
 }
 
 int SubGraphNpuKernel::BuildNPUInputOp() {
@@ -156,6 +157,14 @@ std::vector<ge::Operator> SubGraphNpuKernel::GetNPUNodes(const vector<kernel::Li
 int SubGraphNpuKernel::BuildNPUOutputOp() {
   subgraph_output_op_.clear();
   subgraph_output_op_ = GetNPUNodes(out_nodes_);
+  out_tensor_sorted_.resize(out_tensors_.size());
+  int i = 0;
+  for (auto node : out_nodes_) {
+    for (auto tensor : node->out_tensors()) {
+      if (std::find(out_tensors_.begin(), out_tensors_.end(), tensor) != out_tensors_.end())
+        this->out_tensor_sorted_[i++] = tensor;
+    }
+  }
   if (subgraph_output_op_.empty()) {
     MS_LOG(ERROR) << "NPU subgraph output op is empty.";
     return RET_ERROR;

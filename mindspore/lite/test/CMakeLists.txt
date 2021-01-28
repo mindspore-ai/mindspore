@@ -218,6 +218,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/functionalize_control_op_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/functionalize_while.cc
+            ${LITE_DIR}/tools/optimizer/graph/inputs_adjust_pass.cc
             )
 endif()
 ### train

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,15 @@ PrimitiveC *CaffeScaleParser::ParseLitePrimitive(const caffe::LayerParameter &pr
   }
 
   const caffe::ScaleParameter &scaleParam = weight.scale_param();
+  attr->axis = 1;
   if (scaleParam.has_axis()) {
     uint32_t axis_index = 1;
     if (GetAxisIndex(scaleParam.axis(), &axis_index)) {
       MS_LOG(ERROR) << "scale get axis failed for layer " << weight.name().c_str();
       return nullptr;
     }
+    attr->axis = axis_index;
   }
-  attr->axis = 1;
   auto primitive = std::make_unique<schema::PrimitiveT>();
   primitive->value.type = schema::PrimitiveType_Scale;
   primitive->value.value = attr.release();

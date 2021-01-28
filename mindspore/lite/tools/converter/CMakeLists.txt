@@ -69,6 +69,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/mindir_inputs_adjust_pass.cc
         ../optimizer/graph/functionalize_control_op_pass.cc
         ../optimizer/graph/functionalize_while.cc
+        ../optimizer/graph/inputs_adjust_pass.cc
         )
 
 add_subdirectory(../anf_importer anf_importer)

@@ -62,9 +62,9 @@ int ResizeBaseCPUKernel::CheckParameters() {
       MS_LOG(INFO) << "Out shape is not assigned";
       const_shape_ = false;
     } else {
-      auto ret = CalculateLinearNewHeightWidth();
-      if (ret != RET_OK) {
-        return ret;
+      if (InferShapeDone()) {
+        new_height_ = out_tensors_.at(0)->shape().at(1);
+        new_width_ = out_tensors_.at(0)->shape().at(2);
       }
       const_shape_ = true;
     }
@@ -75,52 +75,6 @@ int ResizeBaseCPUKernel::CheckParameters() {
     MS_LOG(ERROR) << "Resize currently not support preserve_aspect_ratio true";
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-int ResizeBaseCPUKernel::CalculateLinearNewHeightWidth() {
-  if (method_ != static_cast<int>(schema::ResizeMethod_LINEAR)) {
-    return RET_OK;
-  }
-  if (in_tensors_.size() != 2) {
-    return RET_ERROR;
-  }
-  auto input_tensor = in_tensors_.at(0);
-  auto shape_scale_tensor = in_tensors_.at(1);
-  if (shape_scale_tensor->data_type() == kNumberTypeFloat32) {
-    // float type means scale
-    float *shape_scale = reinterpret_cast<float *>(shape_scale_tensor->data_c());
-    if (shape_scale == nullptr) {
-      return RET_ERROR;
-    }
-    if (shape_scale_tensor->format() == schema::Format_NHWC) {
-      new_height_ = input_tensor->Height() * shape_scale[1];
-      new_width_ = input_tensor->Width() * shape_scale[2];
-    } else if (shape_scale_tensor->format() == schema::Format_NCHW) {
-      new_height_ = input_tensor->Height() * shape_scale[2];
-      new_width_ = input_tensor->Width() * shape_scale[3];
-    } else {
-      MS_LOG(ERROR) << "resize not support format " << shape_scale_tensor->format();
-      return RET_ERROR;
-    }
-  } else if (shape_scale_tensor->data_type() == kNumberTypeInt32) {
-    // int32 type means real shape
-    int32_t *shape_data = reinterpret_cast<int32_t *>(shape_scale_tensor->data_c());
-    if (shape_data == nullptr) {
-      return RET_ERROR;
-    }
-    if (shape_scale_tensor->format() == schema::Format_NHWC) {
-      new_height_ = shape_data[1];
-      new_width_ = shape_data[2];
-    } else if (shape_scale_tensor->format() == schema::Format_NCHW) {
-      new_height_ = shape_data[2];
-      new_width_ = shape_data[3];
-    } else {
-      MS_LOG(ERROR) << "resize not support format " << shape_scale_tensor->format();
-      return RET_ERROR;
-    }
-  }
-
   return RET_OK;
 }
 
