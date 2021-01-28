@@ -37,6 +37,7 @@ class GraphMapSchema:
             "second_id": {"type": "int64"},
             "third_id": {"type": "int64"},
             "type": {"type": "int32"},
+            "weight": {"type": "float32"},
             "attribute": {"type": "string"},  # 'n' for ndoe, 'e' for edge
             "node_feature_index": {"type": "int32", "shape": [-1]},
             "edge_feature_index": {"type": "int32", "shape": [-1]}
@@ -91,8 +92,11 @@ class GraphMapSchema:
             logger.info("node cannot be None.")
             raise ValueError("node cannot be None.")
 
-        node_graph = {"first_id": node["id"], "second_id": 0, "third_id": 0, "attribute": 'n', "type": node["type"],
-                      "node_feature_index": []}
+        node_graph = {"first_id": node["id"], "second_id": 0, "third_id": 0, "weight": 1.0, "attribute": 'n',
+                      "type": node["type"], "node_feature_index": []}
+        if "weight" in node:
+            node_graph["weight"] = node["weight"]
+
         for i in range(self.num_node_features):
             k = i + 1
             node_field_key = 'feature_' + str(k)
@@ -129,8 +133,11 @@ class GraphMapSchema:
             logger.info("edge cannot be None.")
             raise ValueError("edge cannot be None.")
 
-        edge_graph = {"first_id": edge["id"], "second_id": edge["src_id"], "third_id": edge["dst_id"], "attribute": 'e',
-                      "type": edge["type"], "edge_feature_index": []}
+        edge_graph = {"first_id": edge["id"], "second_id": edge["src_id"], "third_id": edge["dst_id"], "weight": 1.0,
+                      "attribute": 'e', "type": edge["type"], "edge_feature_index": []}
+
+        if "weight" in edge:
+            edge_graph["weight"] = edge["weight"]
 
         for i in range(self.num_edge_features):
             k = i + 1

@@ -80,10 +80,12 @@ class GraphDataImpl : public GraphData {
   // @param std::vector<NodeType> node_list - List of nodes
   // @param std::vector<NodeIdType> neighbor_nums - Number of neighbors sampled per hop
   // @param std::vector<NodeType> neighbor_types - Neighbor type sampled per hop
+  // @param std::SamplingStrategy strategy - Sampling strategy
   // @param std::shared_ptr<Tensor> *out - Returned neighbor's id.
   // @return Status The status code returned
   Status GetSampledNeighbors(const std::vector<NodeIdType> &node_list, const std::vector<NodeIdType> &neighbor_nums,
-                             const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out) override;
+                             const std::vector<NodeType> &neighbor_types, SamplingStrategy strategy,
+                             std::shared_ptr<Tensor> *out) override;
 
   // Get negative sampled neighbors.
   // @param std::vector<NodeType> node_list - List of nodes
@@ -98,7 +100,7 @@ class GraphDataImpl : public GraphData {
   // @param std::vector<NodeIdType> node_list - List of nodes
   // @param std::vector<NodeType> meta_path - node type of each step
   // @param float step_home_param - return hyper parameter in node2vec algorithm
-  // @param float step_away_param - inout hyper parameter in node2vec algorithm
+  // @param float step_away_param - in out hyper parameter in node2vec algorithm
   // @param NodeIdType default_node - default node id
   // @param std::shared_ptr<Tensor> *out - Returned nodes id in walk path
   // @return Status The status code returned
@@ -194,7 +196,7 @@ class GraphDataImpl : public GraphData {
     std::vector<NodeIdType> node_list_;
     std::vector<NodeType> meta_path_;
     float step_home_param_;  // Return hyper parameter. Default is 1.0
-    float step_away_param_;  // Inout hyper parameter. Default is 1.0
+    float step_away_param_;  // In out hyper parameter. Default is 1.0
     NodeIdType default_node_;
 
     int32_t num_walks_;    // Number of walks per source. Default is 1

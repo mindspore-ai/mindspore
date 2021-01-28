@@ -20,6 +20,7 @@ from multiprocessing import Process
 import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
+from mindspore.dataset.engine import SamplingStrategy
 
 DATASET_FILE = "../data/mindrecord/testGraphData/testdata"
 
@@ -68,9 +69,9 @@ class GNNGraphDataset():
         neg_nodes = self.g.get_neg_sampled_neighbors(
             node_list=nodes, neg_neighbor_num=3, neg_neighbor_type=1)
         nodes_neighbors = self.g.get_sampled_neighbors(node_list=nodes, neighbor_nums=[
-            2, 2], neighbor_types=[2, 1])
-        neg_nodes_neighbors = self.g.get_sampled_neighbors(
-            node_list=neg_nodes[:, 1:].reshape(-1), neighbor_nums=[2, 2], neighbor_types=[2, 2])
+            2, 2], neighbor_types=[2, 1], strategy=SamplingStrategy.RANDOM)
+        neg_nodes_neighbors = self.g.get_sampled_neighbors(node_list=neg_nodes[:, 1:].reshape(-1), neighbor_nums=[2, 2],
+                                                           neighbor_types=[2, 1], strategy=SamplingStrategy.EDGE_WEIGHT)
         nodes_neighbors_features = self.g.get_node_feature(
             node_list=nodes_neighbors, feature_types=[2, 3])
         neg_neighbors_features = self.g.get_node_feature(

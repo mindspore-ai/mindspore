@@ -71,6 +71,7 @@ message GnnGraphDataRequestPb {
   repeated int32 number = 4; // samples number
   TensorPb id_tensor = 5; // input ids ,node id or edge id
   GnnRandomWalkPb random_walk = 6;
+  int32 strategy = 7;
 }
 
 message GnnGraphDataResponsePb {

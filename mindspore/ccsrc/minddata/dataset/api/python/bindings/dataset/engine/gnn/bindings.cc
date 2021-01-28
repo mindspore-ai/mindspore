@@ -65,9 +65,9 @@ PYBIND_REGISTER(
            })
       .def("get_sampled_neighbors",
            [](gnn::GraphData &g, std::vector<gnn::NodeIdType> node_list, std::vector<gnn::NodeIdType> neighbor_nums,
-              std::vector<gnn::NodeType> neighbor_types) {
+              std::vector<gnn::NodeType> neighbor_types, SamplingStrategy strategy) {
              std::shared_ptr<Tensor> out;
-             THROW_IF_ERROR(g.GetSampledNeighbors(node_list, neighbor_nums, neighbor_types, &out));
+             THROW_IF_ERROR(g.GetSampledNeighbors(node_list, neighbor_nums, neighbor_types, strategy, &out));
              return out;
            })
       .def("get_neg_sampled_neighbors",
@@ -114,8 +114,15 @@ PYBIND_REGISTER(
         return out;
       }))
       .def("stop", [](gnn::GraphDataServer &g) { THROW_IF_ERROR(g.Stop()); })
-      .def("is_stoped", [](gnn::GraphDataServer &g) { return g.IsStoped(); });
+      .def("is_stopped", [](gnn::GraphDataServer &g) { return g.IsStopped(); });
   }));
+
+PYBIND_REGISTER(SamplingStrategy, 0, ([](const py::module *m) {
+                  (void)py::enum_<SamplingStrategy>(*m, "SamplingStrategy", py::arithmetic())
+                    .value("DE_SAMPLING_RANDOM", SamplingStrategy::kRandom)
+                    .value("DE_SAMPLING_EDGE_WEIGHT", SamplingStrategy::kEdgeWeight)
+                    .export_values();
+                }));
 
 }  // namespace dataset
 }  // namespace mindspore
