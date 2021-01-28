@@ -61,12 +61,13 @@ void Conv2dCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
 
   std::vector<int> stride{stride_ori[2], stride_ori[3]};
+  std::vector<int> dilation{dilation_ori[2], dilation_ori[3]};
   dnnl::memory::dims strides{stride_ori[2], stride_ori[3]};
   dnnl::memory::dims dilates{dilation_ori[2] - 1, dilation_ori[3] - 1};
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
-  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r);
+  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "get padding failed";
   }
