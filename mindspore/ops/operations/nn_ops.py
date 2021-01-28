@@ -555,7 +555,7 @@ class Elu(PrimitiveWithInfer):
         Tensor, has the same shape and data type as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
