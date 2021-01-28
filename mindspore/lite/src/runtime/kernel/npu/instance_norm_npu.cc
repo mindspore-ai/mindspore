@@ -53,7 +53,7 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
   ge::TensorDesc gamma_tensor_desc(lite::ConverterToNPUShape({1, gamma_shape[0], 1, 1}), ge::FORMAT_NCHW,
                                    lite::ConverterToNPUDataType(inputs[1]->data_type()));
   gamma_tensor->SetTensorDesc(gamma_tensor_desc);
-  gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs.data()), inputs[1]->Size());
+  gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[1]->data_c()), inputs[1]->Size());
   op_->set_input_gamma(*gamma);
 
   auto beta = new (std::nothrow) hiai::op::Const(name_ + "_beta");
@@ -61,16 +61,16 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
     MS_LOG(ERROR) << "New beta const failed.";
     return RET_ERROR;
   }
-  auto beta_shape = inputs[1]->shape();
+  auto beta_shape = inputs[2]->shape();
   std::shared_ptr<ge::Tensor> beta_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
   if (beta_tensor == nullptr) {
     MS_LOG(ERROR) << "new beta_tensor failed.";
     return RET_ERROR;
   }
   ge::TensorDesc beta_tensor_desc(lite::ConverterToNPUShape({1, beta_shape[0], 1, 1}), ge::FORMAT_NCHW,
-                                  lite::ConverterToNPUDataType(inputs[1]->data_type()));
+                                  lite::ConverterToNPUDataType(inputs[2]->data_type()));
   beta_tensor->SetTensorDesc(beta_tensor_desc);
-  beta_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs.data()), inputs[1]->Size());
+  beta_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[2]->data_c()), inputs[2]->Size());
   op_->set_input_beta(*beta);
   op_->set_attr_epsilon(instance_norm_param_->epsilon_);
   return RET_OK;

@@ -68,6 +68,9 @@ int ArithmeticSelfNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inp
     case PrimitiveType_Sqrt:
       op = CreateOperator<hiai::op::Sqrt>(npu_inputs[0], name_);
       break;
+    case PrimitiveType_Rsqrt:
+      op = CreateOperator<hiai::op::Rsqrt>(npu_inputs[0], name_);
+      break;
     case PrimitiveType_Sin:
       op = CreateOperator<hiai::op::Sin>(npu_inputs[0], name_);
       break;
