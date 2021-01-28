@@ -242,8 +242,11 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
   std::shared_ptr<Dataset> ds5 = MindData(file_list, {}, SubsetRandomSampler({0, 1, 2}, 10));
   EXPECT_NE(ds5, nullptr);
 
-  std::vector<std::shared_ptr<Dataset>> ds = {ds1, ds2, ds3, ds4, ds5};
-  std::vector<int32_t> expected_samples = {5, 5, 2, 3, 3};
+  std::shared_ptr<Dataset> ds6 = MindData(file_list, {}, SubsetSampler({1, 2}, 10));
+  EXPECT_NE(ds5, nullptr);
+
+  std::vector<std::shared_ptr<Dataset>> ds = {ds1, ds2, ds3, ds4, ds5, ds6};
+  std::vector<int32_t> expected_samples = {5, 5, 2, 3, 3, 2};
 
   for (int32_t i = 0; i < ds.size(); i++) {
     // Create an iterator over the result of the above dataset

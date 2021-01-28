@@ -72,9 +72,14 @@ PYBIND_REGISTER(SequentialSamplerRT, 1, ([](const py::module *m) {
                     .def(py::init<int64_t, int64_t>());
                 }));
 
-PYBIND_REGISTER(SubsetRandomSamplerRT, 1, ([](const py::module *m) {
-                  (void)py::class_<SubsetRandomSamplerRT, SamplerRT, std::shared_ptr<SubsetRandomSamplerRT>>(
+PYBIND_REGISTER(SubsetRandomSamplerRT, 2, ([](const py::module *m) {
+                  (void)py::class_<SubsetRandomSamplerRT, SubsetSamplerRT, std::shared_ptr<SubsetRandomSamplerRT>>(
                     *m, "SubsetRandomSampler")
+                    .def(py::init<int64_t, std::vector<int64_t>>());
+                }));
+
+PYBIND_REGISTER(SubsetSamplerRT, 1, ([](const py::module *m) {
+                  (void)py::class_<SubsetSamplerRT, SamplerRT, std::shared_ptr<SubsetSamplerRT>>(*m, "SubsetSampler")
                     .def(py::init<int64_t, std::vector<int64_t>>());
                 }));
 

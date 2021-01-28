@@ -8,6 +8,7 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES
         sampler.cc
         sequential_sampler.cc
         subset_random_sampler.cc
+        subset_sampler.cc
         weighted_random_sampler.cc
         )
 

@@ -34,11 +34,15 @@ class __attribute__((visibility("default"))) ShardSample : public ShardOperator 
 
   ShardSample(int num, int den, int par, int no_of_samples = 0, int offset = -1);
 
+  ShardSample(const std::vector<int64_t> &indices);
+
   ShardSample(const std::vector<int64_t> &indices, uint32_t seed);
 
   ~ShardSample() override{};
 
   MSRStatus Execute(ShardTask &tasks) override;
+
+  MSRStatus UpdateTasks(ShardTask &tasks, int taking);
 
   MSRStatus SufExecute(ShardTask &tasks) override;
 

@@ -410,9 +410,7 @@ def check_generatordataset(method):
         if sampler is not None:
             if isinstance(sampler, samplers.PKSampler):
                 raise ValueError("GeneratorDataset doesn't support PKSampler.")
-            if not isinstance(sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
-                                        samplers.RandomSampler, samplers.SubsetRandomSampler,
-                                        samplers.WeightedRandomSampler, samplers.Sampler)):
+            if not isinstance(sampler, samplers.BuiltinSampler):
                 try:
                     iter(sampler)
                 except TypeError:

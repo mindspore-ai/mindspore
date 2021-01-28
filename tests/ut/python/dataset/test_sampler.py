@@ -165,7 +165,7 @@ def test_python_sampler():
     assert list(sp1.get_indices()) == [0, 1, 2, 3, 4]
 
 
-def test_subset_sampler():
+def test_sequential_sampler2():
     manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
     map_ = {(172876, 0): 0, (54214, 0): 1, (54214, 1): 2, (173673, 0): 3, (64631, 1): 4}
 
@@ -189,6 +189,48 @@ def test_subset_sampler():
     assert test_config(3, 2) == [3, 4]
     assert test_config(4, 1) == [4]
     assert test_config(4, None) == [4]
+
+
+def test_subset_sampler():
+    def test_config(indices, num_samples=None, exception_msg=None):
+        def pipeline():
+            sampler = ds.SubsetSampler(indices, num_samples)
+            data = ds.NumpySlicesDataset(list(range(0, 10)), sampler=sampler)
+            dataset_size = data.get_dataset_size()
+            return [d[0] for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True)], dataset_size
+
+        if exception_msg is None:
+            res, size = pipeline()
+            assert indices[:num_samples] == res
+            assert len(indices[:num_samples]) == size
+        else:
+            with pytest.raises(Exception) as error_info:
+                pipeline()
+            print(str(error_info))
+            assert exception_msg in str(error_info)
+
+    test_config([1, 2, 3])
+    test_config(list(range(10)))
+    test_config([0])
+    test_config([9])
+    test_config(list(range(0, 10, 2)))
+    test_config(list(range(1, 10, 2)))
+    test_config(list(range(9, 0, -1)))
+    test_config(list(range(9, 0, -2)))
+    test_config(list(range(8, 0, -2)))
+    test_config([0, 9, 3, 2])
+    test_config([0, 0, 0, 0])
+    test_config([0])
+    test_config([0, 9, 3, 2], num_samples=2)
+    test_config([0, 9, 3, 2], num_samples=5)
+
+    test_config([20], exception_msg="Sample ID (20) is out of bound, expected range [0, 9]")
+    test_config([10], exception_msg="Sample ID (10) is out of bound, expected range [0, 9]")
+    test_config([0, 9, 0, 500], exception_msg="Sample ID (500) is out of bound, expected range [0, 9]")
+    test_config([0, 9, -6, 2], exception_msg="Sample ID (-6) is out of bound, expected range [0, 9]")
+    # test_config([], exception_msg="Indices list is empty") # temporary until we check with MindDataset
+    test_config([0, 9, 3, 2], num_samples=0,
+                exception_msg="num_samples should be a positive integer value, but got num_samples: 0.")
 
 
 def test_sampler_chain():
@@ -249,6 +291,7 @@ if __name__ == '__main__':
     test_random_sampler_multi_iter(True)
     test_sampler_py_api()
     test_python_sampler()
+    test_sequential_sampler2()
     test_subset_sampler()
     test_sampler_chain()
     test_add_sampler_invalid_input()

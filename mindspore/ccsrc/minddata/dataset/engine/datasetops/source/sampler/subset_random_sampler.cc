@@ -28,99 +28,31 @@ namespace dataset {
 // Constructor.
 SubsetRandomSamplerRT::SubsetRandomSamplerRT(int64_t num_samples, const std::vector<int64_t> &indices,
                                              int64_t samples_per_buffer)
-    : SamplerRT(num_samples, samples_per_buffer), indices_(indices), sample_id_(0), buffer_id_(0) {}
+    : SubsetSamplerRT(num_samples, indices, samples_per_buffer) {}
 
 // Initialized this Sampler.
 Status SubsetRandomSamplerRT::InitSampler() {
   if (is_initialized) {
     return Status::OK();
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_) + ".\n");
 
-  // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
-  // In this case, the id's are provided by the user.  Cap the num_samples on the number of id's given.
-  if (num_samples_ == 0 || num_samples_ > static_cast<int64_t>(indices_.size())) {
-    num_samples_ = static_cast<int64_t>(indices_.size());
-  }
   // Initialize random generator with seed from config manager
   rand_gen_.seed(GetSeed());
-
-  if (samples_per_buffer_ > num_samples_) {
-    samples_per_buffer_ = num_samples_;
-  }
 
   // num_samples_ could be smaller than the total number of input id's.
   // We will shuffle the full set of id's, but only select the first num_samples_ of them later.
   std::shuffle(indices_.begin(), indices_.end(), rand_gen_);
 
-  is_initialized = true;
-  return Status::OK();
+  return SubsetSamplerRT::InitSampler();
 }
 
 // Reset the internal variable to the initial state.
 Status SubsetRandomSamplerRT::ResetSampler() {
-  // Reset the internal counters.
-  sample_id_ = 0;
-  buffer_id_ = 0;
-
   // Randomized the indices again.
   rand_gen_.seed(GetSeed());
   std::shuffle(indices_.begin(), indices_.end(), rand_gen_);
 
-  if (HasChildSampler()) {
-    RETURN_IF_NOT_OK(child_[0]->ResetSampler());
-  }
-
-  return Status::OK();
-}
-
-// Get the sample ids.
-Status SubsetRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
-  // All samples have been drawn
-  if (sample_id_ == num_samples_) {
-    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagEOE);
-  } else {
-    if (HasChildSampler()) {
-      RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
-    }
-
-    (*out_buffer) = std::make_unique<DataBuffer>(buffer_id_++, DataBuffer::kDeBFlagNone);
-    std::shared_ptr<Tensor> outputIds;
-
-    int64_t last_id = sample_id_ + samples_per_buffer_;
-    // Handling the return all samples at once, and when last draw is not a full batch.
-    if (last_id > num_samples_) {
-      last_id = num_samples_;
-    }
-
-    // Allocate tensor
-    RETURN_IF_NOT_OK(CreateSamplerTensor(&outputIds, last_id - sample_id_));
-
-    // Initialize tensor
-    auto id_ptr = outputIds->begin<int64_t>();
-    while (sample_id_ < last_id) {
-      if (indices_[sample_id_] >= num_rows_) {
-        std::string err_msg = "Generated indice is out of bound, expect range [0, num_data-1], got indice: " +
-                              std::to_string(indices_[sample_id_]) + ", num_data: " + std::to_string(num_rows_ - 1);
-        RETURN_STATUS_UNEXPECTED(err_msg);
-      }
-
-      int64_t sampled_id = ((indices_[sample_id_] % num_rows_) + num_rows_) % num_rows_;
-      if (HasChildSampler()) {
-        RETURN_IF_NOT_OK(GetAssociatedChildId(&sampled_id, sampled_id));
-      }
-
-      *id_ptr = sampled_id;
-      id_ptr++;
-      sample_id_++;
-    }
-
-    // Create a TensorTable from that single tensor and push into DataBuffer
-    (*out_buffer)->set_tensor_table(std::make_unique<TensorQTable>(1, TensorRow(1, outputIds)));
-  }
-
-  return Status::OK();
+  return SubsetSamplerRT::ResetSampler();
 }
 
 void SubsetRandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
@@ -134,19 +66,8 @@ void SubsetRandomSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const
 
 Status SubsetRandomSamplerRT::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
+  RETURN_IF_NOT_OK(SubsetSamplerRT::to_json(&args));
   args["sampler_name"] = "SubsetRandomSampler";
-  args["indices"] = indices_;
-  args["num_samples"] = num_samples_;
-  if (this->HasChildSampler()) {
-    std::vector<nlohmann::json> children_args;
-    for (auto child : child_) {
-      nlohmann::json child_arg;
-      RETURN_IF_NOT_OK(child->to_json(&child_arg));
-      children_args.push_back(child_arg);
-    }
-    args["child_sampler"] = children_args;
-  }
-  *out_json = args;
   return Status::OK();
 }
 }  // namespace dataset

@@ -119,6 +119,7 @@ SET(DE_UT_SRCS
         status_test.cc
         storage_container_test.cc
         subset_random_sampler_test.cc
+        subset_sampler_test.cc
         swap_red_blue_test.cc
         take_op_test.cc
         task_manager_test.cc
