@@ -4619,7 +4619,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         Otherwise, the output is a scalar.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
