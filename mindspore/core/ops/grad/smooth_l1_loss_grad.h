@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SMOOTH_L1_LOSS_GRAD_H_
-#define MINDSPORE_CORE_C_OPS_SMOOTH_L1_LOSS_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_GRAD_H_
+#define MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_GRAD_H_
 #include <memory>
 #include <vector>
 
@@ -41,4 +41,4 @@ AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const
 using PrimSmoothL1LossGradPtr = std::shared_ptr<SmoothL1LossGrad>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_SMOOTH_L1_LOSS_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_GRAD_H_

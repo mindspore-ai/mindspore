@@ -468,7 +468,7 @@ TEST_F(ConstantFoldingFusionTest, TestTransposeConstantFold) {
 
 TEST_F(ConstantFoldingFusionTest, TestStackConstantFold) {
   auto stackT = new schema::StackT;
-  stackT->axis[0] = 1;
+  stackT->axis = 1;
   auto meta_graph = BuildGraph(schema::PrimitiveType_Stack, stackT);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto optimizer = std::make_shared<opt::GraphOptimizer>();

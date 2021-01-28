@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SQUARED_DIFFERENCE_H_
-#define MINDSPORE_CORE_C_OPS_SQUARED_DIFFERENCE_H_
+#ifndef MINDSPORE_CORE_OPS_SQUARED_DIFFERENCE_H_
+#define MINDSPORE_CORE_OPS_SQUARED_DIFFERENCE_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -38,4 +38,4 @@ using PrimSquaredDifferencePtr = std::shared_ptr<SquaredDifference>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_SQUARED_DIFFERENCE_H_
+#endif  // MINDSPORE_CORE_OPS_SQUARED_DIFFERENCE_H_

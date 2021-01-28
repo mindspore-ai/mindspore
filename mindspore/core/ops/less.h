@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_LESS_H_
-#define MINDSPORE_CORE_C_OPS_LESS_H_
+#ifndef MINDSPORE_CORE_OPS_LESS_H_
+#define MINDSPORE_CORE_OPS_LESS_H_
 #include <vector>
 #include <memory>
 
@@ -38,4 +38,4 @@ AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 using PrimLessPtr = std::shared_ptr<Less>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_LESS_H_
+#endif  // MINDSPORE_CORE_OPS_LESS_H_

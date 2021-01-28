@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ONES_LIKE_H_
-#define MINDSPORE_CORE_C_OPS_ONES_LIKE_H_
+#ifndef MINDSPORE_CORE_OPS_ONES_LIKE_H_
+#define MINDSPORE_CORE_OPS_ONES_LIKE_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -38,4 +38,4 @@ using PrimOnesLikePtr = std::shared_ptr<OnesLike>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ONES_LIKE_H_
+#endif  // MINDSPORE_CORE_OPS_ONES_LIKE_H_

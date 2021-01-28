@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_EXP_H_
-#define MINDSPORE_CORE_C_OPS_EXP_H_
+#ifndef MINDSPORE_CORE_OPS_EXP_H_
+#define MINDSPORE_CORE_OPS_EXP_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -42,4 +42,4 @@ using PrimExpPtr = std::shared_ptr<Exp>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_EXP_H_
+#endif  // MINDSPORE_CORE_OPS_EXP_H_

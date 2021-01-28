@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ZEROSLIKE_H_
-#define MINDSPORE_CORE_C_OPS_ZEROSLIKE_H_
+#ifndef MINDSPORE_CORE_OPS_ZEROSLIKE_H_
+#define MINDSPORE_CORE_OPS_ZEROSLIKE_H_
 #include <memory>
 #include <vector>
 
@@ -39,4 +39,4 @@ using PrimZerosLike = std::shared_ptr<ZerosLike>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ZEROSLIKE_H_
+#endif  // MINDSPORE_CORE_OPS_ZEROSLIKE_H_

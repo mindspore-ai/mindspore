@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ELU_H_
-#define MINDSPORE_CORE_C_OPS_ELU_H_
+#ifndef MINDSPORE_CORE_OPS_ELU_H_
+#define MINDSPORE_CORE_OPS_ELU_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -40,4 +40,4 @@ AbstractBasePtr EluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
 using PrimElu = std::shared_ptr<Elu>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_ELU_H_
+#endif  // MINDSPORE_CORE_OPS_ELU_H_

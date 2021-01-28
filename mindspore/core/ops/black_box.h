@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_BLACK_BOX_H_
-#define MINDSPORE_CORE_C_OPS_BLACK_BOX_H_
+#ifndef MINDSPORE_CORE_OPS_BLACK_BOX_H_
+#define MINDSPORE_CORE_OPS_BLACK_BOX_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -44,4 +44,4 @@ using PrimBlackBoxPtr = std::shared_ptr<BlackBox>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_BLACK_BOX_H_
+#endif  // MINDSPORE_CORE_OPS_BLACK_BOX_H_

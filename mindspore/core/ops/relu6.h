@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_C_OPS_RELU6_H_
-#define MINDSPORE_CORE_C_OPS_RELU6_H_
+#ifndef MINDSPORE_CORE_OPS_RELU6_H_
+#define MINDSPORE_CORE_OPS_RELU6_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -39,4 +39,4 @@ AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
 using PrimReLU6Ptr = std::shared_ptr<ReLU6>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_RELU6_H_
+#endif  // MINDSPORE_CORE_OPS_RELU6_H_

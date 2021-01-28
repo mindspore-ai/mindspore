@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_GATHER_H_
-#define MINDSPORE_CORE_C_OPS_GATHER_H_
+#ifndef MINDSPORE_CORE_OPS_GATHER_H_
+#define MINDSPORE_CORE_OPS_GATHER_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -40,4 +40,4 @@ using PrimGatherPtr = std::shared_ptr<Gather>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_GATHER_H_
+#endif  // MINDSPORE_CORE_OPS_GATHER_H_

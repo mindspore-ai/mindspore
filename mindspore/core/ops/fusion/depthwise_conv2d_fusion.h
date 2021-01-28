@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_DEPTHWISE_CONV2D_FUSION_H_
+#define MINDSPORE_CORE_OPS_DEPTHWISE_CONV2D_FUSION_H_
 #include <vector>
 
 #include "ops/depthwise_conv2d.h"
@@ -38,4 +38,4 @@ class DepthWiseConv2DFusion : public DepthWiseConv2D {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_DEPTHWISE_CONV2D_FUSION_H_
+#endif  // MINDSPORE_CORE_OPS_DEPTHWISE_CONV2D_FUSION_H_

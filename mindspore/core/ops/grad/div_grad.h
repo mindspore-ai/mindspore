@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DIV_GRAD_H_
-#define MINDSPORE_CORE_C_OPS_DIV_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_DIV_GRAD_H_
+#define MINDSPORE_CORE_OPS_DIV_GRAD_H_
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
@@ -33,4 +33,4 @@ class DivGrad : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_DIV_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_DIV_GRAD_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_NEG_H_
-#define MINDSPORE_CORE_C_OPS_NEG_H_
+#ifndef MINDSPORE_CORE_OPS_NEG_H_
+#define MINDSPORE_CORE_OPS_NEG_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -39,4 +39,4 @@ using PrimNegPtr = std::shared_ptr<Neg>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_NEG_H_
+#endif  // MINDSPORE_CORE_OPS_NEG_H_

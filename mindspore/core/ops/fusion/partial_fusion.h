@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_PARTIAL_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_PARTIAL_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_PARTIAL_FUSION_H_
+#define MINDSPORE_CORE_OPS_PARTIAL_FUSION_H_
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
@@ -35,4 +35,4 @@ class PartialFusion : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_PARTIAL_FUSION_H_
+#endif  // MINDSPORE_CORE_OPS_PARTIAL_FUSION_H_

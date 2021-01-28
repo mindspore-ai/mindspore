@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_L2_NORMALIZE_H_
-#define MINDSPORE_CORE_C_OPS_L2_NORMALIZE_H_
+#ifndef MINDSPORE_CORE_OPS_L2_NORMALIZE_H_
+#define MINDSPORE_CORE_OPS_L2_NORMALIZE_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -43,4 +43,4 @@ AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const Prim
 using PrimL2NormalizePtr = std::shared_ptr<L2Normalize>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_L2_NORMALIZE_H_
+#endif  // MINDSPORE_CORE_OPS_L2_NORMALIZE_H_

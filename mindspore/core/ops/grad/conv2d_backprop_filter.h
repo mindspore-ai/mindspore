@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_FILTER_H_
-#define MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_FILTER_H_
+#ifndef MINDSPORE_CORE_OPS_CONV2D_BACKPROP_FILTER_H_
+#define MINDSPORE_CORE_OPS_CONV2D_BACKPROP_FILTER_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -70,4 +70,4 @@ using PrimConv2DBackpropFilterPtr = std::shared_ptr<Conv2DBackpropFilter>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_Conv2DBackpropFilter_H_
+#endif  // MINDSPORE_CORE_OPS_Conv2DBackpropFilter_H_

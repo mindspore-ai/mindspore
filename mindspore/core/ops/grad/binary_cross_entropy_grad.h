@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_BINARY_CROSS_ENTROPY_GRAD_H_
-#define MINDSPORE_CORE_C_OPS_BINARY_CROSS_ENTROPY_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_BINARY_CROSS_ENTROPY_GRAD_H_
+#define MINDSPORE_CORE_OPS_BINARY_CROSS_ENTROPY_GRAD_H_
 #include <vector>
 #include <memory>
 
@@ -41,4 +41,4 @@ AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &,
 using PrimBinaryCrossEntropyGradPtr = std::shared_ptr<BinaryCrossEntropyGrad>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_BINARY_CROSS_ENTROPY_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_BINARY_CROSS_ENTROPY_GRAD_H_

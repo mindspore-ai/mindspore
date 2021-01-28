@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_APPLY_MOMENTUM_H_
-#define MINDSPORE_CORE_C_OPS_APPLY_MOMENTUM_H_
+#ifndef MINDSPORE_CORE_OPS_APPLY_MOMENTUM_H_
+#define MINDSPORE_CORE_OPS_APPLY_MOMENTUM_H_
 #include <vector>
 #include <memory>
 
@@ -47,4 +47,4 @@ using PrimApplyMomentumPtr = std::shared_ptr<ApplyMomentum>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_APPLY_MOMENTUM_H_
+#endif  // MINDSPORE_CORE_OPS_APPLY_MOMENTUM_H_

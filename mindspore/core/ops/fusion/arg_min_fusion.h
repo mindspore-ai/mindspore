@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_ARGMIN_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_ARGMIN_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_ARGMIN_FUSION_H_
+#define MINDSPORE_CORE_OPS_ARGMIN_FUSION_H_
 #include <vector>
 #include <memory>
 
@@ -44,4 +44,4 @@ using PrimArgMinFusion = std::shared_ptr<ArgMinFusion>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_ARGMINTOPKMAXVALUE_H_
+#endif  // MINDSPORE_CORE_OPS_ARGMINTOPKMAXVALUE_H_

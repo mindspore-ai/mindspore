@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SQUEEZE_H_
-#define MINDSPORE_CORE_C_OPS_SQUEEZE_H_
+#ifndef MINDSPORE_CORE_OPS_SQUEEZE_H_
+#define MINDSPORE_CORE_OPS_SQUEEZE_H_
 
 #include <map>
 #include <vector>
@@ -48,4 +48,4 @@ using PrimSqueezePtr = std::shared_ptr<Squeeze>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_SQUEEZE_H_
+#endif  // MINDSPORE_CORE_OPS_SQUEEZE_H_

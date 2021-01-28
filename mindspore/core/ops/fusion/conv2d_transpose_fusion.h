@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONV2D_TRANSPOSE_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_CONV2D_TRANSPOSE_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_FUSION_H_
+#define MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_FUSION_H_
 #include <vector>
 
 #include "ops/conv2d_transpose.h"
@@ -45,4 +45,4 @@ class Conv2dTransposeFusion : public Conv2dTranspose {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_CONV2D_TRANSPOSE_FUSION_H_
+#endif  // MINDSPORE_CORE_OPS_CONV2D_TRANSPOSE_FUSION_H_

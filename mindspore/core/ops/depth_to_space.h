@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DEPTH_TO_SPACE_H_
-#define MINDSPORE_CORE_C_OPS_DEPTH_TO_SPACE_H_
+#ifndef MINDSPORE_CORE_OPS_DEPTH_TO_SPACE_H_
+#define MINDSPORE_CORE_OPS_DEPTH_TO_SPACE_H_
 
 #include <map>
 #include <vector>
@@ -46,4 +46,4 @@ using PrimDepthToSpacePtr = std::shared_ptr<DepthToSpace>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_DEPTH_TO_SPACE_H_
+#endif  // MINDSPORE_CORE_OPS_DEPTH_TO_SPACE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONTROL_DEPEND_H_
-#define MINDSPORE_CORE_C_OPS_CONTROL_DEPEND_H_
+#ifndef MINDSPORE_CORE_OPS_CONTROL_DEPEND_H_
+#define MINDSPORE_CORE_OPS_CONTROL_DEPEND_H_
 #include <vector>
 #include <memory>
 
@@ -39,4 +39,4 @@ class ControlDepend : public PrimitiveC {
 using PrimControlDepend = std::shared_ptr<ControlDepend>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_CONTROl_DEPEND_H_
+#endif  // MINDSPORE_CORE_OPS_CONTROl_DEPEND_H_

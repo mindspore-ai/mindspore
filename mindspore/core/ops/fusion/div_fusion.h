@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DIV_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_DIV_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_DIV_FUSION_H_
+#define MINDSPORE_CORE_OPS_DIV_FUSION_H_
 #include "ops/div.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -34,4 +34,4 @@ class DivFusion : public Div {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_DIV_FUSION_H_
+#endif  // MINDSPORE_CORE_OPS_DIV_FUSION_H_

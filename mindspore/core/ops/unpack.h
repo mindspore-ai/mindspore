@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_UNPACK_H_
-#define MINDSPORE_CORE_C_OPS_UNPACK_H_
+#ifndef MINDSPORE_CORE_OPS_UNPACK_H_
+#define MINDSPORE_CORE_OPS_UNPACK_H_
 
 #include <map>
 #include <vector>
@@ -46,4 +46,4 @@ using PrimUnpackPtr = std::shared_ptr<Unpack>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_UNPACK_H_
+#endif  // MINDSPORE_CORE_OPS_UNPACK_H_

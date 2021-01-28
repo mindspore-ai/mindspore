@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_BATCH_NORM_GRAD_H_
-#define MINDSPORE_CORE_C_OPS_BATCH_NORM_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_H_
+#define MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -43,4 +43,4 @@ using PrimBatchNormGradPtr = std::shared_ptr<BatchNormGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_BATCH_NORM_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_BATCH_NORM_GRAD_H_

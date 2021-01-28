@@ -35,7 +35,7 @@ TEST_F(TestTfliteParserStack, OpType) {
 TEST_F(TestTfliteParserStack, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsStack(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsStack();
-  ASSERT_EQ(val->axis[0], 1);
+  ASSERT_EQ(val->axis, 1);
 }
 
 }  // namespace mindspore

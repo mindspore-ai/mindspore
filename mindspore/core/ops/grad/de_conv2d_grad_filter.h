@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DE_CONV2D_GRAD_FILTER_H_
-#define MINDSPORE_CORE_C_OPS_DE_CONV2D_GRAD_FILTER_H_
+#ifndef MINDSPORE_CORE_OPS_DE_CONV2D_GRAD_FILTER_H_
+#define MINDSPORE_CORE_OPS_DE_CONV2D_GRAD_FILTER_H_
 #include <vector>
 
 #include "ops/primitive_c.h"
@@ -64,4 +64,4 @@ class DeConv2DGradFilter : public PrimitiveC {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_DE_CONV2D_GRAD_FILTER_H_
+#endif  // MINDSPORE_CORE_OPS_DE_CONV2D_GRAD_FILTER_H_

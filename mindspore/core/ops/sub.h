@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SUB_H_
-#define MINDSPORE_CORE_C_OPS_SUB_H_
+#ifndef MINDSPORE_CORE_OPS_SUB_H_
+#define MINDSPORE_CORE_OPS_SUB_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -42,4 +42,4 @@ using PrimSubPtr = std::shared_ptr<Sub>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_SUB_H_
+#endif  // MINDSPORE_CORE_OPS_SUB_H_

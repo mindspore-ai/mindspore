@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_DROPOUT_H_
-#define MINDSPORE_CORE_C_OPS_DROPOUT_H_
+#ifndef MINDSPORE_CORE_OPS_DROPOUT_H_
+#define MINDSPORE_CORE_OPS_DROPOUT_H_
 #include <vector>
 #include <memory>
 
@@ -42,4 +42,4 @@ AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 using PrimDropoutPtr = std::shared_ptr<Dropout>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_DROPOUT_H_
+#endif  // MINDSPORE_CORE_OPS_DROPOUT_H_

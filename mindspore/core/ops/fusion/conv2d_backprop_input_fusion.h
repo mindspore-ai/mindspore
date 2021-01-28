@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_INPUT_FUSION_H_
-#define MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_INPUT_FUSION_H_
+#ifndef MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_FUSION_H_
+#define MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_FUSION_H_
 #include <vector>
 #include "ops/grad/conv2d_backprop_input.h"
 #include "ops/op_utils.h"
@@ -41,4 +41,4 @@ class Conv2DBackpropInputFusion : public Conv2DBackpropInput {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_CONV2D_BACKPROP_INPUT_FUSION_H_
+#endif  // MINDSPORE_CORE_OPS_CONV2D_BACKPROP_INPUT_FUSION_H_

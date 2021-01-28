@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_C_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_H_
-#define MINDSPORE_CORE_C_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_H_
+#ifndef MINDSPORE_CORE_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_H_
+#define MINDSPORE_CORE_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_H_
 #include <vector>
 #include <memory>
 
@@ -42,4 +42,4 @@ using PrimFakeQuantWithMinMaxVarsPtr = std::shared_ptr<FakeQuantWithMinMaxVars>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_H_
+#endif  // MINDSPORE_CORE_OPS_FAKE_QUANT_WITH_MIN_MAX_VARS_H_

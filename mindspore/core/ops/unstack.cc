@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_FLOOR_MOD_H_
-#define MINDSPORE_CORE_OPS_FLOOR_MOD_H_
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/unstack.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameFloorMod = "FloorMod";
-class FloorMod : public PrimitiveC {
- public:
-  FloorMod() : PrimitiveC(kNameFloorMod) { InitIOName({"x", "y"}, {"output"}); }
-  ~FloorMod() = default;
-  MS_DECLARE_PARENT(FloorMod, PrimitiveC);
-  void Init() {}
-};
+
+void Unstack::Init(const int64_t axis) { this->set_axis(axis); }
+void Unstack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
+int64_t Unstack::get_axis() const {
+  auto value_ptr = this->GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
+}
+
+REGISTER_PRIMITIVE_C(kNameUnstack, Unstack);
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_FLOOR_MOD_H_

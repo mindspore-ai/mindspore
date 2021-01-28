@@ -42,7 +42,7 @@ ops::PrimitiveC *TfliteStackParser::Parse(const std::unique_ptr<tflite::Operator
     MS_LOG(ERROR) << "get op stack attr failed";
     return nullptr;
   }
-  prim->set_axis({tflite_attr->axis});
+  prim->set_axis(tflite_attr->axis);
 
   return prim;
 }

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_STACK_H_
-#define MINDSPORE_CORE_C_OPS_STACK_H_
+#ifndef MINDSPORE_CORE_OPS_STACK_H_
+#define MINDSPORE_CORE_OPS_STACK_H_
 
 #include <map>
 #include <vector>
@@ -36,13 +36,13 @@ class Stack : public PrimitiveC {
   Stack() : PrimitiveC(kNameStack) {}
   ~Stack() = default;
   MS_DECLARE_PARENT(Stack, PrimitiveC);
-  void Init(const std::vector<int64_t> &axis);
-  void set_axis(const std::vector<int64_t> &axis);
-  std::vector<int64_t> get_axis() const;
+  void Init(const int64_t axis);
+  void set_axis(const int64_t axis);
+  int64_t get_axis() const;
 };
 AbstractBasePtr StackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
 using PrimStackPtr = std::shared_ptr<Stack>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_STACK_H_
+#endif  // MINDSPORE_CORE_OPS_STACK_H_

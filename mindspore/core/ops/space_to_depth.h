@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_SPACE_TO_DEPTH_H_
-#define MINDSPORE_CORE_C_OPS_SPACE_TO_DEPTH_H_
+#ifndef MINDSPORE_CORE_OPS_SPACE_TO_DEPTH_H_
+#define MINDSPORE_CORE_OPS_SPACE_TO_DEPTH_H_
 #include <vector>
 #include <memory>
 
@@ -43,4 +43,4 @@ AbstractBasePtr SpaceToDepthInfer(const abstract::AnalysisEnginePtr &, const Pri
 using PrimSpaceToDepthPtr = std::shared_ptr<SpaceToDepth>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_SpaceToDepth_H_
+#endif  // MINDSPORE_CORE_OPS_SpaceToDepth_H_

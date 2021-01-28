@@ -14,23 +14,37 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_FLOOR_MOD_H_
-#define MINDSPORE_CORE_OPS_FLOOR_MOD_H_
+#ifndef MINDSPORE_CORE_OPS_UNSTACK_H_
+#define MINDSPORE_CORE_OPS_UNSTACK_H_
+
+#include <map>
+#include <vector>
+#include <string>
+#include <memory>
+#include <algorithm>
+#include "ops/op_utils.h"
 #include "ops/primitive_c.h"
+#include "abstract/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameFloorMod = "FloorMod";
-class FloorMod : public PrimitiveC {
+constexpr auto kNameUnstack = "Unstack";
+class Unstack : public PrimitiveC {
  public:
-  FloorMod() : PrimitiveC(kNameFloorMod) { InitIOName({"x", "y"}, {"output"}); }
-  ~FloorMod() = default;
-  MS_DECLARE_PARENT(FloorMod, PrimitiveC);
-  void Init() {}
+  Unstack() : PrimitiveC(kNameUnstack) {}
+  ~Unstack() = default;
+  MS_DECLARE_PARENT(Unstack, PrimitiveC);
+  void Init(const int64_t axis = 0);
+  void set_axis(const int64_t axis);
+  int64_t get_axis() const;
 };
+
+AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const std::vector<AbstractBasePtr> &input_args);
+using PrimUnstackPtr = std::shared_ptr<Unstack>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_FLOOR_MOD_H_
+#endif  // MINDSPORE_CORE_OPS_UNSTACK_H_

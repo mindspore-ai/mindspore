@@ -33,11 +33,6 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
   }
   auto input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
-  int64_t axis = stack_prim->get_axis().size() < 0 ? stack_prim->get_axis().size() + input_shape.size() + 1
-                                                   : stack_prim->get_axis().size();
-  if (axis < 0 || axis > (int64_t)input_shape.size()) {
-    MS_LOG(ERROR) << "Invalid axis " << stack_prim->get_axis().size();
-  }
   for (int64_t i = 1; i < (int64_t)input_args.size(); ++i) {
     auto input_shape_tmp =
       CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[i]->BuildShape(), prim_name);
@@ -51,7 +46,7 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
     }
   }
   std::vector<int64_t> infer_shape = input_shape;
-  infer_shape.insert(infer_shape.begin() + axis, input_args.size());
+  infer_shape.insert(infer_shape.begin() + stack_prim->get_axis(), input_args.size());
 
   auto infer_type0 = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   for (int64_t i = 1; i < (int64_t)input_args.size(); i++) {
@@ -67,14 +62,14 @@ abstract::AbstractBasePtr StackInfer(const PrimitivePtr &primitive, const std::v
 }
 }  // namespace
 
-void Stack::set_axis(const std::vector<int64_t> &axis) { AddAttr(kAxis, MakeValue(axis)); }
+void Stack::set_axis(const int64_t axis) { AddAttr(kAxis, MakeValue(axis)); }
 
-std::vector<int64_t> Stack::get_axis() const {
+int64_t Stack::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<std::vector<int64_t>>(value_ptr);
+  return GetValue<int64_t>(value_ptr);
 }
 
-void Stack::Init(const std::vector<int64_t> &axis) { this->set_axis(axis); }
+void Stack::Init(const int64_t axis) { this->set_axis(axis); }
 
 AbstractBasePtr StackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {

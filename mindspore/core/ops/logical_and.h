@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_LOGICAL_AND_H_
-#define MINDSPORE_CORE_C_OPS_LOGICAL_AND_H_
+#ifndef MINDSPORE_CORE_OPS_LOGICAL_AND_H_
+#define MINDSPORE_CORE_OPS_LOGICAL_AND_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -40,4 +40,4 @@ using PrimLogicalAndPtr = std::shared_ptr<LogicalAnd>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_LOGICAL_AND_H_
+#endif  // MINDSPORE_CORE_OPS_LOGICAL_AND_H_

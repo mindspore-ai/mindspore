@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_BATCH_TO_SPACE_ND_H_
-#define MINDSPORE_CORE_C_OPS_BATCH_TO_SPACE_ND_H_
+#ifndef MINDSPORE_CORE_OPS_BATCH_TO_SPACE_ND_H_
+#define MINDSPORE_CORE_OPS_BATCH_TO_SPACE_ND_H_
 
 #include <map>
 #include <vector>
@@ -45,4 +45,4 @@ using PrimBatchToSpaceNDPtr = std::shared_ptr<BatchToSpaceND>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_BATCH_TO_SPACE_ND_H_
+#endif  // MINDSPORE_CORE_OPS_BATCH_TO_SPACE_ND_H_

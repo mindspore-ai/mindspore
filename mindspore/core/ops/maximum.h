@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_MAXIMUM_H_
-#define MINDSPORE_CORE_C_OPS_MAXIMUM_H_
+#ifndef MINDSPORE_CORE_OPS_MAXIMUM_H_
+#define MINDSPORE_CORE_OPS_MAXIMUM_H_
 
 #include <vector>
 #include <memory>
@@ -37,4 +37,4 @@ AbstractBasePtr MaximumInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 using PrimMaximumPtr = std::shared_ptr<Maximum>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_C_OPS_MAXIMUM_H_
+#endif  // MINDSPORE_CORE_OPS_MAXIMUM_H_

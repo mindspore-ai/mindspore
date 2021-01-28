@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_RANGE_H_
-#define MINDSPORE_CORE_C_OPS_RANGE_H_
+#ifndef MINDSPORE_CORE_OPS_RANGE_H_
+#define MINDSPORE_CORE_OPS_RANGE_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -49,4 +49,4 @@ using PrimRangePtr = std::shared_ptr<Range>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_RANGE_H_
+#endif  // MINDSPORE_CORE_OPS_RANGE_H_

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_C_OPS_MERGE_H_
-#define MINDSPORE_CORE_C_OPS_MERGE_H_
+#ifndef MINDSPORE_CORE_OPS_MERGE_H_
+#define MINDSPORE_CORE_OPS_MERGE_H_
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
@@ -39,4 +39,4 @@ using PrimMergePtr = std::shared_ptr<Merge>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_C_OPS_MERGE_H_
+#endif  // MINDSPORE_CORE_OPS_MERGE_H_
