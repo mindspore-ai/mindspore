@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_TENSOR_C_H_
-#define MINDSPORE_LITE_NNACL_TENSOR_C_H_
-#include "nnacl/op_base.h"
+#ifndef MINDSPORE_LITE_NNACL_ADD_SUB_GRAD_INFER_H
+#define MINDSPORE_LITE_NNACL_ADD_SUB_GRAD_INFER_H
 
-typedef struct TensorC {
-  int data_type_;
-  int format_;
-  void *data_;
-  size_t shape_size_;
-  int shape_[MAX_SHAPE_SIZE];
-} TensorC;
+#include "nnacl/infer/common_infer.h"
 
-#endif  // MINDSPORE_LITE_NNACL_TENSOR_C_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                         OpParameter *parameter);
+
+#ifdef __cplusplus
+}
+#endif
+#endif  // MINDSPORE_LITE_NNACL_ADD_SUB_GRAD_INFER_H

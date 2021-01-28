@@ -45,8 +45,8 @@ int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vect
   return RET_OK;
 }
 
-int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out) {
-  for (size_t i = 0; i < tensors_in.size(); ++i) {
+int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector<TensorC *> *tensors_c) {
+  for (size_t i = 0; i < tensors.size(); ++i) {
     auto *tensor_c = static_cast<TensorC *>(malloc(sizeof(TensorC)));
     if (tensor_c == nullptr) {
       MS_LOG(ERROR) << "malloc tensor fail!";
@@ -56,7 +56,7 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vec
     tensor_c->format_ = schema::Format::Format_NCHW;
     tensor_c->data_ = nullptr;
     tensor_c->shape_size_ = 0;
-    tensors_out->push_back(tensor_c);
+    tensors_c->push_back(tensor_c);
   }
   return RET_OK;
 }
@@ -74,10 +74,28 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
     if (i == nullptr) {
       continue;
     }
-    free(i);
-    i = nullptr;
+    if (i->data_type_ == kObjectTypeTensorType) {
+      TensorListC *tensorListC = reinterpret_cast<TensorListC *>(i);
+      FreeTensorListC(tensorListC);
+      tensorListC = nullptr;
+    } else {
+      free(i);
+      i = nullptr;
+    }
   }
   tensors_in->clear();
+}
+
+void FreeTensorListC(TensorListC *tensorlist_c) {
+  for (size_t i = 0; i < tensorlist_c->element_num_; i++) {
+    free(tensorlist_c->tensors_[i]);
+    tensorlist_c->tensors_[i] = nullptr;
+  }
+  if (tensorlist_c->tensors_ != nullptr) {
+    free(tensorlist_c->tensors_);
+    tensorlist_c->tensors_ = nullptr;
+  }
+  free(tensorlist_c);
 }
 
 }  // namespace lite

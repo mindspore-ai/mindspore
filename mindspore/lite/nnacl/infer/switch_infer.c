@@ -30,24 +30,39 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     return NNACL_INFER_INVALID;
   }
   for (size_t i = 0; i < outputs_size / 2; i++) {
-    if (((TensorListC *)inputs[i + 1])->data_type_ == kObjectTypeTensorType) {
-      TensorListC *input_tensorlist = (TensorListC *)inputs[i + 1];
-      TensorListC *output_tensorlist1 = (TensorListC *)outputs[i];
-      memcpy(output_tensorlist1, input_tensorlist, sizeof(TensorListC));
-      outputs[i] = (TensorC *)output_tensorlist1;
+    const TensorC *input = inputs[i + 1];
+    TensorC *output_true = outputs[i];
+    TensorC *output_false = outputs[i + outputs_size / 2];
 
-      TensorListC *output_tensorlist2 = (TensorListC *)outputs[i + outputs_size / 2];
-      memcpy(output_tensorlist2, input_tensorlist, sizeof(TensorListC));
-      outputs[i + outputs_size / 2] = (TensorC *)output_tensorlist2;
-      continue;
+    SetDataTypeFormat(output_false, input);
+    SetDataTypeFormat(output_true, input);
+
+    if (input->data_type_ == kObjectTypeTensorType) {
+      TensorListC *input_tensorlist = (TensorListC *)(input);
+      TensorListC *output_true_tensorlist = (TensorListC *)(output_true);
+      TensorListC *output_false_tensorlist = (TensorListC *)(output_false);
+
+      ShapeSet(output_true_tensorlist->element_shape_, &output_true_tensorlist->element_shape_size_,
+               input_tensorlist->element_shape_, input_tensorlist->element_shape_size_);
+      ShapeSet(output_false_tensorlist->element_shape_, &output_false_tensorlist->element_shape_size_,
+               input_tensorlist->element_shape_, input_tensorlist->element_shape_size_);
+      output_true_tensorlist->max_elements_num_ = input_tensorlist->max_elements_num_;
+      output_false_tensorlist->max_elements_num_ = input_tensorlist->max_elements_num_;
+      output_true_tensorlist->tensors_data_type_ = input_tensorlist->tensors_data_type_;
+      output_false_tensorlist->tensors_data_type_ = input_tensorlist->tensors_data_type_;
+
+      output_false_tensorlist->element_num_ = input_tensorlist->element_num_;
+      output_true_tensorlist->element_num_ = input_tensorlist->element_num_;
+
+      for (size_t j = 0; j < output_false_tensorlist->element_num_; j++) {
+        memcpy(output_true_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
+        memcpy(output_false_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
+      }
+
+    } else {
+      SetShapeTensor(output_true, input);
+      SetShapeTensor(output_false, input);
     }
-
-    outputs[i]->data_type_ = (inputs[i + 1]->data_type_);
-    outputs[i + outputs_size / 2]->data_type_ = inputs[i + 1]->data_type_;
-    SetShapeTensor(outputs[i], inputs[i + 1]);
-    SetShapeTensor(outputs[i + outputs_size / 2], inputs[i + 1]);
-    outputs[i]->format_ = inputs[i + 1]->format_;
-    outputs[i + outputs_size / 2]->format_ = inputs[i + 1]->format_;
   }
   return NNACL_OK;
 }

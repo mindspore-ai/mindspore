@@ -23,14 +23,8 @@ int FreeTensorListData(TensorListC *tensor_list) {
     return NNACL_OK;
   }
   for (int i = 0; i < tensor_list->element_num_; ++i) {
-    // if (tensor_list->tensors_[i] != NULL) {
-    // delete this->tensors_[i];
-    // free(tensor_list->tensors_[i]); note: maybe need
     tensor_list->tensors_[i] = NULL;
-    // }
   }
-  // tensors_.clear(); //note: correct?
-  // tensor_list->element_num_ = 0; //note: maybe need
   return NNACL_OK;
 }
 
@@ -38,22 +32,25 @@ int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, vvector *tenso
   // This function will create a new tensors_
   // Your must to set shape(param2: tensor_shape) and data_type_(tensors_data_type_ = param1: dtype) of each tensor in
   // tensors_. After that, you need to call function:MallocData to malloc data buf of each tensor in tensors_.
-  if (tensor_list->element_num_ != 0) {
-    // If tensors_ is not empty then clear this tensors_ and rebuild a new tensors_.
-    int ret = FreeTensorListData(tensor_list);
-    if (ret != NNACL_OK) {
-      return NNACL_ERR;
-    }
+
+  if (tensor_list->element_num_ == 0) {
+    return NNACL_OK;
   }
   if (((size_t)(tensor_list->element_num_)) != tensor_shape->size_) {
     return NNACL_ERR;
   }
   tensor_list->tensors_data_type_ = dtype;
+  tensor_list->tensors_ = (TensorC **)malloc(tensor_list->element_num_ * sizeof(TensorC *));  // free in infer_manager
+  if (tensor_list->tensors_ == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  memset(tensor_list->tensors_, 0, tensor_list->element_num_ * sizeof(TensorC *));
   for (int i = 0; i < tensor_list->element_num_; ++i) {
     TensorC *tensor_ptr = (TensorC *)malloc(sizeof(TensorC));
     if (tensor_ptr == NULL) {
       return NNACL_ERR;
     }
+    memset(tensor_ptr, 0, sizeof(TensorC));
     tensor_ptr->data_type_ = dtype;
     ShapeSet(tensor_ptr->shape_, &(tensor_ptr->shape_size_), tensor_shape->shape_[i], tensor_shape->shape_size_[i]);
     tensor_list->tensors_[i] = tensor_ptr;

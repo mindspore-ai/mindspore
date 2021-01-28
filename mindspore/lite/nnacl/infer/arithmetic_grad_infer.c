@@ -16,6 +16,13 @@
 
 #include "nnacl/infer/arithmetic_grad_infer.h"
 
+/*
+ * the Arithmetic Grad op include AddGrad, SubGrad, MulGrad, DivGrad, MaximumGrad, MinimumGrad
+ * according to the arithmetic_fp32.h now
+ * the MaximumGrad, MinimumGrad run through MaximumGradInfershape
+ * the AddGrad, SubGrad run through AddSubGradInfershape
+ * the others run through this function
+ * */
 int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 2);
@@ -29,78 +36,56 @@ int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, T
   TensorC *dx2 = outputs[1];
 
   ArithmeticGradParameter *param = (ArithmeticGradParameter *)parameter;
-  if ((param->type_ == PrimitiveType_MaximumGrad) || (param->type_ == PrimitiveType_MinimumGrad)) {
-    x1 = inputs[0];
-    x2 = inputs[1];
-    dy = inputs[2];
-  }
 
-  int inShape0[MAX_SHAPE_SIZE];
-  size_t inShape0_size = 0;
-  ShapeSet(inShape0, &inShape0_size, x1->shape_, x1->shape_size_);
-  int inShape1[MAX_SHAPE_SIZE];
-  size_t inShape1_size = 0;
-  ShapeSet(inShape1, &inShape1_size, x2->shape_, x2->shape_size_);
-  int outShape[MAX_SHAPE_SIZE];
-  size_t outShape_size = 0;
-  ShapeSet(outShape, &outShape_size, dy->shape_, dy->shape_size_);
+  int in_shape0[MAX_SHAPE_SIZE];
+  size_t in_shape0_size = 0;
+  ShapeSet(in_shape0, &in_shape0_size, x1->shape_, x1->shape_size_);
+  int in_shape1[MAX_SHAPE_SIZE];
+  size_t in_shape1_size = 0;
+  ShapeSet(in_shape1, &in_shape1_size, x2->shape_, x2->shape_size_);
+  int out_shape[MAX_SHAPE_SIZE];
+  size_t out_shape_size = 0;
+  ShapeSet(out_shape, &out_shape_size, dy->shape_, dy->shape_size_);
 
-  if ((param->type_ == PrimitiveType_AddGrad) || (param->type_ == PrimitiveType_SubGrad) ||
-      (param->type_ == PrimitiveType_MaximumGrad) || (param->type_ == PrimitiveType_MinimumGrad)) {
-    param->ndim_ = outShape_size;
+  if (GetElementNum(dx1) < GetElementNum(dx2)) {
+    param->ndim_ = in_shape1_size;
     param->x1_shape_size_ = param->ndim_;
     param->x2_shape_size_ = param->ndim_;
     param->dy_shape_size_ = param->ndim_;
-    int fillDimNum0 = outShape_size - inShape0_size;
-    int fillDimNum1 = outShape_size - inShape1_size;
-    int j0 = 0;
-    int j1 = 0;
-    for (unsigned int i = 0; i < outShape_size; i++) {
-      param->x1_shape_[i] = (i < fillDimNum0) ? 1 : inShape0[j0++];
-      param->x2_shape_[i] = (i < fillDimNum1) ? 1 : inShape1[j1++];
-      param->dy_shape_[i] = outShape[i];
+    int fill_dim_num = in_shape1_size - in_shape0_size;  // This will not work for batch!
+    int j = 0;
+    for (unsigned int i = 0; i < in_shape1_size; i++) {
+      if (i < fill_dim_num) {
+        param->x2_shape_[i] = 1;
+      } else {
+        param->x2_shape_[i] = in_shape0[j++];
+      }
+      param->x1_shape_[i] = in_shape1[i];
+      param->dy_shape_[i] = out_shape[i];
+    }
+  } else if (GetElementNum(dx2) < GetElementNum(dx1)) {
+    param->ndim_ = in_shape0_size;
+    param->x1_shape_size_ = param->ndim_;
+    param->x2_shape_size_ = param->ndim_;
+    param->dy_shape_size_ = param->ndim_;
+    param->broadcasting_ = true;
+    int j = 0;
+    int fill_dim_num = in_shape0_size - in_shape1_size;
+    for (unsigned int i = 0; i < in_shape0_size; i++) {
+      if (i < fill_dim_num) {
+        param->x2_shape_[i] = 1;
+      } else {
+        param->x2_shape_[i] = in_shape1[j++];
+      }
+      param->x1_shape_[i] = in_shape0[i];
+      param->dy_shape_[i] = out_shape[i];
     }
   } else {
-    if (GetElementNum(dx1) < GetElementNum(dx2)) {
-      param->ndim_ = inShape1_size;
-      param->x1_shape_size_ = param->ndim_;
-      param->x2_shape_size_ = param->ndim_;
-      param->dy_shape_size_ = param->ndim_;
-      int fillDimNum = inShape1_size - inShape0_size;  // This will not work for batch!
-      int j = 0;
-      for (unsigned int i = 0; i < inShape1_size; i++) {
-        if (i < fillDimNum) {
-          param->x2_shape_[i] = 1;
-        } else {
-          param->x2_shape_[i] = inShape0[j++];
-        }
-        param->x1_shape_[i] = inShape1[i];
-        param->dy_shape_[i] = outShape[i];
-      }
-    } else if (GetElementNum(dx2) < GetElementNum(dx1)) {  // if (inShape0.size() > inShape1.size())
-      param->ndim_ = inShape0_size;
-      param->x1_shape_size_ = param->ndim_;
-      param->x2_shape_size_ = param->ndim_;
-      param->dy_shape_size_ = param->ndim_;
-      param->broadcasting_ = true;
-      int j = 0;
-      int fillDimNum = inShape0_size - inShape1_size;
-      for (unsigned int i = 0; i < inShape0_size; i++) {
-        if (i < fillDimNum) {
-          param->x2_shape_[i] = 1;
-        } else {
-          param->x2_shape_[i] = inShape1[j++];
-        }
-        param->x1_shape_[i] = inShape0[i];
-        param->dy_shape_[i] = outShape[i];
-      }
-    } else {
-      param->broadcasting_ = false;
-      for (unsigned int i = 0; i < inShape0_size; i++) {
-        param->x2_shape_[i] = inShape1[i];
-        param->x1_shape_[i] = inShape0[i];
-        param->dy_shape_[i] = outShape[i];
-      }
+    param->broadcasting_ = false;
+    for (unsigned int i = 0; i < in_shape0_size; i++) {
+      param->x2_shape_[i] = in_shape1[i];
+      param->x1_shape_[i] = in_shape0[i];
+      param->dy_shape_[i] = out_shape[i];
     }
   }
 
