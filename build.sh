@@ -511,10 +511,6 @@ gen_fbs() {
       if [[ "X${diff_ops}" != "X" ]]; then
         cp ${BASEPATH}/mindspore/lite/build/tools/schema_gen/ops.fbs ${BASEPATH}/mindspore/lite/schema/
       fi
-      diff_types=$(diff ${BASEPATH}/mindspore/lite/build/tools/schema_gen/primitive_type.fbs ${BASEPATH}/mindspore/lite/schema/primitive_type.fbs || true)
-      if [[ "X${diff_types}" != "X" ]]; then
-        cp ${BASEPATH}/mindspore/lite/build/tools/schema_gen/primitive_type.fbs ${BASEPATH}/mindspore/lite/schema/
-      fi
     fi
   fi
 }
