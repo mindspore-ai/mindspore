@@ -33,6 +33,7 @@ from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.profiler.profiling import Profiler
+from mindspore.common import set_seed
 
 from src.utils import get_logger
 from src.utils import AverageMeter
@@ -47,6 +48,7 @@ from src.config import ConfigCenterface
 from src.centerface import CenterFaceWithLossCell, TrainingWrapper
 from src.dataset import GetDataLoader
 
+set_seed(1)
 dev_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=False,
                     device_target="Ascend", save_graphs=False, device_id=dev_id, reserve_class_name_in_scope=False)

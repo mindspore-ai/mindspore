@@ -120,12 +120,6 @@ def pt_to_ckpt(pt, ckpt, out_ckpt):
         parameter = state_dict_torch[key]
         parameter = parameter.numpy()
 
-        # depwise conv pytorch[cout, 1, k , k] -> ms[1, cin, k , k], cin = cout
-        if state_dict_ms[name_relate[key]].data.shape != parameter.shape:
-            parameter = parameter.transpose(1, 0, 2, 3)
-            print('ms=', state_dict_ms[name_relate[key]].data.shape, 'pytorch=', parameter.shape, 'name=', key)
-
-
         param_dict['name'] = name_relate[key]
         param_dict['data'] = Tensor(parameter)
         new_params_list.append(param_dict)

@@ -96,7 +96,7 @@ step1: prepare pretrained model: train a mobilenet_v2 model by mindspore or use 
 #        The key/cell/module name must as follow, otherwise you need to modify "name_map" function:
 #            --mindspore: as the same as mobilenet_v2_key.ckpt
 #            --pytorch: same as official pytorch model(e.g., official mobilenet_v2-b0353104.pth)
-python torch_to_ms_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
+python convert_weight_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
 ```
 
 step2: prepare user rank_table
