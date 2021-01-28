@@ -68,7 +68,7 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test():
+def test_adam_fusion():
     beta1 = Tensor(np.array([0.9]).astype(np.float32))
     beta2 = Tensor(np.array([0.999]).astype(np.float32))
     lr = Tensor(np.array([0.001]).astype(np.float32))

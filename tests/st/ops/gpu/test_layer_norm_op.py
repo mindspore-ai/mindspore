@@ -53,6 +53,7 @@ def LayerNormReference(begin_norm_axis, begin_params_axis, x, gamma, beta):
 def test_layernorm0():
     begin_norm_axis = 1
     begin_params_axis = 1
+    np.random.seed(42)
     x_np = np.random.randn(4096, 3072).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     beta_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
@@ -75,6 +76,7 @@ def test_layernorm0():
 def test_layernorm1():
     begin_norm_axis = 1
     begin_params_axis = 1
+    np.random.seed(42)
     x_np = np.random.randn(640, 768).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     beta_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
@@ -97,6 +99,7 @@ def test_layernorm1():
 def test_layernorm3d_1():
     begin_norm_axis = -1
     begin_params_axis = -1
+    np.random.seed(42)
     x_np = np.random.randn(32, 128, 768).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     beta_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
@@ -119,6 +122,7 @@ def test_layernorm3d_1():
 def test_layernorm3d_2():
     begin_norm_axis = -1
     begin_params_axis = 1
+    np.random.seed(42)
     x_np = np.random.randn(32, 128, 768).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     beta_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
@@ -141,6 +145,7 @@ def test_layernorm3d_2():
 def test_layernorm2d_2():
     begin_norm_axis = -1
     begin_params_axis = 1
+    np.random.seed(42)
     x_np = np.random.randn(64, 32).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     beta_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
@@ -162,6 +167,7 @@ def test_layernorm2d_2():
 def test_layernorm2d_3():
     begin_norm_axis = -1
     begin_params_axis = 1
+    np.random.seed(42)
     x_np = np.random.randn(128, 128).astype(np.float32)
     gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
     beta_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
