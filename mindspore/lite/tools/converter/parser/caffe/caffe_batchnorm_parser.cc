@@ -24,11 +24,10 @@ namespace mindspore {
 namespace lite {
 using STATUS = int;
 ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::BatchNorm();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new BatchNorm failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::BatchNorm>();
+
+  prim->set_is_training(false);
+  prim->set_format(mindspore::NCHW);
 
   const caffe::BatchNormParameter &batchNormParam = proto.batch_norm_param();
   if (proto.bottom_size() != 1) {
@@ -46,12 +45,9 @@ ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto,
   if (batchNormParam.has_eps() && std::fabs(1e-5 - batchNormParam.eps()) >= 1e-9) {
     epsilon = batchNormParam.eps();
   }
-  primitive_c->set_epsilon(epsilon);
+  prim->set_epsilon(epsilon);
 
-  primitive_c->set_is_training(false);
-  primitive_c->set_format(mindspore::NCHW);
-
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeBatchNormParser("BatchNorm", new CaffeBatchNormParser());

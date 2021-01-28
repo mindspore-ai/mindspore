@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSplitParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Split();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Split failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Split>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -85,7 +81,7 @@ ops::PrimitiveC *TfliteSplitParser::Parse(const std::unique_ptr<tflite::Operator
   }
   prim->set_size_splits(size_splits);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSplitParser(tflite::BuiltinOperator_SPLIT, new TfliteSplitParser());

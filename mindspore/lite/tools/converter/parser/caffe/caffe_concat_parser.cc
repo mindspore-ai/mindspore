@@ -21,11 +21,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Concat();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Concat failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Concat>();
 
   const caffe::ConcatParameter &concatParam = proto.concat_param();
   if (concatParam.has_axis() && concatParam.has_concat_dim()) {
@@ -45,9 +41,9 @@ ops::PrimitiveC *CaffeConcatParser::Parse(const caffe::LayerParameter &proto, co
     MS_LOG(DEBUG) << "set axis: " << concatParam.axis();
     axis = concatParam.axis();
   }
-  primitive_c->set_axis(axis);
+  prim->set_axis(axis);
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeConcatParser("Concat", new CaffeConcatParser());

@@ -24,13 +24,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteZerosLikeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::ZerosLike();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ZerosLike failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::ZerosLike>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteZerosLikeParser(tflite::BuiltinOperator_ZEROS_LIKE, new TfliteZerosLikeParser());

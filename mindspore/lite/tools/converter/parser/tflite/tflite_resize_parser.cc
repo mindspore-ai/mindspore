@@ -25,13 +25,19 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Resize();
+  auto prim = std::make_unique<ops::Resize>();
+
+  prim->set_format(mindspore::Format::NHWC);
+  prim->set_preserve_aspect_ratio(false);
+  prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
+
+  MS_ASSERT(tfliteOp != nullptr);
+  MS_ASSERT(tfliteModel != nullptr);
   auto &tflite_subgraph = tflite_model->subgraphs.front();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Resize failed";
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-  prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
   if (tflite_op_type == tflite::BuiltinOperator_RESIZE_BILINEAR) {
     MS_LOG(DEBUG) << "parse TfliteResizeBilinearParser";
@@ -69,12 +75,8 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
     return nullptr;
   }
 
-  prim->set_format(mindspore::Format::NHWC);
-  prim->set_preserve_aspect_ratio(false);
-
   auto tfliteResizeTensorIndex = tflite_op->inputs[1];
   const auto &shape_tensor = tflite_subgraph->tensors[tfliteResizeTensorIndex];
-
   if (shape_tensor == nullptr) {
     MS_LOG(ERROR) << "shape_tensor is null";
     return nullptr;
@@ -93,7 +95,7 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
     prim->set_new_height(height);
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteResizeBilinearParser(tflite::BuiltinOperator_RESIZE_BILINEAR, new TfliteResizeParser());

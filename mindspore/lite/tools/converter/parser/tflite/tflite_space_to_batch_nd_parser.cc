@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::SpaceToBatchND();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new SpaceToBatch failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::SpaceToBatchND>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -50,7 +46,7 @@ ops::PrimitiveC *TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite:
   }
   prim->set_paddings(paddings);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSpaceToBatchNDParser(tflite::BuiltinOperator_SPACE_TO_BATCH_ND,

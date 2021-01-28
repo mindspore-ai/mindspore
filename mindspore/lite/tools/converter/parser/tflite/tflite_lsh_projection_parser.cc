@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteLshProjectionParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::LshProjection();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new LshProjection failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::LshProjection>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsLSHProjectionOptions();
@@ -46,7 +42,7 @@ ops::PrimitiveC *TfliteLshProjectionParser::Parse(const std::unique_ptr<tflite::
       prim->set_type(mindspore::LshProjectionType::UNKNOWN);
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteLshProjectionParser(tflite::BuiltinOperator_LSH_PROJECTION, new TfliteLshProjectionParser());

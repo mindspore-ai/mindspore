@@ -22,11 +22,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::BroadcastTo;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new BroadcastTo failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::BroadcastTo>();
 
   std::vector<int64_t> dst_shape;
   const auto &onnx_expand_power = onnx_node.input(1);
@@ -46,9 +42,9 @@ ops::PrimitiveC *OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, con
       }
     }
   }
-  primitive_c->set_shape(dst_shape);
+  prim->set_shape(dst_shape);
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxExpandSpaceParser("Expand", new OnnxExpandParser());

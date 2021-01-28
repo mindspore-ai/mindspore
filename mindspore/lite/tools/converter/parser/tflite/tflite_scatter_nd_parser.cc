@@ -23,13 +23,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteScatterNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::ScatterNd();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ScatterNd failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::ScatterNd>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteScatterNdParser(tflite::BuiltinOperator_SCATTER_ND, new TfliteScatterNdParser());

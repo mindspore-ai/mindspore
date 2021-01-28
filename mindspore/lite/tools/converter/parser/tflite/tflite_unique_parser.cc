@@ -24,13 +24,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteUniqueParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Unique();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Unique failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Unique>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteUniqueParser(tflite::BuiltinOperator_UNIQUE, new TfliteUniqueParser());

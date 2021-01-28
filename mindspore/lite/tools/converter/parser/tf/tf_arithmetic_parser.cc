@@ -44,89 +44,41 @@ ops::PrimitiveC *TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   if (tf_op.op() == "Add" || tf_op.op() == "AddV2") {
-    auto primitive_c = new (std::nothrow) ops::AddFusion;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new AddFusion failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::AddFusion>();
+    return prim.release();
   } else if (tf_op.op() == "Sub") {
-    auto primitive_c = new (std::nothrow) ops::SubFusion;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new SubFusion failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::SubFusion>();
+    return prim.release();
   } else if (tf_op.op() == "Mul") {
-    auto primitive_c = new (std::nothrow) ops::MulFusion;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new MulFusion failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::MulFusion>();
+    return prim.release();
   } else if (tf_op.op() == "Div" || tf_op.op() == "RealDiv") {
-    auto primitive_c = new (std::nothrow) ops::DivFusion;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new DivFusion failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::DivFusion>();
+    return prim.release();
   } else if (tf_op.op() == "Maximum") {
-    auto primitive_c = new (std::nothrow) ops::Maximum;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new Maximum failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::Maximum>();
+    return prim.release();
   } else if (tf_op.op() == "Minimum") {
-    auto primitive_c = new (std::nothrow) ops::Minimum;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new Minimum failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::Minimum>();
+    return prim.release();
   } else if (tf_op.op() == "Greater") {
-    auto primitive_c = new (std::nothrow) ops::Greater;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new Greater failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::Greater>();
+    return prim.release();
   } else if (tf_op.op() == "GreaterEqual") {
-    auto primitive_c = new (std::nothrow) ops::GreaterEqual;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new GreaterEqual failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::GreaterEqual>();
+    return prim.release();
   } else if (tf_op.op() == "Less") {
-    auto primitive_c = new (std::nothrow) ops::Less;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new Less failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::Less>();
+    return prim.release();
   } else if (tf_op.op() == "LessEqual") {
-    auto primitive_c = new (std::nothrow) ops::LessEqual;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new LessEqual failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::LessEqual>();
+    return prim.release();
   } else if (tf_op.op() == "Equal") {
-    auto primitive_c = new (std::nothrow) ops::Equal;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new Equal failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::Equal>();
+    return prim.release();
   } else if (tf_op.op() == "NotEqual") {
-    auto primitive_c = new (std::nothrow) ops::NotEqual;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new NotEqual failed";
-      return nullptr;
-    }
-    return primitive_c;
+    auto prim = std::make_unique<ops::NotEqual>();
+    return prim.release();
   }
   return nullptr;
 }

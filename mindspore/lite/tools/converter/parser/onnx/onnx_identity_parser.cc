@@ -21,14 +21,10 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxIdentityParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Identity;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Identity failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Identity>();
+  return prim.release();
 }
+
 OnnxNodeRegistrar g_onnxIdentityParser("Identity", new OnnxIdentityParser());
 }  // namespace lite
 }  // namespace mindspore

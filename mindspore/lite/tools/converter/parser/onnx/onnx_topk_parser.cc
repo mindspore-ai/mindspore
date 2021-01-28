@@ -21,20 +21,16 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxTopkParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::TopKFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new TopKFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::TopKFusion>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "k") {
-      primitive_c->AddAttr("k", MakeValue(static_cast<int32_t>(onnx_node_attr.i())));
+      prim->AddAttr("k", MakeValue(static_cast<int32_t>(onnx_node_attr.i())));
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxTopkParser("TopK", new OnnxTopkParser());

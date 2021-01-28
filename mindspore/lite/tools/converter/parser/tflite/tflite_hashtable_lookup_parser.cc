@@ -23,13 +23,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteHashtableLookupParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::HashtableLookup();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new HashtableLookup failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::HashtableLookup>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteHashtableLookupParser(tflite::BuiltinOperator_HASHTABLE_LOOKUP,

@@ -21,25 +21,21 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Crop();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Crop failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Crop>();
 
   if (!proto.has_crop_param()) {
-    primitive_c->set_axis(2);
+    prim->set_axis(2);
     std::vector<int64_t> offsets(2, 0);
-    primitive_c->set_offsets(offsets);
+    prim->set_offsets(offsets);
   } else {
     const caffe::CropParameter &cropParam = proto.crop_param();
     if (cropParam.has_axis()) {
       if (cropParam.axis() == -1) {
         MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
       }
-      primitive_c->set_axis(cropParam.axis());
+      prim->set_axis(cropParam.axis());
     } else {
-      primitive_c->set_axis(2);
+      prim->set_axis(2);
     }
 
     if (cropParam.offset_size() != 0) {
@@ -48,11 +44,11 @@ ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, cons
       for (int i = 0; i < cropParam.offset_size(); i++) {
         offsets.push_back(cropParam.offset(i));
       }
-      primitive_c->set_offsets(offsets);
+      prim->set_offsets(offsets);
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeCropParser("Crop", new CaffeCropParser());

@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteDepthToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::DepthToSpace();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new DepthToSpace failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::DepthToSpace>();
 
   prim->set_format(mindspore::Format::NHWC);
 
@@ -40,7 +36,7 @@ ops::PrimitiveC *TfliteDepthToSpaceParser::Parse(const std::unique_ptr<tflite::O
   }
   prim->set_block_size(tflite_attr->block_size);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteDepthToSpaceParser(tflite::BuiltinOperator_DEPTH_TO_SPACE, new TfliteDepthToSpaceParser());

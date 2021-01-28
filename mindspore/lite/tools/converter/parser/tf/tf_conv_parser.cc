@@ -27,14 +27,10 @@ namespace lite {
 ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                      std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Conv2DFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Conv2DFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Conv2DFusion>();
 
-  primitive_c->set_pad({0, 0, 0, 0});
-  primitive_c->set_group(1);
+  prim->set_pad({0, 0, 0, 0});
+  prim->set_group(1);
 
   // parse format
   auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
@@ -42,7 +38,7 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "TF Conv2D with data_format=NCHW is not supported now";
     return nullptr;
   }
-  primitive_c->set_format(format);
+  prim->set_format(format);
 
   // parse kernel
   auto weight_node = GetConstInputNode(tf_node_map, tf_op.input(1));
@@ -55,9 +51,9 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "parse kernels failed";
     return nullptr;
   }
-  primitive_c->set_kernel_size({kernels[0], kernels[1]});
-  primitive_c->set_out_channel(kernels[3]);
-  primitive_c->set_in_channel(kernels[2]);
+  prim->set_kernel_size({kernels[0], kernels[1]});
+  prim->set_out_channel(kernels[3]);
+  prim->set_in_channel(kernels[2]);
 
   // parse stride
   std::vector<int64_t> strides(2);
@@ -65,7 +61,7 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "parse strides failed";
     return nullptr;
   }
-  primitive_c->set_stride(strides);
+  prim->set_stride(strides);
 
   // parse dilation
   std::vector<int64_t> dilations(2);
@@ -73,11 +69,11 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "parse dilations failed";
     return nullptr;
   }
-  primitive_c->set_dilation(dilations);
+  prim->set_dilation(dilations);
 
   // parse pad
-  auto padMode = ParsePadMode(tf_op);
-  primitive_c->set_pad_mode(padMode);
+  auto pad_mode = ParsePadMode(tf_op);
+  prim->set_pad_mode(pad_mode);
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
@@ -85,7 +81,7 @@ ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfConvParser("Conv2D", new TFConvParser());

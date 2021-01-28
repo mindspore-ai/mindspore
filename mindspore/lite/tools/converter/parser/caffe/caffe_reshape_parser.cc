@@ -21,11 +21,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Reshape();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Reshape failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Reshape>();
 
   const caffe::ReshapeParameter &reshapeParam = proto.reshape_param();
   if (!reshapeParam.has_shape()) {
@@ -37,9 +33,9 @@ ops::PrimitiveC *CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, c
   for (int i = 0; i < blob_shape.dim_size(); i++) {
     shape.push_back(blob_shape.dim(i));
   }
-  primitive_c->AddAttr("shape", MakeValue(shape));
+  prim->AddAttr("shape", MakeValue(shape));
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeReshapeParser("Reshape", new CaffeReshapeParser());

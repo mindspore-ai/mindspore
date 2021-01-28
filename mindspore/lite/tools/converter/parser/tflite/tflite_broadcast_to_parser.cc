@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::BroadcastTo();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new BroadcastTo failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::BroadcastTo>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -44,7 +40,7 @@ ops::PrimitiveC *TfliteBroadcastToParser::Parse(const std::unique_ptr<tflite::Op
   }
   prim->set_shape(dst_shape);
 
-  return prim;
+  return prim.release();
 }
 
 }  // namespace lite

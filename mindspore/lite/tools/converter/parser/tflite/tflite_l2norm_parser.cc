@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::L2NormalizeFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new L2NormalizeFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::L2NormalizeFusion>();
 
   prim->set_axis({-1});
   prim->set_epsilon(1e-6);
@@ -41,7 +37,7 @@ ops::PrimitiveC *TfliteL2NormParser::Parse(const std::unique_ptr<tflite::Operato
   }
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteL2NormParser(tflite::BuiltinOperator_L2_NORMALIZATION, new TfliteL2NormParser());

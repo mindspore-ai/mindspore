@@ -50,11 +50,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::AddFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new AddFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::AddFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsAddOptions();
@@ -64,16 +60,12 @@ ops::PrimitiveC *TfliteAddParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::MulFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new MulFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::MulFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsMulOptions();
@@ -83,16 +75,12 @@ ops::PrimitiveC *TfliteMulParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteDivParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::DivFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new DivFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::DivFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsDivOptions();
@@ -102,16 +90,12 @@ ops::PrimitiveC *TfliteDivParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::SubFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new SubFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::SubFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsSubOptions();
@@ -121,278 +105,160 @@ ops::PrimitiveC *TfliteSubParser::Parse(const std::unique_ptr<tflite::OperatorT>
   }
   prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteFloorDivParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::FloorDiv();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new FloorDiv failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::FloorDiv>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteFloorModParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::FloorMod();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new FloorMod failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::FloorMod>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TflitePowParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::PowFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new PowFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::PowFusion>();
 
   prim->set_scale(1.0);
   prim->set_shift(0.0);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteSquaredDifferenceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::SquaredDifference();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new SquaredDifference failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::SquaredDifference>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteMaximumParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Maximum();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Maximum failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Maximum>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteMinimumParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Minimum();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Minimum failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Minimum>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteAbsParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Abs();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Abs failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Abs>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCosParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Cos();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Cos failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Cos>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteFloorParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Floor();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Floor failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Floor>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteExpParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::ExpFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ExpFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ExpFusion>();
 
   prim->set_base(-1.0);
   prim->set_scale(1.0);
   prim->set_shift(0.0);
 
-  return prim;
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteCeilParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Ceil();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Ceil failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Ceil>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteLogParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Log();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Log failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Log>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteRoundParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Round();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Round failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Round>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteSqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Sqrt();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Sqrt failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Sqrt>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteRsqrtParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Rsqrt();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Rsqrt failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Rsqrt>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteSquareParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Square();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Square failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Square>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteSinParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Sin();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Sin failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Sin>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteNegParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Neg();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Neg failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Neg>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Equal();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Equal failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Equal>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteNotEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::NotEqual();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new NotEqual failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::NotEqual>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteGreaterParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Greater();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Greater failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Greater>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteGreaterEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::GreaterEqual();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new GreaterEqual failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::GreaterEqual>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteLessParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Less();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Less failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::Less>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteLessEqualParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::LessEqual();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new LessEqual failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::LessEqual>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteAddParser(tflite::BuiltinOperator_ADD, new TfliteAddParser());

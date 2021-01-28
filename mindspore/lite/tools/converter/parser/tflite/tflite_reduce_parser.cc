@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteReduceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::ReduceFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new ReduceFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ReduceFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsReducerOptions();
@@ -53,7 +49,7 @@ ops::PrimitiveC *TfliteReduceParser::Parse(const std::unique_ptr<tflite::Operato
     return nullptr;
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_TfliteSumParser(tflite::BuiltinOperator_SUM, new TfliteReduceParser());

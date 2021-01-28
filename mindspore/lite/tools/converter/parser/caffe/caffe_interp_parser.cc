@@ -21,11 +21,10 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Resize();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Resize failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Resize>();
+
+  prim->set_method(mindspore::ResizeMethod::LINEAR);
+  prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
 
   const caffe::InterpParameter &interpParam = proto.interp_param();
   if (interpParam.has_height()) {
@@ -34,7 +33,7 @@ ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, co
       MS_LOG(ERROR) << "Interp height must be > 0";
       return nullptr;
     }
-    primitive_c->set_new_height(height);
+    prim->set_new_height(height);
   }
 
   if (interpParam.has_width()) {
@@ -43,12 +42,10 @@ ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, co
       MS_LOG(ERROR) << "Interp width must be > 0";
       return nullptr;
     }
-    primitive_c->set_new_width(width);
+    prim->set_new_width(width);
   }
-  primitive_c->set_method(mindspore::ResizeMethod::LINEAR);
-  primitive_c->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeInterpParser("Interp", new CaffeInterpParser());

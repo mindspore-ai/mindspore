@@ -27,11 +27,7 @@ namespace lite {
 ops::PrimitiveC *TFSqueezeParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Squeeze;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Squeeze failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Squeeze>();
 
   std::vector<int64_t> axis;
   tensorflow::AttrValue attr_value;
@@ -43,7 +39,7 @@ ops::PrimitiveC *TFSqueezeParser::Parse(const tensorflow::NodeDef &tf_op,
   for (int i = 0; i < dims.i_size(); ++i) {
     axis.push_back(dims.i(i));
   }
-  primitive_c->set_axis(axis);
+  prim->set_axis(axis);
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
@@ -51,7 +47,7 @@ ops::PrimitiveC *TFSqueezeParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfSqueezeParser("Squeeze", new TFSqueezeParser());

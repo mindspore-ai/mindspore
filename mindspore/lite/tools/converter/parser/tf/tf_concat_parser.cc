@@ -26,11 +26,7 @@ namespace lite {
 ops::PrimitiveC *TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Concat;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Concat failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Concat>();
 
   auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(tf_op.input_size() - 1));
   if (axis_node == nullptr) {
@@ -43,7 +39,7 @@ ops::PrimitiveC *TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
   auto tensor_proto = attr_value.tensor();
-  primitive_c->set_axis(tensor_proto.int_val(0));
+  prim->set_axis(tensor_proto.int_val(0));
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size() - 1; ++i) {
@@ -53,7 +49,7 @@ ops::PrimitiveC *TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfConcatV2Parser("ConcatV2", new TFConcatParser());

@@ -26,18 +26,14 @@ namespace lite {
 ops::PrimitiveC *TFMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::MatMul;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new MatMul failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::MatMul>();
 
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "transpose_a", &attr_value)) {
-    primitive_c->set_transpose_a(attr_value.b());
+    prim->set_transpose_a(attr_value.b());
   }
   if (TensorFlowUtils::FindAttrValue(tf_op, "transpose_b", &attr_value)) {
-    primitive_c->set_transpose_b(attr_value.b());
+    prim->set_transpose_b(attr_value.b());
   }
 
   *output_size = 1;
@@ -46,7 +42,7 @@ ops::PrimitiveC *TFMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfMatMulParser("MatMul", new TFMatMulParser());

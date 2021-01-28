@@ -26,24 +26,20 @@ namespace lite {
 ops::PrimitiveC *TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                        std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::ReduceFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ReduceFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ReduceFusion>();
 
   if (tf_op.op() == "Sum") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Sum);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Sum);
   } else if (tf_op.op() == "Max") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Max);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Max);
   } else if (tf_op.op() == "Min") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Min);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Min);
   } else if (tf_op.op() == "Mean") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Mean);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Mean);
   } else if (tf_op.op() == "Prod") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Prod);
+    prim->set_mode(mindspore::ReduceMode::Reduce_Prod);
   } else if (tf_op.op() == "All") {
-    primitive_c->set_mode(mindspore::ReduceMode::Reduce_All);
+    prim->set_mode(mindspore::ReduceMode::Reduce_All);
   } else {
     MS_LOG(ERROR) << "unsupported reduce mode: " << tf_op.op();
     return nullptr;
@@ -59,7 +55,7 @@ ops::PrimitiveC *TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "the keep_dims attr of reduce should be bool type";
     return nullptr;
   }
-  primitive_c->set_keep_dims(attr_value.b());
+  prim->set_keep_dims(attr_value.b());
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
@@ -67,7 +63,7 @@ ops::PrimitiveC *TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
     return nullptr;
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfSumParser("Sum", new TFReduceParser());

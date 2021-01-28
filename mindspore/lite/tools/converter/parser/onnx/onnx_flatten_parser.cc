@@ -21,13 +21,8 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Flatten;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Flatten failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::Flatten>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxFlattenParser("Flatten", new OnnxFlattenParser());

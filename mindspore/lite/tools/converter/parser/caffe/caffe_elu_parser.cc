@@ -21,20 +21,16 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeEluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::Elu();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Elu failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Elu>();
 
   if (proto.has_elu_param()) {
     const caffe::ELUParameter &eluParameter = proto.elu_param();
     if (eluParameter.has_alpha()) {
-      primitive_c->set_alpha(eluParameter.alpha());
+      prim->set_alpha(eluParameter.alpha());
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeEluParser("ELU", new CaffeEluParser());

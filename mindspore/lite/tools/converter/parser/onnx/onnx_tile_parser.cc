@@ -21,13 +21,8 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::TileFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new TileFusion failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::TileFusion>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxTileParser("Tile", new OnnxTileParser());

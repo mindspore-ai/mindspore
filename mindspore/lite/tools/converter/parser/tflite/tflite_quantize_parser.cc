@@ -44,25 +44,15 @@ ops::PrimitiveC *TfliteQuantizeParser::Parse(const std::unique_ptr<tflite::Opera
   auto in_tensor_type = GetTfliteDataType(in_tensor->type);
   auto out_tensor_type = GetTfliteDataType(out_tensor->type);
   if (out_tensor_type == kNumberTypeInt8 || out_tensor_type == kNumberTypeUInt8) {
-    auto prim = new (std::nothrow) ops::QuantDTypeCast();
-    if (prim == nullptr) {
-      MS_LOG(ERROR) << "new QuantDTypeCast failed";
-      return nullptr;
-    }
+    auto prim = std::make_unique<ops::QuantDTypeCast>();
     prim->set_src_t(in_tensor_type);
     prim->set_dst_t(out_tensor_type);
-    return prim;
+    return prim.release();
   } else {
-    auto prim = new (std::nothrow) ops::Cast();
-    if (prim == nullptr) {
-      MS_LOG(ERROR) << "new Cast failed";
-      return nullptr;
-    }
-
+    auto prim = std::make_unique<ops::Cast>();
     auto dstT = GetTfliteDataType(out_tensor->type);
     prim->AddAttr("to", MakeValue(static_cast<int32_t>(dstT)));
-
-    return prim;
+    return prim.release();
   }
 }
 

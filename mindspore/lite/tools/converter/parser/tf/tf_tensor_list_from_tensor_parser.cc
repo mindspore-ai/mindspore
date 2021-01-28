@@ -26,11 +26,7 @@ namespace lite {
 ops::PrimitiveC *TFTensorListFromTensorParser::Parse(const tensorflow::NodeDef &tf_op,
                                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                                      std::vector<std::string> *inputs, int *output_size) {
-  auto primitive = new (std::nothrow) ops::TensorListFromTensor;
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New TensorListFromTensor failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::TensorListFromTensor>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "element_dtype", &attr_value)) {
@@ -42,7 +38,7 @@ ops::PrimitiveC *TFTensorListFromTensorParser::Parse(const tensorflow::NodeDef &
     MS_LOG(ERROR) << "tensor_list_from_tensor element dtype must be known type";
     return nullptr;
   }
-  primitive->set_element_dtype((int64_t)(type));
+  prim->set_element_dtype((int64_t)(type));
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "shape_type", &attr_value)) {
     MS_LOG(ERROR) << "The shape_type attr should be specified";
@@ -53,7 +49,7 @@ ops::PrimitiveC *TFTensorListFromTensorParser::Parse(const tensorflow::NodeDef &
     MS_LOG(ERROR) << "tensor_list_from_tensor shape type must be known type";
     return nullptr;
   }
-  primitive->set_shape_type((int64_t)(type));
+  prim->set_shape_type((int64_t)(type));
 
   *output_size = 1;
   for (int i = 0; i < 2; ++i) {
@@ -63,7 +59,7 @@ ops::PrimitiveC *TFTensorListFromTensorParser::Parse(const tensorflow::NodeDef &
     }
   }
 
-  return primitive;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfTensorListFromTensorParser("TensorListFromTensor", new TFTensorListFromTensorParser());

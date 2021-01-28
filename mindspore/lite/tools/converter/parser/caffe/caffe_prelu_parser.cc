@@ -21,20 +21,16 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffePReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::PReLUFusion();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new PReLUFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::PReLUFusion>();
 
-  const caffe::PReLUParameter &pReluParam = proto.prelu_param();
-  if (pReluParam.has_channel_shared()) {
-    primitive_c->set_channel_shared(pReluParam.channel_shared());
+  const caffe::PReLUParameter &prelu_param = proto.prelu_param();
+  if (prelu_param.has_channel_shared()) {
+    prim->set_channel_shared(prelu_param.channel_shared());
   } else {
-    primitive_c->set_channel_shared(false);
+    prim->set_channel_shared(false);
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffePReluParser("PReLU", new CaffePReluParser());

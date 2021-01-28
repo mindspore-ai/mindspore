@@ -21,13 +21,8 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxAdderParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::AdderFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new AdderFusion failed";
-    return nullptr;
-  }
-
-  return primitive_c;
+  auto prim = std::make_unique<ops::AdderFusion>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxAdderParser("adder_f", new OnnxAdderParser());

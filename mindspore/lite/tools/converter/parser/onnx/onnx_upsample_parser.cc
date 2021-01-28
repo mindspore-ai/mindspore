@@ -23,14 +23,10 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  // use bilinear method
-  auto primitive_c = new (std::nothrow) ops::Resize;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Resize failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Resize>();
 
-  primitive_c->set_method(mindspore::ResizeMethod::NEAREST);
+  prim->set_method(mindspore::ResizeMethod::NEAREST);  // use bilinear method
+
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "mode") {
@@ -38,13 +34,13 @@ ops::PrimitiveC *OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, c
         MS_LOG(ERROR) << "the UpSample mode don't support now.";
         return nullptr;
       }
-      primitive_c->set_method(onnx_node_attr.s() == "nearest" ? mindspore::ResizeMethod::NEAREST
-                                                              : mindspore::ResizeMethod::LINEAR);
+      prim->set_method(onnx_node_attr.s() == "nearest" ? mindspore::ResizeMethod::NEAREST
+                                                       : mindspore::ResizeMethod::LINEAR);
     }
   }
-  primitive_c->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
+  prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxUpsampleParser("Upsample", new OnnxUpsampleParser());

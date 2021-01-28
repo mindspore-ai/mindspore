@@ -22,13 +22,9 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::PadFusion;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new PadFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::PadFusion>();
 
-  mindspore::PaddingMode paddingMode;
+  mindspore::PaddingMode padding_mode;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "pads") {
@@ -40,28 +36,28 @@ ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const 
         paddings[i][0] = static_cast<int64_t>(onnx_node_attr.ints(i));
         paddings[i][1] = static_cast<int64_t>(onnx_node_attr.ints(i + size / 2));
       }
-      primitive_c->set_paddings(paddings);
+      prim->set_paddings(paddings);
 
       std::vector<std::vector<int32_t>> pads(size / 2, std::vector<int32_t>(2, 0));
       for (int i = 0; i < size / 2; i++) {
         pads[i][0] = static_cast<int32_t>(onnx_node_attr.ints(i));
         pads[i][1] = static_cast<int32_t>(onnx_node_attr.ints(i + size / 2));
       }
-      primitive_c->AddAttr("pads", MakeValue(pads));
+      prim->AddAttr("pads", MakeValue(pads));
     } else if (attribute_name == "mode") {
       const auto &mode = onnx_node_attr.s();
       if (mode == "constant") {
-        paddingMode = mindspore::PaddingMode::CONSTANT;
+        padding_mode = mindspore::PaddingMode::CONSTANT;
       } else if (mode == "reflect") {
-        paddingMode = mindspore::PaddingMode::REFLECT;
+        padding_mode = mindspore::PaddingMode::REFLECT;
       } else if (mode == "edge") {
-        paddingMode = mindspore::PaddingMode::SYMMETRIC;
+        padding_mode = mindspore::PaddingMode::SYMMETRIC;
       }
-      primitive_c->set_padding_mode(paddingMode);
+      prim->set_padding_mode(padding_mode);
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxPadParser("Pad", new OnnxPadParser());

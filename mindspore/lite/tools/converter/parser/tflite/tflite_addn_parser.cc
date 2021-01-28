@@ -24,13 +24,8 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::AddN();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new AddN failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::AddN>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteAddNParser(tflite::BuiltinOperator_ADD_N, new TfliteAddNParser());

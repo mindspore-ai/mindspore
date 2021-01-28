@@ -21,11 +21,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Lrn;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new LRN failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Lrn>();
 
   int64_t size = 0;
   float alpha = 0;
@@ -34,12 +30,12 @@ ops::PrimitiveC *OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const 
     if (attribute_name == "alpha") {
       alpha = onnx_node_attr.f();
     } else if (attribute_name == "beta") {
-      primitive_c->set_beta(onnx_node_attr.f());
+      prim->set_beta(onnx_node_attr.f());
     } else if (attribute_name == "bias") {
-      primitive_c->set_bias(onnx_node_attr.f());
+      prim->set_bias(onnx_node_attr.f());
     } else if (attribute_name == "size") {
       size = onnx_node_attr.i();
-      primitive_c->set_depth_radius(size / 2);
+      prim->set_depth_radius(size / 2);
     }
   }
 
@@ -48,9 +44,9 @@ ops::PrimitiveC *OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const 
     return nullptr;
   }
   alpha /= size;
-  primitive_c->set_alpha(alpha);
+  prim->set_alpha(alpha);
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxLrnxParser("Lrn", new OnnxLrnParser());

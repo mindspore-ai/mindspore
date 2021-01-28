@@ -21,24 +21,20 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Clip;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Clip failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Clip>();
 
-  primitive_c->set_min(-1);
-  primitive_c->set_max(-1);
+  prim->set_min(-1);
+  prim->set_max(-1);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "max") {
-      primitive_c->set_max(onnx_node_attr.f());
+      prim->set_max(onnx_node_attr.f());
     } else if (attribute_name == "min") {
-      primitive_c->set_min(onnx_node_attr.f());
+      prim->set_min(onnx_node_attr.f());
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxClipParser("Clip", new OnnxClipParser());

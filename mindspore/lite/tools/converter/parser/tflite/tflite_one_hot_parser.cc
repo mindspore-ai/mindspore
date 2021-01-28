@@ -23,11 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::OneHot();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new OneHot failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::OneHot>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsOneHotOptions();
@@ -37,7 +33,7 @@ ops::PrimitiveC *TfliteOneHotParser::Parse(const std::unique_ptr<tflite::Operato
   }
   prim->set_axis(tflite_attr->axis);
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteOneHotParser(tflite::BuiltinOperator_ONE_HOT, new TfliteOneHotParser());

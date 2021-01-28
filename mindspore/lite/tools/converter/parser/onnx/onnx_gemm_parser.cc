@@ -22,11 +22,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxGemmParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::MakeTuple;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new MakeTuple failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::MakeTuple>();
 
   auto node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser("MatMul");
   if (node_parser == nullptr) {
@@ -34,7 +30,7 @@ ops::PrimitiveC *OnnxGemmParser::Parse(const onnx::GraphProto &onnx_graph, const
     return nullptr;
   }
   auto *matmul_primitive = node_parser->Parse(onnx_graph, onnx_node);
-  primitive_c->AddAttr("MatMul", std::shared_ptr<ops::PrimitiveC>(matmul_primitive));
+  prim->AddAttr("MatMul", std::shared_ptr<ops::PrimitiveC>(matmul_primitive));
 
   node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser("BiasAdd");
   if (node_parser == nullptr) {
@@ -42,9 +38,9 @@ ops::PrimitiveC *OnnxGemmParser::Parse(const onnx::GraphProto &onnx_graph, const
     return nullptr;
   }
   auto *bias_add_primitive = node_parser->Parse(onnx_graph, onnx_node);
-  primitive_c->AddAttr("BiasAdd", std::shared_ptr<ops::PrimitiveC>(bias_add_primitive));
+  prim->AddAttr("BiasAdd", std::shared_ptr<ops::PrimitiveC>(bias_add_primitive));
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxGemmParser("Gemm", new OnnxGemmParser());

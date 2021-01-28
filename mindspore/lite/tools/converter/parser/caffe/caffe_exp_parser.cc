@@ -22,29 +22,26 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffeExpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::ExpFusion();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new ExpFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ExpFusion>();
+
   const caffe::ExpParameter &exp_param = proto.exp_param();
   if (exp_param.has_base()) {
-    primitive_c->set_base(exp_param.base());
+    prim->set_base(exp_param.base());
   } else {
-    primitive_c->set_base(-1);  // -1 represent base = e
+    prim->set_base(-1);  // -1 represent base = e
   }
   if (exp_param.has_scale()) {
-    primitive_c->set_scale(exp_param.scale());
+    prim->set_scale(exp_param.scale());
   } else {
-    primitive_c->set_scale(1);
+    prim->set_scale(1);
   }
   if (exp_param.has_shift()) {
-    primitive_c->set_shift(exp_param.shift());
+    prim->set_shift(exp_param.shift());
   } else {
-    primitive_c->set_shift(0);
+    prim->set_shift(0);
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeExpParser("Exp", new CaffeExpParser());

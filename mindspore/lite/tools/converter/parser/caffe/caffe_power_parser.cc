@@ -21,11 +21,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
-  auto primitive_c = new (std::nothrow) ops::PowFusion();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new PowFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::PowFusion>();
 
   const caffe::PowerParameter &powerParam = proto.power_param();
   float power = 1.0;
@@ -42,11 +38,11 @@ ops::PrimitiveC *CaffePowerParser::Parse(const caffe::LayerParameter &proto, con
       shift = powerParam.shift();
     }
   }
-  primitive_c->AddAttr("power", MakeValue(power));
-  primitive_c->set_scale(scale);
-  primitive_c->set_shift(shift);
+  prim->AddAttr("power", MakeValue(power));
+  prim->set_scale(scale);
+  prim->set_shift(shift);
 
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffePowerParser("Power", new CaffePowerParser());

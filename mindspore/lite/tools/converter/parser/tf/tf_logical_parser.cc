@@ -27,16 +27,12 @@ ops::PrimitiveC *TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                         std::vector<std::string> *inputs, int *output_size) {
   if (tf_op.op() == "LogicalAnd") {
-    auto primitive_c = new (std::nothrow) ops::LogicalAnd;
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "new LogicalAnd failed";
-      return nullptr;
-    }
+    auto prim = std::make_unique<ops::LogicalAnd>();
     *output_size = 1;
     for (int i = 0; i < tf_op.input_size(); i++) {
       inputs->emplace_back(tf_op.input(i));
     }
-    return primitive_c;
+    return prim.release();
   } else {
     MS_LOG(ERROR) << "only LogicalAnd is supported now";
     return nullptr;

@@ -23,31 +23,28 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxSplitParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::Split;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Split failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Split>();
 
-  primitive_c->set_axis(0);
+  prim->set_axis(0);
   std::vector<int64_t> size_splits;
   int64_t split_num = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      primitive_c->set_axis(onnx_node_attr.i());
+      prim->set_axis(onnx_node_attr.i());
     } else if (attribute_name == "split") {
       size_splits.resize(onnx_node_attr.ints_size());
       std::copy(onnx_node_attr.ints().begin(), onnx_node_attr.ints().end(), size_splits.begin());
-      primitive_c->set_size_splits(size_splits);
+      prim->set_size_splits(size_splits);
       split_num = onnx_node_attr.ints_size();
     }
   }
   if (split_num == 0) {
     split_num = onnx_node.output_size();
   }
-  primitive_c->set_output_num(split_num);
-  return primitive_c;
+  prim->set_output_num(split_num);
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxSplitParser("Split", new OnnxSplitParser());

@@ -25,20 +25,16 @@ namespace lite {
 ops::PrimitiveC *TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                            std::vector<std::string> *inputs, int *output_size) {
-  auto primitive_c = new (std::nothrow) ops::Activation();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Activation failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Activation>();
 
   if (tf_op.op() == "Relu") {
-    primitive_c->set_activation_type(mindspore::ActivationType::RELU);
+    prim->set_activation_type(mindspore::ActivationType::RELU);
   } else if (tf_op.op() == "Relu6") {
-    primitive_c->set_activation_type(mindspore::ActivationType::RELU6);
+    prim->set_activation_type(mindspore::ActivationType::RELU6);
   } else if (tf_op.op() == "Sigmoid") {
-    primitive_c->set_activation_type(mindspore::ActivationType::SIGMOID);
+    prim->set_activation_type(mindspore::ActivationType::SIGMOID);
   } else if (tf_op.op() == "Tanh") {
-    primitive_c->set_activation_type(mindspore::ActivationType::TANH);
+    prim->set_activation_type(mindspore::ActivationType::TANH);
   } else {
     MS_LOG(ERROR) << "unsupported activation type:" << tf_op.op();
     return nullptr;
@@ -49,7 +45,8 @@ ops::PrimitiveC *TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "add op input failed";
     return nullptr;
   }
-  return primitive_c;
+
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfReluParser("Relu", new TFActivationParser());

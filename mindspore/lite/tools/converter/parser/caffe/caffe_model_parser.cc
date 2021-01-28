@@ -95,8 +95,8 @@ STATUS CaffeModelParser::ConvertLayers() {
       continue;
     }
 
-    auto primitive_c = node_parser->Parse(layer, weight);
-    if (primitive_c == nullptr) {
+    auto prim = node_parser->Parse(layer, weight);
+    if (prim == nullptr) {
       MS_LOG(ERROR) << "parse node " << layer.name() << " failed.";
       status = RET_ERROR;
       continue;
@@ -119,7 +119,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     }
 
     // build cnode
-    std::vector<AnfNodePtr> op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c))};
+    std::vector<AnfNodePtr> op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(prim))};
     op_inputs.insert(op_inputs.end(), input_nodes.begin(), input_nodes.end());
     op_inputs.insert(op_inputs.end(), const_parameters.begin(), const_parameters.end());
     auto new_cnode = func_graph_ptr_->NewCNode(op_inputs);
@@ -132,7 +132,7 @@ STATUS CaffeModelParser::ConvertLayers() {
       continue;
     }
 
-    status = ConvertLayerQuantParams(layer, weight, primitive_c);
+    status = ConvertLayerQuantParams(layer, weight, prim);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert quant params for " << layer.name() << " failed.";
       continue;
@@ -294,9 +294,9 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
 }
 
 STATUS CaffeModelParser::ConvertLayerQuantParams(const caffe::LayerParameter &layer,
-                                                 const caffe::LayerParameter &weight, ops::PrimitiveC *primitive_c) {
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
+                                                 const caffe::LayerParameter &weight, ops::PrimitiveC *prim) {
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "prim is null, get quant params failed.";
     return RET_NULL_PTR;
   }
   auto quant_params_holder = std::make_shared<QuantParamHolder>();
@@ -312,7 +312,7 @@ STATUS CaffeModelParser::ConvertLayerQuantParams(const caffe::LayerParameter &la
     std::vector<schema::QuantParamT> notinited_quant_params(1);
     quant_params_holder->AddOutputQuantParam(notinited_quant_params);
   }
-  primitive_c->AddAttr("quant_params", quant_params_holder);
+  prim->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
 

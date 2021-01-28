@@ -34,14 +34,11 @@ ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, con
   }
 
   // use bilinear method
-  auto primitive_c = new (std::nothrow) ops::Resize;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new Resize failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Resize>();
 
-  primitive_c->set_format(mindspore::Format::NCHW);
-  primitive_c->set_nearest_mode(mindspore::NearestMode::ROUND_HALF_DOWN);
+  prim->set_format(mindspore::Format::NCHW);
+  prim->set_nearest_mode(mindspore::NearestMode::ROUND_HALF_DOWN);
+
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "coordinate_transformation_mode") {
@@ -51,24 +48,24 @@ ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, con
         {"align_corners", mindspore::CoordinateTransformMode::ALIGN_CORNERS},
         {"asymmetric", mindspore::CoordinateTransformMode::ASYMMETRIC}};
       if (transform_map.find(onnx_node_attr.s()) != transform_map.end()) {
-        primitive_c->set_coordinate_transform_mode(transform_map[onnx_node_attr.s()]);
+        prim->set_coordinate_transform_mode(transform_map[onnx_node_attr.s()]);
       } else {
         MS_LOG(ERROR) << "Unsupport coordinate transform mode: " << attribute_name;
         return nullptr;
       }
     } else if (attribute_name == "cubic_coeff_a") {
-      primitive_c->set_cubic_coeff(onnx_node_attr.f());
+      prim->set_cubic_coeff(onnx_node_attr.f());
     } else if (attribute_name == "exclude_outside") {
-      primitive_c->set_exclude_outside(onnx_node_attr.i());
+      prim->set_exclude_outside(onnx_node_attr.i());
     } else if (attribute_name == "extrapolation_value") {
-      primitive_c->set_extrapolation_value(onnx_node_attr.f());
+      prim->set_extrapolation_value(onnx_node_attr.f());
     } else if (attribute_name == "mode") {
       std::map<std::string, mindspore::ResizeMethod> resize_mode = {
         {"nearest", mindspore::ResizeMethod::NEAREST},
         {"linear", mindspore::ResizeMethod::LINEAR},
         {"cubic", mindspore::ResizeMethod::CUBIC},
       };
-      primitive_c->set_method(resize_mode[onnx_node_attr.s()]);
+      prim->set_method(resize_mode[onnx_node_attr.s()]);
     } else if (attribute_name == "nearest_mode") {
       std::map<std::string, mindspore::NearestMode> nearest_mode = {
         {"round_prefer_floor", mindspore::NearestMode::ROUND_HALF_DOWN},
@@ -76,11 +73,11 @@ ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, con
         {"floor", mindspore::NearestMode::FLOOR},
         {"ceil", mindspore::NearestMode::CEIL},
       };
-      primitive_c->set_nearest_mode(nearest_mode[onnx_node_attr.s()]);
+      prim->set_nearest_mode(nearest_mode[onnx_node_attr.s()]);
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxResizeParser("Resize", new OnnxResizeParser());

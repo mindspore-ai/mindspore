@@ -24,11 +24,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::PadFusion();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new PadFusion failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::PadFusion>();
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);
@@ -82,7 +78,7 @@ ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT>
     return nullptr;
   }
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tflitePadParser(tflite::BuiltinOperator_PAD, new TflitePadParser());

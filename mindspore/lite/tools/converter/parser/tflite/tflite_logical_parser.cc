@@ -26,35 +26,20 @@ namespace lite {
 
 ops::PrimitiveC *TfliteLogicalAndParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::LogicalAnd();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new LogicalAnd failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::LogicalAnd>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteLogicalNotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                                const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::LogicalNot();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new LogicalNot failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::LogicalNot>();
+  return prim.release();
 }
 
 ops::PrimitiveC *TfliteLogicalOrParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::LogicalOr();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new LogicalOr failed";
-    return nullptr;
-  }
-
-  return prim;
+  auto prim = std::make_unique<ops::LogicalOr>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteLogicalAndParser(tflite::BuiltinOperator_LOGICAL_AND, new TfliteLogicalAndParser());

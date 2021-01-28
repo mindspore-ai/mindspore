@@ -32,23 +32,19 @@ ops::PrimitiveC *TFReverseSequenceParser::Parse(const tensorflow::NodeDef &tf_op
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return nullptr;
   }
-  auto primitive = new (std::nothrow) ops::ReverseSequence;
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New ReverseSequenceParser failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::ReverseSequence>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "batch_dim", &attr_value)) {
     MS_LOG(ERROR) << "The batch_dim attr should be specified";
     return nullptr;
   }
-  primitive->set_batch_dim(attr_value.i());
+  prim->set_batch_dim(attr_value.i());
   if (!TensorFlowUtils::FindAttrValue(tf_op, "seq_dim", &attr_value)) {
     MS_LOG(ERROR) << "The seq_dim attr should be specified";
     return nullptr;
   }
-  primitive->set_seq_dim(attr_value.i());
+  prim->set_seq_dim(attr_value.i());
 
   *output_size = 1;
   if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
@@ -56,7 +52,7 @@ ops::PrimitiveC *TFReverseSequenceParser::Parse(const tensorflow::NodeDef &tf_op
     return nullptr;
   }
 
-  return primitive;
+  return prim.release();
 }
 
 TFNodeRegistrar g_tfReverseSequenceParser("ReverseSequence", new TFReverseSequenceParser());

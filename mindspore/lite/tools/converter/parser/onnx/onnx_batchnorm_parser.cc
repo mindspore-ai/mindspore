@@ -21,21 +21,17 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto primitive_c = new (std::nothrow) ops::FusedBatchNorm;
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "new FusedBatchNorm failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::FusedBatchNorm>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "epsilon") {
-      primitive_c->set_epsilon(onnx_node_attr.f());
+      prim->set_epsilon(onnx_node_attr.f());
     } else if (onnx_node_attr.name() == "momentum") {
-      primitive_c->set_momentum(onnx_node_attr.f());
+      prim->set_momentum(onnx_node_attr.f());
     }
   }
 
-  return primitive_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxBatchNormParser("BatchNormalization", new OnnxBatchNormParser());

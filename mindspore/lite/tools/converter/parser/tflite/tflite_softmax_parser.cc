@@ -23,15 +23,11 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = new (std::nothrow) ops::Softmax();
-  if (prim == nullptr) {
-    MS_LOG(ERROR) << "new Softmax failed";
-    return nullptr;
-  }
+  auto prim = std::make_unique<ops::Softmax>();
 
   prim->set_axis({-1});
 
-  return prim;
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSoftmaxParser(tflite::BuiltinOperator_SOFTMAX, new TfliteSoftmaxParser());
