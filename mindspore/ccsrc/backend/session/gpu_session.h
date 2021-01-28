@@ -37,6 +37,7 @@ class GPUSession : public SessionBasic {
  protected:
   void UnifyMindIR(const KernelGraphPtr &graph) override { return; }
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
+  GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
   void RunGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) override;
   void BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                    const std::vector<tensor::TensorPtr> &input_tensors,
@@ -81,6 +82,8 @@ class GPUSession : public SessionBasic {
   void SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
   void CleanValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+
+  GraphId CompileGraphImpl(KernelGraphPtr kernel_graph);
 };
 using GPUSessionPtr = std::shared_ptr<GPUSession>;
 MS_REG_SESSION(kGPUDevice, GPUSession);

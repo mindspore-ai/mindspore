@@ -49,12 +49,12 @@ class __attribute__((visibility("default"))) VMCallbackRegister {
   static VMCallbackRegister &GetInstance();
   VMCallbackRegister(const VMCallbackRegister &) = delete;
   VMCallbackRegister &operator=(const VMCallbackRegister &) = delete;
-  bool Registe(Status (*pRegProfCtrlCallback)(MsprofCtrlCallback),
-               Status (*pRegProfSetDeviceCallback)(MsprofSetDeviceCallback),
-               Status (*pRegProfReporterCallback)(MsprofReporterCallback),
-               Status (*pProfCommandHandle)(ProfCommandHandleType, void *, uint32_t));
+  bool Register(Status (*pRegProfCtrlCallback)(MsprofCtrlCallback),
+                Status (*pRegProfSetDeviceCallback)(MsprofSetDeviceCallback),
+                Status (*pRegProfReporterCallback)(MsprofReporterCallback),
+                Status (*pProfCommandHandle)(ProfCommandHandleType, void *, uint32_t));
   void ForceMsprofilerInit();
-  bool registed() { return registed_; }
+  bool registered() { return registered_; }
   Status DoRegProfCtrlCallback(MsprofCtrlCallback func) { return pRegProfCtrlCallback_(func); }
   Status DoRegProfSetDeviceCallback(MsprofSetDeviceCallback func) { return pRegProfSetDeviceCallback_(func); }
   Status DoRegProfReporterCallback(MsprofReporterCallback func) { return pRegProfReporterCallback_(func); }
@@ -64,7 +64,7 @@ class __attribute__((visibility("default"))) VMCallbackRegister {
 
  private:
   VMCallbackRegister()
-      : registed_(false),
+      : registered_(false),
         ms_profile_inited_(false),
         pRegProfCtrlCallback_(nullptr),
         pRegProfSetDeviceCallback_(nullptr),
@@ -72,7 +72,7 @@ class __attribute__((visibility("default"))) VMCallbackRegister {
         pProfCommandHandle_(nullptr) {}
   ~VMCallbackRegister() = default;
 
-  bool registed_;
+  bool registered_;
   bool ms_profile_inited_;
   Status (*pRegProfCtrlCallback_)(MsprofCtrlCallback);
   Status (*pRegProfSetDeviceCallback_)(MsprofSetDeviceCallback);

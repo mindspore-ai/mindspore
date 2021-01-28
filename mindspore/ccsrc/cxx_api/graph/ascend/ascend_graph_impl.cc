@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cxx_api/graph/ms/ms_graph_impl.h"
+#include "cxx_api/graph/ascend/ascend_graph_impl.h"
 #include <algorithm>
 #include "include/api/context.h"
 #include "cxx_api/factory.h"
@@ -26,43 +26,9 @@
 #include "runtime/device/kernel_runtime_manager.h"
 
 namespace mindspore::api {
-API_FACTORY_REG(GraphCell::GraphImpl, Ascend910, MsGraphImpl);
+API_FACTORY_REG(GraphCell::GraphImpl, Ascend910, AscendGraphImpl);
 
-static DataType TransTypeId2InferDataType(TypeId type_id) {
-  const std::map<TypeId, api::DataType> id2type_map{
-    {TypeId::kNumberTypeBegin, api::kMsUnknown},   {TypeId::kNumberTypeBool, api::kMsBool},
-    {TypeId::kNumberTypeFloat64, api::kMsFloat64}, {TypeId::kNumberTypeInt8, api::kMsInt8},
-    {TypeId::kNumberTypeUInt8, api::kMsUint8},     {TypeId::kNumberTypeInt16, api::kMsInt16},
-    {TypeId::kNumberTypeUInt16, api::kMsUint16},   {TypeId::kNumberTypeInt32, api::kMsInt32},
-    {TypeId::kNumberTypeUInt32, api::kMsUint32},   {TypeId::kNumberTypeInt64, api::kMsInt64},
-    {TypeId::kNumberTypeUInt64, api::kMsUint64},   {TypeId::kNumberTypeFloat16, api::kMsFloat16},
-    {TypeId::kNumberTypeFloat32, api::kMsFloat32},
-  };
-
-  // cppcheck-suppress stlIfFind
-  if (auto it = id2type_map.find(type_id); it != id2type_map.end()) {
-    return it->second;
-  }
-
-  MS_LOG(WARNING) << "Unsupported data id " << type_id;
-  return api::kMsUnknown;
-}
-
-template <class T>
-inline static void ClearIfNotNull(T *vec) {
-  if (vec != nullptr) {
-    vec->clear();
-  }
-}
-
-template <class T, class U = std::vector<T>>
-inline static void PushbackIfNotNull(U *vec, T &&item) {
-  if (vec != nullptr) {
-    vec->emplace_back(item);
-  }
-}
-
-MsGraphImpl::MsGraphImpl()
+AscendGraphImpl::AscendGraphImpl()
     : session_impl_(nullptr),
       graph_id_(0),
       device_type_("Ascend"),
@@ -75,9 +41,9 @@ MsGraphImpl::MsGraphImpl()
       init_flag_(false),
       load_flag_(false) {}
 
-MsGraphImpl::~MsGraphImpl() { (void)FinalizeEnv(); }
+AscendGraphImpl::~AscendGraphImpl() { (void)FinalizeEnv(); }
 
-Status MsGraphImpl::InitEnv() {
+Status AscendGraphImpl::InitEnv() {
   if (init_flag_) {
     return SUCCESS;
   }
@@ -108,7 +74,7 @@ Status MsGraphImpl::InitEnv() {
   return SUCCESS;
 }
 
-Status MsGraphImpl::FinalizeEnv() {
+Status AscendGraphImpl::FinalizeEnv() {
   if (!init_flag_) {
     return SUCCESS;
   }
@@ -136,7 +102,7 @@ Status MsGraphImpl::FinalizeEnv() {
   return SUCCESS;
 }
 
-Status MsGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
+Status AscendGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
   MS_ASSERT(session_impl_ != nullptr);
   try {
     graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
@@ -147,7 +113,7 @@ Status MsGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr)
   }
 }
 
-std::vector<tensor::TensorPtr> MsGraphImpl::RunGraph(const std::vector<tensor::TensorPtr> &inputs) {
+std::vector<tensor::TensorPtr> AscendGraphImpl::RunGraph(const std::vector<tensor::TensorPtr> &inputs) {
   try {
     VectorRef outputs;
     session_impl_->RunGraph(graph_id_, inputs, &outputs);
@@ -158,7 +124,7 @@ std::vector<tensor::TensorPtr> MsGraphImpl::RunGraph(const std::vector<tensor::T
   }
 }
 
-Status MsGraphImpl::CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const {
+Status AscendGraphImpl::CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const {
   MS_ASSERT(session_impl_ != nullptr);
   std::string error_msg;
   if (!session_impl_->CheckModelInputs(graph_id_, inputs, &error_msg)) {
@@ -167,7 +133,7 @@ Status MsGraphImpl::CheckModelInputs(const std::vector<tensor::TensorPtr> &input
   return SUCCESS;
 }
 
-Status MsGraphImpl::ExecuteModel(const std::vector<Buffer> &request, std::vector<Buffer> *reply) {
+Status AscendGraphImpl::ExecuteModel(const std::vector<Buffer> &request, std::vector<Buffer> *reply) {
   MS_EXCEPTION_IF_NULL(reply);
   if (context_ == nullptr) {
     MS_LOG(ERROR) << "rtCtx is nullptr";
@@ -206,8 +172,8 @@ Status MsGraphImpl::ExecuteModel(const std::vector<Buffer> &request, std::vector
   return SUCCESS;
 }
 
-Status MsGraphImpl::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                  std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+Status AscendGraphImpl::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                                      std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
   if (!load_flag_) {
     Status ret = Load();
     if (ret != SUCCESS) {
@@ -216,22 +182,22 @@ Status MsGraphImpl::GetInputsInfo(std::vector<std::string> *names, std::vector<s
     }
   }
 
-  ClearIfNotNull(names);
-  ClearIfNotNull(shapes);
-  ClearIfNotNull(data_types);
-  ClearIfNotNull(mem_sizes);
+  GraphUtils::ClearIfNotNull(names);
+  GraphUtils::ClearIfNotNull(shapes);
+  GraphUtils::ClearIfNotNull(data_types);
+  GraphUtils::ClearIfNotNull(mem_sizes);
   for (size_t i = 0; i < inputs_.size(); i++) {
     auto &tensor = inputs_[i];
-    PushbackIfNotNull(names, input_names_[i]);
-    PushbackIfNotNull(shapes, tensor->shape());
-    PushbackIfNotNull(data_types, TransTypeId2InferDataType(tensor->data_type()));
-    PushbackIfNotNull(mem_sizes, tensor->Size());
+    GraphUtils::PushbackIfNotNull(names, input_names_[i]);
+    GraphUtils::PushbackIfNotNull(shapes, tensor->shape());
+    GraphUtils::PushbackIfNotNull(data_types, GraphUtils::TransTypeId2InferDataType(tensor->data_type()));
+    GraphUtils::PushbackIfNotNull(mem_sizes, tensor->Size());
   }
   return SUCCESS;
 }
 
-Status MsGraphImpl::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                   std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+Status AscendGraphImpl::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
+                                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
   if (!load_flag_) {
     Status ret = Load();
     if (ret != SUCCESS) {
@@ -240,22 +206,22 @@ Status MsGraphImpl::GetOutputsInfo(std::vector<std::string> *names, std::vector<
     }
   }
 
-  ClearIfNotNull(names);
-  ClearIfNotNull(shapes);
-  ClearIfNotNull(data_types);
-  ClearIfNotNull(mem_sizes);
+  GraphUtils::ClearIfNotNull(names);
+  GraphUtils::ClearIfNotNull(shapes);
+  GraphUtils::ClearIfNotNull(data_types);
+  GraphUtils::ClearIfNotNull(mem_sizes);
   for (size_t i = 0; i < outputs_.size(); i++) {
     auto &tensor = outputs_[i];
-    PushbackIfNotNull(names, output_names_[i]);
-    PushbackIfNotNull(shapes, tensor->shape());
-    PushbackIfNotNull(data_types, TransTypeId2InferDataType(tensor->data_type()));
-    PushbackIfNotNull(mem_sizes, tensor->Size());
+    GraphUtils::PushbackIfNotNull(names, output_names_[i]);
+    GraphUtils::PushbackIfNotNull(shapes, tensor->shape());
+    GraphUtils::PushbackIfNotNull(data_types, GraphUtils::TransTypeId2InferDataType(tensor->data_type()));
+    GraphUtils::PushbackIfNotNull(mem_sizes, tensor->Size());
   }
 
   return SUCCESS;
 }
 
-Status MsGraphImpl::Load() {
+Status AscendGraphImpl::Load() {
   // check graph type
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
@@ -311,7 +277,7 @@ Status MsGraphImpl::Load() {
   return SUCCESS;
 }
 
-Status MsGraphImpl::Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
+Status AscendGraphImpl::Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (!load_flag_) {
     Status ret = Load();

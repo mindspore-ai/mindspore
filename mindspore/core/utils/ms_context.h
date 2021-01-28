@@ -41,6 +41,7 @@ const char kCPUDevice[] = "CPU";
 const char kGPUDevice[] = "GPU";
 const char kAscendDevice[] = "Ascend";
 const char kDavinciInferenceDevice[] = "AscendInference";
+const char kGpuInferenceDevice[] = "GpuInference";
 const char kDavinciDevice[] = "Davinci";
 const char KNpuLog[] = "_npu_log";
 const unsigned int MAX_CALL_DEPTH_DEFAULT = 1000;
@@ -74,6 +75,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_ENABLE_PROFILING,
   MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_ENABLE_PARALLEL_SPLIT,
+  MS_CTX_ENABLE_INFER_OPT,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int

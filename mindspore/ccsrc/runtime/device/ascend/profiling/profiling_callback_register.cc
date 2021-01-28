@@ -31,7 +31,7 @@ constexpr Status PROF_FAILED = 0xFFFFFFFF;
 }  // namespace
 
 Status RegProfCtrlCallback(MsprofCtrlCallback func) {
-  if (VMCallbackRegister::GetInstance().registed()) {
+  if (VMCallbackRegister::GetInstance().registered()) {
     return VMCallbackRegister::GetInstance().DoRegProfCtrlCallback(func);
   } else {
     return PROF_SUCCESS;
@@ -39,7 +39,7 @@ Status RegProfCtrlCallback(MsprofCtrlCallback func) {
 }
 
 Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func) {
-  if (VMCallbackRegister::GetInstance().registed()) {
+  if (VMCallbackRegister::GetInstance().registered()) {
     return VMCallbackRegister::GetInstance().DoRegProfSetDeviceCallback(func);
   } else {
     return PROF_SUCCESS;
@@ -47,7 +47,7 @@ Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func) {
 }
 
 Status RegProfReporterCallback(MsprofReporterCallback func) {
-  if (VMCallbackRegister::GetInstance().registed()) {
+  if (VMCallbackRegister::GetInstance().registered()) {
     return VMCallbackRegister::GetInstance().DoRegProfReporterCallback(func);
   } else {
     return PROF_SUCCESS;
@@ -55,7 +55,7 @@ Status RegProfReporterCallback(MsprofReporterCallback func) {
 }
 
 Status ProfCommandHandle(ProfCommandHandleType type, void *data, uint32_t len) {
-  if (VMCallbackRegister::GetInstance().registed()) {
+  if (VMCallbackRegister::GetInstance().registered()) {
     return VMCallbackRegister::GetInstance().DoProfCommandHandle(type, data, len);
   } else {
     return PROF_SUCCESS;
@@ -69,16 +69,16 @@ VMCallbackRegister &VMCallbackRegister::GetInstance() {
   return instance;
 }
 
-bool VMCallbackRegister::Registe(Status (*pRegProfCtrlCallback)(MsprofCtrlCallback),
-                                 Status (*pRegProfSetDeviceCallback)(MsprofSetDeviceCallback),
-                                 Status (*pRegProfReporterCallback)(MsprofReporterCallback),
-                                 Status (*pProfCommandHandle)(ProfCommandHandleType, void *, uint32_t)) {
-  if (!registed_) {
+bool VMCallbackRegister::Register(Status (*pRegProfCtrlCallback)(MsprofCtrlCallback),
+                                  Status (*pRegProfSetDeviceCallback)(MsprofSetDeviceCallback),
+                                  Status (*pRegProfReporterCallback)(MsprofReporterCallback),
+                                  Status (*pProfCommandHandle)(ProfCommandHandleType, void *, uint32_t)) {
+  if (!registered_) {
     pRegProfCtrlCallback_ = pRegProfCtrlCallback;
     pRegProfSetDeviceCallback_ = pRegProfSetDeviceCallback;
     pRegProfReporterCallback_ = pRegProfReporterCallback;
     pProfCommandHandle_ = pProfCommandHandle;
-    registed_ = true;
+    registered_ = true;
     ForceMsprofilerInit();
     return true;
   }

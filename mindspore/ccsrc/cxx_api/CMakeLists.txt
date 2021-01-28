@@ -15,10 +15,15 @@ if(ENABLE_ACL)
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
             )
-
 endif()
+
 if(ENABLE_D)
-    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "python_utils.cc" "model/ms/*.cc" "graph/ms/*.cc")
+    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR}
+        "python_utils.cc" "model/ms/*.cc" "graph/ascend/*.cc")
+endif()
+
+if(ENABLE_GPU)
+    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "python_utils.cc" "model/ms/*.cc" "graph/gpu/*.cc")
 endif()
 
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
@@ -98,6 +103,15 @@ if(ENABLE_D)
     target_link_libraries(mindspore_shared_lib PRIVATE ${adump_server})
 endif()
 
+if(ENABLE_GPU)
+    target_link_libraries(mindspore_shared_lib PRIVATE  gpu_cuda_lib gpu_queue cublas
+                          ${CUDA_PATH}/lib64/libcurand.so
+                          ${CUDNN_LIBRARY_PATH}
+                          ${CUDA_PATH}/lib64/libcudart.so
+                          ${CUDA_PATH}/lib64/stubs/libcuda.so
+                          ${CUDA_PATH}/lib64/libcusolver.so)
+endif()
+
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(MINDSPORE_RPATH $ORIGIN)
     if(ENABLE_D)
@@ -110,7 +124,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/add-ons)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+        set(MINDSPORE_RPATH
+            ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     elseif(ENABLE_ACL)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/atc/lib64)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/atc/lib64)
@@ -121,7 +136,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/add-ons)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
         set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
-        set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
+        set(MINDSPORE_RPATH
+            ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     endif()
 
     set_target_properties(mindspore_shared_lib PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})

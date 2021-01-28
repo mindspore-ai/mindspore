@@ -299,8 +299,8 @@ Status ProfCommandHandle(ProfCommandHandleType type, void *data, uint32_t len) {
 
 bool DoRegiste() {
   MS_LOG(INFO) << "VM profiling register start";
-  return VMCallbackRegister::GetInstance().Registe(RegProfCtrlCallback, RegProfSetDeviceCallback,
-                                                   RegProfReporterCallback, ProfCommandHandle);
+  return VMCallbackRegister::GetInstance().Register(RegProfCtrlCallback, RegProfSetDeviceCallback,
+                                                    RegProfReporterCallback, ProfCommandHandle);
 }
 static bool doRegiste = DoRegiste();
 }  // namespace ascend

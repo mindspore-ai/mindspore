@@ -20,10 +20,10 @@ VMCallbackRegister &VMCallbackRegister::GetInstance() {
   return instance;
 }
 
-bool VMCallbackRegister::Registe(Status (*pRegProfCtrlCallback)(MsprofCtrlCallback),
-                                 Status (*pRegProfSetDeviceCallback)(MsprofSetDeviceCallback),
-                                 Status (*pRegProfReporterCallback)(MsprofReporterCallback),
-                                 Status (*pProfCommandHandle)(ProfCommandHandleType, void *, uint32_t)) {
+bool VMCallbackRegister::Register(Status (*pRegProfCtrlCallback)(MsprofCtrlCallback),
+                                  Status (*pRegProfSetDeviceCallback)(MsprofSetDeviceCallback),
+                                  Status (*pRegProfReporterCallback)(MsprofReporterCallback),
+                                  Status (*pProfCommandHandle)(ProfCommandHandleType, void *, uint32_t)) {
   return false;
 }
 
