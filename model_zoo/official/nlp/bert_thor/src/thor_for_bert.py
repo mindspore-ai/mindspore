@@ -64,7 +64,7 @@ class THOR(Optimizer):
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.mul = P.Mul()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.matrix_A_inv = ()
         self.matrix_G_inv = ()
         self.num_hidden_layers = num_hidden_layers

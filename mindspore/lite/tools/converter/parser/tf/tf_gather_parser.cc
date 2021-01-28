@@ -83,6 +83,6 @@ ops::PrimitiveC *TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
   return primitive_c;
 }
 
-TFNodeRegistrar g_tfGatherV2Parser("GatherV2", new TFGatherParser());
+TFNodeRegistrar g_tfGatherV2Parser("Gather", new TFGatherParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -16,7 +16,7 @@
 """AddN op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-gather_v2_op_info = TBERegOp("GatherV2") \
+gather_v2_op_info = TBERegOp("Gather") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("gather_v2.so") \

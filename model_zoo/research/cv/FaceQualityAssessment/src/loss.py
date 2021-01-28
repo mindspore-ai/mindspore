@@ -71,7 +71,7 @@ class CriterionsFaceQA(nn.Cell):
     '''CriterionsFaceQA'''
     def __init__(self):
         super(CriterionsFaceQA, self).__init__()
-        self.gatherv2 = P.GatherV2()
+        self.gatherv2 = P.Gather()
         self.squeeze = P.Squeeze(axis=1)
         self.shape = P.Shape()
         self.reshape = P.Reshape()

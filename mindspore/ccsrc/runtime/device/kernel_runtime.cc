@@ -1043,7 +1043,7 @@ void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph *graph, 
   MS_EXCEPTION_IF_NULL(graph);
   for (const auto &kernel : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::GetCNodeName(kernel) != "GatherV2") {
+    if (AnfAlgo::GetCNodeName(kernel) != "Gather") {
       continue;
     }
     auto input_param = AnfAlgo::GetPrevNodeOutput(kernel, 0, true);
@@ -1084,7 +1084,7 @@ void KernelRuntime::CheckIfSupportPSEmbeddingCache(const session::KernelGraph *g
   MS_EXCEPTION_IF_NULL(first_cache_input_index);
   for (const auto &kernel : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
-    if (AnfAlgo::GetCNodeName(kernel) != "GatherV2") {
+    if (AnfAlgo::GetCNodeName(kernel) != "Gather") {
       continue;
     }
     auto input_param = AnfAlgo::GetPrevNodeOutput(kernel, 0, true);

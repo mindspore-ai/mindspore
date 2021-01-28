@@ -33,7 +33,7 @@ class Net(Cell):
                  split_string="manual_split",
                  param_shape=(8, 8)):
         super().__init__()
-        self.gatherv2 = P.GatherV2().shard(strategy1)
+        self.gatherv2 = P.Gather().shard(strategy1)
         self.gatherv2.add_prim_attr(split_string, split_tuple)
         self.mul = P.Mul().shard(strategy2)
         self.reshape = P.Reshape()

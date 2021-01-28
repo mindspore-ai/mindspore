@@ -586,7 +586,7 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_pt
       return s;
     }
     auto name = ops[incoming_op_index]->name().substr(0, pos);
-    if (name == "GatherV2") {
+    if (name == "Gather") {
       return s;
     } else if (name == "GatherV2P") {
       return PrepareGatherV2POutputStrategy(ops, incoming_op_index);
@@ -819,7 +819,7 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
   if (ops[iter_ops]->type() == GATHERV2) {
     auto pos = ops[iter_ops]->name().find("Info");
     auto name = ops[iter_ops]->name().substr(0, pos);
-    if (name == "GatherV2") {
+    if (name == "Gather") {
       return PrepareGatherV2(ops, iter_ops, basic_stra);
     } else if (name == "GatherV2P") {
       return PrepareGatherV2P(ops, iter_ops, basic_stra);

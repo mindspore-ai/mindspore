@@ -30,7 +30,7 @@ class ComputeRij(nn.Cell):
         self.broadcastto1 = P.BroadcastTo((1, 192, 138, 3))
         self.expdims = P.ExpandDims()
         self.concat = P.Concat(axis=1)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.mul = P.Mul()
         self.slice = P.Slice()
 
@@ -89,7 +89,7 @@ class ComputeDescriptor(nn.Cell):
 
         self.expdims = P.ExpandDims()
         self.concat = P.Concat(axis=3)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.mul = P.Mul()
         self.slice = P.Slice()
         self.square = P.Square()

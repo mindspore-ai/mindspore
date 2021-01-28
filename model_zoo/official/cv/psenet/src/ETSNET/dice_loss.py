@@ -50,7 +50,7 @@ class DiceLoss(_Loss):
         self.equal = P.Equal()
         self.zeros_like = P.ZerosLike()
         self.add = P.Add()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
 
     def ohem_batch(self, scores, gt_texts, training_masks):
         '''

@@ -143,7 +143,7 @@ class DeepFMOpNet(nn.Cell):
     """Net definition with Gatherv2 and Tile and Square."""
     def __init__(self):
         super(DeepFMOpNet, self).__init__()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.square = P.Square()
         self.tile = P.Tile()
 

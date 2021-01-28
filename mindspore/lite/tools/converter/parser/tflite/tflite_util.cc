@@ -69,7 +69,7 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_RANGE, "Range"},
   {tflite::BuiltinOperator_RANK, "Rank"},
   {tflite::BuiltinOperator_LOCAL_RESPONSE_NORMALIZATION, "LocalResponseNorm"},
-  {tflite::BuiltinOperator_GATHER, "GatherV2"},
+  {tflite::BuiltinOperator_GATHER, "Gather"},
   {tflite::BuiltinOperator_EXP, "Exp"},
   {tflite::BuiltinOperator_SPLIT_V, "SplitV"},
   {tflite::BuiltinOperator_SPLIT, "Split"},

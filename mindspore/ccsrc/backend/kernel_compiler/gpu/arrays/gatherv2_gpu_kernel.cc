@@ -19,26 +19,26 @@
 namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_TWO(
-  GatherV2,
+  Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
   GatherV2GpuFwdKernel, float, int)
 
 MS_REG_GPU_KERNEL_TWO(
-  GatherV2,
+  Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
   GatherV2GpuFwdKernel, float, int64_t)
 
 MS_REG_GPU_KERNEL_TWO(
-  GatherV2,
+  Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
   GatherV2GpuFwdKernel, half, int)
 
 MS_REG_GPU_KERNEL_TWO(
-  GatherV2,
+  Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
   GatherV2GpuFwdKernel, half, int64_t)
 
-MS_REG_GPU_KERNEL_TWO(GatherV2,
+MS_REG_GPU_KERNEL_TWO(Gather,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
@@ -46,7 +46,7 @@ MS_REG_GPU_KERNEL_TWO(GatherV2,
                         .AddOutputAttr(kNumberTypeFloat32),
                       GatherV2GpuFwdKernel, float, int)
 
-MS_REG_GPU_KERNEL_TWO(GatherV2,
+MS_REG_GPU_KERNEL_TWO(Gather,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt64)
@@ -54,7 +54,7 @@ MS_REG_GPU_KERNEL_TWO(GatherV2,
                         .AddOutputAttr(kNumberTypeFloat32),
                       GatherV2GpuFwdKernel, float, int64_t)
 
-MS_REG_GPU_KERNEL_TWO(GatherV2,
+MS_REG_GPU_KERNEL_TWO(Gather,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
@@ -62,7 +62,7 @@ MS_REG_GPU_KERNEL_TWO(GatherV2,
                         .AddOutputAttr(kNumberTypeFloat16),
                       GatherV2GpuFwdKernel, half, int)
 
-MS_REG_GPU_KERNEL_TWO(GatherV2,
+MS_REG_GPU_KERNEL_TWO(Gather,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt64)

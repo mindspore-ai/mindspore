@@ -149,7 +149,7 @@ class BGCF(nn.Cell):
         self.tanh = P.Tanh()
         self.shape = P.Shape()
         self.split = P.Split(0, 2)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.reshape = P.Reshape()
         self.concat_0 = P.Concat(0)
         self.concat_1 = P.Concat(1)

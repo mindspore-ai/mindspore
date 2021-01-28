@@ -37,14 +37,23 @@ constexpr auto kScalarTrunc = "ScalarTrunc";
 constexpr auto kScalarFloor = "ScalarFloor";
 constexpr auto kScalarUadd = "ScalarUadd";
 constexpr auto kScalarUsub = "ScalarUsub";
-constexpr auto kTupleGetItem = "TupleGetItem";
-constexpr auto kMakeTuple = "MakeTuple";
-constexpr auto kReturn = "Return";
+
+// Arrays
+constexpr auto kGather = "Gather";
+
+// NN
 constexpr auto kSGD = "SGD";
 constexpr auto kGeLU = "GeLU";
 constexpr auto kGeLUGrad = "GeLUGrad";
 constexpr auto kFastGeLU = "FastGeLU";
 constexpr auto kFastGeLUGrad = "FastGeLUGrad";
+
+// Statements
+constexpr auto kReturn = "Return";
+constexpr auto kTupleGetItem = "TupleGetItem";
+constexpr auto kMakeTuple = "MakeTuple";
+
+//
 
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
@@ -108,9 +117,8 @@ inline const PrimitivePtr kPrimConcat = std::make_shared<Primitive>("Concat");
 inline const PrimitivePtr kPrimSqueeze = std::make_shared<Primitive>("Squeeze");
 inline const PrimitivePtr kPrimUnsqueeze = std::make_shared<Primitive>("Unsqueeze");
 inline const PrimitivePtr kPrimTranspose = std::make_shared<Primitive>("Transpose");
-inline const PrimitivePtr kPrimGatherV2 = std::make_shared<Primitive>("GatherV2");
 inline const PrimitivePtr kPrimGatherD = std::make_shared<Primitive>("GatherD");
-inline const PrimitivePtr kPrimGather = std::make_shared<Primitive>("Gather");
+inline const PrimitivePtr kPrimGather = std::make_shared<Primitive>(kGather);
 inline const PrimitivePtr kPrimGatherND = std::make_shared<Primitive>("GatherND");
 inline const PrimitivePtr kPrimSparseGatherV2 = std::make_shared<Primitive>("SparseGatherV2");
 inline const PrimitivePtr kPrimSparseToDense = std::make_shared<Primitive>("SparseToDense");

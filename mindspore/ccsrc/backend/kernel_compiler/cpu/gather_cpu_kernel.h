@@ -43,7 +43,7 @@ class GatherV2CPUKernel : public CPUKernel {
 };
 
 MS_REG_CPU_KERNEL(
-  GatherV2,
+  Gather,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
   GatherV2CPUKernel);
 }  // namespace kernel
