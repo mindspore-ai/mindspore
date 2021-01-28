@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <optional>
+#include "utils/ms_context.h"
 #include "utils/system/env.h"
 #include "utils/system/file_system.h"
 #include "utils/log_adapter.h"
@@ -144,5 +145,29 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
     MS_LOG(EXCEPTION) << "[DataDump] dump config file suffix only support json! But got:." << suffix;
   }
   return dump_config_file;
+}
+
+std::optional<std::string> Common::GetEnvConfigFile() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string env_config_path = context->get_param<std::string>(MS_CTX_ENV_CONFIG_PATH);
+  if (env_config_path.empty()) {
+    MS_LOG(INFO) << "The env_config_path is not set in context.";
+    return {};
+  }
+  MS_LOG(INFO) << "Get env_config_path: " << env_config_path;
+
+  std::string config_file(env_config_path);
+  std::shared_ptr<system::FileSystem> fs = system::Env::GetFileSystem();
+  MS_EXCEPTION_IF_NULL(fs);
+  if (!fs->FileExist(config_file)) {
+    MS_LOG(ERROR) << config_file << " not exist.";
+    return {};
+  }
+  auto point_pos = config_file.find_last_of('.');
+  if (point_pos == std::string::npos) {
+    MS_LOG(EXCEPTION) << "Invalid json file name:" << config_file;
+  }
+  return config_file;
 }
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ class Common {
   ~Common() = default;
   static std::optional<std::string> GetRealPath(const std::string &input_path);
   static std::optional<std::string> GetConfigFile(const std::string &env);
+  static std::optional<std::string> GetEnvConfigFile();
 
  private:
   static bool CreateNotExistDirs(const std::string &path);

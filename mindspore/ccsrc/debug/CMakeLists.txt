@@ -5,6 +5,7 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/dump_proto.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/trace.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/env_config_parser.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_exec_order_recorder.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_recorder.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/rdr/somas_recorder.cc"

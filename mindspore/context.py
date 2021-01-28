@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -254,6 +254,15 @@ class _Context:
             full_file_name = print_file_path
         self.set_param(ms_ctx_param.print_file_path, full_file_name)
 
+    def set_env_config_path(self, env_config_path):
+        """Check and set env_config_path."""
+        env_config_path = os.path.realpath(env_config_path)
+        if not os.path.isfile(env_config_path):
+            raise ValueError("'env_config_path' should be a json file.")
+        if not os.path.exists(env_config_path):
+            raise ValueError("The json file set by 'env_config_path' is not exist.")
+        self.set_param(ms_ctx_param.env_config_path, env_config_path)
+
     setters = {
         'mode': set_mode,
         'save_graphs_path': set_save_graphs_path,
@@ -263,7 +272,8 @@ class _Context:
         'profiling_options': set_profiling_options,
         'variable_memory_max_size': set_variable_memory_max_size,
         'max_device_memory': set_max_device_memory,
-        'print_file_path': set_print_file_path
+        'print_file_path': set_print_file_path,
+        'env_config_path': set_env_config_path
     }
 
     @property
@@ -376,7 +386,7 @@ def set_auto_parallel_context(**kwargs):
         parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
                      the same network initialization parameter values for all devices, broadcast the parameters
                      on device 0 to other devices. Parameter broadcasting in different parallel modes is different,
-                     data_parallel mode, all parameters are broadcast except for the prameter whose attribute
+                     data_parallel mode, all parameters are broadcast except for the parameter whose attribute
                      layerwise_parallel is True. Hybrid_parallel, semi_auto_parallel and auto_parallel mode, the
                      segmented parameters do not participate in broadcasting. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
@@ -480,7 +490,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
-                 enable_sparse=bool, max_call_depth=int)
+                 enable_sparse=bool, max_call_depth=int, env_config_path=str)
 def set_context(**kwargs):
     """
     Sets context for running environment.
@@ -497,10 +507,10 @@ def set_context(**kwargs):
 
     Note:
         Attribute name is required for setting attributes.
-        The mode is not recommended to be changed after net was initilized because the implementations of some
+        The mode is not recommended to be changed after net was initialized because the implementations of some
         operations are different in graph mode and pynative mode. Default: PYNATIVE_MODE.
 
-    Some configurations are device specific, see the bellow table for details:
+    Some configurations are device specific, see the below table for details:
 
     ===========================  ===========================  =================
     Common(CPU/GPU/Ascend)       Ascend                       GPU
@@ -514,6 +524,7 @@ def set_context(**kwargs):
     reserve_class_name_in_scope  profiling_options
     save_graphs                  variable_memory_max_size
     save_graphs_path
+    env_config_path
     ===========================  ===========================  =================
 
     Args:
@@ -543,10 +554,9 @@ def set_context(**kwargs):
               the Ascend 910 processor, and analyze the information of beginning and ending of the task.
             - op_trace: collect single operator performance data.
 
-            The profiling can choose the combination of `training_trace`, `task_trace`,
-            `training_trace` and `task_trace` combination, and separated by colons;
-            a single operator can choose `op_trace`, `op_trace` cannot be combined with
-            `training_trace` and `task_trace`. Default: "training_trace".
+            The profiling can choose the combination of `training_trace`, `task_trace`, `training_trace` and
+            `task_trace` combination, and separated by colons; a single operator can choose `op_trace`, `op_trace`
+            cannot be combined with `training_trace` and `task_trace`. Default: "training_trace".
         check_bprop (bool): Whether to check bprop. Default: False.
         max_device_memory (str): Sets the maximum memory available for devices.
             Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
@@ -554,7 +564,8 @@ def set_context(**kwargs):
             a file by default, and turns off printing to the screen. If the file already exists, add a timestamp
             suffix to the file. Default: ''.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
-        max_call_depth(int): Specify the maximum depth of function call. Default: 1000.
+        max_call_depth (int): Specify the maximum depth of function call. Default: 1000.
+        env_config_path (str): Config path for DFX.
 
     Raises:
         ValueError: If input key is not an attribute in context.
@@ -576,6 +587,7 @@ def set_context(**kwargs):
         >>> context.set_context(max_device_memory="3.5GB")
         >>> context.set_context(print_file_path="print.pb")
         >>> context.set_context(max_call_depth=80)
+        >>> context.set_context(env_config_path="./env_config.json")
     """
     ctx = _context()
     # set device target first
@@ -595,7 +607,7 @@ def set_context(**kwargs):
         if key in ctx.setters:
             ctx.setters[key](ctx, value)
             continue
-        # enum variables begining with '_' are for internal use
+        # enum variables beginning with '_' are for internal use
         if key in ms_ctx_param.__members__ and key[0] != '_':
             ctx.set_param(ms_ctx_param.__members__[key], value)
             continue
@@ -620,7 +632,7 @@ def get_context(attr_key):
     _ = _check_target_specific_cfgs(device, attr_key)
     if hasattr(ctx, attr_key):
         return getattr(ctx, attr_key)
-    # enum variables begining with '_' are for internal use
+    # enum variables beginning with '_' are for internal use
     if attr_key in ms_ctx_param.__members__ and attr_key[0] != '_':
         return ctx.get_param(ms_ctx_param.__members__[attr_key])
     raise ValueError("Get context keyword %s is not recognized!" % attr_key)
