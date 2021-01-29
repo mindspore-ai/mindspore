@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,7 +170,6 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"__ge__", std::string("ge")},                   // C.ge
                                          {"expand_as", std::string("expand_tensor_as")},  // C.expand_as
                                          {"view", std::string("view")},                   // C.view
-                                         {"__matmul__", prim::kPrimDot},                  // P.dot,
                                          {"__len__", prim::kPrimArrayLen},                // P.array_len,
                                          {"__getitem__", prim::kPrimArrayGetItem},        // P.array_getitem,
                                          {"__setitem__", prim::kPrimArraySetItem},        // P.array_setitem,
@@ -352,7 +351,7 @@ void MemoryCleaner::RecordPynativeShortLifePrimitivePy(PrimitivePy *prim) {
   if (pynative_short_life_primitives_.find(prim) != pynative_short_life_primitives_.end()) {
     return;
   }
-  MS_LOG(DEBUG) << "Record pynative tmp primitve:" << prim->ToString();
+  MS_LOG(DEBUG) << "Record pynative tmp primitive:" << prim->ToString();
   pynative_short_life_primitives_.insert(prim);
   pynative_new_primtives_squence_.push_back(prim->ToString());
 }

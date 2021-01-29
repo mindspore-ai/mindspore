@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ bool CNodeHasTupleInput(const CNodePtr &cnode) {
     }
     if (IsValueNode<Primitive>(inputs[i])) {
       // unexpected high order primitvie  as cnode input when transform graph
-      MS_LOG(WARNING) << "CheckTupleInput, got unexpected primitve as input" << cnode->DebugString();
+      MS_LOG(WARNING) << "CheckTupleInput, got unexpected primitive as input" << cnode->DebugString();
       return false;
     }
     auto abs = inputs[i]->abstract();

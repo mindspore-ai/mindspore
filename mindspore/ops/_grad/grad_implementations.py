@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -186,12 +186,6 @@ def bprop_scalar_to_array(x, out, dout):
 def bprop_array_to_scalar(x, out, dout):
     """Backpropagator for primitive `array_to_scalar`."""
     return (F.scalar_to_array(dout),)
-
-
-@bprops.register("dot")
-def bprop_dot(x, y, out, dout):
-    """Backpropagator for primitive `dot`."""
-    return F.dot(dout, F.transpose(y, (1, 0))), F.dot(F.transpose(x, (1, 0)), dout)
 
 
 @bprops.register("reshape")

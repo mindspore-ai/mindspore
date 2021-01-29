@@ -26,7 +26,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
   static PrimitiveEvalImplMap prim_eval_implement_map = {
     // Statements
     {prim::kPrimReturn, {InferImplReturn, true}},
-    {prim::kPrimDot, {InferImplDot, true}},
     {prim::kPrimSwitch, {InferImplSwitch, true}},
     {prim::kPrimSwitchLayer, {InferImplSwitchLayer, true}},
     {prim::kPrimIs_, {InferImplIs_, true}},
