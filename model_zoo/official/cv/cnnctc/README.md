@@ -216,7 +216,7 @@ Results and checkpoints are written to `./train_parallel_{i}` folder for device 
 
 ### Training Result
 
-Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss.log.
+Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the following in loss.log.
 
 ```text
 # distribute training result(8p)
