@@ -30,9 +30,10 @@ void ReplaceStr(std::string *dest, const std::string &replace, char new_char) {
 
 bool AscendKernelBuildClient::TbePre() {
   auto res = SendRequest(kTbePre);
-  if (res != kSuccess) {
+  if (res.find(kSuccess) == res.npos) {
     MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
   }
+  MS_LOG(INFO) << "Pre " << res;
   return true;
 }
 
@@ -74,6 +75,7 @@ bool AscendKernelBuildClient::TbeWait(int *task_id, std::string *task_result, st
 
 void AscendKernelBuildClient::TbeReset() {
   // Start compiling..
+  init_flag = false;
   auto res = SendRequest(kTbeReset);
   if (res != kAck) {
     MS_LOG(EXCEPTION) << "TBE/RESET response is: " << res;

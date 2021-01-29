@@ -19,7 +19,6 @@ import subprocess
 import sys
 import os
 import json
-from mindspore import log as logger
 from .common import check_kernel_info, TBEException
 from .helper import _op_select_format, _check_supported
 
@@ -122,11 +121,11 @@ class TbeProcess:
         process_num = os.getenv("MS_BUILD_PROCESS_NUM")
         res = "Success"
         if process_num is None:
-            logger.info(f"Using default compile process num {self.default_num}")
+            res = "Success, using default build process num: " + str(self.default_num)
         elif process_num.isdigit():
             if int(process_num) in range(1, 25):
                 self.default_num = int(process_num)
-                logger.info(f"Using custom compile process num {self.default_num}")
+                res = "Success, using custom build process num: " + str(self.default_num)
             else:
                 res = "TBEException", \
                       "ERROR: [MS_BUILD_PROCESS_NUM] should be in range(1, 25), but got : " + str(process_num)
