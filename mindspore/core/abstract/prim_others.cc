@@ -102,7 +102,7 @@ AbstractBasePtr InferImplMakeRefKey(const AnalysisEnginePtr &, const PrimitivePt
   ValuePtr name_value = prim->GetAttr("tag");
   auto name = name_value->cast<StringImmPtr>();
   if (name == nullptr) {
-    MS_LOG(EXCEPTION) << "MakeRefKey attr tag sould be a String " << name_value->ToString() << ".";
+    MS_LOG(EXCEPTION) << "MakeRefKey attr tag should be a String " << name_value->ToString() << ".";
   }
   auto refkey = std::make_shared<RefKey>(name->value());
   if (refkey == nullptr) {
@@ -168,6 +168,9 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
     MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at lest 1, but got 0";
   }
   auto depends = args_spec_list[0]->Broaden();
+  if (depends->isa<AbstractScalar>()) {
+    depends->set_value(kAnyValue);
+  }
   return depends;
 }
 
@@ -182,7 +185,7 @@ AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const Primitiv
     auto src_size = arg_src->cast<AbstractTuplePtr>()->size();
     auto dst_size = arg_src->cast<AbstractTuplePtr>()->size();
     if (src_size > 1 && dst_size > 1) {
-      MS_LOG(EXCEPTION) << "Control depend can not setup operator dependcy relationship from tuple from tuple";
+      MS_LOG(EXCEPTION) << "Control depend can not setup operator dependency relationship from tuple from tuple";
     }
   }
   return std::make_shared<AbstractScalar>(kAnyValue, kBool);
@@ -505,7 +508,7 @@ AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePt
   auto axis = primitive->GetAttr("axis");
   auto value = GetValue<int64_t>(axis);
   if (value < -(SizeToInt(x_shape.size()) + 1) || value > SizeToInt(x_shape.size())) {
-    MS_LOG(EXCEPTION) << " axis value shoud be in range [-intput_x.dim-1,input_x.dim], but axis value is" << value
+    MS_LOG(EXCEPTION) << " axis value should be in range [-input_x.dim-1,input_x.dim], but axis value is" << value
                       << " and input_x.dim is" << x_shape.size();
   }
   if (value < 0) {
