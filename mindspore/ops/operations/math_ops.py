@@ -4142,13 +4142,15 @@ class MatrixInverse(PrimitiveWithInfer):
         Tensor, has the same type and shape as input `x`.
 
     Examples:
-        >>> x = Tensor(np.random.uniform(-2, 2, (2, 2, 2)), mstype.float32)
+        >>> mindspore.set_seed(1)
+        >>> x = Tensor(np.random.uniform(-2, 2, (2, 2, 2)), mindspore.float32)
         >>> matrix_inverse = P.MatrixInverse(adjoint=False)
-        >>> result = matrix_inverse(x)
-        [[[ 0.6804  0.8111]
-          [-2.3257  -1.0616]
-         [[-0.7074  -0.4963]
-          [0.1896  -1.5285]]]
+        >>> output = matrix_inverse(x)
+        >>> print(output)
+        [[[-0.39052644 -0.43528939]
+          [ 0.98761106 -0.16393748]]
+         [[ 0.52641493 -1.3895369 ]
+          [-1.0693996   1.2040523 ]]]
     """
 
     @prim_attr_register
