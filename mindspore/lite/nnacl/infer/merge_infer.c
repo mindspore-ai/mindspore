@@ -32,8 +32,7 @@ int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   for (size_t i = 0; i < inputs_size / 2; i++) {
     if (((TensorListC *)inputs[i])->data_type_ == kObjectTypeTensorType) {
       TensorListC *input_tensorlist = (TensorListC *)inputs[i];
-      free(outputs[i]);
-      TensorListC *output_tensorlist = (TensorListC *)malloc(sizeof(TensorListC));
+      TensorListC *output_tensorlist = (TensorListC *)outputs[i];
       memcpy(output_tensorlist, input_tensorlist, sizeof(TensorListC));
       outputs[i] = (TensorC *)output_tensorlist;
       continue;
