@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:textStyle="bold"
+        android:background="@drawable/bg_title_blue"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/me_title"
+        android:textColor="@color/white"
+        android:textSize="17sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_gray" />
+
+    <RelativeLayout
+        android:id="@+id/rl_me_share"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:paddingTop="29dp"
+        android:paddingBottom="29dp">
+
+        <TextView
+            style="@style/MeInfoTextLeftStyle"
+            android:layout_marginStart="20dp"
+            android:drawableStart="@drawable/me_share"
+            android:drawablePadding="15dp"
+            android:gravity="center_vertical"
+            android:text="@string/me_share_title" />
+
+        <ImageView
+            android:layout_width="6dp"
+            android:layout_height="12dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/me_go" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_me_thumbsup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="29dp"
+        android:paddingBottom="29dp">
+
+        <TextView
+            style="@style/MeInfoTextLeftStyle"
+            android:layout_marginStart="20dp"
+            android:drawableStart="@drawable/me_up"
+            android:drawablePadding="15dp"
+            android:gravity="center_vertical"
+            android:text="@string/me_up_title" />
+
+        <ImageView
+            android:layout_width="6dp"
+            android:layout_height="12dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/me_go" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_me_official"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="29dp"
+        android:paddingBottom="29dp">
+
+        <TextView
+            style="@style/MeInfoTextLeftStyle"
+            android:layout_marginStart="20dp"
+            android:drawableStart="@drawable/me_official"
+            android:drawablePadding="15dp"
+            android:gravity="center_vertical"
+            android:text="@string/me_official_title" />
+
+        <ImageView
+            android:layout_width="6dp"
+            android:layout_height="12dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/me_go" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_me_official_code"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="29dp"
+        android:paddingBottom="29dp">
+
+        <TextView
+            style="@style/MeInfoTextLeftStyle"
+            android:layout_marginStart="20dp"
+            android:drawableStart="@drawable/me_official_code"
+            android:drawablePadding="15dp"
+            android:gravity="center_vertical"
+            android:text="@string/me_official_code_title" />
+
+        <ImageView
+            android:layout_width="6dp"
+            android:layout_height="12dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/me_go" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_me_qa"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="29dp"
+        android:paddingBottom="29dp">
+
+        <TextView
+            style="@style/MeInfoTextLeftStyle"
+            android:layout_marginStart="20dp"
+            android:drawableStart="@drawable/me_qa"
+            android:drawablePadding="15dp"
+            android:gravity="center_vertical"
+            android:text="@string/me_qa_title" />
+
+        <ImageView
+            android:layout_width="6dp"
+            android:layout_height="12dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/me_go" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_me_version"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="29dp"
+        android:paddingBottom="29dp">
+
+        <TextView
+            style="@style/MeInfoTextLeftStyle"
+            android:layout_marginStart="20dp"
+            android:drawableStart="@drawable/me_version"
+            android:drawablePadding="15dp"
+            android:gravity="center_vertical"
+            android:text="@string/me_version_title" />
+
+        <TextView
+            android:id="@+id/me_vision"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="20dp"
+            android:textColor="@color/main_tab_text_uncheck"
+            android:textSize="13sp"
+            tools:text="v2.10.0" />
+    </RelativeLayout>
+</LinearLayout>
+

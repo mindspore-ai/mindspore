@@ -486,11 +486,10 @@ public class PoseNetFragment extends Fragment {
             }
         }
 
-        canvas.drawText(String.format("Score: %.2f", person.score),
+        canvas.drawText(String.format(getString(R.string.posenet_score) + "%.2f", person.score),
                 (15.0f * widthRatio), (30.0f * heightRatio + bottom), paint);
-        canvas.drawText(String.format("Time: %.2f ms", posenet.lastInferenceTimeNanos * 1.0f / 1_000_000),
-                (15.0f * widthRatio), (50.0f * heightRatio + bottom), paint
-        );
+        canvas.drawText(String.format(getString(R.string.posenet_time) + "%.2f ms", posenet.lastInferenceTimeNanos * 1.0f / 1_000_000),
+                (15.0f * widthRatio), (50.0f * heightRatio + bottom), paint);
 
         // Draw!
         surfaceView.getHolder().unlockCanvasAndPost(canvas);

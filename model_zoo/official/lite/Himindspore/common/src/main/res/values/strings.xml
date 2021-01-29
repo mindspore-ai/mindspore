@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="explain_title">简要说明</string>
+    <string name="explain_photo_detection">照片检测可以识别出图中物体的类别，并同时标示物体位置。</string>
+    <string name="explain_camera_detection">视频检测可以识别出摄像头中物体的类别，并同时标示物体位置。</string>
+    <string name="explain_posenet">骨骼检测可以识别摄像头中，不同姿势下人体的面部五官与肢体姿势。</string>
+    <string name="explain_style_transfer">风格迁移可以根据APP内置的标准图片改变用户目标图片的艺术风格。</string>
+    <string name="explain_image_segmentation">图像分割用于检测目标在图片中的位置或者图片中出现的物体是属于何种类别的。</string>
+    <string name="explain_image_classification">图像分类可以推测图片中出现物体的所属类别，并标示不同类别的可能性概率。</string>
+    <string name="explain_garbage_classification">垃圾分类可识别出镜头中物体所属的垃圾类别。</string>
+    <string name="explain_scene_detection">场景检测可以判断目标场景的类型。</string>
+
+
+    <string name="activity_photo_title">照片检测</string>
+    <string name="object_camery_title">视频检测</string>
+    <string name="image_camera_title">图像分类</string>
+    <string name="image_garbage_title">垃圾分类</string>
+    <string name="image_scene_title">场景检测</string>
+    <string name="posenet_activity_title">骨骼检测</string>
+    <string name="style_transfer_title">风格迁移</string>
+    <string name="segmentation_toolbar_title">图像分割</string>
+
+</resources>

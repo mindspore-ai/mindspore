@@ -24,8 +24,6 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-
 public class StyleRecyclerViewAdapter extends RecyclerView.Adapter<StyleRecyclerViewAdapter.StyleItemViewHolder> {
 
     private final int[] IMAGES;
@@ -48,16 +46,15 @@ public class StyleRecyclerViewAdapter extends RecyclerView.Adapter<StyleRecycler
 
     @Override
     public void onBindViewHolder(@NonNull StyleItemViewHolder holder, int position) {
-        Glide.with(context).
-                load(IMAGES[position]).
-                into(holder.getImageView());
-
-        View view = holder.getMView();
-        view.setTag(IMAGES[position]);
-        view.setOnClickListener(view1 -> {
+//        Glide.with(context).
+//                load(IMAGES[position]).
+//                into(holder.getImageView());
+        holder.imageView.setImageResource(IMAGES[position]);
+        holder.itemView.setTag(IMAGES[position]);
+        holder.itemView.setOnClickListener(view1 -> {
             if (mListener != null) {
                 if (IMAGES.length - 1 == position) {
-                    mListener.onImageAdd(holder.getImageView());
+                    mListener.onImageAdd(holder.itemView);
                 } else {
                     mListener.onBackImageSelected(position);
                 }
@@ -74,23 +71,8 @@ public class StyleRecyclerViewAdapter extends RecyclerView.Adapter<StyleRecycler
 
     public class StyleItemViewHolder extends RecyclerView.ViewHolder {
         private ImageView imageView;
-        private final View mView;
-
-        public final ImageView getImageView() {
-            return this.imageView;
-        }
-
-        public final void setImageView(ImageView imageView) {
-            this.imageView = imageView;
-        }
-
-        public final View getMView() {
-            return this.mView;
-        }
-
         public StyleItemViewHolder(View mView) {
             super(mView);
-            this.mView = mView;
             this.imageView = mView.findViewById(R.id.image_view);
         }
     }

@@ -25,6 +25,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -33,12 +35,17 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.bumptech.glide.Glide;
+import com.mindspore.common.base.grid.MSGridSpacingItemDecoration;
+import com.mindspore.common.config.MSLinkUtils;
+import com.mindspore.common.utils.Utils;
+import com.mindspore.customview.dialog.NoticeDialog;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -51,13 +58,14 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
     private static final int[] IMAGES = {R.drawable.style0, R.drawable.style1, R.drawable.style2, R.drawable.style3, R.drawable.style4,
             R.drawable.style5, R.drawable.style6, R.drawable.style7, R.drawable.style8, R.drawable.style9,
             R.drawable.style10, R.drawable.style11, R.drawable.style12, R.drawable.style13, R.drawable.style14,
-            R.drawable.style15, R.drawable.style16, R.drawable.style17, R.drawable.style18, R.drawable.style19, R.drawable.add};
+            R.drawable.style15, R.drawable.style16, R.drawable.style17, R.drawable.style18, R.drawable.icon_default};
 
     private static final int RC_CHOOSE_PHOTO = 1;
     private static final int RC_CHOOSE_PHOTO_FOR_BACKGROUND = 11;
     private static final int RC_CHOOSE_CAMERA = 2;
 
 
+    private boolean isPreViewShow = false;
     private StyleTransferModelExecutor transferModelExecutor;
 
     private boolean isRunningModel;
@@ -74,6 +82,7 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
     private boolean isLandScape;
 
     private Bitmap originBitmap, styleBitmap, resultBitmap;
+    private NoticeDialog noticeDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,9 +98,43 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
         progressBar = findViewById(R.id.progress);
         recyclerView = findViewById(R.id.recyclerview);
 
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        recyclerView.addItemDecoration(new MSGridSpacingItemDecoration(10));
         recyclerView.setAdapter(new StyleRecyclerViewAdapter(this, IMAGES, this));
         transferModelExecutor = new StyleTransferModelExecutor(this, false);
+
+        Toolbar mToolbar = findViewById(R.id.style_transfer_toolbar);
+        setSupportActionBar(mToolbar);
+        mToolbar.setNavigationOnClickListener(view -> finish());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.i(TAG, "onCreateOptionsMenu info");
+        getMenuInflater().inflate(R.menu.menu_setting_app, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.item_help) {
+            showHelpDialog();
+        } else if (itemId == R.id.item_more) {
+            Utils.openBrowser(this, MSLinkUtils.HELP_STYLE_TRANSFER);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    private void showHelpDialog() {
+        noticeDialog = new NoticeDialog(this);
+        noticeDialog.setTitleString(getString(R.string.explain_title));
+        noticeDialog.setContentString(getString(R.string.explain_style_transfer));
+        noticeDialog.setYesOnclickListener(() -> {
+            noticeDialog.dismiss();
+        });
+        noticeDialog.show();
     }
 
     public void onClickPhoto(View view) {
@@ -107,8 +150,10 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
     public void onClickRecovery(View view) {
         if (originBitmap != null) {
             Glide.with(this).load(originBitmap).into(imgPreview);
+            isPreViewShow = true;
         } else {
             Toast.makeText(this, R.string.toast_original, Toast.LENGTH_SHORT).show();
+            isPreViewShow = false;
         }
     }
 
@@ -156,6 +201,8 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
             } else if (RC_CHOOSE_CAMERA == requestCode) {
                 showOriginCamera();
             }
+        } else {
+            textOriginImage.setVisibility(!isPreViewShow ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -168,6 +215,9 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
         Log.e(TAG, "resized image size width:" + originBitmap.getWidth() + ",height: " + originBitmap.getHeight());
         if (originBitmap != null) {
             Glide.with(this).load(originBitmap).into(imgPreview);
+            isPreViewShow = true;
+        } else {
+            isPreViewShow = false;
         }
     }
 
@@ -185,6 +235,9 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
         Log.e(TAG, "resized image size width:" + originBitmap.getWidth() + ",height: " + originBitmap.getHeight());
         if (originBitmap != null) {
             Glide.with(this).load(originBitmap).into(imgPreview);
+            isPreViewShow = true;
+        }else {
+            isPreViewShow = false;
         }
     }
 
@@ -220,8 +273,10 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
             if (null != result && null != result.getStyledImage()) {
                 resultBitmap = BitmapUtils.changeBitmapSize(result.getStyledImage(), originBitmap.getWidth(), originBitmap.getHeight());
                 Glide.with(this).load(resultBitmap).override(resultBitmap.getWidth(), resultBitmap.getHeight()).into(imgPreview);
+                isPreViewShow = true;
             } else {
                 Toast.makeText(this, R.string.toast_execute_fail, Toast.LENGTH_SHORT).show();
+                isPreViewShow = false;
             }
             isRunningModel = false;
             progressBar.setVisibility(View.INVISIBLE);

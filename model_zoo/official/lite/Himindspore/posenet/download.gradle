@@ -3,43 +3,8 @@
  * Including mindspore-lite .aar file and model file.
  * The libraries can be downloaded manually.
  */
-
-def mindsporeLite_Version = "mindspore-lite-maven-1.0.1"
-def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/java/${mindsporeLite_Version}.zip"
-def mindSporeLibrary = "../mindsporelibrary/${mindsporeLite_Version}.zip"
-def cleantargetMindSporeInclude = "../mindsporelibrary"
-def targetMindSporeInclude = "../mindsporelibrary/"
-
 def targetModelFile = "src/main/assets/posenet_model.ms"
 def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/posenet_lite/posenet_model.ms"
-
-task downloadMindSporeLibrary(type: DownloadUrlTask) {
-    doFirst {
-        println "Downloading ${mindsporeLiteDownloadUrl}"
-    }
-    sourceUrl = "${mindsporeLiteDownloadUrl}"
-    target = file("${mindSporeLibrary}")
-}
-
-task unzipMindSporeInclude(type: Copy, dependsOn: ['downloadMindSporeLibrary']) {
-    doFirst {
-        println "Unzipping ${mindSporeLibrary}"
-    }
-    from zipTree("${mindSporeLibrary}")
-    into "${targetMindSporeInclude}"
-}
-
-task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['unzipMindSporeInclude']) {
-    delete fileTree("${cleantargetMindSporeInclude}").matching {
-        include "*.zip"
-    }
-}
-
-if (file("../mindsporelibrary/mindspore-lite-1.0.1.aar").exists()) {
-    downloadMindSporeLibrary.enabled = false
-    unzipMindSporeInclude.enabled = false
-    cleanUnusedmindsporeFiles.enabled = false
-}
 
 task downloadModelFile(type: DownloadUrlTask) {
     doFirst {
@@ -53,9 +18,6 @@ if (file("src/main/assets/posenet_model.ms").exists()) {
     downloadModelFile.enabled = false
 }
 
-preBuild.dependsOn downloadMindSporeLibrary
-preBuild.dependsOn unzipMindSporeInclude
-preBuild.dependsOn cleanUnusedmindsporeFiles
 preBuild.dependsOn downloadModelFile
 
 class DownloadUrlTask extends DefaultTask {

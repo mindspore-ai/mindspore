@@ -4,261 +4,67 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimary"
-    tools:context=".SplashActivity">
+    android:background="@color/white"
+    tools:context=".ui.guide.SplashActivity">
+
 
     <ImageView
-        android:id="@+id/shareImg"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:layout_margin="20dp"
-        android:onClick="onClickShare"
-        android:src="@drawable/share"
+        android:id="@+id/image_logo"
+        android:layout_width="160dp"
+        android:layout_height="90dp"
+        android:layout_marginTop="190dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/logo_splash"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/title"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:drawableTop="@drawable/logo"
-        android:gravity="center_horizontal"
-        android:maxLines="1"
-        android:text="@string/app_name"
-        android:textColor="@color/white"
-        android:textSize="36sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/tv_vision"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:textColor="@color/white"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="33dp"
+        android:gravity="center_horizontal"
+        android:maxLines="2"
+        android:text="@string/app_name"
+        android:textColor="@color/text_black"
+        android:textSize="24sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:text="Version 1.0.0" />
+        app:layout_constraintTop_toBottomOf="@+id/image_logo" />
 
-    <ScrollView
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintBottom_toTopOf="@+id/tv_vision"
-        app:layout_constraintTop_toBottomOf="@+id/title">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="30dp"
-            android:layout_marginBottom="30dp"
-            android:orientation="vertical">
-
-            <Button
-                android:id="@+id/btn_object"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_text"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickPhotoDetection"
-                android:paddingLeft="4dp"
-                android:text="@string/title_object"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintWidth_percent="0.43" />
-
-            <Button
-                android:layout_marginEnd="20dp"
-                android:id="@+id/btn_object_camera"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_object"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickCameraDetection"
-                android:paddingLeft="4dp"
-                android:text="@string/title_object_camera"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="@+id/btn_object"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintWidth_percent="0.43" />
-
-            <Button
-                android:id="@+id/btn_posenet"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_audio"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickPoseNet"
-                android:paddingLeft="4dp"
-                android:text="@string/title_pose_net"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintStart_toStartOf="@+id/btn_object"
-                app:layout_constraintTop_toBottomOf="@+id/btn_object"
-                app:layout_constraintWidth_percent="0.43" />
-
-            <Button
-                android:id="@+id/btn_style_transfer"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_commend"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickStyleTransfer"
-                android:paddingLeft="4dp"
-                android:text="@string/title_style_transfer"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="@+id/btn_posenet"
-                app:layout_constraintEnd_toEndOf="@+id/btn_object_camera"
-                app:layout_constraintWidth_percent="0.43" />
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:text="@string/title_splash_welcome"
+        android:textColor="@color/text_gray"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title" />
 
 
-            <Button
-                android:id="@+id/btn_segmentation"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_image"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickSegmentation"
-                android:paddingLeft="4dp"
-                android:text="@string/title_segmentation"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintStart_toStartOf="@+id/btn_posenet"
-                app:layout_constraintTop_toBottomOf="@+id/btn_posenet"
-                app:layout_constraintWidth_percent="0.43" />
-
-
-            <Button
-                android:id="@+id/btn_image"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="30dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_image"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickImage"
-                android:paddingStart="4dp"
-                android:text="@string/title_image"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="@+id/btn_segmentation"
-                app:layout_constraintEnd_toEndOf="@+id/btn_style_transfer"
-                app:layout_constraintWidth_percent="0.43" />
-
-            <Button
-                android:id="@+id/btn_image_garbage"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_other"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickGarbage"
-                android:paddingLeft="4dp"
-                android:text="@string/title_image_garbage"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintStart_toStartOf="@+id/btn_segmentation"
-                app:layout_constraintTop_toBottomOf="@+id/btn_segmentation"
-                app:layout_constraintWidth_percent="0.43" />
-
-
-            <Button
-                android:id="@+id/btn_scene"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:background="@color/gray_btn"
-                android:drawableStart="@drawable/btn_code"
-                android:drawablePadding="5dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickSceneDetection"
-                android:paddingLeft="4dp"
-                android:text="@string/title_scene"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="@+id/btn_image_garbage"
-                app:layout_constraintEnd_toEndOf="@+id/btn_image"
-                app:layout_constraintWidth_percent="0.43" />
-
-            <Button
-                android:id="@+id/btn_source"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/gray_light_btn"
-                android:drawableStart="@drawable/btn_code"
-                android:drawablePadding="8dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickSouceCode"
-                android:paddingStart="10dp"
-                android:text="@string/title_source"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintStart_toStartOf="@+id/btn_image_garbage"
-                app:layout_constraintTop_toBottomOf="@+id/btn_image_garbage"
-                app:layout_constraintWidth_percent="0.28" />
-
-            <Button
-                android:id="@+id/btn_star"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="10dp"
-                android:background="@color/gray_light_btn"
-                android:drawableStart="@drawable/btn_commend"
-                android:drawablePadding="8dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickStar"
-                android:paddingStart="10dp"
-                android:text="@string/title_star"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="@+id/btn_source"
-                app:layout_constraintEnd_toEndOf="@+id/btn_scene"
-                app:layout_constraintWidth_percent="0.28" />
-
-            <Button
-                android:id="@+id/btn_help"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/gray_light_btn"
-                android:drawableStart="@drawable/btn_help"
-                android:drawablePadding="8dp"
-                android:gravity="left|center_vertical"
-                android:onClick="onClickHelp"
-                android:paddingStart="10dp"
-                android:text="@string/title_help"
-                android:textAllCaps="false"
-                android:textSize="12sp"
-                app:layout_constraintBottom_toBottomOf="@+id/btn_source"
-                app:layout_constraintEnd_toStartOf="@+id/btn_star"
-                app:layout_constraintStart_toEndOf="@+id/btn_source"
-                app:layout_constraintWidth_percent="0.28" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
-
+    <com.mindspore.customview.countdown.CountDownView
+        android:id="@+id/cdv_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="20dp"
+        app:cd_animator_time="3"
+        app:cd_animator_time_unit="@string/splash_count_down"
+        app:cd_arc_color="@color/btn_small_checked"
+        app:cd_arc_width="2dp"
+        app:cd_bg_color="@color/gray_light"
+        app:cd_circle_radius="20dp"
+        app:cd_location="top"
+        app:cd_retreat_type="forward"
+        app:cd_text_color="@color/black"
+        app:cd_text_size="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

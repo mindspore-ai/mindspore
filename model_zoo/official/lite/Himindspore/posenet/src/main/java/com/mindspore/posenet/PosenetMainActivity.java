@@ -15,69 +15,59 @@
  */
 package com.mindspore.posenet;
 
-import android.Manifest;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
-import android.hardware.camera2.CameraCharacteristics;
-import android.media.Image;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
-import android.view.SurfaceView;
-import android.view.View;
+import android.view.Menu;
+import android.view.MenuItem;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.util.Pair;
+import androidx.appcompat.widget.Toolbar;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
-
-import static com.mindspore.posenet.Posenet.BodyPart.LEFT_ANKLE;
-import static com.mindspore.posenet.Posenet.BodyPart.LEFT_ELBOW;
-import static com.mindspore.posenet.Posenet.BodyPart.LEFT_HIP;
-import static com.mindspore.posenet.Posenet.BodyPart.LEFT_KNEE;
-import static com.mindspore.posenet.Posenet.BodyPart.LEFT_SHOULDER;
-import static com.mindspore.posenet.Posenet.BodyPart.LEFT_WRIST;
-import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_ANKLE;
-import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_ELBOW;
-import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_HIP;
-import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_KNEE;
-import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_SHOULDER;
-import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_WRIST;
+import com.mindspore.common.config.MSLinkUtils;
+import com.mindspore.common.utils.Utils;
+import com.mindspore.customview.dialog.NoticeDialog;
 
 @Route(path = "/posenet/PosenetMainActivity")
 public class PosenetMainActivity extends AppCompatActivity  {
-
-    private static final String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_PHONE_STATE, Manifest.permission.CAMERA};
-    private static final int REQUEST_PERMISSION = 1;
-    private static final int REQUEST_PERMISSION_AGAIN = 2;
-    private boolean isAllGranted;
-
     private PoseNetFragment poseNetFragment;
+    private NoticeDialog noticeDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.posenet_activity_main);
         addCameraFragment();
+        init();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_setting_app_posenet, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.item_camera) {
+            poseNetFragment.switchCamera();
+        }else if (itemId == R.id.item_help) {
+            showHelpDialog();
+        } else if (itemId == R.id.item_more) {
+            Utils.openBrowser(this, MSLinkUtils.HELP_POSENET_LITE);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    private void showHelpDialog() {
+        noticeDialog = new NoticeDialog(this);
+        noticeDialog.setTitleString(getString(R.string.explain_title));
+        noticeDialog.setContentString(getString(R.string.explain_posenet));
+        noticeDialog.setYesOnclickListener(() -> {
+            noticeDialog.dismiss();
+        });
+        noticeDialog.show();
     }
 
     private void addCameraFragment() {
@@ -88,8 +78,9 @@ public class PosenetMainActivity extends AppCompatActivity  {
                 .commitAllowingStateLoss();
     }
 
-    public void onClickSwitch(View view) {
-        poseNetFragment.switchCamera();
+    private void init() {
+        Toolbar mToolbar = findViewById(R.id.posenet_activity_toolbar);
+        setSupportActionBar(mToolbar);
+        mToolbar.setNavigationOnClickListener(view -> finish());
     }
-
 }

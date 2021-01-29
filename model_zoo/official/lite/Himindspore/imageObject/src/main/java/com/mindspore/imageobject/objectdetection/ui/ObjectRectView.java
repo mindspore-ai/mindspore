@@ -44,6 +44,7 @@ public class ObjectRectView extends View {
 
     private List<RecognitionObjectBean> mRecognitions = new ArrayList<>();
     private Paint mPaint = null;
+    private Paint mPaintText = null;
 
     // Frame area
     private RectF mObjRectF;
@@ -72,10 +73,13 @@ public class ObjectRectView extends View {
         mObjRectF = new RectF();
 
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setTextSize(DisplayUtil.sp2px(context, 16));
         //Draw only outline (stroke)
         mPaint.setStyle(Style.STROKE);
         mPaint.setStrokeWidth(DisplayUtil.dip2px(context, 2));
+
+        mPaintText = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaintText.setTextSize(DisplayUtil.sp2px(context, 16));
+        mPaintText.setStyle(Paint.Style.FILL);
     }
 
     /**
@@ -106,6 +110,7 @@ public class ObjectRectView extends View {
         for (int i = 0; i < mRecognitions.size(); i++) {
             RecognitionObjectBean bean = mRecognitions.get(i);
             mPaint.setColor(context.getResources().getColor(MyColor[i % MyColor.length]));
+            mPaintText.setColor(context.getResources().getColor(MyColor[i % MyColor.length]));
             drawRect(bean, canvas);
         }
     }
@@ -113,11 +118,15 @@ public class ObjectRectView extends View {
 
     public void drawRect(RecognitionObjectBean bean, Canvas canvas) {
         StringBuilder sb = new StringBuilder();
-        sb.append(bean.getRectID()).append("_").append(bean.getObjectName()).append("_").append(String.format("%.2f", (100 * bean.getScore())) + "%");
+        sb.append(bean.getRectID()).append("—").append(bean.getObjectName()).append("—").append(String.format("%.2f", (100 * bean.getScore())) + "%");
 
         mObjRectF = new RectF(bean.getLeft(), bean.getTop(), bean.getRight(), bean.getBottom());
         canvas.drawRect(mObjRectF, mPaint);
-        canvas.drawText(sb.toString(), mObjRectF.left, mObjRectF.top - DisplayUtil.dip2px(context, 10), mPaint);
+        if (mObjRectF.top < DisplayUtil.dip2px(context, 20)){
+            canvas.drawText(sb.toString(), mObjRectF.left + DisplayUtil.dip2px(context, 5), mObjRectF.top + DisplayUtil.dip2px(context, 20), mPaintText);
+        }else{
+            canvas.drawText(sb.toString(), mObjRectF.left, mObjRectF.top - DisplayUtil.dip2px(context, 10), mPaintText);
+        }
     }
 
 }

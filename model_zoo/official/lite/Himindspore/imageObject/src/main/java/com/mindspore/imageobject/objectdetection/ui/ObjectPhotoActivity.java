@@ -24,22 +24,31 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.List;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
+import com.mindspore.common.config.MSLinkUtils;
+import com.mindspore.common.utils.Utils;
+import com.mindspore.customview.dialog.NoticeDialog;
 import com.mindspore.imageobject.R;
 import com.mindspore.imageobject.objectdetection.bean.RecognitionObjectBean;
 import com.mindspore.imageobject.objectdetection.help.ObjectTrackingMobile;
 import com.mindspore.imageobject.util.BitmapUtils;
 import com.mindspore.imageobject.util.DisplayUtil;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.List;
 
 import static com.mindspore.imageobject.objectdetection.bean.RecognitionObjectBean.getRecognitionList;
 
@@ -50,19 +59,20 @@ public class ObjectPhotoActivity extends AppCompatActivity {
     private static final int[] COLORS = {R.color.white, R.color.text_blue, R.color.text_yellow, R.color.text_orange, R.color.text_green};
 
     private static final int RC_CHOOSE_PHOTO = 1;
-
     private ImageView preview;
     private ObjectTrackingMobile trackingMobile;
     private List<RecognitionObjectBean> recognitionObjectBeanList;
 
     private Bitmap originBitmap;
     private Uri imageUri;
+    private NoticeDialog noticeDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate ObjectPhotoActivity info");
         setContentView(R.layout.activity_object_photo);
-
+        init();
         preview = findViewById(R.id.img_photo);
         openGallay();
     }
@@ -130,22 +140,30 @@ public class ObjectPhotoActivity extends AppCompatActivity {
     private void drawRect(Bitmap bitmap) {
         Canvas canvas = new Canvas(bitmap);
         Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaint.setTextSize(DisplayUtil.sp2px(this, 16));
         //Draw only outline (stroke)
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setStrokeWidth(DisplayUtil.dip2px(this, 2));
 
+        Paint mPaintText = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaintText.setTextSize(DisplayUtil.sp2px(this, 16));
+        mPaintText.setStyle(Paint.Style.FILL);
+
         for (int i = 0; i < recognitionObjectBeanList.size(); i++) {
             RecognitionObjectBean objectBean = recognitionObjectBeanList.get(i);
             StringBuilder sb = new StringBuilder();
-            sb.append(objectBean.getRectID()).append("_").append(objectBean.getObjectName()).append("_").append(String.format("%.2f", (100 * objectBean.getScore())) + "%");
+            sb.append(objectBean.getRectID()).append("-").append(objectBean.getObjectName()).append("-").append(String.format("%.2f", (100 * objectBean.getScore())) + "%");
 
             int paintColor = getResources().getColor(COLORS[i % COLORS.length]);
             mPaint.setColor(paintColor);
+            mPaintText.setColor(paintColor);
 
             RectF rectF = new RectF(objectBean.getLeft(), objectBean.getTop(), objectBean.getRight(), objectBean.getBottom());
             canvas.drawRect(rectF, mPaint);
-            canvas.drawText(sb.toString(), objectBean.getLeft(), objectBean.getTop() - 10, mPaint);
+            if (rectF.top < DisplayUtil.dip2px(this, 20)){
+                canvas.drawText(sb.toString(), rectF.left + DisplayUtil.dip2px(this, 5), rectF.top + DisplayUtil.dip2px(this, 20), mPaintText);
+            }else{
+                canvas.drawText(sb.toString(), rectF.left, rectF.top - DisplayUtil.dip2px(this, 10), mPaintText);
+            }
         }
     }
 
@@ -156,5 +174,39 @@ public class ObjectPhotoActivity extends AppCompatActivity {
             trackingMobile.unloadModel();
         }
         BitmapUtils.recycleBitmap(originBitmap);
+    }
+
+    private void init() {
+        Toolbar mToolbar = findViewById(R.id.activity_photo_toolbar);
+        setSupportActionBar(mToolbar);
+        mToolbar.setNavigationOnClickListener(view -> finish());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.i(TAG, "onCreateOptionsMenu info");
+        getMenuInflater().inflate(R.menu.menu_setting_app, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.item_help) {
+            showHelpDialog();
+        } else if (itemId == R.id.item_more) {
+            Utils.openBrowser(this, MSLinkUtils.HELP_PHOTO_DETECTION);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showHelpDialog() {
+        noticeDialog = new NoticeDialog(this);
+        noticeDialog.setTitleString(getString(R.string.explain_title));
+        noticeDialog.setContentString(getString(R.string.explain_photo_detection));
+        noticeDialog.setYesOnclickListener(() -> {
+            noticeDialog.dismiss();
+        });
+        noticeDialog.show();
     }
 }

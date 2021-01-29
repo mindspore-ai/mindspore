@@ -36,92 +36,7 @@ using mindspore::dataset::LDataType;
 #define MS_PRINT(format, ...) __android_log_print(ANDROID_LOG_INFO, "MSJNI", format, ##__VA_ARGS__)
 
 
-static const int RET_CATEGORY_SUM = 410;
-
-static float g_thres_map[RET_CATEGORY_SUM] = {
-        0.23, 0.03, 0.10, 0.13, 0.03,
-        0.10, 0.06, 0.09, 0.09, 0.05,
-        0.01, 0.04, 0.01, 0.27, 0.05,
-        0.16, 0.01, 0.16, 0.04, 0.13,
-        0.09, 0.18, 0.10, 0.65, 0.08,
-        0.04, 0.08, 0.01, 0.05, 0.20,
-        0.01, 0.16, 0.10, 0.10, 0.10,
-        0.02, 0.24, 0.08, 0.10, 0.53,
-        0.07, 0.05, 0.07, 0.27, 0.02,
-        0.01, 0.71, 0.01, 0.06, 0.06,
-        0.03, 0.96, 0.03, 0.94, 0.05,
-        0.03, 0.14, 0.09, 0.03, 0.11,
-        0.50, 0.16, 0.07, 0.07, 0.06,
-        0.07, 0.08, 0.10, 0.29, 0.03,
-        0.05, 0.11, 0.03, 0.03, 0.03,
-        0.01, 0.11, 0.07, 0.03, 0.49,
-        0.12, 0.30, 0.10, 0.15, 0.02,
-        0.06, 0.17, 0.01, 0.04, 0.07,
-        0.06, 0.02, 0.19, 0.20, 0.14,
-        0.35, 0.15, 0.01, 0.10, 0.13,
-        0.43, 0.11, 0.12, 0.32, 0.01,
-        0.22, 0.51, 0.02, 0.04, 0.14,
-        0.04, 0.35, 0.35, 0.01, 0.54,
-        0.04, 0.02, 0.03, 0.02, 0.38,
-        0.13, 0.19, 0.06, 0.01, 0.02,
-        0.06, 0.03, 0.04, 0.01, 0.10,
-        0.01, 0.07, 0.07, 0.07, 0.33,
-        0.08, 0.04, 0.06, 0.07, 0.07,
-        0.11, 0.02, 0.32, 0.48, 0.14,
-        0.01, 0.01, 0.04, 0.05, 0.04,
-        0.16, 0.50, 0.11, 0.03, 0.04,
-        0.02, 0.55, 0.17, 0.13, 0.84,
-        0.18, 0.03, 0.16, 0.02, 0.06,
-        0.03, 0.11, 0.96, 0.36, 0.68,
-        0.02, 0.08, 0.02, 0.01, 0.03,
-        0.05, 0.14, 0.09, 0.06, 0.03,
-        0.20, 0.15, 0.62, 0.03, 0.10,
-        0.08, 0.02, 0.02, 0.06, 0.03,
-        0.04, 0.01, 0.10, 0.05, 0.04,
-        0.02, 0.07, 0.03, 0.32, 0.11,
-        0.03, 0.02, 0.03, 0.01, 0.03,
-        0.03, 0.25, 0.20, 0.19, 0.03,
-        0.11, 0.03, 0.02, 0.03, 0.15,
-        0.14, 0.06, 0.11, 0.03, 0.02,
-        0.02, 0.52, 0.03, 0.02, 0.02,
-        0.02, 0.09, 0.56, 0.01, 0.22,
-        0.01, 0.48, 0.14, 0.10, 0.08,
-        0.73, 0.39, 0.09, 0.10, 0.85,
-        0.31, 0.03, 0.05, 0.01, 0.01,
-        0.01, 0.10, 0.28, 0.02, 0.03,
-        0.04, 0.03, 0.07, 0.14, 0.20,
-        0.10, 0.01, 0.05, 0.37, 0.12,
-        0.04, 0.44, 0.04, 0.26, 0.08,
-        0.07, 0.27, 0.10, 0.03, 0.01,
-        0.03, 0.16, 0.41, 0.16, 0.34,
-        0.04, 0.30, 0.04, 0.05, 0.18,
-        0.33, 0.03, 0.21, 0.03, 0.04,
-        0.22, 0.01, 0.04, 0.02, 0.01,
-        0.06, 0.02, 0.08, 0.87, 0.11,
-        0.15, 0.05, 0.14, 0.09, 0.08,
-        0.22, 0.09, 0.07, 0.06, 0.06,
-        0.05, 0.43, 0.70, 0.03, 0.07,
-        0.06, 0.07, 0.14, 0.04, 0.01,
-        0.03, 0.05, 0.65, 0.06, 0.04,
-        0.23, 0.06, 0.75, 0.10, 0.01,
-        0.63, 0.41, 0.09, 0.01, 0.01,
-        0.18, 0.10, 0.03, 0.01, 0.05,
-        0.13, 0.18, 0.03, 0.23, 0.01,
-        0.04, 0.03, 0.38, 0.90, 0.21,
-        0.18, 0.10, 0.48, 0.08, 0.46,
-        0.03, 0.01, 0.02, 0.03, 0.10,
-        0.01, 0.09, 0.01, 0.01, 0.01,
-        0.10, 0.41, 0.01, 0.06, 0.75,
-        0.08, 0.01, 0.01, 0.08, 0.21,
-        0.06, 0.02, 0.05, 0.02, 0.05,
-        0.09, 0.12, 0.03, 0.06, 0.11,
-        0.03, 0.01, 0.01, 0.06, 0.84,
-        0.04, 0.81, 0.39, 0.02, 0.29,
-        0.77, 0.07, 0.06, 0.22, 0.23,
-        0.23, 0.01, 0.02, 0.13, 0.04,
-        0.19, 0.04, 0.08, 0.27, 0.09,
-        0.06, 0.01, 0.03, 0.21, 0.04,
-};
+static const int RET_CATEGORY_SUM = 1000;
 
 char *ImageCreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
     jbyte *modelAddr = static_cast<jbyte *>(env->GetDirectBufferAddress(modelBuffer));
@@ -146,45 +61,21 @@ std::string ProcessRunnetResult(const int RET_CATEGORY_SUM,
     // The mobilenetv2.ms model output just one branch.
     auto outputTensor = iter->second;
 
-    int tensorNum = outputTensor->ElementsNum();
-    MS_PRINT("Number of tensor elements:%d", tensorNum);
-
     // Get a pointer to the first score.
     float *temp_scores = static_cast<float *>(outputTensor->MutableData());
-    float scores[RET_CATEGORY_SUM];
+    float max = 0.0;
+    int maxIndex = 0;
     for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
-        scores[i] = temp_scores[i];
-    }
-
-    const float unifiedThre = 0.5;
-    const float probMax = 1.0;
-    for (size_t i = 0; i < RET_CATEGORY_SUM; ++i) {
-        float threshold = g_thres_map[i];
-        float tmpProb = scores[i];
-        if (tmpProb < threshold) {
-            tmpProb = tmpProb / threshold * unifiedThre;
-        } else {
-            tmpProb = (tmpProb - threshold) / (probMax - threshold) * unifiedThre + unifiedThre;
-        }
-        scores[i] = tmpProb;
-    }
-
-    for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
-        if (scores[i] > 0.5) {
-            MS_PRINT("MindSpore scores[%d] : [%f]", i, scores[i]);
+        if (temp_scores[i] > max) {
+            max = temp_scores[i];
+            maxIndex = i;
         }
     }
 
     // Score for each category.
     // Converted to text information that needs to be displayed in the APP.
     std::string categoryScore = "";
-    for (int i = 0; i < RET_CATEGORY_SUM; ++i) {
-        categoryScore += std::to_string(i);
-        categoryScore += ":";
-        std::string score_str = std::to_string(scores[i]);
-        categoryScore += score_str;
-        categoryScore += ";";
-    }
+    categoryScore = std::to_string(maxIndex);
     return categoryScore;
 }
 
@@ -376,7 +267,8 @@ Java_com_mindspore_imageobject_imageclassification_help_ImageTrackingMobile_runN
         msOutputs.insert(std::pair<std::string, mindspore::tensor::MSTensor *>{name, temp_dat});
     }
 
-    std::string resultStr = ProcessRunnetResult(::RET_CATEGORY_SUM, msOutputs);
+    std::string resultStr = ProcessRunnetResult(::RET_CATEGORY_SUM,
+                                                msOutputs);
 
     const char *resultCharData = resultStr.c_str();
     return (env)->NewStringUTF(resultCharData);
