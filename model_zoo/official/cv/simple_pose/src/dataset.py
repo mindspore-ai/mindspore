@@ -47,7 +47,7 @@ class KeypointDatasetGenerator:
         self.rotation_factor = cfg.DATASET.ROT_FACTOR
         self.flip = cfg.DATASET.FLIP
 
-        # dataset informations
+        # dataset information
         self.db = []
         self.is_train = is_train
 
