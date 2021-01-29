@@ -22,20 +22,21 @@ set(PROJECT_SRC_ROOT ${CMAKE_CURRENT_LIST_DIR}/)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SRC_ROOT}/out)
 
 # Set include directory and library directory
-#set(ACL_INC_DIR $ENV{ASCEND_HOME}/$ENV{ASCEND_VERSION}/$ENV{ARCH_PATTERN}/include)
-#set(ACL_LIB_DIR $ENV{ASCEND_HOME}/$ENV{ASCEND_VERSION}/$ENV{ARCH_PATTERN}/lib64/stub)
-set(ACL_INC_DIR $ENV{ASCEND_HOME}/acllib/include)
-set(ACL_LIB_DIR $ENV{ASCEND_HOME}/acllib/lib64/stub)
+set(ACL_LIB_DIR $ENV{ASCEND_HOME}/acllib)
+set(ATLAS_ACL_LIB_DIR ${ASCEND_HOME}/ascend-toolkit/latest/acllib)
 # Header path
-include_directories(${ACL_INC_DIR})
+include_directories(${ACL_LIB_DIR}/include/)
+include_directories(${ATLAS_ACL_LIB_DIR}/include/})
 include_directories(${PROJECT_SRC_ROOT}/../inc)
 
 # add host lib path
 link_directories(${ACL_LIB_DIR})
+find_library(acl libascendcl.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
+find_library(acl_dvpp libacl_dvpp.so ${ACL_LIB_DIR}/lib64 ${ATLAS_ACL_LIB_DIR}/lib64)
 
 add_executable(main AclProcess.cpp
                     DvppCommon.cpp
                     ModelProcess.cpp
                     main.cpp)
 
-target_link_libraries(main ascendcl gflags acl_dvpp pthread)
+target_link_libraries(main ${acl} gflags ${acl_dvpp} pthread)

@@ -16,7 +16,7 @@
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then 
     echo "Usage: sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
-    DEVICE_ID is optional, it can be setted by environment variable device_id, otherwise the value is zero"
+    DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
 
@@ -46,10 +46,18 @@ echo $ann_file
 echo $device_id
 
 export ASCEND_HOME=/usr/local/Ascend/
-export PATH=$ASCEND_HOME/atc/ccec_compiler/bin:$ASCEND_HOME/atc/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/atc/lib64:$ASCEND_HOME/acllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ones:$LD_LIBRARY_PATH
-export PYTHONPATH=$ASCEND_HOME/atc/python/site-packages/te.egg:$ASCEND_HOME/atc/python/site-packages/topi.egg:$ASCEND_HOME/atc/python/site-packages/auto_tune.egg::$ASCEND_HOME/atc/python/site-packages/schedule_search.egg:$PYTHONPATH
-export ASCEND_OPP_PATH=$ASCEND_HOME/opp
+if [ -d ${ASCEND_HOME}/ascend-toolkit ]; then
+    export PATH=$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/ccec_compiler/bin:$ASCEND_HOME/ascend-toolkit/latest/atc/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/ascend-toolkit/latest/atc/lib64:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ones:$LD_LIBRARY_PATH
+    export TBE_IMPL_PATH=${ASCEND_HOME}/ascend-toolkit/latest/opp/op_impl/built-in/ai_core/tbe
+    export PYTHONPATH=${TBE_IMPL_PATH}:$ASCEND_HOME/ascend-toolkit/latest/fwkacllib/python/site-packages:$PYTHONPATH
+    export ASCEND_OPP_PATH=$ASCEND_HOME/ascend-toolkit/latest/opp
+else
+    export PATH=$ASCEND_HOME/atc/ccec_compiler/bin:$ASCEND_HOME/atc/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/atc/lib64:$ASCEND_HOME/acllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ones:$LD_LIBRARY_PATH
+    export PYTHONPATH=$ASCEND_HOME/atc/python/site-packages:$PYTHONPATH
+    export ASCEND_OPP_PATH=$ASCEND_HOME/opp
+fi
 
 function air_to_om()
 {
@@ -93,7 +101,7 @@ if [ $? -ne 0 ]; then
 fi
 infer
 if [ $? -ne 0 ]; then
-    echo "excute inference failed"
+    echo "execute inference failed"
     exit 1
 fi
 cal_acc

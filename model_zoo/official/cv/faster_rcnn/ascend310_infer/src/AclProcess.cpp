@@ -163,11 +163,16 @@ int AclProcess::WriteResult(const std::string& imageFile) {
         fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), "_" + std::to_string(i) + ".bin");
 
         std::string outFileName = homePath + "/" + fileName;
-        FILE * outputFile = fopen(outFileName.c_str(), "wb");
-        fwrite(resHostBuf, output_size, sizeof(char), outputFile);
+        try {
+            FILE * outputFile = fopen(outFileName.c_str(), "wb");
+            fwrite(resHostBuf, output_size, sizeof(char), outputFile);
+            fclose(outputFile);
+            outputFile = nullptr;
+        } catch (std::exception &e) {
+            std::cout << "write result file " << outFileName << " failed, error info: " << e.what() << std::endl;
+            std::exit(1);
+        }
 
-        fclose(outputFile);
-        outputFile = nullptr;
         ret = aclrtFreeHost(resHostBuf);
         if (ret != OK) {
             std::cout << "aclrtFree host output memory failed" << std::endl;
