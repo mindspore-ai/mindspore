@@ -79,7 +79,7 @@ int ReshapeOpenCLKernel::Prepare() {
   std::string source = reshape_source;
   std::string program_name = "reshape";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {}, out_tensors_[0]->data_type());
 #endif
 
   SetGlobalLocal();

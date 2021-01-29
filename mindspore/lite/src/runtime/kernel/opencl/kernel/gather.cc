@@ -107,7 +107,7 @@ int GatherOpenCLKernel::Prepare() {
 #else
   std::string program_name = "gather";
   ocl_runtime_->LoadSource(program_name, gather_source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {}, out_tensors_[0]->data_type());
 #endif
   if (in_tensors_.at(1)->IsConst()) {
     intensor1_is_tensor = false;

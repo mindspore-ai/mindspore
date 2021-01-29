@@ -155,7 +155,7 @@ class FusionEltwiseOpenCLKernel : public OpenCLKernel {
 
   ~FusionEltwiseOpenCLKernel() override {
     if (op_parameter_ != nullptr) {
-      delete op_parameter_;
+      delete reinterpret_cast<FusionEltwiseParameter *>(op_parameter_);
       op_parameter_ = nullptr;
     }
   }

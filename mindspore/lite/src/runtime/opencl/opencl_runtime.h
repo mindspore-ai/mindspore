@@ -25,6 +25,7 @@ j* you may not use this file except in compliance with the License.
 #include <string>
 #include <utility>
 #include <type_traits>
+#include "dtype/type_id.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/opencl/opencl_wrapper.h"
 #include "src/runtime/opencl/opencl_allocator.h"
@@ -118,7 +119,7 @@ class OpenCLRuntime {
   std::vector<unsigned char> GetProgramBinary(const cl::Program &program);
   bool LoadSource(const std::string &program_name, const std::string &source);
   int BuildKernel(cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
-                  const std::vector<std::string> &build_options_ext = {});
+                  const std::vector<std::string> &build_options_ext = {}, TypeId data_type = kNumberTypeFloat32);
   int RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
                 cl::CommandQueue *command_queue = nullptr, cl::Event *event = nullptr);
   int ReadOrWriteImage(void *buffer, void *data, bool is_read);
