@@ -110,6 +110,9 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
     uint8_t *cur_in_ptr = input_ptr_ + (caled_num * in_shape[split_axis_] + begin_index) * inner_size_;
     uint8_t *cur_out_ptr = output_ptr_ + caled_num * out_shape[split_axis_] * inner_size_;
     int cur_outer = outer_ - caled_num;
+    if (cur_outer <= 0) {
+      return RET_OK;
+    }
     if (cur_outer > cal_num_per_thread_) {
       cur_outer = cal_num_per_thread_;
     }
@@ -120,6 +123,9 @@ int StridedSliceCPUKernel::FastRunImpl(int task_id) {
     uint8_t *cur_in_ptr = input_ptr_ + (caled_num * param_->strides_[split_axis_] + begin_index) * inner_size_;
     uint8_t *cur_out_ptr = output_ptr_ + caled_num * inner_size_;
     int cal_axis_num = out_shape[split_axis_] - caled_num;
+    if (cal_axis_num <= 0) {
+      return RET_OK;
+    }
     if (cal_axis_num > cal_num_per_thread_) {
       cal_axis_num = cal_num_per_thread_;
     }
