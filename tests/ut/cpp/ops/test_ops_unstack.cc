@@ -16,7 +16,7 @@
 #include <vector>
 #include <memory>
 #include "common/common_test.h"
-#include "ops/unpack.h"
+#include "ops/unstack.h"
 #include "ir/dtype/type.h"
 #include "ir/value.h"
 #include "abstract/dshape.h"
@@ -25,20 +25,20 @@
 namespace mindspore {
 namespace ops {
 
-class TestUnpack : public UT::Common {
+class TestUnstack : public UT::Common {
  public:
-  TestUnpack() {}
+  TestUnstack() {}
   void SetUp() {}
   void TearDown() {}
 };
 
-TEST_F(TestUnpack, test_ops_unpack1) {
-  auto unpack = std::make_shared<Unpack>();
-  unpack->Init();
-  EXPECT_EQ(unpack->get_axis(), 0);
+TEST_F(TestUnstack, test_ops_unstack1) {
+  auto unstack = std::make_shared<Unstack>();
+  unstack->Init();
+  EXPECT_EQ(unstack->get_axis(), 0);
   auto input = TensorConstructUtils::CreateOnesTensor(kNumberTypeInt32, std::vector<int64_t>{2, 4});
   MS_EXCEPTION_IF_NULL(input);
-  auto abstract = unpack->Infer({input->ToAbstract()});
+  auto abstract = unstack->Infer({input->ToAbstract()});
   MS_EXCEPTION_IF_NULL(abstract);
   EXPECT_EQ(abstract->isa<abstract::AbstractTuple>(), true);
   auto shape_ptr = abstract->BuildShape();

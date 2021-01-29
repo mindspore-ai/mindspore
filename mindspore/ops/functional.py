@@ -80,6 +80,7 @@ gather_nd = P.GatherNd()
 scatter_update = P.ScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 pack = P.Pack()
+stack = P.Stack()
 partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()

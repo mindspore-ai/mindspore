@@ -25,11 +25,11 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
 
-class UnpackNet(nn.Cell):
+class UnstackNet(nn.Cell):
     def __init__(self, nptype):
-        super(UnpackNet, self).__init__()
+        super(UnstackNet, self).__init__()
 
-        self.unpack = P.Unpack(axis=3)
+        self.unstack = P.Unstack(axis=3)
         self.data_np = np.array([[[[[0, 0],
                                     [0, 1]],
                                    [[0, 0],
@@ -50,20 +50,21 @@ class UnpackNet(nn.Cell):
 
     @ms_function
     def construct(self):
-        return self.unpack(self.x1)
+        return self.unstack(self.x1)
 
 
-def unpack(nptype):
+def unstack(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    unpack_ = UnpackNet(nptype)
-    output = unpack_()
+    unstack_ = UnstackNet(nptype)
+    output = unstack_()
     expect = (np.reshape(np.array([0] * 16).astype(nptype), (2, 2, 2, 2)),
               np.arange(2 * 2 * 2 * 2).reshape(2, 2, 2, 2).astype(nptype))
 
     for i, exp in enumerate(expect):
         assert (output[i].asnumpy() == exp).all()
 
-def unpack_pynative(nptype):
+
+def unstack_pynative(nptype):
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     x1 = np.array([[[[[0, 0],
                       [0, 1]],
@@ -84,79 +85,91 @@ def unpack_pynative(nptype):
     x1 = Tensor(x1)
     expect = (np.reshape(np.array([0] * 16).astype(nptype), (2, 2, 2, 2)),
               np.arange(2 * 2 * 2 * 2).reshape(2, 2, 2, 2).astype(nptype))
-    output = P.Unpack(axis=3)(x1)
+    output = P.Unstack(axis=3)(x1)
 
     for i, exp in enumerate(expect):
         assert (output[i].asnumpy() == exp).all()
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_unpack_graph_float32():
-    unpack(np.float32)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_graph_float16():
-    unpack(np.float16)
+def test_unstack_graph_float32():
+    unstack(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_graph_int32():
-    unpack(np.int32)
+def test_unstack_graph_float16():
+    unstack(np.float16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_graph_int16():
-    unpack(np.int16)
+def test_unstack_graph_int32():
+    unstack(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_graph_uint8():
-    unpack(np.uint8)
+def test_unstack_graph_int16():
+    unstack(np.int16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_graph_bool():
-    unpack(np.bool)
+def test_unstack_graph_uint8():
+    unstack(np.uint8)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_pynative_float32():
-    unpack_pynative(np.float32)
+def test_unstack_graph_bool():
+    unstack(np.bool)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_pynative_float16():
-    unpack_pynative(np.float16)
+def test_unstack_pynative_float32():
+    unstack_pynative(np.float32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_pynative_int32():
-    unpack_pynative(np.int32)
+def test_unstack_pynative_float16():
+    unstack_pynative(np.float16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_pynative_int16():
-    unpack_pynative(np.int16)
+def test_unstack_pynative_int32():
+    unstack_pynative(np.int32)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_pynative_uint8():
-    unpack_pynative(np.uint8)
+def test_unstack_pynative_int16():
+    unstack_pynative(np.int16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_unpack_pynative_bool():
-    unpack_pynative(np.bool)
+def test_unstack_pynative_uint8():
+    unstack_pynative(np.uint8)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_unstack_pynative_bool():
+    unstack_pynative(np.bool)

@@ -23,7 +23,7 @@ from ....common import dtype as mstype
 from ....common._register_for_tensor import tensor_operator_registry
 
 hyper_map = base.HyperMap()
-pack = P.Pack(axis=-1)
+pack = P.Stack(axis=-1)
 
 
 def _broadcast(broadcast_shape, x):
@@ -214,7 +214,7 @@ def _generate_updates_from_tuple(data, index, value, op_type):
         value_shapes = hyper_map(F.shape, value)
         shapes_same = const_utils.check_shapes_same(value_shapes, const_utils.TENSOR_SETITEM)
         if shapes_same:
-            value = F.pack(value)
+            value = F.stack(value)
         return _generate_updates_from_tensor(data, index, value, op_type)
 
     data_shape = F.shape(data)

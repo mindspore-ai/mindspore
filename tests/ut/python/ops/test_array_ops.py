@@ -267,10 +267,10 @@ class PackNet(Cell):
 class UnpackNet(Cell):
     def __init__(self):
         super(UnpackNet, self).__init__()
-        self.unpack = P.Unpack()
+        self.unstack = P.Unstack()
 
     def construct(self, x):
-        return self.unpack(x)
+        return self.unstack(x)
 class SpaceToDepthNet(Cell):
     def __init__(self):
         super(SpaceToDepthNet, self).__init__()

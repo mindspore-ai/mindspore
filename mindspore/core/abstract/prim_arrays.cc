@@ -114,8 +114,8 @@ AbstractBasePtr InferImplTile(const AnalysisEnginePtr &, const PrimitivePtr &pri
   return std::make_shared<AbstractTensor>(arg->element(), std::make_shared<Shape>(result_shp));
 }
 
-AbstractBasePtr InferImplPack(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tuple of tensor.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
