@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -596,8 +596,60 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   // set file mode to read only by user
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
+
+void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name,
+                  LocDumpMode dump_location) {
+  GetEnvDumpIrLineLevel(&dump_location);
+  if (graph == nullptr) {
+    return;
+  }
+  auto path = AddGlobalId(filename);
+  auto realpath = Common::GetRealPath(path);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << path;
+    return;
+  }
+
+  ChangeFileMode(realpath.value(), S_IRWXU);
+  std::ofstream fout(realpath.value());
+  std::ostringstream buffer;
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open dump file '" << realpath.value() << "' failed!";
+    return;
+  }
+
+  auto nodes = TopoSort(graph->get_return(), SuccDeeperSimple, AlwaysInclude);
+  OrderedMap<AnfNodePtr, int32_t> para_map;
+  // dump global info
+  DumpGlobalInfoEntry(graph, buffer);
+  int32_t total_para = DumpParams(graph, buffer, &para_map);
+
+  OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> sub_graphs;
+  // dump ir in each sub graph
+  DumpIRInSubgraph(nodes, &para_map, &sub_graphs, total_para, dump_full_name, dump_location);
+
+  // output global info
+  fout << buffer.str() << std::endl;
+
+  // output each sub graph
+  DumpSubgraph(&sub_graphs, graph, &para_map, fout);
+
+  fout.close();
+  // set file mode to read only by user
+  ChangeFileMode(realpath.value(), S_IRUSR);
+}
+
 #else
 void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
+                  << "please recompile source to enable it. See help of building script.";
+}
+void DumpIRForRDR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) {
   static bool already_printed = false;
   if (already_printed) {
     return;

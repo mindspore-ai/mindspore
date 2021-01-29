@@ -18,22 +18,35 @@
 
 #include <memory>
 #include <string>
+#include <sstream>
+#include <chrono>
+#include <iomanip>
 #include "debug/env_config_parser.h"
-
 namespace mindspore {
 class BaseRecorder {
  public:
   BaseRecorder() : module_(""), tag_(""), directory_(""), filename_(""), timestamp_("") {}
-  BaseRecorder(const std::string &module, const std::string &tag)
-      : module_(module), tag_(tag), directory_(""), filename_(""), timestamp_("") {
+  BaseRecorder(const std::string &module, const std::string &tag) : module_(module), tag_(tag), filename_("") {
     auto &config_parser_ptr = mindspore::EnvConfigParser::GetInstance();
     config_parser_ptr.Parse();
     directory_ = config_parser_ptr.rdr_path();
+
+    auto sys_time = std::chrono::system_clock::now();
+    auto t_time = std::chrono::system_clock::to_time_t(sys_time);
+    std::tm *l_time = std::localtime(&t_time);
+    if (l_time == nullptr) {
+      timestamp_ = "";
+    } else {
+      std::stringstream ss;
+      ss << std::put_time(l_time, "%Y%m%d%H%M%S");
+      timestamp_ = ss.str();
+    }
   }
   ~BaseRecorder() {}
 
-  std::string GetModule() { return module_; }
-  std::string GetTag() { return tag_; }
+  std::string GetModule() const { return module_; }
+  std::string GetTag() const { return tag_; }
+  std::string GetTimeStamp() const { return timestamp_; }
 
   void SetDirectory(const std::string &directory) { directory_ = directory; }
 

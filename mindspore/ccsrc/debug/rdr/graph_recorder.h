@@ -35,12 +35,14 @@ class GraphRecorder : public BaseRecorder {
   void SetModule(const std::string &module) { module_ = module; }
   void SetGraphType(const std::string &file_type) { graph_type_ = file_type; }
   void SetFuncGraph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
+  void SetDumpFlag(bool full_name) { full_name_ = full_name; }
   void SetNodeId(int id) { id_ = id; }
   virtual void Export();
 
  private:
   FuncGraphPtr func_graph_;
   std::string graph_type_;
+  bool full_name_{false};
   int id_{0};
 };
 using GraphRecorderPtr = std::shared_ptr<GraphRecorder>;
