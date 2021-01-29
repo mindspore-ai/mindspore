@@ -144,7 +144,7 @@ def _axes_int_check(x1_shape, x2_shape, axes):
 def _validate_axes(x1_shape, x2_shape, axes):
     """
     Checks for axes having the correct length according to input, for any value in axis
-    being out of range with given shape and also checking for compatiable axes values
+    being out of range with given shape and also checking for compatible axes values
     with given inputs.
     """
     shapes = [x1_shape, x2_shape]
@@ -246,7 +246,7 @@ def tensor_dot(x1, x2, axes):
     x2_type = F.dtype(x2)
     axes = _check_axes(axes)
     _typecheck_input(x1_type, x2_type)
-    # input compability check & axes format update
+    # input compatibility check & axes format update
     axes = _axes_int_check(x1_shape, x2_shape, axes)
     _validate_axes(x1_shape, x2_shape, axes)
     x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape(x1_shape, axes, 0)

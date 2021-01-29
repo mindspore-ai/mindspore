@@ -316,6 +316,7 @@ class SampledSoftmaxLoss(_Loss):
         ``GPU``
 
     Examples:
+        >>> mindspore.set_seed(1)
         >>> loss = nn.SampledSoftmaxLoss(num_sampled=4, num_classes=7, num_true=1)
         >>> weights = Tensor(np.random.randint(0, 9, [7, 10]), mindspore.float32)
         >>> biases = Tensor(np.random.randint(0, 9, [7]), mindspore.float32)
@@ -323,7 +324,7 @@ class SampledSoftmaxLoss(_Loss):
         >>> inputs = Tensor(np.random.randint(0, 9, [3, 10]), mindspore.float32)
         >>> output = loss(weights, biases, labels, inputs)
         >>> print(output)
-        [ 4.0181947 46.050743   7.0009117]
+        [4.6051701e+01 1.4000047e+01 6.1989022e-06]
     """
 
     def __init__(self, num_sampled, num_classes, num_true=1,
