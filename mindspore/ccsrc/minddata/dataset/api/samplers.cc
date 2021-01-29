@@ -15,6 +15,7 @@
  */
 
 #include "minddata/dataset/include/samplers.h"
+#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/distributed_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"

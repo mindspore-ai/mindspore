@@ -20,7 +20,11 @@
 #ifndef ENABLE_ANDROID
 #include <thread>
 #endif
+#ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
+#else
+#include "mindspore/lite/src/common/log_adapter.h"
+#endif
 
 namespace mindspore {
 Status::Status(enum StatusCode code, int line_of_code, const char *file_name, const std::string &extra) {
