@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-include "primitive_type.fbs";
+include "ops.fbs";
 
 namespace mindspore.schema;
 
