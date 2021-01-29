@@ -415,7 +415,18 @@ class Partial(Primitive):
 
 class Depend(Primitive):
     """
-    Depend is used for processing side-effect operations.
+    Depend is used for processing dependency operations.
+
+    In some side-effect scenarios, we need to ensure the execution order of operators.
+    In order to ensure that operator A is executed before operator B, it is recommended
+    to insert the Depend operator between operators A and B.
+
+    Previously, the ControlDepend operator was used to control the execution order.
+    Since the ControlDepend operator is deprecated from version 1.1, it is recommended
+    to use the Depend operator instead. The replacement method is as follows:
+        a = A(x)                --->        a = A(x)
+        b = B(y)                --->        y = Depend(y, a)
+        ControlDepend(a, b)     --->        b = B(y)
 
     Inputs:
         - **value** (Tensor) - the real value to return for depend operator.
@@ -426,6 +437,34 @@ class Depend(Primitive):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops.operations as P
+        >>> from mindspore import Tensor
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.softmax = P.Softmax()
+        ...         self.depend = P.Depend()
+        ...
+        ...     def construct(self, x, y):
+        ...         mul = x * y
+        ...         y = self.depend(y, mul)
+        ...         ret = self.softmax(y)
+        ...         return ret
+        ...
+        >>> x = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
+        >>> y = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
+        >>> net = Net()
+        >>> output = net(x, y)
+        >>> print(output)
+        [[0.2 0.2 0.2 0.2 0.2]
+         [0.2 0.2 0.2 0.2 0.2]
+         [0.2 0.2 0.2 0.2 0.2]
+         [0.2 0.2 0.2 0.2 0.2]]
     """
 
     @prim_attr_register
