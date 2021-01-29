@@ -207,7 +207,7 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 Notes:
 
-1. Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+1. Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/utils/hccl_tools).
 2. As for PRETRAINED_MODEL，it should be a trained ResNet50 checkpoint. If you need to load Ready-made pretrained FasterRcnn checkpoint, you may make changes to the train.py script as follows.
 
 ```python
@@ -338,7 +338,7 @@ Inference result is saved in current path, you can find result like this in acc.
 | Speed                      | 1pc: 190 ms/step;  8pcs: 200 ms/step                          |
 | Total time                 | 1pc: 37.17 hours;  8pcs: 4.89 hours                          |
 | Parameters (M)             | 250                                                         |
-| Scripts                    | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) |
+| Scripts                    | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/official/cv/faster_rcnn) |
 
 ### Inference Performance
 
@@ -356,4 +356,4 @@ Inference result is saved in current path, you can find result like this in acc.
 
 # [ModelZoo Homepage](#contents)  
 
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo).
