@@ -58,12 +58,13 @@ void Conv2dGradFilterCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Conv2dGradFilterCPUKernel dilation only support 1 in N axis and C axis!";
   }
   std::vector<int> stride{stride_ori[0], stride_ori[1]};
+  std::vector<int> dilation{dilation_ori[2], dilation_ori[3]};
   dnnl::memory::dims strides{stride_ori[0], stride_ori[1]};
   dnnl::memory::dims dilates{dilation_ori[2] - 1, dilation_ori[3] - 1};
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
-  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r);
+  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dilation);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "get padding failed";
   }

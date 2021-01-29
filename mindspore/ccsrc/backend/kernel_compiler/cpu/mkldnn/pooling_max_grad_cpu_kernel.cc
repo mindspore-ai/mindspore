@@ -43,7 +43,8 @@ void MaxPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   kernel_size_ = {IntToSize(kernel_sizes[2]), IntToSize(kernel_sizes[3])};
   stride_.push_back(strides[2]);
   stride_.push_back(strides[3]);
-  GetPadding(kernel_node, pad_mode, src_shape_, kernel_size_, stride_, &padding_l_, &padding_r);
+  std::vector<int> dummy_dilation{1, 1};
+  GetPadding(kernel_node, pad_mode, src_shape_, kernel_size_, stride_, &padding_l_, &padding_r, dummy_dilation);
 }
 
 void MaxPoolingGradCPUKernel::RowPoolingGrad(const float *input, float *output, float diff,

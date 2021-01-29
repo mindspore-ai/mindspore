@@ -46,7 +46,8 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   std::vector<size_t> kernel_size({IntToSize(origin_kernel_sizes[2]), IntToSize(origin_kernel_sizes[3])});
-  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r);
+  std::vector<int> dummy_dilation{1, 1};
+  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r, dummy_dilation);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "pooling get padding failed";
   }
