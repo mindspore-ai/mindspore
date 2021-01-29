@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import os
 import numpy as np
 
 import mindspore._c_dataengine as cde
-from ..engine import samplers
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -289,8 +288,6 @@ def check_sampler_shuffle_shard_options(param_dict):
     shuffle, sampler = param_dict.get('shuffle'), param_dict.get('sampler')
     num_shards, shard_id = param_dict.get('num_shards'), param_dict.get('shard_id')
     num_samples = param_dict.get('num_samples')
-
-    type_check(sampler, (type(None), samplers.BuiltinSampler, samplers.Sampler), "sampler")
 
     if sampler is not None:
         if shuffle is not None:
