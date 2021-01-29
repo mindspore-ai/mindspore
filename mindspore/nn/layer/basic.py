@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,16 +51,17 @@ class L1Regularizer(Cell):
     Args:
         scale (int, float): l1 regularization factor which greater than 0.
 
-    Raises:
-        ValueError: If `scale(regularization factor)` is not greater than 0.
-                    If `scale(regularization factor)` is math.inf or math.nan.
-
     Inputs:
         - **weights** (Tensor) - The input tensor
 
     Outputs:
         Tensor, which dtype is higher precision data type between mindspore.float32 and weights dtype,
         and Tensor shape is ()
+
+    Raises:
+        TypeError: If `scale` is neither an int nor float.
+        ValueError: If `scale` is not greater than 0.
+        ValueError: If `scale` is math.inf or math.nan.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -116,14 +117,17 @@ class Dropout(Cell):
                    dropping out 10% of input units. Default: 0.5.
         dtype (:class:`mindspore.dtype`): Data type of input. Default: mindspore.float32.
 
-    Raises:
-        ValueError: If `keep_prob` is not in range (0, 1].
-
     Inputs:
-        - **input** (Tensor) - The input tensor.
+        - **input** (Tensor) - The input of Dropout with data type of float16 or float32.
 
     Outputs:
         Tensor, output tensor with the same shape as the input.
+
+    Raises:
+        TypeError: If `keep_prob` is not a float.
+        TypeError: If dtype of `input` is not neither float16 nor float32.
+        ValueError: If `keep_prob` is not in range (0, 1].
+        ValueError: If length of shape of `input` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -177,6 +181,9 @@ class Flatten(Cell):
         Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
         the product of the remaining dimensions.
 
+    Raises:
+        TypeError: If `input` is not a subclass of Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -220,14 +227,20 @@ class Dense(Cell):
         activation (Union[str, Cell, Primitive]): activate function applied to the output of the fully connected layer,
             eg. 'ReLU'.Default: None.
 
-    Raises:
-        ValueError: If weight_init or bias_init shape is incorrect.
-
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(*, in\_channels)`.
 
     Outputs:
         Tensor of shape :math:`(*, out\_channels)`.
+
+    Raises:
+        TypeError: If `in_channels` or `out_channels` is not an int.
+        TypeError: If `has_bias` is not a bool.
+        TypeError: If `activation` is not one of str, Cell, Primitive, None.
+        ValueError: If length of shape of `weight_init` is not equal to 2 or shape[0] of `weight_init`
+                    is not equal to `out_channels` or shape[1] of `weight_init` is not equal to `in_channels`.
+        ValueError: If length of shape of `bias_init` is not equal to 1
+                    or shape[0] of `bias_init` is not equal to `out_channels`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -350,6 +363,10 @@ class ClipByNorm(Cell):
     Outputs:
         Tensor, clipped tensor with the same shape as the input, whose type is float32.
 
+    Raises:
+        TypeError: If `axis` is not one of None, int, tuple.
+        TypeError: If dtype of `input` is neither float32 nor float16.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -426,6 +443,10 @@ class Norm(Cell):
         Tensor, output tensor with dimensions in 'axis' reduced to 1 will be returned if 'keep_dims' is True;
         otherwise a Tensor with dimensions in 'axis' removed is returned.
 
+    Raises:
+        TypeError: If `axis` is neither an int nor tuple.
+        TypeError: If `keep_dims` is not a bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -500,11 +521,17 @@ class OneHot(Cell):
                                           data type of indices. Default: mindspore.float32.
 
     Inputs:
-        - **indices** (Tensor) - A tensor of indices of data type mindspore.int32 and arbitrary shape.
+        - **indices** (Tensor) - A tensor of indices with data type of int32 or int64 and arbitrary shape.
 
     Outputs:
         Tensor, the one-hot tensor of data type `dtype` with dimension at `axis` expanded to `depth` and filled with
         on_value and off_value.
+
+    Raises:
+        TypeError: If `axis` or `depth` is not an int.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If `axis` is not in range [-1, len(indices_shape)].
+        ValueError: If `depth` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -570,6 +597,11 @@ class Pad(Cell):
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
           is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the Outputs is
           [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
+
+    Raises:
+        TypeError: If `paddings` is not a tuple.
+        ValueError: If length of `paddings` is more than 4 or its shape is not (n, 2).
+        ValueError: If `mode` is not one of 'CONSTANT', 'REFLECT', 'SYMMETRIC'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -663,6 +695,16 @@ class ResizeBilinear(Cell):
         If scale is set, the result is 4-D tensor with shape:math:`(batch, channels, scale_factor * height,
         scale_factor * width)` in float32
 
+    Raises:
+        TypeError: If `size` is not one of tuple, list, None.
+        TypeError: If `scale_factor` is neither int nor None.
+        TypeError: If `align_corners` is not a bool.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `size` and `scale_factor` are both None or not None.
+        ValueError: If length of shape of `x` is not equal to 4.
+        ValueError: If `scale_factor` is an int which is less than 1.
+        ValueError: If `size` is a list or tuple whose length is not equal to 2.
+
     Supported Platforms:
         ``Ascend``
 
@@ -717,6 +759,11 @@ class Unfold(Cell):
             out_row = (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1
 
             out_col = (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1
+
+    Raises:
+        TypeError: If `ksizes`, `strides` or `rates` is neither a tuple nor list.
+        ValueError: If shape of `ksizes`, `strides` or `rates` is not (1, x_row, x_col, 1).
+        ValueError: If the second and third element of `ksizes`, `strides` or `rates` is less than 1.
 
     Supported Platforms:
         ``Ascend``
@@ -774,6 +821,10 @@ class Tril(Cell):
     Outputs:
         Tensor, has the same type as input `x`.
 
+    Raises:
+        TypeError: If `k` is not an int.
+        ValueError: If length of shape of `x` is less than 1.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -816,6 +867,10 @@ class Triu(Cell):
 
     Outputs:
         Tensor, has the same type as input `x`.
+
+    Raises:
+        TypeError: If `k` is not an int.
+        ValueError: If length of shape of `x` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -875,6 +930,9 @@ class MatrixDiag(Cell):
     Outputs:
         Tensor, has the same type as input `x`. The shape must be x.shape + (x.shape[-1], ).
 
+    Raises:
+        TypeError: If dtype of `x` is not one of float32, float16, int32, int8 or uint8.
+
     Supported Platforms:
         ``Ascend``
 
@@ -917,6 +975,9 @@ class MatrixDiagPart(Cell):
 
     Outputs:
         Tensor, has the same type as input `x`. The shape must be x.shape[:-2] + [min(x.shape[-2:])].
+
+    Raises:
+        TypeError: If dtype of `x` is not one of float32, float16, int32, int8 or uint8.
 
     Supported Platforms:
         ``Ascend``
@@ -965,6 +1026,12 @@ class MatrixSetDiag(Cell):
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
+
+    Raises:
+        TypeError: If dtype of `x` or `diagonal` is not one of float32, float16, int32, int8 or uint8.
+        ValueError: If length of shape of `x` is less than 2.
+        ValueError: If x_shape[-2] < x_shape[-1] and x_shape[:-1] != diagonal_shape.
+        ValueError: If x_shape[-2] >= x_shape[-1] and x_shape[:-2] + x_shape[-1:] != diagonal_shape.
 
     Supported Platforms:
         ``Ascend``

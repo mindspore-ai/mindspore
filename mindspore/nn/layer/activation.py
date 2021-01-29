@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,10 +63,16 @@ class Softmax(Cell):
         axis (Union[int, tuple[int]]): The axis to apply Softmax operation, -1 means the last dimension. Default: -1.
 
     Inputs:
-        - **x** (Tensor) - The input of Softmax.
+        - **x** (Tensor) - The input of Softmax with data type of float16 or float32.
 
     Outputs:
         Tensor, which has the same type and shape as `x` with values in the range[0,1].
+
+    Raises:
+        TypeError: If `axis` is neither an int not a tuple.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `axis` is a tuple whose length is less than 1.
+        ValueError: If `axis` is a tuple whose elements are not all in range [-len(x), len(x)).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -107,10 +113,15 @@ class LogSoftmax(Cell):
         axis (int): The axis to apply LogSoftmax operation, -1 means the last dimension. Default: -1.
 
     Inputs:
-        - **x** (Tensor) - The input of LogSoftmax.
+        - **x** (Tensor) - The input of LogSoftmax, with float16 or float32 data type.
 
     Outputs:
         Tensor, which has the same type and shape as the input as `x` with values in the range[-inf,0).
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `axis` is not in range [-len(x), len(x)).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -153,10 +164,15 @@ class ELU(Cell):
         alpha (float): The coefficient of negative factor whose type is float. Default: 1.0.
 
     Inputs:
-        - **input_data** (Tensor) - The input of ELU.
+        - **input_data** (Tensor) - The input of ELU with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If `alpha` is not a float.
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        ValueError: If `alpha` is not equal to 1.0.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -199,6 +215,9 @@ class ReLU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Raises:
+        TypeError: If dtype of `input_data` is not a number.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -233,10 +252,13 @@ class ReLU6(Cell):
     The input is a Tensor of any valid shape.
 
     Inputs:
-        - **input_data** (Tensor) - The input of ReLU6.
+        - **input_data** (Tensor) - The input of ReLU6 with data type of float16 or float32.
 
     Outputs:
         Tensor, which has the same type as `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -278,6 +300,9 @@ class LeakyReLU(Cell):
 
     Outputs:
         Tensor, has the same type and shape as the `input_x`.
+
+    Raises:
+        TypeError: If `alpha` is not a float or an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -322,10 +347,13 @@ class Tanh(Cell):
     where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Tanh.
+        - **input_data** (Tensor) - The input of Tanh with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -365,10 +393,13 @@ class GELU(Cell):
     Activation_function#/media/File:Activation_gelu.png>`_.
 
     Inputs:
-        - **input_data** (Tensor) - The input of GELU.
+        - **input_data** (Tensor) - The input of GELU with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -410,6 +441,9 @@ class FastGelu(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -448,10 +482,13 @@ class Sigmoid(Cell):
     Sigmoid_function#/media/File:Logistic-curve.svg>`_.
 
     Inputs:
-        - **input_data** (Tensor) - The input of Tanh.
+        - **input_data** (Tensor) - The input of Sigmoid with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -495,13 +532,20 @@ class PReLU(Cell):
 
     Args:
         channel (int): The dimension of input. Default: 1.
-        w (float): The initial value of w. Default: 0.25.
+        w (Union[float, list, Tensor]): The initial value of w. Default: 0.25.
 
     Inputs:
-        - **input_data** (Tensor) - The input of PReLU.
+        - **input_data** (Tensor) - The input of PReLU with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If `channel` is not an int.
+        TypeError: If `w` is not one of float, list, Tensor.
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
+        ValueError: If `channel` is less than 1.
+        ValueError: If length of shape of `input_data` is equal to 1.
 
     Supported Platforms:
         ``Ascend``
@@ -518,6 +562,7 @@ class PReLU(Cell):
     @cell_attr_register(attrs="")
     def __init__(self, channel=1, w=0.25):
         super(PReLU, self).__init__()
+        validator.check_positive_int(channel, 'channel', self.cls_name)
         if isinstance(w, (np.float32, float)):
             tmp = np.empty((channel,), dtype=np.float32)
             tmp.fill(w)
@@ -526,7 +571,7 @@ class PReLU(Cell):
             w = Tensor(w)
 
         if not isinstance(w, Tensor):
-            raise TypeError("w only support np.float32, float or Tensor type.")
+            raise TypeError("w only support np.float32, float, list or Tensor type.")
 
         self.w = Parameter(initializer(w, [channel]), name='a')
         self.prelu = P.PReLU()
@@ -555,10 +600,13 @@ class HSwish(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSwish.
+        - **input_data** (Tensor) - The input of HSwish, data type must be float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``
@@ -593,10 +641,13 @@ class HSigmoid(Cell):
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Inputs:
-        - **input_data** (Tensor) - The input of HSigmoid.
+        - **input_data** (Tensor) - The input of HSigmoid, data type must be float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``
@@ -631,10 +682,13 @@ class LogSigmoid(Cell):
     where :math:`x_{i}` is the element of the input.
 
     Inputs:
-        - **input_data** (Tensor) - The input of LogSigmoid.
+        - **input_data** (Tensor) - The input of LogSigmoid with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

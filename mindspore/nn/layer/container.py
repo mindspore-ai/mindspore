@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,14 +71,14 @@ class SequentialCell(Cell):
     Args:
         args (list, OrderedDict): List of subclass of Cell.
 
-    Raises:
-        TypeError: If the type of the argument is not list or OrderedDict.
-
     Inputs:
         - **input** (Tensor) - Tensor with shape according to the first Cell in the sequence.
 
     Outputs:
         Tensor, the output Tensor with shape depending on the input and defined sequence of Cells.
+
+    Raises:
+        TypeError: If the type of the `args` is not list or OrderedDict.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

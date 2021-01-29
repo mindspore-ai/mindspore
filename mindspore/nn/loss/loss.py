@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -96,13 +96,14 @@ class L1Loss(_Loss):
             Default: "mean".
 
     Inputs:
-        - **input_data** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`. The data type must be float16 or
-          float32.
-        - **target_data** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`. The data type must be float16 or
-          float32.
+        - **input_data** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
+        - **target_data** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
 
     Outputs:
         Tensor, loss float tensor.
+
+    Raises:
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -149,6 +150,9 @@ class MSELoss(_Loss):
     Outputs:
         Tensor, weighted loss float tensor.
 
+    Raises:
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -193,11 +197,17 @@ class SmoothL1Loss(_Loss):
             quadratic to linear. Default: 1.0.
 
     Inputs:
-        - **input_data** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
-        - **target_data** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
+        - **input_data** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`. Data type must be float16 or float32.
+        - **target_data** (Tensor) - Ground truth data, with the same type and shape as `input_data`.
 
     Outputs:
         Tensor, loss float tensor.
+
+    Raises:
+        TypeError: If `beta` is not a float.
+        TypeError: If dtype of `input_data` or `target_data` is neither float16 not float32.
+        ValueError: If `beta` is less than or equal to 0.
+        ValueError: If shape of `input_data` is not the same as `target_data`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -249,13 +259,19 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
             If "none", do not perform reduction. Default: "none".
 
     Inputs:
-        - **logits** (Tensor) - Tensor of shape (N, C).
+        - **logits** (Tensor) - Tensor of shape (N, C). Data type must be float16 or float32.
         - **labels** (Tensor) - Tensor of shape (N, ). If `sparse` is True, The type of
-          `labels` is mindspore.int32. If `sparse` is False, the type of `labels` is the same as the type of `logits`.
+          `labels` is int32 or int64. If `sparse` is False, the type of `labels` is the same as the type of `logits`.
 
     Outputs:
         Tensor, a tensor of the same shape as logits with the component-wise
         logistic losses.
+
+    Raises:
+        TypeError: If `sparse` is not a bool.
+        TypeError: If `sparse` is True and dtype of `labels` is neither int32 not int64.
+        TypeError: If `sparse` is False and dtype of `labels` is neither float16 not float32.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -274,7 +290,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
                  sparse=False,
                  reduction='none'):
         super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
-        self.sparse = sparse
+        self.sparse = validator.check_bool(sparse, "sparse")
         self.reduction = reduction
         self.softmax_cross_entropy = _selected_ops.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
@@ -363,7 +379,7 @@ class SampledSoftmaxLoss(_Loss):
         num_sampled (int): The number of classes to randomly sample per batch.
         num_classes (int): The number of possible classes.
         num_true (int): The number of target classes per training example.
-        sampled_values (Tuple):  Tuple of (`sampled_candidates`, `true_expected_count`,
+        sampled_values (Union[list, tuple]):  List or tuple of (`sampled_candidates`, `true_expected_count`,
             `sampled_expected_count`) returned by a `*CandidateSampler` function.
             Default to None, `UniformCandidateSampler` is applied.
         remove_accidental_hits (bool): Whether to remove "accidental hits"
@@ -382,6 +398,13 @@ class SampledSoftmaxLoss(_Loss):
 
     Outputs:
         Tensor, a tensor of shape (N) with the per-example sampled softmax losses.
+
+    Raises:
+        TypeError: If `sampled_values` is not a list or tuple.
+        TypeError: If dtype of `labels` is neither int32 not int64.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `num_sampled` or `num_true` is great than `num_classes`.
+        ValueError: If length of `sampled_values` is not equal to 3.
 
     Supported Platforms:
         ``GPU``
@@ -413,7 +436,7 @@ class SampledSoftmaxLoss(_Loss):
             raise ValueError(f"num_true {num_true} is great than num_classes {num_classes}.")
         if sampled_values is not None:
             if not isinstance(sampled_values, (list, tuple)):
-                raise TypeError(f"sampled_values {sampled_values} is not a list.")
+                raise TypeError(f"sampled_values {sampled_values} is not a list or tuple.")
             if len(sampled_values) != 3:
                 raise ValueError(f"sampled_values size {len(sampled_values)} is not 3.")
 
@@ -605,6 +628,11 @@ class BCELoss(_Loss):
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `inputs`.
         Otherwise, the output is a scalar.
 
+    Raises:
+        TypeError: If dtype of `inputs`, `labels` or `weight`(if given) is neither float16 not float32.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If shape of `inputs` is not the same as `labels` or `weight`(if given).
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -640,6 +668,7 @@ class BCELoss(_Loss):
 def _check_reduced_shape_valid(ori_shape, reduced_shape, axis, cls_name):
     validator.check_reduce_shape(ori_shape, reduced_shape, axis, cls_name)
 
+
 class CosineEmbeddingLoss(_Loss):
     r"""
     Computes the similarity between two tensors using cosine distance.
@@ -667,13 +696,18 @@ class CosineEmbeddingLoss(_Loss):
         - **loss** (Tensor) - If `reduction` is "none", its shape is the same as `y`'s shape, otherwise a scalar value
           will be returned.
 
+    Raises:
+        TypeError: If `margin` is not a float.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `margin` is not in range [-1, 1].
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
         >>> x1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)
         >>> x2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), mindspore.float32)
-        >>> y = Tensor(np.array([1,-1]), mindspore.int32)
+        >>> y = Tensor(np.array([1, -1]), mindspore.int32)
         >>> cosine_embedding_loss = nn.CosineEmbeddingLoss()
         >>> output = cosine_embedding_loss(x1, x2, y)
         >>> print(output)

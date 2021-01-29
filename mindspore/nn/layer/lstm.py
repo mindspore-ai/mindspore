@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -105,6 +105,12 @@ class LSTM(Cell):
         - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
         - **hx_n** (tuple) - A tuple of two Tensor (h_n, c_n) both of shape
           (num_directions * `num_layers`, batch_size, `hidden_size`).
+
+    Raises:
+        TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
+        TypeError: If `has_bias`, `batch_first` or `bidirectional` is not a bool.
+        TypeError: If `dropout` is neither a float nor an int.
+        ValueError: If `dropout` is not in range [0.0, 1.0].
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -333,6 +339,12 @@ class LSTMCell(Cell):
         - **c** - A Tensor with shape (num_directions, batch_size, `hidden_size`).
         - **reserve** - reserved
         - **state** - reserved
+
+    Raises:
+        TypeError: If `input_size` or `hidden_size` or `num_layers` is not an int.
+        TypeError: If `has_bias` or `batch_first` or `bidirectional` is not a bool.
+        TypeError: If `dropout` is neither a float nor an int.
+        ValueError: If `dropout` is not in range [0.0, 1.0].
 
     Supported Platforms:
         ``GPU`` ``CPU``
