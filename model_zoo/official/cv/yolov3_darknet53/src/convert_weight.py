@@ -39,7 +39,7 @@ def build_network():
 
 
 def convert(weights_file, output_file):
-    """Conver weight to mindspore ckpt."""
+    """Convert weight to mindspore ckpt."""
     params = build_network()
     weights = load_weight(weights_file)
     index = 0
