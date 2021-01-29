@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,22 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 GENERATE_GOLDEN = False
+
+
+def test_random_crop_and_resize_callable():
+    """
+    Test RandomCropAndResize op is callable
+    """
+    logger.info("test_random_crop_and_resize_callable")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    decode_op = c_vision.Decode()
+    img = decode_op(img)
+
+    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
+    img = random_crop_and_resize_op(img)
+    assert np.shape(img) == (256, 512, 3)
 
 
 def test_random_crop_and_resize_op_c(plot=False):
@@ -389,6 +405,7 @@ def test_random_crop_and_resize_06():
 
 
 if __name__ == "__main__":
+    test_random_crop_and_resize_callable()
     test_random_crop_and_resize_op_c(True)
     test_random_crop_and_resize_op_py(True)
     test_random_crop_and_resize_op_py_ANTIALIAS()

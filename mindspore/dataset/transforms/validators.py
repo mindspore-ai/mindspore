@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -237,8 +237,8 @@ def check_compose_list(method):
         type_check(transforms, (list,), transforms)
         if not transforms:
             raise ValueError("transforms list is empty.")
-        for i, transfrom in enumerate(transforms):
-            if not callable(transfrom):
+        for i, transform in enumerate(transforms):
+            if not callable(transform):
                 raise ValueError("transforms[{}] is not callable.".format(i))
         return method(self, *args, **kwargs)
 
@@ -269,9 +269,10 @@ def check_random_apply(method):
         [transforms, prob], _ = parse_user_args(method, *args, **kwargs)
         type_check(transforms, (list,), "transforms")
 
-        for i, transfrom in enumerate(transforms):
-            if not callable(transfrom):
-                raise ValueError("transforms[{}] is not callable.".format(i))
+        for i, transform in enumerate(transforms):
+            if str(transform).find("c_transform") >= 0:
+                raise ValueError("transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
+                    .format(i))
 
         if prob is not None:
             type_check(prob, (float, int,), "prob")
@@ -290,9 +291,10 @@ def check_transforms_list(method):
         [transforms], _ = parse_user_args(method, *args, **kwargs)
 
         type_check(transforms, (list,), "transforms")
-        for i, transfrom in enumerate(transforms):
-            if not callable(transfrom):
-                raise ValueError("transforms[{}] is not callable.".format(i))
+        for i, transform in enumerate(transforms):
+            if str(transform).find("c_transform") >= 0:
+                raise ValueError("transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
+                    .format(i))
         return method(self, *args, **kwargs)
 
     return new_method

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,15 +43,22 @@ class Execute {
 
 #ifdef ENABLE_ANDROID
   /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[inout] input - the tensor to be transformed
+  /// \param[in] input - the tensor to be transformed
   /// \return - the output tensor, nullptr if Compute fails
   std::shared_ptr<tensor::MSTensor> operator()(std::shared_ptr<tensor::MSTensor> input);
 #endif
 
   /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[inout] input - the tensor to be transformed
+  /// \param[in] input - the tensor to be transformed
   /// \return - the output tensor, nullptr if Compute fails
   std::shared_ptr<dataset::Tensor> operator()(std::shared_ptr<dataset::Tensor> input);
+
+  /// \brief callable function to execute the TensorOperation in eager mode
+  /// \param[in] input_tensor_list - the tensor to be transformed
+  /// \param[out] out - the result tensor after transform
+  /// \return - Status
+  Status operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
+                    std::vector<std::shared_ptr<Tensor>> *out);
 
  private:
   std::shared_ptr<TensorOperation> op_;

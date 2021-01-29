@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,21 @@ from util import visualize_list, save_and_check_md5, diff_mse
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
 GENERATE_GOLDEN = False
+
+
+def test_invert_callable():
+    """
+    Test Invert is callable
+    """
+    logger.info("Test Invert callable")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img = C.Decode()(img)
+    img = C.Invert()(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    assert img.shape == (2268, 4032, 3)
 
 
 def test_invert_py(plot=False):
@@ -247,6 +262,7 @@ def test_invert_md5_c():
 
 
 if __name__ == "__main__":
+    test_invert_callable()
     test_invert_py(plot=False)
     test_invert_c(plot=False)
     test_invert_py_c(plot=False)

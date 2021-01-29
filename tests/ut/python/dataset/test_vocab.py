@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,12 +18,23 @@ import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
 import mindspore.common.dtype as mstype
+from mindspore import log as logger
 
 # this file contains "home is behind the world head" each word is 1 line
 DATA_FILE = "../data/dataset/testVocab/words.txt"
 VOCAB_FILE = "../data/dataset/testVocab/vocab_list.txt"
 SIMPLE_VOCAB_FILE = "../data/dataset/testVocab/simple_vocab_list.txt"
 
+
+def test_lookup_callable():
+    """
+    Test lookup is callable
+    """
+    logger.info("test_lookup_callable")
+    vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+    lookup = text.Lookup(vocab)
+    word = "迎"
+    assert lookup(word) == 3
 
 def test_from_list_tutorial():
     vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", "<unk>"], True)
@@ -171,6 +182,7 @@ def test_lookup_cast_type():
 
 
 if __name__ == '__main__':
+    test_lookup_callable()
     test_from_dict_exception()
     test_from_list_tutorial()
     test_from_file_tutorial()

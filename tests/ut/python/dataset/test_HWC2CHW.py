@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,6 +27,20 @@ GENERATE_GOLDEN = False
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
+
+def test_HWC2CHW_callable():
+    """
+    Test HWC2CHW is callable
+    """
+    logger.info("Test HWC2CHW callable")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img = c_vision.Decode()(img)
+    img = c_vision.HWC2CHW()(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+    assert img.shape == (3, 2268, 4032)
 
 
 def test_HWC2CHW(plot=False):
@@ -122,6 +136,7 @@ def test_HWC2CHW_comp(plot=False):
 
 
 if __name__ == '__main__':
+    test_HWC2CHW_callable()
     test_HWC2CHW(True)
     test_HWC2CHW_md5()
     test_HWC2CHW_comp(True)

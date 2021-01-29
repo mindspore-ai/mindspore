@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,118 +59,55 @@ from .validators import check_lookup, check_jieba_add_dict, \
     check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
+from ..transforms.c_transforms import TensorOperation
 
-class TextTensorOperation:
-    def parse(self):
-        raise NotImplementedError("TextTensorOperation has to implement parse method.")
 
-class Lookup(TextTensorOperation):
+class TextTensorOperation(TensorOperation):
     """
-    Lookup operator that looks up a word to an id.
-
-    Args:
-        vocab (Vocab): A vocabulary object.
-        unknown_token (str, optional): Word used for lookup if the word being looked up is out-of-vocabulary (OOV).
-            If unknown_token is OOV, a runtime error will be thrown (default=None).
-        data_type (mindspore.dtype, optional): mindspore.dtype that lookup maps string to (default=mstype.int32)
-
-    Examples:
-        >>> import mindspore.dataset.text as text
-        >>>
-        >>> # Load vocabulary from list
-        >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
-        >>> # Use Lookup operator to map tokens to ids
-        >>> lookup = text.Lookup(vocab)
-        >>> data1 = data1.map(operations=[lookup])
+    Base class of Text Tensor Ops
     """
-
-    @check_lookup
-    def __init__(self, vocab, unknown_token=None, data_type=mstype.int32):
-        self.vocab = vocab
-        self.unknown_token = replace_none(unknown_token, '')
-        self.data_type = data_type
+    def __call__(self, input_tensor):
+        if not isinstance(input_tensor, list):
+            input_list = [input_tensor]
+        else:
+            input_list = input_tensor
+        tensor_list = []
+        for tensor in input_list:
+            if not isinstance(tensor, str):
+                raise TypeError("Input should be string or list of strings, got {}.".format(type(tensor)))
+            tensor_list.append(cde.Tensor(np.asarray(tensor)))
+        callable_op = cde.Execute(self.parse())
+        output_list = callable_op(tensor_list)
+        for i, element in enumerate(output_list):
+            arr = element.as_array()
+            if arr.dtype.char == 'S':
+                output_list[i] = to_str(arr)
+            else:
+                output_list[i] = arr
+        if not isinstance(input_tensor, list) and len(output_list) == 1:
+            output_list = output_list[0]
+        return output_list
 
     def parse(self):
-        return cde.LookupOperation(self.vocab, self.unknown_token, str(mstype_to_detype(self.data_type)))
-
-
-class SlidingWindow(TextTensorOperation):
-    """
-    TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension axis
-    is a slice of data starting at the corresponding position, with a specified width.
-
-    Args:
-        width (int): The width of the window. It must be an integer and greater than zero.
-        axis (int, optional): The axis along which the sliding window is computed (default=0).
-
-    Examples:
-        >>> import mindspore.dataset.text as text
-        >>>
-        >>> # Data before
-        >>> # |    col1     |
-        >>> # +-------------+
-        >>> # | [1,2,3,4,5] |
-        >>> # +-------------+
-        >>> data1 = data1.map(operations=text.SlidingWindow(3, 0))
-        >>> # Data after
-        >>> # |     col1    |
-        >>> # +-------------+
-        >>> # |  [[1,2,3],  |
-        >>> # |   [2,3,4],  |
-        >>> # |   [3,4,5]]  |
-        >>> # +--------------+
-    """
-
-    @check_slidingwindow
-    def __init__(self, width, axis=0):
-        self.width = width
-        self.axis = axis
-
-    def parse(self):
-        return cde.SlidingWindowOperation(self.width, self.axis)
-
-
-class Ngram(TextTensorOperation):
-    """
-    TensorOp to generate n-gram from a 1-D string Tensor.
-
-    Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
-
-    Args:
-        n (list[int]):  n in n-gram, n >= 1. n is a list of positive integers. For example, if n=[4,3], then the result
-            would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
-            for a n-gram, an empty string will be returned. For example, 3 grams on ["mindspore","best"] will result in
-            an empty string produced.
-        left_pad (tuple, optional): ("pad_token", pad_width). Padding performed on left side of the sequence. pad_width
-            will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (default=None).
-        right_pad (tuple, optional): ("pad_token", pad_width). Padding performed on right side of the sequence.
-            pad_width will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--"
-            (default=None).
-        separator (str, optional): symbol used to join strings together. For example. if 2-gram is
-            ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
-            (default=None, which means whitespace is used).
-
-    Examples:
-        >>> import mindspore.dataset.text as text
-        >>>
-        >>> data1 = data1.map(operations=text.Ngram(3, separator=" "))
-    """
-
-    @check_ngram
-    def __init__(self, n, left_pad=("", 0), right_pad=("", 0), separator=" "):
-        self.ngrams = n
-        self.left_pad = left_pad
-        self.right_pad = right_pad
-        self.separator = separator
-
-    def parse(self):
-        return cde.NgramOperation(self.ngrams, self.left_pad, self.right_pad, self.separator)
+        raise NotImplementedError("TextTensorOperation has to implement parse() method.")
 
 
 DE_C_INTER_JIEBA_MODE = {
     JiebaMode.MIX: cde.JiebaMode.DE_JIEBA_MIX,
     JiebaMode.MP: cde.JiebaMode.DE_JIEBA_MP,
     JiebaMode.HMM: cde.JiebaMode.DE_JIEBA_HMM
+}
+
+
+DE_C_INTER_SENTENCEPIECE_LOADTYPE = {
+    SPieceTokenizerLoadType.FILE: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KFILE,
+    SPieceTokenizerLoadType.MODEL: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KMODEL
+}
+
+
+DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
+    SPieceTokenizerOutType.STRING: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KString,
+    SPieceTokenizerOutType.INT: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KINT
 }
 
 
@@ -335,6 +272,201 @@ class JiebaTokenizer(TextTensorOperation):
                 " jieba mode file {} is not exist.".format(model_path))
 
 
+class Lookup(TextTensorOperation):
+    """
+    Lookup operator that looks up a word to an id.
+
+    Args:
+        vocab (Vocab): A vocabulary object.
+        unknown_token (str, optional): Word used for lookup if the word being looked up is out-of-vocabulary (OOV).
+            If unknown_token is OOV, a runtime error will be thrown (default=None).
+        data_type (mindspore.dtype, optional): mindspore.dtype that lookup maps string to (default=mstype.int32)
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> # Load vocabulary from list
+        >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+        >>> # Use Lookup operator to map tokens to ids
+        >>> lookup = text.Lookup(vocab)
+        >>> data1 = data1.map(operations=[lookup])
+    """
+
+    @check_lookup
+    def __init__(self, vocab, unknown_token=None, data_type=mstype.int32):
+        self.vocab = vocab
+        self.unknown_token = replace_none(unknown_token, '')
+        self.data_type = data_type
+
+    def parse(self):
+        return cde.LookupOperation(self.vocab, self.unknown_token, str(mstype_to_detype(self.data_type)))
+
+
+class Ngram(TextTensorOperation):
+    """
+    TensorOp to generate n-gram from a 1-D string Tensor.
+
+    Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
+
+    Args:
+        n (list[int]):  n in n-gram, n >= 1. n is a list of positive integers. For example, if n=[4,3], then the result
+            would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
+            for a n-gram, an empty string will be returned. For example, 3 grams on ["mindspore","best"] will result in
+            an empty string produced.
+        left_pad (tuple, optional): ("pad_token", pad_width). Padding performed on left side of the sequence. pad_width
+            will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (default=None).
+        right_pad (tuple, optional): ("pad_token", pad_width). Padding performed on right side of the sequence.
+            pad_width will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--"
+            (default=None).
+        separator (str, optional): symbol used to join strings together. For example. if 2-gram is
+            ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
+            (default=None, which means whitespace is used).
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> data1 = data1.map(operations=text.Ngram(3, separator=" "))
+    """
+
+    @check_ngram
+    def __init__(self, n, left_pad=("", 0), right_pad=("", 0), separator=" "):
+        self.ngrams = n
+        self.left_pad = left_pad
+        self.right_pad = right_pad
+        self.separator = separator
+
+    def parse(self):
+        return cde.NgramOperation(self.ngrams, self.left_pad, self.right_pad, self.separator)
+
+
+class SentencePieceTokenizer(TextTensorOperation):
+    """
+    Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+
+    Args:
+        mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string.
+            If the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
+        out_type (Union[str, int]): The type of output.
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
+        >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+        >>> data1 = data1.map(operations=tokenizer)
+    """
+
+    def __init__(self, mode, out_type):
+        self.mode = mode
+        self.out_type = out_type
+
+    def parse(self):
+        return cde.SentencePieceTokenizerOperation(self.mode, DE_C_INTER_SENTENCEPIECE_OUTTYPE[self.out_type])
+
+
+class SlidingWindow(TextTensorOperation):
+    """
+    TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension axis
+    is a slice of data starting at the corresponding position, with a specified width.
+
+    Args:
+        width (int): The width of the window. It must be an integer and greater than zero.
+        axis (int, optional): The axis along which the sliding window is computed (default=0).
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> # Data before
+        >>> # |    col1     |
+        >>> # +-------------+
+        >>> # | [1,2,3,4,5] |
+        >>> # +-------------+
+        >>> data1 = data1.map(operations=text.SlidingWindow(3, 0))
+        >>> # Data after
+        >>> # |     col1    |
+        >>> # +-------------+
+        >>> # |  [[1,2,3],  |
+        >>> # |   [2,3,4],  |
+        >>> # |   [3,4,5]]  |
+        >>> # +--------------+
+    """
+
+    @check_slidingwindow
+    def __init__(self, width, axis=0):
+        self.width = width
+        self.axis = axis
+
+    def parse(self):
+        return cde.SlidingWindowOperation(self.width, self.axis)
+
+
+class ToNumber(TextTensorOperation):
+    """
+    Tensor operation to convert every element of a string tensor to a number.
+
+    Strings are casted according to the rules specified in the following links:
+    https://en.cppreference.com/w/cpp/string/basic_string/stof,
+    https://en.cppreference.com/w/cpp/string/basic_string/stoul,
+    except that any strings which represent negative numbers cannot be cast to an
+    unsigned integer type.
+
+    Args:
+        data_type (mindspore.dtype): mindspore.dtype to be casted to. Must be
+            a numeric type.
+
+    Raises:
+        RuntimeError: If strings are invalid to cast, or are out of range after being casted.
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>> import mindspore.common.dtype as mstype
+        >>>
+        >>> to_number_op = text.ToNumber(mstype.int8)
+        >>> data1 = data1.map(operations=to_number_op)
+    """
+
+    @check_to_number
+    def __init__(self, data_type):
+        data_type = mstype_to_detype(data_type)
+        self.data_type = str(data_type)
+
+    def parse(self):
+        return cde.ToNumberOperation(self.data_type)
+
+
+class TruncateSequencePair(TextTensorOperation):
+    """
+    Truncate a pair of rank-1 tensors such that the total length is less than max_length.
+
+    This operation takes two input tensors and returns two output Tensors.
+
+    Args:
+        max_length (int): Maximum length required.
+
+    Examples:
+        >>> import mindspore.dataset.text as text
+        >>>
+        >>> # Data before
+        >>> # |  col1   |  col2   |
+        >>> # +---------+---------|
+        >>> # | [1,2,3] | [4,5]   |
+        >>> # +---------+---------+
+        >>> data1 = data1.map(operations=text.TruncateSequencePair(4))
+        >>> # Data after
+        >>> # |  col1   |  col2   |
+        >>> # +---------+---------+
+        >>> # | [1,2]   | [4,5]   |
+        >>> # +---------+---------+
+    """
+
+    @check_pair_truncate
+    def __init__(self, max_length):
+        self.max_length = max_length
+
+    def parse(self):
+        return cde.TruncateSequencePairOperation(self.max_length)
+
+
 class UnicodeCharTokenizer(TextTensorOperation):
     """
     Tokenize a scalar tensor of UTF-8 string to Unicode characters.
@@ -405,131 +537,31 @@ class WordpieceTokenizer(cde.WordpieceTokenizerOp):
                          self.unknown_token, self.with_offsets)
 
 
-DE_C_INTER_SENTENCEPIECE_LOADTYPE = {
-    SPieceTokenizerLoadType.FILE: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KFILE,
-    SPieceTokenizerLoadType.MODEL: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KMODEL
-}
-
-DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
-    SPieceTokenizerOutType.STRING: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KString,
-    SPieceTokenizerOutType.INT: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KINT
-}
-
-
-class SentencePieceTokenizer(TextTensorOperation):
+class PythonTokenizer:
     """
-    Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+    Callable class to be used for user-defined string tokenizer.
 
     Args:
-        mode (Union[str, SentencePieceVocab]): If the input parameter is a file, then it is of type string.
-            If the input parameter is a SentencePieceVocab object, then it is of type SentencePieceVocab.
-        out_type (Union[str, int]): The type of output.
+        tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
 
     Examples:
         >>> import mindspore.dataset.text as text
         >>>
-        >>> vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
-        >>> tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
-        >>> data1 = data1.map(operations=tokenizer)
+        >>> def my_tokenizer(line):
+        >>>     return line.split()
+        >>> data1 = data1.map(operations=text.PythonTokenizer(my_tokenizer))
     """
 
-    def __init__(self, mode, out_type):
-        self.mode = mode
-        self.out_type = out_type
+    @check_python_tokenizer
+    def __init__(self, tokenizer):
+        self.tokenizer = np.vectorize(lambda x: np.array(tokenizer(x), dtype='U'), signature='()->(n)')
 
-    def parse(self):
-        return cde.SentencePieceTokenizerOperation(self.mode, DE_C_INTER_SENTENCEPIECE_OUTTYPE[self.out_type])
-
+    def __call__(self, in_array):
+        in_array = to_str(in_array)
+        tokens = self.tokenizer(in_array)
+        return tokens
 
 if platform.system().lower() != 'windows':
-    class WhitespaceTokenizer(TextTensorOperation):
-        """
-        Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces, such as: ' ', '\\\\t', '\\\\r', '\\\\n'.
-
-        Note:
-            WhitespaceTokenizer is not supported on Windows platform yet.
-
-        Args:
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
-
-        Examples:
-            >>> import mindspore.dataset.text as text
-            >>>
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
-            >>> tokenizer_op = text.WhitespaceTokenizer()
-            >>> data1 = data1.map(operations=tokenizer_op)
-            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
-            >>> tokenizer_op = text.WhitespaceTokenizer(True)
-            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
-        """
-
-        @check_with_offsets
-        def __init__(self, with_offsets=False):
-            self.with_offsets = with_offsets
-
-        def parse(self):
-            return cde.WhitespaceTokenizerOperation(self.with_offsets)
-
-
-    class UnicodeScriptTokenizer(TextTensorOperation):
-        """
-        Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
-
-        Note:
-            UnicodeScriptTokenizer is not supported on Windows platform yet.
-
-        Args:
-            keep_whitespace (bool, optional): If or not emit whitespace tokens (default=False).
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
-
-        Examples:
-            >>> import mindspore.dataset.text as text
-            >>>
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
-            >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=False)
-            >>> data1 = data1.map(operations=tokenizer_op)
-            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
-            >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=True)
-            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
-        """
-
-        @check_unicode_script_tokenizer
-        def __init__(self, keep_whitespace=False, with_offsets=False):
-            keep_whitespace = replace_none(keep_whitespace, False)
-            with_offsets = replace_none(with_offsets, False)
-            self.keep_whitespace = keep_whitespace
-            self.with_offsets = with_offsets
-
-        def parse(self):
-            return cde.UnicodeScriptTokenizerOperation(self.keep_whitespace, self.with_offsets)
-
-
-    class CaseFold(TextTensorOperation):
-        """
-        Apply case fold operation on UTF-8 string tensor.
-
-        Note:
-            CaseFold is not supported on Windows platform yet.
-
-        Examples:
-            >>> import mindspore.dataset.text as text
-            >>>
-            >>> case_op = text.CaseFold()
-            >>> data1 = data1.map(operations=case_op)
-        """
-
-        def parse(self):
-            return cde.CaseFoldOperation()
-
-
     DE_C_INTER_NORMALIZE_FORM = {
         NormalizeForm.NONE: cde.NormalizeForm.DE_NORMALIZE_NONE,
         NormalizeForm.NFC: cde.NormalizeForm.DE_NORMALIZE_NFC,
@@ -537,118 +569,6 @@ if platform.system().lower() != 'windows':
         NormalizeForm.NFD: cde.NormalizeForm.DE_NORMALIZE_NFD,
         NormalizeForm.NFKD: cde.NormalizeForm.DE_NORMALIZE_NFKD
     }
-
-
-    class NormalizeUTF8(TextTensorOperation):
-        """
-        Apply normalize operation on UTF-8 string tensor.
-
-        Note:
-            NormalizeUTF8 is not supported on Windows platform yet.
-
-        Args:
-            normalize_form (NormalizeForm, optional): Valid values can be any of [NormalizeForm.NONE,
-                NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD,
-                NormalizeForm.NFKD](default=NormalizeForm.NFKC).
-                See http://unicode.org/reports/tr15/ for details.
-
-                - NormalizeForm.NONE, do nothing for input string tensor.
-                - NormalizeForm.NFC, normalize with Normalization Form C.
-                - NormalizeForm.NFKC, normalize with Normalization Form KC.
-                - NormalizeForm.NFD, normalize with Normalization Form D.
-                - NormalizeForm.NFKD, normalize with Normalization Form KD.
-
-        Examples:
-            >>> import mindspore.dataset.text as text
-            >>>
-            >>> normalize_op = text.NormalizeUTF8(normalize_form=NormalizeForm.NFC)
-            >>> data1 = data1.map(operations=normalize_op)
-        """
-
-        def __init__(self, normalize_form=NormalizeForm.NFKC):
-            if not isinstance(normalize_form, NormalizeForm):
-                raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
-
-            normalize_form = replace_none(normalize_form, NormalizeForm.NFKC)
-            self.normalize_form = DE_C_INTER_NORMALIZE_FORM[normalize_form]
-
-        def parse(self):
-            return cde.NormalizeUTF8Operation(self.normalize_form)
-
-
-    class RegexReplace(TextTensorOperation):
-        """
-        Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
-
-        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
-
-        Note:
-            RegexReplace is not supported on Windows platform yet.
-
-        Args:
-            pattern (str): the regex expression patterns.
-            replace (str): the string to replace matched element.
-            replace_all (bool, optional): If False, only replace first matched element;
-                if True, replace all matched elements (default=True).
-
-        Examples:
-            >>> import mindspore.dataset.text as text
-            >>>
-            >>> pattern = 'Canada'
-            >>> replace = 'China'
-            >>> replace_op = text.RegexReplace(pattern, replace)
-            >>> data1 = data1.map(operations=replace_op)
-        """
-
-        def __init__(self, pattern, replace, replace_all=True):
-            self.pattern = pattern
-            self.replace = replace
-            self.replace_all = replace_all
-
-        def parse(self):
-            return cde.RegexReplaceOperation(self.pattern, self.replace, self.replace_all)
-
-
-    class RegexTokenizer(TextTensorOperation):
-        """
-        Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
-
-        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
-
-        Note:
-            RegexTokenizer is not supported on Windows platform yet.
-
-        Args:
-            delim_pattern (str): The pattern of regex delimiters.
-                The original string will be split by matched elements.
-            keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
-                if it can be matched by 'keep_delim_pattern'. The default value is an empty str ('')
-                which means that delimiters will not be kept as an output token (default='').
-            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
-
-        Examples:
-            >>> import mindspore.dataset.text as text
-            >>>
-            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
-            >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=False)
-            >>> data1 = data1.map(operations=tokenizer_op)
-            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
-            >>> #                                                   ["offsets_start", dtype=uint32],
-            >>> #                                                   ["offsets_limit", dtype=uint32]}
-            >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=True)
-            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
-            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
-            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
-        """
-
-        @check_regex_tokenizer
-        def __init__(self, delim_pattern, keep_delim_pattern='', with_offsets=False):
-            self.delim_pattern = delim_pattern
-            self.keep_delim_pattern = keep_delim_pattern
-            self.with_offsets = with_offsets
-
-        def parse(self):
-            return cde.RegexTokenizerOperation(self.delim_pattern, self.keep_delim_pattern, self.with_offsets)
 
 
     class BasicTokenizer(TextTensorOperation):
@@ -776,93 +696,201 @@ if platform.system().lower() != 'windows':
                                               self.normalization_form, self.preserve_unused_token, self.with_offsets)
 
 
-class TruncateSequencePair(TextTensorOperation):
-    """
-    Truncate a pair of rank-1 tensors such that the total length is less than max_length.
+    class CaseFold(TextTensorOperation):
+        """
+        Apply case fold operation on UTF-8 string tensor.
 
-    This operation takes two input tensors and returns two output Tensors.
+        Note:
+            CaseFold is not supported on Windows platform yet.
 
-    Args:
-        max_length (int): Maximum length required.
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> case_op = text.CaseFold()
+            >>> data1 = data1.map(operations=case_op)
+        """
 
-    Examples:
-        >>> import mindspore.dataset.text as text
-        >>>
-        >>> # Data before
-        >>> # |  col1   |  col2   |
-        >>> # +---------+---------|
-        >>> # | [1,2,3] | [4,5]   |
-        >>> # +---------+---------+
-        >>> data1 = data1.map(operations=text.TruncateSequencePair(4))
-        >>> # Data after
-        >>> # |  col1   |  col2   |
-        >>> # +---------+---------+
-        >>> # | [1,2]   | [4,5]   |
-        >>> # +---------+---------+
-    """
-
-    @check_pair_truncate
-    def __init__(self, max_length):
-        self.max_length = max_length
-
-    def parse(self):
-        return cde.TruncateSequencePairOperation(self.max_length)
+        def parse(self):
+            return cde.CaseFoldOperation()
 
 
-class ToNumber(TextTensorOperation):
-    """
-    Tensor operation to convert every element of a string tensor to a number.
+    class NormalizeUTF8(TextTensorOperation):
+        """
+        Apply normalize operation on UTF-8 string tensor.
 
-    Strings are casted according to the rules specified in the following links:
-    https://en.cppreference.com/w/cpp/string/basic_string/stof,
-    https://en.cppreference.com/w/cpp/string/basic_string/stoul,
-    except that any strings which represent negative numbers cannot be cast to an
-    unsigned integer type.
+        Note:
+            NormalizeUTF8 is not supported on Windows platform yet.
 
-    Args:
-        data_type (mindspore.dtype): mindspore.dtype to be casted to. Must be
-            a numeric type.
+        Args:
+            normalize_form (NormalizeForm, optional): Valid values can be any of [NormalizeForm.NONE,
+                NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD,
+                NormalizeForm.NFKD](default=NormalizeForm.NFKC).
+                See http://unicode.org/reports/tr15/ for details.
 
-    Raises:
-        RuntimeError: If strings are invalid to cast, or are out of range after being casted.
+                - NormalizeForm.NONE, do nothing for input string tensor.
+                - NormalizeForm.NFC, normalize with Normalization Form C.
+                - NormalizeForm.NFKC, normalize with Normalization Form KC.
+                - NormalizeForm.NFD, normalize with Normalization Form D.
+                - NormalizeForm.NFKD, normalize with Normalization Form KD.
 
-    Examples:
-        >>> import mindspore.dataset.text as text
-        >>> import mindspore.common.dtype as mstype
-        >>>
-        >>> to_number_op = text.ToNumber(mstype.int8)
-        >>> data1 = data1.map(operations=to_number_op)
-    """
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> normalize_op = text.NormalizeUTF8(normalize_form=NormalizeForm.NFC)
+            >>> data1 = data1.map(operations=normalize_op)
+        """
 
-    @check_to_number
-    def __init__(self, data_type):
-        data_type = mstype_to_detype(data_type)
-        self.data_type = str(data_type)
+        def __init__(self, normalize_form=NormalizeForm.NFKC):
+            if not isinstance(normalize_form, NormalizeForm):
+                raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
-    def parse(self):
-        return cde.ToNumberOperation(self.data_type)
+            normalize_form = replace_none(normalize_form, NormalizeForm.NFKC)
+            self.normalize_form = DE_C_INTER_NORMALIZE_FORM[normalize_form]
+
+        def parse(self):
+            return cde.NormalizeUTF8Operation(self.normalize_form)
 
 
-class PythonTokenizer:
-    """
-    Callable class to be used for user-defined string tokenizer.
+    class RegexReplace(TextTensorOperation):
+        """
+        Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
 
-    Args:
-        tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
+        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
 
-    Examples:
-        >>> import mindspore.dataset.text as text
-        >>>
-        >>> def my_tokenizer(line):
-        >>>     return line.split()
-        >>> data1 = data1.map(operations=text.PythonTokenizer(my_tokenizer))
-    """
+        Note:
+            RegexReplace is not supported on Windows platform yet.
 
-    @check_python_tokenizer
-    def __init__(self, tokenizer):
-        self.tokenizer = np.vectorize(lambda x: np.array(tokenizer(x), dtype='U'), signature='()->(n)')
+        Args:
+            pattern (str): the regex expression patterns.
+            replace (str): the string to replace matched element.
+            replace_all (bool, optional): If False, only replace first matched element;
+                if True, replace all matched elements (default=True).
 
-    def __call__(self, in_array):
-        in_array = to_str(in_array)
-        tokens = self.tokenizer(in_array)
-        return tokens
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> pattern = 'Canada'
+            >>> replace = 'China'
+            >>> replace_op = text.RegexReplace(pattern, replace)
+            >>> data1 = data1.map(operations=replace_op)
+        """
+
+        def __init__(self, pattern, replace, replace_all=True):
+            self.pattern = pattern
+            self.replace = replace
+            self.replace_all = replace_all
+
+        def parse(self):
+            return cde.RegexReplaceOperation(self.pattern, self.replace, self.replace_all)
+
+
+    class RegexTokenizer(TextTensorOperation):
+        """
+        Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
+
+        See http://userguide.icu-project.org/strings/regexp for support regex pattern.
+
+        Note:
+            RegexTokenizer is not supported on Windows platform yet.
+
+        Args:
+            delim_pattern (str): The pattern of regex delimiters.
+                The original string will be split by matched elements.
+            keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
+                if it can be matched by 'keep_delim_pattern'. The default value is an empty str ('')
+                which means that delimiters will not be kept as an output token (default='').
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=False)
+            >>> data1 = data1.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.RegexTokenizer(delim_pattern, keep_delim_pattern, with_offsets=True)
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
+        """
+
+        @check_regex_tokenizer
+        def __init__(self, delim_pattern, keep_delim_pattern='', with_offsets=False):
+            self.delim_pattern = delim_pattern
+            self.keep_delim_pattern = keep_delim_pattern
+            self.with_offsets = with_offsets
+
+        def parse(self):
+            return cde.RegexTokenizerOperation(self.delim_pattern, self.keep_delim_pattern, self.with_offsets)
+
+
+    class UnicodeScriptTokenizer(TextTensorOperation):
+        """
+        Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
+
+        Note:
+            UnicodeScriptTokenizer is not supported on Windows platform yet.
+
+        Args:
+            keep_whitespace (bool, optional): If or not emit whitespace tokens (default=False).
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=False)
+            >>> data1 = data1.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.UnicodeScriptTokenizerOp(keep_whitespace=True, with_offsets=True)
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
+        """
+
+        @check_unicode_script_tokenizer
+        def __init__(self, keep_whitespace=False, with_offsets=False):
+            keep_whitespace = replace_none(keep_whitespace, False)
+            with_offsets = replace_none(with_offsets, False)
+            self.keep_whitespace = keep_whitespace
+            self.with_offsets = with_offsets
+
+        def parse(self):
+            return cde.UnicodeScriptTokenizerOperation(self.keep_whitespace, self.with_offsets)
+
+
+    class WhitespaceTokenizer(TextTensorOperation):
+        """
+        Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces, such as: ' ', '\\\\t', '\\\\r', '\\\\n'.
+
+        Note:
+            WhitespaceTokenizer is not supported on Windows platform yet.
+
+        Args:
+            with_offsets (bool, optional): If or not output offsets of tokens (default=False).
+
+        Examples:
+            >>> import mindspore.dataset.text as text
+            >>>
+            >>> # If with_offsets=False, default output one column {["text", dtype=str]}
+            >>> tokenizer_op = text.WhitespaceTokenizer()
+            >>> data1 = data1.map(operations=tokenizer_op)
+            >>> # If with_offsets=False, then output three columns {["token", dtype=str],
+            >>> #                                                   ["offsets_start", dtype=uint32],
+            >>> #                                                   ["offsets_limit", dtype=uint32]}
+            >>> tokenizer_op = text.WhitespaceTokenizer(True)
+            >>> data2 = data2.map(operations=tokenizer_op, input_columns=["text"],
+            >>>                   output_columns=["token", "offsets_start", "offsets_limit"],
+            >>>                   column_order=["token", "offsets_start", "offsets_limit"])
+        """
+
+        @check_with_offsets
+        def __init__(self, with_offsets=False):
+            self.with_offsets = with_offsets
+
+        def parse(self):
+            return cde.WhitespaceTokenizerOperation(self.with_offsets)
