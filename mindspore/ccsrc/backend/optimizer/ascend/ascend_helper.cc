@@ -73,11 +73,8 @@ std::string InitDefaultFormat(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(data_format_ptr);
     int64_t data_format;
     bool result = CheckAndConvertUtils::GetDataFormatEnumValue(data_format_ptr, &data_format);
-    if (!result) {
-      auto attr = GetValue<std::string>(data_format_ptr);
-      if (attr == kOpFormat_NCDHW) {
-        return kOpFormat_NCDHW;
-      }
+    if (result && data_format == Format::NCDHW) {
+      return kOpFormat_NCDHW;
     }
   } else if (AnfAlgo::IsRealKernel(node)) {
     auto formats = AnfAlgo::GetAllOutputFormats(node);

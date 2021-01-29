@@ -39,12 +39,20 @@ sgd_op_info = TBERegOp("SGD") \
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_Default, DataType.F16_FracZ,
                   DataType.F16_Default, DataType.F16_FracZ, DataType.F16_FracZ) \
+    .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_NDC1HWC0, DataType.F32_Default, DataType.F16_NDC1HWC0,
+                  DataType.F32_Default, DataType.F16_NDC1HWC0, DataType.F16_NDC1HWC0) \
+    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F16_FRACTAL_Z_3D, DataType.F32_Default, DataType.F16_FRACTAL_Z_3D,
+                  DataType.F32_Default, DataType.F16_FRACTAL_Z_3D, DataType.F16_FRACTAL_Z_3D) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_Default, DataType.F32_5HD,
                   DataType.F32_Default, DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_Default, DataType.F32_FracZ,
                   DataType.F32_Default, DataType.F32_FracZ, DataType.F32_FracZ) \
+    .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NDC1HWC0, DataType.F32_Default, DataType.F32_NDC1HWC0,
+                  DataType.F32_Default, DataType.F32_NDC1HWC0, DataType.F32_NDC1HWC0) \
+    .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_FRACTAL_Z_3D, DataType.F32_Default, DataType.F32_FRACTAL_Z_3D,
+                  DataType.F32_Default, DataType.F32_FRACTAL_Z_3D, DataType.F32_FRACTAL_Z_3D) \
     .get_op_info()
 
 

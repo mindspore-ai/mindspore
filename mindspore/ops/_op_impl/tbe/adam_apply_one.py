@@ -36,14 +36,11 @@ adam_apply_one_op_info = TBERegOp("AdamApplyOne") \
     .output(0, "output0", False, "required", "all") \
     .output(1, "output1", False, "required", "all") \
     .output(2, "output2", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_Default) \
+    .op_pattern("dynamicFormat") \
+    .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None,
+                  DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None,
+                  DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None,
+                  DataType.None_None) \
     .get_op_info()
 
 

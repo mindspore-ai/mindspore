@@ -2056,11 +2056,11 @@ class BiasAdd(PrimitiveWithCheck):
     except for the channel axis.
 
     Args:
-        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'，
+        data_format (str): The format of input and output data. It should be 'NHWC', 'NCHW' or 'NCDHW'，
             default is 'NCHW'.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. The shape can be 2-4 dimensions.
+        - **input_x** (Tensor) - The input tensor. The shape can be 2-5 dimensions.
         - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. The shape of
           `bias` must be the same as `input_x`'s channel dimension.
 
@@ -2082,15 +2082,17 @@ class BiasAdd(PrimitiveWithCheck):
     @prim_attr_register
     def __init__(self, data_format="NCHW"):
         self.init_prim_io_names(inputs=['x', 'b'], outputs=['output'])
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
         self.add_prim_attr('data_format', self.format)
 
     def check_shape(self, x_shape, b_shape):
         validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
+        if self.format == "NCDHW" and len(x_shape) != 5:
+            raise ValueError("NCDHW format only support 5-dims input.")
         validator.check_equal_int(len(b_shape), 1, "bias rank", self.name)
-        x_channel = x_shape[1] if self.format == "NCHW" else x_shape[-1]
+        x_channel = x_shape[-1] if self.format == "NHWC" else x_shape[1]
         if np.all(np.array(x_shape) != -1):
             validator.check("b_shape[0]", b_shape[0], "x_channel", x_channel, Rel.EQ, self.name)
 
