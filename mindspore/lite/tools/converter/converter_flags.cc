@@ -38,16 +38,12 @@ Flags::Flags() {
           "UINT8 | DEFAULT",
           "DEFAULT");
   AddFlag(&Flags::quantTypeIn, "quantType", "Quantization Type. PostTraining | WeightQuant", "");
-  AddFlag(&Flags::bitNum, "bitNum", "Weight quantization bitNum", "8");
-  AddFlag(&Flags::quantWeightSize, "quantWeightSize", "Weight quantization size threshold", "0");
-  AddFlag(&Flags::quantWeightChannel, "quantWeightChannel", "Channel threshold for weight quantization", "16");
+  AddFlag(&Flags::bitNumIn, "bitNum", "Weight quantization bitNum", "8");
+  AddFlag(&Flags::quantWeightSizeIn, "quantWeightSize", "Weight quantization size threshold", "0");
+  AddFlag(&Flags::quantWeightChannelIn, "quantWeightChannel", "Channel threshold for weight quantization", "16");
   AddFlag(&Flags::configFile, "configFile", "Configuration for post-training.", "");
-  AddFlag(&Flags::enableHuffmanCodeIn, "enableHuffmanCode",
-          "whether the weight quant model is going to use huffman code."
-          "true | false",
-          "false");
   AddFlag(&Flags::trainModelIn, "trainModel",
-          "whether the model is going to be trained on device."
+          "whether the model is going to be trained on device. "
           "true | false",
           "false");
 }
@@ -107,7 +103,41 @@ int Flags::InitFmk() {
   return RET_OK;
 }
 
-int Flags::InitQuantType() {
+bool Flags::IsValidNum(const std::string &str, int *num) {
+  char *ptr;
+  *num = strtol(str.c_str(), &ptr, 10);
+  return ptr == (str.c_str() + str.size());
+}
+
+int Flags::QuantParamInputCheck() {
+  if (!Flags::IsValidNum(this->quantWeightChannelIn, &this->quantWeightChannel)) {
+    std::cerr << "quantWeightChannel should be a valid number.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (this->quantWeightChannel < 0) {
+    std::cerr << "quantWeightChannel should be greater than or equal to zero.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (!Flags::IsValidNum(this->quantWeightSizeIn, &this->quantWeightSize)) {
+    std::cerr << "quantWeightSize should be a valid number.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (this->quantWeightSize < 0) {
+    std::cerr << "quantWeightSize should be greater than or equal to zero.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (!Flags::IsValidNum(this->bitNumIn, &this->bitNum)) {
+    std::cerr << "bitNum should be a valid number.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  if (this->bitNum <= 0 || this->bitNum > 16) {
+    std::cerr << "bitNum should be greater than zero and lesser than 16 currently.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitQuantParam() {
   if (this->quantTypeIn == "WeightQuant") {
     this->quantType = QuantType_WeightQuant;
   } else if (this->quantTypeIn == "PostTraining") {
@@ -118,19 +148,9 @@ int Flags::InitQuantType() {
     std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining";
     return RET_INPUT_PARAM_INVALID;
   }
-  return RET_OK;
-}
 
-int Flags::InitHuffmanCode() {
-  if (this->enableHuffmanCodeIn == "true") {
-    this->enableHuffmanCode = true;
-  } else if (this->enableHuffmanCodeIn == "false") {
-    this->enableHuffmanCode = false;
-  } else {
-    std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
-    return RET_INPUT_PARAM_INVALID;
-  }
-  return RET_OK;
+  auto ret = QuantParamInputCheck();
+  return ret;
 }
 
 int Flags::InitTrainModel() {
@@ -218,15 +238,9 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  ret = InitQuantType();
+  ret = InitQuantParam();
   if (ret != RET_OK) {
-    std::cerr << "Init quant type failed.";
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  ret = InitHuffmanCode();
-  if (ret != RET_OK) {
-    std::cerr << "Init huffman code failed.";
+    std::cerr << "Init quant param failed.";
     return RET_INPUT_PARAM_INVALID;
   }
 

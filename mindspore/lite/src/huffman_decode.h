@@ -38,11 +38,11 @@ struct HuffmanNode {
 };
 using HuffmanNodePtr = HuffmanNode *;
 
-class huffman_decode {
+class HuffmanDecode {
  public:
-  huffman_decode() = default;
+  HuffmanDecode() = default;
 
-  ~huffman_decode();
+  ~HuffmanDecode();
 
   STATUS DoHuffmanDecode(const std::string &input_str, void *decoded_data);
 

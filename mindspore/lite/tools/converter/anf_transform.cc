@@ -217,26 +217,14 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
                              const FuncGraphPtr &new_graph) {
   // quant
   if (config->quantType == schema::QuantType_PostTraining) {
-    if (!quant::WeightQuantizer::IsPosNum(config->bitNum)) {
-      MS_LOG(ERROR) << "bitNum must be valid pos num.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-      return RET_ERROR;
-    }
-    this->mQuantizer =
-      std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, std::stoi(config->bitNum));
+    this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, config->bitNum);
     if (mQuantizer == nullptr) {
       MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
   } else if (config->quantType == schema::QuantType_WeightQuant) {
-    if (quant::WeightQuantizer::WeightQuantInputCheck(config) != RET_OK) {
-      MS_LOG(ERROR) << "weight quant input param error";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-      return RET_ERROR;
-    }
-    this->mQuantizer = std::make_unique<quant::WeightQuantizer>(new_graph, config->configFile, config->quantWeightSize,
-                                                                config->quantWeightChannel, config->bitNum);
+    this->mQuantizer = std::make_unique<quant::WeightQuantizer>(new_graph, *config);
     if (mQuantizer == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
@@ -255,10 +243,15 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
   return RET_OK;
 }
 
-int AnfTransform::DoHuffmanEncode(const converter::Flags *config, const FuncGraphPtr &new_graph) {
-  if (config->quantType == schema::QuantType_WeightQuant && config->bitNum == "8" && config->enableHuffmanCode) {
-    auto huffman_encode = std::make_unique<lite::huffman_encode>();
-    auto status = huffman_encode->DoHuffmanEncode(new_graph);
+int AnfTransform::DoHuffmanEncode(const converter::Flags *config, const FuncGraphPtr &new_graph,
+                                  bool enableHuffmanCode) {
+  if (config->quantType == schema::QuantType_WeightQuant && enableHuffmanCode) {
+    if (config->bitNum < 16 && config->bitNum > 8) {
+      MS_LOG(WARNING) << "don't support huffman encode when 8 < bitNum < 16 currently.";
+      return RET_OK;
+    }
+    auto huffman_encode = std::make_unique<lite::HuffmanEncode>();
+    auto status = huffman_encode->DoHuffmanEncode(new_graph, config->bitNum);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Huffman encode failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
@@ -322,7 +315,7 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     return nullptr;
   }
 
-  status = DoHuffmanEncode(config, new_graph);
+  status = DoHuffmanEncode(config, new_graph, false);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do HuffmanCode failed.";
     return nullptr;

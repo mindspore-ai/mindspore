@@ -18,18 +18,51 @@
 
 #include <utility>
 #include <iostream>
-#include <memory>
-#include <vector>
 
-#include "securec/include/securec.h"
-#include "src/param_value_lite.h"
+#include "src/dequant.h"
 
 namespace mindspore {
 namespace lite {
 
-STATUS huffman_encode::DoHuffmanEncode(const FuncGraphPtr &func_graph) {
+STATUS HuffmanEncode::GetParamValueLitePtr(const std::shared_ptr<AnfNode> &input_node, ParamValueLitePtr *param_value) {
+  if (!input_node->isa<Parameter>()) {
+    return RET_CONTINUE;
+  }
+  auto abstract_base = input_node->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << input_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << input_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  if (abstract_tensor->element() == nullptr) {
+    MS_LOG(ERROR) << "abstract tensor element is nullptr, " << input_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  auto tensor_type = abstract_tensor->element()->GetTypeTrack();
+  MS_ASSERT(tensor_type != nullptr);
+  auto tensor_type_id = tensor_type->type_id();
+  if (tensor_type_id != kNumberTypeInt8) {
+    return RET_CONTINUE;
+  }
+  auto param_node = input_node->cast<ParameterPtr>();
+  if (param_node == nullptr) {
+    MS_LOG(ERROR) << "parameter node is nullptr, " << input_node->fullname_with_scope();
+    return RET_ERROR;
+  }
+  if (!param_node->has_default()) {
+    MS_LOG(WARNING) << "param_node don't have default: " << input_node->fullname_with_scope();
+    return RET_CONTINUE;
+  }
+  *param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
+  return RET_OK;
+}
+
+STATUS HuffmanEncode::DoHuffmanEncode(const FuncGraphPtr &func_graph, const int &bit_num) {
   auto cnodes = func_graph->GetOrderedCnodes();
-  STATUS status;
   for (auto &cnode : cnodes) {
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
     if (primitive_c == nullptr) {
@@ -41,44 +74,32 @@ STATUS huffman_encode::DoHuffmanEncode(const FuncGraphPtr &func_graph) {
     }
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
       auto input_node = cnode->input(i);
-      if (!input_node->isa<Parameter>()) {
+      ParamValueLitePtr param_value;
+      auto status = GetParamValueLitePtr(input_node, &param_value);
+      if (status == RET_CONTINUE) {
         continue;
-      }
-      auto abstract_base = input_node->abstract();
-      if (abstract_base == nullptr) {
-        MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << input_node->fullname_with_scope();
+      } else if (status == RET_ERROR) {
+        MS_LOG(ERROR) << "Get param value lite ptr failed. " << cnode->fullname_with_scope();
         return RET_ERROR;
       }
-      if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
-        MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << input_node->fullname_with_scope();
-        return RET_ERROR;
-      }
-      auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
-      if (abstract_tensor->element() == nullptr) {
-        MS_LOG(ERROR) << "abstract tensor element is nullptr, " << input_node->fullname_with_scope();
-        return RET_ERROR;
-      }
-      auto tensor_type = abstract_tensor->element()->GetTypeTrack();
-      MS_ASSERT(tensor_type != nullptr);
-      auto tensor_type_id = tensor_type->type_id();
-      if (tensor_type_id != kNumberTypeInt8) {
-        continue;
-      }
-      auto param_node = input_node->cast<ParameterPtr>();
-      if (param_node == nullptr) {
-        MS_LOG(ERROR) << "parameter node is nullptr, " << input_node->fullname_with_scope();
-        return RET_ERROR;
-      }
-      if (!param_node->has_default()) {
-        MS_LOG(WARNING) << "param_node don't have default: " << cnode->fullname_with_scope();
-        continue;
-      }
-      ParamValueLitePtr param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
       size_t elem_count = param_value->tensor_shape_size();
+      size_t packed_size = param_value->tensor_size();
       auto *raw_datas = static_cast<int8_t *>(param_value->tensor_addr());
       if (raw_datas == nullptr) {
         MS_LOG(ERROR) << "rawDatas is nullptr";
         return RET_ERROR;
+      }
+      if (bit_num < 8 && bit_num > 0) {
+        auto dst_data = new (std::nothrow) int8_t[elem_count];
+        if (dst_data == nullptr) {
+          MS_LOG(ERROR) << "new int8_t[] failed";
+          return RET_ERROR;
+        }
+        DequantUtil::UnpackUtil<int8_t, uint8_t>(raw_datas, packed_size, bit_num, dst_data);
+        if (memcpy_s(raw_datas, elem_count, dst_data, elem_count) != EOK) {
+          MS_LOG(ERROR) << "memcpy_s failed.";
+          return RET_MEMORY_FAILED;
+        }
       }
       HuffmanPriorityQueue pq;
       status = GetHuffmanPriorityQueue(raw_datas, elem_count, &pq);
@@ -97,12 +118,14 @@ STATUS huffman_encode::DoHuffmanEncode(const FuncGraphPtr &func_graph) {
         return status;
       }
       size_t ch_size = huffman_encoded_str_.length();
-      if (ch_size < elem_count) {
+      if (ch_size < packed_size) {
         auto encode_data = new (std::nothrow) char[ch_size];
         if (encode_data == nullptr) {
           MS_LOG(ERROR) << "new char[] failed.";
+          delete[] raw_datas;
           return RET_MEMORY_FAILED;
         }
+        delete[] raw_datas;
         if (memcpy_s(encode_data, ch_size, huffman_encoded_str_.c_str(), ch_size) != EOK) {
           MS_LOG(ERROR) << "memcpy_s failed.";
           delete[] encode_data;
@@ -118,7 +141,7 @@ STATUS huffman_encode::DoHuffmanEncode(const FuncGraphPtr &func_graph) {
   return RET_SUCCESS;
 }
 
-STATUS huffman_encode::GetHuffmanPriorityQueue(const int8_t *data, const size_t data_size, HuffmanPriorityQueue *pq) {
+STATUS HuffmanEncode::GetHuffmanPriorityQueue(const int8_t *data, const size_t data_size, HuffmanPriorityQueue *pq) {
   MS_ASSERT(data != nullptr);
 
   std::map<int8_t, size_t> freq_map;
@@ -166,7 +189,7 @@ STATUS huffman_encode::GetHuffmanPriorityQueue(const int8_t *data, const size_t 
   return RET_OK;
 }
 
-void huffman_encode::GenerateHuffmanTable(const HuffmanNodePtr node, bool is_left_node) {
+void HuffmanEncode::GenerateHuffmanTable(const HuffmanNodePtr node, bool is_left_node) {
   if (is_left_node) {
     node->code = node->parent->code + "0";
   } else {
@@ -185,7 +208,7 @@ void huffman_encode::GenerateHuffmanTable(const HuffmanNodePtr node, bool is_lef
   }
 }
 
-STATUS huffman_encode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
+STATUS HuffmanEncode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
   HuffmanNodePtr root = nullptr;
 
   while (!pq->empty()) {
@@ -228,7 +251,7 @@ STATUS huffman_encode::BuildHuffmanTree(HuffmanPriorityQueue *pq) {
   return RET_OK;
 }
 
-STATUS huffman_encode::DoHuffmanCompress(const int8_t *input_datas, const size_t data_size) {
+STATUS HuffmanEncode::DoHuffmanCompress(const int8_t *input_datas, const size_t data_size) {
   unsigned char out_c;
   string code_str;
   std::map<int, string>::iterator iter;
@@ -270,7 +293,7 @@ STATUS huffman_encode::DoHuffmanCompress(const int8_t *input_datas, const size_t
   return RET_OK;
 }
 
-huffman_encode::~huffman_encode() {
+HuffmanEncode::~HuffmanEncode() {
   for (auto &node : this->huffman_nodes_) {
     delete node;
   }

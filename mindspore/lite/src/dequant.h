@@ -31,7 +31,7 @@ class DequantUtil {
  public:
   static float *DequantWeight(lite::Tensor *input_tensor);
 
-  static void UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
+  static int UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
 
   static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(const std::vector<Tensor *> &in_tensors,
                                                                      TypeId data_type, bool need_restore = true);
@@ -108,6 +108,21 @@ class DequantUtil {
       }
     }
     return dequant_datas;
+  }
+
+  template <typename T1, typename T2>
+  static void UnpackUtil(const T1 *weight_data, int pack_size, int origin_bit, void *unpack_int_data) {
+    if (weight_data == nullptr || unpack_int_data == nullptr) {
+      MS_LOG(ERROR) << "data is nullptr";
+      return;
+    }
+    std::queue<bool> unpack_bit_data;
+    size_t count = 0;
+    for (int i = 0; i < pack_size; ++i) {
+      T2 pack_data = (static_cast<const T2 *>(static_cast<const void *>(weight_data)))[i];
+      bool is_last = i == pack_size - 1;
+      UnPackData<T1, T2>(origin_bit, pack_data, &unpack_bit_data, unpack_int_data, &count, is_last);
+    }
   }
 
  private:

@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace lite {
 
-STATUS huffman_decode::DoHuffmanDecode(const std::string &input_str, void *decoded_data) {
+STATUS HuffmanDecode::DoHuffmanDecode(const std::string &input_str, void *decoded_data) {
   if (decoded_data == nullptr) {
     MS_LOG(ERROR) << "decoded_data is nullptr.";
     return RET_ERROR;
@@ -64,7 +64,7 @@ STATUS huffman_decode::DoHuffmanDecode(const std::string &input_str, void *decod
   return RET_OK;
 }
 
-STATUS huffman_decode::RebuildHuffmanTree(std::string keys, std::string codes, const HuffmanNodePtr &root) {
+STATUS HuffmanDecode::RebuildHuffmanTree(std::string keys, std::string codes, const HuffmanNodePtr &root) {
   HuffmanNodePtr cur_node, tmp_node, new_node;
 
   auto huffman_keys = Str2Vec(std::move(keys));
@@ -121,7 +121,7 @@ STATUS huffman_decode::RebuildHuffmanTree(std::string keys, std::string codes, c
   return RET_OK;
 }
 
-STATUS huffman_decode::DoHuffmanDecompress(HuffmanNodePtr root, std::string encoded_data, std::string *decoded_str) {
+STATUS HuffmanDecode::DoHuffmanDecompress(HuffmanNodePtr root, std::string encoded_data, std::string *decoded_str) {
   HuffmanNodePtr cur_node = root;
   bool pseudo_eof = false;
   size_t pos = 0;
@@ -157,7 +157,7 @@ STATUS huffman_decode::DoHuffmanDecompress(HuffmanNodePtr root, std::string enco
   return RET_OK;
 }
 
-huffman_decode::~huffman_decode() {
+HuffmanDecode::~HuffmanDecode() {
   for (auto &node : this->huffman_nodes_) {
     delete node;
   }
