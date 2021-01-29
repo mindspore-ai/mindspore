@@ -282,7 +282,7 @@ For distributed training, a hccl configuration file with JSON format needs to be
 
 Please follow the instructions in the link [hccn_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
-Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". Under this, you can find checkpoint file together with result like the followings in log.
+Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". Under this, you can find checkpoint file together with result like the following in log.
 
 #### Running on GPU
 
@@ -299,7 +299,7 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
 # gpu benchmark training example
 sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional) [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)
 
-# gpu benckmark infer example
+# gpu benchmark infer example
 sh run_eval_gpu_resnet_benchmark.sh [DATASET_PATH] [CKPT_PATH] [BATCH_SIZE](optional) [DTYPE](optional)
 ```
 
@@ -409,7 +409,7 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
 
 ### Result
 
-Evaluation result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
+Evaluation result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the following in log.
 
 - Evaluating ResNet50 with CIFAR-10 dataset
 
