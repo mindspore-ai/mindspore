@@ -55,7 +55,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 <!-- # [Features](#contents)
 
-## [Distrubuted](#contents)
+## [Distributed](#contents)
 
 <!-- 不同的机器有同一个模型的多个副本，每个机器分配到不同的数据，然后将所有机器的计算结果按照某种方式合并 -->
 

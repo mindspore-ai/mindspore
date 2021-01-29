@@ -73,7 +73,7 @@ if __name__ == '__main__':
     if args_opt.dataset_name == "imagenet":
         cfg = imagenet_cfg
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     # set context
     device_target = cfg.device_target
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     if args_opt.dataset_name == "imagenet":
         dataset = create_dataset_imagenet(cfg.data_path, 1)
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     batch_num = dataset.get_dataset_size()
 

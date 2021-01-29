@@ -139,7 +139,7 @@ The structure of the files in this repository is shown below.
  │ ├─ network_define.py       // define loss
  │ └─ predict.py              // predict keypoints from heatmaps
  ├─ eval.py                   // evaluation script
- ├─ param_convert.py          // model parameters convertion script
+ ├─ param_convert.py          // model parameters conversion script
  ├─ train.py                  // training script
  └─ README.md                 // descriptions about this repository
 ```
