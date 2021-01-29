@@ -143,8 +143,7 @@ class Profiler:
                 logger.error(msg)
                 raise ValueError(msg)
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
-            context.set_context(enable_profiling=True, profiling_options=profiling_options,
-                                profiling_dir_path=self._output_path)
+            context.set_context(enable_profiling=True, profiling_options=profiling_options)
             base_profiling_container_path = os.path.join(self._output_path, "container")
             container_path = os.path.join(base_profiling_container_path, self._dev_id)
             data_path = os.path.join(container_path, "data")

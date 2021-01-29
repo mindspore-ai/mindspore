@@ -115,6 +115,8 @@ class MemoryProfiling {
   void SaveMemoryProfiling();
 
  private:
+  std::string GetOutputPath() const;
+
   MemoryProto memory_proto_;
   std::map<uint32_t, std::shared_ptr<GraphMemory>> graph_memory_;
   uint64_t device_mem_size_;
