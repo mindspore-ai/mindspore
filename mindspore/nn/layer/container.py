@@ -42,9 +42,9 @@ class _CellListBase():
     The sequential cell may be iterated using the construct method using for-in statement.
     But there are some scenarios that the construct method built-in does not fit.
     For convenience, we provide an interface that indicates the sequential
-    cell may be interpretated as list of cells, so it can be accessed using
+    cell may be interpreted as list of cells, so it can be accessed using
     iterator or subscript when a sequential cell instantiate is accessed
-    by iterator or subscript , it will be interpretated as a list of cells.
+    by iterator or subscript , it will be interpreted as a list of cells.
     """
     def __init__(self):
         self.__cell_as_list__ = True
@@ -151,7 +151,7 @@ class SequentialCell(Cell):
         """Appends a given cell to the end of the list.
 
         Examples:
-            >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid')
+            >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
             >>> bn = nn.BatchNorm2d(2)
             >>> relu = nn.ReLU()
             >>> seq = nn.SequentialCell([conv, bn])
@@ -159,10 +159,10 @@ class SequentialCell(Cell):
             >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
             >>> output = seq(x)
             >>> print(output)
-            [[[[0.08789019 0.08789019]
-               [0.08789019 0.08789019]]
-              [[0.07690391 0.07690391]
-               [0.07690391 0.07690391]]]]
+            [[[[26.999863 26.999863]
+               [26.999863 26.999863]]
+              [[26.999863 26.999863]
+               [26.999863 26.999863]]]]
         """
         if _valid_cell(cell):
             self._cells[str(len(self))] = cell

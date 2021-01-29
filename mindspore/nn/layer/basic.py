@@ -132,7 +132,7 @@ class Dropout(Cell):
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> net = nn.Dropout(keep_prob=0.8)
         >>> net.set_train()
-        Dropout<keep_prob=0.8, dtype=Float32>
+        Dropout<keep_prob=0.8>
         >>> output = net(x)
         >>> print(output.shape)
         (2, 2, 3)
