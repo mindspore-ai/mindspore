@@ -52,6 +52,10 @@ __kernel void Winograd4x4To36(__read_only image2d_t input,    // height=N*H     
     for (int x = 0; x < 6; x++) {
       acc += BtD_row[x] * Bt[y * 6 + x];
     }
+#if FP16_ENABLE
+    acc = min(acc, HALF_MAX);
+    acc = max(acc, -HALF_MAX);
+#endif
     WRITE_IMAGE(output, (int2)(tile_hw, y_idx + y), acc);
   }
 }
