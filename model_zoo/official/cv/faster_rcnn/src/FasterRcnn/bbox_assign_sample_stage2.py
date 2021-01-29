@@ -19,7 +19,6 @@ import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
-from mindspore import context
 
 
 class BboxAssignSampleForRcnn(nn.Cell):
@@ -46,9 +45,8 @@ class BboxAssignSampleForRcnn(nn.Cell):
     def __init__(self, config, batch_size, num_bboxes, add_gt_as_proposals):
         super(BboxAssignSampleForRcnn, self).__init__()
         cfg = config
-        _mode_16 = bool(context.get_context("device_target") == "Ascend")
-        self.dtype = np.float16 if _mode_16 else np.float32
-        self.ms_type = mstype.float16 if _mode_16 else mstype.float32
+        self.dtype = np.float32
+        self.ms_type = mstype.float32
         self.batch_size = batch_size
         self.neg_iou_thr = cfg.neg_iou_thr_stage2
         self.pos_iou_thr = cfg.pos_iou_thr_stage2
@@ -61,8 +59,7 @@ class BboxAssignSampleForRcnn(nn.Cell):
 
         self.add_gt_as_proposals = add_gt_as_proposals
         self.label_inds = Tensor(np.arange(1, self.num_gts + 1).astype(np.int32))
-        self.add_gt_as_proposals_valid = Tensor(np.array(self.add_gt_as_proposals * np.ones(self.num_gts),
-                                                         dtype=np.int32))
+        self.add_gt_as_proposals_valid = Tensor(np.full(self.num_gts, self.add_gt_as_proposals, dtype=np.int32))
 
         self.concat = P.Concat(axis=0)
         self.max_gt = P.ArgMaxWithValue(axis=0)
@@ -87,17 +84,17 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.tile = P.Tile()
 
         # Check
-        self.check_gt_one = Tensor(np.array(-1 * np.ones((self.num_gts, 4)), dtype=self.dtype))
-        self.check_anchor_two = Tensor(np.array(-2 * np.ones((self.num_bboxes, 4)), dtype=self.dtype))
+        self.check_gt_one = Tensor(np.full((self.num_gts, 4), -1, dtype=self.dtype))
+        self.check_anchor_two = Tensor(np.full((self.num_bboxes, 4), -2, dtype=self.dtype))
 
         # Init tensor
-        self.assigned_gt_inds = Tensor(np.array(-1 * np.ones(num_bboxes), dtype=np.int32))
+        self.assigned_gt_inds = Tensor(np.full(num_bboxes, -1, dtype=np.int32))
         self.assigned_gt_zeros = Tensor(np.array(np.zeros(num_bboxes), dtype=np.int32))
         self.assigned_gt_ones = Tensor(np.array(np.ones(num_bboxes), dtype=np.int32))
-        self.assigned_gt_ignores = Tensor(np.array(-1 * np.ones(num_bboxes), dtype=np.int32))
+        self.assigned_gt_ignores = Tensor(np.full(num_bboxes, -1, dtype=np.int32))
         self.assigned_pos_ones = Tensor(np.array(np.ones(self.num_expected_pos), dtype=np.int32))
 
-        self.gt_ignores = Tensor(np.array(-1 * np.ones(self.num_gts), dtype=np.int32))
+        self.gt_ignores = Tensor(np.full(self.num_gts, -1, dtype=np.int32))
         self.range_pos_size = Tensor(np.arange(self.num_expected_pos).astype(self.dtype))
         self.check_neg_mask = Tensor(np.array(np.ones(self.num_expected_neg - self.num_expected_pos), dtype=np.bool))
         self.bboxs_neg_mask = Tensor(np.zeros((self.num_expected_neg, 4), dtype=self.dtype))

@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     load_param_into_net(net, param_dict_new)
 
-    img = Tensor(np.zeros([config.test_batch_size, 3, config.img_height, config.img_width]), ms.float16)
-    img_metas = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, 4]), ms.float16)
+    img = Tensor(np.zeros([config.test_batch_size, 3, config.img_height, config.img_width]), ms.float32)
+    img_metas = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, 4]), ms.float32)
 
     export(net, img, img_metas, file_name=args.file_name, file_format=args.file_format)

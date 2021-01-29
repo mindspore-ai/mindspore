@@ -127,10 +127,10 @@ if __name__ == '__main__':
         for item in list(param_dict.keys()):
             if not item.startswith('backbone'):
                 param_dict.pop(item)
-        if args_opt.device_target == "GPU":
-            for key, value in param_dict.items():
-                tensor = value.asnumpy().astype(np.float32)
-                param_dict[key] = Parameter(tensor, key)
+
+        for key, value in param_dict.items():
+            tensor = value.asnumpy().astype(np.float32)
+            param_dict[key] = Parameter(tensor, key)
         load_param_into_net(net, param_dict)
 
     loss = LossNet()
@@ -156,4 +156,4 @@ if __name__ == '__main__':
         cb += [ckpoint_cb]
 
     model = Model(net)
-    model.train(config.epoch_size, dataset, callbacks=cb, dataset_sink_mode=False)
+    model.train(config.epoch_size, dataset, callbacks=cb)

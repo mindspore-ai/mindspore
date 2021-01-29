@@ -16,8 +16,8 @@
 import numpy as np
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
+from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore import Tensor, context
 from mindspore.ops import functional as F
 from mindspore.common.initializer import initializer
 from .bbox_assign_sample import BboxAssignSample
@@ -100,9 +100,8 @@ class RPN(nn.Cell):
                  cls_out_channels):
         super(RPN, self).__init__()
         cfg_rpn = config
-        _mode_16 = bool(context.get_context("device_target") == "Ascend")
-        self.dtype = np.float16 if _mode_16 else np.float32
-        self.ms_type = mstype.float16 if _mode_16 else mstype.float32
+        self.dtype = np.float32
+        self.ms_type = mstype.float32
         self.num_bboxes = cfg_rpn.num_bboxes
         self.slice_index = ()
         self.feature_anchor_shape = ()

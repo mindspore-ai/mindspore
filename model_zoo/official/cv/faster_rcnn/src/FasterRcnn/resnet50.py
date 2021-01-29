@@ -19,14 +19,11 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
-from mindspore import context
 
 
 def weight_init_ones(shape):
     """Weight init."""
-    if context.get_context("device_target") == "Ascend":
-        return Tensor(np.array(np.ones(shape).astype(np.float32) * 0.01).astype(np.float16))
-    return Tensor(np.array(np.ones(shape).astype(np.float32) * 0.01))
+    return Tensor(np.full(shape, 0.01).astype(np.float32))
 
 
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad'):
@@ -40,8 +37,7 @@ def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mod
 
 def _BatchNorm2dInit(out_chls, momentum=0.1, affine=True, use_batch_statistics=True):
     """Batchnorm2D wrapper."""
-    _mode_16 = bool(context.get_context("device_target") == "Ascend")
-    dtype = np.float16 if _mode_16 else np.float32
+    dtype = np.float32
     gamma_init = Tensor(np.array(np.ones(out_chls)).astype(dtype))
     beta_init = Tensor(np.array(np.ones(out_chls) * 0).astype(dtype))
     moving_mean_init = Tensor(np.array(np.ones(out_chls) * 0).astype(dtype))
