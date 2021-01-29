@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,14 @@ enum UnaryGradOptype {
   UNARY_OP_ATAN_GRAD = 4,
   UNARY_OP_ASINH_GRAD = 5,
   UNARY_OP_ACOSH_GRAD = 6,
+  UNARY_OP_RECIPROCAL_GRAD = 7,
   UNARY_OP_GRAD_INVALID_TYPE = 255
 };
 static const std::map<std::string, UnaryGradOptype> kUnaryGradOpTypeMap = {
-  {"SqrtGrad", UNARY_OP_SQRT_GRAD},  {"RsqrtGrad", UNARY_OP_RSQRT_GRAD}, {"AsinGrad", UNARY_OP_ASIN_GRAD},
-  {"ACosGrad", UNARY_OP_ACOS_GRAD},  {"AtanGrad", UNARY_OP_ATAN_GRAD},   {"AsinhGrad", UNARY_OP_ASINH_GRAD},
-  {"AcoshGrad", UNARY_OP_ACOSH_GRAD}};
+  {"SqrtGrad", UNARY_OP_SQRT_GRAD},   {"RsqrtGrad", UNARY_OP_RSQRT_GRAD},
+  {"AsinGrad", UNARY_OP_ASIN_GRAD},   {"ACosGrad", UNARY_OP_ACOS_GRAD},
+  {"AtanGrad", UNARY_OP_ATAN_GRAD},   {"AsinhGrad", UNARY_OP_ASINH_GRAD},
+  {"AcoshGrad", UNARY_OP_ACOSH_GRAD}, {"ReciprocalGrad", UNARY_OP_RECIPROCAL_GRAD}};
 
 template <typename T>
 class UnaryGradOpGpuKernel : public GpuKernel {
@@ -99,6 +101,11 @@ class UnaryGradOpGpuKernel : public GpuKernel {
       case UNARY_OP_RSQRT_GRAD: {
         RsqrtGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
                   reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_RECIPROCAL_GRAD: {
+        ReciprocalGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
+                       reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       default: {
