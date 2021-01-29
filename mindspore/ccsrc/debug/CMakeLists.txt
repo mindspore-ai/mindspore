@@ -8,7 +8,7 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/env_config_parser.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_exec_order_recorder.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_recorder.cc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/rdr/somas_recorder.cc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/rdr/string_recorder.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/rdr/recorder_manager.cc"
     "${CMAKE_CURRENT_SOURCE_DIR}/rdr/running_data_recorder.cc"
 )

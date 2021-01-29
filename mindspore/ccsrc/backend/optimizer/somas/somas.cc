@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 #include "backend/optimizer/common/helper.h"
 #include "utils/ms_context.h"
 #include "debug/common.h"
+#include "debug/rdr/running_data_recorder.h"
 #include "common/thread_pool.h"
 #include "profiler/device/common/memory_profiling.h"
 
@@ -97,6 +98,15 @@ bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
   MS_LOG(INFO) << "Created " << streams_list_.size() << " streams (" << streams_groups_.size() << " groups), "
                << nodes_list_.size() << " nodes, " << tensors_list_.size() << " tensors, and "
                << contiguous_tensors_list_.size() << " contiguous lists";
+
+#ifdef ENABLE_DUMP_IR
+  SubModuleId module = SubModuleId::SM_OPTIMIZER;
+  std::string tag = "somas";
+  std::string filename = "somas_pre_processed_info_" + std::to_string(graph->graph_id()) + ".ir";
+  mindspore::RDR::RecordString(module, tag, SomasInfo(), filename);
+  filename = "somas_offline_log_" + std::to_string(graph->graph_id()) + ".ir";
+  mindspore::RDR::RecordString(module, tag, Offline(), filename);
+#endif
 
   if (save_graphs_) {
     std::string file_path =
@@ -380,6 +390,14 @@ void Somas::InitBasicInfo(const session::KernelGraph *graph) {
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+
+#ifdef ENABLE_DUMP_IR
+  SubModuleId module = SubModuleId::SM_OPTIMIZER;
+  std::string tag = "somas";
+  std::string filename = "somas_initial_info_" + std::to_string(graph->graph_id()) + ".ir";
+  mindspore::RDR::RecordString(module, tag, SomasInfo(), filename);
+#endif
+
   save_graphs_ = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   save_graphs_path_ = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path_.empty()) {
@@ -1089,6 +1107,121 @@ std::string Somas::GetSplitName(const std::string &scope_name) const {
   }
 }
 
+std::string Somas::SomasInfo() {
+  std::ostringstream oss;
+
+  DumpParameters(oss);
+  DumpTensors(oss);
+  DumpNodes(oss);
+
+  oss << "\n\nAll Stream Groups:\n\n";
+  for (const auto &stream_group : streams_groups_) {
+    for (const auto &stream : stream_group) {
+      oss << "stm" << stream << " ";
+    }
+    oss << "\n";
+  }
+
+  if (!ref_node_constraints_.empty()) {
+    oss << "\n\nAll Ref Node Info:\n\n";
+    for (const auto &ref_in_out : ref_node_constraints_) {
+      oss << "refnode input-output:";
+      for (const auto &item : ref_in_out) {
+        oss << "%" << item << "T ";
+      }
+      oss << "\n";
+    }
+  }
+  return oss.str();
+}
+
+void Somas::DumpNodes(std::ostringstream &oss) const {
+  oss << "\n\nAll Nodes:\n\n";
+  for (const auto &node : nodes_list_) {
+    auto scope_name = node->scope_full_name_;
+    std::string split_name = GetSplitName(scope_name);
+    oss << "$" << node->GetId() << "\t" << split_name << "\t" << static_cast<int>(node->GetType()) << "\t";
+    auto input_num = node->input_tensors_.size() + node->input_parameters_map_.size();
+    oss << "inputs[";
+    size_t tensor_index = 0;
+    for (size_t input_index = 0; input_index < input_num; input_index++) {
+      auto iter = node->input_parameters_map_.find(input_index);
+      if (iter != node->input_parameters_map_.end()) {
+        oss << "%" << iter->second->id_ << "P"
+            << ", ";
+      } else {
+        oss << "%" << node->input_tensors_[tensor_index]->GetId() << "T"
+            << ", ";
+        tensor_index++;
+      }
+    }
+
+    oss << "]";
+    oss << "\toutputs[";
+    for (const auto &out : node->output_tensors_) {
+      oss << "%" << out->GetId() << "T"
+          << ", ";
+    }
+    oss << "]";
+    oss << "\tworkspace[";
+    for (const auto &wk : node->workspace_tensors_) {
+      oss << "%" << wk->GetId() << "T"
+          << ", ";
+    }
+    oss << "]";
+    oss << "\tstreamID["
+        << "@" << node->GetStream()->GetId() << "]\n";
+  }
+}
+
+void Somas::DumpTensors(std::ostringstream &oss) const {
+  oss << "\n\nAll Tensors:\n\n";
+  oss << "index:"
+      << "\tsize:"
+      << "\treal_size:"
+      << "\toffset:"
+      << "\taddr:"
+      << "\ttype:"
+      << "\tlifelong:"
+      << "\tlife_start:"
+      << "\tlife_end:"
+      << "\tsource node name:\n";
+
+  for (const auto &tensor : tensors_list_) {
+    auto scope_name = tensor->GetSourceNode()->scope_full_name_;
+    std::string split_name = GetSplitName(scope_name);
+    oss << "%" << tensor->GetId() << "T"
+        << "\t"
+        << "#" << tensor->GetAlignedSize() << "S"
+        << "\t"
+        << "#" << tensor->GetOriginalSize() << "S"
+        << "\t"
+        << "&" << tensor->GetOffset() << ""
+        << "\t"
+        << "&" << static_cast<void *>(tensor->GetOffset() + mem_base_addr_) << "\t"
+        << tensor_type_name_map[tensor->type_] << "\t" << tensor->IsLifelong() << "\t" << tensor->lifetime_.start_
+        << "\t" << tensor->lifetime_.end_ << "\t" << split_name << "\n";
+  }
+}
+
+void Somas::DumpParameters(std::ostringstream &oss) const {
+  oss << "All Parameters:\n\n";
+  oss << "index:"
+      << "\tsize:"
+      << "\tstart_addr:"
+      << "\tsource node name:"
+      << "\tnode out index:\n";
+
+  for (const auto &param : parameters_list_) {
+    oss << "%" << param->id_ << "P"
+        << "\t"
+        << "#" << param->size_ << "S"
+        << "\t"
+        << "&" << param->addr_ << "\t" << param->source_node_->fullname_with_scope() << "\t" << param->output_index_
+        << "\n";
+  }
+}
+
 void Somas::DumpSomasInfoIR(const string filename) {
   if (filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
@@ -1108,115 +1241,52 @@ void Somas::DumpSomasInfoIR(const string filename) {
     return;
   }
 
-  DumpParameters(ofs);
-  DumpTensors(ofs);
-  DumpNodes(ofs);
-
-  ofs << "\n\nAll Stream Groups:\n\n";
-  for (const auto &stream_group : streams_groups_) {
-    for (const auto &stream : stream_group) {
-      ofs << "stm" << stream << " ";
-    }
-    ofs << "\n";
-  }
-
-  if (!ref_node_constraints_.empty()) {
-    ofs << "\n\nAll Ref Node Info:\n\n";
-    for (const auto &ref_in_out : ref_node_constraints_) {
-      ofs << "refnode input-output:";
-      for (const auto &item : ref_in_out) {
-        ofs << "%" << item << "T ";
-      }
-      ofs << "\n";
-    }
-  }
+  ofs << SomasInfo();
+  ofs.close();
 }
 
-void Somas::DumpNodes(std::ofstream &ofs) const {
-  ofs << "\n\nAll Nodes:\n\n";
-  for (const auto &node : nodes_list_) {
-    auto scope_name = node->scope_full_name_;
-    std::string split_name = GetSplitName(scope_name);
-    ofs << "$" << node->GetId() << "\t" << split_name << "\t" << static_cast<int>(node->GetType()) << "\t";
-    auto input_num = node->input_tensors_.size() + node->input_parameters_map_.size();
-    ofs << "inputs[";
-    size_t tensor_index = 0;
-    for (size_t input_index = 0; input_index < input_num; input_index++) {
-      auto iter = node->input_parameters_map_.find(input_index);
-      if (iter != node->input_parameters_map_.end()) {
-        ofs << "%" << iter->second->id_ << "P"
-            << ", ";
-      } else {
-        ofs << "%" << node->input_tensors_[tensor_index]->GetId() << "T"
-            << ", ";
-        tensor_index++;
+std::string Somas::Offline() {
+  std::ostringstream oss;
+
+  for (auto tensor : tensors_list_) {
+    if (tensor->IsOutputOnly() || tensor->type_ == TensorType::kRefNodeOutput) {
+      oss << "Somas EDGE ERROR src=n" << tensor->GetSourceNode()->GetId()
+          << ", srcstm=" << tensor->GetSourceStream()->GetId() << ", dst=nc"
+          << ", dststm=nc"
+          << ", workspace=0, size=" << tensor->GetOriginalSize()
+          << ", lifelong=" << static_cast<int>(tensor->lifelong_value_) << ", tid=" << tensor->GetId()
+          << ", start=" << tensor->lifetime_.start_ << ", end=" << tensor->lifetime_.end_ << std::endl;
+    } else {
+      std::map<size_t, size_t> dest_infos;
+      for (SomasNodePtr dest_node : tensor->destinations_) {
+        dest_infos.insert(std::make_pair(dest_node->GetId(), dest_node->GetStream()->GetId()));
+      }
+
+      for (auto dest_info : dest_infos) {
+        oss << "Somas EDGE src=n" << tensor->GetSourceNode()->GetId()
+            << ", srcstm=" << tensor->GetSourceStream()->GetId() << ", dst=n" << dest_info.first
+            << ", dststm=" << dest_info.second << ", workspace=" << static_cast<int>(tensor->type_ == kWorkspace)
+            << ", size=" << tensor->GetOriginalSize() << ", lifelong=" << static_cast<int>(tensor->lifelong_value_)
+            << ", tid=" << tensor->GetId() << ", start=" << tensor->lifetime_.start_
+            << ", end=" << tensor->lifetime_.end_ << std::endl;
       }
     }
-
-    ofs << "]";
-    ofs << "\toutputs[";
-    for (const auto &out : node->output_tensors_) {
-      ofs << "%" << out->GetId() << "T"
-          << ", ";
+  }
+  for (vector<size_t> tList : contiguous_tensors_list_) {
+    oss << "Somas CONTIGUOUS";
+    for (size_t tid : tList) {
+      oss << " " << tid;
     }
-    ofs << "]";
-    ofs << "\tworkspace[";
-    for (const auto &wk : node->workspace_tensors_) {
-      ofs << "%" << wk->GetId() << "T"
-          << ", ";
+    oss << std::endl;
+  }
+  for (const auto &group : streams_groups_) {
+    oss << "Somas GROUP";
+    for (int64_t sid : group) {
+      oss << " " << sid;
     }
-    ofs << "]";
-    ofs << "\tstreamID["
-        << "@" << node->GetStream()->GetId() << "]\n";
+    oss << std::endl;
   }
-}
-
-void Somas::DumpTensors(std::ofstream &ofs) const {
-  ofs << "\n\nAll Tensors:\n\n";
-  ofs << "index:"
-      << "\tsize:"
-      << "\treal_size:"
-      << "\toffset:"
-      << "\taddr:"
-      << "\ttype:"
-      << "\tlifelong:"
-      << "\tlife_start:"
-      << "\tlife_end:"
-      << "\tsource node name:\n";
-
-  for (const auto &tensor : tensors_list_) {
-    auto scope_name = tensor->GetSourceNode()->scope_full_name_;
-    std::string split_name = GetSplitName(scope_name);
-    ofs << "%" << tensor->GetId() << "T"
-        << "\t"
-        << "#" << tensor->GetAlignedSize() << "S"
-        << "\t"
-        << "#" << tensor->GetOriginalSize() << "S"
-        << "\t"
-        << "&" << tensor->GetOffset() << ""
-        << "\t"
-        << "&" << static_cast<void *>(tensor->GetOffset() + mem_base_addr_) << "\t"
-        << tensor_type_name_map[tensor->type_] << "\t" << tensor->IsLifelong() << "\t" << tensor->lifetime_.start_
-        << "\t" << tensor->lifetime_.end_ << "\t" << split_name << "\n";
-  }
-}
-
-void Somas::DumpParameters(std::ofstream &ofs) const {
-  ofs << "All Parameters:\n\n";
-  ofs << "index:"
-      << "\tsize:"
-      << "\tstart_addr:"
-      << "\tsource node name:"
-      << "\tnode out index:\n";
-
-  for (const auto &param : parameters_list_) {
-    ofs << "%" << param->id_ << "P"
-        << "\t"
-        << "#" << param->size_ << "S"
-        << "\t"
-        << "&" << param->addr_ << "\t" << param->source_node_->fullname_with_scope() << "\t" << param->output_index_
-        << "\n";
-  }
+  return oss.str();
 }
 
 void Somas::DumpOfflineIR(const string filename) {
@@ -1240,66 +1310,12 @@ void Somas::DumpOfflineIR(const string filename) {
     return;
   }
 
-  for (auto tensor : tensors_list_) {
-    if (tensor->IsOutputOnly() || tensor->type_ == TensorType::kRefNodeOutput) {
-      ofs << "Somas EDGE ERROR src=n" << tensor->GetSourceNode()->GetId()
-          << ", srcstm=" << tensor->GetSourceStream()->GetId() << ", dst=nc"
-          << ", dststm=nc"
-          << ", workspace=0, size=" << tensor->GetOriginalSize()
-          << ", lifelong=" << static_cast<int>(tensor->lifelong_value_) << ", tid=" << tensor->GetId()
-          << ", start=" << tensor->lifetime_.start_ << ", end=" << tensor->lifetime_.end_ << std::endl;
-    } else {
-      std::map<size_t, size_t> dest_infos;
-      for (SomasNodePtr dest_node : tensor->destinations_) {
-        dest_infos.insert(std::make_pair(dest_node->GetId(), dest_node->GetStream()->GetId()));
-      }
-
-      for (auto dest_info : dest_infos) {
-        ofs << "Somas EDGE src=n" << tensor->GetSourceNode()->GetId()
-            << ", srcstm=" << tensor->GetSourceStream()->GetId() << ", dst=n" << dest_info.first
-            << ", dststm=" << dest_info.second << ", workspace=" << static_cast<int>(tensor->type_ == kWorkspace)
-            << ", size=" << tensor->GetOriginalSize() << ", lifelong=" << static_cast<int>(tensor->lifelong_value_)
-            << ", tid=" << tensor->GetId() << ", start=" << tensor->lifetime_.start_
-            << ", end=" << tensor->lifetime_.end_ << std::endl;
-      }
-    }
-  }
-  for (vector<size_t> tList : contiguous_tensors_list_) {
-    ofs << "Somas CONTIGUOUS";
-    for (size_t tid : tList) {
-      ofs << " " << tid;
-    }
-    ofs << std::endl;
-  }
-  for (const auto &group : streams_groups_) {
-    ofs << "Somas GROUP";
-    for (int64_t sid : group) {
-      ofs << " " << sid;
-    }
-    ofs << std::endl;
-  }
+  ofs << Offline();
   ofs.close();
 }
 
-void Somas::DumpSomasMemoryIR(const string filename) {
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
-    return;
-  }
-
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
-    return;
-  }
-
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
-    return;
-  }
+std::string Somas::SomasMemory() {
+  std::ostringstream oss;
 
   std::map<size_t, size_t> mem_map;
   for (auto tensor : tensors_list_) {
@@ -1325,7 +1341,7 @@ void Somas::DumpSomasMemoryIR(const string filename) {
     }
   }
 
-  ofs << "mem_id:"
+  oss << "mem_id:"
       << "\tstart_offset:"
       << "\tend_offset:"
       << "\ttensor_id:"
@@ -1353,7 +1369,7 @@ void Somas::DumpSomasMemoryIR(const string filename) {
       }
 
       std::string split_name = GetSplitName(scope_name);
-      ofs << "#" << mem_map[tensor->GetOffset()] << "\t" << tensor->GetOffset() << "\t"
+      oss << "#" << mem_map[tensor->GetOffset()] << "\t" << tensor->GetOffset() << "\t"
           << tensor->GetOffset() + tensor->GetAlignedSize() << "\t%" << tensor->GetId() << "T\t"
           << tensor->GetOriginalSize() << "\t" << tensor->GetAlignedSize() << "\t&"
           << static_cast<void *>(tensor->GetOffset() + mem_base_addr_) << "\t&"
@@ -1362,6 +1378,31 @@ void Somas::DumpSomasMemoryIR(const string filename) {
           << tensor->lifetime_.start_ << "\t" << tensor->lifetime_.end_ << "\n";
     }
   }
+  return oss.str();
+}
+
+void Somas::DumpSomasMemoryIR(const string filename) {
+  if (filename.size() > PATH_MAX) {
+    MS_LOG(ERROR) << "File path " << filename << " is too long.";
+    return;
+  }
+
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
+  }
+
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
+
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
+    return;
+  }
+
+  ofs << SomasMemory();
+  ofs.close();
 }
 
 size_t Somas::CalcLowerBound() const {

@@ -17,6 +17,7 @@
 #include "runtime/device/memory_manager.h"
 #include <string>
 #include "backend/session/anf_runtime_algorithm.h"
+#include "debug/rdr/running_data_recorder.h"
 #include "utils/ms_context.h"
 
 using mindspore::memreuse::BestFitMemReuse;
@@ -69,6 +70,16 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+#ifdef ENABLE_DUMP_IR
+  SubModuleId module = SubModuleId::SM_OPTIMIZER;
+  std::string tag = "somas";
+
+  std::string filename = "somas_allocate_info_" + std::to_string(graph->graph_id()) + ".ir";
+  mindspore::RDR::RecordString(module, tag, somas_reuse_util_ptr_->SomasInfo(), filename);
+
+  filename = "somas_mem_info_" + std::to_string(graph->graph_id()) + ".ir";
+  mindspore::RDR::RecordString(module, tag, somas_reuse_util_ptr_->SomasMemory(), filename);
+#endif
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   if (save_graphs_path.empty()) {

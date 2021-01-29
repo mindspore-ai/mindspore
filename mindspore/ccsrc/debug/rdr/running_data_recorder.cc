@@ -16,9 +16,9 @@
 #include "debug/rdr/running_data_recorder.h"
 #include <utility>
 #include "debug/rdr/graph_recorder.h"
-#include "debug/rdr/somas_recorder.h"
 #include "debug/rdr/graph_exec_order_recorder.h"
 #include "debug/rdr/recorder_manager.h"
+#include "debug/rdr/string_recorder.h"
 #include "mindspore/core/ir/func_graph.h"
 #include "mindspore/core/ir/anf.h"
 
@@ -75,15 +75,16 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
   return ans;
 }
 
-bool RecordSomasInfo(const SubModuleId module, const std::string &tag, const SomasPtr &somas_ptr, int graph_id) {
+bool RecordString(SubModuleId module, const std::string &tag, const std::string &data, const std::string &filename) {
   std::string submodule_name = std::string(GetSubModuleName(module));
-  SomasRecorderPtr somas_recorder = std::make_shared<SomasRecorder>(submodule_name, tag, somas_ptr, graph_id);
-  somas_recorder->GenString();
-  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(somas_recorder));
+  StringRecorderPtr string_recorder = std::make_shared<StringRecorder>(submodule_name, tag, data, filename);
+  string_recorder->SetFilename(filename);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(string_recorder));
   return ans;
 }
 
 void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
+
 #else
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph,
                     const std::string &file_type, int graph_id) {
@@ -107,7 +108,7 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag, std:
   return false;
 }
 
-bool RecordSomasInfo(const SubModuleId module, const std::string &tag, const SomasPtr &somas_ptr, int graph_id) {
+bool RecordString(SubModuleId module, const std::string &tag, const std::string &data, const std::string &filename) {
   static bool already_printed = false;
   if (already_printed) {
     return false;
@@ -116,6 +117,7 @@ bool RecordSomasInfo(const SubModuleId module, const std::string &tag, const Som
   MS_LOG(WARNING) << "The RDR presently only support linux os.";
   return false;
 }
+
 void TriggerAll() {
   static bool already_printed = false;
   if (already_printed) {
