@@ -35,7 +35,7 @@ class TestDropoutGrad : public UT::Common {
 TEST_F(TestDropoutGrad, test_ops_dropout_grad1) {
   auto dropout_grad = std::make_shared<DropoutGrad>();
   dropout_grad->Init(0.5);
-  EXPECT_EQ((int64_t)(dropout_grad->get_ratio() - 0.5), 0);
+  EXPECT_EQ((int64_t)(dropout_grad->get_keep_prob() - 0.5), 0);
   auto in = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{4});
   MS_EXCEPTION_IF_NULL(in);
   auto abstract = dropout_grad->Infer({in->ToAbstract(), in->ToAbstract()});

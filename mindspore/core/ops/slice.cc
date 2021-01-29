@@ -14,30 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_DROPOUT_H_
-#define MINDSPORE_CORE_OPS_DROPOUT_H_
-#include <vector>
+#include "ops/slice.h"
+#include <string>
+#include <algorithm>
 #include <memory>
-
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
+#include <set>
+#include <vector>
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameDropout = "Dropout";
-class Dropout : public PrimitiveC {
- public:
-  Dropout() : PrimitiveC(kNameDropout) {}
-  ~Dropout() = default;
-  MS_DECLARE_PARENT(Dropout, PrimitiveC);
-  void Init(const float keep_prob = 0.5);
-  void set_keep_prob(const float keep_prob);
-  float get_keep_prob() const;
-};
-AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args);
-using PrimDropoutPtr = std::shared_ptr<Dropout>;
+REGISTER_PRIMITIVE_C(kNameSlice, Slice);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_DROPOUT_H_

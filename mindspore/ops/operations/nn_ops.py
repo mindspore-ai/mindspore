@@ -2970,6 +2970,11 @@ class GeLU(PrimitiveWithInfer):
 
 
 def Gelu():
+    """
+    Gaussian Error Linear Units activation function.
+
+    The usage of Gelu is deprecated. Please use GeLU.
+    """
     logger.warning("WARN_DEPRECATED: The usage of Gelu is deprecated. Please use GeLU.")
     return GeLU()
 
@@ -3015,7 +3020,13 @@ class FastGeLU(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
         return input_x
 
+
 def FastGelu():
+    """
+    Fast Gaussian Error Linear Units activation function.
+
+    The usage of FastGelu is deprecated. Please use FastGeLU.
+    """
     logger.warning("WARN_DEPRECATED: The usage of FastGelu is deprecated. Please use FastGeLU.")
     return FastGeLU()
 

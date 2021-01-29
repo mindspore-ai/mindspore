@@ -163,7 +163,11 @@ class Add(_MathBinaryOp):
 
 
 def TensorAdd():
-    """Warning: This will be changed later"""
+    """
+    Adds two input tensors element-wise.
+
+    The usage of TensorAdd is deprecated. Please use Add.
+    """
     logger.warning("WARN_DEPRECATED: The usage of TensorAdd is deprecated. Please use Add.")
     return Add()
 

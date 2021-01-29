@@ -19,24 +19,11 @@
 
 namespace mindspore {
 namespace ops {
-void DropoutGrad::Init(const float ratio, const float keep_prob) {
-  this->set_ratio(ratio);
-  this->set_keep_prob(keep_prob);
-}
-
-void DropoutGrad::set_ratio(const float ratio) {
-  CheckAndConvertUtils::CheckInRange<float>(kRatio, ratio, kIncludeRight, {0.0, 1.0}, this->name());
-  this->AddAttr(kRatio, MakeValue(ratio));
-}
+void DropoutGrad::Init(const float keep_prob) { this->set_keep_prob(keep_prob); }
 
 void DropoutGrad::set_keep_prob(const float keep_prob) {
   CheckAndConvertUtils::CheckInRange<float>(kKeepProb, keep_prob, kIncludeRight, {0.0, 1.0}, this->name());
   this->AddAttr(kKeepProb, MakeValue(keep_prob));
-}
-
-float DropoutGrad::get_ratio() const {
-  auto value_ptr = GetAttr(kRatio);
-  return GetValue<float>(value_ptr);
 }
 
 float DropoutGrad::get_keep_prob() const {
@@ -70,6 +57,7 @@ TypePtr DropoutGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   return data_type;
 }
 }  // namespace
+
 AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(DropoutGradInferType(primitive, input_args),

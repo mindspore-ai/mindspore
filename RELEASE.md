@@ -80,46 +80,6 @@
 
 ##### Python API
 
-###### `ops.TensorAdd`, `ops.Gelu`, `ops.GeluGrad`, `ops.FastGelu`, `ops.FastGeluGrad`, `ops.GatherV2`, change API name to `ops.Add` ([!11568](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11568)), `ops.GeLU`, `ops.GeLUGrad`, `ops.FastGeLU`, `ops.FastGeLUGrad` ([!11603](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11603)), `ops.Gather` ([!11713](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11713))
-
-The operator name TensorAdd is not standardized, it is changed to Add. Gelu, GeluGrad, FastGelu, and FastGeluGrad names are unified into ReLU naming rules, "lu" is changed to the uppercase "LU", GatherV2 is changed to Gather. The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
-
-<table>
-<tr>
-<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
-</tr>
-<tr>
-<td>
-
-```python
->>> import mindspore.ops as ops
->>>
->>> add = ops.TensorAdd()
->>> gelu = ops.Gelu()
->>> gelu_grad = ops.GeluGrad()
->>> fast_gelu = ops.FastGelu()
->>> fast_gelu_grad = ops.FastGeluGrad()
->>> gather = ops.GatherV2()
-```
-
-</td>
-<td>
-
-```python
->>> import mindspore.ops as ops
->>>
->>> add = ops.Add()
->>> gelu = ops.GeLU()
->>> gelu_grad = ops.GeLUGrad()
->>> fast_gelu = ops.FastGeLU()
->>> fast_gelu_grad = ops.FastGeLUGrad()
->>> gather = ops.Gather()
-```
-
-</td>
-</tr>
-</table>
-
 ###### Delete shape and dtype of class Initializer ([!7373](https://gitee.com/mindspore/mindspore/pulls/7373/files))
 
 Delete shape and dtype attributes of Initializer class.
