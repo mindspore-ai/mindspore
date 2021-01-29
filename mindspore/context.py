@@ -16,6 +16,7 @@
 The context of mindspore, used to configure the current execution environment,
 includes the execution mode, execution backend and other feature switches.
 """
+import json
 import os
 import time
 import threading
@@ -258,9 +259,13 @@ class _Context:
         """Check and set env_config_path."""
         env_config_path = os.path.realpath(env_config_path)
         if not os.path.isfile(env_config_path):
-            raise ValueError("'env_config_path' should be a json file.")
-        if not os.path.exists(env_config_path):
-            raise ValueError("The json file set by 'env_config_path' is not exist.")
+            raise ValueError("The %r set by 'env_config_path' should be an existing json file." % env_config_path)
+        try:
+            with open(env_config_path, 'r') as f:
+                json.load(f)
+        except (TypeError, ValueError) as exo:
+            raise ValueError("The %r set by 'env_config_path' should be a json file. "
+                             "Detail: %s." % (env_config_path, str(exo)))
         self.set_param(ms_ctx_param.env_config_path, env_config_path)
 
     setters = {
