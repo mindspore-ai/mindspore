@@ -163,10 +163,11 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
         >>> input_x = (Tensor(x1), Tensor(x2))
         >>> out = clip_by_global_norm(input_x, 1.0)
         >>> print(out)
-        ([[ 2.98142403e-01,  4.47213590e-01],
-         [ 1.49071202e-01,  2.98142403e-01]],
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 2.98142403e-01,  4.47213590e-01],
+         [ 1.49071202e-01,  2.98142403e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 1.49071202e-01,  5.96284807e-01],
-         [ 4.47213590e-01,  1.49071202e-01]])
+         [ 4.47213590e-01,  1.49071202e-01]]))
     """
 
     clip_norm = _check_value(clip_norm)
