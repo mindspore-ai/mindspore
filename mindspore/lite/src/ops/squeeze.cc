@@ -133,7 +133,7 @@ int Squeeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
     }
   }
   outputs_.front()->set_shape(out_shape);
-  return 0;
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

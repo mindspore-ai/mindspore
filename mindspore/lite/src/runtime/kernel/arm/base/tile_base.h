@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TILE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TILE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_TILE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_TILE_BASE_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/tile_fp32.h"
+#include "nnacl/base/tile_base.h"
 
 namespace mindspore::kernel {
 class TileCPUKernel : public LiteKernel {
@@ -32,10 +32,16 @@ class TileCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int SimpleTileImpl(int task_id);
 
  private:
+  int RunSimpleTile();
   void ComputeStrides(const int *shape, int *strides, int ndim);
+  void FillOneDimTileParam();
+  bool one_dim_tile_;
+  uint8_t *input_addr_;
+  uint8_t *output_addr_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TILE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_TILE_BASE_H_

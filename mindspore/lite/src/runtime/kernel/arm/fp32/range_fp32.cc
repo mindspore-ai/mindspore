@@ -68,6 +68,7 @@ int RangeCPUKernel::Run() {
   return RET_OK;
 }
 
+// fp16 may not be necessary because it involves small amount of data (input 3 number, output depends on input)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Range, LiteKernelCreator<RangeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat, PrimitiveType_Range, LiteKernelCreator<RangeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Range, LiteKernelCreator<RangeCPUKernel>)

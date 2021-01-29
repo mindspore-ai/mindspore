@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#include <iostream>
 #include <memory>
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/fp32/tile_fp32.h"
+#include "mindspore/lite/nnacl/base/tile_base.h"
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {
@@ -62,6 +61,96 @@ TEST_F(TestTileFp32, Tile) {
 
   float expect[] = {1, 2, 1, 2, 1, 2, 3, 4, 3, 4, 3, 4, 1, 2, 1, 2, 1, 2, 3, 4, 3, 4, 3, 4};
   for (int i = 0; i < 24; ++i) {
+    EXPECT_EQ(output_data[i], expect[i]);
+  }
+
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
+}
+
+TEST_F(TestTileFp32, SimpleTile1) {
+  lite::Tensor in_tensor(kNumberTypeFloat32, {2, 2});
+  lite::Tensor out_tensor(kNumberTypeFloat32, {4, 2});
+  float input_data[] = {1, 2, 3, 4};
+  float output_data[8] = {0};
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
+
+  TileParameter parameter = {0};
+  parameter.in_dim_ = 2;
+  parameter.in_shape_[0] = 2;
+  parameter.in_shape_[1] = 2;
+  parameter.multiples_[0] = 2;
+  parameter.multiples_[1] = 1;
+  parameter.in_strides_[0] = 2;
+  parameter.in_strides_[1] = 1;
+  parameter.out_strides_[0] = 2;
+  parameter.out_strides_[1] = 1;
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Tile};
+
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  EXPECT_NE(creator, nullptr);
+
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
+  auto context = ctx.get();
+  context->thread_num_ = 2;
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc, nullptr);
+  EXPECT_NE(kernel, nullptr);
+
+  auto ret = kernel->Run();
+  EXPECT_EQ(0, ret);
+
+  float expect[] = {1, 2, 3, 4, 1, 2, 3, 4};
+  for (int i = 0; i < 8; ++i) {
+    EXPECT_EQ(output_data[i], expect[i]);
+  }
+
+  in_tensor.set_data(nullptr);
+  out_tensor.set_data(nullptr);
+}
+
+TEST_F(TestTileFp32, SimpleTile2) {
+  lite::Tensor in_tensor(kNumberTypeFloat32, {2, 2});
+  lite::Tensor out_tensor(kNumberTypeFloat32, {2, 4});
+  float input_data[] = {1, 2, 3, 4};
+  float output_data[8] = {0};
+  in_tensor.set_data(input_data);
+  out_tensor.set_data(output_data);
+  std::vector<lite::Tensor *> inputs = {&in_tensor};
+  std::vector<lite::Tensor *> outputs = {&out_tensor};
+
+  TileParameter parameter = {0};
+  parameter.in_dim_ = 2;
+  parameter.in_shape_[0] = 2;
+  parameter.in_shape_[1] = 2;
+  parameter.multiples_[0] = 1;
+  parameter.multiples_[1] = 2;
+  parameter.in_strides_[0] = 2;
+  parameter.in_strides_[1] = 1;
+  parameter.out_strides_[0] = 4;
+  parameter.out_strides_[1] = 1;
+
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Tile};
+
+  auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
+  EXPECT_NE(creator, nullptr);
+
+  auto ctx = std::make_shared<lite::InnerContext>();
+  ASSERT_EQ(lite::RET_OK, ctx->Init());
+  auto context = ctx.get();
+  context->thread_num_ = 2;
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc, nullptr);
+  EXPECT_NE(kernel, nullptr);
+
+  auto ret = kernel->Run();
+  EXPECT_EQ(0, ret);
+
+  float expect[] = {1, 2, 1, 2, 3, 4, 3, 4};
+  for (int i = 0; i < 8; ++i) {
     EXPECT_EQ(output_data[i], expect[i]);
   }
 
