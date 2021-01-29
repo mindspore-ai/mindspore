@@ -121,19 +121,15 @@ int CropAndResizeCPUKernel::RunImpl(int task_id) {
   int unit = UP_DIV(new_height_, context_->thread_num_);
   int h_begin = unit * task_id;
   int h_end = MSMIN(h_begin + unit, new_height_);
+  if (h_end <= h_begin) {
+    return RET_OK;
+  }
   int c = in_tensors_.at(0)->shape().at(3);
   float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
   float *line1 = line0 + new_width_ * c;
-  int ret = 0;
-  if (is_crop_) {
-    ret = CropAndResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
-                                y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0,
-                                line1, h_begin, h_end);
-  } else {
-    ret =
-      ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
-                     y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, h_begin, h_end);
-  }
+  auto ret = CropAndResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(),
+                                   y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0,
+                                   line1, h_begin, h_end);
   return ret;
 }
 
@@ -146,19 +142,10 @@ int CropAndResizeCPUKernel::Run() {
 
   auto input = in_tensors_.at(0);
   auto input_shape = input->shape();
-  // if boxes tensor data is nullptr, crop_and_resize can be seen as resize with coordinate transformation mode
-  // ALIGN_CORNERS
-  if (in_tensors_.at(1)->ElementsNum() == 0 || in_tensors_.at(1)->data_c() == nullptr) {
-    batch_ = 1;
-    is_crop_ = false;
-    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), CalculateAlignCorners,
-                                y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
-  } else {
-    auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-    auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
-    ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, out_tensors_.at(0)->shape().data(),
-                                       y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
-  }
+  auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
+  auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+  ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, out_tensors_.at(0)->shape().data(), y_bottoms_,
+                                     y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
   if (ret != RET_OK) {
     FreeTmpBuffer();
     return ret;

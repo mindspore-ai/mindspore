@@ -46,7 +46,6 @@ class CropAndResizeCPUKernel : public LiteKernel {
   int batch_;
   int new_height_;
   int new_width_;
-  bool is_crop_ = true;
   int *y_tops_ = nullptr;
   int *y_bottoms_ = nullptr;
   int *x_lefts_ = nullptr;
