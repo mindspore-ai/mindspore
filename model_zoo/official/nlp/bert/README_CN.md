@@ -515,7 +515,7 @@ F1 0.920507
 您可以采用如下方式，先将MSRA数据集的原始格式在预处理流程中转换为mindrecord格式以提升性能：
 
 ```python
-python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len
+python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len --class_filter="NAMEX" --split_begin=0.0 --split_end=1.0
 ```
 
 此后，您可以进行微调再训练和推理流程，
@@ -525,12 +525,10 @@ bash scripts/ner.sh
 ```
 
 以上命令后台运行，您可以在ner_log.txt中查看训练日志。
-如您选择SpanF1作为评估方法并且模型结构中配置CRF模式，在微调训练10个epoch之后进行推理，可得到如下结果：
+如您选择MF1（多标签的F1得分）作为评估方法，在微调训练10个epoch之后进行推理，可得到如下结果：
 
 ```text
-Precision 0.953826
-Recall 0.957749
-F1 0.955784
+F1 0.931243
 ```
 
 #### Ascend处理器上运行后评估squad v1.1数据集
