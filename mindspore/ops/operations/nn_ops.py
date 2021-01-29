@@ -538,10 +538,11 @@ class Elu(PrimitiveWithInfer):
 
     .. math::
 
-        \text{x} = \begin{cases}
-        \alpha * (\exp(\text{x}) - 1), & \text{if x} < \text{0;}\\
-        \text{x}, & \text{if x} >= \text{0.}
-        \end{cases}
+        \text{ELU}(x)= \left\{
+        \begin{array}{align}
+            \alpha(e^{x}  - 1) & \text{if } x \le 0\\
+            x & \text{if } x \gt 0\\
+        \end{array}\right.
 
     The data type of input tensor must be float.
 
