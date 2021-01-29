@@ -1260,3 +1260,6 @@ table CropAndResize {
     method : ResizeMethod;
     extrapolation_value : float;
 }
+
+table Erf {
+}
