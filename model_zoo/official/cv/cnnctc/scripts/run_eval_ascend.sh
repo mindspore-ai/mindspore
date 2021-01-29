@@ -48,7 +48,7 @@ cp ./*.py ./eval
 cp ./scripts/*.sh ./eval
 cp -r ./src ./eval
 cd ./eval || exit
-echo "start infering for device $DEVICE_ID"
+echo "start inferring for device $DEVICE_ID"
 env > env.log
 python eval.py --device_id=$DEVICE_ID --ckpt_path=$PATH1 &> log &
 cd .. || exit
