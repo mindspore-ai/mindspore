@@ -123,9 +123,9 @@ class PrimitiveC : public mindspore::Primitive {
 
   schema::QuantType quant_type() const;
 
-  bool IsEnableHuffmanCode() const;
+  bool enable_huffman_code() const;
 
-  void SetEnableHuffmanCode(bool enableHuffmanCode);
+  void set_enable_huffman_code(bool enable_huffman_code);
 
   virtual int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
 
@@ -158,7 +158,7 @@ class PrimitiveC : public mindspore::Primitive {
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
   bool infer_flag_ = true;
   int op_type_ = OP_TYPE_NOT_SET;
-  bool enableHuffmanCode = false;
+  bool enable_huffman_code_ = false;
 };
 std::shared_ptr<PrimitiveC> GetReturnPrim();
 

@@ -227,7 +227,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
-    quantNodeOptimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes2));
     status = quantNodeOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
@@ -287,6 +286,15 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
 
+  {
+    Optimizer quantNodeOptimizer;
+    quantNodeOptimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass());
+    status = quantNodeOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run quantNodeOptimizer graphPasses Failed";
+      return status;
+    }
+  }
   return RET_OK;
 }  // namespace mindspore::lite
 }  // namespace mindspore::lite
