@@ -18,11 +18,8 @@
 #include <limits>
 #include <algorithm>
 #include <cmath>
-#ifdef ENABLE_ANDROID
-#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
-#define USE_NEON
+#ifdef ENABLE_NEON
 #include <arm_neon.h>
-#endif
 #endif
 
 namespace mindspore {
@@ -333,7 +330,7 @@ inline void SubtractImpl(const T *src0, const T *src1, T *dst, int64_t total_siz
 template <>
 inline void SubtractImpl(const uint8_t *src0, const uint8_t *src1, uint8_t *dst, int64_t total_size) {
   int64_t x = 0;
-#ifdef USE_NEON
+#ifdef ENABLE_NEON
   const int64_t step = 32;
   for (; x <= total_size - step; x += step) {
     uint8x16_t v_src00 = vld1q_u8(src0 + x);
@@ -432,7 +429,7 @@ bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
   return true;
 }
 
-#ifdef USE_NEON
+#ifdef ENABLE_NEON
 inline float32x4_t reciprocal_simd(float32x4_t val) {
   // get an initial estimate of 1/val
   float32x4_t reciprocal = vrecpeq_f32(val);
@@ -461,7 +458,7 @@ inline void DivideImpl(const T *src0, const T *src1, T *dst, int64_t total_size)
 template <>
 inline void DivideImpl(const uint8_t *src0, const uint8_t *src1, uint8_t *dst, int64_t total_size) {
   int64_t x = 0;
-#ifdef USE_NEON
+#ifdef ENABLE_NEON
   const int64_t step = 16;
   for (; x <= total_size - step; x += step) {
     __builtin_prefetch(reinterpret_cast<const char *>(src0 + x) + 32 * 10);
@@ -558,7 +555,7 @@ inline bool CheckDivide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst
 
 bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
   if (!CheckDivide(src_a, src_b, dst)) {
-    return true;
+    return false;
   }
 
   if (dst->IsEmpty()) {
@@ -606,7 +603,7 @@ inline void MultiplyImpl(const T *src0, const T *src1, T *dst, int64_t total_siz
 template <>
 inline void MultiplyImpl(const uint8_t *src0, const uint8_t *src1, uint8_t *dst, int64_t total_size) {
   int64_t x = 0;
-#ifdef USE_NEON
+#ifdef ENABLE_NEON
   const int64_t step = 32;
   for (; x <= total_size - step; x += step) {
     uint8x16_t v_src00 = vld1q_u8(src0 + x);
