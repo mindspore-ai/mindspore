@@ -14,11 +14,11 @@
 # ============================================================================
 
 """control_ops"""
-
-from ...common import dtype as mstype
-from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
 from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
+from ..._checkparam import Rel
+from ..._checkparam import Validator as validator
+from ...common import dtype as mstype
+from ...common._decorator import deprecated
 
 
 class ControlDepend(Primitive):
@@ -32,6 +32,7 @@ class ControlDepend(Primitive):
 
     Note:
         This operation does not work in `PYNATIVE_MODE`.
+        `ControlDepend` is deprecated from version 1.1 and will be removed in a future version, use `Depend` instead.
     Args:
         depend_mode (int): Use 0 for a normal dependency relation and 1 for a user-defined dependency relation.
             Default: 0.
@@ -75,7 +76,7 @@ class ControlDepend(Primitive):
          [1. 1. 1. 1. 1.]
          [1. 1. 1. 1. 1.]]
     """
-
+    @deprecated("1.1", "Depend")
     @prim_attr_register
     def __init__(self, depend_mode=0):
         """init"""
