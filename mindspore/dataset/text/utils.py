@@ -24,7 +24,6 @@ import mindspore._c_dataengine as cde
 from .validators import check_from_file, check_from_list, check_from_dict, check_from_dataset, \
     check_from_dataset_sentencepiece, check_from_file_sentencepiece, check_save_model
 
-
 __all__ = [
     "Vocab", "SentencePieceVocab", "to_str", "to_bytes"
 ]
@@ -66,7 +65,7 @@ class Vocab(cde.Vocab):
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
 
         Returns:
-            Vocab, Vocab object built from dataset.
+            Vocab, vocab built from the dataset.
         """
         return dataset.build_vocab(columns, freq_range, top_k, special_tokens, special_first)
 
@@ -82,6 +81,9 @@ class Vocab(cde.Vocab):
                 special_tokens=["<pad>","<unk>"] (default=None, no special tokens will be added).
             special_first(bool, optional): whether special_tokens will be prepended/appended to vocab, If special_tokens
                 is specified and special_first is set to True, special_tokens will be prepended (default=True).
+
+        Returns:
+            Vocab, vocab built from the `list`.
         """
         if special_tokens is None:
             special_tokens = []
@@ -103,6 +105,9 @@ class Vocab(cde.Vocab):
             special_first (bool, optional): whether special_tokens will be prepended/appended to vocab,
                 If special_tokens is specified and special_first is set to True,
                 special_tokens will be prepended (default=True).
+
+        Returns:
+            Vocab, vocab built from the file.
         """
         if vocab_size is None:
             vocab_size = -1
@@ -119,6 +124,9 @@ class Vocab(cde.Vocab):
         Args:
             word_dict (dict): dict contains word and id pairs, where word should be str and id be int. id is recommended
                 to start from 0 and be continuous. ValueError will be raised if id is negative.
+
+        Returns:
+            Vocab, vocab built from the `dict`.
         """
 
         return super().from_dict(word_dict)
@@ -147,7 +155,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             params(dict): A dictionary with no incoming parameters.
 
         Returns:
-            SentencePiece, SentencePiece object from dataset.
+            SentencePieceVocab, vocab built from the dataset.
         """
 
         return dataset.build_sentencepiece_vocab(col_names, vocab_size, character_coverage,
@@ -174,6 +182,9 @@ class SentencePieceVocab(cde.SentencePieceVocab):
 
                     input_sentence_size 0
                     max_sentencepiece_length 16
+
+        Returns:
+            SentencePieceVocab, vocab built from the file.
         """
         return super().from_file(file_path, vocab_size, character_coverage,
                                  DE_C_INTER_SENTENCEPIECE_MODE[model_type], params)
@@ -189,7 +200,7 @@ class SentencePieceVocab(cde.SentencePieceVocab):
             path(str): Path to store model.
             filename(str): The name of the file.
         """
-        return super().save_model(vocab, path, filename)
+        super().save_model(vocab, path, filename)
 
 
 def to_str(array, encoding='utf8'):
