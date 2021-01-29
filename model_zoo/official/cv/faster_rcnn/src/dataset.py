@@ -232,9 +232,9 @@ def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 def transpose_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """transpose operation for image"""
     img_data = img.transpose(2, 0, 1).copy()
-    img_data = img_data.astype(np.float16)
-    img_shape = img_shape.astype(np.float16)
-    gt_bboxes = gt_bboxes.astype(np.float16)
+    img_data = img_data.astype(np.float32)
+    img_shape = img_shape.astype(np.float32)
+    gt_bboxes = gt_bboxes.astype(np.float32)
     gt_label = gt_label.astype(np.int32)
     gt_num = gt_num.astype(np.bool)
 

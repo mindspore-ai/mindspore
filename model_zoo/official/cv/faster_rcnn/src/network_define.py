@@ -167,7 +167,7 @@ class TrainOneStepCell(nn.Cell):
         self.optimizer = optimizer
         self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
-        self.sens = Tensor((np.ones((1,)) * sens).astype(np.float16))
+        self.sens = Tensor((np.ones((1,)) * sens).astype(np.float32))
         self.reduce_flag = reduce_flag
         if reduce_flag:
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)

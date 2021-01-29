@@ -157,7 +157,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
 
         self.rpn_max_num = config.rpn_max_num
 
-        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(np.float16))
+        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(np.float32))
         self.ones_mask = np.ones((self.rpn_max_num, 1)).astype(np.bool)
         self.zeros_mask = np.zeros((self.rpn_max_num, 1)).astype(np.bool)
         self.bbox_mask = Tensor(np.concatenate((self.ones_mask, self.zeros_mask,
@@ -165,10 +165,10 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         self.nms_pad_mask = Tensor(np.concatenate((self.ones_mask, self.ones_mask,
                                                    self.ones_mask, self.ones_mask, self.zeros_mask), axis=1))
 
-        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_score_thr)
-        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * 0)
-        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(np.float16) * -1)
-        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_iou_thr)
+        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float32) * config.test_score_thr)
+        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float32) * 0)
+        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(np.float32) * -1)
+        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float32) * config.test_iou_thr)
         self.test_max_per_img = config.test_max_per_img
         self.nms_test = P.NMSWithMask(config.test_iou_thr)
         self.softmax = P.Softmax(axis=1)
@@ -183,9 +183,9 @@ class Faster_Rcnn_Resnet50(nn.Cell):
 
         # Init tensor
         roi_align_index = [np.array(np.ones((config.num_expected_pos_stage2 + config.num_expected_neg_stage2, 1)) * i,
-                                    dtype=np.float16) for i in range(self.train_batch_size)]
+                                    dtype=np.float32) for i in range(self.train_batch_size)]
 
-        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=np.float16) \
+        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=np.float32) \
                                 for i in range(self.test_batch_size)]
 
         self.roi_align_index_tensor = Tensor(np.concatenate(roi_align_index))
@@ -276,7 +276,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
                                             self.cast(x[3], mstype.float32))
 
 
-        roi_feats = self.cast(roi_feats, mstype.float16)
+        roi_feats = self.cast(roi_feats, mstype.float32)
         rcnn_masks = self.concat(mask_tuple)
         rcnn_masks = F.stop_gradient(rcnn_masks)
         rcnn_mask_squeeze = self.squeeze(self.cast(rcnn_masks, mstype.bool_))
@@ -420,7 +420,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         for i in range(num_levels):
             anchors = self.anchor_generators[i].grid_anchors(
                 featmap_sizes[i], self.anchor_strides[i])
-            multi_level_anchors += (Tensor(anchors.astype(np.float16)),)
+            multi_level_anchors += (Tensor(anchors.astype(np.float32)),)
 
         return multi_level_anchors
 
