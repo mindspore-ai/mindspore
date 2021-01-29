@@ -135,7 +135,9 @@ class MS_API Benchmark {
 
   int CompareOutput();
 
-  tensor::MSTensor *GetTensorByNodeOrTensorName(const std::string &node_or_tensor_name);
+  tensor::MSTensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
+
+  tensor::MSTensor *GetTensorByNodeShape(const std::vector<size_t> &node_shape);
 
   int CompareStringData(const std::string &name, tensor::MSTensor *tensor);
 
