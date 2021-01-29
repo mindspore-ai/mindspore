@@ -170,6 +170,8 @@ class OperatorInfo {
   // needed by rec_parser
   void set_type(const std::string &type) { type_ = type; }
   const std::string &type() const { return type_; }
+  void set_last_node_flag(const bool &is_last_node) { is_last_node_ = is_last_node; }
+  const bool &is_last_node() const { return is_last_node_; }
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
   void set_stage_id(int32_t stage_id) { stage_id_ = stage_id; }
   int32_t stage_id() const { return stage_id_; }
@@ -181,6 +183,7 @@ class OperatorInfo {
  protected:
   // needed by rec_parser
   std::string type_;
+  bool is_last_node_;
   virtual Status CheckStrategy(const StrategyPtr &strategy) = 0;
   virtual Status InferTensorMap() = 0;
   virtual Status InferForwardCommunication() = 0;
