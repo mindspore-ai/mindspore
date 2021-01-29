@@ -18,7 +18,8 @@
 #include "src/tensor.h"
 
 namespace mindspore {
-static std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len) {
+static std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
+                                          bool verify_size) {
   std::vector<int32_t> empty;
   std::vector<int32_t> truncated_shape;
   size_t element_size = lite::DataTypeSize(type);
@@ -31,9 +32,11 @@ static std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enu
       truncated_shape.push_back(static_cast<int32_t>(i));
     }
   }
-  if (element_size != data_len) {
-    MS_LOG(ERROR) << "Invalid data size.";
-    return empty;
+  if (verify_size) {
+    if (element_size != data_len) {
+      MS_LOG(ERROR) << "Invalid data size.";
+      return empty;
+    }
   }
   return truncated_shape;
 }

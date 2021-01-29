@@ -227,7 +227,8 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
   }
   std::vector<std::vector<int32_t>> truncated_shape;
   for (size_t i = 0; i < inner_input.size(); i++) {
-    std::vector<int32_t> tmp = TruncateShape(dims.at(i), inner_input.at(i)->data_type(), inner_input.at(i)->Size());
+    std::vector<int32_t> tmp =
+      TruncateShape(dims.at(i), inner_input.at(i)->data_type(), inner_input.at(i)->Size(), false);
     if (tmp.empty()) {
       MS_LOG(ERROR) << "Input dims[" << i << "]is invalid.";
       return kLiteParamInvalid;
