@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ std::string SSDModelUtil::getDecodeResult(float *branchScores, float *branchBoxD
         result += tmpid_str;
         result += "_";
         MS_PRINT("label_classes i %d, outBuff %d", i, (int) outBuff[i][1]);
-        tmpid_str = label_classes[static_cast<int>(outBuff[i][1])];
+        tmpid_str = std::to_string(static_cast<int>(outBuff[i][1]));
         // label id
         result += tmpid_str;
         result += "_";

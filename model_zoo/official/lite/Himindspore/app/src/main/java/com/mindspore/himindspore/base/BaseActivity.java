@@ -15,10 +15,11 @@
  */
 package com.mindspore.himindspore.base;
 
-import android.app.Activity;
 import android.os.Bundle;
 
-public abstract class BaseActivity<T extends BasePresenter> extends Activity {
+import androidx.appcompat.app.AppCompatActivity;
+
+public abstract class BaseActivity<T extends BasePresenter> extends AppCompatActivity {
 
     protected T presenter;
 

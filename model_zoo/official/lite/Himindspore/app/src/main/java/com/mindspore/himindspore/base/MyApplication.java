@@ -19,12 +19,11 @@ import android.app.Application;
 
 import com.alibaba.android.arouter.BuildConfig;
 import com.alibaba.android.arouter.launcher.ARouter;
+import com.mindspore.common.utils.Utils;
 
 
 public class MyApplication extends Application {
 
-    private static final String appKey = "31f0c1ffe8168";
-    private static final String appSecret = "83e393ced2b9f31771fcb81e1b7a049a";
 
     @Override
     public void onCreate() {
@@ -34,5 +33,6 @@ public class MyApplication extends Application {
             ARouter.openDebug();
         }
         ARouter.init(this);
+        Utils.init(this);
     }
 }

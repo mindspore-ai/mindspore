@@ -17,6 +17,9 @@ package com.mindspore.imageobject.objectdetection.bean;
 
 import android.text.TextUtils;
 
+import com.mindspore.common.utils.Utils;
+import com.mindspore.imageobject.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,7 +110,9 @@ public class RecognitionObjectBean {
     }
 
     public String getObjectName() {
-        return objectName;
+        int i = Integer.parseInt(objectName);
+        String[] IMAGECONTENT = Utils.getApp().getResources().getStringArray(R.array.object_category);
+        return IMAGECONTENT[i];
     }
 
     public float getScore() {

@@ -1,4 +1,4 @@
 <resources>
-    <string name="posenet_app_name">PoseNetDemo</string>
-    <string name="posenet_app_name_title">MS PoseNet</string>
+    <string name="posenet_score">得分：</string>
+    <string name="posenet_time">Inference Time:</string>
 </resources>

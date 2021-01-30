@@ -53,7 +53,7 @@ MSNetWork::CreateSessionMS(char *modelBuffer, size_t bufferLen, mindspore::lite:
 void MSNetWork::ReleaseNets(void) {
     if (model_ != nullptr) {
         model_->Free();
-        delete model_;
+     //   delete model_;
         model_ = nullptr;
     }
     if (session_ != nullptr) {

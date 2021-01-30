@@ -10,7 +10,7 @@ def mindsporeLite_Version_AAR = "mindspore-lite-maven-1.1.0"
 def targetModelFile = "src/main/assets/model/mobilenetv2.ms"
 def mindSporeLibrary_arm64 = "src/main/cpp/${mindsporeLite_Version}.tar.gz"
 
-def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.ms"
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_imagenet/mobilenetv2.ms"
 def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.0/MindSpore/lite/release/android/${mindsporeLite_Version}.tar.gz"
 
 def mindSporeLibraryAAR = "src/main/cpp/${mindsporeLite_Version}/${mindsporeLite_Version_AAR}.zip"

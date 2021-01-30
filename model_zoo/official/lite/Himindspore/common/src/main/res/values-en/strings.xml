@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="explain_photo_detection">Photo detection can identify the category of the object and mark its position in the image.</string>
+    <string name="explain_camera_detection">Camera detection can identify the category of the object and mark its position in the camera.</string>
+    <string name="explain_posenet">Posenet can identify the facial features and body postures of human in different positions in the camera.</string>
+    <string name="explain_style_transfer">Style transfer can change the art style of users’ target images based on the standard image in the APP.</string>
+    <string name="explain_image_segmentation">Image segmentation is used to detect the position of the target or the category of the object in the picture.</string>
+    <string name="explain_image_classification">Image classification can infer the category of the object in the picture and indicate the probability of different categories.</string>
+    <string name="explain_garbage_classification">Garbage classification identifies the garbage category of the object detected by the camera lens.</string>
+    <string name="explain_scene_detection">Scene detection can estimate the category of the target scene.</string>
+    <string name="explain_title">Summary</string>
+    <string name="segmentation_toolbar_title">Image Segmentation</string>
+    <string name="style_transfer_title">Style Transfer</string>
+    <string name="posenet_activity_title">PoseNet</string>
+    <string name="image_scene_title">Scene Detection</string>
+    <string name="image_garbage_title">Garbage Classification</string>
+    <string name="image_camera_title">Image Classification</string>
+    <string name="object_camery_title">Camera Detection</string>
+    <string name="activity_photo_title">Photo Detection</string>
+</resources>

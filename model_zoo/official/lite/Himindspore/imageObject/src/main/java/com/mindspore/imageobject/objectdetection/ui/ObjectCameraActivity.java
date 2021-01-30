@@ -19,10 +19,16 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
+import com.mindspore.common.config.MSLinkUtils;
+import com.mindspore.common.utils.Utils;
+import com.mindspore.customview.dialog.NoticeDialog;
 import com.mindspore.imageobject.R;
 import com.mindspore.imageobject.camera.CameraPreview;
 import com.mindspore.imageobject.objectdetection.bean.RecognitionObjectBean;
@@ -52,12 +58,13 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
 
     private List<RecognitionObjectBean> recognitionObjectBeanList;
 
+    private NoticeDialog noticeDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_object_camera);
-
+        Log.i(TAG, "onCreate ObjectCameraActivity info");
         cameraPreview = findViewById(R.id.camera_preview);
         mObjectRectView = findViewById(R.id.objRectView);
 
@@ -74,14 +81,44 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
         Log.d(TAG, "TrackingMobile loadModelFromBuf: " + ret);
 
         cameraPreview.addImageRecognitionDataCallBack(this);
+
+        Log.i(TAG, "init ObjectPhotoActivity info");
+        Toolbar mToolbar = findViewById(R.id.object_camera_toolbar);
+        setSupportActionBar(mToolbar);
+        mToolbar.setNavigationOnClickListener(view -> finish());
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_setting_app, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.item_help) {
+            showHelpDialog();
+        } else if (itemId == R.id.item_more) {
+            Utils.openBrowser(this, MSLinkUtils.HELP_CAMERA_DETECTION);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showHelpDialog() {
+        noticeDialog = new NoticeDialog(this);
+        noticeDialog.setTitleString(getString(R.string.explain_title));
+        noticeDialog.setContentString(getString(R.string.explain_camera_detection));
+        noticeDialog.setYesOnclickListener(() -> {
+            noticeDialog.dismiss();
+        });
+        noticeDialog.show();
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
         cameraPreview.onResume(this);
-
     }
 
     @Override
