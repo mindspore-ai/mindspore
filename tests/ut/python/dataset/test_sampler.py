@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,23 +91,9 @@ def test_random_sampler_multi_iter(print_res=False):
 
 
 def test_sampler_py_api():
-    sampler = ds.SequentialSampler().create()
-    sampler.set_num_rows(128)
-    sampler.set_num_samples(64)
-    sampler.initialize()
-    sampler.get_indices()
-
-    sampler = ds.RandomSampler().create()
-    sampler.set_num_rows(128)
-    sampler.set_num_samples(64)
-    sampler.initialize()
-    sampler.get_indices()
-
-    sampler = ds.DistributedSampler(8, 4).create()
-    sampler.set_num_rows(128)
-    sampler.set_num_samples(64)
-    sampler.initialize()
-    sampler.get_indices()
+    sampler = ds.SequentialSampler().parse()
+    sampler1 = ds.RandomSampler().parse()
+    sampler1.add_child(sampler)
 
 
 def test_python_sampler():
@@ -157,12 +143,6 @@ def test_python_sampler():
     assert test_config(2, Sp1(5)) == [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
     assert test_config(6, Sp2(2)) == [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0]
     test_generator()
-
-    sp1 = Sp1().create()
-    sp1.set_num_rows(5)
-    sp1.set_num_samples(5)
-    sp1.initialize()
-    assert list(sp1.get_indices()) == [0, 1, 2, 3, 4]
 
 
 def test_sequential_sampler2():
@@ -229,8 +209,8 @@ def test_subset_sampler():
     test_config([0, 9, 0, 500], exception_msg="Sample ID (500) is out of bound, expected range [0, 9]")
     test_config([0, 9, -6, 2], exception_msg="Sample ID (-6) is out of bound, expected range [0, 9]")
     # test_config([], exception_msg="Indices list is empty") # temporary until we check with MindDataset
-    test_config([0, 9, 3, 2], num_samples=0,
-                exception_msg="num_samples should be a positive integer value, but got num_samples: 0.")
+    test_config([0, 9, 3, 2], num_samples=-1,
+                exception_msg="SubsetRandomSampler: invalid num_samples: -1")
 
 
 def test_sampler_chain():
@@ -280,9 +260,9 @@ def test_add_sampler_invalid_input():
 
 
 def test_distributed_sampler_invalid_offset():
-    with pytest.raises(ValueError) as info:
-        sampler = ds.DistributedSampler(num_shards=4, shard_id=0, shuffle=False, num_samples=None, offset=5)
-    assert "offset should be no more than num_shards" in str(info.value)
+    with pytest.raises(RuntimeError) as info:
+        sampler = ds.DistributedSampler(num_shards=4, shard_id=0, shuffle=False, num_samples=None, offset=5).parse()
+    assert "DistributedSampler: invalid offset: 5, which should be no more than num_shards: 4" in str(info.value)
 
 
 if __name__ == '__main__':

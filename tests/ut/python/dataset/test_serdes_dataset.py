@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -377,7 +377,7 @@ def test_serdes_exception():
 def util_check_serialize_deserialize_file(data_orig, filename, remove_json_files):
     """
     Utility function for testing serdes files. It is to check if a json file is indeed created with correct name
-    after serializing and if it remains the same after repeatly saving and loading.
+    after serializing and if it remains the same after repeatedly saving and loading.
     :param data_orig: original data pipeline to be serialized
     :param filename: filename to be saved as json format
     :param remove_json_files: whether to remove the json file after testing

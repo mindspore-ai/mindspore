@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,15 +150,13 @@ std::shared_ptr<SamplerObj> toSamplerObj(py::handle py_sampler, bool isMindDatas
     std::shared_ptr<SamplerObj> sampler_obj;
     if (!isMindDataset) {
       // Common Sampler
-      std::shared_ptr<SamplerRT> sampler;
-      auto create = py::reinterpret_borrow<py::object>(py_sampler).attr("create");
-      sampler = create().cast<std::shared_ptr<SamplerRT>>();
-      sampler_obj = std::make_shared<PreBuiltSamplerObj>(std::move(sampler));
+      auto parse = py::reinterpret_borrow<py::object>(py_sampler).attr("parse");
+      sampler_obj = parse().cast<std::shared_ptr<SamplerObj>>();
     } else {
       // Mindrecord Sampler
       std::shared_ptr<mindrecord::ShardOperator> sampler;
-      auto create = py::reinterpret_borrow<py::object>(py_sampler).attr("create_for_minddataset");
-      sampler = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
+      auto parse = py::reinterpret_borrow<py::object>(py_sampler).attr("parse_for_minddataset");
+      sampler = parse().cast<std::shared_ptr<mindrecord::ShardOperator>>();
       sampler_obj = std::make_shared<PreBuiltSamplerObj>(std::move(sampler));
     }
     return sampler_obj;
