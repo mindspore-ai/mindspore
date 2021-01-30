@@ -14,32 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
-#define MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_SLICE_H_
+#define MINDSPORE_CORE_OPS_SLICE_H_
+#include <map>
 #include <vector>
+#include <string>
 #include <memory>
-
 #include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameDropoutGrad = "DropoutGrad";
-class DropoutGrad : public PrimitiveC {
+constexpr auto kNameSlice = "Slice";
+class Slice : public PrimitiveC {
  public:
-  DropoutGrad() : PrimitiveC(kNameDropoutGrad) {}
-  ~DropoutGrad() = default;
-  MS_DECLARE_PARENT(DropoutGrad, PrimitiveC);
-  void Init(const float keep_prob = 0.5);
-  void set_keep_prob(const float keep_prob);
-  float get_keep_prob() const;
+  Slice() : PrimitiveC(kNameSlice) { InitIOName({"x", "begin", "size"}, {"output"}); }
+  ~Slice() = default;
+  MS_DECLARE_PARENT(Slice, PrimitiveC);
+  void Init() {}
 };
-
-AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
-using PrimDropoutGradPtr = std::shared_ptr<DropoutGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_DROPOUT_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_SLICE_H_

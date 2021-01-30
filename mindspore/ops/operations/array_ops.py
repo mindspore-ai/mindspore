@@ -816,9 +816,14 @@ class Gather(PrimitiveWithCheck):
 
 
 def GatherV2():
-    """Warning: This will be changed later"""
+    """
+    Returns a slice of the input tensor based on the specified indices and axis.
+
+    The usage of GatherV2 is deprecated. Please use Gather.
+    """
     logger.warning("WARN_DEPRECATED: The usage of GatherV2 is deprecated. Please use Gather.")
     return Gather()
+
 
 class SparseGatherV2(Gather):
     """

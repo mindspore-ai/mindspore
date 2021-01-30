@@ -24,24 +24,11 @@
 
 namespace mindspore {
 namespace ops {
-void Dropout::Init(const float ratio, const float keep_prob) {
-  this->set_ratio(ratio);
-  this->set_keep_prob(keep_prob);
-}
-
-void Dropout::set_ratio(const float ratio) {
-  CheckAndConvertUtils::CheckInRange<float>(kRatio, ratio, kIncludeRight, {0.0, 1.0}, this->name());
-  this->AddAttr(kRatio, MakeValue(ratio));
-}
+void Dropout::Init(const float keep_prob) { this->set_keep_prob(keep_prob); }
 
 void Dropout::set_keep_prob(const float keep_prob) {
   CheckAndConvertUtils::CheckInRange<float>(kKeepProb, keep_prob, kIncludeRight, {0.0, 1.0}, this->name());
   this->AddAttr(kKeepProb, MakeValue(keep_prob));
-}
-
-float Dropout::get_ratio() const {
-  auto value_ptr = this->GetAttr(kRatio);
-  return GetValue<float>(value_ptr);
 }
 
 float Dropout::get_keep_prob() const {
