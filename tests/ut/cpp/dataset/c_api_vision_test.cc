@@ -265,6 +265,9 @@ TEST_F(MindDataTestPipeline, TestCropFail) {
   // zero height
   crop = mindspore::dataset::vision::Crop({0, 0}, {0, 32});
   EXPECT_EQ(crop, nullptr);
+  // negative coordinates
+  crop = mindspore::dataset::vision::Crop({-1, 0}, {32, 32});
+  EXPECT_EQ(crop, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess1) {
@@ -882,7 +885,7 @@ TEST_F(MindDataTestPipeline, TestNormalize) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> normalize = vision::Normalize({121.0, 115.0, 100.0}, {70.0, 68.0, 71.0});
+  std::shared_ptr<TensorOperation> normalize = vision::Normalize({121.0, 115.0, 0.0}, {70.0, 68.0, 71.0});
   EXPECT_NE(normalize, nullptr);
 
   // Create a Map operation on ds
@@ -923,6 +926,15 @@ TEST_F(MindDataTestPipeline, TestNormalizeFail) {
   // std value at 0.0
   std::shared_ptr<TensorOperation> normalize =
     mindspore::dataset::vision::Normalize({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});
+  EXPECT_EQ(normalize, nullptr);
+  // mean out of range
+  normalize = mindspore::dataset::vision::Normalize({121.0, 0.0, 100.0}, {256.0, 68.0, 71.0});
+  EXPECT_EQ(normalize, nullptr);
+  // mean out of range
+  normalize = mindspore::dataset::vision::Normalize({256.0, 0.0, 100.0}, {70.0, 68.0, 71.0});
+  EXPECT_EQ(normalize, nullptr);
+  // mean out of range
+  normalize = mindspore::dataset::vision::Normalize({-1.0, 0.0, 100.0}, {70.0, 68.0, 71.0});
   EXPECT_EQ(normalize, nullptr);
   // normalize with 2 values (not 3 values) for mean
   normalize = mindspore::dataset::vision::Normalize({121.0, 115.0}, {70.0, 68.0, 71.0});
@@ -1258,7 +1270,7 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   std::shared_ptr<TensorOperation> random_color_adjust4 = vision::RandomColorAdjust();
   EXPECT_NE(random_color_adjust4, nullptr);
 
-  // Use subset of explictly set parameters
+  // Use subset of explicitly set parameters
   std::shared_ptr<TensorOperation> random_color_adjust5 = vision::RandomColorAdjust({0.0, 0.5}, {0.25});
   EXPECT_NE(random_color_adjust5, nullptr);
 
@@ -1293,6 +1305,31 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRandomColorAdjustFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomColorAdjustFail.";
+  // brightness out of range
+  std::shared_ptr<TensorOperation> random_color_adjust1 = vision::RandomColorAdjust({-1.0});
+  EXPECT_EQ(random_color_adjust1, nullptr);
+
+  // contrast out of range
+  std::shared_ptr<TensorOperation> random_color_adjust2 = vision::RandomColorAdjust({1.0}, {-0.1});
+  EXPECT_EQ(random_color_adjust2, nullptr);
+
+  // saturation out of range
+  std::shared_ptr<TensorOperation> random_color_adjust3 = vision::RandomColorAdjust({0.0}, {0.0}, {-0.2});
+  EXPECT_EQ(random_color_adjust3, nullptr);
+
+  // hue out of range
+  std::shared_ptr<TensorOperation> random_color_adjust4 = vision::RandomColorAdjust({0.0}, {0.0}, {0.0}, {-0.6});
+  EXPECT_EQ(random_color_adjust4, nullptr);
+
+  std::shared_ptr<TensorOperation> random_color_adjust5 = vision::RandomColorAdjust({0.0}, {0.0}, {0.0}, {-0.5, 0.6});
+  EXPECT_EQ(random_color_adjust5, nullptr);
+
+  std::shared_ptr<TensorOperation> random_color_adjust6 = vision::RandomColorAdjust({0.0}, {0.0}, {0.0}, {0.51});
+  EXPECT_EQ(random_color_adjust6, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
@@ -1796,13 +1833,17 @@ TEST_F(MindDataTestPipeline, TestRandomResizeFail) {
   std::shared_ptr<TensorOperation> random_resize1 = vision::RandomResize({-66, 77});
   EXPECT_EQ(random_resize1, nullptr);
 
-  // RandomResize : size must be a vector of one or two values
-  std::shared_ptr<TensorOperation> random_resize2 = vision::RandomResize({1, 2, 3});
+  // RandomResize : size must only contain positive integers
+  std::shared_ptr<TensorOperation> random_resize2 = vision::RandomResize({0, 77});
   EXPECT_EQ(random_resize2, nullptr);
 
   // RandomResize : size must be a vector of one or two values
-  std::shared_ptr<TensorOperation> random_resize3 = vision::RandomResize({});
+  std::shared_ptr<TensorOperation> random_resize3 = vision::RandomResize({1, 2, 3});
   EXPECT_EQ(random_resize3, nullptr);
+
+  // RandomResize : size must be a vector of one or two values
+  std::shared_ptr<TensorOperation> random_resize4 = vision::RandomResize({});
+  EXPECT_EQ(random_resize4, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
