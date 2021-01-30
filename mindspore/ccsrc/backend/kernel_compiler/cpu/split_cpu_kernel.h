@@ -17,14 +17,16 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SPLIT_CPU_KERNEL_H_
 #include <vector>
 #include <memory>
+#include <thread>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class SplitCPUKernel : public CPUKernel {
  public:
-  SplitCPUKernel() : axis_(0) {}
+  SplitCPUKernel() = default;
   ~SplitCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -32,26 +34,46 @@ class SplitCPUKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
-  template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+
+  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
  private:
-  static void CheckParam(const CNodePtr &kernel_node);
-  template <typename T>
-  void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
-                        T **output_addr, size_t *buff_size);
+  void CheckParam(const CNodePtr &kernel_node);
+  void Reshape();
+  void LaunchSplit(const T *input, T **output, size_t size);
   int64_t axis_;
+  int64_t output_num_;
+  int64_t axis_step_;
+
+  size_t input_size_;
+  size_t dims_after_axis_;
+  size_t dims_current_after_axis_;
+
   std::vector<std::vector<size_t>> output_shape_list_;
   std::vector<size_t> input_shape_;
   TypeId dtype_{kTypeUnknown};
 };
 
-MS_REG_CPU_KERNEL(Split,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  SplitCPUKernel);
-MS_REG_CPU_KERNEL(Split,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                  SplitCPUKernel);
+MS_REG_CPU_KERNEL_T(
+  Split, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  SplitCPUKernel, float);
+MS_REG_CPU_KERNEL_T(
+  Split, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  SplitCPUKernel, float16);
+MS_REG_CPU_KERNEL_T(
+  Split, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  SplitCPUKernel, double);
+MS_REG_CPU_KERNEL_T(Split,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    SplitCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(Split,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+                    SplitCPUKernel, uint32_t);
+MS_REG_CPU_KERNEL_T(Split,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                    SplitCPUKernel, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

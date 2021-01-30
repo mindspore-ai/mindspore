@@ -13,111 +13,105 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "backend/kernel_compiler/cpu/split_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
-void SplitCPUKernel::InitKernel(const CNodePtr &kernel_node) {
-  CheckParam(kernel_node);
-
-  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
-  auto output_1_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (axis_ < 0) {
-    axis_ = axis_ + SizeToLong(output_1_shape.size());
-  }
-  axis_ += 4 - SizeToLong(output_1_shape.size());
-
-  auto output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t i = 0; i < output_num; i++) {
-    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, i);
-    CPUKernelUtils::ExpandDimsTo4(&output_shape);
-    output_shape_list_.push_back(output_shape);
-  }
-
+template <typename T>
+void SplitCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis");
+  output_num_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num");
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  CPUKernelUtils::ExpandDimsTo4(&input_shape_);
-
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  CheckParam(kernel_node);
+  Reshape();
 }
 
-bool SplitCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                            const std::vector<kernel::AddressPtr> & /*workspace*/,
-                            const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt) {
-    return LaunchKernel<int32_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    return LaunchKernel<int64_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat) {
-    return LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat64) {
-    return LaunchKernel<double>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "Only support int, float, but actual data type is " << TypeIdLabel(dtype_);
+template <typename T>
+void SplitCPUKernel<T>::Reshape() {
+  input_size_ = 1;
+  dims_current_after_axis_ = 1;
+  dims_after_axis_ = 1;
+  axis_step_ = input_shape_[axis_] / output_num_;
+
+  for (int i = 0; i < SizeToInt(input_shape_.size()); i++) {
+    input_size_ *= input_shape_[i];
+    if (i > axis_) {
+      dims_current_after_axis_ *= input_shape_[i];
+      dims_after_axis_ *= input_shape_[i];
+    }
+    if (i == axis_) {
+      dims_current_after_axis_ *= input_shape_[i];
+    }
   }
 }
 
 template <typename T>
-bool SplitCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto buff_size = inputs[0]->size;
-  size_t dim0 = input_shape_[0];
-  size_t dim1 = input_shape_[1];
-  size_t dim2 = input_shape_[2];
+void SplitCPUKernel<T>::InitInputOutputSize(const CNodePtr &kernel_node) {
+  CPUKernel::InitInputOutputSize(kernel_node);
+  workspace_size_list_.emplace_back((sizeof(T *) * output_num_));
+}
 
-  if (axis_ == 3) {
-    for (size_t i = 0; i < dim0; ++i) {
-      for (size_t j = 0; j < dim1; ++j) {
-        for (size_t k = 0; k < dim2; ++k) {
-          CopyDataToOutput(outputs, i, j, k, &input_addr, &buff_size);
-        }
-      }
-    }
-  } else if (axis_ == 2) {
-    for (size_t i = 0; i < dim0; ++i) {
-      for (size_t j = 0; j < dim1; ++j) {
-        CopyDataToOutput(outputs, i, j, 0, &input_addr, &buff_size);
-      }
-    }
-  } else if (axis_ == 1) {
-    for (size_t i = 0; i < dim0; ++i) {
-      CopyDataToOutput(outputs, i, 0, 0, &input_addr, &buff_size);
-    }
-  } else if (axis_ == 0) {
-    CopyDataToOutput(outputs, 0, 0, 0, &input_addr, &buff_size);
-  }
+template <typename T>
+bool SplitCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                               const std::vector<kernel::AddressPtr> &workspace,
+                               const std::vector<kernel::AddressPtr> &outputs) {
+  LaunchKernel(inputs, workspace, outputs);
   return true;
 }
 
 template <typename T>
-void SplitCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &outputs, size_t dim0, size_t dim1,
-                                      size_t dim2, T **input_addr, size_t *buff_size) {
-  for (size_t i = 0; i < output_shape_list_.size(); ++i) {
-    auto output_i_shape = output_shape_list_[i];
-    auto output_i_addr = reinterpret_cast<float *>(outputs[i]->addr);
-
-    size_t num = CPUKernelUtils::GetElementNumOnAxis(output_i_shape, axis_);
-    num *= output_i_shape[axis_];
-    auto pos = CPUKernelUtils::CalcOffset(output_i_shape, dim0, dim1, dim2, 0);
-    auto ret = memcpy_s(output_i_addr + pos, *buff_size, *input_addr, num * sizeof(T));
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy failed.";
+void SplitCPUKernel<T>::LaunchSplit(const T *input, T **output, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      int num = i % dims_current_after_axis_ / dims_after_axis_;
+      int block = num / axis_step_;
+      int block_pos = i / dims_current_after_axis_ * axis_step_ * dims_after_axis_ +
+                      num % axis_step_ * dims_after_axis_ + i % dims_after_axis_;
+      output[block][block_pos] = input[i];
     }
-    *input_addr += num;
-    *buff_size -= num * sizeof(T);
-  }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
+  return;
 }
 
-void SplitCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (output_shape.size() > 4) {
-    MS_LOG(EXCEPTION) << "Output dims is " << output_shape.size() << ", but SplitCPUKernel only support 4d or lower.";
+template <typename T>
+void SplitCPUKernel<T>::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> &workspace,
+                                     const std::vector<AddressPtr> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->addr);
+  T **output = reinterpret_cast<T **>(workspace[0]->addr);
+  for (size_t i = 0; i < outputs.size(); i++) {
+    output[i] = reinterpret_cast<T *>(outputs[i]->addr);
   }
+  size_t size = static_cast<size_t>(inputs[0]->size / sizeof(T));
+  LaunchSplit(input, output, size);
+  return;
+}
 
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+template <typename T>
+void SplitCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
+  auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  int64_t dims = SizeToLong(input_shape_.size());
+  int64_t output_num = SizeToLong(AnfAlgo::GetOutputTensorNum(kernel_node));
+
   if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but SplitCPUKernel needs 1 input.";
+    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but Split needs 1 input.";
+  }
+  if (dims == 0) {
+    MS_LOG(EXCEPTION) << "Input dims is " << dims << ", scalar is not supported.";
+  }
+  if (axis_ < -dims || axis_ >= dims) {
+    MS_LOG(EXCEPTION) << "Attr axis_ " << axis_ << " must be in " << -dims << "~" << dims;
+  }
+  if (axis_ < 0) {
+    axis_ += SizeToInt(input_shape_.size());
+  }
+  if (output_num_ > SizeToInt(input_shape_[axis_])) {
+    MS_LOG(EXCEPTION) << "Attr output_num " << output_num_ << " must less than " << input_shape_[axis_];
+  }
+  if (output_num_ != output_num) {
+    MS_LOG(EXCEPTION) << "Output num is " << output_num << ", but need " << output_num_;
   }
 }
 }  // namespace kernel
