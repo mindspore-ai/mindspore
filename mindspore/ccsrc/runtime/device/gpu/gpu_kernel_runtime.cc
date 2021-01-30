@@ -851,7 +851,7 @@ void GPUKernelRuntime::UpdateHostSwapInQueue(const DeviceAddressPtr device_addre
       MS_LOG(WARNING) << "Unexpected device address status: " << status;
       break;
     default:
-      MS_LOG(EXCEPTION) << "Invaild device address status: " << status;
+      MS_LOG(EXCEPTION) << "Invalid device address status: " << status;
   }
 }
 
@@ -1092,6 +1092,7 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
   MS_EXCEPTION_IF_NULL(mem_reuse_util_);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  // Can not free the input addr of communication op when enable multi stream
   if (AnfAlgo::IsCommunicationOp(kernel)) {
     return;
   }
@@ -1106,7 +1107,9 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
     }
 
     auto kernel_with_index = GetPrevNodeOutput(kernel, i);
-    if (AnfAlgo::IsCommunicationOp(kernel_with_index.first)) {
+    // Maintain output addr of fused communication op to improve training performance
+    if (AnfAlgo::IsCommunicationOp(kernel_with_index.first) &&
+        AnfAlgo::GetInputTensorNum(kernel_with_index.first) > 1) {
       continue;
     }
 

@@ -20,10 +20,12 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
-from mindspore.communication.management import get_group_size
-from mindspore.context import ParallelMode, get_context
+from mindspore.communication.management import get_group_size, get_rank
+from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode, _get_full_batch
-from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_enable, _is_role_worker, _get_ps_context
+from mindspore.parallel._ps_context import _is_role_worker, _get_ps_context
+from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_enable, _set_rank_id
+from mindspore import context
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 from mindspore.ops.primitive import constexpr
@@ -227,8 +229,6 @@ class EmbeddingLookup(Cell):
         self.embedding_size = validator.check_positive_int(embedding_size, 'embedding_size')
         self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
                                          name='embedding_table')
-        if self.cache_enable and enable_ps:
-            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size)
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
         self.gather_revert = P.GatherV2()
@@ -238,6 +238,10 @@ class EmbeddingLookup(Cell):
         self.shape = P.Shape()
         if is_auto_parallel:
             self.unique = P.Unique().shard(((1,),))
+        if self.cache_enable and enable_ps:
+            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size)
+            if is_auto_parallel:
+                self.unique.add_prim_attr('cache_enable', True)
         indices_shape_size = 2
         if slice_mode == "field_slice" and is_auto_parallel:
             if not manual_shapes:
@@ -252,7 +256,7 @@ class EmbeddingLookup(Cell):
             self.embeddinglookup.shard(((get_group_size(), 1), (1, get_group_size())))
         elif slice_mode == "table_row_slice" and is_auto_parallel:
             full_batch = _get_full_batch()
-            if target == 'DEVICE' and not full_batch:
+            if (target == 'DEVICE' and not full_batch) or (self.cache_enable and enable_ps and sparse):
                 indices_shape_size = 1
                 self.gather_revert.shard(((1, 1), (get_group_size(),)))
                 self.forward_unique = True
@@ -293,7 +297,7 @@ class EmbeddingLookup(Cell):
             raise ValueError("The configuration of 'vocab_cache_size' is valid only in 'DEVICE' target.")
         if not self.sparse:
             raise ValueError("The configuration of 'vocab_cache_size' is valid only 'sparse' is true.")
-        if get_context("device_target") != 'Ascend':
+        if context.get_context("device_target") != 'Ascend':
             raise ValueError("The configuration of 'vocab_cache_size' is valid only in 'ascend'.")
 
         logger.info("EmbeddingLookup cache enable takes effect.")
@@ -320,21 +324,29 @@ class EmbeddingLookup(Cell):
             parallel_mode = _get_parallel_mode()
             is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
             if is_auto_parallel:
-                device_num = get_group_size()
+                rank_size = get_group_size()
+                rank_id = get_rank()
                 full_batch = _get_full_batch()
-                if device_num > 1 and not (full_batch and slice_mode == "table_row_slice"):
+                if rank_size > 1 and not (full_batch and slice_mode == "table_row_slice"):
                     raise ValueError("The embeddingLookup cache of parameter server parallel only be used "
                                      "in 'full_batch' and 'table_row_slice' parallel strategy.")
-                self.vocab_cache_size = self.vocab_cache_size * device_num
+                self.vocab_cache_size = self.vocab_cache_size * rank_size
+                _set_rank_id(rank_id)
             self.cache_enable = True
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
+                if context.get_context("enable_sparse") != self.sparse:
+                    raise ValueError("The value of parameter 'sparse' must be same for all EmbeddingLookup "
+                                     "kernels and equal the value of 'enable_sparse' in context setting in "
+                                     "parameter server cache mode")
 
     def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size):
         """PS embeddingLookup cache enable set."""
         self.embedding_table.cache_enable = True
         self.embedding_table.is_param_ps = True
         _set_cache_enable(True)
+        if self.sparse:
+            self.forward_unique = True
         if _is_role_worker():
             _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size)
 

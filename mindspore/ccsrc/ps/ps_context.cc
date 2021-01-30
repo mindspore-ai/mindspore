@@ -129,5 +129,11 @@ void PSContext::set_cache_enable(bool cache_enable) const {
   PsDataPrefetch::GetInstance().set_cache_enable(cache_enable);
 #endif
 }
+
+void PSContext::set_rank_id(int rank_id) const {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  ps_cache_instance.set_rank_id(rank_id);
+#endif
+}
 }  // namespace ps
 }  // namespace mindspore

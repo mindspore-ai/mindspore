@@ -28,14 +28,15 @@ _lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 
 
 @_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool")
+                         "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool",
+                         "Bool")
 def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power, beta2_power,
-                         beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter):
+                         beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter, cache_enable):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
     values = gradient.values
-    if ps_parameter:
+    if ps_parameter and not cache_enable:
         op_shape = P.Shape()
         shapes = (op_shape(params), op_shape(m), op_shape(v),
                   op_shape(beta1_power), op_shape(beta2_power), op_shape(lr), op_shape(beta1),
@@ -75,12 +76,12 @@ def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov,
 
 
 @_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
-def _run_opt_with_one_number(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
-                             beta2_power, beta1, beta2, eps, lr, gradient, params, moment1, moment2, ps_parameter):
+                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+def _run_opt_with_one_number(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power, beta2_power,
+                             beta1, beta2, eps, lr, gradient, params, moment1, moment2, ps_parameter, cache_enable):
     """Apply lazy adam optimizer to the weight parameter using Tensor."""
     success = True
-    if ps_parameter:
+    if ps_parameter and not cache_enable:
         op_shape = P.Shape()
         success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
                                               (op_shape(params), op_shape(moment1), op_shape(moment2))), params))
@@ -245,12 +246,14 @@ class LazyAdam(Optimizer):
             success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
                                           self.use_locking, self.use_nesterov, self._is_device,
                                           self.beta1_power, self.beta2_power, self.beta1, self.beta2, self.eps),
-                                lr, gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters)
+                                lr, gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters,
+                                self.cache_enable)
         else:
             success = self.map_(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
                                           self.use_locking, self.use_nesterov, self._is_device,
                                           self.beta1_power, self.beta2_power, self.beta1, self.beta2, self.eps, lr),
-                                gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters)
+                                gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters,
+                                self.cache_enable)
         return success
 
     @Optimizer.target.setter

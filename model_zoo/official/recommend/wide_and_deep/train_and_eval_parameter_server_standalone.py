@@ -29,7 +29,6 @@ from src.metrics import AUCMetric
 from src.config import WideDeepConfig
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-context.set_context(enable_sparse=True)
 
 
 def get_wide_deep_net(config):
@@ -39,7 +38,7 @@ def get_wide_deep_net(config):
     wide_deep_net = WideDeepModel(config)
     loss_net = NetWithLossClass(wide_deep_net, config)
     train_net = TrainStepWrap(loss_net, parameter_server=bool(config.parameter_server),
-                              cache_enable=(config.vocab_cache_size > 0))
+                              sparse=config.sparse, cache_enable=(config.vocab_cache_size > 0))
     eval_net = PredictWithSigmoid(wide_deep_net)
     return train_net, eval_net
 
@@ -81,7 +80,6 @@ def train_and_eval(config):
     else:
         dataset_type = DataType.H5
     parameter_server = bool(config.parameter_server)
-    cache_enable = config.vocab_cache_size > 0
     print("epochs is {}".format(epochs))
     ds_train = create_dataset(data_path, train_mode=True, epochs=1,
                               batch_size=batch_size, data_type=dataset_type)
@@ -121,6 +119,11 @@ if __name__ == "__main__":
     wide_deep_config.argparse_init()
 
     context.set_context(mode=context.GRAPH_MODE, device_target=wide_deep_config.device_target, save_graphs=True)
+    cache_enable = wide_deep_config.vocab_cache_size > 0
+    if not cache_enable:
+        wide_deep_config.sparse = True
+    if wide_deep_config.sparse:
+        context.set_context(enable_sparse=True)
     context.set_ps_context(enable_ps=True)
 
     train_and_eval(wide_deep_config)

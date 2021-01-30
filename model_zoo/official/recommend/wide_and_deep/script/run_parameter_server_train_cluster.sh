@@ -17,7 +17,8 @@
 
 #bash run_parameter_server_train_cluster.sh RANK_SIZE EPOCHS DEVICE_TARGET DATASET 
 #                                           LOCAL_WORKER_NUM LOCAL_SERVER_NUM SERVER_NUM 
-#                                           SCHED_HOST SCHED_PORT ROLE RANK_TABLE_FILE VOCAB_CACHE_SIZE 
+#                                           SCHED_HOST SCHED_PORT ROLE RANK_TABLE_FILE
+#                                           VOCAB_CACHE_SIZE SPARSE
 execute_path=$(pwd)
 script_self=$(readlink -f "$0")
 self_path=$(dirname "${script_self}")
@@ -37,9 +38,14 @@ export MS_SCHED_PORT=$9
 export MS_ROLE=${10}
 export RANK_TABLE_FILE=${11}
 export VOCAB_CACHE_SIZE=${12}
+export SPARSE=${13}
 
 if [[ ! -n "${12}" ]]; then
   export VOCAB_CACHE_SIZE=0
+fi
+
+if [[ ! -n "${13}" ]]; then
+  export SPARSE=0
 fi
 
 echo  "=====Role is $MS_ROLE======"
@@ -73,7 +79,7 @@ if [[ "$MS_ROLE" == "MS_WORKER" ]]; then
     mpirun --allow-run-as-root -n $LOCAL_WORKER_NUM --output-filename log_output --merge-stderr-to-stdout \
       python -s ${self_path}/../train_and_eval_parameter_server_distribute.py                             \
         --device_target=$DEVICE --data_path=$DATASET --epochs=$EPOCH_SIZE --parameter_server=1            \
-        --vocab_cache_size=$VOCAB_CACHE_SIZE --dropout_flag=1 >worker.log 2>&1 &
+        --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=1 >worker.log 2>&1 &
   else
     for((i=0;i<$LOCAL_WORKER_NUM;i++));
     do
@@ -84,7 +90,7 @@ if [[ "$MS_ROLE" == "MS_WORKER" ]]; then
       export DEVICE_ID=$i
       python -s ${self_path}/../train_and_eval_parameter_server_distribute.py                         \
         --device_target=$DEVICE_TARGET --data_path=$DATASET --epochs=$EPOCH_SIZE --parameter_server=1 \
-        --vocab_cache_size=$VOCAB_CACHE_SIZE --dropout_flag=1 >worker_$i.log 2>&1 &
+        --vocab_cache_size=$VOCAB_CACHE_SIZE --sparse=$SPARSE --dropout_flag=1 >worker_$i.log 2>&1 &
     done
   fi
 fi

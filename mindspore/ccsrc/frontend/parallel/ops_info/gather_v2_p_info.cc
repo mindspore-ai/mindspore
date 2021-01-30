@@ -24,8 +24,10 @@
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
+#include "frontend/parallel/context.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "ps/ps_cache/ps_cache_manager.h"
+#include "utils/ms_context.h"
 #endif
 
 namespace mindspore {
@@ -158,6 +160,15 @@ Status GatherV2PInfo::GetAttrs() {
   if (std::find(inputs_shape_[1].begin(), inputs_shape_[1].end(), -1) != inputs_shape_[1].end()) {
     dynamic_shape_indices_ = true;
   }
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  bool enable_sparse = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_SPARSE);
+  if (ps::PsDataPrefetch::GetInstance().cache_enable() && enable_sparse) {
+    dynamic_shape_indices_ = true;
+  }
+#endif
   return SUCCESS;
 }
 
@@ -531,7 +542,7 @@ Status GatherV2PInfo::InferBias() {
     }
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
-      bias_ = 0;
+      bias_ = static_cast<int64_t>(ps::PsCacheManager::GetInstance().cache_indices_lower_bound());
       return SUCCESS;
     }
 #endif

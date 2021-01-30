@@ -321,7 +321,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("insert_weight_init_info", &PSContext::InsertWeightInitInfo, "Insert embedding table initialization seed.")
     .def("insert_accumu_init_info", &PSContext::InsertAccumuInitInfo, "Insert accumulation initialization value.")
     .def("clone_hash_table", &PSContext::CloneHashTable, "Clone a hash table.")
-    .def("set_cache_enable", &PSContext::set_cache_enable, "Set ps mode cache enable or not.");
+    .def("set_cache_enable", &PSContext::set_cache_enable, "Set ps mode cache enable or not.")
+    .def("set_rank_id", &PSContext::set_rank_id, "Set rank id for worker on ps mode.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())

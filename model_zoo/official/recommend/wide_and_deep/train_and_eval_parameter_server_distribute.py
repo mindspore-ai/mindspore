@@ -43,7 +43,7 @@ def get_wide_deep_net(config):
     if cache_enable:
         loss_net = VirtualDatasetCellTriple(loss_net)
     train_net = TrainStepWrap(loss_net, parameter_server=bool(config.parameter_server),
-                              cache_enable=(config.vocab_cache_size > 0))
+                              sparse=config.sparse, cache_enable=(config.vocab_cache_size > 0))
     eval_net = PredictWithSigmoid(wide_deep_net)
     if cache_enable:
         eval_net = VirtualDatasetCellTriple(eval_net)
@@ -138,7 +138,7 @@ def train_and_eval(config):
         callback_list.append(ckpoint_cb)
     model.train(epochs, ds_train,
                 callbacks=callback_list,
-                dataset_sink_mode=bool(parameter_server and cache_enable))
+                dataset_sink_mode=(parameter_server and cache_enable))
 
 
 if __name__ == "__main__":
@@ -148,7 +148,6 @@ if __name__ == "__main__":
     cache_enable = wide_deep_config.vocab_cache_size > 0
     if cache_enable and wide_deep_config.device_target != "GPU":
         context.set_context(variable_memory_max_size="24GB")
-    context.set_context(enable_sparse=True)
     context.set_ps_context(enable_ps=True)
     init()
     context.set_context(save_graphs_path='./graphs_of_device_id_'+str(get_rank()))
@@ -159,5 +158,8 @@ if __name__ == "__main__":
     else:
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=get_group_size())
+        wide_deep_config.sparse = True
 
+    if wide_deep_config.sparse:
+        context.set_context(enable_sparse=True)
     train_and_eval(wide_deep_config)
