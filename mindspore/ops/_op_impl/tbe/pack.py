@@ -16,7 +16,7 @@
 """Pack op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-pack_op_info = TBERegOp("Pack") \
+stack_op_info = TBERegOp("Stack") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("pack.so") \
@@ -52,7 +52,7 @@ pack_op_info = TBERegOp("Pack") \
     .get_op_info()
 
 
-@op_info_register(pack_op_info)
+@op_info_register(stack_op_info)
 def _pack_tbe():
     """Pack TBE register"""
     return

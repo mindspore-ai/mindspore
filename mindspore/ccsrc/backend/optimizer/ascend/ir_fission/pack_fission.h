@@ -24,7 +24,7 @@ constexpr size_t kPackInputsDivisor = 63;
 class PackFission : public PatternProcessPass {
  public:
   explicit PackFission(bool multigraph = true)
-      : PatternProcessPass("pack_fission", multigraph), inputs_divisor_(kPackInputsDivisor) {}
+      : PatternProcessPass("stack_fission", multigraph), inputs_divisor_(kPackInputsDivisor) {}
   ~PackFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;

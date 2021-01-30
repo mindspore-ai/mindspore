@@ -35,7 +35,7 @@ from .squeeze import _squeeze_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .randperm import _randperm_aicpu
 from .random_choice_with_mask import _random_choice_with_mask_aicpu
-from .pack import _pack_aicpu
+from .stack import _stack_aicpu
 from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
 from .compute_accidental_hits import _compute_accidental_hits_aicpu

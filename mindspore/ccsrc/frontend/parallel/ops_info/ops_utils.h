@@ -371,7 +371,7 @@ constexpr char STOP_GRADIENT[] = "stop_gradient";
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";
 constexpr char MIN_MAX_UPDATE_PER_LAYER[] = "MinMaxUpdatePerLayer";
-constexpr char PACK[] = "Pack";
+constexpr char STACK[] = "Stack";
 
 constexpr size_t LAST_INDEX(size_t s) { return s - 1; }
 constexpr size_t SECOND_FROM_END(size_t s) { return s - 2; }

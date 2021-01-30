@@ -18,38 +18,38 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Pack,
+MS_REG_GPU_KERNEL_ONE(Stack,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
                       PackGpuFwdKernel, int8_t)
-MS_REG_GPU_KERNEL_ONE(Pack,
+MS_REG_GPU_KERNEL_ONE(Stack,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
                       PackGpuFwdKernel, int16_t)
-MS_REG_GPU_KERNEL_ONE(Pack,
+MS_REG_GPU_KERNEL_ONE(Stack,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                       PackGpuFwdKernel, int)
-MS_REG_GPU_KERNEL_ONE(Pack,
+MS_REG_GPU_KERNEL_ONE(Stack,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
                       PackGpuFwdKernel, int64_t)
-MS_REG_GPU_KERNEL_ONE(Pack,
+MS_REG_GPU_KERNEL_ONE(Stack,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
                       PackGpuFwdKernel, uint8_t)
-MS_REG_GPU_KERNEL_ONE(Pack,
+MS_REG_GPU_KERNEL_ONE(Stack,
                       KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                       PackGpuFwdKernel, bool)
 MS_REG_GPU_KERNEL_ONE(
-  Pack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+  Stack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
   PackGpuFwdKernel, uint16_t)
 MS_REG_GPU_KERNEL_ONE(
-  Pack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+  Stack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
   PackGpuFwdKernel, uint32_t)
 MS_REG_GPU_KERNEL_ONE(
-  Pack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+  Stack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
   PackGpuFwdKernel, uint64_t)
 MS_REG_GPU_KERNEL_ONE(
-  Pack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  Stack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   PackGpuFwdKernel, half)
 MS_REG_GPU_KERNEL_ONE(
-  Pack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  Stack, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   PackGpuFwdKernel, float)
 }  // namespace kernel
 }  // namespace mindspore

@@ -83,7 +83,7 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
 OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor) {
   size_t input_tensor_size = ops[iter_ops]->inputs_tensor_info().size();
-  if (ops[iter_ops]->type() == PACK) {
+  if (ops[iter_ops]->type() == STACK) {
     input_tensor_size = 1;
   }
   if (input_tensor_size > MAX_INPUT_NUM) {

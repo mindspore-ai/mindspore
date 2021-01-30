@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status PackInfo::GetAttrs() {
+Status StackInfo::GetAttrs() {
   int axis = 0;
   auto axis_iter = attrs_.find(AXIS);
   if (axis_iter != attrs_.end()) {
@@ -57,7 +57,7 @@ Status PackInfo::GetAttrs() {
   return SUCCESS;
 }
 
-Status PackInfo::CheckStrategy(const StrategyPtr &strategy) {
+Status StackInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
@@ -83,7 +83,7 @@ Status PackInfo::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status PackInfo::InferDevMatrixShape() {
+Status StackInfo::InferDevMatrixShape() {
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();
   if (stra.empty()) {
@@ -95,7 +95,7 @@ Status PackInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status PackInfo::InferTensorMap() {
+Status StackInfo::InferTensorMap() {
   TensorMap in_tensor_map;
   TensorMap out_tensor_map;
 
@@ -119,7 +119,7 @@ Status PackInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-Status PackInfo::InferMirrorOps() {
+Status StackInfo::InferMirrorOps() {
   mirror_ops_.clear();
   if (inputs_tensor_map_.empty()) {
     MS_LOG(ERROR) << name_ << ": The inputs tensor map is empty";
@@ -147,7 +147,7 @@ Status PackInfo::InferMirrorOps() {
   return SUCCESS;
 }
 
-Status PackInfo::InferTensorInfo() {
+Status StackInfo::InferTensorInfo() {
   if (inputs_shape_.empty() || outputs_shape_.empty() || inputs_tensor_map_.empty() || outputs_tensor_map_.empty()) {
     MS_LOG(ERROR) << name_ << ": Invalid args";
     return FAILED;
@@ -173,15 +173,15 @@ Status PackInfo::InferTensorInfo() {
   return SUCCESS;
 }
 
-void PackInfo::ReComputeBatchSplitFlagList() {
+void StackInfo::ReComputeBatchSplitFlagList() {
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     split_flag_list_[i] = true;
   }
 }
 
-Status PackInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+Status StackInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-Status PackInfo::GenerateStrategies(int64_t stage_id) {
+Status StackInfo::GenerateStrategies(int64_t stage_id) {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Infer attrs failed";
     return FAILED;
@@ -231,7 +231,7 @@ Status PackInfo::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
-Status PackInfo::Init(const StrategyPtr &strategy) {
+Status StackInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -240,7 +240,7 @@ Status PackInfo::Init(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status PackInfo::InitForCostModel(const StrategyPtr &strategy) {
+Status StackInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
