@@ -109,7 +109,7 @@ pip install mmcv=0.2.14
     Note:
     1. To speed up data preprocessing, MindSpore provide a data format named MindRecord, hence the first step is to generate MindRecord files based on COCO2017 dataset before training. The process of converting raw COCO2017 dataset to MindRecord format may take about 4 hours.
     2. For distributed training, a [hccl configuration file](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) with JSON format needs to be created in advance.
-    3. PRETRAINED_CKPT is a resnet50 checkpoint that trained over ImageNet2012.
+    3. PRETRAINED_CKPT is a resnet50 checkpoint that trained over ImageNet2012.you can train it with [resnet50](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/official/cv/resnet) scripts in modelzoo, and use src/convert_checkpoint.py to get the pretrain checkpoint file.
     4. For large models like MaskRCNN, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 
 4. Execute eval script.
@@ -205,6 +205,7 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       └─rpn.py                            # reagion proposal network
     ├─aipp.cfg                            #aipp config file
     ├─config.py                           # network configuration
+    ├─convert_checkpoint.py               # convert resnet50 backbone checkpoint
     ├─dataset.py                          # dataset utils
     ├─lr_schedule.py                      # leanring rate geneatore
     ├─network_define.py                   # network define for maskrcnn
@@ -272,7 +273,7 @@ Usage: bash run_standalone_train.sh [PRETRAINED_MODEL]
 "neg_iou_thr": 0.3,                                                      # negative sample threshold after IOU
 "pos_iou_thr": 0.7,                                                      # positive sample threshold after IOU
 "min_pos_iou": 0.3,                                                      # minimal positive sample threshold after IOU
-"num_bboxes": 245520,                                                    # total bbox numner
+"num_bboxes": 245520,                                                    # total bbox number
 "num_gts": 128,                                                          # total ground truth number
 "num_expected_neg": 256,                                                 # negative sample number
 "num_expected_pos": 128,                                                 # positive sample number
@@ -284,7 +285,7 @@ Usage: bash run_standalone_train.sh [PRETRAINED_MODEL]
 # roi_alignj
 "roi_layer": dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2), # ROIAlign parameters
 "roi_align_out_channels": 256,                                                  # ROIAlign out channels size
-"roi_align_featmap_strides": [4, 8, 16, 32],                                    # stride size for differnt level of ROIAling feature map
+"roi_align_featmap_strides": [4, 8, 16, 32],                                    # stride size for different level of ROIAling feature map
 "roi_align_finest_scale": 56,                                                   # finest scale ofr ROIAlign
 "roi_sample_num": 640,                                                          # sample number in ROIAling layer
 
@@ -499,7 +500,7 @@ Accumulating evaluation results...
 python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` shoule be in ["AIR", "ONNX", "MINDIR"]
+`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
 
 ## Inference Process
 

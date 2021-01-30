@@ -84,7 +84,7 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
         ```
 
     2. If your own dataset is used. **Select dataset to other when run script.**
-        Organize the dataset infomation into a TXT file, each row in the file is as follows:
+        Organize the dataset information into a TXT file, each row in the file is as follows:
 
         ```log
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
@@ -97,10 +97,14 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
 Note: 1.the first run will generate the mindeocrd file, which will take a long time.
-      2.pretrained model is a resnet50 checkpoint that trained over ImageNet2012.
-      3.VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained.
+      2.pretrained model is a resnet50 checkpoint that trained over ImageNet2012.you can train it with [resnet50](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/official/cv/resnet) scripts in modelzoo, and use src/convert_checkpoint.py to get the pretrain model.
+      3.BACKBONE_MODEL is a checkpoint file trained with [resnet50](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/official/cv/resnet) scripts in modelzoo.PRETRAINED_MODEL is a checkpoint file after convert.VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained.
 
 ```shell
+
+# convert checkpoint
+python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
+
 # standalone training
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
@@ -287,7 +291,7 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
 ```
 
-`EXPORT_FORMAT` shoule be in ["AIR", "ONNX", "MINDIR"]
+`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
 
 ## Inference Process
 

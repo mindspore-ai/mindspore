@@ -110,8 +110,8 @@ pip install mmcv=0.2.14
 
     注：
     1. 为加快数据预处理速度，MindSpore提供了MindRecord数据格式。因此，训练前首先需要生成基于COCO2017数据集的MindRecord文件。COCO2017原始数据集转换为MindRecord格式大概需要4小时。
-    2. 进行分布式训练前，需要提前创建JSON格式的[hccl配置文件](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)。
-    3. PRETRAINED_CKPT是一个ResNet50检查点，通过ImageNet2012训练。
+    2. 进行分布式训练前，需要提前创建JSON格式的[hccl配置文件](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/official/cv/resnet)。
+    3. PRETRAINED_CKPT是一个ResNet50检查点，通过ImageNet2012训练。你可以使用ModelZoo中 [resnet50](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/official/cv/resnet) 脚本来训练, 然后使用src/convert_checkpoint.py把训练好的resnet50的权重文件转换为可加载的权重文件。
 
 4. 执行评估脚本。
    训练结束后，按照如下步骤启动评估：
@@ -199,6 +199,7 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       └─rpn.py                            # 区域候选网络
     ├─aipp.cfg                            #aipp 配置文件
     ├─config.py                           # 网络配置
+    ├─convert_checkpoint.py               # 转换预训练checkpoint文件
     ├─dataset.py                          # 数据集工具
     ├─lr_schedule.py                      # 学习率生成器
     ├─network_define.py                   # MaskRCNN的网络定义
