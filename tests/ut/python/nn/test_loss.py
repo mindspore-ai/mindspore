@@ -97,8 +97,7 @@ def test_dice_loss():
     y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
     y = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
     # Pass the test if no error is reported
-    loss(y_pred, y).asnumpy()
-
+    loss(y_pred, y)
 
 
 def test_dice_loss_check_shape():

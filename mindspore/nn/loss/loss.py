@@ -310,11 +310,10 @@ class DiceLoss(_Loss):
     Args:
         smooth (float): A term added to the denominator to improve numerical stability. Should be greater than 0.
                         Default: 1e-5.
-        threshold (float): A threshold, which is used to compare with the input tensor. Default: 0.5.
 
     Inputs:
-        - **y_pred** (Tensor) - Tensor of shape (N, C).
-        - **y** (Tensor) - Tensor of shape (N, C).
+        - **y_pred** (Tensor) - Tensor of shape (N, ...).
+        - **y** (Tensor) - Tensor of shape (N, ...).
 
     Outputs:
         Tensor, a tensor of shape with the per-example sampled Dice losses.
@@ -323,32 +322,30 @@ class DiceLoss(_Loss):
         ``Ascend``
 
     Examples:
-        >>> loss = nn.Diceloss(smooth=1e-5, threshold=0.5)
+        >>> loss = nn.DiceLoss(smooth=1e-5)
         >>> y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
         >>> y = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
         >>> output = loss(y_pred, y)
         >>> print(output)
-        [0.77777076]
+        [0.7953220862819745]
+
+    Raises:
+        ValueError: If the dimensions are different.
+        TypeError: If the type of inputs are not Tensor.
     """
-    def __init__(self, smooth=1e-5, threshold=0.5):
+    def __init__(self, smooth=1e-5):
         super(DiceLoss, self).__init__()
         self.smooth = validator.check_positive_float(smooth, "smooth")
-        self.threshold = validator.check_value_type("threshold", threshold, [float])
         self.reshape = P.Reshape()
 
     def construct(self, logits, label):
         _check_shape(logits.shape, label.shape)
-        logits = self.cast((logits > self.threshold), mstype.float32)
-        label = self.cast(label, mstype.float32)
-        dim = label.shape
-        pred_flat = self.reshape(logits, (dim[0], -1))
-        true_flat = self.reshape(label, (dim[0], -1))
+        intersection = self.reduce_sum(self.mul(logits.view(-1), label.view(-1)))
+        unionset = self.reduce_sum(self.mul(logits.view(-1), logits.view(-1))) + \
+                   self.reduce_sum(self.mul(label.view(-1), label.view(-1)))
 
-        intersection = self.reduce_sum((pred_flat * true_flat), 1)
-        unionset = self.reduce_sum(pred_flat, 1) + self.reduce_sum(true_flat, 1)
-
-        dice = (2 * intersection + self.smooth) / (unionset + self.smooth)
-        dice_loss = 1 - self.reduce_sum(dice) / dim[0]
+        single_dice_coeff = (2 * intersection) / (unionset + self.smooth)
+        dice_loss = 1 - single_dice_coeff / label.shape[0]
 
         return dice_loss
 

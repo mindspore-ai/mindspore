@@ -29,12 +29,12 @@ def test_classification_dice():
     metric.update(x, y)
     dice = metric.eval()
 
-    assert math.isclose(dice, 0.22222926, abs_tol=0.001)
+    assert math.isclose(dice, 0.20467791371802546, abs_tol=0.001)
 
 
 def test_dice_update1():
     x = Tensor(np.array([[0.2, 0.5, 0.7], [0.3, 0.1, 0.2], [0.9, 0.6, 0.5]]))
-    metric = Dice(1e-5, 0.5)
+    metric = Dice(1e-5)
     metric.clear()
 
     with pytest.raises(ValueError):
@@ -42,8 +42,8 @@ def test_dice_update1():
 
 
 def test_dice_runtime():
-    metric = Dice(1e-5, 0.8)
+    metric = Dice(1e-5)
     metric.clear()
 
-    with pytest.raises(TypeError):
+    with pytest.raises(RuntimeError):
         metric.eval()
