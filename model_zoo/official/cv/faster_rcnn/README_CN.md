@@ -100,10 +100,14 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 注意：
 
 1. 第一次运行生成MindRecord文件，耗时较长。
-2. 预训练模型是在ImageNet2012上训练的ResNet-50检查点。
-3. VALIDATION_JSON_FILE为标签文件。CHECKPOINT_PATH是训练后的检查点文件。
+2. 预训练模型是在ImageNet2012上训练的ResNet-50检查点。你可以使用ModelZoo中 [resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet) 脚本来训练, 然后使用src/convert_checkpoint.py把训练好的resnet50的权重文件转换为可加载的权重文件。
+3. BACKBONE_MODEL是通过modelzoo中的[resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet)脚本训练的。PRETRAINED_MODEL是经过转换后的权重文件。VALIDATION_JSON_FILE为标签文件。CHECKPOINT_PATH是训练后的检查点文件。
 
 ```shell
+
+# 权重文件转换
+python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
+
 # 单机训练
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
