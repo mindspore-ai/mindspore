@@ -523,7 +523,6 @@ CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr 
 void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs;
-  std::vector<std::string> new_input_names;
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
   MS_EXCEPTION_IF_NULL(primitive);
   primitive = primitive->Clone();
@@ -550,17 +549,12 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
       need_update = true;
     } else {
       new_inputs.push_back(input_node);
-      if (i < input_names_vec.size()) {
-        new_input_names.push_back(input_names_vec[i]);
-      }
     }
   }
   if (need_update) {
     // Update cnode's inputs
     new_inputs[0] = NewValueNode(primitive);
     cnode->set_inputs(new_inputs);
-    // Update cnode's input_names attr
-    primitive->set_attr(kAttrInputNames, MakeValue(new_input_names));
   }
 }
 
