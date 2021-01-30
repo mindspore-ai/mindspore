@@ -295,7 +295,7 @@ class Lookup(TextTensorOperation):
     @check_lookup
     def __init__(self, vocab, unknown_token=None, data_type=mstype.int32):
         self.vocab = vocab
-        self.unknown_token = replace_none(unknown_token, '')
+        self.unknown_token = unknown_token
         self.data_type = data_type
 
     def parse(self):
