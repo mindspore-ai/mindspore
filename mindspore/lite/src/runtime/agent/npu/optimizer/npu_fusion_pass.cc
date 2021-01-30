@@ -141,6 +141,9 @@ void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
 
 void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
   auto tensor = cur_kernel->out_tensors()[0];
+  tensor->set_format(schema::Format_NCHW);
+  auto nhwc_shape = tensor->shape();
+  tensor->set_shape({nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]});
   for (auto out_kernel : cur_kernel->out_kernels()) {
     auto out_tensor = out_kernel->out_tensors()[0];
     if (out_kernel->out_kernels().empty()) {

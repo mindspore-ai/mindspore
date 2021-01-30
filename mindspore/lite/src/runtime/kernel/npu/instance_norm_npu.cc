@@ -54,6 +54,7 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
                                    lite::ConverterToNPUDataType(inputs[1]->data_type()));
   gamma_tensor->SetTensorDesc(gamma_tensor_desc);
   gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[1]->data_c()), inputs[1]->Size());
+  gamma->set_attr_value(gamma_tensor);
   op_->set_input_gamma(*gamma);
 
   auto beta = new (std::nothrow) hiai::op::Const(name_ + "_beta");
@@ -71,6 +72,7 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
                                   lite::ConverterToNPUDataType(inputs[2]->data_type()));
   beta_tensor->SetTensorDesc(beta_tensor_desc);
   beta_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[2]->data_c()), inputs[2]->Size());
+  beta->set_attr_value(beta_tensor);
   op_->set_input_beta(*beta);
   op_->set_attr_epsilon(instance_norm_param_->epsilon_);
   return RET_OK;

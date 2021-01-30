@@ -538,6 +538,9 @@ LiteSession::~LiteSession() {
     MS_LOG(ERROR) << "Not support multi-threading";
     return;
   }
+  for (auto *kernel : kernels_) {
+    delete kernel;
+  }
   for (size_t i = 0; i < tensors_.size(); i++) {
     auto *tensor = tensors_.at(i);
     MS_ASSERT(tensor != nullptr);
@@ -552,9 +555,6 @@ LiteSession::~LiteSession() {
   output_node_map_.clear();
   output_tensor_map_.clear();
   input_vec_.clear();
-  for (auto *kernel : kernels_) {
-    delete kernel;
-  }
   delete this->context_;
   delete this->executor_;
   this->executor_ = nullptr;
