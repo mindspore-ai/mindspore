@@ -378,6 +378,8 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetOutputsFormat({kOpFormat_NCHW, kOpFormat_NCHW, kOpFormat_NHWC, kOpFormat_FRAC_NZ});
+  builder.SetOutputsDeviceType({kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id(),
+                                kFloat32->type_id()});
   d_kernel_info->set_select_kernel_build_info(builder.Build());
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 0)[2], 224);
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 1)[0], 2);
@@ -409,6 +411,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
   MS_EXCEPTION_IF_NULL(d_kernel_info);
   KernelBuildInfoBuilder builder;
   builder.SetInputsFormat({kOpFormat_NCHW, kOpFormat_NCHW, kOpFormat_NHWC});
+  builder.SetInputsDeviceType({kFloat32->type_id(), kFloat32->type_id(), kFloat32->type_id()});
   d_kernel_info->set_select_kernel_build_info(builder.Build());
   EXPECT_EQ(AnfAlgo::GetInputDeviceShape(add, 0)[2], 224);
   EXPECT_EQ(AnfAlgo::GetInputDeviceShape(add, 1)[1], 32);
@@ -600,7 +603,7 @@ TEST_F(AnfRuntimeAlgorithmTest, SetOutputInferTypeAndShape) {
   AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, add.get());
   EXPECT_EQ(AnfAlgo::GetOutputInferDataType(add, 0), kFloat32->type_id());
   EXPECT_EQ(AnfAlgo::GetOutputInferShape(add, 0).size(), 4);
-  // set mutiple input
+  // set multiple input
   std::vector<TypeId> mutiple_types = {kFloat16->type_id(), kFloat32->type_id(), kFloat64->type_id()};
   std::vector<std::vector<size_t>> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
   AnfAlgo::SetOutputInferTypeAndShape(mutiple_types, mutiple_shapes, add.get());
@@ -621,7 +624,7 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyAbstract) {
   std::vector<TypeId> single_types = {kFloat32->type_id()};
   std::vector<std::vector<size_t>> single_shapes = {{2, 32, 224, 224}};
   AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, first_add.get());
-  // set mutiple input
+  // set multiple input
   std::vector<AnfNodePtr> second_inputs;
   second_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto second_add = kernel_graph->NewCNode(second_inputs);
