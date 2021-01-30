@@ -34,7 +34,9 @@
 #include "backend/optimizer/common/helper.h"
 #include "utils/ms_context.h"
 #include "debug/common.h"
+#ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
+#endif
 #include "common/thread_pool.h"
 #include "profiler/device/common/memory_profiling.h"
 

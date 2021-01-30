@@ -78,8 +78,17 @@ void DumpIRProto(const FuncGraphPtr &, const std::string &) {
 void GraphRecorder::Export() {
   bool save_flag = false;
   if (filename_.empty()) {
-    filename_ = directory_ + module_ + "_" + tag_ + "_" + timestamp_;
+    filename_ = module_ + "_" + tag_ + "_" + timestamp_;
   }
+  if (filename_.length() > 255) {  // 255: filename maximum length
+    filename_ = filename_.substr(0, 255);
+  }
+  filename_ = directory_ + filename_;
+  if (filename_.size() + 3 > PATH_MAX) {  // 3: file format length
+    MS_LOG(ERROR) << "File path " << filename_ << " is too long.";
+    return;
+  }
+
   if (graph_type_.find(".dat") != std::string::npos) {
     save_flag = true;
     AnfExporter exporter(std::to_string(id_));
