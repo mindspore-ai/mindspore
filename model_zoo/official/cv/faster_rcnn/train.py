@@ -19,9 +19,10 @@ import os
 import time
 import argparse
 import ast
+import numpy as np
 
 import mindspore.common.dtype as mstype
-from mindspore import context, Tensor
+from mindspore import context, Tensor, Parameter
 from mindspore.communication.management import init
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint, TimeMonitor
 from mindspore.train import Model
@@ -116,6 +117,9 @@ if __name__ == '__main__':
         for item in list(param_dict.keys()):
             if not item.startswith('backbone'):
                 param_dict.pop(item)
+        for key, value in param_dict.items():
+            tensor = value.asnumpy().astype(np.float32)
+            param_dict[key] = Parameter(tensor, key)
         load_param_into_net(net, param_dict)
 
     loss = LossNet()

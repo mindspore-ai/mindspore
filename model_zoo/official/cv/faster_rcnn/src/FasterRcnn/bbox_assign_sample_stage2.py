@@ -83,8 +83,8 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.tile = P.Tile()
 
         # Check
-        self.check_gt_one = Tensor(np.array(-1 * np.ones((self.num_gts, 4)), dtype=np.float16))
-        self.check_anchor_two = Tensor(np.array(-2 * np.ones((self.num_bboxes, 4)), dtype=np.float16))
+        self.check_gt_one = Tensor(np.array(-1 * np.ones((self.num_gts, 4)), dtype=np.float32))
+        self.check_anchor_two = Tensor(np.array(-2 * np.ones((self.num_bboxes, 4)), dtype=np.float32))
 
         # Init tensor
         self.assigned_gt_inds = Tensor(np.array(-1 * np.ones(num_bboxes), dtype=np.int32))
@@ -94,18 +94,18 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.assigned_pos_ones = Tensor(np.array(np.ones(self.num_expected_pos), dtype=np.int32))
 
         self.gt_ignores = Tensor(np.array(-1 * np.ones(self.num_gts), dtype=np.int32))
-        self.range_pos_size = Tensor(np.arange(self.num_expected_pos).astype(np.float16))
+        self.range_pos_size = Tensor(np.arange(self.num_expected_pos).astype(np.float32))
         self.check_neg_mask = Tensor(np.array(np.ones(self.num_expected_neg - self.num_expected_pos), dtype=np.bool))
-        self.bboxs_neg_mask = Tensor(np.zeros((self.num_expected_neg, 4), dtype=np.float16))
+        self.bboxs_neg_mask = Tensor(np.zeros((self.num_expected_neg, 4), dtype=np.float32))
         self.labels_neg_mask = Tensor(np.array(np.zeros(self.num_expected_neg), dtype=np.uint8))
 
         self.reshape_shape_pos = (self.num_expected_pos, 1)
         self.reshape_shape_neg = (self.num_expected_neg, 1)
 
-        self.scalar_zero = Tensor(0.0, dtype=mstype.float16)
-        self.scalar_neg_iou_thr = Tensor(self.neg_iou_thr, dtype=mstype.float16)
-        self.scalar_pos_iou_thr = Tensor(self.pos_iou_thr, dtype=mstype.float16)
-        self.scalar_min_pos_iou = Tensor(self.min_pos_iou, dtype=mstype.float16)
+        self.scalar_zero = Tensor(0.0, dtype=mstype.float32)
+        self.scalar_neg_iou_thr = Tensor(self.neg_iou_thr, dtype=mstype.float32)
+        self.scalar_pos_iou_thr = Tensor(self.pos_iou_thr, dtype=mstype.float32)
+        self.scalar_min_pos_iou = Tensor(self.min_pos_iou, dtype=mstype.float32)
 
     def construct(self, gt_bboxes_i, gt_labels_i, valid_mask, bboxes, gt_valids):
         gt_bboxes_i = self.select(self.cast(self.tile(self.reshape(self.cast(gt_valids, mstype.int32), \
@@ -149,12 +149,12 @@ class BboxAssignSampleForRcnn(nn.Cell):
         # Get pos index
         pos_index, valid_pos_index = self.random_choice_with_mask_pos(self.greater(assigned_gt_inds5, 0))
 
-        pos_check_valid = self.cast(self.greater(assigned_gt_inds5, 0), mstype.float16)
+        pos_check_valid = self.cast(self.greater(assigned_gt_inds5, 0), mstype.float32)
         pos_check_valid = self.sum_inds(pos_check_valid, -1)
         valid_pos_index = self.less(self.range_pos_size, pos_check_valid)
         pos_index = pos_index * self.reshape(self.cast(valid_pos_index, mstype.int32), (self.num_expected_pos, 1))
 
-        num_pos = self.sum_inds(self.cast(self.logicalnot(valid_pos_index), mstype.float16), -1)
+        num_pos = self.sum_inds(self.cast(self.logicalnot(valid_pos_index), mstype.float32), -1)
         valid_pos_index = self.cast(valid_pos_index, mstype.int32)
         pos_index = self.reshape(pos_index, self.reshape_shape_pos)
         valid_pos_index = self.reshape(valid_pos_index, self.reshape_shape_pos)
