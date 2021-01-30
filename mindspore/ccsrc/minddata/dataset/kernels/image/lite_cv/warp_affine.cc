@@ -24,7 +24,6 @@
 #define BITS1 15
 #define TAB_SZ (1 << BITS)
 #define TAB_SZ2 (TAB_SZ * TAB_SZ)
-#define U32TOU8CAST(value) ((uint8_t)std::min(value, (uint32_t)UCHAR_MAX))
 #define FLOATTOSHORT(value) (IntCastShort(round(value)))
 #define REMAP_SCALE (1 << 15)
 #define INTTOUCHAR(v) ((uint8_t)((unsigned)v <= UCHAR_MAX ? v : v > 0 ? UCHAR_MAX : 0))

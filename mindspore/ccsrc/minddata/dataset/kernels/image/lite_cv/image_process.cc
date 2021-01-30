@@ -21,19 +21,17 @@
 #include <cmath>
 #include <vector>
 
-#ifdef ENABLE_ANDROID
-#if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || defined(_M_ARM64)
-#define USE_NEON
+#ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#endif
 
-#ifdef PLATFORM_ARM64
+#ifdef ENABLE_NEON
 #define R2GRAY 9798
 #define G2GRAY 19235
 #define B2GRAY 3735
 #define GRAYSHIFT 15
 #define GRAYSHIFT_DELTA (1 << (GRAYSHIFT - 1))
+#define U32TOU8CAST(value) ((uint8_t)std::min(value, (uint32_t)UCHAR_MAX))
 #else
 #define R2GRAY 77
 #define G2GRAY 150
@@ -397,7 +395,7 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
   return true;
 }
 
-#ifdef PLATFORM_ARM64
+#ifdef ENABLE_NEON
 static uint8x8_t RGBToGray(const uint16x8_t &r_value, const uint16x8_t &g_value, const uint16x8_t &b_value,
                            const uint16x4_t &r2y_value, const uint16x4_t &g2y_value, const uint16x4_t &b2y_value) {
   uint32x4_t dst0_value = vmull_u16(vget_low_u16(g_value), g2y_value);
@@ -478,7 +476,7 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
     }
     unsigned char *ptr = mat;
     const unsigned char *data_ptr = data;
-#ifdef PLATFORM_ARM64
+#ifdef ENABLE_NEON
     ConvertRGBAToGRAY_Neon(data_ptr, ptr, w, h);
 #else
     for (int y = 0; y < h; y++) {
@@ -547,7 +545,7 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
   float *dst_ptr = reinterpret_cast<float *>(dst.data_ptr_);
   int64_t total_size = src.height_ * src.width_ * src.channel_;
   int64_t x = 0;
-#ifdef USE_NEON
+#ifdef ENABLE_NEON
   float32x4_t v_scale = vdupq_n_f32(static_cast<float>(scale));
   float32x4_t v_c = vdupq_n_f32(0.0f);
   const int64_t step = 16;
