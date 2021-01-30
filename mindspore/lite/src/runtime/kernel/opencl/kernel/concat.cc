@@ -168,8 +168,9 @@ int ConcatOpenCLKernel::ConvertWeightToTensor() {
     if (in_tensor->IsConst()) {
       std::vector<char> weight(in_shape.Image2DSize, 0);
       bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
-      PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16, fp16_enable, in_shape);
-      size_t dtype = fp16_enable ? CL_HALF_FLOAT : CL_FLOAT;
+      PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16,
+                      fp16_enable && in_tensor->data_type() != kNumberTypeInt32, in_shape);
+      size_t dtype = fp16_enable && in_tensor->data_type() != kNumberTypeInt32 ? CL_HALF_FLOAT : CL_FLOAT;
       ImageSize img_size{in_shape.width, in_shape.height, dtype};
       auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
       weight_ptrs_.push_back(weight_ptr_);
@@ -206,7 +207,7 @@ int ConcatOpenCLKernel::Prepare() {
   std::string source = concat_source;
   std::string program_name = "Concat";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, {}, out_tensors_[0]->data_type());
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
   SetGlobalLocal();

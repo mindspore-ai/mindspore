@@ -172,7 +172,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       return RET_ERROR;
     }
     static int index = 0;
-    in_convert_op->set_name("ToFormat_" + std::to_string(index));
+    in_convert_op->set_name("ToFormat_" + std::to_string(index++));
 
     ReplaceOutTensorAndKernelToConvert(in_tensor, in_kernels.at(i), new_tensor, in_convert_op, mem_type);
 
@@ -318,6 +318,14 @@ bool OpenCLSubGraph::IsSubGraphInferShapeDone() {
 }
 
 int OpenCLSubGraph::Prepare() {
+  for (const auto tensor : in_tensors_) {
+    MS_ASSERT(tensor);
+    tensor->set_allocator(allocator_);
+  }
+  for (const auto tensor : out_tensors_) {
+    MS_ASSERT(tensor);
+    tensor->set_allocator(allocator_);
+  }
   executor_ = new (std::nothrow) lite::opencl::OpenCLExecutor();
   if (executor_ == nullptr) {
     MS_LOG(ERROR) << "Create OpenCLExecutor fail";

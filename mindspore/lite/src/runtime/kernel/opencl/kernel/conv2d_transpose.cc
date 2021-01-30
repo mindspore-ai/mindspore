@@ -42,10 +42,6 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  if (param->pad_l_ != param->pad_r_ || param->pad_u_ != param->pad_d_) {
-    MS_LOG(ERROR) << "only support symmetric padding";
-    return RET_ERROR;
-  }
   if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
     MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
@@ -102,8 +98,8 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
   int co = out_tensors_[0]->shape()[3];
   int kh = param->kernel_h_;
   int kw = param->kernel_w_;
-  int pad_h = param->pad_l_;
-  int pad_w = param->pad_u_;
+  int pad_h = param->pad_u_;
+  int pad_w = param->pad_l_;
   int stride_h = param->stride_h_;
   int stride_w = param->stride_w_;
   int oh = out_tensors_[0]->shape()[1];
