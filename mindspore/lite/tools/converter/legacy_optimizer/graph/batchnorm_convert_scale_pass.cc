@@ -74,9 +74,8 @@ STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std:
     MS_LOG(ERROR) << "new scaleParam failed";
     return RET_ERROR;
   }
-  int32_t axis =
-    (graph->allTensors.at(bnNode->inputIndex.at(1))->format == Format_NHWC) ? (int32_t)NHWC_C : (int32_t)NCHW_C;
-  scaleParam->axis = axis;
+  //  after fusion bn must NHWC
+  scaleParam->axis = -1;
   bnNode->primitive->value.value = scaleParam.release();
   auto input0 = bnNode->inputIndex.at(0);
   bnNode->inputIndex.clear();
