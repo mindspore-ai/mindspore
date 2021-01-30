@@ -49,7 +49,9 @@ class EnvConfigParser {
   void ParseRdrSetting(const nlohmann::json &content);
 
   bool CheckJsonStringType(const nlohmann::json &content, const std::string &setting_key, const std::string &key);
-  auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &setting_key, const std::string &key);
+  std::optional<nlohmann::detail::iter_impl<const nlohmann::json>> CheckJsonKeyExist(const nlohmann::json &content,
+                                                                                     const std::string &setting_key,
+                                                                                     const std::string &key);
 
   void ParseRdrPath(const nlohmann::json &content);
   void ParseRdrEnable(const nlohmann::json &content);

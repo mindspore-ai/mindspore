@@ -38,12 +38,13 @@ bool EnvConfigParser::CheckJsonStringType(const nlohmann::json &content, const s
   return true;
 }
 
-auto EnvConfigParser::CheckJsonKeyExist(const nlohmann::json &content, const std::string &setting_key,
-                                        const std::string &key) {
+std::optional<nlohmann::detail::iter_impl<const nlohmann::json>> EnvConfigParser::CheckJsonKeyExist(
+  const nlohmann::json &content, const std::string &setting_key, const std::string &key) {
   auto iter = content.find(key);
   if (iter == content.end()) {
     MS_LOG(WARNING) << "Check json failed, '" << key << "' not found in '" << setting_key << "'."
                     << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
+    return std::nullopt;
   }
   return iter;
 }
@@ -104,10 +105,14 @@ void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
   }
 
   auto rdr_enable = CheckJsonKeyExist(*rdr_setting, kRdrSettings, kEnable);
-  auto rdr_path = CheckJsonKeyExist(*rdr_setting, kRdrSettings, kPath);
+  if (rdr_enable.has_value()) {
+    ParseRdrEnable(**rdr_enable);
+  }
 
-  ParseRdrEnable(*rdr_enable);
-  ParseRdrPath(*rdr_path);
+  auto rdr_path = CheckJsonKeyExist(*rdr_setting, kRdrSettings, kPath);
+  if (rdr_path.has_value()) {
+    ParseRdrPath(**rdr_path);
+  }
 }
 
 void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
