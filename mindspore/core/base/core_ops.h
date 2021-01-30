@@ -239,6 +239,7 @@ inline const PrimitivePtr kPrimSparseSoftmaxCrossEntropyWithLogits =
   std::make_shared<Primitive>("SparseSoftmaxCrossEntropyWithLogits");
 inline const PrimitivePtr kPrimMomentum = std::make_shared<Primitive>("Momentum");
 inline const PrimitivePtr kPrimApplyMomentum = std::make_shared<Primitive>("ApplyMomentum");
+inline const PrimitivePtr kPrimApplyFtrl = std::make_shared<Primitive>("ApplyFtrl");
 inline const PrimitivePtr kPrimLayerNorm = std::make_shared<Primitive>("LayerNorm");
 inline const PrimitivePtr kPrimLrn = std::make_shared<Primitive>("Lrn");
 inline const PrimitivePtr kPrimLayerNormGrad = std::make_shared<Primitive>("LayerNormGrad");
@@ -452,7 +453,7 @@ inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_
 inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");
 inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
 
-// Other primitve not used by backend but used in core;
+// Other primitive not used by backend but used in core;
 inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
 inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J");
 

@@ -308,7 +308,6 @@ def _concat_grad_uniform(input_shapes, input_nums):
 def get_bprop_concat(self):
     """Generate bprop for Concat"""
     axis = self.axis
-    is_ascend = context.get_context('device_target') == "Ascend"
 
     def bprop(x, out, dout):
         dx = ()
@@ -318,7 +317,7 @@ def get_bprop_concat(self):
         for i in range(input_nums):
             input_shapes = input_shapes + (shape_op(x[i]),)
         is_uniform = _concat_grad_uniform(input_shapes, input_nums)
-        if is_uniform and is_ascend:
+        if is_uniform:
             dx = P.Split(axis, input_nums)(dout)
         else:
             for i in range(input_nums):
