@@ -183,7 +183,7 @@ For example, you can run the shell command below to launch the training procedur
 sh scripts/train_standalone.sh 0 /data/dataset/imagenet/ scripts/pretrian/ 0
 ```
 
-If eval_each_epoch is 1, it will evaluate after each epoch and save the parameters with the max accurracy. But in this case, the time of one epoch will be longer.
+If eval_each_epoch is 1, it will evaluate after each epoch and save the parameters with the max accuracy. But in this case, the time of one epoch will be longer.
 
 If eval_each_epoch is 0, it will save parameters every some epochs instead of evaluating in the training process.
 
