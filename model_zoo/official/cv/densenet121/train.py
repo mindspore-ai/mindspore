@@ -39,10 +39,6 @@ from src.lr_scheduler import MultiStepLR, CosineAnnealingLR
 from src.utils.logging import get_logger
 from src.config import config
 
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
-                    device_target="Davinci", save_graphs=False, device_id=devid)
-
 set_seed(1)
 
 class BuildTrainNetwork(nn.Cell):
@@ -124,6 +120,9 @@ def parse_args(cloud_args=None):
     # roma obs
     parser.add_argument('--train_url', type=str, default="", help='train url')
 
+    # platform
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='device target')
+
     args, _ = parser.parse_known_args()
     args = merge_args(args, cloud_args)
     args.image_size = config.image_size
@@ -172,6 +171,13 @@ def train(cloud_args=None):
     """training process"""
     args = parse_args(cloud_args)
 
+    context.set_context(mode=context.GRAPH_MODE, enable_auto_mixed_precision=True,
+                        device_target=args.device_target, save_graphs=False)
+
+    if args.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
+
     # init distributed
     if args.is_distributed:
         init()
@@ -181,7 +187,7 @@ def train(cloud_args=None):
     if args.is_dynamic_loss_scale == 1:
         args.loss_scale = 1  # for dynamic loss scale can not set loss scale in momentum opt
 
-    # select for master rank save ckpt or all rank save, compatiable for model parallel
+    # select for master rank save ckpt or all rank save, compatible for model parallel
     args.rank_save_ckpt_flag = 0
     if args.is_save_on_master:
         if args.rank == 0:
@@ -269,7 +275,13 @@ def train(cloud_args=None):
 
     context.set_auto_parallel_context(parallel_mode=parallel_mode, device_num=args.group_size,
                                       gradients_mean=True)
-    model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager, amp_level="O3")
+
+    if args.device_target == 'Ascend':
+        model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager, amp_level="O3")
+    elif args.device_target == 'GPU':
+        model = Model(train_net, optimizer=opt, metrics=None, loss_scale_manager=loss_scale_manager, amp_level="O0")
+    else:
+        raise ValueError("Unsupported device target.")
 
     # checkpoint save
     progress_cb = ProgressMonitor(args)

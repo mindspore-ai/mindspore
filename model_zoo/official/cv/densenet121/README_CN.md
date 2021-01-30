@@ -63,8 +63,8 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 
 # 环境要求
 
-- 硬件（Ascend）
-- 准备Ascend AI处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+- 硬件（Ascend/GPU）
+- 准备Ascend或GPU处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 - 框架
 - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
@@ -74,6 +74,8 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 # 快速入门
 
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
+
+- Ascend处理器环境运行
 
   ```python
   # 训练示例
@@ -94,6 +96,22 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
 
   [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)
 
+- GPU处理器环境运行
+
+  ```python
+  # 训练示例
+  export CUDA_VISIBLE_DEVICES=0
+  python train.py --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+
+  # 分布式训练示例
+  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [DATASET_PATH]
+
+  # 评估示例
+  python eval.py --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  OR
+  sh run_distribute_eval_gpu.sh 1 0 [DATASET_PATH] [CHECKPOINT_PATH]
+  ```
+
 # 脚本说明
 
 ## 脚本及样例代码
@@ -105,7 +123,9 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
         ├── README.md                    // DenseNet-121相关说明
         ├── scripts
         │   ├── run_distribute_train.sh             // Ascend分布式shell脚本
+        │   ├── run_distribute_train_gpu.sh             // GPU分布式shell脚本
         │   ├── run_distribute_eval.sh              // Ascend评估shell脚本
+        │   ├── run_distribute_eval_gpu.sh              // GPU评估shell脚本
         ├── src
         │   ├── datasets             // 数据集处理函数
         │   ├── losses
@@ -176,6 +196,15 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
   ...
   ```
 
+- GPU处理器环境运行
+
+  ```python
+  export CUDA_VISIBLE_DEVICES=0
+  python train.py --data_dir=[DATASET_PATH] --is_distributed=0 --device_target='GPU' > train.log 2>&1 &
+  ```
+
+  以上python命令在后台运行，在`output/202x-xx-xx_time_xx_xx/`目录下生成日志和模型检查点。
+
 ### 分布式训练
 
 - Ascend处理器环境运行
@@ -196,6 +225,15 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
   ...
   ...
   ```
+
+- GPU处理器环境运行
+
+  ```bash
+  cd scripts
+  sh run_distribute_train_gpu.sh 8 0,1,2,3,4,5,6,7 [DATASET_PATH]
+  ```
+
+  上述shell脚本将在后台进行分布式训练。可以通过文件`train[X]/output/202x-xx-xx_time_xx_xx_xx/`查看结果日志和模型检查点。
 
 ## 评估过程
 
@@ -218,35 +256,52 @@ DenseNet-121构建在4个密集连接块上。各个密集块中，每个层都�
   2020-08-24 09:21:50,551:INFO:after allreduce eval: top5_correct=46224, tot=49920, acc=92.60%
   ```
 
+- GPU处理器环境
+
+  运行以下命令进行评估。
+
+  ```eval
+  python eval.py --data_dir=[DATASET_PATH] --device_target='GPU' --pretrained=[CHECKPOINT_PATH] > eval.log 2>&1 &
+  OR
+  sh run_distribute_eval_gpu.sh 1 0 [DATASET_PATH] [CHECKPOINT_PATH]
+  ```
+
+  上述python命令在后台运行。可以通过“eval/eval.log”文件查看结果。测试数据集的准确率如下：
+
+  ```log
+  2021-02-04 14:20:50,551:INFO:after allreduce eval: top1_correct=37637, tot=49984, acc=75.30%
+  2021-02-04 14:20:50,551:INFO:after allreduce eval: top5_correct=46370, tot=49984, acc=92.77%
+  ```
+
 # 模型描述
 
 ## 性能
 
 ### 训练准确率结果
 
-| 参数 | DenseNet |
-| ------------------- | --------------------------- |
-| 模型版本 | Inception V1 |
-| 资源 | Ascend 910 |
-| 上传日期 | 2020/9/15 |
-| MindSpore版本 | 1.0.0 |
-| 数据集 | ImageNet |
-| 轮次 | 120 |
-| 输出 | 概率 |
-| 训练性能 | Top1：75.13%； Top5：92.57% |
+| 参数                | Ascend                     | GPU                        |
+| ------------------- | -------------------------- | -------------------------- |
+| 模型版本            | Inception V1               | Inception V1               |
+| 资源                | Ascend 910                 | Tesla V100-PCIE            |
+| 上传日期            | 2020/9/15                  | 2021/2/4                   |
+| MindSpore版本       | 1.0.0                      | 1.1.1                      |
+| 数据集              | ImageNet                   | ImageNet                   |
+| 轮次                | 120                        | 120                        |
+| 输出                | 概率                       | 概率                       |
+| 训练性能            | Top1：75.13%；Top5：92.57% | Top1：75.30%; Top5：92.77% |
 
 ### 训练性能结果
 
-| 参数 | DenseNet |
-| ------------------- | --------------------------- |
-| 模型版本 | Inception V1 |
-| 资源 | Ascend 910 |
-| 上传日期 | 2020/9/15 |
-| MindSpore版本 | 1.0.0 |
-| 数据集 | ImageNet |
-| batch_size | 32 |
-| 输出 | 概率 |
-| 速度 | 单卡：760 img/s；8卡：6000 img/s |
+| 参数                | Ascend                           | GPU                              |
+| ------------------- | -------------------------------- | -------------------------------- |
+| 模型版本            | Inception V1                     | Inception V1                     |
+| 资源                | Ascend 910                       | Tesla V100-PCIE                  |
+| 上传日期            | 2020/9/15                        | 2021/2/4                         |
+| MindSpore版本       | 1.0.0                            | 1.1.1                            |
+| 数据集              | ImageNet                         | ImageNet                         |
+| batch_size          | 32                               | 32                               |
+| 输出                | 概率                             | 概率                             |
+| 速度                | 单卡：760 img/s；8卡：6000 img/s | 单卡：161 img/s；8卡：1288 img/s |
 
 # 随机情况说明
 

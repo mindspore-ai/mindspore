@@ -38,10 +38,6 @@ from src.datasets import classification_dataset
 from src.network import DenseNet121
 from src.config import config
 
-devid = int(os.getenv('DEVICE_ID'))
-context.set_context(mode=context.GRAPH_MODE, device_target="Davinci",
-                    save_graphs=True, device_id=devid)
-
 
 class ParameterReduce(nn.Cell):
     """
@@ -83,6 +79,9 @@ def parse_args(cloud_args=None):
     # roma obs
     parser.add_argument('--train_url', type=str, default="", help='train url')
 
+    # platform
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='device target')
+
     args, _ = parser.parse_known_args()
     args = merge_args(args, cloud_args)
 
@@ -114,12 +113,54 @@ def merge_args(args, cloud_args):
                 args_dict[key] = val
     return args
 
+def generate_results(model, rank, group_size, top1_correct, top5_correct, img_tot):
+    model_md5 = model.replace('/', '')
+    tmp_dir = '../cache'
+    if not os.path.exists(tmp_dir):
+        os.mkdir(tmp_dir)
+
+    top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, rank, model_md5)
+    top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, rank, model_md5)
+    img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, rank, model_md5)
+    np.save(top1_correct_npy, top1_correct)
+    np.save(top5_correct_npy, top5_correct)
+    np.save(img_tot_npy, img_tot)
+    while True:
+        rank_ok = True
+        for other_rank in range(group_size):
+            top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+            top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+            img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+            if not os.path.exists(top1_correct_npy) or not os.path.exists(top5_correct_npy) \
+               or not os.path.exists(img_tot_npy):
+                rank_ok = False
+        if rank_ok:
+            break
+
+    top1_correct_all = 0
+    top5_correct_all = 0
+    img_tot_all = 0
+    for other_rank in range(group_size):
+        top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+        top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+        img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
+        top1_correct_all += np.load(top1_correct_npy)
+        top5_correct_all += np.load(top5_correct_npy)
+        img_tot_all += np.load(img_tot_npy)
+    return [[top1_correct_all], [top5_correct_all], [img_tot_all]]
+
 def test(cloud_args=None):
     """
     network eval function. Get top1 and top5 ACC from classification.
     The result will be save at [./outputs] by default.
     """
     args = parse_args(cloud_args)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target,
+                        save_graphs=True)
+    if args.device_target == 'Ascend':
+        devid = int(os.getenv('DEVICE_ID'))
+        context.set_context(device_id=devid)
 
     # init distributed
     if args.is_distributed:
@@ -164,7 +205,8 @@ def test(cloud_args=None):
         load_param_into_net(network, param_dict_new)
         args.logger.info('load model {} success'.format(model))
 
-        network.add_flags_recursive(fp16=True)
+        if args.device_target == 'Ascend':
+            network.add_flags_recursive(fp16=True)
 
         img_tot = 0
         top1_correct = 0
@@ -186,41 +228,9 @@ def test(cloud_args=None):
         results = [[top1_correct], [top5_correct], [img_tot]]
         args.logger.info('before results={}'.format(results))
         if args.is_distributed:
-            model_md5 = model.replace('/', '')
-            tmp_dir = '../cache'
-            if not os.path.exists(tmp_dir):
-                os.mkdir(tmp_dir)
-            top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, args.rank, model_md5)
-            top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, args.rank, model_md5)
-            img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, args.rank, model_md5)
-            np.save(top1_correct_npy, top1_correct)
-            np.save(top5_correct_npy, top5_correct)
-            np.save(img_tot_npy, img_tot)
-            while True:
-                rank_ok = True
-                for other_rank in range(args.group_size):
-                    top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
-                    top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
-                    img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
-                    if not os.path.exists(top1_correct_npy) or not os.path.exists(top5_correct_npy) \
-                       or not os.path.exists(img_tot_npy):
-                        rank_ok = False
-                if rank_ok:
-                    break
-
-            top1_correct_all = 0
-            top5_correct_all = 0
-            img_tot_all = 0
-            for other_rank in range(args.group_size):
-                top1_correct_npy = '{}/top1_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
-                top5_correct_npy = '{}/top5_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
-                img_tot_npy = '{}/img_tot_rank_{}_{}.npy'.format(tmp_dir, other_rank, model_md5)
-                top1_correct_all += np.load(top1_correct_npy)
-                top5_correct_all += np.load(top5_correct_npy)
-                img_tot_all += np.load(img_tot_npy)
-            results = [[top1_correct_all], [top5_correct_all], [img_tot_all]]
+            results = generate_results(model, args.rank, args.group_size, top1_correct,
+                                       top5_correct, img_tot)
             results = np.array(results)
-
         else:
             results = np.array(results)
 
