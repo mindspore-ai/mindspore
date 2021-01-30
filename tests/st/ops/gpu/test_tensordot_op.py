@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ def test_tensor_dot_fp16():
     network = NetTensorDot(axes)
     ms_result_np = network(x1_tensor, x2_tensor).asnumpy()
     np_result = np.tensordot(x1, x2, axes)
-    np.testing.assert_array_almost_equal(ms_result_np, np_result)
+    assert np.allclose(ms_result_np, np_result, rtol=1e-3, atol=1e-3)
 
     # 3D
     shape_x1 = (60, 30, 450)
@@ -164,7 +164,7 @@ def test_tensor_dot_fp16():
     network = NetTensorDot(axes)
     ms_result_np = network(x1_tensor, x2_tensor).asnumpy()
     np_result = np.tensordot(x1, x2, axes)
-    np.testing.assert_array_almost_equal(ms_result_np, np_result)
+    assert np.allclose(ms_result_np, np_result, rtol=1e-3, atol=6e0)
 
 
 @pytest.mark.level0
@@ -173,7 +173,7 @@ def test_tensor_dot_fp16():
 def test_tensor_dot_outer():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(2746)
-    shape_x1 = (1, 2, 3)  # incompatable dims for x1 and x2
+    shape_x1 = (1, 2, 3)  # incompatible dims for x1 and x2
     shape_x2 = (4, 5, 6)
     axes = 0  # outer product does not require multiplicable dims
     x1 = np.random.random(shape_x1).astype(np.float32)
