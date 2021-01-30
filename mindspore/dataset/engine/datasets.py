@@ -214,7 +214,8 @@ class Dataset:
         Returns:
             str, JSON string of the pipeline.
         """
-        return json.loads(self.parse_tree().to_json(filename))
+        ir_tree, _ = self.create_ir_tree()
+        return json.loads(ir_tree.to_json(filename))
 
     @check_bucket_batch_by_length
     def bucket_batch_by_length(self, column_names, bucket_boundaries, bucket_batch_sizes,
