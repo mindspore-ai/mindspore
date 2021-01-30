@@ -115,7 +115,7 @@ class ASRDataset(LoadAudioAndTranscript):
         batch_idx = self.bins[index]
         batch_size = len(batch_idx)
         batch_spect, batch_script, target_indices = [], [], []
-        input_length = np.zeros(batch_size, np.int32)
+        input_length = np.zeros(batch_size, np.float32)
         for data in batch_idx:
             audio_path, transcript_path = data[0], data[1]
             spect = self.parse_audio(audio_path)

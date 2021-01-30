@@ -19,7 +19,7 @@
 # [DeepSpeech2 Description](#contents)
 
 DeepSpeech2 is a speech recognition models which is trained with CTC loss. It replaces entire pipelines of hand-engineered components with neural networks and can handle a diverse variety of speech including noisy
-environments, accents and different languages. We support training and evaluation on GPU.
+environments, accents and different languages. We support training and evaluation on CPU and GPU.
 
 [Paper](https://arxiv.org/pdf/1512.02595v1.pdf): Amodei, Dario, et al. Deep speech 2: End-to-end speech recognition in english and mandarin.
 
@@ -97,10 +97,12 @@ usage: train.py  [--use_pretrained USE_PRETRAINED]
                  [--pre_trained_model_path PRE_TRAINED_MODEL_PATH]
                  [--is_distributed IS_DISTRIBUTED]
                  [--bidirectional BIDIRECTIONAL]
+                 [--device_target DEVICE_TARGET]
 options:
     --pre_trained_model_path    pretrained checkpoint path, default is ''
     --is_distributed            distributed training, default is False
     --bidirectional             whether or not to use bidirectional RNN, default is True. Currently, only bidirectional model is implemented
+    --device_target             device where the code will be implemented: "GPU" | "CPU", default is "GPU"
 ```
 
 ### Evaluation
@@ -108,10 +110,12 @@ options:
 ```text
 usage: eval.py  [--bidirectional BIDIRECTIONAL]
                 [--pretrain_ckpt PRETRAIN_CKPT]
+                [--device_target DEVICE_TARGET]
 
 options:
     --bidirectional              whether to use bidirectional RNN, default is True. Currently, only bidirectional model is implemented
     --pretrain_ckpt              saved checkpoint path, default is ''
+    --device_target              device where the code will be implemented: "GPU" | "CPU", default is "GPU"
 ```
 
 ### Options and Parameters
@@ -210,7 +214,7 @@ for evaluation configuration
 
 ```
 
- The three*.csv files will be used in training and evaluation process. Before training, some requirements should be installed, including `librosa` and `Levenshtein`
+Before training, some requirements should be installed, including `librosa` and `Levenshtein`
 After installing MindSpore via the official website and finishing dataset processing, you can start training as follows:
 
 ```shell

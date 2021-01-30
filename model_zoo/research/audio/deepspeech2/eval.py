@@ -24,17 +24,18 @@ from src.config import eval_config
 from src.deepspeech2 import DeepSpeechModel, PredictWithSoftmax
 from src.dataset import create_dataset
 from src.greedydecoder import MSGreedyDecoder
-
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=False)
 
 parser = argparse.ArgumentParser(description='DeepSpeech evaluation')
 parser.add_argument('--bidirectional', action="store_false", default=True, help='Use bidirectional RNN')
 parser.add_argument('--pretrain_ckpt', type=str, default='', help='Pretrained checkpoint path')
+parser.add_argument('--device_target', type=str, default="GPU", choices=("GPU", "CPU"),
+                    help='Device target, support GPU and CPU, Default: GPU')
 args = parser.parse_args()
 
 if __name__ == '__main__':
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, save_graphs=False)
     config = eval_config
     with open(config.DataConfig.labels_path) as label_file:
         labels = json.load(label_file)
