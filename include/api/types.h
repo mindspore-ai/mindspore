@@ -22,21 +22,8 @@
 #include <memory>
 #include "include/api/data_type.h"
 
-// refer to https://gcc.gnu.org/wiki/Visibility
-#if defined _WIN32 || defined __CYGWIN__
-#ifdef BUILDING_DLL
-#ifdef __GNUC__
-#define MS_API __attribute__((dllexport))
-#else
-#define MS_API __declspec(dllexport)  // Note: actually gcc seems to also supports this syntax.
-#endif
-#else
-#ifdef __GNUC__
-#define MS_API __attribute__((dllimport))
-#else
-#define MS_API __declspec(dllimport)  // Note: actually gcc seems to also supports this syntax.
-#endif
-#endif
+#ifdef _WIN32
+#define MS_API __declspec(dllexport)
 #else
 #define MS_API __attribute__((visibility("default")))
 #endif
