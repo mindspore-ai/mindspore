@@ -216,10 +216,8 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
   for (int b = 0; b < in_b; b++) {
     const float *input = input_data + b * in_h * in_w * in_c;
     float *output = output_data + b * new_height * new_width * in_c;
-    for (int h = h_begin; h < h_end; h++) {
-      Bilinear(input, output, input_shape, output_shape, y_bottoms, y_tops, x_lefts, x_rights, y_bottom_weights,
-               x_left_weights, line0, line1, h_begin, h_end);
-    }
+    Bilinear(input, output, input_shape, output_shape, y_bottoms, y_tops, x_lefts, x_rights, y_bottom_weights,
+             x_left_weights, line0, line1, h_begin, h_end);
   }
   return NNACL_OK;
 }
