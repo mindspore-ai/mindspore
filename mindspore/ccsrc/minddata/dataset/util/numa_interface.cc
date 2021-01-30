@@ -19,6 +19,9 @@
 namespace mindspore {
 namespace dataset {
 inline void *LoadLibrary(const char *name) {
+  if (name == nullptr) {
+    return nullptr;
+  }
   auto handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
   return handle;
 }
