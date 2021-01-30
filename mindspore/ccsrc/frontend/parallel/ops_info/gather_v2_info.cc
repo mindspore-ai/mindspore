@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace parallel {
-Status GatherV2Info::GetAttrs() {
+Status GatherInfo::GetAttrs() {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": inputs shape size must be 2, but is " << inputs_shape_.size();
     return FAILED;
@@ -70,7 +70,7 @@ Status GatherV2Info::GetAttrs() {
   return SUCCESS;
 }
 
-Status GatherV2Info::CheckStrategy(const StrategyPtr &strategy) {
+Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": inputs shape size must be " << GATHER_V2_INPUTS_SIZE << ", but is "
                   << inputs_shape_.size();
@@ -104,7 +104,7 @@ Status GatherV2Info::CheckStrategy(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherV2Info::InferDevMatrixShape() {
+Status GatherInfo::InferDevMatrixShape() {
   Strategys stra = strategy_->GetInputDim();
   dev_matrix_shape_ = stra.at(0);
   return SUCCESS;
@@ -114,7 +114,7 @@ Status GatherV2Info::InferDevMatrixShape() {
 // If index is a n dimension tensor, output dimension is input dimension plus (n - 1).
 // Tensor map dimension is equal to the corresponding input and output dimension.
 // If index's dimension is more than 1, we insert -1 for the output tensor map.
-Status GatherV2Info::InferTensorMap() {
+Status GatherInfo::InferTensorMap() {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": inputs shape size must be " << GATHER_V2_INPUTS_SIZE << ", but is "
                   << inputs_shape_.size();
@@ -158,7 +158,7 @@ Status GatherV2Info::InferTensorMap() {
   return SUCCESS;
 }
 
-Status GatherV2Info::InferTensorInfo() {
+Status GatherInfo::InferTensorInfo() {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": inputs shape size must be " << GATHER_V2_INPUTS_SIZE << ", but is "
                   << inputs_shape_.size();
@@ -219,7 +219,7 @@ OperatorVector CreateSubOp(int64_t sub_value) {
   return ops;
 }
 
-Status GatherV2Info::InferTensorSubOps() {
+Status GatherInfo::InferTensorSubOps() {
   sub_ops_.clear();
   if ((index_size_ == 0) || (axis_strategy_ == 1)) {
     return SUCCESS;
@@ -252,7 +252,7 @@ Status GatherV2Info::InferTensorSubOps() {
   return SUCCESS;
 }
 
-Status GatherV2Info::Init(const StrategyPtr &strategy) {
+Status GatherInfo::Init(const StrategyPtr &strategy) {
   if (InitWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init failed.";
     return FAILED;
@@ -266,7 +266,7 @@ Status GatherV2Info::Init(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherV2Info::InitForCostModel(const StrategyPtr &strategy) {
+Status GatherInfo::InitForCostModel(const StrategyPtr &strategy) {
   if (InitForCostModelWithAutoRepeatCalc(strategy) != SUCCESS) {
     MS_LOG(ERROR) << name_ << ": Init for cost model failed.";
     return FAILED;
@@ -275,7 +275,7 @@ Status GatherV2Info::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
-Status GatherV2Info::GenerateStrategies(int64_t stage_id) {
+Status GatherInfo::GenerateStrategies(int64_t stage_id) {
   if ((inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) || (outputs_shape_.size() != GATHER_V2_OUTPUTS_SIZE)) {
     MS_LOG(ERROR) << name_ << " : Inputs shape size(" << inputs_shape_.size() << ") or outputs shape size("
                   << outputs_shape_.size() << "is wrong.";
@@ -301,9 +301,9 @@ Status GatherV2Info::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
-Status GatherV2Info::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+Status GatherInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-std::shared_ptr<Strategys> GatherV2Info::GenerateBatchStrategies() {
+std::shared_ptr<Strategys> GatherInfo::GenerateBatchStrategies() {
   if (inputs_shape_.size() != GATHER_V2_INPUTS_SIZE) {
     MS_LOG(EXCEPTION) << name_ << ": inputs shape size must be " << GATHER_V2_INPUTS_SIZE << ", but is "
                       << inputs_shape_.size();

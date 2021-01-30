@@ -118,7 +118,7 @@ class EmbeddingLookup(nn.Cell):
         self.embedding_table = Parameter(normal_weight([vocab_size, embedding_size], embedding_size))
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
@@ -246,7 +246,7 @@ class LayerPreprocess(nn.Cell):
 
 class LayerPostprocess(nn.Cell):
     """
-    postprocess ouput of each layer.
+    postprocess output of each layer.
     """
     def __init__(self,
                  dropout_prob=0.1):

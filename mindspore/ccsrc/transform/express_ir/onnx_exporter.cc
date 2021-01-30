@@ -247,7 +247,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(
     .Attr("pad_mode", "auto_pad", onnx::AttributeProto_AttributeType_STRING, SetPoolingPadMode)
     .Attr("strides", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>))
 
-OPERATOR_ONNX_CONVERT_DEFINE(GatherV2, Gather, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Gather, Gather, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(make_tuple, SequenceConstruct, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Concat, Concat, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(RealDiv, Div, OpNameInfo())
@@ -970,7 +970,7 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
   }
 
   // MindSpore GatherV2(x, indices, axis) --> ONNX Pow(x, indices)
-  if (node->IsApply(prim::kPrimGatherV2)) {
+  if (node->IsApply(prim::kPrimGather)) {
     return ExportPrimGatherV2(func_graph, node, node_map_ptr, graph_proto);
   }
 

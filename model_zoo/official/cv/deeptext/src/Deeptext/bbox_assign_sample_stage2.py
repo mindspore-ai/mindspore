@@ -23,7 +23,7 @@ from mindspore.common.tensor import Tensor
 
 class BboxAssignSampleForRcnn(nn.Cell):
     """
-    Bbox assigner and sampler defination.
+    Bbox assigner and sampler definition.
 
     Args:
         config (dict): Config.
@@ -71,7 +71,7 @@ class BboxAssignSampleForRcnn(nn.Cell):
         self.greater = P.Greater()
         self.select = P.Select()
         self.gatherND = P.GatherNd()
-        self.gatherV2 = P.GatherV2()
+        self.gatherV2 = P.Gather()
         self.squeeze = P.Squeeze()
         self.cast = P.Cast()
         self.logicaland = P.LogicalAnd()

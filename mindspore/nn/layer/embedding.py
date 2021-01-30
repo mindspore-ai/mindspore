@@ -112,7 +112,7 @@ class Embedding(Cell):
         self.expand = P.ExpandDims()
         self.reshape_flat = P.Reshape()
         self.shp_flat = (-1,)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, self.dtype)
         self.off_value = Tensor(0.0, self.dtype)
@@ -154,7 +154,7 @@ class EmbeddingLookup(Cell):
         When 'target' is set to 'CPU', this module will use
         P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU') which
         specified 'offset = 0' to lookup table.
-        When 'target' is set to 'DEVICE', this module will use P.GatherV2() which
+        When 'target' is set to 'DEVICE', this module will use P.Gather() which
         specified 'axis = 0' to lookup table.
         In field slice mode, the manual_shapes must be given. It is a tuple ,where
         the element is vocab[i], vocab[i] is the row numbers for i-th part.
@@ -221,7 +221,7 @@ class EmbeddingLookup(Cell):
         if sparse:
             self.gatherv2 = P.SparseGatherV2()
         else:
-            self.gatherv2 = P.GatherV2()
+            self.gatherv2 = P.Gather()
         self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
         enable_ps = _get_ps_context("enable_ps")
         if enable_ps:
@@ -231,7 +231,7 @@ class EmbeddingLookup(Cell):
                                          name='embedding_table')
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-        self.gather_revert = P.GatherV2()
+        self.gather_revert = P.Gather()
         self.reshape_first = P.Reshape()
         self.reshape = P.Reshape()
         self.unique = P.Unique()
@@ -379,7 +379,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         When 'target' is set to 'CPU', this module will use
         P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU') which
         specified 'offset = 0' to lookup table.
-        When 'target' is set to 'DEVICE', this module will use P.GatherV2() which
+        When 'target' is set to 'DEVICE', this module will use P.Gather() which
         specified 'axis = 0' to lookup table.
         The vectors with the same field_ids  will be combined by the 'operator', such as 'SUM', 'MAX' and
         'MEAN'. Ensure the input_values of the padded id is zero, so that they can be ignored. The final

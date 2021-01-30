@@ -70,7 +70,7 @@ class PositionalEmbedding(nn.Cell):
             position_encoding(max_position_embeddings, embedding_size),
             mstype.float32
         )
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.get_shape = P.Shape()
 
     def construct(self, word_embeddings):

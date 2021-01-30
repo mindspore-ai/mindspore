@@ -79,7 +79,7 @@ class GatherV2(_Loss):
             emb2_list = np.reshape(emb_list[1::2], (int(index_size / 2), 16))
         self.emb1_param = Tensor(emb1_list, dtype=mstype.int32)
         self.emb2_param = Tensor(emb2_list, dtype=mstype.int32)
-        self.gatherv2 = P.GatherV2().shard(strategy).add_prim_attr("data_parallel", True)
+        self.gatherv2 = P.Gather().shard(strategy).add_prim_attr("data_parallel", True)
 
     def construct(self, nembeddings):
         emb1 = self.gatherv2(nembeddings, self.emb1_param, 0)
@@ -208,7 +208,7 @@ class GatherV2Axis1(_Loss):
             emb2_list = np.reshape(emb_list[1::2], (int(index_size / 2), index_size))
         self.emb1_param = Tensor(emb1_list, dtype=mstype.int32)
         self.emb2_param = Tensor(emb2_list, dtype=mstype.int32)
-        self.gatherv2 = P.GatherV2().shard(strategy)
+        self.gatherv2 = P.Gather().shard(strategy)
 
     def construct(self, nembeddings):
         emb1 = self.gatherv2(nembeddings, self.emb1_param, 1)

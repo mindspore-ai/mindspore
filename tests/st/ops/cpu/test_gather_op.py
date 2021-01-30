@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 class NetGatherV2_axis0(nn.Cell):
     def __init__(self):
         super(NetGatherV2_axis0, self).__init__()
-        self.gatherv2 = P.GatherV2()
+        self.gatherv2 = P.Gather()
 
     def construct(self, params, indices):
         return self.gatherv2(params, indices, 0)
@@ -52,7 +52,7 @@ def test_gatherv2_axis0():
 class NetGatherV2_axis1(nn.Cell):
     def __init__(self):
         super(NetGatherV2_axis1, self).__init__()
-        self.gatherv2 = P.GatherV2()
+        self.gatherv2 = P.Gather()
 
     def construct(self, params, indices):
         return self.gatherv2(params, indices, 1)
@@ -78,7 +78,7 @@ def test_gatherv2_axis1():
 class NetGatherV2_axisN1(nn.Cell):
     def __init__(self):
         super(NetGatherV2_axisN1, self).__init__()
-        self.gatherv2 = P.GatherV2()
+        self.gatherv2 = P.Gather()
 
     def construct(self, params, indices):
         return self.gatherv2(params, indices, -1)

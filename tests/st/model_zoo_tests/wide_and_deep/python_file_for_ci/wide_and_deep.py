@@ -53,8 +53,8 @@ def init_var_dict(init_args, in_vars):
     '''
     var_map = {}
     _, _max_val = init_args
-    for _, iterm in enumerate(in_vars):
-        key, shape, method = iterm
+    for _, item in enumerate(in_vars):
+        key, shape, method = item
         if key not in var_map.keys():
             if method in ['random', 'uniform']:
                 var_map[key] = Parameter(initializer(
@@ -176,8 +176,8 @@ class WideDeepModel(nn.Cell):
                                         self.weight_bias_init,
                                         self.deep_layer_act, convert_dtype=True)
 
-        self.gather_v2 = P.GatherV2().shard(((1, 8), (1, 1)))
-        self.gather_v2_1 = P.GatherV2()
+        self.gather_v2 = P.Gather().shard(((1, 8), (1, 1)))
+        self.gather_v2_1 = P.Gather()
         self.mul = P.Mul()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.reshape = P.Reshape()

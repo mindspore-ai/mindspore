@@ -113,7 +113,7 @@ class EmbeddingLookup(nn.Cell):
                                           [vocab_size, embedding_size]))
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
@@ -179,7 +179,7 @@ class EmbeddingPostprocessor(nn.Cell):
         self.shape = tuple(embedding_shape)
         self.layernorm = nn.LayerNorm((embedding_size,))
         self.dropout = nn.Dropout(1 - dropout_prob)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.use_relative_positions = use_relative_positions
         self.slice = P.StridedSlice()
         self.full_position_embeddings = Parameter(initializer
@@ -322,7 +322,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
         self.shape = P.Shape()
-        self.gather = P.GatherV2()  # index_select
+        self.gather = P.Gather()  # index_select
         self.matmul = P.BatchMatMul()
 
     def construct(self):
@@ -957,7 +957,7 @@ class BertModelCLS(nn.Cell):
     """
     This class is responsible for classification task evaluation,
     i.e. XNLI(num_labels=3), LCQMC(num_labels=2), Chnsenti(num_labels=2).
-    The returned output represents the final logits as the results of log_softmax is propotional to that of softmax.
+    The returned output represents the final logits as the results of log_softmax is proportional to that of softmax.
     """
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0,
                  use_one_hot_embeddings=False, phase_type="student"):

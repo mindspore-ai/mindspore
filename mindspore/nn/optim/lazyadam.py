@@ -49,7 +49,7 @@ def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov,
         success = F.depend(success, sparse_opt(params, m, v, beta1_power, beta2_power, lr, beta1, beta2,
                                                eps, values, indices))
     else:
-        op_gather = P.GatherV2()
+        op_gather = P.Gather()
         op_sqrt = P.Sqrt()
         scatter_add = P.ScatterAdd(use_locking)
         scatter_update = P.ScatterUpdate(use_locking)

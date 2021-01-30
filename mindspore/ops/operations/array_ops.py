@@ -771,7 +771,7 @@ class Unique(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class GatherV2(PrimitiveWithCheck):
+class Gather(PrimitiveWithCheck):
     """
     Returns a slice of the input tensor based on the specified indices and axis.
 
@@ -793,7 +793,7 @@ class GatherV2(PrimitiveWithCheck):
         >>> input_params = Tensor(np.array([[1, 2, 7, 42], [3, 4, 54, 22], [2, 2, 55, 3]]), mindspore.float32)
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
-        >>> output = ops.GatherV2()(input_params, input_indices, axis)
+        >>> output = ops.Gather()(input_params, input_indices, axis)
         >>> print(output)
         [[ 2.  7.]
          [ 4. 54.]
@@ -815,7 +815,12 @@ class GatherV2(PrimitiveWithCheck):
         validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, "axis", self.name)
 
 
-class SparseGatherV2(GatherV2):
+def GatherV2():
+    """Warning: This will be changed later"""
+    logger.warning("WARN_DEPRECATED: The usage of GatherV2 is deprecated. Please use Gather.")
+    return Gather()
+
+class SparseGatherV2(Gather):
     """
     Returns a slice of input tensor based on the specified indices and axis.
 

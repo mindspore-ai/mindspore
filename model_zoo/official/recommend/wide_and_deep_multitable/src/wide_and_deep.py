@@ -252,7 +252,7 @@ class WideDeepModel(nn.Cell):
                                        convert_dtype=True,
                                        use_activation=False)
 
-        self.gather_v2 = P.GatherV2()
+        self.gather_v2 = P.Gather()
         self.mul = P.Mul()
         self.reduce_sum_false = P.ReduceSum(keep_dims=False)
         self.reduce_sum_true = P.ReduceSum(keep_dims=True)

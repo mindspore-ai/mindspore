@@ -66,7 +66,7 @@ class THOR(Optimizer):
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.mul = P.Mul()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.matrix_A_inv = ()
         self.matrix_G_inv = ()
         self.num_hidden_layers = num_hidden_layers
@@ -230,8 +230,8 @@ class THOR(Optimizer):
             end_idx = mlm_fc_idx + 4
             new_grads = new_grads + gradients[begin_idx: end_idx]
 
-            lenth = len(gradients)
-            new_grads = new_grads + gradients[lenth - 2: lenth]
+            length = len(gradients)
+            new_grads = new_grads + gradients[length - 2: length]
             gradients = new_grads
             gradients = self.grad_reducer_g(gradients)
         else:
@@ -356,8 +356,8 @@ class THOR(Optimizer):
             end_idx = mlm_fc_idx + 4
             new_grads = new_grads + gradients[begin_idx: end_idx]
 
-            lenth = len(gradients)
-            new_grads = new_grads + gradients[lenth - 2: lenth]
+            length = len(gradients)
+            new_grads = new_grads + gradients[length - 2: length]
             gradients = new_grads
             gradients = self.grad_reducer_g(gradients)
 

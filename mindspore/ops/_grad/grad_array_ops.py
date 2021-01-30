@@ -376,7 +376,7 @@ def _regenerate_output_shape(x_shp, ind_shp, axis):
     return out_shape
 
 
-@bprop_getters.register(P.GatherV2)
+@bprop_getters.register(P.Gather)
 def get_bprop_gather_v2(self):
     """Generate bprop for GatherV2"""
 
@@ -732,7 +732,7 @@ def get_bprop_tensor_scatter_update(self):
 @bprop_getters.register(P.ScatterMax)
 def get_bprop_scatter_max(self):
     """Generate bprop for ScatterMax"""
-    gather = P.GatherV2()
+    gather = P.Gather()
 
     def bprop(x, indices, update, out, dout):
         return dout, zeros_like(indices), gather(dout, indices, 0)
@@ -810,7 +810,7 @@ def _gather_drop_negatives(params,
                            is_positive=None):
     """Helper function for unsorted segment ops."""
     maximum = P.Maximum()
-    gather = P.GatherV2()
+    gather = P.Gather()
     greater_equal = P.GreaterEqual()
     rank = P.Rank()
     fill = P.Fill()
@@ -889,7 +889,7 @@ def get_bprop_unsorted_segment_prod(self):
     equal = P.Equal()
     cast = P.Cast()
     select = P.Select()
-    gather = P.GatherV2()
+    gather = P.Gather()
     greater = P.Greater()
     ones_like = P.OnesLike()
     maximum = P.Maximum()

@@ -97,6 +97,7 @@ STATUS TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
   status = AddOpInput(tf_op, 1, inputs);
   return status;
 }
+
 TFNodeRegistrar g_tfGatherV2Parser("GatherV2", new TFGatherParser());
 }  // namespace lite
 }  // namespace mindspore
