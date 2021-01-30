@@ -174,6 +174,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, const std::u
 
   if (batch_size == 1) {
     TensorRow row = std::move((*src)->front());
+    row.setPath({});
     (*src)->pop_front();
     (*dest)->push_back(row);
     for (const auto &tensor : (*dest)->front()) {

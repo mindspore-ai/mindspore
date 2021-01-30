@@ -56,6 +56,12 @@ int GetCVInterpolationMode(InterpolationMode mode);
 /// \return Status code
 int GetCVBorderType(BorderType type);
 
+/// \brief Returns the check result of tensor rank and tensor shape
+/// \param[in] tensor: The input tensor need to check
+/// \param[in] channel: The channel index of tensor shape.
+/// \param[out] return true if channel of tensor shape is 1 or 3.
+bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel);
+
 /// \brief Returns flipped image
 /// \param[in] input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
 /// \param flip_code: 1 for Horizontal (around y-axis), 0 for Vertical (around x-axis), -1 for both

@@ -274,7 +274,7 @@ def test_coco_case_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "json.exception.parse_error" in str(e)
+        assert "failed to open json file" in str(e)
 
     try:
         sampler = ds.PKSampler(3)

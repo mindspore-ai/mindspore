@@ -19,7 +19,6 @@
 #include <fstream>
 #include <iomanip>
 
-#include "./tinyxml2.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -28,9 +27,6 @@
 #include "minddata/dataset/engine/opt/pass.h"
 #include "utils/ms_utils.h"
 
-using tinyxml2::XMLDocument;
-using tinyxml2::XMLElement;
-using tinyxml2::XMLError;
 namespace mindspore {
 namespace dataset {
 const char kColumnImage[] = "image";
@@ -327,6 +323,14 @@ Status VOCOp::ParseAnnotationIds() {
   return Status::OK();
 }
 
+void VOCOp::ParseNodeValue(XMLElement *bbox_node, const char *name, float *value) {
+  *value = 0.0;
+  if (bbox_node != nullptr) {
+    XMLElement *node = bbox_node->FirstChildElement(name);
+    if (node != nullptr) *value = node->FloatText();
+  }
+}
+
 Status VOCOp::ParseAnnotationBbox(const std::string &path) {
   if (!Path(path).Exists()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + path);
@@ -350,21 +354,15 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
     float xmin = 0.0, ymin = 0.0, xmax = 0.0, ymax = 0.0, truncated = 0.0, difficult = 0.0;
     XMLElement *name_node = object->FirstChildElement("name");
     if (name_node != nullptr && name_node->GetText() != 0) label_name = name_node->GetText();
-    XMLElement *truncated_node = object->FirstChildElement("truncated");
-    if (truncated_node != nullptr) truncated = truncated_node->FloatText();
-    XMLElement *difficult_node = object->FirstChildElement("difficult");
-    if (difficult_node != nullptr) difficult = difficult_node->FloatText();
+    ParseNodeValue(object, "difficult", &difficult);
+    ParseNodeValue(object, "truncated", &truncated);
 
     XMLElement *bbox_node = object->FirstChildElement("bndbox");
     if (bbox_node != nullptr) {
-      XMLElement *xmin_node = bbox_node->FirstChildElement("xmin");
-      if (xmin_node != nullptr) xmin = xmin_node->FloatText();
-      XMLElement *ymin_node = bbox_node->FirstChildElement("ymin");
-      if (ymin_node != nullptr) ymin = ymin_node->FloatText();
-      XMLElement *xmax_node = bbox_node->FirstChildElement("xmax");
-      if (xmax_node != nullptr) xmax = xmax_node->FloatText();
-      XMLElement *ymax_node = bbox_node->FirstChildElement("ymax");
-      if (ymax_node != nullptr) ymax = ymax_node->FloatText();
+      ParseNodeValue(bbox_node, "xmin", &xmin);
+      ParseNodeValue(bbox_node, "xmax", &xmax);
+      ParseNodeValue(bbox_node, "ymin", &ymin);
+      ParseNodeValue(bbox_node, "ymax", &ymax);
     } else {
       RETURN_STATUS_UNEXPECTED("Invalid data, bndbox dismatch in " + path);
     }
@@ -406,7 +404,7 @@ Status VOCOp::ReadImageToTensor(const std::string &path, const ColDescriptor &co
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
     if (rc.IsError()) {
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to decode file: " + path);
+      RETURN_STATUS_UNEXPECTED("Invalid data, failed to decode image: " + path);
     }
   }
   return Status::OK();

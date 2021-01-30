@@ -44,7 +44,7 @@ std::string CodeAsString(const StatusCode c) {
         s = "Interrupted system call";
         break;
       case StatusCode::kShapeMisMatch:
-        s = "Shape is incorrect.";
+        s = "Shape is incorrect";
         break;
       case StatusCode::kNoSpace:
         s = "No space left on device";

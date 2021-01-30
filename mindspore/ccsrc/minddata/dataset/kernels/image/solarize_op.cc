@@ -40,12 +40,12 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
     }
 
     if (input_cv->Rank() != 2 && input_cv->Rank() != 3) {
-      RETURN_STATUS_UNEXPECTED("Solarize: image shape is not of either <H,W,C> or <H,W>.");
+      RETURN_STATUS_UNEXPECTED("Solarize: image shape is not <H,W,C> or <H,W>.");
     }
     if (input_cv->Rank() == 3) {
       int num_channels = input_cv->shape()[2];
       if (num_channels != 3 && num_channels != 1) {
-        RETURN_STATUS_UNEXPECTED("Solarize: number of channels is not 1 or 3.");
+        RETURN_STATUS_UNEXPECTED("Solarize: image shape is not <H,W,C>.");
       }
     }
 
