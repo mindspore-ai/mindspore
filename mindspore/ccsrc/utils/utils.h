@@ -379,6 +379,7 @@ constexpr auto kAttrDilation = "dilation";
 constexpr auto kAttrPadMode = "pad_mode";
 constexpr auto kAttrPad = "pad";
 constexpr auto kAttrPadding = "padding";
+constexpr auto kAttrNonTask = "non_task";
 constexpr auto kAttrIsGrad = "is_grad";
 constexpr auto kAttrRecompute = "recompute";
 constexpr auto kAttrNeedCseAfterRecompute = "need_cse_after_recompute";
