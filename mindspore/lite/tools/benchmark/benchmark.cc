@@ -346,8 +346,9 @@ int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::M
     MS_LOG(ERROR) << "mutableData is nullptr.";
     return RET_ERROR;
   }
-  switch (msCalibDataType) {
-    case TypeId::kNumberTypeFloat: {
+  switch (tensor->data_type()) {
+    case TypeId::kNumberTypeFloat:
+    case TypeId::kNumberTypeFloat32: {
       bias = CompareData<float>(name, tensor->shape(), mutableData);
       break;
     }
@@ -359,6 +360,7 @@ int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::M
       bias = CompareData<uint8_t>(name, tensor->shape(), mutableData);
       break;
     }
+    case TypeId::kNumberTypeInt:
     case TypeId::kNumberTypeInt32: {
       bias = CompareData<int32_t>(name, tensor->shape(), mutableData);
       break;

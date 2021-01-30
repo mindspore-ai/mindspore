@@ -20,8 +20,7 @@
 #include "nnacl/infer/adam_infer.h"
 #include "nnacl/infer/addn_infer.h"
 #include "nnacl/infer/apply_momentum_infer.h"
-#include "nnacl/infer/argmax_infer.h"
-#include "nnacl/infer/argmin_infer.h"
+#include "nnacl/infer/argmin_max_infer.h"
 #include "nnacl/infer/arithmetic_compare_infer.h"
 #include "nnacl/infer/arithmetic_grad_infer.h"
 #include "nnacl/infer/arithmetic_infer.h"
@@ -474,7 +473,7 @@ static RegistryInferShape g_MaximumGradInferShape(mindspore::schema::PrimitiveTy
 static RegistryInferShape g_PowerInferShape(mindspore::schema::PrimitiveType_PowFusion, PowerInferShape);
 static RegistryInferShape g_RangeInferShape(mindspore::schema::PrimitiveType_Range, RangeInferShape);
 static RegistryInferShape g_SgdInferShape(mindspore::schema::PrimitiveType_SGD, SgdInferShape);
-static RegistryInferShape g_ArgminInferShape(mindspore::schema::PrimitiveType_ArgMinFusion, ArgminInferShape);
+static RegistryInferShape g_ArgminInferShape(mindspore::schema::PrimitiveType_ArgMinFusion, ArgMinMaxInferShape);
 static RegistryInferShape g_UnstackInferShape(mindspore::schema::PrimitiveType_Unstack, UnstackInferShape);
 static RegistryInferShape g_AudioSpectrogramInferShape(mindspore::schema::PrimitiveType_AudioSpectrogram,
                                                        AudioSpectrogramInferShape);
@@ -549,7 +548,7 @@ static RegistryInferShape g_NonMaxSuppressionInferShape(mindspore::schema::Primi
                                                         NonMaxSuppressionInferShape);
 static RegistryInferShape g_CustomExtractFeaturesInferShape(mindspore::schema::PrimitiveType_CustomExtractFeatures,
                                                             CustomExtractFeaturesInferShape);
-static RegistryInferShape g_ArgmaxInferShape(mindspore::schema::PrimitiveType_ArgMaxFusion, ArgmaxInferShape);
+static RegistryInferShape g_ArgmaxInferShape(mindspore::schema::PrimitiveType_ArgMaxFusion, ArgMinMaxInferShape);
 static RegistryInferShape g_UniqueInferShape(mindspore::schema::PrimitiveType_Unique, UniqueInferShape);
 
 static RegistryInferShape g_TensorListFromTensorInferShape(mindspore::schema::PrimitiveType_TensorListFromTensor,

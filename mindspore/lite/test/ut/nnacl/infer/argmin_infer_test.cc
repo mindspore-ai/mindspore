@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/infer/argmin_infer.h"
+#include "mindspore/lite/nnacl/infer/argmin_max_infer.h"
 
 namespace mindspore {
 
@@ -36,8 +36,8 @@ TEST_F(ArgminInferTest, ArgminInferTest0) {
   parameter->keep_dims_ = true;
   parameter->axis_ = 0;
   parameter->op_parameter_.infer_flag_ = true;
-  int ret = ArgminInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
-                             reinterpret_cast<OpParameter *>(parameter));
+  int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
+                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 1);
   ASSERT_EQ(outputs[0]->shape_[0], 1);
@@ -64,8 +64,8 @@ TEST_F(ArgminInferTest, ArgminInferTest1) {
   parameter->keep_dims_ = true;
   parameter->axis_ = 0;
   parameter->op_parameter_.infer_flag_ = true;
-  int ret = ArgminInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
-                             reinterpret_cast<OpParameter *>(parameter));
+  int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
+                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);
   ASSERT_EQ(outputs[0]->shape_[0], 1);
@@ -93,8 +93,8 @@ TEST_F(ArgminInferTest, ArgminInferTest2) {
   parameter->keep_dims_ = true;
   parameter->axis_ = 1;
   parameter->op_parameter_.infer_flag_ = true;
-  int ret = ArgminInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
-                             reinterpret_cast<OpParameter *>(parameter));
+  int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
+                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);
   ASSERT_EQ(outputs[0]->shape_[0], 3);
@@ -122,8 +122,8 @@ TEST_F(ArgminInferTest, ArgminInferTestTopK2) {
   parameter->keep_dims_ = true;
   parameter->axis_ = 1;
   parameter->op_parameter_.infer_flag_ = true;
-  int ret = ArgminInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
-                             reinterpret_cast<OpParameter *>(parameter));
+  int ret = ArgMinMaxInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
+                                reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);
   ASSERT_EQ(outputs[0]->shape_size_, 2);
   ASSERT_EQ(outputs[0]->shape_[0], 3);

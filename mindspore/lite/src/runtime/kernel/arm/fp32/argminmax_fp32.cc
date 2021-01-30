@@ -53,10 +53,15 @@ int ArgMinMaxCPUKernel::ReSize() {
 
 int ArgMinMaxCPUKernel::Run() {
   float *input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
-  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  int *output_index = nullptr;
   float *output_value = nullptr;
   if (out_tensors_.size() == 2) {
+    output_index = reinterpret_cast<int *>(out_tensors_.at(0)->data_c());
     output_value = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
+  } else if (arg_param_->out_value_) {
+    output_value = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  } else {
+    output_index = reinterpret_cast<int *>(out_tensors_.at(0)->data_c());
   }
 
   auto shape = in_tensors_.at(0)->shape();
@@ -70,7 +75,7 @@ int ArgMinMaxCPUKernel::Run() {
       return RET_ERROR;
     }
   }
-  ArgMinMaxFp32(input_data, output_data, output_value, reinterpret_cast<const int *>(shape.data()), arg_param_);
+  ArgMinMaxFp32(input_data, output_index, output_value, reinterpret_cast<const int *>(shape.data()), arg_param_);
   context_->allocator->Free(arg_param_->arg_elements_);
   arg_param_->arg_elements_ = nullptr;
   return RET_OK;

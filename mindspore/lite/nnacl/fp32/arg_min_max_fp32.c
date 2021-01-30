@@ -43,15 +43,14 @@ int ArgCompareDescFp32(const void *a, const void *b) {
   return 0;
 }
 
-void ArgMaxTopK1(const float *input, float *output, float *output_value, const ArgMinMaxParameter *param,
-                 int pre_axis_count, int axis_count, int after_axis_count) {
-  bool out_value = param->out_value_;
+void ArgMaxTopK1(const float *input, int *output_index, float *output_value, int pre_axis_count, int axis_count,
+                 int after_axis_count) {
   for (int i = 0; i < pre_axis_count; ++i) {
     size_t output_offset = i * after_axis_count;
     size_t input_offset = output_offset * axis_count;
     for (int j = 0; j < after_axis_count; ++j) {
       float value = -FLT_MAX;
-      float index = 0.0f;
+      int index = 0;
       for (int k = 0; k < axis_count; ++k) {
         float value_tmp = input[input_offset + k * after_axis_count + j];
         if (value_tmp > value) {
@@ -59,7 +58,9 @@ void ArgMaxTopK1(const float *input, float *output, float *output_value, const A
           index = k;
         }
       }
-      output[output_offset + j] = out_value ? value : index;
+      if (output_index != NULL) {
+        output_index[output_offset + j] = index;
+      }
       if (output_value != NULL) {
         output_value[output_offset + j] = value;
       }
@@ -67,15 +68,14 @@ void ArgMaxTopK1(const float *input, float *output, float *output_value, const A
   }
 }
 
-void ArgMinTopK1(const float *input, float *output, float *output_value, const ArgMinMaxParameter *param,
-                 int pre_axis_count, int axis_count, int after_axis_count) {
-  bool out_value = param->out_value_;
+void ArgMinTopK1(const float *input, int *output_index, float *output_value, int pre_axis_count, int axis_count,
+                 int after_axis_count) {
   for (int i = 0; i < pre_axis_count; ++i) {
     size_t output_offset = i * after_axis_count;
     size_t input_offset = output_offset * axis_count;
     for (int j = 0; j < after_axis_count; ++j) {
       float value = FLT_MAX;
-      float index = 0.0f;
+      int index = 0;
       for (int k = 0; k < axis_count; ++k) {
         float value_tmp = input[input_offset + k * after_axis_count + j];
         if (value_tmp < value) {
@@ -83,7 +83,9 @@ void ArgMinTopK1(const float *input, float *output, float *output_value, const A
           index = k;
         }
       }
-      output[output_offset + j] = out_value ? value : index;
+      if (output_index != NULL) {
+        output_index[output_offset + j] = index;
+      }
       if (output_value != NULL) {
         output_value[output_offset + j] = value;
       }
@@ -106,7 +108,7 @@ void GetCalcParameter(const int *shape, int dims_number, int axis, int *pre_axis
   }
 }
 
-void ArgMinMaxDim0(const float *input, float *output, float *output_value, const int *in_shape,
+void ArgMinMaxDim0(const float *input, int *output_index, float *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param, COMPARE_FUNCTION compare_func) {
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
@@ -117,16 +119,17 @@ void ArgMinMaxDim0(const float *input, float *output, float *output_value, const
     qsort(param->arg_elements_, in_shape[0], sizeof(ArgElement), *compare_func);
     for (int j = 0; j < param->topk_; ++j) {
       size_t out_offset = j * param->out_strides_[0] + i;
-      output[out_offset] = param->out_value_ ? param->arg_elements_[j].data_.f_data_ : param->arg_elements_[j].index_;
+      if (output_index != NULL) {
+        output_index[out_offset] = param->arg_elements_[j].index_;
+      }
       if (output_value != NULL) {
         output_value[out_offset] = param->arg_elements_[j].data_.f_data_;
       }
     }
   }
-  return;
 }
 
-void ArgMinMaxDim1(const float *input, float *output, float *output_value, const int *in_shape,
+void ArgMinMaxDim1(const float *input, int *output_index, float *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param, COMPARE_FUNCTION compare_func) {
   int in_shape1 = in_shape[1];
   for (int i = 0; i < in_shape[0]; ++i) {
@@ -141,17 +144,18 @@ void ArgMinMaxDim1(const float *input, float *output, float *output_value, const
       qsort(param->arg_elements_, in_shape1, sizeof(ArgElement), *compare_func);
       for (int k = 0; k < param->topk_; ++k) {
         size_t out_offset = out_dim0_offset + j + k * param->out_strides_[1];
-        output[out_offset] = param->out_value_ ? param->arg_elements_[k].data_.f_data_ : param->arg_elements_[k].index_;
+        if (output_index != NULL) {
+          output_index[out_offset] = param->arg_elements_[k].index_;
+        }
         if (output_value != NULL) {
           output_value[out_offset] = param->arg_elements_[k].data_.f_data_;
         }
       }
     }
   }
-  return;
 }
 
-void ArgMinMaxDim2(const float *input, float *output, float *output_value, const int *in_shape,
+void ArgMinMaxDim2(const float *input, int *output_index, float *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param, COMPARE_FUNCTION compare_func) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
@@ -170,9 +174,9 @@ void ArgMinMaxDim2(const float *input, float *output, float *output_value, const
         qsort(param->arg_elements_, in_shape2, sizeof(ArgElement), *compare_func);
         for (int l = 0; l < param->topk_; ++l) {
           size_t out_offset = out_dim1_offset + k + l * param->out_strides_[2];
-
-          output[out_offset] =
-            param->out_value_ ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
+          if (output_index != NULL) {
+            output_index[out_offset] = param->arg_elements_[l].index_;
+          }
           if (output_value != NULL) {
             output_value[out_offset] = param->arg_elements_[l].data_.f_data_;
           }
@@ -182,7 +186,7 @@ void ArgMinMaxDim2(const float *input, float *output, float *output_value, const
   }
 }
 
-void ArgMinMaxDim3(const float *input, float *output, float *output_value, const int *in_shape,
+void ArgMinMaxDim3(const float *input, int *output_index, float *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param, COMPARE_FUNCTION compare_func) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
@@ -204,8 +208,9 @@ void ArgMinMaxDim3(const float *input, float *output, float *output_value, const
         qsort(param->arg_elements_, in_shape3, sizeof(ArgElement), *compare_func);
         for (int l = 0; l < param->topk_; ++l) {
           size_t out_offset = out_dim2_offset + l;
-          output[out_offset] =
-            param->out_value_ ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
+          if (output_index != NULL) {
+            output_index[out_offset] = param->arg_elements_[l].index_;
+          }
           if (output_value != NULL) {
             output_value[out_offset] = param->arg_elements_[l].data_.f_data_;
           }
@@ -215,7 +220,7 @@ void ArgMinMaxDim3(const float *input, float *output, float *output_value, const
   }
 }
 
-void ArgMinMaxFp32(const float *input, float *output, float *output_value, const int *in_shape,
+void ArgMinMaxFp32(const float *input, int *output_index, float *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param) {
   if (param->topk_ == 1) {
     int pre_axis_count = 1;
@@ -224,9 +229,9 @@ void ArgMinMaxFp32(const float *input, float *output, float *output_value, const
     GetCalcParameter(in_shape, param->dims_size_, param->axis_, &pre_axis_count, &axis_count, &after_axis_count);
 
     if (param->get_max_) {
-      ArgMaxTopK1(input, output, output_value, param, pre_axis_count, axis_count, after_axis_count);
+      ArgMaxTopK1(input, output_index, output_value, pre_axis_count, axis_count, after_axis_count);
     } else {
-      ArgMinTopK1(input, output, output_value, param, pre_axis_count, axis_count, after_axis_count);
+      ArgMinTopK1(input, output_index, output_value, pre_axis_count, axis_count, after_axis_count);
     }
     return;
   }
@@ -240,17 +245,16 @@ void ArgMinMaxFp32(const float *input, float *output, float *output_value, const
 
   switch (param->axis_) {
     case 0:
-      ArgMinMaxDim0(input, output, output_value, in_shape, param, compare_function);
+      ArgMinMaxDim0(input, output_index, output_value, in_shape, param, compare_function);
       break;
     case 1:
-      ArgMinMaxDim1(input, output, output_value, in_shape, param, compare_function);
+      ArgMinMaxDim1(input, output_index, output_value, in_shape, param, compare_function);
       break;
     case 2:
-      ArgMinMaxDim2(input, output, output_value, in_shape, param, compare_function);
+      ArgMinMaxDim2(input, output_index, output_value, in_shape, param, compare_function);
       break;
     case 3:
-      ArgMinMaxDim3(input, output, output_value, in_shape, param, compare_function);
+      ArgMinMaxDim3(input, output_index, output_value, in_shape, param, compare_function);
       break;
   }
-  return;
 }
