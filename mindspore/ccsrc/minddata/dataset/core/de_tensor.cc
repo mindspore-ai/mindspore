@@ -22,10 +22,10 @@
 #include "utils/hashing.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
-#define ASSERT_NULL(ptr) MS_EXCEPTION_IF_NULL(ptr)
+#define CHECK_IF_NULL(ptr) MS_EXCEPTION_IF_NULL(ptr)
 #else
 #include "mindspore/lite/src/common/log_adapter.h"
-#define ASSERT_NULL(ptr) MS_ASSERT((ptr) != nullptr)
+#define CHECK_IF_NULL(ptr) MS_ASSERT((ptr) != nullptr)
 #endif
 
 namespace mindspore {
@@ -40,13 +40,13 @@ DETensor::DETensor(std::shared_ptr<dataset::Tensor> tensor_impl)
 const std::string &DETensor::Name() const { return name_; }
 
 enum mindspore::DataType DETensor::DataType() const {
-  ASSERT_NULL(tensor_impl_);
+  CHECK_IF_NULL(tensor_impl_);
   return static_cast<mindspore::DataType>(DETypeToMSType(tensor_impl_->type()));
 }
 
 size_t DETensor::DataSize() const {
-  ASSERT_NULL(tensor_impl_);
-  return tensor_impl_->SizeInBytes();
+  CHECK_IF_NULL(tensor_impl_);
+  return static_cast<size_t>(tensor_impl_->SizeInBytes());
 }
 
 const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
@@ -56,7 +56,7 @@ std::shared_ptr<const void> DETensor::Data() const {
 }
 
 void *DETensor::MutableData() {
-  ASSERT_NULL(tensor_impl_);
+  CHECK_IF_NULL(tensor_impl_);
   return tensor_impl_->GetMutableBuffer();
 }
 
