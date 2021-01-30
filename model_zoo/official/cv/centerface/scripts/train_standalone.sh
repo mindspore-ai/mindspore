@@ -34,10 +34,10 @@ get_real_path(){
 }
 
 current_exec_path=$(pwd)
-echo ${current_exec_path}
+echo "current_exec_path: "   ${current_exec_path}
 
 dirname_path=$(dirname "$(pwd)")
-echo ${dirname_path}
+echo "dirname_path: "   ${dirname_path}
 
 SCRIPT_NAME='train.py'
 
@@ -57,49 +57,63 @@ fi
 
 if [ $# == 2 ]
 then
+    use_device_id=$1
     pretrained_backbone=$(get_real_path $2)
-    if [ ! -f $pretrained_backbone ]
-    then
-        echo "error: pretrained_backbone=$pretrained_backbone is not a file"
-    exit 1
-    fi
 fi
 
 if [ $# == 3 ]
 then
+    use_device_id=$1
+    pretrained_backbone=$(get_real_path $2)
     dataset_path=$(get_real_path $3)
-    if [ ! -f $dataset_path ]
-    then
-        echo "error: dataset_path=$dataset_path is not a file"
-    exit 1
-    fi
 fi
 
 if [ $# == 4 ]
 then
+    use_device_id=$1
+    pretrained_backbone=$(get_real_path $2)
+    dataset_path=$(get_real_path $3)
     annot_path=$(get_real_path $4)
-    if [ ! -f $annot_path ]
-    then
-        echo "error: annot_path=$annot_path is not a file"
-    exit 1
-    fi
 fi
 
 if [ $# == 5 ]
 then
+    use_device_id=$1
+    pretrained_backbone=$(get_real_path $2)
+    dataset_path=$(get_real_path $3)
+    annot_path=$(get_real_path $4)
     img_dir=$(get_real_path $5)
-    if [ ! -f $img_dir ]
-    then
-        echo "error: img_dir=$img_dir is not a file"
-    exit 1
-    fi
 fi
 
-echo $use_device_id
-echo $pretrained_backbone
-echo $dataset_path
-echo $annot_path
-echo $img_dir
+echo "use_device_id: "   $use_device_id
+echo "pretrained_backbone: "   $pretrained_backbone
+echo "dataset_path: "   $dataset_path
+echo "annot_path: "   $annot_path
+echo "img_dir: "   $img_dir
+
+if [ ! -f $pretrained_backbone ]
+then
+    echo "error: pretrained_backbone=$pretrained_backbone is not a file"
+exit 1
+fi
+
+if [ ! -d $dataset_path ]
+then
+    echo "error: dataset_path=$dataset_path is not a directory"
+exit 1
+fi
+
+if [ ! -f $annot_path ]
+then
+    echo "error: annot_path=$annot_path is not a file"
+exit 1
+fi
+
+if [ ! -d $img_dir ]
+then
+    echo "error: img_dir=$img_dir is not a directory"
+exit 1
+fi
 
 export PYTHONPATH=${dirname_path}:$PYTHONPATH
 export RANK_SIZE=1
