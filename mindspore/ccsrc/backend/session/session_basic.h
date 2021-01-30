@@ -59,8 +59,21 @@ struct OpRunInfo {
   size_t next_input_index = 0;
 #endif
 };
+
+struct InputTensorInfo {
+  std::vector<tensor::TensorPtr> input_tensors;
+  std::vector<int64_t> input_tensors_mask;
+  std::set<KernelWithIndex> input_kernel;
+};
+
+struct OutputTensorInfo {
+  tensor::TensorPtr output_stub_tensor;
+  bool is_weight;
+};
+
 using OpRunInfoPtr = std::shared_ptr<OpRunInfo>;
 class Executor;
+
 class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
  public:
   SessionBasic() : context_(nullptr), summary_callback_(nullptr), device_id_(0) {
@@ -163,8 +176,9 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   virtual void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                          std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                          const std::vector<int64_t> &tensors_mask) {}
-  virtual void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                                 VectorRef *outputs) {}
+  void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
+  virtual void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
+                               const std::vector<tensor::TensorPtr> &graph_inputs) {}
   void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
 
   virtual void SetSummaryNodes(KernelGraph *graph);
@@ -184,6 +198,18 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
                                                       const std::vector<int64_t> &tensors_mask, bool is_ascend = false);
+  // Generate graph info for a single op graph
+  GraphInfo GetSingleOpGraphInfo(const CNodePtr &kernel, const std::vector<tensor::TensorPtr> &input_tensors);
+  void GetSingleOpRunInfo(const CNodePtr cnode, OpRunInfo *run_info);
+  tensor::TensorPtr GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index);
+  tensor::TensorPtr GetParameterOutputTensor(const AnfNodePtr &node,
+                                             const std::map<AnfNodePtr, size_t> &parameter_index,
+                                             const std::vector<tensor::TensorPtr> &graph_inputs);
+  tensor::TensorPtr GetCNodeOutputTensor(const KernelWithIndex &kernel_with_index,
+                                         const std::map<KernelWithIndex, tensor::TensorPtr> &op_output);
+  void GetOpInputTensors(const CNodePtr &cnode, const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
+                         const std::map<AnfNodePtr, size_t> &parameter_index,
+                         const std::vector<tensor::TensorPtr> &graph_inputs, InputTensorInfo *input_tensor_info);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);

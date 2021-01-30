@@ -351,7 +351,8 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool is_enable_dynamic_mem = context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL);
   bool is_enable_pynative_infer = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-  if (is_enable_dynamic_mem && !is_enable_pynative_infer) {
+  bool is_pynative_mode = (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  if (is_enable_dynamic_mem && !is_pynative_mode && !is_enable_pynative_infer) {
     auto graph_id = graph->graph_id();
     auto iter = mem_swap_map_.find(graph_id);
     if (iter == mem_swap_map_.end()) {

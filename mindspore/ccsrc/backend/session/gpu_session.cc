@@ -354,8 +354,10 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
   graph->UpdateGraphDynamicAttr();
-  // Hide NopOp from execution graph
-  opt::HideNopNode(graph.get());
+  // Hide NopOp from execution graph in graph mode
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+    opt::HideNopNode(graph.get());
+  }
   // Build kernel if node is cnode
   BuildKernel(graph);
   // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
