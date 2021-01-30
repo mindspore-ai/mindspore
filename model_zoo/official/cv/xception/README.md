@@ -148,7 +148,7 @@ sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /ckpt_0` by default, and training log will be redirected to `log.txt` like followings.
+Training result will be stored in the example path. Checkpoints will be stored at `. /ckpt_0` by default, and training log will be redirected to `log.txt` like following.
 
 ``` shell
 epoch: 1 step: 1251, loss is 4.8427444
@@ -182,7 +182,7 @@ sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 
 ### Result
 
-Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`.
+Evaluation result will be stored in the example path, you can find result like the following in `eval.log`.
 
 ```shell
 result: {'Loss': 1.7797744848789312, 'Top_1_Acc': 0.7985777243589743, 'Top_5_Acc': 0.9485777243589744}
