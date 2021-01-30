@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_CPU_ARM_NNACL_SHAPE_H_
-#define MINDSPORE_CCSRC_KERNEL_CPU_ARM_NNACL_SHAPE_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_POWER_FP32_H_
+#define MINDSPORE_LITE_NNACL_FP32_POWER_FP32_H_
 
+#include <math.h>
 #include "nnacl/op_base.h"
+#include "nnacl/power_parameter.h"
 
-typedef struct ShapeParameter {
-  // primitive parameter
-  OpParameter op_parameter_;
-} ShapeParameter;
+#ifdef __cplusplus
+extern "C" {
+#endif
+void Power(const float *input, const float *exponent, float *output, int len, float scale, float shift, bool broadcast);
+#ifdef __cplusplus
+}
+#endif
 
-#endif  // MINDSPORE_CCSRC_KERNEL_CPU_ARM_NNACL_SHAPE_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_POWER_FP32_H_

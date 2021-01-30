@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_SKIP_GRAM_H_
-#define MINDSPORE_LITE_NNACL_FP32_SKIP_GRAM_H_
+#include "nnacl/fp32/scatter_nd_fp32.h"
+#include <string.h>
+#include "nnacl/errorcode.h"
 
-#include "nnacl/op_base.h"
-
-typedef struct SkipGramParameter {
-  // primitive parameter
-  OpParameter op_parameter_;
-  bool include_all_ngrams;
-  int max_skip_size;
-  int ngram_size;
-} SkipGramParameter;
-
-#endif  // MINDSPORE_LITE_NNACL_FP32_SKIP_GRAM_H_
+int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units) {
+  if (output_ptr == NULL || update == NULL || output_unit_offsets == NULL || unit_size <= 0 || num_units < 0) {
+    return NNACL_ERR;
+  }
+  for (int i = 0; i < num_units; i++) {
+    (void)memcpy(output_ptr + output_unit_offsets[i], update + unit_size * i, unit_size * sizeof(float));
+  }
+  return NNACL_OK;
+}

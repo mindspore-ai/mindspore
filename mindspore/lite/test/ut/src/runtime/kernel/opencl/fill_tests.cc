@@ -109,8 +109,8 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
   std::vector<lite::Tensor *> outputs{&output_tensor};
 
   MS_LOG(INFO) << " initialize tensors ";
-  auto param = reinterpret_cast<ShapeParameter *>(malloc(sizeof(ShapeParameter)));
-  param->op_parameter_.type_ = PrimitiveType_Shape;
+  auto param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  param->type_ = PrimitiveType_Shape;
   if (param == nullptr) {
     MS_LOG(INFO) << " new FillParameter failed ";
     return;

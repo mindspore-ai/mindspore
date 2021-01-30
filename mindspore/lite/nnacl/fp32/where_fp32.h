@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_FP32_WHERE_Fp32_H_
+#define MINDSPORE_LITE_NNACL_FP32_WHERE_Fp32_H_
 
-#include "nnacl/scatter_nd.h"
-#include <string.h>
-#include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/where_parameter.h"
 
-int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units) {
-  if (output_ptr == NULL || update == NULL || output_unit_offsets == NULL || unit_size <= 0 || num_units < 0) {
-    return NNACL_ERR;
-  }
-  for (int i = 0; i < num_units; i++) {
-    (void)memcpy(output_ptr + output_unit_offsets[i], update + unit_size * i, unit_size * sizeof(float));
-  }
-  return NNACL_OK;
+#ifdef __cplusplus
+extern "C" {
+#endif
+void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
+                           WhereParameter *where_param_, int task_id);
+#ifdef __cplusplus
 }
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_FP32_WHERE_Fp32_H_

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_L2NORM_H_
-#define MINDSPORE_LITE_NNACL_L2NORM_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_L2NORM_FP32_H_
+#define MINDSPORE_LITE_NNACL_FP32_L2NORM_FP32_H_
+
 #include "nnacl/l2_norm_parameter.h"
 
 #ifdef __cplusplus
@@ -30,4 +31,4 @@ int ThreadTrailingAxis(const float *input_ptr, float *output_ptr, const L2NormPa
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_L2NORM_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_L2NORM_FP32_H_

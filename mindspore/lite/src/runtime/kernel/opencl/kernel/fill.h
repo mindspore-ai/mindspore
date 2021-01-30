@@ -19,11 +19,9 @@
 
 #include <vector>
 #include "mindspore/lite/nnacl/base/fill_base.h"
-#include "mindspore/lite/nnacl/shape.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {
-
 class FillOpenCLKernel : public OpenCLKernel {
  public:
   using OpenCLKernel::OpenCLKernel;

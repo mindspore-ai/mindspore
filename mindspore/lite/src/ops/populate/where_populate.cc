@@ -15,7 +15,7 @@
  */
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/where.h"
+#include "mindspore/lite/nnacl/fp32/where_fp32.h"
 
 namespace mindspore {
 namespace lite {

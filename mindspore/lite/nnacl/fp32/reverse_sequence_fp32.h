@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_SCATTER_ND_H_
-#define MINDSPORE_LITE_NNACL_SCATTER_ND_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_REVERSE_SEQUENCE_H_
+#define MINDSPORE_LITE_NNACL_FP32_REVERSE_SEQUENCE_H_
 
+#include <string.h>
+#include "nnacl/common_func.h"
 #include "nnacl/op_base.h"
-
-typedef struct ScatterNDParameter {
-  // primitive parameter
-  OpParameter op_parameter_;
-} ScatterNDParameter;
+#include "nnacl/reverse_sequence_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units);
+void ReverseSequence(float *input0, const void *input1, float *output, ReverseSequenceParameter *para);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_SCATTER_ND_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_REVERSE_SEQUENCE_H_

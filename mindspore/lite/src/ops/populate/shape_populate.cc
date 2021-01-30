@@ -18,23 +18,20 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
-#include "nnacl/shape.h"
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateShapeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ShapeParameter *shape_param = reinterpret_cast<ShapeParameter *>(malloc(sizeof(ShapeParameter)));
+  OpParameter *shape_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (shape_param == nullptr) {
     MS_LOG(ERROR) << "malloc ShapeParameter failed.";
     return nullptr;
   }
-  memset(shape_param, 0, sizeof(ShapeParameter));
-  shape_param->op_parameter_.type_ = primitive->Type();
+  memset(shape_param, 0, sizeof(OpParameter));
+  shape_param->type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(shape_param);
 }
 
 Registry ShapeParameterRegistry(schema::PrimitiveType_Shape, PopulateShapeParameter);
-
 }  // namespace lite
 }  // namespace mindspore

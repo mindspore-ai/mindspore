@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/where.h"
+
+#include "nnacl/fp32/where_fp32.h"
 #include "nnacl/common_func.h"
 
 void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
