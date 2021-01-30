@@ -71,7 +71,8 @@ Status ModelImpl::Build() {
   model_context.thread_num_ = Context::GetThreadNum(context_);
   model_context.device_list_.clear();
   if (Context::IfCPUEnabled(context_) && Context::IfGPUEnabled(context_) && Context::IfNPUEnabled(context_)) {
-    MS_LOG(INFO) << "CPU/GPU/NPU cannot be enabled at the same time.";
+    MS_LOG(ERROR) << "CPU/GPU/NPU cannot be enabled at the same time.";
+    return kLiteInputParamInvalid;
   }
   if (!Context::IfCPUEnabled(context_)) {
     MS_LOG(INFO) << "CPU is forced to be enabled.";
