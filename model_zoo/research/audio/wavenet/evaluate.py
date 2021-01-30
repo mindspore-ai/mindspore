@@ -36,10 +36,12 @@ parser.add_argument('--data_path', type=str, required=True, default='',
                     help='Directory contains preprocessed features.')
 parser.add_argument('--preset', type=str, required=True, default='', help='Path of preset parameters (json).')
 parser.add_argument('--pretrain_ckpt', type=str, default='', help='Pretrained checkpoint path')
-parser.add_argument('--is_numpy', action="store_false", default=True, help='Using numpy for inference or not')
+parser.add_argument('--is_numpy', action="store_true", default=False, help='Using numpy for inference or not')
 parser.add_argument('--output_path', type=str, default='./out_wave/', help='Path to save generated audios')
 parser.add_argument('--speaker_id', type=str, default='',
                     help=' Use specific speaker of data in case for multi-speaker datasets.')
+parser.add_argument('--platform', type=str, default='GPU', choices=('GPU', 'CPU'),
+                    help='run platform, support GPU and CPU. Default: GPU')
 args = parser.parse_args()
 
 
@@ -183,7 +185,7 @@ def save_ref_audio(hparam, ref, length, target_wav_path_):
 
 
 if __name__ == '__main__':
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU', save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args.platform, save_graphs=False)
     speaker_id = int(args.speaker_id) if args.speaker_id != '' else None
     if args.preset is not None:
         with open(args.preset) as f:

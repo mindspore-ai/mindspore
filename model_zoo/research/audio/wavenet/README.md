@@ -18,7 +18,7 @@
 
 # [WaveNet Description](#contents)
 
-WaveNet is a deep neural network for generating raw audio waveforms. The model is fully probabilistic and autoregressive, with the predictive distribution for each audio sample conditioned on all previous ones. We support training and evaluation on GPU.
+WaveNet is a deep neural network for generating raw audio waveforms. The model is fully probabilistic and autoregressive, with the predictive distribution for each audio sample conditioned on all previous ones. We support training and evaluation  on both GPU and CPU.
 
 [Paper](https://arxiv.org/pdf/1609.03499.pdf): ord A, Dieleman S, Zen H, et al. Wavenet: A generative model for raw audio
 
@@ -47,8 +47,8 @@ Dataset used: [The LJ Speech Dataset](<https://keithito.com/LJ-Speech-Dataset>)
 
 # [Environment Requirements](#contents)
 
-- Hardware（GPU）
-    - Prepare hardware environment with GPU processor.
+- Hardware（GPU/CPU）
+    - Prepare hardware environment with GPU/CPU processor.
 - Framework
     - [MindSpore](https://cmc-szv.clouddragon.huawei.com/cmcversion/index/search?searchKey=Do-MindSpore%20V100R001C00B622)
 - For more information, please check the resources below：
@@ -65,37 +65,38 @@ Dataset used: [The LJ Speech Dataset](<https://keithito.com/LJ-Speech-Dataset>)
 .
 ├── audio
     └──wavenet
-        ├──datasets                      // Note the datasets folder should be download from the above link
-        ├──egs                           // Note the egs folder should be download from the above link  
-        ├──utils                         // Note the utils folder should be download from the above link  
-        ├── audio.py                     // audio utils. Note this script should be download from a third party
-        ├── compute-meanvar-stats.py     // Compute mean-variance normalization stats. Note this script should be download from the above link
-        ├── evaluate.py                  // evaluation
-        ├── export.py                    // convert mindspore model to air model
-        ├── hparams.py                   // hyper-parameter configuration. Note this script should be download from the above link
-        ├── mksubset.py                  // Make subset of dataset. Note this script should be download from the above link
-        ├── preprocess.py                // Preprocess dataset. Note this script should be download from the above link
-        ├── preprocess_normalize.py      // Perform meanvar normalization to preprocessed features. Note this script should be download from the above link
-        ├── README.md                    // descriptions about WaveNet
-        ├── train.py                     // training scripts
-        ├── train_pytorch.py             // Note this script should be download from the above link. The initial name of this script is train.py in the project from the link
+        ├──datasets                      // Note the datasets folder should be downloaded from the above link
+        ├──egs                           // Note the egs folder should be downloaded from the above link  
+        ├──utils                         // Note the utils folder should be downloaded from the above link  
+        ├── audio.py                     // Audio utils. Note this script should be downloaded from a third party
+        ├── compute-meanvar-stats.py     // Compute mean-variance normalization stats. Note this script should be downloaded from the above link
+        ├── evaluate.py                  // Evaluation
+        ├── export.py                    // Convert mindspore model to air model  
+        ├── hparams.py                   // Hyper-parameter configuration. Note this script should be downloaded from the above link
+        ├── lrschedule.py                  // Learning rate scheduler. Note this script should be downloaded from the above link
+        ├── mksubset.py                  // Make subset of dataset. Note this script should be downloaded from the above link
+        ├── preprocess.py                // Preprocess dataset. Note this script should be downloaded from the above link
+        ├── preprocess_normalize.py      // Perform meanvar normalization to preprocessed features. Note this script should be downloaded from the above link
+        ├── README.md                    // Descriptions about WaveNet
+        ├── train.py                     // Training scripts
+        ├── train_pytorch.py             // Note this script should be downloaded from the above link. The initial name of this script is train.py in the project from the link
         ├── src
         │   ├──__init__.py
-        │   ├──dataset.py                // generate dataloader and data processing entry
-        │   ├──callback.py               // callbacks to monitor the training
-        │   ├──lr_generator.py           // learning rate generator
-        │   └──loss.py                   // loss function definition
+        │   ├──dataset.py                // Generate dataloader and data processing entry
+        │   ├──callback.py               // Callbacks to monitor the training
+        │   ├──lr_generator.py           // Learning rate generator
+        │   └──loss.py                   // Loss function definition
         └── wavenet_vocoder
             ├──__init__.py
-            ├──conv.py                   // extended 1D convolution
-            ├──mixture.py                // loss function for training and sample function for testing
-            ├──modules.py                // modules for Wavenet construction
-            ├──upsample.py               // upsample layer definition
-            ├──util.py                   // utils. Note this script should be download from the above link
+            ├──conv.py                   // Extended 1D convolution
+            ├──mixture.py                // Loss function for training and sample function for testing
+            ├──modules.py                // Modules for Wavenet construction
+            ├──upsample.py               // Upsample layer definition
+            ├──util.py                   // Utils. Note this script should be downloaded from the above link
             ├──wavenet.py                // WaveNet networks
-            └──tfcompat                  // Note this script should be download from the above link
+            └──tfcompat                  // Note this script should be downloaded from the above link
                ├──__init__.py
-               └──hparam.py              // param management tools
+               └──hparam.py              // Param management tools
 ```
 
 ## [Script Parameters](#contents)
@@ -105,13 +106,15 @@ Dataset used: [The LJ Speech Dataset](<https://keithito.com/LJ-Speech-Dataset>)
 ```text
 usage: train.py  [--data_path DATA_PATH] [--preset PRESET]
                  [--checkpoint_dir CHECKPOINT_DIR] [--checkpoint CHECKPOINT]
-                 [--speaker_id SPEAKER_ID] [--is_distributed IS_DISTRIBUTED]
+                 [--speaker_id SPEAKER_ID] [--platform PLATFORM]
+                 [--is_distributed IS_DISTRIBUTED]
 options:
     --data_path                  dataset path
     --preset                     path of preset parameters (json)
     --checkpoint_dir             directory of saving model checkpoints
     --checkpoint                 pre-trained ckpt path, default is "./checkpoints"
     --speaker_id                 specific speaker of data in case for multi-speaker datasets, not used currently
+    --platform                   specify platform to be used, defeault is "GPU"
     --is_distributed             whether distributed training or not
 
 ```
@@ -120,8 +123,9 @@ options:
 
 ```text
 usage: evaluate.py  [--data_path DATA_PATH] [--preset PRESET]
-                    [--pretrain_ckpt PRETRAIN_CKPT] [--output_path OUTPUT_PATH]
-                    [--speaker_id SPEAKER_ID]
+                    [--pretrain_ckpt PRETRAIN_CKPT] [--is_numpy]
+                    [--output_path OUTPUT_PATH] [--speaker_id SPEAKER_ID]
+                    [--platform PLATFORM]
 options:
     --data_path                  dataset path
     --preset                     path of preset parameters (json)
@@ -129,6 +133,7 @@ options:
     --is_numpy                   whether using numpy for inference or not
     --output_path                path to save synthesized audio
     --speaker_id                 specific speaker of data in case for multi-speaker datasets, not used currently
+    --platform                   specify platform to be used, defeault is "GPU"
 ```
 
 More parameters for training and evaluation can be set in file `hparams.py`.
@@ -194,18 +199,19 @@ After the processing, the directory of gaussian will be as follows:
                 └──eval
 ```
 
-The train_no_dev folder contains the final training data. For mulaw256 and mol, the process is the same. When the training data is prepared,
+The train_no_dev folder contains the final training data. For mol and gaussian, the process is the same. When the training data is prepared,
 you can run the following command to train the network:
 
 ```bash
-# standalone training
-python train.py ----data_path= /path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --checkpoint_dir=path_to_save_ckpt
+Standalone training
+GPU:
+python train.py --data_path=/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --checkpoint_dir=path_to_save_ckpt
 
-distributed training
+CPU:
+python train.py --data_path=/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --checkpoint_dir=path_to_save_ckpt --platform=CPU
+
+Distributed training (on GPU only)
 CUDA_VISIBLE_DEVICES='0,1,2,3,4,5,6,7' mpirun --allow-run-as-root -n 8 python train.py ----data_path= /path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --checkpoint_dir=path_to_save_ckpt --is_distributed=True
-
-eval
-python evaluate.py ----data_path= /path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --pretrain_ckpt=path_to_load_ckpt --output_path=path_to_save_audio
 ```
 
 ## [Evaluation Process](#contents)
@@ -214,21 +220,29 @@ WaveNet has a process of auto-regression and this process currently cannot be ru
 this [link](https://bbs.huaweicloud.com/forum/thread-94852-1-1.html)
 
 ```bash
-eval
-python evaluate.py --data_path= /path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/eval  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --pretrain_ckpt=path_to_load_ckpt --is_numpy --output_path=path_to_save_audio
+Evaluation
+GPU:
+python evaluate.py --data_path=/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/eval  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --pretrain_ckpt=path_to_load_ckpt --is_numpy --output_path=path_to_save_audio
+
+CPU:
+python evaluate.py --data_path=/path_to_egs/egs/gaussian/dump/lj/logmelspectrogram/norm/eval  --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --pretrain_ckpt=path_to_load_ckpt --is_numpy --output_path=path_to_save_audio --platform=CPU
 ```
 
 ## [Convert Process](#contents)
 
 ```bash
-python export.py --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --pretrain_ckpt=path_to_load_ckpt
+GPU:
+python export.py --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --checkpoint_dir=path_to_dump_hparams --pretrain_ckpt=path_to_load_ckpt
+
+CPU:
+python export.py --preset=/path_to_egs/egs/gaussian/conf/gaussian_wavenet.json --checkpoint_dir=path_to_dump_hparams --pretrain_ckpt=path_to_load_ckpt --platform=CPU
 ```
 
 # [Model Description](#contents)
 
 ## [Performance](#contents)
 
-### Training Performance
+### Training Performance on GPU
 
 | Parameters                 | WaveNet                                                      |
 | -------------------------- | ---------------------------------------------------------------|

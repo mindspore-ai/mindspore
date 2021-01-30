@@ -20,6 +20,8 @@ import matplotlib.pyplot as plt
 
 from mindspore import nn, Tensor
 from mindspore.ops import operations as P
+import mindspore.common.dtype as mstype
+from mindspore import context
 from nnmnkwii import preprocessing as P1
 
 from wavenet_vocoder.util import is_mulaw_quantize, is_mulaw
@@ -204,6 +206,7 @@ class NetWithLossClass(nn.Cell):
     Returns:
         Tensor, loss tensor.
     """
+
     def __init__(self, network, hparams):
         super(NetWithLossClass, self).__init__(auto_prefix=False)
         self.network = network
@@ -213,6 +216,7 @@ class NetWithLossClass(nn.Cell):
         self.transpose_op = P.Transpose()
         self.reshape_op = P.Reshape()
         self.is_mulaw_quant = is_mulaw_quantize(hparams.input_type)
+        self.cast = P.Cast()
 
         if self.is_mulaw_quant:
             self.criterion = MaskedCrossEntropyLoss()
@@ -225,13 +229,33 @@ class NetWithLossClass(nn.Cell):
                 self.criterion = None
                 raise RuntimeError(
                     "Not supported output distribution type: {}".format(hparams.output_distribution))
+        self.device_target = context.get_context("device_target")
 
     def construct(self, x, y, c, g, input_lengths, mask):
+        """
+
+        Args:
+            x (Tensor): input
+            y (Tensor): predition
+            c (Tensor): local_conditioning
+            g (Tensor): global_conditioning
+            input_lengths (Tensor): input_lengths
+            mask (Tensor): Mask
+
+        Returns:
+            Tensor: Loss tensor
+
+        """
         y_hat = self.network(x, c, g, False)
         if self.is_mulaw_quant:
             y_hat = self.transpose_op(y_hat[:, :, :-1], (0, 2, 1))
             y_hat = self.reshape_op(y_hat, (-1, y_hat.shape[-1]))
-            y = self.reshape_op(y[:, 1:, 0], (-1,))
+            if self.device_target == "CPU":
+                y = self.cast(y, mstype.float32)
+                y = self.reshape_op(y[:, 1:, 0], (-1,))
+                y = self.cast(y, mstype.int32)
+            else:
+                y = self.reshape_op(y[:, 1:, 0], (-1,))
             loss = self.criterion(y_hat, y)
         else:
             loss = self.criterion(y_hat[:, :, :-1], y[:, 1:, :], mask[:, 1:, :])

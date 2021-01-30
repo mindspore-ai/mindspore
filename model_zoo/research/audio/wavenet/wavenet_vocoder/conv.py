@@ -18,6 +18,7 @@ import math
 from mindspore import nn, Tensor
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
+from mindspore import context
 import numpy as np
 
 class Conv1d(nn.Conv1d):
@@ -84,7 +85,12 @@ class Conv1d(nn.Conv1d):
                 self.input_buffer = self.concat_op((self.input_buffer[:, 1:, :], inputs[:, 0:1, :]))
             inputs = self.input_buffer
             if dilation > 1:
-                inputs = inputs[:, 0::dilation, :]
+                if context.get_context("device_target") == "CPU":
+                    inputs = self.transpose_op(inputs, (1, 0, 2))
+                    inputs = inputs[0::dilation, :, :]
+                    inputs = self.transpose_op(inputs, (1, 0, 2))
+                else:
+                    inputs = inputs[:, 0::dilation, :]
 
         output = self.matmul(self.reshape_op(inputs, (bsz, -1)), self.get_weight)
         if self.bias is not None:
