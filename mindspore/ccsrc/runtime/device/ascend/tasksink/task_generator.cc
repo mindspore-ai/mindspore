@@ -171,8 +171,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
           input->addr =
             static_cast<uint8_t *>(split_input0_device_address->ptr_) + (prenode_with_index.second * input->size);
           MS_LOG(INFO) << "Change " << anf_node_ptr->fullname_with_scope() << "'s input " << i << " address to "
-                       << split_input0_device_address->ptr_ << " + "
-                       << "prenode_with_index.second * input->size";
+                       << split_input0_device_address->ptr_ << " + " << prenode_with_index.second * input->size;
         }
       }
       kernel_inputs.push_back(input);
