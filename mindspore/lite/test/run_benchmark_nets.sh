@@ -179,7 +179,8 @@ function Run_Converter() {
         if [[ $fp16_line_info == \#* ]]; then
           continue
         fi
-        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        model_name=${model_info%%;*}
         echo 'cp '${ms_models_path}'/'${model_name}'.ms' ${ms_models_path}'/'${model_name}'.fp16.ms'
         cp ${ms_models_path}/${model_name}.ms ${ms_models_path}/${model_name}.fp16.ms
         if [ $? = 0 ]; then
@@ -278,7 +279,7 @@ function Run_Converter() {
         fi
     done < ${models_mindspore_mixbit_config}
 
-    # Convert models which has several inputs or does not need to be cared about the accuracy:
+    # Convert models which has multiple inputs:
     while read line; do
         if [[ $line == \#* ]]; then
           continue
@@ -311,7 +312,42 @@ function Run_Converter() {
         else
             converter_result='converter '${model_type}' '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
         fi
-    done < ${models_only_for_process_config}
+    done < ${models_with_multiple_inputs_config}
+
+    # Convert models which does not need to be cared about the accuracy:
+    while read line; do
+        if [[ $line == \#* ]]; then
+          continue
+        fi
+        model_name=${line%%;*}
+        model_type=${model_name##*.}
+        case $model_type in
+          pb)
+            model_fmk="TF"
+            ;;
+          tflite)
+            model_fmk="TFLITE"
+            ;;
+          caffemodel)
+            model_name=${model_name%.*}
+            model_fmk="CAFFE"
+            ;;
+          onnx)
+            model_fmk="ONNX"
+            ;;
+          mindir)
+            model_fmk="MINDIR"
+            ;;
+        esac
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk='${model_fmk}' --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
+        if [ $? = 0 ]; then
+            converter_result='converter '${model_type}' '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter '${model_type}' '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_for_process_only_config}
 }
 
 # Run on x86 platform:
@@ -583,7 +619,7 @@ function Run_x86() {
         fi
     done < ${models_mindspore_mixbit_config}
 
-    # Run converted models which has several inputs or does not need to be cared about the accuracy:
+    # Run converted models which has multiple inputs:
     while read line; do
         if [[ $line == \#* ]]; then
           continue
@@ -594,31 +630,51 @@ function Run_x86() {
         input_files=''
         output_file=''
         data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
-        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${data_path}'input/'${model_name}'.ms.bin' ]; then
-          input_files=${data_path}'input/'$model_name'.ms.bin'
-        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        if [ -e ${data_path}'output/'${model_name}'.ms.out' ]; then
-          output_file=${data_path}'output/'${model_name}'.ms.out'
-        fi
+        for i in $(seq 1 $input_num)
+        do
+          input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+        done
+        output_file=${data_path}'output/'${model_name}'.ms.out'
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
         fi
         echo ${model_name} >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "{run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    done < ${models_only_for_process_config}
+    done < ${models_with_multiple_inputs_config}
+
+    # Run converted models which does not need to be cared about the accuracy:
+    while read line; do
+        if [[ $line == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
+        input_files=''
+        output_file=''
+        data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        if [[ ${model_name##*.} == "caffemodel" ]]; then
+          model_name=${model_name%.*}
+        fi
+        echo ${model_name} >> "${run_x86_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "{run_x86_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inputShapes='${input_shapes}' --loopCount=2 --warmUpLoopCount=0' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inputShapes=${input_shapes} --loopCount=2 --warmUpLoopCount=0 >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_for_process_only_config}
 }
 
 # Run on x86 sse platform:
@@ -854,7 +910,7 @@ function Run_x86_sse() {
         fi
     done < ${models_mindspore_mixbit_config}
 
-    # Run converted models which has several inputs or does not need to be cared about the accuracy:
+    # Run converted models with multiple inputs:
     while read line; do
         model_name=${line%%;*}
         if [[ $model_name == \#* ]]; then
@@ -866,31 +922,49 @@ function Run_x86_sse() {
         input_files=''
         output_file=''
         data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
-        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${data_path}'input/'${model_name}'.ms.bin' ]; then
-          input_files=${data_path}'input/'$model_name'.ms.bin'
-        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        if [ -e ${data_path}'output/'${model_name}'.ms.out' ]; then
-          output_file=${data_path}'output/'${model_name}'.ms.out'
-        fi
+        for i in $(seq 1 $input_num)
+        do
+          input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+        done
+        output_file=${data_path}'output/'${model_name}'.ms.out'
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
         fi
         echo ${model_name} >> "${run_x86_sse_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "{run_x86_sse_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_sse_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_sse_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> "${run_x86_sse_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86_sse: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    done < ${models_only_for_process_config}
+    done < ${models_with_multiple_inputs_config}
+
+    # Run converted models which does not need to be cared about the accuracy:
+    while read line; do
+        model_name=${line%%;*}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
+        if [[ ${model_name##*.} == "caffemodel" ]]; then
+          model_name=${model_name%.*}
+        fi
+        echo ${model_name} >> "${run_x86_sse_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "{run_x86_sse_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inputShapes='${input_shapes}' --loopCount=2 --warmUpLoopCount=0' >> "${run_x86_sse_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inputShapes=${input_shapes} --loopCount=2 --warmUpLoopCount=0 >> "${run_x86_sse_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_sse: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_for_process_only_config}
 }
 
 # Run on x86 avx platform:
@@ -1126,7 +1200,7 @@ function Run_x86_avx() {
         fi
     done < ${models_mindspore_mixbit_config}
 
-    # Run converted models which has several inputs or does not need to be cared about the accuracy:
+    # Run converted models which has multiple inputs:
     while read line; do
         model_name=${line%%;*}
         if [[ $model_name == \#* ]]; then
@@ -1138,31 +1212,49 @@ function Run_x86_avx() {
         input_files=''
         output_file=''
         data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
-        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${data_path}'input/'${model_name}'.ms.bin' ]; then
-          input_files=${data_path}'input/'$model_name'.ms.bin'
-        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        if [ -e ${data_path}'output/'${model_name}'.ms.out' ]; then
-          output_file=${data_path}'output/'${model_name}'.ms.out'
-        fi
+        for i in $(seq 1 $input_num)
+        do
+          input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+        done
+        output_file=${data_path}'output/'${model_name}'.ms.out'
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
         fi
         echo ${model_name} >> "${run_x86_avx_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "{run_x86_avx_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_avx_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_avx_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> "${run_x86_avx_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86_avx: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    done < ${models_only_for_process_config}
+    done < ${models_with_multiple_inputs_config}
+
+    # Run converted models which does not need to be cared about the accuracy:
+    while read line; do
+        model_name=${line%%;*}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
+        if [[ ${model_name##*.} == "caffemodel" ]]; then
+          model_name=${model_name%.*}
+        fi
+        echo ${model_name} >> "${run_x86_avx_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "{run_x86_avx_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inputShapes='${input_shapes}' --loopCount=2 --warmUpLoopCount=0' >> "${run_x86_avx_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inputShapes=${input_shapes} --loopCount=2 --warmUpLoopCount=0 >> "${run_x86_avx_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_avx: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_for_process_only_config}
 }
 
 # Run on arm64 platform:
@@ -1426,14 +1518,17 @@ function Run_arm64() {
         if [[ $fp16_line_info == \#* ]]; then
           continue
         fi
-        model_name=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
+        model_info=`echo ${fp16_line_info}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${fp16_line_info}|awk -F ' ' '{print $2}'`
+        model_name=${model_info%%;*}
+        length=${#model_name}
+        input_shapes=${model_info:length+1}
         echo "---------------------------------------------------------" >> "${run_arm64_log_file}"
         echo "fp16 run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
 
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
 
         cat adb_run_cmd.txt >> "${run_arm64_log_file}"
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
@@ -1680,7 +1775,7 @@ function Run_arm64() {
         fi
     done < ${models_npu_config}
 
-    # Run converted models which has several inputs or does not need to be cared about the accuracy:
+    # Run converted models which has multiple inputs:
     while read line; do
         model_name=${line%%;*}
         if [[ $model_name == \#* ]]; then
@@ -1692,18 +1787,11 @@ function Run_arm64() {
         input_files=''
         output_file=''
         data_path="/data/local/tmp/input_output/"
-        model_x86_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
-        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${model_x86_path}'input/'${model_name}'.ms.bin' ]; then
-          input_files=${data_path}'input/'$model_name'.ms.bin'
-        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
-          for i in $(seq 1 $input_num)
-          do
-            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
-          done
-        fi
-        if [ -e ${model_x86_path}'output/'${model_name}'.ms.out' ]; then
-          output_file=${data_path}'output/'${model_name}'.ms.out'
-        fi
+        for i in $(seq 1 $input_num)
+        do
+          input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+        done
+        output_file=${data_path}'output/'${model_name}'.ms.out'
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
         fi
@@ -1717,7 +1805,31 @@ function Run_arm64() {
         else
             run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    done < ${models_only_for_process_config}
+    done < ${models_with_multiple_inputs_config}
+
+    # Run converted models which does not need to be cared about the accuracy:
+    while read line; do
+        model_name=${line%%;*}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
+        if [[ ${model_name##*.} == "caffemodel" ]]; then
+          model_name=${model_name%.*}
+        fi
+        echo ${model_name} >> "${run_arm64_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=0 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_for_process_only_config}
 }
 
 # Run on arm32 platform:
@@ -1861,7 +1973,8 @@ models_mindspore_weightquant_config=${basepath}/models_mindspore_weightquant.cfg
 models_arm32_config=${basepath}/models_arm32.cfg
 models_npu_config=${basepath}/models_npu.cfg
 models_compatibility_config=${basepath}/models_compatibility.cfg
-models_only_for_process_config=${basepath}/models_with_several_inputs_or_without_outputs.cfg
+models_with_multiple_inputs_config=${basepath}/models_with_multiple_inputs.cfg
+models_for_process_only_config=${basepath}/models_for_process_only.cfg
 
 ms_models_path=${basepath}/ms_models
 
