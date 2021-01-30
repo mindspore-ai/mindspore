@@ -2,13 +2,25 @@
 
 ## MindSpore
 
-### API Change
+### Major Features and Improvements
 
-#### Backwards Incompatible Change
+#### NewModels
 
-##### Python API
+- [STABLE] BGCF: a Bayesian Graph Collaborative Filtering(BGCF) framework used to model the uncertainty in the user-item interaction graph and thus recommend accurate and diverse items on Amazon recommendation dataset.(Ascend)
+- [STABLE] GRU: a recurrent neural network architecture like the LSTM(Long-Short Term Memory) on Multi30K dataset.(Ascend)
+- [STABLE] FastText: a simple and efficient text classification algorithm on AG's news topic classification dataset, DBPedia Ontology classification dataset and Yelp Review Polarity dataset.(Ascend)
+- [STABLE] LSTM: a recurrent neural network architecture used to learn word vectors for sentiment analysis on aclImdb_v1 dataset.(Ascend)
+- [STABLE] SimplePoseNet: a convolution-based neural network for the task of human pose estimation and tracking on COCO2017 dataset.(Ascend)
 
-###### `ops.AvgPool`, `ops.MaxPool`, `ops.MaxPoolWithArgmax` change attr name from 'ksize', 'padding' to 'kernel_size', 'pad_mode' ([!11350](https://gitee.com/mindspore/mindspore/pulls/11350))
+#### FrontEnd
+
+- [BETA] Support Tensor Fancy Index Getitem with tuple and list. (Ascend/GPU/CPU)
+
+### Backwards Incompatible Change
+
+#### Python API
+
+##### `ops.AvgPool`, `ops.MaxPool`, `ops.MaxPoolWithArgmax` change attr name from 'ksize', 'padding' to 'kernel_size', 'pad_mode' ([!11350](https://gitee.com/mindspore/mindspore/pulls/11350))
 
 Previously the kernel size and pad mode attrs of pooling ops are named "ksize" and "padding", which is a little puzzling and inconsistent with convolution ops. So they are rename to "kernel_size" and "pad_mode".
 
@@ -41,6 +53,428 @@ Previously the kernel size and pad mode attrs of pooling ops are named "ksize" a
 </td>
 </tr>
 </table>
+
+##### `ops.TensorAdd`, change API name to `ops.Add` ([!11568](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11568))
+
+The operator name TensorAdd is not standardized, it is changed to Add. The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> add = ops.TensorAdd()
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> add = ops.Add()
+```
+
+</td>
+</tr>
+</table>
+
+##### `ops.Gelu`, `ops.GeluGrad`, `ops.FastGelu`, `ops.FastGeluGrad`, change API name to `ops.GeLU`, `ops.GeLUGrad`, `ops.FastGeLU`, `ops.FastGeLUGrad` ([!11603](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11603))
+
+Gelu, GeluGrad, FastGelu, and FastGeluGrad names are unified into ReLU naming rules, "lu" is changed to the uppercase "LU". The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> gelu = ops.Gelu()
+>>> gelu_grad = ops.GeluGrad()
+>>> fast_gelu = ops.FastGelu()
+>>> fast_gelu_grad = ops.FastGeluGrad()
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> gelu = ops.GeLU()
+>>> gelu_grad = ops.GeLUGrad()
+>>> fast_gelu = ops.FastGeLU()
+>>> fast_gelu_grad = ops.FastGeLUGrad()
+```
+
+</td>
+</tr>
+</table>
+
+##### `ops.GatherV2`, change API name to `ops.Gather` ([!11713](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11713))
+
+GatherV2 is changed to Gather. The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> gather = ops.GatherV2()
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> gather = ops.Gather()
+```
+
+</td>
+</tr>
+</table>
+
+##### `ops.Pack`、`ops.Unpack`, change API name to `ops.Stack`、`ops.Unstack` ([!11828](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11828))
+
+Pack is changed to Stack, and Unpack is changed to Unstack. The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> pack= ops.Pack()
+>>> unpack= ops.Unpack()
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.ops as ops
+>>>
+>>> stack= ops.Stack()
+>>> unstack= ops.Unstack()
+```
+
+</td>
+</tr>
+</table>
+
+##### `ops.ControlDepend`, add deprecated to ControlDepend ([!11844](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11844))
+
+ControlDepend is deprecated and will be removed in a future version, use Depend instead.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```pythonNote:
+Note:
+    This operation does not work in `PYNATIVE_MODE`.
+```
+
+</td>
+<td>
+
+```python
+Note:
+        This operation does not work in `PYNATIVE_MODE`.
+        `ControlDepend` is deprecated from version 1.1 and will be removed in a future version, use `Depend` instead.
+```
+
+</td>
+</tr>
+</table>
+
+##### `ops.Depend`, add operator description and use case ([!11815](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11815)), ([!11879](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11879))
+
+Since the ControlDepend operator will be deprecated from version 1.2, it is recommended to use the Depend operator instead.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+Depend is used for processing side-effect operations.
+
+Inputs:
+    - **value** (Tensor) - the real value to return for depend operator.
+    - **expr** (Expression) - the expression to execute with no outputs.
+
+Outputs:
+    Tensor, the value passed by last operator.
+
+Supported Platforms:
+    ``Ascend`` ``GPU`` ``CPU``
+```
+
+</td>
+<td>
+
+```python
+Depend is used for processing dependency operations.
+
+In some side-effect scenarios, we need to ensure the execution order of operators.
+In order to ensure that operator A is executed before operator B, it is recommended
+to insert the Depend operator between operators A and B.
+
+Previously, the ControlDepend operator was used to control the execution order.
+Since the ControlDepend operator will be deprecated from version 1.2, it is
+recommended to use the Depend operator instead. The replacement method is as follows::
+
+    a = A(x)                --->        a = A(x)
+    b = B(y)                --->        y = Depend(y, a)
+    ControlDepend(a, b)     --->        b = B(y)
+
+Inputs:
+    - **value** (Tensor) - the real value to return for depend operator.
+    - **expr** (Expression) - the expression to execute with no outputs.
+
+Outputs:
+    Tensor, the value passed by last operator.
+
+Supported Platforms:
+    ``Ascend`` ``GPU`` ``CPU``
+
+Examples:
+    >>> import numpy as np
+    >>> import mindspore
+    >>> import mindspore.nn as nn
+    >>> import mindspore.ops.operations as P
+    >>> from mindspore import Tensor
+    >>> class Net(nn.Cell):
+    ...     def __init__(self):
+    ...         super(Net, self).__init__()
+    ...         self.softmax = P.Softmax()
+    ...         self.depend = P.Depend()
+    ...
+    ...     def construct(self, x, y):
+    ...         mul = x * y
+    ...         y = self.depend(y, mul)
+    ...         ret = self.softmax(y)
+    ...         return ret
+    ...
+    >>> x = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
+    >>> y = Tensor(np.ones([4, 5]), dtype=mindspore.float32)
+    >>> net = Net()
+    >>> output = net(x, y)
+    >>> print(output)
+    [[0.2 0.2 0.2 0.2 0.2]
+     [0.2 0.2 0.2 0.2 0.2]
+     [0.2 0.2 0.2 0.2 0.2]
+     [0.2 0.2 0.2 0.2 0.2]]
+```
+
+</td>
+</tr>
+</table>
+
+#### C++ API
+
+##### change namespace from `mindspore::api` to `mindspore` ([!11574](https://gitee.com/mindspore/mindspore/pulls/11574))
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```c++
+namespace ms = mindspore::api;
+```
+
+</td>
+<td>
+
+```c++
+namespace ms = mindspore;
+```
+
+</td>
+</tr>
+</table>
+
+##### `Context` ([!11574](https://gitee.com/mindspore/mindspore/pulls/11574))
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```c++
+ms::Context::Instance().SetDeviceTarget(ms::kDeviceTypeAscend310).SetDeviceID(0);
+```
+
+</td>
+<td>
+
+```c++
+ms::GlobalContext::SetGlobalDeviceTarget(ms::kDeviceTypeAscend310);
+ms::GlobalContext::SetGlobalDeviceID(0);
+```
+
+</td>
+</tr>
+</table>
+
+##### rename `Tensor` to `MSTensor` ([!11574](https://gitee.com/mindspore/mindspore/pulls/11574))
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```c++
+ms::Tensor a;
+```
+
+</td>
+<td>
+
+```c++
+ms::MSTensor a;
+```
+
+</td>
+</tr>
+</table>
+
+##### `Model` move setting of model options from `Build` to ctor `Model` ([!11574](https://gitee.com/mindspore/mindspore/pulls/11574))
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```c++
+ms::Model model(graph_cell);
+model.Build(model_options);
+```
+
+</td>
+<td>
+
+```c++
+ms::Model model(graph_cell, model_context);
+model.Build();
+```
+
+</td>
+</tr>
+</table>
+
+##### `Model` modify `GetInputsInfo`, `GetOutputsInfo` to `GetInputs`, `GetOutputs` ([!11574](https://gitee.com/mindspore/mindspore/pulls/11574))
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```c++
+std::vector<std::string> names;
+std::vector<ms::DataType> types;
+std::vector<std::vector<int64_t>> shapes;
+std::vector<size_t> mem_sizes;
+model.GetInputsInfo(&names, &types, &shapes, &mem_sizes);
+std::cout << "Input 0 name: " << names[0] << std::endl;
+```
+
+</td>
+<td>
+
+```c++
+auto inputs = model.GetInputs();
+std::cout << "Input 0 name: " << inputs[0].Name() << std::endl;
+```
+
+</td>
+</tr>
+</table>
+
+##### `Model` modify `Predict` parameters type from `Buffer` to `MSTensor` ([!11574](https://gitee.com/mindspore/mindspore/pulls/11574))
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```c++
+std::vector<ms::Buffer> inputs;
+std::vector<ms::Buffer> outputs;
+model.Predict(inputs, &outputs);
+```
+
+</td>
+<td>
+
+```c++
+std::vector<ms::MSTensor> inputs;
+std::vector<ms::MSTensor> outputs;
+model.Predict(inputs, &outputs);
+```
+
+</td>
+</tr>
+</table>
+
+### Deprecations
+
+#### Python API
+
+##### `ops.SpaceToBatch`, `ops.BatchToSpace` are deprecated in favor of `ops.SpaceToBatchND`, `ops.BatchToSpaceND`([!11527](https://gitee.com/mindspore/mindspore/pulls/11527))
+
+The `ops.SpaceToBatchND`, `ops.BatchToSpaceND` are more general and have same behavior as `ops.SpaceToBatch`, `ops.BatchToSpace` when `block_shape` is a int.
+
+##### `ops.DepthwiseConv2dNative` is deprecated in favor of `nn.Conv2D`([!11702](https://gitee.com/mindspore/mindspore/pulls/11702))
+
+The `ops.DepthwiseConv2dNative` is only supported by Ascend, it is recommended to directly use `nn.Conv2D`. If `group` is equal to `in_ channels` and `out_channels`, the 2D convolution layer is also a 2D depthwise convolution layer.
+
+## Contributors
+
+Thanks goes to these wonderful people:
+
+Adel, AGroupofProbiotocs, anthonyaje, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, eric, Eric, fary86, fuzhiye, Gaoxiong, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jesse, jianghui58, jiangzhiwen, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, Jonathan, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, laiyongqiang, leonwanghui, Li, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luoyang, lvchangquan, lvliang, lz, mahdi, Mahdi, maning202007, Margaret_wangrui, mayang, mengyuanli, nhussain, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin, wangnan39@huawei.com, wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wukesong, wuweikang, wuxuejian, Xiaoda, xiefangqi, xinyunfan, xuanyue, xulei2020, Xun, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang, zhanghaibo5@huawei.com, zhanghuiyao, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Zirui, Ziyan, zjun, ZPaC, zymaa
+
+Contributions of any kind are welcome!
 
 # MindSpore 1.1.0 Release Notes
 
@@ -661,9 +1095,15 @@ Deprecate Interface GetOutputsByNodeName
 - [BUGFIX] Fix the bug in Tensor getitem in which the ellipsis matches the wrong dim-size.
 - [BUGFIX] Fix the bug that activation modification after defining Dense will not take effect.
 
-### Contributors
+## Contributors
+
+Thanks goes to these wonderful people:
 
 zhouyifengCode, huqi, JulyAi, damon0626, chenbo116, rmdyh, davidmc, gray0v0, doitH, Gogery, zymaa, xinyunfan
+
+Adel, AGroupofProbiotocs, anthonyaje, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, eric, Eric, fary86, fuzhiye, Gaoxiong, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jesse, jianghui58, jiangzhiwen, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, Jonathan, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, laiyongqiang, leonwanghui, Li, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luoyang, lvchangquan, lvliang, lz, mahdi, Mahdi, maning202007, Margaret_wangrui, mayang, mengyuanli, nhussain, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin, wangnan39@huawei.com, wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wukesong, wuweikang, wuxuejian, Xiaoda, xiefangqi, xinyunfan, xuanyue, xulei2020, Xun, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang, zhanghaibo5@huawei.com, zhanghuiyao, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Zirui, Ziyan, zjun, ZPaC, zymaa
+
+Contributions of any kind are welcome!
 
 # MindSpore 1.0.0 Release Notes
 
