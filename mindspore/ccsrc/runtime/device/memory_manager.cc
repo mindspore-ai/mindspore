@@ -17,7 +17,9 @@
 #include "runtime/device/memory_manager.h"
 #include <string>
 #include "backend/session/anf_runtime_algorithm.h"
+#ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
+#endif
 #include "utils/ms_context.h"
 
 using mindspore::memreuse::BestFitMemReuse;
