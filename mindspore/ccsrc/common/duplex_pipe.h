@@ -39,7 +39,7 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
   constexpr inline static unsigned int kTimeOutSeconds = 5;
 
   DuplexPipe() = default;
-  ~DuplexPipe() = default;
+  ~DuplexPipe();
 
   // Create a subprocess and open a duplex pipe between local and remote
   int Open(std::initializer_list<std::string> arg_list, bool append_fds = false);
@@ -84,10 +84,6 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
     }
   }
 
-  // Subprocess id in parent process,
-  // otherwise zero in child process.
-  pid_t pid_;
-
   // Pipe: { Local:fd1_[1] --> Remote:fd1_[0] }
   // Remote:fd1_[0] would be redirected by subprocess's stdin.
   // Local:fd1_[1] would be used by 'Write()' as output.
@@ -109,7 +105,7 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
 
   class SignalHandler {
    public:
-    SignalHandler(std::shared_ptr<DuplexPipe> dp, pid_t pid);
+    SignalHandler(const std::weak_ptr<DuplexPipe> &dp, pid_t *pid);
     ~SignalHandler();
 
     void SetAlarm(unsigned int interval_secs);
@@ -120,15 +116,19 @@ class DuplexPipe : public std::enable_shared_from_this<mindspore::DuplexPipe> {
     static void SigPipeHandler(int sig);
     static void SigChildHandler(int sig);
 
-    inline static std::shared_ptr<DuplexPipe> dp_;
-    inline static pid_t child_pid_;
+    inline static std::weak_ptr<DuplexPipe> dp_;
+    inline static pid_t *child_pid_;
   };
 
   unsigned int time_out_secs_ = kTimeOutSeconds;
   std::shared_ptr<std::function<void()>> time_out_callback_;
   std::shared_ptr<std::function<void()>> finalize_callback_;
+  // signal_handler_ has a pid_ pointer, so it must be ahead of pid_
   std::shared_ptr<SignalHandler> signal_handler_;
+
+  // Subprocess id in parent process,
+  // otherwise zero in child process.
+  pid_t pid_;
 };
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_COMMON_DUPLEX_PIPE_H_

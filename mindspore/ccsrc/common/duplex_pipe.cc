@@ -22,6 +22,13 @@
 #include <algorithm>
 
 namespace mindspore {
+DuplexPipe::~DuplexPipe() {
+  // pid_ < 0 means the child process is invalid or closed, pid_ == 0 means this process is child
+  if (pid_ > 0) {
+    (void)kill(pid_, SIGKILL);
+  }
+}
+
 int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fds) {
   if (pipe(fd1_) == -1) {
     DP_EXCEPTION << "pipe 1 failed, errno: " << errno;
@@ -68,7 +75,7 @@ int DuplexPipe::Open(std::initializer_list<std::string> arg_list, bool append_fd
     close(fd1_[0]);
     close(fd2_[1]);
 
-    signal_handler_ = std::make_shared<SignalHandler>(shared_from_this(), pid_);
+    signal_handler_ = std::make_shared<SignalHandler>(weak_from_this(), &pid_);
   }
   return 0;
 }
@@ -147,16 +154,17 @@ void DuplexPipe::Close() {
   close(fd1_[1]);
   close(fd2_[0]);
   close(fd2_[1]);
+  pid_ = -1;
 }
 
-DuplexPipe::SignalHandler::SignalHandler(std::shared_ptr<DuplexPipe> dp, pid_t pid) {
+DuplexPipe::SignalHandler::SignalHandler(const std::weak_ptr<DuplexPipe> &dp, pid_t *pid) {
   dp_ = dp;
   child_pid_ = pid;
   signal(SIGCHLD, SigChildHandler);
   signal(SIGPIPE, SigPipeHandler);
 }
 
-DuplexPipe::SignalHandler::~SignalHandler() { dp_.reset(); }
+DuplexPipe::SignalHandler::~SignalHandler() {}
 
 void DuplexPipe::SignalHandler::SetAlarm(unsigned int interval_secs) {
   signal(SIGALRM, SigAlarmHandler);
@@ -167,20 +175,31 @@ void DuplexPipe::SignalHandler::CancelAlarm() { alarm(0); }
 
 void DuplexPipe::SignalHandler::SigAlarmHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
-  if (dp_ != nullptr) {
-    dp_->NotifyTimeOut();
+  auto shared_dp = dp_.lock();
+  if (shared_dp != nullptr) {
+    shared_dp->NotifyTimeOut();
+  }
+  if (child_pid_ != nullptr) {
+    *child_pid_ = -1;
   }
 }
 
 void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
   DP_INFO << "Signal: " << sig << ", child_pid_: " << child_pid_;
-  if (dp_ != nullptr) {
-    dp_->NotifyFinalize();
+  auto shared_dp = dp_.lock();
+  if (shared_dp != nullptr) {
+    shared_dp->NotifyFinalize();
+  }
+  if (child_pid_ != nullptr) {
+    *child_pid_ = -1;
   }
 }
 
 void DuplexPipe::SignalHandler::SigChildHandler(int sig) {
   int status;
-  (void)waitpid(child_pid_, &status, WNOHANG | WUNTRACED);
+  if (child_pid_ != nullptr) {
+    (void)waitpid(*child_pid_, &status, WNOHANG | WUNTRACED);
+    *child_pid_ = -1;
+  }
 }
 }  // namespace mindspore
