@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_REVERSE_SEQUENCE_H_
-#define MINDSPORE_LITE_NNACL_REVERSE_SEQUENCE_H_
+#ifndef MINDSPORE_LITE_NNACL_REVERSE_SEQUENCE_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_REVERSE_SEQUENCE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -42,12 +42,4 @@ typedef struct ReverseSequenceParameter {
   bool is_seq_length_int32_;
 } ReverseSequenceParameter;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void ReverseSequence(float *input0, const void *input1, float *output, ReverseSequenceParameter *para);
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_LITE_NNACL_REVERSE_SEQUENCE_H_
+#endif  // MINDSPORE_LITE_NNACL_REVERSE_SEQUENCE_PARAMETER_H_

@@ -17,7 +17,7 @@
 #include <iostream>
 #include <memory>
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/reverse_sequence.h"
+#include "mindspore/lite/nnacl/fp32/reverse_sequence_fp32.h"
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {

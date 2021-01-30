@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_POWER_H_
 
 #include <vector>
-#include "nnacl/power.h"
+#include "mindspore/lite/nnacl/fp32/power_fp32.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
 namespace mindspore::kernel {

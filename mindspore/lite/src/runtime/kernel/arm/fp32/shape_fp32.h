@@ -19,10 +19,8 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/shape.h"
 
 namespace mindspore::kernel {
-
 class ShapeCPUKernel : public LiteKernel {
  public:
   ShapeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/power.h"
+#include "nnacl/fp32/power_fp32.h"
 
 bool CheckInteger(float f) { return floorf(f) == f; }
 

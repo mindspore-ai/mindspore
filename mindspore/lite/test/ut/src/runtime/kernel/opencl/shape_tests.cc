@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 #include "ut/src/runtime/kernel/opencl/common.h"
-#include "nnacl/shape.h"
 
 namespace mindspore::lite::opencl::test {
-
 class TestOpenCL_Shape : public CommonTest {};
 
 namespace {
 // PrimitiveType_Shape: src/ops/populate/shape_populate.cc
 OpParameter *CreateParameter() {
-  auto *param = test::CreateParameter<ShapeParameter>(schema::PrimitiveType_Shape);
+  auto *param = test::CreateParameter<OpParameter>(schema::PrimitiveType_Shape);
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace

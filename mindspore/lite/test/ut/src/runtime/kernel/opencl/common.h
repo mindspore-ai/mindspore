@@ -86,7 +86,7 @@ T *CreateParameter(schema::PrimitiveType type) {
     return nullptr;
   }
   memset(param, 0, sizeof(T));
-  param->op_parameter_.type_ = type;
+  (reinterpret_cast<OpParameter *>(param))->type_ = type;
   return param;
 }
 

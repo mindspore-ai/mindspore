@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/reverse_sequence.h"
-#include <string.h>
-#include "nnacl/common_func.h"
+#include "nnacl/fp32/reverse_sequence_fp32.h"
 
 void ReverseSequence(float *input0, const void *input1, float *output, ReverseSequenceParameter *para) {
   (void)memcpy(output, input0, para->total_data_size_);

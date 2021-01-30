@@ -17,19 +17,17 @@
 #include "src/ops/scatter_nd.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/scatter_nd.h"
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateScatterNDParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ScatterNDParameter *scatter_nd_param = reinterpret_cast<ScatterNDParameter *>(malloc(sizeof(ScatterNDParameter)));
+  OpParameter *scatter_nd_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (scatter_nd_param == nullptr) {
     MS_LOG(ERROR) << "malloc ScatterNDParameter failed.";
     return nullptr;
   }
-  memset(scatter_nd_param, 0, sizeof(ScatterNDParameter));
-  scatter_nd_param->op_parameter_.type_ = primitive->Type();
+  memset(scatter_nd_param, 0, sizeof(OpParameter));
+  scatter_nd_param->type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(scatter_nd_param);
 }
 Registry ScatterNDParameterRegistry(schema::PrimitiveType_ScatterND, PopulateScatterNDParameter);

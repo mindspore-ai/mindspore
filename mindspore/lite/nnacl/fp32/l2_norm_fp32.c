@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/l2_norm.h"
+#include "nnacl/fp32/l2_norm_fp32.h"
 #include <math.h>
 #include "nnacl/errorcode.h"
 

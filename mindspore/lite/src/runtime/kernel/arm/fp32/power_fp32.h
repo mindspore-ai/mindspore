@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/power.h"
+#include "mindspore/lite/nnacl/fp32/power_fp32.h"
 
 namespace mindspore::kernel {
 class PowerCPUKernel : public LiteKernel {

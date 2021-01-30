@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_POWER_H_
-#define MINDSPORE_LITE_NNACL_POWER_H_
-#include <math.h>
+#ifndef MINDSPORE_LITE_NNACL_SKIP_GRAM_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_SKIP_GRAM_PARAMETER_H_
+
 #include "nnacl/op_base.h"
-#include "nnacl/power_parameter.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Power(const float *input, const float *exponent, float *output, int len, float scale, float shift, bool broadcast);
-#ifdef __cplusplus
-}
-#endif
+typedef struct SkipGramParameter {
+  // primitive parameter
+  OpParameter op_parameter_;
+  bool include_all_ngrams;
+  int max_skip_size;
+  int ngram_size;
+} SkipGramParameter;
 
-#endif  // MINDSPORE_LITE_NNACL_POWER_H_
+#endif  // MINDSPORE_LITE_NNACL_SKIP_GRAM_PARAMETER_H_

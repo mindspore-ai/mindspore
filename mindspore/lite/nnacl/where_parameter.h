@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_WHERE_H_
-#define MINDSPORE_LITE_NNACL_WHERE_H_
+#ifndef MINDSPORE_LITE_NNACL_WHERE_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_WHERE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -32,13 +32,4 @@ typedef struct WhereParameter {
   int thread_num_;
 } WhereParameter;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
-                           WhereParameter *where_param_, int task_id);
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_LITE_NNACL_WHERE_H_
+#endif  // MINDSPORE_LITE_NNACL_WHERE_PARAMETER_H_
