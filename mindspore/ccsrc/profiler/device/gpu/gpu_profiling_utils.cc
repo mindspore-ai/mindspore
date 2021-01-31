@@ -74,10 +74,6 @@ void ProfilingUtils::GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order)
 }
 
 void ProfilingUtils::SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_order) {
-  if (!profiling_trace.trace_fp_start.empty()) {
-    return;
-  }
-
   const char *trace_fp_start = std::getenv(kFpStartNode);
   if (trace_fp_start != nullptr) {
     profiling_trace.trace_fp_start = std::string(trace_fp_start);
