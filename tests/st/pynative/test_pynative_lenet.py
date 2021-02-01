@@ -164,3 +164,40 @@ def test_ascend_pynative_lenet():
         print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
     assert loss_output.asnumpy() < 0.004
     assert loss_output.asnumpy() > 0.003
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_lenet_with_new_interface():
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    epoch_size = 20
+    batch_size = 32
+    inputs = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32))
+    labels = Tensor(np.ones([batch_size]).astype(np.int32))
+
+    net = LeNet()
+    criterion = CrossEntropyLoss()
+    net_with_criterion = WithLossCell(net, criterion)
+    net_with_criterion.set_train()
+
+    weights = ParameterTuple(filter(lambda x: x.requires_grad, net.get_parameters()))
+    optimizer = Momentum(weights, 0.1, 0.9)
+
+    forward_value_and_grad = nn.ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True)
+    total_time = 0
+    for epoch in range(0, epoch_size):
+        start_time = time.time()
+        loss_output, grads = forward_value_and_grad(inputs, labels)
+        optimizer(grads)
+        end_time = time.time()
+        cost_time = end_time - start_time
+        total_time = total_time + cost_time
+
+        print("======epoch: ", epoch, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
+    assert loss_output.asnumpy() < 0.005
+    assert loss_output.asnumpy() > 0.003

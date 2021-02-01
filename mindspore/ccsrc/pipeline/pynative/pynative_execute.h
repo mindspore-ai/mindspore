@@ -107,6 +107,7 @@ class TopCellInfo {
   std::string cell_id;
   std::string sens_id;
   std::string weights_id;
+  std::string input_args_id;
 };
 
 using GraphInfoPtr = std::shared_ptr<GraphInfo>;
@@ -209,6 +210,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
                        abstract::AbstractBasePtrList *args_spec_list);
+  abstract::AbstractBasePtr CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
+                                            const abstract::AbstractBasePtr &abs, const std::string &id, size_t index);
   void GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
                            bool *is_find);
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const AnfNodePtr &cnode);

@@ -307,6 +307,23 @@ class Cell(Cell_):
                 res.append(cast(item, dst_type))
         return tuple(res)
 
+    def do_parameter_broadcast(self):
+        if context.get_auto_parallel_context("parallel_mode") == ParallelMode.DATA_PARALLEL:
+            if not self.parameter_broadcast_done:
+                _pynative_exec.parameter_broadcast(self, self.phase, self._auto_parallel_mode)
+                self.parameter_broadcast_done = True
+
+    def run_construct(self, cast_inputs, kwargs):
+        if self.enable_hook:
+            _pynative_exec.enter_construct(self)
+            output = self._hook_construct(*cast_inputs, **kwargs)
+            _pynative_exec.leave_construct(self)
+        else:
+            _pynative_exec.enter_construct(self)
+            output = self.construct(*cast_inputs, **kwargs)
+            _pynative_exec.leave_construct(self)
+        return output
+
     def __call__(self, *inputs, **kwargs):
         if self.__class__.construct is Cell.construct:
             logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
@@ -324,11 +341,7 @@ class Cell(Cell_):
             out = self.compile_and_run(*inputs)
             return out
 
-        if context.get_auto_parallel_context("parallel_mode") == ParallelMode.DATA_PARALLEL:
-            if not self.parameter_broadcast_done:
-                _pynative_exec.parameter_broadcast(self, self.phase, self._auto_parallel_mode)
-                self.parameter_broadcast_done = True
-
+        self.do_parameter_broadcast()
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
@@ -349,14 +362,7 @@ class Cell(Cell_):
                 cast_inputs = self._cast_mixed_precision_inputs(inputs, mstype.float32)
         if not cast_inputs:
             cast_inputs = inputs
-        if self.enable_hook:
-            _pynative_exec.enter_construct(self)
-            output = self._hook_construct(*cast_inputs, **kwargs)
-            _pynative_exec.leave_construct(self)
-        else:
-            _pynative_exec.enter_construct(self)
-            output = self.construct(*cast_inputs, **kwargs)
-            _pynative_exec.leave_construct(self)
+        output = self.run_construct(cast_inputs, kwargs)
         if isinstance(output, Parameter):
             output = output.data
         if self.requires_grad is True:
