@@ -59,7 +59,7 @@ class YoloBlock(nn.Cell):
 
     Args:
         in_channels: Integer. Input channel.
-        out_chls: Interger. Middle channel.
+        out_chls: Integer. Middle channel.
         out_channels: Integer. Output channel.
 
     Returns:
@@ -108,7 +108,7 @@ class YOLOv3(nn.Cell):
      Args:
          backbone_shape: List. Darknet output channels shape.
          backbone: Cell. Backbone Network.
-         out_channel: Interger. Output channel.
+         out_channel: Integer. Output channel.
 
      Returns:
          Tensor, output tensor.
