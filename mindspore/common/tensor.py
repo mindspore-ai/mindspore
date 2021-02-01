@@ -252,22 +252,22 @@ class Tensor(Tensor_):
 
     @property
     def shape(self):
-        """The shape of tensor is a tuple."""
+        """Returns the shape of the tensor as a tuple."""
         return self._shape
 
     @property
     def dtype(self):
-        """The dtype of tensor is a mindspore type."""
+        """Returns the dtype of the tensor (:class:`mindspore.dtype`)."""
         return self._dtype
 
     @property
     def size(self):
-        """The size reflects the total number of elements in tensor."""
+        """Returns the total number of elements in tensor."""
         return self._size
 
     @property
     def ndim(self):
-        """The ndim of tensor is an integer."""
+        """Returns the number of tensor dimensions."""
         return len(self._shape)
 
     @property
@@ -277,22 +277,22 @@ class Tensor(Tensor_):
 
     @property
     def itemsize(self):
-        """The length of one tensor element in bytes."""
+        """Returns the length of one tensor element in bytes."""
         return self._itemsize
 
     @property
     def strides(self):
-        """The tuple of bytes to step in each dimension when traversing a tensor."""
+        """Returns the tuple of bytes to step in each dimension when traversing a tensor."""
         return self._strides
 
     @property
     def nbytes(self):
-        """The total number of bytes taken by the tensor."""
+        """Returns the total number of bytes taken by the tensor."""
         return self._nbytes
 
     @property
     def T(self):
-        """The transposed tensor."""
+        """Returns the transposed tensor."""
         return self.transpose()
 
     @property
@@ -425,22 +425,21 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
 
     def transpose(self, *axes):
-        """
-        Returns a view of the array with axes transposed.
+        r"""
+        Returns a view of the tensor with axes transposed.
 
-        For a 1-D array this has no effect, as a transposed vector is simply the
-        same vector. For a 2-D array, this is a standard matrix transpose. For an
-        n-D array, if axes are given, their order indicates how the axes are permuted
-        (see Examples). If axes are not provided and a.shape = (i[0], i[1],...
-        i[n-2], i[n-1]), then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
+        For a 1-D tensor this has no effect, as a transposed vector is simply the
+        same vector. For a 2-D tensor, this is a standard matrix transpose. For a
+        n-D tensor, if axes are given, their order indicates how the axes are permuted.
+        If axes are not provided and tensor.shape = (i[0], i[1],...i[n-2], i[n-1]),
+        then tensor.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
 
         Args:
-            axes(Union[None, tuple(int), list(int), n ints], optional):
-                None or no argument: reverses the order of the axes.
-                Tuple of ints: i in the j-th place in the tuple means a’s i-th
-                    axis becomes a.transpose()’s j-th axis.
-                n ints: this form is intended simply as a `convenience alternative
-                    to the tuple form.
+            axes(Union[None, tuple(int), list(int), \*int], optional): If axes is None or
+                blank, tensor.transpose() will reverse the order of the axes. If axes is tuple(int)
+                or list(int), tensor.transpose() will transpose the tensor to the new axes order.
+                If axes is \*int, this form is simply intended as a convenience alternative to the
+                tuple/list form.
 
         Returns:
             Tensor, has the same dimension as input tensor, with axes suitably permuted.
@@ -451,17 +450,16 @@ class Tensor(Tensor_):
 
     def reshape(self, *shape):
         """
-        Gives a new shape to an array without changing its data.
+        Gives a new shape to a tensor without changing its data.
 
         Args:
             shape(Union[int, tuple(int), list(int)]): The new shape should be compatible
-            with the original shape. If an integer, then the result will be a 1-D
-            array of that length. One shape dimension can be -1. In this case, the
-            value is inferred from the length of the array and remaining dimensions.
+                with the original shape. If an integer, then the result will be a 1-D
+                array of that length. One shape dimension can be -1. In this case, the
+                value is inferred from the length of the array and remaining dimensions.
 
         Returns:
-            reshaped_tensor(Tensor): This will be a new view object if possible;
-            otherwise, it will be a copy.
+            Tensor, with new specified shape.
         """
         self.init_check()
         new_shape = validator.check_reshape_shp(shape)
@@ -470,10 +468,9 @@ class Tensor(Tensor_):
     def ravel(self):
         """
         Returns a contiguous flattened tensor.
-        A 1-D tensor, containing the elements of the input, is returned.
 
         Returns:
-            Tensor, has the same data type as x.
+            Tensor, a 1-D tensor, containing the same elements of the input.
         """
         self.init_check()
         reshape_op = tensor_operator_registry.get('reshape')()
@@ -481,15 +478,15 @@ class Tensor(Tensor_):
 
     def flatten(self, order='C'):
         """
-        Returns a copy of the array collapsed into one dimension.
+        Returns a copy of the tensor collapsed into one dimension.
 
         Args:
-            order (str, optional): Can choose between `C` and `F`. `C` means to
-            flatten in row-major (C-style) order. ‘F’ means to flatten in column-major
-            (Fortran- style) order. Only `C` and `F` are supported.
+            order (str, optional): Can choose between \'C\' and \'F\'. \'C\' means to
+                flatten in row-major (C-style) order. \'F\' means to flatten in column-major
+                (Fortran- style) order. Only \'C\' and \'F\' are supported.
 
         Returns:
-            Tensor, has the same data type as x.
+            Tensor, has the same data type as input.
         """
         self.init_check()
         reshape_op = tensor_operator_registry.get('reshape')()
@@ -511,7 +508,7 @@ class Tensor(Tensor_):
             axis2 (int): Second axis.
 
         Returns:
-            Transposed tensor, has the same data type as the original tensor x.
+            Transposed tensor, has the same data type as the input.
         """
         self.init_check()
         axis1, axis2 = validator.check_swapaxes_axis((axis1, axis2), self.ndim)
@@ -534,10 +531,10 @@ class Tensor(Tensor_):
 
     def squeeze(self, axis=None):
         """
-        Removes single-dimensional entries from the shape of an tensor.
+        Removes single-dimensional entries from the shape of a tensor.
 
         Args:
-            axis: Union[None, int, list(int), tuple(list)]. Default is None.
+            axis (Union[None, int, list(int), tuple(list)], optional): Default is None.
 
         Returns:
             Tensor, with all or a subset of the dimensions of length 1 removed.
@@ -550,14 +547,13 @@ class Tensor(Tensor_):
 
     def astype(self, dtype, copy=True):
         """
-        Returns a copy of the array, cast to a specified type.
+        Returns a copy of the tensor, casted to a specified type.
 
         Args:
-            dtype(Union[mstype.dtype, numpy.dtype, str]): Designated tensor dtype,
-            can be in format of np.float32, mstype.float32 or `float32`. Default
-            is mstype.float32.
+            dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format
+                of :class:`mindspore.dtype.float32` or \'float32\'. Default is :class:`mindspore.dtype.float32`
 
-            copy(bool, optional): By default, astype always returns a newly allocated
+            copy (bool, optional): By default, astype always returns a newly allocated
                 tensor. If this is set to false, the input tensor is returned instead
                 of a copy if possible.
 
