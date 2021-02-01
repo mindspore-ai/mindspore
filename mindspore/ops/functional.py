@@ -41,8 +41,12 @@ ones_like = P.OnesLike()
 shape = P.Shape()
 rank = P.Rank()
 reshape = P.Reshape()
+
 # control_depend: represent dependency between two operators
-control_depend = P.ControlDepend()
+def control_depend(src, dst):
+    control_depend_op = P.ControlDepend()
+    return control_depend_op(src, dst)
+
 merge = P.Merge()
 geswitch = P.GeSwitch()
 addn = P.AddN()

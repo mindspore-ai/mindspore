@@ -19,7 +19,7 @@ def deprecated(version, substitute):
     """deprecated warning
 
     Args:
-        version (str): version that the operator or function will be deprecated.
+        version (str): version that the operator or function is deprecated.
         substitute (str): the substitute name for deprecated operator or function.
     """
 
