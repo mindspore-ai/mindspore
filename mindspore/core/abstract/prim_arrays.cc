@@ -612,7 +612,7 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
   ShapeVector indices_shp_max = (ind_dyn) ? indices->shape()->max_shape() : indices->shape()->shape();
   // check axis_val within interval: [-params_rank, params_rank)
   if (!(-params_rank <= axis_val) || !(axis_val < params_rank)) {
-    MS_LOG(EXCEPTION) << "For GatherV2 - Axis value must be within [ " << -params_rank << ", " << params_rank << " ) "
+    MS_LOG(EXCEPTION) << "For Gather - Axis value must be within [ " << -params_rank << ", " << params_rank << " ) "
                       << "Got " << axis_val << ".";
   }
   if (axis_val < 0) {
