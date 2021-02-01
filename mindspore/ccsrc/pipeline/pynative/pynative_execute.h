@@ -311,6 +311,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   size_t top_cell_index_{0};
   std::string top_cell_id_;
   bool grad_flag_{false};
+  bool in_bprop_process_{false};
   bool in_grad_process_{false};
   bool has_dynamic_cell_{false};
   bool grad_is_running_{false};

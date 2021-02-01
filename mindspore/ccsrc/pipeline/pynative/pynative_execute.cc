@@ -650,7 +650,7 @@ OpExecInfoPtr PynativeExecutor::GenerateOpExecInfo(const py::args &args) {
   auto op_name = py::cast<std::string>(args[PY_NAME]);
   op_exec_info->op_name = op_name;
   if (grad_flag()) {
-    op_exec_info->op_index = op_name + std::to_string(op_index_map_[op_name]);
+    op_exec_info->op_index = op_name + "_" + std::to_string(op_index_map_[op_name]);
     if (!cell_op_info_stack_.empty()) {
       std::string &cell_op_info = cell_op_info_stack_.top();
       cell_op_info += op_exec_info->op_index;
@@ -1908,27 +1908,23 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
   // check whether cell needed to construct grad graph
   if (graph_stack_.empty() && !top_cell_list_.empty() && CheckCellGraph(cell_id) && !CheckDynamicCell(cell_id)) {
     // Clear previous step resource
-    if (IsTopestGraph(cell_id) && cell_op_info_stack_.empty()) {
+    auto init_fn = [&cell_id, this](bool flag) {
       CleanPreMemoryInValueNode();
       op_index_map_.clear();
       in_grad_process_ = true;
-      auto top_cell = GetTopCell(cell_id);
+      in_bprop_process_ = false;
+      auto top_cell = GetTopCell(cell_id, flag);
       MS_EXCEPTION_IF_NULL(top_cell);
       top_cell_id_ = top_cell->cell_id;
       top_cell_index_ = top_cell->top_cell_index;
       top_cell->forward_already_run = true;
       MS_LOG(DEBUG) << "Top cell id " << top_cell_id_;
+    };
+    if (IsTopestGraph(cell_id) && cell_op_info_stack_.empty()) {
+      init_fn(false);
     }
     if (!in_grad_process_ && cell_op_info_stack_.empty()) {
-      CleanPreMemoryInValueNode();
-      op_index_map_.clear();
-      in_grad_process_ = true;
-      auto top_cell = GetTopCell(cell_id, true);
-      MS_EXCEPTION_IF_NULL(top_cell);
-      top_cell_id_ = top_cell->cell_id;
-      top_cell_index_ = top_cell->top_cell_index;
-      top_cell->forward_already_run = true;
-      MS_LOG(DEBUG) << "Top cell id " << top_cell_id_;
+      init_fn(true);
     }
     PushCurrentCellOpInfoToStack();
     MS_LOG(INFO) << "NewGraph already compiled";
@@ -1941,7 +1937,7 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
     if (!IsBpropGraph(cell_id)) {
       MakeNewTopGraph(cell_id, args);
     } else {
-      top_cell_index_ = cell_graph_list_.size();
+      in_bprop_process_ = true;
     }
   }
   PushCurrentGraphToStack();
@@ -2247,7 +2243,11 @@ void PynativeExecutor::UpdateCellGraph(const py::object &cell, const FuncGraphPt
                     << " cell ops info " << GetCellOpInfo();
       auto cell_info = std::make_shared<CellInfo>(true, has_dynamic_cell_, g, cell_id, bprop_func_cell_id);
       cell_info->cell_ops_info.emplace_back(GetCellOpInfo());
-      cell_graph_list_.insert(cell_graph_list_.begin() + top_cell_index_, cell_info);
+      if (in_bprop_process_) {
+        cell_graph_list_.emplace_back(cell_info);
+      } else {
+        cell_graph_list_.insert(cell_graph_list_.begin() + top_cell_index_, cell_info);
+      }
     }
     return;
   }
@@ -2274,7 +2274,11 @@ void PynativeExecutor::UpdateCellGraph(const py::object &cell, const FuncGraphPt
       MS_LOG(DEBUG) << "Add new cell with cloned graph " << cell_id << " cell ops info " << GetCellOpInfo();
       auto cell_info = std::make_shared<CellInfo>(true, has_dynamic_cell_, tmp, cell_id, "");
       cell_info->cell_ops_info.emplace_back(GetCellOpInfo());
-      cell_graph_list_.insert(cell_graph_list_.begin() + top_cell_index_, cell_info);
+      if (in_bprop_process_) {
+        cell_graph_list_.emplace_back(cell_info);
+      } else {
+        cell_graph_list_.insert(cell_graph_list_.begin() + top_cell_index_, cell_info);
+      }
     } else {
       auto it = std::find_if(cell_graph_list_.begin() + top_cell_index_, cell_graph_list_.end(),
                              [&cell_id](const CellInfoPtr &value) { return value->cell_id == cell_id; });
