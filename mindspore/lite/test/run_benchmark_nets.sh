@@ -293,20 +293,26 @@ function Run_Converter() {
           tflite)
             model_fmk="TFLITE"
             ;;
-          caffemodel)
-            model_name=${model_name%.*}
-            model_fmk="CAFFE"
-            ;;
           onnx)
             model_fmk="ONNX"
             ;;
           mindir)
             model_fmk="MINDIR"
             ;;
+          *)
+            model_type="caffe"
+            model_fmk="CAFFE"
+            ;;
         esac
-        echo ${model_name} >> "${run_converter_log_file}"
-        echo './converter_lite  --fmk='${model_fmk}' --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
-        ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
+        if [[ $model_fmk == "CAFFE" ]]; then
+          echo ${model_name} >> "${run_converter_log_file}"
+          echo './converter_lite  --fmk='${model_fmk}' --modelFile='$models_path/${model_name}'.prototxt --weightFile='$models_path'/'${model_name}'.caffemodel --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
+          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name}.prototxt --weightFile=${models_path}/${model_name}.caffemodel --outputFile=${ms_models_path}/${model_name}
+        else
+          echo ${model_name} >> "${run_converter_log_file}"
+          echo './converter_lite  --fmk='${model_fmk}' --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name} >> "${run_converter_log_file}"
+          ./converter_lite  --fmk=${model_fmk} --modelFile=${models_path}/${model_name} --outputFile=${ms_models_path}/${model_name}
+        fi
         if [ $? = 0 ]; then
             converter_result='converter '${model_type}' '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
         else
