@@ -296,7 +296,7 @@ void LiteMat::AlignFree(void *ptr) {
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
 
 bool LiteMat::GetROI(int x, int y, int w, int h, LiteMat &m) {
-  if (x < 0 || y < 0 || x > width_ - w || h > height_ - y || w < 0 || h < 0) {
+  if (x < 0 || y < 0 || x > width_ - w || h > height_ - y || w <= 0 || h <= 0) {
     return false;
   }
   if (!m.IsEmpty()) {
