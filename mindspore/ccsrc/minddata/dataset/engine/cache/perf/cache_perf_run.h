@@ -93,6 +93,10 @@ class CachePerfRun {
   Status GetSession();
   Status ListenToPipeline(int32_t workerId);
   void PrintEpochSummary() const;
+  Status StartPipelines();
+  Status Cleanup();
+  int32_t SanityCheck(std::map<int32_t, int32_t> seen_opts);
+  int32_t ProcessArgsHelper(int32_t opt);
 };
 }  // namespace dataset
 }  // namespace mindspore

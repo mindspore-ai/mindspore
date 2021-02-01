@@ -31,14 +31,9 @@ namespace mindspore {
 namespace dataset {
 void CachePipelineRun::PrintHelp() { std::cout << "Please run the executable cache_perf instead." << std::endl; }
 
-int32_t CachePipelineRun::ProcessArgs(int argc, char **argv) {
-  if (argc != 3) {
-    PrintHelp();
-    return -1;
-  }
-
+int32_t CachePipelineRun::ProcessPipelineArgs(char *argv) {
   try {
-    std::stringstream cfg_ss(argv[1]);
+    std::stringstream cfg_ss(argv);
     std::string s;
     int32_t numArgs = 0;
     while (std::getline(cfg_ss, s, ',')) {
@@ -72,8 +67,18 @@ int32_t CachePipelineRun::ProcessArgs(int argc, char **argv) {
       std::cerr << "Incomplete arguments. Expect 11. But get " << numArgs << std::endl;
       return -1;
     }
-    std::stringstream client_ss(argv[2]);
-    numArgs = 0;
+  } catch (const std::exception &e) {
+    std::cerr << "Parse error: " << e.what() << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int32_t CachePipelineRun::ProcessClientArgs(char *argv) {
+  try {
+    std::stringstream client_ss(argv);
+    std::string s;
+    int32_t numArgs = 0;
     while (std::getline(client_ss, s, ',')) {
       if (numArgs == 0) {
         cache_builder_.SetHostname(s);
@@ -99,6 +104,17 @@ int32_t CachePipelineRun::ProcessArgs(int argc, char **argv) {
     return -1;
   }
   return 0;
+}
+
+int32_t CachePipelineRun::ProcessArgs(int argc, char **argv) {
+  if (argc != 3) {
+    PrintHelp();
+    return -1;
+  }
+  int32_t rc = ProcessPipelineArgs(argv[1]);
+  if (rc < 0) return rc;
+  rc = ProcessClientArgs(argv[2]);
+  return rc;
 }
 
 CachePipelineRun::CachePipelineRun()
@@ -282,7 +298,7 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
         std::shared_ptr<Tensor> element;
         RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, col_desc->type(), &element));
         row.setId(id);
-        // CreateEmpty allocates the memory but in virutal address. Let's commit the memory
+        // CreateEmpty allocates the memory but in virtual address. Let's commit the memory
         // so we can get an accurate timing.
         auto it = element->begin<int64_t>();
         for (auto i = 0; i < num_elements; ++i, ++it) {
