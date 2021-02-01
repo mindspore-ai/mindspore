@@ -678,7 +678,7 @@ TEST_F(TestConvert, TestNPUClearFloatStatusOps) {
 #endif
 
 TEST_F(TestConvert, TestAddOps) {
-  auto prim = std::make_shared<Primitive>("TensorAdd");
+  auto prim = std::make_shared<Primitive>("Add");
   auto func_graph = MakeFuncGraph(prim, 2);
   ASSERT_TRUE(nullptr != func_graph);
 

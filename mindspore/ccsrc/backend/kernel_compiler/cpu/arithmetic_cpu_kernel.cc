@@ -238,7 +238,7 @@ void ArithmeticCPUKernel::LessEqual(const T *input1, const T *input2, bool *out,
 void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == prim::kPrimTensorAdd->name()) {
+  if (kernel_name == prim::kPrimAdd->name()) {
     operate_type_ = ADD;
   } else if (kernel_name == prim::kPrimSub->name()) {
     operate_type_ = SUB;

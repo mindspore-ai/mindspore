@@ -15,7 +15,7 @@
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
-Add = P.TensorAdd()
+Add = P.Add()
 Mul = P.Mul()
 Sqrt = P.Sqrt()
 Square = P.Square()

@@ -75,7 +75,7 @@ class ResidualConv1dGLU(nn.Cell):
         self.tanh = P.Tanh()
         self.sigmoid = P.Sigmoid()
         self.mul = P.Mul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
         if skip_out_channels is None:
             skip_out_channels = residual_channels

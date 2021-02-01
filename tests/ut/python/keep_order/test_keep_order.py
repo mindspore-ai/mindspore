@@ -23,9 +23,9 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE)
-add1 = P.TensorAdd()
+add1 = P.Add()
 mul1 = P.MatMul()
-add2 = P.TensorAdd()
+add2 = P.Add()
 
 
 def add(x, y):

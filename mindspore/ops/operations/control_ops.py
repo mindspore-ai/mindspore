@@ -106,7 +106,7 @@ class GeSwitch(PrimitiveWithInfer):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.square = ops.Square()
-        ...         self.add = ops.TensorAdd()
+        ...         self.add = ops.Add()
         ...         self.value = Tensor(np.full((1), 3), mindspore.float32)
         ...         self.switch = ops.GeSwitch()
         ...         self.merge = ops.Merge()

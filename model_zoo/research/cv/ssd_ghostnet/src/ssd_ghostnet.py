@@ -273,7 +273,7 @@ class GhostBottleneck(nn.Cell):
                     ConvBNReLU(num_in, num_out, kernel_size=1, stride=1,
                                groups=1, use_act=False),
                 ])
-            self.add = P.TensorAdd()
+            self.add = P.Add()
 
     def construct(self, x):
         """construct"""
@@ -345,7 +345,7 @@ class InvertedResidual(nn.Cell):
             _bn(oup),
         ])
         self.conv = nn.SequentialCell(layers)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.cast = P.Cast()
         self.last_relu = last_relu
         self.relu = nn.ReLU6()

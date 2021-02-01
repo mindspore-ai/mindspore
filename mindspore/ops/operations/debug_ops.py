@@ -66,7 +66,7 @@ class ScalarSummary(PrimitiveWithInfer):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
         ...         self.summary = ops.ScalarSummary()
-        ...         self.add = ops.TensorAdd()
+        ...         self.add = ops.Add()
         ...
         ...     def construct(self, x, y):
         ...         name = "x"
@@ -149,7 +149,7 @@ class TensorSummary(PrimitiveWithInfer):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
         ...         self.summary = ops.TensorSummary()
-        ...         self.add = ops.TensorAdd()
+        ...         self.add = ops.Add()
         ...
         ...     def construct(self, x, y):
         ...         x = self.add(x, y)
@@ -191,7 +191,7 @@ class HistogramSummary(PrimitiveWithInfer):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
         ...         self.summary = ops.HistogramSummary()
-        ...         self.add = ops.TensorAdd()
+        ...         self.add = ops.Add()
         ...
         ...     def construct(self, x, y):
         ...         x = self.add(x, y)
@@ -409,7 +409,7 @@ class Assert(PrimitiveWithInfer):
         ...     def __init__(self):
         ...         super(AssertDemo, self).__init__()
         ...         self.assert1 = ops.Assert(summarize=10)
-        ...         self.add = ops.TensorAdd()
+        ...         self.add = ops.Add()
         ...
         ...     def construct(self, x, y):
         ...         data = self.add(x, y)

@@ -61,7 +61,7 @@ class ResidualBlock(nn.Cell):
                                           kernel_size=1, stride=stride)
             self.bn_down_sample = _bn(out_channels, momentum=momentum)
 
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x

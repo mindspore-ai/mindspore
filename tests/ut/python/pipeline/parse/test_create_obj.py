@@ -71,11 +71,11 @@ class Net1(nn.Cell):
 
     def __init__(self):
         super(Net1, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     @ms_function
     def construct(self, x, y):
-        add = P.TensorAdd()
+        add = P.Add()
         result = add(x, y)
         return result
 

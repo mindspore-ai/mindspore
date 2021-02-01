@@ -85,7 +85,7 @@ class ResidualBlock(nn.Cell):
             self.down_sample_layer = nn.Conv2dBnAct(in_channel, out_channel,
                                                     kernel_size=1, stride=stride,
                                                     pad_mode='same', padding=0, has_bn=True, activation='relu')
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.relu = P.ReLU()
 
     def construct(self, x):

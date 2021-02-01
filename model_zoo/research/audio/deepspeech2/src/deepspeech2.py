@@ -207,7 +207,7 @@ class DeepSpeechModel(nn.Cell):
         self.reshape_op = P.Reshape()
         self.shape_op = P.Shape()
         self.transpose_op = P.Transpose()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.div = P.Div()
 
         sample_rate = self.audio_conf.sample_rate

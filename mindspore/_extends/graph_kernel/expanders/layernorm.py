@@ -68,13 +68,13 @@ def expand_layernorm(expand_info):
         # Calculate normalize
         normalize_sub = graph_builder.emit('Sub', [input_x, mean])
         epsilon_v = graph_builder.value(input_x.dtype, epsilon, input_x.data_format)
-        normalize_add = graph_builder.emit('TensorAdd', [variance, epsilon_v])
+        normalize_add = graph_builder.emit('Add', [variance, epsilon_v])
         normlize_rsqrt = graph_builder.emit('Rsqrt', [normalize_add])
         normalize_mul = graph_builder.emit('Mul', [normalize_sub, normlize_rsqrt])
 
         # Calculate scale and translate
         scale_mul = graph_builder.emit('Mul', [input_gamma, normalize_mul])
-        res = graph_builder.emit('TensorAdd', [scale_mul, input_beta])
+        res = graph_builder.emit('Add', [scale_mul, input_beta])
 
         # set graph output.
         graph_scope.set_output(res, mean, variance)

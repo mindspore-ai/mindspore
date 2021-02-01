@@ -47,7 +47,7 @@ AnfNodePtr NewCNodeWithInfo(const AnfNodePtrList &inputs, const AnfNodePtr &ori_
 }
 
 AnfNodePtr SimplifyAdd(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimTensorAdd)) {
+  if (!IsPrimitiveCNode(node, prim::kPrimAdd)) {
     return nullptr;
   }
   PatternNode<AnfNodePtr> x, y, z;
@@ -57,13 +57,13 @@ AnfNodePtr SimplifyAdd(const AnfNodePtr &node) {
   PConstant<AnfNodePtr> any_const_2(node);
 
   auto add_distri_lambda = [&node, &x, &y, &any_const]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimTensorAdd), x.GetNode(node), y.GetNode(node)}, node);
+    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), y.GetNode(node)}, node);
     auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimMul), node_tmp, any_const.GetNode(node)}, node);
     return new_cnode;
   };
   auto add_union_lambda = [&node, &x, &any_const, &any_const_2]() -> AnfNodePtr {
     auto new_rhs = any_const.AddByPatternConst(any_const_2, x.GetNode(node));
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimTensorAdd), x.GetNode(node), new_rhs}, node);
+    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), new_rhs}, node);
     return new_cnode;
   };
   // A + 0 = A
@@ -88,7 +88,7 @@ AnfNodePtr SimplifySub(const AnfNodePtr &node) {
   PConstant<AnfNodePtr> any_const(node);
   auto sub_toadd_lambda = [&node, &x, &any_const]() -> AnfNodePtr {
     auto new_rhs = any_const.ValueNodeWithOprations(prim::kPrimNeg);
-    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimTensorAdd), x.GetNode(node), new_rhs}, node);
+    auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), new_rhs}, node);
     return new_cnode;
   };
   // A - 0 = A
@@ -269,7 +269,7 @@ AnfNodePtr SimplifyMul(const AnfNodePtr &node) {
     return new_cnode;
   };
   auto exp_merge_lambda = [&node, &x, &y]() -> AnfNodePtr {
-    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimTensorAdd), x.GetNode(node), y.GetNode(node)}, node);
+    auto node_tmp = NewCNodeWithInfo({NewValueNode(prim::kPrimAdd), x.GetNode(node), y.GetNode(node)}, node);
     auto new_cnode = NewCNodeWithInfo({NewValueNode(prim::kPrimExp), node_tmp}, node);
     return new_cnode;
   };

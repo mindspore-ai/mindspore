@@ -86,7 +86,7 @@ REGISTER(LogSoftmaxInfo);
 REGISTER(ActivationInfo);
 REGISTER(SoftmaxCrossEntropyWithLogitsInfo);
 REGISTER(SubInfo);
-REGISTER(TensorAddInfo);
+REGISTER(AddInfo);
 REGISTER(BiasAddInfo);
 REGISTER(MulInfo);
 REGISTER(DivInfo);

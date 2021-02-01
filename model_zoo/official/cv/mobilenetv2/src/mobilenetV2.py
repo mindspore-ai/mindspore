@@ -16,7 +16,7 @@
 import numpy as np
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from mindspore import Tensor
 
 __all__ = ['MobileNetV2', 'MobileNetV2Backbone', 'MobileNetV2Head', 'mobilenet_v2']
@@ -129,7 +129,7 @@ class InvertedResidual(nn.Cell):
             nn.BatchNorm2d(oup),
         ])
         self.conv = nn.SequentialCell(layers)
-        self.add = TensorAdd()
+        self.add = Add()
         self.cast = P.Cast()
 
     def construct(self, x):

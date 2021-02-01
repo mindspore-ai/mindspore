@@ -16,7 +16,7 @@
 
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 
 from src.var_init import KaimingNormal
 
@@ -91,7 +91,7 @@ class InvertedResidual(nn.Cell):
         ])
 
         self.conv = nn.SequentialCell(layers)
-        self.add = TensorAdd()
+        self.add = Add()
         self.cast = P.Cast()
 
     def construct(self, x):

@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 class TensorAdd(nn.Cell):
     def __init__(self):
         super(TensorAdd, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         res = self.add(x, y)

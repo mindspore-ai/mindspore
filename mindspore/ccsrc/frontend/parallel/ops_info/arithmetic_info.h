@@ -60,12 +60,11 @@ class SubInfo : public ArithmeticBase {
   ~SubInfo() override = default;
 };
 
-class TensorAddInfo : public ArithmeticBase {
+class AddInfo : public ArithmeticBase {
  public:
-  TensorAddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs)
+  AddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
       : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<TensorAddCost>()) {}
-  ~TensorAddInfo() override = default;
+  ~AddInfo() override = default;
 };
 
 class MulInfo : public ArithmeticBase {

@@ -46,7 +46,7 @@ class ExportToQuantInferNetwork:
     Returns:
         Cell, Infer network.
     """
-    __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
+    __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
         network = Validator.check_isinstance('network', network, (nn.Cell,))
@@ -225,7 +225,7 @@ class ExportManualQuantNetwork(ExportToQuantInferNetwork):
         Returns:
             Cell, Infer network.
         """
-    __quant_op_name__ = ["TensorAdd", "Sub", "Mul", "RealDiv"]
+    __quant_op_name__ = ["Add", "Sub", "Mul", "RealDiv"]
 
     def __init__(self, network, mean, std_dev, *inputs, is_mindir=False):
         super(ExportManualQuantNetwork, self).__init__(network, mean, std_dev, *inputs, is_mindir)

@@ -26,7 +26,7 @@ from mindspore.nn.layer.conv import Conv2d
 from mindspore.nn.layer.normalization import BatchNorm2d
 from mindspore.nn.layer.pooling import MaxPool2d
 from mindspore.ops import operations as P
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from mindspore.train.serialization import export
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -128,7 +128,7 @@ class ResidualBlock(Cell):
         self.bn3 = bn_with_initialize_last(out_channels)
 
         self.relu = P.ReLU()
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         identity = x
@@ -176,7 +176,7 @@ class ResidualBlockWithDown(Cell):
         self.conv_down_sample = conv1x1(
             in_channels, out_channels, stride=stride, padding=0)
         self.bn_down_sample = bn_with_initialize(out_channels)
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         identity = x

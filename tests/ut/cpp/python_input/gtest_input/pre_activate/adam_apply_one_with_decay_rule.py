@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
 mul = P.Mul()
-add = P.TensorAdd()
+add = P.Add()
 square = P.Square()
 sqrt = P.Sqrt()
 real_div = P.RealDiv()

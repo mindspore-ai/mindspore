@@ -237,7 +237,7 @@ inline const PrimitivePtr kPrimSparseTensorGetIndices = std::make_shared<Primiti
 inline const PrimitivePtr kPrimSparseTensorGetDenseShape = std::make_shared<Primitive>("SparseTensorGetDenseShape");
 
 // Maths
-inline const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");
+inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>("Add");
 inline const PrimitivePtr kPrimMatMul = std::make_shared<Primitive>("MatMul");
 inline const PrimitivePtr kPrimBatchMatMul = std::make_shared<Primitive>("BatchMatMul");
 inline const PrimitivePtr kPrimMaximumGrad = std::make_shared<Primitive>("MaximumGrad");

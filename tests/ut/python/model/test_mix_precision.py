@@ -205,7 +205,7 @@ def test_dict_cast():
     class SecondNet(nn.Cell):
         def __init__(self):
             super(SecondNet, self).__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
 
         def construct(self, tensor_c, **kwargs):
             d = F.mixed_precision_cast(mstype.float16, tensor_c)
@@ -225,7 +225,7 @@ def test_kwarg_cast():
         def __init__(self):
             super(FirstNet, self).__init__()
             self.net = SecondNet().add_flags_recursive(fp16=True)
-            self.add = P.TensorAdd()
+            self.add = P.Add()
 
         def construct(self, tensor_a, tensor_b):
             tensor_c = self.add(tensor_a, tensor_b)
@@ -236,7 +236,7 @@ def test_kwarg_cast():
     class SecondNet(nn.Cell):
         def __init__(self):
             super(SecondNet, self).__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
 
         def construct(self, key1=1, key2=2):
             tensor_d = self.add(key1, key2["key"])

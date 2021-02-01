@@ -14,7 +14,7 @@
 # ============================================================================
 """Face attribute resnet18 backbone."""
 import mindspore.nn as nn
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 
@@ -41,7 +41,7 @@ class IRBlock(Cell):
         else:
             self.downsample = downsample
 
-        self.add = TensorAdd()
+        self.add = Add()
         self.cast = P.Cast()
         self.relu2 = P.ReLU()
 

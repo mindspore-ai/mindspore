@@ -16,7 +16,7 @@
 ResNet based ResNext
 """
 import mindspore.nn as nn
-from mindspore.ops.operations import TensorAdd, Split, Concat
+from mindspore.ops.operations import Add, Split, Concat
 from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
 
@@ -105,7 +105,7 @@ class BasicBlock(nn.Cell):
             self.down_sample = down_sample
             self.down_sample_flag = True
 
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         identity = x
@@ -176,7 +176,7 @@ class Bottleneck(nn.Cell):
             self.down_sample_flag = True
 
         self.cast = P.Cast()
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         identity = x

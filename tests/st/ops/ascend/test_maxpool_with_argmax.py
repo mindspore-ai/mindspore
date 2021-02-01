@@ -31,7 +31,7 @@ class Net(nn.Cell):
                                            strides=2)
         self.x = Parameter(initializer(
             'normal', [1, 64, 112, 112]), name='w')
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     @ms_function
     def construct(self):

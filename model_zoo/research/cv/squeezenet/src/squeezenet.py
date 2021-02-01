@@ -170,7 +170,7 @@ class SqueezeNet_Residual(nn.Cell):
 
         self.relu = nn.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=3, stride=2)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.dropout = nn.Dropout(keep_prob=0.5)
         self.mean = P.ReduceMean(keep_dims=True)
         self.flatten = nn.Flatten()

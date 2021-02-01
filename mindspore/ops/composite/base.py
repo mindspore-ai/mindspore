@@ -395,7 +395,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         >>> from mindspore.ops import Primitive, operations as P
         >>> from mindspore import dtype as mstype
         >>>
-        >>> tensor_add = P.TensorAdd()
+        >>> tensor_add = P.Add()
         >>> add = MultitypeFuncGraph('add')
         >>> @add.register("Number", "Number")
         ... def add_scala(x, y):

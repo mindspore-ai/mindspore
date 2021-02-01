@@ -130,7 +130,7 @@ def test_prim_vararg_kwonlyarg():
             super(SecondNet, self).__init__()
             self.addN = P.AddN()
             self.max = P.Maximum()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
 
         def construct(self, x, y, *args, z=0, r=1):
             c = self.max(args[0], args[1])
@@ -195,7 +195,7 @@ def test_net_variable_and_weights():
             super(SecondNet, self).__init__()
             self.addN = P.AddN()
             self.max = P.Maximum()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.weight = Parameter(Tensor(np.ones((2, 3, 4), np.float32)), "w2", requires_grad=True)
 
         def construct(self, a, b, *args):

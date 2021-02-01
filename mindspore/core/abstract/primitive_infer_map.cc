@@ -38,7 +38,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMaximumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMinimumGrad, {InferImplMinOrMaxGrad, true}},
     {prim::kPrimMul, {InferImplMul, true}},
-    {prim::kPrimTensorAdd, {InferImplTensorAdd, true}},
+    {prim::kPrimAdd, {InferImplAdd, true}},
     {prim::kPrimSquare, {InferImplSquare, true}},
     {prim::kPrimSqrt, {InferImplSqrt, true}},
     {prim::kPrimSqrtGrad, {InferImplSqrtGrad, true}},

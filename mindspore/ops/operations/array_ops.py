@@ -25,6 +25,7 @@ import numbers
 
 import numpy as np
 
+from mindspore import log as logger
 from .._utils import get_concat_offset
 from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op

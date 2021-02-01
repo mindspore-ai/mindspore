@@ -165,7 +165,7 @@ class OpNameInfo {
 #define OPERATOR_ONNX_CONVERT_DEFINE(name, onnx_name, impl) \
   OpNameInfo GetOpOnnxConvertInfo_##name() { return impl.set_op_type(#name).set_onnx_type(#onnx_name); }
 
-OPERATOR_ONNX_CONVERT_DEFINE(TensorAdd, Add, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(Add, Add, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Mul, Mul, OpNameInfo())
 
 OPERATOR_ONNX_CONVERT_DEFINE(ReLU, Relu, OpNameInfo())
@@ -257,7 +257,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(Sub, Sub, OpNameInfo())
 #define OP_CONVERT_FUNCTION_NAME(name) GetOpOnnxConvertInfo_##name
 
 void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
-  fn(OP_CONVERT_FUNCTION_NAME(TensorAdd)());
+  fn(OP_CONVERT_FUNCTION_NAME(Add)());
   fn(OP_CONVERT_FUNCTION_NAME(Mul)());
 
   fn(OP_CONVERT_FUNCTION_NAME(ReLU)());

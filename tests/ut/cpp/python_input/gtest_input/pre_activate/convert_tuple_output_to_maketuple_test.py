@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 make_tuple = Primitive('make_tuple')
 tuple_get_item = Primitive("tuple_getitem")
 LSTM = P.LSTM(input_size=10, hidden_size=2, num_layers=1, has_bias=True, bidirectional=False, dropout=0.0)
-add = P.TensorAdd()
+add = P.Add()
 
 
 class FnDict:

@@ -49,7 +49,7 @@ class DiceLoss(_Loss):
         self.logical_or = P.LogicalOr()
         self.equal = P.Equal()
         self.zeros_like = P.ZerosLike()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.gather = P.Gather()
 
     def ohem_batch(self, scores, gt_texts, training_masks):

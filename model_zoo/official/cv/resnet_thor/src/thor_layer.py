@@ -333,7 +333,7 @@ class Dense_Thor_GPU(Cell):
         self.gather = P.Gather()
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.sqrt = P.Sqrt()
         self.cholesky = P.CholeskyTrsm(split_dim=split_dim)
         self.vector_matmul = P.BatchMatMul(transpose_a=True)
@@ -690,7 +690,7 @@ class Dense_Thor(Cell):
         self.exp = P.Exp()
         self.dampingA = Tensor(np.identity(2048), mstype.float32)
         self.dampingG = Tensor(np.identity(1024), mstype.float32)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.sqrt = P.Sqrt()
         self.getG = P.InsertGradientOf(self.save_gradient)
 

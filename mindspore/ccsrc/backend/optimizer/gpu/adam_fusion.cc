@@ -51,13 +51,13 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
 }  // namespace
 
 const BaseRef AdamFusion::DefinePattern() const {
-  VectorRef next_m = VectorRef({prim::kPrimTensorAdd, VectorRef({prim::kPrimMul, beta1_, m_}),
-                                VectorRef({prim::kPrimMul, one_sub_beta1_, gradient_})});
+  VectorRef next_m = VectorRef(
+    {prim::kPrimAdd, VectorRef({prim::kPrimMul, beta1_, m_}), VectorRef({prim::kPrimMul, one_sub_beta1_, gradient_})});
   VectorRef next_v =
-    VectorRef({prim::kPrimTensorAdd, VectorRef({prim::kPrimMul, beta2_, v_}),
+    VectorRef({prim::kPrimAdd, VectorRef({prim::kPrimMul, beta2_, v_}),
                VectorRef({prim::kPrimMul, one_sub_beta2_, VectorRef({prim::kPrimSquare, gradient_})})});
-  VectorRef update = VectorRef(
-    {prim::kPrimRealDiv, next_m, VectorRef({prim::kPrimTensorAdd, eps_, VectorRef({prim::kPrimSqrt, next_v})})});
+  VectorRef update =
+    VectorRef({prim::kPrimRealDiv, next_m, VectorRef({prim::kPrimAdd, eps_, VectorRef({prim::kPrimSqrt, next_v})})});
   VectorRef update_with_lr = VectorRef({prim::kPrimMul, lr_, update});
   VectorRef next_param = VectorRef({prim::kPrimSub, param_, update_with_lr});
 

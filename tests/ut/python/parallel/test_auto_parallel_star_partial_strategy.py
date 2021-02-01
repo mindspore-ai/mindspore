@@ -54,7 +54,7 @@ class Net(nn.Cell):
         self.relu1 = P.ReLU()
         self.relu2 = P.ReLU()
         self.ba1 = P.BiasAdd()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.weight = Parameter(Tensor(np.ones([128, 1000]), dtype=ms.float32), name="weight")
         self.bias = Parameter(Tensor(np.ones([1000]), dtype=ms.float32), name="bias")
 

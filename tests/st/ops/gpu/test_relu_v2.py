@@ -62,7 +62,7 @@ def test_ReluV2():
 class AddReluNet(nn.Cell):
     def __init__(self):
         super(AddReluNet, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.relu = P.ReLU()
         self.relu_grad = G.ReluGrad()
 
@@ -103,7 +103,7 @@ def test_AddRelu():
 class AddReluGradNet(nn.Cell):
     def __init__(self):
         super(AddReluGradNet, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.relu = P.ReLU()
         self.relu_grad = G.ReluGrad()
 

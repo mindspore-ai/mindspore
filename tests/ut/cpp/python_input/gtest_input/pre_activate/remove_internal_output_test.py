@@ -16,7 +16,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 tuple_getitem = Primitive('tuple_getitem')
-add = P.TensorAdd()
+add = P.Add()
 max_pool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=3, strides=2)
 make_tuple = Primitive('make_tuple')
 trans_data = Primitive("TransData")

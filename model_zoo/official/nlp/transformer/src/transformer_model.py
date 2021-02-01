@@ -188,7 +188,7 @@ class EmbeddingPostprocessor(nn.Cell):
         super(EmbeddingPostprocessor, self).__init__()
         self.scores_mul = Tensor([math.sqrt(float(embedding_size))], dtype=mstype.float32)
         self.multiply = P.Mul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.dropout = nn.Dropout(1 - dropout_prob, dtype=mstype.float32)
         self.use_dropout = dropout_prob > 0
         self.expand_dims = P.ExpandDims()
@@ -251,7 +251,7 @@ class LayerPostprocess(nn.Cell):
     def __init__(self,
                  dropout_prob=0.1):
         super(LayerPostprocess, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.dropout = nn.Dropout(1 - dropout_prob)
         self.use_dropout = dropout_prob > 0
 
@@ -357,7 +357,7 @@ class MultiheadAttention(nn.Cell):
         if self.has_attention_mask:
             self.expand_dims = P.ExpandDims()
             self.sub = P.Sub()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.cast = P.Cast()
             self.get_dtype = P.DType()
 

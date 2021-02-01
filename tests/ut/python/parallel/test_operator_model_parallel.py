@@ -28,7 +28,7 @@ from mindspore.nn.layer.pooling import MaxPool2d
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
@@ -70,7 +70,7 @@ class DenseWrap(Cell):
                 'zeros', [output_channels]), name="bias")
 
         self.matmul = P.MatMul(transpose_b=True).shard(matmul_strategy)
-        self.bias_add = P.TensorAdd().shard(shard)
+        self.bias_add = P.Add().shard(shard)
 
     def construct(self, x):
         if self.has_bias:
@@ -200,7 +200,7 @@ class ResidualBlock(Cell):
         self.relu1 = P.ReLU().shard(strategy_no_weight)
         self.relu2 = P.ReLU().shard(strategy_no_weight)
         self.relu3 = P.ReLU().shard(strategy_no_weight)
-        self.add = TensorAdd().shard(strategy_add)
+        self.add = Add().shard(strategy_add)
 
     def construct(self, x):
         identity = x
@@ -249,7 +249,7 @@ class ResidualBlockWithDown(Cell):
 
         self.conv_down_sample = conv1x1(in_channels, out_channels, stride=stride)
         self.bn_down_sample = bn_with_initialize(out_channels)
-        self.add = TensorAdd().shard(strategy_add)
+        self.add = Add().shard(strategy_add)
 
     def construct(self, x):
         identity = x

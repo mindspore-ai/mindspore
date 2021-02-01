@@ -76,7 +76,7 @@ class ResidualBlock(nn.Cell):
         out_chls = out_channels
         self.conv1 = conv_block(in_channels, out_chls, kernel_size=1, stride=1)
         self.conv2 = conv_block(out_chls, out_channels, kernel_size=3, stride=1)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x
@@ -111,7 +111,7 @@ class CspDarkNet53(nn.Cell):
         self.outchannel = 1024
         self.detect = detect
         self.concat = P.Concat(axis=1)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
         self.conv0 = conv_block(3, 32, kernel_size=3, stride=1)
         self.conv1 = conv_block(32, 64, kernel_size=3, stride=2)

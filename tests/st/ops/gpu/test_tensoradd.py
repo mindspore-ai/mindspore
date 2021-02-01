@@ -32,7 +32,7 @@ class TensroAdd(nn.Cell):
     def __init__(self):
         super(TensroAdd, self).__init__()
 
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
         self.x = Parameter(initializer(
             Tensor(np.random.randn(2, 0).astype(np.float32)), [2, 0]), name='x')
@@ -135,7 +135,7 @@ class Tensoradd_d(nn.Cell):
     def __init__(self):
         super(Tensoradd_d, self).__init__()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         x = self.test_dynamic(x)

@@ -36,24 +36,24 @@ def expand_biasadd(expand_info):
                 'ExpandDims', [input_y], attrs={'axis': 1})
             input_y_expand = graph_builder.emit(
                 'ExpandDims', [input_y_expand], attrs={'axis': 2})
-            result = graph_builder.emit('TensorAdd', [input_x, input_y_expand])
+            result = graph_builder.emit('Add', [input_x, input_y_expand])
         elif input_x.data_format == "DefaultFormat":
             if len(input_x.shape) == 2:
-                result = graph_builder.emit('TensorAdd', [input_x, input_y])
+                result = graph_builder.emit('Add', [input_x, input_y])
             elif len(input_x.shape) == 3:
                 input_y_expand = graph_builder.emit(
                     'ExpandDims', [input_y], attrs={'axis': 1})
                 result = graph_builder.emit(
-                    'TensorAdd', [input_x, input_y_expand])
+                    'Add', [input_x, input_y_expand])
             else:
                 input_y_expand = graph_builder.emit(
                     'ExpandDims', [input_y], attrs={'axis': 1})
                 input_y_expand = graph_builder.emit(
                     'ExpandDims', [input_y_expand], attrs={'axis': 2})
                 result = graph_builder.emit(
-                    'TensorAdd', [input_x, input_y_expand])
+                    'Add', [input_x, input_y_expand])
         else:
-            result = graph_builder.emit('TensorAdd', [input_x, input_y])
+            result = graph_builder.emit('Add', [input_x, input_y])
 
         # set graph output.
         graph_scope.set_output(result)

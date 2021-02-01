@@ -66,7 +66,7 @@ def expand_layernormgrad(expand_info):
         mean_cof = graph_builder.value(x.dtype, (1.0 / reduce_size), x.data_format)
 
         # cal dg db
-        var_eps = graph_builder.emit('TensorAdd', [variance, eps])
+        var_eps = graph_builder.emit('Add', [variance, eps])
         sqrt_var_eps = graph_builder.emit('Sqrt', [var_eps])
         rsqrt_var_eps = graph_builder.emit('RealDiv', [const_one, sqrt_var_eps])
         x_sub_mean = graph_builder.emit('Sub', [x, mean])
@@ -100,10 +100,10 @@ def expand_layernormgrad(expand_info):
         neg_rsqrt_var_eps_mul_sum_2 = graph_builder.emit('Mul', [neg_rsqrt_var_eps, sum_2])
         sum_1_mul_sum_3 = graph_builder.emit('Mul', [sum_1, sum_3])
         mean_cof_mul_sum_1_mul_sum_3 = graph_builder.emit('Mul', [mean_cof, sum_1_mul_sum_3])
-        add_tmp = graph_builder.emit('TensorAdd', [neg_rsqrt_var_eps_mul_sum_2, mean_cof_mul_sum_1_mul_sum_3])
+        add_tmp = graph_builder.emit('Add', [neg_rsqrt_var_eps_mul_sum_2, mean_cof_mul_sum_1_mul_sum_3])
         dx_3 = graph_builder.emit('Mul', [add_tmp, mean_cof])
-        dx_tmp = graph_builder.emit('TensorAdd', [dx_1, dx_2])
-        dx = graph_builder.emit('TensorAdd', [dx_tmp, dx_3])
+        dx_tmp = graph_builder.emit('Add', [dx_1, dx_2])
+        dx = graph_builder.emit('Add', [dx_tmp, dx_3])
 
         # set graph output.
         graph_scope.set_output(dx, dg, db)

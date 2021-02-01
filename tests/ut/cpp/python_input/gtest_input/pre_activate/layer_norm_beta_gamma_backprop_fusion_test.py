@@ -15,7 +15,7 @@
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
-Add = P.TensorAdd()
+Add = P.Add()
 Cast = P.Cast()
 LayerNormBetaGammaBackprop = Primitive('LayerNormBetaGammaBackprop')
 tuple_getitem = Primitive('tuple_getitem')

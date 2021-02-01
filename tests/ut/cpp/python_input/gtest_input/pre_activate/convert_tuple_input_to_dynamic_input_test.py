@@ -20,7 +20,7 @@ from mindspore.ops import operations as P
 
 make_tuple = Primitive('make_tuple')
 concat = P.Concat()
-add = P.TensorAdd()
+add = P.Add()
 
 t1 = Tensor(np.random.randn(1, 11, 20, 1, 1).astype(np.float32))
 t2 = Tensor(np.random.randn(1, 11, 20, 1, 1).astype(np.float32))

@@ -18,6 +18,7 @@
 import copy
 
 import numpy as np
+from mindspore import log as logger
 from ... import context
 from .. import signature as sig
 from ..._checkparam import Validator as validator
@@ -114,7 +115,7 @@ class _BitwiseBinaryOp(_MathBinaryOp):
         return _BitwiseBinaryOp._check_bitwise_op_input_type(x1_type, x2_type, self.name)
 
 
-class TensorAdd(_MathBinaryOp):
+class Add(_MathBinaryOp):
     r"""
     Adds two input tensors element-wise.
 
@@ -143,7 +144,7 @@ class TensorAdd(_MathBinaryOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> add = ops.TensorAdd()
+        >>> add = ops.Add()
         >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> input_y = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> output = add(input_x, input_y)
@@ -160,6 +161,10 @@ class TensorAdd(_MathBinaryOp):
             return Tensor(out)
         return None
 
+def TensorAdd():
+    """Warning: This will be changed later"""
+    logger.warning("WARN_DEPRECATED: The usage of TensorAdd is deprecated. Please use Add.")
+    return Add()
 
 class AssignAdd(PrimitiveWithInfer):
     """

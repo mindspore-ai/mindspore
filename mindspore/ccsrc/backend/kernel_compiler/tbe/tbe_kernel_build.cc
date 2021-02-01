@@ -1063,7 +1063,7 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
 
 std::string TbeKernelBuild::GetRealOpType(const std::string &origin_type) {
   static std::map<std::string, std::string> buffer_fussion_op_map = {
-    {parallel::DEPTHWISE_CONV2D_NATIVE, parallel::DEPTHWISE_CONV2D}, {parallel::TENSOR_ADD, parallel::ADD}};
+    {parallel::DEPTHWISE_CONV2D_NATIVE, parallel::DEPTHWISE_CONV2D}};
   string result = origin_type;
   auto iter = buffer_fussion_op_map.find(origin_type);
   if (iter != buffer_fussion_op_map.end()) {

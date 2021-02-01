@@ -34,7 +34,7 @@ class Net(nn.Cell):
 
     def __init__(self):
         super(Net, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.x = Parameter(initializer('normal', [1, 3, 3, 4]), name='x')
         self.y = Parameter(initializer('normal', [1, 3, 3, 4]), name='y')
 
