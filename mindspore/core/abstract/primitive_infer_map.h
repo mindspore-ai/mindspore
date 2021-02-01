@@ -18,9 +18,14 @@
 #ifndef MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
 #define MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_
 #include <unordered_map>
+#include <map>
+#include <string>
+#include <vector>
 #include "ir/primitive.h"
 #include "base/core_ops.h"
 #include "abstract/abstract_value.h"
+#include "ir/anf.h"
+
 namespace mindspore {
 namespace abstract {
 using StandardPrimitiveEvalImpl = AbstractBasePtr (*)(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
@@ -34,6 +39,8 @@ using PrimitiveEvalImplMap =
   std::unordered_map<PrimitivePtr, StandardPrimitiveImplReg, PrimitiveHasher, PrimitiveEqual>;
 
 PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap();
+
+std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode);
 
 void RegisterStandardPrimitiveImpl(const PrimitivePtr &primitive, const StandardPrimitiveImplReg &impl_reg);
 

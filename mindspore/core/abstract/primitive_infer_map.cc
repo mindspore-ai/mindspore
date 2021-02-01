@@ -22,6 +22,25 @@
 
 namespace mindspore {
 namespace abstract {
+std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
+  constexpr auto kUnsortedSegmentSum = "UnsortedSegmentSum";
+  constexpr auto kUnsortedSegmentMin = "UnsortedSegmentMin";
+  constexpr auto kUnsortedSegmentMax = "UnsortedSegmentMax";
+  static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {
+    {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}};
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().empty()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs";
+  }
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->inputs()[0]);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto iter = dynamic_shape_depends.find(primitive->ToString());
+  if (iter != dynamic_shape_depends.end()) {
+    return iter->second;
+  }
+  return {};
+}
+
 PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
   static PrimitiveEvalImplMap prim_eval_implement_map = {
     // Statements
