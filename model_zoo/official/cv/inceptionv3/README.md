@@ -40,6 +40,14 @@ Dataset used can refer to paper.
 - Data format: RGB images.
     - Note: Data will be processed in src/dataset.py
 
+Dataset used: [CIFAR-10](http://www.cs.toronto.edu/~kriz/cifar.html)
+
+- Dataset size: 175M, 60,000 32\*32 colorful images in 10 classes
+    - Train: 146M, 50,000 images
+    - Test: 29M, 10,000 images
+- Data format：binary files
+    - Note：Data will be processed in src/dataset.py
+
 # [Features](#contents)
 
 ## [Mixed Precision(Ascend)](#contents)
@@ -67,8 +75,13 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 └─Inception-v3
   ├─README.md
   ├─scripts
+    ├─run_standalone_train_cpu.sh             # launch standalone training with cpu platform
+    ├─run_standalone_train_gpu.sh             # launch standalone training with gpu platform(1p)
+    ├─run_distribute_train_gpu.sh             # launch distributed training with gpu platform(8p)
     ├─run_standalone_train.sh                 # launch standalone training with ascend platform(1p)
     ├─run_distribute_train.sh                 # launch distributed training with ascend platform(8p)
+    ├─run_eval_cpu.sh                         # launch evaluation with cpu platform
+    ├─run_eval_gpu.sh                         # launch evaluation with gpu platform
     └─run_eval.sh                             # launch evaluating with ascend platform
   ├─src
     ├─config.py                       # parameter configuration
@@ -93,6 +106,8 @@ Major parameters in train.py and config.py are:
 'batch_size'                 # input batchsize
 'epoch_size'                 # total epoch numbers
 'num_classes'                # dataset class numbers
+'ds_type'                    # dataset type, such as: imagenet, cifar10
+'ds_sink_mode'               # whether enable dataset sink mode
 'smooth_factor'              # label smoothing factor
 'aux_factor'                 # loss factor of aux logit
 'lr_init'                    # initiate learning rate
@@ -127,6 +142,13 @@ sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
+- CPU:
+
+```shell
+# standalone training
+sh scripts/run_standalone_train_cpu.sh DATA_PATH
+```
+
 > Notes: RANK_TABLE_FILE can refer to [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html), and the device_ip can be got as [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools). For large models like InceptionV3, it's better to export an external environment variable `export HCCL_CONNECT_TIMEOUT=600` to extend hccl connection checking time from the default 120 seconds to 600 seconds. Otherwise, the connection could be timeout since compiling time increases with the growth of model size.
 >
 > This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
@@ -137,6 +159,7 @@ sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 # training example
   python:
       Ascend: python train.py --dataset_path DATA_PATH --platform Ascend
+      CPU: python train.py --dataset_path DATA_PATH --platform CPU
 
   shell:
       Ascend:
@@ -144,17 +167,34 @@ sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
       sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
       # standalone training example
       sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+
+      CPU:
+      sh script/run_standalone_train_cpu.sh DATA_PATH
 ```
 
 ### Result
 
 Training result will be stored in the example path. Checkpoints will be stored at `. /checkpoint` by default, and training log  will be redirected to `./log.txt` like followings.
 
+#### Ascend
+
 ```python
 epoch: 0 step: 1251, loss is 5.7787247
 epoch time: 360760.985 ms, per step time: 288.378 ms
 epoch: 1 step: 1251, loss is 4.392868
 epoch time: 160917.911 ms, per step time: 128.631 ms
+```
+
+#### CPU
+
+```bash
+epoch: 1 step: 390, loss is 2.7072601
+epoch time: 6334572.124 ms, per step time: 16242.493 ms
+epoch: 2 step: 390, loss is 2.5908582
+epoch time: 6217897.644 ms, per step time: 15943.327 ms
+epoch: 3 step: 390, loss is 2.5612416
+epoch time: 6358482.104 ms, per step time: 16303.800 ms
+...
 ```
 
 ## [Eval process](#contents)
@@ -169,15 +209,23 @@ You can start training using python or shell scripts. The usage of shell scripts
     sh scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
 ```
 
+- CPU:
+
+```python
+    sh scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
+```
+
 ### Launch
 
 ```python
 # eval example
   python:
       Ascend: python eval.py --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform Ascend
+      CPU: python eval.py --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
 
   shell:
       Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
+      CPU: sh scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
 ```
 
 > checkpoint can be produced in training process.

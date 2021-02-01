@@ -51,6 +51,14 @@ InceptionV3的总体网络架构如下：
 - 数据格式：RGB
     - 注：数据将在src/dataset.py中处理。
 
+使用的数据集：[CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
+
+- 数据集大小：175M，共10个类、6万张32*32彩色图像
+    - 训练集：146M，共5万张图像
+    - 测试集：29M，共1万张图像
+- 数据格式：二进制文件
+    - 注：数据将在src/dataset.py中处理。
+
 # 特性
 
 ## 混合精度（Ascend）
@@ -78,9 +86,14 @@ InceptionV3的总体网络架构如下：
 └─Inception-v3
   ├─README.md
   ├─scripts
+    ├─run_standalone_train_cpu.sh             # 启动CPU训练
+    ├─run_standalone_train_gpu.sh             # 启动GPU单机训练（单卡）
+    ├─run_distribute_train_gpu.sh             # 启动GPU分布式训练（8卡）
     ├─run_standalone_train.sh                 # 启动Ascend单机训练（单卡）
     ├─run_distribute_train.sh                 # 启动Ascend分布式训练（8卡）
-    ├─run_eval.sh                             # 启动Ascend评估
+    ├─run_eval_cpu.sh                         # 启动CPU评估
+    ├─run_eval_gpu.sh                         # 启动GPU评估
+    └─run_eval.sh                             # 启动Ascend评估
   ├─src
     ├─config.py                       # 参数配置
     ├─dataset.py                      # 数据预处理
@@ -106,6 +119,8 @@ train.py和config.py中主要参数如下：
 'batch_size'                 # 输入张量的批次大小
 'epoch_size'                 # 总轮次数
 'num_classes'                # 数据集类数
+'ds_type'                    # 数据集类型，如：imagenet, cifar10
+'ds_sink_mode'               # 使能数据下沉
 'smooth_factor'              # 标签平滑因子
 'aux_factor'                 # aux logit的损耗因子
 'lr_init'                    # 初始学习率
@@ -149,6 +164,7 @@ train.py和config.py中主要参数如下：
 # 训练示例
   python:
       Ascend: python train.py --dataset_path /dataset/train --platform Ascend
+      CPU: python train.py --dataset_path DATA_PATH --platform CPU
 
   shell:
       Ascend:
@@ -156,17 +172,34 @@ train.py和config.py中主要参数如下：
       sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
       # 单机训练
       sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
+
+      CPU:
+      sh script/run_standalone_train_cpu.sh DATA_PATH
 ```
 
 ### 结果
 
 训练结果保存在示例路径。检查点默认保存在`checkpoint`，训练日志会重定向到`./log.txt`，如下：
 
+#### Ascend
+
 ```log
 epoch:0 step:1251, loss is 5.7787247
 Epoch time:360760.985, per step time:288.378
 epoch:1 step:1251, loss is 4.392868
 Epoch time:160917.911, per step time:128.631
+```
+
+#### CPU
+
+```bash
+epoch: 1 step: 390, loss is 2.7072601
+epoch time: 6334572.124 ms, per step time: 16242.493 ms
+epoch: 2 step: 390, loss is 2.5908582
+epoch time: 6217897.644 ms, per step time: 15943.327 ms
+epoch: 3 step: 390, loss is 2.5612416
+epoch time: 6358482.104 ms, per step time: 16303.800 ms
+...
 ```
 
 ## 评估过程
@@ -181,15 +214,23 @@ Epoch time:160917.911, per step time:128.631
     sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
+- CPU:
+
+```python
+    sh scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
+```
+
 ### 启动
 
 ``` launch
 # 评估示例
   python:
       Ascend: python eval.py --dataset_path DATA_DIR --checkpoint PATH_CHECKPOINT --platform Ascend
+      CPU: python eval.py --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform CPU
 
   shell:
       Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      CPU: sh scripts/run_eval_cpu.sh DATA_PATH PATH_CHECKPOINT
 ```
 
 > 训练过程中可以生成检查点。

@@ -15,32 +15,32 @@
 """
 Data operations, will be used in train.py and eval.py
 """
+import os
+
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
-from src.config import config_gpu as cfg
 
 
-def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
+def create_dataset_imagenet(dataset_path, do_train, cfg, repeat_num=1):
     """
     create a train or eval dataset
 
     Args:
         dataset_path(string): the path of dataset.
         do_train(bool): whether dataset is used for train or eval.
-        rank (int): The shard ID within num_shards (default=None).
-        group_size (int): Number of shards that the dataset should be divided into (default=None).
+        cfg (dict): the config for creating dataset.
         repeat_num(int): the repeat times of dataset. Default: 1.
 
     Returns:
         dataset
     """
-    if group_size == 1:
+    if cfg.group_size == 1:
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
     else:
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
-                                         num_shards=group_size, shard_id=rank)
+                                         num_shards=cfg.group_size, shard_id=cfg.rank)
     # define map operations
     if do_train:
         trans = [
@@ -64,6 +64,47 @@ def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
     data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=cfg.work_nums)
     # apply batch operations
     data_set = data_set.batch(cfg.batch_size, drop_remainder=True)
+    # apply dataset repeat operation
+    data_set = data_set.repeat(repeat_num)
+    return data_set
+
+
+def create_dataset_cifar10(dataset_path, do_train, cfg, repeat_num=1):
+    """
+    create a train or eval dataset
+
+    Args:
+        dataset_path(string): the path of dataset.
+        do_train(bool): whether dataset is used for train or eval.
+        cfg (dict): the config for creating dataset.
+        repeat_num(int): the repeat times of dataset. Default: 1.
+
+    Returns:
+        dataset
+    """
+    dataset_path = os.path.join(dataset_path, "cifar-10-batches-bin" if do_train else "cifar-10-verify-bin")
+    if cfg.group_size == 1:
+        data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
+    else:
+        data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
+                                     num_shards=cfg.group_size, shard_id=cfg.rank)
+
+    # define map operations
+    trans = []
+    if do_train:
+        trans.append(C.RandomCrop((32, 32), (4, 4, 4, 4)))
+        trans.append(C.RandomHorizontalFlip(prob=0.5))
+
+    trans.append(C.Resize((299, 299)))
+    trans.append(C.Rescale(1.0 / 255.0, 0.0))
+    trans.append(C.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010]))
+    trans.append(C.HWC2CHW())
+
+    type_cast_op = C2.TypeCast(mstype.int32)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=cfg.work_nums)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=cfg.work_nums)
+    # apply batch operations
+    data_set = data_set.batch(cfg.batch_size, drop_remainder=do_train)
     # apply dataset repeat operation
     data_set = data_set.repeat(repeat_num)
     return data_set
