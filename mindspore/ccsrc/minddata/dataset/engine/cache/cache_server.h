@@ -70,6 +70,7 @@ class CacheServer : public Service {
     int32_t GetPort() const { return port_; }
     int32_t GetSharedMemorySzInGb() const { return shared_memory_sz_in_gb_; }
     float GetMemoryCapRatio() const { return memory_cap_ratio_; }
+    int8_t GetLogLevel() const { return log_level_; }
 
     Builder &SetRootDirectory(std::string root) {
       top_ = std::move(root);
@@ -91,6 +92,10 @@ class CacheServer : public Service {
       memory_cap_ratio_ = ratio;
       return *this;
     }
+    Builder &SetLogLevel(int8_t log_level) {
+      log_level_ = log_level;
+      return *this;
+    }
 
     Status SanityCheck();
 
@@ -100,7 +105,8 @@ class CacheServer : public Service {
           << "Number of parallel workers: " << GetNumWorkers() << "\n"
           << "Tcp/ip port: " << GetPort() << "\n"
           << "Shared memory size (in GB): " << GetSharedMemorySzInGb() << "\n"
-          << "Memory cap ratio: " << GetMemoryCapRatio();
+          << "Memory cap ratio: " << GetMemoryCapRatio() << "\n"
+          << "Log level: " << GetLogLevel();
     }
 
     friend std::ostream &operator<<(std::ostream &out, const Builder &bld) {
@@ -113,7 +119,7 @@ class CacheServer : public Service {
       // We need to bring up the Task Manager by bringing up the Services singleton.
       RETURN_IF_NOT_OK(Services::CreateInstance());
       RETURN_IF_NOT_OK(
-        CacheServer::CreateInstance(top_, num_workers_, port_, shared_memory_sz_in_gb_, memory_cap_ratio_));
+        CacheServer::CreateInstance(top_, num_workers_, port_, shared_memory_sz_in_gb_, memory_cap_ratio_, log_level_));
       return Status::OK();
     }
 
@@ -123,6 +129,7 @@ class CacheServer : public Service {
     int32_t port_;
     int32_t shared_memory_sz_in_gb_;
     float memory_cap_ratio_;
+    int8_t log_level_;
 
     /// \brief Sanity checks on the shared memory.
     /// \return Status object
@@ -138,11 +145,11 @@ class CacheServer : public Service {
   ~CacheServer() override { (void)ServiceStop(); }
 
   static Status CreateInstance(const std::string &spill_path, int32_t num_workers, int32_t port,
-                               int32_t shared_memory_sz, float memory_cap_ratio) {
+                               int32_t shared_memory_sz, float memory_cap_ratio, int8_t log_level) {
     std::call_once(init_instance_flag_, [&]() -> Status {
       auto &SvcManager = Services::GetInstance();
       RETURN_IF_NOT_OK(
-        SvcManager.AddHook(&instance_, spill_path, num_workers, port, shared_memory_sz, memory_cap_ratio));
+        SvcManager.AddHook(&instance_, spill_path, num_workers, port, shared_memory_sz, memory_cap_ratio, log_level));
       return Status::OK();
     });
     return Status::OK();
@@ -254,6 +261,7 @@ class CacheServer : public Service {
   int32_t num_grpc_workers_;
   int32_t port_;
   int32_t shared_memory_sz_in_gb_;
+  int8_t log_level_;  // log_level is saved here for informational purpose only. It's not a functional field.
   std::atomic<bool> global_shutdown_;
   float memory_cap_ratio_;
   std::shared_ptr<CacheServerHW> hw_info_;
@@ -266,7 +274,7 @@ class CacheServer : public Service {
   /// \param spill_path Top directory for spilling buffers to.
   /// \param num_workers Number of threads for handling requests.
   explicit CacheServer(const std::string &spill_path, int32_t num_workers, int32_t port, int32_t share_memory_sz_in_gb,
-                       float memory_cap_ratio);
+                       float memory_cap_ratio, int8_t log_level);
 
   /// \brief Locate a cache service from connection id.
   /// \return Pointer to cache service. Null if not found

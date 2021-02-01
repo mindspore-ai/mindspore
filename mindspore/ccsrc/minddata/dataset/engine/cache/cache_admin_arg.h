@@ -44,6 +44,7 @@ class CacheAdminArgHandler {
     kCmdGenerateSession = 3,
     kCmdDestroySession = 4,
     kCmdListSessions = 5,
+    kCmdServerInfo = 6,
     kCmdUnknown = 32767
   };
 
@@ -74,12 +75,15 @@ class CacheAdminArgHandler {
     kArgLogLevel = 11,
     kArgMemoryCapRatio = 12,
     kArgListSessions = 13,
-    kArgNumArgs = 14  // Must be the last position to provide a count
+    kArgServerInfo = 14,
+    kArgNumArgs = 15  // Must be the last position to provide a count
   };
 
   Status StartServer(CommandId command_id);
 
   Status StopServer(CommandId command_id);
+
+  Status ShowServerInfo();
 
   Status AssignArg(std::string option, int32_t *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);

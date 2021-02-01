@@ -726,9 +726,14 @@ Status CacheServer::ListSessions(CacheReply *reply) {
       session_msgs_vector.push_back(current_session_info);
     }
   }
+  flatbuffers::Offset<flatbuffers::String> spill_dir;
+  spill_dir = fbb.CreateString(top_);
   auto session_msgs = fbb.CreateVector(session_msgs_vector);
   ListSessionsMsgBuilder s_builder(fbb);
   s_builder.add_sessions(session_msgs);
+  s_builder.add_num_workers(num_workers_);
+  s_builder.add_log_level(log_level_);
+  s_builder.add_spill_dir(spill_dir);
   auto offset = s_builder.Finish();
   fbb.Finish(offset);
   reply->set_result(fbb.GetBufferPointer(), fbb.GetSize());
@@ -988,7 +993,7 @@ session_id_type CacheServer::GetSessionID(connection_id_type connection_id) cons
 }
 
 CacheServer::CacheServer(const std::string &spill_path, int32_t num_workers, int32_t port,
-                         int32_t shared_meory_sz_in_gb, float memory_cap_ratio)
+                         int32_t shared_meory_sz_in_gb, float memory_cap_ratio, int8_t log_level)
     : top_(spill_path),
       num_workers_(num_workers),
       num_grpc_workers_(num_workers_),
@@ -996,7 +1001,8 @@ CacheServer::CacheServer(const std::string &spill_path, int32_t num_workers, int
       shared_memory_sz_in_gb_(shared_meory_sz_in_gb),
       global_shutdown_(false),
       memory_cap_ratio_(memory_cap_ratio),
-      numa_affinity_(true) {
+      numa_affinity_(true),
+      log_level_(log_level) {
   hw_info_ = std::make_shared<CacheServerHW>();
   // If we are not linked with numa library (i.e. NUMA_ENABLED is false), turn off cpu
   // affinity which can make performance worse.

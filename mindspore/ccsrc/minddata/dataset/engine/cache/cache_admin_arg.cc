@@ -73,6 +73,7 @@ CacheAdminArgHandler::CacheAdminArgHandler()
   arg_map_["-r"] = ArgValue::kArgMemoryCapRatio;
   arg_map_["--memory_cap_ratio"] = ArgValue::kArgMemoryCapRatio;
   arg_map_["--list_sessions"] = ArgValue::kArgListSessions;
+  arg_map_["--server_info"] = ArgValue::kArgServerInfo;
   // Initialize argument tracker with false values
   for (int16_t i = 0; i < static_cast<int16_t>(ArgValue::kArgNumArgs); ++i) {
     ArgValue currAV = static_cast<ArgValue>(i);
@@ -280,6 +281,10 @@ Status CacheAdminArgHandler::ParseArgStream(std::stringstream *arg_stream) {
         RETURN_IF_NOT_OK(AssignArg(tok, static_cast<std::string *>(nullptr), arg_stream, CommandId::kCmdListSessions));
         break;
       }
+      case ArgValue::kArgServerInfo: {
+        RETURN_IF_NOT_OK(AssignArg(tok, static_cast<std::string *>(nullptr), arg_stream, CommandId::kCmdServerInfo));
+        break;
+      }
       default: {
         // Save space delimited trailing arguments
         trailing_args_ += (" " + tok);
@@ -396,12 +401,59 @@ Status CacheAdminArgHandler::RunCommand() {
       }
       break;
     }
+    case CommandId::kCmdServerInfo: {
+      RETURN_IF_NOT_OK(ShowServerInfo());
+      break;
+    }
     default: {
       RETURN_STATUS_UNEXPECTED("Invalid cache admin command id.");
       break;
     }
   }
 
+  return Status::OK();
+}
+
+Status CacheAdminArgHandler::ShowServerInfo() {
+  CacheClientGreeter comm(hostname_, port_, 1);
+  RETURN_IF_NOT_OK(comm.ServiceStart());
+  auto rq = std::make_shared<ListSessionsRequest>();
+  RETURN_IF_NOT_OK(comm.HandleRequest(rq));
+  RETURN_IF_NOT_OK(rq->Wait());
+
+  auto session_ids = rq->GetSessionIds();
+  auto server_cfg_info = rq->GetServerStat();
+  int32_t num_workers = server_cfg_info.num_workers;
+  int8_t log_level = server_cfg_info.log_level;
+  std::string spill_dir = server_cfg_info.spill_dir;
+
+  int name_w = 20;
+  int value_w = 15;
+  std::cout << "Cache Server Configuration: " << std::endl;
+  std::cout << "----------------------------------------" << std::endl;
+  std::cout << std::setw(name_w) << "config name" << std::setw(value_w) << "value" << std::endl;
+  std::cout << "----------------------------------------" << std::endl;
+  std::cout << std::setw(name_w) << "hostname" << std::setw(value_w) << hostname_ << std::endl;
+  std::cout << std::setw(name_w) << "port" << std::setw(value_w) << port_ << std::endl;
+  std::cout << std::setw(name_w) << "number of workers" << std::setw(value_w) << std::to_string(num_workers)
+            << std::endl;
+  std::cout << std::setw(name_w) << "log level" << std::setw(value_w) << std::to_string(log_level) << std::endl;
+  if (spill_dir.empty()) {
+    std::cout << std::setw(name_w) << "spill" << std::setw(value_w) << "disabled" << std::endl;
+  } else {
+    std::cout << std::setw(name_w) << "spill dir" << std::setw(value_w) << spill_dir << std::endl;
+  }
+  std::cout << "----------------------------------------" << std::endl;
+
+  std::cout << "Active sessions: " << std::endl;
+  if (!session_ids.empty()) {
+    for (auto session_id : session_ids) {
+      std::cout << session_id << "  ";
+    }
+    std::cout << std::endl << "(Please use 'cache_admin --list_session' to get detailed info of sessions.)\n";
+  } else {
+    std::cout << "No active sessions." << std::endl;
+  }
   return Status::OK();
 }
 
@@ -549,6 +601,8 @@ void CacheAdminArgHandler::Help() {
   std::cerr << "            [--generate_session | -g]\n";
   std::cerr << "                [[-p | --port] <port number>]\n";
   std::cerr << "            [--list_sessions]\n";
+  std::cerr << "                [[-p | --port] <port number>]\n";
+  std::cerr << "            [--server_info]\n";
   std::cerr << "                [[-p | --port] <port number>]\n";
   std::cerr << "            [--help]" << std::endl;
   // Do not expose these option to the user via help or documentation, but the options do exist to aid with

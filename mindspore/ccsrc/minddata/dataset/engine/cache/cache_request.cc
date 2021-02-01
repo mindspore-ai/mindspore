@@ -333,7 +333,9 @@ Status ListSessionsRequest::PostReply() {
     current_info.stats = stats;  // fixed length struct.  = operator is safe
     session_info_list_.push_back(current_info);
   }
-
+  server_cfg_.num_workers = msg->num_workers();
+  server_cfg_.log_level = msg->log_level();
+  server_cfg_.spill_dir = msg->spill_dir()->str();
   return Status::OK();
 }
 

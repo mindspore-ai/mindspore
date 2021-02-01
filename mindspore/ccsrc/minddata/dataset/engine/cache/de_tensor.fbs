@@ -104,6 +104,9 @@ table ListSessionMsg {
 
 table ListSessionsMsg {
     sessions:[ListSessionMsg];
+    num_workers:int32;
+    log_level:int8;
+    spill_dir:string;
 }
 
 table DataLocatorMsg {

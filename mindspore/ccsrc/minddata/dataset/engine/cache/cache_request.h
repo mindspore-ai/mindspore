@@ -47,6 +47,12 @@ struct CacheServiceStat {
   int8_t cache_service_state;
 };
 
+struct CacheServerCfgInfo {
+  int32_t num_workers;
+  int8_t log_level;
+  std::string spill_dir;
+};
+
 /// \brief Info structure ListSessionsRequest
 struct SessionCacheInfo {
   session_id_type session_id;
@@ -410,8 +416,19 @@ class ListSessionsRequest : public BaseRequest {
 
   std::vector<SessionCacheInfo> GetSessionCacheInfo() { return session_info_list_; }
 
+  std::vector<session_id_type> GetSessionIds() {
+    std::vector<session_id_type> session_ids;
+    for (auto session_info : session_info_list_) {
+      session_ids.push_back(session_info.session_id);
+    }
+    return session_ids;
+  }
+
+  CacheServerCfgInfo GetServerStat() { return server_cfg_; }
+
  private:
   std::vector<SessionCacheInfo> session_info_list_;
+  CacheServerCfgInfo server_cfg_{};
 };
 
 class AllocateSharedBlockRequest : public BaseRequest {
