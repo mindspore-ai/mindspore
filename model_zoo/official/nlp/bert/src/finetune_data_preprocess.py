@@ -20,6 +20,7 @@ sample script of processing CLUE classification dataset using mindspore.dataset.
 import os
 import argparse
 import numpy as np
+from lxml import etree
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -139,46 +140,60 @@ def process_cmnli_clue_dataset(data_dir, label_list, bert_vocab_path, data_usage
     return dataset
 
 
-def process_cluener_msra(data_file):
-    """process MSRA dataset for CLUE"""
-    content = []
-    labels = []
-    for line in open(data_file):
-        line = line.strip()
-        if line:
-            word = line.split("\t")[0]
-            if len(line.split("\t")) == 1:
-                label = "O"
+def process_cluener_msra(data_file, class_filter=None, split_begin=None, split_end=None):
+    """
+    Data pre-process for MSRA dataset
+    Args:
+        data_file (path): The original dataset file path.
+        class_filter (list of str): Only tags within the class_filter will be counted unless the list is None.
+        split_begin (float): Only data after split_begin part will be counted. Used for split dataset
+                     into training and evaluation subsets if needed.
+        split_end (float): Only data before split_end part will be counted. Used for split dataset
+                     into training and evaluation subsets if needed.
+    """
+    tree = etree.parse(data_file)
+    root = tree.getroot()
+    print("original dataset length: ", len(root))
+    dataset_size = len(root)
+    beg = 0 if split_begin is None or not 0 <= split_begin <= 1.0 else int(dataset_size * split_begin)
+    end = dataset_size if split_end is None or not 0 <= split_end <= 1.0 else int(dataset_size * split_end)
+    print("preporcessed dataset_size: ", end - beg)
+    for i in range(beg, end):
+        sentence = root[i]
+        tags = []
+        content = ""
+        for phrases in sentence:
+            labeled_words = [word for word in phrases]
+            if labeled_words:
+                for words in phrases:
+                    name = words.tag
+                    label = words.get("TYPE")
+                    words = words.text
+                    if not words:
+                        continue
+                    content += words
+                    if class_filter and name not in class_filter:
+                        tags += ["O" for _ in words]
+                    else:
+                        length = len(words)
+                        labels = ["S_"] if length == 1 else ["B_"] + ["M_" for i in range(length - 2)] + ["E_"]
+                        tags += [ele + label for ele in labels]
             else:
-                label = line.split("\t")[1].split("\n")[0]
-                if label[0] != "O":
-                    label = label[0] + "_" + label[2:]
-                if label[0] == "I":
-                    label = "M" + label[1:]
-            content.append(word)
-            labels.append(label)
-        else:
-            for i in range(1, len(labels) - 1):
-                if labels[i][0] == "B" and labels[i+1][0] != "M":
-                    labels[i] = "S" + labels[i][1:]
-                elif labels[i][0] == "M" and labels[i+1][0] != labels[i][0]:
-                    labels[i] = "E" + labels[i][1:]
-            last = len(labels) - 1
-            if labels[last][0] == "B":
-                labels[last] = "S" + labels[last][1:]
-            elif labels[last][0] == "M":
-                labels[last] = "E" + labels[last][1:]
-
-            yield (np.array("".join(content)), np.array(list(labels)))
-            content.clear()
-            labels.clear()
-            continue
+                phrases = phrases.text
+                if phrases:
+                    content += phrases
+                    tags += ["O" for ele in phrases]
+        if len(content) != len(tags):
+            raise ValueError("Mismathc length of content: ", len(content), " and label: ", len(tags))
+        yield (np.array("".join(content)), np.array(list(tags)))
 
 
-def process_msra_clue_dataset(data_dir, label_list, bert_vocab_path, max_seq_len=128):
+def process_msra_clue_dataset(data_dir, label_list, bert_vocab_path, max_seq_len=128, class_filter=None,
+                              split_begin=None, split_end=None):
     """Process MSRA dataset"""
     ### Loading MSRA from CLUEDataset
-    dataset = ds.GeneratorDataset(process_cluener_msra(data_dir), column_names=['text', 'label'])
+    dataset = ds.GeneratorDataset(process_cluener_msra(data_dir, class_filter, split_begin, split_end),
+                                  column_names=['text', 'label'])
 
     ### Processing label
     label_vocab = text.Vocab.from_list(label_list)
@@ -213,10 +228,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="create mindrecord")
     parser.add_argument("--data_dir", type=str, default="", help="dataset path")
     parser.add_argument("--vocab_file", type=str, default="", help="Vocab file path")
-    parser.add_argument("--max_seq_len", type=int, default=128, help="Sequence length")
     parser.add_argument("--save_path", type=str, default="./my.mindrecord", help="Path to save mindrecord")
     parser.add_argument("--label2id", type=str, default="",
                         help="Label2id file path, must be set for cluener2020 task")
+    parser.add_argument("--max_seq_len", type=int, default=128, help="Sequence length")
+    parser.add_argument("--class_filter", nargs='*', help="Specified classes will be counted, if empty all in counted")
+    parser.add_argument("--split_begin", type=float, default=None, help="Specified subsets of date will be counted,"
+                        "if not None, the data will counted begin from split_begin")
+    parser.add_argument("--split_end", type=float, default=None, help="Specified subsets of date will be counted,"
+                        "if not None, the data will counted before split_before")
+
     args_opt = parser.parse_args()
     if args_opt.label2id == "":
         raise ValueError("label2id should not be empty")
@@ -225,5 +246,6 @@ if __name__ == "__main__":
         for tag in f:
             labels_list.append(tag.strip())
     tag_to_index = list(convert_labels_to_index(labels_list).keys())
-    ds = process_msra_clue_dataset(args_opt.data_dir, tag_to_index, args_opt.vocab_file, args_opt.max_seq_len)
+    ds = process_msra_clue_dataset(args_opt.data_dir, tag_to_index, args_opt.vocab_file, args_opt.max_seq_len,
+                                   args_opt.class_filter, args_opt.split_begin, args_opt.split_end)
     ds.save(args_opt.save_path)
