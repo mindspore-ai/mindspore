@@ -193,6 +193,8 @@ lite::STATUS WeightFormatHardCodePass::HardCodeTF(const AnfNodePtr &conv_node,
     param_value->set_format(schema::Format::Format_HWCK);
   } else if (op_type == schema::PrimitiveType_DepthwiseConv2D) {
     param_value->set_format(schema::Format::Format_HWKC);
+  } else if (op_type == schema::PrimitiveType_DeConv2D) {
+    param_value->set_format(schema::Format::Format_HWCK);
   } else {
     MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(op_type)
                   << ", node: " << conv_node->fullname_with_scope();
@@ -248,7 +250,7 @@ bool WeightFormatHardCodePass::Run(const FuncGraphPtr &graph) {
         return false;
     }
     if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "schema::Format hardCode faild: " << status << ", node: " << node->fullname_with_scope();
+      MS_LOG(ERROR) << "Format hard code failed: " << status << ", node: " << node->fullname_with_scope();
       return false;
     }
   }

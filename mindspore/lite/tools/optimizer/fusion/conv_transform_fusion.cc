@@ -221,16 +221,22 @@ void ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const Pa
       delete[] tmp_weight_data;
       return;
     }
-    auto group = primc->GetGroup();
-    auto cin_group = weight_tensor->tensor_shape()[0] / group;
-    int area_size = weight_tensor->tensor_shape()[2] * weight_tensor->tensor_shape()[3];
-    int cout_size = kernel_num * area_size;
-    for (int k = 0; k < cin_group; ++k) {
-      for (int i = 0; i < kernel_num; ++i) {
-        auto row_addr = weight_data + k * cout_size + i * area_size;
-        auto new_row_addr = tmp_weight_data + k * cout_size + i * area_size;
-        for (int j = 0; j < area_size; j++) {
-          new_row_addr[j] = row_addr[j] * trans_scale[i];
+    if (this->fmk_type_ == lite::converter::FmkType_TF) {
+      for (int i = 0; i < weight_shape_size; i++) {
+        tmp_weight_data[i] = weight_data[i] * trans_scale[i % kernel_num];
+      }
+    } else {
+      auto group = primc->GetGroup();
+      auto cin_group = weight_tensor->tensor_shape()[0] / group;
+      int area_size = weight_tensor->tensor_shape()[2] * weight_tensor->tensor_shape()[3];
+      int cout_size = kernel_num * area_size;
+      for (int k = 0; k < cin_group; ++k) {
+        for (int i = 0; i < kernel_num; ++i) {
+          auto row_addr = weight_data + k * cout_size + i * area_size;
+          auto new_row_addr = tmp_weight_data + k * cout_size + i * area_size;
+          for (int j = 0; j < area_size; j++) {
+            new_row_addr[j] = row_addr[j] * trans_scale[i];
+          }
         }
       }
     }
