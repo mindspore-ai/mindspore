@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ELTWISE_GRAD_CPU_KERNEL_H_
 #include <memory>
 #include <vector>
+#include <limits>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
@@ -49,6 +50,10 @@ class EltWiseGradCPUKernel : public CPUKernel {
   void TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
   template <typename T>
   void GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void AsinGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void ACosGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;
@@ -90,6 +95,20 @@ MS_REG_CPU_KERNEL(GeluGrad,
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddOutputAttr(kNumberTypeFloat32),
                   EltWiseGradCPUKernel);
+MS_REG_CPU_KERNEL(
+  AsinGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  EltWiseGradCPUKernel);
+MS_REG_CPU_KERNEL(
+  AsinGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  EltWiseGradCPUKernel);
+MS_REG_CPU_KERNEL(
+  ACosGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  EltWiseGradCPUKernel);
+MS_REG_CPU_KERNEL(
+  ACosGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  EltWiseGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

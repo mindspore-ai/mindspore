@@ -279,6 +279,10 @@ inline const PrimitivePtr kPrimSplitV = std::make_shared<Primitive>("SplitV");
 inline const PrimitivePtr kPrimLinSpace = std::make_shared<Primitive>("LinSpace");
 inline const PrimitivePtr kPrimSign = std::make_shared<Primitive>("Sign");
 inline const PrimitivePtr kPrimSquaredDifference = std::make_shared<Primitive>("SquaredDifference");
+inline const PrimitivePtr kPrimAsin = std::make_shared<Primitive>("Asin");
+inline const PrimitivePtr kPrimACos = std::make_shared<Primitive>("ACos");
+inline const PrimitivePtr kPrimAsinGrad = std::make_shared<Primitive>("AsinGrad");
+inline const PrimitivePtr kPrimACosGrad = std::make_shared<Primitive>("ACosGrad");
 
 // Statements
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("return");

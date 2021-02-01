@@ -93,6 +93,20 @@ void Gelu(const T *in, T *out, size_t start, size_t end) {
     out[i] = x * ((T)1.0 + tanh_res) / (T)2.0;
   }
 }
+
+template <typename T>
+void Asin(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = asin(in[i]);
+  }
+}
+
+template <typename T>
+void ACos(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = acos(in[i]);
+  }
+}
 }  // namespace
 
 void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -116,6 +130,10 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = RECIPROCAL;
   } else if (kernel_name == prim::kPrimGelu->name()) {
     operate_type_ = GELU;
+  } else if (kernel_name == prim::kPrimAsin->name()) {
+    operate_type_ = ASIN;
+  } else if (kernel_name == prim::kPrimACos->name()) {
+    operate_type_ = ACOS;
   }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   target_dtype_ = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
@@ -216,6 +234,10 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
       threads.emplace_back(std::thread(Reciprocal<T>, input, output, start, end));
     } else if (operate_type_ == GELU) {
       threads.emplace_back(std::thread(Gelu<T>, input, output, start, end));
+    } else if (operate_type_ == ASIN) {
+      threads.emplace_back(std::thread(Asin<T>, input, output, start, end));
+    } else if (operate_type_ == ACOS) {
+      threads.emplace_back(std::thread(ACos<T>, input, output, start, end));
     }
     start += once_compute_size;
   }

@@ -93,6 +93,10 @@ enum OperateType {
   RECIPROCAL,
   GELU,
   GELUGRAD,
+  ASIN,
+  ACOS,
+  ASINGRAD,
+  ACOSGRAD,
 };
 
 class CPUKernel : public kernel::KernelMod {
