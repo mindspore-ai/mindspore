@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Tensor implementation."""
+import numbers
 import numpy as np
 
 from mindspore import log as logger
@@ -43,6 +44,9 @@ class Tensor(Tensor_):
         shape (Union[tuple, list, int]): A list of integers, a tuple of integers or an integer as the shape of
             output. Default: None.
         init (class:'Initializer'): the information of init data.
+            'init' is used for delayed initialization in parallel mode. Usually, it is not recommended to
+            use 'init' interface to initialize parameters in other conditions. If 'init' interface is used
+            to initialize parameters, the `init_data` API need to be called to convert `Tensor` to the actual data.
 
     Outputs:
         Tensor, with the same shape as `input_data`.
@@ -75,6 +79,9 @@ class Tensor(Tensor_):
 
         if ((input_data is not None and init is None) or (input_data is None and init is not None)) is False:
             raise TypeError("input_data and init can not be None at the same time.")
+
+        if isinstance(shape, numbers.Number):
+            shape = (shape,)
 
         # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
         if init is None:
@@ -575,6 +582,7 @@ class Tensor(Tensor_):
     def init_data(self, slice_index=None, shape=None, opt_shard_group=None):
         """
         Get the tensor format data of this Tensor.
+        The init_data function can be called once for the same tensor.
 
         Args:
             slice_index (int): Slice index of a parameter's slices.

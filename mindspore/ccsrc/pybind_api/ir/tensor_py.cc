@@ -406,6 +406,11 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                   return std::make_shared<Tensor>(data_type, GetShapeFromTuple(shape));
                                 }),
                                 py::arg("dtype"), py::arg("shape"))
+                           .def(py::init([](const TypePtr &type_ptr, const py::list &shape) {
+                                  auto data_type = type_ptr ? type_ptr->type_id() : TypeId::kNumberTypeFloat64;
+                                  return std::make_shared<Tensor>(data_type, GetShapeFromTuple(shape));
+                                }),
+                                py::arg("dtype"), py::arg("shape"))
                            .def(py::init([](const py::array &input, const TypePtr &type_ptr) {
                                   return TensorPy::MakeTensor(input, type_ptr);
                                 }),
