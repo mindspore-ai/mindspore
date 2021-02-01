@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
-#include "minddata/dataset/include/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -114,11 +113,18 @@ Status CacheValidationPass::Visit(std::shared_ptr<MapNode> node, bool *const mod
     }
     // If Map is created to be cached, set the flag indicating we found an operation with a cache.
     is_cached_ = true;
+
+    // This is temporary code.
+    // Because the randomness of its tensor operations is not known in TensorOperation form until we convert them
+    // to TensorOp, we need to check the randomness in MapNode::Build().
+    // By setting this MapNode is under a cache, we will check the randomness of its tensor operations without the need
+    // to walk the IR tree again.
+    node->Cached();
+
     auto tfuncs = node->TensorOperations();
     for (size_t i = 0; i < tfuncs.size(); i++) {
       if (tfuncs[i]->IsRandomOp()) {
-        RETURN_STATUS_UNEXPECTED(
-          "MapNode with non-deterministic operations is not supported as a descendant of cache.");
+        RETURN_STATUS_UNEXPECTED("MapNode containing random operation is not supported as a descendant of cache.");
       }
     }
   }

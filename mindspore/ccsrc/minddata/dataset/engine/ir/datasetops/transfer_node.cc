@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,11 @@ Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   device_id_ = 0;
   RETURN_IF_NOT_OK(this->GetShardId(&device_id_));
 
-  node_ops->push_back(std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
-                                                      total_batch_, create_data_info_queue_));
+  auto op = std::make_shared<DeviceQueueOp>(queue_name_, type, device_id_, prefetch_size_, send_epoch_end_,
+                                            total_batch_, create_data_info_queue_);
+  op->set_total_repeats(GetTotalRepeats());
+  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  node_ops->push_back(op);
   return Status::OK();
 }
 

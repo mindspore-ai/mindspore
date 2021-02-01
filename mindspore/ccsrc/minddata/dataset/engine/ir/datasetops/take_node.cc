@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 20202-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,10 @@ void TakeNode::Print(std::ostream &out) const { out << Name() + "(num_rows:" + s
 
 // Function to build the TakeOp
 Status TakeNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  node_ops->push_back(std::make_shared<TakeOp>(take_count_, connector_que_size_));
+  auto op = std::make_shared<TakeOp>(take_count_, connector_que_size_);
+  op->set_total_repeats(GetTotalRepeats());
+  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  node_ops->push_back(op);
   return Status::OK();
 }
 

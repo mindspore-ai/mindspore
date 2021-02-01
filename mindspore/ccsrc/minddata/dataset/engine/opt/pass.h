@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,11 @@ namespace dataset {
 class BatchNode;
 class BucketBatchByLengthNode;
 class BuildVocabNode;
+#ifndef ENABLE_ANDROID
+class CacheLookupNode;
+class CacheMergeNode;
+class CacheNode;
+#endif
 class ConcatNode;
 class EpochCtrlNode;
 class FilterNode;
@@ -199,6 +204,14 @@ class IRNodePass : public IRPass {
   virtual Status VisitAfter(std::shared_ptr<BuildVocabNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<ConcatNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<ConcatNode> node, bool *const modified);
+#ifndef ENABLE_ANDROID
+  virtual Status Visit(std::shared_ptr<CacheMergeNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<CacheMergeNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<CacheLookupNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<CacheLookupNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<CacheNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<CacheNode> node, bool *const modified);
+#endif
   virtual Status Visit(std::shared_ptr<EpochCtrlNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<EpochCtrlNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<FilterNode> node, bool *const modified);

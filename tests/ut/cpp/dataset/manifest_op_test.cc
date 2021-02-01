@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,11 @@ class MindDataTestManifest : public UT::DatasetOpTesting {
 
 TEST_F(MindDataTestManifest, TestSequentialManifestWithRepeat) {
   std::string file = datasets_root_path_ + "/testManifestData/cpp.json";
-  auto tree = Build({Manifest(16, 2, 32, file), Repeat(2)});
+  auto op1 = Manifest(16, 2, 32, file);
+  auto op2 = Repeat(2);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2});
   tree->Prepare();
   uint32_t res[] = {0, 1, 0, 1};
   Status rc = tree->Launch();
@@ -148,7 +152,11 @@ TEST_F(MindDataTestManifest, MindDataTestManifestNumSamples) {
   int64_t num_samples = 1;
   int64_t start_index = 0;
   auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
-  auto tree = Build({Manifest(16, 2, 32, file, "train", std::move(seq_sampler), {}), Repeat(4)});
+  auto op1 = Manifest(16, 2, 32, file, "train", std::move(seq_sampler), {});
+  auto op2 = Repeat(4);
+  op1->set_total_repeats(4);
+  op1->set_num_repeats_per_epoch(4);
+  auto tree = Build({op1, op2});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {

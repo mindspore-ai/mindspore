@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,9 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include <iostream>
 #include <string>
-#include <utility>
 #include <limits>
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
-#include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
-#include "minddata/dataset/engine/opt/pass.h"
-#include "minddata/dataset/engine/opt/pre/removal_pass.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
-#include "minddata/dataset/engine/opt/post/repeat_pass.h"
-#include "minddata/dataset/engine/opt/pre/cache_error_pass.h"
-#include "mindspore/ccsrc/minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
-#endif
-#include "minddata/dataset/engine/opt/pre/epoch_injection_pass.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/perf/monitor.h"
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
@@ -255,97 +244,13 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
   return Status::OK();
 }
 
-// The driver of the prepare phase of the execution tree.
-// Prepare phase consists of three sub phases
-//
-// 1. PreAction()
-//    Compulsory transformation/action pre optimization.
-//    For example, CacheOp Insertion
-//
-// 2. Optimize()
-//    Optimization transformation/action, optional
-//    For example, MapOp Fusion
-//
-// 3. PostAction()
-//    Compulsory transformation/action post optimization.
-//    For example, repeatOp inlining
-//
-// @return Status The status code returned
-Status ExecutionTree::Prepare(int32_t num_epochs, bool partial) {
-  num_epochs_ = num_epochs;
-  partially_prepare_ = partial;
-
-  // Pre optimization compulsory transformation
-  RETURN_IF_NOT_OK(this->PreAction());
-
-  // Post optimization compulsory transformation
-  RETURN_IF_NOT_OK(this->PostAction());
-
-  // The tree is ready to be prepared.
-  tree_state_ = kDeTStatePrepare;
-
-  // Existing transformation implementation, will be removed later
-  RETURN_IF_NOT_OK(this->PrepareDeprecated());
-  return Status::OK();
-}
-
-Status ExecutionTree::PreAction() {
-  bool modified = false;
-  std::vector<std::unique_ptr<Pass>> pre_actions;
-  // Construct pre actions
-  if (!partially_prepare_) {
-#ifndef ENABLE_ANDROID
-    pre_actions.push_back(std::make_unique<CacheErrorPass>());
-#endif
-    pre_actions.push_back(std::make_unique<EpochInjectionPass>());
-    pre_actions.push_back(std::make_unique<RemovalPass>());
-  }
-
-  MS_LOG(INFO) << "Running " << pre_actions.size() << " pre pass loops.";
-
-  // Apply pre action passes
-  for (auto &pass : pre_actions) {
-    RETURN_IF_NOT_OK(pass->Run(this, &modified));
-  }
-  MS_LOG(INFO) << "Pre passes complete.";
-  return Status::OK();
-}
-
-Status ExecutionTree::PostAction() {
-  bool modified = false;
-  OptPass post_actions;
-  // Construct pre actions
-  MS_LOG(INFO) << "Running post pass loops.";
-#ifndef ENABLE_ANDROID
-  // Calling CacheErrorPass again. This is a temporary fix until the TensorOperation is properly done in Pybind.
-  // The IR version cannot detect an invalid case of a cache on Map with random tensor operation from Python API.
-  // This is because Python API binding to TensorOperation is still in progress.
-  post_actions.push_back(std::make_unique<CacheErrorPass>());
-  post_actions.push_back(std::make_unique<RepeatPass>());
-#endif
-
-  // Apply post action passes
-  for (auto &pass : post_actions) {
-    RETURN_IF_NOT_OK(pass->Run(this, &modified));
-  }
-  MS_LOG(INFO) << "Post passes complete.";
-
-  return Status::OK();
-}
-
-// The driver of the prepare phase of the execution tree. The prepare phase will recursively
 // walk the tree to perform modifications to the tree or specific nodes within the tree to get
 // it ready for execution.
 //
 // This driver is deprecated.
-Status ExecutionTree::PrepareDeprecated() {
-  // Tree must be in pending prepare state before we can assign root to it
-  if (tree_state_ != kDeTStatePrepare) {
-    std::string err_msg =
-      "Invalid tree state for preparing the tree. Current state: " + std::to_string(static_cast<int>(tree_state_)) +
-      " Expected state: " + std::to_string(static_cast<int>(kDeTStatePrepare));
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
+Status ExecutionTree::Prepare() {
+  // The tree is ready to be prepared.
+  tree_state_ = kDeTStatePrepare;
 
   if (root_ == nullptr) {
     RETURN_STATUS_UNEXPECTED("Please assign one operator as the root of this tree.");

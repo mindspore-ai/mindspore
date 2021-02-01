@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,6 +169,8 @@ Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   }
 
   RETURN_IF_NOT_OK(mindrecord_op->Init());
+  mindrecord_op->set_total_repeats(GetTotalRepeats());
+  mindrecord_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(mindrecord_op);
 
   return Status::OK();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,12 @@ Status CelebANode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   // label is like this:0 1 0 0 1......
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
 
-  node_ops->push_back(std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                                 decode_, usage_, extensions_, std::move(schema),
-                                                 std::move(sampler_->SamplerBuild())));
+  auto celeba_op =
+    std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_, decode_, usage_,
+                               extensions_, std::move(schema), std::move(sampler_->SamplerBuild()));
+  celeba_op->set_total_repeats(GetTotalRepeats());
+  celeba_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  node_ops->push_back(celeba_op);
 
   return Status::OK();
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,11 @@ void BuildSentenceVocabNode::Print(std::ostream &out) const {
 
 // Function to build BuildSentenceVocabNode
 Status BuildSentenceVocabNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  std::shared_ptr<BuildSentencePieceVocabOp> build_sentence_piece_vocab_op;
-  build_sentence_piece_vocab_op = std::make_shared<BuildSentencePieceVocabOp>(
-    vocab_, col_names_, vocab_size_, character_coverage_, model_type_, params_, connector_que_size_);
-  node_ops->push_back(build_sentence_piece_vocab_op);
+  auto op = std::make_shared<BuildSentencePieceVocabOp>(vocab_, col_names_, vocab_size_, character_coverage_,
+                                                        model_type_, params_, connector_que_size_);
+  op->set_total_repeats(GetTotalRepeats());
+  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  node_ops->push_back(op);
   return Status::OK();
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-
 
 #include "common/common.h"
 #include "minddata/dataset/core/client.h"
@@ -416,6 +415,8 @@ TEST_F(MindDataTestMapOp, TestTFReaderRepeatMap) {
   rc = my_map_op->AddChild(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
+  my_tfreader_op->set_total_repeats(num_repeats);
+  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -471,9 +472,13 @@ TEST_F(MindDataTestMapOp, TestTFReaderMapRepeat) {
   rc = my_tree_->AssociateNode(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
+  my_map_op->set_total_repeats(num_repeats);
+  my_map_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_map_op);
   EXPECT_TRUE(rc.IsOk());
 
+  my_tfreader_op->set_total_repeats(num_repeats);
+  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_map_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -548,9 +553,13 @@ TEST_F(MindDataTestMapOp, TFReader_Decode_Repeat_Resize) {
   rc = my_tree_->AssociateNode(my_map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
+  my_tfreader_op->set_total_repeats(num_repeats);
+  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_map_decode_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
 
+  my_map_decode_op->set_total_repeats(num_repeats);
+  my_map_decode_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_map_decode_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -611,7 +620,12 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   rc = map_resize_builder.Build(&map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_tree_ = Build({ImageFolder(16, 2, 32, folder_path, false), map_decode_map, repeat_op, map_resize_op});
+  auto image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
+  image_folder_op->set_total_repeats(num_repeats);
+  image_folder_op->set_num_repeats_per_epoch(num_repeats);
+  map_decode_map->set_total_repeats(num_repeats);
+  map_decode_map->set_num_repeats_per_epoch(num_repeats);
+  my_tree_ = Build({image_folder_op, map_decode_map, repeat_op, map_resize_op});
   rc = my_tree_->Prepare();
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->Launch();
@@ -656,7 +670,12 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize) {
   rc = map_resize_builder.Build(&map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
-  auto my_tree_2 = Build({ImageFolder(16, 2, 32, folder_path, false), map_decode_map, repeat_op, map_resize_op});
+  image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
+  image_folder_op->set_total_repeats(num_repeats);
+  image_folder_op->set_num_repeats_per_epoch(num_repeats);
+  map_decode_map->set_total_repeats(num_repeats);
+  map_decode_map->set_num_repeats_per_epoch(num_repeats);
+  auto my_tree_2 = Build({image_folder_op, map_decode_map, repeat_op, map_resize_op});
 
   rc = my_tree_2->Prepare();
   EXPECT_TRUE(rc.IsOk());
@@ -714,7 +733,12 @@ TEST_F(MindDataTestMapOp, ImageFolder_Decode_Repeat_Resize_NoInputColumns) {
   rc = map_resize_builder.Build(&map_resize_op);
   EXPECT_TRUE(rc.IsOk());
 
-  my_tree_ = Build({ImageFolder(16, 2, 32, folder_path, false), map_decode_map, repeat_op, map_resize_op});
+  auto image_folder_op = ImageFolder(16, 2, 32, folder_path, false);
+  image_folder_op->set_total_repeats(num_repeats);
+  image_folder_op->set_num_repeats_per_epoch(num_repeats);
+  map_decode_map->set_total_repeats(num_repeats);
+  map_decode_map->set_num_repeats_per_epoch(num_repeats);
+  my_tree_ = Build({image_folder_op, map_decode_map, repeat_op, map_resize_op});
   rc = my_tree_->Prepare();
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree_->Launch();

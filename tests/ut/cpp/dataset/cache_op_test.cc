@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,15 +293,20 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCache1) {
   ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
+  myCacheOp->set_total_repeats(numRepeats);
+  myCacheOp->set_num_repeats_per_epoch(numRepeats);
   rc = myRepeatOp->AddChild(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
+  // Always set to 1 under a CacheOp because we read from it only once. The CacheOp is the one that repeats.
+  myRandomDataOp->set_total_repeats(1);
+  myRandomDataOp->set_num_repeats_per_epoch(1);
   rc = myCacheOp->AddChild(myRandomDataOp);
   ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
-  rc = myTree->Prepare(1);
+  rc = myTree->Prepare();
   ASSERT_TRUE(rc.IsOk());
 
   // quick check to see what tree looks like
@@ -412,15 +417,20 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestRandomDataCacheSpill) {
   ASSERT_TRUE(rc.IsOk());
 
   // Assign tree relations and root
+  myCacheOp->set_total_repeats(numRepeats);
+  myCacheOp->set_num_repeats_per_epoch(numRepeats);
   rc = myRepeatOp->AddChild(myCacheOp);
   ASSERT_TRUE(rc.IsOk());
+  // Always set to 1 under a CacheOp because we read from it only once. The CacheOp is the one that repeats.
+  myRandomDataOp->set_total_repeats(1);
+  myRandomDataOp->set_num_repeats_per_epoch(1);
   rc = myCacheOp->AddChild(myRandomDataOp);
   ASSERT_TRUE(rc.IsOk());
   rc = myTree->AssignRoot(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
   MS_LOG(INFO) << "Launching tree and begin iteration";
-  rc = myTree->Prepare(1);
+  rc = myTree->Prepare();
   ASSERT_TRUE(rc.IsOk());
 
   std::cout << *myClient << std::endl;
@@ -502,14 +512,20 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = myTree->AssignRoot(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
+  myMergeOp->set_total_repeats(numRepeats);
+  myMergeOp->set_num_repeats_per_epoch(numRepeats);
   rc = myRepeatOp->AddChild(myMergeOp);
   ASSERT_TRUE(rc.IsOk());
+  myLookupOp->set_total_repeats(numRepeats);
+  myLookupOp->set_num_repeats_per_epoch(numRepeats);
   rc = myMergeOp->AddChild(myLookupOp);
   ASSERT_TRUE(rc.IsOk());
+  so->set_total_repeats(numRepeats);
+  so->set_num_repeats_per_epoch(numRepeats);
   rc = myMergeOp->AddChild(so);
   ASSERT_TRUE(rc.IsOk());
 
-  rc = myTree->Prepare(1);
+  rc = myTree->Prepare();
   ASSERT_TRUE(rc.IsOk());
   rc = myTree->Launch();
   ASSERT_TRUE(rc.IsOk());

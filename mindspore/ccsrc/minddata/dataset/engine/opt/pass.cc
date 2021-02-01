@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@
 #include "minddata/dataset/engine/ir/datasetops/build_sentence_piece_vocab_node.h"
 #endif
 #include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
+#ifndef ENABLE_ANDROID
+#include "minddata/dataset/engine/ir/datasetops/cache_node.h"
+#include "minddata/dataset/engine/ir/datasetops/cache_merge_node.h"
+#include "minddata/dataset/engine/ir/datasetops/cache_lookup_node.h"
+#endif
 #include "minddata/dataset/engine/ir/datasetops/concat_node.h"
 #include "minddata/dataset/engine/ir/datasetops/epoch_ctrl_node.h"
 #include "minddata/dataset/engine/ir/datasetops/filter_node.h"
@@ -187,6 +192,26 @@ Status IRNodePass::Visit(std::shared_ptr<ConcatNode> node, bool *const modified)
 Status IRNodePass::VisitAfter(std::shared_ptr<ConcatNode> node, bool *const modified) {
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
+#ifndef ENABLE_ANDROID
+Status IRNodePass::Visit(std::shared_ptr<CacheLookupNode> node, bool *const modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status IRNodePass::VisitAfter(std::shared_ptr<CacheLookupNode> node, bool *const modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status IRNodePass::Visit(std::shared_ptr<CacheMergeNode> node, bool *const modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status IRNodePass::VisitAfter(std::shared_ptr<CacheMergeNode> node, bool *const modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status IRNodePass::Visit(std::shared_ptr<CacheNode> node, bool *const modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status IRNodePass::VisitAfter(std::shared_ptr<CacheNode> node, bool *const modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+#endif
 Status IRNodePass::Visit(std::shared_ptr<EpochCtrlNode> node, bool *const modified) {
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }

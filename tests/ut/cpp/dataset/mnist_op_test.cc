@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,11 @@ TEST_F(MindDataTestMnistSampler, TestSequentialMnistWithRepeat) {
   int64_t num_samples = 10;
   int64_t start_index = 0;
   auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
-  auto tree = Build({CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler)), Repeat(2)});
+  auto op1 = CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler));
+  auto op2 = Repeat(2);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2});
   tree->Prepare();
   uint32_t res[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   Status rc = tree->Launch();
@@ -108,7 +112,12 @@ TEST_F(MindDataTestMnistSampler, TestSequentialImageFolderWithRepeatBatch) {
   int64_t num_samples = 10;
   int64_t start_index = 0;
   auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
-  auto tree = Build({CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler)), Repeat(2), Batch(5)});
+  auto op1 = CreateMnist(16, 2, 32, folder_path, false, std::move(seq_sampler));
+  auto op2 = Repeat(2);
+  auto op3 = Batch(5);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2, op3});
   tree->Prepare();
   uint32_t res[4][5] = { {0, 0, 0, 0, 0 },
                          {0, 0, 0, 0, 0 },

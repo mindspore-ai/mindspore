@@ -51,8 +51,22 @@ Status CacheLookupNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops)
                                "Internal error. Attempt to create a cache lookup node without cache client.");
   RETURN_IF_NOT_OK(cache_->Build());
   RETURN_IF_NOT_OK(cache_->CreateCacheLookupOp(num_workers_, &lookup_op_, sampler_));
+  lookup_op_->set_total_repeats(GetTotalRepeats());
+  lookup_op_->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(lookup_op_);
   return Status::OK();
+}
+
+// Visitor accepting method for IRNodePass
+Status CacheLookupNode::Accept(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<CacheLookupNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status CacheLookupNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<CacheLookupNode>(), modified);
 }
 
 std::shared_ptr<SamplerObj> CacheLookupNode::SamplerCopy() {

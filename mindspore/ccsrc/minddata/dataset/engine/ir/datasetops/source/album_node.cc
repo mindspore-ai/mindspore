@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,9 +72,11 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
   // Argument that is not exposed to user in the API.
   std::set<std::string> extensions = {};
 
-  node_ops->push_back(std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                                decode_, extensions, std::move(schema),
-                                                std::move(sampler_->SamplerBuild())));
+  auto album_op = std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_, decode_,
+                                            extensions, std::move(schema), std::move(sampler_->SamplerBuild()));
+  album_op->set_total_repeats(GetTotalRepeats());
+  album_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  node_ops->push_back(album_op);
   return Status::OK();
 }
 

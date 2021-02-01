@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ MapNode::MapNode(std::shared_ptr<DatasetNode> child, std::vector<std::shared_ptr
       output_columns_(output_columns),
       project_columns_(project_columns),
       DatasetNode(std::move(cache)),
-      callbacks_(callbacks) {
+      callbacks_(callbacks),
+      under_a_cache_(false) {
   this->AddChild(child);
 }
 
@@ -64,6 +65,17 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
     operations_.begin(), operations_.end(), std::back_inserter(tensor_ops),
     [](std::shared_ptr<TensorOperation> operation) -> std::shared_ptr<TensorOp> { return operation->Build(); });
 
+  // This is temporary code.
+  // Because the randomness of its tensor operations is not known in TensorOperation form until we convert them
+  // to TensorOp, we need to check the randomness here.
+  // When TensorOperation captures the randomness behaviour, remove this code and the member "under_a_cache_"
+  // and the temporary code in CacheValidation pre pass in IR optimizer.
+  if (under_a_cache_) {
+    auto itr = std::find_if(tensor_ops.begin(), tensor_ops.end(), [](const auto &it) { return !it->Deterministic(); });
+    if (itr != tensor_ops.end()) {
+      RETURN_STATUS_UNEXPECTED("MapNode containing random operation is not supported as a descendant of cache.");
+    }
+  }
   // This parameter will be removed with next rebase
   std::vector<std::string> col_orders;
   auto map_op = std::make_shared<MapOp>(input_columns_, output_columns_, tensor_ops, num_workers_, connector_que_size_);
@@ -74,9 +86,12 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 
   if (!project_columns_.empty()) {
     auto project_op = std::make_shared<ProjectOp>(project_columns_);
+    project_op->set_total_repeats(GetTotalRepeats());
+    project_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
     node_ops->push_back(project_op);
   }
-
+  map_op->set_total_repeats(GetTotalRepeats());
+  map_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(map_op);
   return Status::OK();
 }

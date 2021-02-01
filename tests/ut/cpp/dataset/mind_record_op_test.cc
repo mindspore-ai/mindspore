@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -370,8 +370,11 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordRepeat) {
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
+  my_mindrecord_op->set_total_repeats(num_repeats);
+  my_mindrecord_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_mindrecord_op);
   EXPECT_TRUE(rc.IsOk());
+
 
   // Set children/root layout.
   rc = my_tree->AssignRoot(my_repeat_op);
@@ -452,6 +455,8 @@ TEST_F(MindDataTestMindRecordOp, TestMindRecordBlockReaderRepeat) {
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
+  my_mindrecord_op->set_total_repeats(num_repeats);
+  my_mindrecord_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_mindrecord_op);
   EXPECT_TRUE(rc.IsOk());
 

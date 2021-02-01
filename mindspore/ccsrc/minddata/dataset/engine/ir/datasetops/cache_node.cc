@@ -53,8 +53,22 @@ Status CacheNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
   std::shared_ptr<DatasetOp> cache_op = nullptr;
   RETURN_IF_NOT_OK(cache_->CreateCacheOp(num_workers_, &cache_op));
   cache_op->SetSampler(sampler_->SamplerBuild());
+  cache_op->set_total_repeats(GetTotalRepeats());
+  cache_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(cache_op);
   return Status::OK();
+}
+
+// Visitor accepting method for IRNodePass
+Status CacheNode::Accept(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<CacheNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status CacheNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<CacheNode>(), modified);
 }
 
 }  // namespace dataset
