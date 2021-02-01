@@ -109,7 +109,9 @@ STATUS WeightQuantizer::DoConvQuantize(CNodePtr cnode) {
     status =
       QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true);
   }
-  if (status != RET_OK) {
+  if (status == RET_CONTINUE) {
+    return RET_OK;
+  } else if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed : " << status;
     return status;
   }
@@ -173,7 +175,9 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
     status =
       QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true);
   }
-  if (status != RET_OK) {
+  if (status == RET_CONTINUE) {
+    return RET_OK;
+  } else if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed : " << status;
     return status;
   }
@@ -246,7 +250,9 @@ STATUS WeightQuantizer::DoGatherQuantize(CNodePtr cnode) {
     status =
       QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, false, 0);
   }
-  if (status != RET_OK) {
+  if (status == RET_CONTINUE) {
+    return RET_OK;
+  } else if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed : " << status;
     return status;
   }
@@ -286,7 +292,9 @@ STATUS WeightQuantizer::ProcessLstmWeightByIndex(const CNodePtr &cnode, const st
     status = QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
                                   false, index - 1);
   }
-  if (status != RET_OK) {
+  if (status == RET_CONTINUE) {
+    return RET_OK;
+  } else if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed : " << status;
     return status;
   }
@@ -503,7 +511,9 @@ STATUS WeightQuantizer::TryQuant(const int &bit_num_t, const ParameterPtr &param
     MS_LOG(ERROR) << "unexpected type_id_: " << type_id_;
     return RET_ERROR;
   }
-  if (status != RET_OK) {
+  if (status == RET_CONTINUE) {
+    return RET_OK;
+  } else if (status != RET_OK) {
     MS_LOG(ERROR) << "quant filter failed.";
     return RET_ERROR;
   }

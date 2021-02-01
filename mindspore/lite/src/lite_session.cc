@@ -74,7 +74,7 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
       dst_tensor->AddQuantParam(quant_arg);
     }
   }
-  dst_tensor->SetEnableHuffmanCode(src_tensor->enableHuffmanCode());
+  dst_tensor->set_enable_huffman_code(src_tensor->enableHuffmanCode());
   auto quant_clusters = src_tensor->quantClusters();
   if (quant_clusters != nullptr) {
     std::vector<float> clusters;

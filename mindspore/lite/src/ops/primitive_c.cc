@@ -451,9 +451,9 @@ void PrimitiveC::set_quant_type(const schema::QuantType &quant_type) { this->qua
 
 schema::QuantType PrimitiveC::quant_type() const { return quant_type_; }
 
-bool PrimitiveC::IsEnableHuffmanCode() const { return enableHuffmanCode; }
+bool PrimitiveC::enable_huffman_code() const { return enable_huffman_code_; }
 
-void PrimitiveC::SetEnableHuffmanCode(bool enableHuffmanCode) { this->enableHuffmanCode = enableHuffmanCode; }
+void PrimitiveC::set_enable_huffman_code(bool enable_huffman_code) { this->enable_huffman_code_ = enable_huffman_code; }
 
 std::shared_ptr<PrimitiveC> GetReturnPrim() {
   auto return_primitiveT = new (std::nothrow) schema::PrimitiveT;

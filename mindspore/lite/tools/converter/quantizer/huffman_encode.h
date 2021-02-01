@@ -60,7 +60,8 @@ class HuffmanEncode {
 
   STATUS GetParamValueLitePtr(const std::shared_ptr<AnfNode> &input_node, ParamValueLitePtr *param_value);
 
-  STATUS DoHuffmanEncode(const FuncGraphPtr &func_graph, const int &bit_num);
+  STATUS DoHuffmanEncode(const ParamValueLitePtr &weight, const std::shared_ptr<PrimitiveC> &primitive_c,
+                         void *quant_datas, const size_t &bit_num);
 
  private:
   std::map<int, std::string> huffman_table_;

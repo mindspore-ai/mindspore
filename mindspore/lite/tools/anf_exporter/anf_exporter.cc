@@ -508,7 +508,7 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_ano
   }
 
   paramTensor->name = input_name;
-  if (primitive_c->IsEnableHuffmanCode() && paramTensor->dataType == kNumberTypeInt8) {
+  if (primitive_c->enable_huffman_code() && paramTensor->dataType == kNumberTypeInt8) {
     paramTensor->enableHuffmanCode = true;
   }
   node_id_map_[input_name] = meta_graphT->allTensors.size();

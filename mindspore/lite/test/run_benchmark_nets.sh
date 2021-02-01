@@ -238,10 +238,11 @@ function Run_Converter() {
 
     # Convert mindir weightquant models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        weight_quant_line_info=${line}
+        if [[ $weight_quant_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
         echo ${model_name} >> "${run_converter_log_file}"
         echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}' --quantType=WeightQuant --bitNum=8 --quantWeightSize=500 --quantWeightChannel=16' >> "${run_converter_log_file}"
         ./converter_lite  --fmk=MINDIR --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}_weightquant --quantType=WeightQuant --bitNum=8 --quantWeightSize=500 --quantWeightChannel=16
@@ -538,15 +539,17 @@ function Run_x86() {
 
     # Run mindir weight quantization converted models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        weight_quant_line_info=${line}
+        if [[ $weight_quant_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.weightquant.ms.out >> "${run_x86_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'[weight quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -809,15 +812,17 @@ function Run_x86_sse() {
 
     # Run mindir weight quantization converted models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        weight_quant_line_info=${line}
+        if [[ $weight_quant_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_sse_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "${run_x86_sse_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.weightquant.ms.out >> "${run_x86_sse_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_sse_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}'[weight quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1081,15 +1086,17 @@ function Run_x86_avx() {
 
     # Run mindir weight quantization converted models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        weight_quant_line_info=${line}
+        if [[ $weight_quant_line_info == \#* ]]; then
           continue
         fi
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
         echo ${model_name} >> "${run_x86_avx_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "${run_x86_avx_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.weightquant.ms.out >> "${run_x86_avx_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_avx_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}'[weight quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1637,14 +1644,16 @@ function Run_arm64() {
 
     # Run mindir weightquant converted train models:
     while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
+        weight_quant_line_info=${line}
+        if [[ $weight_quant_line_info == \#* ]]; then
           continue
         fi
-        echo ${model_name}'_train' >> "${run_arm64_log_file}"
+        model_name=`echo ${weight_quant_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${weight_quant_line_info}|awk -F ' ' '{print $2}'`
+        echo ${model_name} >> "${run_arm64_log_file}"
         echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.weightquant.ms.out --loopCount=1' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.weightquant.ms.out --loopCount=1' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --loopCount=1 --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --loopCount=1 --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}'[weightQuant] pass'; echo ${run_result} >> ${run_benchmark_result_file}

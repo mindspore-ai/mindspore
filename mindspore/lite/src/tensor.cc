@@ -366,9 +366,9 @@ std::vector<float> Tensor::quant_clusters() const { return this->quant_clusters_
 
 void Tensor::set_quant_clusters(const std::vector<float> &clusters) { this->quant_clusters_ = clusters; }
 
-bool Tensor::IsEnableHuffmanCode() const { return enableHuffmanCode; }
+bool Tensor::enable_huffman_code() const { return enable_huffman_code_; }
 
-void Tensor::SetEnableHuffmanCode(bool enableHuffmanCode) { this->enableHuffmanCode = enableHuffmanCode; }
+void Tensor::set_enable_huffman_code(bool enable_huffman_code) { this->enable_huffman_code_ = enable_huffman_code; }
 
 std::vector<tensor::MSTensor *> TensorVectorCast(const std::vector<Tensor *> &src) {
   std::vector<tensor::MSTensor *> target(src.size());
