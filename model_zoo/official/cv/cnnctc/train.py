@@ -80,10 +80,13 @@ def train(args_opt, config):
                                  keep_checkpoint_max=config.KEEP_CKPT_MAX_NUM)
     ckpoint_cb = ModelCheckpoint(prefix="CNNCTC", config=config_ck, directory=config.SAVE_PATH)
 
-    if args_opt.device_id == 0:
-        model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback, ckpoint_cb], dataset_sink_mode=False)
+    if args_opt.run_distribute:
+        if args_opt.device_id == 0:
+            model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback, ckpoint_cb], dataset_sink_mode=False)
+        else:
+            model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback], dataset_sink_mode=False)
     else:
-        model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback], dataset_sink_mode=False)
+        model.train(config.TRAIN_EPOCHS, ds, callbacks=[callback, ckpoint_cb], dataset_sink_mode=False)
 
 
 if __name__ == '__main__':
