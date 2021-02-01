@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,12 @@ AnfNodePtrList FindGraphKernelsWithMultiOutput(const FuncGraphPtr &func_graph) {
            IsPrimitiveCNode(AnfAlgo::GetCNodeFuncGraphPtr(node)->output(), prim::kPrimMakeTuple);
   });
   return result;
+}
+
+bool IsSideEffectNode(const AnfNodePtr &node) {
+  std::vector<PrimitivePtr> side_effect_nodes = {prim::kPrimAssign, prim::kPrimInplaceAssign};
+  return std::any_of(side_effect_nodes.begin(), side_effect_nodes.end(),
+                     [&node](const PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
 }
 
 /* Unify the repeated output in a func_graph.
@@ -318,6 +324,7 @@ bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
   return changed;
 }
 
+// update the GetItem(node, i) to GetItem(node, i - offset)
 void EliminateRedundantOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) {
   if (offset == 0) return;
   MS_EXCEPTION_IF_NULL(getitem);
@@ -338,12 +345,15 @@ AnfNodePtr EliminateRedundantOutput::ReplaceMakeTuple(const AnfNodePtr &node, co
   AbstractBasePtrList abstract_list;
   size_t offset = 0;
   for (size_t i = 0; i < getitems.size(); ++i) {
-    if (getitems[i] == nullptr) {
+    // If a node has no user, it should be eliminated, but except for side-effect node.
+    if (getitems[i] == nullptr && !IsSideEffectNode(old_maketuple->input(i + 1))) {
       offset++;
     } else {
       new_maketuple_inputs.push_back(old_maketuple->input(i + 1));
       abstract_list.push_back(old_maketuple->input(i + 1)->abstract());
-      UpdateGetitemIndex(getitems[i], offset);
+      if (getitems[i] != nullptr) {
+        UpdateGetitemIndex(getitems[i], offset);
+      }
     }
   }
   if (offset == 0) return nullptr;

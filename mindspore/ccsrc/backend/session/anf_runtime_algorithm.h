@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +105,10 @@ class AnfRuntimeAlgorithm {
   static std::vector<std::string> GetAllOutputFormats(const AnfNodePtr &node);
   // get all inputs format select of anf node
   static std::vector<std::string> GetAllInputFormats(const AnfNodePtr &node);
+  // get all inputs type select of anf node
+  static std::vector<TypeId> GetAllInputDeviceTypes(const AnfNodePtr &node);
+  // get all outputs type select of anf node
+  static std::vector<TypeId> GetAllOutputDeviceTypes(const AnfNodePtr &node);
   // get origin data format select of anf node
   static std::string GetOriginDataFormat(const AnfNodePtr &node);
   // get output format select of anf node

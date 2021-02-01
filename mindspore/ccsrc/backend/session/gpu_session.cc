@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@
 #include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
+#include "backend/optimizer/graph_kernel/optimize_assign.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
@@ -187,6 +188,8 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
+  pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
+  pm->AddPass(std::make_shared<opt::OptimizeAssign>());
   pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
   pm->AddPass(std::make_shared<opt::RaiseReductionPrecision>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>(duplicated_ops));
