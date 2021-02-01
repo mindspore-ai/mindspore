@@ -389,10 +389,46 @@ overall performance
 
 ### Convert
 
-If you want to infer the network on Ascend 310, you should convert the model to AIR:
+If you want to infer the network on Ascend 310, you should convert the model to MINDIR:
 
 ```python
-python src/export.py --pretrained=[PRETRAINED_BACKBONE] --batch_size=[BATCH_SIZE] 
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] 
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the mindir file must be exported by export script on the 910 environment.
+Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space.
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [ANN_FILE]
+```
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```text
+=============coco eval reulst=========
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.438
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.630
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.475
+Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.272
+Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.481
+Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.567
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.330
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.542
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.588
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.410
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.636
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.716
 ```
 
 # [Model Description](#contents)
