@@ -19,11 +19,10 @@
 #include "src/ops/strided_slice.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/strided_slice.h"
+#include "nnacl/strided_slice_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive) {
   StridedSliceParameter *strided_slice_param =
     reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));

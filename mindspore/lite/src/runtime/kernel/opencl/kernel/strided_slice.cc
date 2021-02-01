@@ -22,7 +22,7 @@
 #include "src/runtime/kernel/opencl/kernel/strided_slice.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/strided_slice.cl.inc"
-#include "nnacl/strided_slice.h"
+#include "nnacl/strided_slice_parameter.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;

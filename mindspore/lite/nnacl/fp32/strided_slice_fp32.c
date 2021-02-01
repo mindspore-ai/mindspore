@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/strided_slice.h"
+#include "nnacl/fp32/strided_slice_fp32.h"
 #include "nnacl/errorcode.h"
 
 void PadStridedSliceParameterTo6D(StridedSliceParameter *param) {

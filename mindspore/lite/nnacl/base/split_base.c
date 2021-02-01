@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-#include "nnacl/split.h"
+#include "nnacl/base/split_base.h"
 #include "nnacl/split_parameter.h"
 #include <string.h>
 #include "nnacl/errorcode.h"
 
-int DoSplit(float *in_data, float **out_data, const int *input_shape, int offset, int num_unit,
-            SplitParameter *split_param) {
+int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, int num_unit,
+            SplitParameter *split_param, int data_size) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
+
+  int8_t *int8_in = (int8_t *)in_data;
+
   int num_split = split_param->num_split_;
   int *split_sizes = split_param->split_sizes_;
   int *strides = split_param->strides_;
   int split_dim = split_param->split_dim_;
   int in_stride = strides[split_dim];
 
-  float *src;
-  int size_float = (int)(sizeof(float));
-  int in_stride_bytes = in_stride * size_float;
+  int in_stride_bytes = in_stride * data_size;
 
   int split_which;
   int split_times;
@@ -40,19 +41,20 @@ int DoSplit(float *in_data, float **out_data, const int *input_shape, int offset
 
   split_which = offset % num_split;
   split_times = offset / num_split;
-  src = in_data + split_times * stride_per_split;
+  int8_t *src = int8_in + split_times * stride_per_split * data_size;
 
   for (int i = 0; i < split_which; i++) {
-    src += split_sizes[i] * in_stride;
+    src += split_sizes[i] * in_stride * data_size;
   }
 
   for (int i = offset; i < offset + num_unit; i++) {
     split_which = i % num_split;
     split_times = i / num_split;
     int split_size = split_sizes[split_which];
-    float *dst = out_data[split_which] + split_times * in_stride * split_size;
+    int8_t *int8_out = (int8_t *)out_data[split_which];
+    int8_t *dst = int8_out + split_times * in_stride * split_size * data_size;
     (void)memcpy(dst, src, split_size * in_stride_bytes);
-    src += split_size * in_stride;
+    src += split_size * in_stride * data_size;
   }
 
   return NNACL_OK;

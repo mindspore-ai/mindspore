@@ -16,7 +16,7 @@
 
 #include <memory>
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/strided_slice.h"
+#include "nnacl/fp32/strided_slice_fp32.h"
 #include "mindspore/lite/src/kernel_registry.h"
 
 namespace mindspore {

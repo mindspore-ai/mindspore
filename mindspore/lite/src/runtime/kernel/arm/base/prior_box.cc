@@ -136,8 +136,8 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
   }
 
   // variance
-  for (auto i = 0; i < out_tensors_[0]->Height() / PRIOR_BOX_VAR_NUM; i++) {
-    for (auto j = 0; j < PRIOR_BOX_VAR_NUM; j++) {
+  for (auto i = 0; i < out_tensors_[0]->Height() / COMM_SHAPE_SIZE; i++) {
+    for (auto j = 0; j < COMM_SHAPE_SIZE; j++) {
       output_.emplace_back(prior_box_param_->variances[j]);
     }
   }

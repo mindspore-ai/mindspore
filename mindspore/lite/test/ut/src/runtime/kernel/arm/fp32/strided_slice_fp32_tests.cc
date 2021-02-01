@@ -19,7 +19,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/utils.h"
-#include "nnacl/strided_slice.h"
+#include "mindspore/lite/nnacl/fp32/strided_slice_fp32.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "mindspore/lite/src/lite_kernel.h"
 
@@ -81,7 +81,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice1) {
   printf("==================output data=================\n");
   std::cout << output_data[0] << " , " << output_data[1];
   std::cout << std::endl;
-  printf("==================corret data=================\n");
+  printf("==================correct data=================\n");
   std::cout << correct[0] << " , " << correct[1];
   std::cout << std::endl;
 
