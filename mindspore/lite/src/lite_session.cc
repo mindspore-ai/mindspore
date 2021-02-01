@@ -32,7 +32,7 @@
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #endif
-#if SUPPORT_GPU
+#if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #endif
 
@@ -562,7 +562,7 @@ LiteSession::~LiteSession() {
   mindspore::lite::NPUPassManager::GetInstance()->Clear();
   mindspore::lite::NPUManager::GetInstance()->Reset();
 #endif
-#if SUPPORT_GPU && !SUPPORT_TRAIN
+#if GPU_OPENCL && !SUPPORT_TRAIN
   delete opencl_runtime_wrapper_;
 #endif
   delete (model_);
@@ -646,7 +646,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
     }
     auto ret = RET_OK;
     if (kernel->subgraph_type() == kernel::kGpuSubGraph) {
-#if SUPPORT_GPU
+#if GPU_OPENCL
       auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
       ret = sub_graph->ReSize(false);
 #endif
@@ -700,7 +700,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
-#if SUPPORT_GPU && !SUPPORT_TRAIN
+#if GPU_OPENCL && !SUPPORT_TRAIN
   if (this->context_->IsGpuEnabled()) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();
     if (opencl_runtime_wrapper_ == nullptr) {
@@ -715,6 +715,23 @@ int LiteSession::InitGPURuntime() {
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
     } else {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
+    }
+  }
+#elif GPU_VULKAN && !SUPPORT_TRAIN
+  if (this->context_->IsGpuEnabled()) {
+    auto gpu_device_info = this->context_->GetGpuInfo();
+    vk_runtime_wrap_ = new (std::nothrow) gpu::GpuRuntimeWrapper<vulkan::VulkanRuntime>;
+    if (vk_runtime_wrap_ == nullptr) {
+      MS_LOG(ERROR) << "create vk_runtime failed";
+      return RET_ERROR;
+    }
+    auto vk_runtime = vk_runtime_wrap_->GetInstance();
+    vk_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
+    if (vk_runtime->Init() != RET_OK) {
+      this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
+      MS_LOG(WARNING) << "Init Vulkan runtime failed, change to CPU mode.";
+    } else {
+      MS_LOG(INFO) << "Init Vulkan runtime success.";
     }
   }
 #endif

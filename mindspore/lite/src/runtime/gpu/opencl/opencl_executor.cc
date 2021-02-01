@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/opencl/opencl_executor.h"
+#include "src/runtime/gpu/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "nnacl/pack.h"
 #include "include/errorcode.h"
@@ -27,8 +27,8 @@ int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &ou
   return RunOrTune(inputs, outputs, kernels, allocator, before, after, false);
 }
 
-int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs,
-                              std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
+int OpenCLExecutor::RunOrTune(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
+                              const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                               const KernelCallBack &before, const KernelCallBack &after, bool is_tune) {
   int ret{RET_OK};
   auto opencl_runtime_ins = ocl_runtime.GetInstance();

@@ -28,9 +28,9 @@
 #include "src/kernel_registry.h"
 #include "src/sub_graph_kernel.h"
 #include "src/dequant.h"
-#if SUPPORT_GPU
+#if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
-#include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/subgraph_npu_kernel.h"
@@ -462,7 +462,7 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
   std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
   if (type == kernel::kGpuSubGraph) {
-#if SUPPORT_GPU
+#if GPU_OPENCL
     auto sub_kernel = new (std::nothrow)
       kernel::OpenCLSubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     if (sub_kernel == nullptr) {
@@ -470,6 +470,8 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
       return nullptr;
     }
     return sub_kernel;
+#elif GPU_VULKAN
+    return nullptr;
 #else
     return nullptr;
 #endif

@@ -89,7 +89,7 @@ if("${X86_64_SIMD}" STREQUAL "avx")
 endif()
 
 ### gpu kernel
-if(SUPPORT_GPU)
+if(SUPPORT_GPU STREQUAL opencl)
     file(GLOB GPU_KERNEL_OP_SRC
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/*.cc
             )
@@ -100,6 +100,15 @@ if(SUPPORT_GPU)
             ${LITE_DIR}/src/runtime/kernel/opencl/opencl_subgraph.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/opencl_fusion.cc
             ${LITE_DIR}/src/runtime/kernel/opencl/utils.cc
+            )
+endif()
+if(SUPPORT_GPU STREQUAL vulkan)
+    file(GLOB GPU_KERNEL_OP_SRC
+            ${LITE_DIR}/src/runtime/kernel/vulkan/kernel/*.cc
+            )
+    set(KERNEL_OP_SRC
+            ${KERNEL_OP_SRC}
+            ${GPU_KERNEL_OP_SRC}
             )
 endif()
 
@@ -150,18 +159,26 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/errorcode.cc
         )
 ### gpu runtime
-if(SUPPORT_GPU)
-    include_directories(${TOP_DIR}/third_party/OpenCL-Headers)
-    include_directories(${TOP_DIR}/third_party/OpenCL-CLHPP/include)
-    set(OPENCL_RUNTIME_SRC
-            ${LITE_DIR}/src/runtime/opencl/opencl_allocator.cc
-            ${LITE_DIR}/src/runtime/opencl/opencl_executor.cc
-            ${LITE_DIR}/src/runtime/opencl/opencl_runtime.cc
-            ${LITE_DIR}/src/runtime/opencl/opencl_wrapper.cc
+if(SUPPORT_GPU STREQUAL opencl)
+    include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-headers-src)
+    include_directories(${CMAKE_BINARY_DIR}/_deps/opencl-clhpp-src/include)
+    file(GLOB_RECURSE OPENCL_RUNTIME_SRC
+            ${LITE_DIR}/src/runtime/gpu/opencl/*.cc
             )
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
             ${OPENCL_RUNTIME_SRC}
+            )
+endif()
+if(SUPPORT_GPU STREQUAL vulkan)
+    include_directories(${LITE_DIR}/build/_deps/vulkan-headers-src/include)
+    file(GLOB VULKAN_RUNTIME_SRC
+            ${LITE_DIR}/src/runtime/gpu/*.cc
+            ${LITE_DIR}/src/runtime/vulkan/*.cc
+            )
+    set(TEST_LITE_SRC
+            ${TEST_LITE_SRC}
+            ${VULKAN_RUNTIME_SRC}
             )
 endif()
 ### converter
@@ -286,7 +303,7 @@ else()
             )
 endif()
 
-if(SUPPORT_GPU)
+if(SUPPORT_GPU STREQUAL opencl)
     file(GLOB_RECURSE TEST_CASE_KERNEL_GPU_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/*.cc
             )

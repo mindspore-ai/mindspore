@@ -341,6 +341,7 @@ checkopts()
   # Parse device
   # Process build option
   if [[ "X$DEVICE" == "Xgpu" ]]; then
+    LITE_ENABLE_GPU="opencl"
     ENABLE_GPU="on"
     ENABLE_CPU="on"
     ENABLE_MPI="on"
@@ -378,6 +379,12 @@ checkopts()
     ENABLE_CPU="on"
   elif [[ "X$DEVICE" == "Xcpu" ]]; then
     ENABLE_CPU="on"
+  elif [[ "X$DEVICE" == "Xopencl" ]]; then
+    LITE_ENABLE_GPU="opencl"
+  elif [[ "X$DEVICE" == "Xvulkan" ]]; then
+    LITE_ENABLE_GPU="vulkan"
+  elif [[ "X$DEVICE" == "Xcuda" ]]; then
+    LITE_ENABLE_GPU="cuda"
   elif [[ "X$DEVICE" == "X" ]]; then
     :
   else
@@ -520,16 +527,10 @@ build_lite()
     get_version
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
 
-    LITE_ENABLE_GPU=${ENABLE_GPU}
     LITE_ENABLE_NPU=${ENABLE_NPU}
     if [[ "${DEVICE}" == ""  &&  "${LITE_PLATFORM}" == "arm64" ]]; then
-      LITE_ENABLE_GPU="on"
+      LITE_ENABLE_GPU="opencl"
       LITE_ENABLE_NPU="on"
-    fi
-
-    if [[ $1 == "arm64" && "X$DEVICE" != "Xcpu" ]]; then
-      LITE_ENABLE_GPU="on"
-      echo "start get opencl"
     fi
 
     if [ "${LITE_ENABLE_NPU}" == "on" ]; then

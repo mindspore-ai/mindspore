@@ -24,7 +24,7 @@
 #include <string>
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
-#include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/gpu/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/dequant.h"
 #include "src/runtime/kernel/opencl/utils.h"
 
