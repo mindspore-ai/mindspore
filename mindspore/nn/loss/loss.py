@@ -15,6 +15,7 @@
 """loss"""
 import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
+from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
@@ -739,3 +740,86 @@ class CosineEmbeddingLoss(_Loss):
         output_unreduced = pos_part + neg_part
 
         return self.get_loss(output_unreduced)
+
+
+class BCEWithLogitsLoss(_Loss):
+    r"""
+    Adds sigmoid activation function to input `predict`, and uses the given logits to compute binary cross entropy
+    between the target and the output.
+
+    Sets input predict as `X`, input target as `Y`, output as `L`. Then,
+
+    .. math::
+        p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
+
+    .. math::
+        L_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]
+
+    Then,
+
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{`none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        \end{cases}
+
+    Args:
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+            If "none", do not perform reduction. Default:`mean`.
+        weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
+            If not None, it must can be broadcast to a tensor with shape of `predict`,
+            data type must be float16 or float32. Default: None.
+        pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
+            number of classes. If not None, it must can be broadcast to a tensor with shape of `predict`,
+            data type must be float16 or float32. Default: None.
+
+    Inputs:
+        - **predict** (Tensor) - Input logits. The data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth label. Has the same data type and shape with `predict`.
+
+    Outputs:
+        Scalar. If reduction is "none", it's a tensor with the same shape and type as input `predict`.
+
+    Raises:
+        TypeError: If data type of `predict` or `target` is neither float16 nor float32.
+        TypeError: If `weight` or `pos_weight` is Parameter.
+        TypeError: If data type of `weight` or `pos_weight` is neither float16 nor float32.
+        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `predict`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
+        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
+        >>> loss = nn.BCEWithLogitsLoss()
+        >>> output = loss(inputs, labels)
+        >>> print(output)
+        0.3463612
+    """
+
+    def __init__(self, reduction='mean', weight=None, pos_weight=None):
+        super(BCEWithLogitsLoss, self).__init__()
+        self.bce_with_logits_loss = P.BCEWithLogitsLoss(reduction=reduction)
+        if isinstance(weight, Parameter):
+            raise TypeError(f"For {self.cls_name}, weight can not be Parameter.")
+        if isinstance(pos_weight, Parameter):
+            raise TypeError(f"For {self.cls_name}, pos_weight can not be Parameter.")
+        self.weight = weight
+        self.pos_weight = pos_weight
+        self.ones = P.OnesLike()
+
+    def construct(self, predict, target):
+        ones_input = self.ones(predict)
+        if self.weight is not None:
+            weight = self.weight
+        else:
+            weight = ones_input
+        if self.pos_weight is not None:
+            pos_weight = self.pos_weight
+        else:
+            pos_weight = ones_input
+        loss = self.bce_with_logits_loss(predict, target, weight, pos_weight)
+        return loss

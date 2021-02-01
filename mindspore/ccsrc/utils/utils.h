@@ -344,6 +344,7 @@ constexpr auto kAttrWaitEventStream = "wait_event_stream";
 constexpr auto kAttrIndex = "index";
 constexpr auto kAttrSplitDim = "split_dim";
 constexpr auto kAttrNumSplit = "num_split";
+constexpr auto kAttrReduction = "reduction";
 constexpr auto kAttrOutputNum = "output_num";
 constexpr auto kAttrSizeSplits = "size_splits";
 constexpr auto kAttrOutputDefault = "output_default";

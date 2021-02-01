@@ -282,6 +282,7 @@ inline const PrimitivePtr kPrimSparseApplyProximalAdagrad = std::make_shared<Pri
 inline const PrimitivePtr kPrimFusedAdam = std::make_shared<Primitive>("FusedAdam");
 inline const PrimitivePtr kPrimFusedAdamWeightDecay = std::make_shared<Primitive>("FusedAdamWeightDecay");
 inline const PrimitivePtr kPrimSGD = std::make_shared<Primitive>("SGD");
+inline const PrimitivePtr kPrimBCEWithLogitsLoss = std::make_shared<Primitive>("BCEWithLogitsLoss");
 inline const PrimitivePtr kPrimClipByNormNoDivSum = std::make_shared<Primitive>("ClipByNormNoDivSum");
 inline const PrimitivePtr kPrimTensorMove = std::make_shared<Primitive>("TensorMove");
 inline const PrimitivePtr kPrimL2Normalize = std::make_shared<Primitive>("L2Normalize");
