@@ -23,7 +23,6 @@ inplace_update_op_info = TBERegOp("InplaceUpdate") \
     .compute_cost(10) \
     .kernel_name("inplace_update_d") \
     .partial_flag(True) \
-    .need_check_supported(True) \
     .attr("indices", "required", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "v", False, "required", "all") \
