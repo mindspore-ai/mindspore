@@ -25,7 +25,7 @@ TaskManager *TaskManager::instance_ = nullptr;
 std::once_flag TaskManager::init_instance_flag_;
 // This takes the same parameter as Task constructor.
 Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, TaskGroup *vg,
-                                    Task **task) {
+                                    Task **task, int32_t operator_id) {
   // We need to block destructor coming otherwise we will deadlock. We will grab the
   // stateLock in shared allowing CreateAsyncTask to run concurrently.
   SharedLock stateLck(&state_lock_);
@@ -33,7 +33,7 @@ Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::funct
   if (ServiceState() == STATE::kStopInProg || ServiceState() == STATE::kStopped) {
     return Status(StatusCode::kInterrupted, __LINE__, __FILE__, "TaskManager is shutting down");
   }
-  RETURN_IF_NOT_OK(GetFreeTask(my_name, f, task));
+  RETURN_IF_NOT_OK(GetFreeTask(my_name, f, task, operator_id));
   if (vg == nullptr) {
     RETURN_STATUS_UNEXPECTED("TaskGroup is null");
   }
@@ -248,7 +248,8 @@ void TaskManager::ReturnFreeTask(Task *p) noexcept {
   }
 }
 
-Status TaskManager::GetFreeTask(const std::string &my_name, const std::function<Status()> &f, Task **p) {
+Status TaskManager::GetFreeTask(const std::string &my_name, const std::function<Status()> &f, Task **p,
+                                int32_t operator_id) {
   if (p == nullptr) {
     RETURN_STATUS_UNEXPECTED("p is null");
   }
@@ -262,18 +263,19 @@ Status TaskManager::GetFreeTask(const std::string &my_name, const std::function<
     }
   }
   if (q) {
-    new (q) Task(my_name, f);
+    new (q) Task(my_name, f, operator_id);
   } else {
     std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
     Status rc;
-    q = new (&rc, mp) Task(my_name, f);
+    q = new (&rc, mp) Task(my_name, f, operator_id);
     RETURN_IF_NOT_OK(rc);
   }
   *p = q;
   return Status::OK();
 }
 
-Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, Task **ppTask) {
+Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::function<Status()> &f, Task **ppTask,
+                                  int32_t operator_id) {
   auto pMytask = TaskManager::FindMe();
   // We need to block ~TaskGroup coming otherwise we will deadlock. We will grab the
   // stateLock in shared allowing CreateAsyncTask to run concurrently.
@@ -293,7 +295,7 @@ Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::functio
       return pMytask->IsMasterThread() ? rc_ : Status(StatusCode::kInterrupted);
     }
   }
-  RETURN_IF_NOT_OK(dm.CreateAsyncTask(my_name, f, this, &pTask));
+  RETURN_IF_NOT_OK(dm.CreateAsyncTask(my_name, f, this, &pTask, operator_id));
   if (ppTask) {
     *ppTask = pTask;
   }

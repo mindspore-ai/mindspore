@@ -265,7 +265,7 @@ Status BatchOp::LaunchThreadsAndInitOp() {
   }
   RETURN_IF_NOT_OK(worker_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&BatchOp::WorkerEntry, this, std::placeholders::_1), Name()));
+    tree_->LaunchWorkers(num_workers_, std::bind(&BatchOp::WorkerEntry, this, std::placeholders::_1), Name(), id()));
   return Status::OK();
 }
 

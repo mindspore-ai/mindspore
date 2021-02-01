@@ -44,8 +44,8 @@ void Task::operator()() {
 
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   native_handle_ = pthread_self();
+  thread_id_ = syscall(SYS_gettid);
 #endif
-
   try {
     // Previously there is a timing hole where the thread is spawn but hit error immediately before we can set
     // the TaskGroup pointer and register. We move the registration logic to here (after we spawn) so we can
@@ -105,8 +105,9 @@ Status Task::GetTaskErrorIfAny() const {
   }
 }
 
-Task::Task(const std::string &myName, const std::function<Status()> &f)
+Task::Task(const std::string &myName, const std::function<Status()> &f, int32_t operator_id)
     : my_name_(myName),
+      operator_id_(operator_id),
       rc_(),
       fnc_obj_(f),
       task_group_(nullptr),

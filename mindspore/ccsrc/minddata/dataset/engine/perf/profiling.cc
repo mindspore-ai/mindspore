@@ -24,6 +24,7 @@
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/engine/perf/connector_size.h"
 #include "minddata/dataset/engine/perf/connector_throughput.h"
+#include "minddata/dataset/engine/perf/cpu_sampling.h"
 #include "minddata/dataset/engine/perf/dataset_iterator_tracing.h"
 #include "minddata/dataset/util/log_adapter.h"
 
@@ -78,6 +79,9 @@ Status ProfilingManager::Initialize() {
 
   std::shared_ptr<Sampling> connector_thr_sampling = std::make_shared<ConnectorThroughput>(tree_);
   RETURN_IF_NOT_OK(RegisterSamplingNode(connector_thr_sampling));
+
+  std::shared_ptr<Sampling> cpu_sampling = std::make_shared<CpuSampling>(tree_);
+  RETURN_IF_NOT_OK(RegisterSamplingNode(cpu_sampling));
 
   return Status::OK();
 }
@@ -168,7 +172,7 @@ Status ProfilingManager::ChangeFileMode() {
   return Status::OK();
 }
 
-int64_t ProfilingTime::GetCurMilliSecond() {
+uint64_t ProfilingTime::GetCurMilliSecond() {
   // because cpplint does not allow using namespace
   using std::chrono::duration_cast;
   using std::chrono::milliseconds;

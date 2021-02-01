@@ -464,65 +464,7 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file, Tenso
 
       // loop over each column descriptor, this can optimized by switch cases
       for (int32_t i = 0; i < columns; i++) {
-        // special case to handle
-        if (data_schema_->column(i).name() == "id") {
-          // id is internal, special case to load from file
-          RETURN_IF_NOT_OK(LoadIDTensor(file, i, row));
-          continue;
-        }
-        // find if key does not exist, insert placeholder nullptr if not found
-        if (js.find(data_schema_->column(i).name()) == js.end()) {
-          // iterator not found, push nullptr as placeholder
-          MS_LOG(INFO) << "Pushing empty tensor for column: " << data_schema_->column(i).name() << ".";
-          RETURN_IF_NOT_OK(LoadEmptyTensor(i, row));
-          continue;
-        }
-        nlohmann::json column_value = js.at(data_schema_->column(i).name());
-        MS_LOG(INFO) << "This column is: " << data_schema_->column(i).name() << ".";
-        bool is_array = column_value.is_array();
-        // load single string
-        if (column_value.is_string() && data_schema_->column(i).type() == DataType::DE_STRING) {
-          RETURN_IF_NOT_OK(LoadStringTensor(column_value, i, row));
-          continue;
-        }
-        // load string array
-        if (is_array && data_schema_->column(i).type() == DataType::DE_STRING) {
-          RETURN_IF_NOT_OK(LoadStringArrayTensor(column_value, i, row));
-          continue;
-        }
-        // load image file
-        if (column_value.is_string() && data_schema_->column(i).type() != DataType::DE_STRING) {
-          std::string image_file_path = column_value;
-          RETURN_IF_NOT_OK(LoadImageTensor(image_file_path, i, row));
-          continue;
-        }
-        // load float value
-        if (!is_array && (data_schema_->column(i).type() == DataType::DE_FLOAT32 ||
-                          data_schema_->column(i).type() == DataType::DE_FLOAT64)) {
-          RETURN_IF_NOT_OK(LoadFloatTensor(column_value, i, row));
-          continue;
-        }
-        // load float array
-        if (is_array && (data_schema_->column(i).type() == DataType::DE_FLOAT32 ||
-                         data_schema_->column(i).type() == DataType::DE_FLOAT64)) {
-          RETURN_IF_NOT_OK(LoadFloatArrayTensor(column_value, i, row));
-          continue;
-        }
-        // int value
-        if (!is_array && (data_schema_->column(i).type() == DataType::DE_INT64 ||
-                          data_schema_->column(i).type() == DataType::DE_INT32)) {
-          RETURN_IF_NOT_OK(LoadIntTensor(column_value, i, row));
-          continue;
-        }
-        // int array
-        if (is_array && (data_schema_->column(i).type() == DataType::DE_INT64 ||
-                         data_schema_->column(i).type() == DataType::DE_INT32)) {
-          RETURN_IF_NOT_OK(LoadIntArrayTensor(column_value, i, row));
-          continue;
-        } else {
-          MS_LOG(WARNING) << "Value type for column: " << data_schema_->column(i).name() << " is not supported.";
-          continue;
-        }
+        RETURN_IF_NOT_OK(loadColumnData(file, i, js, row));
       }
     } catch (const std::exception &err) {
       file_handle.close();
@@ -533,6 +475,60 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file, Tenso
   std::vector<std::string> path(row->size(), folder_path_ + file);
   row->setPath(path);
   return Status::OK();
+}
+
+Status AlbumOp::loadColumnData(const std::string &file, int32_t index, nlohmann::json js, TensorRow *row) {
+  int32_t i = index;
+  // special case to handle
+  if (data_schema_->column(i).name() == "id") {
+    // id is internal, special case to load from file
+    return LoadIDTensor(file, i, row);
+  }
+  // find if key does not exist, insert placeholder nullptr if not found
+  if (js.find(data_schema_->column(i).name()) == js.end()) {
+    // iterator not found, push nullptr as placeholder
+    MS_LOG(INFO) << "Pushing empty tensor for column: " << data_schema_->column(i).name() << ".";
+    return LoadEmptyTensor(i, row);
+  }
+  nlohmann::json column_value = js.at(data_schema_->column(i).name());
+  MS_LOG(INFO) << "This column is: " << data_schema_->column(i).name() << ".";
+  bool is_array = column_value.is_array();
+  // load single string
+  if (column_value.is_string() && data_schema_->column(i).type() == DataType::DE_STRING) {
+    return LoadStringTensor(column_value, i, row);
+  }
+  // load string array
+  if (is_array && data_schema_->column(i).type() == DataType::DE_STRING) {
+    return LoadStringArrayTensor(column_value, i, row);
+  }
+  // load image file
+  if (column_value.is_string() && data_schema_->column(i).type() != DataType::DE_STRING) {
+    std::string image_file_path = column_value;
+    return LoadImageTensor(image_file_path, i, row);
+  }
+  // load float value
+  bool judge_float = (data_schema_->column(i).type() == DataType::DE_FLOAT32) ||
+                     (data_schema_->column(i).type() == DataType::DE_FLOAT64);
+  if (!is_array && judge_float) {
+    return LoadFloatTensor(column_value, i, row);
+  }
+  // load float array
+  if (is_array && judge_float) {
+    return LoadFloatArrayTensor(column_value, i, row);
+  }
+  // int value
+  if (!is_array &&
+      (data_schema_->column(i).type() == DataType::DE_INT64 || data_schema_->column(i).type() == DataType::DE_INT32)) {
+    return LoadIntTensor(column_value, i, row);
+  }
+  // int array
+  if (is_array &&
+      (data_schema_->column(i).type() == DataType::DE_INT64 || data_schema_->column(i).type() == DataType::DE_INT32)) {
+    return LoadIntArrayTensor(column_value, i, row);
+  } else {
+    MS_LOG(WARNING) << "Value type for column: " << data_schema_->column(i).name() << " is not supported.";
+    return Status::OK();
+  }
 }
 
 // Looping over LoadTensorRow to make 1 DataBuffer. 1 function call produces 1 buffer
@@ -587,7 +583,8 @@ Status AlbumOp::LaunchThreadsAndInitOp() {
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
   // launch main workers that load DataBuffers by reading all images
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&AlbumOp::WorkerEntry, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(num_workers_, std::bind(&AlbumOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(this->InitSampler());  // pass numRows to Sampler
   return Status::OK();

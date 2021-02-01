@@ -155,8 +155,11 @@ class ExecutionTree {
   // wrapper for the TaskGroup handling that is stored inside the execution tree.
   // @param num_workers - The number of workers to launch
   // @param func - The function entry point that workers will execute
+  // @param name - The description of worker to launch
+  // @param op_id - The id of corresponding operator, if not inherit from dataset op then it is -1.
   // @return Status The status code returned
-  Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name = "");
+  Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name = "",
+                       int32_t operator_id = -1);
 
   // Getter method
   // @return shared_ptr to the root operator

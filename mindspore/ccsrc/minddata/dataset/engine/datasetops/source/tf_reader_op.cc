@@ -234,12 +234,12 @@ Status TFReaderOp::operator()() {
   RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
 
   // launch one thread, responsible for filling mIOBlockQueue
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&TFReaderOp::WaitToFillIOBlockQueue, this)));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&TFReaderOp::WaitToFillIOBlockQueue, this), "", id()));
 
   // launch num_workers_ worker threads, responsible for pulling from the IOBlockQueue and reading
   // data from disk into buffers
   RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&TFReaderOp::WorkerEntry, this, std::placeholders::_1)));
+    tree_->LaunchWorkers(num_workers_, std::bind(&TFReaderOp::WorkerEntry, this, std::placeholders::_1), "", id()));
 
   // must be called after launching workers. workers can't be spawned after this post,
   // so workers have to be kept alive until the end of the program

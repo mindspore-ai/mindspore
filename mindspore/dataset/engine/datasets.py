@@ -107,6 +107,25 @@ def zip(datasets):
     return ZipDataset(datasets)
 
 
+def _get_operator_process():
+    """
+    Inner implemented method, mainly for passing sub-process id in C layer
+
+    Returns:
+         dict, mapping dict of operator id and corresponding process id.
+    """
+    global _OP_PROCESS
+    process_info = _OP_PROCESS
+    op_process = dict()
+    keys = process_info.keys()
+    fetched_all = True
+    for key in keys:
+        op_process[key] = list(process_info[key][1])
+        item_full = (len(process_info[key][1]) == process_info[key][0])
+        fetched_all = fetched_all and item_full
+    return op_process, fetched_all
+
+
 class Dataset:
     """
     Abstract class to represent a dataset in DataEngine's data pipeline.
@@ -156,10 +175,46 @@ class Dataset:
         parent = self.parent
         self.parent = []
         dataset = copy.deepcopy(self)
+        global _OP_NAME
+        _OP_NAME = Dataset._get_operator_id(dataset)
         ir_tree = dataset.parse_tree()
         self.parent = parent
         _init_device_info()
         return ir_tree, dataset
+
+    @staticmethod
+    def _get_operator_id(dataset):
+        """
+        Internal method to iterate the tree and obtain op_id of each operator.
+
+        Returns:
+            Dataset, the root dataset of the tree.
+        """
+        op_name = dict()
+        generator_process = dict()
+        op_name[str(dataset)] = 0
+        op_id = 1
+
+        def process_name(datasets, operator_id):
+            if not datasets:
+                return 0
+            temp = []
+            for item in datasets:
+                for d in item.children:
+                    temp.append(d)
+                    op_name[str(d)] = operator_id
+                    if isinstance(d, GeneratorDataset) and d.sample_fn:
+                        if d.sample_fn.pid:
+                            generator_process[operator_id] = [d.num_parallel_workers, set(d.sample_fn.pid)]
+
+            operator_id = operator_id + 1
+            return process_name(temp, operator_id)
+
+        process_name([dataset], op_id)
+        if generator_process:
+            global _OP_PROCESS
+            _OP_PROCESS.update(generator_process)
+        return op_name
 
     def parse_tree(self):
         """
@@ -2202,7 +2257,8 @@ class ShuffleDataset(Dataset):
 # Pyfunc collection for multiprocess pyfunc
 # This global variable will only be used within subprocesses
 _GLOBAL_PYFUNC_LIST = []
-
+_OP_NAME = dict()
+_OP_PROCESS = dict()
 
 # Pyfunc worker init function
 # Python multiprocessing library forbid sending lambda function through pipe.
@@ -2215,6 +2271,9 @@ def _pyfunc_worker_init(pyfunc_list):
 # Pyfunc worker execution function
 # All exceptions will be raised to main processes
 def _pyfunc_worker_exec(index, *args):
+    """
+    Internal function for call certain pyfunc in python process.
+    """
     try:
         return _GLOBAL_PYFUNC_LIST[index](*args)
     except KeyboardInterrupt:
@@ -3509,6 +3568,7 @@ class SamplerFn:
         self.multi_process = multi_process
         self.joined = False
         self.ppid = os.getpid()
+        self.pid = []
         # Event for end of epoch
         if multi_process is True:
             self.eof = multiprocessing.Event()
@@ -3523,6 +3583,7 @@ class SamplerFn:
                 # which may cause deadlock. Therefore, the subprocess startup is performed in che initialization phase.
                 # In this phase, the main process is not locked.
                 worker.start()
+                self.pid.append(worker.pid)
             else:
                 worker = _GeneratorWorkerMt(dataset, self.eof)
                 worker.daemon = True
@@ -3847,6 +3908,7 @@ class GeneratorDataset(MappableDataset):
         new_op.source_len = self.source_len
         new_op.saved_output_types = self.saved_output_types
         new_op.saved_output_shapes = self.saved_output_shapes
+        sample_fn = None
         if hasattr(self, "__total_batch__"):
             new_op.__total_batch__ = self.__total_batch__
         if new_op.sampler is not None and hasattr(self.source, "__getitem__"):
@@ -3870,9 +3932,11 @@ class GeneratorDataset(MappableDataset):
                     new_op.source = (lambda: _py_sampler_fn_mp(new_op.sample_ids, new_op.num_samples, sample_fn))
                 else:
                     new_op.source = (lambda: _py_sampler_fn(new_op.sample_ids, new_op.num_samples, self.source))
+            new_op.sample_fn = sample_fn
         else:
             try:
                 new_op.sampler = None
+                new_op.sample_fn = sample_fn
                 iter(self.source)
             except TypeError:
                 # Use generator function if input callable

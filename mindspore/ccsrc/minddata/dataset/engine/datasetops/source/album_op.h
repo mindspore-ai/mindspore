@@ -134,7 +134,7 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
     Status SanityCheck();
 
     /// \brief The builder "build" method creates the final object.
-    /// \param[inout] std::shared_ptr<AlbumOp> *op - DatasetOp
+    /// \param[in, out] std::shared_ptr<AlbumOp> *op - DatasetOp
     /// \return Status The status code returned
     Status Build(std::shared_ptr<AlbumOp> *op);
 
@@ -210,74 +210,82 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \brief Load image to tensor row
   /// \param[in] image_file Image name of file
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadImageTensor(const std::string &image_file, uint32_t col_num, TensorRow *row);
 
   /// \brief Load vector of ints to tensor, append tensor to tensor row
   /// \param[in] json_obj Json object containing multi-dimensional label
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
   /// \brief Load vector of floatss to tensor, append tensor to tensor row
   /// \param[in] json_obj Json object containing array data
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
   /// \brief Load string array into a tensor, append tensor to tensor row
   /// \param[in] json_obj Json object containing string tensor
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
   /// \brief Load string into a tensor, append tensor to tensor row
   /// \param[in] json_obj Json object containing string tensor
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
   /// \brief Load float value to tensor row
   /// \param[in] json_obj Json object containing float
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
   /// \brief Load int value to tensor row
   /// \param[in] json_obj Json object containing int
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, TensorRow *row);
 
-  /// \brief Load emtpy tensor to tensor row
+  /// \brief Load empty tensor to tensor row
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadEmptyTensor(uint32_t col_num, TensorRow *row);
 
   /// \brief Load id from file name to tensor row
   /// \param[in] file The file name to get ID from
   /// \param[in] col_num Column num in schema
-  /// \param[inout] row Tensor row to push to
+  /// \param[in, out] row Tensor row to push to
   /// \return Status The status code returned
   Status LoadIDTensor(const std::string &file, uint32_t col_num, TensorRow *row);
 
   /// \brief Load a tensor row according to a json file
   /// \param[in] row_id_type row_id - id for this tensor row
   /// \param[in] ImageColumns file Json file location
-  /// \param[inout] TensorRow row Json content stored into a tensor row
+  /// \param[in, out] TensorRow row Json content stored into a tensor row
   /// \return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, const std::string &file, TensorRow *row);
 
+  /// \brief Load a tensor column according to a json file
+  /// \param[in] ImageColumns file Json file location
+  /// \param[in] index - certain column index
+  /// \param[in] js - json object
+  /// \param[in, out] TensorRow row Json content stored into a tensor row
+  /// \return Status The status code returned
+  Status loadColumnData(const std::string &file, int32_t index, nlohmann::json js, TensorRow *row);
+
   /// \param[in] const std::vector<int64_t> &keys Keys in ioblock
-  /// \param[inout] std::unique_ptr<DataBuffer> db Databuffer to push to
+  /// \param[in, out] std::unique_ptr<DataBuffer> db Databuffer to push to
   /// \return Status The status code returned
   Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
 

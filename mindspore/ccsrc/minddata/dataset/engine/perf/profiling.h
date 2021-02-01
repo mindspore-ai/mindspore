@@ -33,6 +33,7 @@ const char kDeviceQueueTracingName[] = "Device_Queue_Tracing";
 const char kDatasetIteratorTracingName[] = "Dataset_Iterator_Tracing";
 const char kConnectorSizeSamplingName[] = "Connector_Size_Sampling";
 const char kConnectorThroughputSamplingName[] = "Connector_Throughput_Sampling";
+const char kCpuSamplingName[] = "Cpu_Sampling";
 
 // Profiling is a class of basic unit of profiling action
 // This base class encapsulate the serialization output logic
@@ -150,7 +151,7 @@ enum ProfilingTimeSubType {
 
 class ProfilingTime {
  public:
-  static int64_t GetCurMilliSecond();
+  static uint64_t GetCurMilliSecond();
 };
 }  // namespace dataset
 }  // namespace mindspore

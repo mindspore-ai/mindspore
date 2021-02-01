@@ -33,7 +33,8 @@ class DatasetIteratorTracing : public Tracing {
 
   // Record tracing data
   // @return Status The status code returned
-  Status Record(const int32_t type, const int32_t extra_info, const int32_t batch_num, const int32_t value);
+  Status Record(const int32_t type, const int32_t extra_info, const int32_t batch_num, const int32_t value,
+                const uint64_t time_stamp);
 
   std::string Name() const override { return kDatasetIteratorTracingName; };
 

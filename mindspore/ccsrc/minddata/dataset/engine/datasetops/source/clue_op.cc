@@ -237,9 +237,10 @@ Status ClueOp::operator()() {
   RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
 
   // launch one thread, responsible for filling IoBlockQueue
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&ClueOp::WaitToFillIOBlockQueue, this)));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&ClueOp::WaitToFillIOBlockQueue, this), "", id()));
 
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&ClueOp::WorkerEntry, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(num_workers_, std::bind(&ClueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
 
   // must be called after launching workers.
   TaskManager::FindMe()->Post();

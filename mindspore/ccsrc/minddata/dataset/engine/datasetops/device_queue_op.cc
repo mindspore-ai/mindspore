@@ -26,7 +26,6 @@
 #include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/datasetops/epoch_ctrl_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
-#include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -134,8 +133,8 @@ Status DeviceQueueOp::operator()() {
 Status DeviceQueueOp::SendDataToAscend() {
   MS_LOG(INFO) << "Device queue, sending data to Ascend.";
   int64_t send_batch = 0;
-  double batch_start_time, end_time;
-  int32_t batch_cost, tdt_cost;
+  uint64_t batch_start_time, end_time;
+  int32_t tdt_cost;
   int32_t connector_size = 0;
   int32_t connector_capacity;
   bool is_break_loop = false;
@@ -178,20 +177,8 @@ Status DeviceQueueOp::SendDataToAscend() {
             [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
           RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
         }
-
-        if (isProfilingEnable) {
-          end_time = ProfilingTime::GetCurMilliSecond();
-          // record push tdt time
-          profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch + 1, tdt_cost);
-          batch_cost = (int32_t)(end_time - batch_start_time);
-          // record batch time
-          profiling_node->Record(TIME, BATCH_TIME, send_batch + 1, batch_cost);
-          // record pipeline time
-          profiling_node->Record(TIME, PIPELINE_TIME, send_batch + 1, batch_cost - tdt_cost);
-          batch_start_time = end_time;
-          // record connector depth
-          profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch + 1, connector_size);
-        }
+        ProfilingRecorder(isProfilingEnable, profiling_node, send_batch, tdt_cost, &batch_start_time, &end_time,
+                          connector_capacity, connector_size);
         send_batch++;
 
         if (total_batch_ > 0 && send_batch >= total_batch_) {
@@ -273,9 +260,9 @@ Status DeviceQueueOp::LaunchParallelCopyThread() {
   receive_queues_.Init(num_workers_, queue_capacity_);
   RETURN_IF_NOT_OK(receive_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&DeviceQueueOp::WorkerEntry, this, std::placeholders::_1)));
-  RETURN_IF_NOT_OK(
-    tree_->AllTasks()->CreateAsyncTask("Push data to GPU queue", std::bind(&DeviceQueueOp::PushDataToGPU, this)));
+    tree_->LaunchWorkers(num_workers_, std::bind(&DeviceQueueOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Push data to GPU queue",
+                                                      std::bind(&DeviceQueueOp::PushDataToGPU, this), nullptr, id()));
 
   return Status::OK();
 }
@@ -285,8 +272,8 @@ Status DeviceQueueOp::PushDataToGPU() {
   // and will overload in distribute scenario, so don't remove this line
   cudaSetDevice(rank_id_);
   TaskManager::FindMe()->Post();
-  double batch_start_time = 0.0;
-  double end_time = 0.0;
+  uint64_t batch_start_time = 0;
+  uint64_t end_time = 0;
   int32_t batch_cost = 0;
   int32_t push_cost = 0;
   int32_t connector_size = 0;
@@ -345,15 +332,15 @@ Status DeviceQueueOp::PushDataToGPU() {
     if (isProfilingEnable) {
       end_time = ProfilingTime::GetCurMilliSecond();
       // record push data time
-      profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch, push_cost);
+      profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch, push_cost, end_time);
       batch_cost = (int32_t)(end_time - batch_start_time);
       // record batch time
-      profiling_node->Record(TIME, BATCH_TIME, send_batch, batch_cost);
+      profiling_node->Record(TIME, BATCH_TIME, send_batch, batch_cost, end_time);
       // record pipeline time
-      profiling_node->Record(TIME, PIPELINE_TIME, send_batch, batch_cost - push_cost);
+      profiling_node->Record(TIME, PIPELINE_TIME, send_batch, batch_cost - push_cost, end_time);
       batch_start_time = end_time;
       // record connector depth
-      profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch, connector_size);
+      profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch, connector_size, end_time);
       connector_size = gpu_item_connector_->size();
       connector_capacity = gpu_item_connector_->capacity();
     }
@@ -508,5 +495,23 @@ Status DeviceQueueOp::Accept(NodePass *p, bool *const modified) {
   return p->RunOnNode(shared_from_base<DeviceQueueOp>(), modified);
 }
 
+void DeviceQueueOp::ProfilingRecorder(bool isProfilingEnable, std::shared_ptr<DeviceQueueTracing> profiling_node,
+                                      int64_t send_batch, int32_t tdt_cost, uint64_t *batch_start_time,
+                                      uint64_t *end_time, int32_t connector_capacity, int32_t connector_size) {
+  // Record the pipeline profiling info
+  if (isProfilingEnable) {
+    *end_time = ProfilingTime::GetCurMilliSecond();
+    // record push tdt time
+    profiling_node->Record(TIME, TDT_PUSH_TIME, send_batch + 1, tdt_cost, *end_time);
+    int32_t batch_cost = (int32_t)(*end_time - *batch_start_time);
+    // record batch time
+    profiling_node->Record(TIME, BATCH_TIME, send_batch + 1, batch_cost, *end_time);
+    // record pipeline time
+    profiling_node->Record(TIME, PIPELINE_TIME, send_batch + 1, batch_cost - tdt_cost, *end_time);
+    *batch_start_time = *end_time;
+    // record connector depth
+    profiling_node->Record(CONNECTOR_DEPTH, connector_capacity, send_batch + 1, connector_size, *end_time);
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

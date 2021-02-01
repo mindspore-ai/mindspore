@@ -23,6 +23,7 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
+#include "minddata/dataset/engine/perf/profiling.h"
 
 namespace mindspore {
 namespace dataset {
@@ -185,7 +186,8 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
   RETURN_IF_NOT_OK(curr_buffer_->PopRow(out_row));
   if (tracing_ != nullptr) {
     cur_batch_num_++;
-    tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_);
+    tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_,
+                     ProfilingTime::GetCurMilliSecond());
   }
   return Status::OK();
 }

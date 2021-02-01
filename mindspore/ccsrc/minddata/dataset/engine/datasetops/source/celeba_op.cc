@@ -102,8 +102,10 @@ Status CelebAOp::LaunchThreadsAndInitOp() {
   RETURN_IF_NOT_OK(attr_info_queue_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(wait_for_workers_post_.Register(tree_->AllTasks()));
 
-  RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Walking attr file", std::bind(&CelebAOp::ParseAttrFile, this)));
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CelebAOp::WorkerEntry, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(
+    tree_->AllTasks()->CreateAsyncTask("Walking attr file", std::bind(&CelebAOp::ParseAttrFile, this), nullptr, id()));
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(num_workers_, std::bind(&CelebAOp::WorkerEntry, this, std::placeholders::_1), Name(), id()));
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(ParseImageAttrInfo());
   RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));

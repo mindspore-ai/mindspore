@@ -446,7 +446,7 @@ Status MindRecordOp::LaunchThreadAndInitOp() {
   }
   // Launch main workers that load DataBuffers by reading all images
   RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&MindRecordOp::WorkerEntry, this, std::placeholders::_1)));
+    tree_->LaunchWorkers(num_workers_, std::bind(&MindRecordOp::WorkerEntry, this, std::placeholders::_1), "", id()));
   TaskManager::FindMe()->Post();
   return Status::OK();
 }
