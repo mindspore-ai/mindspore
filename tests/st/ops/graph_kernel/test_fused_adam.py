@@ -135,10 +135,6 @@ def test_adam_gpu():
     test_adam()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_adam_ascend():
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_adam()
@@ -152,10 +148,6 @@ def test_adam_weight_decay_gpu():
     test_adam_weight_decay()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_adam_weight_decay_ascend():
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_adam_weight_decay()

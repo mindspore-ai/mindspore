@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -103,8 +103,22 @@ def _auto_enable_graph_kernel(device_target, graph_kernel_mode):
         cfg.optimizer == 'AdamWeightDecay'
 
 
-def run_pretrain():
-    """pre-train bert_clue"""
+def _set_graph_kernel_context(device_target, enable_graph_kernel, is_auto_enable_graph_kernel):
+    if enable_graph_kernel == "true" or is_auto_enable_graph_kernel:
+        if device_target == 'GPU':
+            context.set_context(enable_graph_kernel=True)
+        else:
+            logger.warning('Graph kernel only supports GPU back-end now, run with graph kernel off.')
+
+
+def _check_compute_type(device_target, is_auto_enable_graph_kernel):
+    if device_target == 'GPU' and bert_net_cfg.compute_type != mstype.float32 and not is_auto_enable_graph_kernel:
+        logger.warning('Gpu only support fp32 temporarily, run with fp32.')
+        bert_net_cfg.compute_type = mstype.float32
+
+
+def argparse_init():
+    """Argparse init."""
     parser = argparse.ArgumentParser(description='bert pre_training')
     parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
@@ -137,7 +151,12 @@ def run_pretrain():
     parser.add_argument("--schema_dir", type=str, default="", help="Schema path, it is better to use absolute path")
     parser.add_argument("--enable_graph_kernel", type=str, default="auto", choices=["auto", "true", "false"],
                         help="Accelerate by graph kernel, default is auto.")
+    return parser
 
+
+def run_pretrain():
+    """pre-train bert_clue"""
+    parser = argparse_init()
     args_opt = parser.parse_args()
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
     context.set_context(reserve_class_name_in_scope=False)
@@ -163,15 +182,8 @@ def run_pretrain():
         device_num = 1
 
     is_auto_enable_graph_kernel = _auto_enable_graph_kernel(args_opt.device_target, args_opt.enable_graph_kernel)
-
-    if args_opt.enable_graph_kernel == "true" or is_auto_enable_graph_kernel:
-        context.set_context(enable_graph_kernel=True)
-
-    if args_opt.device_target == 'GPU' and bert_net_cfg.compute_type != mstype.float32 and \
-        not is_auto_enable_graph_kernel:
-        logger.warning('Gpu only support fp32 temporarily, run with fp32.')
-        bert_net_cfg.compute_type = mstype.float32
-
+    _set_graph_kernel_context(args_opt.device_target, args_opt.enable_graph_kernel, is_auto_enable_graph_kernel)
+    _check_compute_type(args_opt.device_target, is_auto_enable_graph_kernel)
 
     if args_opt.accumulation_steps > 1:
         logger.info("accumulation steps: {}".format(args_opt.accumulation_steps))
