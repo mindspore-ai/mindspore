@@ -438,8 +438,8 @@ class Pad(ImageTensorOperation):
     Args:
         padding (Union[int, sequence]): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads the (left and top)
-            with the first value and (right and bottom) with the second value.
+            If a tuple or list of 2 values are provided, it pads left and right
+            with the first value and top and bottom with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
         fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
@@ -674,8 +674,8 @@ class RandomCrop(ImageTensorOperation):
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, pad image firstly with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values are provided, pad the (left and top)
-            with the first value and (right and bottom) with the second value.
+            If a tuple or list of 2 values are provided, it pads left and right
+            with the first value and top and bottom with the second value.
             If 4 values are provided as a list or tuple,
             pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
@@ -790,8 +790,8 @@ class RandomCropWithBBox(ImageTensorOperation):
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values are provided, pad the (left and top)
-            with the first value and (right and bottom) with the second value.
+            If a tuple or list of 2 values are provided, it pads left and right
+            with the first value and top and bottom with the second value.
             If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).

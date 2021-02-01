@@ -949,7 +949,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       RETURN_STATUS_UNEXPECTED("CutOut: load image failed.");
     }
     if (input_cv->Rank() != 3 || num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C> or <H,W>.");
+      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C>.");
     }
     cv::Mat input_img = input_cv->mat();
     int32_t image_h = input_cv->shape()[0];
