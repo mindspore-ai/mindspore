@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -219,7 +219,7 @@ def test_c_py_compose_vision_module(plot=False, run_golden=True):
 
 def test_py_transforms_with_c_vision():
     """
-    These examples will fail, as py_transforms.Random(Apply/Choice/Order) expect callable functions
+    These examples will fail, as c_transform should not be used in py_transforms.Random(Apply/Choice/Order)
     """
 
     ds.config.set_seed(0)
@@ -236,15 +236,15 @@ def test_py_transforms_with_c_vision():
 
     with pytest.raises(ValueError) as error_info:
         test_config(py_transforms.RandomApply([c_vision.RandomResizedCrop(200)]))
-    assert "transforms[0] is not callable." in str(error_info.value)
+    assert "transforms[0] is not a py transforms." in str(error_info.value)
 
     with pytest.raises(ValueError) as error_info:
         test_config(py_transforms.RandomChoice([c_vision.RandomResizedCrop(200)]))
-    assert "transforms[0] is not callable." in str(error_info.value)
+    assert "transforms[0] is not a py transforms." in str(error_info.value)
 
     with pytest.raises(ValueError) as error_info:
         test_config(py_transforms.RandomOrder([np.array, c_vision.RandomResizedCrop(200)]))
-    assert "transforms[1] is not callable." in str(error_info.value)
+    assert "transforms[1] is not a py transforms." in str(error_info.value)
 
     with pytest.raises(RuntimeError) as error_info:
         test_config([py_transforms.OneHotOp(20, 0.1)])

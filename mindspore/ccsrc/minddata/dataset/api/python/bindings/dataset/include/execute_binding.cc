@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,26 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                       auto execute = std::make_shared<Execute>(toTensorOperation(operation));
                       return execute;
                     }))
-                    .def("__call__", [](Execute &self, std::shared_ptr<Tensor> in) {
-                      std::shared_ptr<Tensor> out = self(in);
-                      if (out == nullptr) {
+                    .def("__call__",
+                         [](Execute &self, std::shared_ptr<Tensor> in) {
+                           std::shared_ptr<Tensor> out = self(in);
+                           if (out == nullptr) {
+                             THROW_IF_ERROR([]() {
+                               RETURN_STATUS_UNEXPECTED(
+                                 "Failed to execute op in eager mode, please check ERROR log above.");
+                             }());
+                           }
+                           return out;
+                         })
+                    .def("__call__", [](Execute &self, const std::vector<std::shared_ptr<Tensor>> &input_tensor_list) {
+                      std::vector<std::shared_ptr<Tensor>> output_tensor_list;
+                      THROW_IF_ERROR(self(input_tensor_list, &output_tensor_list));
+                      if (output_tensor_list.empty()) {
                         THROW_IF_ERROR([]() {
                           RETURN_STATUS_UNEXPECTED("Failed to execute op in eager mode, please check ERROR log above.");
                         }());
                       }
-                      return out;
+                      return output_tensor_list;
                     });
                 }));
 }  // namespace dataset

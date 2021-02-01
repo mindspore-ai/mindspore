@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/include/execute.h"
+#include "minddata/dataset/core/tensor_row.h"
 #ifdef ENABLE_ANDROID
 #include "minddata/dataset/include/de_tensor.h"
 #endif
+#include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #ifndef ENABLE_ANDROID
@@ -82,6 +83,26 @@ std::shared_ptr<dataset::Tensor> Execute::operator()(std::shared_ptr<dataset::Te
     return nullptr;
   }
   return de_output;
+}
+
+Status Execute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
+                           std::vector<std::shared_ptr<Tensor>> *output_tensor_list) {
+  CHECK_FAIL_RETURN_UNEXPECTED(op_ != nullptr, "Input TensorOperation is not valid");
+  CHECK_FAIL_RETURN_UNEXPECTED(!input_tensor_list.empty(), "Input Tensor is not valid");
+
+  TensorRow input, output;
+  std::copy(input_tensor_list.begin(), input_tensor_list.end(), std::back_inserter(input));
+  CHECK_FAIL_RETURN_UNEXPECTED(!input.empty(), "Input Tensor is not valid");
+
+  std::shared_ptr<TensorOp> transform = op_->Build();
+  Status rc = transform->Compute(input, &output);
+  if (rc.IsError()) {
+    // execution failed
+    RETURN_STATUS_UNEXPECTED("Operation execution failed : " + rc.ToString());
+  }
+
+  std::copy(output.begin(), output.end(), std::back_inserter(*output_tensor_list));
+  return Status::OK();
 }
 
 }  // namespace dataset

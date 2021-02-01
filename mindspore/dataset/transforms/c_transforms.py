@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,6 +24,14 @@ import mindspore._c_dataengine as cde
 from .validators import check_num_classes, check_de_type, check_fill_value, check_slice_option, check_slice_op, \
     check_mask_op, check_pad_end, check_concat_type, check_random_transform_ops
 from ..core.datatypes import mstype_to_detype
+
+
+class TensorOperation:
+    def __call__(self):
+        raise NotImplementedError("TensorOperation has to implement __call__() method.")
+
+    def parse(self):
+        raise NotImplementedError("TensorOperation has to implement parse() method.")
 
 
 class OneHot(cde.OneHotOp):
@@ -304,7 +312,7 @@ class Unique(cde.UniqueOp):
     Also return an index tensor that contains the index of each element of the
     input tensor in the Unique output tensor.
 
-    Finally, return a count tensor that constains the count of each element of
+    Finally, return a count tensor that contains the count of each element of
     the output tensor in the input tensor.
 
     Note:
