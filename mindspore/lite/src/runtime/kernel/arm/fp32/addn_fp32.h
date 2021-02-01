@@ -39,7 +39,7 @@ class AddNCPUKernel : public LiteKernel {
   float *in1_addr_;
   float *in2_addr_;
   float *out_addr_;
-  size_t elements_num_;
+  int elements_num_;
 };
 }  // namespace mindspore::kernel
 

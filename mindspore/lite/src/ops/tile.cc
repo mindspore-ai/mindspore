@@ -186,7 +186,8 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
     out_shape.push_back(input->shape().at(i));
   }
   for (size_t i = 0; i < dims.size(); ++i) {
-    if (multiples.at(i) > std::numeric_limits<int>::max() / input->shape().at(dims.at(i))) {
+    if (input->shape().at(dims.at(i)) != 0 &&
+        multiples.at(i) > std::numeric_limits<int>::max() / input->shape().at(dims.at(i))) {
       MS_LOG(ERROR) << "The value of multiples[" << i << "] is too big";
       return RET_ERROR;
     }
