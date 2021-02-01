@@ -584,8 +584,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShapeTo4d(infer_shape, GetOutputReshapeType(node, output_idx));
   }
-  auto dtype = AnfAlgo::GetOutputDeviceDataType(node, output_idx);
-  return trans::TransShapeToDevice(infer_shape, format, dtype);
+  return trans::TransShapeToDevice(infer_shape, format);
 }
 
 std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
@@ -598,8 +597,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &n
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShapeTo4d(infer_shape, GetInputReshapeType(node, input_idx));
   }
-  auto dtype = AnfAlgo::GetInputDeviceDataType(node, input_idx);
-  return trans::TransShapeToDevice(infer_shape, format, dtype);
+  return trans::TransShapeToDevice(infer_shape, format);
 }
 
 std::vector<Axis> AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, size_t input_idx) {
@@ -1636,8 +1634,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputRealDeviceShapeIfExist(const An
     auto max_shape = GetInputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetInputFormat(anf_node, index);
-    auto dtype = GetInputDeviceDataType(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format, dtype);
+    trans::TransShapeToDevice(device_shape, format);
   }
   return device_shape;
 }
@@ -1649,8 +1646,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputRealDeviceShapeIfExist(const A
     auto max_shape = GetOutputMaxShape(anf_node, index);
     std::transform(max_shape.begin(), max_shape.end(), device_shape.begin(), IntToSize);
     auto format = GetOutputFormat(anf_node, index);
-    auto dtype = GetOutputDeviceDataType(anf_node, index);
-    trans::TransShapeToDevice(device_shape, format, dtype);
+    trans::TransShapeToDevice(device_shape, format);
   }
   return device_shape;
 }
