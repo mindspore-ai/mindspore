@@ -18,9 +18,10 @@
 #include <memory>
 #include "src/dequant.h"
 #include "src/huffman_decode.h"
+#include "src/ops/matmul.h"
 
 namespace mindspore::lite {
-float *DequantUtil::DequantWeight(lite::Tensor *input_tensor) {
+float *DequantUtil::DequantWeight(lite::Tensor *input_tensor, bool channel_first) {
   MS_ASSERT(input_tensor != nullptr);
   if (input_tensor->data_type() != kNumberTypeInt8 && input_tensor->data_type() != kNumberTypeInt16) {
     MS_LOG(ERROR) << "Conv weight input type error." << input_tensor->data_type();
@@ -31,9 +32,9 @@ float *DequantUtil::DequantWeight(lite::Tensor *input_tensor) {
     return nullptr;
   }
   if (input_tensor->data_type() == kNumberTypeInt16) {
-    return DequantData<int16_t>(input_tensor);
+    return DequantData<int16_t>(input_tensor, channel_first);
   } else {
-    return DequantData<int8_t>(input_tensor);
+    return DequantData<int8_t>(input_tensor, channel_first);
   }
 }
 
@@ -65,19 +66,35 @@ int DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_in
   return RET_OK;
 }
 
-std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(const std::vector<Tensor *> &in_tensors,
+std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(const mindspore::lite::PrimitiveC *primitive,
+                                                                         const std::vector<Tensor *> &in_tensors,
                                                                          TypeId data_type, bool need_restore) {
   std::map<Tensor *, std::pair<TypeId, void *>> tensor_origin_data;
   if (data_type == TypeId::kNumberTypeFloat32 || data_type == TypeId::kNumberTypeFloat16) {
+    auto input_i = 0;
     for (auto weight_tensor : in_tensors) {
       MS_ASSERT(weight_tensor != nullptr);
+      input_i++;
+      auto channel_first = true;
+      if ((schema::PrimitiveType)primitive->Type() == schema::PrimitiveType_MatMul &&
+          weight_tensor->shape().size() == 2) {
+        auto param = reinterpret_cast<mindspore::lite::MatMul *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+        if (input_i == 1) {
+          channel_first = !param->GetTransposeA();
+        } else if (input_i == 2) {
+          channel_first = param->GetTransposeB();
+        } else {
+          MS_LOG(WARNING) << "unexpected input_i";
+        }
+      }
+
       auto *restore_data = weight_tensor->data_c();
       auto restore_type = weight_tensor->data_type();
       bool dequant_flag = !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited &&
                           restore_data != nullptr &&
                           (restore_type == kNumberTypeInt8 || restore_type == kNumberTypeInt16);
       if (dequant_flag) {
-        auto *dequant_weight = DequantUtil::DequantWeight(weight_tensor);
+        auto *dequant_weight = DequantUtil::DequantWeight(weight_tensor, channel_first);
         if (dequant_weight == nullptr) {
           MS_LOG(ERROR) << "dequant data is nullptr.";
           return tensor_origin_data;

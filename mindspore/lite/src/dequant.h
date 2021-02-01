@@ -29,17 +29,18 @@
 namespace mindspore::lite {
 class DequantUtil {
  public:
-  static float *DequantWeight(lite::Tensor *input_tensor);
+  static float *DequantWeight(lite::Tensor *input_tensor, bool);
 
   static int UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
 
-  static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(const std::vector<Tensor *> &in_tensors,
+  static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(const mindspore::lite::PrimitiveC *primitive,
+                                                                     const std::vector<Tensor *> &in_tensors,
                                                                      TypeId data_type, bool need_restore = true);
 
   static void RestoreTensorData(const std::map<Tensor *, std::pair<TypeId, void *>> &tensor_origin_data_map);
 
   template <typename ST, typename DT = float>
-  static DT *DequantData(lite::Tensor *input_tensor) {
+  static DT *DequantData(lite::Tensor *input_tensor, bool channel_first = true) {
     const auto *quant_datas = static_cast<const ST *>(input_tensor->MutableData());
     if (quant_datas == nullptr) {
       MS_LOG(ERROR) << "Get quant tensor failed.";
@@ -65,6 +66,13 @@ class DequantUtil {
       }
     } else if (input_tensor->quant_params().size() != kPerTensor) {
       auto channels = static_cast<size_t>(input_tensor->Batch());
+      if (!channel_first) {
+        if (input_tensor->shape().size() != 2) {
+          MS_LOG(ERROR) << "unexpected shape size: " << input_tensor->shape().size();
+          return nullptr;
+        }
+        channels = input_tensor->shape()[1];
+      }
       if (input_tensor->quant_params().size() != channels) {
         MS_LOG(ERROR) << "Quant param not equal channel num " << input_tensor->quant_params().size() << channels;
         free(dequant_datas);
@@ -83,8 +91,12 @@ class DequantUtil {
           var_corr = 1;
         }
         for (size_t j = 0; j < per_channel_size; j++) {
-          auto dequant_data = (quant_datas[per_channel_size * i + j] - zero_point) * scale;
-          dequant_datas[per_channel_size * i + j] = static_cast<DT>(dequant_data * var_corr + mean_corr);
+          auto index = per_channel_size * i + j;
+          if (!channel_first) {
+            index = channels * j + i;
+          }
+          auto dequant_data = (quant_datas[index] - zero_point) * scale;
+          dequant_datas[index] = static_cast<DT>(dequant_data * var_corr + mean_corr);
         }
       }
     } else {

@@ -107,6 +107,9 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
 
 STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int new_size);
 
+void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, float *raw_datas,
+                         bool channel_at_first, float *desired_max, float *desired_min);
+
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
   MS_ASSERT(quantParam != nullptr);
@@ -163,11 +166,19 @@ template <typename T>
 STATUS DoPerChannelQuant(const ParamValueLitePtr &weight, const QuantType &quant_type,
                          std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
                          const size_t &bit_num, const bool &k_means, std::vector<T> *quant_datas,
-                         std::vector<float> *dequant_datas) {
+                         std::vector<float> *dequant_datas, bool channel_at_first = true) {
   auto dims = weight->tensor_shape();
   size_t elem_count = weight->tensor_shape_size();
   auto *raw_datas = static_cast<float *>(weight->tensor_addr());
   auto channels = dims[0];
+  if (!channel_at_first) {
+    if (dims.size() != 2) {
+      MS_LOG(ERROR) << "unexpected dims size: " << dims.size();
+      channel_at_first = true;
+    } else {
+      channels = dims[1];
+    }
+  }
   if (channels == 0) {
     MS_LOG(ERROR) << "channels is zero";
     return RET_ERROR;
@@ -181,16 +192,7 @@ STATUS DoPerChannelQuant(const ParamValueLitePtr &weight, const QuantType &quant
   for (int i = 0; i < channels; i++) {
     float min = FLT_MAX;
     float max = -FLT_MAX;
-    // find min and max
-    for (size_t j = 0; j < one_filter_size; j++) {
-      auto index = j + i * one_filter_size;
-      if (index >= elem_count) {
-        MS_LOG(ERROR) << "over flow!";
-        return RET_ERROR;
-      }
-      min = std::min(min, raw_datas[index]);
-      max = std::max(max, raw_datas[index]);
-    }
+    GetMaxMinPerchannel(channels, one_filter_size, i, elem_count, raw_datas, channel_at_first, &max, &min);
     schema::QuantParamT quant_param;
     STATUS status = CalQuantizationParams(&quant_param, min, max, false, quant_max, quant_min, bit_num);
     if (status != RET_OK) {
@@ -202,10 +204,10 @@ STATUS DoPerChannelQuant(const ParamValueLitePtr &weight, const QuantType &quant
     double average_raw = 0;
     for (uint32_t j = 0; j < one_filter_size; j++) {
       auto index = j + i * one_filter_size;
-      if (index >= elem_count) {
-        MS_LOG(ERROR) << "over flow!";
-        return RET_ERROR;
+      if (!channel_at_first) {
+        index = j * channels + i;
       }
+      MS_ASSERT(index < elem_count);
       float raw_data = raw_datas[index];
       auto quant_data = QuantizeData<T>(raw_data, quant_param, quant_max, quant_min);
       (*quant_datas)[index] = quant_data;
@@ -226,10 +228,10 @@ STATUS DoPerChannelQuant(const ParamValueLitePtr &weight, const QuantType &quant
       double variance_raw = 0;
       for (uint32_t j = 0; j < one_filter_size; j++) {
         auto index = j + i * one_filter_size;
-        if (index >= elem_count) {
-          MS_LOG(ERROR) << "over flow!";
-          return RET_ERROR;
+        if (!channel_at_first) {
+          index = j * channels + i;
         }
+        MS_ASSERT(index < elem_count);
         variance_dequant += std::pow((*dequant_datas)[index] - average_dequant, 2);
         variance_raw += std::pow(raw_datas[index] - average_raw, 2);
       }
@@ -339,20 +341,26 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
 
   std::vector<schema::QuantParamT> quant_params;
   size_t elem_count = weight->tensor_shape_size();
-  auto *raw_datas = static_cast<float *>(weight->tensor_addr());
-  if (raw_datas == nullptr) {
+  auto *raw_data = static_cast<float *>(weight->tensor_addr());
+  if (raw_data == nullptr) {
     MS_LOG(ERROR) << "rawDatas is nullptr";
     return RET_ERROR;
   }
 
-  std::vector<T> quant_datas(elem_count);
+  std::vector<T> quant_data(elem_count);
   std::vector<float> dequant_datas(elem_count);
   int ret = RET_OK;
   if (per_channel) {
-    // notice: assume Con2D\DepthwiseConv2D's weight format are same: KHWC
+    bool channel_at_first = true;
+    auto op_type = (schema::PrimitiveType)primitive_c->Type();
+    if (op_type == schema::PrimitiveType_MatMul && weight->tensor_shape().size() == 2) {
+      auto matmul_op = primitive_c->primitiveT()->value.AsMatMul();
+      MS_ASSERT(matmul_op != nullptr);
+      channel_at_first = !(index == 1 && !matmul_op->transposeB);
+    }
     // channel at first
-    ret = DoPerChannelQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_datas,
-                               &dequant_datas);
+    ret = DoPerChannelQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_data,
+                               &dequant_datas, channel_at_first);
     if (ret == RET_CONTINUE) {
       return ret;
     } else if (ret != RET_OK) {
@@ -360,7 +368,7 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
       return ret;
     }
   } else {
-    ret = DoPerLayerQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_datas);
+    ret = DoPerLayerQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_data);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per layer quant failed.";
       return ret;
@@ -376,7 +384,7 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
   }
 #else
   // do bit pack
-  ret = DoBitPack(weight, bit_num, quant_datas);
+  ret = DoBitPack(weight, bit_num, quant_data);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Do bit pack failed.";
     return ret;
