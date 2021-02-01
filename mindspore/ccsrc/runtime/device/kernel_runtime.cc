@@ -69,7 +69,8 @@ size_t KernelRuntime::CountNodeDeviceMemorySize(const mindspore::AnfNodePtr &nod
   auto format = AnfAlgo::GetOutputFormat(node, output_index);
   if (shape.empty() && format != kOpFormat_DEFAULT) {
     shape = trans::PaddingShapeTo4d(shape, AnfAlgo::GetOutputReshapeType(node, output_index));
-    shape = trans::TransShapeToDevice(shape, format);
+    auto dtype = AnfAlgo::GetOutputDeviceDataType(node, output_index);
+    shape = trans::TransShapeToDevice(shape, format, dtype);
   }
   // scalar's output shape is a empty vector
   size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
