@@ -32,7 +32,6 @@ dataset_config = edict({
     'aug_rot': 0.0,
     'rotate': 0,
     'flip_prop': 0.5,
-    'color_aug': False,
     'mean': np.array([0.40789654, 0.44719302, 0.47026115], dtype=np.float32),
     'std': np.array([0.28863828, 0.27408164, 0.27809835], dtype=np.float32),
     'flip_idx': [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]],

@@ -163,7 +163,7 @@ class DeformConv2d(nn.Cell):
         stride (int): The distance of kernel moving. Default: 1.
         padding (int): Implicit paddings size on both sides of the input. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
-        modulation (bool): If True, modulated defomable convolution (Deformable ConvNets v2). Defaut: True.
+        modulation (bool): If True, modulated defomable convolution (Deformable ConvNets v2). Default: True.
     Returns:
         Tensor, detection of images(bboxes, score, keypoints and category id of each objects)
     """

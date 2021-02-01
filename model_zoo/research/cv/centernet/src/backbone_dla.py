@@ -276,7 +276,7 @@ class DLAUp(nn.Cell):
     Upsampling of DLA network.
 
     Args:
-        startp(int): The begining stage startup upsampling
+        startp(int): The beginning stage startup upsampling
         channels(list int): The channels of each stage after upsampling
         last_level(int): The ending stage of the final upsampling
 

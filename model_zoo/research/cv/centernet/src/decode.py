@@ -62,7 +62,7 @@ class NMS(nn.Cell):
 
 class GatherTopK(nn.Cell):
     """
-    Gather topk features through all channeles
+    Gather topk features through all channels
 
     Args: None
 
@@ -107,7 +107,7 @@ class GatherTopKChannel(nn.Cell):
     Args: None
 
     Returns:
-        Tuple of Tensors, top_k scores, indexes, and the indexes in height and width direcction repectively.
+        Tuple of Tensors, top_k scores, indexes, and the indexes in height and width direcction respectively.
     """
     def __init__(self):
         super(GatherTopKChannel, self).__init__()
@@ -281,7 +281,7 @@ class FlipLROff(nn.Cell):
         self.concat = ops.Concat(axis=1)
 
     def construct(self, kps):
-        """flip and gather kps at specfied position"""
+        """flip and gather kps at specified position"""
         # kps: 2b, 2J, h, w
         kps_o, kps_f = self.half(kps)
         # b, 2J, h, w

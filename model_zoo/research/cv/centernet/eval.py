@@ -45,7 +45,7 @@ parser.add_argument("--data_dir", type=str, default="", help="Dataset directory,
                                                              "and the relative path in anno_path")
 parser.add_argument("--run_mode", type=str, default="test", help="test or validation, default is test.")
 parser.add_argument("--visual_image", type=str, default="false", help="Visulize the ground truth and predicted image")
-parser.add_argument("--enable_eval", type=str, default="true", help="Wether evaluate accuracy after prediction")
+parser.add_argument("--enable_eval", type=str, default="true", help="Whether evaluate accuracy after prediction")
 parser.add_argument("--save_result_dir", type=str, default="", help="The path to save the predict results")
 
 args_opt = parser.parse_args()

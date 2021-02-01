@@ -501,7 +501,7 @@ class LossCallBack(Callback):
 
     def step_begin(self, run_context):
         """
-        Get begining time of each step
+        Get beginning time of each step
         """
         self._begin_time = time.time()
 
@@ -575,7 +575,7 @@ class CenterNetMultiEpochsDecayLR(LearningRateSchedule):
     Args:
         learning_rate(float): Initial learning rate.
         warmup_steps(int): Warmup steps.
-        multi_steps(list int): The steps coresponding to decay learning rate.
+        multi_steps(list int): The steps corresponding to decay learning rate.
         steps_per_epoch(int): How many steps for each epoch.
         factor(int): Learning rate decay factor. Default: 10.
 
@@ -612,7 +612,7 @@ class MultiEpochsDecayLR(LearningRateSchedule):
 
     Args:
         learning_rate(float): Initial learning rate.
-        multi_steps(list int): The steps coresponding to decay learning rate.
+        multi_steps(list int): The steps corresponding to decay learning rate.
         steps_per_epoch(int): How many steps for each epoch.
         factor(int): Learning rate decay factor. Default: 10.
 

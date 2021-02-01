@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash run_standalone_eval_cpu.sh RUN_MODE DATA_DIR LOAD_CHECKPOINT_PATH"
 echo "for example of validation: bash run_standalone_eval_cpu.sh val /path/coco_dataset /path/load_ckpt"
 echo "for example of test: bash run_standalone_eval_cpu.sh test /path/coco_dataset /path/load_ckpt"
