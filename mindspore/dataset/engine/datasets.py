@@ -3795,10 +3795,13 @@ class GeneratorDataset(MappableDataset):
         # lose attribution of '__len__' after deepcopy.
         self.dataset_size = None
         if hasattr(self.source, "__len__"):
-            if not isinstance(self.sampler, samplers.DistributedSampler):
-                self.dataset_size = len(self.source)
-            else:
+            if isinstance(self.sampler, samplers.DistributedSampler):
                 self.dataset_size = math.ceil(len(self.source) / self.sampler.num_shards)
+            elif isinstance(self.sampler, samplers.SequentialSampler):
+                start_index = self.sampler.start_index or 0
+                self.dataset_size = len(self.source) - start_index
+            else:
+                self.dataset_size = len(self.source)
 
             rows_from_sampler = self._get_sampler_dataset_size()
             if self.num_samples is not None and self.num_samples < rows_from_sampler:
