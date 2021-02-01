@@ -171,7 +171,7 @@ optional arguments:
   --device_target       device where the code will be implemented: "Ascend", default is "Ascend"
   --data_dir DATA_DIR   Train dataset directory.
   --per_batch_size PER_BATCH_SIZE
-                        Batch size for Training. Default: 32.
+                        Batch size for Training. Default: 8.
   --pretrained_backbone PRETRAINED_BACKBONE
                         The ckpt file of CspDarkNet53. Default: "".
   --resume_yolov4 RESUME_YOLOV4
@@ -437,7 +437,7 @@ YOLOv4 on 20K images(The annotation and data format must be the same as coco tes
 # [Description of Random Situation](#contents)
 
 In dataset.py, we set the seed inside ```create_dataset``` function.
-In var_init.py, we set seed for weight initilization
+In var_init.py, we set seed for weight initialization
 
 # [ModelZoo Homepage](#contents)
 
