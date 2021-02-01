@@ -455,7 +455,7 @@ std::vector<size_t> AscendDeviceAddress::GetWorkspaceSizeList(const nlohmann::js
 std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *host_shape) const {
   std::vector<size_t> device_shape;
   if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
-    device_shape = trans::TransShapeToDevice(*host_shape, format_, type_id_);
+    device_shape = trans::TransShapeToDevice(*host_shape, format_);
   } else {
     if (host_shape_.empty()) {
       *host_shape = trans::PaddingShapeTo4d(*host_shape);
@@ -463,7 +463,7 @@ std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *hos
       host_shape->clear();
       (void)std::transform(host_shape_.begin(), host_shape_.end(), std::back_inserter(*host_shape), LongToSize);
     }
-    device_shape = trans::TransShapeToDevice(*host_shape, format_, type_id_);
+    device_shape = trans::TransShapeToDevice(*host_shape, format_);
   }
   return device_shape;
 }
@@ -577,10 +577,10 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
   std::vector<size_t> device_shape;
   if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW || format_ == kOpFormat_NDC1HWC0 ||
       format_ == kOpFormat_FRACTAL_Z_3D) {
-    device_shape = trans::TransShapeToDevice(host_shape, format_, type_id_);
+    device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
     host_shape = trans::PaddingShapeTo4d(host_shape);
-    device_shape = trans::TransShapeToDevice(host_shape, format_, type_id_);
+    device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {
     auto shape_size = abstract::ShapeSize(host_shape);

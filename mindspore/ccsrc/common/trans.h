@@ -53,7 +53,7 @@ size_t CubeSizeByType(const TypeId data_type);
 std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::vector<Axis> &padding_axis = {});
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
 bool IsNeedPadding(const std::string &format, const size_t shape_size);
-std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format, const TypeId &type);
+std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format);
 bool TransDataType(const TypeIdArgs &args, void *result);
 bool TransFormat(const FormatArgs &args, void *result);
 bool TransFormatFromDeviceToHost(const FormatArgs &args, void *result);
