@@ -25,7 +25,7 @@
     <string name="title_star">Star</string>
     <string name="title_version">"Version: "</string>
     <string name="title_share">Share</string>
-    <string name="title_share_commend">MindSpore掌中宝：A one-stop collaborative learning, demonstration, and experience platform for beginners\t</string>
+    <string name="title_share_commend">MindSpore掌中宝：A one-stop platform of collaborative learning, demonstrating, and experiencing for AI users.\t</string>
 
     <string name="main_tab_title_one">Experience</string>
     <string name="main_tab_title_two">College</string>
@@ -45,7 +45,7 @@
     <string name="me_official_title">Official Website</string>
     <string name="me_official_code_title">Official Code</string>
 
-    <string name="title_splash_welcome">A one-stop collaborative learning, demonstration, and experience platform for beginners</string>
+    <string name="title_splash_welcome">A one-stop platform of collaborative learning, demonstrating, and experiencing for AI users.</string>
 
     <string name="college_summary_title">MindSpore Summary</string>
     <string name="college_cloud_title">A One-Hour Trip to MindSpore</string>
