@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -56,10 +55,6 @@ def test_sqrt_grad(shape_x, shape_dout, dtype):
     assert np.allclose(expect_np, output_np, rtol, atol)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_sqrt_grad_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_sqrt_grad((16, 16), (16, 16), np.float16)
