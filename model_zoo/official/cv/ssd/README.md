@@ -37,7 +37,7 @@ The SSD approach is based on a feed-forward convolutional network that produces 
 
 We present two different base architecture.
 
-- **ssd300**, reference from the paper. Using mobilenetv2 as backbone and the same bbox predictor as the paper pressent.
+- **ssd300**, reference from the paper. Using mobilenetv2 as backbone and the same bbox predictor as the paper present.
 - ***ssd-mobilenet-v1-fpn**, using mobilenet-v1 and FPN as feature extractor with weight-shared box predcitors.
 
 ## [Dataset](#contents)
@@ -85,7 +85,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         ```
 
     2. If VOC dataset is used. **Select dataset to voc when run script.**
-        Change `classes`, `num_classes`, `voc_json` and `voc_root` in `src/config.py`. `voc_json` is the path of json file with coco format for evalution, `voc_root` is the path of VOC dataset, the directory structure is as follows:
+        Change `classes`, `num_classes`, `voc_json` and `voc_root` in `src/config.py`. `voc_json` is the path of json file with coco format for evaluation, `voc_root` is the path of VOC dataset, the directory structure is as follows:
 
         ```shell
         .
@@ -105,7 +105,7 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
         ```
 
     3. If your own dataset is used. **Select dataset to other when run script.**
-        Organize the dataset infomation into a TXT file, each row in the file is as follows:
+        Organize the dataset information into a TXT file, each row in the file is as follows:
 
         ```shell
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
@@ -117,15 +117,15 @@ Dataset used: [COCO2017](<http://images.cocodataset.org/>)
 
 ### Prepare the model
 
-1. Chose the model by chaning the `using_model` in `src/confgi.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`.
-2. Change the datset config in the corresponding config. `src/config_ssd300.py` or `src/config_ssd_mobilenet_v1_fpn.py`.
+1. Chose the model by changing the `using_model` in `src/confgi.py`. The optional models are: `ssd300`, `ssd_mobilenet_v1_fpn`.
+2. Change the dataset config in the corresponding config. `src/config_ssd300.py` or `src/config_ssd_mobilenet_v1_fpn.py`.
 3. If you are running with `ssd_mobilenet_v1_fpn`, you need a pretrained model for `mobilenet_v1`. Set the checkpoint path to `feature_extractor_base_param` in `src/config_ssd_mobilenet_v1_fpn.py`. For more detail about training mobilnet_v1, please refer to the mobilenetv1 model.
 
 ### Run the scripts
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- runing on Ascend
+- running on Ascend
 
 ```shell
 # distributed training on Ascend
@@ -135,7 +135,7 @@ sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_
 sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
-- runing on GPU
+- running on GPU
 
 ```shell
 # distributed training on GPU
@@ -145,7 +145,7 @@ sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
 sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
-- runing on CPU(support Windows and Ubuntu)
+- running on CPU(support Windows and Ubuntu)
 
 **CPU is usually used for fine-tuning, which needs pre_trained checkpoint.**
 
@@ -200,15 +200,15 @@ python eval.py --run_platform=CPU --dataset=[DATASET] --checkpoint_path=[PRETRAI
     "pre_trained_epoch_size": 0                      # Pretrained epoch size
     "save_checkpoint_epochs": 10                     # The epoch interval between two checkpoints. By default, the checkpoint will be saved per 10 epochs
     "loss_scale": 1024                               # Loss scale
-    "filter_weight": False                           # Load paramters in head layer or not. If the class numbers of train dataset is different from the class numbers in pre_trained checkpoint, please set True.
-    "freeze_layer": "none"                           # Freeze the backbone paramters or not, support none and backbone.
+    "filter_weight": False                           # Load parameters in head layer or not. If the class numbers of train dataset is different from the class numbers in pre_trained checkpoint, please set True.
+    "freeze_layer": "none"                           # Freeze the backbone parameters or not, support none and backbone.
 
     "class_num": 81                                  # Dataset class number
     "image_shape": [300, 300]                        # Image height and width used as input to the model
     "mindrecord_dir": "/data/MindRecord_COCO"        # MindRecord path
     "coco_root": "/data/coco2017"                    # COCO2017 dataset path
     "voc_root": "/data/voc_dataset"                  # VOC original dataset path
-    "voc_json": "annotations/voc_instances_val.json" # is the path of json file with coco format for evalution
+    "voc_json": "annotations/voc_instances_val.json" # is the path of json file with coco format for evaluation
     "image_dir": ""                                  # Other dataset image path, if coco or voc used, it will be useless
     "anno_path": ""                                  # Other dataset annotation path, if coco or voc used, it will be useless
 
@@ -304,18 +304,18 @@ We need two parameters for this scripts.
 Inference result will be stored in the example path, whose folder name begins with "eval". Under this, you can find result like the followings in log.
 
 ```shell
-Average Precision (AP) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.238
-Average Precision (AP) @[ IoU=0.50 | area= all | maxDets=100 ] = 0.400
-Average Precision (AP) @[ IoU=0.75 | area= all | maxDets=100 ] = 0.240
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.238
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.400
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.240
 Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.039
 Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.198
 Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.438
-Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 1 ] = 0.250
-Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 10 ] = 0.389
-Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.424
-Average Recall (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.122
-Average Recall (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.434
-Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.697
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.250
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.389
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.424
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.122
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.434
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.697
 
 ========================================
 
@@ -339,18 +339,18 @@ We need two parameters for this scripts.
 Inference result will be stored in the example path, whose folder name begins with "eval". Under this, you can find result like the followings in log.
 
 ```shell
-Average Precision (AP) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.224
-Average Precision (AP) @[ IoU=0.50 | area= all | maxDets=100 ] = 0.375
-Average Precision (AP) @[ IoU=0.75 | area= all | maxDets=100 ] = 0.228
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.224
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.375
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.228
 Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.034
 Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.189
 Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.407
-Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 1 ] = 0.243
-Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets= 10 ] = 0.382
-Average Recall (AR) @[ IoU=0.50:0.95 | area= all | maxDets=100 ] = 0.417
-Average Recall (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.120
-Average Recall (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.425
-Average Recall (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.686
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.243
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.382
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.417
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.120
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.425
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.686
 
 ========================================
 
@@ -363,7 +363,42 @@ mAP: 0.2244936111705981
 python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
-The ckpt_file parameter is required.
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+
+## Inference Process
+
+### Usage
+
+Before performing inference, the air file must bu exported by export script on the 910 environment.
+Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space.
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
+
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```bash
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.354
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.459
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.432
+Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.228
+Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.455
+Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.604
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.255
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.409
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.507
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.325
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.670
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.733
+mAP: 0.35406563212712244
+```
 
 ## [Model Description](#contents)
 
