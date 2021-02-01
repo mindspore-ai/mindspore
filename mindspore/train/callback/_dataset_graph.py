@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Define dataset graph related operations."""
+import json
 from importlib import import_module
 
 from mindspore import log as logger
@@ -124,6 +125,11 @@ class DatasetGraph:
             if value:
                 replace_value_list = list(map(lambda x: "" if x is None else x, value))
                 message.mapStrList[key].strValue.extend(replace_value_list)
+        elif isinstance(value, dict):
+            try:
+                message.mapStr[key] = json.dumps(value)
+            except TypeError as exo:
+                logger.warning("Transform the value of parameter %r to string failed. Detail: %s.", key, str(exo))
         elif value is None:
             message.mapStr[key] = "None"
         else:
