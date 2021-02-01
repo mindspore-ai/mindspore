@@ -272,6 +272,7 @@ union PrimitiveType {
     Size,
     RandomStandardNormal,
     CropAndResize,
+    Erf,
 }
 
 enum QuantType: int {
