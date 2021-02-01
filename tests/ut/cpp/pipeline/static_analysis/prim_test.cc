@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,22 +289,6 @@ TEST_F(TestPrim, test_J_2) {
   ASSERT_TRUE(*res_J_0 == *(FromValue(static_cast<int64_t>(2), false)));
   AbstractFunctionPtr res_J_1 = dyn_cast<AbstractFunction>(res_J->elements()[1]);
   ASSERT_TRUE(res_J_1 != nullptr);
-}
-
-TEST_F(TestPrim, test_dot) {
-  auto dot = std::make_shared<Primitive>("dot");
-  FuncGraphPtr func_graph = MakeFuncGraph(dot, 2);
-
-  auto a1 = UTPrimUtils::ArrayFloat64Of({2, 3});
-  auto a2 = UTPrimUtils::ArrayFloat64Of({3, 4});
-  std::vector<int64_t> expectedA = {2, 4};
-  auto expected = UTPrimUtils::ArrayFloat64Of({2, 4});
-
-  AbstractBasePtrList args_spec_list = {a1, a2};
-
-  AbstractTensorPtr res = dyn_cast<AbstractTensor>(engine_->Run(func_graph, args_spec_list).inferred->abstract());
-
-  ASSERT_TRUE(*(dyn_cast<Shape>(res->GetShapeTrack())) == *(dyn_cast<Shape>(expected->GetShapeTrack())));
 }
 
 // tail half

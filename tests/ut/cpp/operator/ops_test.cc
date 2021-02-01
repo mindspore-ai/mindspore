@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,11 +285,6 @@ TEST_F(TestOps, DistributeTest) {
 TEST_F(TestOps, TransposeTest) {
   auto prim = std::make_shared<Primitive>("Transpose");
   ASSERT_EQ(prim->name(), kPrimTranspose->name());
-}
-
-TEST_F(TestOps, DotTest) {
-  auto prim = std::make_shared<Primitive>("dot");
-  ASSERT_EQ(prim->name(), kPrimDot->name());
 }
 
 TEST_F(TestOps, Im2ColTest) {
