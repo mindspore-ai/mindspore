@@ -19,6 +19,7 @@ DeepSpeech2 model
 
 import math
 import numpy as np
+import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore import nn, Tensor, ParameterTuple, Parameter
 from mindspore.common.initializer import initializer
@@ -112,7 +113,7 @@ class BatchRNN(nn.Cell):
     """
 
     def __init__(self, batch_size, input_size, hidden_size, num_layers, bidirectional=False, batch_norm=False,
-                 rnn_type='LSTM'):
+                 rnn_type='LSTM', device_target="GPU"):
         super(BatchRNN, self).__init__()
         self.batch_size = batch_size
         self.input_size = input_size
@@ -141,7 +142,10 @@ class BatchRNN(nn.Cell):
         for i in range(num_layers):
             weight_size = (input_size_list[i] + hidden_size) * hidden_size * self.num_directions * 4
             if self.has_bias:
-                bias_size = self.num_directions * hidden_size * 4 * 2
+                if device_target == "GPU":
+                    bias_size = self.num_directions * hidden_size * 4 * 2
+                else:
+                    bias_size = self.num_directions * hidden_size * 4
                 weight_size = weight_size + bias_size
 
             stdv = 1 / math.sqrt(hidden_size)
@@ -195,7 +199,8 @@ class DeepSpeechModel(nn.Cell):
         bidirectional(bool): use bidirectional rnn (default=True)
     """
 
-    def __init__(self, batch_size, labels, rnn_hidden_size, nb_layers, audio_conf, rnn_type='LSTM', bidirectional=True):
+    def __init__(self, batch_size, labels, rnn_hidden_size, nb_layers, audio_conf, rnn_type='LSTM',
+                 bidirectional=True, device_target='GPU'):
         super(DeepSpeechModel, self).__init__()
         self.batch_size = batch_size
         self.hidden_size = rnn_hidden_size
@@ -226,7 +231,7 @@ class DeepSpeechModel(nn.Cell):
 
         self.RNN = BatchRNN(batch_size=self.batch_size, input_size=rnn_input_size, num_layers=nb_layers,
                             hidden_size=rnn_hidden_size, bidirectional=bidirectional, batch_norm=False,
-                            rnn_type=self.rnn_type)
+                            rnn_type=self.rnn_type, device_target=device_target)
         fully_connected = nn.Dense(rnn_hidden_size, num_classes, has_bias=False)
         self.fc = SequenceWise(fully_connected)
 
@@ -275,10 +280,11 @@ class NetWithLossClass(nn.Cell):
         self.network = network
         self.ReduceMean_false = P.ReduceMean(keep_dims=False)
         self.squeeze_op = P.Squeeze(0)
+        self.cast_op = P.Cast()
 
     def construct(self, inputs, input_length, target_indices, label_values):
         predict, output_length = self.network(inputs, input_length)
-        loss = self.loss(predict, target_indices, label_values, output_length)
+        loss = self.loss(predict, target_indices, label_values, self.cast_op(output_length, mstype.int32))
         return self.ReduceMean_false(loss[0])
 
 
@@ -292,9 +298,10 @@ class PredictWithSoftmax(nn.Cell):
         self.network = network
         self.inference_softmax = P.Softmax(axis=-1)
         self.transpose_op = P.Transpose()
+        self.cast_op = P.Cast()
 
     def construct(self, inputs, input_length):
-        x, output_sizes = self.network(inputs, input_length)
+        x, output_sizes = self.network(inputs, self.cast_op(input_length, mstype.int32))
         x = self.inference_softmax(x)
         x = self.transpose_op(x, (1, 0, 2))
         return x, output_sizes
