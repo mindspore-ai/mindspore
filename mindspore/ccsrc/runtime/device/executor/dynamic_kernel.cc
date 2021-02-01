@@ -39,16 +39,14 @@ void DynamicKernel::Initialize() {
   is_input_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode_ptr_, kAttrInputIsDynamicShape);
   is_output_dynamic_shape_ = AnfAlgo::GetBooleanAttr(cnode_ptr_, kAttrOutputIsDynamicShape);
 
-  auto have_depends = AnfAlgo::HasNodeAttr(kDynamicShapeDepends, cnode_ptr_);
-  if (!have_depends) {
+  auto ret = abstract::GetDependsFormMap(cnode_ptr_);
+  if (ret.empty()) {
     MS_LOG(DEBUG) << "No dynamic_shape_depends found";
     return;
   }
   MS_LOG(INFO) << "Have depends";
-  std::vector<int64_t> depends_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kDynamicShapeDepends);
-  (void)std::transform(depends_list_me.begin(), depends_list_me.end(), std::back_inserter(depend_list_),
+  (void)std::transform(ret.begin(), ret.end(), std::back_inserter(depend_list_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-
   MS_LOG(INFO) << "Init End";
 }
 

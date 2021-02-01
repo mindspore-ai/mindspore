@@ -100,13 +100,13 @@ void FeedTeOpTensorOutputArg(const NotNull<CNodePtr> &cnode,
 void FeedTeOpConstTensor(const NotNull<CNodePtr> &cnode, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
                          NotNull<std::map<std::string, optiling::TeConstTensorData> *> const_inputs) {
   MS_LOG(INFO) << "FeedTeOpConstTensor start, node:" << cnode->fullname_with_scope();
-  if (!AnfAlgo::HasNodeAttr(kDynamicShapeDepends, cnode.get())) {
+  auto depends_list_me = abstract::GetDependsFormMap(cnode);
+  if (depends_list_me.empty()) {
     MS_LOG(INFO) << "No input depend found, " << cnode->fullname_with_scope();
     return;
   }
 
   std::vector<int> depends_list;
-  std::vector<int64_t> depends_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode.get(), kDynamicShapeDepends);
   (void)std::transform(depends_list_me.begin(), depends_list_me.end(), std::back_inserter(depends_list),
                        [](const int64_t &value) { return static_cast<int>(value); });
   for (auto index : depends_list) {

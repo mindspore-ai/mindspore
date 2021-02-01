@@ -1867,7 +1867,6 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
     def __init__(self):
         """Initialize UnsortedSegmentSum"""
         self.init_prim_io_names(inputs=['x', 'segment_ids', 'num_segments'], outputs=['y'])
-        self.add_prim_attr("dynamic_shape_depends", [2])
 
     def __infer__(self, x, segment_ids, num_segments):
         x_type = x['dtype']
