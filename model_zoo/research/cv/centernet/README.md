@@ -157,8 +157,8 @@ bash scripts/run_standalone_eval_cpu.sh [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_P
         ├── scripts
         │   ├── ascend_distributed_launcher
         │   │    ├──__init__.py
-        │   │    ├──hyper_parameter_config.ini         // hyper parameter for distributed pretraining
-        │   │    ├──get_distribute_pretrain_cmd.py     // script for distributed pretraining
+        │   │    ├──hyper_parameter_config.ini         // hyper parameter for distributed training
+        │   │    ├──get_distribute_train_cmd.py     // script for distributed training
         │   │    ├──README.md
         │   ├──convert_dataset_to_mindrecord.sh        // shell script for converting coco type dataset to mindrecord
         │   ├──run_standalone_train_ascend.sh          // shell script for standalone training on ascend
@@ -400,7 +400,7 @@ epoch: 0.0, current epoch percent: 0.00, step: 5, time of per steps: 45.213 s, o
 #### Running on Ascend
 
 ```bash
-bash scripts/run_distributed_pretrain_ascend.sh /path/mindrecord_dataset /path/hccl.json /path/load_ckpt(optional)
+bash scripts/run_distributed_train_ascend.sh /path/mindrecord_dataset /path/hccl.json /path/load_ckpt(optional)
 ```
 
 The command above will run in the background, you can view training logs in LOG*/training_log.txt and LOG*/ms_log/. After training finished, you will get some checkpoint files under the LOG*/ckpt_0 folder by default. The loss value will be displayed as follows:
