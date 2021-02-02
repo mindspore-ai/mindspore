@@ -727,8 +727,8 @@ table PowerGrad {
 }
 
 table PowFusion {
-    scale: float;
-    shift: float;
+    scale: float = 1;
+    shift: float = 0;
 }
 
 table PriorBox {

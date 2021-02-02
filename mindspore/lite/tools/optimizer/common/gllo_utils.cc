@@ -159,6 +159,37 @@ std::vector<int> CastToInt(const ValuePtr &value) {
   return cur_value;
 }
 
+std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value) {
+  if (value == nullptr) {
+    MS_LOG(WARNING) << "valueptr is nullptr.";
+    return {};
+  }
+
+  std::vector<std::vector<int>> result_value;
+  if (utils::isa<ValueSequeuePtr>(value)) {
+    if (value->cast<ValueSequeuePtr>()
+          ->value()
+          .front()
+          ->cast<ValueSequeuePtr>()
+          ->value()
+          .front()
+          ->type()
+          ->number_type() == kNumberTypeInt64) {
+      auto origin_value = GetValue<std::vector<std::vector<int64_t>>>(value);
+      for (size_t i = 0; i < origin_value.size(); ++i) {
+        std::vector<int> cur_value;
+        for (size_t j = 0; j < origin_value.at(i).size(); ++j) {
+          cur_value.push_back(static_cast<int>(origin_value[i][j]));
+        }
+        result_value.push_back(cur_value);
+      }
+    } else {
+      result_value = GetValue<std::vector<std::vector<int>>>(value);
+    }
+  }
+  return result_value;
+}
+
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);

@@ -41,9 +41,11 @@
 #include "ops/fusion/max_pool_fusion.h"
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/pad_fusion.h"
+#include "ops/fusion/pow_fusion.h"
 #include "ops/fusion/prelu_fusion.h"
 #include "ops/fusion/reduce_fusion.h"
 #include "ops/fusion/scale_fusion.h"
+#include "ops/fusion/slice_fusion.h"
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/topk_fusion.h"
@@ -65,6 +67,7 @@
 #include "ops/resize_bilinear.h"
 #include "ops/resize_nearest_neighbor.h"
 #include "ops/sigmoid.h"
+#include "ops/stack.h"
 #include "ops/tanh.h"
 
 using mindspore::ops::kNameAbs;
@@ -89,6 +92,7 @@ using mindspore::ops::kNameLeakyRelu;
 using mindspore::ops::kNameMaxPool;
 using mindspore::ops::kNameMul;
 using mindspore::ops::kNamePad;
+using mindspore::ops::kNamePow;
 using mindspore::ops::kNamePReLU;
 using mindspore::ops::kNameReduceAll;
 using mindspore::ops::kNameReduceASum;
@@ -115,6 +119,7 @@ namespace {
 constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
+constexpr auto kNameSlice = "Slice";
 constexpr auto kNameGatherV2 = "Gather";
 constexpr auto kNameTensorAdd = "TensorAdd";
 std::map<std::string, mindspore::ActivationType> activation_map = {
@@ -418,6 +423,30 @@ int MoveAttrMapResize(const CNodePtr &cnode) {
 }
 }  // namespace
 
+int MoveAttrSlice(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  MS_ASSERT(value_node != nullptr);
+  auto src_prim = GetValueNode<PrimitivePtr>(value_node);
+  if (src_prim == nullptr) {
+    MS_LOG(ERROR) << "value node is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto dst_prim = std::make_shared<ops::SliceFusion>();
+  MS_ASSERT(dst_prim != nullptr);
+  auto begin = GetValueNode<ValuePtr>(cnode->input(2));
+  auto begin_value = GetValue<std::vector<int64_t>>(begin);
+
+  std::vector<int64_t> axes(begin_value.size());
+  for (size_t i = 0; i < begin_value.size(); i++) {
+    axes[i] = i;
+  }
+  dst_prim->set_axes(axes);
+  dst_prim->SetAttrs(src_prim->attrs());
+  value_node->set_value(dst_prim);
+  return lite::RET_OK;
+}
+
 bool PrimitiveAdjustPass::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type_ != lite::converter::FmkType_MS) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
@@ -480,6 +509,7 @@ REGIST_PRIMITIVE_ADJUST(kNameLeakyRelu, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameMaxPool, MoveAttrPool)
 REGIST_PRIMITIVE_ADJUST(kNameMul, MoveAttrMapCommon<ops::MulFusion>)
 REGIST_PRIMITIVE_ADJUST(kNamePad, MoveAttrMapCommon<ops::PadFusion>)
+REGIST_PRIMITIVE_ADJUST(kNamePow, MoveAttrMapCommon<ops::PowFusion>)
 REGIST_PRIMITIVE_ADJUST(kNamePReLU, MoveAttrMapCommon<ops::PReLUFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameReduceAll, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReduceASum, MoveAttrMapReduce)
@@ -495,6 +525,7 @@ REGIST_PRIMITIVE_ADJUST(kNameResizeBilinear, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighbor, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameScale, MoveAttrMapCommon<ops::ScaleFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameSigmoid, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameSlice, MoveAttrSlice)
 REGIST_PRIMITIVE_ADJUST(kNameSub, MoveAttrMapCommon<ops::SubFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTanh, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameTensorAdd, MoveAttrMapCommon<ops::AddFusion>)

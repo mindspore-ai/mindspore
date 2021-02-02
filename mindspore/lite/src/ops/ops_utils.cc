@@ -502,6 +502,10 @@ schema::PrimitiveT *ScaleFusionPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ScaleFusion>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
+schema::PrimitiveT *ScatterNdPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ScatterNd>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
 schema::PrimitiveT *ShapePrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Shape>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
@@ -787,6 +791,7 @@ RegistryMSOps g_rsqrtPrimitiveCreatorRegistry("Rsqrt", RsqrtPrimitiveCreator);
 RegistryMSOps g_quantDTypeCastPrimitiveCreatorRegistry("QuantDTypeCast", QuantDTypeCastPrimitiveCreator);
 RegistryMSOps g_scalePrimitiveCreatorRegistry("Scale", ScaleFusionPrimitiveCreator);
 RegistryMSOps g_scaleFusionPrimitiveCreatorRegistry("ScaleFusion", ScaleFusionPrimitiveCreator);
+RegistryMSOps g_scatterNdPrimitiveCreatorRegistry("ScatterNd", ScatterNdPrimitiveCreator);
 RegistryMSOps g_shapePrimitiveCreatorRegistry("Shape", ShapePrimitiveCreator);
 RegistryMSOps g_sigmoidCrossEntropyWithLogitsPrimitiveCreatorRegistry("SigmoidCrossEntropyWithLogits",
                                                                       SigmoidCrossEntropyWithLogitsPrimitiveCreator);

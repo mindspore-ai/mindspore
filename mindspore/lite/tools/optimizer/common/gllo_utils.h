@@ -37,6 +37,8 @@ namespace mindspore {
 namespace opt {
 std::vector<int> CastToInt(const ValuePtr &value);
 
+std::vector<std::vector<int>> CastToVec2DInt(const ValuePtr &value);
+
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
 
 bool IsRealCNodeKernel(const AnfNodePtr &node);
