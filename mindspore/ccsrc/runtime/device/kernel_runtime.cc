@@ -1151,6 +1151,11 @@ void KernelRuntime::CheckIfSupportPSEmbeddingCache(const session::KernelGraph *g
                     << input_index.first->fullname_with_scope();
       MS_LOG(EXCEPTION) << "The embeddingLookup whose input index isn't from dataset doesn't support cache in "
                            "parameter server training mode.";
+    } else if (input_index.first->isa<CNode>() && (AnfAlgo::GetCNodeName(input_index.first) == kGetNextOpName)) {
+      MS_LOG(ERROR) << "The EmbeddingLookup kernel(" << kernel->fullname_with_scope() << ") doesn't enable cache.";
+      MS_LOG(EXCEPTION) << "All EmbeddingLookup kernels whose input indices are from dataset must enable cache at "
+                           "the same time and parameter 'sparse' must be equal to the value of 'enable_sparse' in "
+                           "context setting in parameter server training mode.";
     }
   }
 }
