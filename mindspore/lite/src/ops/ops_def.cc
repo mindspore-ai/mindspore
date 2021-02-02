@@ -726,8 +726,8 @@ OP_ATTR(shift, float)
 OP_SCHEMA_DEF_END(PowerGrad)
 
 OP_SCHEMA_DEF(PowFusion)
-OP_ATTR(scale, float)
-OP_ATTR(shift, float)
+OP_ATTR_WITH_VALUE(scale, float, 1)
+OP_ATTR_WITH_VALUE(shift, float, 0)
 OP_SCHEMA_DEF_END(PowFusion)
 
 OP_SCHEMA_DEF(PriorBox)

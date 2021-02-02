@@ -37,13 +37,6 @@ ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const 
         paddings[i][1] = static_cast<int64_t>(onnx_node_attr.ints(i + size / 2));
       }
       prim->set_paddings(paddings);
-
-      std::vector<std::vector<int32_t>> pads(size / 2, std::vector<int32_t>(2, 0));
-      for (int i = 0; i < size / 2; i++) {
-        pads[i][0] = static_cast<int32_t>(onnx_node_attr.ints(i));
-        pads[i][1] = static_cast<int32_t>(onnx_node_attr.ints(i + size / 2));
-      }
-      prim->AddAttr("pads", MakeValue(pads));
     } else if (attribute_name == "mode") {
       const auto &mode = onnx_node_attr.s();
       if (mode == "constant") {

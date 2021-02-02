@@ -49,13 +49,6 @@ ops::PrimitiveC *TflitePadParser::Parse(const std::unique_ptr<tflite::OperatorT>
       return nullptr;
     }
     prim->set_paddings(paddings);
-
-    std::vector<std::vector<int32_t>> pads;
-    if (TransTfliteDataToVec2D(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, pads)) {
-      MS_LOG(ERROR) << "get Pad -> paddings failed";
-      return nullptr;
-    }
-    prim->AddAttr("pads", MakeValue(pads));
   } else if (tflite_op_type == tflite::BuiltinOperator_MIRROR_PAD) {
     const auto &tflite_attr = tflite_op->builtin_options.AsMirrorPadOptions();
     if (tflite_attr == nullptr) {

@@ -44,21 +44,21 @@ STATUS InputAdjustPass::AddAttrToInput(const FuncGraphPtr &func_graph, const CNo
   if (value_ptr != nullptr) {
     switch (flag) {
       case 1: {
-        auto value_data = GetValue<int32_t>(value_ptr);
+        auto value_data = CastToInt(value_ptr).front();
         auto param_node =
           BuildIntValueParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
         inputs.push_back(param_node);
         break;
       }
       case 2: {
-        auto value_data = GetValue<std::vector<int32_t>>(value_ptr);
+        auto value_data = CastToInt(value_ptr);
         auto param_node =
           BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
         inputs.push_back(param_node);
         break;
       }
       case 3: {
-        auto value_data = GetValue<std::vector<std::vector<int32_t>>>(value_ptr);
+        auto value_data = CastToVec2DInt(value_ptr);
         auto param_node =
           BuildIntVec2DParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
         inputs.push_back(param_node);
@@ -123,7 +123,7 @@ bool InputAdjustPass::Run(const FuncGraphPtr &func_graph) {
       status = AddAttrToInput(func_graph, cnode, 2, "axes", 2);
     } else if (CheckPrimitiveType(node, prim::kPrimPadFusion)) {
       MS_LOG(INFO) << "Adjust PadFusion";
-      status = AddAttrToInput(func_graph, cnode, 2, "pads", 3);
+      status = AddAttrToInput(func_graph, cnode, 2, "paddings", 3);
     } else if (CheckPrimitiveType(node, prim::kPrimPowFusion)) {
       MS_LOG(INFO) << "Adjust PowFuison";
       status = AddAttrToInput(func_graph, cnode, 2, "power", 4);

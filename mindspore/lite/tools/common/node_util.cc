@@ -49,7 +49,10 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_InstanceNorm,
   schema::PrimitiveType_SpaceToDepth,
   schema::PrimitiveType_DepthToSpace,
-  schema::PrimitiveType_TopKFusion};
+  schema::PrimitiveType_TopKFusion,
+  schema::PrimitiveType_BatchToSpace,
+  schema::PrimitiveType_SpaceToBatch,
+  schema::PrimitiveType_SpaceToBatchND};
 
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
 #ifdef SUPPORT_TRAIN

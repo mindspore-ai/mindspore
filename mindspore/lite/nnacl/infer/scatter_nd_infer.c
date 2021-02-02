@@ -24,6 +24,9 @@ int ScatterNdInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   }
 
   const TensorC *shape = inputs[0];
+  if (shape->data_ == NULL) {
+    return NNACL_INFER_INVALID;
+  }
   // const TensorC *indices = inputs[1];
   const TensorC *update = inputs[2];
   TensorC *output = outputs[0];
