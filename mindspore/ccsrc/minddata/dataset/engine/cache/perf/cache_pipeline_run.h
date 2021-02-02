@@ -115,9 +115,4 @@ class CachePipelineRun {
 };
 }  // namespace dataset
 }  // namespace mindspore
-// todo: waiting for the master of the codes to refactor
-#define get_code StatusCode
-#define kDuplicateKey kMDDuplicateKey
-#define IsOutofMemory() StatusCode() == StatusCode::kMDOutOfMemory
-#define IsNoSpace() StatusCode() == StatusCode::kMDNoSpace
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_PIPELINE_RUN_H_
