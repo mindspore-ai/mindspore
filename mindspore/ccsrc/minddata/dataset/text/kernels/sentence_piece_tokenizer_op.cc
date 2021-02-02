@@ -31,7 +31,7 @@ SentencePieceTokenizerOp::SentencePieceTokenizerOp(const std::shared_ptr<Sentenc
   auto status = processor_.LoadFromSerializedProto(vocab_.get()->model_proto());
   if (!status.ok()) {
     model_status_ =
-      Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "SentencePieceTokenizer: parser vocab model filed.");
+      Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "SentencePieceTokenizer: parser vocab model filed.");
   } else {
     model_status_ = Status::OK();
   }
@@ -46,7 +46,7 @@ SentencePieceTokenizerOp::SentencePieceTokenizerOp(const std::string &model_path
   if (!status.ok()) {
     std::string err_msg = "SentencePieceTokenizer: ";
     err_msg += "load vocab model file: " + file_path_ + " failed.";
-    model_status_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+    model_status_ = Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
   } else {
     model_status_ = Status::OK();
   }

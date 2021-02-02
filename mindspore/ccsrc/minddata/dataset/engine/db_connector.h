@@ -58,7 +58,7 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
   // @param retry_if_eoe A flag to allow the same thread invoke pop() again if the current pop returns eoe buffer.
   Status PopWithRetry(int32_t worker_id, std::unique_ptr<DataBuffer> *result, bool retry_if_eoe = false) noexcept {
     if (result == nullptr) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                     "[ERROR] nullptr detected when getting data from db connector");
     } else {
       std::unique_lock<std::mutex> lk(m_);
@@ -69,7 +69,7 @@ class DbConnector : public Connector<std::unique_ptr<DataBuffer>> {
       } else {
         RETURN_IF_NOT_OK(queues_[pop_from_]->PopFront(result));
         if (*result == nullptr) {
-          return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+          return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                         "[ERROR] nullptr detected when getting data from db connector");
         }
         // Setting the internal flag once the first EOF is encountered.

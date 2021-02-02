@@ -16,26 +16,49 @@
 #ifndef MINDSPORE_INCLUDE_API_CONTEXT_H
 #define MINDSPORE_INCLUDE_API_CONTEXT_H
 
+#include <map>
+#include <any>
 #include <string>
 #include <memory>
 #include "include/api/types.h"
 
 namespace mindspore {
-namespace api {
-class MS_API Context {
- public:
-  static Context &Instance();
-  const std::string &GetDeviceTarget() const;
-  Context &SetDeviceTarget(const std::string &device_target);
-  uint32_t GetDeviceID() const;
-  Context &SetDeviceID(uint32_t device_id);
+constexpr auto kDeviceTypeAscend310 = "Ascend310";
+constexpr auto kDeviceTypeAscend910 = "Ascend910";
 
- private:
-  Context();
-  ~Context();
-  class ContextImpl;
-  std::shared_ptr<ContextImpl> impl_;
+struct MS_API Context {
+  virtual ~Context() = default;
+  std::map<std::string, std::any> params;
 };
-}  // namespace api
+
+struct MS_API GlobalContext : public Context {
+  static std::shared_ptr<Context> GetGlobalContext();
+
+  static void SetGlobalDeviceTarget(const std::string &device_target);
+  static std::string GetGlobalDeviceTarget();
+
+  static void SetGlobalDeviceID(const uint32_t &device_id);
+  static uint32_t GetGlobalDeviceID();
+};
+
+struct MS_API ModelContext : public Context {
+  static void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path);
+  static std::string GetInsertOpConfigPath(const std::shared_ptr<Context> &context);
+
+  static void SetInputFormat(const std::shared_ptr<Context> &context, const std::string &format);
+  static std::string GetInputFormat(const std::shared_ptr<Context> &context);
+
+  static void SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape);
+  static std::string GetInputShape(const std::shared_ptr<Context> &context);
+
+  static void SetOutputType(const std::shared_ptr<Context> &context, enum DataType output_type);
+  static enum DataType GetOutputType(const std::shared_ptr<Context> &context);
+
+  static void SetPrecisionMode(const std::shared_ptr<Context> &context, const std::string &precision_mode);
+  static std::string GetPrecisionMode(const std::shared_ptr<Context> &context);
+
+  static void SetOpSelectImplMode(const std::shared_ptr<Context> &context, const std::string &op_select_impl_mode);
+  static std::string GetOpSelectImplMode(const std::shared_ptr<Context> &context);
+};
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H

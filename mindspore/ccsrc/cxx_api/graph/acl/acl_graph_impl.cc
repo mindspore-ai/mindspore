@@ -16,53 +16,50 @@
 #include "cxx_api/graph/acl/acl_graph_impl.h"
 #include "include/api/context.h"
 #include "cxx_api/model/acl/model_converter.h"
-#include "cxx_api/python_utils.h"
 #include "utils/log_adapter.h"
 
-namespace mindspore::api {
+namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, Ascend310, AclGraphImpl);
 
 AclGraphImpl::AclGraphImpl()
     : init_flag_(false),
       load_flag_(false),
       device_type_("AscendCL"),
-      device_id_(Context::Instance().GetDeviceID()),
+      device_id_(GlobalContext::GetGlobalDeviceID()),
       context_(nullptr),
       acl_env_(nullptr) {}
 
 AclGraphImpl::~AclGraphImpl() { (void)FinalizeEnv(); }
 
-Status AclGraphImpl::Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
+Status AclGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   Status ret = Load();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
-    return FAILED;
+    return ret;
   }
 
   return model_process_.PredictFromHost(inputs, outputs);
 }
 
-Status AclGraphImpl::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                   std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+std::vector<MSTensor> AclGraphImpl::GetInputs() {
   Status ret = Load();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
-    return FAILED;
+    return {};
   }
 
-  return model_process_.GetInputsInfo(names, shapes, data_types, mem_sizes);
+  return model_process_.GetInputs();
 }
 
-Status AclGraphImpl::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                    std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+std::vector<MSTensor> AclGraphImpl::GetOutputs() {
   Status ret = Load();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Prepare model resource failed.";
-    return FAILED;
+    return {};
   }
 
-  return model_process_.GetOutputsInfo(names, shapes, data_types, mem_sizes);
+  return model_process_.GetOutputs();
 }
 
 Status AclGraphImpl::LoadAclModel(Buffer om_data) {
@@ -72,44 +69,44 @@ Status AclGraphImpl::LoadAclModel(Buffer om_data) {
   auto acl_ret = aclmdlLoadFromMem(om_data.Data(), om_data.DataSize(), &acl_model_id);
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call aclmdlLoadFromMem failed.";
-    return FAILED;
+    return kMCDeviceError;
   }
 
   // acl init model resource
   model_process_.set_model_id(acl_model_id);
   Status ret = model_process_.PreInitModelResource();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     (void)aclmdlUnload(acl_model_id);
     MS_LOG(ERROR) << "Pre init model resource failed.";
-    return FAILED;
+    return ret;
   }
 
   MS_LOG(INFO) << "Load acl model success.";
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status AclGraphImpl::InitEnv() {
   if (init_flag_) {
-    return SUCCESS;
+    return kSuccess;
   }
 
   acl_env_ = AclEnvGuard::GetAclEnv("");
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Acl init failed.";
-    return FAILED;
+    return kMCDeviceError;
   }
 
   aclError ret = aclrtSetDevice(device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed";
-    return FAILED;
+    return kMCDeviceError;
   }
   MS_LOG(INFO) << "Open device " << device_id_ << " success";
 
   ret = aclrtCreateContext(&context_, device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl create context failed";
-    return FAILED;
+    return kMCDeviceError;
   }
   MS_LOG(INFO) << "Create context success";
 
@@ -117,7 +114,7 @@ Status AclGraphImpl::InitEnv() {
   ret = aclrtGetRunMode(&run_mode);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl get run mode failed";
-    return FAILED;
+    return kMCDeviceError;
   }
   bool is_device = (run_mode == ACL_DEVICE);
   model_process_.SetIsDevice(is_device);
@@ -125,24 +122,24 @@ Status AclGraphImpl::InitEnv() {
 
   MS_LOG(INFO) << "Init acl success, device id " << device_id_;
   init_flag_ = true;
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status AclGraphImpl::FinalizeEnv() {
   if (!init_flag_) {
-    return SUCCESS;
+    return kSuccess;
   }
 
   aclError rt_ret = aclrtSetCurrentContext(context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed";
-    return FAILED;
+    return kMCDeviceError;
   }
 
   Status ret = model_process_.UnLoad();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Unload model inner failed.";
-    return FAILED;
+    return ret;
   }
 
   if (context_ != nullptr) {
@@ -161,16 +158,16 @@ Status AclGraphImpl::FinalizeEnv() {
   MS_LOG(INFO) << "End to reset device " << device_id_;
 
   init_flag_ = false;
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status AclGraphImpl::Load() {
   // check graph type
   if (graph_->ModelType() != ModelType::kOM) {
     Status ret = ConvertToOM();
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "Load Failed.";
-      return FAILED;
+      return ret;
     }
   }
 
@@ -180,15 +177,15 @@ Status AclGraphImpl::Load() {
 
   // init
   Status ret = InitEnv();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitEnv failed.";
-    return FAILED;
+    return ret;
   }
 
   // load model
   if (!load_flag_) {
     ret = LoadAclModel(om_data);
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "Load acl model failed.";
       return ret;
     }
@@ -198,24 +195,24 @@ Status AclGraphImpl::Load() {
   aclError rt_ret = aclrtSetCurrentContext(context_);
   if (rt_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed";
-    return FAILED;
+    return kMCDeviceError;
   }
 
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status AclGraphImpl::ConvertToOM() {
   MS_LOG(INFO) << "Start convert to om model.";
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid graph_ is null.";
-    return FAILED;
+    return kMCFailed;
   }
 
   auto &graph_data = GraphImpl::MutableGraphData();
   MS_EXCEPTION_IF_NULL(graph_data);
   if (graph_->ModelType() == ModelType::kOM) {
     MS_LOG(INFO) << "This model has been built, skip.";
-    return SUCCESS;
+    return kSuccess;
   } else if (graph_->ModelType() == ModelType::kMindIR) {
     auto func_graph = graph_data->GetFuncGraph();
     MS_EXCEPTION_IF_NULL(func_graph);
@@ -223,13 +220,13 @@ Status AclGraphImpl::ConvertToOM() {
     Buffer om_data = model_converter.LoadMindIR(func_graph);
     if (om_data.Data() == nullptr || om_data.DataSize() == 0) {
       MS_LOG(ERROR) << "Convert MindIR to OM failed.";
-      return FAILED;
+      return kMCFailed;
     }
     graph_data = std::make_shared<Graph::GraphData>(om_data, ModelType::kOM);
     MS_LOG(INFO) << "Convert MindIR to OM success.";
-    return SUCCESS;
+    return kSuccess;
   }
   MS_LOG(ERROR) << "Unsupported ModelType " << graph_->ModelType();
-  return FAILED;
+  return kMCFailed;
 }
-}  // namespace mindspore::api
+}  // namespace mindspore

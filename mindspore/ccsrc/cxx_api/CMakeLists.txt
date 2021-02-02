@@ -23,7 +23,7 @@ if(ENABLE_D)
 endif()
 
 if(ENABLE_GPU)
-    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "python_utils.cc" "model/ms/*.cc" "graph/gpu/*.cc")
+    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/ms/*.cc" "graph/gpu/*.cc")
 endif()
 
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
@@ -45,8 +45,13 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
             -Wl,-force_load mindspore -Wl,-noall_load proto_input mindspore_gvar mindspore::protobuf)
 else()
-    target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
+    if(ENABLE_D OR ENABLE_ACL)
+        target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
             -Wl,--whole-archive mindspore -Wl,--no-whole-archive proto_input mindspore_gvar mindspore::protobuf)
+    else()
+        target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
+          mindspore proto_input mindspore_gvar mindspore::protobuf)
+    endif()
 endif()
 
 if(ENABLE_CPU)

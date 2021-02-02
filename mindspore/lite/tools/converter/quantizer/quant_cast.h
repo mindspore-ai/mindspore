@@ -19,7 +19,7 @@
 
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/lite/include/errorcode.h"
-#include "mindspore/core/ir/dtype/type_id.h"
+#include "ir/dtype/type_id.h"
 #include "mindspore/core/ir/func_graph.h"
 
 namespace mindspore::lite::quant {

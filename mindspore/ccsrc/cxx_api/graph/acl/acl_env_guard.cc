@@ -17,8 +17,8 @@
 #include "utils/log_adapter.h"
 #include "acl/acl.h"
 
-namespace mindspore::api {
-std::weak_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_;
+namespace mindspore {
+std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_;
 std::mutex AclEnvGuard::global_acl_env_mutex_;
 
 AclEnvGuard::AclEnvGuard(std::string_view cfg_file) {
@@ -42,7 +42,7 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
   std::shared_ptr<AclEnvGuard> acl_env;
 
   std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
-  acl_env = global_acl_env_.lock();
+  acl_env = global_acl_env_;
   if (acl_env != nullptr) {
     MS_LOG(INFO) << "Acl has been initialized, skip.";
   } else {
@@ -57,4 +57,4 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
   }
   return acl_env;
 }
-}  // namespace mindspore::api
+}  // namespace mindspore

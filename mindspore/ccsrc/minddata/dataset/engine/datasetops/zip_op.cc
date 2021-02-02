@@ -123,7 +123,7 @@ Status ZipOp::prepare(TensorQTable *const table) {
   draining_ = false;
   buffer_id_ = 0;
   if (table == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid data, ZipOp prepare phase requires a tensor table, but got nullptr.");
   }
   // fill initial row
@@ -148,7 +148,7 @@ Status ZipOp::prepare(TensorQTable *const table) {
 // fillBuffer always expects a new table to fill
 Status ZipOp::fillBuffer(TensorQTable *const table) {
   if (table == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid data, ZipOp fillBuffer null table pointer.");
   }
   TensorRow new_row;
@@ -199,7 +199,7 @@ Status ZipOp::getNextTensorRow(TensorRow *const new_zip_row) {
 Status ZipOp::drainPipeline() {
   // we don't need to drain if we reached eof
   if (eof_) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "ZipOp draining should not be done if already at eof!");
   }
   for (int32_t con = 0; con < children_num_; ++con) {

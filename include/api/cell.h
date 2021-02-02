@@ -24,7 +24,6 @@
 #include "include/api/graph.h"
 
 namespace mindspore {
-namespace api {
 class InputAndOutput;
 using Input = InputAndOutput;
 using Output = InputAndOutput;
@@ -35,7 +34,7 @@ class MS_API CellBase {
   virtual ~CellBase() = default;
   virtual std::vector<Output> Construct(const std::vector<Input> &inputs) { return {}; }
   virtual std::shared_ptr<CellBase> Clone() const = 0;
-  virtual Status Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) { return SUCCESS; }
+  virtual Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) { return kSuccess; }
   std::vector<Output> operator()(const std::vector<Input> &inputs) const;
 };
 
@@ -57,16 +56,16 @@ class MS_API ParameterCell final : public Cell<ParameterCell> {
   ParameterCell(ParameterCell &&);
   ParameterCell &operator=(ParameterCell &&);
 
-  explicit ParameterCell(const Tensor &);
-  ParameterCell &operator=(const Tensor &);
+  explicit ParameterCell(const MSTensor &);
+  ParameterCell &operator=(const MSTensor &);
 
-  explicit ParameterCell(Tensor &&);
-  ParameterCell &operator=(Tensor &&);
+  explicit ParameterCell(MSTensor &&);
+  ParameterCell &operator=(MSTensor &&);
 
-  Tensor GetTensor() const { return tensor_; }
+  MSTensor GetTensor() const { return tensor_; }
 
  private:
-  Tensor tensor_;
+  MSTensor tensor_;
 };
 
 class MS_API OpCellBase : public CellBase {
@@ -99,11 +98,9 @@ class MS_API GraphCell final : public Cell<GraphCell> {
   explicit GraphCell(const std::shared_ptr<Graph> &);
 
   const std::shared_ptr<Graph> &GetGraph() const { return graph_; }
-  Status Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) override;
-  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
-  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
+  Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
+  std::vector<MSTensor> GetInputs();
+  std::vector<MSTensor> GetOutputs();
 
  private:
   friend class ModelImpl;
@@ -119,8 +116,8 @@ class MS_API InputAndOutput {
   ~InputAndOutput() = default;
 
   // no explicit
-  InputAndOutput(const Tensor &);  // NOLINT(runtime/explicit)
-  InputAndOutput(Tensor &&);       // NOLINT(runtime/explicit)
+  InputAndOutput(const MSTensor &);  // NOLINT(runtime/explicit)
+  InputAndOutput(MSTensor &&);       // NOLINT(runtime/explicit)
 
   InputAndOutput(const std::shared_ptr<CellBase> &, const std::vector<InputAndOutput> &, int32_t index);
 
@@ -132,6 +129,5 @@ class MS_API InputAndOutput {
   std::vector<InputAndOutput> prev_;
   int32_t index_;
 };
-}  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CELL_H

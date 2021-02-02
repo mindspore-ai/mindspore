@@ -16,49 +16,119 @@
 #include "include/api/context.h"
 #include "utils/log_adapter.h"
 
-namespace mindspore::api {
-class Context::ContextImpl {
- public:
-  ContextImpl() : device_target_("NotSet"), device_id_(0) {}
-  ~ContextImpl() = default;
-  const std::string &GetDeviceTarget() const { return device_target_; }
-  void SetDeviceTarget(std::string_view device_target) { device_target_ = device_target; }
-  uint32_t GetDeviceID() const { return device_id_; }
-  void SetDeviceID(uint32_t device_id) { device_id_ = device_id; }
+constexpr auto kGlobalContextDeviceTarget = "mindspore.ascend.globalcontext.device_target";
+constexpr auto kGlobalContextDeviceID = "mindspore.ascend.globalcontext.device_id";
+constexpr auto kModelOptionInsertOpCfgPath = "mindspore.option.insert_op_config_file_path";  // aipp config file
+constexpr auto kModelOptionInputFormat = "mindspore.option.input_format";                    // nchw or nhwc
+constexpr auto kModelOptionInputShape = "mindspore.option.input_shape";
+// Mandatory while dynamic batch: e.g. "input_op_name1: n1,c2,h3,w4;input_op_name2: n4,c3,h2,w1"
+constexpr auto kModelOptionOutputType = "mindspore.option.output_type";  // "FP32", "UINT8" or "FP16", default as "FP32"
+constexpr auto kModelOptionPrecisionMode = "mindspore.option.precision_mode";
+// "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
+constexpr auto kModelOptionOpSelectImplMode = "mindspore.option.op_select_impl_mode";
 
- private:
-  std::string device_target_;
-  uint32_t device_id_;
-};
+namespace mindspore {
+template <class T>
+static T GetValue(const std::shared_ptr<Context> &context, const std::string &key) {
+  auto iter = context->params.find(key);
+  if (iter == context->params.end()) {
+    return T();
+  }
+  const std::any &value = iter->second;
+  if (value.type() != typeid(T)) {
+    return T();
+  }
 
-Context &Context::Instance() {
-  static Context context;
-  return context;
+  return std::any_cast<T>(value);
 }
 
-const std::string &Context::GetDeviceTarget() const {
-  MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->GetDeviceTarget();
+std::shared_ptr<Context> GlobalContext::GetGlobalContext() {
+  static std::shared_ptr<Context> g_context = std::make_shared<Context>();
+  return g_context;
 }
 
-Context &Context::SetDeviceTarget(const std::string &device_target) {
-  MS_EXCEPTION_IF_NULL(impl_);
-  impl_->SetDeviceTarget(device_target);
-  return *this;
+void GlobalContext::SetGlobalDeviceTarget(const std::string &device_target) {
+  auto global_context = GetGlobalContext();
+  MS_EXCEPTION_IF_NULL(global_context);
+  global_context->params[kGlobalContextDeviceTarget] = device_target;
 }
 
-uint32_t Context::GetDeviceID() const {
-  MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->GetDeviceID();
+std::string GlobalContext::GetGlobalDeviceTarget() {
+  auto global_context = GetGlobalContext();
+  MS_EXCEPTION_IF_NULL(global_context);
+  return GetValue<std::string>(global_context, kGlobalContextDeviceTarget);
 }
 
-Context &Context::SetDeviceID(uint32_t device_id) {
-  MS_EXCEPTION_IF_NULL(impl_);
-  impl_->SetDeviceID(device_id);
-  return *this;
+void GlobalContext::SetGlobalDeviceID(const uint32_t &device_id) {
+  auto global_context = GetGlobalContext();
+  MS_EXCEPTION_IF_NULL(global_context);
+  global_context->params[kGlobalContextDeviceID] = device_id;
 }
 
-Context::Context() : impl_(std::make_shared<Context::ContextImpl>()) { MS_EXCEPTION_IF_NULL(impl_); }
+uint32_t GlobalContext::GetGlobalDeviceID() {
+  auto global_context = GetGlobalContext();
+  MS_EXCEPTION_IF_NULL(global_context);
+  return GetValue<uint32_t>(global_context, kGlobalContextDeviceID);
+}
 
-Context::~Context() {}
-}  // namespace mindspore::api
+void ModelContext::SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path) {
+  MS_EXCEPTION_IF_NULL(context);
+  context->params[kModelOptionInsertOpCfgPath] = cfg_path;
+}
+
+std::string ModelContext::GetInsertOpConfigPath(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  return GetValue<std::string>(context, kModelOptionInsertOpCfgPath);
+}
+
+void ModelContext::SetInputFormat(const std::shared_ptr<Context> &context, const std::string &format) {
+  MS_EXCEPTION_IF_NULL(context);
+  context->params[kModelOptionInputFormat] = format;
+}
+
+std::string ModelContext::GetInputFormat(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  return GetValue<std::string>(context, kModelOptionInputFormat);
+}
+
+void ModelContext::SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape) {
+  MS_EXCEPTION_IF_NULL(context);
+  context->params[kModelOptionInputShape] = shape;
+}
+
+std::string ModelContext::GetInputShape(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  return GetValue<std::string>(context, kModelOptionInputShape);
+}
+
+void ModelContext::SetOutputType(const std::shared_ptr<Context> &context, enum DataType output_type) {
+  MS_EXCEPTION_IF_NULL(context);
+  context->params[kModelOptionOutputType] = output_type;
+}
+
+enum DataType ModelContext::GetOutputType(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  return GetValue<enum DataType>(context, kModelOptionOutputType);
+}
+
+void ModelContext::SetPrecisionMode(const std::shared_ptr<Context> &context, const std::string &precision_mode) {
+  MS_EXCEPTION_IF_NULL(context);
+  context->params[kModelOptionPrecisionMode] = precision_mode;
+}
+
+std::string ModelContext::GetPrecisionMode(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  return GetValue<std::string>(context, kModelOptionPrecisionMode);
+}
+
+void ModelContext::SetOpSelectImplMode(const std::shared_ptr<Context> &context,
+                                       const std::string &op_select_impl_mode) {
+  MS_EXCEPTION_IF_NULL(context);
+  context->params[kModelOptionOpSelectImplMode] = op_select_impl_mode;
+}
+
+std::string ModelContext::GetOpSelectImplMode(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  return GetValue<std::string>(context, kModelOptionOpSelectImplMode);
+}
+}  // namespace mindspore

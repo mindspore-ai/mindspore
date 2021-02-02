@@ -27,7 +27,7 @@
 #include "external/ge/ge_ir_build.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 
-namespace mindspore::api {
+namespace mindspore {
 class ModelConverter {
  public:
   ModelConverter() : options_(nullptr) {}
@@ -46,6 +46,5 @@ class ModelConverter {
   Buffer LoadMindIRInner(const FuncGraphPtr &func_graph);
   Buffer LoadAscendIRInner(const Buffer &model_data);
 };
-}  // namespace mindspore::api
-
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXXAPI_SESSION_ACL_MODEL_CONVERTER_H

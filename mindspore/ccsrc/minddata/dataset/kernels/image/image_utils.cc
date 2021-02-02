@@ -110,11 +110,11 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   if (output_height > in_image.rows * 1000 || output_width > in_image.cols * 1000) {
     std::string err_msg =
       "Resize: the resizing width or height is too big, it's 1000 times bigger than the original image.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   if (output_height == 0 || output_width == 0) {
     std::string err_msg = "Resize: the resizing width or height is invalid, width or height is zero.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   try {
     TensorShape shape{output_height, output_width};
@@ -632,12 +632,12 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
     std::string err_msg = "Normalize: mean should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   std->Squeeze();
   if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
     std::string err_msg = "Normalize: std tensor should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   try {
     // NOTE: We are assuming the input image is in RGB and the mean
@@ -682,12 +682,12 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
     std::string err_msg = "NormalizePad: mean tensor should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   std->Squeeze();
   if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
     std::string err_msg = "NormalizePad: std tensor should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   try {
     // NOTE: We are assuming the input image is in RGB and the mean

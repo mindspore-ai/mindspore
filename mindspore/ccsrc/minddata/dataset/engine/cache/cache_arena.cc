@@ -75,7 +75,7 @@ Status CachedSharedMemory::AllocateSharedMemory(int32_t client_id, size_t sz, vo
   do {
     std::unique_lock<std::mutex> lock(mux_[slot]);
     rc = shm_pool_[slot]->Allocate(sz, p);
-    if (rc.IsOutofMemory()) {
+    if (rc == StatusCode::kMDOutOfMemory) {
       slot = (slot + 1) % shm_pool_.size();
     }
   } while (rc.IsError() && slot != begin_slot);

@@ -20,26 +20,25 @@
 #include "mindspore/core/utils/log_adapter.h"
 
 namespace mindspore {
-namespace api {
 Status SharedMemory::Create(uint64_t memory_size) {
   auto access_mode = S_IRUSR | S_IWUSR | S_IROTH | S_IWOTH | S_IRGRP | S_IWGRP;
   shm_id_ = shmget(IPC_PRIVATE, memory_size, IPC_CREAT | IPC_EXCL | access_mode);
   if (shm_id_ == -1) {
     MS_LOG_ERROR << "Shared memory creation failed. Errno " + std::to_string(errno);
-    return FAILED;
+    return kMCFailed;
   }
   MS_LOG_INFO << "shmget success, shm id " << shm_id_;
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status SharedMemory::Attach() {
   void *shmat_addr = shmat(shm_id_, nullptr, 0);
   if (shmat_addr == reinterpret_cast<void *>(-1)) {
     MS_LOG_ERROR << "Shared memory attach failed. Errno " + std::to_string(errno);
-    return FAILED;
+    return kMCFailed;
   }
   shmat_addr_ = reinterpret_cast<uint8_t *>(shmat_addr);
-  return SUCCESS;
+  return kSuccess;
 }
 
 void SharedMemory::Detach() {
@@ -63,5 +62,4 @@ void SharedMemory::Destroy() {
     MS_LOG_ERROR << errMsg;
   }
 }
-}  // namespace api
 }  // namespace mindspore

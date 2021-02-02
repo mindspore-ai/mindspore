@@ -36,7 +36,7 @@ Status CachePerfMsg::Receive(int32_t qID) {
   auto err = msgrcv(qID, reinterpret_cast<void *>(&small_msg_), sizeof(small_msg_.body.msg), 0, MSG_NOERROR);
   if (err == -1) {
     if (errno == EIDRM) {
-      return Status(StatusCode::kInterrupted);
+      return Status(StatusCode::kMDInterrupted);
     } else {
       std::string errMsg = "Failed to call msgrcv. Errno = " + std::to_string(errno);
       RETURN_STATUS_UNEXPECTED(errMsg);

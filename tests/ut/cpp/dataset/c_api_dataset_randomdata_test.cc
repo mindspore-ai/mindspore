@@ -17,7 +17,7 @@
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/core/global_context.h"
 
-#include "mindspore/core/ir/dtype/type_id.h"
+#include "ir/dtype/type_id.h"
 
 using namespace mindspore::dataset;
 

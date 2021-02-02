@@ -419,7 +419,7 @@ class CacheServer : public Service {
     Status GetRc() {
       Status rc;
       for (auto &cache_rc : rc_lists_) {
-        if (cache_rc.IsError() && !cache_rc.IsInterrupted() && rc.IsOk()) {
+        if (cache_rc.IsError() && cache_rc != StatusCode::kMDInterrupted && rc.IsOk()) {
           rc = cache_rc;
         }
       }

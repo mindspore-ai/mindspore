@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_INCLUDE_API_GRAPH_H
 #define MINDSPORE_INCLUDE_API_GRAPH_H
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <map>
@@ -24,21 +25,21 @@
 #include "include/api/types.h"
 
 namespace mindspore {
-namespace api {
 class MS_API Graph {
  public:
   class GraphData;
   explicit Graph(const std::shared_ptr<GraphData> &graph_data);
   explicit Graph(std::shared_ptr<GraphData> &&graph_data);
+  explicit Graph(std::nullptr_t);
   ~Graph();
 
   enum ModelType ModelType() const;
+  bool operator==(std::nullptr_t) const;
 
  private:
   friend class GraphCell;
   friend class ModelImpl;
   std::shared_ptr<GraphData> graph_data_;
 };
-}  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_GRAPH_H

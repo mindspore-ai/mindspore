@@ -50,7 +50,7 @@ Status ClueOp::Builder::ValidateInputs() const {
            ? "Invalid parameter, num_shard must be greater than shard_id and greater than 0, got num_shard: " +
                std::to_string(builder_num_devices_) + ", shard_id: " + std::to_string(builder_device_id_) + ".\n"
            : "";
-  return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err);
+  return err.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err);
 }
 
 Status ClueOp::Builder::Build(std::shared_ptr<ClueOp> *op) {

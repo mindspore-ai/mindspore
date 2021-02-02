@@ -23,15 +23,15 @@
 #include "backend/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
-namespace mindspore::api {
+namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, GPU, GPUGraphImpl);
 
 GPUGraphImpl::GPUGraphImpl()
     : session_impl_(nullptr),
       graph_id_(0),
-      device_id_(Context::Instance().GetDeviceID()),
-      inputs_(),
-      outputs_(),
+      device_id_(GlobalContext::GetGlobalDeviceID()),
+      inputs_info_(),
+      outputs_info_(),
       input_names_(),
       output_names_(),
       init_flag_(false),
@@ -40,13 +40,13 @@ GPUGraphImpl::GPUGraphImpl()
 Status GPUGraphImpl::InitEnv() {
   if (init_flag_) {
     MS_LOG(WARNING) << "Initialized again, return success.";
-    return SUCCESS;
+    return kSuccess;
   }
 
   auto ms_context = MsContext::GetInstance();
   if (ms_context == nullptr) {
     MS_LOG(ERROR) << "Get Context failed!";
-    return FAILED;
+    return kMCFailed;
   }
   ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
@@ -57,18 +57,18 @@ Status GPUGraphImpl::InitEnv() {
   if (session_impl_ == nullptr) {
     MS_LOG(ERROR) << "Session create failed!, please make sure target device:" << kGpuInferenceDevice
                   << " is available.";
-    return FAILED;
+    return kMCFailed;
   }
 
   session_impl_->Init(device_id_);
   init_flag_ = true;
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status GPUGraphImpl::FinalizeEnv() {
   if (!init_flag_) {
     MS_LOG(WARNING) << "Never initialize before, return success";
-    return SUCCESS;
+    return kSuccess;
   }
 
   MS_LOG_INFO << "Start finalize env";
@@ -77,14 +77,14 @@ Status GPUGraphImpl::FinalizeEnv() {
 
   init_flag_ = false;
   MS_LOG(INFO) << "End finalize env";
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status GPUGraphImpl::Load() {
   // check graph type
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
-    return INVALID_INPUTS;
+    return kMCInvalidInput;
   }
 
   const auto &graph_data = GraphImpl::MutableGraphData();
@@ -93,38 +93,38 @@ Status GPUGraphImpl::Load() {
 
   // init
   Status ret = InitEnv();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitEnv failed.";
-    return FAILED;
+    return kMCDeviceError;
   }
 
   ret = CompileGraph(func_graph);
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Compile graph model failed";
-    return FAILED;
+    return kMCFailed;
   }
-  session_impl_->GetModelInputsInfo(graph_id_, &inputs_, &input_names_);
-  session_impl_->GetModelOutputsInfo(graph_id_, &outputs_, &output_names_);
-  if (inputs_.empty() || inputs_.size() != input_names_.size()) {
+  session_impl_->GetModelInputsInfo(graph_id_, &inputs_info_, &input_names_);
+  session_impl_->GetModelOutputsInfo(graph_id_, &outputs_info_, &output_names_);
+  if (inputs_info_.empty() || inputs_info_.size() != input_names_.size()) {
     MS_LOG_ERROR << "Get model inputs info failed";
-    return FAILED;
+    return kMCInvalidInput;
   }
-  if (outputs_.empty() || outputs_.size() != output_names_.size()) {
+  if (outputs_info_.empty() || outputs_info_.size() != output_names_.size()) {
     MS_LOG_ERROR << "Get model outputs info failed";
-    return FAILED;
+    return kMCInvalidInput;
   }
   load_flag_ = true;
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status GPUGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
   MS_ASSERT(session_impl_ != nullptr);
   try {
     graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
-    return SUCCESS;
+    return kSuccess;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "CompileGraph failed: " << e.what();
-    return FAILED;
+    return kMCFailed;
   }
 }
 
@@ -139,118 +139,118 @@ std::vector<tensor::TensorPtr> GPUGraphImpl::RunGraph(const std::vector<tensor::
   }
 }
 
-Status GPUGraphImpl::ExecuteModel(const std::vector<Buffer> &request, std::vector<Buffer> *reply) {
+Status GPUGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply) {
   MS_EXCEPTION_IF_NULL(reply);
 
   vector<tensor::TensorPtr> inputs;
   for (size_t i = 0; i < request.size(); i++) {
     auto &item = request[i];
-    auto input = inputs_[i];
+    auto input = inputs_info_[i];
     if (input->Size() != item.DataSize()) {
       MS_LOG(ERROR) << "Input " << i << " data size " << item.DataSize() << " not match model input data size "
                     << input->Size();
-      return FAILED;
+      return kMCInvalidInput;
     }
-    auto ret = memcpy_s(input->data_c(), input->Size(), item.Data(), item.DataSize());
-    if (ret != SUCCESS) {
+    auto ret = memcpy_s(input->data_c(), input->Size(), item.Data().get(), item.DataSize());
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "Tensor copy failed";
-      return FAILED;
+      return kMCFailed;
     }
     inputs.push_back(input);
   }
-  vector<tensor::TensorPtr> outputs = RunGraph(inputs);
+  last_inputs_ = inputs;
+  std::vector<tensor::TensorPtr> outputs = RunGraph(inputs);
   if (outputs.empty()) {
     MS_LOG(ERROR) << "Execute Model Failed";
-    return FAILED;
+    return kMCFailed;
   }
+  last_outputs_ = outputs;
   reply->clear();
-  std::transform(outputs.begin(), outputs.end(), std::back_inserter(*reply),
-                 [](const tensor::TensorPtr &tensor) { return Buffer(tensor->data_c(), tensor->Size()); });
-  return SUCCESS;
+  *reply = GetOutputs();
+  return kSuccess;
 }
 
-Status GPUGraphImpl::Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
+Status GPUGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (!load_flag_) {
     Status ret = Load();
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return ret;
     }
   }
 
-  if (inputs.size() != inputs_.size()) {
-    MS_LOG(ERROR) << "inputs count not match, required count " << inputs_.size() << ", given count " << inputs.size();
-    return INVALID_INPUTS;
+  if (inputs.size() != inputs_info_.size()) {
+    MS_LOG(ERROR) << "inputs count not match, required count " << inputs_info_.size() << ", given count "
+                  << inputs.size();
+    return kMCInvalidInput;
   }
 
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    if (inputs[i].DataSize() != inputs_[i]->Size()) {
-      MS_LOG(ERROR) << "input " << i << " data size not match, required size " << inputs_[i]->Size() << ", given count "
-                    << inputs[i].DataSize();
-      return INVALID_INPUTS;
+  for (size_t i = 0; i < inputs_info_.size(); ++i) {
+    if (inputs[i].DataSize() != inputs_info_[i]->Size()) {
+      MS_LOG(ERROR) << "input " << i << " data size not match, required size " << inputs_info_[i]->Size()
+                    << ", given count " << inputs[i].DataSize();
+      return kMCInvalidInput;
     }
   }
-  if (ExecuteModel(inputs, outputs) != SUCCESS) {
+  if (ExecuteModel(inputs, outputs) != kSuccess) {
     MS_LOG(ERROR) << "Execute Model Failed";
-    return FAILED;
+    return kMCFailed;
   }
-  if (outputs_.size() != outputs->size()) {
+  if (outputs_info_.size() != outputs->size()) {
     MS_LOG(ERROR) << "Predict output size " << outputs->size() << " not match output size got from model info "
-                  << outputs_.size();
-    return FAILED;
+                  << outputs_info_.size();
+    return kMCFailed;
   }
 
-  return SUCCESS;
+  return kSuccess;
 }
 
-Status GPUGraphImpl::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                   std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+std::vector<MSTensor> GPUGraphImpl::GetInputs() {
   if (!load_flag_) {
     Status ret = Load();
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
-      return ret;
+      return {};
     }
   }
 
-  GraphUtils::ClearIfNotNull(names);
-  GraphUtils::ClearIfNotNull(shapes);
-  GraphUtils::ClearIfNotNull(data_types);
-  GraphUtils::ClearIfNotNull(mem_sizes);
-  for (size_t i = 0; i < inputs_.size(); i++) {
-    auto &tensor = inputs_[i];
-    GraphUtils::PushbackIfNotNull(names, input_names_[i]);
-    GraphUtils::PushbackIfNotNull(shapes, tensor->shape());
-    GraphUtils::PushbackIfNotNull(data_types, GraphUtils::TransTypeId2InferDataType(tensor->data_type()));
-    GraphUtils::PushbackIfNotNull(mem_sizes, tensor->Size());
+  std::vector<MSTensor> result(inputs_info_.size());
+  for (size_t i = 0; i < inputs_info_.size(); ++i) {
+    auto &tensor = inputs_info_[i];
+    void *data = nullptr;
+    size_t data_size = tensor->Size();
+    if (i < last_inputs_.size()) {
+      data = last_inputs_[i]->data_c();
+      data_size = last_inputs_[i]->Size();
+    }
+    result[i] =
+      MSTensor(input_names_[i], static_cast<enum DataType>(tensor->data_type()), tensor->shape(), data, data_size);
   }
-  return SUCCESS;
+  return result;
 }
 
-Status GPUGraphImpl::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                    std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+std::vector<MSTensor> GPUGraphImpl::GetOutputs() {
   if (!load_flag_) {
     Status ret = Load();
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
-      return ret;
+      return {};
     }
   }
 
-  GraphUtils::ClearIfNotNull(names);
-  GraphUtils::ClearIfNotNull(shapes);
-  GraphUtils::ClearIfNotNull(data_types);
-  GraphUtils::ClearIfNotNull(mem_sizes);
-  for (size_t i = 0; i < outputs_.size(); i++) {
-    auto &tensor = outputs_[i];
-    GraphUtils::PushbackIfNotNull(names, output_names_[i]);
-    GraphUtils::PushbackIfNotNull(shapes, tensor->shape());
-    GraphUtils::PushbackIfNotNull(data_types, GraphUtils::TransTypeId2InferDataType(tensor->data_type()));
-    GraphUtils::PushbackIfNotNull(mem_sizes, tensor->Size());
+  std::vector<MSTensor> result(outputs_info_.size());
+  for (size_t i = 0; i < outputs_info_.size(); ++i) {
+    auto &tensor = outputs_info_[i];
+    void *data = nullptr;
+    size_t data_size = tensor->Size();
+    if (i < last_outputs_.size()) {
+      data = last_outputs_[i]->data_c();
+      data_size = last_outputs_[i]->Size();
+    }
+    result[i] =
+      MSTensor(output_names_[i], static_cast<enum DataType>(tensor->data_type()), tensor->shape(), data, data_size);
   }
-
-  return SUCCESS;
+  return result;
 }
-
-}  // namespace mindspore::api
+}  // namespace mindspore

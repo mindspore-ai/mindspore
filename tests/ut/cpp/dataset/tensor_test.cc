@@ -156,9 +156,9 @@ TEST_F(MindDataTestTensorDE, InsertTensor) {
   Tensor::CreateFromVector(z, TensorShape({2, 3}), &t6);
 
   ASSERT_EQ(*t == *t6, true);
-  ASSERT_EQ(t->InsertTensor({2}, t5).get_code(), StatusCode::kUnexpectedError);
-  ASSERT_EQ(t->InsertTensor({1}, t5).get_code(), StatusCode::kUnexpectedError);
-  ASSERT_EQ(t->InsertTensor({1, 2}, t6).get_code(), StatusCode::kUnexpectedError);
+  ASSERT_EQ(t->InsertTensor({2}, t5).StatusCode(), StatusCode::kMDUnexpectedError);
+  ASSERT_EQ(t->InsertTensor({1}, t5).StatusCode(), StatusCode::kMDUnexpectedError);
+  ASSERT_EQ(t->InsertTensor({1, 2}, t6).StatusCode(), StatusCode::kMDUnexpectedError);
   t6->Fill<double>(-1);
   ASSERT_TRUE(t->InsertTensor({}, t6).OK());
   ASSERT_EQ(*t == *t6, true);

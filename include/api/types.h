@@ -16,15 +16,20 @@
 #ifndef MINDSPORE_INCLUDE_API_TYPES_H
 #define MINDSPORE_INCLUDE_API_TYPES_H
 
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <memory>
+#include "include/api/data_type.h"
 
+#ifdef _WIN32
+#define MS_API __declspec(dllexport)
+#else
 #define MS_API __attribute__((visibility("default")))
+#endif
 
 namespace mindspore {
-namespace api {
-enum ModelType {
+enum ModelType : uint32_t {
   kMindIR = 0,
   kAIR = 1,
   kOM = 2,
@@ -33,52 +38,38 @@ enum ModelType {
   kUnknownType = 0xFFFFFFFF
 };
 
-enum DataType {
-  kMsUnknown = 0,
-  kMsBool = 1,
-  kMsInt8 = 2,
-  kMsInt16 = 3,
-  kMsInt32 = 4,
-  kMsInt64 = 5,
-  kMsUint8 = 6,
-  kMsUint16 = 7,
-  kMsUint32 = 8,
-  kMsUint64 = 9,
-  kMsFloat16 = 10,
-  kMsFloat32 = 11,
-  kMsFloat64 = 12,
-  // insert new data type here
-  kInvalidDataType = 0xFFFFFFFF
-};
-
-class MS_API Tensor {
+class MS_API MSTensor {
  public:
-  Tensor();
-  Tensor(const std::string &name, DataType type, const std::vector<int64_t> &shape, const void *data, size_t data_len);
-  ~Tensor();
+  class Impl;
+
+  static MSTensor CreateTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
+                               const void *data, size_t data_len) noexcept;
+  static MSTensor CreateRefTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
+                                  const void *data, size_t data_len) noexcept;
+
+  MSTensor();
+  explicit MSTensor(const std::shared_ptr<Impl> &impl);
+  MSTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape, const void *data,
+           size_t data_len);
+  ~MSTensor();
 
   const std::string &Name() const;
-  void SetName(const std::string &name);
-
-  api::DataType DataType() const;
-  void SetDataType(api::DataType type);
-
+  enum DataType DataType() const;
   const std::vector<int64_t> &Shape() const;
-  void SetShape(const std::vector<int64_t> &shape);
+  int64_t ElementNum() const;
 
-  const void *Data() const;
+  std::shared_ptr<const void> Data() const;
   void *MutableData();
   size_t DataSize() const;
 
-  bool ResizeData(size_t data_len);
-  bool SetData(const void *data, size_t data_len);
+  bool IsDevice() const;
 
-  int64_t ElementNum() const;
-  static int GetTypeSize(api::DataType type);
-  Tensor Clone() const;
+  MSTensor Clone() const;
+  bool operator==(std::nullptr_t) const;
 
  private:
-  class Impl;
+  friend class ModelImpl;
+  explicit MSTensor(std::nullptr_t);
   std::shared_ptr<Impl> impl_;
 };
 
@@ -101,21 +92,5 @@ class MS_API Buffer {
   class Impl;
   std::shared_ptr<Impl> impl_;
 };
-
-extern MS_API const char *kDeviceTypeAscend310;
-extern MS_API const char *kDeviceTypeAscend910;
-extern MS_API const char *kDeviceTypeGpu;
-
-constexpr auto kModelOptionDumpCfgPath = "mindspore.option.dump_config_file_path";
-constexpr auto kModelOptionInsertOpCfgPath = "mindspore.option.insert_op_config_file_path";  // aipp config file
-constexpr auto kModelOptionInputFormat = "mindspore.option.input_format";                    // nchw or nhwc
-// Mandatory while dynamic batch: e.g. "input_op_name1: n1,c2,h3,w4;input_op_name2: n4,c3,h2,w1"
-constexpr auto kModelOptionInputShape = "mindspore.option.input_shape";
-constexpr auto kModelOptionOutputType = "mindspore.option.output_type";  // "FP32", "UINT8" or "FP16", default as "FP32"
-constexpr auto kModelOptionPrecisionMode = "mindspore.option.precision_mode";
-// "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
-constexpr auto kModelOptionOpSelectImplMode = "mindspore.option.op_select_impl_mode";
-// "high_precision" or "high_performance", default as "high_performance"
-}  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_TYPES_H

@@ -29,6 +29,8 @@
 #include <string>
 #include <utility>
 
+#include "include/api/status.h"
+
 namespace mindspore {
 namespace dataset {
 #define RETURN_IF_NOT_OK(_s) \
@@ -39,23 +41,30 @@ namespace dataset {
     }                        \
   } while (false)
 
-#define RETURN_STATUS_UNEXPECTED(_e)                                     \
-  do {                                                                   \
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, _e); \
-  } while (false)
-
-#define CHECK_FAIL_RETURN_UNEXPECTED(_condition, _e)                       \
+#define RETURN_STATUS_UNEXPECTED(_e)                                       \
   do {                                                                     \
-    if (!(_condition)) {                                                   \
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, _e); \
-    }                                                                      \
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
   } while (false)
 
-#define CHECK_FAIL_RETURN_SYNTAX_ERROR(_condition, _e)                 \
-  do {                                                                 \
-    if (!(_condition)) {                                               \
-      return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, _e); \
-    }                                                                  \
+#define CHECK_FAIL_RETURN_UNEXPECTED(_condition, _e)                         \
+  do {                                                                       \
+    if (!(_condition)) {                                                     \
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, _e); \
+    }                                                                        \
+  } while (false)
+
+#define CHECK_FAIL_RETURN_SYNTAX_ERROR(_condition, _e)                   \
+  do {                                                                   \
+    if (!(_condition)) {                                                 \
+      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, _e); \
+    }                                                                    \
+  } while (false)
+
+#define CHECK_FAIL_RETURN_SYNTAX_ERROR(_condition, _e)                   \
+  do {                                                                   \
+    if (!(_condition)) {                                                 \
+      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, _e); \
+    }                                                                    \
   } while (false)
 
 #define RETURN_UNEXPECTED_IF_NULL(_ptr)                                         \
@@ -73,9 +82,9 @@ namespace dataset {
     }                                 \
   } while (false)
 
-#define RETURN_STATUS_SYNTAX_ERROR(_e)                               \
-  do {                                                               \
-    return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, _e); \
+#define RETURN_STATUS_SYNTAX_ERROR(_e)                                 \
+  do {                                                                 \
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, _e); \
   } while (false)
 
 #define RETURN_SECOND_IF_ERROR(_s, _r) \
@@ -87,99 +96,8 @@ namespace dataset {
     }                                  \
   } while (false)
 
-enum class StatusCode : char {
-  kOK = 0,
-  kOutOfMemory = 1,
-  kShapeMisMatch = 2,
-  kInterrupted = 3,
-  kNoSpace = 4,
-  kPyFuncException = 5,
-  kDuplicateKey = 6,
-  kPythonInterpreterFailure = 7,
-  kTDTPushFailure = 8,
-  kFileNotExist = 9,
-  kProfilingError = 10,
-  kBoundingBoxOutOfBounds = 11,
-  kBoundingBoxInvalidShape = 12,
-  kSyntaxError = 13,
-  kTimeOut = 14,
-  kBuddySpaceFull = 15,
-  kNetWorkError = 16,
-  kNotImplementedYet = 17,
-  // Make this error code the last one. Add new error code above it.
-  kUnexpectedError = 127
-};
-
-std::string CodeAsString(const StatusCode c);
-
-class Status {
- public:
-  Status() noexcept;
-
-  explicit Status(StatusCode c) noexcept;
-
-  ~Status() noexcept;
-
-  // Copy constructor
-  Status(const Status &s);
-
-  Status &operator=(const Status &s);
-
-  // Move constructor
-  Status(Status &&) noexcept;
-
-  Status &operator=(Status &&) noexcept;
-
-  Status(const StatusCode code, const std::string &msg);
-
-  Status(const StatusCode code, int line_of_code, const char *file_name, const std::string &extra = "");
-
-  // Return a success status
-  static Status OK() { return Status(StatusCode::kOK); }
-
-  std::string ToString() const;
-
-  StatusCode get_code() const;
-
-  int GetLineOfCode() const { return line_of_code_; }
-
-  std::string SetErrDescription(const std::string &err_description);
-
-  std::string GetErrDescription() const { return err_description_; }
-
-  friend std::ostream &operator<<(std::ostream &os, const Status &s);
-
-  explicit operator bool() const { return (get_code() == StatusCode::kOK); }
-
-  bool operator==(const Status &other) const { return (this->get_code() == other.get_code()); }
-
-  bool operator!=(const Status &other) const { return !(*this == other); }
-
-  bool IsOk() const { return (get_code() == StatusCode::kOK); }
-
-  bool IsError() const { return !IsOk(); }
-
-  bool IsOutofMemory() const { return (get_code() == StatusCode::kOutOfMemory); }
-
-  bool IsInterrupted() const { return (get_code() == StatusCode::kInterrupted); }
-
-  bool IsShapeIncorrect() const { return (get_code() == StatusCode::kShapeMisMatch); }
-
-  bool IsNoSpace() const { return (get_code() == StatusCode::kNoSpace); }
-
-  bool IsNetWorkError() const { return (get_code() == StatusCode::kNetWorkError); }
-
- private:
-  StatusCode code_;
-  int line_of_code_;
-  std::string file_name_;
-  std::string err_description_;
-  std::string err_msg_;
-};
-
 #if !defined(_WIN32) && !defined(_WIN64)
 const float MAX_MEMORY_USAGE_THRESHOLD = 0.95;
-
 float GetMemoryUsage();
 #endif
 }  // namespace dataset

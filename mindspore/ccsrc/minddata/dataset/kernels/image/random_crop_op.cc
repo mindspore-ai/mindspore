@@ -94,11 +94,11 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
   }
 
   if (crop_height_ == 0 || crop_width_ == 0) {
-    return Status(StatusCode::kShapeMisMatch, __LINE__, __FILE__,
+    return Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
                   "RandomCrop: invalid crop size, crop dimension is not allowed to be zero.");
   }
   if (*padded_image_h < crop_height_ || *padded_image_w < crop_width_ || crop_height_ == 0 || crop_width_ == 0) {
-    return Status(StatusCode::kShapeMisMatch, __LINE__, __FILE__,
+    return Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
                   "RandomCrop: invalid crop size, crop size is bigger than the image dimensions.");
   }
   return Status::OK();
@@ -144,7 +144,7 @@ Status RandomCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "RandomCrop: invalid input shape.");
+  return Status(StatusCode::kMDUnexpectedError, "RandomCrop: invalid input shape.");
 }
 }  // namespace dataset
 }  // namespace mindspore

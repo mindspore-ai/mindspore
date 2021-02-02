@@ -41,23 +41,17 @@
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/util/status.h"
 #include "utils/ms_utils.h"
 #ifndef ENABLE_ANDROID
 #include "proto/example.pb.h"
-#else
-#include "minddata/dataset/include/de_tensor.h"
 #endif
 
 #ifdef ENABLE_PYTHON
 namespace py = pybind11;
 #endif
 namespace mindspore {
-#ifdef ENABLE_ANDROID
-namespace tensor {
-class DETensor;
-}  // namespace tensor
-#endif
 namespace dataset {
 class Tensor;
 template <typename T>
@@ -85,7 +79,7 @@ class Tensor {
   /// \param other Tensor to be moved
   Tensor(Tensor &&other) noexcept;
 
-  /// Move assigment operator
+  /// Move assignment operator
   /// \param other Tensor to be moved
   Tensor &operator=(Tensor &&other) noexcept;
 
@@ -134,7 +128,7 @@ class Tensor {
 #ifndef ENABLE_ANDROID
   /// Create a tensor of type DE_STRING from a BytesList.
   /// \param[in] bytes_list protobuf's Bytelist
-  /// \param[in] shape shape of the outout tensor
+  /// \param[in] shape shape of the output tensor
   /// \param[out] out created Tensor
   /// \return Status Code
   static Status CreateFromByteList(const dataengine::BytesList &bytes_list, const TensorShape &shape, TensorPtr *out);
@@ -292,7 +286,7 @@ class Tensor {
       std::string err;
       err += (data_ == nullptr) ? "data_ is nullptr \t" : "";
       err += type_.IsCompatible<T>() ? "data type not compatible\t" : "";
-      return Status(StatusCode::kUnexpectedError, err);
+      return Status(StatusCode::kMDUnexpectedError, err);
     }
   }
 
@@ -343,7 +337,7 @@ class Tensor {
   void Invalidate();
 
   /// Copy input tensor into self at the location index.
-  /// Index is a vector of axises which can be incomplete:
+  /// Index is a vector of axes which can be incomplete:
   /// Ex: shape <2,3>, inserting into index {0} will replace the first row. index {1,2} will replace the last cell.
   /// \param index
   /// \param input
@@ -686,9 +680,7 @@ class Tensor {
   unsigned char *data_end_ = nullptr;
 
  private:
-#ifdef ENABLE_ANDROID
-  friend class tensor::DETensor;
-#endif
+  friend class DETensor;
 
   /// Slice numeric tensors.
   Status SliceNumeric(TensorPtr *out, const std::vector<std::vector<dsize_t>> &indices, const TensorShape &shape);

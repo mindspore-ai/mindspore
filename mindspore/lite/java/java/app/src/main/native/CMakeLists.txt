@@ -33,7 +33,8 @@ set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../../..)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${LITE_DIR})  ## lite include
+include_directories(${LITE_DIR}) ## lite include
+include_directories(${TOP_DIR}) ## api include
 include_directories(${TOP_DIR}/mindspore/core/) ## core include
 include_directories(${LITE_DIR}/build) ## flatbuffers
 

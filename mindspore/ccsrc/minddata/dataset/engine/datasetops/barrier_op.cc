@@ -122,7 +122,8 @@ Status BarrierOp::prepare(TensorQTable *const table) {
   clean_up_ = false;
   buffer_id_ = 0;
   if (table == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "BarrierOp prepare phase requires a tensor table.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "BarrierOp prepare phase requires a tensor table.");
   }
   // fill initial row
   TensorRow new_row = {};
@@ -150,7 +151,7 @@ Status BarrierOp::prepare(TensorQTable *const table) {
 // fillBuffer always expects a new table to fill
 Status BarrierOp::fillBuffer(TensorQTable *const table) {
   if (table == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "BarrierOp fillBuffer null table pointer.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "BarrierOp fillBuffer null table pointer.");
   }
   TensorRow new_row = {};
   while (table->size() < static_cast<size_t>(rows_per_buffer_)) {
@@ -172,7 +173,7 @@ Status BarrierOp::blockCond() {
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
     }
     // we have condition name, however the flexibility is in python today
     try {
@@ -180,11 +181,11 @@ Status BarrierOp::blockCond() {
       py::object ret_py_obj = condition_function_();
       // Process the return value
       if (!py::isinstance<py::bool_>(ret_py_obj)) {
-        return Status(StatusCode::kPyFuncException,
+        return Status(StatusCode::kMDPyFuncException,
                       "Invalid parameter, condition wait function should return true/false.");
       }
     } catch (const py::error_already_set &e) {
-      return Status(StatusCode::kPyFuncException, e.what());
+      return Status(StatusCode::kMDPyFuncException, e.what());
     }
   }
   return Status::OK();

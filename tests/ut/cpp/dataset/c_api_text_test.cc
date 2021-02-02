@@ -27,7 +27,7 @@
 
 using namespace mindspore::dataset;
 using mindspore::dataset::ShuffleMode;
-using mindspore::dataset::Status;
+using mindspore::Status;
 using mindspore::dataset::Tensor;
 using mindspore::dataset::Vocab;
 

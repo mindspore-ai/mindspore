@@ -16,17 +16,77 @@
 
 #include "cxx_api/model/ms/ms_model.h"
 #include <memory>
+#include "include/api/context.h"
 #include "utils/ms_context.h"
 #include "cxx_api/factory.h"
 
 namespace mindspore {
-namespace api {
 API_FACTORY_REG(ModelImpl, Ascend910, MsModel);
 API_FACTORY_REG(ModelImpl, GPU, MsModel);
 
-Status MsModel::Build(const std::map<std::string, std::string> &) {
+static std::string GenerateShapeKey(const std::vector<std::vector<int64_t>> &dims) {
+  std::string shape_key;
+  for (size_t i = 0; i < dims.size(); ++i) {
+    shape_key += std::to_string(i) + ":";
+    for (size_t j = 0; j < dims[i].size(); ++j) {
+      shape_key += std::to_string(dims[i][j]);
+      if (j + 1 < dims[i].size()) {
+        shape_key += ",";
+      }
+    }
+    if (i + 1 < dims.size()) {
+      shape_key += ";";
+    }
+  }
+  return shape_key;
+}
+
+std::shared_ptr<GraphCell> MsModel::GenerateGraphCell(const std::vector<std::vector<int64_t>> &dims) {
+  std::string shape_key = GenerateShapeKey(dims);
+  if (auto iter = dynamic_size_graph_map_.find(shape_key); iter != dynamic_size_graph_map_.end()) {
+    MS_LOG(INFO) << "This options has been built, read cache.";
+    return iter->second;
+  }
+
+  auto func_graph = ModelImpl::GetFuncGraph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  const auto &inputs = func_graph->parameters();
+  if (dims.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Invalid dims size " << dims.size() << " not match model inputs size " << inputs.size();
+    return nullptr;
+  }
+  for (size_t i = 0; i < dims.size(); ++i) {
+    const auto &param = inputs[i];
+    auto shape_ptr = std::dynamic_pointer_cast<abstract::Shape>(param->Shape());
+    if (shape_ptr == nullptr) {
+      MS_LOG(ERROR) << "Inputs " << i << " is not supported to resize, debug string: " << param->DebugString();
+      return nullptr;
+    }
+    shape_ptr->shape() = dims[i];
+  }
+
+  auto graph = std::make_shared<Graph>(std::make_shared<Graph::GraphData>(func_graph, ModelType::kMindIR));
+  MS_EXCEPTION_IF_NULL(graph);
+  auto graph_cell = std::make_shared<GraphCell>(graph);
+  MS_EXCEPTION_IF_NULL(graph_cell);
+  auto ret = ModelImpl::Load(graph_cell);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Load failed.";
+    return nullptr;
+  }
+  dynamic_size_graph_map_[shape_key] = graph_cell;
+  return graph_cell;
+}
+
+Status MsModel::Build() {
   MS_LOG(INFO) << "Start build model.";
   MS_EXCEPTION_IF_NULL(graph_);
+
+  if (graph_cell_ != nullptr) {
+    MS_LOG(INFO) << "This model has been built, skip.";
+    return kSuccess;
+  }
 
   auto func_graph = ModelImpl::GetFuncGraph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -36,7 +96,7 @@ Status MsModel::Build(const std::map<std::string, std::string> &) {
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
   auto ret = ModelImpl::Load(graph_cell);
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";
     return ret;
   }
@@ -44,55 +104,66 @@ Status MsModel::Build(const std::map<std::string, std::string> &) {
   // save result
   graph_cell_ = graph_cell;
   MS_LOG(INFO) << "Build model success.";
-  return SUCCESS;
+  return kSuccess;
 }
 
-Status MsModel::Train(const DataSet &, std::map<std::string, Buffer> *) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return FAILED;
+Status MsModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
+  MS_LOG(INFO) << "Start to resize model";
+  auto origin_inputs = GetInputs();
+  if (inputs.size() != origin_inputs.size()) {
+    MS_LOG(ERROR) << "Invalid inputs size " << inputs.size() << " not match model inputs size " << origin_inputs.size();
+    return kMCInvalidInput;
+  }
+
+  if (inputs.size() != dims.size()) {
+    MS_LOG(ERROR) << "Invalid dims size " << dims.size() << " not match inputs size " << inputs.size();
+    return kMCInvalidInput;
+  }
+
+  auto graph_cell = GenerateGraphCell(dims);
+  if (graph_cell == nullptr) {
+    MS_LOG(ERROR) << "GenerateGraphCell failed.";
+    return kMCFailed;
+  }
+
+  MS_LOG(INFO) << "Resize model success.";
+  graph_cell_ = std::move(graph_cell);
+  return kSuccess;
 }
 
-Status MsModel::Eval(const DataSet &, std::map<std::string, Buffer> *) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return FAILED;
-}
-
-Status MsModel::Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
+Status MsModel::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid data, graph_ is null.";
-    return FAILED;
+    return kMCFailed;
   }
 
   if (graph_cell_ == nullptr) {
     MS_LOG(INFO) << "Model has not been built, it will be built with default options";
-    Status ret = Build({});
-    if (ret != SUCCESS) {
+    Status ret = Build();
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "Build model failed.";
-      return FAILED;
+      return ret;
     }
   }
 
   MS_EXCEPTION_IF_NULL(graph_cell_);
   Status ret = graph_cell_->Run(inputs, outputs);
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
-    return FAILED;
+    return ret;
   }
 
-  return SUCCESS;
+  return kSuccess;
 }
 
-Status MsModel::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                              std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+std::vector<MSTensor> MsModel::GetInputs() {
   MS_EXCEPTION_IF_NULL(graph_cell_);
-  return graph_cell_->GetInputsInfo(names, shapes, data_types, mem_sizes);
+  return graph_cell_->GetInputs();
 }
 
-Status MsModel::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                               std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+std::vector<MSTensor> MsModel::GetOutputs() {
   MS_EXCEPTION_IF_NULL(graph_cell_);
-  return graph_cell_->GetOutputsInfo(names, shapes, data_types, mem_sizes);
+  return graph_cell_->GetOutputs();
 }
-}  // namespace api
 }  // namespace mindspore

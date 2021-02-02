@@ -19,7 +19,7 @@
 #include "framework/common/helper/model_helper.h"
 #endif
 
-namespace mindspore::api {
+namespace mindspore {
 Graph::GraphData::GraphData(const FuncGraphPtr &func_graph, enum ModelType model_type)
     : func_graph_(nullptr), om_data_(), model_type_(ModelType::kUnknownType) {
   if (model_type != ModelType::kMindIR) {
@@ -72,4 +72,4 @@ Buffer Graph::GraphData::GetOMData() const {
 
   return om_data_;
 }
-}  // namespace mindspore::api
+}  // namespace mindspore

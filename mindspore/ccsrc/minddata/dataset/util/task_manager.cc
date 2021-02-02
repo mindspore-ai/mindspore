@@ -31,7 +31,7 @@ Status TaskManager::CreateAsyncTask(const std::string &my_name, const std::funct
   SharedLock stateLck(&state_lock_);
   // Now double check the state
   if (ServiceState() == STATE::kStopInProg || ServiceState() == STATE::kStopped) {
-    return Status(StatusCode::kInterrupted, __LINE__, __FILE__, "TaskManager is shutting down");
+    return Status(StatusCode::kMDInterrupted, __LINE__, __FILE__, "TaskManager is shutting down");
   }
   RETURN_IF_NOT_OK(GetFreeTask(my_name, f, task, operator_id));
   if (vg == nullptr) {
@@ -282,7 +282,7 @@ Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::functio
   SharedLock state_lck(&state_lock_);
   // Now double check the state
   if (ServiceState() != STATE::kRunning) {
-    return Status(StatusCode::kInterrupted, __LINE__, __FILE__, "Taskgroup is shutting down");
+    return Status(StatusCode::kMDInterrupted, __LINE__, __FILE__, "Taskgroup is shutting down");
   }
   TaskManager &dm = TaskManager::GetInstance();
   Task *pTask = nullptr;
@@ -292,7 +292,7 @@ Status TaskGroup::CreateAsyncTask(const std::string &my_name, const std::functio
   {
     std::unique_lock<std::mutex> rcLock(rc_mux_);
     if (rc_.IsError()) {
-      return pMytask->IsMasterThread() ? rc_ : Status(StatusCode::kInterrupted);
+      return pMytask->IsMasterThread() ? rc_ : Status(StatusCode::kMDInterrupted);
     }
   }
   RETURN_IF_NOT_OK(dm.CreateAsyncTask(my_name, f, this, &pTask, operator_id));

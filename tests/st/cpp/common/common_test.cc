@@ -61,7 +61,7 @@ void Common::ReadFile(const char *file, size_t *size, char **buf) {
 void Common::ContextAutoSet() {
   auto device_target = GetEnv("DEVICE_TARGET");
   if (device_target.empty()) {
-    device_target = mindspore::api::kDeviceTypeAscend310;  // default is 310
+    device_target = mindspore::kDeviceTypeAscend310;  // default is 310
   }
 
   auto device_id_str = GetEnv("DEVICE_ID");
@@ -70,7 +70,8 @@ void Common::ContextAutoSet() {
   }
   uint32_t device_id = std::strtoul(device_id_str.c_str(), nullptr, 10);
 
-  mindspore::api::Context::Instance().SetDeviceTarget(device_target).SetDeviceID(device_id);
+  mindspore::GlobalContext::SetGlobalDeviceTarget(device_target);
+  mindspore::GlobalContext::SetGlobalDeviceID(device_id);
 }
 }  // namespace ST
 

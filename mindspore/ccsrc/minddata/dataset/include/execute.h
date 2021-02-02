@@ -19,18 +19,12 @@
 
 #include <vector>
 #include <memory>
-
+#include "include/api/types.h"
 #include "minddata/dataset/include/constants.h"
-#ifdef ENABLE_ANDROID
-#include "minddata/dataset/include/de_tensor.h"
-#endif
-#include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/transforms.h"
 
 namespace mindspore {
 namespace dataset {
-
-class TensorOp;
 
 // class to run tensor operations in eager mode
 class Execute {
@@ -38,30 +32,25 @@ class Execute {
   /// \brief Constructor
   explicit Execute(std::shared_ptr<TensorOperation> op);
 
+  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops);
+
   /// \brief Destructor
-  ~Execute();
-
-#ifdef ENABLE_ANDROID
-  /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[in] input - the tensor to be transformed
-  /// \return - the output tensor, nullptr if Compute fails
-  std::shared_ptr<tensor::MSTensor> operator()(std::shared_ptr<tensor::MSTensor> input);
-#endif
+  ~Execute() = default;
 
   /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[in] input - the tensor to be transformed
-  /// \return - the output tensor, nullptr if Compute fails
-  std::shared_ptr<dataset::Tensor> operator()(std::shared_ptr<dataset::Tensor> input);
+  /// \param[in] input Tensor to be transformed
+  /// \param[out] output Transformed tensor
+  /// \return Status code
+  Status operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output);
 
   /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[in] input_tensor_list - the tensor to be transformed
-  /// \param[out] out - the result tensor after transform
+  /// \param[in] input_tensor_list List of Tensor to be transformed
+  /// \param[out] out Result tensor after transform
   /// \return - Status
-  Status operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
-                    std::vector<std::shared_ptr<Tensor>> *out);
+  Status operator()(const std::vector<mindspore::MSTensor> &input_tensor_list, std::vector<mindspore::MSTensor> *out);
 
  private:
-  std::shared_ptr<TensorOperation> op_;
+  std::vector<std::shared_ptr<TensorOperation>> ops_;
 };
 
 }  // namespace dataset

@@ -22,10 +22,11 @@
 #include "minddata/dataset/engine/cache/cache_common.h"
 #include "minddata/dataset/util/path.h"
 
+namespace ms = mindspore;
 namespace ds = mindspore::dataset;
 
 int main(int argc, char **argv) {
-  ds::Status rc;
+  ms::Status rc;
   ds::CacheAdminArgHandler args;
   std::stringstream arg_stream;
 

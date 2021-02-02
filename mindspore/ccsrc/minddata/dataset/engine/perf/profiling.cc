@@ -97,7 +97,7 @@ Status ProfilingManager::RegisterTracingNode(std::shared_ptr<Tracing> node) {
   // Check if node with the same name has already been registered.
   auto exist = tracing_nodes_.find(node->Name());
   if (exist != tracing_nodes_.end()) {
-    return Status(StatusCode::kProfilingError, "Profiling node already exist: " + node->Name());
+    return Status(StatusCode::kMDProfilingError, "Profiling node already exist: " + node->Name());
   }
   // Register the node with its name as key.
   RETURN_IF_NOT_OK(node->Init(dir_path_, device_id_));
@@ -110,7 +110,7 @@ Status ProfilingManager::GetTracingNode(const std::string &name, std::shared_ptr
   // Check if node with the same name has already been registered.
   auto exist = tracing_nodes_.find(name);
   if (exist == tracing_nodes_.end()) {
-    return Status(StatusCode::kProfilingError, "Profiling node does not exist: " + name);
+    return Status(StatusCode::kMDProfilingError, "Profiling node does not exist: " + name);
   }
   // Fetch node.
   *node = tracing_nodes_[name];
@@ -122,7 +122,7 @@ Status ProfilingManager::RegisterSamplingNode(std::shared_ptr<Sampling> node) {
   // Check if node with the same name has already been registered.
   auto exist = sampling_nodes_.find(node->Name());
   if (exist != sampling_nodes_.end()) {
-    return Status(StatusCode::kProfilingError, "Profiling node already exist: " + node->Name());
+    return Status(StatusCode::kMDProfilingError, "Profiling node already exist: " + node->Name());
   }
   // Register the node with its name as key.
   RETURN_IF_NOT_OK(node->Init(dir_path_, device_id_));
@@ -135,7 +135,7 @@ Status ProfilingManager::GetSamplingNode(const std::string &name, std::shared_pt
   // Check if node with the same name has already been registered.
   auto exist = sampling_nodes_.find(name);
   if (exist == sampling_nodes_.end()) {
-    return Status(StatusCode::kProfilingError, "Profiling node does not exist: " + name);
+    return Status(StatusCode::kMDProfilingError, "Profiling node does not exist: " + name);
   }
   // Fetch node.
   *node = sampling_nodes_[name];

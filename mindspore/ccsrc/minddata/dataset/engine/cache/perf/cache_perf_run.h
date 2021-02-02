@@ -100,5 +100,7 @@ class CachePerfRun {
 };
 }  // namespace dataset
 }  // namespace mindspore
-
+// todo: waiting for the master of the codes to refactor
+#define get_code StatusCode
+#define kDuplicateKey kMDDuplicateKey
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CACHE_PERF_RUN_H_

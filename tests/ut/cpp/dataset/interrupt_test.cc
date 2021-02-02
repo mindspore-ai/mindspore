@@ -43,7 +43,7 @@ TEST_F(MindDataTestIntrpService, Test1) {
       int v;
       Status rc;
       rc = q.PopFront(&v);
-      EXPECT_TRUE(rc.IsInterrupted());
+      EXPECT_TRUE(rc == StatusCode::kMDInterrupted);
       return rc;
   });
   vg_.GetIntrpService()->InterruptAll();
@@ -59,7 +59,7 @@ TEST_F(MindDataTestIntrpService, Test2) {
   vg_.CreateAsyncTask("Test1", [&]() -> Status {
     TaskManager::FindMe()->Post();
       Status rc = wp.Wait();
-      EXPECT_TRUE(rc.IsInterrupted());
+      EXPECT_TRUE(rc == StatusCode::kMDInterrupted);
       return rc;
   });
   vg_.GetIntrpService()->InterruptAll();

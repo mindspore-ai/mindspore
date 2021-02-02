@@ -17,15 +17,19 @@
 #include "cxx_api/graph/graph_data.h"
 #include "utils/log_adapter.h"
 
-namespace mindspore::api {
+namespace mindspore {
 Graph::Graph(const std::shared_ptr<GraphData> &graph_data) : graph_data_(graph_data) {}
 
 Graph::Graph(std::shared_ptr<GraphData> &&graph_data) : graph_data_(graph_data) {}
 
 Graph::~Graph() {}
 
+Graph::Graph(std::nullptr_t) : graph_data_(nullptr) {}
+
+bool Graph::operator==(std::nullptr_t) const { return graph_data_ == nullptr; }
+
 ModelType Graph::ModelType() const {
   MS_EXCEPTION_IF_NULL(graph_data_);
   return graph_data_->ModelType();
 }
-}  // namespace mindspore::api
+}  // namespace mindspore

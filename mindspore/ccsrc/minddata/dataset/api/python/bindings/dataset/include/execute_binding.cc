@@ -29,25 +29,42 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                       return execute;
                     }))
                     .def("__call__",
-                         [](Execute &self, std::shared_ptr<Tensor> in) {
-                           std::shared_ptr<Tensor> out = self(in);
-                           if (out == nullptr) {
-                             THROW_IF_ERROR([]() {
-                               RETURN_STATUS_UNEXPECTED(
-                                 "Failed to execute op in eager mode, please check ERROR log above.");
+                         [](Execute &self, const std::shared_ptr<Tensor> &de_tensor) {
+                           auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+                           Status rc = self(ms_tensor, &ms_tensor);
+                           if (rc.IsError()) {
+                             THROW_IF_ERROR([&rc]() {
+                               RETURN_STATUS_UNEXPECTED("Failed to execute transform op, " + rc.ToString());
                              }());
                            }
-                           return out;
+                           std::shared_ptr<dataset::Tensor> de_output_tensor;
+                           dataset::Tensor::CreateFromMemory(dataset::TensorShape(ms_tensor.Shape()),
+                                                             MSTypeToDEType(static_cast<TypeId>(ms_tensor.DataType())),
+                                                             (const uchar *)(ms_tensor.Data().get()),
+                                                             ms_tensor.DataSize(), &de_output_tensor);
+                           return de_output_tensor;
                          })
                     .def("__call__", [](Execute &self, const std::vector<std::shared_ptr<Tensor>> &input_tensor_list) {
-                      std::vector<std::shared_ptr<Tensor>> output_tensor_list;
-                      THROW_IF_ERROR(self(input_tensor_list, &output_tensor_list));
-                      if (output_tensor_list.empty()) {
-                        THROW_IF_ERROR([]() {
-                          RETURN_STATUS_UNEXPECTED("Failed to execute op in eager mode, please check ERROR log above.");
-                        }());
+                      std::vector<MSTensor> ms_input_tensor_list;
+                      std::vector<MSTensor> ms_output_tensor_list;
+                      for (auto &tensor : input_tensor_list) {
+                        auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(tensor));
+                        ms_input_tensor_list.emplace_back(std::move(ms_tensor));
                       }
-                      return output_tensor_list;
+                      Status rc = self(ms_input_tensor_list, &ms_output_tensor_list);
+                      if (rc.IsError()) {
+                        THROW_IF_ERROR(
+                          [&rc]() { RETURN_STATUS_UNEXPECTED("Failed to execute transform op, " + rc.ToString()); }());
+                      }
+                      std::vector<std::shared_ptr<dataset::Tensor>> de_output_tensor_list;
+                      for (auto &tensor : ms_output_tensor_list) {
+                        std::shared_ptr<dataset::Tensor> de_output_tensor;
+                        dataset::Tensor::CreateFromMemory(
+                          dataset::TensorShape(tensor.Shape()), MSTypeToDEType(static_cast<TypeId>(tensor.DataType())),
+                          (const uchar *)(tensor.Data().get()), tensor.DataSize(), &de_output_tensor);
+                        de_output_tensor_list.emplace_back(std::move(de_output_tensor));
+                      }
+                      return de_output_tensor_list;
                     });
                 }));
 }  // namespace dataset

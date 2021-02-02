@@ -44,7 +44,7 @@ Status CropOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<T
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Crop: invalid input shape.");
+  return Status(StatusCode::kMDUnexpectedError, "Crop: invalid input shape.");
 }
 }  // namespace dataset
 }  // namespace mindspore

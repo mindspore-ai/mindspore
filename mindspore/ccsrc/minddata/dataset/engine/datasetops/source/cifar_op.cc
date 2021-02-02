@@ -83,7 +83,7 @@ Status CifarOp::Builder::SanityCheck() {
   err_msg += valid.find(usage_) == valid.end()
                ? "Invalid parameter, usage must be 'train','test' or 'all', but got " + usage_ + ".\n"
                : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 CifarOp::CifarOp(CifarType type, const std::string &usage, int32_t num_works, int32_t rows_per_buf,

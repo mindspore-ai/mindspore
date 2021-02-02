@@ -20,7 +20,7 @@
 #include "include/api/serialization.h"
 #include "include/api/context.h"
 
-using namespace mindspore::api;
+using namespace mindspore;
 
 static const char tensor_add_file[] = "/home/workspace/mindspore_dataset/mindir/add/add.mindir";
 static const std::vector<float> input_data_1 = {1, 2, 3, 4};
@@ -36,23 +36,42 @@ TEST_F(TestAdd, InferMindIR) {
 
   auto graph = Serialization::LoadModel(tensor_add_file, ModelType::kMindIR);
   Model tensor_add((GraphCell(graph)));
-  Status ret = tensor_add.Build({});
-  ASSERT_TRUE(ret == SUCCESS);
+  ASSERT_TRUE(tensor_add.Build() == kSuccess);
+
+  // get model inputs
+  std::vector<MSTensor> origin_inputs = tensor_add.GetInputs();
+  ASSERT_EQ(origin_inputs.size(), 2);
 
   // prepare input
-  std::vector<Buffer> outputs;
-  std::vector<Buffer> inputs;
-  inputs.emplace_back(Buffer(input_data_1.data(), sizeof(float) * input_data_1.size()));
-  inputs.emplace_back(Buffer(input_data_2.data(), sizeof(float) * input_data_2.size()));
+  std::vector<MSTensor> outputs;
+  std::vector<MSTensor> inputs;
+  inputs.emplace_back(origin_inputs[0].Name(), origin_inputs[0].DataType(), origin_inputs[0].Shape(),
+                      input_data_1.data(), sizeof(float) * input_data_1.size());
+  inputs.emplace_back(origin_inputs[1].Name(), origin_inputs[1].DataType(), origin_inputs[1].Shape(),
+                      input_data_2.data(), sizeof(float) * input_data_2.size());
 
   // infer
-  ret = tensor_add.Predict(inputs, &outputs);
-  ASSERT_TRUE(ret == SUCCESS);
+  ASSERT_TRUE(tensor_add.Predict(inputs, &outputs) == kSuccess);
 
-  // print
+  // assert input
+  inputs = tensor_add.GetInputs();
+  ASSERT_EQ(inputs.size(), 2);
+  auto after_input_data_1 = inputs[0].Data();
+  auto after_input_data_2 = inputs[1].Data();
+  const float *p = reinterpret_cast<const float *>(after_input_data_1.get());
+  for (size_t i = 0; i < inputs[0].DataSize() / sizeof(float); ++i) {
+    ASSERT_LE(std::abs(p[i] - input_data_1[i]), 1e-4);
+  }
+  p = reinterpret_cast<const float *>(after_input_data_2.get());
+  for (size_t i = 0; i < inputs[0].DataSize() / sizeof(float); ++i) {
+    ASSERT_LE(std::abs(p[i] - input_data_2[i]), 1e-4);
+  }
+
+  // assert output
   for (auto &buffer : outputs) {
-    const float *p = reinterpret_cast<const float *>(buffer.Data());
-    for (size_t i = 0; i <  buffer.DataSize() / sizeof(float); ++i) {
+    auto buffer_data = buffer.Data();
+    p = reinterpret_cast<const float *>(buffer_data.get());
+    for (size_t i = 0; i < buffer.DataSize() / sizeof(float); ++i) {
       ASSERT_LE(std::abs(p[i] - (input_data_1[i] + input_data_2[i])), 1e-4);
     }
   }

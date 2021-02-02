@@ -39,7 +39,7 @@ Status IntrpService::Register(const std::string &name, IntrpResource *res) {
   SharedLock stateLck(&state_lock_);
   // Now double check the state
   if (ServiceState() != STATE::kRunning) {
-    return Status(StatusCode::kInterrupted, __LINE__, __FILE__, "Interrupt service is shutting down");
+    return Status(StatusCode::kMDInterrupted, __LINE__, __FILE__, "Interrupt service is shutting down");
   } else {
     std::lock_guard<std::mutex> lck(mutex_);
     try {
@@ -48,7 +48,7 @@ Status IntrpService::Register(const std::string &name, IntrpResource *res) {
       MS_LOG(DEBUG) << "Register resource with name " << name << ". Thread ID " << ss.str() << ".";
       auto it = all_intrp_resources_.emplace(name, res);
       if (it.second == false) {
-        return Status(StatusCode::kDuplicateKey, __LINE__, __FILE__, name);
+        return Status(StatusCode::kMDDuplicateKey, __LINE__, __FILE__, name);
       }
       high_water_mark_++;
     } catch (std::exception &e) {

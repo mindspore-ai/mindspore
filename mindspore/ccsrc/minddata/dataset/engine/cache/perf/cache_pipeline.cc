@@ -33,12 +33,12 @@ int main(int argc, char **argv) {
     // If we hit any error, send the rc back to the parent.
     if (rc.IsError()) {
       ds::ErrorMsg proto;
-      proto.set_rc(static_cast<int32_t>(rc.get_code()));
+      proto.set_rc(static_cast<int32_t>(rc.StatusCode()));
       proto.set_msg(rc.ToString());
       ds::CachePerfMsg msg;
       (void)cachePipelineRun.SendMessage(&msg, ds::CachePerfMsg::MessageType::kError, &proto);
     }
-    return static_cast<int>(rc.get_code());
+    return static_cast<int>(rc.StatusCode());
   }
   return 0;
 }

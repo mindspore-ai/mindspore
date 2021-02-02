@@ -26,9 +26,12 @@
 
 #include "album_op_android.h"  //NOLINT
 #include "minddata/dataset/include/execute.h"
+#include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/include/vision.h"
 #include "minddata/dataset/util/data_helper.h"
+#include "minddata/dataset/core/de_tensor.h"
+#include "include/api/types.h"
 #if defined(__ANDROID__) || defined(ANDROID)
 #include <android/log.h>
 #include <android/asset_manager.h>
@@ -45,9 +48,9 @@ using mindspore::MsLogLevel::DEBUG;
 using mindspore::MsLogLevel::ERROR;
 using mindspore::MsLogLevel::INFO;
 
+using mindspore::Status;
 using mindspore::dataset::BorderType;
 using mindspore::dataset::InterpolationMode;
-using mindspore::dataset::Status;
 
 class MDToDApi {
  public:
@@ -60,11 +63,11 @@ class MDToDApi {
 
  public:
   MDToDApi() : _iter(nullptr), _augs({}), _storage_folder(""), _file_id(-1), _hasBatch(false) {
-    MS_LOG(INFO) << "MDToDAPI Call constractor";
+    MS_LOG(INFO) << "MDToDAPI Call constructor";
   }
   ~MDToDApi() {
     MS_LOG(INFO) << "MDToDAPI Call destractor";
-    // derefernce dataset and iterator
+    // dereference dataset and iterator
     _augs.clear();
   }
 };
@@ -257,7 +260,7 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
     return -1;
   }
 
-  // Set defualt
+  // Set default
   results->fileid = -1;
   results->embeddingBuff.DataSize = 0;
   results->imageBuff.DataSize = 0;
@@ -287,12 +290,17 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
           if (orientation > 1) {
             RotateOperation *p = static_cast<RotateOperation *>(pMDToDApi->_augs[i].get());
             p->setAngle(orientation);
-            orientation = 0;  // clear oriation filed if allready preformed
+            orientation = 0;  // clear oriation filed if already performed
           } else {
             continue;
           }
         }
-        row["image"] = mindspore::dataset::Execute((pMDToDApi->_augs)[i])(std::move(row["image"]));
+        mindspore::MSTensor image(std::make_shared<mindspore::dataset::DETensor>(row["image"]));
+        (void)mindspore::dataset::Execute((pMDToDApi->_augs)[i])(image, &image);
+        mindspore::dataset::Tensor::CreateFromMemory(
+          mindspore::dataset::TensorShape(image.Shape()),
+          mindspore::dataset::MSTypeToDEType(static_cast<mindspore::TypeId>(image.DataType())),
+          (const uint8_t *)(image.Data().get()), &(row["image"]));
         if (row["image"] == nullptr) {
           // nullptr means that the eager mode image processing failed, we fail in this case
           return -1;
@@ -324,7 +332,7 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
 
 extern "C" int MDToDApi_Stop(MDToDApi *pMDToDApi) {
   // Manually terminate the pipeline
-  MS_LOG(INFO) << "pipline stoped";
+  MS_LOG(INFO) << "pipline stopped";
   return 0;
 }
 
@@ -338,7 +346,7 @@ extern "C" int MDToDApi_Destroy(MDToDApi *pMDToDApi) {
 int GetJsonFullFileName(const MDToDApi *pMDToDApi, std::string *filePath) {
   int64_t file_id = pMDToDApi->_file_id;
   if (file_id < 0) {
-    MS_LOG(ERROR) << "Illigal file ID to update: " << file_id << ".";
+    MS_LOG(ERROR) << "Illegal file ID to update: " << file_id << ".";
     return -1;
   }
   std::string converted = std::to_string(pMDToDApi->_file_id);
@@ -407,7 +415,7 @@ extern "C" int MDToDApi_UpdateFloatArray(MDToDApi *pMDToDApi, const char *column
   auto columnName = std::string(column);
   std::string file_path;
   if (0 != GetJsonFullFileName(pMDToDApi, &file_path)) {
-    MS_LOG(ERROR) << "Faile to updaet " << columnName;
+    MS_LOG(ERROR) << "Failed to updaet " << columnName;
     return -1;
   }
   MS_LOG(INFO) << "Start Update float Array column: " << columnName << " in file " << file_path;

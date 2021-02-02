@@ -16,7 +16,20 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     endif()
 endif()
 
+set(API_SRC
+        ${CORE_DIR}/utils/status.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/cell.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/serialization.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/types.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/lite_context.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/model_impl.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/graph.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/tensor_impl.cc
+)
+
 set(LITE_SRC
+        ${API_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc

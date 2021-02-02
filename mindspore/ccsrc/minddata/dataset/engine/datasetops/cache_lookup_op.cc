@@ -39,12 +39,12 @@ CacheLookupOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_
 // Check if the required parameters are set by the builder.
 Status CacheLookupOp::Builder::SanityCheck() const {
   if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, CacheLookupOp requires a CacheClient, but got nullptr.");
   }
   // Make sure the cache client has a valid session
   if (!build_cache_client_->session_id()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, cache client for CacheLookupOp requires a session id which is not equal to 0.");
   }
   return Status::OK();
@@ -59,7 +59,7 @@ Status CacheLookupOp::Builder::Build(std::shared_ptr<CacheLookupOp> *ptr) {
 }
 Status CacheLookupOp::operator()() {
   if (!sampler_) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, CacheLookupOp requires a sampler before it can be executed, but got nullptr.");
   }
   RETURN_IF_NOT_OK(RegisterResources());

@@ -129,7 +129,7 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
       Status rc;
       if ((rc = cache_client_->FlushAsyncWriteBuffer()).IsError()) {
         cache_missing_rows_ = false;
-        if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+        if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
           cache_client_->ServerRunningOutOfResources();
         } else {
           MS_LOG(INFO) << "Async row flushing not successful: " << rc.ToString();
@@ -156,7 +156,7 @@ Status CacheMergeOp::CacheMissWorkerEntry(int32_t workerId) {
             rc = rq->AsyncSendCacheRequest(cache_client_, row);
             if (rc.IsOk()) {
               RETURN_IF_NOT_OK(io_que_->EmplaceBack(row_id));
-            } else if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+            } else if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
               cache_missing_rows_ = false;
               cache_client_->ServerRunningOutOfResources();
             }
@@ -188,9 +188,9 @@ Status CacheMergeOp::Cleaner() {
     Status rc = rq->CheckCacheResult();
     if (rc.IsError()) {
       // If interrupt, time to quit.
-      if (rc.IsInterrupted()) {
+      if (rc == StatusCode::kMDInterrupted) {
         return Status::OK();
-      } else if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+      } else if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
         // The server is hitting some limit and we will turn off caching from now on.
         cache_missing_rows_ = false;
         cache_client_->ServerRunningOutOfResources();
@@ -215,7 +215,7 @@ Status CacheMergeOp::PrepareNodePostAction() {  // Run any common code from supe
   // Construct the cache
   const bool generate_ids = false;
   Status rc = cache_client_->CreateCache(cache_crc, generate_ids);
-  if (rc.get_code() == StatusCode::kDuplicateKey) {
+  if (rc.StatusCode() == StatusCode::kMDDuplicateKey) {
     // We are told the cache has been created already.
     MS_LOG(INFO) << "Cache created already";
     rc = Status::OK();
@@ -244,12 +244,12 @@ CacheMergeOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(
 // Check if the required parameters are set by the builder.
 Status CacheMergeOp::Builder::SanityCheck() const {
   if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, CacheMergeOp requires a CacheClient, but got nullptr.");
   }
   // Make sure the cache client has a valid session
   if (!build_cache_client_->session_id()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, cache client for CacheMergeOp requires a session id which is not equal to 0.");
   }
   return Status::OK();
@@ -316,7 +316,7 @@ Status CacheMergeOp::TensorRowCacheRequest::AsyncSendCacheRequest(const std::sha
     // We will do a deep copy but write directly into CacheRequest protobuf or shared memory
     Status rc;
     rc = cc->AsyncWriteRow(row);
-    if (rc.get_code() == StatusCode::kNotImplementedYet) {
+    if (rc.StatusCode() == StatusCode::kMDNotImplementedYet) {
       cleaner_copy_ = std::make_shared<CacheRowRequest>(cc.get());
       rc = cleaner_copy_->SerializeCacheRowRequest(cc.get(), row);
       if (rc.IsOk()) {
