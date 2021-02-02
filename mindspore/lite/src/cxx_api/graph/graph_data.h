@@ -35,8 +35,6 @@ class Graph::GraphData {
 
   std::shared_ptr<lite::Model> lite_model() { return lite_model_; }
 
-  enum ModelType ModelType() const { return kMindIR; }
-
  private:
   std::shared_ptr<lite::Model> lite_model_;
 };
