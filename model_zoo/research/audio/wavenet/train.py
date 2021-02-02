@@ -44,6 +44,8 @@ parser.add_argument('--checkpoint_dir', type=str, default='./checkpoints_test',
 parser.add_argument('--checkpoint', type=str, default='', help='Restore model from checkpoint path if given.')
 parser.add_argument('--speaker_id', type=str, default='',
                     help=' Use specific speaker of data in case for multi-speaker datasets.')
+parser.add_argument('--platform', type=str, default='GPU', choices=('GPU', 'CPU'),
+                    help='run platform, support GPU and CPU. Default: GPU')
 parser.add_argument('--is_distributed', action="store_true", default=False, help='Distributed training')
 args = parser.parse_args()
 
@@ -57,7 +59,7 @@ if __name__ == '__main__':
         context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target="GPU", save_graphs=False)
+        context.set_context(mode=context.GRAPH_MODE, device_target=args.platform, save_graphs=False)
         rank_id = 0
         group_size = 1
 
@@ -132,4 +134,4 @@ if __name__ == '__main__':
     config_ck = CheckpointConfig(save_checkpoint_steps=step_size_per_epoch, keep_checkpoint_max=10)
     ckpt_cb = ModelCheckpoint(prefix='wavenet', directory=ckpt_path, config=config_ck)
     callback_list.append(ckpt_cb)
-    model.train(hparams.nepochs, data_loaders, callbacks=callback_list)
+    model.train(hparams.nepochs, data_loaders, callbacks=callback_list, dataset_sink_mode=False)

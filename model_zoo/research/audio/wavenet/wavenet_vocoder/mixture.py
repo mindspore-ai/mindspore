@@ -20,6 +20,7 @@ import mindspore as ms
 from mindspore import Tensor
 import mindspore.nn as nn
 import mindspore.ops as P
+from mindspore import context
 
 
 class log_sum_exp(nn.Cell):
@@ -39,6 +40,55 @@ class log_sum_exp(nn.Cell):
         m = self.maxi(x, axis)
         m2 = self.maxi_dim(x, axis)
         return m + self.log(self.sums(self.exp(x - m2), axis))
+
+
+class log_softmax(nn.Cell):
+    """
+    replacement of P.LogSoftmax(-1) in CPU mode
+        only support x.shape == 2 or 3
+    """
+
+    def __init__(self):
+        super(log_softmax, self).__init__()
+        self.maxi = P.ReduceMax()
+        self.log = P.Log()
+        self.sums = P.ReduceSum()
+        self.exp = P.Exp()
+        self.axis = -1
+        self.concat = P.Concat(-1)
+        self.expanddims = P.ExpandDims()
+
+    def construct(self, x):
+        """
+
+        Args:
+            x (Tensor): input
+
+        Returns:
+            Tensor: log_softmax of input
+
+        """
+        c = self.maxi(x, self.axis)
+        logs, lsm = None, None
+        if len(x.shape) == 2:
+            for j in range(x.shape[-1]):
+                temp = self.expanddims(self.exp(x[:, j] - c), -1)
+                logs = temp if j == 0 else self.concat((logs, temp))
+            sums = self.sums(logs, -1)
+            for i in range(x.shape[-1]):
+                temp = self.expanddims(x[:, i] - c - self.log(sums), -1)
+                lsm = temp if i == 0 else self.concat((lsm, temp))
+            return lsm
+        if len(x.shape) == 3:
+            for j in range(x.shape[-1]):
+                temp = self.expanddims(self.exp(x[:, :, j] - c), -1)
+                logs = temp if j == 0 else self.concat((logs, temp))
+            sums = self.sums(logs, -1)
+            for i in range(x.shape[-1]):
+                temp = self.expanddims(x[:, :, i] - c - self.log(sums), -1)
+                lsm = temp if i == 0 else self.concat((lsm, temp))
+            return lsm
+        return None
 
 
 class Stable_softplus(nn.Cell):
@@ -77,7 +127,6 @@ class discretized_mix_logistic_loss(nn.Cell):
         self.softplus = Stable_softplus()
         self.log = P.Log()
         self.cast = P.Cast()
-        self.logsoftmax = P.LogSoftmax(-1)
         self.expand_dims = P.ExpandDims()
         self.tile = P.Tile()
         self.maximum = P.Maximum()
@@ -85,6 +134,12 @@ class discretized_mix_logistic_loss(nn.Cell):
         self.lse = log_sum_exp()
         self.reshape = P.Reshape()
         self.factor = self.log(Tensor((self.num_classes - 1) / 2, ms.float32))
+        self.tensor_one = Tensor(1., ms.float32)
+
+        if context.get_context("device_target") == "CPU":
+            self.logsoftmax = log_softmax()
+        else:
+            self.logsoftmax = P.LogSoftmax(-1)
 
     def construct(self, y_hat, y):
         """
@@ -105,7 +160,8 @@ class discretized_mix_logistic_loss(nn.Cell):
         # (B, T, num_mixtures) x 3
         logit_probs = y_hat[:, :, :nr_mix]
         means = y_hat[:, :, nr_mix:2 * nr_mix]
-        log_scales = self.maximum(y_hat[:, :, 2 * nr_mix:3 * nr_mix], self.log_scale_min)
+        min_cut = self.log_scale_min * self.tile(self.tensor_one, (y_hat.shape[0], y_hat.shape[1], nr_mix))
+        log_scales = self.maximum(y_hat[:, :, 2 * nr_mix:3 * nr_mix], min_cut)
 
         # B x T x 1 -> B x T x num_mixtures
         y = self.tile(y, (1, 1, nr_mix))
@@ -127,8 +183,9 @@ class discretized_mix_logistic_loss(nn.Cell):
         log_pdf_mid = mid_in - log_scales - 2. * self.softplus(mid_in)
 
         inner_inner_cond = self.cast(cdf_delta > 1e-5, ms.float32)
+        min_cut2 = 1e-12 * self.tile(self.tensor_one, cdf_delta.shape)
         inner_inner_out = inner_inner_cond * \
-                          self.log(self.maximum(cdf_delta, 1e-12)) + \
+                          self.log(self.maximum(cdf_delta, min_cut2)) + \
                           (1. - inner_inner_cond) * (log_pdf_mid - self.factor)
         inner_cond = self.cast(y > 0.999, ms.float32)
         inner_out = inner_cond * log_one_minus_cdf_min + (1. - inner_cond) * inner_inner_out
@@ -192,15 +249,19 @@ class mix_gaussian_loss(nn.Cell):
         self.maximum = P.Maximum()
         self.tile = P.Tile()
         self.exp = P.Exp()
-        self.logsoftmax = P.LogSoftmax(-1)
         self.expand_dims = P.ExpandDims()
         self.sums = P.ReduceSum()
         self.lse = log_sum_exp()
-
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
         self.const = P.ScalarToArray()
         self.log = P.Log()
+        self.tensor_one = Tensor(1., ms.float32)
+
+        if context.get_context("device_target") == "CPU":
+            self.logsoftmax = log_softmax()
+        else:
+            self.logsoftmax = P.LogSoftmax(-1)
 
     def construct(self, y_hat, y):
         """
@@ -225,12 +286,14 @@ class mix_gaussian_loss(nn.Cell):
         if C == 2:
             logit_probs = None
             means = y_hat[:, :, 0:1]
-            log_scales = self.maximum(y_hat[:, :, 1:2], self.log_scale_min)
+            min_cut = self.log_scale_min * self.tile(self.tensor_one, (y_hat.shape[0], y_hat.shape[1], 1))
+            log_scales = self.maximum(y_hat[:, :, 1:2], min_cut)
         else:
             # (B, T, num_mixtures) x 3
             logit_probs = y_hat[:, :, :nr_mix]
             means = y_hat[:, :, nr_mix:2 * nr_mix]
-            log_scales = self.maximum(y_hat[:, :, 2 * nr_mix:3 * nr_mix], self.log_scale_min)
+            min_cut = self.log_scale_min * self.tile(self.tensor_one, (y_hat.shape[0], y_hat.shape[1], nr_mix))
+            log_scales = self.maximum(y_hat[:, :, 2 * nr_mix:3 * nr_mix], min_cut)
 
         # B x T x 1 -> B x T x num_mixtures
         y = self.tile(y, (1, 1, nr_mix))
