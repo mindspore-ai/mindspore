@@ -71,7 +71,8 @@ Status ModelImpl::Build() {
   model_context.thread_num_ = Context::GetThreadNum(context_);
   model_context.device_list_.clear();
   if (Context::IfCPUEnabled(context_) && Context::IfGPUEnabled(context_) && Context::IfNPUEnabled(context_)) {
-    MS_LOG(INFO) << "CPU/GPU/NPU cannot be enabled at the same time.";
+    MS_LOG(ERROR) << "CPU/GPU/NPU cannot be enabled at the same time.";
+    return kLiteInputParamInvalid;
   }
   if (!Context::IfCPUEnabled(context_)) {
     MS_LOG(INFO) << "CPU is forced to be enabled.";
@@ -155,6 +156,7 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     MS_LOG(DEBUG) << "Empty outputs.";
     return kLiteError;
   }
+  outputs->clear();
   outputs->insert(outputs->end(), res.begin(), res.end());
   return kSuccess;
 }
@@ -167,8 +169,13 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   }
   std::vector<MSTensor> res;
   auto inputs = session_->GetInputs();
-  for (auto input : inputs) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(input));
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "The inputs of model is null.";
+    return empty;
+  }
+  res.resize(inputs.size());
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
     if (impl == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
@@ -178,7 +185,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
     }
-    res.push_back(tensor);
+    res[i] = tensor;
   }
   return res;
 }
@@ -191,9 +198,22 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   }
   std::vector<MSTensor> res;
   auto names = session_->GetOutputTensorNames();
+  if (names.empty()) {
+    MS_LOG(ERROR) << "The names of model is null.";
+    return empty;
+  }
   auto outputs = session_->GetOutputs();
-  for (auto name : names) {
-    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[name]));
+  if (outputs.empty()) {
+    MS_LOG(ERROR) << "The outputs of model is null.";
+    return empty;
+  }
+  if (names.size() != outputs.size()) {
+    MS_LOG(ERROR) << "The size of outputs dose not match the size of names.";
+    return empty;
+  }
+  res.resize(names.size());
+  for (size_t i = 0; i < names.size(); i++) {
+    auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[names[i]]));
     if (impl == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
@@ -203,7 +223,7 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
     }
-    res.push_back(tensor);
+    res[i] = tensor;
   }
   return res;
 }
@@ -213,26 +233,44 @@ Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<
     MS_LOG(ERROR) << "Session is null.";
     return kLiteNullptr;
   }
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "Inputs is null.";
+    return kLiteInputParamInvalid;
+  }
+  if (dims.empty()) {
+    MS_LOG(ERROR) << "Dims is null.";
+    return kLiteInputParamInvalid;
+  }
   if (inputs.size() != dims.size()) {
-    MS_LOG(ERROR) << "The size of inputs is not equal to the size of dims.";
+    MS_LOG(ERROR) << "The size of inputs does not match the size of dims.";
+    return kLiteInputParamInvalid;
+  }
+  auto model_inputs = session_->GetInputs();
+  if (model_inputs.empty()) {
+    MS_LOG(ERROR) << "The inputs of model is null.";
     return kLiteParamInvalid;
   }
+  if (inputs.size() != model_inputs.size()) {
+    MS_LOG(ERROR) << "The size of inputs is incorrect.";
+    return kLiteInputParamInvalid;
+  }
   std::vector<tensor::MSTensor *> inner_input;
-  for (auto input : inputs) {
+  inner_input.resize(inputs.size());
+  std::vector<std::vector<int32_t>> truncated_shape;
+  truncated_shape.resize(inputs.size());
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto input = inputs[i];
     if (input.impl_ == nullptr || input.impl_->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Input tensor " << input.Name() << " is null.";
       return kLiteInputTensorError;
     }
-    inner_input.push_back(input.impl_->lite_tensor());
-  }
-  std::vector<std::vector<int32_t>> truncated_shape;
-  for (size_t i = 0; i < inner_input.size(); i++) {
-    std::vector<int32_t> tmp = TruncateShape(dims.at(i), inner_input.at(i)->data_type(), inner_input.at(i)->Size());
-    if (tmp.empty()) {
-      MS_LOG(ERROR) << "Input dims[" << i << "]is invalid.";
+    inner_input[i] = input.impl_->lite_tensor();
+    std::vector<int32_t> shape = TruncateShape(dims[i], inner_input[i]->data_type(), inner_input[i]->Size(), false);
+    if (shape.empty() && !(dims[i].empty())) {
+      MS_LOG(ERROR) << "Input dims[" << i << "] is invalid.";
       return kLiteParamInvalid;
     }
-    truncated_shape.push_back(tmp);
+    truncated_shape[i] = shape;
   }
   auto ret = session_->Resize(inner_input, truncated_shape);
   return static_cast<StatusCode>(ret);

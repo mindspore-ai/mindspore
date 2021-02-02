@@ -48,17 +48,12 @@ Model::Model(const GraphCell &graph, const std::shared_ptr<Context> &model_conte
   impl_ = std::shared_ptr<ModelImpl>(new (std::nothrow) ModelImpl());
   if (impl_ == nullptr || graph.GetGraph() == nullptr) {
     MS_LOG(ERROR) << "Invalid graph.";
+  } else if (model_context == nullptr) {
+    MS_LOG(ERROR) << "Invalid context.";
   } else {
-    if (model_context == nullptr) {
-      MS_LOG(INFO) << "Invalid context, use default context.";
-      auto context = std::shared_ptr<Context>(new (std::nothrow) Context());
-      Context::SetAsDefault(context);
-      impl_->SetContext(context);
-    } else {
-      impl_->SetContext(model_context);
-    }
     auto new_graph_cell = std::shared_ptr<GraphCell>(new (std::nothrow) GraphCell(graph));
     if (new_graph_cell != nullptr) {
+      impl_->SetContext(model_context);
       impl_->SetGraphCell(new_graph_cell);
     } else {
       MS_LOG(ERROR) << "New graphcell failed.";
