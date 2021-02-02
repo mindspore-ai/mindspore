@@ -26,7 +26,7 @@ import pycocotools.coco as coco
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
-from src.image import color_aug, get_affine_transform, affine_transform
+from src.image import get_affine_transform, affine_transform
 from src.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, draw_dense_reg
 from src.visual import visual_image
 
@@ -37,7 +37,7 @@ cv2.setNumThreads(0)
 class COCOHP(ds.Dataset):
     """
     Encapsulation class of COCO person keypoints datast.
-    Initilize and preprocess of image for training and testing.
+    Initialize and preprocess of image for training and testing.
 
     Args:
         data_dir(str): Path of coco dataset.
@@ -67,7 +67,7 @@ class COCOHP(ds.Dataset):
                 os.makedirs(self.save_path)
 
     def init(self, data_dir, keep_res=False):
-        """initailize additional info"""
+        """initialize additional info"""
         logger.info('Initializing coco 2017 {} data.'.format(self.run_mode))
         if not os.path.isdir(data_dir):
             raise RuntimeError("Invalid dataset path")
@@ -236,9 +236,8 @@ class COCOHP(ds.Dataset):
 
         return eval_image, meta
 
-    def preprocess_fn(self, img, num_objects, keypoints, bboxes, category_id):
-        """image pre-process and augmentation"""
-        num_objs = min(num_objects, self.data_opt.max_objs)
+    def get_aug_param(self, img):
+        """get data augmentation parameters"""
         img = cv2.imdecode(img, cv2.IMREAD_COLOR)
         width = img.shape[1]
         c = np.array([img.shape[1] / 2., img.shape[0] / 2.], dtype=np.float32)
@@ -266,21 +265,22 @@ class COCOHP(ds.Dataset):
             flipped = True
             img = img[:, ::-1, :]
             c[0] = width - c[0] - 1
+        return img, width, c, s, rot, flipped
+
+    def preprocess_fn(self, img, num_objects, keypoints, bboxes, category_id):
+        """image pre-process and augmentation"""
+        num_objs = min(num_objects, self.data_opt.max_objs)
+        img, width, c, s, rot, flipped = self.get_aug_param(img)
 
         trans_input = get_affine_transform(c, s, rot, self.data_opt.input_res)
         inp = cv2.warpAffine(img, trans_input, (self.data_opt.input_res[0], self.data_opt.input_res[1]),
                              flags=cv2.INTER_LINEAR)
-        if self.run_mode == "train" and self.data_opt.color_aug:
-            color_aug(self._data_rng, inp / 255., self.data_opt.eig_val, self.data_opt.eig_vec)
-            inp *= 255.
 
         # caution: image normalization and transpose to nchw will both be done on device
         # inp = (inp.astype(np.float32) / 255. - self.data_opt.mean) / self.data_opt.std
         # inp = inp.transpose(2, 0, 1)
 
-        if self.data_opt.output_res[0] != self.data_opt.output_res[1]:
-            raise ValueError("Only square image was supported to used as output for convinient")
-
+        assert self.data_opt.output_res[0] == self.data_opt.output_res[1]
         output_res = self.data_opt.output_res[0]
         num_joints = self.data_opt.num_joints
         max_objs = self.data_opt.max_objs
@@ -314,22 +314,20 @@ class COCOHP(ds.Dataset):
                 for e in self.data_opt.flip_idx:
                     pts[e[0]], pts[e[1]] = pts[e[1]].copy(), pts[e[0]].copy()
 
-            lt = [bbox[0], bbox[3]]
-            rb = [bbox[2], bbox[1]]
+            lt, rb = [bbox[0], bbox[3]], [bbox[2], bbox[1]]
             bbox[:2] = affine_transform(bbox[:2], trans_output_rot)
             bbox[2:] = affine_transform(bbox[2:], trans_output_rot)
             if rot != 0:
                 lt = affine_transform(lt, trans_output_rot)
                 rb = affine_transform(rb, trans_output_rot)
-                bbox[0] = min(lt[0], rb[0], bbox[0], bbox[2])
-                bbox[2] = max(lt[0], rb[0], bbox[0], bbox[2])
-                bbox[1] = min(lt[1], rb[1], bbox[1], bbox[3])
-                bbox[3] = max(lt[1], rb[1], bbox[1], bbox[3])
+                for i in range(2):
+                    bbox[i] = min(lt[i], rb[i], bbox[i], bbox[i+2])
+                    bbox[i+2] = max(lt[i], rb[i], bbox[i], bbox[i+2])
             bbox = np.clip(bbox, 0, output_res - 1)
             h, w = bbox[3] - bbox[1], bbox[2] - bbox[0]
             if h <= 0 or w <= 0:
                 continue
-            radius = gaussian_radius((math.ceil(h), math.ceil(w)))
+            hp_radius = radius = gaussian_radius((math.ceil(h), math.ceil(w)))
             ct = np.array([(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2], dtype=np.float32)
             ct_int = ct.astype(np.int32)
             wh[k] = 1. * w, 1. * h
@@ -341,7 +339,6 @@ class COCOHP(ds.Dataset):
                 hm[cls_id, ct_int[1], ct_int[0]] = 0.9999
                 reg_mask[k] = 0
 
-            hp_radius = radius
             for j in range(num_joints):
                 if pts[j, 2] > 0:
                     pts[j, :2] = affine_transform(pts[j, :2], trans_output_rot)

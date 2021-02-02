@@ -300,7 +300,6 @@ Parameters for dataset (Training/Evaluation):
     aug_rot                         properbility of image rotation during data augmenation: N, default is 0.0
     rotate                          maximum value of rotation angle during data augmentation: N, default is 0.0
     flip_prop                       properbility of image flip during data augmenation: N, default is 0.5
-    color_aug                       whether use color augmentation: True | False, default is False
     mean                            mean value of RGB image
     std                             variance of RGB image
     flip_idx                        the corresponding point index of keypoints when flip the image
