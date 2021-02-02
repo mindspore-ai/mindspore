@@ -405,6 +405,13 @@ class Tensor {
   /// \return Status error code
   Status Slice(TensorPtr *out, const std::vector<mindspore::dataset::SliceOption> slice_options);
 
+  /// Get slice_option according to shape and index.
+  /// \param[in] slice_option input SliceOption object
+  /// \param[in] slice_index index of SliceOption object
+  /// \param[out] output slice_option with shape info
+  /// \return Status error code
+  Status GetSliceOption(const SliceOption &slice_option, const int32_t &slice_index, SliceOption *slice_option_ptr);
+
 #ifdef ENABLE_PYTHON
   /// Constructs numpy array from input tensor
   /// \param[in] data this data is the location of python data

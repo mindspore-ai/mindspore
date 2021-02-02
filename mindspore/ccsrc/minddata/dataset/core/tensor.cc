@@ -269,10 +269,11 @@ Status Tensor::CreateFromFile(const std::string &path, std::shared_ptr<Tensor> *
   CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + path);
   int64_t num_bytes = fs.seekg(0, std::ios::end).tellg();
   CHECK_FAIL_RETURN_UNEXPECTED(num_bytes <= kDeMaxDim, "Invalid file to allocate tensor memory, check path: " + path);
-  CHECK_FAIL_RETURN_UNEXPECTED(fs.seekg(0, std::ios::beg).good(), "Fail to find size of file");
+  CHECK_FAIL_RETURN_UNEXPECTED(fs.seekg(0, std::ios::beg).good(), "Fail to find size of file, check path: " + path);
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape{num_bytes}, DataType(DataType::DE_UINT8), out));
   int64_t written_bytes = fs.read(reinterpret_cast<char *>((*out)->GetMutableBuffer()), num_bytes).gcount();
-  CHECK_FAIL_RETURN_UNEXPECTED(written_bytes == num_bytes && fs.good(), "Error in writing to tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(written_bytes == num_bytes && fs.good(),
+                               "Error in writing to tensor, check path: " + path);
   fs.close();
   return Status::OK();
 }
@@ -873,6 +874,42 @@ Status Tensor::CopyLastDimAt(const std::shared_ptr<Tensor> &src, const std::vect
   return Status::OK();
 }
 
+Status Tensor::GetSliceOption(const SliceOption &slice_option, const int32_t &slice_index,
+                              SliceOption *slice_option_ptr) {
+  if (slice_option.indices_.empty() && !slice_option.slice_.valid()) {
+    RETURN_STATUS_UNEXPECTED("Both indices and slices can not be empty.");
+  }
+
+  if (!slice_option.indices_.empty() && slice_option.slice_.valid()) {
+    RETURN_STATUS_UNEXPECTED("Both indices and slices can not be given.");
+  }
+
+  // if slice object was provided, indices should be empty. Generate indices from the slice object.
+  if (slice_option.indices_.empty()) {
+    // check if slice is valid
+    mindspore::dataset::Slice slice_copy = slice_option.slice_;
+    slice_copy.start_ = HandleNeg(slice_option.slice_.start_, shape_[slice_index]);
+    slice_copy.stop_ = HandleNeg(slice_option.slice_.stop_, shape_[slice_index]);
+    slice_copy.start_ = slice_copy.start_ < 0 ? 0 : slice_copy.start_;
+    slice_copy.stop_ = slice_copy.stop_ < 0 ? 0 : slice_copy.stop_;
+    dsize_t max_idx = shape_[slice_index];
+    slice_copy.start_ = slice_copy.start_ > max_idx ? max_idx : slice_copy.start_;
+    slice_copy.stop_ = slice_copy.stop_ > max_idx ? max_idx : slice_copy.stop_;
+    *slice_option_ptr = SliceOption(slice_copy);
+  } else {
+    // indices validation
+    std::vector<dsize_t> indices_copy;
+    for (int j = 0; j < slice_option.indices_.size(); j++) {
+      dsize_t index = HandleNeg(slice_option.indices_[j], shape_[slice_index]);
+      CHECK_FAIL_RETURN_UNEXPECTED(index < shape_[slice_index] && index >= 0,
+                                   "Index " + std::to_string(index) + " is out of bounds.");
+      indices_copy.emplace_back(index);
+    }
+    *slice_option_ptr = SliceOption(indices_copy);
+  }
+  return Status::OK();
+}
+
 Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption> slice_options_) {
   std::vector<SliceOption> converted_slice_objects;
 
@@ -885,37 +922,9 @@ Status Tensor::Slice(std::shared_ptr<Tensor> *out, const std::vector<SliceOption
       continue;
     }
 
-    if (slice_option.indices_.empty() && !slice_option.slice_.valid()) {
-      RETURN_STATUS_UNEXPECTED("Both indices and slices can not be empty.");
-    }
-
-    if (!slice_option.indices_.empty() && slice_option.slice_.valid()) {
-      RETURN_STATUS_UNEXPECTED("Both indices and slices can not be given.");
-    }
-
-    // if slice object was provided, indices should be empty. Generate indices from the slice object.
-    if (slice_option.indices_.empty()) {
-      // check if slice is valid
-      mindspore::dataset::Slice slice_copy = slice_option.slice_;
-      slice_copy.start_ = HandleNeg(slice_option.slice_.start_, shape_[i]);
-      slice_copy.stop_ = HandleNeg(slice_option.slice_.stop_, shape_[i]);
-      slice_copy.start_ = slice_copy.start_ < 0 ? 0 : slice_copy.start_;
-      slice_copy.stop_ = slice_copy.stop_ < 0 ? 0 : slice_copy.stop_;
-      dsize_t max_idx = shape_[i];
-      slice_copy.start_ = slice_copy.start_ > max_idx ? max_idx : slice_copy.start_;
-      slice_copy.stop_ = slice_copy.stop_ > max_idx ? max_idx : slice_copy.stop_;
-      converted_slice_objects.emplace_back(SliceOption(slice_copy));
-    } else {
-      // indices validation
-      std::vector<dsize_t> indices_copy;
-      for (int j = 0; j < slice_option.indices_.size(); j++) {
-        dsize_t index = HandleNeg(slice_option.indices_[j], shape_[i]);
-        CHECK_FAIL_RETURN_UNEXPECTED(index < shape_[i] && index >= 0,
-                                     "Index " + std::to_string(index) + " is out of bounds.");
-        indices_copy.emplace_back(index);
-      }
-      converted_slice_objects.emplace_back(SliceOption(indices_copy));
-    }
+    SliceOption slice_option_item(false);
+    RETURN_IF_NOT_OK(GetSliceOption(slice_option, i, &slice_option_item));
+    converted_slice_objects.emplace_back(slice_option_item);
   }
 
   // if a string with partial slices, pass in the rest
