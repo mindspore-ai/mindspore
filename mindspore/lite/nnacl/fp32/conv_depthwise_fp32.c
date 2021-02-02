@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/conv_depthwise_fp32.h"
+#include "nnacl/common_func.h"
 #include "nnacl/fp32/common_func_fp32.h"
 #include "nnacl/winograd_transform.h"
 #ifdef ENABLE_ARM64

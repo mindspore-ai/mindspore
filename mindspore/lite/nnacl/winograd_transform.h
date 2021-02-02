@@ -22,7 +22,6 @@
 #endif
 #include <string.h>
 #include "nnacl/pack.h"
-#include "nnacl/fp32/conv_fp32.h"
 #include "nnacl/winograd_utils.h"
 #include "mindspore/lite/nnacl/int8/fixed_point.h"
 

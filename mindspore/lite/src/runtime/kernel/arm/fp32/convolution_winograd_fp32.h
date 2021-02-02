@@ -21,6 +21,7 @@
 #include "src/lite_kernel.h"
 #include "nnacl/winograd_transform.h"
 #include "nnacl/minimal_filtering_generator.h"
+#include "nnacl/fp32/conv_winograd_fp32.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 
 namespace mindspore::kernel {
