@@ -61,26 +61,6 @@ Status PReLUInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status PReLUInfo::InferMirrorOps() {
-  Shape param_tensor_map = inputs_tensor_map_[1];
-  std::vector<Group> param_group;
-  if (CreateGroupByTensorMap(param_tensor_map, &param_group) != SUCCESS) {
-    return FAILED;
-  } else if (param_group.empty()) {
-    MS_LOG(INFO) << name_ << ": The mirror ops is empty.";
-    return SUCCESS;
-  }
-  OperatorVector op_for_param;
-  op_for_param = CreateMirrorOps(param_group[0].name(), param_group[0].GetDevNum());
-  // op_for_inputs is empty
-  OperatorVector op_for_inputs;
-  mirror_ops_.push_back(op_for_inputs);
-  mirror_ops_.push_back(op_for_param);
-  std::string group_name = param_group[0].name();
-  MS_LOG(INFO) << name_ << ": The mirror ops group is " << group_name;
-  return SUCCESS;
-}
-
 Status PReLUInfo::InferForwardCommunication() { return SUCCESS; }
 
 /*
