@@ -313,7 +313,7 @@ class BertNetworkWithLoss(nn.Cell):
 
 class BertTrainWithLossScaleCell(nn.Cell):
     """
-    Especifically defined for finetuning where only four inputs tensor are needed.
+    Specifically defined for finetuning where only four inputs tensor are needed.
     """
     def __init__(self, network, optimizer, scale_update_cell=None):
         super(BertTrainWithLossScaleCell, self).__init__(auto_prefix=False)
@@ -333,6 +333,8 @@ class BertTrainWithLossScaleCell(nn.Cell):
         if self.reducer_flag:
             self.degree = get_group_size()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
+        self.clip_type = gradient_cfg.clip_type
+        self.clip_value = gradient_cfg.clip_value
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
@@ -410,7 +412,7 @@ class BertTrainWithLossScaleCell(nn.Cell):
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
-        grads = self.hyper_map(F.partial(clip_grad, gradient_cfg.clip_type, gradient_cfg.clip_value), grads)
+        grads = self.hyper_map(F.partial(clip_grad, self.clip_type, self.clip_value), grads)
         restore = ()
         for i in range(self.length):
             restore = restore + (F.assign(weights[i], self.saved_params[i]),)
@@ -437,7 +439,7 @@ class BertTrainWithLossScaleCell(nn.Cell):
 
 class BertTrainCell(nn.Cell):
     """
-    Especifically defined for finetuning where only four inputs tensor are needed.
+    Specifically defined for finetuning where only four inputs tensor are needed.
     """
     def __init__(self, network, optimizer, sens=1.0):
         super(BertTrainCell, self).__init__(auto_prefix=False)
@@ -448,6 +450,8 @@ class BertTrainCell(nn.Cell):
         self.sens = sens
         self.grad = C.GradOperation(get_by_list=True,
                                     sens_param=True)
+        self.clip_type = gradient_cfg.clip_type
+        self.clip_value = gradient_cfg.clip_value
         self.reducer_flag = False
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
@@ -514,7 +518,7 @@ class BertTrainCell(nn.Cell):
         F.control_depend(input_ids, grads)
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
-        grads = self.hyper_map(F.partial(clip_grad, gradient_cfg.clip_type, gradient_cfg.clip_value), grads)
+        grads = self.hyper_map(F.partial(clip_grad, self.clip_type, self.clip_value), grads)
         restore = ()
         for i in range(self.length):
             restore = restore + (F.assign(weights[i], self.saved_params[i]),)

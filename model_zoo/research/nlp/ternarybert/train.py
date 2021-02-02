@@ -21,7 +21,7 @@ from mindspore import context
 from mindspore.train.model import Model
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore import set_seed
-from src.dataset import create_tinybert_dataset
+from src.dataset import create_dataset
 from src.utils import StepCallBack, ModelSaveCkpt, EvalCallBack, BertLearningRate
 from src.config import train_cfg, eval_cfg, teacher_net_cfg, student_net_cfg, task_cfg
 from src.cell_wrapper import BertNetworkWithLoss, BertTrainCell
@@ -86,26 +86,26 @@ def run_task_distill(args_opt):
 
     rank = 0
     device_num = 1
-    train_dataset = create_tinybert_dataset(batch_size=train_cfg.batch_size,
-                                            device_num=device_num,
-                                            rank=rank,
-                                            do_shuffle=args_opt.do_shuffle,
-                                            data_dir=train_data_dir,
-                                            data_type=args_opt.dataset_type,
-                                            seq_length=task.seq_length,
-                                            task_type=task.task_type,
-                                            drop_remainder=True)
+    train_dataset = create_dataset(batch_size=train_cfg.batch_size,
+                                   device_num=device_num,
+                                   rank=rank,
+                                   do_shuffle=args_opt.do_shuffle,
+                                   data_dir=train_data_dir,
+                                   data_type=args_opt.dataset_type,
+                                   seq_length=task.seq_length,
+                                   task_type=task.task_type,
+                                   drop_remainder=True)
     dataset_size = train_dataset.get_dataset_size()
     print('train dataset size:', dataset_size)
-    eval_dataset = create_tinybert_dataset(batch_size=eval_cfg.batch_size,
-                                           device_num=device_num,
-                                           rank=rank,
-                                           do_shuffle=args_opt.do_shuffle,
-                                           data_dir=eval_data_dir,
-                                           data_type=args_opt.dataset_type,
-                                           seq_length=task.seq_length,
-                                           task_type=task.task_type,
-                                           drop_remainder=False)
+    eval_dataset = create_dataset(batch_size=eval_cfg.batch_size,
+                                  device_num=device_num,
+                                  rank=rank,
+                                  do_shuffle=args_opt.do_shuffle,
+                                  data_dir=eval_data_dir,
+                                  data_type=args_opt.dataset_type,
+                                  seq_length=task.seq_length,
+                                  task_type=task.task_type,
+                                  drop_remainder=False)
     print('eval dataset size:', eval_dataset.get_dataset_size())
 
     if args_opt.enable_data_sink == 'true':

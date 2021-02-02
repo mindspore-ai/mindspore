@@ -89,12 +89,7 @@ class LossCallBack(Callback):
 
 class StepCallBack(Callback):
     """
-    Monitor the loss in training.
-    If the loss in NAN or INF terminating training.
-    Note:
-        if per_print_times is 0 do not print loss.
-    Args:
-        per_print_times (int): Print loss every times. Default: 1.
+    Monitor the time in training.
     """
     def __init__(self):
         super(StepCallBack, self).__init__()

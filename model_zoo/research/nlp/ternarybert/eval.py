@@ -20,7 +20,7 @@ import re
 import argparse
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from src.dataset import create_tinybert_dataset
+from src.dataset import create_dataset
 from src.config import eval_cfg, student_net_cfg, task_cfg
 from src.tinybert_model import BertModelCLS
 
@@ -66,15 +66,15 @@ def do_eval_standalone(args_opt):
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args.device_id)
 
-    eval_dataset = create_tinybert_dataset(batch_size=eval_cfg.batch_size,
-                                           device_num=1,
-                                           rank=0,
-                                           do_shuffle='false',
-                                           data_dir=eval_data_dir,
-                                           data_type=args_opt.dataset_type,
-                                           seq_length=task.seq_length,
-                                           task_type=task.task_type,
-                                           drop_remainder=False)
+    eval_dataset = create_dataset(batch_size=eval_cfg.batch_size,
+                                  device_num=1,
+                                  rank=0,
+                                  do_shuffle='false',
+                                  data_dir=eval_data_dir,
+                                  data_type=args_opt.dataset_type,
+                                  seq_length=task.seq_length,
+                                  task_type=task.task_type,
+                                  drop_remainder=False)
     print('eval dataset size:', eval_dataset.get_dataset_size())
     print('eval dataset batch size:', eval_dataset.get_batch_size())
 
