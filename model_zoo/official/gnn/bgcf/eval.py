@@ -19,6 +19,7 @@ import datetime
 
 import mindspore.context as context
 from mindspore.train.serialization import load_checkpoint
+from mindspore.common import set_seed
 
 from src.bgcf import BGCF
 from src.utils import BGCFLogger
@@ -27,6 +28,7 @@ from src.metrics import BGCFEvaluate
 from src.callback import ForwardBGCF, TestBGCF
 from src.dataset import TestGraphDataset, load_graph
 
+set_seed(1)
 
 def evaluation():
     """evaluation"""
@@ -34,7 +36,8 @@ def evaluation():
     num_item = train_graph.graph_info()["node_num"][1]
 
     eval_class = BGCFEvaluate(parser, train_graph, test_graph, parser.Ks)
-    for _epoch in range(parser.eval_interval, parser.num_epoch+1, parser.eval_interval):
+    for _epoch in range(parser.eval_interval, parser.num_epoch+1, parser.eval_interval) \
+                  if parser.device_target == "Ascend" else range(parser.num_epoch, parser.num_epoch+1):
         bgcfnet_test = BGCF([parser.input_dim, num_user, num_item],
                             parser.embedded_dimension,
                             parser.activation,
@@ -79,9 +82,10 @@ def evaluation():
 if __name__ == "__main__":
     parser = parser_args()
     context.set_context(mode=context.GRAPH_MODE,
-                        device_target="Ascend",
-                        save_graphs=False,
-                        device_id=int(parser.device))
+                        device_target=parser.device_target,
+                        save_graphs=False)
+    if parser.device_target == "Ascend":
+        context.set_context(device_id=int(parser.device))
 
     train_graph, test_graph, sampled_graph_list = load_graph(parser.datapath)
     test_graph_dataset = TestGraphDataset(train_graph, sampled_graph_list, num_samples=parser.raw_neighs,
