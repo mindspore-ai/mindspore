@@ -16,6 +16,14 @@
 
 - [BETA] Support Tensor Fancy Index Getitem with tuple and list. (Ascend/GPU/CPU)
 
+#### Graph Kernel Fusion
+
+- [STABLE] Optimize buffer fusion performance based on primary-op aggregation. (Ascend/GPU)
+- [STABLE] Support auto-expanding composite operators into primary-op sub-graphs for fusion. (Ascend/GPU)
+- [STABLE] Optimize reduce operators performance with atomic funcions in AKG. (GPU)
+- [BETA] Support Parallel Fusion and Buffer Stitching. (GPU)
+- [STABLE] Improve the performance of BERT Base by enabling Graph Kernel Fusion. (GPU)
+
 ### Backwards Incompatible Change
 
 #### Python API
