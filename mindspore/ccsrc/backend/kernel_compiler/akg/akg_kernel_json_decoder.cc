@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,6 +414,35 @@ FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const std::string &kernel_js
   return DecodeFusedNodes(kernel_json);
 }
 
+StitchInfo AkgKernelJsonDecoder::GetStitchInfo(const nlohmann::json &kernel_json) {
+  StitchInfo info;
+  if (kernel_json.find(kJsonKeyBufferStitch) != kernel_json.end()) {
+    nlohmann::json buffer_stitch = kernel_json[kJsonKeyBufferStitch];
+    if (buffer_stitch.find(kJsonKeyStitchOp) != buffer_stitch.end()) {
+      std::vector<std::string> stitch_ops = buffer_stitch[kJsonKeyStitchOp];
+      info.stitch_ops = stitch_ops;
+    }
+    if (buffer_stitch.find(kJsonKeyStitchAtomicOp) != buffer_stitch.end()) {
+      std::vector<std::string> stitch_atomic_ops = buffer_stitch[kJsonKeyStitchAtomicOp];
+      info.stitch_atomic_ops = stitch_atomic_ops;
+    }
+  }
+  return info;
+}
+
+void AkgKernelJsonDecoder::SetStitchAttr(const nlohmann::json &op_desc, const StitchInfo &info, const CNodePtr &node) {
+  std::vector<nlohmann::json> output_descs = op_desc[kJsonKeyOutputDesc];
+  if (output_descs.empty() || output_descs[0].find(kJsonKeyTensorName) == output_descs[0].end()) return;
+  std::string tensor_name = output_descs[0][kJsonKeyTensorName];
+  if (std::find(info.stitch_ops.begin(), info.stitch_ops.end(), tensor_name) != info.stitch_ops.end()) {
+    AnfAlgo::SetNodeAttr(kAttrStitch, MakeValue("common"), node);
+  }
+  if (std::find(info.stitch_atomic_ops.begin(), info.stitch_atomic_ops.end(), tensor_name) !=
+      info.stitch_atomic_ops.end()) {
+    AnfAlgo::SetNodeAttr(kAttrStitch, MakeValue("atomic"), node);
+  }
+}
+
 bool AkgKernelJsonDecoder::DecodeSplitNodes(const nlohmann::json &kernel_json,
                                             const std::map<std::string, AnfNodePtr> &address_node_map,
                                             AnfNodePtrList *res_graphs) {
@@ -425,6 +454,7 @@ bool AkgKernelJsonDecoder::DecodeSplitNodes(const nlohmann::json &kernel_json,
     MS_LOG(ERROR) << "Error decode, no cnodes for graph." << kernel_json;
     return false;
   }
+  StitchInfo info = GetStitchInfo(kernel_json);
   for (const auto &op_desc : op_node_descs) {
     if (op_desc.find(kJsonKeyPtrAddress) == op_desc.end() || op_desc[kJsonKeyPtrAddress].is_null()) {
       MS_LOG(ERROR) << "Decode failed, key: " << kJsonKeyPtrAddress << " not found in: " << op_desc;
@@ -436,7 +466,9 @@ bool AkgKernelJsonDecoder::DecodeSplitNodes(const nlohmann::json &kernel_json,
       MS_LOG(ERROR) << "Decode failed, ptr_address not found in map.";
       return false;
     }
-    res_graphs->push_back(address_node_map.at(ptr_address));
+    auto node = address_node_map.at(ptr_address)->cast<CNodePtr>();
+    SetStitchAttr(op_desc, info, node);
+    res_graphs->push_back(node);
   }
   MS_LOG(DEBUG) << "decode cnodes success, size: " << res_graphs->size();
   return true;

@@ -132,7 +132,7 @@ inline const PrimitivePtr kPrimRange = std::make_shared<Primitive>("Range");
 
 // NN
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");
-inline const PrimitivePtr kPrimSoftMax = std::make_shared<Primitive>("SoftMax");
+inline const PrimitivePtr kPrimSoftMax = std::make_shared<Primitive>("Softmax");
 inline const PrimitivePtr kPrimLogSoftmax = std::make_shared<Primitive>("LogSoftmax");
 inline const PrimitivePtr kPrimLogSoftmaxGrad = std::make_shared<Primitive>("LogSoftmaxGrad");
 inline const PrimitivePtr kPrimTanh = std::make_shared<Primitive>("Tanh");

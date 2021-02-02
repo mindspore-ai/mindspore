@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,10 @@
 
 namespace mindspore {
 namespace kernel {
+struct StitchInfo {
+  std::vector<std::string> stitch_ops;
+  std::vector<std::string> stitch_atomic_ops;
+};
 class AkgKernelJsonDecoder {
  public:
   AkgKernelJsonDecoder() { nodes_map_.clear(); }
@@ -40,6 +44,8 @@ class AkgKernelJsonDecoder {
   ParameterPtr DecodeParameter(const nlohmann::json &parameter_json, const FuncGraphPtr &func_graph);
   CNodePtr DecodeCNode(const nlohmann::json &cnode_json, const FuncGraphPtr &func_graph, const std::string &processor);
   AnfNodePtr DecodeOutput(const std::vector<nlohmann::json> &output_descs, const FuncGraphPtr &func_graph);
+  StitchInfo GetStitchInfo(const nlohmann::json &kernel_json);
+  void SetStitchAttr(const nlohmann::json &op_desc, const StitchInfo &info, const CNodePtr &node);
   std::map<std::string, AnfNodePtr> nodes_map_;
 };
 }  // namespace kernel
