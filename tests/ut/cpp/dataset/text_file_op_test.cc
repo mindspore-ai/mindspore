@@ -45,10 +45,7 @@ TEST_F(MindDataTestTextFileOp, TestTextFileBasic) {
 
   std::shared_ptr<TextFileOp> op;
   TextFileOp::Builder builder;
-  builder.SetTextFilesList({dataset_path})
-      .SetRowsPerBuffer(16)
-      .SetNumWorkers(16)
-      .SetOpConnectorSize(2);
+  builder.SetTextFilesList({dataset_path}).SetRowsPerBuffer(16).SetOpConnectorSize(2);
 
   Status rc = builder.Build(&op);
   ASSERT_TRUE(rc.IsOk());
@@ -97,10 +94,7 @@ TEST_F(MindDataTestTextFileOp, TestTextFileFileNotExist) {
 
   std::shared_ptr<TextFileOp> op;
   TextFileOp::Builder builder;
-  builder.SetTextFilesList({dataset_path})
-      .SetRowsPerBuffer(16)
-      .SetNumWorkers(16)
-      .SetOpConnectorSize(2);
+  builder.SetTextFilesList({dataset_path}).SetRowsPerBuffer(16).SetOpConnectorSize(2);
 
   Status rc = builder.Build(&op);
   ASSERT_TRUE(rc.IsOk());

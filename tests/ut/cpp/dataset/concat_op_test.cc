@@ -51,10 +51,7 @@ TEST_F(MindDataTestConcatOp, TestConcatProject) {
   // TFReaderOp1
   std::shared_ptr<TFReaderOp> my_tfreader_op1;
   TFReaderOp::Builder builder1;
-  builder1.SetDatasetFilesList({dataset_path})
-    .SetRowsPerBuffer(16)
-    .SetWorkerConnectorSize(16)
-    .SetNumWorkers(16);
+  builder1.SetDatasetFilesList({dataset_path}).SetRowsPerBuffer(16).SetWorkerConnectorSize(16);
   std::unique_ptr<DataSchema> schema1 = std::make_unique<DataSchema>();
   schema1->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder1.SetDataSchema(std::move(schema1));
@@ -66,10 +63,7 @@ TEST_F(MindDataTestConcatOp, TestConcatProject) {
   // TFReaderOp2
   std::shared_ptr<TFReaderOp> my_tfreader_op2;
   TFReaderOp::Builder builder2;
-  builder2.SetDatasetFilesList({dataset_path})
-    .SetRowsPerBuffer(16)
-    .SetWorkerConnectorSize(16)
-    .SetNumWorkers(16);
+  builder2.SetDatasetFilesList({dataset_path}).SetRowsPerBuffer(16).SetWorkerConnectorSize(16);
   std::unique_ptr<DataSchema> schema2 = std::make_unique<DataSchema>();
   schema2->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder2.SetDataSchema(std::move(schema2));

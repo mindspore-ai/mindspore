@@ -37,7 +37,6 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeDisabled) {
 
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  ds = ds->SetNumWorkers(16);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorOperation> decode = vision::Decode();
@@ -69,7 +68,6 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeEnabled) {
 
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  ds = ds->SetNumWorkers(16);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorOperation> decode = vision::Decode();

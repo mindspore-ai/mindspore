@@ -77,7 +77,7 @@ TEST_F(MindDataTestClientConfig, TestClientConfig1) {
 TEST_F(MindDataTestClientConfig, TestClientConfig2) {
   std::shared_ptr<ConfigManager> my_conf = GlobalContext::config_manager();
 
-  my_conf->set_num_parallel_workers(16);
+  my_conf->set_num_parallel_workers(8);
 
   Status rc;
 

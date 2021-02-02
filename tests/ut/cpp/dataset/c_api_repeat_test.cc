@@ -28,7 +28,7 @@ TEST_F(MindDataTestPipeline, TestRepeatSetNumWorkers) {
 
   std::string file_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
   std::shared_ptr<Dataset> ds = TFRecord({file_path});
-  ds = ds->SetNumWorkers(16);
+  ds = ds->SetNumWorkers(8);
   ds = ds->Repeat(32);
 
   // Create an iterator over the result of the above dataset
