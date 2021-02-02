@@ -278,6 +278,7 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     MS_LOG(ERROR) << "Add fusion pass failed.";
     return nullptr;
   }
+
   status = AddGraphPass(optimizer, config);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Add graph pass failed.";
