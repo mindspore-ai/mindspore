@@ -52,6 +52,16 @@ class ArithmeticCPUKernel : public LiteKernel {
                                      const ArithmeticParameter *param);
   typedef int (*ArithmeticBoolRun)(const bool *input0, const bool *input1, bool *output, const int element_size);
 
+  typedef struct {
+    int primitive_type_;
+    int activation_type_;
+    ArithmeticRun func_;
+    ArithmeticIntRun int_func_;
+    ArithmeticBoolRun bool_func_;
+    ArithmeticOptRun opt_func_;
+    ArithmeticOptIntRun opt_int_func_;
+  } ARITHMETIC_FUNC_INFO_FP32;
+
  public:
   ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
@@ -75,6 +85,8 @@ class ArithmeticCPUKernel : public LiteKernel {
   void FreeTmpPtr();
   int InitBroadCastCase();
   void InitParamInRunTime();
+  bool CanBatchScalar();
+  int BatchScalarCalc(int task_id);
 
  protected:
   bool input0_broadcast_ = false;
