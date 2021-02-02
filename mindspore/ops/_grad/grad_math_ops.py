@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -161,6 +161,22 @@ def get_bprop_tensor_add(self):
 
     def bprop(x, y, out, dout):
         return binop_grad_common(x, y, dout, dout)
+
+    return bprop
+
+
+@bprop_getters.register(P.MatrixInverse)
+def get_bprop_matrix_inverse(self):
+    """Grad definition for `MatrixInverse` operation."""
+    batchmatmul_a = P.math_ops.BatchMatMul(transpose_a=True)
+    batchmatmul_b = P.math_ops.BatchMatMul(transpose_b=True)
+    neg = P.Neg()
+
+    def bprop(x, out, dout):
+        dx = batchmatmul_b(dout, out)
+        dx = batchmatmul_a(out, dx)
+        dx = neg(dx)
+        return dx
 
     return bprop
 

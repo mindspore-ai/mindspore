@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -4131,6 +4131,9 @@ class MatrixInverse(PrimitiveWithInfer):
     Returns the inverse of the input matrix. If the matrix is irreversible, an error may be reported or an unknown
     result may be returned
 
+    Note:
+        The parameter 'adjoint' is only supporting False right now. Because complex number is not supported at present.
+
     Args:
         adjoint (bool) : An optional bool. Default: False.
 
@@ -4140,6 +4143,9 @@ class MatrixInverse(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as input `x`.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> x = Tensor(np.random.uniform(-2, 2, (2, 2, 2)), mstype.float32)
@@ -4154,7 +4160,7 @@ class MatrixInverse(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, adjoint=False):
         """Initialize MatrixInverse"""
-        validator.check_value_type("adjoint", adjoint, [bool], self.name)
+        validator.check_type_name("adjoint", adjoint, False, self.name)
         self.adjoint = adjoint
 
     def infer_dtype(self, x_dtype):
