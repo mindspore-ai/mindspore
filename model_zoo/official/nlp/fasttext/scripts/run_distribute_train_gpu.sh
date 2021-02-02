@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_standalone_train.sh DATASET_PATH"
-echo "for example: sh run_standalone_train.sh /home/workspace/ag"
+echo "sh run_distributed_train_gpu.sh DATASET_PATH DEVICE_NUM"
+echo "for example: sh run_distributed_train_gpu.sh /home/workspace/ag 8"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
-
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
     echo "$1"
@@ -31,26 +31,21 @@ get_real_path(){
 DATASET=$(get_real_path $1)
 echo $DATASET
 DATANAME=$(basename $DATASET)
+
 echo $DATANAME
-DEVICEID=$2
-
-export DEVICE_NUM=1
-export DEVICE_ID=$DEVICEID
-export RANK_ID=0
-export RANK_SIZE=1
 
 
-if [ -d "train" ];
+if [ -d "distribute_train" ];
 then
-    rm -rf ./train
+    rm -rf ./distribute_train
 fi
-mkdir ./train
-cp ../*.py ./train
-cp -r ../src ./train
-cp -r ../scripts/*.sh ./train
-cd ./train || exit
-echo "start training for device $DEVICE_ID"
-env > env.log
-#python train.py  --data_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
-python train.py  --data_path $DATASET --data_name $DATANAME
+mkdir ./distribute_train
+cp ../*.py ./distribute_train
+cp -r ../src ./distribute_train
+cp -r ../scripts/*.sh ./distribute_train
+cd ./distribute_train || exit
+echo "start training for $2 GPU devices"
+
+mpirun -n $2 --allow-run-as-root --output-filename log_output --merge-stderr-to-stdout \
+python ../../train.py --device_target GPU --run_distribute True --data_path $DATASET --data_name $DATANAME
 cd ..

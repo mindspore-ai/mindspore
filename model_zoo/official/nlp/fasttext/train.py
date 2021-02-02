@@ -16,6 +16,7 @@
 import os
 import time
 import argparse
+import ast
 from mindspore import context
 from mindspore.nn.optim import Adam
 from mindspore.common import set_seed
@@ -24,7 +25,7 @@ import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.context import ParallelMode
 from mindspore.train.callback import Callback, TimeMonitor
-from mindspore.communication import management as MultiAscend
+from mindspore.communication import management as MultiDevice
 from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.load_dataset import load_dataset
@@ -34,14 +35,21 @@ from src.fasttext_train import FastTextTrainOneStepCell, FastTextNetWithLoss
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_path', type=str, required=True, help='FastText input data file path.')
 parser.add_argument('--data_name', type=str, required=True, default='ag', help='dataset name. eg. ag, dbpedia')
+parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
+                    help='device where the code will be implemented (default: Ascend)')
+parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute, default: false.')
+
 args = parser.parse_args()
 
 if args.data_name == "ag":
-    from src.config import config_ag as config
+    from src.config import config_ag as config_ascend
+    from src.config import config_ag_gpu as config_gpu
 elif args.data_name == 'dbpedia':
-    from src.config import config_db as config
+    from src.config import config_db as config_ascend
+    from src.config import config_db_gpu as config_gpu
 elif args.data_name == 'yelp_p':
-    from  src.config import config_yelpp as config
+    from  src.config import config_yelpp as config_ascend
+    from src.config import config_yelpp_gpu as config_gpu
 
 def get_ms_timestamp():
     t = time.time()
@@ -53,7 +61,8 @@ rank_id = os.getenv('DEVICE_ID')
 context.set_context(
     mode=context.GRAPH_MODE,
     save_graphs=False,
-    device_target="Ascend")
+    device_target=args.device_target)
+config = config_ascend if args.device_target == 'Ascend' else config_gpu
 
 class LossCallBack(Callback):
     """
@@ -96,7 +105,7 @@ class LossCallBack(Callback):
             f.write('\n')
 
 
-def _build_training_pipeline(pre_dataset):
+def _build_training_pipeline(pre_dataset, run_distribute=False):
     """
     Build training pipeline
 
@@ -139,12 +148,12 @@ def _build_training_pipeline(pre_dataset):
     ckpt_config = CheckpointConfig(save_checkpoint_steps=decay_steps * config.epoch,
                                    keep_checkpoint_max=config.keep_ckpt_max)
     callbacks = [time_monitor, loss_monitor]
-    if rank_size is None or int(rank_size) == 1:
+    if not run_distribute:
         ckpt_callback = ModelCheckpoint(prefix='fasttext',
                                         directory=os.path.join('./', 'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
                                         config=ckpt_config)
         callbacks.append(ckpt_callback)
-    if rank_size is not None and int(rank_size) > 1 and MultiAscend.get_rank() % 8 == 0:
+    if run_distribute and MultiDevice.get_rank() % 8 == 0:
         ckpt_callback = ModelCheckpoint(prefix='fasttext',
                                         directory=os.path.join('./', 'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
                                         config=ckpt_config)
@@ -152,8 +161,8 @@ def _build_training_pipeline(pre_dataset):
     print("Prepare to Training....")
     epoch_size = pre_dataset.get_repeat_count()
     print("Epoch size ", epoch_size)
-    if os.getenv("RANK_SIZE") is not None and int(os.getenv("RANK_SIZE")) > 1:
-        print(f" | Rank {MultiAscend.get_rank()} Call model train.")
+    if run_distribute:
+        print(f" | Rank {MultiDevice.get_rank()} Call model train.")
     model.train(epoch=config.epoch, train_dataset=pre_dataset, callbacks=callbacks, dataset_sink_mode=False)
 
 
@@ -173,9 +182,9 @@ def train_single(input_file_path):
 
 def set_parallel_env():
     context.reset_auto_parallel_context()
-    MultiAscend.init()
+    MultiDevice.init()
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL,
-                                      device_num=MultiAscend.get_group_size(),
+                                      device_num=MultiDevice.get_group_size(),
                                       gradients_mean=True)
 def train_paralle(input_file_path):
     """
@@ -185,18 +194,21 @@ def train_paralle(input_file_path):
     """
     set_parallel_env()
     print("Starting traning on multiple devices. |~ _ ~| |~ _ ~| |~ _ ~| |~ _ ~|")
+    batch_size = config.batch_size
+    if args.device_target == 'GPU':
+        batch_size = config.distribute_batch_size
+
     preprocessed_data = load_dataset(dataset_path=input_file_path,
-                                     batch_size=config.batch_size,
+                                     batch_size=batch_size,
                                      epoch_count=config.epoch_count,
-                                     rank_size=MultiAscend.get_group_size(),
-                                     rank_id=MultiAscend.get_rank(),
+                                     rank_size=MultiDevice.get_group_size(),
+                                     rank_id=MultiDevice.get_rank(),
                                      bucket=config.buckets,
                                      shuffle=False)
-    _build_training_pipeline(preprocessed_data)
+    _build_training_pipeline(preprocessed_data, True)
 
 if __name__ == "__main__":
-    _rank_size = os.getenv("RANK_SIZE")
-    if _rank_size is not None and int(_rank_size) > 1:
+    if args.run_distribute:
         train_paralle(args.data_path)
     else:
         train_single(args.data_path)

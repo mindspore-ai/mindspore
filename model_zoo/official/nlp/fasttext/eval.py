@@ -32,21 +32,27 @@ parser.add_argument('--data_name', type=str, required=True, default='ag',
                     help='dataset name. eg. ag, dbpedia')
 parser.add_argument("--model_ckpt", type=str, required=True,
                     help="existed checkpoint address.")
+parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU'],
+                    help='device where the code will be implemented (default: Ascend)')
+
 args = parser.parse_args()
 if args.data_name == "ag":
     from src.config import config_ag as config
+    from src.config import config_ag_gpu as config_gpu
     target_label1 = ['0', '1', '2', '3']
 elif args.data_name == 'dbpedia':
     from src.config import config_db as config
+    from src.config import config_db_gpu as config_gpu
     target_label1 = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13']
 elif args.data_name == 'yelp_p':
     from  src.config import config_yelpp as config
+    from src.config import config_yelpp_gpu as config_gpu
     target_label1 = ['0', '1']
 context.set_context(
     mode=context.GRAPH_MODE,
     save_graphs=False,
-    device_target="Ascend")
-
+    device_target=args.device_target)
+config = config_ascend if args.device_target == 'Ascend' else config_gpu
 class FastTextInferCell(nn.Cell):
     """
     Encapsulation class of FastText network infer.

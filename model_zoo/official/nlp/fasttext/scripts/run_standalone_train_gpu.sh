@@ -15,11 +15,10 @@
 # ============================================================================
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_standalone_train.sh DATASET_PATH"
-echo "for example: sh run_standalone_train.sh /home/workspace/ag"
+echo "sh run_standalone_train_gpu.sh DATASET_PATH"
+echo "for example: sh run_standalone_train_gpu.sh /home/workspace/ag"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
-
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
     echo "$1"
@@ -32,13 +31,6 @@ DATASET=$(get_real_path $1)
 echo $DATASET
 DATANAME=$(basename $DATASET)
 echo $DATANAME
-DEVICEID=$2
-
-export DEVICE_NUM=1
-export DEVICE_ID=$DEVICEID
-export RANK_ID=0
-export RANK_SIZE=1
-
 
 if [ -d "train" ];
 then
@@ -49,8 +41,7 @@ cp ../*.py ./train
 cp -r ../src ./train
 cp -r ../scripts/*.sh ./train
 cd ./train || exit
-echo "start training for device $DEVICE_ID"
-env > env.log
-#python train.py  --data_path $DATASET --data_name $DATANAME > log_fasttext.log 2>&1 &
-python train.py  --data_path $DATASET --data_name $DATANAME
+echo "start training for standalone GPU device"
+
+python train.py --device_target="GPU" --data_path=$1 --data_name=$DATANAME > log_fasttext.log 2>&1 &
 cd ..
