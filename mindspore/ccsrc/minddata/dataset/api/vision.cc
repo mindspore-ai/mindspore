@@ -901,8 +901,14 @@ std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
   if (translate_range_.size() == 2) {
     translate_range_.resize(4);
   }
+  std::vector<uint8_t> fill_value = {fill_value_[0], fill_value_[0], fill_value_[0]};
+  if (fill_value_.size() == 3) {
+    fill_value[1] = fill_value_[1];
+    fill_value[2] = fill_value_[2];
+  }
+
   auto tensor_op = std::make_shared<RandomAffineOp>(degrees_, translate_range_, scale_range_, shear_ranges_,
-                                                    interpolation_, fill_value_);
+                                                    interpolation_, fill_value);
   return tensor_op;
 }
 

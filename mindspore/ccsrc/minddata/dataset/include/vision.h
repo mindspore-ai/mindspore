@@ -198,14 +198,14 @@ std::shared_ptr<NormalizePadOperation> NormalizePad(const std::vector<float> &me
 /// \brief Function to create a Pad TensorOp
 /// \notes Pads the image according to padding parameters
 /// \param[in] padding A vector representing the number of pixels to pad the image
-///    If vector has one value, it pads all sides of the image with that value
+///    If vector has one value, it pads all sides of the image with that value.
 ///    If vector has two values, it pads left and right with the first and
-///    top and bottom with the second value
+///    top and bottom with the second value.
 ///    If vector has four values, it pads left, top, right, and bottom with
-///    those values respectively
+///    those values respectively.
 /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
-///    BorderType.kConstant. If 3 values are provided,
-///    it is used to fill R, G, B channels respectively
+///    BorderType.kConstant. If 1 value is provided, it is used for all RGB channels. If 3 values are provided,
+///    it is used to fill R, G, B channels respectively.
 /// \param[in] padding_mode The method of padding (default=BorderType.kConstant)
 ///    Can be any of
 ///    [BorderType.kConstant, BorderType.kEdge, BorderType.kReflect, BorderType.kSymmetric]
@@ -230,8 +230,9 @@ std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint
 ///    if size is 2, (min_shear_x, max_shear_x, 0, 0)
 ///    if size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y)
 /// \param[in] interpolation An enum for the mode of interpolation
-/// \param[in] fill_value A uint8_t vector of size 3, representing the pixel intensity of the borders, it is used to
-///    fill R, G, B channels respectively.
+/// \param[in] fill_value A vector representing the value to fill the area outside the transform
+///    in the output image. If 1 value is provided, it is used for all RGB channels.
+///    If 3 values are provided, it is used to fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomAffineOperation> RandomAffine(
   const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range = {0.0, 0.0, 0.0, 0.0},
@@ -272,8 +273,9 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
 ///     it pads the left, top, right and bottom respectively.
 /// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
 ///     the given output size.
-/// \param[in] fill_value A vector representing the pixel intensity of the borders, it is used to
-///     fill R, G, B channels respectively.
+/// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
+///     BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
+///     If 3 values are provided, it is used to fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
                                                 bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
@@ -305,8 +307,9 @@ std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(
 ///     it pads the left, top, right and bottom respectively.
 /// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
 ///     the given output size.
-/// \param[in] fill_value A vector representing the pixel intensity of the borders, it is used to
-///     fill R, G, B channels respectively.
+/// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
+///     BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
+///     If 3 values are provided, it is used to fill R, G, B channels respectively.
 /// \param[in] padding_mode The method of padding (default=BorderType::kConstant).It can be any of
 ///     [BorderType::kConstant, BorderType::kEdge, BorderType::kReflect, BorderType::kSymmetric].
 /// \return Shared pointer to the current TensorOperation.
@@ -389,7 +392,9 @@ std::shared_ptr<RandomResizedCropWithBBoxOperation> RandomResizedCropWithBBox(
 /// \param[in] resample An enum for the mode of interpolation
 /// \param[in] expand A boolean representing whether the image is expanded after rotation
 /// \param[in] center A float vector of size 2, representing the x and y center of rotation.
-/// \param[in] fill_value A uint8_t vector of size 3, representing the rgb value of the fill color
+/// \param[in] fill_value A vector representing the value to fill the area outside the transform
+///    in the output image. If 1 value is provided, it is used for all RGB channels.
+///    If 3 values are provided, it is used to fill R, G, B channels respectively.
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<RandomRotationOperation> RandomRotation(
   std::vector<float> degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
