@@ -24,7 +24,7 @@
     <string name="title_star">打星</string>
     <string name="title_version">版本号： </string>
     <string name="title_share">分享</string>
-    <string name="title_share_commend">MindSpore掌中宝：初学者的一站式协同学习、演示、体验平台\t</string>
+    <string name="title_share_commend">MindSpore掌中宝：AI爱好者的一站式协同学习、演示、体验平台\t</string>
 
     <string name="main_tab_title_one">体验</string>
     <string name="main_tab_title_two">学院</string>
@@ -43,7 +43,7 @@
     <string name="me_version_title">版本号</string>
     <string name="me_official_title">官方网站</string>
     <string name="me_official_code_title">官方代码仓</string>
-    <string name="title_splash_welcome">初学者的一站式协同学习、演示、体验平台</string>
+    <string name="title_splash_welcome">AI爱好者的一站式协同学习、演示、体验平台</string>
 
     <string name="college_summary_title">MindSpore简介</string>
     <string name="college_cloud_title">1小时体验端云协同全流程开发</string>
