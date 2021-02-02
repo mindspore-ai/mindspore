@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_
 #include <vector>
 #include "src/ops/strided_slice.h"
-#include "nnacl/strided_slice.h"
+#include "nnacl/strided_slice_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {

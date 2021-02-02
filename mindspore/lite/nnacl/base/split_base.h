@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_SPLIT_H_
-#define MINDSPORE_LITE_NNACL_SPLIT_H_
+#ifndef MINDSPORE_LITE_NNACL_NNACL_SPLIT_BASE_H_
+#define MINDSPORE_LITE_NNACL_NNACL_SPLIT_BASE_H_
 
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"
@@ -23,10 +23,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoSplit(float *in_data, float **out_data, const int *input_shape, int offset, int num_unit,
-            SplitParameter *split_param);
+int DoSplit(void *in_data, void **out_data, const int *input_shape, int offset, int num_unit,
+            SplitParameter *split_param, int data_size);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_SPLIT_H_
+#endif  // MINDSPORE_LITE_NNACL_NNACL_SPLIT_BASE_H_

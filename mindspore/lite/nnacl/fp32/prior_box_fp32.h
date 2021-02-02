@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_FP32_PRIOR_BOX_FP32_H_
+#define MINDSPORE_LITE_NNACL_FP32_PRIOR_BOX_FP32_H_
 
-#ifndef MINDSPORE_LITE_NNACL_SPLITFP16_H_
-#define MINDSPORE_LITE_NNACL_SPLITFP16_H_
-
-#include <arm_neon.h>
+#include <memory.h>
 #include "nnacl/op_base.h"
-#include "nnacl/split_parameter.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/prior_box_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int DoSplitFp16(float16_t *in_data, float16_t **out_data, const int *input_shape, int offset, int num_unit,
-                SplitParameter *split_param);
+static int PriorBox(const float *input_data, float *output_data, const size_t size, const int tid,
+                    const int thread_num) {
+  size_t unit_size = size / thread_num;
+  size_t copy_size = (tid == thread_num - 1) ? size - unit_size * tid : unit_size;
+  (void)memcpy(output_data + tid * unit_size, input_data + tid * unit_size, copy_size * sizeof(float));
+  return NNACL_OK;
+}
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_SPLIT_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_PRIOR_BOX_FP32_H_

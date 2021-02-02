@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_STRIDED_SLICE_H_
-#define MINDSPORE_LITE_NNACL_STRIDED_SLICE_H_
+#ifndef MINDSPORE_LITE_NNACL_STRIDED_SLICE_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_STRIDED_SLICE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
 
@@ -35,15 +35,4 @@ typedef struct StridedSliceParameter {
   LiteDataType data_type;
 } StridedSliceParameter;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int DoStridedSlice(const void *inputs, void *output, StridedSliceParameter *param);
-
-void FastStride(const uint8_t *input, uint8_t *output, int split_len, int stride, size_t outer, size_t inner_size,
-                size_t in_offset);
-#ifdef __cplusplus
-}
-#endif
-
-#endif  // MINDSPORE_LITE_NNACL_STRIDED_SLICE_H_
+#endif  // MINDSPORE_LITE_NNACL_STRIDED_SLICE_PARAMETER_H_

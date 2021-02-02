@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_FP32_STRIDED_SLICE_FP32_H_
+#define MINDSPORE_LITE_NNACL_FP32_STRIDED_SLICE_FP32_H_
 
-#include <memory.h>
-#include "nnacl/errorcode.h"
-#include "nnacl/prior_box.h"
+#include "nnacl/op_base.h"
+#include "nnacl/strided_slice_parameter.h"
 
-int PriorBox(const float *input_data, float *output_data, const size_t size, const int tid, const int thread_num) {
-  if (thread_num == 0) {
-    return NNACL_ERR;
-  }
-  size_t unit_size = size / thread_num;
-  if (tid == thread_num - 1) {
-    size_t tail_size = size - unit_size * tid;
-    (void)memcpy(output_data + tid * unit_size, input_data + tid * unit_size, tail_size * sizeof(float));
-  } else {
-    (void)memcpy(output_data + tid * unit_size, input_data + tid * unit_size, unit_size * sizeof(float));
-  }
-  return NNACL_OK;
+#ifdef __cplusplus
+extern "C" {
+#endif
+int DoStridedSlice(const void *inputs, void *output, StridedSliceParameter *param);
+
+void FastStride(const uint8_t *input, uint8_t *output, int split_len, int stride, size_t outer, size_t inner_size,
+                size_t in_offset);
+#ifdef __cplusplus
 }
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_FP32_STRIDED_SLICE_FP32_H_

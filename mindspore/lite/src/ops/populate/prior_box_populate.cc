@@ -17,7 +17,7 @@
 #include "src/ops/prior_box.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/prior_box.h"
+#include "mindspore/lite/nnacl/prior_box_parameter.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,15 +33,15 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   auto prior_box_attr =
     reinterpret_cast<mindspore::lite::PriorBox *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
 
-  if (prior_box_attr->GetMinSizes().size() > PRIOR_BOX_MAX_NUM) {
-    MS_LOG(ERROR) << "PriorBox min_sizes size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
+  if (prior_box_attr->GetMinSizes().size() > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "PriorBox min_sizes size exceeds max num " << MAX_SHAPE_SIZE << ", got "
                   << prior_box_attr->GetMinSizes();
     free(prior_box_param);
     return nullptr;
   }
   prior_box_param->min_sizes_size = prior_box_attr->GetMinSizes().size();
-  if (prior_box_attr->GetMaxSizes().size() > PRIOR_BOX_MAX_NUM) {
-    MS_LOG(ERROR) << "PriorBox max_sizes size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
+  if (prior_box_attr->GetMaxSizes().size() > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "PriorBox max_sizes size exceeds max num " << MAX_SHAPE_SIZE << ", got "
                   << prior_box_attr->GetMaxSizes();
     free(prior_box_param);
     return nullptr;
@@ -52,8 +52,8 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   memcpy(prior_box_param->min_sizes, prior_box_attr->GetMinSizes().data(),
          prior_box_attr->GetMinSizes().size() * sizeof(int32_t));
 
-  if (prior_box_attr->GetAspectRatios().size() > PRIOR_BOX_MAX_NUM) {
-    MS_LOG(ERROR) << "PriorBox aspect_ratios size exceeds max num " << PRIOR_BOX_MAX_NUM << ", got "
+  if (prior_box_attr->GetAspectRatios().size() > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "PriorBox aspect_ratios size exceeds max num " << MAX_SHAPE_SIZE << ", got "
                   << prior_box_attr->GetAspectRatios();
     free(prior_box_param);
     return nullptr;
@@ -61,13 +61,13 @@ OpParameter *PopulatePriorBoxParameter(const mindspore::lite::PrimitiveC *primit
   prior_box_param->aspect_ratios_size = prior_box_attr->GetAspectRatios().size();
   memcpy(prior_box_param->aspect_ratios, prior_box_attr->GetAspectRatios().data(),
          prior_box_attr->GetAspectRatios().size() * sizeof(float));
-  if (prior_box_attr->GetVariances().size() != PRIOR_BOX_VAR_NUM) {
-    MS_LOG(ERROR) << "PriorBox variances size should be " << PRIOR_BOX_VAR_NUM << ", got "
+  if (prior_box_attr->GetVariances().size() != COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "PriorBox variances size should be " << COMM_SHAPE_SIZE << ", got "
                   << prior_box_attr->GetVariances().size();
     free(prior_box_param);
     return nullptr;
   }
-  memcpy(prior_box_param->variances, prior_box_attr->GetVariances().data(), PRIOR_BOX_VAR_NUM * sizeof(float));
+  memcpy(prior_box_param->variances, prior_box_attr->GetVariances().data(), COMM_SHAPE_SIZE * sizeof(float));
   prior_box_param->flip = prior_box_attr->GetFlip();
   prior_box_param->clip = prior_box_attr->GetClip();
   prior_box_param->offset = prior_box_attr->GetOffset();

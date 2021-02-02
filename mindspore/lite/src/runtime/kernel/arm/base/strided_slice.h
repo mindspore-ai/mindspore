@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_BASE_STRIDED_SLICE_H_
 
 #include <vector>
-#include "nnacl/strided_slice.h"
+#include "nnacl/fp32/strided_slice_fp32.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {

@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/reshape_parameter.h"
-#include "nnacl/prior_box.h"
+#include "nnacl/fp32/prior_box_fp32.h"
 
 using mindspore::lite::InnerContext;
 
