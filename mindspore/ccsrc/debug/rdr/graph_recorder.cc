@@ -25,33 +25,22 @@
 namespace mindspore {
 namespace protobuf {
 #ifdef ENABLE_DUMP_IR
-void DumpIRProto(const std::string &filename, const FuncGraphPtr &func_graph) {
+void DumpIRProto(const std::string &real_path, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Func graph is nullptr";
+    MS_LOG(ERROR) << "Func graph is nullptr.";
     return;
   }
 
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
-    return;
-  }
-
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
-    return;
-  }
-  ChangeFileMode(real_path.value(), S_IRWXU);
   // write to pb file
-  std::ofstream ofs(real_path.value());
+  std::ofstream ofs(real_path);
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << real_path.value() << "' failed!";
+    MS_LOG(ERROR) << "Open file '" << real_path << "' failed!";
     return;
   }
   ofs << GetFuncGraphProtoString(func_graph);
   ofs.close();
   // set file mode to read only by user
-  ChangeFileMode(real_path.value(), S_IRUSR);
+  ChangeFileMode(real_path, S_IRUSR);
 }
 #else
 void DumpIRProto(const std::string &, const FuncGraphPtr &) {
@@ -68,31 +57,35 @@ void DumpIRProto(const std::string &, const FuncGraphPtr &) {
 
 void GraphRecorder::Export() {
   bool save_flag = false;
-  if (filename_.empty()) {
-    filename_ = module_ + "_" + tag_ + "_" + timestamp_;
+
+  auto tmp_realpath = GetFileRealPath();
+  if (!tmp_realpath.has_value()) {
+    return;
   }
-  std::string file_path = directory_ + filename_ + std::to_string(id_);
+
+  std::string realpath = tmp_realpath.value() + std::to_string(id_);
+
   if (graph_type_.find(".dat") != std::string::npos) {
     save_flag = true;
-    AnfExporter exporter("");
-    std::string real_path = file_path + ".dat";
-    ChangeFileMode(real_path, S_IRWXU);
-    exporter.ExportFuncGraph(real_path, func_graph_);
-    ChangeFileMode(real_path, S_IRUSR);
+    AnfExporter exporter(std::to_string(id_));
+    std::string realpath_dat = realpath + ".dat";
+    ChangeFileMode(realpath_dat, S_IRWXU);
+    exporter.ExportFuncGraph(realpath_dat, func_graph_);
+    ChangeFileMode(realpath_dat, S_IRUSR);
   }
   if (graph_type_.find(".ir") != std::string::npos) {
     save_flag = true;
-    std::string real_path = file_path + ".ir";
+    std::string realpath_ir = realpath + ".ir";
     if (full_name_) {
-      DumpIRForRDR(real_path, func_graph_, true, kTopStack);
+      DumpIRForRDR(realpath_ir, func_graph_, true, kTopStack);
     } else {
-      DumpIRForRDR(real_path, func_graph_, false, kOff);
+      DumpIRForRDR(realpath_ir, func_graph_, false, kOff);
     }
   }
   if (graph_type_.find(".pb") != std::string::npos) {
     save_flag = true;
-    std::string real_path = file_path + ".pb";
-    protobuf::DumpIRProto(real_path, func_graph_);  // save *.pb file
+
+    protobuf::DumpIRProto(realpath + ".pb", func_graph_);  // save *.pb file
   }
   if (!save_flag) {
     MS_LOG(WARNING) << "Unknown save graph type: " << graph_type_;

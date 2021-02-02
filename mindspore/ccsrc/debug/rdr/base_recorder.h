@@ -21,7 +21,11 @@
 #include <sstream>
 #include <chrono>
 #include <iomanip>
+#include "debug/common.h"
 #include "debug/env_config_parser.h"
+#include "mindspore/core/utils/log_adapter.h"
+
+const int maxTagLength = 32;
 namespace mindspore {
 class BaseRecorder {
  public:
@@ -30,6 +34,17 @@ class BaseRecorder {
     auto &config_parser_ptr = mindspore::EnvConfigParser::GetInstance();
     config_parser_ptr.Parse();
     directory_ = config_parser_ptr.rdr_path();
+
+    if (tag.length() > maxTagLength) {
+      tag_ = tag.substr(0, maxTagLength);
+      MS_LOG(WARNING) << "The tag length is " << tag.length() << ", exceeding the limit " << maxTagLength
+                      << ". It will be intercepted as '" << tag_ << "'.";
+    }
+
+    std::string err_msg = module_ + ":" + tag_ + " set filename failed.";
+    if (!filename_.empty() && !Common::IsFilenameValid(filename_, maxFilenameLength, err_msg)) {
+      filename_ = "";
+    }
 
     auto sys_time = std::chrono::system_clock::now();
     auto t_time = std::chrono::system_clock::to_time_t(sys_time);
@@ -47,9 +62,10 @@ class BaseRecorder {
   std::string GetModule() const { return module_; }
   std::string GetTag() const { return tag_; }
   std::string GetTimeStamp() const { return timestamp_; }
+  std::optional<std::string> GetFileRealPath();
 
-  void SetDirectory(const std::string &directory) { directory_ = directory; }
-  std::string GetDirectory() const { return directory_; }
+  void SetDirectory(const std::string &directory);
+  void SetFilename(const std::string &filename);
   virtual void Export() {}
 
  protected:

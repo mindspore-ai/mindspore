@@ -46,10 +46,11 @@ bool DumpGraphExeOrder(const std::string &filename, const std::vector<CNodePtr> 
 }  // namespace
 
 void GraphExecOrderRecorder::Export() {
-  if (filename_.empty()) {
-    filename_ = module_ + "_" + tag_ + "_" + timestamp_;
+  auto realpath = GetFileRealPath();
+  if (!realpath.has_value()) {
+    return;
   }
-  std::string filename = directory_ + filename_ + ".txt";
-  DumpGraphExeOrder(filename, exec_order_);
+  std::string real_file_path = realpath.value() + ".txt";
+  DumpGraphExeOrder(real_file_path, exec_order_);
 }
 }  // namespace mindspore

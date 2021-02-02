@@ -22,23 +22,13 @@
 
 namespace mindspore {
 void StringRecorder::Export() {
-  if (directory_.back() != '/') {
-    directory_ += "/";
-  }
-
-  if (filename_.empty()) {
-    filename_ = module_ + "_" + tag_ + "_" + timestamp_ + ".txt";
-  }
-  std::string file_path = directory_ + filename_;
-
-  auto realpath = Common::GetRealPath(file_path);
+  auto realpath = GetFileRealPath();
   if (!realpath.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << file_path;
     return;
   }
-
-  ChangeFileMode(realpath.value(), S_IRWXU);
-  std::ofstream fout(realpath.value(), std::ofstream::app);
+  std::string file_path = realpath.value() + ".txt";
+  ChangeFileMode(file_path, S_IRWXU);
+  std::ofstream fout(file_path, std::ofstream::app);
   if (!fout.is_open()) {
     MS_LOG(WARNING) << "Open file for saving string failed.";
     return;
@@ -46,6 +36,6 @@ void StringRecorder::Export() {
   fout << data_;
   fout.close();
   // set file mode to read only by user
-  ChangeFileMode(realpath.value(), S_IRUSR);
+  ChangeFileMode(file_path, S_IRUSR);
 }
 }  // namespace mindspore
