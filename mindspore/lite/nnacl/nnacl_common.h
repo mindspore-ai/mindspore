@@ -31,6 +31,17 @@ inline void ComputeStrides(const int *shape, int *strides, const int ndim) {
   }
 }
 
+static inline void ComputeAxisDims(const int *shape, int shape_size, int axis, int *out_count, int *axis_count,
+                                   int *in_count) {
+  *out_count = 1;
+  *in_count = 1;
+  for (int i = 0; i < shape_size; i++) {
+    if (i < axis) *out_count = (*out_count) * shape[i];
+    if (i == axis) *axis_count = shape[axis];
+    if (i > axis) *in_count = (*in_count) * shape[i];
+  }
+}
+
 static const unsigned int FP32_BIT_SIZE = 32;
 static const unsigned int FP32_EXPONENT_BIAS = 127;
 static const unsigned int FP32_SIGNIFICAND = 23;

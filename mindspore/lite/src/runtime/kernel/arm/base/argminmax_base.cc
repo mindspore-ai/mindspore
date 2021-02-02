@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/argminmax_fp32.h"
+#include "src/runtime/kernel/arm/base/argminmax_base.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 
@@ -52,25 +52,38 @@ int ArgMinMaxCPUKernel::ReSize() {
 }
 
 int ArgMinMaxCPUKernel::Run() {
-  float *input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
-  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-  float *output_value = nullptr;
-  if (out_tensors_.size() == 2) {
-    output_value = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
-  }
+  auto input = in_tensors_.at(0);
+  auto shape = input->shape();
 
-  auto shape = in_tensors_.at(0)->shape();
+  auto input_data = input->data_c();
+  auto output_data = out_tensors_.at(0)->data_c();
+  void *output_value = nullptr;
+  if (out_tensors_.size() == 2) {
+    output_value = out_tensors_.at(1)->data_c();
+  }
 
   MS_ASSERT(context_->allocator != nullptr);
   if (arg_param_->topk_ > 1 || arg_param_->keep_dims_) {
     arg_param_->arg_elements_ =
       reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * shape[arg_param_->axis_]));
     if (arg_param_->arg_elements_ == nullptr) {
-      MS_LOG(ERROR) << "malloc memroy fail!";
+      MS_LOG(ERROR) << "malloc memory fail!";
       return RET_ERROR;
     }
   }
-  ArgMinMaxFp32(input_data, output_data, output_value, reinterpret_cast<const int *>(shape.data()), arg_param_);
+  if (input->data_type() == kNumberTypeFloat32) {
+    ArgMinMaxFp32(reinterpret_cast<float *>(input_data), reinterpret_cast<float *>(output_data),
+                  reinterpret_cast<float *>(output_value), shape.data(), arg_param_);
+#ifdef ENABLE_ARM64
+  } else if (input->data_type() == kNumberTypeFloat16) {
+    ArgMinMaxFp16(reinterpret_cast<float16_t *>(input_data), reinterpret_cast<float16_t *>(output_data),
+                  reinterpret_cast<float16_t *>(output_value), shape.data(), arg_param_);
+
+#endif
+  } else {
+    MS_LOG(ERROR) << "unsupported data type!";
+  }
+
   context_->allocator->Free(arg_param_->arg_elements_);
   arg_param_->arg_elements_ = nullptr;
   return RET_OK;
@@ -78,4 +91,6 @@ int ArgMinMaxCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMax, LiteKernelCreator<ArgMinMaxCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMin, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMax, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMin, LiteKernelCreator<ArgMinMaxCPUKernel>)
 }  // namespace mindspore::kernel

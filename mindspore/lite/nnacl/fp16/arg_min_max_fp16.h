@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_FP32_ARG_MIN_MAX_H_
-#define MINDSPORE_LITE_NNACL_FP32_ARG_MIN_MAX_H_
+#ifndef MINDSPORE_LITE_NNACL_FP16_ARG_MIN_MAX_H_
+#define MINDSPORE_LITE_NNACL_FP16_ARG_MIN_MAX_H_
 
-#include "nnacl/nnacl_common.h"
+#include <float.h>
 #include "nnacl/arg_min_max_parameter.h"
+#include "nnacl/nnacl_common.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ArgMinMaxFp32(const float *input, float *output, float *output_value, const int *in_shape,
+void ArgMinMaxFp16(const float16_t *input, float16_t *output, float16_t *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_ARG_MIN_MAX_H_
+#endif  // MINDSPORE_LITE_NNACL_FP16_ARG_MIN_MAX_H_
