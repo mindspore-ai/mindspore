@@ -14,12 +14,13 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 maximum = P.Maximum()
 minimum = P.Minimum()
 clip_by_value = Primitive('ClipByValue')
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

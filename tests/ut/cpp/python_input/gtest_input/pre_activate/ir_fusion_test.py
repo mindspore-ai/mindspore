@@ -15,14 +15,15 @@
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import _constants as Constants
 
 # pylint: disable=unused-variable
 
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 add = P.Add()
 allreduce = P.AllReduce()
 allreduce.add_prim_attr('fusion', 1)
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive("make_tuple")
 conv = P.Conv2D(out_channel=64, kernel_size=7, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1)
 bn = P.FusedBatchNorm()
 relu = P.ReLU()

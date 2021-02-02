@@ -15,6 +15,8 @@
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops import _constants as Constants
+
 
 Add = P.Add()
 Sub = P.Sub()
@@ -24,7 +26,7 @@ Sqrt = P.Sqrt()
 Square = P.Square()
 Assign = P.Assign()
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 AdamApplyOne = Primitive('AdamApplyOne')
 AdamApplyOneAssign = Primitive('AdamApplyOneAssign')
 

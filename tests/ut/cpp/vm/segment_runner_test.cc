@@ -31,6 +31,7 @@
 #include "utils/convert_utils.h"
 #include "utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace compile {
@@ -46,7 +47,7 @@ class TestCompileSegmentRunner : public UT::Common {
 };
 
 TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
-  FuncGraphPtr g = get_py_fun_("scalar_add");
+  FuncGraphPtr g = get_py_fun_(prim::kScalarAdd);
   // g was managed by local variable manager in get_py_fun_ and that manager will be freed as no reference.
   // so a new manager should be declared to make get_outputs() in segment_runner.cc happy.
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
@@ -62,7 +63,7 @@ TEST_F(TestCompileSegmentRunner, test_MsVmConvert1) {
 }
 
 TEST_F(TestCompileSegmentRunner, test_MsVmConvert2) {
-  FuncGraphPtr g = get_py_fun_("scalar_mul");
+  FuncGraphPtr g = get_py_fun_(prim::kScalarMul);
   std::shared_ptr<mindspore::FuncGraphManager> manager = mindspore::Manage(g);
 
   BackendPtr b = std::make_shared<Backend>("vm");

@@ -15,12 +15,13 @@
 import mindspore.common.dtype as mstype
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 addn = P.AddN()
 add = P.Add()
 reshape = P.Reshape()
 cast = P.Cast()
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 max_pool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=3, strides=2)
 
 

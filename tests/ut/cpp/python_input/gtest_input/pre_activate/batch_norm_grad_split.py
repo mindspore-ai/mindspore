@@ -15,12 +15,13 @@
 
 from mindspore.ops import Primitive
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import _constants as Constants
 
 batch_norm_grad = G.BatchNormGrad(is_training=True)
 bn_training_update_grad = Primitive('BNTrainingUpdateGrad')
 bn_training_reduce_grad = Primitive('BNTrainingReduceGrad')
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

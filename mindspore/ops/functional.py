@@ -18,10 +18,10 @@
 """The names of functional part are summarized here."""
 
 from mindspore.common._register_for_tensor import tensor_operator_registry
+from mindspore.ops import _constants
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
-
 
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
@@ -96,7 +96,7 @@ depend = P.Depend()
 identity = P.identity()
 
 tuple_setitem = Primitive('tuple_setitem')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(_constants.kTupleGetItem)
 list_getitem = Primitive('list_getitem')
 list_setitem = Primitive('list_setitem')
 dict_getitem = Primitive('dict_getitem')
@@ -114,22 +114,22 @@ tuple_equal = Primitive("tuple_equal")
 list_equal = Primitive("list_equal")
 make_ref = Primitive("make_ref")
 
-scalar_add = Primitive('scalar_add')
-scalar_mul = Primitive('scalar_mul')
-scalar_sub = Primitive('scalar_sub')
-scalar_div = Primitive('scalar_div')
-scalar_floordiv = Primitive('scalar_floordiv')
+scalar_add = Primitive(_constants.kScalarAdd)
+scalar_mul = Primitive(_constants.kScalarMul)
+scalar_sub = Primitive(_constants.kScalarSub)
+scalar_div = Primitive(_constants.kScalarDiv)
+scalar_floordiv = Primitive(_constants.kScalarFloordiv)
 scalar_log = Primitive('scalar_log')
-scalar_pow = Primitive('scalar_pow')
+scalar_pow = Primitive(_constants.kScalarPow)
 scalar_gt = Primitive('scalar_gt')
 scalar_ge = Primitive('scalar_ge')
 scalar_le = Primitive('scalar_le')
 scalar_lt = Primitive('scalar_lt')
 scalar_eq = Primitive('scalar_eq')
 scalar_ne = Primitive('scalar_ne')
-scalar_uadd = Primitive('scalar_uadd')
-scalar_usub = Primitive('scalar_usub')
-scalar_mod = Primitive('scalar_mod')
+scalar_uadd = Primitive(_constants.kScalarUadd)
+scalar_usub = Primitive(_constants.kScalarUsub)
+scalar_mod = Primitive(_constants.kScalarMod)
 string_eq = Primitive('string_equal')
 string_concat = Primitive('string_concat')
 bool_not = Primitive("bool_not")

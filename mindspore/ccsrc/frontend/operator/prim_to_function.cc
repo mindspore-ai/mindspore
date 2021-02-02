@@ -15,6 +15,7 @@
  */
 
 #include "frontend/operator/prim_to_function.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 // namespace to support prim related definition
@@ -25,31 +26,31 @@ PrimToFunction::PrimToFunction()
                            {"bool_not", kPrimTypeOneArg},
                            {"scalar_cos", kPrimTypeOneArg},
                            {"scalar_exp", kPrimTypeOneArg},
-                           {"scalar_floor", kPrimTypeOneArg},
+                           {kScalarFloor, kPrimTypeOneArg},
                            {"scalar_log", kPrimTypeOneArg},
                            {"scalar_sin", kPrimTypeOneArg},
                            {"scalar_tan", kPrimTypeOneArg},
-                           {"scalar_trunc", kPrimTypeOneArg},
+                           {kScalarTrunc, kPrimTypeOneArg},
                            {"typeof", kPrimTypeOneArg},
-                           {"scalar_uadd", kPrimTypeOneArg},
-                           {"scalar_usub", kPrimTypeOneArg},
+                           {kScalarUadd, kPrimTypeOneArg},
+                           {kScalarUsub, kPrimTypeOneArg},
                            // TWO_ARGS prim
-                           {"scalar_add", kPrimTypeTwoArgs},
+                           {kScalarAdd, kPrimTypeTwoArgs},
                            {"bool_and", kPrimTypeTwoArgs},
                            {"bool_eq", kPrimTypeTwoArgs},
                            {"bool_or", kPrimTypeTwoArgs},
-                           {"scalar_div", kPrimTypeTwoArgs},
+                           {kScalarDiv, kPrimTypeTwoArgs},
                            {"scalar_eq", kPrimTypeTwoArgs},
                            {"scalar_ge", kPrimTypeTwoArgs},
                            {"scalar_gt", kPrimTypeTwoArgs},
                            {"scalar_le", kPrimTypeTwoArgs},
                            {"scalar_lt", kPrimTypeTwoArgs},
                            {"scalar_ne", kPrimTypeTwoArgs},
-                           {"scalar_mod", kPrimTypeTwoArgs},
-                           {"scalar_mul", kPrimTypeTwoArgs},
-                           {"scalar_pow", kPrimTypeTwoArgs},
-                           {"scalar_sub", kPrimTypeTwoArgs},
-                           {"scalar_floordiv", kPrimTypeTwoArgs}}) {}
+                           {kScalarMod, kPrimTypeTwoArgs},
+                           {kScalarMul, kPrimTypeTwoArgs},
+                           {kScalarPow, kPrimTypeTwoArgs},
+                           {kScalarSub, kPrimTypeTwoArgs},
+                           {kScalarFloordiv, kPrimTypeTwoArgs}}) {}
 
 bool PrimToFunction::GetFunction(const PrimitivePtr &prim, FunctionPtr *const func) const {
   bool result = false;

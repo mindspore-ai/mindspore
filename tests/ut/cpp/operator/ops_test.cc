@@ -22,6 +22,7 @@
 #include "pybind_api/ir/primitive_py.h"
 #include "pipeline/jit/parse/python_adapter.h"
 #include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace prim {
@@ -34,52 +35,52 @@ class TestOps : public UT::Common {
 
 // Arithmetic
 TEST_F(TestOps, ScalarAddTest) {
-  auto prim = std::make_shared<Primitive>("scalar_add");
+  auto prim = std::make_shared<Primitive>(prim::kScalarAdd);
   ASSERT_EQ(prim->name(), kPrimScalarAdd->name());
 }
 
 TEST_F(TestOps, ScalarSubTest) {
-  auto prim = std::make_shared<Primitive>("scalar_sub");
+  auto prim = std::make_shared<Primitive>(prim::kScalarSub);
   ASSERT_EQ(prim->name(), kPrimScalarSub->name());
 }
 
 TEST_F(TestOps, ScalarMulTest) {
-  auto prim = std::make_shared<Primitive>("scalar_mul");
+  auto prim = std::make_shared<Primitive>(prim::kScalarMul);
   ASSERT_EQ(prim->name(), kPrimScalarMul->name());
 }
 
 TEST_F(TestOps, ScalarDivTest) {
-  auto prim = std::make_shared<Primitive>("scalar_div");
+  auto prim = std::make_shared<Primitive>(prim::kScalarDiv);
   ASSERT_EQ(prim->name(), kPrimScalarDiv->name());
 }
 
 TEST_F(TestOps, ScalarModTest) {
-  auto prim = std::make_shared<Primitive>("scalar_mod");
+  auto prim = std::make_shared<Primitive>(prim::kScalarMod);
   ASSERT_EQ(prim->name(), kPrimScalarMod->name());
 }
 
 TEST_F(TestOps, ScalarPowTest) {
-  auto prim = std::make_shared<Primitive>("scalar_pow");
+  auto prim = std::make_shared<Primitive>(prim::kScalarPow);
   ASSERT_EQ(prim->name(), kPrimScalarPow->name());
 }
 
 TEST_F(TestOps, ScalarTruncTest) {
-  auto prim = std::make_shared<Primitive>("scalar_trunc");
+  auto prim = std::make_shared<Primitive>(prim::kScalarTrunc);
   ASSERT_EQ(prim->name(), kPrimScalarTrunc->name());
 }
 
 TEST_F(TestOps, ScalarFloorTest) {
-  auto prim = std::make_shared<Primitive>("scalar_floor");
+  auto prim = std::make_shared<Primitive>(prim::kScalarFloor);
   ASSERT_EQ(prim->name(), kPrimScalarFloor->name());
 }
 
 TEST_F(TestOps, ScalarUaddTest) {
-  auto prim = std::make_shared<Primitive>("scalar_uadd");
+  auto prim = std::make_shared<Primitive>(prim::kScalarUadd);
   ASSERT_EQ(prim->name(), kPrimScalarUadd->name());
 }
 
 TEST_F(TestOps, ScalarUsubTest) {
-  auto prim = std::make_shared<Primitive>("scalar_usub");
+  auto prim = std::make_shared<Primitive>(prim::kScalarUsub);
   ASSERT_EQ(prim->name(), kPrimScalarUsub->name());
 }
 
@@ -187,7 +188,7 @@ TEST_F(TestOps, MakeRecordTest) {
 }
 
 TEST_F(TestOps, TupleGetItemTest) {
-  auto prim = std::make_shared<Primitive>("tuple_getitem");
+  auto prim = std::make_shared<Primitive>(kTupleGetItem);
   ASSERT_EQ(prim->name(), kPrimTupleGetItem->name());
 }
 

@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "base/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
@@ -311,7 +312,7 @@ void ForwardCommunication(OperatorVector forward_op, const CNodePtr &node) {
     }
     PrimitivePtr value_node_prim = GetValueNode<PrimitivePtr>(uses_cnode->input(0));
     MS_EXCEPTION_IF_NULL(value_node_prim);
-    if (value_node_prim->name() == TUPLE_GETITEM) {
+    if (value_node_prim->name() == prim::kTupleGetItem) {
       if (uses_set.size() > 1) {
         MS_LOG(EXCEPTION) << "Now only support one output, but got " << uses_set.size();
       }
@@ -409,7 +410,7 @@ void InsertGetTensorSliceOp(const Operator &op, const CNodePtr &node, const Func
 TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &middle_prim,
                                const OperatorInfoPtr &distribute_operator) {
   TensorInfo tensorinfo_in;
-  if (middle_prim->name() == TUPLE_GETITEM) {
+  if (middle_prim->name() == prim::kTupleGetItem) {
     auto value_node = middle_node->input(2)->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     size_t index_s = LongToSize(GetValue<int64_t>(value_node->value()));
@@ -603,7 +604,7 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
     MS_EXCEPTION_IF_NULL(current_value);
     PrimitivePtr current_prim = current_value->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(current_prim);
-    insert_node_new = ((current_prim->name() == TUPLE_GETITEM) ? node : insert_node);
+    insert_node_new = ((current_prim->name() == prim::kTupleGetItem) ? node : insert_node);
   } else {
     insert_node_new = insert_node;
   }
@@ -2117,7 +2118,7 @@ std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-  if (prim->name() == TUPLE_GETITEM) {
+  if (prim->name() == prim::kTupleGetItem) {
     auto tuple_index = GetTupleGetItemIndex(cnode);
     auto layout_ptr = FindPrevParallelCareNodeLayout(cnode->input(1), LongToSize(tuple_index));
     if (!layout_ptr) {
@@ -2234,7 +2235,7 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
   }
 
   // return -> tuple_getitem -> loss
-  if (current_prim->name() == TUPLE_GETITEM) {
+  if (current_prim->name() == prim::kTupleGetItem) {
     auto tuple_index = GetTupleGetItemIndex(pre_cnode);
     AnfNodePtr pre_pre_node = pre_cnode->input(1);
     MS_EXCEPTION_IF_NULL(pre_pre_node);
@@ -2491,7 +2492,7 @@ std::vector<std::pair<CNodePtr, LossNodeInfo>> GetSensLossPairs(const FuncGraphP
     }
 
     auto expect_tuple_getitem_cnode = expect_tuple_getitem->cast<CNodePtr>();
-    if (!IsSomePrimitive(expect_tuple_getitem_cnode, TUPLE_GETITEM)) {
+    if (!IsSomePrimitive(expect_tuple_getitem_cnode, prim::kTupleGetItem)) {
       continue;
     }
 

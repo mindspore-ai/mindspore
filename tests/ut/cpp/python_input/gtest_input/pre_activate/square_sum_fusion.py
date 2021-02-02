@@ -14,9 +14,10 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 square = P.Square()
 reduce_sum = P.ReduceSum()
 square_sumv1 = Primitive('SquareSumV1')

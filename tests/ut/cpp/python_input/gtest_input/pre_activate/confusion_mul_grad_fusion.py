@@ -14,13 +14,14 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 addn = P.AddN()
 mul = P.Mul()
 reduce_sum = P.ReduceSum()
 confusion_mul_grad = Primitive('ConfusionMulGrad')
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 axis = 1
 
 

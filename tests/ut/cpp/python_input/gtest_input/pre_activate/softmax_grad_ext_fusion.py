@@ -14,13 +14,14 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 Mul = P.Mul()
 ReduceSum = P.ReduceSum(keep_dims=True)
 Sub = P.Sub()
 SoftmaxGradExt = Primitive('SoftmaxGradExt')
 MakeTuple = Primitive('make_tuple')
-TupleGetItem = Primitive('tuple_getitem')
+TupleGetItem = Primitive(Constants.kTupleGetItem)
 axes = (2, 3)
 
 

@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_OPS_UTILS_H_
 
+#include "base/core_ops.h"
+
 namespace mindspore {
 namespace parallel {
 constexpr size_t PRELU_INPUTS_SIZE = 2;
@@ -320,7 +322,6 @@ constexpr char KStridedSlice[] = "StridedSlice";
 constexpr char UNIQUE[] = "Unique";
 
 // Parallel don't care
-constexpr char TUPLE_GETITEM[] = "tuple_getitem";
 constexpr char STRING_EQUAL[] = "string_equal";
 constexpr char MAKE_TUPLE[] = "make_tuple";
 constexpr char MAKE_LIST[] = "make_list";

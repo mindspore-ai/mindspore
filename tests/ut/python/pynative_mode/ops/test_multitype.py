@@ -21,12 +21,13 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import _constants
 from mindspore import dtype as mstype
 from ...ut_filter import non_graph_engine
 
 tensor_add = P.Add()
 op_add = P.AddN()
-scala_add = Primitive('scalar_add')
+scala_add = Primitive(_constants.kScalarAdd)
 add = C.MultitypeFuncGraph('add')
 
 

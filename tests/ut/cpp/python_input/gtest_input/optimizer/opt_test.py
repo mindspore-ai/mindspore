@@ -17,6 +17,7 @@ import numpy as np
 
 from mindspore import Tensor
 from mindspore.ops import Primitive
+from mindspore.ops import _constants as Constants
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
@@ -26,9 +27,9 @@ from mindspore.ops.operations import _grad_ops as G
 # pylint: disable=unused-argument
 # pylint: disable=redefined-outer-name
 
-scalar_add = Primitive('scalar_add')
-scalar_mul = Primitive('scalar_mul')
-tuple_getitem = Primitive('tuple_getitem')
+scalar_add = Primitive(Constants.kScalarAdd)
+scalar_mul = Primitive(Constants.kScalarMul)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 switch = Primitive('switch')
 
 
@@ -347,7 +348,7 @@ def test_inline_while(tag):
 def test_cse(tag):
     """ test_cse """
     fns = FnDict()
-    scalar_div = Primitive('scalar_div')
+    scalar_div = Primitive(Constants.kScalarDiv)
 
     @fns
     def test_f1(x, y):
@@ -920,9 +921,9 @@ def test_convert_switch_ops(tag):
     fns = FnDict()
     ge_switch = Primitive('GeSwitch')
     merge = Primitive('Merge')
-    add = Primitive('Add')
+    add = Primitive(Constants.kScalarAdd)
     neg = Primitive('Neg')
-    tuple_getitem = Primitive('tuple_getitem')
+    tuple_getitem = Primitive(Constants.kTupleGetItem)
     make_tuple = Primitive('make_tuple')
 
     @fns
