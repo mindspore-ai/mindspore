@@ -154,8 +154,8 @@ PYBIND_REGISTER(
 PYBIND_REGISTER(LookupOperation, 1, ([](const py::module *m) {
                   (void)py::class_<text::LookupOperation, TensorOperation, std::shared_ptr<text::LookupOperation>>(
                     *m, "LookupOperation")
-                    .def(py::init([](const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
-                                     const std::string &data_type) {
+                    .def(py::init([](const std::shared_ptr<Vocab> &vocab,
+                                     const std::optional<std::string> &unknown_token, const std::string &data_type) {
                       auto lookup = std::make_shared<text::LookupOperation>(vocab, unknown_token, data_type);
                       THROW_IF_ERROR(lookup->ValidateParams());
                       return lookup;

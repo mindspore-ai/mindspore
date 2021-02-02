@@ -87,8 +87,8 @@ std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_p
   return op->ValidateParams() ? op : nullptr;
 }
 
-std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
-                                        const std::string &data_type) {
+std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab,
+                                        const std::optional<std::string> &unknown_token, const std::string &data_type) {
   auto op = std::make_shared<LookupOperation>(vocab, unknown_token, data_type);
 
   return op->ValidateParams() ? op : nullptr;
@@ -340,7 +340,7 @@ Status JiebaTokenizerOperation::AddWord(const std::string &word, int64_t freq) {
 }
 
 // LookupOperation
-LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
+LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
                                  const std::string &data_type)
     : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists), data_type_(data_type) {}
 
@@ -352,10 +352,10 @@ Status LookupOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (!unknown_token_.empty()) {
-    default_id_ = vocab_->Lookup(unknown_token_);
+  if (unknown_token_ != std::nullopt) {
+    default_id_ = vocab_->Lookup(*unknown_token_);
     if (default_id_ == Vocab::kNoTokenExists) {
-      std::string err_msg = "Lookup: \"" + unknown_token_ + "\" doesn't exist in vocab.";
+      std::string err_msg = "Lookup: \"" + *unknown_token_ + "\" doesn't exist in vocab.";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }

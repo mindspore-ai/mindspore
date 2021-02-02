@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TEXT_H_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -143,11 +144,13 @@ std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_p
 /// \brief Lookup operator that looks up a word to an id.
 /// \param[in] vocab a Vocab object.
 /// \param[in] unknown_token word to use for lookup if the word being looked up is out of Vocabulary (oov).
-///   If unknown_token is oov, runtime error will be thrown.
+///   If unknown_token is oov, runtime error will be thrown. If unknown_token is {}, which means that not to
+//    specify unknown_token when word being out of Vocabulary (default={}).
 /// \param[in] data_type type of the tensor after lookup, typically int32.
 /// \return Shared pointer to the current TensorOperation.
 
-std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
+std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab,
+                                        const std::optional<std::string> &unknown_token = {},
                                         const std::string &data_type = "int32");
 
 /// \brief TensorOp to generate n-gram from a 1-D string Tensor.
@@ -343,7 +346,7 @@ class JiebaTokenizerOperation : public TensorOperation {
 
 class LookupOperation : public TensorOperation {
  public:
-  explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
+  explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token,
                            const std::string &data_type);
 
   ~LookupOperation();
@@ -356,7 +359,7 @@ class LookupOperation : public TensorOperation {
 
  private:
   std::shared_ptr<Vocab> vocab_;
-  std::string unknown_token_;
+  std::optional<std::string> unknown_token_;
   int32_t default_id_;
   std::string data_type_;
 };

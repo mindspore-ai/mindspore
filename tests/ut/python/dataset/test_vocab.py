@@ -119,6 +119,31 @@ def test_from_list():
     assert "is not of type" in test_config("w1", ["w1", "w2"], ["s1"], True, 123)
 
 
+def test_from_list_lookup_empty_string():
+    # "" is a valid word in vocab, which can be looked up by LookupOp
+    vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", ""], True)
+    lookup = text.Lookup(vocab, "")
+    data = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    data = data.map(operations=lookup, input_columns=["text"])
+    ind = 0
+    res = [2, 1, 4, 5, 6, 7]
+    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert d["text"] == res[ind], ind
+        ind += 1
+
+    # unknown_token of LookUp is None, it will convert to std::nullopt in C++,
+    # so it has nothing to do with "" in vocab and C++ will skip looking up unknown_token
+    vocab = text.Vocab.from_list("home IS behind the world ahead !".split(" "), ["<pad>", ""], True)
+    lookup = text.Lookup(vocab)
+    data = ds.TextFileDataset(DATA_FILE, shuffle=False)
+    data = data.map(operations=lookup, input_columns=["text"])
+    try:
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+    except RuntimeError as e:
+        assert "token: \"is\" doesn't exist in vocab and no unknown token is specified" in str(e)
+
+
 def test_from_file():
     def gen(texts):
         for word in texts.split(" "):
