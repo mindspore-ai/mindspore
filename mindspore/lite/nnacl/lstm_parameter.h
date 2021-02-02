@@ -34,6 +34,8 @@ typedef struct LstmParameter {
   // output_hidden = old_hidden * smooth + new_hidden * (1 - smooth)
   // output_cell = old_cell * smooth + new_cell * (1 - smooth)
   float smooth_;
+  int col_align_;
+  int row_align_;
 } LstmParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_LSTM_PARAMETER_H_

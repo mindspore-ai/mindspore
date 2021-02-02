@@ -39,8 +39,9 @@ class LstmCPUKernel : public LiteKernel {
 
  private:
   void FreeTmpBuffer();
+  void FreeRunBuffer();
   int InitParam();
-  int InitBuffer();
+  int MallocRunBuffer();
   int InitWeightBias();
 
   float *gate_buffer_ = nullptr;
@@ -48,6 +49,10 @@ class LstmCPUKernel : public LiteKernel {
   float *weight_i_ptr_ = nullptr;
   float *weight_h_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
+  float *matmul_buffer_[2];
+  int row_tile_ = 0;
+  int col_tile_ = 0;
+  bool is_vec_ = false;
   LstmParameter *lstm_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
