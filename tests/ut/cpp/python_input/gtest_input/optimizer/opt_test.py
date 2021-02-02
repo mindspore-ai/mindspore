@@ -920,7 +920,7 @@ def test_convert_switch_ops(tag):
     fns = FnDict()
     ge_switch = Primitive('GeSwitch')
     merge = Primitive('Merge')
-    add = Primitive('TensorAdd')
+    add = Primitive('Add')
     neg = Primitive('Neg')
     tuple_getitem = Primitive('tuple_getitem')
     make_tuple = Primitive('make_tuple')

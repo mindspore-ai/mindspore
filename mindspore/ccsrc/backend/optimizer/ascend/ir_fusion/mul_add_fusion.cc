@@ -58,7 +58,7 @@ bool GetMul(const FuncGraphPtr &graph, const CNodePtr &add, CNodePtr *mul, size_
 const BaseRef MulAddFusion::DefinePattern() const {
   VarPtr x = std::make_shared<Var>();
   VarPtr y = std::make_shared<Var>();
-  VectorRef pattern({prim::kPrimTensorAdd, x, y});
+  VectorRef pattern({prim::kPrimAdd, x, y});
   return pattern;
 }
 

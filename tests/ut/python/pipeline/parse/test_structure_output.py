@@ -128,7 +128,7 @@ def test_tuple_tuple_0():
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
 
         def construct(self, x, y):
@@ -150,7 +150,7 @@ def test_tuple_tuple_1():
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
 
         def construct(self, x, y):
@@ -170,7 +170,7 @@ def test_tuple_tuple_2():
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.relu = P.ReLU()
             self.depend = depend
@@ -196,7 +196,7 @@ def test_tuple_tuple_3():
     class Net(Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.relu = P.ReLU()
             self.depend = depend

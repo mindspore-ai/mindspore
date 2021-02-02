@@ -17,7 +17,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 addn = P.AddN()
-add = P.TensorAdd()
+add = P.Add()
 reshape = P.Reshape()
 cast = P.Cast()
 tuple_getitem = Primitive('tuple_getitem')

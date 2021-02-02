@@ -61,7 +61,7 @@ def graph_1():
         b = gb.emit("Abs", a, 'b')
         c = gb.emit("Abs", b, 'c')
         d = gb.emit("Abs", c, 'd')
-        gb.emit('TensorAdd', [b, d], 'e')
+        gb.emit('Add', [b, d], 'e')
     return gb.get()[0]
 
 
@@ -74,7 +74,7 @@ def graph_2():
         b = gb.emit("Abs", a, 'b')
         c = gb.emit("Abs", a, 'c')
         d = gb.emit("Abs", b, 'd')
-        e = gb.emit('TensorAdd', [c, d], 'e')
+        e = gb.emit('Add', [c, d], 'e')
         gb.emit("Abs", e, 'f')
     return gb.get()[0]
 
@@ -88,7 +88,7 @@ def graph_3():
         b = gb.emit("Abs", a0, 'b')
         c = gb.emit("Abs", a1, 'c')
         d = gb.emit("Abs", b, 'd')
-        e = gb.emit('TensorAdd', [c, d], 'e')
+        e = gb.emit('Add', [c, d], 'e')
         gb.emit("Abs", e, 'f')
     return gb.get()[0]
 
@@ -103,10 +103,10 @@ def graph_4():
         c = gb.emit("Abs", b, 'c')
         d = gb.emit("Abs", a1, 'd')
         e = gb.emit("Abs", d, 'e')
-        f = gb.emit('TensorAdd', [c, e], 'f')
+        f = gb.emit('Add', [c, e], 'f')
         gb.emit('Abs', f, 'g')
         h = gb.emit("Abs", d, 'h')
-        i = gb.emit('TensorAdd', [c, h], 'i')
+        i = gb.emit('Add', [c, h], 'i')
         gb.emit("Abs", i, 'j')
     return gb.get()[0]
 
@@ -121,10 +121,10 @@ def graph_5():
         a = gb.emit("Abs", a0, 'a')
         b = gb.emit("Abs", a1, 'b')
         c = gb.emit("Abs", b, 'c')
-        d = gb.emit('TensorAdd', [a, c], 'd')
+        d = gb.emit('Add', [a, c], 'd')
         gb.emit("Abs", d, 'e')
         f = gb.emit("Abs", a2, 'f')
-        g = gb.emit('TensorAdd', [c, f], 'g')
+        g = gb.emit('Add', [c, f], 'g')
         gb.emit("Abs", g, 'h')
     return gb.get()[0]
 
@@ -202,7 +202,7 @@ def graph_pat_4():
         # g0 = gb.emit("Abs", g0, 'g0')
         # g0 = gb.emit("Abs", g0, 'g0')
         g0 = gb.emit("Abs", g0, 'g0')
-        g1 = gb.emit('TensorAdd', [f, g0], 'g1')
+        g1 = gb.emit('Add', [f, g0], 'g1')
         g2 = gb.emit("Abs", g1, 'g2')
         g3 = gb.emit("Abs", g2, 'g3')
         g4 = gb.emit("Abs", g3, 'g4')
@@ -232,7 +232,7 @@ def graph_pat_6():
         a = gb.emit("Abs", a0, 'a')
         b = gb.emit("Abs", a, 'b')
         c = gb.emit("Abs", a, 'c')
-        gb.emit("TensorAdd", [b, c], 'd')
+        gb.emit("Add", [b, c], 'd')
         gb.emit("Abs", c, 'f')  # broke dimond
     return gb.get()[0]
 
@@ -263,7 +263,7 @@ def graph_pat_8():
         b = gb.emit("Abs", a, 'b')
         #c = gb.emit("Abs", b, 'b')
         c = gb.emit("ReduceSum", b, 'c', attrs={'reduce_axis': (1,)})
-        gb.emit("TensorAdd", [b, c], 'd')
+        gb.emit("Add", [b, c], 'd')
     return gb.get()[0]
 
 

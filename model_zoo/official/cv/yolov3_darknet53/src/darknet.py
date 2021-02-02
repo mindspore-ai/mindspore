@@ -62,7 +62,7 @@ class ResidualBlock(nn.Cell):
         out_chls = out_channels//2
         self.conv1 = conv_block(in_channels, out_chls, kernel_size=1, stride=1)
         self.conv2 = conv_block(out_chls, out_channels, kernel_size=3, stride=1)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x

@@ -198,7 +198,7 @@ class SummaryNet(nn.Cell):
     def __init__(self):
         super(SummaryNet, self).__init__()
         self.s = P.ScalarSummary()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         self.s("x1", x)
@@ -209,7 +209,7 @@ class HistogramSummaryNet(nn.Cell):
     def __init__(self):
         super(HistogramSummaryNet, self).__init__()
         self.summary = P.HistogramSummary()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         out = self.add(x, y)
@@ -1000,8 +1000,8 @@ test_case_math_ops = [
         'block': P.Sub(),
         'desc_inputs': [[3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
-    ('TensorAdd', {
-        'block': P.TensorAdd(),
+    ('Add', {
+        'block': P.Add(),
         'desc_inputs': [[3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
     ('Mul0', {
@@ -1028,26 +1028,26 @@ test_case_math_ops = [
         'desc_bprop': [[2, 3, 3, 5]],
         'skip': ['backward']}),
     ('Add0', {
-        'block': P.TensorAdd(),
+        'block': P.Add(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
     ('Add1', {
-        'block': P.TensorAdd(),
+        'block': P.Add(),
         'desc_inputs': [[3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]],
         'skip': ['backward']}),
     ('Add2', {
-        'block': P.TensorAdd(),
+        'block': P.Add(),
         'desc_inputs': [[2, 3, 3, 5], [3, 5]],
         'desc_bprop': [[2, 3, 3, 5]],
         'skip': ['backward']}),
     ('Add3', {
-        'block': P.TensorAdd(),
+        'block': P.Add(),
         'desc_inputs': [[2, 3, 1, 1], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]],
         'skip': ['backward']}),
     ('Add4', {
-        'block': P.TensorAdd(),
+        'block': P.Add(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 1, 1]],
         'desc_bprop': [[2, 3, 3, 5]],
         'skip': ['backward']}),

@@ -37,8 +37,7 @@ class TensorAddCPUKernel : public MKLCPUKernel {
 };
 
 MS_REG_CPU_KERNEL(
-  TensorAdd,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  Add, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   TensorAddCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

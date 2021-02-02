@@ -51,7 +51,7 @@ def test_triangle_strategy_consistency():
             self.ba1 = P.BiasAdd()
             self.weight = Parameter(Tensor(np.ones([128, 1000]), dtype=ms.float32), name="weight")
             self.bias = Parameter(Tensor(np.ones([1000]), dtype=ms.float32), name="bias")
-            self.add = P.TensorAdd().shard(((1, 8), (1, 8)))
+            self.add = P.Add().shard(((1, 8), (1, 8)))
             self.relu = P.ReLU()
 
         def construct(self, x):

@@ -30,7 +30,7 @@ from mindspore.train.summary.enums import ModeEnum, PluginEnum
 from mindspore.train.summary import SummaryRecord
 from mindspore.nn import Cell
 from mindspore.nn.optim.optimizer import Optimizer
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 
 
 _VALUE_CACHE = list()
@@ -58,7 +58,7 @@ class CustomNet(Cell):
     """Define custom network."""
     def __init__(self):
         super(CustomNet, self).__init__()
-        self.add = TensorAdd
+        self.add = Add
         self.optimizer = Optimizer(learning_rate=1, parameters=[Parameter(Tensor(1), 'weight')])
 
     def construct(self, data):
@@ -356,7 +356,7 @@ class TestSummaryCollector:
             """Define net."""
             def __init__(self):
                 super(Net, self).__init__()
-                self.add = TensorAdd()
+                self.add = Add()
 
             def construct(self, data):
                 return data

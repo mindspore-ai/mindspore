@@ -19,7 +19,7 @@ from mindspore.ops.operations import _grad_ops as G
 # pylint: disable=unused-variable
 
 tuple_getitem = Primitive('tuple_getitem')
-add = P.TensorAdd()
+add = P.Add()
 allreduce = P.AllReduce()
 allreduce.add_prim_attr('fusion', 1)
 make_tuple = Primitive('make_tuple')

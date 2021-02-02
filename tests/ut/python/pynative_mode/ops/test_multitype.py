@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from mindspore import dtype as mstype
 from ...ut_filter import non_graph_engine
 
-tensor_add = P.TensorAdd()
+tensor_add = P.Add()
 op_add = P.AddN()
 scala_add = Primitive('scalar_add')
 add = C.MultitypeFuncGraph('add')

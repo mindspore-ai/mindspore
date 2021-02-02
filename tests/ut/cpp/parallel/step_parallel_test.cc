@@ -212,7 +212,7 @@ TEST_F(TestStepParallel, GetPythonPath1) {
 }
 
 TEST_F(TestStepParallel, GetPythonPath2) {
-  OperatorName operator_name = "TensorAdd";
+  OperatorName operator_name = "Add";
   const std::string expect = "mindspore.ops.operations";
   auto temp = parallel::GetOpPythonPath(operator_name);
   ASSERT_EQ(temp, expect);

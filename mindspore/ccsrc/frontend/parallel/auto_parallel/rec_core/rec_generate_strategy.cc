@@ -860,7 +860,7 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
   if (ops[iter_ops]->type() == L2_NORMALIZE) {
     return PrepareL2Normalize(ops, iter_ops, basic_stra);
   }
-  if (ops[iter_ops]->type() == TENSOR_ADD || ops[iter_ops]->type() == SUB || ops[iter_ops]->type() == MUL ||
+  if (ops[iter_ops]->type() == ADD || ops[iter_ops]->type() == SUB || ops[iter_ops]->type() == MUL ||
       ops[iter_ops]->type() == DIV) {
     return CheckBroadcast(ops, iter_ops, basic_stra);
   }

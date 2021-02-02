@@ -214,7 +214,7 @@ class ParallelStrategySearchNet(Cell):
         self.prelu = P.PReLU()
         self.matmul = P.MatMul(transpose_b=transpose_b)
         self.l2norm = P.L2Normalize(axis=(1 - axis))
-        self.tensoradd = P.TensorAdd()
+        self.tensoradd = P.Add()
         self.strided_slice = P.StridedSlice()
         self.dense = Dense(in_channels=6,
                            out_channels=num_class,

@@ -38,8 +38,8 @@ class LambNextMVWithDecayRule : public MultipleOutputPatternProcessPass {
     mul4_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimMul->name()));
     real_div0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(kRealDivOpName));
     real_div1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(kRealDivOpName));
-    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
-    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
+    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAdd->name()));
+    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAdd->name()));
   }
 
   ~LambNextMVWithDecayRule() override = default;

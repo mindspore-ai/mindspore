@@ -42,7 +42,7 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   // test nullptr as input
   EXPECT_THROW(AnfAlgo::VisitKernel(nullptr, 0), std::runtime_error);
   // test value node as input
-  ValueNodePtr value_node = NewValueNode(prim::kPrimTensorAdd);
+  ValueNodePtr value_node = NewValueNode(prim::kPrimAdd);
   kernel_with_index = AnfAlgo::VisitKernel(value_node, 0);
   EXPECT_NE(kernel_with_index.first->cast<ValueNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<ValueNodePtr>()).get(), value_node.get());
@@ -61,7 +61,7 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add.get());
   EXPECT_EQ(kernel_with_index.second, 0);
   // test maketuple node as input
-  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimTensorAdd)};
+  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd)};
   auto add_second = kernel_graph->NewCNode(add_inputs);
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(prim::kPrimMakeTuple), add, add_second};
   auto make_tuple = kernel_graph->NewCNode(make_tuple_inputs);
@@ -104,7 +104,7 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
 TEST_F(AnfRuntimeAlgorithmTest, GetCNodePrimitive) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  PrimitivePtr add_primitive = prim::kPrimTensorAdd;
+  PrimitivePtr add_primitive = prim::kPrimAdd;
   std::vector<AnfNodePtr> inputs{NewValueNode(add_primitive)};
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_NE(AnfAlgo::GetCNodePrimitive(add), nullptr);
@@ -115,9 +115,9 @@ TEST_F(AnfRuntimeAlgorithmTest, GetCNodePrimitive) {
 TEST_F(AnfRuntimeAlgorithmTest, GetCNodeName) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd)};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(inputs);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(add), prim::kPrimTensorAdd->name());
+  EXPECT_EQ(AnfAlgo::GetCNodeName(add), prim::kPrimAdd->name());
   EXPECT_THROW(AnfAlgo::GetCNodeName(nullptr), std::runtime_error);
   // test parameter
   auto parameter_node = kernel_graph->add_parameter();
@@ -127,7 +127,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetCNodeName) {
 TEST_F(AnfRuntimeAlgorithmTest, GetNodeDebugString) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd)};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_EQ(AnfAlgo::GetNodeDebugString(add), add->DebugString());
   EXPECT_THROW(AnfAlgo::GetNodeDebugString(nullptr), std::runtime_error);
@@ -136,7 +136,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetNodeDebugString) {
 TEST_F(AnfRuntimeAlgorithmTest, SetNodeAttr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd)};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(inputs);
   AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
   auto primitive = AnfAlgo::GetCNodePrimitive(add);
@@ -150,7 +150,7 @@ TEST_F(AnfRuntimeAlgorithmTest, SetNodeAttr) {
 TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimTensorAdd)};
+  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(add_inputs);
   AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
 
@@ -174,7 +174,7 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttr) {
 TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttrs) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimTensorAdd)};
+  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(add_inputs);
   AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
 
@@ -198,7 +198,7 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyNodeAttrs) {
 TEST_F(AnfRuntimeAlgorithmTest, EraseNodeAttr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test cnode node
-  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimTensorAdd)};
+  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd)};
   auto add = kernel_graph->NewCNode(add_inputs);
   AnfAlgo::SetNodeAttr("test_set_attr", MakeValue("test_value"), add);
   AnfAlgo::SetNodeAttr("test_set_attr_v2", MakeValue("test_value_v2"), add);
@@ -215,7 +215,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputTensorNum) {
   // test cnode node
   auto parameter_one = kernel_graph->NewParameter();
   auto parameter_two = kernel_graph->NewParameter();
-  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimTensorAdd), parameter_one, parameter_two};
+  std::vector<AnfNodePtr> add_inputs{NewValueNode(prim::kPrimAdd), parameter_one, parameter_two};
   auto add = kernel_graph->NewCNode(add_inputs);
   EXPECT_EQ(AnfAlgo::GetInputTensorNum(add), 2);
   EXPECT_THROW(AnfAlgo::GetInputTensorNum(nullptr), std::runtime_error);
@@ -238,7 +238,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
   EXPECT_THROW(AnfAlgo::GetOutputTensorNum(nullptr), std::runtime_error);
   // test add as input
   inputs.clear();
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(std::make_shared<abstract::AbstractNone>());
@@ -249,7 +249,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorAdd), kernel_graph->NewParameter(),
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimAdd), kernel_graph->NewParameter(),
                                     kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
   std::vector<size_t> shape = {1, 2, 3, 4};
@@ -270,7 +270,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetInputFormat) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorAdd), kernel_graph->NewParameter(),
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimAdd), kernel_graph->NewParameter(),
                                     kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
@@ -290,7 +290,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputFormat) {
 TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputFormat) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> pre_node_inputs;
-  pre_node_inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  pre_node_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto pre_add = kernel_graph->NewCNode(pre_node_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
   pre_add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -300,7 +300,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputFormat) {
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   builder.SetOutputsFormat({kOpFormat_NCHW});
   d_kernel_info->set_select_kernel_build_info(builder.Build());
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd), pre_add};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), pre_add};
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_EQ(AnfAlgo::GetPrevNodeOutputFormat(add, 0), kOpFormat_NCHW);
   EXPECT_THROW(AnfAlgo::GetPrevNodeOutputFormat(nullptr, 0), std::runtime_error);
@@ -317,7 +317,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferShape) {
   AbstractBasePtrList args_spec_list{x_abstract, none_abstract, x_abstract};
   auto tuple_abstract = std::make_shared<abstract::AbstractTuple>(args_spec_list);
   // test value node as input
-  auto value_node = NewValueNode(prim::kPrimTensorAdd);
+  auto value_node = NewValueNode(prim::kPrimAdd);
   MS_EXCEPTION_IF_NULL(value_node);
   value_node->set_abstract(x_abstract);
   EXPECT_EQ(AnfAlgo::GetOutputInferShape(value_node, 0)[1], 32);
@@ -329,7 +329,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferShape) {
   EXPECT_EQ(AnfAlgo::GetOutputInferShape(parameter_node, 0)[2], 224);
   // test cnode as input
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(std::make_shared<abstract::AbstractNone>());
@@ -354,7 +354,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferShape) {
   parameter_node->set_abstract(x_abstract);
   EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferShape(parameter_node, 0), std::runtime_error);
   // test cnode as input
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd), parameter_node};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), parameter_node};
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_EQ(AnfAlgo::GetPrevNodeOutputInferShape(add, 0)[1], 32);
   EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferShape(add, 1), std::runtime_error);
@@ -369,7 +369,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
   auto tuple_abstract = std::make_shared<abstract::AbstractTuple>(args_spec_list);
   // test cnode as input
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_abstract(tuple_abstract);
@@ -403,7 +403,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
   MS_EXCEPTION_IF_NULL(parameter_third);
   parameter_third->set_abstract(x_abstract);
   // test cnode as input
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd), parameter_one, parameter_two, parameter_third};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), parameter_one, parameter_two, parameter_third};
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -438,13 +438,13 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferDataTypeTest) {
 TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferDataType) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> pre_node_inputs;
-  pre_node_inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  pre_node_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto pre_add = kernel_graph->NewCNode(pre_node_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
   std::vector<int64_t> shp{2, 32, 224, 224};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
   pre_add->set_abstract(x_abstract);
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd), pre_add};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), pre_add};
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_EQ(AnfAlgo::GetPrevNodeOutputInferDataType(add, 0), kFloat32->type_id());
   EXPECT_THROW(AnfAlgo::GetPrevNodeOutputInferDataType(add, 1), std::runtime_error);
@@ -457,7 +457,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputInferDataType) {
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceDataTypeTest) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -473,7 +473,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceDataTypeTest) {
 
 TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceDataTypeTest) {
   auto kernel_graph = std::make_shared<KernelGraph>();
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimTensorAdd), kernel_graph->NewParameter(),
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimAdd), kernel_graph->NewParameter(),
                                     kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
@@ -492,7 +492,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceDataTypeTest) {
 TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputDeviceDataType) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> pre_add_inputs;
-  pre_add_inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  pre_add_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto pre_add = kernel_graph->NewCNode(pre_add_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
   pre_add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -501,7 +501,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputDeviceDataType) {
   KernelBuildInfoBuilder builder;
   builder.SetOutputsDeviceType({kFloat32->type_id()});
   d_kernel_info->set_select_kernel_build_info(builder.Build());
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd), pre_add};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), pre_add};
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_EQ(AnfAlgo::GetPrevNodeOutputDeviceDataType(add, 0), kFloat32->type_id());
   EXPECT_THROW(AnfAlgo::GetPrevNodeOutputDeviceDataType(add, 1), std::runtime_error);
@@ -513,7 +513,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputDeviceDataType) {
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputAddr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -528,7 +528,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputAddr) {
 TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputAddr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> pre_add_inputs;
-  pre_add_inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  pre_add_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto pre_add = kernel_graph->NewCNode(pre_add_inputs);
   MS_EXCEPTION_IF_NULL(pre_add);
   pre_add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -537,7 +537,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputAddr) {
   int *addr = nullptr;
   auto device_address = std::make_shared<AscendDeviceAddress>(addr, 1);
   d_kernel_info->SetOutputAddr(device_address, 0);
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimTensorAdd), pre_add};
+  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimAdd), pre_add};
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_EQ(AnfAlgo::GetPrevNodeOutputAddr(add, 0), device_address.get());
   EXPECT_THROW(AnfAlgo::GetPrevNodeOutputAddr(add, 1), std::runtime_error);
@@ -549,7 +549,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetPrevNodeOutputAddr) {
 TEST_F(AnfRuntimeAlgorithmTest, SetOutputAddr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   int *addr = nullptr;
   auto device_address = std::make_shared<AscendDeviceAddress>(addr, 1);
@@ -561,7 +561,7 @@ TEST_F(AnfRuntimeAlgorithmTest, SetOutputAddr) {
 TEST_F(AnfRuntimeAlgorithmTest, GetWorkspaceAddr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -576,7 +576,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetWorkspaceAddr) {
 TEST_F(AnfRuntimeAlgorithmTest, SetWorkspaceAddr) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   int *addr = nullptr;
   auto device_address = std::make_shared<AscendDeviceAddress>(addr, 1);
@@ -588,7 +588,7 @@ TEST_F(AnfRuntimeAlgorithmTest, SetWorkspaceAddr) {
 TEST_F(AnfRuntimeAlgorithmTest, SetOutputInferTypeAndShape) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   // set none abstract
   std::vector<TypeId> none_types = {};
@@ -618,7 +618,7 @@ TEST_F(AnfRuntimeAlgorithmTest, SetOutputInferTypeAndShape) {
 TEST_F(AnfRuntimeAlgorithmTest, CopyAbstract) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> first_inputs;
-  first_inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  first_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto first_add = kernel_graph->NewCNode(first_inputs);
   // set single input
   std::vector<TypeId> single_types = {kFloat32->type_id()};
@@ -626,7 +626,7 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyAbstract) {
   AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, first_add.get());
   // set multiple input
   std::vector<AnfNodePtr> second_inputs;
-  second_inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  second_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto second_add = kernel_graph->NewCNode(second_inputs);
   std::vector<TypeId> mutiple_types = {kFloat16->type_id(), kFloat32->type_id(), kFloat64->type_id()};
   std::vector<std::vector<size_t>> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
@@ -643,7 +643,7 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyAbstract) {
 TEST_F(AnfRuntimeAlgorithmTest, GetKernelType) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -659,7 +659,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetKernelType) {
 TEST_F(AnfRuntimeAlgorithmTest, GetProcessor) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -675,7 +675,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetProcessor) {
 TEST_F(AnfRuntimeAlgorithmTest, GetFusionType) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -691,7 +691,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetFusionType) {
 TEST_F(AnfRuntimeAlgorithmTest, SetSelectKernelBuildInfo) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   std::shared_ptr<KernelBuildInfoBuilder> builder = std::make_shared<KernelBuildInfoBuilder>();
   builder->SetFusionType(kernel::CONVLUTION);
@@ -703,7 +703,7 @@ TEST_F(AnfRuntimeAlgorithmTest, SetSelectKernelBuildInfo) {
 TEST_F(AnfRuntimeAlgorithmTest, GetKernelMod) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -717,7 +717,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetKernelMod) {
 TEST_F(AnfRuntimeAlgorithmTest, SetKernelMod) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   AnfAlgo::SetKernelMod(nullptr, add.get());
   EXPECT_THROW(AnfAlgo::SetKernelMod(nullptr, nullptr), std::runtime_error);
@@ -727,7 +727,7 @@ TEST_F(AnfRuntimeAlgorithmTest, SetKernelMod) {
 TEST_F(AnfRuntimeAlgorithmTest, IsRealKernel) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test value node as input
-  auto value_node = NewValueNode(prim::kPrimTensorAdd);
+  auto value_node = NewValueNode(prim::kPrimAdd);
   EXPECT_TRUE(AnfAlgo::IsRealKernel(value_node));
   EXPECT_THROW(AnfAlgo::IsRealKernel(nullptr), std::runtime_error);
   // test parameter as input
@@ -735,7 +735,7 @@ TEST_F(AnfRuntimeAlgorithmTest, IsRealKernel) {
   EXPECT_TRUE(AnfAlgo::IsRealKernel(parameter_node));
   // test add as input
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_TRUE(AnfAlgo::IsRealKernel(add));
   // test Depend as input
@@ -748,7 +748,7 @@ TEST_F(AnfRuntimeAlgorithmTest, IsRealKernel) {
 TEST_F(AnfRuntimeAlgorithmTest, IsRealCNodeKernel) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   // test value node as input
-  auto value_node = NewValueNode(prim::kPrimTensorAdd);
+  auto value_node = NewValueNode(prim::kPrimAdd);
   EXPECT_FALSE(AnfAlgo::IsRealCNodeKernel(value_node));
   EXPECT_THROW(AnfAlgo::IsRealCNodeKernel(nullptr), std::runtime_error);
   // test parameter as input
@@ -756,7 +756,7 @@ TEST_F(AnfRuntimeAlgorithmTest, IsRealCNodeKernel) {
   EXPECT_FALSE(AnfAlgo::IsRealCNodeKernel(parameter_node));
   // test add as input
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   EXPECT_TRUE(AnfAlgo::IsRealCNodeKernel(add));
   // test ImageSummary as input
@@ -779,7 +779,7 @@ TEST_F(AnfRuntimeAlgorithmTest, IsParameterWeight) {
 TEST_F(AnfRuntimeAlgorithmTest, GetStreamId) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -793,7 +793,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetStreamId) {
 TEST_F(AnfRuntimeAlgorithmTest, SetStreamId) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimTensorAdd));
+  inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto add = kernel_graph->NewCNode(inputs);
   AnfAlgo::SetStreamId(0, add.get());
   EXPECT_THROW(AnfAlgo::SetStreamId(0, nullptr), std::runtime_error);

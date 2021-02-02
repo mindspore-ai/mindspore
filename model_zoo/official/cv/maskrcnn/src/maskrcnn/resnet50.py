@@ -218,7 +218,7 @@ class ResidualBlockUsing(nn.Cell):
                 self.bn_down_sample = self.bn_down_sample.set_train()
             if not weights_update:
                 self.conv_down_sample.weight.requires_grad = False
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x

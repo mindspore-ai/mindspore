@@ -31,8 +31,8 @@ The pipeline is suitable for config in a case-by-case style.
 Example:
     Examples:
     verification_set = [
-        ('TensorAdd', {
-            'block': (P.TensorAdd(), {'reduce_output': False}),
+        ('Add', {
+            'block': (P.Add(), {'reduce_output': False}),
             'desc_inputs': [[1, 3, 3, 4], [1, 3, 3, 4]],
             'desc_bprop': [[1, 3, 3, 4]],
         })
@@ -49,8 +49,8 @@ The pipeline is suitable for config in a case-by-case style.
 Example:
     Examples:
     verification_set = [
-        ('TensorAdd', {
-            'block': (P.TensorAdd(), {'reduce_output': False}),
+        ('Add', {
+            'block': (P.Add(), {'reduce_output': False}),
             'desc_inputs': [[1, 3, 3, 4], [1, 3, 3, 4]],
             'desc_bprop': [[1, 3, 3, 4]],
         })

@@ -989,7 +989,7 @@ class PConstant : public PBase<PConstant<T> > {
   }
 
 // Arithmetic operations
-BIN_OPERATION_PATTERN(operator+, prim::kPrimTensorAdd, true);
+BIN_OPERATION_PATTERN(operator+, prim::kPrimAdd, true);
 BIN_OPERATION_PATTERN(operator*, prim::kPrimMul, true);
 BIN_OPERATION_PATTERN(operator/, prim::kPrimRealDiv, false);
 BIN_OPERATION_PATTERN(operator-, prim::kPrimSub, false);

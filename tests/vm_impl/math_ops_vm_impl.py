@@ -26,7 +26,7 @@ from .vm_interface import vm
 # pylint: disable=unused-argument
 
 
-@vm_impl_getters.register(P.TensorAdd)
+@vm_impl_getters.register(P.Add)
 def vm_impl_tensor_add(self):
     """Generate vm_impl function for TensorAdd."""
 

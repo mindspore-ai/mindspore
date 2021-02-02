@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-"""TensorAdd op"""
+"""Add op"""
 from mindspore.ops.op_info_register import op_info_register, AkgAscendRegOp, DataType as DT
 
-op_info = AkgAscendRegOp("TensorAdd") \
+op_info = AkgAscendRegOp("Add") \
     .fusion_type("ELEMWISE") \
     .input(0, "x") \
     .input(1, "y") \
@@ -38,5 +38,5 @@ op_info = AkgAscendRegOp("TensorAdd") \
 
 @op_info_register(op_info)
 def _add_akg():
-    """TensorAdd Akg register"""
+    """Add Akg register"""
     return

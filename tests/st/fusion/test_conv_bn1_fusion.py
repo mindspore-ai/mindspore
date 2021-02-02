@@ -62,7 +62,7 @@ def test_conv_bn_add_relu_fusion():
             self.conv1 = nn.Conv2d(input_channel, output_channel,
                                    kernel_size=1, stride=1, padding=0, has_bias=False, pad_mode="same")
             self.bn = nn.BatchNorm2d(output_channel, momentum=0.1, eps=0.0001)
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.relu = P.ReLU()
             self.mean = P.ReduceMean(keep_dims=True)
             self.reshape = P.Reshape()

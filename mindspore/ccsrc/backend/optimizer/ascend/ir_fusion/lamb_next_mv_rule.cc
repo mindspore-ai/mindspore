@@ -130,11 +130,11 @@ const BaseRef LambNextMVRuleCond1::DefinePattern() const {
   auto real_div0 = VectorRef({real_div0_var_, add0, input5_});
   auto real_div1 = VectorRef({real_div1_var_, add1, input2_});
 
-  auto add2 = VectorRef({prim::kPrimTensorAdd, add2_y_, real_div1});
+  auto add2 = VectorRef({prim::kPrimAdd, add2_y_, real_div1});
   auto sqrt0 = VectorRef({prim_rsqrt, add2});
   auto real_div2 = VectorRef({real_div2_var_, sqrt0, real_div0});
 
-  return VectorRef({prim::kPrimTensorAdd, mul4, real_div2});
+  return VectorRef({prim::kPrimAdd, mul4, real_div2});
 }
 
 BaseRef LambNextMVRuleCond1::DefineAnotherPattern() const {
@@ -147,7 +147,7 @@ BaseRef LambNextMVRuleCond1::DefineAnotherPattern() const {
   VectorRef real_div1 = VectorRef({real_div1_var_, Ys});
 
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
-  VectorRef add4 = VectorRef({prim::kPrimTensorAdd, add2_y_, sqrt1});
+  VectorRef add4 = VectorRef({prim::kPrimAdd, add2_y_, sqrt1});
   VectorRef real_div4 = VectorRef({prim_real_div, real_div0, add4});
   return real_div4;
 }
@@ -166,11 +166,11 @@ const BaseRef LambNextMVRuleCond2::DefinePattern() const {
   auto real_div0 = VectorRef({real_div0_var_, add0, input5_});
   auto real_div1 = VectorRef({real_div1_var_, add1, input2_});
 
-  auto add2 = VectorRef({prim::kPrimTensorAdd, add2_y_, real_div1});
+  auto add2 = VectorRef({prim::kPrimAdd, add2_y_, real_div1});
   auto sqrt0 = VectorRef({prim_rsqrt, add2});
   auto real_div2 = VectorRef({real_div2_var_, sqrt0, real_div0});
 
-  return VectorRef({prim::kPrimTensorAdd, mul4, real_div2});
+  return VectorRef({prim::kPrimAdd, mul4, real_div2});
 }
 
 BaseRef LambNextMVRuleCond2::DefineAnotherPattern() const {
@@ -183,7 +183,7 @@ BaseRef LambNextMVRuleCond2::DefineAnotherPattern() const {
   VectorRef real_div1 = VectorRef({real_div1_var_, Ys});
 
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
-  VectorRef add4 = VectorRef({prim::kPrimTensorAdd, sqrt1, add2_y_});
+  VectorRef add4 = VectorRef({prim::kPrimAdd, sqrt1, add2_y_});
   VectorRef real_div4 = VectorRef({prim_real_div, real_div0, add4});
   return real_div4;
 }
@@ -202,11 +202,11 @@ const BaseRef LambNextMVRuleCond3::DefinePattern() const {
   auto real_div0 = VectorRef({real_div0_var_, add0, input5_});
   auto real_div1 = VectorRef({real_div1_var_, add1, input2_});
 
-  auto add2 = VectorRef({prim::kPrimTensorAdd, real_div1, add2_y_});
+  auto add2 = VectorRef({prim::kPrimAdd, real_div1, add2_y_});
   auto sqrt0 = VectorRef({prim_rsqrt, add2});
   auto real_div2 = VectorRef({real_div2_var_, sqrt0, real_div0});
 
-  return VectorRef({prim::kPrimTensorAdd, mul4, real_div2});
+  return VectorRef({prim::kPrimAdd, mul4, real_div2});
 }
 
 BaseRef LambNextMVRuleCond3::DefineAnotherPattern() const {
@@ -219,7 +219,7 @@ BaseRef LambNextMVRuleCond3::DefineAnotherPattern() const {
   VectorRef real_div1 = VectorRef({real_div1_var_, Ys});
 
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
-  VectorRef add4 = VectorRef({prim::kPrimTensorAdd, sqrt1, add2_y_});
+  VectorRef add4 = VectorRef({prim::kPrimAdd, sqrt1, add2_y_});
   VectorRef real_div4 = VectorRef({prim_real_div, real_div0, add4});
   return real_div4;
 }
@@ -238,11 +238,11 @@ const BaseRef LambNextMVRuleCond4::DefinePattern() const {
   auto real_div0 = VectorRef({real_div0_var_, add0, input5_});
   auto real_div1 = VectorRef({real_div1_var_, add1, input2_});
 
-  auto add2 = VectorRef({prim::kPrimTensorAdd, real_div1, add2_y_});
+  auto add2 = VectorRef({prim::kPrimAdd, real_div1, add2_y_});
   auto sqrt0 = VectorRef({prim_rsqrt, add2});
   auto real_div2 = VectorRef({real_div2_var_, real_div0, sqrt0});
 
-  return VectorRef({prim::kPrimTensorAdd, real_div2, mul4});
+  return VectorRef({prim::kPrimAdd, real_div2, mul4});
 }
 
 BaseRef LambNextMVRuleCond4::DefineAnotherPattern() const {
@@ -255,7 +255,7 @@ BaseRef LambNextMVRuleCond4::DefineAnotherPattern() const {
   VectorRef real_div1 = VectorRef({real_div1_var_, Ys});
 
   VectorRef sqrt1 = VectorRef({prim_sqrt, real_div1});
-  VectorRef add4 = VectorRef({prim::kPrimTensorAdd, sqrt1, add2_y_});
+  VectorRef add4 = VectorRef({prim::kPrimAdd, sqrt1, add2_y_});
   VectorRef real_div4 = VectorRef({prim_real_div, real_div0, add4});
   return real_div4;
 }

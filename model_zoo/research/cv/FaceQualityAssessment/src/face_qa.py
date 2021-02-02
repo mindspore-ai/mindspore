@@ -14,7 +14,7 @@
 # ============================================================================
 """Face Quality Assessment backbone."""
 import mindspore.nn as nn
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from mindspore.ops import operations as P
 from mindspore.nn import Dense, Cell
 
@@ -78,7 +78,7 @@ class Block1(Cell):
         self.bk1_relu4 = P.ReLU()
 
         self.cast = P.Cast()
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         '''construct'''
@@ -129,7 +129,7 @@ class Block2(Cell):
         self.bk2_relu4 = P.ReLU()
 
         self.cast = P.Cast()
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         '''construct'''

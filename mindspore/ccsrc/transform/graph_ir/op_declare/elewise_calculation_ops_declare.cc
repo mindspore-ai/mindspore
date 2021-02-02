@@ -29,7 +29,7 @@ REG_ADPT_DESC(StateSetItem, prim::kPrimStateSetItem->name(), ADPT_DESC(Assign))
 INPUT_MAP(Add) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Add) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Add) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Add, prim::kPrimTensorAdd->name(),
+REG_ADPT_DESC(Add, prim::kPrimAdd->name(),
               std::make_shared<OpAdapterDesc>(
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}})),
                 std::make_shared<OpAdapter<Add>>(ExtraAttr({{"mode", MakeValue(static_cast<int64_t>(1))}}))))

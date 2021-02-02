@@ -145,7 +145,7 @@ def test_matmul_add_tensor():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().shard(strategy1)
-            self.add = P.TensorAdd().shard(strategy2)
+            self.add = P.Add().shard(strategy2)
             self.b = Tensor(0.9, ms.float32)
 
         def construct(self, x, y):

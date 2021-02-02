@@ -330,7 +330,7 @@ class MultiPoseDecode(nn.Cell):
         self.trans_gather_feature = TransposeGatherFeature()
         self.expand_dims = ops.ExpandDims()
         self.reshape = ops.Reshape()
-        self.add = ops.TensorAdd()
+        self.add = ops.Add()
         self.dtype = ops.DType()
         self.cast = ops.Cast()
         self.thresh = 0.1

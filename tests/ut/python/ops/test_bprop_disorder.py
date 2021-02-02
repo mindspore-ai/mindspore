@@ -42,7 +42,7 @@ class DisOrderTest1(nn.Cell):
         self.s3 = Parameter(weight, name="s3")
         self.s4 = Parameter(weight, name="s4")
         self.mul = P.Mul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         return x * (self.s1 * self.s2 + self.s2 * self.s3 + self.s3 * self.s4 + self.s4 * self.s1)
@@ -59,7 +59,7 @@ class DisOrderTest2(nn.Cell):
         self.s3 = Parameter(weight, name="s3")
         self.s4 = Parameter(weight, name="s4")
         self.mul = P.Mul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         return self.mul(x, (self.add(self.add(self.add(self.mul(self.s1, self.s2), self.mul(self.s2, self.s3)),

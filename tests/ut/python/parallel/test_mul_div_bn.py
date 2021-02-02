@@ -26,7 +26,7 @@ class TwoInputBpropOperator(Cell):
     def __init__(self):
         super().__init__()
         self.op = P.Mul()
-        self.bp = P.TensorAdd()
+        self.bp = P.Add()
 
     def construct(self, x, y):
         return self.op(x, y)

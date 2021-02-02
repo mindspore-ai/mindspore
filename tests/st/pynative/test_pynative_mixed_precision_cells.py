@@ -48,7 +48,7 @@ class Add(Cell, MetaFactory):
     def __init__(self):
         super().__init__()
         MetaFactory.__init__(self)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         return self.add(x, y)

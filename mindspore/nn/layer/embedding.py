@@ -441,13 +441,13 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
 
         self.mul = P.Mul()
         self.inf_mask_mul = P.Mul()
-        self.bias_add = P.TensorAdd()
-        self.inf_add = P.TensorAdd()
+        self.bias_add = P.Add()
+        self.inf_add = P.Add()
         self.merge_op = None
         self.count_op = P.UnsortedSegmentSum()
         self.abs = P.Abs()
         self.equal = P.Equal()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.cast = P.Cast()
         self.div_no_nan = P.DivNoNan()
         self.expand = P.ExpandDims()

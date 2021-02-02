@@ -99,8 +99,8 @@ class BatchNormFoldCell(Cell):
             else:
                 batch_mean = P.ZerosLike()(variance)
                 batch_std = P.OnesLike()(variance)
-                running_mean = P.TensorAdd()(mean, 0.)
-                running_std = P.Sqrt()(P.TensorAdd()(variance, self.epsilon))
+                running_mean = P.Add()(mean, 0.)
+                running_std = P.Sqrt()(P.Add()(variance, self.epsilon))
         return batch_mean, batch_std, running_mean, running_std
 
 
@@ -559,7 +559,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         return s
 
     def construct(self, x):
-        running_std = P.Sqrt()(P.TensorAdd()(self.moving_variance, self.eps))
+        running_std = P.Sqrt()(P.Add()(self.moving_variance, self.eps))
         scale_factor = self.gamma / running_std
         if self.channel_axis:
             scale_factor = self.reshape(scale_factor, (1, -1, 1, 1))
@@ -1236,7 +1236,7 @@ class TensorAddQuant(Cell):
                                                       ema=True,
                                                       ema_decay=ema_decay,
                                                       quant_dtype=quant_dtype)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x1, x2):
         x = self.add(x1, x2)

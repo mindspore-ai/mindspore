@@ -131,7 +131,7 @@ class PrimLib:
         ]
 
     primtives = {
-        'TensorAdd': Prim(ELEMWISE),
+        'Add': Prim(ELEMWISE),
         'Abs': Prim(ELEMWISE),
         'Neg': Prim(ELEMWISE),
         'Mul': Prim(ELEMWISE),

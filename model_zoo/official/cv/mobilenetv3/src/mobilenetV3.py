@@ -197,7 +197,7 @@ class ResUnit(nn.Cell):
                           padding=0, act_type=act_type, use_act=False)
         if num_in != num_out or stride != 1:
             self.use_short_cut_conv = False
-        self.add = P.TensorAdd() if self.use_short_cut_conv else None
+        self.add = P.Add() if self.use_short_cut_conv else None
 
     def construct(self, x):
         """construct"""

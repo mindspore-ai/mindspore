@@ -102,7 +102,7 @@ class Bottleneck(nn.Cell):
         self.relu = nn.ReLU()
         self.downsample = downsample
 
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x

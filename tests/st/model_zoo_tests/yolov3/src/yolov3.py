@@ -107,7 +107,7 @@ class BasicBlock(nn.Cell):
         self.downsample = (in_channels != out_channels)
         if self.downsample:
             self.down_sample_layer = _conv2d(in_channels, out_channels, 1, stride=stride)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x

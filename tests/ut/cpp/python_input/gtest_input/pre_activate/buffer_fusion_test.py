@@ -31,7 +31,7 @@ Fusion_biasadd = Primitive('FusionOp_ReLU_ReLU_ReLU_BiasAdd_ReLU_ReLU_ReLU')
 Fusion_biasaddgrad = Primitive('FusionOp_ReLU_ReLU_ReLU_BiasAddGrad_ReLU_ReLU_ReLU')
 Fusion_matmul_relu = Primitive('FusionOp_MatMul_ReLU')
 
-Add = P.TensorAdd()
+Add = P.Add()
 Sub = P.Sub()
 make_tuple = Primitive('make_tuple')
 

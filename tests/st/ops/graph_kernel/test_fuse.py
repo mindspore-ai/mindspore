@@ -25,7 +25,7 @@ from mindspore.ops.operations import _grad_ops as G
 class Net(Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.sub = P.Sub()
         self.mul = P.Mul()
         self.sqrt_grad = G.SqrtGrad()

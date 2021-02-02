@@ -138,7 +138,7 @@ class MultiHeadAttention(nn.Cell):
         if self.has_attention_mask:
             self.expand_dims = P.ExpandDims()
             self.sub = P.Sub()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.cast = P.Cast()
             self.get_dtype = P.DType()
 

@@ -208,7 +208,7 @@ class CustNet3(Cell):
 class MathBinaryNet1(Cell):
     def __init__(self):
         super(MathBinaryNet1, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.mul = P.Mul()
         self.max = P.Maximum()
         self.number = 3

@@ -215,7 +215,7 @@ class ResidualBlock(nn.Cell):
                                                                  frequency=frequency,
                                                                  batch_size=batch_size),
                                                         _bn(out_channel)])
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x

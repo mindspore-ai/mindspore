@@ -22,7 +22,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Model
 from mindspore.context import ParallelMode
 from mindspore.nn.optim import Momentum
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from ....dataset_mock import MindData
 
 
@@ -67,7 +67,7 @@ class ResidualBlock(nn.Cell):
         self.conv_down_sample = conv1x1(in_channels, out_channels,
                                         stride=stride, padding=0)
         self.bn_down_sample = nn.BatchNorm2d(out_channels)
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         """

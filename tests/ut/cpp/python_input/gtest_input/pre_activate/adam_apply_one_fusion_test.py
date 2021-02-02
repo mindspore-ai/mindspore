@@ -16,7 +16,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
-Add = P.TensorAdd()
+Add = P.Add()
 Sub = P.Sub()
 Mul = P.Mul()
 RealDiv = P.RealDiv()

@@ -68,7 +68,7 @@ class Block(nn.Cell):
         if strides != 1:
             rep.append(nn.MaxPool2d(3, strides, pad_mode="same"))
         self.rep = nn.SequentialCell(*rep)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, inp):
         x = self.rep(inp)

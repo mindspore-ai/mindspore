@@ -99,7 +99,7 @@ class SummaryDemo(nn.Cell):
         super(SummaryDemo, self).__init__()
         self.s = P.ScalarSummary()
         self.histogram_summary = P.HistogramSummary()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         self.s("x1", x)

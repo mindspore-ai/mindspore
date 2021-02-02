@@ -49,8 +49,8 @@ class LambNextMVRule : public MultipleOutputPatternProcessPass {
     real_div0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(kRealDivOpName));
     real_div1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(kRealDivOpName));
     real_div2_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimMul->name()));
-    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
-    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
+    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAdd->name()));
+    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAdd->name()));
   }
   ~LambNextMVRule() override = default;
   const BaseRef DefinePattern() const override = 0;
