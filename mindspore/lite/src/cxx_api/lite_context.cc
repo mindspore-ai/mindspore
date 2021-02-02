@@ -282,9 +282,9 @@ void Context::SetNPUFrequency(const std::shared_ptr<Context> &context, int freq)
   }
   auto iter = context->context_.find(kNPUFrequency);
   if (iter != context->context_.end()) {
-    iter->second = true;
+    iter->second = freq;
   } else {
-    context->context_.emplace(kNPUFrequency, true);
+    context->context_.emplace(kNPUFrequency, freq);
   }
 }
 

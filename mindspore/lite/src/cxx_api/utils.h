@@ -18,22 +18,30 @@
 #include "src/tensor.h"
 
 namespace mindspore {
-static std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len) {
+static std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
+                                          bool verify_size) {
   std::vector<int32_t> empty;
+  if (shape.empty()) {
+    return empty;
+  }
   std::vector<int32_t> truncated_shape;
+  truncated_shape.resize(shape.size());
   size_t element_size = lite::DataTypeSize(type);
-  for (auto i : shape) {
-    if (i < 0 || i > INT_MAX || element_size > INT_MAX / static_cast<size_t>(i)) {
+  for (size_t i = 0; i < shape.size(); i++) {
+    auto dim = shape[i];
+    if (dim < 0 || dim > INT_MAX || element_size > INT_MAX / static_cast<size_t>(dim)) {
       MS_LOG(ERROR) << "Invalid shape.";
       return empty;
     } else {
-      element_size *= static_cast<size_t>(i);
-      truncated_shape.push_back(static_cast<int32_t>(i));
+      element_size *= static_cast<size_t>(dim);
+      truncated_shape[i] = static_cast<int32_t>(dim);
     }
   }
-  if (element_size != data_len) {
-    MS_LOG(ERROR) << "Invalid data size.";
-    return empty;
+  if (verify_size) {
+    if (element_size != data_len) {
+      MS_LOG(ERROR) << "Invalid data size.";
+      return empty;
+    }
   }
   return truncated_shape;
 }
