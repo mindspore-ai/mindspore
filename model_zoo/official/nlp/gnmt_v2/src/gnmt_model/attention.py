@@ -115,7 +115,7 @@ class BahdanauAttention(nn.Cell):
         if self.is_training:
             query_trans = self.cast(query_trans, mstype.float16)
         processed_query = self.linear_q(query_trans)
-        if self.is_trining:
+        if self.is_training:
             processed_query = self.cast(processed_query, mstype.float32)
         processed_query = self.reshape(processed_query, (batch_size, t_q_length, self.num_units))
         # (N, t_k_length, D)
@@ -123,7 +123,7 @@ class BahdanauAttention(nn.Cell):
         if self.is_training:
             keys = self.cast(keys, mstype.float16)
         processed_key = self.linear_k(keys)
-        if self.is_trining:
+        if self.is_training:
             processed_key = self.cast(processed_key, mstype.float32)
         processed_key = self.reshape(processed_key, (batch_size, t_k_length, self.num_units))
 
