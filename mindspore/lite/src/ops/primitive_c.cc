@@ -170,6 +170,8 @@
 #include "src/ops/crop_and_resize.h"
 #include "src/ops/nonzero.h"
 #include "src/ops/erf.h"
+#include "src/ops/is_finite.h"
+#include "src/ops/batch_matmul.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -665,7 +667,6 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<ArgMax>(prim, inputs, quantType);
   } else if (op_type == "Gelu") {
     return NewPrimitiveC<GeLU>(prim, inputs, quantType);
-
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
     return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
@@ -1034,6 +1035,10 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) NonZero(primitive);
     case schema::PrimitiveType_Erf:
       return new (std::nothrow) Erf(primitive);
+    case schema::PrimitiveType_IsFinite:
+      return new (std::nothrow) IsFinite(primitive);
+    case schema::PrimitiveType_BatchMatMul:
+      return new (std::nothrow) BatchMatMul(primitive);
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);

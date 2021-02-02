@@ -1275,3 +1275,11 @@ table StridedSliceGrad {
 
 table Erf {
 }
+
+table IsFinite {
+}
+
+table BatchMatMul {
+    adj_x : bool = false;
+    adj_y : bool = false;
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_logical_parser.h"
-#include <map>
-#include <memory>
+#include "tools/converter/parser/tf/tf_zeros_like_parser.h"
 #include <string>
+#include <memory>
+#include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
-                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                              std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF LogicalParser";
+STATUS TFZerosLikeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
   if (primitiveC == nullptr || output_size == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return RET_NULL_PTR;
@@ -37,33 +35,26 @@ STATUS TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "primitive is nullptr";
     return RET_NULL_PTR;
   }
+  auto attr = std::make_unique<schema::ZerosLikeT>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new op failed";
+    return RET_NULL_PTR;
+  }
 
-  int status = RET_ERROR;
-  if (tf_op.op() == "LogicalAnd") {
-    status = CreateOperator<schema::LogicalAndT>(primitive, schema::PrimitiveType_LogicalAnd);
-  } else if (tf_op.op() == "LogicalOr") {
-    status = CreateOperator<schema::LogicalOrT>(primitive, schema::PrimitiveType_LogicalOr);
-  } else if (tf_op.op() == "LogicalNot") {
-    status = CreateOperator<schema::LogicalNotT>(primitive, schema::PrimitiveType_LogicalNot);
-  }
-  if (status != RET_OK) {
-    return status;
-  }
+  primitive->value.type = schema::PrimitiveType_ZerosLike;
+  primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return RET_ERROR;
   }
 
-  *output_size = 1;
+  *output_size = tf_op.input_size();
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
-
   return RET_OK;
 }
-TFNodeRegistrar g_tfLogicalNotParser("LogicalNot", new TFLogicalParser());
-TFNodeRegistrar g_tfLogicalOrParser("LogicalOr", new TFLogicalParser());
-TFNodeRegistrar g_tfLogicalAndParser("LogicalAnd", new TFLogicalParser());
+TFNodeRegistrar g_tfZerosLikeParser("ZerosLike", new TFZerosLikeParser());
 }  // namespace lite
 }  // namespace mindspore

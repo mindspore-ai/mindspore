@@ -19,21 +19,10 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "tools/common/node_util.h"
 
 namespace mindspore {
 namespace lite {
-
-template <typename T>
-int CreateOperator(const std::unique_ptr<schema::PrimitiveT> &primitive, schema::PrimitiveType type) {
-  auto attr = std::make_unique<T>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-  primitive->value.type = type;
-  primitive->value.value = attr.release();
-  return RET_OK;
-}
 
 STATUS TFArithmeticSelfParser::Parse(const tensorflow::NodeDef &tf_op,
                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
@@ -61,6 +50,12 @@ STATUS TFArithmeticSelfParser::Parse(const tensorflow::NodeDef &tf_op,
     status = CreateOperator<schema::LogT>(primitive, schema::PrimitiveType_Log);
   } else if (tf_op.op() == "Sqrt") {
     status = CreateOperator<schema::SqrtT>(primitive, schema::PrimitiveType_Sqrt);
+  } else if (tf_op.op() == "Cos") {
+    status = CreateOperator<schema::CosT>(primitive, schema::PrimitiveType_Cos);
+  } else if (tf_op.op() == "Sin") {
+    status = CreateOperator<schema::SinT>(primitive, schema::PrimitiveType_Sin);
+  } else if (tf_op.op() == "Square") {
+    status = CreateOperator<schema::SquareT>(primitive, schema::PrimitiveType_Square);
   } else if (tf_op.op() == "Pow") {
     status = CreateOperator<schema::PowerT>(primitive, schema::PrimitiveType_Power);
   }
@@ -81,6 +76,9 @@ STATUS TFArithmeticSelfParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   return status;
 }
+TFNodeRegistrar g_tfCosParser("Cos", new TFArithmeticSelfParser());
+TFNodeRegistrar g_tfSinParser("Sin", new TFArithmeticSelfParser());
+TFNodeRegistrar g_tfSquareParser("Square", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfCeilParser("Ceil", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfExpParser("Exp", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfFloorParser("Floor", new TFArithmeticSelfParser());
