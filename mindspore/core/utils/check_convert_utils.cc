@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <typeinfo>
 #include <functional>
 #include "utils/check_convert_utils.h"
+#include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "ir/dtype/type.h"
 #include "ir/dtype/tensor_type.h"
@@ -84,21 +85,21 @@ AttrConverterPair PadModeUpperConverter(PadModToEnumUpperMap, PadModToStrUpperMa
 AttrConverterPair ReductionConverter(ReductionToEnumMap, ReductionToStrMap);
 
 static std::map<std::string, AttrConverterPair> FormatAndPadAttrMap = {
-  {"format", DataFormatConverter},
-  {"pad_mode", PadModeConverter},
+  {ops::kFormat, DataFormatConverter},
+  {ops::kPadMode, PadModeConverter},
 };
 
 static std::map<std::string, AttrConverterPair> FormatAndPadUpperAttrMap = {
-  {"format", DataFormatConverter},
-  {"pad_mode", PadModeUpperConverter},
+  {ops::kFormat, DataFormatConverter},
+  {ops::kPadMode, PadModeUpperConverter},
 };
 
 static std::map<std::string, AttrConverterPair> DataFormatMap = {
-  {"format", DataFormatConverter},
+  {ops::kFormat, DataFormatConverter},
 };
 
 static std::map<std::string, AttrConverterPair> ReductionMap = {
-  {"reduction", ReductionConverter},
+  {ops::kReduction, ReductionConverter},
 };
 
 static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrConvertMap = {
@@ -132,6 +133,7 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"BinaryCrossEntropy", ReductionMap},
   {"BinaryCrossEntropyGrad", ReductionMap},
   {"NLLLoss", ReductionMap},
+  {"DepthToSpace", DataFormatMap},
 };
 
 int64_t CheckAndConvertUtils::GetDataFormatEnumValue(const std::string &value) {
