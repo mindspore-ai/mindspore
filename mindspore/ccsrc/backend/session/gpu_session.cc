@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,14 +185,14 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
   pm->AddPass(std::make_shared<opt::DependFormater>());  // Make more fusion opportunity.
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
-  pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
   pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
   pm->AddPass(std::make_shared<opt::RaiseReductionPrecision>());
-  pm->AddPass(std::make_shared<opt::GraphKernelCSE>(duplicated_ops));
+  pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   pm->AddPass(std::make_shared<opt::ArithmeticSimplify>());
-  pm->AddPass(std::make_shared<opt::GraphKernelCSE>(duplicated_ops));
+  pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   pm->AddPass(std::make_shared<opt::TensorPromotion>());
+  pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   // The CSE may output a graph with repeated outputs.
