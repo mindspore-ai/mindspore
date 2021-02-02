@@ -29,7 +29,7 @@ cfg = edict({
     'AdamWeightDecay': edict({
         'learning_rate': 3e-5,
         'end_learning_rate': 0.0,
-        'power': 5.0,
+        'power': 2.0,
         'weight_decay': 1e-5,
         'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
         'eps': 1e-6,
@@ -38,11 +38,11 @@ cfg = edict({
     'Lamb': edict({
         'learning_rate': 3e-5,
         'end_learning_rate': 0.0,
-        'power': 10.0,
+        'power': 5.0,
         'warmup_steps': 10000,
         'weight_decay': 0.01,
         'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
-        'eps': 1e-6,
+        'eps': 1e-8,
     }),
     'Momentum': edict({
         'learning_rate': 2e-5,
@@ -73,7 +73,8 @@ if cfg.bert_network == 'base':
         initializer_range=0.02,
         use_relative_positions=False,
         dtype=mstype.float32,
-        compute_type=mstype.float16
+        compute_type=mstype.float16,
+        enable_fused_layernorm=True
     )
 if cfg.bert_network == 'nezha':
     cfg.batch_size = 96
