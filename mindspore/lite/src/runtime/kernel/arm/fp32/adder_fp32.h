@@ -21,7 +21,6 @@
 #include "src/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/arm/fp32/convolution_fp32.h"
-#include "nnacl/fp32/conv_fp32.h"
 
 namespace mindspore::kernel {
 class AdderCPUKernel : public ConvolutionCPUKernel {

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_winograd_fp32.h"
-#include "nnacl/fp32/conv_fp32.h"
+#include "nnacl/fp32/conv_winograd_fp32.h"
 #include "nnacl/pack.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -85,7 +85,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   }
   ret = WinogradFilterTransform(origin_weight_, matrix_g, matrix_gt, oc_block);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "winograd filter transfrom failed.";
+    MS_LOG(ERROR) << "winograd filter transform failed.";
     return ret;
   }
 

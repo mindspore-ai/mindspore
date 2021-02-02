@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_CONV_H_
-#define MINDSPORE_LITE_NNACL_FP32_CONV_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_CONV_WINOGRAD_H_
+#define MINDSPORE_LITE_NNACL_FP32_CONV_WINOGRAD_H_
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -33,10 +33,6 @@ typedef float *TmpBufferAddress;
 extern "C" {
 #endif
 
-// fp32 convolution common (im2col+gemm)
-void ConvFp32(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
-              float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param);
-
 // fp32 convolution winograd
 void ConvWinogardFp32(const float *input_data, const float *trans_weight, const float *bias_data, float *output_data,
                       TmpBufferAddress *buffer_list, int task_id, const ConvParameter *conv_param,
@@ -45,4 +41,4 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_CONV_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_CONV_WINOGRAD_H_
