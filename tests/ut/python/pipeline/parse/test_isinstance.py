@@ -43,10 +43,10 @@ def test_isinstance():
             is_int = isinstance(self.int_member, int)
             is_float = isinstance(self.float_member, float)
             is_bool = isinstance(self.bool_member, bool)
-            bool_is_int = isinstance(self.bool_member, int)
+            bool_is_int = isinstance(self.bool_member, (((int,)), float))
             is_string = isinstance(self.string_member, str)
             is_parameter = isinstance(self.weight, Parameter)
-            parameter_is_tensor = isinstance(self.weight, Tensor)
+            parameter_is_tensor = isinstance(self.weight, ((Tensor, float), int))
             is_tensor_const = isinstance(self.tensor_member, Tensor)
             is_tensor_var = isinstance(x, Tensor)
             is_tuple_const = isinstance(self.tuple_member, tuple)
@@ -88,8 +88,7 @@ def test_isinstance_not_supported():
     net = Net()
     with pytest.raises(TypeError) as err:
         net()
-    assert "The second arg of 'isinstance' should be bool, int, float, str, list, tuple, Tensor, Parameter, " \
-           "or a tuple containing only these types, but got None" in str(err.value)
+    assert "The second arg of 'isinstance' must be a type or a tuple of types, but got a NoneType" in str(err.value)
 
 
 def test_isinstance_second_arg_is_list():
