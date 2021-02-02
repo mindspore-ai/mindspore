@@ -2851,7 +2851,9 @@ py::object PynativeExecutor::CheckAlreadyRun(const py::object &cell, const py::a
   return BaseRefToPyData(forward_run);
 }
 
-py::object PynativeExecutor::Run(const py::object &cell, const py::tuple &args, const py::object &phase) {
+void PynativeExecutor::RunInner(const py::object &cell, const py::tuple &args, const py::object &phase,
+                                py::object *ret) {
+  MS_EXCEPTION_IF_NULL(ret);
   auto cell_id = GetCellId(cell, args);
   MS_LOG(DEBUG) << "Run start cell id " << cell_id;
   bool has_sens = false;
@@ -2886,20 +2888,25 @@ py::object PynativeExecutor::Run(const py::object &cell, const py::tuple &args, 
   BaseRef value = (*run)(arg_list);
   set_grad_runing(false);
   MS_LOG(DEBUG) << "Eval run end " << value.ToString();
-  auto out = BaseRefToPyData(value);
+  *ret = BaseRefToPyData(value);
   auto do_vm_compiled =
     std::any_of(top_cell_list_.begin(), top_cell_list_.end(),
                 [&cell_id](const TopCellInfoPtr &value) { return value->cell_id == cell_id && value->do_vm_compiled; });
   if (do_vm_compiled) {
-    if (MakeBpropNestedCnode(cell, out, cell_id)) {
-      return out;
+    if (MakeBpropNestedCNode(cell, *ret, cell_id)) {
+      return;
     }
-    MakeNestedCnode(cell_id, args, resource, out, has_sens);
+    MakeNestedCNode(cell_id, args, resource, *ret, has_sens);
   }
-  return out;
 }
 
-bool PynativeExecutor::MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id) {
+py::object PynativeExecutor::Run(const py::object &cell, const py::tuple &args, const py::object &phase) {
+  py::object ret;
+  PynativeExecutorTry(this, &PynativeExecutor::RunInner, cell, args, phase, &ret);
+  return ret;
+}
+
+bool PynativeExecutor::MakeBpropNestedCNode(const py::object &cell, const py::object &out, const std::string &cell_id) {
   if (graph_stack_.empty() || !py::hasattr(cell, parse::CUSTOM_BPROP_NAME)) {
     MS_LOG(DEBUG) << "No nested bprop grad find";
     return false;
@@ -2922,7 +2929,7 @@ bool PynativeExecutor::MakeBpropNestedCnode(const py::object &cell, const py::ob
   return true;
 }
 
-void PynativeExecutor::MakeNestedCnode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
+void PynativeExecutor::MakeNestedCNode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
                                        const py::object &out, bool has_sens) {
   if (graph_stack_.empty()) {
     MS_LOG(DEBUG) << "No nested grad find";
