@@ -32,7 +32,7 @@ mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-st
     --distribute="true"        \
     --epoch_size=$EPOCH_SIZE    \
     --enable_save_ckpt="true"    \
-    --enable_lossscale="false"    \
+    --enable_lossscale="true"    \
     --do_shuffle="true"        \
     --enable_data_sink="true"    \
     --data_sink_steps=20        \
