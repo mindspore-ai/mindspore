@@ -49,7 +49,7 @@ class Somas {
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
 
-  std::string SomasInfo();
+  std::string SomasInfo(bool calc_hash = false);
   std::string SomasMemory();
   void DumpSomasInfoIR(const string filename);
   void DumpSomasMemoryIR(const string filename);
@@ -60,6 +60,8 @@ class Somas {
   void ConvertToProfilingNode(uint32_t graph_id);
 
  private:
+  // hash id
+  std::string hash_id_;
   // Maps
   std::unordered_map<size_t, SomasTensorPtr> tensors_map_;
   std::map<void *, SomasNodePtr> nodes_map_;
@@ -151,6 +153,11 @@ class Somas {
   void DumpNodes(std::ostringstream &oss) const;
   std::map<size_t, size_t> GetContiguousListContainRefTensor();
   std::map<size_t, size_t> GetRefTensorsInContiguousList();
+  bool SaveSomasResult(const session::KernelGraph *graph);
+  bool VerifySomasResult(const session::KernelGraph *graph, const nlohmann::json &somas_json) const;
+  bool LoadSomasResult(const session::KernelGraph *graph, const string filename);
+  bool UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json);
+  bool CalcSomasModelHash(const session::KernelGraph *graph);
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
