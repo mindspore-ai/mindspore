@@ -45,7 +45,6 @@ class PReLUInfo : public OperatorInfo {
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
