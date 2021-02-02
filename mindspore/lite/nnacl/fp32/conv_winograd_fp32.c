@@ -56,6 +56,9 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
       int out_tile_index = thread_id * tile_num;
       int cal_num = output_count - out_tile_index;
       cal_num = cal_num > tile_num ? tile_num : cal_num;
+      if (cal_num <= 0) {
+        return;
+      }
       WinogradInputTransform(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                              tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
                              in_func);

@@ -36,7 +36,6 @@ ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {
 }
 
 void ConvolutionBaseCPUKernel::FreeQuantParam() {
-  ConvQuantArg *conv_quant_arg_ = &conv_param_->conv_quant_arg_;
   if (conv_quant_arg_ == nullptr) {
     return;
   }

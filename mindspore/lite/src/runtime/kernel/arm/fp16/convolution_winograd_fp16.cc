@@ -108,7 +108,6 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
 int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
   const int cal_num = 16;
   int channel_out = conv_param_->output_channel_;
-  int oc8 = UP_DIV(channel_out, C8NUM);
 
   size_t tile_buffer_size =
     thread_count_ * cal_num * input_unit_ * input_unit_ * conv_param_->input_channel_ * sizeof(float16_t);
@@ -118,8 +117,8 @@ int ConvolutionWinogradFP16CPUKernel::InitTmpBuffer() {
     return RET_ERROR;
   }
 
-  gemm_out_ = reinterpret_cast<float16_t *>(
-    ctx_->allocator->Malloc(thread_count_ * cal_num * input_unit_ * input_unit_ * oc8 * C8NUM * sizeof(float16_t)));
+  gemm_out_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(
+    thread_count_ * cal_num * input_unit_ * input_unit_ * UP_ROUND(channel_out, C8NUM) * sizeof(float16_t)));
   if (gemm_out_ == nullptr) {
     MS_LOG(ERROR) << "malloc gemm_out_ failed.";
     return RET_ERROR;
@@ -174,6 +173,13 @@ int ConvolutionWinogradFP16CPUKernel::Init() {
   return RET_OK;
 }
 
+void ConvolutionWinogradFP16CPUKernel::AdjustNumberOfThread() {
+  auto out_tensor = out_tensors_.front();
+  int cal_plane = UP_DIV(out_tensor->Height(), output_unit_) * UP_DIV(out_tensor->Width(), output_unit_);
+  thread_count_ = MSMIN(ctx_->thread_num_, UP_DIV(cal_plane, C8NUM));
+  conv_param_->thread_num_ = thread_count_;
+}
+
 int ConvolutionWinogradFP16CPUKernel::ReSize() {
   auto ret = ConvolutionBaseCPUKernel::CheckResizeValid();
   if (ret != RET_OK) {
@@ -190,6 +196,7 @@ int ConvolutionWinogradFP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "ConfigInputOutput failed.";
     return RET_ERROR;
   }
+  AdjustNumberOfThread();
   return RET_OK;
 }
 
