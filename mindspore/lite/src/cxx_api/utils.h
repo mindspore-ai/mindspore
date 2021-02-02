@@ -21,6 +21,9 @@ namespace mindspore {
 static std::vector<int32_t> TruncateShape(const std::vector<int64_t> &shape, enum TypeId type, size_t data_len,
                                           bool verify_size) {
   std::vector<int32_t> empty;
+  if (shape.empty()) {
+    return empty;
+  }
   std::vector<int32_t> truncated_shape;
   size_t element_size = lite::DataTypeSize(type);
   for (auto i : shape) {

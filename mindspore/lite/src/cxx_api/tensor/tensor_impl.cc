@@ -29,10 +29,10 @@ namespace mindspore {
 MSTensor::Impl::Impl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
                      size_t data_len) {
   std::vector<int32_t> truncated_shape = TruncateShape(shape, static_cast<enum TypeId>(type), data_len, true);
-  if (!truncated_shape.empty()) {
-    lite_tensor_ = new (std::nothrow) lite::Tensor(name, static_cast<enum TypeId>(type), truncated_shape, data);
-  } else {
+  if (truncated_shape.empty() && !(shape.empty())) {
     lite_tensor_ = nullptr;
+  } else {
+    lite_tensor_ = new (std::nothrow) lite::Tensor(name, static_cast<enum TypeId>(type), truncated_shape, data);
   }
 }
 
