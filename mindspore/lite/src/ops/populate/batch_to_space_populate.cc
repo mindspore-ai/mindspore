@@ -34,6 +34,9 @@ OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *pr
   batch_space_param->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::BatchToSpace *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto block_shape = param->GetBlockShape();
+  if (block_shape.empty()) {
+    return reinterpret_cast<OpParameter *>(batch_space_param);
+  }
   if (block_shape.size() != BATCH_TO_SPACE_BLOCK_SHAPE_SIZE) {
     MS_LOG(ERROR) << "batch_to_space blockShape size should be " << BATCH_TO_SPACE_BLOCK_SHAPE_SIZE;
     free(batch_space_param);
@@ -41,6 +44,9 @@ OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *pr
   }
 
   auto crops = param->GetCrops();
+  if (crops.empty()) {
+    return reinterpret_cast<OpParameter *>(batch_space_param);
+  }
   if (crops.size() != COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "batch_to_space crops size should be " << COMM_SHAPE_SIZE;
     free(batch_space_param);

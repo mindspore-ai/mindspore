@@ -396,6 +396,9 @@ int Conv2D::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     return RET_INFER_INVALID;
   }
   auto in_shape = input_tensor->shape();
+  if (in_shape.size() == 0) {
+    return RET_INFER_INVALID;
+  }
   int input_h = in_shape.at(1);
   int input_w = in_shape.at(2);
   int output_w = 0, output_h = 0;

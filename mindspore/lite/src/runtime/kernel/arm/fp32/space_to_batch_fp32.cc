@@ -25,6 +25,32 @@ using mindspore::schema::PrimitiveType_SpaceToBatch;
 using mindspore::schema::PrimitiveType_SpaceToBatchND;
 
 namespace mindspore::kernel {
+void SpaceToBatchCPUKernel::ProcessInput() {
+  MS_ASSERT(in_tensors_[1] != nullptr);
+  MS_ASSERT(in_tensors_[2] != nullptr);
+  auto input_tensor = in_tensors_.at(0);
+  MS_ASSERT(input_tensor);
+  auto output_tensor = out_tensors_.at(0);
+  MS_ASSERT(output_tensor);
+  MS_ASSERT(param_);
+  for (size_t i = 0; i < DIMENSION_4D; i++) {
+    param_->input_shape_[i] = input_tensor->shape().at(i);
+    param_->output_shape_[i] = output_tensor->shape().at(i);
+  }
+  ComputeStrides(param_->input_shape_, param_->in_stride_, DIMENSION_4D);
+  ComputeStrides(param_->output_shape_, param_->out_stride_, DIMENSION_4D);
+  auto block_shape_data = in_tensors_[1]->data_c();
+  auto block_shape = static_cast<int *>(block_shape_data);
+  for (int i = 0; i < in_tensors_[1]->ElementsNum(); i++) {
+    param_->block_sizes_[i] = block_shape[i];
+  }
+  auto padding_data = in_tensors_[2]->data_c();
+  auto padding = static_cast<int *>(padding_data);
+  for (int i = 0; i < in_tensors_[2]->ElementsNum(); i++) {
+    param_->paddings_[i] = padding[i];
+  }
+}
+
 int SpaceToBatchCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -39,6 +65,12 @@ int SpaceToBatchFp32Run(void *cdata, int task_id) {
 }
 
 int SpaceToBatchCPUKernel::ReSize() {
+  if (in_tensors_.size() == 3) {
+    if (in_tensors_[1] != nullptr && in_tensors_[1]->IsConst() && in_tensors_[2] != nullptr &&
+        in_tensors_[2]->IsConst()) {
+      ProcessInput();
+    }
+  }
   auto input_tensor = in_tensors_.at(0);
   MS_ASSERT(input_tensor);
   auto output_tensor = out_tensors_.at(0);
@@ -61,8 +93,14 @@ void SpaceToBatchCPUKernel::DoRun(int task_id) {
 }
 
 int SpaceToBatchCPUKernel::Run() {
+  MS_ASSERT(in_tensors_[0] != nullptr);
   input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  if (in_tensors_.size() == 3) {
+    if (!in_tensors_[1]->IsConst() || !in_tensors_[2]->IsConst()) {
+      ProcessInput();
+    }
+  }
 
   ParallelLaunch(this->context_->thread_pool_, SpaceToBatchFp32Run, this, op_parameter_->thread_num_);
 
