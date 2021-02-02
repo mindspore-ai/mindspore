@@ -56,6 +56,8 @@ STATUS TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
     attr->method = schema::ResizeMethod_LINEAR;
   } else if (tf_op.op() == "ResizeNearestNeighbor") {
     attr->method = schema::ResizeMethod_NEAREST;
+  } else if (tf_op.op() == "ResizeBicubic") {
+    attr->method = schema::ResizeMethod_CUBIC;
   } else {
     attr->method = schema::ResizeMethod_UNKNOWN;
   }
@@ -90,5 +92,6 @@ STATUS TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
 }
 TFNodeRegistrar g_tfResizeBilinearParser("ResizeBilinear", new TFResizeParser());
 TFNodeRegistrar g_tfResizeNearestNeighborParser("ResizeNearestNeighbor", new TFResizeParser());
+TFNodeRegistrar g_tfResizeBicubicParser("ResizeBicubic", new TFResizeParser());
 }  // namespace lite
 }  // namespace mindspore
