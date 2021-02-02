@@ -19,6 +19,7 @@
 #include <float.h>
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
+#include "nnacl/fp32/mul_fp32.h"
 
 void InitGate(float *gate_buffer, const float *bias, const LstmParameter *lstm_parm) {
   int gate_offest = 0;
