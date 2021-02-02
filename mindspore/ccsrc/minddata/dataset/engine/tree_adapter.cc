@@ -18,14 +18,16 @@
 
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
+#include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
+#include "minddata/dataset/engine/opt/post/repeat_pass.h"
+#endif
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
-#include "minddata/dataset/engine/opt/post/repeat_pass.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/opt/post/generator_node_pass.h"
 #endif
-#include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
 #include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
@@ -55,7 +57,9 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   actions.emplace_back(std::make_unique<NodeRemovalPass>());
   actions.emplace_back(std::make_unique<EpochCtrlPass>());
   if (usage_ == kDeGetter) actions.emplace_back(std::make_unique<GetterPass>());
+#ifndef ENABLE_ANDROID
   actions.emplace_back(std::make_unique<CacheTransformPass>());
+#endif
   // Vector of flags for each action
   std::vector<bool> modified(actions.size(), false);
   // Apply pre-pass actions
@@ -72,7 +76,9 @@ Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
   // Vector of optimizations
   std::vector<std::unique_ptr<IRNodePass>> optimizations;
   MS_LOG(INFO) << "Running optimization pass loops";
+#ifndef ENABLE_ANDROID
   optimizations.emplace_back(std::make_unique<TensorOpFusionPass>());
+#endif
   // Apply optimization pass actions
   for (auto i = 0; i < optimizations.size(); i++) {
     bool modified = false;
@@ -95,8 +101,9 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
 #ifdef ENABLE_PYTHON
   actions.emplace_back(std::make_unique<GeneratorNodePass>());
 #endif
+#ifndef ENABLE_ANDROID
   actions.emplace_back(std::make_unique<RepeatPass>());
-
+#endif
   // We will gradually move RepeatPass from ExecutionTree::PrepareTreePostAction to here.
 
   // Vector of flags for each action

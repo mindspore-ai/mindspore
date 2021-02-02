@@ -79,6 +79,7 @@
 
 // IR leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/source/album_node.h"
+#include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 
 // IR leaf nodes disabled for android
 #ifndef ENABLE_ANDROID
@@ -89,7 +90,6 @@
 #include "minddata/dataset/engine/ir/datasetops/source/coco_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/image_folder_node.h"
-#include "minddata/dataset/engine/ir/datasetops/source/mnist_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/random_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/text_file_node.h"
 #include "minddata/dataset/engine/ir/datasetops/source/manifest_node.h"
@@ -390,7 +390,7 @@ std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &datase
 
   return ds;
 }
-
+#endif
 // Function to create a MnistDataset.
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
                                     const std::shared_ptr<SamplerObj> &sampler,
@@ -399,6 +399,8 @@ std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::s
 
   return ds;
 }
+
+#ifndef ENABLE_ANDROID
 // Function to overload "+" operator to concat two datasets
 std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
                                          const std::shared_ptr<Dataset> &datasets2) {
@@ -906,12 +908,15 @@ MindDataDataset::MindDataDataset(const std::vector<std::string> &dataset_files,
   auto ds = std::make_shared<MindDataNode>(dataset_files, columns_list, sampler, padded_sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+#endif
 
 MnistDataset::MnistDataset(const std::string &dataset_dir, const std::string &usage,
                            const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+
+#ifndef ENABLE_ANDROID
 TextFileDataset::TextFileDataset(const std::vector<std::string> &dataset_files, int64_t num_samples,
                                  ShuffleMode shuffle, int32_t num_shards, int32_t shard_id,
                                  const std::shared_ptr<DatasetCache> &cache) {
