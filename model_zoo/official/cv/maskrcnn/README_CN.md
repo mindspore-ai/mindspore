@@ -553,34 +553,34 @@ Accumulating evaluation results...
 
 ### 训练性能
 
-| 参数                 | MaskRCNN                                                  |
-
-| 模型版本              | V1                                                          |
-| 资源                   | Ascend 910；CPU： 2.60GHz，192核；内存：755G              |
-| 上传日期              | 2020-08-01                                 |
-| MindSpore版本          | 0.6.0-alpha                                                 |
-| 数据集                    | COCO2017                                                    |
-| 训练参数        | epoch=12，batch_size=2                                   |
-| 优化器                  | SGD                                                         |
-| 损失函数              | Softmax交叉熵，Sigmoid交叉熵，SmoothL1Loss   |
-| 速度                      | 单卡：250毫秒/步；8P: 260毫秒/步                        |
-| 总时长                 | 单卡：52小时；8卡：6.6小时                             |
-| 参数（M）             | 280                                                         |
-| 脚本                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn> |
+| 参数                  | MaskRCNN                                                  |
+| -------------------   | --------------------------------------------------------- |
+| 模型版本              | V1                                                        |
+| 资源                  | Ascend 910；CPU： 2.60GHz，192核；内存：755G              |
+| 上传日期              | 2020-08-01                                                |
+| MindSpore版本         | 0.6.0-alpha                                               |
+| 数据集                | COCO2017                                                  |
+| 训练参数              | epoch=12，batch_size=2                                    |
+| 优化器                | SGD                                                       |
+| 损失函数              | Softmax交叉熵，Sigmoid交叉熵，SmoothL1Loss                |
+| 速度                  | 单卡：250毫秒/步；8P: 260毫秒/步                          |
+| 总时长                | 单卡：52小时；8卡：6.6小时                                |
+| 参数（M）             | 280                                                       |
+| 脚本                  | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn> |
 
 ### 评估性能
 
-| 参数          | MaskRCNN                    |
-| ------------------- | --------------------------- |
-| 模型版本       | V1                          |
-| 资源            | Ascend 910                  |
-| 上传日期       | 2020-08-01 |
-| MindSpore版本   | 0.6.0-alpha                 |
-| 数据集             | COCO2017                    |
-| 批次大小          | 2                           |
-| 输出             | mAP                         |
-| 精确度            | 交并比（IoU）=0.50:0.95 32.4%         |
-| 推理模型 | 254M（.ckpt文件）           |
+| 参数                  | MaskRCNN                      |
+| --------------------- | ----------------------------- |
+| 模型版本              | V1                            |
+| 资源                  | Ascend 910                    |
+| 上传日期              | 2020-08-01                    |
+| MindSpore版本         | 0.6.0-alpha                   |
+| 数据集                | COCO2017                      |
+| 批次大小              | 2                             |
+| 输出                  | mAP                           |
+| 精确度                | 交并比（IoU）=0.50:0.95 32.4% |
+| 推理模型              | 254M（.ckpt文件）             |
 
 # 随机情况说明
 
