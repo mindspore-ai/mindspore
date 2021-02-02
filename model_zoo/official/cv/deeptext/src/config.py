@@ -86,12 +86,12 @@ config = ed({
 
     # test proposal
     "rpn_nms_across_levels": False,
-    "rpn_nms_pre": 300,
-    "rpn_nms_post": 300,
-    "rpn_max_num": 300,
+    "rpn_nms_pre": 1000,
+    "rpn_nms_post": 1000,
+    "rpn_max_num": 1000,
     "rpn_nms_thr": 0.7,
     "rpn_min_bbox_min_size": 0,
-    "test_score_thr": 0.95,
+    "test_score_thr": 0.80,
     "test_iou_thr": 0.5,
     "test_max_per_img": 100,
     "test_batch_size": 2,
