@@ -14,6 +14,7 @@
 # ============================================================================
 """Profiling api file."""
 import os
+import re
 import stat
 import time
 import json
@@ -80,19 +81,7 @@ class Profiler:
     def __init__(self, **kwargs):
         # get device_id and device_target
         self._get_devid_and_devtarget()
-        # to avoid get different timestamp between each process in multi-card training,
-        # set the timestamp which is divisible by 3
-        format_time = int(time.time() - time.time() % 3)
-        output_path = kwargs.pop("output_path", f"data-{format_time}")
-        self._output_path = validate_and_normalize_path(output_path)
-        self._output_path = os.path.join(self._output_path, f"profiler-{format_time}")
-        if not os.path.exists(self._output_path):
-            os.makedirs(self._output_path, exist_ok=True)
-            os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        else:
-            logger.warning("The target dir already exists. "
-                           "There may be some old profiling data, and they will be rewrote in the end.")
-
+        self._get_output_path(kwargs)
         os.environ['PROFILING_MODE'] = 'true'
         os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
 
@@ -537,6 +526,49 @@ class Profiler:
 
         self._dev_id = dev_id
         self._device_target = device_target
+
+    def _get_output_path(self, kwargs):
+        """Get output path of profiling data."""
+        current_time = int(time.time())
+
+        # to avoid getting different timestamp from different process in multi-card training,
+        # set the timestamp as exist timestamp if it's difference is less than 6 seconds.
+        def _select_timestamp(dir_name, re_pattern, input_time):
+            """select the timestamp from current_time and exist timestamp."""
+            timestamp_diff_threshold = 6
+            exist_timestamp_list = []
+            select_time = input_time
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name, exist_ok=True)
+            for file_name in os.listdir(dir_name):
+                match_res = re_pattern.match(file_name)
+                if match_res:
+                    exist_timestamp_list.append(int(match_res.group(1)))
+            if exist_timestamp_list:
+                time_diff_list = [input_time - timestamp for timestamp in exist_timestamp_list]
+                min_time_diff = min(time_diff_list)
+                if min_time_diff <= timestamp_diff_threshold:
+                    select_time = exist_timestamp_list[time_diff_list.index(min_time_diff)]
+
+            return select_time
+
+        if "output_path" not in kwargs:
+            selected_timestamp = _select_timestamp(os.getcwd(), re.compile(r'data-(\d+)'), current_time)
+            output_path = f"data-{selected_timestamp}"
+            self._output_path = validate_and_normalize_path(output_path)
+        else:
+            output_path = kwargs.pop("output_path")
+            self._output_path = validate_and_normalize_path(output_path)
+            selected_timestamp = _select_timestamp(self._output_path,
+                                                   re.compile(r'profiler-(\d+)'), current_time)
+
+        self._output_path = os.path.join(self._output_path, f"profiler-{selected_timestamp}")
+        if not os.path.exists(self._output_path):
+            os.makedirs(self._output_path, exist_ok=True)
+            os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        else:
+            logger.warning("The target dir already exists. "
+                           "There may be some old profiling data, and they will be rewrote in the end.")
 
     @staticmethod
     def profile(network=None, profile_option=None):
