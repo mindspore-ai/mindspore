@@ -17,6 +17,7 @@ import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
+from util import dataset_equal
 
 
 # test5trainimgs.json contains 5 images whose un-decoded shape is [83554, 54214, 65512, 54214, 64631]
@@ -265,6 +266,15 @@ def test_distributed_sampler_invalid_offset():
     assert "DistributedSampler: invalid offset: 5, which should be no more than num_shards: 4" in str(info.value)
 
 
+def test_sampler_list():
+    data1 = ds.ImageFolderDataset("../data/dataset/testPK/data", sampler=[1, 3, 5])
+    data21 = ds.ImageFolderDataset("../data/dataset/testPK/data", shuffle=False).take(2).skip(1)
+    data22 = ds.ImageFolderDataset("../data/dataset/testPK/data", shuffle=False).take(4).skip(3)
+    data23 = ds.ImageFolderDataset("../data/dataset/testPK/data", shuffle=False).take(6).skip(5)
+
+    dataset_equal(data1, data21 + data22 + data23, 0)
+
+
 if __name__ == '__main__':
     test_sequential_sampler(True)
     test_random_sampler(True)
@@ -276,3 +286,4 @@ if __name__ == '__main__':
     test_sampler_chain()
     test_add_sampler_invalid_input()
     test_distributed_sampler_invalid_offset()
+    test_sampler_list()
