@@ -19,8 +19,8 @@
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeConvolutionParser::ParseGroupConvolution(schema::PrimitiveT *primitiveT, schema::Conv2DT *attr) {
-  if (attr->group == 1) {
+STATUS CaffeConvolutionParser::ParseDepthwiseConvolution(schema::PrimitiveT *primitiveT, schema::Conv2DT *attr) {
+  if (attr->group == 1 || attr->group != attr->channelOut) {
     return RET_OK;
   }
   std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
@@ -125,9 +125,9 @@ PrimitiveC *CaffeConvolutionParser::ParseLitePrimitive(const caffe::LayerParamet
   primitive->value.type = schema::PrimitiveType_Conv2D;
   primitive->value.value = attr.release();
 
-  status = ParseGroupConvolution(primitive.get(), static_cast<schema::Conv2DT *>(primitive->value.value));
+  status = ParseDepthwiseConvolution(primitive.get(), static_cast<schema::Conv2DT *>(primitive->value.value));
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "Parse group convolution failed";
+    MS_LOG(ERROR) << "Parse depthwise convolution failed";
     return nullptr;
   }
 
