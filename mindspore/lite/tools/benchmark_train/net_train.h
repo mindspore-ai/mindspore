@@ -79,7 +79,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::vector<std::string> input_data_list_;
   DataType in_data_type_;
   std::string in_data_type_in_ = "bin";
-  int cpu_bind_mode_ = 0;
+  int cpu_bind_mode_ = 1;
   // MarkPerformance
   int num_threads_ = 1;
   int warm_up_loop_count_ = 0;

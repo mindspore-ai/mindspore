@@ -18,6 +18,56 @@
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/pack.h"
 
+void RollingIm2ColPackDwUnitFp32(const float *in_data, const ConvParameter *conv_param, float *data_col_orig,
+                                 int real_cal_num, int start) {
+  const int pad_left = conv_param->pad_l_;
+  const int pad_up = conv_param->pad_u_;
+
+  const int stride_h = conv_param->stride_h_;
+  const int stride_w = conv_param->stride_w_;
+
+  const int dilation_h = conv_param->dilation_h_;
+  const int dilation_w = conv_param->dilation_w_;
+
+  const int kernel_h = conv_param->kernel_h_;
+  const int kernel_w = conv_param->kernel_w_;
+
+  const int in_height = conv_param->input_h_;
+  const int in_width = conv_param->input_w_;
+
+  const int output_w = conv_param->output_w_;
+
+  const int channels = conv_param->input_channel_;
+  const int stride = kernel_h * kernel_w;
+
+  int kernel_row, kernel_col;
+
+  for (int i = 0; i < real_cal_num; i++) {
+    int block_start = start + i;
+    int input_h = block_start / output_w * stride_h;
+    int input_w = block_start % output_w * stride_w;
+    float *data_col = data_col_orig + i * channels * stride;
+    for (kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
+      int input_row = -pad_up + kernel_row * dilation_h + input_h;
+      for (kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
+        int input_col = -pad_left + kernel_col * dilation_w + input_w;
+        if (((unsigned)(input_row) < (unsigned)(in_height)) && ((unsigned)(input_col) < (unsigned)(in_width))) {
+          const int offset = (input_row * in_width + input_col) * channels;
+          for (int c = 0; c < channels; c++) {
+            data_col[c * stride] = in_data[offset + c];
+          }
+          data_col++;
+        } else {
+          for (int c = 0; c < channels; c++) {
+            data_col[c * stride] = 0;
+          }
+          data_col++;
+        }
+      }
+    }
+  }
+}
+
 void rolling_im2col_hwc(const float *in_data, float *data_col, const ConvParameter *conv_param, int real_cal_num,
                         int start) {
   const int pad_left = conv_param->pad_l_;
@@ -90,85 +140,6 @@ void RollingIm2ColPackUnitFp32(const float *input_data, const ConvParameter *con
   rolling_im2col_hwc(input_data, packed_input, conv_param, real_cal_num, block_index);
 }
 
-void im2row_hwc(const float *in_data, float *data_row, const ConvParameter *conv_param, bool transpose) {
-  const int pad_left = conv_param->pad_l_;
-  const int pad_up = conv_param->pad_u_;
-
-  const int stride_h = conv_param->stride_h_;
-  const int stride_w = conv_param->stride_w_;
-
-  const int dilation_h = conv_param->dilation_h_;
-  const int dilation_w = conv_param->dilation_w_;
-
-  const int kernel_h = conv_param->kernel_h_;
-  const int kernel_w = conv_param->kernel_w_;
-
-  const int in_height = (transpose) ? conv_param->output_h_ : conv_param->input_h_;
-  const int in_width = (transpose) ? conv_param->output_w_ : conv_param->input_w_;
-
-  const int output_h = (transpose) ? conv_param->input_h_ : conv_param->output_h_;
-  const int output_w = (transpose) ? conv_param->input_w_ : conv_param->output_w_;
-
-  const int tot_channels = (transpose) ? conv_param->output_channel_ : conv_param->input_channel_;
-  const int channels = tot_channels / conv_param->group_;
-  int channel, kernel_row, kernel_col, output_rows, output_col;
-
-  if (transpose) {
-    for (channel = 0; channel < channels; channel++) {
-      for (kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
-        for (kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
-          int input_row = -pad_up + kernel_row * dilation_h;
-          for (output_rows = output_h; output_rows; output_rows--) {
-            if (!((unsigned)(input_row) < (unsigned)(in_height))) {
-              for (output_col = output_w; output_col; output_col--) {
-                *(data_row++) = 0;
-              }
-            } else {
-              int input_col = -pad_left + kernel_col * dilation_w;
-              for (output_col = output_w; output_col; output_col--) {
-                if (((unsigned)(input_col) < (unsigned)(in_width))) {
-                  const int offset = (input_row * in_width + input_col) * tot_channels + channel;
-                  *(data_row++) = in_data[offset];
-                } else {
-                  *(data_row++) = 0;
-                }
-                input_col += stride_w;
-              }
-            }
-            input_row += stride_h;
-          }
-        }
-      }
-    }
-  } else {
-    for (kernel_row = 0; kernel_row < kernel_h; kernel_row++) {
-      for (kernel_col = 0; kernel_col < kernel_w; kernel_col++) {
-        for (channel = 0; channel < channels; channel++) {
-          int input_row = -pad_up + kernel_row * dilation_h;
-          for (output_rows = output_h; output_rows; output_rows--) {
-            if (!((unsigned)(input_row) < (unsigned)(in_height))) {
-              for (output_col = output_w; output_col; output_col--) {
-                *(data_row++) = 0;
-              }
-            } else {
-              int input_col = -pad_left + kernel_col * dilation_w;
-              for (output_col = output_w; output_col; output_col--) {
-                if (((unsigned)(input_col) < (unsigned)(in_width))) {
-                  const int offset = (input_row * in_width + input_col) * tot_channels + channel;
-                  *(data_row++) = in_data[offset];
-                } else {
-                  *(data_row++) = 0;
-                }
-                input_col += stride_w;
-              }
-            }
-            input_row += stride_h;
-          }
-        }
-      }
-    }
-  }
-}
 void rolling_im2row_hwc(const float *in_data, float *data_row, const ConvParameter *conv_param, int rows, int start) {
   const int pad_left = conv_param->pad_l_;
   const int pad_up = conv_param->pad_u_;

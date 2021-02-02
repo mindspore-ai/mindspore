@@ -31,7 +31,7 @@ int FlattenGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
     MS_LOG(ERROR) << "FlattenGrad input or output is null!";
     return RET_ERROR;
   }
-  if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
+  if (inputs_.size() != kDoubleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "input size: " << inputs_.size() << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;
   }
@@ -42,16 +42,15 @@ int FlattenGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
     return RET_INFER_INVALID;
   }
 
-  auto input_shape = input->shape();
-  std::vector<int> output_shape(2);
-  output_shape.at(0) = input_shape.at(0);
-  output_shape.at(1) = 1;
-  for (size_t i = 1; i < input_shape.size(); i++) {
-    output_shape.at(1) *= input_shape.at(i);
+  auto output_size = inputs_.at(1)->shape().at(0);
+  std::vector<int> output_shape(output_size);
+  for (int i = 0; i < output_size; i++) {
+    output_shape.at(i) = static_cast<int *>(inputs_.at(1)->data_c())[i];
   }
   output->set_shape(output_shape);
   return RET_OK;
 }
+
 #ifdef PRIMITIVE_WRITEABLE
 int FlattenGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {

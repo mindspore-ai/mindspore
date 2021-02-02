@@ -91,10 +91,12 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
 
   // init bias
   size_t new_bias_size = oc4 * C4NUM * sizeof(float);
-  bias_data_ = reinterpret_cast<float *>(malloc(new_bias_size));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc bias_data_ failed.";
-    return RET_MEMORY_FAILED;
+    bias_data_ = reinterpret_cast<float *>(malloc(new_bias_size));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "malloc bias_data_ failed.";
+      return RET_MEMORY_FAILED;
+    }
   }
   memset(bias_data_, 0, new_bias_size);
   if (in_tensors_.size() == kInputSize2) {

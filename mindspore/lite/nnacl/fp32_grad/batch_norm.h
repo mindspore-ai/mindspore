@@ -32,6 +32,10 @@ extern "C" {
 void var2Invar(float *save_var, int size, float eps);
 void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
                  int ch, float *dxhat_sum, float *dxhathat_sum, float *dbias, float *dscale, float *dx);
+void backwardP1(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
+                int ch, float *dxhat_sum, float *dxhathat_sum, float *dbias, float *dscale);
+void backwardP2(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
+                int total_size, int ch, const float *dxhat_sum, const float *dxhathat_sum, float *dx);
 #ifdef __cplusplus
 }
 #endif

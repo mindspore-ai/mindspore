@@ -49,6 +49,7 @@
 #include "src/ops/smooth_l1_loss_grad.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
 #include "src/ops/arithmetic_grad.h"
+#include "src/ops/populate/strided_slice_populate.h"
 namespace mindspore::kernel {
 
 OpParameter *DefaultPopulateParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -569,6 +570,9 @@ void PopulateTrainParameters() {
                                                        DefaultPopulateParameter);
   lite::Registry SigmoidCrossEntropyWithLogitsGradRegistry(schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad,
                                                            DefaultPopulateParameter);
+  lite::Registry FlattenGradParameterRegistry(schema::PrimitiveType_FlattenGrad, DefaultPopulateParameter);
+  lite::Registry StridedSliceGradParameterRegistry(schema::PrimitiveType_StridedSliceGrad,
+                                                   mindspore::lite::PopulateStridedSliceParameter);
 }
 
 }  // namespace mindspore::kernel

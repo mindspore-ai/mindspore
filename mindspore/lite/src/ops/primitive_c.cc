@@ -202,6 +202,7 @@
 #include "src/ops/smooth_l1_loss_grad.h"
 #include "src/ops/sigmoid_cross_entropy_with_logits.h"
 #include "src/ops/sigmoid_cross_entropy_with_logits_grad.h"
+#include "src/ops/strided_slice_grad.h"
 #endif
 #endif
 namespace mindspore {
@@ -724,6 +725,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<SigmoidCrossEntropyWithLogitsGrad>(prim, inputs, quantType);
   } else if (op_type == "Pad") {
     return NewPrimitiveC<Pad>(prim, inputs, quantType);
+  } else if (op_type == "StridedSliceGrad") {
+    return NewPrimitiveC<StridedSliceGrad>(prim, inputs, quantType);
 #else
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
@@ -1102,6 +1105,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) SigmoidCrossEntropyWithLogits(primitive);
     case schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad:
       return new (std::nothrow) SigmoidCrossEntropyWithLogitsGrad(primitive);
+    case schema::PrimitiveType_StridedSliceGrad:
+      return new (std::nothrow) StridedSliceGrad(primitive);
 #endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);

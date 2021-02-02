@@ -79,15 +79,18 @@ TEST_F(TestPoolingGradFp32, AvgPoolingGradFp32) {
 
   auto output_data = new float[output_data_size];
   ASSERT_NE(output_data, nullptr);
+
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    AvgPoolingGrad(input_data, output_data, pooling_param, 1);
+    std::fill(output_data, output_data + output_data_size, 0.f);
+    AvgPoolingGrad(input_data, output_data, pooling_param->output_batch_, pooling_param);
   }
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    AvgPoolingGrad(input_data, output_data, pooling_param, 1);
+    std::fill(output_data, output_data + output_data_size, 0.f);
+    AvgPoolingGrad(input_data, output_data, pooling_param->output_batch_, pooling_param);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;
@@ -407,18 +410,21 @@ TEST_F(TestPoolingGradFp32, MaxPoolingGradFp32) {
   std::string dx_path = "./test_data/pooling/maxpoolgradfp32_1_dx_1_28_28_3.bin";
   auto dx_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(dx_path.c_str(), &input_size));
   ASSERT_NE(dx_data, nullptr);
-
+  int in_batch_size =
+    pooling_param->input_h_ * pooling_param->input_w_ * pooling_param->input_channel_ * pooling_param->input_batch_;
   auto output_data = new float[output_data_size];
   ASSERT_NE(output_data, nullptr);
   // warm up loop
   for (int i = 0; i < 3; i++) {
-    MaxPoolingGrad(in_data, dx_data, dy_data, output_data, pooling_param, 1);
+    std::fill(output_data, output_data + in_batch_size, 0.f);
+    MaxPoolingGrad(in_data, dy_data, output_data, pooling_param->output_batch_, pooling_param);
   }
 
   int loop_count = 100;
   auto time_start = mindspore::lite::GetTimeUs();
   for (int i = 0; i < loop_count; i++) {
-    MaxPoolingGrad(in_data, dx_data, dy_data, output_data, pooling_param, 1);
+    std::fill(output_data, output_data + in_batch_size, 0.f);
+    MaxPoolingGrad(in_data, dy_data, output_data, pooling_param->output_batch_, pooling_param);
   }
   auto time_end = mindspore::lite::GetTimeUs();
   auto cost = time_end - time_start;

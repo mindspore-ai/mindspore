@@ -135,7 +135,6 @@ int NetTrain::ReadCalibData() {
 
   MS_LOG(INFO) << "Start reading calibData file";
   std::string tensor_name;
-
   while (!in_file.eof()) {
     getline(in_file, line);
     std::stringstream string_line1(line);

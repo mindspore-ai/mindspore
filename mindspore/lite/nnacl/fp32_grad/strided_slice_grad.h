@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_STRIDED_SLICE_GRAD_H_
+#define MINDSPORE_LITE_NNACL_FP32_GRAD_STRIDED_SLICE_GRAD_H_
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
-#define MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
-
-#include "nnacl/fp32/pooling_fp32.h"
+#include "nnacl/op_base.h"
+#include "nnacl/strided_slice_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, PoolingParameter *pooling_param);
-void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_ptr, int output_batch,
-                    PoolingParameter *pooling_param);
+int DoStridedSliceGrad(const float *inputs, float *output, const int *dx_shape, StridedSliceParameter *param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_STRIDED_SLICE_GRAD_H_

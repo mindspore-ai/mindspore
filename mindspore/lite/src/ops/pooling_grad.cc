@@ -91,6 +91,8 @@ int PoolingGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr>
       attr->poolingMode = schema::PoolMode_MEAN_POOLING;
     } else if (prim.instance_name() == "AvgPoolGradGpu") {
       attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+    } else if (prim.instance_name() == "AvgPoolGradCpu") {
+      attr->poolingMode = schema::PoolMode_MEAN_POOLING;
     } else {
       attr->poolingMode = schema::PoolMode_MAX_POOLING;
     }

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run Export on x86 platform and create output test files:
-docker_image=mindspore_dev:8
+docker_image=
 function Run_Export(){
     cd $models_path || exit 1
     if [[ -z "${CLOUD_MODEL_ZOO}" ]]; then
@@ -16,8 +16,13 @@ function Run_Export(){
         fi
         echo ${model_name}'_train_export.py' >> "${export_log_file}"
         echo 'exporting' ${model_name}
-        echo 'docker run --user '"$(id -u):$(id -g)"' --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true '${docker_image}' python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
-        docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true "${docker_image}" python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
+        if [ -n "$docker_image" ]; then
+          echo 'docker run --user '"$(id -u):$(id -g)"' --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true '${docker_image}' python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
+          docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true "${docker_image}" python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
+        else
+          echo 'CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
+          CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
+        fi
         if [ $? = 0 ]; then
             export_result='export mindspore '${model_name}'_train_export pass';echo ${export_result} >> ${export_result_file}
         else
@@ -28,7 +33,7 @@ function Run_Export(){
 
 # Run converter on x86 platform:
 function Run_Converter() {
-    # Unzip x86 runtime and convertor
+    # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
     tar -zxf mindspore-lite-${version}-train-linux-x64.tar.gz || exit 1
 
@@ -189,7 +194,7 @@ ENDM
         if [ $? = 0 ]; then
             run_result=$1': '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file}; return 1
+            run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
         fi
     done < ${models_mindspore_train_config}
 }
@@ -222,16 +227,15 @@ echo ${basepath}
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
-threads=1
+threads=2
 train_io_path=""
-while getopts "r:m:d:i:e:vt:q:" opt; do
+while getopts "r:m:d:i:e:vt:q:D" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
            echo "release_path is ${OPTARG}"
             ;;
         m)
-
             models_path=${OPTARG}"/models_train"
             echo "models_path is ${OPTARG}"
             ;;
@@ -244,8 +248,9 @@ while getopts "r:m:d:i:e:vt:q:" opt; do
             echo "device_id is ${OPTARG}"
             ;;
         e)
-            enable_export=${OPTARG}
-            echo "enable_export = ${OPTARG}"
+            enable_export=1
+            docker_image=${OPTARG}
+            echo "enable_export = 1, docker_image = ${OPTARG}"
             ;;          
         v)
             run_valgrind="valgrind --log-file=valgrind.log "
@@ -404,27 +409,27 @@ function Print_Benchmark_Result() {
     done < ${run_benchmark_train_result_file}
     MS_PRINT_TESTCASE_END_MSG
 }
-
+result=0
 # Check benchmark_train result and return value
 if [[ ${Run_x86_status} != 0 ]];then
     echo "Run_x86 failed"
     cat ${run_x86_log_file}
-    exit 1
+    result=1
 fi
 
 if [[ ${Run_arm64_status} != 0 ]];then
     echo "Run_arm64 failed"
     cat ${run_arm64_log_file}
-    exit 1
+    result=1
 fi
 
 if [[ ${Run_arm32_status} != 0 ]];then
     echo "Run_arm32 failed"
     cat ${run_arm32_log_file}
-    exit 1
+    result=1
 fi
 
 echo "Test ended - Results:"
 Print_Benchmark_Result
 echo "Test run Time:" $DIFF
-exit 0
+exit ${result}
