@@ -33,7 +33,13 @@ class DatasetGraph:
             DatasetGraph, a object of lineage_pb2.DatasetGraph.
         """
         dataset_package = import_module('mindspore.dataset')
-        dataset_dict = dataset_package.serialize(dataset)
+        try:
+            dataset_dict = dataset_package.serialize(dataset)
+        except (TypeError, OSError) as exc:
+            logger.warning("Summary can not collect dataset graph, there is an error in dataset internal, "
+                           "detail: %s.", str(exc))
+            return None
+
         dataset_graph_proto = lineage_pb2.DatasetGraph()
         if not isinstance(dataset_dict, dict):
             logger.warning("The dataset graph serialized from dataset object is not a dict. "

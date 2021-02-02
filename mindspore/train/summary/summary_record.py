@@ -112,8 +112,8 @@ class SummaryRecord:
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: None.
         max_file_size (int, optional): The maximum size of each file that can be written to disk (in bytes). \
             Unlimited by default. For example, to write not larger than 4GB, specify `max_file_size=4 * 1024**3`.
-        raise_exception (bool, optional): Sets whether to throw an exception when an RuntimeError exception occurs
-            in recording data. Default: False, this means that error logs are printed and no exception is thrown.
+        raise_exception (bool, optional): Sets whether to throw an exception when a RuntimeError or OSError exception
+            occurs in recording data. Default: False, this means that error logs are printed and no exception is thrown.
         export_options (Union[None, dict]): Perform custom operations on the export data.
             Default: None, it means there is no export data.
             Note that the size of export files is not limited by the max_file_size.
@@ -177,7 +177,7 @@ class SummaryRecord:
         if self._export_options is not None:
             export_dir = "export_{}".format(time_second)
 
-        filename_dict = dict(summary=self.full_file_name,
+        filename_dict = dict(summary=self.event_file_name,
                              lineage=get_event_file_name(self.prefix, '_lineage', time_second),
                              explainer=get_event_file_name(self.prefix, '_explain', time_second),
                              exporter=export_dir)
