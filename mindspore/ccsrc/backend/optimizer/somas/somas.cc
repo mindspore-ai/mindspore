@@ -48,6 +48,26 @@ namespace mindspore {
 namespace somas {
 constexpr auto kGapSize = 512;
 constexpr auto kParallelComputeSizeThreshold = 2000;
+
+constexpr auto kGraphId = "graph_id";
+constexpr auto kHashId = "hash_id";
+constexpr auto kMemOffset = "mem_offset";
+constexpr auto kNodeSize = "node_size";
+constexpr auto kTensorSize = "tensor_size";
+constexpr auto kContiguousSize = "contiguous_size";
+constexpr auto kRefNodeSize = "ref_node_size";
+constexpr auto kStreamSize = "stream_size";
+constexpr auto kStreamGroupSize = "stream_group_size";
+constexpr auto kTensors = "tensors";
+
+constexpr auto kTensorId = "tensor_id";
+constexpr auto kSize = "size";
+constexpr auto kOriSize = "ori_size";
+constexpr auto kLifelongValue = "lifelong_value";
+constexpr auto kLifeStart = "life_start";
+constexpr auto kLifeEnd = "life_end";
+constexpr auto kOffset = "offset";
+
 std::map<TensorType, std::string> tensor_type_name_map = {{kCommon, "Common"},
                                                           {kOutputOnly, "OutputOnly"},
                                                           {kWorkspace, "Workspace"},
@@ -68,6 +88,29 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
     MS_LOG(EXCEPTION) << "Somas Initialize Failed.";
   }
 
+  if (tensors_list_.empty()) {
+    MS_LOG(INFO) << "No Tensor for Somas";
+    return true;
+  }
+
+  ret = CalcSomasModelHash(graph);
+  if (ret) {
+    std::string filename =
+      save_graphs_path_ + "/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
+    ret = LoadSomasResult(graph, filename);
+    if (ret) {
+      MS_LOG(INFO) << "Load Somas Cache file " << filename << " Successfully.";
+      GenGraphStatisticInfo();
+      return ret;
+    } else {
+      for (auto &tensor : tensors_list_) {
+        tensor->offset_ = 0;
+      }
+    }
+  } else {
+    MS_LOG(ERROR) << "Calculate somas's model hash id failed.";
+  }
+
   // Computing Conflict pairs
   MS_LOG(INFO) << "Start Computing Conflict Pairs";
   ComputeConflictPairs();
@@ -77,8 +120,241 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
   if (!ret) {
     MS_LOG(EXCEPTION) << "Somas Assign Failed.";
   }
-
+  SaveSomasResult(graph);
   GenGraphStatisticInfo();
+  return ret;
+}
+
+bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
+  auto model_str = SomasInfo(true);
+  hash_id_ = std::to_string(std::hash<std::string>()(model_str));
+  MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model hash id is " << hash_id_;
+  std::string filename =
+    save_graphs_path_ + "/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
+  if (filename.size() > PATH_MAX) {
+    MS_LOG(WARNING) << "File path " << filename << " is too long.";
+    return false;
+  }
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(WARNING) << "Get real path failed. path=" << filename;
+    return false;
+  }
+
+  std::ifstream ifs(real_path.value());
+  if (ifs) {
+    MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model file " << real_path.value() << " is exist.";
+    ifs.close();
+    return true;
+  }
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
+
+  if (!ofs.is_open()) {
+    MS_LOG(WARNING) << "Open file '" << real_path.value() << "' failed!";
+    return false;
+  }
+  ofs << model_str << std::endl;
+  ofs.close();
+  return true;
+}
+
+bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
+  nlohmann::json somas_json;
+  somas_json[kGraphId] = graph->graph_id();
+  somas_json[kHashId] = hash_id_;
+  somas_json[kMemOffset] = mem_offset_;
+  somas_json[kNodeSize] = nodes_list_.size();
+  somas_json[kTensorSize] = tensors_list_.size();
+  somas_json[kContiguousSize] = contiguous_tensors_list_.size();
+  somas_json[kRefNodeSize] = ref_node_constraints_.size();
+  somas_json[kStreamSize] = streams_list_.size();
+  somas_json[kStreamGroupSize] = streams_groups_.size();
+  std::vector<nlohmann::json> tensors_json;
+  for (auto &tensor : tensors_list_) {
+    nlohmann::json tensor_json;
+    tensor_json[kTensorId] = tensor->GetId();
+    tensor_json[kSize] = tensor->GetAlignedSize();
+    tensor_json[kOriSize] = tensor->GetOriginalSize();
+    tensor_json[kLifelongValue] = tensor->lifelong_value_;
+    tensor_json[kLifeStart] = tensor->lifetime_.start_;
+    tensor_json[kLifeEnd] = tensor->lifetime_.end_;
+    tensor_json[kOffset] = tensor->GetOffset();
+    tensors_json.emplace_back(tensor_json);
+  }
+  somas_json[kTensors] = tensors_json;
+
+  std::string filename =
+    save_graphs_path_ + "/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
+  if (filename.size() > PATH_MAX) {
+    MS_LOG(WARNING) << "File path " << filename << " is too long.";
+    return false;
+  }
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(WARNING) << "Get real path failed. path=" << filename;
+    return false;
+  }
+
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
+
+  if (!ofs.is_open()) {
+    MS_LOG(WARNING) << "Open file '" << real_path.value() << "' failed!";
+    return false;
+  }
+
+  ofs << somas_json.dump() << std::endl;
+  ofs.close();
+  return true;
+}
+
+bool Somas::LoadSomasResult(const session::KernelGraph *graph, const string filename) {
+  if (filename.length() <= strlen(".json")) {
+    MS_LOG(WARNING) << "please check somas cache file path.";
+    return false;
+  }
+  std::ifstream somas_json_fs(filename);
+  if (!somas_json_fs.is_open()) {
+    MS_LOG(INFO) << "Open json file: " << filename << " error, Somas Cache Missed.";
+    return false;
+  }
+  nlohmann::json somas_json;
+  try {
+    somas_json_fs >> somas_json;
+    somas_json_fs.close();
+  } catch (std::exception &e) {
+    MS_LOG(WARNING) << "Parse json file error: " << filename << ", sleep 500ms and retry again.";
+    somas_json_fs.close();
+    usleep(500000);
+    std::ifstream retry_tmp(filename);
+    if (!retry_tmp.is_open()) {
+      MS_LOG(INFO) << "Open json file: " << filename << " error, please check kernel_meta.";
+      return false;
+    }
+    retry_tmp >> somas_json;
+    retry_tmp.close();
+  }
+
+  auto ret = VerifySomasResult(graph, somas_json);
+  if (!ret) {
+    MS_LOG(WARNING) << "Verify Somas Result Failed.";
+    return false;
+  }
+  auto mem_offset = somas_json[kMemOffset];
+  mem_offset_ = mem_offset;
+  ret = UpdateTensorsOffset(somas_json[kTensors]);
+  return ret;
+}
+
+bool Somas::VerifySomasResult(const session::KernelGraph *graph, const nlohmann::json &somas_json) const {
+  auto graph_id = somas_json[kGraphId];
+  auto hash_id = somas_json[kHashId];
+  auto node_size = somas_json[kNodeSize];
+  auto tensor_size = somas_json[kTensorSize];
+  auto contiguous_size = somas_json[kContiguousSize];
+  auto ref_node_size = somas_json[kRefNodeSize];
+  auto stream_size = somas_json[kStreamSize];
+  auto stream_group_size = somas_json[kStreamGroupSize];
+
+  if (graph_id != graph->graph_id()) {
+    MS_LOG(WARNING) << "Mismatch graph id " << graph_id << " vs " << graph->graph_id();
+    return false;
+  }
+
+  if (hash_id != hash_id_) {
+    MS_LOG(WARNING) << "Mismatch hash id " << hash_id << " vs " << hash_id_;
+    return false;
+  }
+
+  if (node_size != nodes_list_.size()) {
+    MS_LOG(WARNING) << "Mismatch node size " << node_size << " vs " << nodes_list_.size();
+    return false;
+  }
+
+  if (tensor_size != tensors_list_.size()) {
+    MS_LOG(WARNING) << "Mismatch tensor size " << tensor_size << " vs " << tensors_list_.size();
+    return false;
+  }
+
+  if (contiguous_size != contiguous_tensors_list_.size()) {
+    MS_LOG(WARNING) << "Mismatch contiguous size " << contiguous_size << " vs " << contiguous_tensors_list_.size();
+    return false;
+  }
+
+  if (ref_node_size != ref_node_constraints_.size()) {
+    MS_LOG(WARNING) << "Mismatch ref node size " << ref_node_size << " vs " << ref_node_constraints_.size();
+    return false;
+  }
+
+  if (stream_size != streams_list_.size()) {
+    MS_LOG(WARNING) << "Mismatch stream size " << stream_size << " vs " << streams_list_.size();
+    return false;
+  }
+
+  if (stream_group_size != streams_groups_.size()) {
+    MS_LOG(WARNING) << "Mismatch stream group size " << stream_group_size << " vs " << streams_groups_.size();
+    return false;
+  }
+
+  return true;
+}
+
+bool Somas::UpdateTensorsOffset(const std::vector<nlohmann::json> &tensors_json) {
+  bool ret = true;
+  for (auto &tensor_json : tensors_json) {
+    auto tensor_id = tensor_json[kTensorId];
+    auto size = tensor_json[kSize];
+    auto ori_size = tensor_json[kOriSize];
+    auto lifelong_value = tensor_json[kLifelongValue];
+    auto life_start = tensor_json[kLifeStart];
+    auto life_end = tensor_json[kLifeEnd];
+    auto offset = tensor_json[kOffset];
+    auto iter = tensors_map_.find(tensor_id);
+    if (iter != tensors_map_.end()) {
+      if (size != iter->second->aligned_size_) {
+        MS_LOG(WARNING) << "Mismatch size of tensor " << tensor_id << " " << size << " vs "
+                        << iter->second->aligned_size_;
+        ret = false;
+        break;
+      }
+
+      if (ori_size != iter->second->GetOriginalSize()) {
+        MS_LOG(WARNING) << "Mismatch original size of tensor " << tensor_id << " " << ori_size << " vs "
+                        << iter->second->GetOriginalSize();
+        ret = false;
+        break;
+      }
+
+      if (lifelong_value != iter->second->lifelong_value_) {
+        MS_LOG(WARNING) << "Mismatch lifelong value of tensor " << tensor_id << " " << lifelong_value << " vs "
+                        << iter->second->lifelong_value_;
+        ret = false;
+        break;
+      }
+
+      if (life_start != iter->second->lifetime_.start_) {
+        MS_LOG(WARNING) << "Mismatch life start of tensor " << tensor_id << " " << life_start << " vs "
+                        << iter->second->lifetime_.start_;
+        ret = false;
+        break;
+      }
+
+      if (life_end != iter->second->lifetime_.end_) {
+        MS_LOG(WARNING) << "Mismatch life start of tensor " << tensor_id << " " << life_end << " vs "
+                        << iter->second->lifetime_.end_;
+        ret = false;
+        break;
+      }
+
+      // verify pass, update memory offset
+      iter->second->offset_ = offset;
+    } else {
+      MS_LOG(WARNING) << "Can't find tensor " << tensor_id;
+      ret = false;
+      break;
+    }
+  }
   return ret;
 }
 
@@ -1134,10 +1410,11 @@ std::string Somas::GetSplitName(const std::string &scope_name) const {
   }
 }
 
-std::string Somas::SomasInfo() {
+std::string Somas::SomasInfo(bool calc_hash) {
   std::ostringstream oss;
-
-  DumpParameters(oss);
+  if (!calc_hash) {
+    DumpParameters(oss);
+  }
   DumpTensors(oss);
   DumpNodes(oss);
 
