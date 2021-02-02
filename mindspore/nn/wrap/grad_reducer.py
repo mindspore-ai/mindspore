@@ -239,6 +239,7 @@ class DistributedGradReducer(Cell):
         parameters (list): the parameters to be updated.
         mean (bool): When mean is true, the mean coefficient (degree) would apply on gradients. Default: False.
         degree (int): The mean coefficient. Usually it equals to device number. Default: None.
+        fusion_type (int): The type of all reduce fusion. Default: 1.
 
     Raises:
         ValueError: If degree is not a int or less than 0.
@@ -319,7 +320,7 @@ class DistributedGradReducer(Cell):
         256.0
     """
 
-    def __init__(self, parameters, mean=True, degree=None):
+    def __init__(self, parameters, mean=True, degree=None, fusion_type=1):
         super(DistributedGradReducer, self).__init__(auto_prefix=False)
         self.map_ = C.Map()
         if degree is None:
@@ -337,7 +338,7 @@ class DistributedGradReducer(Cell):
             self.op_list = _init_allreduce_operators(len(parameters), split_indices)
         else:
             self.split_fusion = False
-            self.allreduce = AllReduce().add_prim_attr('fusion', 1)
+            self.allreduce = AllReduce().add_prim_attr('fusion', fusion_type)
         self.allgather = AllGather(GlobalComm.WORLD_COMM_GROUP)
         ps_filter = lambda x: x.is_param_ps
         self.ps_parameters = tuple(ps_filter(x) for x in parameters)

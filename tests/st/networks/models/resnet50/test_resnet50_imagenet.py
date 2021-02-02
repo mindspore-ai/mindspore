@@ -21,7 +21,8 @@ from multiprocessing import Process, Queue
 import pytest
 import numpy as np
 
-from mindspore import context, Tensor
+from mindspore import context
+from mindspore.common.tensor import Tensor
 from mindspore.communication.management import init
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -29,6 +30,7 @@ from mindspore.train.callback import Callback
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 import mindspore.nn as nn
 import mindspore.dataset as ds
+from mindspore.nn.optim import THOR
 
 from tests.st.networks.models.resnet50.src.resnet import resnet50
 from tests.st.networks.models.resnet50.src.dataset import create_dataset
@@ -39,7 +41,7 @@ from tests.st.networks.models.resnet50.src.CrossEntropySmooth import CrossEntrop
 from tests.st.networks.models.resnet50.src_thor.config import config as thor_config
 from tests.st.networks.models.resnet50.src_thor.model_thor import Model as THOR_Model
 from tests.st.networks.models.resnet50.src_thor.resnet import resnet50 as resnet50_thor
-from tests.st.networks.models.resnet50.src_thor.thor import THOR
+
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_1.json"
 MINDSPORE_HCCL_CONFIG_PATH_2 = "/home/workspace/mindspore_config/hccl/rank_tabel_4p/rank_table_4p_2.json"
@@ -50,7 +52,8 @@ np.random.seed(1)
 ds.config.set_seed(1)
 os.environ['GLOG_v'] = str(2)
 
-def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch):
+
+def get_thor_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch, decay_epochs=100):
     """get_model_lr"""
     lr_each_step = []
     total_steps = steps_per_epoch * total_epochs
@@ -58,9 +61,9 @@ def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch):
         epoch = (i + 1) / steps_per_epoch
         base = (1.0 - float(epoch) / total_epochs) ** decay
         lr_local = lr_init * base
-        if epoch >= 39:
+        if epoch >= decay_epochs:
             lr_local = lr_local * 0.5
-        if epoch >= 40:
+        if epoch >= decay_epochs + 1:
             lr_local = lr_local * 0.5
         lr_each_step.append(lr_local)
     current_step = global_step
@@ -69,7 +72,7 @@ def get_model_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch):
     return learning_rate
 
 
-def get_model_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
+def get_thor_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
     """get_model_damping"""
     damping_each_step = []
     total_steps = steps_per_epoch * total_epochs
@@ -77,7 +80,6 @@ def get_model_damping(global_step, damping_init, decay_rate, total_epochs, steps
         epoch = (step + 1) / steps_per_epoch
         damping_here = damping_init * (decay_rate ** (epoch / 10))
         damping_each_step.append(damping_here)
-
     current_step = global_step
     damping_each_step = np.array(damping_each_step).astype(np.float32)
     damping_now = damping_each_step[current_step:]
@@ -140,6 +142,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
         init()
 
     # network
+
     net = resnet50(class_num=config.class_num)
 
     # evaluation network
@@ -160,7 +163,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
     eval_interval = config.eval_interval
     dataset.__loop_size__ = step_size * eval_interval
 
-    # evalutation dataset
+    # evaluation dataset
     eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
                                   repeat_num=1, batch_size=config.eval_batch_size)
 
@@ -233,16 +236,11 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     os.environ['RANK_SIZE'] = str(device_num)
     if enable_hccl:
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True, all_reduce_fusion_config=[107])
+                                          gradients_mean=True, all_reduce_fusion_config=[85, 160])
         init()
 
     # network
-    damping = get_model_damping(0, 0.03, 0.87, 50, 5004)
-    net = resnet50_thor(class_num=thor_config.class_num, damping=damping, loss_scale=thor_config.loss_scale,
-                        frequency=thor_config.frequency)
-
-    # evaluation network
-    dist_eval_network = ClassifyCorrectCell(net)
+    net = resnet50_thor(thor_config.class_num)
 
     if not thor_config.label_smooth:
         thor_config.label_smooth_factor = 0.0
@@ -258,7 +256,7 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     step_size = dataset.get_dataset_size()
     eval_interval = thor_config.eval_interval
 
-    # evalutation dataset
+    # evaluation dataset
     eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
                                   repeat_num=1, batch_size=thor_config.eval_batch_size)
 
@@ -266,16 +264,15 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     loss_scale = FixedLossScaleManager(thor_config.loss_scale, drop_overflow_update=False)
 
     # learning rate
-    lr = Tensor(get_model_lr(0, 0.045, 6, 70, 5004))
-
+    lr = get_thor_lr(0, 0.05803, 4.04839, 53, 5004, decay_epochs=39)
+    damping = get_thor_damping(0, 0.02714, 0.50036, 70, 5004)
     # optimizer
-    opt = THOR(filter(lambda x: x.requires_grad, net.get_parameters()), lr, thor_config.momentum,
-               filter(lambda x: 'matrix_A' in x.name, net.get_parameters()),
-               filter(lambda x: 'matrix_G' in x.name, net.get_parameters()),
-               filter(lambda x: 'A_inv_max' in x.name, net.get_parameters()),
-               filter(lambda x: 'G_inv_max' in x.name, net.get_parameters()),
-               thor_config.weight_decay, thor_config.loss_scale)
+    split_indices = [26, 53]
+    opt = THOR(net, Tensor(lr), Tensor(damping), thor_config.momentum, thor_config.weight_decay, thor_config.loss_scale,
+               thor_config.batch_size, split_indices=split_indices)
 
+    # evaluation network
+    dist_eval_network = ClassifyCorrectCell(net)
     # model
     model = THOR_Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, amp_level="O2",
                        keep_batchnorm_fp32=False,

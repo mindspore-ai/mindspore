@@ -22,6 +22,7 @@ import math
 import collections
 import numpy as np
 import mindspore.nn as nn
+from mindspore import context
 from mindspore import log as logger
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
@@ -106,11 +107,10 @@ class LossCallBack(Callback):
                 percent = 1
                 epoch_num -= 1
             print("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
-                  .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs),
-                          flush=True))
+                  .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
         else:
             print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
-                                                               str(cb_params.net_outputs), flush=True))
+                                                               str(cb_params.net_outputs)))
 
 def LoadNewestCkpt(load_finetune_checkpoint_dir, steps_per_epoch, epoch_num, prefix):
     """
@@ -181,3 +181,61 @@ def convert_labels_to_index(label_list):
             sub_label = pre + label
             label2id[sub_label] = index
     return label2id
+
+def _get_poly_lr(global_step, lr_init, lr_end, lr_max, warmup_steps, total_steps, poly_power):
+    """
+    generate learning rate array
+
+    Args:
+       global_step(int): current step
+       lr_init(float): init learning rate
+       lr_end(float): end learning rate
+       lr_max(float): max learning rate
+       warmup_steps(int): number of warmup epochs
+       total_steps(int): total epoch of training
+       poly_power(int): poly learning rate power
+
+    Returns:
+       np.array, learning rate array
+    """
+    lr_each_step = []
+    if warmup_steps != 0:
+        inc_each_step = (float(lr_max) - float(lr_init)) / float(warmup_steps)
+    else:
+        inc_each_step = 0
+    for i in range(total_steps):
+        if i < warmup_steps:
+            lr = float(lr_init) + inc_each_step * float(i)
+        else:
+            base = (1.0 - (float(i) - float(warmup_steps)) / (float(total_steps) - float(warmup_steps)))
+            lr = float(lr_max - lr_end) * (base ** poly_power)
+            lr = lr + lr_end
+            if lr < 0.0:
+                lr = 0.0
+        lr_each_step.append(lr)
+
+    learning_rate = np.array(lr_each_step).astype(np.float32)
+    current_step = global_step
+    learning_rate = learning_rate[current_step:]
+    return learning_rate
+
+
+def get_bert_thor_lr():
+    if context.get_context("device_target") == "Ascend":
+        learning_rate = _get_poly_lr(global_step=0, lr_init=0.0, lr_end=3.244018779068399e-05,
+                                     lr_max=0.0034022148941459055, warmup_steps=0, total_steps=30000, poly_power=1)
+    else:
+        learning_rate = _get_poly_lr(global_step=0, lr_init=0.0, lr_end=1e-6, lr_max=1.7e-3, warmup_steps=0,
+                                     total_steps=30000, poly_power=1)
+
+    return Tensor(learning_rate)
+
+
+def get_bert_thor_damping():
+    if context.get_context("device_target") == "Ascend":
+        damping = _get_poly_lr(global_step=0, lr_init=0.0, lr_end=1e-6, lr_max=5e-2, warmup_steps=0, total_steps=30000,
+                               poly_power=1)
+    else:
+        damping = _get_poly_lr(global_step=0, lr_init=0.0, lr_end=1e-6, lr_max=3.5e-2, warmup_steps=0,
+                               total_steps=30000, poly_power=1)
+    return Tensor(damping)

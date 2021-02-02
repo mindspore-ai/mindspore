@@ -18,7 +18,7 @@ network config setting, will be used in train.py and eval.py
 from easydict import EasyDict as ed
 
 config = ed({
-    "class_num": 1000,
+    "class_num": 1001,
     "batch_size": 32,
     "loss_scale": 128,
     "momentum": 0.9,

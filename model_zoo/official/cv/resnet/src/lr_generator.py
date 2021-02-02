@@ -205,3 +205,36 @@ def warmup_cosine_annealing_lr(lr, steps_per_epoch, warmup_epochs, max_epoch=120
     lr_each_step = np.array(lr_each_step).astype(np.float32)
     learning_rate = lr_each_step[global_step:]
     return learning_rate
+
+
+def get_thor_lr(global_step, lr_init, decay, total_epochs, steps_per_epoch, decay_epochs=100):
+    """get_model_lr"""
+    lr_each_step = []
+    total_steps = steps_per_epoch * total_epochs
+    for i in range(total_steps):
+        epoch = (i + 1) / steps_per_epoch
+        base = (1.0 - float(epoch) / total_epochs) ** decay
+        lr_local = lr_init * base
+        if epoch >= decay_epochs:
+            lr_local = lr_local * 0.5
+        if epoch >= decay_epochs + 1:
+            lr_local = lr_local * 0.5
+        lr_each_step.append(lr_local)
+    current_step = global_step
+    lr_each_step = np.array(lr_each_step).astype(np.float32)
+    learning_rate = lr_each_step[current_step:]
+    return learning_rate
+
+
+def get_thor_damping(global_step, damping_init, decay_rate, total_epochs, steps_per_epoch):
+    """get_model_damping"""
+    damping_each_step = []
+    total_steps = steps_per_epoch * total_epochs
+    for step in range(total_steps):
+        epoch = (step + 1) / steps_per_epoch
+        damping_here = damping_init * (decay_rate ** (epoch / 10))
+        damping_each_step.append(damping_here)
+    current_step = global_step
+    damping_each_step = np.array(damping_each_step).astype(np.float32)
+    damping_now = damping_each_step[current_step:]
+    return damping_now
