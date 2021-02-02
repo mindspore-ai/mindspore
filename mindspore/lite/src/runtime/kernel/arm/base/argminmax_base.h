@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARGMINMAX_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARGMINMAX_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_ARGMINMAX_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_ARGMINMAX_BASE_H_
 
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/fp32/arg_min_max_fp32.h"
+#ifdef ENABLE_ARM64
+#include "nnacl/fp16/arg_min_max_fp16.h"
+#endif
 #include "nnacl/common_func.h"
 #include "src/lite_kernel.h"
 
@@ -43,4 +46,4 @@ class ArgMinMaxCPUKernel : public LiteKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARGMINMAX_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_ARGMINMAX_BASE_H_
