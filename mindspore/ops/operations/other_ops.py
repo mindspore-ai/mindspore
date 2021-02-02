@@ -343,55 +343,6 @@ class IOU(PrimitiveWithInfer):
         return anchor_boxes
 
 
-class MakeRefKey(Primitive):
-    """
-    Makes a RefKey instance by string. RefKey stores the name of Parameter, can be passed through the functions,
-    and used for Assign target.
-
-    Args:
-        tag (str): Parameter name to make the RefKey.
-
-    Inputs:
-        No inputs.
-
-    Outputs:
-        RefKeyType, made from the Parameter name.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Parameter, Tensor
-        >>> from mindspore import dtype as mstype
-        >>> import mindspore.ops as ops
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.y = Parameter(Tensor(np.ones([2, 3]), mstype.int32), name="y")
-        ...         self.make_ref_key = ops.MakeRefKey("y")
-        ...
-        ...     def construct(self, x):
-        ...         key = self.make_ref_key()
-        ...         ref = ops.make_ref(key, x, self.y)
-        ...         return ref * x
-        ...
-        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.int32)
-        >>> net = Net()
-        >>> output = net(x)
-        >>> print(output)
-        [[ 1  4  9]
-         [16 25 36]]
-    """
-
-    @prim_attr_register
-    def __init__(self, tag):
-        validator.check_value_type('tag', tag, (str,), self.name)
-
-    def __call__(self):
-        pass
-
-
 class Partial(Primitive):
     """
     Makes a partial function instance, used for pynative mode.

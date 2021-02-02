@@ -435,7 +435,7 @@ class Receive(PrimitiveWithInfer):
                       will be send by the Send op with the same "sr_tag".
         src_rank (int): A required integer identifying the source rank.
         shape (list[int]): A required list identifying the shape of the tensor to be received.
-        dtype (Type): A required Type indentifying the type of the tensor to be received. The supported types:
+        dtype (Type): A required Type identifying the type of the tensor to be received. The supported types:
                        int8, int16, int32, float16, float32.
         group (str): The communication group to work on. Default: "hccl_world_group/nccl_world_group".
 
