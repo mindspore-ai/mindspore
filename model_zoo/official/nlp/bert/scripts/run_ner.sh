@@ -18,7 +18,7 @@ echo "==========================================================================
 echo "Please run the script as: "
 echo "bash scripts/run_ner.sh"
 echo "for example: bash scripts/run_ner.sh"
-echo "assessment_method include: [F1, SpanF1, clue_benchmark]"
+echo "assessment_method include: [BF1, MF1, clue_benchmark]"
 echo "=============================================================================================================="
 
 mkdir -p ms_log
@@ -30,7 +30,7 @@ python ${PROJECT_DIR}/../run_ner.py  \
     --device_target="Ascend" \
     --do_train="true" \
     --do_eval="false" \
-    --assessment_method="F1" \
+    --assessment_method="BF1" \
     --use_crf="false" \
     --device_id=0 \
     --epoch_num=5 \

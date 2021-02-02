@@ -53,7 +53,7 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
 
 
 def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy", data_file_path=None,
-                       dataset_format="mindrecord", schema_file_path=None, do_shuffle=True):
+                       dataset_format="mindrecord", schema_file_path=None, do_shuffle=True, drop_remainder=True):
     """create finetune or evaluation dataset"""
     type_cast_op = C.TypeCast(mstype.int32)
     if dataset_format == "mindrecord":
@@ -74,7 +74,7 @@ def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy
     dataset = dataset.map(operations=type_cast_op, input_columns="input_ids")
     dataset = dataset.repeat(repeat_count)
     # apply batch operations
-    dataset = dataset.batch(batch_size, drop_remainder=True)
+    dataset = dataset.batch(batch_size, drop_remainder=drop_remainder)
     return dataset
 
 

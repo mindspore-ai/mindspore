@@ -106,10 +106,11 @@ class LossCallBack(Callback):
                 percent = 1
                 epoch_num -= 1
             print("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
-                  .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
+                  .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs),
+                          flush=True))
         else:
             print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
-                                                               str(cb_params.net_outputs)))
+                                                               str(cb_params.net_outputs), flush=True))
 
 def LoadNewestCkpt(load_finetune_checkpoint_dir, steps_per_epoch, epoch_num, prefix):
     """

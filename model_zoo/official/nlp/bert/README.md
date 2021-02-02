@@ -546,7 +546,7 @@ F1 0.920507
 For preprocess, you can first convert the original txt format of MSRA dataset into mindrecord by run the command as below:
 
 ```python
-python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len
+python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len --class_filter="NAMEX" --split_begin=0.0 --split_end=1.0
 ```
 
 For finetune and evaluation, just do
@@ -557,12 +557,10 @@ bash scripts/ner.sh
 
 The command above will run in the background, you can view training logs in ner_log.txt.
 
-If you choose SpanF1 as assessment method and mode use_crf is set to be "true", the result will be as follows if evaluation is done after finetuning 10 epoches:
+If you choose MF1(F1 score with multi-labels) as assessment method, the result will be as follows if evaluation is done after finetuning 10 epoches:
 
 ```text
-Precision 0.953826
-Recall 0.957749
-F1 0.955784
+F1 0.931243
 ```
 
 #### evaluation on squad v1.1 dataset when running on Ascend
