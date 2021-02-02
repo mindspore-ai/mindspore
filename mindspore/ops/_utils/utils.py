@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ def get_broadcast_shape(x_shape, y_shape, prim_name):
         List, the shape that broadcast between tensor x and tensor y.
 
     Raises:
-        ValueError: If tensor x and tensor y are not equal and could't broadcast.
+        ValueError: If tensor x and tensor y are not equal and couldn't broadcast.
 
     Examples:
         >>> x_shape = [1, 2, 3]
@@ -66,7 +66,7 @@ def get_broadcast_shape(x_shape, y_shape, prim_name):
 
 def get_concat_offset(x_shp, x_type, axis, prim_name):
     """for concat and concatoffset check args and compute offset"""
-    validator.check_value_type("shape", x_shp, [tuple], prim_name)
+    validator.check_value_type("shape", x_shp, [tuple, list], prim_name)
     validator.check_positive_int(len(x_shp), "input_x rank", prim_name)
     validator.check_subclass("shape0", x_type[0], mstype.tensor, prim_name)
     validator.check_positive_int(len(x_shp[0]), "len of x_shp[0]", prim_name)

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -133,8 +133,8 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         >>> boundingbox_encode = ops.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
         >>> output = boundingbox_encode(anchor_box, groundtruth_box)
         >>> print(output)
-        [[ －1.  0.25  0.  0.40551758]
-         [ －1.  0.25  0.  0.40551758]]
+        [[ -1.  0.25  0.  0.40551758]
+         [ -1.  0.25  0.  0.40551758]]
     """
 
     @prim_attr_register
