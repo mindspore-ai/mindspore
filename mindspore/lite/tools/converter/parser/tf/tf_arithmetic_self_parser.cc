@@ -61,6 +61,8 @@ STATUS TFArithmeticSelfParser::Parse(const tensorflow::NodeDef &tf_op,
     status = CreateOperator<schema::LogT>(primitive, schema::PrimitiveType_Log);
   } else if (tf_op.op() == "Sqrt") {
     status = CreateOperator<schema::SqrtT>(primitive, schema::PrimitiveType_Sqrt);
+  } else if (tf_op.op() == "Pow") {
+    status = CreateOperator<schema::PowerT>(primitive, schema::PrimitiveType_Power);
   }
   if (status != RET_OK) {
     return status;
@@ -84,5 +86,6 @@ TFNodeRegistrar g_tfExpParser("Exp", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfFloorParser("Floor", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfLogParser("Log", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfSqrtParser("Sqrt", new TFArithmeticSelfParser());
+TFNodeRegistrar g_tfPowParser("Pow", new TFArithmeticSelfParser());
 }  // namespace lite
 }  // namespace mindspore
