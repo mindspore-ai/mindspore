@@ -18,7 +18,7 @@
 #include <string>
 #include "src/ops/schema_register.h"
 #ifdef PRIMITIVE_WRITEABLE
-#include "c_ops/conv2d.h"
+#include "ops/conv2d.h"
 #include "schema/inner/model_generated.h"
 #endif
 

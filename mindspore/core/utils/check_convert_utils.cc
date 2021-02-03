@@ -14,40 +14,233 @@
  * limitations under the License.
  */
 
-#include "utils/check_convert_utils.h"
 #include <utility>
+#include <vector>
+#include <algorithm>
+#include <typeinfo>
+#include <functional>
+#include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
+#include "ir/dtype/type.h"
+#include "ir/dtype/tensor_type.h"
+#include "ir/dtype.h"
 
 namespace mindspore {
+static std::map<std::string, int64_t> DataFormatToEnumMap = {
+  {"NCHW", Format::NCHW}, {"NHWC", Format::NHWC},     {"NHWC4", Format::NHWC4},
+  {"HWKC", Format::HWKC}, {"HWCK", Format::HWCK},     {"KCHW", Format::KCHW},
+  {"CKHW", Format::CKHW}, {"KHWC", Format::KHWC},     {"CHWK", Format::CHWK},
+  {"HW", Format::HW},     {"HW4", Format::HW4},       {"NC", Format::NC},
+  {"NC4", Format::NC4},   {"NC4HW4", Format::NC4HW4}, {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
+};
+
+static std::map<int64_t, std::string> DataFormatToStrMap = {
+  {Format::NCHW, "NCHW"}, {Format::NHWC, "NHWC"},     {Format::NHWC4, "NHWC4"},
+  {Format::HWKC, "HWKC"}, {Format::HWCK, "HWCK"},     {Format::KCHW, "KCHW"},
+  {Format::CKHW, "CKHW"}, {Format::KHWC, "KHWC"},     {Format::CHWK, "CHWK"},
+  {Format::HW, "HW"},     {Format::HW4, "HW4"},       {Format::NC, "NC"},
+  {Format::NC4, "NC4"},   {Format::NC4HW4, "NC4HW4"}, {Format::NUM_OF_FORMAT, "NUM_OF_FORMAT"},
+};
+
+static std::map<std::string, int64_t> ReductionToEnumMap = {
+  {"sum", Reduction::REDUCTION_SUM},
+  {"mean", Reduction::MEAN},
+  {"none", Reduction::NONE},
+};
+
+static std::map<int64_t, std::string> ReductionToStrMap = {
+  {Reduction::REDUCTION_SUM, "sum"},
+  {Reduction::MEAN, "mean"},
+  {Reduction::NONE, "none"},
+};
+
+static std::map<std::string, int64_t> PadModToEnumMap = {
+  {"pad", PadMode::PAD},
+  {"same", PadMode::SAME},
+  {"valid", PadMode::VALID},
+};
+
+static std::map<int64_t, std::string> PadModToStrMap = {
+  {PadMode::PAD, "pad"},
+  {PadMode::SAME, "same"},
+  {PadMode::VALID, "valid"},
+};
+
+static std::map<std::string, int64_t> PadModToEnumUpperMap = {
+  {"PAD", PadMode::PAD},
+  {"SAME", PadMode::SAME},
+  {"VALID", PadMode::VALID},
+};
+
+static std::map<int64_t, std::string> PadModToStrUpperMap = {
+  {PadMode::PAD, "PAD"},
+  {PadMode::SAME, "SAME"},
+  {PadMode::VALID, "VALID"},
+};
+
+AttrConverterPair DataFormatConverter(DataFormatToEnumMap, DataFormatToStrMap);
+AttrConverterPair PadModeConverter(PadModToEnumMap, PadModToStrMap);
+AttrConverterPair PadModeUpperConverter(PadModToEnumUpperMap, PadModToStrUpperMap);
+AttrConverterPair ReductionConverter(ReductionToEnumMap, ReductionToStrMap);
+
+static std::map<std::string, AttrConverterPair> FormatAndPadAttrMap = {
+  {"format", DataFormatConverter},
+  {"pad_mode", PadModeConverter},
+};
+
+static std::map<std::string, AttrConverterPair> FormatAndPadUpperAttrMap = {
+  {"format", DataFormatConverter},
+  {"pad_mode", PadModeUpperConverter},
+};
+
+static std::map<std::string, AttrConverterPair> DataFormatMap = {
+  {"format", DataFormatConverter},
+};
+
+static std::map<std::string, AttrConverterPair> ReductionMap = {
+  {"reduction", ReductionConverter},
+};
+
+static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrConvertMap = {
+  {"Conv2D", FormatAndPadAttrMap},
+  {"Conv2DBackpropInput", FormatAndPadUpperAttrMap},
+  {"Conv2DBackpropFilter", FormatAndPadUpperAttrMap},
+  {"Conv3D", FormatAndPadAttrMap},
+  {"Conv3DBackpropInput", FormatAndPadAttrMap},
+  {"Conv3DBackpropFilter", FormatAndPadAttrMap},
+  {"Conv3DTranspose", DataFormatMap},
+  {"DepthwiseConv2dNative", FormatAndPadAttrMap},
+  {"DepthwiseConv2dNativeBackpropInput", FormatAndPadAttrMap},
+  {"DepthwiseConv2dNativeBackpropFilter", FormatAndPadAttrMap},
+  {"AvgPool", FormatAndPadUpperAttrMap},
+  {"MaxPool", FormatAndPadUpperAttrMap},
+  {"MaxPoolWithArgmax", FormatAndPadUpperAttrMap},
+  {"AvgPoolGrad", FormatAndPadUpperAttrMap},
+  {"AvgPoolGradVm", FormatAndPadUpperAttrMap},
+  {"AvgPoolGradGpu", FormatAndPadUpperAttrMap},
+  {"AvgPoolGradCpu", FormatAndPadUpperAttrMap},
+  {"MaxPoolGrad", FormatAndPadUpperAttrMap},
+  {"MaxPoolGradGrad", FormatAndPadUpperAttrMap},
+  {"MaxPoolGradWithArgmax", FormatAndPadUpperAttrMap},
+  {"MaxPoolGradGradWithArgmax", FormatAndPadUpperAttrMap},
+  {"BatchNorm", DataFormatMap},
+  {"BatchNormGrad", DataFormatMap},
+  {"FusedBatchNormEx", DataFormatMap},
+  {"FusedBatchNormGradEx", DataFormatMap},
+  {"BiasAdd", DataFormatMap},
+  {"BiasAddGrad", DataFormatMap},
+  {"BinaryCrossEntropy", ReductionMap},
+  {"BinaryCrossEntropyGrad", ReductionMap},
+  {"NLLLoss", ReductionMap},
+};
+
+int64_t CheckAndConvertUtils::GetDataFormatEnumValue(const std::string &value) {
+  if (DataFormatToEnumMap.find(value) == DataFormatToEnumMap.end()) {
+    MS_LOG(ERROR) << "Can not convert data format " << value << "to enum";
+  }
+  return DataFormatToEnumMap[value];
+}
+
+int64_t CheckAndConvertUtils::GetPadModEnumValue(const std::string &value, bool is_upper) {
+  std::map<std::string, int64_t> pad_map = PadModToEnumMap;
+  if (is_upper) {
+    pad_map = PadModToEnumUpperMap;
+  }
+  if (pad_map.find(value) == pad_map.end()) {
+    MS_LOG(ERROR) << "Can not convert pad mode " << value << "to enum";
+  }
+  return pad_map[value];
+}
+
+AttrConverterPair CheckAndConvertUtils::GetAttrConvertPair(const std::string &op_type, const std::string &attr_name) {
+  AttrConverterPair attr_pair;
+  if (op_type.empty() || attr_name.empty()) {
+    return attr_pair;
+  }
+  auto op_attr_map_it = PrimAttrConvertMap.find(op_type);
+  if (op_attr_map_it == PrimAttrConvertMap.end()) {
+    return attr_pair;
+  }
+  auto op_attr_map = op_attr_map_it->second;
+  auto attr_pair_it = op_attr_map.find(attr_name);
+  if (attr_pair_it == op_attr_map.end()) {
+    return attr_pair;
+  }
+
+  return attr_pair_it->second;
+}
+
+bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, const std::string &attr_name,
+                                                 ValuePtr *const value) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  if (!(*value)->isa<StringImm>()) {
+    return false;
+  }
+  auto attr_map_pair = GetAttrConvertPair(op_type, attr_name);
+  if (attr_map_pair.first.size() == 0) {
+    return false;
+  }
+
+  std::string real_value = std::dynamic_pointer_cast<StringImm>(*value)->value();
+  bool do_convert = false;
+  if (attr_map_pair.first.find(real_value) != attr_map_pair.first.end()) {
+    do_convert = true;
+  }
+  if (!do_convert) {
+    transform(real_value.begin(), real_value.end(), real_value.begin(), ::toupper);
+    if (attr_map_pair.first.find(real_value) == attr_map_pair.first.end()) {
+      MS_LOG(DEBUG) << "Can not convert " << op_type << " attr " << attr_name << ": " << real_value << " to int";
+      return false;
+    }
+  }
+
+  *value = MakeValue<int64_t>(attr_map_pair.first[real_value]);
+  MS_LOG(DEBUG) << "convert str to int, name: " << op_type << ", attr: " << attr_name;
+  return true;
+}
+
+bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name,
+                                                    ValuePtr *const value) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  if (!(*value)->isa<Int64Imm>()) {
+    return false;
+  }
+  auto attr_map_pair = GetAttrConvertPair(op_type, attr_name);
+  if (attr_map_pair.second.size() == 0) {
+    return false;
+  }
+
+  int64_t real_value = std::dynamic_pointer_cast<Int64Imm>(*value)->value();
+  if (attr_map_pair.second.find(real_value) == attr_map_pair.second.end()) {
+    MS_LOG(DEBUG) << "Can not convert " << op_type << " attr " << attr_name << ": " << real_value << " to string";
+    return false;
+  }
+  *value = MakeValue<std::string>(attr_map_pair.second[real_value]);
+  MS_LOG(DEBUG) << "convert int to str, name: " << op_type << ", attr: " << attr_name;
+  return true;
+}
+
 namespace {
-const std::map<CompareEnum, std::function<bool(int, int)>> kCompareMap = {
-  {kEqual, [](int num1, int num2) -> bool { return num1 == num2; }},
-  {kNotEqual, [](int num1, int num2) -> bool { return num1 != num2; }},
-  {kLessThan, [](int num1, int num2) -> bool { return num1 < num2; }},
-  {kLessEqual, [](int num1, int num2) -> bool { return num1 <= num2; }},
-  {kGreaterThan, [](int num1, int num2) -> bool { return num1 > num2; }},
-  {kGreaterEqual, [](int num1, int num2) -> bool { return num1 >= num2; }}};
+typedef std::map<std::string, std::function<ValuePtr(ValuePtr)>> AttrFunction;
 
-const std::map<CompareRange, std::function<bool(int, std::pair<int, int>)>> kCompareRangeMap = {
-  {kIncludeNeither,
-   [](int num1, std::pair<int, int> range) -> bool { return num1 > range.first && num1 < range.second; }},
-  {kIncludeLeft,
-   [](int num1, std::pair<int, int> range) -> bool { return num1 >= range.first && num1 < range.second; }},
-  {kIncludeRight,
-   [](int num1, std::pair<int, int> range) -> bool { return num1 > range.first && num1 <= range.second; }},
-  {kIncludeBoth,
-   [](int num1, std::pair<int, int> range) -> bool { return num1 >= range.first && num1 <= range.second; }}};
+ValuePtr L2NormalizeAttrConversion(ValuePtr attr) {
+  if (attr->isa<Int64Imm>()) {
+    return attr;
+  }
+  auto attr_value = GetValue<std::vector<int64_t>>(attr);
+  return MakeValue(attr_value[0]);
+}
 
-const std::map<CompareEnum, std::string> kCompareToString = {
-  {kEqual, "equal "},          {kNotEqual, "not equal "},       {kLessThan, "less than "},
-  {kLessEqual, "less eqaul "}, {kGreaterThan, "greater than "}, {kGreaterEqual, "greate equal "}};
-
-const std::map<CompareRange, std::pair<std::string, std::string>> kCompareRangeToString = {
-  {kIncludeNeither, {"in (", ")"}},
-  {kIncludeLeft, {" in [", ")"}},
-  {kIncludeRight, {"in (", "]"}},
-  {kIncludeBoth, {"in [", "]"}}};
+std::map<std::string, AttrFunction> kIrAttrToOpAttr = {{"L2Normalize", {{"axis", L2NormalizeAttrConversion}}},
+                                                       {"L2NormalizeGrad", {{"axis", L2NormalizeAttrConversion}}}};
 }  // namespace
+
 bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2) {
   if (vec_1.size() != vec_2.size()) {
     return false;
@@ -70,7 +263,7 @@ std::vector<int64_t> CheckAndConvertUtils::CheckPositiveVector(const std::string
     if (allow_four) {
       buffer << "or four ";
     }
-    buffer << " positive int numbers , but got [";
+    buffer << " positive int64_t numbers , but got [";
     for (auto item : arg_value) {
       buffer << item << ",";
     }
@@ -115,10 +308,10 @@ std::string CheckAndConvertUtils::CheckString(const std::string &arg_name, const
   MS_EXCEPTION(ValueError) << buffer.str();
 }
 
-int CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int arg_value, CompareEnum compare_operator,
-                                       int match_value, const std::string &prim_name) {
-  auto iter = kCompareMap.find(compare_operator);
-  if (iter == kCompareMap.end()) {
+int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t arg_value, CompareEnum compare_operator,
+                                           int64_t match_value, const std::string &prim_name) {
+  auto iter = kCompareMap<float>.find(compare_operator);
+  if (iter == kCompareMap<float>.end()) {
     MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
   }
   if (iter->second(arg_value, match_value)) {
@@ -139,35 +332,6 @@ int CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int arg_valu
   MS_EXCEPTION(ValueError) << buffer.str();
 }
 
-void CheckAndConvertUtils::CheckInRange(const std::string &arg_name, int arg_value, CompareRange compare_operator,
-                                        const std::pair<int, int> &range, const std::string &prim_name) {
-  auto iter = kCompareRangeMap.find(compare_operator);
-  if (iter == kCompareRangeMap.end()) {
-    MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
-  }
-  if (range.first >= range.second) {
-    MS_EXCEPTION(ArgumentError) << "the check range left must be larger than right number bug got [ " << range.first
-                                << "," << range.second;
-  }
-  if (iter->second(arg_value, range)) {
-    return;
-  }
-  std::ostringstream buffer;
-  if (prim_name.empty()) {
-    buffer << "The ";
-  } else {
-    buffer << "For " << prim_name << " the ";
-  }
-  buffer << arg_name << " must ";
-  auto iter_to_string = kCompareRangeToString.find(compare_operator);
-  if (iter_to_string == kCompareRangeToString.end()) {
-    MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare string map";
-  }
-  auto range_strng = iter_to_string->second;
-  buffer << range_strng.first << range.first << "," << range_strng.second << " , but got " << arg_value;
-  MS_EXCEPTION(ValueError) << buffer.str();
-}
-
 std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::string &arg_name,
                                                                   const BaseShapePtr &shape,
                                                                   const std::string &prim_name) {
@@ -181,11 +345,11 @@ std::vector<int64_t> CheckAndConvertUtils::ConvertShapePtrToShape(const std::str
   return shape_element->shape();
 }
 
-void CheckAndConvertUtils::Check(const string &arg_name, int arg_value, CompareEnum compare_type,
-                                 const string &value_name, int value, const string &prim_name,
+void CheckAndConvertUtils::Check(const string &arg_name, int64_t arg_value, CompareEnum compare_type,
+                                 const string &value_name, int64_t value, const string &prim_name,
                                  ExceptionType exception_type) {
-  auto iter = kCompareMap.find(compare_type);
-  if (iter == kCompareMap.end()) {
+  auto iter = kCompareMap<float>.find(compare_type);
+  if (iter == kCompareMap<float>.end()) {
     MS_EXCEPTION(NotExistsError) << "the compare type :" << compare_type << " is not in the compare map";
   }
   if (iter->second(arg_value, value)) {
@@ -203,41 +367,6 @@ void CheckAndConvertUtils::Check(const string &arg_name, int arg_value, CompareE
   }
   MS_EXCEPTION(exception_type) << buffer.str() << arg_name << " should be " << iter_to_string->second << value
                                << " but got " << arg_value;
-}
-void CheckAndConvertUtils::Check(const string &arg_name, const std::vector<int64_t> &arg_value,
-                                 CompareEnum compare_type, const string &value_name, const std::vector<int64_t> &value,
-                                 const string &prim_name, ExceptionType exception_type) {
-  if (compare_type != kEqual) {
-    auto iter = kCompareToString.find(compare_type);
-    if (iter != kCompareToString.end()) {
-      MS_EXCEPTION(NotSupportError) << "Only supported equal to compare two vectors but got " << iter->second;
-    }
-    MS_EXCEPTION(UnknownError) << "Cannot find the operator " << compare_type << "in the compare map!";
-  }
-  if (arg_value == value) {
-    return;
-  }
-  std::ostringstream buffer;
-  if (prim_name.empty()) {
-    buffer << "The ";
-  } else {
-    buffer << "For " << prim_name << " the ";
-  }
-  auto iter_to_string = kCompareToString.find(compare_type);
-  if (iter_to_string == kCompareToString.end()) {
-    MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_type << " cannot find in the compare string map";
-  }
-  buffer << arg_name << "should be " << iter_to_string->second << " [";
-  for (auto item : value) {
-    buffer << item << ",";
-  }
-  buffer << "] "
-         << "but got [";
-  for (auto item : arg_value) {
-    buffer << item << " ,";
-  }
-  buffer << "]";
-  MS_EXCEPTION(exception_type) << buffer.str();
 }
 
 TypeId CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, TypePtr> &types,
@@ -279,5 +408,174 @@ TypeId CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Typ
     MS_EXCEPTION(TypeError) << buffer.str();
   }
   return *types_id.begin();
+}
+
+void CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name, const TypePtr type,
+                                                const std::set<TypeId> &check_list, const std::string &prim_name) {
+  MS_EXCEPTION_IF_NULL(type);
+  if (!type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s " << type_name << " input must be tensor type but got "
+                            << type->ToString();
+  }
+  auto tensor_type = type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type);
+  auto element = tensor_type->element();
+  MS_EXCEPTION_IF_NULL(element);
+  std::ostringstream buffer;
+  if (check_list.find(element->type_id()) == check_list.end()) {
+    buffer << "type of " << type_name << " should be in [";
+    for (auto type_elem : check_list) {
+      buffer << TypeIdToType(type_elem)->ToString() << " ,";
+    }
+    buffer << "], but got " << type->ToString();
+    MS_EXCEPTION(TypeError) << buffer.str();
+  }
+}
+
+void CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const TypePtr type_,
+                                         const std::set<TypePtr> &template_types, const std::string &prim_name) {
+  MS_EXCEPTION_IF_NULL(type_);
+  bool hit = false;
+  for (auto template_type : template_types) {
+    if (type_->isa<Type>()) {
+      if (IsIdentidityOrSubclass(type_, template_type)) {
+        hit = true;
+        break;
+      }
+    } else if (type_->type_id() == template_type->type_id()) {
+      hit = true;
+      break;
+    }
+  }
+  if (!hit) {
+    std::string type_str = type_->ToString();
+    std::ostringstream buffer;
+    buffer << "For '" << prim_name << "', the type of `" << type_name << "` should be subclass of ";
+    for (auto template_type : template_types) {
+      buffer << template_type->ToString() << ",";
+    }
+    buffer << " but got " << type_str << ".";
+    MS_EXCEPTION(TypeError) << buffer.str();
+  }
+}
+
+void CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
+                                                        const std::set<TypePtr> &valid_values,
+                                                        const std::string &prim_name, const bool allow_mix) {
+  std::vector<std::map<std::string, TypePtr>> check_results;
+  for (auto &iter : args) {
+    std::map<std::string, TypePtr> arg = {{iter.first, iter.second}};
+    check_results.push_back(_CheckArgumentType(arg, valid_values, prim_name));
+  }
+
+  std::map<std::string, TypePtr> &arg_ = check_results[0];
+  int64_t size = check_results.size();
+  for (int64_t it = 1; it != size; it++) {
+    arg_ = _CheckTypeSame(arg_, check_results[it], prim_name, allow_mix);
+  }
+}
+
+std::map<std::string, TypePtr> CheckAndConvertUtils::_CheckArgumentType(const std::map<std::string, TypePtr> &arg,
+                                                                        const std::set<TypePtr> &valid_values,
+                                                                        const std::string &prim_name) {
+  std::string arg_key = arg.begin()->first;
+  TypePtr arg_val = arg.begin()->second;
+
+  if (arg_val->isa<TensorType>()) {
+    auto arg_val_ = std::static_pointer_cast<TensorType>(arg_val);
+    arg_val = arg_val_->element();
+  }
+
+  auto it = valid_values.find(arg_val);
+  if (it == valid_values.end()) {
+    std::ostringstream buffer;
+    buffer << "For '" << prim_name << "' , the `" << arg_key << "` should be in { ";
+    for (auto valid_value : valid_values) {
+      buffer << valid_value->ToString() << " },";
+      buffer << "but `" << arg_key << "`"
+             << "is" << arg_val->ToString() << ".";
+    }
+    MS_EXCEPTION(TypeError) << buffer.str();
+  }
+  return arg;
+}
+
+std::map<std::string, TypePtr> CheckAndConvertUtils::_CheckTypeSame(const std::map<std::string, TypePtr> &arg1,
+                                                                    const std::map<std::string, TypePtr> &arg2,
+                                                                    const std::string &prim_name,
+                                                                    const bool allow_mix) {
+  std::string arg1_name = arg1.begin()->first;
+  TypePtr arg1_type = arg1.begin()->second;
+  std::string arg2_name = arg2.begin()->first;
+  TypePtr arg2_type = arg2.begin()->second;
+  bool except_flag = false;
+
+  if (arg1_type->isa<TensorType>() && arg2_type->isa<TensorType>()) {
+    arg1_type = std::static_pointer_cast<TensorType>(arg1_type)->element();
+    arg2_type = std::static_pointer_cast<TensorType>(arg2_type)->element();
+  } else if (allow_mix) {
+    arg1_type = arg1_type->isa<TensorType>() ? std::static_pointer_cast<TensorType>(arg1_type)->element() : arg1_type;
+    arg2_type = arg2_type->isa<TensorType>() ? std::static_pointer_cast<TensorType>(arg2_type)->element() : arg2_type;
+  } else {
+    except_flag = true;
+  }
+
+  if (except_flag || arg1_type != arg2_type) {
+    std::ostringstream buffer;
+    buffer << "For '" << prim_name << "'"
+           << "type of "
+           << "`" << arg2_name << "` should be same as "
+           << "`" << arg1_name << "`,";
+    buffer << "but `" << arg1_name << "` is " << arg1_type->ToString() << "and `" << arg2_name << "` is "
+           << arg2_type->ToString() << ".";
+    MS_EXCEPTION(TypeError) << buffer.str();
+  }
+  return arg1;
+}
+
+TypeId CheckAndConvertUtils::CheckTypeSame(const std::string &arg_name, const TypePtr arg_type,
+                                           const std::set<TypeId> &valid_type, const std::string &prim_name) {
+  if (valid_type.empty()) {
+    MS_EXCEPTION(ArgumentError) << "Trying to use the function to check a empty valid_type!";
+  }
+  // std::set<TypeId> types_id;
+  std::ostringstream buffer;
+  TypeId arg_type_;
+  arg_type_ = arg_type->isa<TensorType>() ? std::static_pointer_cast<TensorType>(arg_type)->generic_type_id()
+                                          : arg_type->type_id();
+
+  auto it = valid_type.find(arg_type_);
+  if (it == valid_type.end()) {
+    buffer << "For" << prim_name << ", the '" << arg_name << "' should be {' one of '" << valid_type.size() << "'}";
+    for (auto type : valid_type) {
+      buffer << "{" << TypeIdLabel(type);
+    }
+    buffer << "},";
+    buffer << "but got " << arg_type->ToString() << ".";
+    MS_EXCEPTION(TypeError) << buffer.str();
+  }
+  return arg_type_;
+}
+
+bool CheckAndConvertUtils::CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name,
+                                               ValuePtr *const value) {
+  if (*value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  if (op_type.empty() || attr_name.empty()) {
+    return false;
+  }
+  auto op_map = kIrAttrToOpAttr.find(op_type);
+  if (op_map == kIrAttrToOpAttr.end()) {
+    return false;
+  }
+  auto attr_func = op_map->second.find(attr_name);
+  if (attr_func == op_map->second.end()) {
+    return false;
+  }
+  *value = attr_func->second(*value);
+  MS_LOG(DEBUG) << "convert ir attr to op attr, name: " << op_type << ", attr: " << attr_name;
+  return true;
 }
 }  // namespace mindspore

@@ -25,7 +25,7 @@
 #include <utility>
 #include "ir/tensor.h"
 #include "ir/param_info.h"
-#include "c_ops/primitive_c.h"
+#include "ops/primitive_c.h"
 #include "abstract/abstract_value.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
@@ -676,7 +676,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   const std::string &node_type = node_proto.op_type();
 
   std::shared_ptr<Primitive> prim;
-  auto op_primc_fns = OpPrimCRegister::GetInstance().GetPrimCMap();
+  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   if (op_primc_fns.find(node_type) != op_primc_fns.end()) {
     prim = op_primc_fns[node_type]();
   } else {
