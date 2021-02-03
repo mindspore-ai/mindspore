@@ -20,6 +20,7 @@
 #include <set>
 #include "base/core_ops.h"
 #include "ir/param_info.h"
+#include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
@@ -400,8 +401,8 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
     AnfAlgo::SetNodeAttr(kIsBackendCast, MakeValue(false), cnode);
   }
   SetKernelInfoForNode(cnode);
-  if (AnfAlgo::HasNodeAttr("io_format", cnode)) {
-    auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, "io_format");
+  if (AnfAlgo::HasNodeAttr(kAttrFormat, cnode)) {
+    auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFormat);
     if (attr == kOpFormat_NCDHW) {
       ResetInFormat(cnode, kOpFormat_NCDHW);
     }
