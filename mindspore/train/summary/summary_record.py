@@ -36,7 +36,7 @@ _summary_lock = threading.Lock()
 # cache the summary data
 _summary_tensor_cache = {}
 _DEFAULT_EXPORT_OPTIONS = {
-    'tensor_format': 'npy',
+    'tensor_format': {'npy'},
 }
 
 
@@ -68,13 +68,21 @@ def process_export_options(export_options):
 
     check_value_type('export_options', export_options, [dict, type(None)])
 
-    for param_name in export_options:
-        check_value_type(param_name, param_name, [str])
+    for export_option, export_format in export_options.items():
+        check_value_type('export_option', export_option, [str])
+        check_value_type('export_format', export_format, [str])
 
     unexpected_params = set(export_options) - set(_DEFAULT_EXPORT_OPTIONS)
     if unexpected_params:
         raise ValueError(f'For `export_options` the keys {unexpected_params} are unsupported, '
                          f'expect the follow keys: {list(_DEFAULT_EXPORT_OPTIONS.keys())}')
+
+    for export_option, export_format in export_options.items():
+        unexpected_format = {export_format} - _DEFAULT_EXPORT_OPTIONS.get(export_option)
+        if unexpected_format:
+            raise ValueError(
+                f'For `export_options`, the export_format {unexpected_format} are unsupported for {export_option}, '
+                f'expect the follow values: {list(_DEFAULT_EXPORT_OPTIONS.get(export_option))}')
 
     for item in set(export_options):
         check_value_type(item, export_options.get(item), [str, type(None)])
