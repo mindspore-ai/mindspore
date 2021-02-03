@@ -34,7 +34,6 @@ python ${PROJECT_DIR}/../run_ner.py  \
     --use_crf="false" \
     --device_id=0 \
     --epoch_num=5 \
-    --num_class=41 \
     --train_data_shuffle="true" \
     --eval_data_shuffle="false" \
     --train_batch_size=32 \
