@@ -96,9 +96,11 @@ class TopCellInfo {
   TopCellInfo(bool topest, ResourcePtr r, FuncGraphPtr df, std::string cellid)
       : is_topest(topest), resource(std::move(r)), df_builder(std::move(df)), cell_id(std::move(cellid)) {}
 
+  bool need_grad{true};
   bool is_topest{false};
   bool do_vm_compiled{false};
   bool forward_already_run{false};
+  size_t top_cell_index{0};
   ResourcePtr resource{nullptr};
   FuncGraphPtr df_builder{nullptr};
   FuncGraphPtr bg{nullptr};  // Backward graph
@@ -134,6 +136,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   py::object Run(const py::object &cell, const py::tuple &args, const py::object &phase);
+  void RunInner(const py::object &cell, const py::tuple &args, const py::object &phase, py::object *ret);
   py::object CheckGraph(const py::object &cell, const py::args &args);
   py::object CheckAlreadyRun(const py::object &cell, const py::args &args);
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
@@ -241,7 +244,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool CheckCellGraph(const std::string &cell_id, bool is_grad = false);
   bool CheckDynamicCell(const std::string &cell_id);
   bool CheckRealDynamicCell(const std::string &cell_id);
-  void UpdateBpropCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id, bool need_cloned,
+  bool UpdateBpropCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id, bool need_cloned,
                             bool is_grad);
   void UpdateCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id,
                        bool need_cloned = false, bool is_grad = false);
@@ -308,8 +311,10 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::mutex instance_lock_;
   static int64_t graph_id_;
   size_t grad_order_{0};
+  size_t top_cell_index_{0};
   std::string top_cell_id_;
   bool grad_flag_{false};
+  bool in_bprop_process_{false};
   bool in_grad_process_{false};
   bool has_dynamic_cell_{false};
   bool grad_is_running_{false};
