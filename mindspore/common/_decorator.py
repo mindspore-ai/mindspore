@@ -15,12 +15,13 @@
 """Providing decorators."""
 
 
-def deprecated(version, substitute):
+def deprecated(version, substitute, use_substitute_name=False):
     """deprecated warning
 
     Args:
         version (str): version that the operator or function is deprecated.
         substitute (str): the substitute name for deprecated operator or function.
+        use_substitute_name (bool): flag for whether to use substitute name for deprecated operator or function
     """
 
     def decorate(func):
@@ -29,6 +30,8 @@ def deprecated(version, substitute):
             name = cls.__name__ if cls else func.__name__
             print(f"WARNING: '{name}' is deprecated from version {version} and will be removed in a future version, "
                   f"use '{substitute}' instead.")
+            if cls and use_substitute_name:
+                cls.substitute_name = substitute
             ret = func(*args, **kwargs)
             return ret
 
