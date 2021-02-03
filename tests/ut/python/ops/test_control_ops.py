@@ -761,27 +761,6 @@ def test_while_scalar():
     out = net(x, y)
 
 
-def test_while_tensor():
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.t = Tensor(np.ones([6, 8, 10], np.int32))
-            self.count = Tensor(np.array([10], np.int32))
-
-        def construct(self, x, y):
-            i = 0
-            t = self.t
-            while (i < self.count):
-                t = t + x + y
-                i = i + 1
-            return t
-
-    net = Net()
-    x = Tensor(np.ones([6, 8, 10], np.int32))
-    y = Tensor(np.ones([6, 8, 10], np.int32))
-    out = net(x, y)
-
-
 def test_large_for_loop():
     class Net(nn.Cell):
         def __init__(self):
