@@ -30,5 +30,5 @@ Graph::Graph(std::nullptr_t) : graph_data_(nullptr) {}
 
 bool Graph::operator==(std::nullptr_t) const { return graph_data_ == nullptr; }
 
-ModelType Graph::ModelType() const { return graph_data_->ModelType(); }
+ModelType Graph::ModelType() const { return kMindIR; }
 }  // namespace mindspore
