@@ -28,7 +28,7 @@ void ElementMulAcc(const float *input0, const float *input1, float *output, int 
 int ElementOptMulAcc(const float *input0, const float input1, float *output, const int element_size);
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *bias,
-          float *hidden_state, float *cell_state, float *gate_buffer, float *state_buffer,
+          float *hidden_state, float *cell_state, float *gate_buffer, float *state_buffer, float *matmul_buffer[2],
           const LstmParameter *lstm_parm);
 #ifdef __cplusplus
 }
