@@ -94,8 +94,15 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph,
 void SomasSolverPre::Log(const session::KernelGraph *graph,
                          const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
                          const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) {
-  MS_LOG(INFO) << "SomasSolver::Log Writing somas-input.txt..";
+  SolverInputLog(graph, tensors, pConstraints, continuous_v);
+  SolverOutputLog(graph, tensors);
+}
 
+void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph,
+                                    const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
+                                    const std::vector<DynamicBitSet> *pConstraints,
+                                    const vector<vector<size_t>> &continuous_v) {
+  MS_LOG(INFO) << "SomasSolver::Log Writing somas-input.txt..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
@@ -140,16 +147,24 @@ void SomasSolverPre::Log(const session::KernelGraph *graph,
   }
   ofs.close();
 
-  MS_LOG(INFO) << "SomasSolver::Log Writing somas-output.txt..";
+  MS_LOG(INFO) << "SomasSolver input Log done";
+}
+
+void SomasSolverPre::SolverOutputLog(const session::KernelGraph *graph,
+                                     const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors) const {
+  MS_LOG(INFO) << "SomasSolver::Log Writing somas output...";
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto save_graphs_path = context_ptr->get_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH);
   std::string out_filename =
     save_graphs_path + "/" + "somas_solver_output_" + std::to_string(graph->graph_id()) + ".ir";
   if (out_filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << out_filename << " is too long.";
     return;
   }
-  auto out_real_path = Common::GetRealPath(filename);
+  auto out_real_path = Common::GetRealPath(out_filename);
   if (!out_real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    MS_LOG(ERROR) << "Get real path failed. path=" << out_filename;
     return;
   }
 
@@ -181,7 +196,7 @@ void SomasSolverPre::Log(const session::KernelGraph *graph,
   }
   ofs_out.close();
 
-  MS_LOG(INFO) << "SomasSolver::Log done";
+  MS_LOG(INFO) << "SomasSolver output Log done";
 }
 }  // namespace somas
 }  // namespace mindspore
