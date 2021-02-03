@@ -455,6 +455,12 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
     uniform_split = layout[4]
     opt_shard_group = layout[5]
 
+    allgather_net = None
+    if param_name in net.parallel_parameter_merge_net_dict:
+        allgather_net = net.parallel_parameter_merge_net_dict[param_name]
+    else:
+        logger.info("need to create allgather net for %s", param_name)
+
     if integrated_save:
         if uniform_split == 0:
             raise RuntimeError("Integrated save checkpoint only support uniform split tensor now.")
@@ -462,19 +468,25 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
         # pipeline parallel need to be supported here later
         for dim in tensor_map:
             if dim != -1:
-                if opt_shard_group:
-                    allgather_net = get_allgather_cell(opt_shard_group, True)
-                else:
-                    allgather_net = get_allgather_cell(opt_shard_group, False)
+                if allgather_net is None:
+                    if opt_shard_group:
+                        allgather_net = get_allgather_cell(opt_shard_group, True)
+                    else:
+                        allgather_net = get_allgather_cell(opt_shard_group, False)
+                    net.parallel_parameter_merge_net_dict[param_name] = allgather_net
                 param_data = allgather_net(param_data)
                 if field_size:
                     return _reshape_param_data_with_weight(param_data, dev_mat, field_size)
                 return _reshape_param_data(param_data, dev_mat, tensor_map)
         if opt_shard_group:
-            allgather_net = get_allgather_cell(opt_shard_group, False)
+            if allgather_net is None:
+                allgather_net = get_allgather_cell(opt_shard_group, False)
+                net.parallel_parameter_merge_net_dict[param_name] = allgather_net
             param_data = allgather_net(param_data)
     elif opt_shard_group:
-        allgather_net = get_allgather_cell(opt_shard_group, False)
+        if allgather_net is None:
+            allgather_net = get_allgather_cell(opt_shard_group, False)
+            net.parallel_parameter_merge_net_dict[param_name] = allgather_net
         param_data = allgather_net(param_data)
     return param_data
 

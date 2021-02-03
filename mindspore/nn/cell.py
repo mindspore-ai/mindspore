@@ -90,6 +90,7 @@ class Cell(Cell_):
         self._phase = 'train'
         self._parameter_layout_dict = {}
         self._parallel_parameter_name_list = ()
+        self._parallel_parameter_merge_net_dict = {}
         self._create_time = int(time.time() * 1e9)
         self.phase_prefix = ""
         self.parameter_broadcast_done = False
@@ -223,6 +224,16 @@ class Cell(Cell_):
         if not isinstance(value, list):
             raise TypeError("'parallel_parameter_name_list' must be list type.")
         self._parallel_parameter_name_list = value
+
+    @property
+    def parallel_parameter_merge_net_dict(self):
+        return self._parallel_parameter_merge_net_dict
+
+    @parallel_parameter_merge_net_dict.setter
+    def parallel_parameter_merge_net_dict(self, value):
+        if not isinstance(value, dict):
+            raise TypeError("'parallel_parameter_merge_net_dict' must be dict type.")
+        self._parallel_parameter_merge_net_dict = value
 
     def get_func_graph_proto(self):
         """Return graph binary proto."""
@@ -382,46 +393,63 @@ class Cell(Cell_):
             self._add_attr(key, value)
         self._attr_synced = True
 
+    def _set_attr_for_parameter(self, name, value):
+        """Set attr for parameter."""
+        cells = self.__dict__.get('_cells')
+        params = self.__dict__.get('_params')
+        if params is None:
+            raise AttributeError("Can not assign params before Cell.__init__() call.")
+        if name in self.__dict__:
+            if self.__dict__[name] is not None:
+                raise TypeError("The type of value should not be Parameter or Cell, but got Parameter.")
+            del self.__dict__[name]
+        if cells and name in cells:
+            raise TypeError("The type of value should be Cell, but got Parameter.")
+        self.insert_param_to_cell(name, value)
+
+    def _set_attr_for_parameter_tuple(self, name, value):
+        """Set attr for parameter tuple."""
+        params = self.__dict__.get('_params')
+        params_list = self.__dict__.get('_params_list')
+        if params is None:
+            raise AttributeError("Can not assign params before Cell.__init__() call.")
+        for item in value:
+            self.insert_param_to_cell(item.name, item, check_name=False)
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            if name in self.__dict__:
+                del self.__dict__[name]
+            if name in params:
+                del params[name]
+            params_list[name] = value
+        else:
+            object.__setattr__(self, name, value)
+
+    def _set_attr_for_cell(self, name, value):
+        """Set attr for cell."""
+        cells = self.__dict__.get('_cells')
+        params = self.__dict__.get('_params')
+        if cells is None:
+            raise AttributeError("Can not assign cells before Cell.__init__() call.")
+        if name in self.__dict__:
+            del self.__dict__[name]
+        if params and name in params:
+            raise TypeError("The type of value should be Parameter, but got Cell.")
+        if self._auto_prefix:
+            value.update_parameters_name(name + '.')
+        cells[name] = value
+        if hasattr(self, '_cell_init_args'):
+            self.cell_init_args += str({name: value})
+
     def __setattr__(self, name, value):
         cells = self.__dict__.get('_cells')
         params = self.__dict__.get('_params')
-        params_list = self.__dict__.get('_params_list')
         tensor_list = self.__dict__.get('_tensor_list')
         if isinstance(value, Parameter):
-            if params is None:
-                raise AttributeError("Can not assign params before Cell.__init__() call.")
-            if name in self.__dict__:
-                if self.__dict__[name] is not None:
-                    raise TypeError("The type of value should not be Parameter or Cell, but got Parameter.")
-                del self.__dict__[name]
-            if cells and name in cells:
-                raise TypeError("The type of value should be Cell, but got Parameter.")
-            self.insert_param_to_cell(name, value)
+            self._set_attr_for_parameter(name, value)
         elif isinstance(value, ParameterTuple):
-            if params is None:
-                raise AttributeError("Can not assign params before Cell.__init__() call.")
-            for item in value:
-                self.insert_param_to_cell(item.name, item, check_name=False)
-            if context.get_context("mode") == context.PYNATIVE_MODE:
-                if name in self.__dict__:
-                    del self.__dict__[name]
-                if name in params:
-                    del params[name]
-                params_list[name] = value
-            else:
-                object.__setattr__(self, name, value)
+            self._set_attr_for_parameter_tuple(name, value)
         elif isinstance(value, Cell):
-            if cells is None:
-                raise AttributeError("Can not assign cells before Cell.__init__() call.")
-            if name in self.__dict__:
-                del self.__dict__[name]
-            if params and name in params:
-                raise TypeError("The type of value should be Parameter, but got Cell.")
-            if self._auto_prefix:
-                value.update_parameters_name(name + '.')
-            cells[name] = value
-            if hasattr(self, '_cell_init_args'):
-                self.cell_init_args += str({name: value})
+            self._set_attr_for_cell(name, value)
         elif params and name in params:
             if isinstance(value, Tensor) and self._params[name] is not None:
                 self._params[name].set_data(value)
