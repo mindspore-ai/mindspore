@@ -40,6 +40,7 @@ int TransposeFp16CPUKernel::Init() {
 int TransposeFp16CPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  param->data_size_ = in_tensors_[0]->Size();
   if (in_tensors_.size() == 2) {
     auto input_perm = in_tensors_.at(1);
     MS_ASSERT(input_perm != nullptr);

@@ -82,7 +82,7 @@ int BiasCPUFp16Kernel::Init() {
       return RET_NULL_PTR;
     }
     auto *bias = reinterpret_cast<float *>(bias_tensor->MutableData());
-    if (bias != nullptr) {
+    if (bias == nullptr) {
       MS_LOG(ERROR) << "bias is nullptr!";
       return RET_NULL_PTR;
     }
