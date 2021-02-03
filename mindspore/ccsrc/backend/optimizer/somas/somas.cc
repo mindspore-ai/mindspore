@@ -96,7 +96,7 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
   ret = CalcSomasModelHash(graph);
   if (ret) {
     std::string filename =
-      save_graphs_path_ + "/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
+      save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
     ret = LoadSomasResult(graph, filename);
     if (ret) {
       MS_LOG(INFO) << "Load Somas Cache file " << filename << " Successfully.";
@@ -130,7 +130,7 @@ bool Somas::CalcSomasModelHash(const session::KernelGraph *graph) {
   hash_id_ = std::to_string(std::hash<std::string>()(model_str));
   MS_LOG(INFO) << "Graph " << graph->graph_id() << "'s SOMAS Model hash id is " << hash_id_;
   std::string filename =
-    save_graphs_path_ + "/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
+    save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".info";
   if (filename.size() > PATH_MAX) {
     MS_LOG(WARNING) << "File path " << filename << " is too long.";
     return false;
@@ -185,7 +185,7 @@ bool Somas::SaveSomasResult(const session::KernelGraph *graph) {
   somas_json[kTensors] = tensors_json;
 
   std::string filename =
-    save_graphs_path_ + "/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
+    save_graphs_path_ + "/somas_meta/" + "somas_graph" + std::to_string(graph->graph_id()) + "_" + hash_id_ + ".json";
   if (filename.size() > PATH_MAX) {
     MS_LOG(WARNING) << "File path " << filename << " is too long.";
     return false;
