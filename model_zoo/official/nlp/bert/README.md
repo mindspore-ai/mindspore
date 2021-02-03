@@ -292,11 +292,10 @@ options:
     --use_crf                         whether to use crf to calculate loss: true | false
     --device_id                       device id to run task
     --epoch_num                       total number of training epochs to perform
-    --num_class                       number of classes to do labeling
     --train_data_shuffle              Enable train data shuffle, default is true
     --eval_data_shuffle               Enable eval data shuffle, default is true
     --vocab_file_path                 the vocabulary file that the BERT model was trained on
-    --label2id_file_path              label to id json file
+    --label2id_file_path              label to id file, each label name must be consistent with the type name labeled in the original dataset file
     --save_finetune_checkpoint_path   path to save generated finetuning checkpoint
     --load_pretrain_checkpoint_path   initial checkpoint (usually from a pre-trained BERT model)
     --load_finetune_checkpoint_path   give a finetuning checkpoint path if only do eval
@@ -533,7 +532,7 @@ acc_num XXX, total_num XXX, accuracy 0.588986
 #### evaluation on cluener dataset when running on Ascend
 
 ```bash
-bash scripts/ner.sh
+bash scripts/run_ner.sh
 ```
 
 The command above will run in the background, you can view training logs in ner_log.txt.
@@ -548,16 +547,16 @@ F1 0.920507
 
 #### evaluation on msra dataset when running on Ascend
 
-For preprocess, you can first convert the original txt format of MSRA dataset into mindrecord by run the command as below:
+For preprocess, you can first convert the original txt format of MSRA dataset into mindrecord by run the command as below (please keep in mind that the label names in label2id_file should be consistent with the type names labeled in the original msra_dataset.xml dataset file):
 
 ```python
-python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len --class_filter="NAMEX" --split_begin=0.0 --split_end=1.0
+python src/finetune_data_preprocess.py --data_dir=/path/msra_dataset.xml --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len --class_filter="NAMEX" --split_begin=0.0 --split_end=1.0
 ```
 
 For finetune and evaluation, just do
 
 ```bash
-bash scripts/ner.sh
+bash scripts/run_ner.sh
 ```
 
 The command above will run in the background, you can view training logs in ner_log.txt.

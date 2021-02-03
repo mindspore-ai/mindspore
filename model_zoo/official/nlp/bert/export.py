@@ -29,7 +29,6 @@ parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--use_crf", type=str, default="false", help="Use cfg, default is false.")
 parser.add_argument("--downstream_task", type=str, choices=["NER", "CLS", "SQUAD"], default="NER",
                     help="at present，support NER only")
-parser.add_argument("--num_class", type=int, default=41, help="The number of class, default is 41.")
 parser.add_argument("--batch_size", type=int, default=16, help="batch size")
 parser.add_argument("--label_file_path", type=str, default="", help="label file path, used in clue benchmark.")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Bert ckpt file.")
@@ -56,7 +55,7 @@ if args.use_crf.lower() == "true":
     tag_to_index["<STOP>"] = max_val + 2
     number_labels = len(tag_to_index)
 else:
-    number_labels = args.num_class
+    number_labels = len(tag_to_index)
 
 if __name__ == "__main__":
     if args.downstream_task == "NER":

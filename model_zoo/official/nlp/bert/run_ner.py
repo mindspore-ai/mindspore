@@ -161,7 +161,6 @@ def parse_args():
                         help="Use crf, default is false")
     parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
     parser.add_argument("--epoch_num", type=int, default=5, help="Epoch number, default is 5.")
-    parser.add_argument("--num_class", type=int, default=41, help="The number of class, default is 41.")
     parser.add_argument("--train_data_shuffle", type=str, default="true", choices=["true", "false"],
                         help="Enable train data shuffle, default is true")
     parser.add_argument("--eval_data_shuffle", type=str, default="false", choices=["true", "false"],
@@ -228,7 +227,7 @@ def run_ner():
         tag_to_index["<STOP>"] = max_val + 2
         number_labels = len(tag_to_index)
     else:
-        number_labels = args_opt.num_class
+        number_labels = len(tag_to_index)
     if args_opt.do_train.lower() == "true":
         netwithloss = BertNER(bert_net_cfg, args_opt.train_batch_size, True, num_labels=number_labels,
                               use_crf=(args_opt.use_crf.lower() == "true"),

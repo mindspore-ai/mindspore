@@ -290,11 +290,10 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     --use_crf                         是否采用CRF来计算损失，可选项为true或false
     --device_id                       任务运行的设备ID
     --epoch_num                       训练轮次总数
-    --num_class                       标注类的数量
     --train_data_shuffle              是否使能训练数据集轮换，默认为true
     --eval_data_shuffle               是否使能评估数据集轮换，默认为true
     --vocab_file_path                 BERT模型训练的词汇表
-    --label2id_file_path              标注转ID的JSON文件
+    --label2id_file_path              标注文件，文件中的标注名称必须与原始数据集中所标注的类型名称完全一致
     --save_finetune_checkpoint_path   保存生成微调检查点的路径
     --load_pretrain_checkpoint_path   初始检查点（通常来自预训练BERT模型
     --load_finetune_checkpoint_path   如仅执行评估，提供微调检查点保存路径
@@ -497,7 +496,7 @@ acc_num XXX, total_num XXX, accuracy 0.588986
 #### Ascend处理器上运行后评估cluener数据集
 
 ```bash
-bash scripts/ner.sh
+bash scripts/run_ner.sh
 ```
 
 以上命令后台运行，您可以在ner_log.txt中查看训练日志。
@@ -512,16 +511,16 @@ F1 0.920507
 
 #### Ascend处理器上运行后评估msra数据集
 
-您可以采用如下方式，先将MSRA数据集的原始格式在预处理流程中转换为mindrecord格式以提升性能：
+您可以采用如下方式，先将MSRA数据集的原始格式在预处理流程中转换为mindrecord格式以提升性能 (请注意label2id_file文件中的标注名称应与数据集msra_dataset.xml文件中的标注名保持一致)：
 
 ```python
-python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len --class_filter="NAMEX" --split_begin=0.0 --split_end=1.0
+python src/finetune_data_preprocess.py --data_dir=/path/msra_dataset.xml --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len --class_filter="NAMEX" --split_begin=0.0 --split_end=1.0
 ```
 
 此后，您可以进行微调再训练和推理流程，
 
 ```bash
-bash scripts/ner.sh
+bash scripts/run_ner.sh
 ```
 
 以上命令后台运行，您可以在ner_log.txt中查看训练日志。
