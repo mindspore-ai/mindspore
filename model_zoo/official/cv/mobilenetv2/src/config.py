@@ -95,6 +95,6 @@ def set_config(args):
                  "Ascend": config_ascend})
 
     if args.platform not in config.keys():
-        raise ValueError("Unsupport platform.")
+        raise ValueError("Unsupported platform.")
 
     return config[args.platform]
