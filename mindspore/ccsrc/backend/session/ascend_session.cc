@@ -994,7 +994,7 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   for (auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph, true);
+    DumpIR(file_name, graph, true, kWholeStack);
     DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
     DumpIR("trace_code_graph", graph, true, kWholeStack);
   }
