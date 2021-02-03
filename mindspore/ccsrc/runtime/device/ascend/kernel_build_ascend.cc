@@ -171,7 +171,6 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   size_t workspace_num = kernel_mod->GetWorkspaceSizeList().size();
   size_t param_num = parameters_indexs.size();
   size_t total_num = input_num + workspace_num + output_num;
-  MS_LOG(INFO) << "parameters size: " << param_num << ", input & workspace & output num: " << total_num;
   size_t pad_index = param_num;
   for (; pad_index < total_num; ++pad_index) {
     parameters_indexs.emplace_back(0);
@@ -179,7 +178,7 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   // process input
   for (size_t j = 0; j < input_num; ++j) {
     if (parameters_indexs.at(j) == 1) {
-      MS_LOG(EXCEPTION) << "Atomic addr clean does't support clean input address, input index: " << j;
+      MS_LOG(EXCEPTION) << "Atomic addr clean doesn't support clean input address, input index: " << j;
     }
   }
   // process output

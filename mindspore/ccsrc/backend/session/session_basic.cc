@@ -1514,7 +1514,6 @@ void SessionBasic::AddParameterToGraphInputs(const std::vector<AnfNodePtr> &para
       MS_LOG(INFO) << "Can't find parameter:" << parameter->DebugString();
       continue;
     }
-    MS_LOG(INFO) << "Graph[" << graph->graph_id() << "],parameter:" << parameter->DebugString();
     graph_inputs->push_back(backend_parameter);
   }
 }

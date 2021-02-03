@@ -117,11 +117,6 @@ uint8_t *AscendMemoryManager::MallocStaticMem(size_t size, bool communication_me
     node->AddStaticMemorySize(align_size);
   }
 
-  auto device_mem_pool_offset = AscendMemoryPool::GetInstance().device_mem_pool_offset();
-  MS_LOG(INFO) << "Malloc Memory: Static, total[" << device_mem_size_ << "] (dynamic[" << total_dynamic_size_
-               << "] memory pool[" << device_mem_size_ - device_mem_pool_offset << "])"
-               << " malloc [" << align_size << "] communication_mem: " << communication_mem;
-
   if (communication_mem) {
     // create protect area [kMemAlignSize -- data -- kMemAlignSize]
     uint8_t *alloc_address = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));

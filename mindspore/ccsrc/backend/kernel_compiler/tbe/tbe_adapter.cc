@@ -227,7 +227,6 @@ void TbeAdapter::CastAttrJsonPass(const mindspore::AnfNodePtr &anf_node,
   attr_obj["valid"] = true;
   attr_obj["name"] = attr_name;
   attrs_json->push_back(attr_obj);
-  MS_LOG(INFO) << "CastAttrJsonPass done.";
 }
 
 void TbeAdapter::GenTopKV2IndicesTensorInfo(const std::shared_ptr<mindspore::AnfNode> &anf_node,

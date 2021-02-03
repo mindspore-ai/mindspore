@@ -34,7 +34,6 @@ bool TbeKernelBroadCastSelecter::GetShapeInfo(SupportFormat *support_format) {
   input_shapes_.clear();
   output_shapes_.clear();
   if (AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode_ptr_)) {
-    MS_LOG(INFO) << "This broadcast node has dynamic input.";
     auto dynamic_size_vec = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode_ptr_, kAttrDynInputSizes);
     if (dynamic_size_vec.empty() || dynamic_size_vec[0] < 2) {
       MS_LOG(EXCEPTION) << "dynamic attr set error, please check.";

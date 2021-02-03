@@ -184,7 +184,6 @@ void SetNodeAttr(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *p
       ParseAttrValue(type, attr_name, value, node_attr);
     }
   }
-  MS_LOG(INFO) << "Set node attr end!";
 }
 
 void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
@@ -256,7 +255,6 @@ void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef
 void SetNodedefProto(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef *proto) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(proto);
-  MS_LOG(INFO) << "SetNodedefProto entry";
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
@@ -269,14 +267,12 @@ void SetNodedefProto(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDe
   SetNodeOutputs(anf_node, proto);
   // set node attr
   SetNodeAttr(anf_node, proto);
-  MS_LOG(INFO) << "SetNodedefProto end!";
 }
 
 bool CreateNodeDefBytes(const std::shared_ptr<AnfNode> &anf_node,
                         const std::shared_ptr<AicpuOpKernelMod> &kernel_mod_ptr) {
   MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
   MS_EXCEPTION_IF_NULL(anf_node);
-  MS_LOG(INFO) << "CreateNodeDefBytes entry";
 
   mindspore::NodeDef proto;
   SetNodedefProto(anf_node, &proto);
@@ -286,7 +282,6 @@ bool CreateNodeDefBytes(const std::shared_ptr<AnfNode> &anf_node,
     return false;
   }
   kernel_mod_ptr->SetNodeDef(nodeDefStr);
-  MS_LOG(INFO) << "CreateNodeDefBytes end!";
   return true;
 }
 
@@ -381,8 +376,6 @@ bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
     return true;
   }
 
-  MS_LOG(INFO) << "CreateExtInfo start, " << anf_node->fullname_with_scope();
-
   uint64_t ext_info_head_len = kExtInfoHeadSize;
   std::string ext_info;
   size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
@@ -428,11 +421,11 @@ KernelModPtr AicpuOpBuild(const std::shared_ptr<AnfNode> &anf_node) {
   kernel_mod_ptr->SetAnfNode(anf_node);
   kernel_mod_ptr->SetNodeName(op_name);
   if (!CreateNodeDefBytes(anf_node, kernel_mod_ptr)) {
-    MS_LOG(EXCEPTION) << "Create nodeDefBytes faild!";
+    MS_LOG(EXCEPTION) << "Create nodeDefBytes failed!";
   }
 
   if (!CreateExtInfo(anf_node, kernel_mod_ptr)) {
-    MS_LOG(EXCEPTION) << "Create nodeDefBytes faild!";
+    MS_LOG(EXCEPTION) << "Create nodeDefBytes failed!";
   }
 
   if (!SetIOSize(anf_node, kernel_mod_ptr)) {

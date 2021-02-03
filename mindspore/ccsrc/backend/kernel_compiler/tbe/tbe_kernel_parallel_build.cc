@@ -47,7 +47,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     TbeKernelJsonCreator creator(SINGLE_BUILD);
     if (!creator.GenTbeSingleKernelJson(anf_node, &kernel_json)) {
       MS_LOG(ERROR) << "GenTbeSingleKernelJson failed";
-      TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json["op_info"].dump());
+      TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json.dump());
       return false;
     }
     // get size
@@ -59,8 +59,6 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     auto IsDynamicShape = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
     if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get()) &&
         !IsDynamicShape) {
-      MS_LOG(INFO) << "Node:" << anf_node->fullname_with_scope() << " Use cached kernel, kernel json name:."
-                   << json_name;
       continue;
     }
     // same op not need build, but need wait build finish to set kernel mode
@@ -70,7 +68,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     }
     (void)processed_kernel.insert(json_name);
     // op build
-    TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json["op_info"].dump());
+    TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json.dump());
     auto task_id = build_manger->StartCompileOp(kernel_json);
     build_manger->SaveTaskInfo(task_id, anf_node, json_name, input_size_list, output_size_list);
   }
@@ -207,7 +205,6 @@ bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std
                                          const std::vector<size_t> &output_size_list, mindspore::AnfNode *node) const {
   auto cached_kernel_pack = TbeUtils::SearchCache(json_name, processor);
   if (cached_kernel_pack != nullptr) {
-    MS_LOG(INFO) << "Find cached kernel, kernel json name" << json_name;
     auto kernel_mod_ptr = GenKernelMod(json_name, processor, input_size_list, output_size_list, cached_kernel_pack);
     MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
     AnfAlgo::SetKernelMod(kernel_mod_ptr, node);

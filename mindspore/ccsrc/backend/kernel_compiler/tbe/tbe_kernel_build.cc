@@ -97,7 +97,6 @@ constexpr auto kJIsDynamicShape = "is_dynamic_shape";
 
 bool IsNeedChangeDefaultFormat(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "Check if need change default format";
   if (AnfAlgo::HasNodeAttr("io_format", cnode->cast<CNodePtr>())) {
     auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, "io_format");
     return attr == kOpFormat_NCDHW;
@@ -149,8 +148,8 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   (*kernel_json)[kJOpInfo] = op_info_json;
   (*kernel_json)[kJFullName] = anf_node->fullname_with_scope();
 
-  MS_LOG(INFO) << "Operate type:" << creater_type_ << ", full scope name is :" << anf_node->fullname_with_scope()
-               << ", json info name is : " << json_name_ << ", kernel json:" << kernel_json->dump();
+  MS_LOG(DEBUG) << "Operate type:" << creater_type_ << ", full scope name is :" << anf_node->fullname_with_scope()
+                << ", json info name is : " << json_name_ << ", kernel json:" << kernel_json->dump();
 
   return true;
 }
@@ -465,26 +464,29 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
 
 string TbeKernelJsonCreator::GetSocVersion() {
   // Get default soc version.
-  const int kSocVersionLen = 50;
-  char soc_version[kSocVersionLen] = {0};
-  auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-  }
-  MS_LOG(INFO) << "Default SocVersion is " << soc_version;
-  // Get soc version from env value.
-  const char *soc_version_env = getenv(kSOC_VERSION);
-  if (soc_version_env != nullptr) {
-    if (std::strcmp(soc_version, soc_version_env) != 0) {
-      MS_LOG(WARNING) << "SocVerison change to " << soc_version_env;
-      ret = rtSetSocVersion(soc_version_env);
-      if (ret != RT_ERROR_NONE) {
-        MS_LOG(EXCEPTION) << "SetSocVersion to " << soc_version_env << " failed, errorno: " << ret;
-      }
-      return soc_version_env;
+  static std::string version;
+  if (version.empty()) {
+    const int kSocVersionLen = 50;
+    char soc_version[kSocVersionLen] = {0};
+    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
     }
+    // Get soc version from env value.
+    const char *soc_version_env = getenv(kSOC_VERSION);
+    if (soc_version_env != nullptr) {
+      if (std::strcmp(soc_version, soc_version_env) != 0) {
+        MS_LOG(WARNING) << "SocVerison will be change.";
+        ret = rtSetSocVersion(soc_version_env);
+        if (ret != RT_ERROR_NONE) {
+          MS_LOG(EXCEPTION) << "SetSocVersion failed, errorno: " << ret;
+        }
+        return soc_version_env;
+      }
+    }
+    version = soc_version;
   }
-  return soc_version;
+  return version;
 }
 
 void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspore::ValuePtr &value,
@@ -650,7 +652,6 @@ void GetInputSizeList(const nlohmann::json &input_json, std::vector<size_t> *inp
       size_t size_i = 1;
       if (input_json[i][m][kJValid] == false) {
         std::string input_name = input_json[i][m][kJName];
-        MS_LOG(INFO) << "Input name:" << input_name << "is optional, valid is false.";
         continue;
       }
       for (size_t j = 0; j < input_json[i][m][kJShape].size(); ++j) {
@@ -746,7 +747,7 @@ bool TbeKernelBuild::GenFusionScopeJson(const std::vector<mindspore::AnfNodePtr>
     for (const auto &data_input : layer) {
       nlohmann::json data_str;
       if (!GenFusionDataInputJson(data_input, spec_data_input, &data_str, &index)) {
-        MS_LOG(INFO) << "Fusion error: gen fusion datainput json faild.";
+        MS_LOG(INFO) << "Fusion error: gen fusion data input json failed.";
         return false;
       }
       data_list.push_back(data_str);
@@ -831,7 +832,7 @@ void TbeKernelBuild::GenSuffixDescJson(nlohmann::json *output_desc) {
   (*output_desc)[kJValidShape] = nlohmann::json::array();
 }
 
-// anf_node: this node is used to get output desc(type\foramt\shape ...)
+// anf_node: this node is used to get output desc(type\format\shape ...)
 // node_out_idx: node output index
 // desc_output_idx: this index use to add json
 // nlohmann::json *output_desc: for return
@@ -912,7 +913,6 @@ bool TbeKernelBuild::GetSpecInputLayers(const std::string &op_name,
     MS_LOG(INFO) << "Fusion error: node(" << op_name << " )'s input is null. ";
     return false;
   }
-  MS_LOG(INFO) << "Fusion info: op_name: " << op_name << "input layer size: " << reorder_layer.size();
   if (op_name == kReluGradV2OpName) {
     (*spec_data_input)[reorder_layer[0]] = kFusionReLUGradV2;
   } else if (op_name == kAddNOpName) {
@@ -948,21 +948,15 @@ bool TbeKernelBuild::GetInputLayers(const std::vector<mindspore::AnfNodePtr> &in
       MS_LOG(INFO) << "Fusion error: fusion compute node must be cnode";
       return false;
     }
-    MS_LOG(INFO) << "Fusion info: compute name: " << compute_node->fullname_with_scope();
     for (size_t i = 1; i < ccompute_node->inputs().size(); ++i) {
       auto input = ccompute_node->input(i);
       auto find_iter = std::find(input_nodes.begin(), input_nodes.end(), input);
       if (find_iter != input_nodes.end()) {
-        MS_LOG(INFO) << "Fusion info: add compute node's [" << i << "] input: " << input->fullname_with_scope();
         layer.emplace_back((*find_iter));
-      } else {
-        MS_LOG(INFO) << "Fusion warning: this input [" << i << "] may be pre compute(" << input->fullname_with_scope()
-                     << ") node's output.";
       }
     }
     TbeAdapter::FusionDataOrderPass(op_name, layer, &reorder_layer);
     if (need_spec) {
-      MS_LOG(INFO) << "Fusion info: match conv2d backprop input + ... patten.";
       if (!GetSpecInputLayers(op_name, reorder_layer, spec_data_input)) {
         return false;
       }
@@ -986,7 +980,6 @@ bool TbeKernelBuild::GenFusionDataInputJson(const std::shared_ptr<mindspore::Anf
   std::vector<nlohmann::json> output_desc_list;
   // if data_input is null, this is optional input.
   if (!data_input) {
-    MS_LOG(INFO) << "Fusion info: data input is optional node";
     auto name = std::string(kOptional) + std::to_string(*index);
     (*data_str)[kJName] = name;
     nlohmann::json output_desc;
@@ -1003,7 +996,6 @@ bool TbeKernelBuild::GenFusionDataInputJson(const std::shared_ptr<mindspore::Anf
     auto kernel_idx = AnfAlgo::VisitKernel(data_input, 0);
     auto real_node = kernel_idx.first;
     size_t real_idx = kernel_idx.second;
-    MS_LOG(INFO) << "Fusion info: Real name: " << real_node->fullname_with_scope() << ". index:" << real_idx;
     // kJOutputDesc
     nlohmann::json output_desc;
     GenDescJson(real_node, real_idx, real_idx, &output_desc, fusion_data_type);
@@ -1109,7 +1101,6 @@ bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
     auto kernel_idx = AnfAlgo::VisitKernel(input, 0);
     auto real_node = kernel_idx.first;
     size_t real_idx = kernel_idx.second;
-    MS_LOG(INFO) << "Fusion info: real name: " << real_node->fullname_with_scope() << ". index:" << real_idx;
     nlohmann::json input_desc;
     GenDescJson(real_node, real_idx, real_idx, &input_desc);
     if (is_dynamic_input) {
@@ -1122,7 +1113,6 @@ bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
   size_t optional_num = GetOptionalInput(cnode, is_dynamic_input);
   if (optional_num > 0) {
     // 3. optional input
-    MS_LOG(INFO) << "Fusion info: node has optional input.";
     for (size_t i = 0; i < optional_num; ++i) {
       nlohmann::json optional_input_desc;
       optional_input_desc[kJName] = std::string(kOptional) + std::to_string(*index);
@@ -1141,7 +1131,6 @@ std::vector<size_t> TbeKernelBuild::GetDescOutputIndex(const std::vector<int64_t
   std::vector<size_t> desc_output_index = {};
   for (size_t idx = 0; idx < output_used_nums.size(); ++idx) {
     auto output_use_num_item = output_used_nums[idx];
-    MS_LOG(INFO) << "Fusion info: output used num[" << idx << "] = " << output_use_num_item;
     desc_output_index.emplace_back(idx);
     if (output_use_num_item > 1) {
       desc_output_index.emplace_back(idx);
@@ -1156,7 +1145,6 @@ bool TbeKernelBuild::GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode
   auto output_size = AnfAlgo::GetOutputTensorNum(cnode);
   if (AnfAlgo::HasNodeAttr(kAttrOutputUsedNum, cnode)) {
     auto output_used_nums = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrOutputUsedNum);
-    MS_LOG(INFO) << "Fusion info: this node's output has been reused, node name: " << cnode->fullname_with_scope();
     if (output_used_nums.size() != output_size) {
       MS_LOG(INFO) << "Fusion error: output tenor num(" << output_size << ")"
                    << " is not match output used num(" << output_used_nums.size() << ")";
@@ -1238,7 +1226,6 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &fusion_op_list,
         }
         auto ret = GetIOSizeImpl(data_output);
         input_size_list->push_back(ret);
-        MS_LOG(INFO) << "Fusion info: input node name： " << op[kJName] << ", size: " << ret;
       }
     }
   }
@@ -1248,13 +1235,11 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &fusion_op_list,
     auto real_node = kernel_idx.first;
     size_t real_idx = kernel_idx.second;
     auto full_name = real_node->fullname_with_scope();
-    MS_LOG(INFO) << "Fusion info: real output node name: " << full_name << ", real output index: " << real_idx;
     for (const auto &op : fusion_op_list) {
       if (op[kJName] == full_name) {
         auto op_output_desces = op[kJOutputDesc];
         if (output_node != real_node) {
           // tuple_get item
-          MS_LOG(INFO) << "Fusion info: output is a tuple get_item node";
           auto output_desc = op_output_desces[real_idx];
           if (output_desc[kJShape].empty()) {
             MS_LOG(INFO) << "Fusion error: output_desc's shape is empty. real_index " << real_idx;
@@ -1262,17 +1247,13 @@ bool TbeKernelBuild::GetIOSize(const nlohmann::json &fusion_op_list,
           }
           auto ret = GetIOSizeImpl(output_desc);
           output_size_list->push_back(ret);
-          MS_LOG(INFO) << "Fusion info: scope output index： " << real_idx << ", size: " << ret;
         } else {
-          MS_LOG(INFO) << "Fusion info: output is self.";
           for (const auto &output_desc : op_output_desces) {
             if (output_desc[kJShape].empty()) {
-              MS_LOG(INFO) << "Fusion info: output_desc's shape is empty, may be this node output";
               continue;
             }
             auto ret = GetIOSizeImpl(output_desc);
             output_size_list->push_back(ret);
-            MS_LOG(INFO) << "Fusion info: scope output size: " << ret;
           }
         }
       }
