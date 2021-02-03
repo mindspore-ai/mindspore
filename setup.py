@@ -129,6 +129,7 @@ package_data = {
         '*.so*',
         '*.pyd',
         '*.dll',
+        'bin/*',
         'lib/*.so*',
         'lib/*.a',
         '.commit_id',
@@ -159,24 +160,6 @@ def update_permissions(path):
         for filename in filenames:
             file_fullpath = os.path.join(dirpath, filename)
             os.chmod(file_fullpath, stat.S_IREAD)
-
-def bin_files():
-    """
-    Gets the binary files to be installed.
-    """
-    data_files = []
-    binary_files = []
-
-    cache_server_bin = os.path.join('mindspore', 'bin', 'cache_server')
-    if not os.path.exists(cache_server_bin):
-        return data_files
-    binary_files.append(cache_server_bin)
-    cache_admin_bin = os.path.join('mindspore', 'bin', 'cache_admin')
-    if not os.path.exists(cache_admin_bin):
-        return data_files
-    binary_files.append(cache_admin_bin)
-    data_files.append(('bin', binary_files))
-    return data_files
 
 
 class EggInfo(egg_info):
@@ -214,13 +197,17 @@ setup(
     'framework that could be used for mobile, edge and cloud scenarios.',
     long_description="\n\n".join([readme, release]),
     long_description_content_type="text/markdown",
-    data_files=bin_files(),
     packages=find_packages(),
     package_data=package_data,
     include_package_data=True,
     cmdclass={
         'egg_info': EggInfo,
         'build_py': BuildPy,
+    },
+    entry_points={
+        'console_scripts': [
+            'cache_admin=mindspore.dataset.engine.cache_admin:main',
+        ],
     },
     python_requires='>=3.7',
     install_requires=required_package,
