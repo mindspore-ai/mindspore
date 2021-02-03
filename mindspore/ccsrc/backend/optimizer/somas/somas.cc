@@ -73,6 +73,7 @@ bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
   IndependentNodeOutputProcess(graph);
   SummaryInputProcess(graph);
   RefNodeProcess(graph);
+  NonTaskSplitProcess(graph);
   UnReuseNodeProcess(graph);
   GenContiguousList(graph);
   GetNextOutputProcess(graph);
@@ -405,6 +406,30 @@ void Somas::RefNodeProcess(const session::KernelGraph *graph) {
     std::string file_path =
       save_graphs_path_ + "/" + "somas_refnode_process_" + std::to_string(graph->graph_id()) + ".ir";
     DumpSomasBasicIR(file_path);
+  }
+}
+
+void Somas::NonTaskSplitProcess(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto kernel_cnodes = graph->execution_order();
+  for (const auto &kernel : kernel_cnodes) {
+    auto op_name = AnfAlgo::GetCNodeName(kernel);
+    if ((op_name == kSplitOpName || op_name == kSplitVOpName) && AnfAlgo::HasNodeAttr(kAttrNonTask, kernel)) {
+      std::vector<size_t> refnode_input_output;
+      auto node = nodes_map_[kernel.get()];
+      if (node->input_tensors_.size() == 0) {
+        MS_LOG(EXCEPTION) << op_name << " has no input tensor, can not do split non_task process.";
+      }
+      auto input_tensor = node->input_tensors_[0];
+      input_tensor->type_ = kRefNodeInput;
+      refnode_input_output.push_back(input_tensor->GetId());
+
+      for (auto &output_tensor : node->output_tensors_) {
+        output_tensor->type_ = kRefNodeOutput;
+        refnode_input_output.push_back(output_tensor->GetId());
+      }
+      ref_node_constraints_.push_back(refnode_input_output);
+    }
   }
 }
 

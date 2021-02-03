@@ -116,6 +116,7 @@
 #include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
+#include "backend/optimizer/ascend/enhancer/split_n_optimizer.h"
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -356,6 +357,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<InsertMemcpyAsyncForCascade>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());
   other_pm->AddPass(std::make_shared<RefreshParameterFormat>());
+  other_pm->AddPass(std::make_shared<SplitOpOptimizer>());
   optimizer->AddPassManager(other_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
