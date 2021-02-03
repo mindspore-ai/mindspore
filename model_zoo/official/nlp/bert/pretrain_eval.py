@@ -107,10 +107,10 @@ def get_enwiki_512_dataset(batch_size=1, repeat_count=1, distribute_file=''):
     '''
     Get enwiki dataset when seq_length is 512.
     '''
-    ds = de.TFRecordDataset([cfg.data_file], cfg.schema_file, columns_list=["input_ids", "input_mask", "segment_ids",
-                                                                            "masked_lm_positions", "masked_lm_ids",
-                                                                            "masked_lm_weights",
-                                                                            "next_sentence_labels"])
+    ds = de.TFRecordDataset([cfg.data_file], None, columns_list=["input_ids", "input_mask", "segment_ids",
+                                                                 "masked_lm_positions", "masked_lm_ids",
+                                                                 "masked_lm_weights",
+                                                                 "next_sentence_labels"])
     type_cast_op = C.TypeCast(mstype.int32)
     ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
     ds = ds.map(operations=type_cast_op, input_columns="input_mask")

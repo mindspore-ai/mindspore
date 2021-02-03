@@ -221,6 +221,7 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─dataset.py                              # data preprocessing
     ├─finetune_eval_config.py                 # parameter configuration for finetuning
     ├─finetune_eval_model.py                  # backbone code of network
+    ├─fused_layer_norm.py                     # Layernormal is optimized for Ascend
     ├─sample_process.py                       # sample processing
     ├─utils.py                                # util function
   ├─pretrain_eval.py                          # train and eval net  
