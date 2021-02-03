@@ -130,6 +130,12 @@ class SaveToDisk : public TreeConsumer {
                                 nlohmann::json *row_raw_data,
                                 std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data);
 
+  Status FetchFloatData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
+                        std::unique_ptr<std::vector<uint8_t>> *data_ptr);
+
+  Status FetchItemData(std::shared_ptr<Tensor> tensor, std::string column_name, nlohmann::json *row_raw_data,
+                       std::map<std::string, std::unique_ptr<std::vector<uint8_t>>> *row_bin_data);
+
   std::string dataset_path_;
   int32_t num_files_;
   std::string dataset_type_;

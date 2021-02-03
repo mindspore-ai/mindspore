@@ -16,7 +16,33 @@ set(MIND_DATA_LIB_DIR ${RUNTIME_PKG_NAME}/minddata/lib)
 
 set(LIB_DIR_RUN_X86 ${RUNTIME_PKG_NAME}/lib)
 
-if(BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper")
+if(BUILD_MINDDATA STREQUAL "full")
+    install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/liteapi/include/ DESTINATION
+    ${MIND_DATA_INC_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "vision.h" EXCLUDE)
+    install(FILES ${TOP_DIR}/include/api/status.h  DESTINATION ${MIND_DATA_INC_DIR}
+    RENAME ms_status.h COMPONENT ${RUNTIME_COMPONENT_NAME})
+
+    if(PLATFORM_ARM64)
+        file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so
+        DESTINATION ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+    elseif(PLATFORM_ARM32)
+        file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
+        ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${JPEGTURBO_LIB_LIST} DESTINATION ${TURBO_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+    else()
+        install(FILES ${TOP_DIR}/mindspore/lite/build/minddata/libminddata-lite.so DESTINATION
+        ${MIND_DATA_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0 DESTINATION ${TURBO_DIR}/lib
+        RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0 DESTINATION ${TURBO_DIR}/lib
+        RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
+endif()
+
+if(BUILD_MINDDATA STREQUAL "wrapper")
     install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/ DESTINATION ${MIND_DATA_INC_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "vision.h" EXCLUDE)
     if(PLATFORM_ARM64)

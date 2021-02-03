@@ -86,8 +86,9 @@
 #include "minddata/dataset/engine/datasetops/source/csv_op.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #endif
-#include "minddata/dataset/engine/datasetops/source/voc_op.h"
+
 #ifdef ENABLE_PYTHON
+#include "minddata/dataset/engine/datasetops/source/voc_op.h"
 #include "minddata/dataset/engine/datasetops/filter_op.h"
 #include "minddata/dataset/engine/datasetops/source/generator_op.h"
 #endif

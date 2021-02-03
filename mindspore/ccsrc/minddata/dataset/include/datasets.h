@@ -830,6 +830,7 @@ std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &datase
                                           const std::vector<std::string> &columns_list = {},
                                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                           nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+#endif
 
 class MnistDataset : public Dataset {
  public:
@@ -850,7 +851,7 @@ class MnistDataset : public Dataset {
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
                                     const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
                                     const std::shared_ptr<DatasetCache> &cache = nullptr);
-
+#ifndef ENABLE_ANDROID
 /// \brief Function to create a ConcatDataset
 /// \notes Reload "+" operator to concat two datasets
 /// \param[in] datasets1 Shared pointer to the first dataset to be concatenated

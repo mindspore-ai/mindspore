@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <nlohmann/json.hpp>
 
-#include "minddata/dataset/include/status.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/mindrecord/include/shard_column.h"
-#include "minddata/mindrecord/include/shard_error.h"
-#include "minddata/mindrecord/include/shard_operator.h"
-#include "minddata/mindrecord/include/shard_reader.h"
-#endif
+#include "include/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -36,7 +29,7 @@ namespace dataset {
 // Internal Sampler class forward declaration
 class SamplerRT;
 
-class SamplerObj {
+class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
  public:
   /// \brief Constructor
   SamplerObj();
@@ -50,11 +43,11 @@ class SamplerObj {
 
   /// \brief Pure virtual function to convert a SamplerObj class into a runtime sampler object
   /// \return Shared pointers to the newly created Sampler
-  virtual std::shared_ptr<SamplerRT> SamplerBuild() = 0;
+  virtual std::shared_ptr<SamplerRT> Build() = 0;
 
   /// \brief Pure virtual function to copy a SamplerObj class
   /// \return Shared pointers to the newly copied SamplerObj
-  virtual std::shared_ptr<SamplerObj> SamplerCopy() = 0;
+  virtual std::shared_ptr<SamplerObj> Copy() = 0;
 
   /// \brief Function for derived class to get the shard id of sampler
   /// \return The shard id of the derived sampler
@@ -63,18 +56,7 @@ class SamplerObj {
   /// \brief Adds a child to the sampler
   /// \param[in] child The sampler to be added as child
   /// \return the Status code returned
-  Status AddChildSampler(std::shared_ptr<SamplerObj> child);
-
-  virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
-
-  std::vector<std::shared_ptr<SamplerObj>> GetChild() { return children_; }
-
-#ifndef ENABLE_ANDROID
-  /// \brief Virtual function to convert a SamplerObj class into a runtime mindrecord sampler object,
-  ///     only override by SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler
-  /// \return Shared pointers to the newly created Sampler
-  virtual std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() { return nullptr; }
-#endif
+  Status AddChild(std::shared_ptr<SamplerObj> child);
 
  protected:
   /// \brief A function that calls build on the children of this sampler
@@ -89,7 +71,6 @@ class PKSamplerObj;
 class PreBuiltSamplerObj;
 class RandomSamplerObj;
 class SequentialSamplerObj;
-class SubsetSamplerObj;
 class SubsetRandomSamplerObj;
 class WeightedRandomSamplerObj;
 
@@ -131,13 +112,6 @@ std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement = false, int64_
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
 
-/// Function to create a Subset  Sampler.
-/// \notes Samples the elements from a sequence of indices.
-/// \param[in] indices - A vector sequence of indices.
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<SubsetSamplerObj> SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
-
 /// Function to create a Subset Random Sampler.
 /// \notes Samples the elements randomly from a sequence of indices.
 /// \param[in] indices - A vector sequence of indices.
@@ -163,25 +137,16 @@ class DistributedSamplerObj : public SamplerObj {
 
   ~DistributedSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
+  std::shared_ptr<SamplerObj> Copy() override {
     auto sampler = std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_,
                                                            offset_, even_dist_);
     for (auto child : children_) {
-      sampler->AddChildSampler(child);
+      sampler->AddChild(child);
     }
     return sampler;
   }
-
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
-
-  /// \brief Get the arguments of node
-  /// \param[out] out_json JSON string of all attributes
-  /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 
@@ -205,24 +170,15 @@ class PKSamplerObj : public SamplerObj {
 
   ~PKSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
+  std::shared_ptr<SamplerObj> Copy() override {
     auto sampler = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
     for (auto child : children_) {
-      sampler->AddChildSampler(child);
+      sampler->AddChild(child);
     }
     return sampler;
   }
-
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
-
-  /// \brief Get the arguments of node
-  /// \param[out] out_json JSON string of all attributes
-  /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 
@@ -235,62 +191,40 @@ class PKSamplerObj : public SamplerObj {
 class PreBuiltSamplerObj : public SamplerObj {
  public:
   explicit PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler);
-#ifndef ENABLE_ANDROID
-  explicit PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator> sampler);
-#endif
 
   ~PreBuiltSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override;
+  std::shared_ptr<SamplerObj> Copy() override;
 
   Status ValidateParams() override;
 
-  Status to_json(nlohmann::json *out_json) override;
-
  private:
   std::shared_ptr<SamplerRT> sp_;
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> sp_minddataset_;
-#endif
 };
 
 class RandomSamplerObj : public SamplerObj {
  public:
-  RandomSamplerObj(bool replacement, int64_t num_samples, bool reshuffle_each_epoch = true);
+  RandomSamplerObj(bool replacement, int64_t num_samples);
 
   ~RandomSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
+  std::shared_ptr<SamplerObj> Copy() override {
+    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_);
     for (auto child : children_) {
-      sampler->AddChildSampler(child);
+      sampler->AddChild(child);
     }
     return sampler;
   }
-
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
-
-  /// \brief Get the arguments of node
-  /// \param[out] out_json JSON string of all attributes
-  /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 
  private:
   bool replacement_;
   int64_t num_samples_;
-  bool reshuffle_each_epoch_;
 };
 
 class SequentialSamplerObj : public SamplerObj {
@@ -299,24 +233,15 @@ class SequentialSamplerObj : public SamplerObj {
 
   ~SequentialSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
+  std::shared_ptr<SamplerObj> Copy() override {
     auto sampler = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
     for (auto child : children_) {
-      sampler->AddChildSampler(child);
+      sampler->AddChild(child);
     }
     return sampler;
   }
-
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
-
-  /// \brief Get the arguments of node
-  /// \param[out] out_json JSON string of all attributes
-  /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 
@@ -325,61 +250,27 @@ class SequentialSamplerObj : public SamplerObj {
   int64_t num_samples_;
 };
 
-class SubsetSamplerObj : public SamplerObj {
- public:
-  SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
-
-  ~SubsetSamplerObj() = default;
-
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
-
-  /// \brief Get the arguments of node
-  /// \param[out] out_json JSON string of all attributes
-  /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
-
-  Status ValidateParams() override;
-
- protected:
-  const std::vector<int64_t> indices_;
-  int64_t num_samples_;
-};
-
-class SubsetRandomSamplerObj : public SubsetSamplerObj {
+class SubsetRandomSamplerObj : public SamplerObj {
  public:
   SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
 
   ~SubsetRandomSamplerObj() = default;
 
-  Status to_json(nlohmann::json *out_json) override;
+  std::shared_ptr<SamplerRT> Build() override;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
+  std::shared_ptr<SamplerObj> Copy() override {
     auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
     for (auto child : children_) {
-      sampler->AddChildSampler(child);
+      sampler->AddChild(child);
     }
     return sampler;
   }
 
-#ifndef ENABLE_ANDROID
-  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
-#endif
+  Status ValidateParams() override;
 
  private:
+  const std::vector<int64_t> indices_;
+  int64_t num_samples_;
 };
 
 class WeightedRandomSamplerObj : public SamplerObj {
@@ -388,20 +279,15 @@ class WeightedRandomSamplerObj : public SamplerObj {
 
   ~WeightedRandomSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  std::shared_ptr<SamplerRT> Build() override;
 
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
+  std::shared_ptr<SamplerObj> Copy() override {
     auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
     for (auto child : children_) {
-      sampler->AddChildSampler(child);
+      sampler->AddChild(child);
     }
     return sampler;
   }
-
-  /// \brief Get the arguments of node
-  /// \param[out] out_json JSON string of all attributes
-  /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 

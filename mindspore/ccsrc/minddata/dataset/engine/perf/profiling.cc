@@ -80,9 +80,10 @@ Status ProfilingManager::Initialize() {
   std::shared_ptr<Sampling> connector_thr_sampling = std::make_shared<ConnectorThroughput>(tree_);
   RETURN_IF_NOT_OK(RegisterSamplingNode(connector_thr_sampling));
 
+#ifndef ENABLE_ANDROID
   std::shared_ptr<Sampling> cpu_sampling = std::make_shared<CpuSampling>(tree_);
   RETURN_IF_NOT_OK(RegisterSamplingNode(cpu_sampling));
-
+#endif
   return Status::OK();
 }
 
