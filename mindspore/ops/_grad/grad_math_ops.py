@@ -165,6 +165,22 @@ def get_bprop_tensor_add(self):
     return bprop
 
 
+@bprop_getters.register(P.MatrixInverse)
+def get_bprop_matrix_inverse(self):
+    """Grad definition for `MatrixInverse` operation."""
+    batchmatmul_a = P.math_ops.BatchMatMul(transpose_a=True)
+    batchmatmul_b = P.math_ops.BatchMatMul(transpose_b=True)
+    neg = P.Neg()
+
+    def bprop(x, out, dout):
+        dx = batchmatmul_b(dout, out)
+        dx = batchmatmul_a(out, dx)
+        dx = neg(dx)
+        return dx
+
+    return bprop
+
+
 @bprop_getters.register(P.Neg)
 def get_bprop_neg(self):
     """Grad definition for `Neg` operation."""
