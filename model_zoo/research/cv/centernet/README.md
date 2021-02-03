@@ -149,12 +149,12 @@ bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID]
         ├── scripts
         │   ├── ascend_distributed_launcher
         │   │    ├──__init__.py
-        │   │    ├──hyper_parameter_config.ini         // hyper parameter for distributed pretraining
-        │   │    ├──get_distribute_pretrain_cmd.py     // script for distributed pretraining
+        │   │    ├──hyper_parameter_config.ini         // hyper parameter for distributed training
+        │   │    ├──get_distribute_train_cmd.py        // script for distributed training
         │   │    ├──README.md
         │   ├──convert_dataset_to_mindrecord.sh        // shell script for converting coco type dataset to mindrecord
-        │   ├──run_standalone_train_ascend.sh          // shell script for standalone pretrain on ascend
-        │   ├──run_distributed_train_ascend.sh         // shell script for distributed pretrain on ascend
+        │   ├──run_standalone_train_ascend.sh          // shell script for standalone train on ascend
+        │   ├──run_distributed_train_ascend.sh         // shell script for distributed train on ascend
         │   ├──run_standalone_eval_ascend.sh           // shell script for standalone evaluation on ascend
         └── src
             ├──__init__.py
@@ -345,7 +345,7 @@ Parameters for optimizer and learning rate:
 Before your first training, convert coco type dataset to mindrecord files is needed to improve performance on host.
 
 ```bash
-bash scripts/convert_dataset_to_mindrecord.sh
+bash scripts/convert_dataset_to_mindrecord.sh /path/coco_dataset_dir /path/mindrecord_dataset_dir
 ```
 
 The command above will run in the background, after converting mindrecord files will be located in path specified by yourself.
@@ -355,7 +355,7 @@ The command above will run in the background, after converting mindrecord files 
 #### Running on Ascend
 
 ```bash
-bash scripts/run_standalone_pretrain_ascend.sh 0 1
+bash scripts/run_standalone_train_ascend.sh 0 1
 ```
 
 The command above will run in the background, you can view training logs in training_log.txt. After training finished, you will get some checkpoint files under the script folder by default. The loss values will be displayed as follows:
@@ -373,7 +373,7 @@ epoch: 349.0, current epoch percent: 1.00, step: 87500, outputs are (Tensor(shap
 #### Running on Ascend
 
 ```bash
-bash scripts/run_distributed_pretrain_ascend.sh /path/coco2017 /path/mindrecord /path/hccl.json
+bash scripts/run_distributed_train_ascend.sh /path/coco2017 /path/mindrecord /path/hccl.json
 ```
 
 The command above will run in the background, you can view training logs in LOG*/training_log.txt and LOG*/ms_log/. After training finished, you will get some checkpoint files under the LOG*/ckpt_0 folder by default. The loss value will be displayed as follows:
