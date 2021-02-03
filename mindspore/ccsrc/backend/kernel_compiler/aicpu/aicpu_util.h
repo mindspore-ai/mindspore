@@ -52,7 +52,7 @@ constexpr auto kSubAndFilter = "SubAndFilter";
 constexpr auto kPadAndShift = "PadAndShift";
 constexpr auto kCustRunApi = "RunCpuKernel";
 constexpr auto kDropout3d = "Dropout3d";
-const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kIdentity};
+const std::set<std::string> kCustAiCpuKernelOps{kIdentity};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter, kPadAndShift, kDropout3d};
 
 struct AicpuParamHead {
