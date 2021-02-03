@@ -215,7 +215,6 @@ constexpr auto kNearestMode = "nearest_mode";
 constexpr auto kReduceToEnd = "reduce_to_end";
 constexpr auto kCoeff = "coeff";
 constexpr auto kIsDepthWise = "is_depth_wise";
-constexpr auto kIsDepthWiseNative = "is_depth_wise_native";
 
 const std::set<TypeId> common_valid_types = {
   kNumberTypeInt8,   kNumberTypeInt16,  kNumberTypeInt32,   kNumberTypeInt64,   kNumberTypeUInt8,  kNumberTypeUInt16,

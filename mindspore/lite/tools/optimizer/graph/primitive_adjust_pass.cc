@@ -19,7 +19,6 @@
 #include <memory>
 #include <set>
 #include <string>
-#include "ops/abs.h"
 #include "ops/batch_norm.h"
 #include "ops/elu.h"
 #include "ops/depthwise_conv2d.h"
@@ -49,7 +48,6 @@
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/topk_fusion.h"
-#include "ops/gather.h"
 #include "ops/gelu.h"
 #include "ops/leaky_relu.h"
 #include "ops/mat_mul.h"
@@ -70,7 +68,6 @@
 #include "ops/stack.h"
 #include "ops/tanh.h"
 
-using mindspore::ops::kNameAbs;
 using mindspore::ops::kNameAdd;
 using mindspore::ops::kNameAdder;
 using mindspore::ops::kNameArgMax;
@@ -120,13 +117,10 @@ constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
 constexpr auto kNameSlice = "Slice";
-constexpr auto kNameGatherV2 = "Gather";
-constexpr auto kNameTensorAdd = "TensorAdd";
 std::map<std::string, mindspore::ActivationType> activation_map = {
-  {ops::kNameAbs, mindspore::ABS},         {ops::kNameElu, mindspore::ELU},
-  {ops::kNameGeLU, mindspore::GELU},       {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
-  {ops::kNameReLU, mindspore::RELU},       {ops::kNameReLU6, mindspore::RELU6},
-  {ops::kNameSigmoid, mindspore::SIGMOID}, {ops::kNameTanh, mindspore::TANH}};
+  {ops::kNameElu, mindspore::ELU},   {ops::kNameGeLU, mindspore::GELU},   {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
+  {ops::kNameReLU, mindspore::RELU}, {ops::kNameReLU6, mindspore::RELU6}, {ops::kNameSigmoid, mindspore::SIGMOID},
+  {ops::kNameTanh, mindspore::TANH}};
 
 std::map<std::string, mindspore::ReduceMode> reduce_map = {
   {ops::kNameReduceAll, mindspore::Reduce_All}, {ops::kNameReduceASum, mindspore::Reduce_ASum},
@@ -163,40 +157,6 @@ int AttrAdjust(const PrimitivePtr &prim, const std::string &name, const std::vec
     }
   }
   prim->AddAttr(name, MakeValue(new_value));
-  return lite::RET_OK;
-}
-
-int64_t ComputeGroupForDepthWiseConv2D(const AnfNodePtr &anf_node) {
-  auto weight_node = anf_node->cast<ParameterPtr>();
-  if (weight_node == nullptr) {
-    MS_LOG(INFO) << "weight node is not parameter node.";
-    return 1;
-  }
-  if (!weight_node->has_default() || weight_node->default_param() == nullptr) {
-    MS_LOG(ERROR) << "weight not is not a const tensor.";
-    return lite::RET_ERROR;
-  }
-  auto weight = weight_node->default_param()->cast<tensor::TensorPtr>();
-  MS_ASSERT(weight != nullptr);
-  auto shape = weight->shape_c();
-  MS_ASSERT(shape.size() == 4);
-  return shape[1];
-}
-
-int SetAttrForDepthWiseConv2D(const CNodePtr &cnode, const PrimitivePtr &prim, int64_t *group) {
-  MS_ASSERT(cnode != nullptr && prim != nullptr);
-  if (*group == 1) {
-    *group = ComputeGroupForDepthWiseConv2D(cnode->input(2));
-  }
-  if (*group < 0) {
-    MS_LOG(ERROR) << "fail to compute group.";
-    return lite::RET_ERROR;
-  }
-  if (prim->GetAttr(ops::kOutChannel) == nullptr) {
-    prim->AddAttr(ops::kOutChannel, MakeValue(*group));
-  }
-  prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
-  prim->AddAttr(ops::kIsDepthWiseNative, MakeValue<bool>(true));
   return lite::RET_OK;
 }
 
@@ -295,13 +255,6 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
   }
   if (group > 1) {
     dst_prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
-  }
-  if (src_prim->name() == kNameDepthWiseConv2D) {
-    status = SetAttrForDepthWiseConv2D(cnode, dst_prim, &group);
-    if (status != lite::RET_OK) {
-      MS_LOG(ERROR) << "set attr for depthwiseconv2D native failed.";
-      return lite::RET_ERROR;
-    }
   }
   dst_prim->set_group(group);
   value_node->set_value(dst_prim);
@@ -483,7 +436,6 @@ bool PrimitiveAdjustPass::Run(const FuncGraphPtr &func_graph) {
   return true;
 }
 
-REGIST_PRIMITIVE_ADJUST(kNameAbs, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameAdd, MoveAttrMapCommon<ops::AddFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAdder, MoveAttrMapAdder)
 REGIST_PRIMITIVE_ADJUST(kNameArgMax, MoveAttrMapCommon<ops::ArgMaxFusion>)
@@ -501,7 +453,6 @@ REGIST_PRIMITIVE_ADJUST(kNameConv2dTranspose, MoveAttrMapCommon<ops::Conv2dTrans
 REGIST_PRIMITIVE_ADJUST(kNameDiv, MoveAttrMapCommon<ops::DivFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameExp, MoveAttrMapCommon<ops::ExpFusion>)
-REGIST_PRIMITIVE_ADJUST(kNameGatherV2, MoveAttrMapCommon<ops::Gather>)
 REGIST_PRIMITIVE_ADJUST(kNameGeLU, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameL2Normalize, MoveAttrMapCommon<ops::L2NormalizeFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameLayerNorm, MoveAttrMapLayerNorm)
@@ -528,7 +479,6 @@ REGIST_PRIMITIVE_ADJUST(kNameSigmoid, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameSlice, MoveAttrSlice)
 REGIST_PRIMITIVE_ADJUST(kNameSub, MoveAttrMapCommon<ops::SubFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTanh, MoveAttrMapActivation)
-REGIST_PRIMITIVE_ADJUST(kNameTensorAdd, MoveAttrMapCommon<ops::AddFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTile, MoveAttrMapCommon<ops::TileFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTopK, MoveAttrMapCommon<ops::TopKFusion>)
 }  // namespace opt
