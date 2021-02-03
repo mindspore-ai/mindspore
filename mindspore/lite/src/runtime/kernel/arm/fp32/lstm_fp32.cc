@@ -57,24 +57,8 @@ void LstmCPUKernel::FreeRunBuffer() {
   }
 }
 
-int InitRightMatrix(float *dst, const float *src, int batch, int deep, int col, int col_align, bool is_vec) {
-  for (int i = 0; i < batch; i++) {
-    auto src_batch = src + i * col * deep;
-    auto dst_batch = dst + i * col_align * deep;
-#ifdef ENABLE_AVX
-    RowMajor2Col16Major(src_batch, dst_batch, col, deep);
-#elif defined(ENABLE_ARM32)
-    RowMajor2Col4Major(src_batch, dst_batch, col, deep);
-#else
-    RowMajor2Col8Major(src_batch, dst_batch, col, deep);
-#endif
-  }
-  return RET_OK;
-}
-
 int LstmCPUKernel::InitWeightBias() {
   auto weight_batch = lstm_param_->bidirectional_ ? 8 : 4;
-
   if (!is_vec_) {
     // malloc and init input * weight right matrix buffer
     auto weight_i = in_tensors_.at(1);
@@ -86,8 +70,8 @@ int LstmCPUKernel::InitWeightBias() {
       return RET_ERROR;
     }
     auto weight_i_data = reinterpret_cast<float *>(weight_i->data_c());
-    InitRightMatrix(weight_i_ptr_, weight_i_data, weight_batch, lstm_param_->input_size_, lstm_param_->hidden_size_,
-                    lstm_param_->col_align_, is_vec_);
+    PackLstmWeight(weight_i_ptr_, weight_i_data, weight_batch, lstm_param_->input_size_, lstm_param_->hidden_size_,
+                   lstm_param_->col_align_);
 
     // malloc and init state * weight right matrix buffer
     auto weight_h = in_tensors_.at(2);
@@ -99,8 +83,8 @@ int LstmCPUKernel::InitWeightBias() {
       return RET_ERROR;
     }
     auto weight_h_data = reinterpret_cast<float *>(weight_h->data_c());
-    InitRightMatrix(weight_h_ptr_, weight_h_data, weight_batch, lstm_param_->hidden_size_, lstm_param_->hidden_size_,
-                    lstm_param_->col_align_, is_vec_);
+    PackLstmWeight(weight_h_ptr_, weight_h_data, weight_batch, lstm_param_->hidden_size_, lstm_param_->hidden_size_,
+                   lstm_param_->col_align_);
 
     // init bias
     int bias_batch = lstm_param_->bidirectional_ ? 16 : 8;
@@ -235,7 +219,7 @@ int LstmCPUKernel::Run() {
 
   auto ret = MallocRunBuffer();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitRunBuffer error.";
+    MS_LOG(ERROR) << "LstmCPUKernel MallocRunBuffer error.";
     return RET_ERROR;
   }
 
@@ -244,7 +228,6 @@ int LstmCPUKernel::Run() {
     weight_h_ptr_ = reinterpret_cast<float *>(in_tensors_[2]->data_c());
     bias_ptr_ = reinterpret_cast<float *>(in_tensors_[3]->data_c());
   }
-
   MS_ASSERT(weight_h_ptr_);
   MS_ASSERT(weight_i_ptr_);
   MS_ASSERT(bias_ptr_);

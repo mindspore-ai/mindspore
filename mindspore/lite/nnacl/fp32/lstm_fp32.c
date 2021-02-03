@@ -21,6 +21,30 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 
+void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align) {
+  for (int i = 0; i < batch; i++) {
+    const float *src_batch = src + i * col * deep;
+    float *dst_batch = dst + i * col_align * deep;
+#ifdef ENABLE_AVX
+    RowMajor2Col16Major(src_batch, dst_batch, col, deep);
+#elif defined(ENABLE_ARM32)
+    RowMajor2Col4Major(src_batch, dst_batch, col, deep);
+#else
+    RowMajor2Col8Major(src_batch, dst_batch, col, deep);
+#endif
+  }
+}
+
+void PackLstmInput(float *dst, const float *src, int row, int deep) {
+#ifdef ENABLE_AVX
+  RowMajor2Col6Major(src, dst, row, deep);
+#elif defined(ENABLE_SSE)
+  RowMajor2Col4Major(src, dst, row, deep);
+#else
+  RowMajor2Col12Major(src, dst, row, deep);
+#endif
+}
+
 // input: [row, inner_size]; weight: [col, inner_size]; output: [row, col]
 void MatMulAcc(float *output, const float *input, const float *weight, int rows, int cols, int inner_size) {
   for (int r = 0; r < rows; r++) {
@@ -49,6 +73,15 @@ void MatMulAcc(float *output, const float *input, const float *weight, int rows,
       }
       output[r * cols + c] += res;
     }
+  }
+}
+
+void LstmMatMul(float *c, const float *a, const float *b, const float *bias, int row, int deep, int col, bool is_vec) {
+  if (is_vec) {
+    memcpy(c, bias, col * sizeof(float));
+    MatMulAcc(c, a, b, row, col, deep);
+  } else {
+    MatMulOpt(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
   }
 }
 
@@ -121,46 +154,14 @@ void UpdataOutput(const float *cell_state, const float *output_gate, float *hidd
   }
 }
 
-void LstmMatmul(float *c, const float *a, const float *b, const float *bias, int row, int deep, int col, bool is_vec) {
-  if (is_vec) {
-    memcpy(c, bias, col * sizeof(float));
-    MatMulAcc(c, a, b, row, col, deep);
-  } else {
-    MatMulOpt(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
+void UpdateLstmGate(float *gate_buffer, const float *input, const float *weight, const float *bias, int row, int deep,
+                    int col, int col_align, bool is_vec) {
+  for (int i = 0; i < 4; i++) {
+    const float *weight_i = weight + deep * col * i;
+    const float *bias_i = bias + col_align * i;
+    float *gate = gate_buffer + row * col * i;
+    LstmMatMul(gate, input, weight_i, bias_i, row, deep, col, is_vec);
   }
-}
-
-void PackLstmInput(float *dst, const float *src, int row, int deep) {
-#ifdef ENABLE_AVX
-  RowMajor2Col6Major(src, dst, row, deep);
-#elif defined(ENABLE_SSE)
-  RowMajor2Col4Major(src, dst, row, deep);
-#else
-  RowMajor2Col12Major(src, dst, row, deep);
-#endif
-}
-
-void UpdateGate(float *gate_buffer, const float *input, const float *weight, const float *bias, int row, int deep,
-                int col, int col_align, bool is_vec) {
-  const float *input_weight = weight;
-  const float *forget_weight = weight + deep * col * 2;
-  const float *cell_weight = weight + deep * col * 3;
-  const float *output_weight = weight + deep * col;
-
-  const float *input_bias = bias;
-  const float *forget_bias = bias + col_align * 2;
-  const float *cell_bias = bias + col_align * 3;
-  const float *output_bias = bias + col_align;
-
-  float *input_gate = gate_buffer;
-  float *forget_gate = gate_buffer + row * col * 2;
-  float *cell_gate = gate_buffer + row * col * 3;
-  float *output_gate = gate_buffer + row * col;
-
-  LstmMatmul(input_gate, input, input_weight, input_bias, row, deep, col, is_vec);
-  LstmMatmul(forget_gate, input, forget_weight, forget_bias, row, deep, col, is_vec);
-  LstmMatmul(cell_gate, input, cell_weight, cell_bias, row, deep, col, is_vec);
-  LstmMatmul(output_gate, input, output_weight, output_bias, row, deep, col, is_vec);
 }
 
 void LstmStepUnit(float *output, const float *input, const float *input_weight, const float *state_weight,
@@ -169,26 +170,26 @@ void LstmStepUnit(float *output, const float *input, const float *input_weight, 
   bool is_vec = lstm_param->batch_ == 1;
   // input * weight
   if (is_vec) {
-    UpdateGate(gate_buffer, input, input_weight, bias, lstm_param->batch_, lstm_param->input_size_,
-               lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+    UpdateLstmGate(gate_buffer, input, input_weight, bias, lstm_param->batch_, lstm_param->input_size_,
+                   lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   } else {
     // pack input for matmul
     PackLstmInput(matmul_buffer[0], input, lstm_param->batch_, lstm_param->input_size_);
-    UpdateGate(gate_buffer, matmul_buffer[0], input_weight, bias, lstm_param->batch_, lstm_param->input_size_,
-               lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+    UpdateLstmGate(gate_buffer, matmul_buffer[0], input_weight, bias, lstm_param->batch_, lstm_param->input_size_,
+                   lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   }
 
   // state * weight
   float *state_gate = gate_buffer + lstm_param->batch_ * lstm_param->hidden_size_ * 4;
   const float *state_bias = bias + lstm_param->col_align_ * 4;
   if (is_vec) {
-    UpdateGate(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
-               lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+    UpdateLstmGate(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
+                   lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   } else {
     // pack state for matmul
     PackLstmInput(matmul_buffer[1], hidden_state, lstm_param->batch_, lstm_param->hidden_size_);
-    UpdateGate(state_gate, matmul_buffer[1], state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
-               lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+    UpdateLstmGate(state_gate, matmul_buffer[1], state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
+                   lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   }
   ElementAdd(gate_buffer, state_gate, gate_buffer, 4 * lstm_param->batch_ * lstm_param->hidden_size_);
 

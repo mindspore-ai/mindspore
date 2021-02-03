@@ -30,6 +30,8 @@ typedef struct GruParameter {
   int input_step_;
   int output_step_;
   bool bidirectional_;
+  int col_align_;
+  int row_align_;
 } GruParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_GRU_PARAMETER_H_

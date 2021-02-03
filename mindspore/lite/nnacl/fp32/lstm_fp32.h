@@ -21,7 +21,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void MatMulAcc(float *output, const float *input, const float *weight, int rows, int cols, int inner_size);
+void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, int col_align);
+
+void PackLstmInput(float *dst, const float *src, int row, int deep);
+
+void LstmMatMul(float *c, const float *a, const float *b, const float *bias, int row, int deep, int col, bool is_vec);
 
 void ElementMulAcc(const float *input0, const float *input1, float *output, int element_size);
 
