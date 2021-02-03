@@ -105,7 +105,7 @@ class Parameter(Tensor_):
         >>> print(net(x))
         [[2.]]
         >>> net.weight.set_data(Tensor(np.zeros((1,2))))
-        Parameter (name=w)
+        Parameter (name=w, shape=(1, 2), dtype=Float64, requires_grad=True)
         >>> print(net(x))
         [[0.]]
     """

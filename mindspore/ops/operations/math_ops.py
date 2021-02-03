@@ -218,7 +218,7 @@ class AssignAdd(PrimitiveWithInfer):
         >>> value = Tensor(np.ones([1]).astype(np.int64)*100)
         >>> output = net(value)
         >>> print(output)
-        Parameter (name=global_step)
+        Parameter (name=global_step, shape=(1,), dtype=Int64, requires_grad=True)
     """
     __mindspore_signature__ = (
         sig.make_sig('x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -273,7 +273,7 @@ class AssignSub(PrimitiveWithInfer):
         >>> value = Tensor(np.ones([1]).astype(np.int32)*100)
         >>> output = net(value)
         >>> print(output)
-        Parameter (name=global_step)
+        Parameter (name=global_step, shape=(1,), dtype=Int32, requires_grad=True)
     """
 
     __mindspore_signature__ = (

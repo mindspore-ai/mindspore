@@ -544,7 +544,7 @@ void FuncGraphSpecializer::ProcessCNode(const CNodePtr &new_node) {
   }
 
   if (CanSpecializeNode(func)) {
-    // for primitive node , we build the primitive node with inferred attributes in the first pass
+    // for primitive node, we build the primitive node with inferred attributes in the first pass
     // so we do not build replaced node again here in second pass
     if (IsValueNode<Primitive>(func)) {
       new_inputs[0] = func;
