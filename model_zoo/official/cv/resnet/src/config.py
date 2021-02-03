@@ -16,6 +16,10 @@
 network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
+# config optimizer for resnet50, imagenet2012. Momentum is default, Thor is optional.
+cfg = ed({
+    'optimizer': 'Thor',
+    })
 
 # config for resent50, cifar10
 config1 = ed({
@@ -100,4 +104,50 @@ config4 = ed({
     "lr_init": 0.0,
     "lr_max": 0.3,
     "lr_end": 0.0001
+})
+
+# config for resnet50, imagenet2012, Ascend 910
+config_thor_Ascend = ed({
+    "class_num": 1001,
+    "batch_size": 32,
+    "loss_scale": 128,
+    "momentum": 0.9,
+    "weight_decay": 5e-4,
+    "epoch_size": 45,
+    "pretrain_epoch_size": 0,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 2,
+    "keep_checkpoint_max": 15,
+    "save_checkpoint_path": "./",
+    "use_label_smooth": True,
+    "label_smooth_factor": 0.1,
+    "lr_init": 0.05803,
+    "lr_decay": 4.04839,
+    "lr_end_epoch": 53,
+    "damping_init": 0.02714,
+    "damping_decay": 0.50036,
+    "frequency": 834,
+})
+
+# config for resnet50, imagenet2012, GPU
+config_thor_gpu = ed({
+    "class_num": 1001,
+    "batch_size": 32,
+    "loss_scale": 128,
+    "momentum": 0.9,
+    "weight_decay": 5e-4,
+    "epoch_size": 40,
+    "pretrain_epoch_size": 0,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 1,
+    "keep_checkpoint_max": 15,
+    "save_checkpoint_path": "./",
+    "use_label_smooth": True,
+    "label_smooth_factor": 0.1,
+    "lr_init": 0.05672,
+    "lr_decay": 4.9687,
+    "lr_end_epoch": 50,
+    "damping_init": 0.02345,
+    "damping_decay": 0.5467,
+    "frequency": 834,
 })

@@ -48,6 +48,12 @@ cfg = edict({
         'learning_rate': 2e-5,
         'momentum': 0.9,
     }),
+    'Thor': edict({
+        'momentum': 0.9,
+        'weight_decay': 5e-4,
+        'loss_scale': 1.0,
+        'frequency': 100,
+    }),
 })
 
 '''

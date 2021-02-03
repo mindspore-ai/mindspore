@@ -18,9 +18,10 @@ import argparse
 import ast
 from mindspore import context
 from mindspore import Tensor
-from mindspore.nn.optim.momentum import Momentum
+from mindspore.nn.optim.momentum import Momentum, THOR
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
+from mindspore.train.train_thor import ConvertModelUtils
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
@@ -32,6 +33,7 @@ import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
 from src.lr_generator import get_lr, warmup_cosine_annealing_lr
 from src.CrossEntropySmooth import CrossEntropySmooth
+from src.config import cfg
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet50 or resnet101')
@@ -64,6 +66,12 @@ else:
     from src.resnet import se_resnet50 as resnet
     from src.config import config4 as config
     from src.dataset import create_dataset4 as create_dataset
+
+if cfg.optimizer == "Thor":
+    if args_opt.device_target == "Ascend":
+        from src.config import config_thor_Ascend as config
+    else:
+        from src.config import config_thor_gpu as config
 
 
 if __name__ == '__main__':
@@ -124,13 +132,17 @@ if __name__ == '__main__':
                                                              cell.weight.dtype))
 
     # init lr
-    if args_opt.net == "resnet50" or args_opt.net == "se-resnet50":
-        lr = get_lr(lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
-                    warmup_epochs=config.warmup_epochs, total_epochs=config.epoch_size, steps_per_epoch=step_size,
-                    lr_decay_mode=config.lr_decay_mode)
+    if cfg.optimizer == "Thor":
+        from src.lr_generator import get_thor_lr
+        lr = get_thor_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
     else:
-        lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size,
-                                        config.pretrain_epoch_size * step_size)
+        if args_opt.net == "resnet50" or args_opt.net == "se-resnet50":
+            lr = get_lr(lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
+                        warmup_epochs=config.warmup_epochs, total_epochs=config.epoch_size, steps_per_epoch=step_size,
+                        lr_decay_mode=config.lr_decay_mode)
+        else:
+            lr = warmup_cosine_annealing_lr(config.lr, step_size, config.warmup_epochs, config.epoch_size,
+                                            config.pretrain_epoch_size * step_size)
     lr = Tensor(lr)
 
     # define opt
@@ -180,6 +192,16 @@ if __name__ == '__main__':
             ## fp32 training
             opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay)
             model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
+    if cfg.optimizer == "Thor" and args_opt.dataset == "imagenet2012":
+        from src.lr_generator import get_thor_damping
+        damping = get_thor_damping(0, config.damping_init, config.damping_decay, 70, step_size)
+        split_indices = [26, 53]
+        opt = THOR(net, lr, Tensor(damping), config.momentum, config.weight_decay, config.loss_scale,
+                   config.batch_size, split_indices=split_indices)
+        model = ConvertModelUtils().convert_to_thor_model(model=model, network=net, loss_fn=loss, optimizer=opt,
+                                                          loss_scale_manager=loss_scale, metrics={'acc'},
+                                                          amp_level="O2", keep_batchnorm_fp32=False,
+                                                          frequency=config.frequency)
 
     # define callbacks
     time_cb = TimeMonitor(data_size=step_size)

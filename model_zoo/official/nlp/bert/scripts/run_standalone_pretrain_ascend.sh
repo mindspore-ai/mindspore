@@ -24,6 +24,7 @@ DEVICE_ID=$1
 EPOCH_SIZE=$2
 DATA_DIR=$3
 SCHEMA_DIR=$4
+ulimit -s 102400
 
 mkdir -p ms_log 
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)

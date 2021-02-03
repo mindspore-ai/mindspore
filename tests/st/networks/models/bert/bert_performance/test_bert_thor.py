@@ -28,20 +28,44 @@ from mindspore import log as logger
 from mindspore.train.callback import Callback
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.nn.optim import THOR
+from mindspore.train.model import Model
+from mindspore.train.train_thor import ConvertModelUtils
 import mindspore.dataset.transforms.c_transforms as C
-from model_zoo.official.nlp.bert_thor.src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepCell
-from model_zoo.official.nlp.bert_thor.src.bert_net_config import bert_net_cfg
-from model_zoo.official.nlp.bert_thor.src.config import cfg
-from model_zoo.official.nlp.bert_thor.src.lr_generator import get_bert_lr, get_bert_damping
-from model_zoo.official.nlp.bert_thor.src.model_thor import Model
-from model_zoo.official.nlp.bert_thor.src.thor_for_bert_arg import THOR
+
+from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepCell
+from model_zoo.official.nlp.bert.src.utils import get_bert_thor_lr, get_bert_thor_damping
+from model_zoo.official.nlp.bert.src.bert_model import BertConfig
 
 MINDSPORE_HCCL_CONFIG_PATH = "/home/workspace/mindspore_config/hccl/rank_table_8p.json"
 DATASET_PATH = "/home/workspace/mindspore_dataset/bert/thor/en-wiki-512_test_first1wan"
+
 load_checkpoint_path = ""
 data_sink_steps = 100
 train_steps = 200
 batch_size = 12
+frequency = 100
+momentum = 0.9
+weight_decay = 5e-4
+loss_scale = 1.0
+
+bert_net_cfg = BertConfig(
+    seq_length=512,
+    vocab_size=30522,
+    hidden_size=1024,
+    num_hidden_layers=4,
+    num_attention_heads=16,
+    intermediate_size=4096,
+    hidden_act="gelu",
+    hidden_dropout_prob=0.1,
+    attention_probs_dropout_prob=0.1,
+    max_position_embeddings=512,
+    type_vocab_size=2,
+    initializer_range=0.02,
+    use_relative_positions=False,
+    dtype=mstype.float32,
+    compute_type=mstype.float16
+)
 
 np.random.seed(1)
 ds.config.set_seed(1)
@@ -113,27 +137,7 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
 
 def _set_bert_all_reduce_split():
     """set bert all_reduce fusion split, support num_hidden_layers is 12 and 24."""
-    from mindspore.parallel._auto_parallel_context import auto_parallel_context
-    if bert_net_cfg.num_hidden_layers == 12:
-        if bert_net_cfg.use_relative_positions:
-            auto_parallel_context().set_all_reduce_fusion_split_indices([29, 58, 87, 116, 145, 174, 203, 217],
-                                                                        "hccl_world_groupsum1")
-            auto_parallel_context().set_all_reduce_fusion_split_indices([29, 58, 87, 116, 145, 174, 203, 217],
-                                                                        "hccl_world_groupsum3")
-        else:
-            auto_parallel_context().set_all_reduce_fusion_split_indices([28, 55, 82, 109, 136, 163, 190, 205],
-                                                                        "hccl_world_groupsum1")
-            auto_parallel_context().set_all_reduce_fusion_split_indices([28, 55, 82, 109, 136, 163, 190, 205],
-                                                                        "hccl_world_groupsum3")
-    elif bert_net_cfg.num_hidden_layers == 24:
-        if bert_net_cfg.use_relative_positions:
-            auto_parallel_context().set_all_reduce_fusion_split_indices([30, 90, 150, 210, 270, 330, 390, 421],
-                                                                        "hccl_world_groupsum1")
-            auto_parallel_context().set_all_reduce_fusion_split_indices([30, 90, 150, 210, 270, 330, 390, 421],
-                                                                        "hccl_world_groupsum3")
-        else:
-            auto_parallel_context().set_all_reduce_fusion_split_indices([38, 77], "hccl_world_groupsum1")
-            auto_parallel_context().set_all_reduce_fusion_split_indices([38, 77], "hccl_world_groupsum3")
+    context.set_auto_parallel_context(all_reduce_fusion_config=[38, 77])
 
 
 def train_process_bert_thor(q, device_id, epoch_size, device_num):
@@ -153,7 +157,6 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                       device_num=device_num)
 
-    bert_net_cfg.num_hidden_layers = 4
     data_set = create_bert_dataset(device_num=device_num, rank=rank, do_shuffle=False, data_dir=DATASET_PATH,
                                    schema_dir=None)
     net_with_loss = BertNetworkWithLoss(bert_net_cfg, True)
@@ -161,13 +164,12 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
     new_repeat_count = epoch_size * data_set.get_dataset_size() // data_sink_steps
     new_repeat_count = min(new_repeat_count, train_steps // data_sink_steps)
 
-    lr = get_bert_lr()
-    damping = get_bert_damping()
-    optimizer = THOR(filter(lambda x: x.requires_grad, net_with_loss.get_parameters()), lr, cfg.Thor.momentum,
-                     filter(lambda x: 'matrix_A' in x.name, net_with_loss.get_parameters()),
-                     filter(lambda x: 'matrix_G' in x.name, net_with_loss.get_parameters()),
-                     cfg.Thor.weight_decay, cfg.Thor.loss_scale, bert_net_cfg.num_hidden_layers,
-                     bert_net_cfg.batch_size, damping)
+    lr = get_bert_thor_lr()
+    damping = get_bert_thor_damping()
+    split_indices = [38, 77]
+    optimizer = THOR(net_with_loss, lr, damping, momentum, weight_decay, loss_scale, batch_size,
+                     decay_filter=lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
+                     split_indices=split_indices)
     time_monitor_callback = TimeMonitor(data_sink_steps)
     loss_callback = LossCallback()
     callback = [time_monitor_callback, loss_callback]
@@ -177,7 +179,9 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
         load_param_into_net(net_with_loss, param_dict)
 
     net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
-    model = Model(net_with_grads, frequency=cfg.Thor.frequency)
+    model = Model(net_with_grads)
+    model = ConvertModelUtils().convert_to_thor_model(model, network=net_with_grads, optimizer=optimizer,
+                                                      frequency=frequency)
     model.train(new_repeat_count, data_set, callbacks=callback, dataset_sink_mode=True, sink_size=data_sink_steps)
 
     loss_list = loss_callback.loss_list
@@ -230,9 +234,12 @@ def test_bert_thor_mlperf_8p():
         os.system("rm -rf " + str(i))
 
     print("End training...")
-    assert mean_cost < 64.4
-    assert mean_loss < 7.9
+    assert mean_cost < 71.5
+    assert mean_loss < 8.125
 
 
 if __name__ == '__main__':
+    begin = time.time()
     test_bert_thor_mlperf_8p()
+    end = time.time()
+    print("time span is", end - begin, flush=True)
