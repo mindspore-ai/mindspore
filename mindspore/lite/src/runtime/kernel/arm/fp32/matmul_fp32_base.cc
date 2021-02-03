@@ -68,8 +68,8 @@ int MatmulFp32BaseCPUKernel::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  a_pack_ptr_ =
-    reinterpret_cast<float *>(malloc(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float)));
+  a_pack_ptr_ = reinterpret_cast<float *>(
+    context_->allocator->Malloc(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float)));
   if (a_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc a_pack_ptr_ failed";
     return RET_ERROR;
@@ -81,8 +81,8 @@ int MatmulFp32BaseCPUKernel::InitBufferB() {
   if (b_pack_ptr_ != nullptr) {
     return RET_OK;
   }
-  b_pack_ptr_ =
-    reinterpret_cast<float *>(malloc(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float)));
+  b_pack_ptr_ = reinterpret_cast<float *>(
+    context_->allocator->Malloc(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float)));
   if (b_pack_ptr_ == nullptr) {
     MS_LOG(ERROR) << "malloc b_pack_ptr_ failed";
     return RET_ERROR;
@@ -99,6 +99,7 @@ int MatmulFp32BaseCPUKernel::InitBiasData() {
       MS_LOG(ERROR) << "malloc bias_ptr_ failed";
       return RET_ERROR;
     }
+    memset(bias_ptr_, 0, max_bias_data * sizeof(float));
     memcpy(bias_ptr_, bias_tensor->data_c(), bias_tensor->ElementsNum() * sizeof(float));
   }
   return RET_OK;
@@ -201,7 +202,9 @@ void MatmulFp32BaseCPUKernel::FreeResizeBufB() {
 }
 
 int MatmulFp32BaseCPUKernel::FloatRun(int task_id) {
-  int cur_oc = MSMIN(thread_stride_ * col_tile_, params_->col_ - task_id * thread_stride_ * col_tile_);
+  int current_stride_oc = thread_stride_ * col_tile_;
+  int current_rest_oc = params_->col_ - task_id * thread_stride_ * col_tile_;
+  int cur_oc = MSMIN(current_stride_oc, current_rest_oc);
   if (cur_oc <= 0) {
     return RET_OK;
   }
@@ -254,7 +257,7 @@ int MatmulFp32BaseCPUKernel::ReSize() {
 int MatmulFp32BaseCPUKernel::Run() {
   auto a_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   auto b_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
-  c_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto c_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
 
   if (params_->a_const_ == false) {
     if (RET_OK != InitBufferA()) {
@@ -274,11 +277,11 @@ int MatmulFp32BaseCPUKernel::Run() {
     if (vec_matmul_) {
       batch_a_ptr_ = a_pack_ptr_ + i * params_->deep_;
       batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_;
-      batch_c_ptr_ = c_ptr_ + i * params_->row_ * params_->col_;
+      batch_c_ptr_ = c_ptr + i * params_->row_ * params_->col_;
     } else {
       batch_a_ptr_ = a_pack_ptr_ + i * params_->row_align_ * params_->deep_;
       batch_b_ptr_ = b_pack_ptr_ + i * params_->deep_ * params_->col_align_;
-      batch_c_ptr_ = c_ptr_ + i * params_->row_ * params_->col_;
+      batch_c_ptr_ = c_ptr + i * params_->row_ * params_->col_;
     }
     auto ret = ParallelLaunch(this->context_->thread_pool_, MatmulBaseFloatRun, this, thread_count_);
     if (ret != RET_OK) {

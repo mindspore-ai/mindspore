@@ -25,29 +25,37 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
+void MatmulCPUKernel::InitShapeA() {
+  auto a_shape = in_tensors_.at(0)->shape();
+  int batch = 1;
+  for (size_t i = 0; i < a_shape.size() - 2; ++i) {
+    batch *= a_shape[i];
+  }
+  params_->batch = batch;
+  params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
+  params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
+}
+
+void MatmulCPUKernel::InitShapeB() {
+  auto b_shape = in_tensors_.at(1)->shape();
+  int batch = 1;
+  for (size_t i = 0; i < b_shape.size() - 2; ++i) {
+    batch *= b_shape[i];
+  }
+  params_->batch = batch;
+  params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1];
+  params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
+}
+
 int MatmulCPUKernel::Init() {
   MatmulFp32BaseCPUKernel::InitParameter();
 
   if (params_->a_const_ == true) {
-    auto a_shape = in_tensors_.at(0)->shape();
-    int batch = 1;
-    for (size_t i = 0; i < a_shape.size() - 2; ++i) {
-      batch *= a_shape[i];
-    }
-    params_->batch = batch;
-    params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
-    params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
+    InitShapeA();
   }
 
   if (params_->b_const_ == true) {
-    auto b_shape = in_tensors_.at(1)->shape();
-    int batch = 1;
-    for (size_t i = 0; i < b_shape.size() - 2; ++i) {
-      batch *= b_shape[i];
-    }
-    params_->batch = batch;
-    params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1];
-    params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
+    InitShapeB();
   }
 
   auto ret = MatmulFp32BaseCPUKernel::Init();
@@ -62,17 +70,8 @@ int MatmulCPUKernel::Init() {
 }
 
 int MatmulCPUKernel::ReSize() {
-  auto a_shape = in_tensors_.at(0)->shape();
-  auto b_shape = in_tensors_.at(1)->shape();
-  int batch = 1;
-  MS_ASSERT(a_shape.size() >= 2);
-  for (size_t i = 0; i < a_shape.size() - 2; ++i) {
-    batch *= a_shape[i];
-  }
-  params_->batch = batch;
-  params_->row_ = params_->a_transpose_ ? a_shape[a_shape.size() - 1] : a_shape[a_shape.size() - 2];
-  params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1];
-  params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
+  InitShapeA();
+  InitShapeB();
 
   return MatmulFp32BaseCPUKernel::ReSize();
 }

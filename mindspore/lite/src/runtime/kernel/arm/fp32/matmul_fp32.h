@@ -33,6 +33,10 @@ class MatmulCPUKernel : public MatmulFp32BaseCPUKernel {
   int ReSize() override;
   int Run() override;
   int Eval() override;
+
+ private:
+  void InitShapeA();
+  void InitShapeB();
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_H_
