@@ -60,7 +60,9 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
         outputs_device_format.push_back(AnfAlgo::GetOutputFormat(cnode, output_index));
         outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(cnode, output_index));
         std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(cnode, output_index);
-        shape[0] /= rank_size;
+        if (!shape.empty()) {
+          shape[0] /= rank_size;
+        }
         outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
       }
     }
@@ -204,7 +206,9 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
       auto cnode = communication_op_info.communication_op_nodes[idx];
       MS_EXCEPTION_IF_NULL(cnode);
       std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(cnode, 0);
-      shape[0] /= rank_size;
+      if (!shape.empty()) {
+        shape[0] /= rank_size;
+      }
       shapes.push_back(shape);
     }
   }
