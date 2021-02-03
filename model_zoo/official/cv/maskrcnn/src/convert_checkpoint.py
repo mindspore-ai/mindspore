@@ -44,7 +44,7 @@ def load_weights(model_path, use_fp16_weight):
             param_name = msname
         if "down_sample_layer.0" in param_name:
             param_name = param_name.replace("down_sample_layer.0", "conv_down_sample")
-        if "down_sample-layer.1" in param_name:
+        if "down_sample_layer.1" in param_name:
             param_name = param_name.replace("down_sample_layer.1", "bn_down_sample")
         weights[param_name] = ms_ckpt[msname].data.asnumpy()
     if use_fp16_weight:
