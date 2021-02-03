@@ -290,7 +290,6 @@ class _Reduce(PrimitiveWithInfer):
         """Initialize Reduce"""
         validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         self.init_prim_io_names(inputs=['input_x', 'axis'], outputs=['y'])
-        self.add_prim_attr("io_format", "ND")
 
     def __call__(self, x, axis=()):
         args = [x, axis]
@@ -730,7 +729,6 @@ class MatMul(PrimitiveWithCheck):
         cls_name = self.name
         validator.check_value_type("transpose_a", transpose_a, [bool], cls_name)
         validator.check_value_type("transpose_b", transpose_b, [bool], cls_name)
-        self.add_prim_attr("io_format", "ND")
 
     def check_shape_size(self, x1, x2):
         if len(x1) != 2 or len(x2) != 2:
