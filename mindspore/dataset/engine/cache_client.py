@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +38,14 @@ class DatasetCache:
         num_connections (int, optional): Number of tcp/ip connections (default=12).
         prefetch_size (int, optional): Prefetch size (default=20).
 
+    Examples:
+            >>> import mindspore.dataset as ds
+            >>>
+            >>> # create a cache instance, in which session_id is generated from command line `cache_admin -g`
+            >>> some_cache = ds.DatasetCache(session_id=session_id, size=0)
+            >>>
+            >>> dataset_dir = "path/to/imagefolder_directory"
+            >>> ds1 = ds.ImageFolderDataset(dataset_dir, cache=some_cache)
     """
 
     def __init__(self, session_id, size=0, spilling=False, hostname=None, port=None, num_connections=None,

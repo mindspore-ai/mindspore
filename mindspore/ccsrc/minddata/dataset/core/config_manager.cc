@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +57,8 @@ ConfigManager::ConfigManager()
     char *end = nullptr;
     cache_port_ = strtol(env_cache_port, &end, 10);
     if (*end != '\0') {
-      MS_LOG(WARNING) << "\nCache port from env variable MS_CACHE_PORT is invalid, back to use default "
-                      << kCfgDefaultCachePort << std::endl;
-      cache_port_ = kCfgDefaultCachePort;
+      MS_LOG(WARNING) << "Cache port from env variable MS_CACHE_PORT is invalid\n";
+      cache_port_ = 0;  // cause the port range validation to generate an error during the validation checks
     }
   }
 }
