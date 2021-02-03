@@ -38,18 +38,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-typedef enum eHttpMethod {
-  HM_GET = 1 << 0,
-  HM_POST = 1 << 1,
-  HM_HEAD = 1 << 2,
-  HM_PUT = 1 << 3,
-  HM_DELETE = 1 << 4,
-  HM_OPTIONS = 1 << 5,
-  HM_TRACE = 1 << 6,
-  HM_CONNECT = 1 << 7,
-  HM_PATCH = 1 << 8
-} HttpMethod;
-
 using OnRequestReceive = std::function<void(std::shared_ptr<HttpMessageHandler>)>;
 
 class HttpServer {
@@ -61,12 +49,13 @@ class HttpServer {
         event_base_(nullptr),
         event_http_(nullptr),
         is_init_(false),
-        is_stop_(true) {}
+        is_stop_(true),
+        request_timeout_(300) {}
 
   ~HttpServer();
 
   bool InitServer();
-  void SetTimeOut(int seconds = 5);
+  void SetTimeOut(int seconds);
 
   // Default allowed methods: GET, POST, HEAD, PUT, DELETE
   void SetAllowedMethod(u_int16_t methods);
@@ -91,9 +80,9 @@ class HttpServer {
   struct evhttp *event_http_;
   bool is_init_;
   std::atomic<bool> is_stop_;
+  int request_timeout_;
 };
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_PS_CORE_HTTP_SERVER_H_

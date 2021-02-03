@@ -57,6 +57,7 @@ bool HttpServer::InitServer() {
   MS_EXCEPTION_IF_NULL(event_base_);
   event_http_ = evhttp_new(event_base_);
   MS_EXCEPTION_IF_NULL(event_http_);
+  evhttp_set_timeout(event_http_, request_timeout_);
   int ret = evhttp_bind_socket(event_http_, server_address_.c_str(), server_port_);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "Http bind server addr:" << server_address_.c_str() << " port:" << server_port_ << "failed";
@@ -70,7 +71,7 @@ void HttpServer::SetTimeOut(int seconds) {
   if (seconds < 0) {
     MS_LOG(EXCEPTION) << "The timeout seconds:" << seconds << "is less than 0!";
   }
-  evhttp_set_timeout(event_http_, seconds);
+  request_timeout_ = seconds;
 }
 
 void HttpServer::SetAllowedMethod(u_int16_t methods) {
@@ -105,7 +106,8 @@ bool HttpServer::RegisterRoute(const std::string &url, OnRequestReceive *functio
   auto TransFunc = [](struct evhttp_request *req, void *arg) {
     MS_EXCEPTION_IF_NULL(req);
     MS_EXCEPTION_IF_NULL(arg);
-    auto httpReq = std::make_shared<HttpMessageHandler>(req);
+    auto httpReq = std::make_shared<HttpMessageHandler>();
+    httpReq->set_request(req);
     httpReq->InitHttpMessage();
     OnRequestReceive *func = reinterpret_cast<OnRequestReceive *>(arg);
     (*func)(httpReq);
@@ -144,8 +146,9 @@ bool HttpServer::Start() {
     MS_LOG(ERROR) << "Event base dispatch failed with error occurred!";
     return false;
   } else {
-    MS_LOG(EXCEPTION) << "Event base dispatch with unexpect error code!";
+    MS_LOG(EXCEPTION) << "Event base dispatch with unexpected error code!";
   }
+  return true;
 }
 
 void HttpServer::Stop() {
