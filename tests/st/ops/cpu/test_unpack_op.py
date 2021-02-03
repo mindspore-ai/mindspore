@@ -29,7 +29,7 @@ class Net(nn.Cell):
     def __init__(self, nptype):
         super(Net, self).__init__()
 
-        self.unpack = P.Unpack(axis=3)
+        self.unstack = P.Unstack(axis=3)
         self.data_np = np.array([[[[[0, 0],
                                     [-2, -1]],
                                    [[0, 0],
@@ -70,7 +70,7 @@ class Net(nn.Cell):
 
     @ms_function
     def construct(self):
-        return self.unpack(self.x1)
+        return self.unstack(self.x1)
 
 
 def unpack(nptype):
@@ -125,7 +125,7 @@ def unpack_pynative(nptype):
     x1 = Tensor(x1)
     expect = (np.reshape(np.array([0] * 36).astype(nptype), (3, 3, 2, 2)),
               np.arange(-2, 34, 1).reshape(3, 3, 2, 2).astype(nptype))
-    output = P.Unpack(axis=3)(x1)
+    output = P.Unstack(axis=3)(x1)
 
     for i, exp in enumerate(expect):
         assert (output[i].asnumpy() == exp).all()

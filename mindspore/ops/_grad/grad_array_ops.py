@@ -84,6 +84,8 @@ def get_bprop_dtype(self):
 
 
 dout_cast = C.MultitypeFuncGraph("dout_cast")
+
+
 @dout_cast.register("Tensor", "Tensor")
 def dout_cast_tensor(dout, x):
     cast = P.Cast()
@@ -91,12 +93,14 @@ def dout_cast_tensor(dout, x):
     dx = cast(dout, get_dtype(x))
     return dx
 
+
 @dout_cast.register("Number", "Number")
 def dout_cast_number(dout, x):
     cast = P.Cast()
     get_dtype = P.DType()
     dx = cast(dout, get_dtype(x))
     return dx
+
 
 @dout_cast.register("RowTensor", "Tensor")
 def dout_cast_row_tensor(dout, x):
@@ -253,6 +257,7 @@ def get_bprop_embedding_lookup(self):
     """Generate bprop for EmbeddingLookup"""
     sub_op = P.Sub()
     reshape_op = P.Reshape()
+
     def bprop_sparse(x, indices, offset, out, dout):
         x_shp = shape_op(x)
         new_indices = sub_op(indices, offset)
@@ -264,12 +269,15 @@ def get_bprop_embedding_lookup(self):
         # Reshape the 'actual_dout' on device
         actual_dout = reshape_op(dout, actual_dout_shape_changed)
         return RowTensor(new_indices, actual_dout, x_shp), zeros_like(indices), zeros_like(offset)
+
     return bprop_sparse
+
 
 @constexpr
 def make_begin(shp):
     begin = tuple([0 for _ in shp])
     return begin
+
 
 @bprop_getters.register(P.Padding)
 def get_bprop_padding(self):
@@ -299,10 +307,11 @@ def _concat_grad_uniform(input_shapes, input_nums):
     """Helper function for bprop of Concat"""
     is_uniform = True
     for i in range(1, input_nums):
-        if input_shapes[i-1] != input_shapes[i]:
+        if input_shapes[i - 1] != input_shapes[i]:
             is_uniform = False
             break
     return is_uniform
+
 
 @bprop_getters.register(P.Concat)
 def get_bprop_concat(self):
@@ -325,6 +334,7 @@ def get_bprop_concat(self):
                 slice_out = P.Slice()(dout, out_offset[i], input_shapes[i])
                 dx = dx + (slice_out,)
         return (dx,)
+
     return bprop
 
 
@@ -461,6 +471,7 @@ def _range_op(start, limit, delta, dtype):
     output_tensor = Tensor(list(range(start, limit, delta)), dtype)
     return output_tensor
 
+
 @constexpr
 def _get_1d_shape(in_shape):
     """helper function for grad of Sort"""
@@ -468,6 +479,7 @@ def _get_1d_shape(in_shape):
     for i in in_shape:
         out_shape *= i
     return (out_shape,)
+
 
 @constexpr
 def _get_transposition(axis, rank):
@@ -477,6 +489,7 @@ def _get_transposition(axis, rank):
     transposition = np.r_[np.arange(axis), [rank - 1], np.arange(axis + 1, rank - 1), [axis]]
     trans = tuple(transposition.tolist())
     return trans
+
 
 @bprop_getters.register(P.Sort)
 def get_bprop_sort(self):
@@ -556,14 +569,14 @@ def get_bprop_range(self):
     return bprop
 
 
-@bprop_getters.register(P.Pack)
-def get_bprop_pack(self):
-    """Generate bprop for Pack"""
+@bprop_getters.register(P.Stack)
+def get_bprop_stack(self):
+    """Generate bprop for Stack"""
     axis = self.axis
 
     def bprop(x, out, dout):
-        pack_grad = P.Unpack(axis)
-        out = pack_grad(dout)
+        stack_grad = P.Unstack(axis)
+        out = stack_grad(dout)
         if is_sub_class(F.typeof(x), ms.list_):
             ret = []
             for item in out:
@@ -586,14 +599,15 @@ def get_bprop_reverse_v2(self):
 
     return bprop
 
-@bprop_getters.register(P.Unpack)
-def get_bprop_unpack(self):
-    """Generate bprop for Unpack"""
+
+@bprop_getters.register(P.Unstack)
+def get_bprop_unstack(self):
+    """Generate bprop for Unstack"""
     axis = self.axis
 
     def bprop(x, out, dout):
-        unpack_grad = P.Pack(axis)
-        out = unpack_grad(dout)
+        unstack_grad = P.Stack(axis)
+        out = unstack_grad(dout)
         return (out,)
 
     return bprop
@@ -714,6 +728,7 @@ def get_bprop_scatter_non_aliasing_add_update(self):
 
     return bprop
 
+
 @bprop_getters.register(P.TensorScatterUpdate)
 def get_bprop_tensor_scatter_update(self):
     """Generate bprop for TensorScatterUpdate"""
@@ -726,7 +741,6 @@ def get_bprop_tensor_scatter_update(self):
         return x_grad, zeros_like(indices), update_grad
 
     return bprop
-
 
 
 @bprop_getters.register(P.ScatterMax)
@@ -858,7 +872,7 @@ def get_bprop_unsorted_segment_sum(self):
 
     def bprop(x, segment_ids, num_segments, out, dout):
         return _gather_drop_negatives(dout, segment_ids, None, None)[0], zeros_like(segment_ids), \
-                zeros_like(num_segments)
+               zeros_like(num_segments)
 
     return bprop
 
@@ -941,9 +955,11 @@ def get_bprop_batch_to_space(self):
 def get_bprop_space_to_batch_nd(self):
     """Generate bprop for SpaceToBatchND"""
     space_to_batch_nd_grad = P.BatchToSpaceND(self.block_shape, self.paddings)
+
     def bprop(x, out, dout):
         dx = space_to_batch_nd_grad(dout)
         return (dx,)
+
     return bprop
 
 
@@ -951,10 +967,13 @@ def get_bprop_space_to_batch_nd(self):
 def get_bprop_batch_to_space_nd(self):
     """Generate bprop for BatchToSpaceND"""
     batch_to_space_nd_grad = P.SpaceToBatchND(self.block_shape, self.crops)
+
     def bprop(x, out, dout):
         dx = batch_to_space_nd_grad(dout)
         return (dx,)
+
     return bprop
+
 
 @bprop_getters.register(P.BroadcastTo)
 def get_bprop_broadcast_to(self):
@@ -972,6 +991,7 @@ def get_bprop_broadcast_to(self):
         reduced_grad = reduce_keep_dim(dout, reduction_axes)
         dx = reshape(reduced_grad, x_shape)
         return (dx,)
+
     return bprop
 
 
@@ -983,6 +1003,7 @@ def get_bprop_reverse_sequence(self):
     def bprop(x, seq_lengths, out, dout):
         dx = reverse_sequence_grad(dout, seq_lengths)
         return dx, zeros_like(seq_lengths)
+
     return bprop
 
 
@@ -990,9 +1011,11 @@ def get_bprop_reverse_sequence(self):
 def get_bprop_trans_shape(self):
     """Generate bprop for TransShape"""
     op = P.TransShape()
+
     def bprop(x, shape, out, dout):
         dx = op(dout, shape_op(x))
         return (dx, zeros_like(shape))
+
     return bprop
 
 
@@ -1000,7 +1023,9 @@ def get_bprop_trans_shape(self):
 def get_bprop_unique(self):
     """Generate bprop for Unique"""
     op = G.UniqueGrad()
+
     def bprop(x, out, dout):
         dx = op(dout, out)
         return (dx,)
+
     return bprop

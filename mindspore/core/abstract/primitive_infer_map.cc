@@ -59,7 +59,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
     {prim::kPrimBroadcastShape, {InferImplBroadCastShape, true}},
-    {prim::kPrimPack, {InferImplPack, true}},
+    {prim::kPrimStack, {InferImplStack, true}},
     {prim::kPrimPad, {InferImplPad, true}},
     {prim::kPrimUnique, {InferImplUnique, true}},
     {prim::kPrimUniqueGrad, {InferImplUniqueGrad, true}},

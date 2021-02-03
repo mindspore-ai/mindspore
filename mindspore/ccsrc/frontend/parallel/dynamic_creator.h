@@ -187,7 +187,7 @@ REGISTER(BroadcastToInfo);
 REGISTER(StridedSliceInfo);
 REGISTER(SliceInfo);
 REGISTER(DropoutInfo);
-REGISTER(PackInfo);
+REGISTER(StackInfo);
 REGISTER(ConcatInfo);
 REGISTER(SplitInfo);
 REGISTER(UniqueInfo);

@@ -38,6 +38,10 @@ constexpr auto kScalarTrunc = "ScalarTrunc";
 constexpr auto kScalarFloor = "ScalarFloor";
 constexpr auto kScalarUadd = "ScalarUadd";
 constexpr auto kScalarUsub = "ScalarUsub";
+
+// Arrays
+constexpr auto kStack = "Stack";
+constexpr auto kUnstack = "Unstack";
 constexpr auto kTupleGetItem = "TupleGetItem";
 
 // Here list all primitives used in backend or some special primitives used by core.
@@ -118,8 +122,9 @@ inline const PrimitivePtr kPrimSize = std::make_shared<Primitive>("Size");
 inline const PrimitivePtr kPrimArgMax = std::make_shared<Primitive>("Argmax");
 inline const PrimitivePtr kPrimArgMin = std::make_shared<Primitive>("Argmin");
 inline const PrimitivePtr kPrimPack = std::make_shared<Primitive>("Pack");
+inline const PrimitivePtr kPrimStack = std::make_shared<Primitive>(kStack);
 inline const PrimitivePtr kPrimUnpack = std::make_shared<Primitive>("Unpack");
-inline const PrimitivePtr kPrimUnstack = std::make_shared<Primitive>("Unstack");
+inline const PrimitivePtr kPrimUnstack = std::make_shared<Primitive>(kUnstack);
 inline const PrimitivePtr kPrimUnsortedSegmentMax = std::make_shared<Primitive>("UnsortedSegmentMax");
 inline const PrimitivePtr kPrimUnsortedSegmentSum = std::make_shared<Primitive>("UnsortedSegmentSum");
 inline const PrimitivePtr kPrimUnsortedSegmentMin = std::make_shared<Primitive>("UnsortedSegmentMin");
@@ -426,7 +431,6 @@ inline const PrimitivePtr kPrimEquivFormat = std::make_shared<Primitive>("EquivF
 inline const PrimitivePtr kPrimLshProjection = std::make_shared<Primitive>("LshProjection");
 inline const PrimitivePtr kPrimHashtableLookup = std::make_shared<Primitive>("HashtableLookup");
 inline const PrimitivePtr kPrimCustomPredict = std::make_shared<Primitive>("CustomPredict");
-inline const PrimitivePtr kPrimStack = std::make_shared<Primitive>("Stack");
 inline const PrimitivePtr kPrimPriorBox = std::make_shared<Primitive>("PriorBox");
 inline const PrimitivePtr kPrimQuantDTypeCast = std::make_shared<Primitive>("QuantDTypeCast");
 inline const PrimitivePtr kPrimWhile = std::make_shared<Primitive>("While");

@@ -25,11 +25,11 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
 
-class PackNet(nn.Cell):
+class StackNet(nn.Cell):
     def __init__(self, nptype):
-        super(PackNet, self).__init__()
+        super(StackNet, self).__init__()
 
-        self.pack = P.Pack(axis=2)
+        self.stack = P.Stack(axis=2)
         self.data_np = np.array([0] * 16).astype(nptype)
         self.data_np = np.reshape(self.data_np, (2, 2, 2, 2))
         self.x1 = Parameter(initializer(
@@ -39,13 +39,13 @@ class PackNet(nn.Cell):
 
     @ms_function
     def construct(self):
-        return self.pack((self.x1, self.x2))
+        return self.stack((self.x1, self.x2))
 
 
-def pack(nptype):
+def stack(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    pack_ = PackNet(nptype)
-    output = pack_()
+    stack_ = StackNet(nptype)
+    output = stack_()
     expect = np.array([[[[[0, 0],
                           [0, 0]],
                          [[0, 1],
@@ -64,7 +64,7 @@ def pack(nptype):
                           [14, 15]]]]]).astype(nptype)
     assert (output.asnumpy() == expect).all()
 
-def pack_pynative(nptype):
+def stack_pynative(nptype):
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     x1 = np.array([0] * 16).astype(nptype)
     x1 = np.reshape(x1, (2, 2, 2, 2))
@@ -86,77 +86,77 @@ def pack_pynative(nptype):
                           [0, 0]],
                          [[12, 13],
                           [14, 15]]]]]).astype(nptype)
-    output = P.Pack(axis=2)((x1, x2))
+    output = P.Stack(axis=2)((x1, x2))
     assert (output.asnumpy() == expect).all()
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_graph_float32():
-    pack(np.float32)
+def test_stack_graph_float32():
+    stack(np.float32)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_graph_float16():
-    pack(np.float16)
+def test_stack_graph_float16():
+    stack(np.float16)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_graph_int32():
-    pack(np.int32)
+def test_stack_graph_int32():
+    stack(np.int32)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_graph_int16():
-    pack(np.int16)
+def test_stack_graph_int16():
+    stack(np.int16)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_graph_uint8():
-    pack(np.uint8)
+def test_stack_graph_uint8():
+    stack(np.uint8)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_graph_bool():
-    pack(np.bool)
+def test_stack_graph_bool():
+    stack(np.bool)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_pynative_float32():
-    pack_pynative(np.float32)
+def test_stack_pynative_float32():
+    stack_pynative(np.float32)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_pynative_float16():
-    pack_pynative(np.float16)
+def test_stack_pynative_float16():
+    stack_pynative(np.float16)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_pynative_int32():
-    pack_pynative(np.int32)
+def test_stack_pynative_int32():
+    stack_pynative(np.int32)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_pynative_int16():
-    pack_pynative(np.int16)
+def test_stack_pynative_int16():
+    stack_pynative(np.int16)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_pynative_uint8():
-    pack_pynative(np.uint8)
+def test_stack_pynative_uint8():
+    stack_pynative(np.uint8)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_pack_pynative_bool():
-    pack_pynative(np.bool)
+def test_stack_pynative_bool():
+    stack_pynative(np.bool)

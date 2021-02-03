@@ -16,7 +16,7 @@
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
 
-pack = P.Pack()
+stack = P.Stack()
 concat = P.Concat()
 make_tuple = Primitive('make_tuple')
 
@@ -32,26 +32,26 @@ class FnDict:
         return self.fnDict[name]
 
 
-def test_pack_fission(tag):
+def test_stack_fission(tag):
     """ test_adam_apply_one_with_decay_rule """
     fns = FnDict()
 
     @fns
     def before(input0, input1, input2, input3, input4, input5, input6, input7, input8):
-        return pack((input0, input1, input2, input3, input4, input5, input6, input7, input8))
+        return stack((input0, input1, input2, input3, input4, input5, input6, input7, input8))
 
     @fns
     def after_divided_by_3(input0, input1, input2, input3, input4, input5, input6, input7, input8):
-        pack1 = pack(input0, input1, input2)
-        pack2 = pack(input3, input4, input5)
-        pack3 = pack(input6, input7, input8)
-        return make_tuple(concat(pack1, pack2, pack3))
+        stack1 = stack(input0, input1, input2)
+        stack2 = stack(input3, input4, input5)
+        stack3 = stack(input6, input7, input8)
+        return make_tuple(concat(stack1, stack2, stack3))
 
     @fns
     def after_divided_by_4(input0, input1, input2, input3, input4, input5, input6, input7, input8):
-        pack1 = pack(input0, input1, input2, input3)
-        pack2 = pack(input4, input5, input6, input7)
-        pack3 = pack(input8)
-        return make_tuple(concat(pack1, pack2, pack3))
+        stack1 = stack(input0, input1, input2, input3)
+        stack2 = stack(input4, input5, input6, input7)
+        stack3 = stack(input8)
+        return make_tuple(concat(stack1, stack2, stack3))
 
     return fns[tag]

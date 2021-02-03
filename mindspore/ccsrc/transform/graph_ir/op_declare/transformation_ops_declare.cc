@@ -28,7 +28,7 @@ REG_ADPT_DESC(Flatten, prim::kPrimFlatten->name(), ADPT_DESC(Flatten))
 INPUT_MAP(Unpack) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Unpack) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}, {"num", ATTR_DESC(num, AnyTraits<int64_t>())}};
 DYN_OUTPUT_MAP(Unpack) = {{0, DYN_OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Unpack, kNameUnpack, ADPT_DESC(Unpack))
+REG_ADPT_DESC(Unpack, prim::kUnstack, ADPT_DESC(Unpack))
 
 // ExtractImagePatches
 INPUT_MAP(ExtractImagePatches) = {{1, INPUT_DESC(x)}};
