@@ -145,8 +145,6 @@ class FootPrint : public std::enable_shared_from_this<FootPrint> {
   const size_t getOffset() { return m_offset_; }
   void setOffset(const size_t &offset) { m_offset_ = offset; }
   bool findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset);
-  void ConstrainedBLocks(const std::vector<DynamicBitSet> *constraints, const BlockTensor &b1, const BlockTensor &b2,
-                         vector<Interval> *oInterval_l);
   void Merge(vector<Interval> *l_interval, stack<Interval> *l_merged);
   bool findFirst(stack<Interval> *merged, const BlockTensor &block, size_t *offset);
   size_t Result();

@@ -53,7 +53,6 @@ class SomasSolverCore {
   Status MemoryAllocationSolver();
   Status Verify();
   bool Verify(const size_t &);
-  Status Verify(unordered_map<size_t, SomasSolverTensorDescPtr> *);
   void VerifySolution(const bool verify) { verify_ = verify; }
   void SortTensors();
   void BuildBlocks();

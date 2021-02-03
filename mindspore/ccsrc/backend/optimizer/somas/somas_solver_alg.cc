@@ -117,25 +117,6 @@ void FootPrint::Merge(vector<Interval> *interval_v, stack<Interval> *s) {
 
   return;
 }
-void FootPrint::ConstrainedBLocks(const std::vector<DynamicBitSet> *constraints, const BlockTensor &b1,
-                                  const BlockTensor &b2, vector<Interval> *oInterval) {
-  MS_EXCEPTION_IF_NULL(oInterval);
-  // propagate
-  size_t acum = m_offset_;
-
-  for (SomasSolverTensorDescPtr p1 = b1.m_start_tensor_; NULL != p1; p1 = p1->right_) {
-    for (SomasSolverTensorDescPtr p2 = b2.m_start_tensor_; NULL != p2; p2 = p2->right_) {
-      if ((*constraints)[p1->index_].IsBitTrue(p2->index_) == false) {
-        Interval a = Interval(acum, acum + p1->size_);
-        Interval b = Interval(p2);
-        if (a.lb() < b.ub()) {
-          (*oInterval).emplace_back(b);
-        }
-      }
-    }
-    acum += p1->size_;
-  }
-}
 bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const BlockTensor &block, size_t *offset) {
   MS_EXCEPTION_IF_NULL(offset);
   bool bretval = true;
@@ -148,16 +129,42 @@ bool FootPrint::findOffset(const std::vector<DynamicBitSet> *constraints, const 
   bretval = true;
 
   // transform constrained tensors in non eligible intervals
-  for (size_t i = 0; i < m_starts_.size(); i++) {
-    if (block.Alone() && m_starts_[i]->Alone() &&
-        (*constraints)[block.m_start_tensor_->index_].IsBitTrue(m_starts_[i]->m_start_tensor_->index_) == false) {
-      if (m_algorithm_ != 1 && i == 0) return false;
-      Interval It = Interval(m_starts_[i]->m_start_tensor_);
-      l_interval.emplace_back(It);
-    } else {
-      ConstrainedBLocks(constraints, block, *m_starts_[i], &l_interval);  // solve multiple tensor blocks
+  if (block.Alone()) {
+    if (m_algorithm_ != kSingleObject && m_starts_.size() > 0 && m_starts_[0]->Alone() &&
+        (*constraints)[block.m_start_tensor_->index_].IsBitTrue(m_starts_[0]->m_start_tensor_->index_) == false) {
+      return false;
+    }
+    for (size_t i = 0; i < m_starts_.size(); i++) {
+      auto allocated_tensor = m_starts_[i]->m_start_tensor_;
+      while (allocated_tensor != NULL) {
+        if ((*constraints)[block.m_start_tensor_->index_].IsBitTrue(allocated_tensor->index_) == false) {
+          l_interval.emplace_back(Interval(allocated_tensor));
+        }
+        allocated_tensor = allocated_tensor->right_;
+      }
+    }
+  } else {
+    int64_t start_offset = static_cast<int64_t>(m_offset_);
+    for (size_t i = 0; i < m_starts_.size(); i++) {
+      auto allocated_tensor = m_starts_[i]->m_start_tensor_;
+      while (allocated_tensor != NULL) {
+        int64_t allocated_offset = static_cast<int64_t>(allocated_tensor->offset_);
+        int64_t allocated_size = static_cast<int64_t>(allocated_tensor->size_);
+        int64_t accumulator = 0;
+        for (auto block_tensor = block.m_start_tensor_; block_tensor != NULL; block_tensor = block_tensor->right_) {
+          int64_t end_placement = allocated_offset + allocated_size - accumulator;
+          if ((*constraints)[block_tensor->index_].IsBitTrue(allocated_tensor->index_) == false &&
+              end_placement > start_offset) {
+            l_interval.emplace_back(Interval(allocated_tensor));
+            break;
+          }
+          accumulator += block_tensor->size_;
+        }
+        allocated_tensor = allocated_tensor->right_;
+      }
     }
   }
+
   // merge non-eligible intervals and find a slot to allocate the tensor block
   if (!l_interval.empty()) {
     stack<Interval> l_mergedIntervals;
