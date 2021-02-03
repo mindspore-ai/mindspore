@@ -701,7 +701,7 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
 
 void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
                                     const std::vector<tensor::TensorPtr> &graph_inputs) {
-  if (built_graph_id_.find(graph_id) == built_graph_id_.end()) {
+  if (built_graph_id_.find(graph_id) != built_graph_id_.end()) {
     return;
   }
   auto graph = GetGraph(graph_id);
@@ -751,7 +751,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   for (const auto &single_op_graph : single_op_graphs) {
     for (const auto &graph_info : single_op_graph.second) {
       run_op_graphs_[graph_info] = single_op_graph.first;
-      MS_LOG(DEBUG) << "Pre build op finished, graph info: " << single_op_graph.second;
+      MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_info;
     }
   }
   built_graph_id_.insert(graph_id);
