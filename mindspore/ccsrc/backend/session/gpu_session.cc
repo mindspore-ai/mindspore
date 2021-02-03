@@ -56,6 +56,7 @@
 #include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
+#include "backend/optimizer/graph_kernel/optimize_assign.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
@@ -187,6 +188,8 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::DependFormater>());  // Make more fusion opportunity.
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
+  pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
+  pm->AddPass(std::make_shared<opt::OptimizeAssign>());
   pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
   pm->AddPass(std::make_shared<opt::RaiseReductionPrecision>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());

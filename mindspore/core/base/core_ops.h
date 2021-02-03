@@ -379,6 +379,9 @@ inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J");
 inline const PrimitivePtr kPrimExtractKeywordArg = std::make_shared<Primitive>("extract_keyword_arg");
 inline const PrimitivePtr kPrimMakeDict = std::make_shared<Primitive>("make_dict");
 
+// GraphKernel ops
+inline const PrimitivePtr kPrimInplaceAssign = std::make_shared<Primitive>("InplaceAssign");
+
 class DoSignaturePrimitive : public Primitive {
  public:
   explicit DoSignaturePrimitive(const std::string &name, const ValuePtr &function)
