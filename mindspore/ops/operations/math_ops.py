@@ -18,13 +18,13 @@
 import copy
 
 import numpy as np
-from mindspore import log as logger
 from ... import context
 from .. import signature as sig
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
+from ...common._decorator import deprecated
 from .._utils import get_broadcast_shape
 from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 
@@ -161,10 +161,28 @@ class Add(_MathBinaryOp):
             return Tensor(out)
         return None
 
-def TensorAdd():
-    """Warning: This will be changed later"""
-    logger.warning("WARN_DEPRECATED: The usage of TensorAdd is deprecated. Please use Add.")
-    return Add()
+
+class TensorAdd(_MathBinaryOp):
+    """
+    Same as operator Add. TensorAdd will be deprecated in the future.
+    Please use Add instead.
+    """
+    #deprecate_new_name = "Add"
+
+    @deprecated("1.1", "Add", True)
+    @prim_attr_register
+    def __init__(self):
+        _MathBinaryOp.__init__(self)
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = x + y
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
+
 
 class AssignAdd(PrimitiveWithInfer):
     """
