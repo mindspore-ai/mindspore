@@ -187,6 +187,10 @@ class SomasSolverPre {
 
  private:
   size_t max_offset_;
+  void SolverInputLog(const session::KernelGraph *graph, const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
+                      const std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
+  void SolverOutputLog(const session::KernelGraph *graph,
+                       const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors) const;
 };
 using SomasSolverPrePtr = std::shared_ptr<SomasSolverPre>;
 }  // namespace somas
