@@ -39,7 +39,7 @@ if(ENABLE_MINDDATA)
             ./abstract/*.cc
             ./base/*.cc
             ./dataset/*.cc
-            ./c_ops/*.cc
+            ./ops/*.cc
             ./ir/dtype/*.cc
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv/*.cc
             ./debug/*.cc
@@ -112,7 +112,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/kernel_compiler/cpu/adam_delta_cpu_kernel.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/akg/*.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/rts/*.cc"
-        "../../../mindspore/core/c_ops/*.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/hccl/*.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/kernel_query.cc"
         "../../../mindspore/ccsrc/backend/kernel_compiler/aicpu/aicpu_kernel_metadata.cc"
@@ -126,7 +125,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/backend/session/kernel_graph.cc"
         "../../../mindspore/ccsrc/backend/session/session_basic.cc"
         "../../../mindspore/ccsrc/backend/session/executor.cc"
-        "../../../mindspore/core/c_ops/*.cc"
+        "../../../mindspore/core/ops/*.cc"
         "../../../mindspore/ccsrc/backend/session/executor_manager.cc"
         "../../../mindspore/ccsrc/backend/session/session_factory.cc"
         "../../../mindspore/ccsrc/backend/session/kernel_build_client.cc"
@@ -184,4 +183,5 @@ if(USE_GLOG)
     target_link_libraries(ut_tests PRIVATE mindspore::glog)
 endif()
 
+target_link_libraries(mindspore mindspore_core)
 target_link_libraries(ut_tests PRIVATE mindspore mindspore_shared_lib securec graph)

@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include "src/ops/primitive_c.h"
-#include "c_ops/primitive_c.h"
+#include "ops/primitive_c.h"
 #include "google/protobuf/message.h"
 #include "schema/inner/model_generated.h"
 #include "proto/caffe.pb.h"

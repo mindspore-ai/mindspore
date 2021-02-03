@@ -13,11 +13,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/ops/schema_def.h"
-#ifdef PRIMITIVE_WRITEABLE
-#include "c_ops/conv2d.h"
-#endif
 
-OP_SCHEMA_DEF(Conv2D)
-OP_ATTR(group, int)
-OP_SCHEMA_DEF_END(Conv2D)
+#include "src/ops/schema_def.h"

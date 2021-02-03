@@ -717,7 +717,7 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimMinimumGrad,
     prim::kPrimGkDropout,
     prim::kPrimDropoutGrad,
-    prim::kPrimSoftMax,
+    prim::kPrimSoftmax,
     prim::kPrimLayerNorm,
     prim::kPrimLayerNormGrad,
 #endif

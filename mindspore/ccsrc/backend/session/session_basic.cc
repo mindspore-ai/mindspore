@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "c_ops/primitive_c.h"
+#include "ops/primitive_c.h"
 #include "ir/manager.h"
 #include "abstract/utils.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -1750,8 +1750,8 @@ void SessionBasic::RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<
         input_abstracts.emplace_back(abstract);
       }
       auto prim = AnfAlgo::GetCNodePrimitive(node);
-      if (prim->isa<PrimitiveC>()) {
-        auto prim_c = prim->cast<std::shared_ptr<PrimitiveC>>();
+      if (prim->isa<ops::PrimitiveC>()) {
+        auto prim_c = prim->cast<std::shared_ptr<ops::PrimitiveC>>();
         MS_EXCEPTION_IF_NULL(prim_c);
         auto abstract = prim_c->Infer(input_abstracts);
         node->set_abstract(abstract);
