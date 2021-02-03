@@ -80,7 +80,7 @@ Before running the shell script, please set the `task_name`, `model_dir` and `da
 ```text
 
 .
-└─bert
+└─ternarybert
   ├─README.md
   ├─scripts
     ├─run_train.sh                  # shell script for training phase
@@ -106,26 +106,12 @@ Before running the shell script, please set the `task_name`, `model_dir` and `da
 
 ```text
 
-usage: train.py    [--h]
-                   [--device_target {GPU,Ascend}]
-                   [--do_eval {true,false}]
-                   [--epoch_size EPOCH_SIZE]
-                   [--device_id DEVICE_ID]
-                   [--do_shuffle {true,false}]
-                   [--enable_data_sink {true,false}]
-                   [--save_ckpt_step SAVE_CKPT_STEP]
-                   [--eval_ckpt_step EVAL_CKPT_STEP]
-                   [--max_ckpt_num MAX_CKPT_NUM]
-                   [--data_sink_steps DATA_SINK_STEPS]
-                   [--teacher_model_dir TEACHER_MODEL_DIR]
-                   [--student_model_dir STUDENT_MODEL_DIR]
-                   [--data_dir DATA_DIR]
-                   [--output_dir OUTPUT_DIR]
-                   [--task_name {sts-b,qnli,mnli}]
-                   [--dataset_type DATASET_TYPE]
-                   [--seed SEED]
-                   [--train_batch_size TRAIN_BATCH_SIZE]
-                   [--eval_batch_size EVAL_BATCH_SIZE]
+usage: train.py    [--h] [--device_target {GPU,Ascend}] [--do_eval {true,false}] [--epoch_size EPOCH_SIZE]
+                   [--device_id DEVICE_ID] [--do_shuffle {true,false}] [--enable_data_sink {true,false}] [--save_ckpt_step SAVE_CKPT_STEP]
+                   [--eval_ckpt_step EVAL_CKPT_STEP] [--max_ckpt_num MAX_CKPT_NUM] [--data_sink_steps DATA_SINK_STEPS]
+                   [--teacher_model_dir TEACHER_MODEL_DIR] [--student_model_dir STUDENT_MODEL_DIR] [--data_dir DATA_DIR]
+                   [--output_dir OUTPUT_DIR] [--task_name {sts-b,qnli,mnli}] [--dataset_type DATASET_TYPE] [--seed SEED]
+                   [--train_batch_size TRAIN_BATCH_SIZE] [--eval_batch_size EVAL_BATCH_SIZE]
 
 options:
     --device_target                 Device where the code will be implemented: "GPU" | "Ascend", default is "GPU"
@@ -154,14 +140,8 @@ options:
 
 ```text
 
-usage: eval.py    [--h]
-                  [--device_target {GPU,Ascend}]
-                  [--device_id DEVICE_ID]
-                  [--model_dir MODEL_DIR]
-                  [--data_dir DATA_DIR]
-                  [--task_name {sts-b,qnli,mnli}]
-                  [--dataset_type DATASET_TYPE]
-                  [--batch_size BATCH_SIZE]
+usage: eval.py    [--h] [--device_target {GPU,Ascend}] [--device_id DEVICE_ID] [--model_dir MODEL_DIR] [--data_dir DATA_DIR]
+                  [--task_name {sts-b,qnli,mnli}] [--dataset_type DATASET_TYPE] [--batch_size BATCH_SIZE]
 
 options:
     --device_target                 Device where the code will be implemented: "GPU" | "Ascend", default is "GPU"
@@ -205,7 +185,7 @@ Parameters for eval:
 
 Parameters for teacher bert network:
     seq_length                      length of input sequence: N, default is 128
-    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 30522
+    vocab_size                      size of each embedding vector: N, must be consistent with the dataset you use. Default is 30522
     hidden_size                     size of bert encoder layers: N
     num_hidden_layers               number of hidden layers: N
     num_attention_heads             number of attention heads: N, default is 12
@@ -224,7 +204,7 @@ Parameters for teacher bert network:
 
 Parameters for student bert network:
     seq_length                      length of input sequence: N, default is 128
-    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 30522
+    vocab_size                      size of each embedding vector: N, must be consistent with the dataset you use. Default is 30522
     hidden_size                     size of bert encoder layers: N
     num_hidden_layers               number of hidden layers: N
     num_attention_heads             number of attention heads: N, default is 12
@@ -348,7 +328,7 @@ eval step: 0, Accuracy: 90.625
 eval step: 1, Accuracy: 81.25
 eval step: 2, Accuracy: 79.16666666666666
 ...
-The best Accuracy: 83.70860927152319
+The best Accuracy: 83.58388835685436
 
 ```
 
@@ -362,27 +342,13 @@ The best Accuracy: 83.70860927152319
 | ----------------- | :---------------------------------------------------- |
 | Model Version     | TernaryBERT                                           |
 | Resource          | NV SMX2 V100-32G                                      |
-| uploaded Date     | 08/20/2020                                            |
+| uploaded Date     | 02/01/2020                                            |
 | MindSpore Version | 1.1.0                                                 |
-| Dataset           | STS-B, QNLI, MNLI                                     |
-| batch_size        | 16, 16, 16                                            |
-| Metric value      | 87.58388835685437, 90.426505583013, 83.70860927152319 |
-| Speed             |                                                       |
-| Total time        |                                                       |
-
-### Inference Performance
-
-| Parameters        | GPU                                                   |
-| ----------------- | :---------------------------------------------------- |
-| Model Version     | TernaryBERT                                           |
-| Resource          | NV SMX2 V100-32G                                      |
-| uploaded Date     | 08/20/2020                                            |
-| MindSpore Version | 1.1.0                                                 |
-| Dataset           | STS-B, QNLI, MNLI                                     |
-| batch_size        | 32, 32, 32                                            |
-| Accuracy          | 87.58388835685437, 90.426505583013, 83.70860927152319 |
-| Speed             |                                                       |
-| Total time        |                                                       |
+| Dataset           | STS-B                                                 |
+| batch_size        | 16                                                    |
+| Metric value      | 87.5839                                               |
+| Speed             | 0.19s/step                                             |
+| Total time        | 6.7min(3epoch, 1p)                                    |
 
 # [Description of Random Situation](#contents)
 

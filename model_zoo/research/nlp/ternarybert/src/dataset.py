@@ -27,8 +27,8 @@ class DataType(Enum):
     MINDRECORD = 2
 
 
-def create_tinybert_dataset(batch_size=32, device_num=1, rank=0, do_shuffle="true", data_dir=None,
-                            data_type='tfrecord', seq_length=128, task_type=mstype.int32, drop_remainder=True):
+def create_dataset(batch_size=32, device_num=1, rank=0, do_shuffle="true", data_dir=None,
+                   data_type='tfrecord', seq_length=128, task_type=mstype.int32, drop_remainder=True):
     """create tinybert dataset"""
     if isinstance(data_dir, list):
         data_files = data_dir
