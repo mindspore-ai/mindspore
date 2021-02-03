@@ -55,7 +55,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void CreateContext() override;
   void *context() const override { return rt_context_; }
   void PreInit() override;
-  uint64_t GetAvailableMemMaxSize() const;
+  uint64_t GetAvailableMemMaxSize() const override;
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -68,19 +68,20 @@ class AscendKernelRuntime : public KernelRuntime {
  private:
   bool InitDevice();
   bool ResetDevice(uint32_t device_id);
-  bool HcclInit();
-  bool NeedDestroyHccl();
-  bool DestroyHccl();
-  bool DestroySingleOpHccl();
+  static bool HcclInit();
+  static bool NeedDestroyHccl();
+  static bool DestroyHccl();
+  static bool DestroySingleOpHccl();
   void InnerSetContext();
 
   void ClearGraphModelMap();
   void ReleaseDeviceRes() override;
   bool GraphWithEmptyTaskList(const session::KernelGraph *graph) const;
   bool CheckGraphIdValid(GraphId graph_id) const;
-  void DistributeDebugTask(NotNull<const session::KernelGraph *> graph, NotNull<std::function<void *()>> model_handle);
+  void DistributeDebugTask(NotNull<const session::KernelGraph *> graph,
+                           const NotNull<std::function<void *()>> &model_handle);
   void LaunchDataDump(GraphId graph_id);
-  static string GetErrorNodeName(uint32_t streamid, uint32_t taskid);
+  static CNodePtr GetErrorNodeName(uint32_t streamid, uint32_t taskid);
   static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
   static void TaskFailCallback(rtTaskFailInfo *task_fail_info);
   void ReportProfilingData();
@@ -91,7 +92,6 @@ class AscendKernelRuntime : public KernelRuntime {
   unordered_map<GraphId, std::shared_ptr<ge::model_runner::DavinciModel>> graph_model_map_;
   unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
-  static uint32_t current_graph_id_;
   static std::map<std::string, uint32_t> overflow_tasks_;
   static std::vector<rtTaskFailInfo> task_fail_infoes_;
 };
