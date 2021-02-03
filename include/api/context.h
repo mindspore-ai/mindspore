@@ -25,6 +25,7 @@
 namespace mindspore {
 constexpr auto kDeviceTypeAscend310 = "Ascend310";
 constexpr auto kDeviceTypeAscend910 = "Ascend910";
+constexpr auto kDeviceTypeGPU = "GPU";
 
 struct MS_API Context {
   virtual ~Context() = default;
