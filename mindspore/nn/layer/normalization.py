@@ -47,6 +47,7 @@ class _BatchNorm(Cell):
                  input_dims='2d',
                  data_format='NCHW'):
         super(_BatchNorm, self).__init__()
+        validator.check_value_type('num_features', num_features, [int], self.cls_name)
         if num_features < 1:
             raise ValueError("num_features must be at least 1")
 
@@ -270,6 +271,12 @@ class BatchNorm1d(_BatchNorm):
     Supported Platforms:
         ``Ascend`` ``GPU``
 
+    Raises:
+        TypeError: If `num_features` is not an int.
+        TypeError: If `eps` is not a float.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+
     Examples:
         >>> net = nn.BatchNorm1d(num_features=4)
         >>> np.random.seed(0)
@@ -358,6 +365,13 @@ class BatchNorm2d(_BatchNorm):
 
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `num_features` is not an int.
+        TypeError: If `eps` is not a float.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+        ValueError: If `data_format` is neither 'NHWC' not 'NCHW'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -544,6 +558,13 @@ class GlobalBatchNorm(_BatchNorm):
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Raises:
+        TypeError: If `num_features` or `device_num_each_group` is not an int.
+        TypeError: If `eps` is not a float.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+        ValueError: If `device_num_each_group` is less than 2.
+
     Supported Platforms:
         ``Ascend``
 
@@ -642,6 +663,11 @@ class LayerNorm(Cell):
     Outputs:
         Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input_x`.
 
+    Raises:
+        TypeError: If `normalized_shape` is neither a list nor tuple.
+        TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
+        TypeError: If `epsilon` is not a float.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -675,7 +701,8 @@ class LayerNorm(Cell):
         self.beta = Parameter(initializer(
             beta_init, normalized_shape), name="beta")
         self.layer_norm = _selected_ops.LayerNorm(begin_norm_axis=self.begin_norm_axis,
-                                                  begin_params_axis=self.begin_params_axis)
+                                                  begin_params_axis=self.begin_params_axis,
+                                                  epsilon=self.epsilon)
 
     def construct(self, input_x):
         y, _, _ = self.layer_norm(input_x, self.gamma, self.beta)
@@ -830,6 +857,13 @@ class GroupNorm(Cell):
 
     Outputs:
         Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input_x`.
+
+    Raises:
+        TypeError: If `num_groups` or `num_channels` is not an int.
+        TypeError: If `eps` is not a float.
+        TypeError: If `affine` is not a bool.
+        ValueError: If `num_groups` or `num_channels` is less than 1.
+        ValueError: If `num_channels` is not divided by `num_groups`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

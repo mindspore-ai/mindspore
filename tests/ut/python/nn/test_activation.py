@@ -58,7 +58,7 @@ class LogSoftmaxNet(nn.Cell):
 @non_graph_engine
 def test_compile_logsoftmax():
     net = LogSoftmaxNet(0)
-    input_tensor = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]]))
+    input_tensor = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
     net(input_tensor)
 
 

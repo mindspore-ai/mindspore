@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,6 +74,11 @@ class Embedding(Cell):
 
     Outputs:
         Tensor of shape :math:`(\text{batch_size}, \text{input_length}, \text{embedding_size})`.
+
+    Raises:
+        TypeError: If `vocab_size` or `embedding_size` is not an int.
+        TypeError: If `use_one_hot` is not a bool.
+        ValueError: If `padding_idx` is an int which not in range [0, `vocab_size`].
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -187,6 +192,17 @@ class EmbeddingLookup(Cell):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Raises:
+        TypeError: If `vocab_size` or `embedding_size` or `vocab_cache_size` is not an int.
+        TypeError: If `sparse` is not a bool or `manual_shapes` is not a tuple.
+        ValueError: If `vocab_size` or `embedding_size` is less than 1.
+        ValueError: If `vocab_cache_size` is less than 0.
+        ValueError: If `target` is neither 'CPU' nor 'DEVICE'.
+        ValueError: If `slice_mode` is not one of 'batch_slice' or 'field_slice' or
+                    'table_row_slice' or 'table_column_slice'.
+        ValueError: If `sparse` is False and `target` is 'CPU'.
+        ValueError: If `slice_mode` is 'field_slice' and `manual_shapes` is None.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -402,7 +418,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: None
         sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
-        operator (string): The pooling method for the features in one field. Support 'SUM, 'MEAN' and 'MAX'
+        operator (str): The pooling method for the features in one field. Support 'SUM, 'MEAN' and 'MAX'
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.
@@ -416,6 +432,16 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(batch\_size, field\_size, embedding\_size)`. Type is Float32.
+
+    Raises:
+        TypeError: If `vocab_size` or `embedding_size` or `field_size` is not an int.
+        TypeError: If `sparse` is not a bool or `feature_num_list` is not a tuple.
+        ValueError: If `vocab_size` or `embedding_size` or `field_size` is less than 1.
+        ValueError: If `target` is neither 'CPU' nor 'DEVICE'.
+        ValueError: If `slice_mode` is not one of 'batch_slice', 'field_slice', 'table_row_slice', 'table_column_slice'.
+        ValueError: If `sparse` is False and `target` is 'CPU'.
+        ValueError: If `slice_mode` is 'field_slice' and `feature_num_list` is None.
+        ValueError: If `operator` is not one of 'SUM', 'MAX', 'MEAN'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

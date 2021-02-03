@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -196,6 +196,16 @@ class Conv2d(_Conv):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(N, H_{out}, W_{out}, C_{out})`.
 
+    Raises:
+        TypeError: If `in_channels`, `out_channels` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int not a tuple.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `padding` is a tuple whose length is not equal to 4.
+        ValueError: If `pad_mode` is not equal to 'pad' and `padding` is not equal to (0, 0, 0, 0).
+        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -354,6 +364,12 @@ class Conv1d(_Conv):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `in_channels`, `out_channels`, `kernel_size`, `stride`, `padding` or `dilation` is not an int.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -528,6 +544,15 @@ class Conv2dTranspose(_Conv):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `in_channels`, `out_channels` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `padding` or `dilation` is neither an int not a tuple.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `padding` is a tuple whose length is not equal to 4.
+        ValueError: If `pad_mode` is not equal to 'pad' and `padding` is not equal to (0, 0, 0, 0).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -707,6 +732,12 @@ class Conv1dTranspose(_Conv):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `in_channels`, `out_channels`, `kernel_size`, `stride`, `padding` or `dilation` is not an int.
+        ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `padding` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

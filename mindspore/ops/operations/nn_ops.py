@@ -88,6 +88,9 @@ class Flatten(PrimitiveWithInfer):
         Tensor, the shape of the output tensor is :math:`(N, X)`, where :math:`X` is
         the product of the remaining dimension.
 
+    Raises:
+        ValueError: If length of shape of `input_x` is less than 1.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -135,6 +138,12 @@ class Softmax(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the logits.
 
+    Raises:
+        TypeError: If `axis` is neither an int not a tuple.
+        TypeError: If dtype of `logits` is neither float16 nor float32.
+        ValueError: If `axis` is a tuple whose length is less than 1.
+        ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits), len(logits)).
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -163,7 +172,7 @@ class Softmax(PrimitiveWithInfer):
         return logits
 
     def infer_dtype(self, logits):
-        validator.check_tensor_dtype_valid("logits", logits, mstype.float_type, self.name)
+        validator.check_tensor_dtype_valid("logits", logits, (mstype.float16, mstype.float32), self.name)
         return logits
 
 
@@ -189,6 +198,11 @@ class LogSoftmax(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the logits.
 
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If dtype of `logits` is neither float16 nor float32.
+        ValueError: If `axis` is not in range [-len(logits), len(logits)).
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -210,7 +224,7 @@ class LogSoftmax(PrimitiveWithInfer):
         return logits
 
     def infer_dtype(self, logits):
-        validator.check_tensor_dtype_valid("logits", logits, mstype.float_type, self.name)
+        validator.check_tensor_dtype_valid("logits", logits, (mstype.float16, mstype.float32), self.name)
         return logits
 
 
@@ -305,6 +319,9 @@ class ReLU(PrimitiveWithCheck):
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is not a number.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -439,6 +456,9 @@ class ReLU6(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -551,10 +571,15 @@ class Elu(PrimitiveWithInfer):
             only support '1.0' currently. Default: 1.0.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor whose data type must be float.
+        - **input_x** (Tensor) - The input of Elu with data type of float16 or float32.
 
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
+
+    Raises:
+        TypeError: If `alpha` is not a float.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        ValueError: If `alpha` is not equal to 1.0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -578,7 +603,7 @@ class Elu(PrimitiveWithInfer):
         return input_x
 
     def infer_dtype(self, input_x):
-        validator.check_tensor_dtype_valid('input_x', input_x, mstype.float_type, self.name)
+        validator.check_tensor_dtype_valid('input_x', input_x, (mstype.float16, mstype.float32), self.name)
         return input_x
 
 
@@ -600,6 +625,9 @@ class HSwish(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
+
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``
@@ -640,6 +668,9 @@ class Sigmoid(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -683,6 +714,9 @@ class HSigmoid(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Raises:
+        TypeError: If dtype of `input_data` is neither float16 nor float32.
+
     Supported Platforms:
         ``GPU``
 
@@ -718,10 +752,13 @@ class Tanh(PrimitiveWithInfer):
     where :math:`x_i` is an element of the input Tensor.
 
     Inputs:
-        - **input_x** (Tensor) - The input of Tanh.
+        - **input_x** (Tensor) - The input of Tanh with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as the input_x.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -742,7 +779,7 @@ class Tanh(PrimitiveWithInfer):
         return input_x
 
     def infer_dtype(self, input_x):
-        validator.check_subclass("input_x", input_x, mstype.tensor, self.name)
+        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
         return input_x
 
 
@@ -1355,6 +1392,15 @@ class Conv2D(PrimitiveWithCheck):
     Outputs:
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Raises:
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        TypeError: If `out_channel` or `group` is not an int.
+        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 4.
+        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
+        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1883,6 +1929,15 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
     Outputs:
         Tensor, the gradients w.r.t the input of convolution. It has the same shape as the input.
 
+    Raises:
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        TypeError: If `out_channel` or `group` is not an int.
+        ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `padding` is a tuple whose length is not equal to 4.
+        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
+        ValueError: If `data_format` is neither 'NCHW' not 'NHWC'.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -2203,6 +2258,10 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     Outputs:
         Tuple of 2 tensors, the `loss` shape is `(N,)`, and the `dlogits` with the same shape as `logits`.
 
+    Raises:
+        TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
+        ValueError: If shape of `logits` is not the same as `labels`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2261,6 +2320,12 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
     Outputs:
         Tensor, if `is_grad` is False, the output tensor is the value of loss which is a scalar tensor;
         if `is_grad` is True, the output tensor is the gradient of input with the same shape as `logits`.
+
+    Raises:
+        TypeError: If `is_grad` is not a bool.
+        TypeError: If dtype of `logits' is neither float16 nor float32.
+        TypeError: If dtype of `labels' is neither int32 nor int64.
+        ValueError: If logits_shape[0] != labels_shape[0].
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2393,6 +2458,12 @@ class SmoothL1Loss(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as `prediction`.
+
+    Raises:
+        TypeError: If `beta` is not a float.
+        TypeError: If dtype of `prediction` or `target` is neither float16 not float32.
+        ValueError: If `beta` is less than or equal to 0.
+        ValueError: If shape of `prediction` is not the same as `target`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2874,6 +2945,10 @@ class LayerNorm(Primitive):
         - **mean** (Tensor) - Tensor of shape :math:`(C,)`.
         - **variance** (Tensor) - Tensor of shape :math:`(C,)`.
 
+    Raises:
+        TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
+        TypeError: If `epsilon` is not a float.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -3073,6 +3148,12 @@ class ResizeBilinear(PrimitiveWithInfer):
     Outputs:
         Tensor, resized image. 4-D with shape [batch, channels, new_height, new_width] in `float32`.
 
+    Raises:
+        TypeError: If `size` is neither a tuple nor list.
+        TypeError: If `align_corners` is not a bool.
+        TypeError: If dtype of `input` is neither float16 nor float32.
+        ValueError: If length of shape of `input` is not equal to 4.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3091,6 +3172,7 @@ class ResizeBilinear(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, size, align_corners=False):
         validator.check_value_type("size", size, [tuple, list], self.name)
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
 
     def infer_shape(self, input_shape):
         validator.check("input shape rank", len(input_shape), "", 4, Rel.EQ, self.name)
@@ -3134,6 +3216,12 @@ class OneHot(PrimitiveWithInfer):
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If `axis` or `depth` is not an int.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If `axis` is not in range [-1, len(indices_shape)].
+        ValueError: If `depth` is less than 0.
 
     Examples:
         >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
@@ -3192,6 +3280,9 @@ class Gelu(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as input.
 
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -3232,6 +3323,9 @@ class FastGelu(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same type and shape as input.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
@@ -3337,6 +3431,11 @@ class PReLU(PrimitiveWithInfer):
 
     For detailed information, please refer to `nn.PReLU`.
 
+    Raises:
+        TypeError: If dtype of `input_x` or `weight` is neither float16 nor float32.
+        ValueError: If length of shape of `input_x` is equal to 1.
+        ValueError: If length of shape of `weight` is not equal to 1.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3396,6 +3495,36 @@ class LSTM(PrimitiveWithInfer):
 
     For detailed information, please refer to `nn.LSTM
     <https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/nn/mindspore.nn.LSTM.html>`_.
+
+    Args:
+        input_size (int): Number of features of input.
+        hidden_size (int):  Number of features of hidden layer.
+        num_layers (int): Number of layers of stacked LSTM . Default: 1.
+        has_bias (bool): Whether the cell has bias `b_ih` and `b_hh`. Default: True.
+        bidirectional (bool): Specifies whether it is a bidirectional LSTM. Default: False.
+        dropout (float): If not 0, append `Dropout` layer on the outputs of each
+            LSTM layer except the last layer. Default 0. The range of dropout is [0.0, 1.0].
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape (seq_len, batch_size, `input_size`) or
+          (batch_size, seq_len, `input_size`).
+        - **h** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **c** (tuple) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+
+    Outputs:
+        Tuple, a tuple contains (`output`, `h_n`, `c_n`, `reserve`, `state`).
+
+        - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
+        - **h_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **c_n** (Tensor) - Tensor of shape (num_directions * `num_layers`, batch_size, `hidden_size`).
+        - **reserve** (Tensor) - Tensor of shape (r, 1).
+        - **state** (Tensor) - Random number generator state and its shape is (s, 1).
+
+    Raises:
+        TypeError: If `input_size`, `hidden_size` or `num_layers` is not an int.
+        TypeError: If `has_bias` or `bidirectional` is not a bool.
+        TypeError: If `dropout` is not a float.
+        ValueError: If `dropout` is not in range [0.0, 1.0].
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -3561,6 +3690,10 @@ class Pad(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the tensor after padding.
+
+    Raises:
+        TypeError: If `paddings` is not a tuple.
+        ValueError: If shape of `paddings` is not (n, 2).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4618,6 +4751,11 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
     Outputs:
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
         Otherwise, the output is a scalar.
+
+    Raises:
+        TypeError: If dtype of `input_x`, `input_y` or `weight`(if given) is neither float16 not float32.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If shape of `input_y` is not the same as `input_x` or `weight`(if given).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6347,13 +6485,25 @@ class Dropout(PrimitiveWithInfer):
     Args:
         keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
             means dropping out 10% of input units.
+        Seed0 (int): Seed0 value for random generating. Default: 0.
+        Seed1 (int): Seed1 value for random generating. Default: 0.
 
     Inputs:
-        - **input** (Tensor) - The input tensor.
+        - **input** (Tensor) - The input of Dropout with data type of float16 or float32.
 
     Outputs:
         - **output** (Tensor) - with the same shape as the input tensor.
         - **mask** (Tensor) - with the same shape as the input tensor.
+
+    Raises:
+        TypeError: If `keep_prob` is not a float.
+        TypeError: If `Seed0` or `Seed1` is not an int.
+        TypeError: If dtype of `input` is not neither float16 nor float32.
+        ValueError: If `keep_prob` is not in range (0, 1].
+        ValueError: If length of shape of `input` is less than 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> dropout = ops.Dropout(keep_prob=0.5)
