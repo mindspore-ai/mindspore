@@ -36,3 +36,23 @@ config_gpu = ed({
     "export_format": "MINDIR",
     "export_file": "mobilenetv3"
 })
+
+config_cpu = ed({
+    "num_classes": 10,
+    "image_height": 224,
+    "image_width": 224,
+    "batch_size": 32,
+    "epoch_size": 120,
+    "warmup_epochs": 5,
+    "lr": 0.1,
+    "momentum": 0.9,
+    "weight_decay": 1e-4,
+    "label_smooth": 0.1,
+    "loss_scale": 1024,
+    "save_checkpoint": True,
+    "save_checkpoint_epochs": 1,
+    "keep_checkpoint_max": 500,
+    "save_checkpoint_path": "./checkpoint",
+    "export_format": "MINDIR",
+    "export_file": "mobilenetv3"
+})

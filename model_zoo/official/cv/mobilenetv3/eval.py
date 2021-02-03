@@ -21,7 +21,9 @@ from mindspore import nn
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.dataset import create_dataset
+from src.dataset import create_dataset_cifar
 from src.config import config_gpu
+from src.config import config_cpu
 from src.mobilenetV3 import mobilenet_v3_large
 
 
@@ -38,17 +40,24 @@ if __name__ == '__main__':
         config = config_gpu
         context.set_context(mode=context.GRAPH_MODE,
                             device_target="GPU", save_graphs=False)
+        dataset = create_dataset(dataset_path=args_opt.dataset_path,
+                                 do_train=False,
+                                 config=config,
+                                 device_target=args_opt.device_target,
+                                 batch_size=config.batch_size)
+    elif args_opt.device_target == "CPU":
+        config = config_cpu
+        context.set_context(mode=context.GRAPH_MODE,
+                            device_target="CPU", save_graphs=False)
+        dataset = create_dataset_cifar(dataset_path=args_opt.dataset_path,
+                                       do_train=False,
+                                       batch_size=config.batch_size)
     else:
         raise ValueError("Unsupported device_target.")
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     net = mobilenet_v3_large(num_classes=config.num_classes, activation="Softmax")
 
-    dataset = create_dataset(dataset_path=args_opt.dataset_path,
-                             do_train=False,
-                             config=config,
-                             device_target=args_opt.device_target,
-                             batch_size=config.batch_size)
     step_size = dataset.get_dataset_size()
 
     if args_opt.checkpoint_path:
