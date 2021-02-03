@@ -18,6 +18,10 @@
 #include <math.h>
 #include <algorithm>
 #include <vector>
+
+#include <thread>
+#include <fstream>
+
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "nnacl/fp32_grad/batch_norm.h"
@@ -34,7 +38,8 @@ namespace mindspore::kernel {
 int BNGradCPUKernel::ReSize() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
-  set_workspace_size(2 * channels * sizeof(float));
+  ws_size_ = 2 * channels;
+  set_workspace_size(ws_size_ * sizeof(float));
   return RET_OK;
 }
 
@@ -46,7 +51,9 @@ int BNGradCPUKernel::Execute(int task_id) {
   auto *input_scale = in_tensors_.at(2);
   auto *input_mean = in_tensors_.at(3);
   auto *input_var = in_tensors_.at(4);
-
+  auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
+  int stage = stage_;
+  int thread_num = thread_num_;
   float *save_mean = reinterpret_cast<float *>(input_mean->MutableData());
   float *save_var = reinterpret_cast<float *>(input_var->MutableData());
 
@@ -58,26 +65,57 @@ int BNGradCPUKernel::Execute(int task_id) {
   int32_t spatial = input_x->Height() * input_x->Width();
 
   float *workspace_temp = static_cast<float *>(workspace());
-  std::fill(workspace_temp, workspace_temp + workspace_size() / sizeof(*workspace_temp), 0.f);
   float *dxhat_sum = workspace_temp;
   float *dxhathat_sum = dxhat_sum + channels;
-
   float *x = reinterpret_cast<float *>(input_x->MutableData());
   float *yt = reinterpret_cast<float *>(input_yt->MutableData());
   float *scale = reinterpret_cast<float *>(input_scale->MutableData());
   float *dx = reinterpret_cast<float *>(output_dx->MutableData());
   float *dbias = reinterpret_cast<float *>(output_bias->MutableData());
   float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
-  std::fill(dbias, dbias + channels, 0.f);
-  std::fill(dscale, dscale + channels, 0.f);
-  backwardAll(x, yt, save_mean, save_var, scale, batch * spatial, channels, dxhat_sum, dxhathat_sum, dbias, dscale, dx);
+  int total = spatial * batch;
+  int stride = UP_DIV(total, thread_num);
+  int count = MSMIN(stride, total - stride * task_id);
+  switch (stage) {
+    case 0: {
+      for (int job = task_id; job < 4; job += thread_num) {
+        switch (job) {
+          case 0:
+            var2Invar(save_var, input_var->ElementsNum(), bn_param->epsilon_);
+            break;
+          case 1:
+            std::fill(workspace_temp, workspace_temp + ws_size_, 0.f);
+            break;
+          case 2:
+            std::fill(dbias, dbias + channels, 0.f);
+            break;
+          case 3:
+            std::fill(dscale, dscale + channels, 0.f);
+            break;
+        }
+      }
+      if (thread_num == 1) {
+        backwardAll(x, yt, save_mean, save_var, scale, total, channels, dxhat_sum, dxhathat_sum, dbias, dscale, dx);
+      }
+      break;
+    }
+    case 1: {
+      backwardP1(x, yt, save_mean, save_var, scale, total, channels, dxhat_sum, dxhathat_sum, dbias, dscale);
+      break;
+    }
+    case 2: {
+      backwardP2(x + task_id * stride * channels, yt + task_id * stride * channels, save_mean, save_var, scale, count,
+                 total, channels, dxhat_sum, dxhathat_sum, dx + task_id * stride * channels);
+      break;
+    }
+  }
+
   return RET_OK;
 }
 
 int BNGradRun(void *cdata, int task_id) {
   MS_ASSERT(cdata != nullptr);
   auto bn_kernel = reinterpret_cast<BNGradCPUKernel *>(cdata);
-
   auto error_code = bn_kernel->Execute(task_id);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "BNGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
@@ -87,15 +125,24 @@ int BNGradRun(void *cdata, int task_id) {
 }
 
 int BNGradCPUKernel::Run() {
-  auto *input_var = in_tensors_.at(4);
-  float *save_var = reinterpret_cast<float *>(input_var->MutableData());
-  auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
-  float eps = bn_param->epsilon_;
-  var2Invar(save_var, input_var->ElementsNum(), eps);
-  int error_code = ParallelLaunch(this->context_->thread_pool_, BNGradRun, this, 1);
-  if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
-    return RET_ERROR;
+  stage_ = 0;
+  thread_num_ = context_->thread_num_;
+  if (thread_num_ == 1) {
+    int error_code = ParallelLaunch(this->context_->thread_pool_, BNGradRun, this, thread_num_);
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
+      return RET_ERROR;
+    }
+  } else {
+    const std::vector<int> threads = {thread_num_, 1, thread_num_};
+    for (size_t stage = 0; stage < threads.size(); stage++) {
+      stage_ = static_cast<int>(stage);
+      int error_code = ParallelLaunch(this->context_->thread_pool_, BNGradRun, this, threads.at(stage));
+      if (error_code != RET_OK) {
+        MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";
+        return RET_ERROR;
+      }
+    }
   }
   return RET_OK;
 }

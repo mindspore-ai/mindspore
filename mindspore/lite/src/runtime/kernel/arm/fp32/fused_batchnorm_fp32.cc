@@ -91,10 +91,6 @@ int FusedBatchnormCPUKernel::Run() {
     memcpy(scale_, scale, in_tensors_[1]->Size());
     memcpy(offset_, offset, in_tensors_[2]->Size());
 
-    // save for next iteration
-    memcpy(in_tensors_[3]->MutableData(), save_mean, in_tensors_[3]->Size());
-    memcpy(in_tensors_[4]->MutableData(), save_variance, in_tensors_[4]->Size());
-
     trained_ = true;  // trained at least once
   }
   auto ret = ParallelLaunch(this->context_->thread_pool_, BatchNormRun, this, op_parameter_->thread_num_);

@@ -1259,6 +1259,18 @@ table RandomStandardNormal {
 table CropAndResize {
     method : ResizeMethod;
     extrapolation_value : float;
+}    
+
+table StridedSliceGrad {
+    beginMask: int;
+    endMask: int;
+    ellipsisMask: int;
+    newAxisMask: int;
+    shrinkAxisMask: int;
+    begin: [int];
+    end: [int];
+    stride: [int];
+    isScale: [int];
 }
 
 table Erf {

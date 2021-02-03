@@ -32,7 +32,6 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_PoolingGrad,
   schema::PrimitiveType_BiasGrad,
   schema::PrimitiveType_BNGrad,
-  schema::PrimitiveType_ActivationGrad,
   schema::PrimitiveType_ApplyMomentum,
   schema::PrimitiveType_Sgd,
   schema::PrimitiveType_Adam,
@@ -219,6 +218,26 @@ STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::v
   return RET_OK;
 }
 
+static bool IsKCHWSource(kTransFilterType type) {
+  return (type == kKCHW2HWCK || type == kKCHW2HWKC || type == kKCHW2KHWC || type == kKCHW2CKHW);
+}
+
+static bool IsCKHWSource(kTransFilterType type) {
+  return (type == kCKHW2HWCK || type == kCKHW2HWKC || type == kCKHW2KHWC);
+}
+
+static bool IsHWCKSource(kTransFilterType type) { return (type == kHWCK2KCHW || type == kHWCK2CKHW); }
+
+static bool IsHWKCSource(kTransFilterType type) { return (type == kHWKC2KCHW || type == kHWKC2CKHW); }
+
+static bool IsNHWCSource(kTransFilterType type) {
+  return (type == kNHWC2KCHW || type == kNHWC2HWCK || type == kNHWC2CKHW);
+}
+
+static bool IsCHWKSource(kTransFilterType type) { return (type == kCHWK2HWCK || type == kCHWK2KHWC); }
+
+static bool IsKHWCSource(kTransFilterType type) { return (type == kKHWC2HWCK || type == kKHWC2CHWK); }
+
 STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
                     int32_t *filterH, int32_t *filterW) {
   if (filterK == nullptr || filterC == nullptr || filterH == nullptr || filterW == nullptr) {
@@ -226,37 +245,37 @@ STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, 
     return RET_NULL_PTR;
   }
   MS_ASSERT(oriDims.size() == 4);
-  if (type == kKCHW2HWCK || type == kKCHW2HWKC || type == kKCHW2KHWC || type == kKCHW2CKHW) {
+  if (IsKCHWSource(type)) {
     *filterK = oriDims.at(KCHW_K);
     *filterC = oriDims.at(KCHW_C);
     *filterH = oriDims.at(KCHW_H);
     *filterW = oriDims.at(KCHW_W);
-  } else if (type == kCKHW2HWCK || type == kCKHW2HWKC || type == kCKHW2KHWC) {
+  } else if (IsCKHWSource(type)) {
     *filterC = oriDims.at(CKHW_C);
     *filterK = oriDims.at(CKHW_K);
     *filterH = oriDims.at(CKHW_H);
     *filterW = oriDims.at(CKHW_W);
-  } else if (type == kHWCK2KCHW || type == kHWCK2CKHW) {
+  } else if (IsHWCKSource(type)) {
     *filterH = oriDims.at(HWCK_H);
     *filterW = oriDims.at(HWCK_W);
     *filterC = oriDims.at(HWCK_C);
     *filterK = oriDims.at(HWCK_K);
-  } else if (type == kHWKC2KCHW || type == kHWKC2CKHW) {
+  } else if (IsHWKCSource(type)) {
     *filterH = oriDims.at(HWKC_H);
     *filterW = oriDims.at(HWKC_W);
     *filterK = oriDims.at(HWKC_K);
     *filterC = oriDims.at(HWKC_C);
-  } else if (type == kNHWC2KCHW || type == kNHWC2HWCK || type == kNHWC2CKHW) {
+  } else if (IsNHWCSource(type)) {
     *filterK = oriDims.at(NHWC_N);
     *filterH = oriDims.at(NHWC_H);
     *filterW = oriDims.at(NHWC_W);
     *filterC = oriDims.at(NHWC_C);
-  } else if (type == kCHWK2HWCK || type == kCHWK2KHWC) {
+  } else if (IsCHWKSource(type)) {
     *filterC = oriDims.at(CHWK_C);
     *filterH = oriDims.at(CHWK_H);
     *filterW = oriDims.at(CHWK_W);
     *filterK = oriDims.at(CHWK_K);
-  } else if (type == kKHWC2HWCK || type == kKHWC2CHWK) {
+  } else if (IsKHWCSource(type)) {
     *filterK = oriDims.at(KHWC_K);
     *filterH = oriDims.at(KHWC_H);
     *filterW = oriDims.at(KHWC_W);
@@ -290,6 +309,37 @@ STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filt
   return RET_OK;
 }
 
+static int Convert2KHWC(int srcFormat) {
+  if (srcFormat == schema::Format::Format_KCHW) return kKCHW2KHWC;
+  if (srcFormat == schema::Format::Format_CKHW) return kCKHW2KHWC;
+  if (srcFormat == schema::Format::Format_CHWK) return kCHWK2KHWC;
+  return -1;
+}
+
+static int Convert2HWCK(int srcFormat) {
+  if (srcFormat == schema::Format::Format_KCHW) return kKCHW2HWCK;
+  if (srcFormat == schema::Format::Format_KHWC) return kKHWC2HWCK;
+  if (srcFormat == schema::Format::Format_CKHW) return kCKHW2HWCK;
+  if (srcFormat == schema::Format::Format_CHWK) return kCHWK2HWCK;
+  return -1;
+}
+
+static int Convert2KCHW(int srcFormat) {
+  if (srcFormat == schema::Format::Format_HWCK) return kHWCK2KCHW;
+  if (srcFormat == schema::Format::Format_HWKC) return kHWKC2KCHW;
+  if (srcFormat == schema::Format::Format_KHWC) return kKHWC2KCHW;
+  if (srcFormat == schema::Format::Format_CKHW) return kCKHW2KCHW;
+  if (srcFormat == schema::Format::Format_CHWK) return kCHWK2KCHW;
+  return -1;
+}
+
+static int Convert2CKHW(int srcFormat) {
+  if (srcFormat == schema::Format::Format_HWCK) return kHWCK2CKHW;
+  if (srcFormat == schema::Format::Format_HWKC) return kHWKC2CKHW;
+  if (srcFormat == schema::Format::Format_KCHW) return kKCHW2CKHW;
+  return -1;
+}
+
 STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null";
@@ -303,231 +353,40 @@ STATUS TransFilterFormat(schema::TensorT *tensor, schema::Format dstFormat) {
   auto srcFormat = tensor->format;
   auto dataType = tensor->dataType;
   STATUS status;
+  int convert = -1;
+
+  if (dstFormat == srcFormat) return RET_OK;
+
   switch (dstFormat) {
-    case schema::Format::Format_KHWC: {
-      switch (srcFormat) {
-        case schema::Format::Format_KCHW:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kKCHW2KHWC);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kKCHW2KHWC);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kKCHW2KHWC);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_CKHW:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kCKHW2KHWC);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kCKHW2KHWC);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kCKHW2KHWC);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_CHWK:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kCHWK2KHWC);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kCHWK2KHWC);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kCHWK2KHWC);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_KHWC:
-          return RET_OK;
-        default:
-          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
-                        << EnumNameFormat(dstFormat);
-          return RET_ERROR;
-      }
-    } break;
-    case schema::Format::Format_HWCK: {
-      switch (srcFormat) {
-        case schema::Format::Format_KCHW:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kKCHW2HWCK);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kKCHW2HWCK);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kKCHW2HWCK);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_KHWC:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kKHWC2HWCK);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kKHWC2HWCK);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kKHWC2HWCK);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_CKHW:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kCKHW2HWCK);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kCKHW2HWCK);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kCKHW2HWCK);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_CHWK:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kCHWK2HWCK);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kCHWK2HWCK);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kCHWK2HWCK);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_HWCK:
-          return RET_OK;
-        default:
-          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
-                        << EnumNameFormat(dstFormat);
-          return RET_ERROR;
-      }
-    } break;
-    case schema::Format::Format_KCHW: {
-      switch (srcFormat) {
-        case schema::Format::Format_KCHW:
-          return RET_OK;
-        case schema::Format::Format_HWCK:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kHWCK2KCHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kHWCK2KCHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kHWCK2KCHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_HWKC:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kHWKC2KCHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kHWKC2KCHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kHWKC2KCHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_KHWC:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kKHWC2KCHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kKHWC2KCHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kKHWC2KCHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_CKHW:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kCKHW2KCHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kCKHW2KCHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kCKHW2KCHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_CHWK:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kCHWK2KCHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kCHWK2KCHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kCHWK2KCHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        default:
-          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
-                        << EnumNameFormat(dstFormat);
-          return RET_ERROR;
-      }
-    } break;
-    case schema::Format::Format_CKHW: {
-      switch (srcFormat) {
-        case schema::Format::Format_HWCK:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kHWCK2CKHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kHWCK2CKHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kHWCK2CKHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_HWKC:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kHWKC2CKHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kHWKC2CKHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kHWKC2CKHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_KCHW:
-          if (dataType == kNumberTypeFloat32) {
-            status = TransFilterFormat<float>(tensor, kKCHW2CKHW);
-          } else if (dataType == kNumberTypeUInt8) {
-            status = TransFilterFormat<uint8_t>(tensor, kKCHW2CKHW);
-          } else if (dataType == kNumberTypeInt8) {
-            status = TransFilterFormat<int8_t>(tensor, kKCHW2CKHW);
-          } else {
-            MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
-            return RET_ERROR;
-          }
-          break;
-        case schema::Format::Format_CKHW:
-          return RET_OK;
-        default:
-          MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
-                        << EnumNameFormat(dstFormat);
-          return RET_ERROR;
-      }
-    } break;
+    case schema::Format::Format_KHWC:
+      convert = Convert2KHWC(srcFormat);
+      break;
+    case schema::Format::Format_HWCK:
+      convert = Convert2HWCK(srcFormat);
+      break;
+    case schema::Format::Format_KCHW:
+      convert = Convert2KCHW(srcFormat);
+      break;
+    case schema::Format::Format_CKHW:
+      convert = Convert2CKHW(srcFormat);
+      break;
     default:
-      MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to "
-                    << EnumNameFormat(dstFormat);
-      return RET_ERROR;
+      convert = -1;
+  }
+  if (convert == -1) {
+    MS_LOG(ERROR) << "Unsupported transform from " << EnumNameFormat(srcFormat) << " to " << EnumNameFormat(dstFormat);
+    return RET_ERROR;
+  }
+
+  if (dataType == kNumberTypeFloat32) {
+    status = TransFilterFormat<float>(tensor, static_cast<kTransFilterType>(convert));
+  } else if (dataType == kNumberTypeUInt8) {
+    status = TransFilterFormat<uint8_t>(tensor, static_cast<kTransFilterType>(convert));
+  } else if (dataType == kNumberTypeInt8) {
+    status = TransFilterFormat<int8_t>(tensor, static_cast<kTransFilterType>(convert));
+  } else {
+    MS_LOG(ERROR) << "Unsupported dataType: " << dataType;
+    return RET_ERROR;
   }
   if (status != RET_OK) {
     MS_LOG(ERROR) << "TransFilterData failed: " << status;

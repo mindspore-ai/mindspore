@@ -40,6 +40,7 @@ class PoolingGradCPUKernel : public LiteKernel {
   int Execute(int task_id);
 
  private:
+  int thread_num_ = 1;
 };
 
 }  // namespace mindspore::kernel

@@ -54,9 +54,6 @@ int ConvolutionTrainCPUKernel::ReSize() {
   conv_param_->group_ = (conv_param_->group_ == 0) ? conv_param_->input_channel_ : conv_param_->group_;
   const int n = conv_param_->output_channel_ * conv_param_->group_;
   const int k = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ / conv_param_->group_;
-  ws_size_ = chunk_ * k;
-  int mat_alloc = MatSizeTotal(chunk_, n, k, 0);
-  set_workspace_size((ws_size_ + mat_alloc) * sizeof(float));
 
   do_img2col_ = (conv_param_->kernel_h_ == 1) && (conv_param_->kernel_w_ == 1) && (conv_param_->pad_d_ == 0) &&
                     (conv_param_->pad_u_ == 0) && (conv_param_->pad_l_ == 0) && (conv_param_->pad_r_ == 0) &&
@@ -64,6 +61,16 @@ int ConvolutionTrainCPUKernel::ReSize() {
                     (conv_param_->stride_h_ == 1) && (conv_param_->stride_w_ == 1) && (conv_param_->group_ == 1)
                   ? false
                   : true;
+  do_dw_ = (conv_param_->output_channel_ == conv_param_->group_) &&
+               (conv_param_->input_channel_ == conv_param_->output_channel_) && (conv_param_->dilation_h_ == 1) &&
+               (conv_param_->dilation_w_ == 1)
+             ? true
+             : false;
+
+  ws_size_ = chunk_ * conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_;
+  ws_size_ = do_dw_ ? ws_size_ : ws_size_ / conv_param_->group_;
+  int mat_alloc = MatSizeTotal(chunk_, n, k, 0);
+  set_workspace_size((ws_size_ + mat_alloc) * sizeof(float));
 
   return RET_OK;
 }
@@ -97,7 +104,25 @@ int ConvolutionTrainCPUKernel::Execute(int task_id) {
   float *workspace_temp = static_cast<float *>(workspace());
   float *mat_workspace = workspace_temp + ws_size_;
 
-  if (do_img2col_) {
+  if (do_dw_) {
+    const int kernel_spatial = k_h * k_w;
+    for (int i = 0; i < batch; ++i) {
+      for (int ci = 0; ci < m; ci += chunk_) {
+        int real_chunk = MSMIN(m - ci, chunk_);
+        float *mat_a = workspace_temp;
+        float *im = x_addr + (i * in_ch * in_h * in_w);
+        RollingIm2ColPackDwUnitFp32(im, conv_param_, mat_a, real_chunk, ci);
+        for (int j = 0; j < groups; ++j) {
+          const float *mat_b = w_addr + j * nweights / groups;
+          float *mat_c = y_addr + (i * groups) * n * m + j * (out_ch / groups) + ci * out_ch;
+          // float *im = x_addr + i * in_ch * in_h * in_w + j * (in_ch / groups);
+          // RollingIm2ColPackUnitFp32(im, conv_param_, mat_a, real_chunk, ci);
+          GemmMatmul(0, 1, real_chunk, n, k, 1, mat_a + (j * kernel_spatial), k * groups, mat_b, k, 0, mat_c, out_ch,
+                     mat_workspace);
+        }
+      }
+    }
+  } else if (do_img2col_) {
     for (int i = 0; i < batch; ++i) {
       for (int j = 0; j < groups; ++j) {
         for (int ci = 0; ci < m; ci += chunk_) {

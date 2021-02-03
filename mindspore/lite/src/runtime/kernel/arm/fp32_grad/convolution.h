@@ -37,6 +37,7 @@ class ConvolutionTrainCPUKernel : public LiteKernel {
  private:
   int ws_size_ = 0;
   bool do_img2col_ = true;
+  bool do_dw_ = false;
 #ifdef ENABLE_ARM32
   const int chunk_ = C4NUM * 2;
 #else

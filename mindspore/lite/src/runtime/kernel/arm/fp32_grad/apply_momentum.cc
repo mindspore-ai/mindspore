@@ -40,17 +40,16 @@ int ApplyMomentumCPUKernel::Execute(int task_id) {
 
   size_t stride = UP_DIV(length, thread_count_);
   size_t count = MSMIN(stride, length - stride * task_id);
-
   size_t start = stride * task_id;
   size_t end = start + count;
 
   if (apply_momentum_param_->use_nesterov_) {
-    for (size_t i = start; i < end; ++i) {
+    for (size_t i = start; i < end; i++) {
       accumulate[i] = accumulate[i] * moment + gradient[i];
       weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
     }
   } else {
-    for (size_t i = start; i < end; ++i) {
+    for (size_t i = start; i < end; i++) {
       accumulate[i] = accumulate[i] * moment + gradient[i];
       weight[i] -= accumulate[i] * learning_rate;
     }

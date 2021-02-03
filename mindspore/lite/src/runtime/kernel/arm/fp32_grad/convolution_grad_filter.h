@@ -38,6 +38,7 @@ class ConvolutionGradFilterCPUKernel : public LiteKernel {
  private:
   size_t ws_size_ = 0;
   bool do_img2col_ = true;
+  bool do_dw_ = false;
   std::mutex lock_;
   size_t mat_alloc_ = 0;
 #ifdef ENABLE_ARM32

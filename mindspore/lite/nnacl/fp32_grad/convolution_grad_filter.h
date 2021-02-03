@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
-#define MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
+#define MINDSPORE_LITE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_
 
-#include "nnacl/fp32/pooling_fp32.h"
+#include <stddef.h>
+#include "nnacl/conv_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, PoolingParameter *pooling_param);
-void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_ptr, int output_batch,
-                    PoolingParameter *pooling_param);
+
+int ConvDwFilterGrad(const float *x, const float *dy, float *dw, int start, int count, const ConvParameter *conv_param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_POOLING_GRAD_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_GRAD_CONVOLUTION_GRAD_FILTER_H_

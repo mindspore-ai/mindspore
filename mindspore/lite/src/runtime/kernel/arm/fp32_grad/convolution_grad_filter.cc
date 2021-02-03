@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp32_grad/convolution_grad_filter.h"
 #include "src/kernel_registry.h"
 #include "nnacl/pack.h"
+#include "nnacl/fp32_grad/convolution_grad_filter.h"
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"
 #include "include/errorcode.h"
@@ -51,20 +52,25 @@ int ConvolutionGradFilterCPUKernel::ReSize() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
-  ws_size_ = chunk_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
-
-  int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
-  int k = conv_param->output_channel_ / conv_param->group_;
-  int thread_num = context_->thread_num_;
-  mat_alloc_ = MatSizeTotal(k, n, chunk_, 0);
-  set_workspace_size((ws_size_ + mat_alloc_ + (k * n)) * thread_num * sizeof(float));
-
   do_img2col_ = (conv_param->kernel_h_ == 1) && (conv_param->kernel_w_ == 1) && (conv_param->pad_d_ == 0) &&
                     (conv_param->pad_u_ == 0) && (conv_param->pad_l_ == 0) && (conv_param->pad_r_ == 0) &&
                     (conv_param->dilation_h_ == 1) && (conv_param->dilation_w_ == 1) && (conv_param->stride_h_ == 1) &&
                     (conv_param->stride_w_ == 1) && (conv_param->group_ == 1)
                   ? false
                   : true;
+  do_dw_ = (conv_param->output_channel_ == conv_param->group_) &&
+               (conv_param->input_channel_ == conv_param->output_channel_) && (conv_param->dilation_h_ == 1) &&
+               (conv_param->dilation_w_ == 1)
+             ? true
+             : false;
+
+  ws_size_ = chunk_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
+  ws_size_ = do_dw_ ? ws_size_ : ws_size_ / conv_param->group_;
+  int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
+  int k = conv_param->output_channel_ / conv_param->group_;
+  int thread_num = context_->thread_num_;
+  mat_alloc_ = MatSizeTotal(k, n, chunk_, 0);
+  set_workspace_size((ws_size_ + mat_alloc_ + (k * n)) * thread_num * sizeof(float));
 
   return RET_OK;
 }
@@ -105,10 +111,38 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   int start = stride * task_id;
   int end = start + count;
 
-  if (do_img2col_) {
+  if (do_dw_) {
+#ifdef ENABLE_ARM
+    stride = UP_DIV(k_h * k_w, thread_num);
+    count = MSMIN(stride, k_h * k_w - stride * task_id);
+    start = stride * task_id;
+    ConvDwFilterGrad(x_addr, dy_addr, dw_addr, start, count, conv_param);
+#else
+    stride = UP_DIV(groups, thread_num);
+    count = MSMIN(stride, groups - stride * task_id);
+    start = stride * task_id;
+    end = start + count;
+
+    const int kernel_spatial = k_h * k_w;
+    for (int i = 0; i < batch; ++i) {
+      for (int ci = 0; ci < m; ci += chunk_) {
+        int real_chunk = MSMIN(m - ci, chunk_);
+        float *mat_b = workspace_temp + task_id * ws_size_;
+        float *im = x_addr + (i * in_ch * in_h * in_w);
+        RollingIm2ColPackDwUnitFp32(im, conv_param, mat_b, real_chunk, ci);
+        for (int j = start; j < end; ++j) {
+          float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
+          float *mat_c = dw_addr + j * nweights / groups;
+          GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, mat_b + (j * kernel_spatial), n * groups, 1, mat_c, n,
+                     mat_workspace);
+        }
+      }
+    }
+#endif
+  } else if (do_img2col_) {
     for (int i = start; i < end; ++i) {
-      for (int j = 0; j < groups; ++j) {
-        for (int ci = 0; ci < m; ci += chunk_) {
+      for (int ci = 0; ci < m; ci += chunk_) {
+        for (int j = 0; j < groups; ++j) {
           int real_chunk = MSMIN(m - ci, chunk_);
           float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
           float *mat_b = workspace_temp + task_id * ws_size_;

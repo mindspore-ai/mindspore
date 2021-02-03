@@ -273,6 +273,7 @@ union PrimitiveType {
     RandomStandardNormal,
     CropAndResize,
     Erf,
+    StridedSliceGrad
 }
 
 enum QuantType: int {
