@@ -76,8 +76,6 @@ void TbeUtils::LoadCache() {
     KernelMeta *bin_map = KernelMeta::GetInstance();
     if (bin_map != nullptr && !bin_map->ReadIndex(kCceKernelMeta)) {
       MS_LOG(INFO) << "Cache initialize failed[" << kCceKernelMeta << "]";
-    } else {
-      MS_LOG(INFO) << "Cache initialize to " << kCceKernelMeta;
     }
     has_load = true;
   }
@@ -214,7 +212,6 @@ bool KernelMeta::ReadIndex(const std::string &bin_dir) {
   }
   (void)closedir(dir);
 
-  MS_LOG(INFO) << "Cache kernel initialized, kernel size: " << kernel_index_map_.size();
   return true;
 }
 
@@ -223,7 +220,6 @@ KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const st
   // 1. pack has been created
   auto kernel_pack_iter = kernel_pack_map_.find(kernel_name);
   if (kernel_pack_iter != kernel_pack_map_.end()) {
-    MS_LOG(INFO) << "kernel pack [" << kernel_name << "]has been created.";
     ret = kernel_pack_iter->second;
   } else {
     // 2. kernel file has been create, but pack does not been created.
@@ -237,7 +233,7 @@ KernelPackPtr KernelMeta::GetKernelPack(const std::string &kernel_name, const st
     kernel_pack_map_[kernel_name] = ret;
     auto iter = kernel_index_map_.find(kernel_name);
     if (iter == kernel_index_map_.end()) {
-      MS_LOG(INFO) << "kernel name [" << kernel_name << "] has been ceated first.";
+      MS_LOG(INFO) << "kernel name [" << kernel_name << "] has been created first.";
       kernel_index_map_[kernel_name] = cce_json;
     }
   }

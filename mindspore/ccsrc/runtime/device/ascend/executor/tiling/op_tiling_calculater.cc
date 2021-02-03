@@ -138,9 +138,8 @@ void FeedTeOpConstTensor(const NotNull<CNodePtr> &cnode, const std::map<uint32_t
 void OpTilingCalculater::Init() {
   MS_LOG(INFO) << "Start init OpTilingCalculater";
   tiling_func_map_ = optiling::OpTilingRegistryInterf::RegisteredOpInterf();
-  MS_LOG(INFO) << "tiling_func_map_ size:" << tiling_func_map_.size();
-  for (const auto &iter : tiling_func_map_) {
-    MS_LOG(INFO) << "Register tiling func:" << iter.first;
+  if (tiling_func_map_.empty()) {
+    MS_LOG(EXCEPTION) << "Get register tiling func failed.";
   }
 }
 

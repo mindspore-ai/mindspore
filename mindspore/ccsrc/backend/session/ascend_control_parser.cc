@@ -833,7 +833,6 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
     }
   }
   graph->set_execution_order(execution_order);
-  graph->PrintGraphExecuteOrder();
   return execution_order;
 }
 

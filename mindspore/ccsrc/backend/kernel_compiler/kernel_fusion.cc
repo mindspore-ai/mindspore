@@ -52,7 +52,6 @@ static size_t GenFusionJsonHash(const nlohmann::json &fusion_json) {
 }
 
 std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes) {
-  MS_LOG(INFO) << "kernel fusion build start, scope size:" << fusion_scopes.size();
   std::map<int64_t, KernelModPtr> kernel_mod_ret;
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
@@ -65,7 +64,6 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     }
     // gen kernel_name & check cache
     size_t hash_id = GenFusionJsonHash(fusion_op);
-    MS_LOG(INFO) << "Fusion op hash id: " << hash_id;
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -82,7 +80,6 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     // search cache
     auto kernel_pack = TbeUtils::SearchCache(json_name, tbe::kProcessorAiCore);
     if (kernel_pack != nullptr) {
-      MS_LOG(INFO) << "Use cached kernel, kernel json name: " << json_name;
       auto kernel_mod =
         build_manger->GenKernelMod(json_name, tbe::kProcessorAiCore, input_size_list, output_size_list, kernel_pack);
       if (kernel_mod != nullptr) {

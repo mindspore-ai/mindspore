@@ -57,15 +57,12 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
 
   auto op_info_ptr = tbe::TbeDynamicShapeUtil::FindOp(node_name_, cnode_ptr_);
   if (!op_info_ptr) {
-    MS_LOG(INFO) << "Warning: Cann't find tbe core opinfo, node type: " << node_name_;
     return;
   }
   if (!TbePropertyChecker::CheckTbeProperties(cnode_ptr_)) {
     MS_LOG(INFO) << "Warning: node(" << cnode_ptr_->fullname_with_scope() << ") not support tbe aicore.";
     return;
   }
-  MS_LOG(INFO) << "Start to tbe metadata info. node type: " << node_name_
-               << ", node name: " << cnode_ptr_->fullname_with_scope();
   OpPattern pattern = op_info_ptr->op_pattern();
   if (pattern == kCommonPattern) {
     GetCommonPatternKernelInfo(*op_info_ptr);
@@ -82,11 +79,9 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   }
   // check support
   FilterInVaildKernelInfo(*op_info_ptr);
-  MS_LOG(INFO) << "End get kernel build info size: " << kernel_info_list_->size() << ", after tbe select.";
 }
 
 void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
-  MS_LOG(INFO) << "start.";
   // get dynamic inputs
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode_ptr_);
   MS_EXCEPTION_IF_NULL(primitive);
@@ -132,20 +127,15 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     builder.SetOutputsReshapeType(outputs_reshape_type);
     kernel_info_list_->emplace_back(builder.Build());
   }
-  MS_LOG(INFO) << "end.";
 }
 
 void TbeKernelSelect::GetDynamicFormatPatternKernelInfo(const OpInfo &op_info) {
-  MS_LOG(INFO) << "start.";
-  //
   OpInfo op_info_new;
   CreateNewOpInfo(op_info, &op_info_new);
   GetCommonPatternKernelInfo(op_info_new);
-  MS_LOG(INFO) << "end.";
 }
 
 void TbeKernelSelect::GetAgnosticPatternKernelInfo(const OpInfo &op_info) {
-  MS_LOG(INFO) << "start.";
   if (op_info.inputs_ptr().size() != 1) {
     MS_LOG(EXCEPTION) << "AgnosticPattern only support one input.";
   }
@@ -161,62 +151,36 @@ void TbeKernelSelect::GetAgnosticPatternKernelInfo(const OpInfo &op_info) {
   output_item.assign(op_info.outputs_ptr().size(), format);
   support_format.input_format.emplace_back(input_item);
   support_format.output_format.emplace_back(output_item);
-  PrintSupportedFormat(support_format);
   OpInfo op_info_new;
   CreateNewOpInfo(op_info, support_format, &op_info_new);
   GetCommonPatternKernelInfo(op_info_new);
-  MS_LOG(INFO) << "end.";
 }
 
 void TbeKernelSelect::GetBroadcastPatternKernelInfo(const OpInfo &op_info) {
-  MS_LOG(INFO) << "start.";
   auto broadcast_selecter = TbeKernelBroadCastSelecter(cnode_ptr_);
   SupportFormat support_format;
   broadcast_selecter.GetShapeInfo(&support_format);
-  if (!broadcast_selecter.IsBroadCastSupport5HD(&support_format)) {
-    MS_LOG(INFO) << "Node(" << node_name_ << ") does not support 5HD.";
-  }
-  if (!broadcast_selecter.IsBroadCastSupportFracZ(&support_format)) {
-    MS_LOG(INFO) << "Node(" << node_name_ << ") does not support FracZ.";
-  }
-  if (!broadcast_selecter.IsBroadCastSupportC1HWNCoC0(&support_format)) {
-    MS_LOG(INFO) << "Node(" << node_name_ << ") does not support C1HWNCoC0.";
-  }
-  if (!broadcast_selecter.IsBroadCastSupportFracNZ(&support_format)) {
-    MS_LOG(INFO) << "Node(" << node_name_ << ") does not support FracNZ.";
-  }
-  if (!broadcast_selecter.IsBroadCastSupportNDC1HWC0(&support_format)) {
-    MS_LOG(INFO) << "Node(" << node_name_ << ") does not support NDC1HWC0.";
-  }
-  PrintSupportedFormat(support_format);
+  (void)broadcast_selecter.IsBroadCastSupport5HD(&support_format);
+  (void)broadcast_selecter.IsBroadCastSupportFracZ(&support_format);
+  (void)broadcast_selecter.IsBroadCastSupportC1HWNCoC0(&support_format);
+  (void)broadcast_selecter.IsBroadCastSupportFracNZ(&support_format);
+  (void)broadcast_selecter.IsBroadCastSupportNDC1HWC0(&support_format);
   OpInfo op_info_new;
   CreateNewOpInfo(op_info, support_format, &op_info_new);
   GetCommonPatternKernelInfo(op_info_new);
-  MS_LOG(INFO) << "end.";
 }
 
 void TbeKernelSelect::GetReducePatternKernelInfo(const OpInfo &op_info) {
-  MS_LOG(INFO) << "start.";
   auto reduce_selecter = TbeKernelReduceSelecter(cnode_ptr_);
   SupportFormat support_format;
   reduce_selecter.GetShapeInfo(&support_format);
-  if (!reduce_selecter.IsReduceSupport5HD(&support_format)) {
-    MS_LOG(INFO) << "Node (" << node_name_ << ") reduce not support 5HD.";
-  }
-  if (reduce_selecter.IsReduceSupportFracZ(&support_format)) {
-    MS_LOG(INFO) << "Node (" << node_name_ << ") reduce not support FracZ.";
-  }
-  if (reduce_selecter.IsReduceSupportC1HWNCoC0(&support_format)) {
-    MS_LOG(INFO) << "Node (" << node_name_ << ") reduce not support C1HWNCoC0.";
-  }
-  if (reduce_selecter.IsReduceSupportFracNZ(&support_format)) {
-    MS_LOG(INFO) << "Node (" << node_name_ << ") reduce not support FracNZ.";
-  }
-  PrintSupportedFormat(support_format);
+  (void)reduce_selecter.IsReduceSupport5HD(&support_format);
+  (void)reduce_selecter.IsReduceSupportFracZ(&support_format);
+  (void)reduce_selecter.IsReduceSupportC1HWNCoC0(&support_format);
+  (void)reduce_selecter.IsReduceSupportFracNZ(&support_format);
   OpInfo op_info_new;
   CreateNewOpInfo(op_info, support_format, &op_info_new);
   GetCommonPatternKernelInfo(op_info_new);
-  MS_LOG(INFO) << "end.";
 }
 
 void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
@@ -227,12 +191,10 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
   std::vector<std::shared_ptr<KernelBuildInfo>> new_kernel_info_list;
   for (auto iter = kernel_info_list_->begin(); iter != kernel_info_list_->end(); ++iter) {
     if (!FilterInVaildShape(iter)) {
-      MS_LOG(INFO) << "Filter invaild shape, filter item info: " << (*iter)->ToString();
       continue;
     }
     if (op_info.need_check_supported()) {
       if (!TbeCheckSupported(iter)) {
-        MS_LOG(INFO) << "Check support shape, filter item info: " << (*iter)->ToString();
         continue;
       }
     }
@@ -249,7 +211,6 @@ bool TbeKernelSelect::FilterInVaildShape(
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
     const auto &format = kernel_build_info_inputs_format[i];
     if (!IsShapeMatchFormat(shape, format)) {
-      MS_LOG(INFO) << "The " << i << "th input check failed.";
       return false;
     }
   }
@@ -258,7 +219,6 @@ bool TbeKernelSelect::FilterInVaildShape(
     auto shape = AnfAlgo::GetOutputInferShape(cnode_ptr_, j);
     const auto &format = kernel_build_info_outputs_format[j];
     if (!IsShapeMatchFormat(shape, format)) {
-      MS_LOG(INFO) << "The " << j << "th input check failed.";
       return false;
     }
   }
@@ -286,14 +246,12 @@ bool TbeKernelSelect::IsShapeMatchFormat(const std::vector<size_t> &shape, const
   // not support format:
   // 1 NCDHW with shape size != 5
   if (format == kOpFormat_NCDHW && shape.size() != kShape5dDims) {
-    MS_LOG(INFO) << "Warning: Shape format check failed, format: " << format << ", size: " << shape.size();
     return false;
   }
   return true;
 }
 
 bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_info_iter) {
-  MS_LOG(INFO) << "Check support start.";
   MS_EXCEPTION_IF_NULL((*kernel_build_info_iter));
   // replace kernel_info with current kernel info
   auto kernel_build_info_tmp = AnfAlgo::GetSelectKernelBuildInfo(cnode_ptr_);
@@ -369,7 +327,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
         real_io_tensor_index += real_io_tensor_num;
       }
     } else if (io_param_type == kParamTypeRequre || io_param_type == kParamTypeOptional) {
-      // requre or optional io
+      // require or optional io
       device_types->emplace_back(tbe::DtypeToTypeId(kernel_build_info_dtype));
       formats->emplace_back(kernel_build_info_format);
       reshape_types->emplace_back(reshape_type);
@@ -378,10 +336,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
       MS_LOG(EXCEPTION) << "op info's param type is not match: " << io_param_type;
     }
   }
-  if (io_info_index != io_info_num) {
-    MS_LOG(INFO) << "Warning: io_info_index(" << io_info_index << ") != io_info_num(" << io_info_num
-                 << "), this node may has optional input/output.";
-  }
+
   if (real_io_tensor_index != real_io_tensor_num) {
     std::string io_type = is_input ? "inputs " : "outputs";
     MS_LOG(INFO) << node_name_ << "'s " << io_type << "op io info num: " << io_info_num
@@ -484,7 +439,6 @@ std::string TbeKernelSelect::OpSelectFormat() {
   if (res_json_str.find("TBEException") != std::string::npos) {
     MS_LOG(EXCEPTION) << "Dynamic op select failed: " << res_json_str << ", input args: " << kernel_json.dump();
   }
-  MS_LOG(INFO) << "Dynamic select foramt response result:" << res_json_str;
   return res_json_str;
 }
 

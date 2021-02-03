@@ -74,7 +74,6 @@ bool KernelPack::ReadFromJsonFileHelper(std::ifstream &kernelbin) {
     return false;
   }
   kernel_->len = binsize;
-  MS_LOG(INFO) << "kernel len:" << kernel_->len;
   (void)kernelbin.seekg(0, std::ios::beg);
   (void)kernelbin.read(kernel_->contents, SizeToLong(kernel_->len));
   return true;
@@ -183,7 +182,6 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
     }
     std::vector<size_t> sizes = js.at("parameters");
     for (auto size : sizes) {
-      MS_LOG(INFO) << "parameter " << size;
       kernel_json_info_.parameters.push_back(size);
     }
   }
@@ -191,7 +189,6 @@ void KernelPack::ParseKernelJson(const nlohmann::json &js) {
     auto workspace = js.at("workspace");
     std::vector<size_t> sizes = workspace.at("size");
     for (auto size : sizes) {
-      MS_LOG(INFO) << "workspace_size_list " << size;
       kernel_json_info_.workspaces.push_back(size);
     }
   }
@@ -243,7 +240,6 @@ bool KernelPack::LoadKernelMeta(const std::string &json_f, const std::string &pr
     return false;
   }
 
-  MS_LOG(INFO) << "kernelbin_name:" << bin_f;
   if (!ReadFromJsonFileHelper(kernelbin)) {
     return false;
   }

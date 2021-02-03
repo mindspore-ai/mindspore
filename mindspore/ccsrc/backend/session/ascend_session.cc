@@ -124,9 +124,7 @@ void SetStreamDistinctionLabel(const KernelGraphPtr &graph, uint32_t label, bool
 
 std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
   std::vector<CNodePtr> cnodes = {};
-  size_t i = 0;
   for (const auto &anf : anf_nodes) {
-    MS_LOG(INFO) << "Apply_list[" << i++ << "] = " << anf->DebugString();
     MS_EXCEPTION_IF_NULL(anf);
     if (anf->isa<CNode>()) {
       cnodes.push_back(anf->cast<CNodePtr>());
@@ -1387,7 +1385,6 @@ void AscendSession::RecurseSelectKernelInfo(NotNull<KernelGraphPtr> graph,
     } else if (status == device::ascend::kStatusReducePrecision) {
       (*reduce_precision_count)++;
     }
-    MS_LOG(INFO) << "Select ApplyKernel: " << cnode->DebugString();
   }
 
   auto context_ptr = MsContext::GetInstance();

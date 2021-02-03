@@ -363,8 +363,6 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
       if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph->graph_id()) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
-      MS_LOG(INFO) << "Malloc Input for graph " << graph->graph_id() << ", node: " << item->fullname_with_scope()
-                   << " index: " << index << " size: " << tensor_size;
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
   }
@@ -419,9 +417,9 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
         MS_EXCEPTION_IF_NULL(origin_node_output_addr);
         auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(kernel, i);
         if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
-          MS_LOG(INFO) << "REF address is not same, ref node output need address update";
-          MS_LOG(INFO) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
-                       << origin_pair.second << ", cur op is " << kernel->DebugString() << ", out index is " << i;
+          MS_LOG(DEBUG) << "REF address is not same, ref node output need address update";
+          MS_LOG(DEBUG) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
+                        << origin_pair.second << ", cur op is " << kernel->DebugString() << ", out index is " << i;
           AnfAlgo::SetOutputAddr(origin_node_output_addr, i, kernel.get());
         }
       }
@@ -597,7 +595,6 @@ void KernelRuntime::AssignNodeOutputMem(MemType type, const AnfNodePtr &node, in
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto output_sizes = kernel_mod->GetOutputSizeList();
   if (output_sizes.empty()) {
-    MS_LOG(INFO) << "This kernel[" << node->DebugString() << "] has no output size.";
     return;
   }
   for (size_t i = 0; i < output_sizes.size(); ++i) {
@@ -679,7 +676,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
   for (auto &value_node : graph->graph_value_nodes()) {
     MS_EXCEPTION_IF_NULL(value_node);
     if (NodeOutputDeviceAddressExist(value_node, 0)) {
-      MS_LOG(INFO) << "value_node[" << value_node->DebugString() << "] address already exist";
+      MS_LOG(DEBUG) << "value_node[" << value_node->DebugString() << "] address already exist";
       continue;
     }
     auto &node_value = value_node->value();
