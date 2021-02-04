@@ -22,7 +22,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-#include "minddata/dataset/include/status.h"
+#include "include/api/status.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/mindrecord/include/shard_column.h"
 #include "minddata/mindrecord/include/shard_error.h"

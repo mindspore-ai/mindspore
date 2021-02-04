@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,11 +38,11 @@
 #endif
 
 #include "utils/ms_utils.h"
+#include "include/api/status.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/de_tensor.h"
-#include "minddata/dataset/util/status.h"
 #ifndef ENABLE_ANDROID
 #include "proto/example.pb.h"
 #endif

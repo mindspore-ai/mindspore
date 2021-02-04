@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "include/api/status.h"
 #include "include/api/types.h"
 #include "mindspore/core/ir/api_tensor_impl.h"
-#include "minddata/dataset/include/status.h"
 #include "minddata/dataset/include/tensor.h"
 
 namespace mindspore {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@
 #include <utility>
 #include <vector>
 
+#include "include/api/status.h"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision_lite.h"
-#include "minddata/dataset/include/status.h"
+
 namespace mindspore {
 namespace dataset {
 
