@@ -618,7 +618,7 @@ Dimensions PrepareIncomingOperatorInputStrategy(const std::vector<std::shared_pt
     auto name = ops[incoming_op_index]->name().substr(0, pos);
     if (name == "Gather") {
       return s;
-    } else if (name == "GatherV2P") {
+    } else if (name == "GatherP") {
       return PrepareGatherV2POutputStrategy(ops, incoming_op_index);
     } else {
       MS_LOG(EXCEPTION) << "Failure: Unknown type of GatherV2." << std::endl;
@@ -851,7 +851,7 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
     auto name = ops[iter_ops]->name().substr(0, pos);
     if (name == "Gather") {
       return PrepareGatherV2(ops, iter_ops, basic_stra);
-    } else if (name == "GatherV2P") {
+    } else if (name == "GatherP") {
       return PrepareGatherV2P(ops, iter_ops, basic_stra);
     } else {
       MS_LOG(EXCEPTION) << "Failure: Unknown type of GatherV2." << std::endl;
