@@ -20,9 +20,10 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
 #include "debug/dump_proto.h"
+#include "debug/common.h"
 
 namespace mindspore {
-namespace dumper {
+namespace protobuf {
 #ifdef ENABLE_DUMP_IR
 void DumpIRProto(const std::string &filename, const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
@@ -34,36 +35,26 @@ void DumpIRProto(const std::string &filename, const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }
-  char real_path[PATH_MAX] = {0};
-  char *real_path_ret = nullptr;
-#if defined(_WIN32) || defined(_WIN64)
-  real_path_ret = _fullpath(real_path, filename.c_str(), PATH_MAX);
-#else
-  real_path_ret = realpath(filename.c_str(), real_path);
-#endif
-  if (nullptr == real_path_ret) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
-  } else {
-    std::string path_string = real_path;
-    if (chmod(common::SafeCStr(path_string), S_IRUSR | S_IWUSR) == -1) {
-      MS_LOG(ERROR) << "Modify file:" << real_path << " to rw fail.";
-      return;
-    }
-  }
 
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
+  }
+  ChangeFileMode(real_path.value(), S_IRWXU);
   // write to pb file
-  std::ofstream ofs(real_path);
+  std::ofstream ofs(real_path.value());
   if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file '" << real_path << "' failed!";
+    MS_LOG(ERROR) << "Open file '" << real_path.value() << "' failed!";
     return;
   }
   ofs << GetFuncGraphProtoString(func_graph);
   ofs.close();
   // set file mode to read only by user
-  ChangeFileMode(real_path, S_IRUSR);
+  ChangeFileMode(real_path.value(), S_IRUSR);
 }
 #else
-void DumpIRProto(const FuncGraphPtr &, const std::string &) {
+void DumpIRProto(const std::string &, const FuncGraphPtr &) {
   static bool already_printed = false;
   if (already_printed) {
     return;
@@ -73,41 +64,35 @@ void DumpIRProto(const FuncGraphPtr &, const std::string &) {
                   << "please recompile source to enable it. See help of building script.";
 }
 #endif
-}  // namespace dumper
+}  // namespace protobuf
 
 void GraphRecorder::Export() {
   bool save_flag = false;
   if (filename_.empty()) {
     filename_ = module_ + "_" + tag_ + "_" + timestamp_;
   }
-  if (filename_.length() > 255) {  // 255: filename maximum length
-    filename_ = filename_.substr(0, 255);
-  }
-  filename_ = directory_ + filename_;
-  if (filename_.size() + 3 > PATH_MAX) {  // 3: file format length
-    MS_LOG(ERROR) << "File path " << filename_ << " is too long.";
-    return;
-  }
-
+  std::string file_path = directory_ + filename_ + std::to_string(id_);
   if (graph_type_.find(".dat") != std::string::npos) {
     save_flag = true;
-    AnfExporter exporter(std::to_string(id_));
-    std::string filename = filename_ + ".dat";
-    ChangeFileMode(filename, S_IRWXU);
-    exporter.ExportFuncGraph(filename, func_graph_);
-    ChangeFileMode(filename, S_IRUSR);
+    AnfExporter exporter("");
+    std::string real_path = file_path + ".dat";
+    ChangeFileMode(real_path, S_IRWXU);
+    exporter.ExportFuncGraph(real_path, func_graph_);
+    ChangeFileMode(real_path, S_IRUSR);
   }
   if (graph_type_.find(".ir") != std::string::npos) {
     save_flag = true;
+    std::string real_path = file_path + ".ir";
     if (full_name_) {
-      DumpIRForRDR(filename_ + ".ir", func_graph_, true, kTopStack);
+      DumpIRForRDR(real_path, func_graph_, true, kTopStack);
     } else {
-      DumpIRForRDR(filename_ + ".ir", func_graph_, false, kOff);
+      DumpIRForRDR(real_path, func_graph_, false, kOff);
     }
   }
   if (graph_type_.find(".pb") != std::string::npos) {
     save_flag = true;
-    dumper::DumpIRProto(filename_ + ".pb", func_graph_);  // save *.pb file
+    std::string real_path = file_path + ".pb";
+    protobuf::DumpIRProto(real_path, func_graph_);  // save *.pb file
   }
   if (!save_flag) {
     MS_LOG(WARNING) << "Unknown save graph type: " << graph_type_;
