@@ -420,8 +420,29 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, 
   }
   if (input_value_node->value() == nullptr || !opt::CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
 #ifndef SUPPORT_TRAIN
-    if (node_id_map_.find(input_name) != node_id_map_.end()) {
-      output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
+    if (utils::isa<abstract::AbstractTuple>(input_anode->abstract())) {
+      auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(input_anode->abstract());
+      if (tuple == nullptr) {
+        MS_LOG(ERROR) << "tuple is nullptr";
+        return RET_ERROR;
+      }
+      auto elements = tuple->elements();
+      for (size_t i = 0; i < elements.size(); i++) {
+        if (elements.size() == 1) {
+          if (node_id_map_.find(input_name) != node_id_map_.end()) {
+            output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
+          }
+        } else {
+          std::string name = input_name + "_o:" + std::to_string(i);
+          if (node_id_map_.find(name) != node_id_map_.end()) {
+            output_cnode->inputIndex.emplace_back(node_id_map_[name]);
+          }
+        }
+      }
+    } else {
+      if (node_id_map_.find(input_name) != node_id_map_.end()) {
+        output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
+      }
     }
 #else
     bool found = false;
