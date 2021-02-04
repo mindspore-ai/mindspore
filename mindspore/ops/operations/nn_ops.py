@@ -2677,7 +2677,7 @@ class SGD(PrimitiveWithCheck):
         >>> momentum = Tensor(0.1, mindspore.float32)
         >>> stat = Tensor(np.array([1.5, -0.3, 0.2, -0.7]), mindspore.float32)
         >>> output = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
-        >>> print(output[0])
+        >>> print(output)
         (Tensor(shape=[4], dtype=Float32, value= [ 1.98989999e+00, -4.90300000e-01,  1.69520009e+00,  3.98009992e+00]),)
     """
 
@@ -5629,14 +5629,14 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         ...
         >>> net = Net()
         >>> grad = Tensor(np.array([[1, 1], [1, 1]], np.float32))
-        >>> indices = Tensor(np.array([0], np.int32))
+        >>> indices = Tensor(np.array([0, 1], np.int32))
         >>> output = net(grad, indices)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 2.97499990e+00,  6.07499981e+00],
-         [ 0.00000000e+00,  1.87500000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 6.40000000e+01,  6.40000000e+01],
-         [ 6.40000000e+01,  6.40000000e+01]]))
+        [[ 2.09999990e+00,  5.199999981e+00],
+         [ 0.00000000e+00,  1.000000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00,  1.000000000e+00],
+         [ 1.00000000e+00,  1.000000000e+00]]))
     """
 
     __mindspore_signature__ = (

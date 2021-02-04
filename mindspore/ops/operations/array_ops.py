@@ -758,14 +758,14 @@ class Unique(Primitive):
         >>> class UniqueNet(nn.Cell):
         ...     def __init__(self):
         ...         super(UniqueNet, self).__init__()
-        ...         self.unique_op = P.Unique()
+        ...         self.unique_op = ops.Unique()
         ...
         ...     def construct(self, x):
         ...         output, indices = self.unique_op(x)
         ...         return output, indices
         ...
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> net = UniqueNet()
         >>> output = net(x)
         >>> print(output)

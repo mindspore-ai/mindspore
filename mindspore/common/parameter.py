@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -95,17 +95,16 @@ class Parameter(Tensor_):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.matmul = P.MatMul()
-        ...         self.weight = Parameter(Tensor(np.ones((1,2))), name="w", requires_grad=True)
+        ...         self.weight = Parameter(Tensor(np.ones((1, 2)), mindspore.float32), name="w", requires_grad=True)
         ...
         ...     def construct(self, x):
         ...         out = self.matmul(self.weight, x)
         ...         return out
         >>> net = Net()
-        >>> x = Tensor(np.ones((2,1)))
+        >>> x = Tensor(np.ones((2, 1)), mindspore.float32)
         >>> print(net(x))
         [[2.]]
-        >>> net.weight.set_data(Tensor(np.zeros((1,2))))
-        Parameter (name=w, shape=(1, 2), dtype=Float64, requires_grad=True)
+        >>> _ = net.weight.set_data(Tensor(np.zeros((1, 2)), mindspore.float32))
         >>> print(net(x))
         [[0.]]
     """
