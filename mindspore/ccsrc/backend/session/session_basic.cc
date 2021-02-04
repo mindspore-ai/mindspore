@@ -2156,9 +2156,9 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   GetParameterIndex(kernel_graph.get(), inputs, &parameter_index);
   std::map<KernelWithIndex, std::vector<std::vector<size_t>>> output_indexes;
   CreateOutputPlaceholder(kernel_graph, inputs, outputs, &output_indexes);
-  std::map<KernelWithIndex, size_t> cnode_ref;
-  GetRefCount(kernel_graph.get(), &cnode_ref);
-  BuildOpsInGraph(graph_id, parameter_index, inputs);
+  std::map<KernelWithIndex, size_t> cnode_refcount;
+  GetRefCount(kernel_graph.get(), &cnode_refcount);
+  BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
 
   std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
   for (const auto &kernel : kernel_graph->execution_order()) {
@@ -2177,8 +2177,8 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
               input_tensor_info.input_tensors_mask);
 
     // Handle inputs and outputs of current op
-    HandleOpInputs(input_tensor_info.input_kernel, &cnode_ref, &op_output_map);
-    HandleOpOutputs(kernel, op_outputs, output_indexes, cnode_ref, &op_output_map, outputs);
+    HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
+    HandleOpOutputs(kernel, op_outputs, output_indexes, cnode_refcount, &op_output_map, outputs);
   }
   MS_LOG(INFO) << "Finish!";
 }
