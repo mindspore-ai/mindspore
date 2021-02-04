@@ -19,9 +19,13 @@
 #include <memory>
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "utils/ms_utils.h"
+#include "nlohmann/json.hpp"
 
 namespace mindspore {
 namespace profiler {
+
+constexpr char kOutputPath[] = "result_path";
 
 std::shared_ptr<GraphMemory> MemoryProfiling::AddGraphMemoryNode(uint32_t graph_id) {
   std::shared_ptr<GraphMemory> node = std::make_shared<GraphMemory>(graph_id);
@@ -76,10 +80,45 @@ void MemoryProfiling::MemoryToPB() {
   return;
 }
 
+std::string MemoryProfiling::GetOutputPath() const {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const std::string options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+  nlohmann::json options_json;
+  try {
+    options_json = nlohmann::json::parse(options_str);
+  } catch (nlohmann::json::parse_error &e) {
+    MS_LOG(EXCEPTION) << "Parse profiling option json failed, error:" << e.what();
+  }
+  auto iter = options_json.find(kOutputPath);
+  if (iter != options_json.end() && iter->is_string()) {
+    char real_path[PATH_MAX] = {0};
+    if ((*iter).size() >= PATH_MAX) {
+      MS_LOG(ERROR) << "Path is invalid for memory profiling.";
+      return "";
+    }
+#if defined(_WIN32) || defined(_WIN64)
+    if (_fullpath(real_path, common::SafeCStr(*iter), PATH_MAX) == nullptr) {
+      MS_LOG(ERROR) << "Path is invalid for memory profiling.";
+      return "";
+    }
+#else
+    if (realpath(common::SafeCStr(*iter), real_path) == nullptr) {
+      MS_LOG(ERROR) << "Path is invalid for memory profiling.";
+      return "";
+    }
+#endif
+    return real_path;
+  }
+
+  MS_LOG(ERROR) << "Output path is not found when save memory profiling data";
+  return "";
+}
+
 void MemoryProfiling::SaveMemoryProfiling() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  std::string dir_path = context->get_param<std::string>(MS_CTX_PROFILING_DIR_PATH);
+  std::string dir_path = GetOutputPath();
   auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string file = dir_path + std::string("/memory_usage_") + std::to_string(device_id) + std::string(".pb");
 
