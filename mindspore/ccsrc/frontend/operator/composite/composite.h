@@ -97,9 +97,11 @@ using HyperMapPyPtr = std::shared_ptr<HyperMapPy>;
 
 extern ValuePtr kCompositeHyperMap;
 
+enum TailType { kGradAll, kGradFirst, kNotGrad };
+
 class Tail : public MetaFuncGraph {
  public:
-  explicit Tail(const std::string &name, bool do_grad = false) : MetaFuncGraph(name), do_grad_(do_grad) {}
+  explicit Tail(const std::string &name, TailType tail_type = kNotGrad) : MetaFuncGraph(name), tail_type_(tail_type) {}
   ~Tail() override = default;
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 
@@ -109,7 +111,7 @@ class Tail : public MetaFuncGraph {
   friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
 
  private:
-  bool do_grad_;
+  TailType tail_type_;
 };
 using TailPtr = std::shared_ptr<Tail>;
 
