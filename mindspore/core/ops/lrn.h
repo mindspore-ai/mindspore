@@ -26,12 +26,12 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLrn = "Lrn";
-class Lrn : public PrimitiveC {
+constexpr auto kNameLrn = "LRN";
+class LRN : public PrimitiveC {
  public:
-  Lrn() : PrimitiveC(kNameLrn) { InitIOName({"x"}, {"y"}); }
-  ~Lrn() = default;
-  MS_DECLARE_PARENT(Lrn, PrimitiveC);
+  LRN() : PrimitiveC(kNameLrn) { InitIOName({"x"}, {"y"}); }
+  ~LRN() = default;
+  MS_DECLARE_PARENT(LRN, PrimitiveC);
   void Init(const int64_t depth_radius = 5, const float bias = 1.0, const float alpha = 1.0, const float beta = 0.5,
             const std::string &norm_region = "ACROSS_CHANNELS");
   void set_depth_radius(const int64_t depth_radius);
@@ -47,7 +47,7 @@ class Lrn : public PrimitiveC {
 };
 AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args);
-using PrimLrn = std::shared_ptr<Lrn>;
+using PrimLrn = std::shared_ptr<LRN>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LRN_H_

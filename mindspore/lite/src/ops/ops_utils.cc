@@ -339,7 +339,7 @@ schema::PrimitiveT *LogicalOrPrimitiveCreator(const AnfNodePtr &node) {
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 schema::PrimitiveT *LrnPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Lrn>>(node);
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::LRN>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 schema::PrimitiveT *LpNormalizationPrimitiveCreator(const AnfNodePtr &node) {
@@ -746,7 +746,7 @@ RegistryMSOps g_logicalAndPrimitiveCreatorRegistry("LogicalAnd", LogicalAndPrimi
 RegistryMSOps g_logicalNotPrimitiveCreatorRegistry("LogicalNot", LogicalNotPrimitiveCreator);
 RegistryMSOps g_logicalOrPrimitiveCreatorRegistry("LogicalOr", LogicalOrPrimitiveCreator);
 RegistryMSOps g_lpNormalizationPrimitiveCreatorRegistry("LpNormalization", LpNormalizationPrimitiveCreator);
-RegistryMSOps g_lrnPrimitiveCreatorRegistry("Lrn", LrnPrimitiveCreator);
+RegistryMSOps g_lrnPrimitiveCreatorRegistry("LRN", LrnPrimitiveCreator);
 RegistryMSOps g_lshProjectionPrimitiveCreatorRegistry("LshProjection", LshProjectionPrimitiveCreator);
 RegistryMSOps g_lSTMPrimitiveCreatorRegistry("LSTM", LSTMPrimitiveCreator);
 RegistryMSOps g_l2NormalizeFusionPrimitiveCreatorRegistry("L2NormalizeFusion", L2NormalizeFusionPrimitiveCreator);

@@ -23,7 +23,7 @@ namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteLRNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = std::make_unique<ops::Lrn>();
+  auto prim = std::make_unique<ops::LRN>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsLocalResponseNormalizationOptions();

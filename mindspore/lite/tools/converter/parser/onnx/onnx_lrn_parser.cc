@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Lrn>();
+  auto prim = std::make_unique<ops::LRN>();
 
   int64_t size = 0;
   float alpha = 0;
