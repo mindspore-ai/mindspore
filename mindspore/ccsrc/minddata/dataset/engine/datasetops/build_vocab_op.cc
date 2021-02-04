@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <utility>
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {
@@ -229,12 +228,6 @@ void BuildVocabOp::Print(std::ostream &out, bool show_all) const {
     out << "\nCode is needed here to show more info about the op."
         << "\n\n";
   }
-}
-
-// Pre-Visitor accept method for NodePass
-Status BuildVocabOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call the pre-visitation
-  return p->PreRunOnNode(shared_from_base<BuildVocabOp>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

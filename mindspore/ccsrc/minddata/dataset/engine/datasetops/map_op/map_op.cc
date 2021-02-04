@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
 #include "minddata/dataset/engine/datasetops/map_op/gpu_map_job.h"
-#include "minddata/dataset/engine/opt/pass.h"
+#include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
@@ -443,18 +443,6 @@ void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name
     // Set the base class final column id map result
     column_name_id_map_ = final_col_name_id_map;
   }
-}
-
-// Visitor accept method for NodePass
-Status MapOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<MapOp>(), modified);
-}
-
-// Visitor pre-accept method for NodePass
-Status MapOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->PreRunOnNode(shared_from_base<MapOp>(), modified);
 }
 
 Status MapOp::WaitForWorkers() {

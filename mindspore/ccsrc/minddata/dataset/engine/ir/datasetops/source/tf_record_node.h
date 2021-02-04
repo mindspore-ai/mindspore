@@ -30,6 +30,8 @@ namespace dataset {
 /// \class TFRecordNode
 /// \brief A Dataset derived class to represent TFRecord dataset
 class TFRecordNode : public NonMappableSourceNode {
+  friend class CacheValidationPass;
+
  public:
   /// \brief Constructor
   /// \note Parameter 'schema' is the path to the schema file
@@ -139,6 +141,18 @@ class TFRecordNode : public NonMappableSourceNode {
   ///     Note: This function is common among NonMappableSourceNode and should be promoted to its parent class.
   /// \return Status of the function
   Status MakeSimpleProducer() override;
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status Accept(IRNodePass *p, bool *const modified) override;
+
+  /// \brief Base-class override for accepting IRNodePass visitor
+  /// \param[in] p The node to visit
+  /// \param[out] modified Indicator if the node was modified
+  /// \return Status of the node visit
+  Status AcceptAfter(IRNodePass *p, bool *const modified) override;
 
  private:
   std::vector<std::string> dataset_files_;

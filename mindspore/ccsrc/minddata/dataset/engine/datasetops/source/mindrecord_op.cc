@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -459,12 +458,6 @@ Status MindRecordOp::CountTotalRows(const std::vector<std::string> dataset_path,
     RETURN_STATUS_UNEXPECTED("Invalid data, MindRecordOp failed to count total rows.");
   }
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status MindRecordOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<MindRecordOp>(), modified);
 }
 
 Status MindRecordOp::ComputeColMap() {

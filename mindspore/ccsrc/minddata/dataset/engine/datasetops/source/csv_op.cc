@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/jagged_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/random.h"
 
 namespace mindspore {
@@ -914,12 +913,6 @@ Status CsvOp::ComputeColMap() {
       ", column_name_id_map: " + std::to_string(column_name_id_map_.size()));
   }
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status CsvOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<CsvOp>(), modified);
 }
 
 }  // namespace dataset

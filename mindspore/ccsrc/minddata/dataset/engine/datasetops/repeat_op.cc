@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/data_buffer.h"
-#include "minddata/dataset/engine/db_connector.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -173,18 +171,6 @@ int32_t RepeatOp::num_producers() const {
   } else {
     return child_[0]->num_producers();
   }
-}
-
-// Pre-Visitor accept method for NodePass
-Status RepeatOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call the pre-visitation
-  return p->PreRunOnNode(shared_from_base<RepeatOp>(), modified);
-}
-
-// Visitor accept method for NodePass
-Status RepeatOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<RepeatOp>(), modified);
 }
 
 int64_t RepeatOp::GetTreeRepeatCount() { return num_repeats_; }

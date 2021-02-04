@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,35 +113,35 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   // Destructor
   ~CacheOp();
 
-  /// \brief Base-class override for setting specific CacheOp configurations. This code will be called
-  /// during the execution tree prepare phase BEFORE traversing down to child operators.
-  uint32_t PrepareFlags() const override;
   /// \brief Base-class override for special eoe handler.
-  /// CacheOp must override this because it shall not perform default handling of eoe. Instead
-  /// the CacheOp manages actions related to the end of the epoch.
+  /// \notes CacheOp must override this because it shall not perform default handling of eoe. Instead
+  ///     the CacheOp manages actions related to the end of the epoch.
   /// \return Status The status code returned
   Status EoeReceived(int32_t worker_id) override;
-  /// \brief Base-class override for NodePass pre-visit acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status PreAccept(NodePass *p, bool *const modified) override;
-  /// \brief Base-class override for NodePass visitor acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *const modified) override;
+
   /// \brief Base-class override for handling cases when an eof is received.
   /// \param worker_id - The worker id
   /// \return Status The status code returned
   Status EofReceived(int32_t worker_id) override;
+
+  // \brief Class functor operator ().
+  /// \return Status The status code returned
   Status operator()() override;
+
+  /// \brief Entry function for worker thread that fetch rows from CacheLookupOp
+  /// \param workerId
+  /// \return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
-  /// \brief Base-class override for handling cases if we allow cache miss
+
+  /// \brief Base-class override for handling cases if we allow cache miss.
   bool AllowCacheMiss() override { return false; }
-  /// \brief Base-class override for the name of this operator
+
+  /// \brief Base-class override for the name of this operator.
   std::string Name() const override { return kCacheOp; }
-  Status PrepareNodePostAction() override;
+
+  /// \brief Perform specific post-operations on CacheOp
+  /// \return Status The status code returned
+  Status PrepareOperator() override;
 
  private:
   WaitPost rows_cache_done_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,12 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
 
@@ -207,9 +205,6 @@ Status CacheOp::RegisterResources() {
   return Status::OK();
 }
 
-// Base-class override for setting specific CacheOp configurations. This code will be called
-// during the execution tree prepare phase BEFORE traversing down to child operators.
-uint32_t CacheOp::PrepareFlags() const { return ExecutionTree::kDePrepCache; }
 // Base-class override for special eoe handler.
 // CacheOp must override this because it shall not perform default handling of eoe. Instead
 // the CacheOp manages actions related to the end of the epoch.
@@ -225,21 +220,9 @@ Status CacheOp::EofReceived(int32_t worker_id) {
   return Status::OK();
 }
 
-// Pre-Visitor accept method for NodePass
-Status CacheOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call the pre-visitation
-  return p->PreRunOnNode(shared_from_base<CacheOp>(), modified);
-}
-
-// Visitor accept method for NodePass
-Status CacheOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<CacheOp>(), modified);
-}
-
-Status CacheOp::PrepareNodePostAction() {
+Status CacheOp::PrepareOperator() {
   // Run any common code from super class first before adding our own
-  RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
+  RETURN_IF_NOT_OK(DatasetOp::PrepareOperator());
   // Get the computed check sum from all ops in our cache path below us and ask the cache op to create it's cache
   uint32_t cache_crc = DatasetOp::GenerateCRC(shared_from_this());
   // This is a non-mappable cache op so the id's need to be generated.

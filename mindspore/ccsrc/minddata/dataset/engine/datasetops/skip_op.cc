@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 #include "minddata/dataset/engine/datasetops/skip_op.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -122,18 +121,6 @@ Status SkipOp::operator()() {
 Status SkipOp::EofReceived(int32_t worker_id) {
   MS_LOG(DEBUG) << "Skip operator EOF received, do nothing now.";
   return Status::OK();
-}
-
-// Visitor accept method for NodePass
-Status SkipOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<SkipOp>(), modified);
-}
-
-// Visitor pre-accept method for NodePass
-Status SkipOp::PreAccept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->PreRunOnNode(shared_from_base<SkipOp>(), modified);
 }
 
 }  // namespace dataset

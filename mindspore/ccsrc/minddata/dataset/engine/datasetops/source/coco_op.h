@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,12 +202,6 @@ class CocoOp : public ParallelOp, public RandomAccessOp {
   // @param std::map<std::string, int32_t> *output_class_indexing - output class index of CocoDataset
   static Status GetClassIndexing(const std::string &dir, const std::string &task_type, const std::string &task_mode,
                                  std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
-
-  /// \brief Base-class override for NodePass visitor acceptor
-  /// \param[in] p Pointer to the NodePass to be accepted
-  /// \param[out] modified Indicator if the node was changed at all
-  /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *const modified) override;
 
   // Op name getter
   // @return Name of the current Op

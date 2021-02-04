@@ -24,6 +24,7 @@
 
 #include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "minddata/dataset/engine/jagged_connector.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
 #include "utils/system/crc32c.h"
 
@@ -246,5 +247,16 @@ Status TFRecordNode::MakeSimpleProducer() {
   return Status::OK();
 }
 
+// Visitor accepting method for IRNodePass
+Status TFRecordNode::Accept(IRNodePass *p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<TFRecordNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status TFRecordNode::AcceptAfter(IRNodePass *p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<TFRecordNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

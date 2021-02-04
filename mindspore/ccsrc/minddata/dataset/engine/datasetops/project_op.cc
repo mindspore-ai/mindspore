@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@
 #include <utility>
 #include <vector>
 #include "minddata/dataset/engine/data_buffer.h"
-#include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 namespace mindspore {
@@ -131,12 +129,6 @@ Status ProjectOp::EoeReceived(int32_t worker_id) {
 }
 
 Status ProjectOp::EofReceived(int32_t worker_id) { return Status::OK(); }
-
-// Visitor accept method for NodePass
-Status ProjectOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<ProjectOp>(), modified);
-}
 
 // Compute the column map and save it into our own column name map
 // We cannot use the super class ComputeColMap here because we're making a modification of the

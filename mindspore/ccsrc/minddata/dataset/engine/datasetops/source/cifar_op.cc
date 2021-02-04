@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
-#include "minddata/dataset/engine/opt/pass.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -498,12 +497,6 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
     *count = num_cifar100_records;
     return Status::OK();
   }
-}
-
-// Visitor accept method for NodePass
-Status CifarOp::Accept(NodePass *p, bool *const modified) {
-  // Downcast shared pointer then call visitor
-  return p->RunOnNode(shared_from_base<CifarOp>(), modified);
 }
 
 Status CifarOp::ComputeColMap() {

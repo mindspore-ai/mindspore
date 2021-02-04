@@ -78,19 +78,19 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Flags that control operator runtime behaviours
   enum OpState { kDeOpRunning = 0, kDeOpIdle = 1, kDeOpTerminated };
 
-  /// Constructor
+  /// \brief Constructor
   /// \param op_connector_size - The size for the output connector of this operator.
   /// \param sampler - The sampler for the op
   DatasetOp(int32_t op_connector_size, std::shared_ptr<SamplerRT> sampler);
 
-  /// Destructor
+  /// \brief Destructor
   virtual ~DatasetOp() { tree_ = nullptr; }
 
-  /// Adds a operator to become our child.
+  /// \brief Adds a operator to become our child.
   /// \param child - shared pointer to the child to add.
   Status AddChild(std::shared_ptr<DatasetOp> child);
 
-  /// Remove a operator from our children.
+  /// \brief Remove a operator from our children.
   /// \param child - shared pointer to the child to remove.
   Status RemoveChild(std::shared_ptr<DatasetOp> child);
 
@@ -114,9 +114,9 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   // Getter function to get all of our parents.
   std::vector<DatasetOp *> parents() const;
 
-  // Inserts a operator as the parent current op.
-  // Inserted op will become the sole parent of the current op.
-  // The existing parent of the current op will be transferred to the inserted op.
+  // \brief Inserts a operator as the parent current op.
+  // \notes Inserted op will become the sole parent of the current op.
+  //     The existing parent of the current op will be transferred to the inserted op.
   Status InsertAsParent(std::shared_ptr<DatasetOp> to_add);
 
   /// \brief Creates the connector within this operator
@@ -140,9 +140,9 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   }
 
   /// \brief Class functor operator ().
-  /// DatasetOps operate by launching a thread (see ExecutionTree).
-  /// This pure virtual version makes the requirement that derived classes must provide a functor
-  /// that will execute their main runtime loop code.
+  /// \notes DatasetOps operate by launching a thread (see ExecutionTree).
+  ///     This pure virtual version makes the requirement that derived classes must provide a functor
+  ///     that will execute their main runtime loop code.
   /// \return Status The status code returned
   virtual Status operator()() = 0;
 
@@ -170,8 +170,8 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   virtual Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe);
 
   /// \brief Gets the next buffer from the given child .  This function also has built-in eoe and eof
-  /// message handling so that child classes don't have to manually code pass-through logic when
-  /// those messages are received.
+  ///     message handling so that child classes don't have to manually code pass-through logic when
+  ///     those messages are received.
   /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
   /// \param worker_id - The worker id
   /// \return Status The status code returned
@@ -194,43 +194,33 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   virtual Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing);
 
   /// \brief Performs handling for when an eoe message is received.
-  /// The base class implementation simply flows the eoe message to output. Derived classes
-  /// may override if they need to perform special eoe handling.
+  ///     The base class implementation simply flows the eoe message to output. Derived classes
+  ///     may override if they need to perform special eoe handling.
   /// \param worker_id - The worker id
   /// \return Status The status code returned
   virtual Status EoeReceived(int32_t worker_id);
 
   /// \brief Performs handling for when an eof message is received.
-  /// The base class implementation simply flows the eof message to output. Derived classes
-  /// may override if they need to perform special eof handling.
+  ///     The base class implementation simply flows the eof message to output. Derived classes
+  ///     may override if they need to perform special eof handling.
   /// \param worker_id - The worker id
   /// \return Status The status code returned
   virtual Status EofReceived(int32_t worker_id);
 
   /// \brief Derived classes may implement the reset function if the operator is stateful and needs
-  /// specific reset handling that is not contained in this common code version of the reset
+  ///     specific reset handling that is not contained in this common code version of the reset
   /// \return Status The status code returned
   virtual Status Reset();
 
-  /// \brief During tree prepare phase, operators may have specific pre-operations to perform depending on
-  /// their role.
-  /// \notes Derived versions of this function should always call it's superclass version first
-  /// before providing their own implementations.
-  virtual Status PrepareNodePreAction();
-
   /// \brief During tree prepare phase, operators may have specific post-operations to perform depending on
-  /// their role.
+  ///     their role.
   /// \notes Derived versions of this function should always call it's superclass version first
-  /// before providing their own implementations.
-  virtual Status PrepareNodePostAction();
+  ///     before providing their own implementations.
+  virtual Status PrepareOperator();
 
   /// \brief Getter function
   /// \return The operator id
   int32_t id() const { return operator_id_; }
-
-  /// \brief Getter function
-  /// \return The prepare flags
-  virtual uint32_t PrepareFlags() const;
 
   /// \brief Getter function
   /// \return The number of workers in this op
@@ -315,22 +305,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \return Vector of Children
   std::vector<std::shared_ptr<DatasetOp>> Children() const { return child_; }
 
-  /// \brief Base method for NodePass pre-visit.  A tree walk consists of walking down the tree and also walking back up
-  ///     in a depth-first order.  PreAccept is the node visit on the way down, whereas the regular Accept is the main
-  ///     visit on the way back up the tree during a post-order traversal. Subclass needs to override this if it
-  ///     requires special node visit access. Check "dataset/engine/opt/pass.h" for more details.
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  virtual Status PreAccept(NodePass *p, bool *const modified);
-
-  /// \brief Base method for NodePass visit. Subclass needs to override this if it requires special node visit access.
-  ///     Check "dataset/engine/opt/pass.h" for more details.
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  virtual Status Accept(NodePass *p, bool *const modified);
-
   /// Op name getter
   /// \return Name of the current Op
   virtual std::string Name() const = 0;
@@ -401,7 +375,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   void AddParent(DatasetOp *parent);
 
   /// Compute the current op's column map using its child's column map.
-  /// Get called during the tree post-prepare phase in PrepareNodePostAction.
+  /// Get called during the tree post-prepare phase in PrepareOperator.
   /// This base implementation just inherits the map from child 0, and can only be used if the number of children is 1.
   /// Operations changing the column map it inherits from the child must overwrite this function.
   /// \return - Status

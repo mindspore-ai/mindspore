@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ class EpochCtrlOp : public RepeatOp {
     Status Build(std::shared_ptr<EpochCtrlOp> *);
   };
 
-  // Contructor
+  // Constructor
   explicit EpochCtrlOp(int32_t num_epoch);
 
   // Destructor
@@ -64,18 +64,6 @@ class EpochCtrlOp : public RepeatOp {
   // Base-class override for handling cases when an eoe is received.
   // @param worker_id - The worker id
   Status EoeReceived(int32_t worker_id) override;
-
-  /// \brief Base-class override for NodePass pre-visit acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status PreAccept(NodePass *p, bool *const modified) override;
-
-  /// \brief Base-class override for NodePass visitor acceptor
-  /// \param[in] p The node to visit
-  /// \param[out] modified Indicator if the node was modified
-  /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *const modified) override;
 
   int64_t GetTreeRepeatCount() override;
 };

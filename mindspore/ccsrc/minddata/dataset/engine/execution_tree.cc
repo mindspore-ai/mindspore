@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit), prepare_flags_(kDePrepNone) {
+ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
   tg_ = std::make_unique<TaskGroup>();
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
@@ -66,11 +66,11 @@ Status ExecutionTree::AssociateNode(const std::shared_ptr<DatasetOp> &op) {
   if (op->tree_ == this) {
     return Status::OK();
   }
-  if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding && tree_state_ != kDeTStatePrepare) {
+  if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding) {
     std::string err_msg =
       "Invalid tree state for adding a node. Current state: " + std::to_string(static_cast<int>(tree_state_)) +
       " Expected states: " + std::to_string(static_cast<int>(kDeTStateInit)) + " or " +
-      std::to_string(static_cast<int>(kDeTStateBuilding)) + " or " + std::to_string(static_cast<int>(kDeTStatePrepare));
+      std::to_string(static_cast<int>(kDeTStateBuilding));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -172,10 +172,10 @@ Status ExecutionTree::Launch() {
 #endif
 
   // Tree must be built and prepared before it can be launched!
-  if (tree_state_ != kDeTStateReady) {
+  if (tree_state_ != kDeTStatePrepared) {
     std::string err_msg =
       "Invalid tree state for launching tree. Current state: " + std::to_string(static_cast<int>(tree_state_)) +
-      " Expected state: " + std::to_string(static_cast<int>(kDeTStateReady));
+      " Expected state: " + std::to_string(static_cast<int>(kDeTStatePrepared));
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
@@ -244,43 +244,31 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
   return Status::OK();
 }
 
-// walk the tree to perform modifications to the tree or specific nodes within the tree to get
-// it ready for execution.
-//
-// This driver is deprecated.
+// Walks the tree to perform modifications to the tree in post-order to get it ready for execution.
 Status ExecutionTree::Prepare() {
-  // The tree is ready to be prepared.
-  tree_state_ = kDeTStatePrepare;
-
   if (root_ == nullptr) {
     RETURN_STATUS_UNEXPECTED("Please assign one operator as the root of this tree.");
   }
 
-  // Start the recursive prepare
-  RETURN_IF_NOT_OK(this->PrepareNode(root_));
-  tree_state_ = kDeTStateReady;
-  return Status::OK();
-}
+  std::vector<std::shared_ptr<DatasetOp>> fifo;
+  std::shared_ptr<DatasetOp> op = root_;
+  size_t index = 0;
 
-// Recursive function used during prepare phase to visit a node and drive any pre- and post-
-// node actions during a tree walk.
-Status ExecutionTree::PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op) {
-  // Before going down into children, make any prepare flags updates based on this operator.
-  uint32_t op_prep_flags = dataset_op->PrepareFlags();
-  BitSet(&prepare_flags_, op_prep_flags);
+  // Build a FIFO queue with the root at the beginning and continue adding its descendants to the queue.
+  fifo.push_back(op);
+  do {
+    op = fifo[index];
+    fifo.insert(fifo.end(), op->child_.begin(), op->child_.end());
+    ++index;
+  } while (index < fifo.size());
 
-  // Now, descend to children
-  for (const auto &i : dataset_op->child_) {
-    RETURN_IF_NOT_OK(this->PrepareNode(i));
+  // By iterating from the end of the FIFO queue, we simulate the post-order walk.
+  for (auto rit = fifo.crbegin(); rit != fifo.crend(); ++rit) {
+    RETURN_IF_NOT_OK((*rit)->PrepareOperator());
   }
 
-  // No more children, now we execute any prepare actions before going back up the
-  // the tree on recursive function
-  RETURN_IF_NOT_OK(dataset_op->PrepareNodePostAction());
-
-  // Then clear the flags from this op now that we have prepared it.
-  BitClear(&prepare_flags_, op_prep_flags);
-
+  // The tree is prepared.
+  tree_state_ = kDeTStatePrepared;
   return Status::OK();
 }
 }  // namespace dataset
