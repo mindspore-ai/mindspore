@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+#include "utils/check_convert_utils.h"
+
 #include <utility>
 #include <vector>
 #include <algorithm>
 #include <typeinfo>
 #include <functional>
-#include "utils/check_convert_utils.h"
+
 #include "abstract/abstract_value.h"
+#include "ops/op_utils.h"
 #include "ir/dtype/type.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype.h"
@@ -84,21 +87,21 @@ AttrConverterPair PadModeUpperConverter(PadModToEnumUpperMap, PadModToStrUpperMa
 AttrConverterPair ReductionConverter(ReductionToEnumMap, ReductionToStrMap);
 
 static std::map<std::string, AttrConverterPair> FormatAndPadAttrMap = {
-  {"format", DataFormatConverter},
-  {"pad_mode", PadModeConverter},
+  {ops::kFormat, DataFormatConverter},
+  {ops::kPadMode, PadModeConverter},
 };
 
 static std::map<std::string, AttrConverterPair> FormatAndPadUpperAttrMap = {
-  {"format", DataFormatConverter},
-  {"pad_mode", PadModeUpperConverter},
+  {ops::kFormat, DataFormatConverter},
+  {ops::kPadMode, PadModeUpperConverter},
 };
 
 static std::map<std::string, AttrConverterPair> DataFormatMap = {
-  {"format", DataFormatConverter},
+  {ops::kFormat, DataFormatConverter},
 };
 
 static std::map<std::string, AttrConverterPair> ReductionMap = {
-  {"reduction", ReductionConverter},
+  {ops::kReduction, ReductionConverter},
 };
 
 static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrConvertMap = {
@@ -132,24 +135,42 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"BinaryCrossEntropy", ReductionMap},
   {"BinaryCrossEntropyGrad", ReductionMap},
   {"NLLLoss", ReductionMap},
+  {"DepthToSpace", DataFormatMap},
 };
 
-int64_t CheckAndConvertUtils::GetDataFormatEnumValue(const std::string &value) {
-  if (DataFormatToEnumMap.find(value) == DataFormatToEnumMap.end()) {
-    MS_LOG(ERROR) << "Can not convert data format " << value << "to enum";
+bool CheckAndConvertUtils::GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    auto attr_value_str = GetValue<std::string>(value);
+    if (DataFormatToEnumMap.find(attr_value_str) == DataFormatToEnumMap.end()) {
+      MS_LOG(DEBUG) << "The data format " << attr_value_str << " not be converted to enum.";
+      return false;
+    }
+    *enum_value = DataFormatToEnumMap[attr_value_str];
+    return true;
+  } else {
+    *enum_value = GetValue<int64_t>(value);
+    return true;
   }
-  return DataFormatToEnumMap[value];
+  return false;
 }
 
-int64_t CheckAndConvertUtils::GetPadModEnumValue(const std::string &value, bool is_upper) {
-  std::map<std::string, int64_t> pad_map = PadModToEnumMap;
-  if (is_upper) {
-    pad_map = PadModToEnumUpperMap;
+void CheckAndConvertUtils::GetPadModEnumValue(const ValuePtr &value, int64_t *enum_value, bool is_upper) {
+  MS_EXCEPTION_IF_NULL(value);
+  if (value->isa<StringImm>()) {
+    auto attr_value_str = GetValue<std::string>(value);
+
+    std::map<std::string, int64_t> pad_map = PadModToEnumMap;
+    if (is_upper) {
+      pad_map = PadModToEnumUpperMap;
+    }
+    if (pad_map.find(attr_value_str) == pad_map.end()) {
+      MS_LOG(EXCEPTION) << "Invalid pad mode " << attr_value_str << " use pad, valid or same";
+    }
+    *enum_value = pad_map[attr_value_str];
+  } else {
+    *enum_value = GetValue<int64_t>(value);
   }
-  if (pad_map.find(value) == pad_map.end()) {
-    MS_LOG(ERROR) << "Can not convert pad mode " << value << "to enum";
-  }
-  return pad_map[value];
 }
 
 AttrConverterPair CheckAndConvertUtils::GetAttrConvertPair(const std::string &op_type, const std::string &attr_name) {
@@ -172,8 +193,8 @@ AttrConverterPair CheckAndConvertUtils::GetAttrConvertPair(const std::string &op
 
 bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, const std::string &attr_name,
                                                  ValuePtr *const value) {
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
+  if (value == nullptr || *value == nullptr) {
+    MS_LOG(DEBUG) << "value of attr " << op_type << attr_name << " is nullptr.";
     return false;
   }
   if (!(*value)->isa<StringImm>()) {
@@ -191,12 +212,17 @@ bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, con
   }
   if (!do_convert) {
     transform(real_value.begin(), real_value.end(), real_value.begin(), ::toupper);
+    if (attr_map_pair.first.find(real_value) != attr_map_pair.first.end()) {
+      do_convert = true;
+    }
+  }
+  if (!do_convert) {
+    transform(real_value.begin(), real_value.end(), real_value.begin(), ::tolower);
     if (attr_map_pair.first.find(real_value) == attr_map_pair.first.end()) {
       MS_LOG(DEBUG) << "Can not convert " << op_type << " attr " << attr_name << ": " << real_value << " to int";
       return false;
     }
   }
-
   *value = MakeValue<int64_t>(attr_map_pair.first[real_value]);
   MS_LOG(DEBUG) << "convert str to int, name: " << op_type << ", attr: " << attr_name;
   return true;
@@ -204,7 +230,7 @@ bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, con
 
 bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name,
                                                     ValuePtr *const value) {
-  if (value == nullptr) {
+  if (value == nullptr || *value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";
     return false;
   }
@@ -226,7 +252,6 @@ bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, 
   return true;
 }
 
-
 namespace {
 typedef std::map<std::string, std::function<ValuePtr(ValuePtr)>> AttrFunction;
 
@@ -241,7 +266,6 @@ ValuePtr L2NormalizeAttrConversion(ValuePtr attr) {
 std::map<std::string, AttrFunction> kIrAttrToOpAttr = {{"L2Normalize", {{"axis", L2NormalizeAttrConversion}}},
                                                        {"L2NormalizeGrad", {{"axis", L2NormalizeAttrConversion}}}};
 }  // namespace
-
 
 bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2) {
   if (vec_1.size() != vec_2.size()) {

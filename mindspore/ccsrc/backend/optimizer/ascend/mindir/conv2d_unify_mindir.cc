@@ -23,6 +23,7 @@
 
 #include "utils/utils.h"
 #include "utils/ms_context.h"
+#include "utils/check_convert_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -46,9 +47,15 @@ bool NeedUpdate(const CNodePtr &conv2d, std::vector<size_t> in_shape, std::vecto
   if (group == 1) {
     return false;
   }
-  auto data_format = AnfAlgo::GetNodeAttr<std::string>(conv2d, kAttrFormat);
-  if (data_format != "NCHW") {
-    MS_LOG(EXCEPTION) << "Conv2D only supports NCHW when group > 1, but got " << data_format;
+
+  auto primitive_ptr = GetCNodePrimitive(conv2d);
+  MS_EXCEPTION_IF_NULL(primitive_ptr);
+  auto data_format_ptr = primitive_ptr->GetAttr(kAttrFormat);
+  MS_EXCEPTION_IF_NULL(data_format_ptr);
+  int64_t data_format;
+  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(data_format_ptr, &data_format);
+  if (!result || data_format != Format::NCHW) {
+    MS_LOG(EXCEPTION) << "Conv2D only supports NCHW when group > 1";
   }
   if (in_shape.size() != kConv2DAxisNum || out_shape.size() != kConv2DAxisNum) {
     MS_LOG(EXCEPTION) << "Conv2D's input and output should have 4 axis, but got input axis num: " << in_shape.size()

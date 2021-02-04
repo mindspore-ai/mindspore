@@ -25,6 +25,7 @@
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
 #include "proto/onnx.pb.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 enum OpMergeMode {
@@ -102,8 +103,9 @@ void SetAttrTupleValueToProto(const ValuePtr &value, onnx::AttributeProto_Attrib
 void SetPoolingPadMode(const ValuePtr &value, onnx::AttributeProto_AttributeType,
                        onnx::AttributeProto *const attr_proto, const PrimitivePtr &) {
   attr_proto->set_type(onnx::AttributeProto_AttributeType_STRING);
-  auto attr_value = GetValue<std::string>(value);
-  if (attr_value == "VALID") {
+  int64_t attr_value;
+  CheckAndConvertUtils::GetPadModEnumValue(value, &attr_value, true);
+  if (attr_value == PadMode::VALID) {
     attr_proto->set_s("VALID");
   } else {
     attr_proto->set_s("SAME_UPPER");
@@ -186,10 +188,11 @@ OPERATOR_ONNX_CONVERT_DEFINE(
           [](ValuePtr value, onnx::AttributeProto_AttributeType, onnx::AttributeProto *const attr_proto,
              const PrimitivePtr &prim) {
             attr_proto->set_type(onnx::AttributeProto_AttributeType_STRING);
-            auto attr_value = GetValue<std::string>(value);
-            if (attr_value == "valid") {
+            int64_t attr_value;
+            CheckAndConvertUtils::GetPadModEnumValue(value, &attr_value);
+            if (attr_value == PadMode::VALID) {
               attr_proto->set_s("VALID");
-            } else if (attr_value == "same") {
+            } else if (attr_value == PadMode::SAME) {
               attr_proto->set_s("SAME_UPPER");
             } else {  // pad_mode is 'pad', use attribute 'pad_list' to fill ONNX attribute 'pads'
               attr_proto->set_name("pads");
@@ -834,12 +837,13 @@ void OnnxExporter::ExportPrimDepthwiseConv2d(const FuncGraphPtr & /*func_graph*/
 
   // set pad
   onnx_attr_proto = node_proto->add_attribute();
-  auto attr_value = GetValue<std::string>(prim->GetAttr("pad_mode"));
+  int64_t attr_value;
+  CheckAndConvertUtils::GetPadModEnumValue(prim->GetAttr("pad_mode"), &attr_value);
   onnx_attr_proto->set_name("auto_pad");
   onnx_attr_proto->set_type(onnx::AttributeProto_AttributeType_STRING);
-  if (attr_value == "valid") {
+  if (attr_value == PadMode::VALID) {
     onnx_attr_proto->set_s("VALID");
-  } else if (attr_value == "same") {
+  } else if (attr_value == PadMode::SAME) {
     onnx_attr_proto->set_s("SAME_UPPER");
   } else {
     onnx_attr_proto->set_name("pads");

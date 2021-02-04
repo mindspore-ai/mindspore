@@ -71,7 +71,7 @@ std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file) {
   return buf;
 }
 
-std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name) {
+std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite) {
   auto graphBuf = ReadProtoFile(file_name);
   if (graphBuf == nullptr) {
     MS_LOG(ERROR) << "Read Mind IR failed, file name is " << file_name.c_str();
@@ -79,7 +79,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name) {
   }
 
   try {
-    auto graph = ConvertStreamToFuncGraph(graphBuf->data(), graphBuf->size());
+    auto graph = ConvertStreamToFuncGraph(graphBuf->data(), graphBuf->size(), is_lite);
     return graph;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
@@ -87,7 +87,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name) {
   }
 }
 
-std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size) {
+std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite) {
   MS_EXCEPTION_IF_NULL(buf);
   std::string str((const char *)buf, buf_size);
   mind_ir::ModelProto model_;
@@ -95,6 +95,9 @@ std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_
     MS_LOG(ERROR) << "Parse model from buffer fail!";
   }
   MSANFModelParser model_parser;
+  if (is_lite) {
+    model_parser.SetLite();
+  }
   FuncGraphPtr dstgraph_ptr = model_parser.Parse(model_);
   return dstgraph_ptr;
 }
