@@ -29,14 +29,24 @@ from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common.initializer import XavierUniform, initializer
 from mindspore.common import set_seed
 
-from src.config import config_gpu, config_ascend
-from src.dataset import create_dataset
+from src.config import config_gpu, config_ascend, config_cpu
+from src.dataset import create_dataset_imagenet, create_dataset_cifar10
 from src.inception_v3 import InceptionV3
 from src.lr_generator import get_lr
 from src.loss import CrossEntropy
 
 set_seed(1)
 
+CFG_DICT = {
+    "Ascend": config_ascend,
+    "GPU": config_gpu,
+    "CPU": config_cpu,
+}
+
+DS_DICT = {
+    "imagenet": create_dataset_imagenet,
+    "cifar10": create_dataset_cifar10,
+}
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='image classification training')
@@ -44,13 +54,16 @@ if __name__ == '__main__':
     parser.add_argument('--resume', type=str, default='', help='resume training with existed checkpoint')
     parser.add_argument('--is_distributed', action='store_true', default=False,
                         help='distributed training')
-    parser.add_argument('--platform', type=str, default='GPU', choices=('Ascend', 'GPU'), help='run platform')
+    parser.add_argument('--platform', type=str, default='GPU', choices=('Ascend', 'GPU', 'CPU'), help='run platform')
     args_opt = parser.parse_args()
+
+    cfg = CFG_DICT[args_opt.platform]
+    create_dataset = DS_DICT[cfg.ds_type]
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.platform, save_graphs=False)
     if os.getenv('DEVICE_ID', "not_set").isdigit():
         context.set_context(device_id=int(os.getenv('DEVICE_ID')))
-    cfg = config_ascend if args_opt.platform == 'Ascend' else config_gpu
+
     # init distributed
     if args_opt.is_distributed:
         init()
@@ -64,7 +77,7 @@ if __name__ == '__main__':
         cfg.group_size = 1
 
     # dataloader
-    dataset = create_dataset(args_opt.dataset_path, True, cfg.rank, cfg.group_size)
+    dataset = create_dataset(args_opt.dataset_path, True, cfg)
     batches_per_epoch = dataset.get_dataset_size()
 
     # network
@@ -120,8 +133,8 @@ if __name__ == '__main__':
     if args_opt.is_distributed & cfg.is_save_on_master:
         if cfg.rank == 0:
             callbacks.append(ckpoint_cb)
-        model.train(cfg.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=True)
+        model.train(cfg.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=cfg.ds_sink_mode)
     else:
         callbacks.append(ckpoint_cb)
-        model.train(cfg.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=True)
+        model.train(cfg.epoch_size, dataset, callbacks=callbacks, dataset_sink_mode=cfg.ds_sink_mode)
     print("train success")
