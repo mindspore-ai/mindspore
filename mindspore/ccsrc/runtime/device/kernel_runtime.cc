@@ -187,7 +187,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       MS_EXCEPTION_IF_NULL(mem_manager_);
       auto ret = mem_manager_->MallocMemFromMemPool(device_address, tensor_size);
       if (!ret) {
-        MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+        MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << tensor_size;
       }
       AnfAlgo::SetOutputAddr(device_address, index, item.get());
     }
@@ -220,7 +220,7 @@ void KernelRuntime::RunOpAssignOutputMemory(const AnfNodePtr &kernel) {
     MS_EXCEPTION_IF_NULL(device_address);
     auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_sizes[i]);
     if (!ret) {
-      MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << output_sizes[i];
     }
     AnfAlgo::SetOutputAddr(device_address, i, kernel.get());
   }
@@ -238,7 +238,7 @@ void KernelRuntime::RunOpAssignWorkSpaceMemory(const AnfNodePtr &kernel) {
       MS_EXCEPTION_IF_NULL(device_address);
       auto ret = mem_manager_->MallocMemFromMemPool(device_address, workspace_lists[i]);
       if (!ret) {
-        MS_LOG(EXCEPTION) << "Malloc device memory failed.";
+        MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << workspace_lists[i];
       }
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());
     }
@@ -651,7 +651,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     MS_EXCEPTION_IF_NULL(address);
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
         !mem_manager_->MallocMemFromMemPool(address, node_size)) {
-      MS_LOG(EXCEPTION) << "Cannot alloc address from memory pool when tensor size is: " << node_size;
+      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << node_size;
     } else if (mem_manager_->MallocMem(kStaticMem, node_size, address, graph_id) == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << node_size;
     }
@@ -692,7 +692,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
       MS_EXCEPTION_IF_NULL(address);
       if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
           !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
-        MS_LOG(EXCEPTION) << "Cannot alloc address from memory pool when tensor size is: " << tensor_size;
+        MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << tensor_size;
       } else if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph->graph_id()) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
