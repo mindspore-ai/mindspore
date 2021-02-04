@@ -1,5 +1,8 @@
-# It is still under development.
+
+# It is still under development
+
 # Contents
+
 - [Contents](#contents)
 - [GPT Description](#bert-description)
 - [Model Architecture](#model-architecture)
@@ -7,42 +10,51 @@
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
 - [Script Description](#script-description)
-  - [Script and Sample Code](#script-and-sample-code)
+- [Script and Sample Code](#script-and-sample-code)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 # [GPT Description](#contents)
+
 The GPT network was proposed by OpenAI and it has three versions, i.e., GPT, GPT2 and GPT3. The newest version GPT3 was proposed in Jul 2020 and it is quite a large language model with 175 billion parameters. Stacking many Decoder structure of Transformer and feeding massive amount of training data, GPT3 becomes such a powerful language model that no fine-tuning process is needed. As the papre title says, language models are few-shot learners, GPT3 proves that with a large and well-trained model, we can achieve a similar performance compared to those of fine-tuning methods.
 
-
-[Paper](https://arxiv.org/abs/2005.14165):  Tom B.Brown, Benjamin Mann, Nick Ryder et al. [Language Models are Few-Shot Learners]((https://arxiv.org/abs/2005.14165)). arXiv preprint arXiv:2005.14165
-
+[Paper](https://arxiv.org/abs/2005.14165):  Tom B.Brown, Benjamin Mann, Nick Ryder et al. [Language Models are Few-Shot Learners](https://arxiv.org/abs/2005.14165). arXiv preprint arXiv:2005.14165
 
 # [Model Architecture](#contents)
-GPT3 stacks many layers of decoder of transformer. According to the layer numbers and embedding size, GPT3 has several versions. The largest model contains 96 layers with embedding size of 12288 resulting to a total parameter of 175 billion. 
+
+GPT3 stacks many layers of decoder of transformer. According to the layer numbers and embedding size, GPT3 has several versions. The largest model contains 96 layers with embedding size of 12288 resulting to a total parameter of 175 billion.
 
 # [Dataset](#contents)
+
 - OpenWebText is utilized as the training data and the training objective is to predict the next token at each position.
 
 # [Environment Requirements](#contents)
+
 - Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get access to the resources. 
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get access to the resources.
 - Framework
-  - [MindSpore](https://gitee.com/mindspore/mindspore)
+    - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
+
 After installing MindSpore via the official website, you can start training and evaluation as follows:
+
 ```bash
+
 # run standalone training example
+
 bash scripts/run_standalone_train.sh 0 10 /path/dataset
 
 # run distributed training example
+
 bash scripts/run_distribute_training.sh /path/dataset /path/hccl.json 8
 
 # run evaluation example, now only accuracy and perplexity for lambada and wikitext103 are supported
+
 bash scripts/run_evaluation.sh lambada /your/ckpt /your/data acc
+
 ```
 
 For distributed training, an hccl configuration file with JSON format needs to be created in advance.
@@ -72,5 +84,5 @@ https:gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools.
 ```
 
 # [ModelZoo Homepage](#contents)
- 
-Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
