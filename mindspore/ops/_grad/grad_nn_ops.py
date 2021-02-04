@@ -669,6 +669,24 @@ def get_bprop_fused_batch_norm_ex(self):
     return bprop
 
 
+@bprop_getters.register(P.InstanceNorm)
+def get_bprop_instance_norm(self):
+    """Grad definition for `InstanceNorm` operation."""
+    is_training = self.is_training
+    input_grad = G.InstanceNormGrad(is_training, self.epsilon, self.momentum)
+
+    def bprop(x, gamma, beta, mean, variance, out, dout):
+        saved_mean = out[1]
+        saved_variance = out[2]
+        out = input_grad(dout[0], x, gamma, saved_mean, saved_variance)
+        dx = out[0]
+        dgamma = out[1]
+        dbeta = out[2]
+        return dx, dgamma, dbeta, zeros_like(mean), zeros_like(variance)
+
+    return bprop
+
+
 @bprop_getters.register(P.BatchNorm)
 def get_bprop_batch_norm(self):
     """Grad definition for `BatchNorm` operation."""

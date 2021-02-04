@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ from mindspore.communication import management
 from mindspore.ops import _selected_ops
 from ..cell import Cell
 
-__all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm']
+__all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm', 'InstanceNorm2d']
 
 
 class _BatchNorm(Cell):
@@ -591,6 +591,119 @@ class LayerNorm(Cell):
         """Display instance object as string."""
         return 'normalized_shape={}, begin_norm_axis={}, begin_params_axis={}, gamma{}, beta={}'.format(
             self.normalized_shape, self.begin_norm_axis, self.begin_params_axis, self.gamma, self.beta)
+
+
+class InstanceNorm2d(Cell):
+    r"""
+    Instance normalization layer over a 4D input.
+
+    This layer applies Instance Normalization over a 4D input (a mini-batch of 2D inputs with
+    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
+    of data and the learned parameters which can be described in the following formula.
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    Note:
+        Note that the formula for updating the running_mean and running_var is
+        :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
+        where :math:`\hat{x}` is the estimated statistic and :math:`x_t` is the new observed value.
+
+    Args:
+        num_features (int): `C` from an expected input of size (N, C, H, W).
+        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        momentum (float): A floating hyperparameter of the momentum for the
+            running_mean and running_var computation. Default: 0.1.
+        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+        gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'ones'.
+        beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'zeros'.
+        moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'zeros'.
+        moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'ones'.
+        use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
+            use the mean value and variance value of specified value. Default: True.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C, H, W)`. Data type: float16 or float32.
+
+    Outputs:
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, H, W)`. Same type and
+        shape as the `input_x`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Raise:
+        ValueError: If num_features is less than 1 or momentum not in (0, 1).
+
+    Examples:
+        >>> net = nn.InstanceNorm2d(3)
+        >>> np.random.seed(0)
+        >>> input = Tensor(np.random.randint(0, 255, [2, 3, 2, 2]), mindspore.float32)
+        >>> output = net(input)
+        >>> print(output.shape)
+        (2, 3, 2, 2)
+    """
+
+    @cell_attr_register
+    def __init__(self,
+                 num_features,
+                 eps=1e-5,
+                 momentum=0.1,
+                 affine=True,
+                 gamma_init='ones',
+                 beta_init='zeros',
+                 moving_mean_init='zeros',
+                 moving_var_init='ones',
+                 use_batch_statistics=True,
+                 input_dims='2d'):
+        super(InstanceNorm2d, self).__init__()
+        if num_features < 1:
+            raise ValueError("num_features must be at least 1")
+
+        if momentum < 0 or momentum > 1:
+            raise ValueError("momentum should be a number in range [0, 1], but got {}".format(momentum))
+        self.use_batch_statistics = use_batch_statistics
+        self.num_features = num_features
+        self.eps = eps
+        self.input_dims = input_dims
+        self.moving_mean = Parameter(initializer(
+            moving_mean_init, num_features), name="mean", requires_grad=False)
+        self.moving_variance = Parameter(initializer(
+            moving_var_init, num_features), name="variance", requires_grad=False)
+        self.gamma = Parameter(initializer(
+            gamma_init, num_features), name="gamma", requires_grad=affine)
+        self.beta = Parameter(initializer(
+            beta_init, num_features), name="beta", requires_grad=affine)
+
+        self.shape = P.Shape()
+        self.momentum = momentum
+        self.instance_bn = P.InstanceNorm(is_training=self.use_batch_statistics,
+                                          epsilon=self.eps,
+                                          momentum=self.momentum)
+
+    def _check_data_dim(self, x):
+        raise NotImplementedError
+
+    def construct(self, x):
+        _shape_check_bn(self.shape(x), self.input_dims)
+        return self.instance_bn(x,
+                                self.gamma,
+                                self.beta,
+                                self.moving_mean,
+                                self.moving_variance)[0]
+
+    def extend_repr(self):
+        return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
+            self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
 
 
 class GroupNorm(Cell):
