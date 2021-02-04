@@ -15,7 +15,7 @@
 """Time Distributed."""
 
 from mindspore.ops.primitive import constexpr, Primitive
-from mindspore.ops import Reshape, Transpose, Pack, Unpack
+from mindspore.ops import Reshape, Transpose, Stack, Unstack
 from mindspore.common import Tensor
 from mindspore._checkparam import Validator
 from ..cell import Cell
@@ -130,13 +130,13 @@ class TimeDistributed(Cell):
                 outputs_shape_new += outputs.shape[reshape_pos + 1:]
             return self.reshape(outputs, outputs_shape_new)
 
-        unpack = Unpack(time_axis)
-        inputs = unpack(inputs)
+        unstack = Unstack(time_axis)
+        inputs = unstack(inputs)
         y = ()
         for item in inputs:
             outputs = self.layer(item)
             _check_data(isinstance(outputs, Tensor))
             _check_expand_dims_axis(time_axis, outputs.ndim)
             y += (outputs,)
-        y = Pack(time_axis)(y)
+        y = Stack(time_axis)(y)
         return y

@@ -43,6 +43,7 @@ constexpr auto kSeed1 = "Seed1";
 constexpr auto kSeed2 = "seed2";
 constexpr auto kTopK = "TopK";
 constexpr auto kTopKV2 = "TopKV2";
+constexpr auto kStack = "Stack";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kIdentity = "Identity";

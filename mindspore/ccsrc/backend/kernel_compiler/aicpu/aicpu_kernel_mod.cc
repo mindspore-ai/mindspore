@@ -142,6 +142,9 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   if (node_name_ == kTopK) {
     node_name_ = kTopKV2;
   }
+  if (node_name_ == kStack) {
+    node_name_ = kPack;
+  }
   MS_LOG(INFO) << "Aicpu launch, node_so_:" << node_so_ << ", node name:" << node_name_
                << ", args_size:" << args_.length();
   if (rtCpuKernelLaunch(reinterpret_cast<const void *>(node_so_.c_str()),
@@ -180,6 +183,10 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
 
   if (node_name_ == kTopK) {
     node_name_ = kTopKV2;
+  }
+
+  if (node_name_ == kStack) {
+    node_name_ = kPack;
   }
 
   AicpuTaskInfoPtr task_info_ptr =

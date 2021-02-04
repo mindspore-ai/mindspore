@@ -2252,8 +2252,8 @@ class ParallelConcat(PrimitiveWithInfer):
         return out
 
 
-def _get_pack_shape(x_shape, x_type, axis, prim_name):
-    """for pack output shape"""
+def _get_stack_shape(x_shape, x_type, axis, prim_name):
+    """for stack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
     validator.check_int(len(x_shape), 1, Rel.GE, "len of input_x", prim_name)
     validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, prim_name)
@@ -2271,24 +2271,24 @@ def _get_pack_shape(x_shape, x_type, axis, prim_name):
     return out_shape
 
 
-class Pack(PrimitiveWithInfer):
+class Stack(PrimitiveWithInfer):
     r"""
-    Packs a list of tensors in specified axis.
+    Stacks a list of tensors in specified axis.
 
-    Packs the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
+    Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
 
     Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
     If :math:`0 \le axis`, the shape of the output tensor is :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
 
     Args:
-        axis (int): Dimension to pack. Default: 0.
+        axis (int): Dimension to stack. Default: 0.
                     Negative values wrap around. The range is [-(R+1), R+1).
 
     Inputs:
         - **input_x** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
 
     Outputs:
-        Tensor. A packed Tensor with the same type as `input_x`.
+        Tensor. A stacked Tensor with the same type as `input_x`.
 
     Raises:
         TypeError: If the data types of elements in `input_x` are not the same.
@@ -2302,8 +2302,8 @@ class Pack(PrimitiveWithInfer):
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
         >>> data2 = Tensor(np.array([2, 3]).astype(np.float32))
-        >>> pack = ops.Pack()
-        >>> output = pack([data1, data2])
+        >>> stack = ops.Stack()
+        >>> output = stack([data1, data2])
         >>> print(output)
         [[0. 1.]
          [2. 3.]]
@@ -2311,7 +2311,7 @@ class Pack(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, axis=0):
-        """Initialize Pack"""
+        """Initialize Stack"""
         validator.check_value_type("axis", axis, [int], self.name)
         self.axis = axis
 
@@ -2319,18 +2319,39 @@ class Pack(PrimitiveWithInfer):
         x_shape = value['shape']
         x_type = value['dtype']
         self.add_prim_attr('num', len(x_shape))
-        all_shape = _get_pack_shape(x_shape, x_type, self.axis, self.name)
+        all_shape = _get_stack_shape(x_shape, x_type, self.axis, self.name)
         out = {'shape': all_shape,
                'dtype': x_type[0],
                'value': None}
         return out
 
+def Pack(axis=0):
+    """
+    Packs a list of tensors in specified axis.
 
-class Unpack(PrimitiveWithInfer):
-    r"""
+    The usage of Pack is deprecated. Please use Stack.
+
+    """
+    logger.warning("WARN_DEPRECATED: The usage of Pack is deprecated. Please use Stack.")
+    return Stack(axis)
+
+
+def Unpack(axis=0):
+    """
     Unpacks tensor in specified axis.
 
-    Unpacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
+    The usage of Unpack is deprecated. Please use Unstack.
+
+    """
+    logger.warning("WARN_DEPRECATED: The usage of Unpack is deprecated. Please use Unstack.")
+    return Unstack(axis)
+
+
+class Unstack(PrimitiveWithInfer):
+    r"""
+    Unstacks tensor in specified axis.
+
+    Unstacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
 
     Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
     the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
@@ -2343,7 +2364,7 @@ class Unpack(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-          A tensor to be unpacked and the rank of the tensor must be greater than 0.
+          A tensor to be unstacked and the rank of the tensor must be greater than 0.
 
     Outputs:
         A tuple of tensors, the shape of each objects is the same.
@@ -2355,9 +2376,9 @@ class Unpack(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> unpack = ops.Unpack()
+        >>> unstack = ops.Unstack()
         >>> input_x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
-        >>> output = unpack(input_x)
+        >>> output = unstack(input_x)
         >>> print(output)
         (Tensor(shape=[4], dtype=Int32, value= [1, 1, 1, 1]),
          Tensor(shape=[4], dtype=Int32, value= [2, 2, 2, 2]))
@@ -2365,7 +2386,7 @@ class Unpack(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, axis=0):
-        """Initialize Unpack"""
+        """Initialize Unstack"""
         validator.check_value_type("axis", axis, [int], self.name)
         self.axis = axis
 
@@ -2382,7 +2403,7 @@ class Unpack(PrimitiveWithInfer):
         self.add_prim_attr('num', output_num)
         output_valid_check = x_shape[self.axis] - output_num
         validator.check_int(output_valid_check, 0, Rel.EQ,
-                            "The dimension which to unpack divides output_num", self.name)
+                            "The dimension which to unstack divides output_num", self.name)
         out_shapes = []
         out_dtypes = []
         out_shape = x_shape[:self.axis] + x_shape[self.axis + 1:]

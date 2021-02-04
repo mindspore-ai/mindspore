@@ -332,7 +332,7 @@ class MSSSIM(Cell):
         self.reduce_mean = P.ReduceMean()
         self.prod = P.ReduceProd()
         self.pow = P.Pow()
-        self.pack = P.Pack(axis=-1)
+        self.stack = P.Stack(axis=-1)
         self.concat = P.Concat(axis=1)
 
     def construct(self, img1, img2):
@@ -360,7 +360,7 @@ class MSSSIM(Cell):
             img1, img2 = _downsample(img1, img2, self.avg_pool)
 
         mcs = mcs[0:-1:1]
-        mcs_and_ssim = self.pack(mcs + (self.relu(sim),))
+        mcs_and_ssim = self.stack(mcs + (self.relu(sim),))
         mcs_and_ssim = self.pow(mcs_and_ssim, self.weight_tensor)
         ms_ssim = self.prod(mcs_and_ssim, -1)
         loss = self.reduce_mean(ms_ssim, -1)

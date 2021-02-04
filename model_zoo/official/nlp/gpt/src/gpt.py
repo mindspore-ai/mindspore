@@ -265,7 +265,7 @@ class Attention(nn.Cell):
             past_key = self.transpose(layer_past[0], (0, 1, 3, 2))
             key = self.concat_k((past_key, key))
             value = self.concat_v(past_value, value)
-        layer_present = P.Pack()([self.transpose(key, (0, 1, 3, 2)), value])
+        layer_present = P.Stack()([self.transpose(key, (0, 1, 3, 2)), value])
         attention = self._attn(query, key, value, attention_mask)
         attention_merge = self.merge_heads(attention)
         output = self.projection(attention_merge)

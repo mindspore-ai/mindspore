@@ -28,7 +28,7 @@ from mindspore.common.parameter import Parameter
 class PackNet(nn.Cell):
     def __init__(self, nptype):
         super(PackNet, self).__init__()
-        self.pack = P.Pack(axis=2)
+        self.stack = P.Stack(axis=2)
         self.data_np = np.array([0] * 16).astype(nptype)
         self.data_np = np.reshape(self.data_np, (2, 2, 2, 2))
         self.x1 = Parameter(initializer(
@@ -38,7 +38,7 @@ class PackNet(nn.Cell):
 
     @ms_function
     def construct(self):
-        return self.pack((self.x1, self.x2))
+        return self.stack((self.x1, self.x2))
 
 
 def pack(nptype):

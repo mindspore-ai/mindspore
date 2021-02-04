@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-"""Pack op"""
+"""Stack op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-pack_op_info = AiCPURegOp("Pack") \
+stack_op_info = AiCPURegOp("Stack") \
     .fusion_type("OPAQUE") \
     .attr("axis", "int") \
     .input(0, "x", "dynamic") \
@@ -35,7 +35,7 @@ pack_op_info = AiCPURegOp("Pack") \
     .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
     .get_op_info()
 
-@op_info_register(pack_op_info)
-def _pack_aicpu():
-    """Pack AiCPU register"""
+@op_info_register(stack_op_info)
+def _stack_aicpu():
+    """Stack AiCPU register"""
     return

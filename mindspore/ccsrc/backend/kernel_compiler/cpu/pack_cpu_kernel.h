@@ -44,38 +44,38 @@ class PackCpuFwdKernel : public CPUKernel {
   std::unique_ptr<T *[]> inputs_host_;
 };
 
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
                     PackCpuFwdKernel, int8_t)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
                     PackCpuFwdKernel, int16_t)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                     PackCpuFwdKernel, int32_t)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
                     PackCpuFwdKernel, int64_t)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
                     PackCpuFwdKernel, uint8_t)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                     PackCpuFwdKernel, bool)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
                     PackCpuFwdKernel, uint16_t)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
                     PackCpuFwdKernel, uint32_t)
-MS_REG_CPU_KERNEL_T(Pack,
+MS_REG_CPU_KERNEL_T(Stack,
                     KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
                     PackCpuFwdKernel, uint64_t)
 MS_REG_CPU_KERNEL_T(
-  Pack, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  Stack, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   PackCpuFwdKernel, float16)
 MS_REG_CPU_KERNEL_T(
-  Pack, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  Stack, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   PackCpuFwdKernel, float)
 }  // namespace kernel
 }  // namespace mindspore

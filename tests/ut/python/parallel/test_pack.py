@@ -26,7 +26,7 @@ from mindspore.nn import Dense, Flatten
 class Net(nn.Cell):
     def __init__(self, weight1, weight2, axis=0, strategy1=None, strategy2=None, is_parameter=True):
         super(Net, self).__init__()
-        self.pack = P.Pack(axis=axis).shard(strategy1)
+        self.pack = P.Stack(axis=axis).shard(strategy1)
         self.mul = P.Mul().shard(strategy2)
         if is_parameter:
             self.weight1 = Parameter(weight1, "w1")
@@ -43,7 +43,7 @@ class Net(nn.Cell):
 class Net1(nn.Cell):
     def __init__(self, weight1, weight2, axis=0, strategy1=None, strategy2=None):
         super(Net1, self).__init__()
-        self.pack = P.Pack(axis=axis).shard(strategy1)
+        self.pack = P.Stack(axis=axis).shard(strategy1)
         self.mul = P.Mul().shard(strategy2)
         self.weight1 = Parameter(weight1, "w1")
         self.weight2 = Parameter(weight2, "w2")
@@ -57,7 +57,7 @@ class Net1(nn.Cell):
 class Net2(nn.Cell):
     def __init__(self, weight1, weight2, weight3, axis=0, strategy1=None, strategy2=None, is_parameter=True):
         super(Net2, self).__init__()
-        self.pack = P.Pack(axis=axis).shard(strategy1)
+        self.pack = P.Stack(axis=axis).shard(strategy1)
         self.mul = P.Mul().shard(strategy2)
         if is_parameter:
             self.weight1 = Parameter(weight1, "w1")
@@ -85,7 +85,7 @@ class PackConstantNet1(nn.Cell):
                            bias_init=Tensor(bias_np),
                            has_bias=True)
         self.mul = P.Mul()
-        self.pack = P.Pack(axis)
+        self.pack = P.Stack(axis)
         if strategy is not None:
             self.pack.shard(strategy)
 
@@ -112,7 +112,7 @@ class PackConstantNet2(nn.Cell):
                            bias_init=Tensor(bias_np),
                            has_bias=True)
         self.mul = P.Mul()
-        self.pack = P.Pack(axis)
+        self.pack = P.Stack(axis)
         if strategy is not None:
             self.pack.shard(strategy)
 

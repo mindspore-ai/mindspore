@@ -158,7 +158,6 @@ constexpr const char kNameSlice[] = "Slice";
 constexpr const char kNameAddN[] = "AddN";
 constexpr const char kNameLess[] = "Less";
 constexpr const char kNameGreater[] = "Greater";
-constexpr const char kNamePack[] = "Pack";
 constexpr const char kNameUnpack[] = "Unpack";
 constexpr const char kNameMerge[] = "Merge";
 constexpr const char kNameGeSwitch[] = "GeSwitch";

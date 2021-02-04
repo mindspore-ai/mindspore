@@ -29,12 +29,12 @@
 
 namespace mindspore {
 namespace parallel {
-class PackInfo : public OperatorInfo {
+class StackInfo : public OperatorInfo {
  public:
-  PackInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-           const PrimitiveAttrs &attrs)
+  StackInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+            const PrimitiveAttrs &attrs)
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<PackCost>()) {}
-  ~PackInfo() override = default;
+  ~StackInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
@@ -55,7 +55,7 @@ class PackInfo : public OperatorInfo {
   size_t axis_ = 0;
 };
 
-using PackInfoPtr = std::shared_ptr<PackInfo>;
+using PackInfoPtr = std::shared_ptr<StackInfo>;
 }  // namespace parallel
 }  // namespace mindspore
 
