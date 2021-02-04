@@ -140,7 +140,7 @@ def process_cmnli_clue_dataset(data_dir, label_list, bert_vocab_path, data_usage
     return dataset
 
 
-def process_cluener_msra(data_file, class_filter=None, split_begin=None, split_end=None):
+def process_msra(data_file, class_filter=None, split_begin=None, split_end=None):
     """
     Data pre-process for MSRA dataset
     Args:
@@ -188,11 +188,11 @@ def process_cluener_msra(data_file, class_filter=None, split_begin=None, split_e
         yield (np.array("".join(content)), np.array(list(tags)))
 
 
-def process_msra_clue_dataset(data_dir, label_list, bert_vocab_path, max_seq_len=128, class_filter=None,
-                              split_begin=None, split_end=None):
+def process_ner_msra_dataset(data_dir, label_list, bert_vocab_path, max_seq_len=128, class_filter=None,
+                             split_begin=None, split_end=None):
     """Process MSRA dataset"""
     ### Loading MSRA from CLUEDataset
-    dataset = ds.GeneratorDataset(process_cluener_msra(data_dir, class_filter, split_begin, split_end),
+    dataset = ds.GeneratorDataset(process_msra(data_dir, class_filter, split_begin, split_end),
                                   column_names=['text', 'label'])
 
     ### Processing label
@@ -230,13 +230,14 @@ if __name__ == "__main__":
     parser.add_argument("--vocab_file", type=str, default="", help="Vocab file path")
     parser.add_argument("--save_path", type=str, default="./my.mindrecord", help="Path to save mindrecord")
     parser.add_argument("--label2id", type=str, default="",
-                        help="Label2id file path, must be set for cluener2020 task")
+                        help="Label2id file path, please keep in mind that each label name should be consistent with"
+                             "the type name labeled in the oroginal dataset file")
     parser.add_argument("--max_seq_len", type=int, default=128, help="Sequence length")
     parser.add_argument("--class_filter", nargs='*', help="Specified classes will be counted, if empty all in counted")
-    parser.add_argument("--split_begin", type=float, default=None, help="Specified subsets of date will be counted,"
+    parser.add_argument("--split_begin", type=float, default=None, help="Specified subsets of data will be counted,"
                         "if not None, the data will counted begin from split_begin")
-    parser.add_argument("--split_end", type=float, default=None, help="Specified subsets of date will be counted,"
-                        "if not None, the data will counted before split_before")
+    parser.add_argument("--split_end", type=float, default=None, help="Specified subsets of data will be counted,"
+                        "if not None, the data before split_end will be counted ")
 
     args_opt = parser.parse_args()
     if args_opt.label2id == "":
@@ -246,6 +247,6 @@ if __name__ == "__main__":
         for tag in f:
             labels_list.append(tag.strip())
     tag_to_index = list(convert_labels_to_index(labels_list).keys())
-    ds = process_msra_clue_dataset(args_opt.data_dir, tag_to_index, args_opt.vocab_file, args_opt.max_seq_len,
-                                   args_opt.class_filter, args_opt.split_begin, args_opt.split_end)
+    ds = process_ner_msra_dataset(args_opt.data_dir, tag_to_index, args_opt.vocab_file, args_opt.max_seq_len,
+                                  args_opt.class_filter, args_opt.split_begin, args_opt.split_end)
     ds.save(args_opt.save_path)
