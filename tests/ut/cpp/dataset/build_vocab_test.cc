@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@
 #include <string>
 
 #include "common/common.h"
+#include "include/api/status.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/status.h"
 #include "minddata/dataset/text/vocab.h"
 
 using mindspore::dataset::Tensor;
-using mindspore::Status;
 using mindspore::dataset::Vocab;
 
 class MindDataTestVocab : public UT::DatasetOpTesting {

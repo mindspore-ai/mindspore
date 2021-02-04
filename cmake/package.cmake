@@ -323,7 +323,6 @@ install(
 ## Public header files for minddata
 install(
     FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/constants.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/status.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/transforms.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision_lite.h

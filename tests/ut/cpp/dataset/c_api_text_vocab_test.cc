@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 #include <string>
 
 #include "common/common.h"
+#include "include/api/status.h"
 #include "minddata/dataset/include/datasets.h"
-#include "minddata/dataset/include/status.h"
 #include "minddata/dataset/include/text.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/text/vocab.h"
