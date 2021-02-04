@@ -50,6 +50,7 @@ class Tensor : public mindspore::tensor::MSTensor {
     CONST_SCALAR,  // weight scalar
     VAR,           // activation tensor
     GRAPH_INPUT,
+    GRAPH_OUTPUT,
   };
   Tensor() = default;
 
@@ -162,6 +163,8 @@ class Tensor : public mindspore::tensor::MSTensor {
   bool IsScalar() const { return this->category_ == CONST_SCALAR && this->data_ != nullptr; }
 
   bool IsGraphInput() const { return this->category_ == GRAPH_INPUT; }
+
+  bool IsGraphOutput() const { return this->category_ == GRAPH_OUTPUT; }
 
   void Prepare() {
     if (allocator_ != nullptr) {

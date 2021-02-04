@@ -176,6 +176,7 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
   uint32_t tensor_count = model->all_tensors_.size();
   MS_ASSERT(!model->sub_graphs_.empty());
   auto model_input_indices = model->sub_graphs_.front()->input_indices_;
+  auto model_output_indices = model->sub_graphs_.front()->output_indices_;
   for (uint32_t i = 0; i < tensor_count; ++i) {
     auto *src_tensor = model->all_tensors_[i];
     if (src_tensor == nullptr) {
@@ -196,6 +197,9 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     ConvertTensorsQuantParam(src_tensor, dst_tensor);
     if (IsContain(model_input_indices, i)) {
       dst_tensor->set_category(Tensor::GRAPH_INPUT);
+    }
+    if (IsContain(model_output_indices, i)) {
+      dst_tensor->set_category(Tensor::GRAPH_OUTPUT);
     }
     if (src_tensor->name() != nullptr) {
       dst_tensor->set_tensor_name(src_tensor->name()->str());

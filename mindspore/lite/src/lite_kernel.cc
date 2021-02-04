@@ -315,23 +315,24 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
   for (const auto &output_kernel : output_nodes) {
     auto &outer_out_kernels = output_kernel->out_kernels();
     auto &out_kernel_out_tensors = output_kernel->out_tensors();
-    if (outer_out_kernels.empty()) {
-      for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
+    for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
+      if (out_kernel_out_tensor->IsGraphOutput()) {
         output_tensors.insert(out_kernel_out_tensor);
       }
-      continue;
     }
-    for (auto outer_out_kernel : outer_out_kernels) {
-      auto iter = std::find(kernels.begin(), kernels.end(), outer_out_kernel);
-      if (iter != kernels.end()) {
-        continue;
-      }
-      auto &outer_out_kernel_in_tensors = outer_out_kernel->in_tensors();
-      for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
-        auto outer_out_kernel_in_tensors_iter =
-          std::find(outer_out_kernel_in_tensors.begin(), outer_out_kernel_in_tensors.end(), out_kernel_out_tensor);
-        if (outer_out_kernel_in_tensors_iter != outer_out_kernel_in_tensors.end()) {
-          output_tensors.insert(out_kernel_out_tensor);
+    if (!outer_out_kernels.empty()) {
+      for (auto outer_out_kernel : outer_out_kernels) {
+        auto iter = std::find(kernels.begin(), kernels.end(), outer_out_kernel);
+        if (iter != kernels.end()) {
+          continue;
+        }
+        auto &outer_out_kernel_in_tensors = outer_out_kernel->in_tensors();
+        for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
+          auto outer_out_kernel_in_tensors_iter =
+            std::find(outer_out_kernel_in_tensors.begin(), outer_out_kernel_in_tensors.end(), out_kernel_out_tensor);
+          if (outer_out_kernel_in_tensors_iter != outer_out_kernel_in_tensors.end()) {
+            output_tensors.insert(out_kernel_out_tensor);
+          }
         }
       }
     }
