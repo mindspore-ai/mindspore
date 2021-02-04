@@ -20,6 +20,8 @@ import numpy as np
 from PIL import Image
 
 from mindspore import log as logger
+from mindspore import context
+from mindspore.communication.management import get_rank
 
 from ..._checkparam import Validator
 from ..anf_ir_pb2 import DataType, ModelProto
@@ -53,10 +55,18 @@ def get_event_file_name(prefix, suffix, time_second):
     file_name = ""
     hostname = platform.node()
 
-    if prefix is not None:
-        file_name = file_name + prefix
+    device_num = context.get_auto_parallel_context('device_num')
+    device_id = context.get_context('device_id')
+    if device_num > 1:
+        # Notice:
+        # In GPU distribute training scene, get_context('device_id') will not work,
+        # so we use get_rank instead of get_context.
+        device_id = get_rank()
 
-    file_name = file_name + EVENT_FILE_NAME_MARK + time_second + "." + hostname
+    file_name = f'{file_name}{EVENT_FILE_NAME_MARK}{time_second}.{device_id}.{hostname}'
+
+    if prefix is not None:
+        file_name = prefix + file_name
 
     if suffix is not None:
         file_name = file_name + suffix

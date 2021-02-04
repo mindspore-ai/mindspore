@@ -97,6 +97,11 @@ class WriterPool(ctx.Process):
         with ctx.Pool(min(ctx.cpu_count(), 32)) as pool:
             deq = deque()
             while True:
+                if not self._writers:
+                    logger.warning("Can not find any writer to write summary data, "
+                                   "so SummaryRecord will not record data.")
+                    break
+
                 while deq and deq[0].ready():
                     for plugin, data in deq.popleft().get():
                         self._write(plugin, data)

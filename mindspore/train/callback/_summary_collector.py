@@ -518,6 +518,8 @@ class SummaryCollector(Callback):
             train_dataset = cb_params.train_dataset
             dataset_graph = DatasetGraph()
             graph_bytes = dataset_graph.package_dataset_graph(train_dataset)
+            if graph_bytes is None:
+                return
             self._record.add_value('dataset_graph', 'train_dataset', graph_bytes)
 
     def _collect_graphs(self, cb_params):
