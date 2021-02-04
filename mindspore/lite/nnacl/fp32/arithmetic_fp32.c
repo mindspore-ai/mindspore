@@ -839,7 +839,7 @@ int ElementFloorMod(const float *input0, const float *input1, float *output, con
 
 int ElementFloorModInt(const int *input0, const int *input1, int *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
-    output[i] = input0[i] - (input0[i] / input1[i]) * input1[i];
+    output[i] = input0[i] - (int)floor((double)input0[i] / (double)input1[i]) * input1[i];
   }
   return NNACL_OK;
 }
@@ -901,7 +901,7 @@ int ElementFloorDiv(const float *input0, const float *input1, float *output, con
 
 int ElementFloorDivInt(const int *input0, const int *input1, int *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
-    output[i] = input0[i] / input1[i];
+    output[i] = (int)floor((double)input0[i] / (double)input1[i]);
   }
   return NNACL_OK;
 }
