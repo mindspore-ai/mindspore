@@ -151,7 +151,7 @@ class CtcLossGpuKernel : public GpuKernel {
   void LaunchSecondHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-    int SOffSet = 2 * max_labels_length_host + 1;
+    const int SOffSet = 2 * max_labels_length_host + 1;
     int log_prob_size = batch * SOffSet * max_time;
 
     if (!ignore_longer_outputs_than_inputs_ && max_labels_length_host > max_time) {

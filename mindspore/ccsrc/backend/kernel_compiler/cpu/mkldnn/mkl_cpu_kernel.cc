@@ -130,7 +130,11 @@ dnnl::memory::format_tag MKLCPUKernel::GetDefaultFormatTag(const dnnl::memory::d
 
 dnnl::memory::desc MKLCPUKernel::GetDefaultMemDesc(const std::vector<size_t> &shape) {
   dnnl::memory::dims dims;
-  dims.insert(dims.end(), shape.begin(), shape.end());
+  if (shape.size() == 0) {
+    dims.insert(dims.end(), 1);
+  } else {
+    dims.insert(dims.end(), shape.begin(), shape.end());
+  }
   dnnl::memory::format_tag mem_tag = GetDefaultFormatTag(dims);
   dnnl::memory::desc mem_desc(dims, dnnl::memory::data_type::f32, mem_tag);
   return mem_desc;
