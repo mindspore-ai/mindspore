@@ -156,6 +156,7 @@ TensorPtr GetCNodeOutputStubTensor(const KernelWithIndex &kernel_with_index,
 }
 
 void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr &kernel,
+                           const std::map<KernelWithIndex, size_t> &cnode_refcount,
                            std::map<KernelWithIndex, OutputTensorInfo> *op_output_info) {
   MS_EXCEPTION_IF_NULL(single_op_graph);
   MS_EXCEPTION_IF_NULL(kernel);
@@ -163,6 +164,10 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
   OutputTensorInfo output_tensor_info;
   size_t out_idx = 0;
   for (const auto &output : single_op_graph->outputs()) {
+    KernelWithIndex kernel_with_index = std::make_pair(kernel, out_idx++);
+    if (cnode_refcount.find(kernel_with_index) == cnode_refcount.end()) {
+      continue;
+    }
     const auto &output_kernel_with_index = AnfAlgo::VisitKernel(output, 0);
     const auto &output_node = output_kernel_with_index.first;
     const auto &output_index = output_kernel_with_index.second;
@@ -187,7 +192,6 @@ void GenOpOutputStubTensor(const KernelGraphPtr &single_op_graph, const CNodePtr
     device::DeviceAddressPtr device_address =
       std::make_shared<device::ascend::AscendDeviceAddress>(nullptr, 0, output_format, output_type);
     stub_output_tensor->set_device_address(device_address);
-    KernelWithIndex kernel_with_index = std::make_pair(kernel, out_idx++);
     output_tensor_info.output_stub_tensor = stub_output_tensor;
     output_tensor_info.is_weight = !dynamic_cast<device::KernelInfo *>(output_node->kernel_info())->is_feature_map();
     (*op_output_info)[kernel_with_index] = output_tensor_info;
@@ -700,7 +704,8 @@ void AscendSession::GetOpInputStubTensors(const CNodePtr &cnode, const std::map<
 }
 
 void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
-                                    const std::vector<tensor::TensorPtr> &graph_inputs) {
+                                    const std::vector<tensor::TensorPtr> &graph_inputs,
+                                    const std::map<KernelWithIndex, size_t> &cnode_refcount) {
   if (built_graph_id_.find(graph_id) != built_graph_id_.end()) {
     return;
   }
@@ -722,13 +727,13 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     if (single_op_graph_iter != run_op_graphs_.end()) {
       // if graph of same single op exists, the output tensor of current op should be generated
       const auto &single_op_graph = single_op_graph_iter->second;
-      GenOpOutputStubTensor(single_op_graph, kernel, &op_output_info);
+      GenOpOutputStubTensor(single_op_graph, kernel, cnode_refcount, &op_output_info);
       continue;
     }
     const auto &single_op_graph =
       PreBuildOp(op_run_info, graph_info, input_tensor_info.input_tensors, input_tensor_info.input_tensors_mask);
     MS_EXCEPTION_IF_NULL(single_op_graph);
-    GenOpOutputStubTensor(single_op_graph, kernel, &op_output_info);
+    GenOpOutputStubTensor(single_op_graph, kernel, cnode_refcount, &op_output_info);
     opt::HideNopNode(single_op_graph.get());
     // The graph info could have been changed in PreBuildOp
     const GraphInfo &new_graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);

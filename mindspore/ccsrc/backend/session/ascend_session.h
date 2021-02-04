@@ -59,7 +59,8 @@ class AscendSession : public SessionBasic {
   void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
   void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
-                       const std::vector<tensor::TensorPtr> &graph_inputs) override;
+                       const std::vector<tensor::TensorPtr> &graph_inputs,
+                       const std::map<KernelWithIndex, size_t> &cnode_refcount) override;
 
  private:
   // compile child graph when session have multiple child graphs
