@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="posenet_colorPrimary">#6200EE</color>
+    <color name="posenet_colorPrimaryDark">#3700B3</color>
+    <color name="posenet_colorAccent">#03DAC5</color>
+
+    <color name="posenet_mindspore_semi_transparent">#66000000</color>
+
+    <color name="posenet_white">#ffffff</color>
+    <color name="posenet_black">#000000</color>
+    <color name="posenet_gray">#A69D9D</color>
+    <color name="posenet_gray_btn">#424242</color>
+
+    <color name="posenet_text_blue">#6DA7FF</color>
+    <color name="posenet_text_yellow">#F8E71C</color>
+    <color name="posenet_text_orange">#FF844D</color>
+    <color name="posenet_text_green">#66B50A</color>
+
+</resources>

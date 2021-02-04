@@ -1,0 +1,4 @@
+<resources>
+    <string name="posenet_score">得分：</string>
+    <string name="posenet_time">Inference Time:</string>
+</resources>

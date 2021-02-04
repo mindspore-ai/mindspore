@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".ui.guide.SplashActivity">
+
+
+    <ImageView
+        android:id="@+id/image_logo"
+        android:layout_width="160dp"
+        android:layout_height="90dp"
+        android:layout_marginTop="190dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/logo_splash"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="33dp"
+        android:gravity="center_horizontal"
+        android:maxLines="2"
+        android:text="@string/app_name"
+        android:textColor="@color/text_black"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/image_logo" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:text="@string/title_splash_welcome"
+        android:textColor="@color/text_gray"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title" />
+
+
+    <com.mindspore.customview.countdown.CountDownView
+        android:id="@+id/cdv_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="20dp"
+        app:cd_animator_time="3"
+        app:cd_animator_time_unit="@string/splash_count_down"
+        app:cd_arc_color="@color/btn_small_checked"
+        app:cd_arc_width="2dp"
+        app:cd_bg_color="@color/gray_light"
+        app:cd_circle_radius="20dp"
+        app:cd_location="top"
+        app:cd_retreat_type="forward"
+        app:cd_text_color="@color/black"
+        app:cd_text_size="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

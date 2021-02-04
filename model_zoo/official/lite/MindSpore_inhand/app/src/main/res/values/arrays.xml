@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="main_tab_un_select">
+        <item name="tab_experience">@drawable/experience_uncheck</item>
+        <item name="tab_find">@drawable/college_uncheck</item>
+        <item name="tab_me">@drawable/me_uncheck</item>
+    </integer-array>
+
+    <integer-array name="main_tab_select">
+        <item name="tab_experience">@drawable/experience_checked</item>
+        <item name="tab_college">@drawable/college_checked</item>
+        <item name="tab_me">@drawable/me_checked</item>
+    </integer-array>
+
+    <string-array name="main_tab_title">
+        <item>@string/main_tab_title_one</item>
+        <item>@string/main_tab_title_two</item>
+        <item>@string/main_tab_title_three</item>
+    </string-array>
+
+    <string-array name="tab_experience">
+        <item>@string/tab_experience_one</item>
+        <item>Reply to all</item>
+    </string-array>
+    <!-- Reply Preference -->
+    <string-array name="reply_entries">
+        <item>Reply</item>
+        <item>Reply to all</item>
+    </string-array>
+
+    <string-array name="reply_values">
+        <item>reply</item>
+        <item>reply_all</item>
+    </string-array>
+</resources>

@@ -1,0 +1,47 @@
+/**
+ * To download necessary model file from Server.
+ */
+def targetPredictModelFile = "src/main/assets/style_predict_quant.ms"
+def targetTransferModelFile = "src/main/assets/style_transfer_quant.ms"
+def modelPredictDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/style_lite/style_predict_quant.ms"
+def modelTransferDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/style_lite/style_transfer_quant.ms"
+
+task downloadPredictModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelPredictDownloadUrl}"
+    }
+    sourceUrl = "${modelPredictDownloadUrl}"
+    target = file("${targetPredictModelFile}")
+}
+
+task downloadTransferModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelTransferDownloadUrl}"
+    }
+    sourceUrl = "${modelTransferDownloadUrl}"
+    target = file("${targetTransferModelFile}")
+}
+
+if (file("src/main/assets/style_transfer_quant.ms").exists()) {
+    downloadTransferModelFile.enabled = false
+}
+
+if (file("src/main/assets/style_predict_quant.ms").exists()) {
+    downloadPredictModelFile.enabled = false
+}
+
+preBuild.dependsOn downloadPredictModelFile
+preBuild.dependsOn downloadTransferModelFile
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}

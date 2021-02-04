@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimary"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/style_transfer_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:title="@string/style_transfer_title"
+        app:titleTextColor="@color/black" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_gray" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="265dp">
+
+        <ImageView
+            android:id="@+id/img_origin"
+            android:layout_width="256dp"
+            android:layout_height="256dp"
+            android:layout_gravity="center"
+            android:layout_margin="10dp"
+            android:scaleType="fitXY" />
+
+        <TextView
+            android:id="@+id/tv_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:drawableTop="@drawable/icon_add"
+            android:drawablePadding="10dp"
+            android:gravity="center"
+            android:text="@string/title_choose_image"
+            android:textAllCaps="false"
+            android:textColor="@color/text_gray"
+            android:textSize="16sp" />
+
+        <ProgressBar
+            android:id="@+id/progress"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+            android:indeterminateDrawable="@drawable/progressbar"
+            android:visibility="invisible" />
+    </FrameLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickPhoto"
+            android:text="@string/btn_photo"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickCamera"
+            android:text="@string/btn_camera"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickRecovery"
+            android:text="@string/btn_recovery"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="37dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="20dp"
+            android:layout_weight="1"
+            android:background="@drawable/btn_small_item"
+            android:gravity="center"
+            android:onClick="onClickSave"
+            android:text="@string/btn_save"
+            android:textAllCaps="false"
+            android:textColor="@drawable/btn_small_item_text_color"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
+        android:text="@string/title_choose_style"
+        android:textColor="@color/black"
+        android:textSize="17sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:fadeScrollbars="false"
+        android:scrollbarSize="6dp"
+        android:scrollbarStyle="outsideInset"
+        android:scrollbarThumbVertical="@color/gray"
+        android:scrollbars="vertical" />
+</LinearLayout>

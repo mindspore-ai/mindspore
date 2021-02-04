@@ -1,0 +1,9 @@
+include ':common'
+include ':customView'
+include ':mindsporelibrary'
+include ':segmentation'
+include ':imageObject'
+include ':styletransfer'
+include ':posenet'
+include ':app'
+rootProject.name = "MindSpore"

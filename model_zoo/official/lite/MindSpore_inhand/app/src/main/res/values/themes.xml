@@ -1,0 +1,16 @@
+<resources>
+
+    <style name="ThemeOverlay.MindSpore.FullscreenContainer" parent="">
+        <item name="fullscreenBackgroundColor">@color/light_blue_600</item>
+        <item name="fullscreenTextColor">@color/light_blue_A200</item>
+    </style>
+
+    <style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/colorAccent</item>
+        <!-- Used for the title and text -->
+        <!-- <item name="android:textColorPrimary">@color/colorAccent</item>-->
+        <!-- Used for the background -->
+        <!-- <item name="android:background">@color/white</item>-->
+    </style>
+</resources>

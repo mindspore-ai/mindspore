@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">StyleTransfer</string>
+    <string name="no_pic_neededSave">没有需要保存的图片</string>
+    <string name="save_success">保存成功</string>
+
+    <string name="toast_original">请先选择原始图片</string>
+    <string name="toast_model_run">先前的模型仍在运行</string>
+    <string name="title_choose_image">选择图片</string>
+    <string name="btn_photo">图片</string>
+    <string name="btn_camera">相机</string>
+    <string name="btn_recovery">恢复</string>
+    <string name="btn_save">保存</string>
+    <string name="title_choose_style">选择风格</string>
+    <string name="toast_execute_fail">解析失败</string>
+</resources>

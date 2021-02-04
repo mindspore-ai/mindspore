@@ -1,0 +1,10 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="posenet_AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/posenet_colorPrimary</item>
+        <item name="colorPrimaryDark">@color/posenet_colorPrimaryDark</item>
+        <item name="colorAccent">@color/posenet_colorAccent</item>
+    </style>
+
+</resources>

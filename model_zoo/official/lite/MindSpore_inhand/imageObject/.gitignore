@@ -1,0 +1,4 @@
+build/
+.cxx/
+src/main/assets/
+src/main/cpp/mindspore-lite*
