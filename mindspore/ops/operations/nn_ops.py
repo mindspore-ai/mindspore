@@ -803,8 +803,8 @@ class FusedBatchNorm(Primitive):
         mode (int): Mode of batch normalization, value is 0 or 1. Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-5.
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
-            (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
-            Momentum value must be [0, 1]. Default: 0.9.
+            (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+            Momentum value must be [0, 1]. Default: 0.1.
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`.
@@ -893,8 +893,8 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         mode (int): Mode of batch normalization, value is 0 or 1. Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-5.
         momentum (float): The hyper parameter to compute moving average for running_mean and running_var
-            (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
-            Momentum value must be [0, 1]. Default: 0.9.
+            (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+            Momentum value must be [0, 1]. Default: 0.1.
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: "NCHW".
 
@@ -1262,6 +1262,9 @@ class BatchNorm(PrimitiveWithInfer):
         is_training (bool): If `is_training` is True, `mean` and `variance` are computed during training.
             If `is_training` is False, they're loaded from checkpoint during inference. Default: False.
         epsilon (float): A small value added for numerical stability. Default: 1e-5.
+        momentum (float): The hyper parameter to compute moving average for running_mean and running_var
+            (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+            Momentum value must be [0, 1]. Default: 0.1.
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: "NCHW".
 
