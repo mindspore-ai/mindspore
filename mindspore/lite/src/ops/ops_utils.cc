@@ -100,6 +100,10 @@ schema::PrimitiveT *AssignAddPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AssignAdd>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
+schema::PrimitiveT *AudioSpectrogramPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AudioSpectrogram>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
 schema::PrimitiveT *AvgPoolFusionPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::AvgPoolFusion>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
@@ -376,6 +380,10 @@ schema::PrimitiveT *MaxPoolFusionPrimitiveCreator(const AnfNodePtr &node) {
 }
 schema::PrimitiveT *MergePrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Merge>>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+schema::PrimitiveT *MfccPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Mfcc>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 schema::PrimitiveT *MinimumPrimitiveCreator(const AnfNodePtr &node) {
@@ -673,6 +681,7 @@ RegistryMSOps g_argMinFusionPrimitiveCreatorRegistry("ArgMinFusion", ArgMinFusio
 RegistryMSOps g_assertPrimitiveCreatorRegistry("Assert", AssertPrimitiveCreator);
 RegistryMSOps g_assignPrimitiveCreatorRegistry("Assign", AssignPrimitiveCreator);
 RegistryMSOps g_assignAddPrimitiveCreatorRegistry("AssignAdd", AssignAddPrimitiveCreator);
+RegistryMSOps g_audioSpectrogramPrimitiveCreatorRegistry("AudioSpectrogram", AudioSpectrogramPrimitiveCreator);
 RegistryMSOps g_avgPoolPrimitiveCreatorRegistry("AvgPool", AvgPoolFusionPrimitiveCreator);
 RegistryMSOps g_avgPoolFusionPrimitiveCreatorRegistry("AvgPoolFusion", AvgPoolFusionPrimitiveCreator);
 RegistryMSOps g_batchNormPrimitiveCreatorRegistry("BatchNorm", BatchNormPrimitiveCreator);
@@ -756,6 +765,7 @@ RegistryMSOps g_maximumGradPrimitiveCreatorRegistry("MaximumGrad", MaximumGradPr
 RegistryMSOps g_maxPoolPrimitiveCreatorRegistry("MaxPool", MaxPoolFusionPrimitiveCreator);
 RegistryMSOps g_maxPoolFusionPrimitiveCreatorRegistry("MaxPoolFusion", MaxPoolFusionPrimitiveCreator);
 RegistryMSOps g_mergePrimitiveCreatorRegistry("Merge", MergePrimitiveCreator);
+RegistryMSOps g_mfccPrimitiveCreatorRegistry("Mfcc", MfccPrimitiveCreator);
 RegistryMSOps g_minimumPrimitiveCreatorRegistry("Minimum", MinimumPrimitiveCreator);
 RegistryMSOps g_minimumGradPrimitiveCreatorRegistry("MinimumGrad", MinimumGradPrimitiveCreator);
 RegistryMSOps g_modPrimitiveCreatorRegistry("Mod", ModPrimitiveCreator);

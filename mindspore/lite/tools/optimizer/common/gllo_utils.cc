@@ -139,15 +139,17 @@ std::vector<int> CastToInt(const ValuePtr &value) {
     MS_LOG(WARNING) << "valueptr is nullptr.";
     return {};
   }
-  std::vector<int> cur_value;
+  std::vector<int> cur_value = {};
   if (utils::isa<ValueSequeuePtr>(value)) {
-    if (value->cast<ValueSequeuePtr>()->value().front()->type()->number_type() == kNumberTypeInt64) {
-      auto origin_value = GetValue<std::vector<int64_t>>(value);
-      for (size_t index = 0; index < origin_value.size(); ++index) {
-        cur_value.push_back(static_cast<int>(origin_value[index]));
+    if (!value->cast<ValueSequeuePtr>()->value().empty()) {
+      if (value->cast<ValueSequeuePtr>()->value().front()->type()->number_type() == kNumberTypeInt64) {
+        auto origin_value = GetValue<std::vector<int64_t>>(value);
+        for (size_t index = 0; index < origin_value.size(); ++index) {
+          cur_value.push_back(static_cast<int>(origin_value[index]));
+        }
+      } else {
+        cur_value = GetValue<std::vector<int>>(value);
       }
-    } else {
-      cur_value = GetValue<std::vector<int>>(value);
     }
   } else {
     if (value->type()->number_type() == kNumberTypeInt64) {
@@ -1384,13 +1386,16 @@ ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std:
   std::vector<int32_t> shape{static_cast<int32_t>(data.size())};
   param_value->set_tensor_shape(shape);
   param_value->set_tensor_type(kNumberTypeInt32);
-  char *default_data = new (std::nothrow) char[data.size() * sizeof(int32_t)];
-  if (memcpy_s(default_data, data.size() * sizeof(int32_t), data.data(), data.size() * sizeof(int32_t)) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] default_data;
-    return nullptr;
+
+  if (!data.empty()) {
+    char *default_data = new (std::nothrow) char[data.size() * sizeof(int32_t)];
+    if (memcpy_s(default_data, data.size() * sizeof(int32_t), data.data(), data.size() * sizeof(int32_t)) != EOK) {
+      MS_LOG(ERROR) << "memcpy data failed.";
+      delete[] default_data;
+      return nullptr;
+    }
+    param_value->SetTensorData(default_data, data.size() * sizeof(int32_t));
   }
-  param_value->SetTensorData(default_data, data.size() * sizeof(int32_t));
   param_node->set_default_param(param_value);
   return param_node;
 }

@@ -25,19 +25,21 @@ ops::PrimitiveC *OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, con
   auto prim = std::make_unique<ops::ReduceFusion>();
 
   prim->set_keep_dims(true);
+
+  std::vector<int32_t> axes = {};
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes") {
-      std::vector<int32_t> axes;
       const int &size = onnx_node_attr.ints_size();
       for (int i = 0; i < size; ++i) {
         axes.push_back(onnx_node_attr.ints(i));
       }
-      prim->AddAttr("axes", MakeValue(axes));
     } else if (attribute_name == "keepdims") {
       prim->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
     }
   }
+  prim->AddAttr("axes", MakeValue(axes));
+
   const auto &type = onnx_node.op_type();
   if (type == "ReduceMean") {
     prim->set_mode(mindspore::ReduceMode::Reduce_Mean);

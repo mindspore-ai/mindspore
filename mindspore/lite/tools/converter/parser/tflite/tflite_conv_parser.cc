@@ -120,7 +120,9 @@ ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite
     return nullptr;
   }
   auto data_shape = data_tensor->shape;
-  prim->set_out_channel(data_shape[3] * tflite_attr->depth_multiplier);
+  if (!data_shape.empty()) {
+    prim->set_out_channel(data_shape[3] * tflite_attr->depth_multiplier);
+  }
 
   // calculate pad params
   std::vector<int64_t> params;

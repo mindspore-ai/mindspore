@@ -39,11 +39,14 @@ uint32_t GetFftLength(uint32_t length) {
 
 int AudioSpectrogramInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                                OpParameter *parameter) {
-  int check_ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 2);
+  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
   const TensorC *input = inputs[0];
+  if (input->shape_size_ != 2) {
+    return NNACL_ERR;
+  }
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
   if (!parameter->infer_flag_) {
