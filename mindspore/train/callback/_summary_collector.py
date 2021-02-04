@@ -130,13 +130,15 @@ class SummaryCollector(Callback):
             Default: None, which means no limit. For example, to write not larger than 4GB,
             specify `max_file_size=4 * 1024**3`.
         export_options (Union[None, dict]): Perform custom operations on the export data.
-            Default: None, it means there is no export data.
+            Default: None, it means that the data is not exported.
             Note that the size of export files is not limited by the max_file_size.
             You can customize the export data with a dictionary. For example, you can set {'tensor_format': 'npy'}
             to export tensor as npy file. The data that supports control is shown below.
 
-            - tensor_format (Union[str, None]): Customize the export tensor format.
-              Default: None, it means there is no export tensor.
+            - tensor_format (Union[str, None]): Customize the export tensor format. Supports ["npy", None].
+              Default: None, it means that the tensor is not exported.
+
+                - npy: export tensor as npy file.
 
     Raises:
         ValueError: If the parameter value is not expected.

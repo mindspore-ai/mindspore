@@ -36,7 +36,7 @@ _summary_lock = threading.Lock()
 # cache the summary data
 _summary_tensor_cache = {}
 _DEFAULT_EXPORT_OPTIONS = {
-    'tensor_format': {'npy'},
+    'tensor_format': {'npy', None},
 }
 
 
@@ -70,7 +70,7 @@ def process_export_options(export_options):
 
     for export_option, export_format in export_options.items():
         check_value_type('export_option', export_option, [str])
-        check_value_type('export_format', export_format, [str])
+        check_value_type('export_format', export_format, [str, type(None)])
 
     unexpected_params = set(export_options) - set(_DEFAULT_EXPORT_OPTIONS)
     if unexpected_params:
@@ -115,13 +115,15 @@ class SummaryRecord:
         raise_exception (bool, optional): Sets whether to throw an exception when a RuntimeError or OSError exception
             occurs in recording data. Default: False, this means that error logs are printed and no exception is thrown.
         export_options (Union[None, dict]): Perform custom operations on the export data.
-            Default: None, it means there is no export data.
+            Default: None, it means that the data is not exported.
             Note that the size of export files is not limited by the max_file_size.
             You can customize the export data with a dictionary. For example, you can set {'tensor_format': 'npy'}
             to export tensor as npy file. The data that supports control is shown below.
 
-            - tensor_format (Union[str, None]): Customize the export tensor format.
-              Default: None, it means there is no export tensor.
+            - tensor_format (Union[str, None]): Customize the export tensor format. Supports ["npy", None].
+              Default: None, it means that the tensor is not exported.
+
+                - npy: export tensor as npy file.
 
     Raises:
         TypeError: If the parameter type is incorrect.
