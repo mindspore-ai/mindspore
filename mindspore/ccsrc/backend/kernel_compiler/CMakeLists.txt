@@ -37,6 +37,26 @@ if(ENABLE_CPU)
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/reduce_scatter_cpu_kernel.cc")
         list(REMOVE_ITEM CPU_SRC_LIST "cpu/embedding_look_up_comm_grad_cpu_kernel.cc")
     endif()
+
+    file(GLOB_RECURSE QUANTUM_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        "cpu/quantum/*.cc"
+    )
+
+    foreach(qcc ${QUANTUM_SRC_LIST})
+        list(REMOVE_ITEM CPU_SRC_LIST ${qcc})
+    endforeach()
+
+    if(ENABLE_CPU AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux"
+        AND ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x86_64")
+        message("compiled quantum kernel_compiler")
+        set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
+            SUBMODULE_ID=mindspore::SubModuleId::SM_MINDQUANTUM)
+        set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_DEFINITIONS INTRIN)
+        set_property(SOURCE ${QUANTUM_SRC_LIST} PROPERTY COMPILE_OPTIONS -fopenmp -march=native -ffast-math)
+    else()
+        message("not compiled quantum kernel_compiler")
+        set(QUANTUM_SRC_LIST "")
+    endif()
 endif()
 
 if(NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
@@ -76,4 +96,5 @@ endif()
 
 set_property(SOURCE ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST}
     PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
-add_library(_mindspore_backend_kernel_compiler_obj OBJECT ${KERNEL_SRC_LIST} ${CPU_SRC_LIST} ${GPU_SRC_LIST} ${D_SRC_LIST})
+add_library(_mindspore_backend_kernel_compiler_obj OBJECT ${KERNEL_SRC_LIST} ${CPU_SRC_LIST}
+    ${GPU_SRC_LIST} ${D_SRC_LIST} ${QUANTUM_SRC_LIST})

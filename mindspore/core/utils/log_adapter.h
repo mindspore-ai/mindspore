@@ -126,6 +126,7 @@ enum SubModuleId : int {
   SM_PS,           // Parameter Server
   SM_LITE,         // LITE
   SM_HCCL_ADPT,    // Hccl Adapter
+  SM_MINDQUANTUM,  // MindQuantum
   NUM_SUBMODUES    // number of submodules
 };
 
