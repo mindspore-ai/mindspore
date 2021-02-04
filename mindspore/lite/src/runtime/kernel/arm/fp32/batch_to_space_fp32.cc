@@ -54,7 +54,7 @@ int BatchToSpaceCPUKernel::Init() {
 }
 
 int BatchToSpaceCPUKernel::ReSize() {
-  MS_ASSERT(in_tensors_.at(0)->shape().size() == 4);
+  MS_ASSERT(in_tensors_.at(0)->shape().size() == COMM_SHAPE_SIZE);
   return RET_OK;
 }
 

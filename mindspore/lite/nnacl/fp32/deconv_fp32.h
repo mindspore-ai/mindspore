@@ -22,7 +22,7 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/fp32/common_func_fp32.h"
-#include "nnacl/minimal_filtering_generator.h"
+#include "nnacl/base/minimal_filtering_generator.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -5,8 +5,10 @@ include_directories(NNACL_DIR)
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing \
+        -ffunction-sections -fdata-sections -ffast-math")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing \
+        -ffunction-sections -fdata-sections -ffast-math")
     endif()
 endif()
 if("${X86_64_SIMD}" STREQUAL "avx")
@@ -37,14 +39,14 @@ if(PLATFORM_ARM32)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "sse")
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/x86_64_sse/*.c)
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "avx")
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/x86_64_sse/*.c
-        ${NNACL_DIR}/x86_64_avx/*.c
-        ${NNACL_DIR}/assembly/avx/*.S)
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
+            ${NNACL_DIR}/intrinsics/avx/*.c
+            ${NNACL_DIR}/assembly/avx/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 

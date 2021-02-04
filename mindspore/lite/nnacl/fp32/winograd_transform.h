@@ -22,10 +22,7 @@
 #endif
 #include <string.h>
 #include "nnacl/pack.h"
-#include "nnacl/winograd_utils.h"
-#include "mindspore/lite/nnacl/int8/fixed_point.h"
-
-#define OUPUT_UNIT 2
+#include "nnacl/fp32/winograd_utils.h"
 
 #ifdef __cplusplus
 extern "C" {

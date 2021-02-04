@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/winograd_transform.h"
+#include "nnacl/fp32/winograd_transform.h"
 #include "nnacl/op_base.h"
 
 // fp32 conv winograd

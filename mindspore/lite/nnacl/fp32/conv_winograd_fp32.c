@@ -17,7 +17,7 @@
 #include "nnacl/fp32/conv_winograd_fp32.h"
 #include <string.h>
 #include "nnacl/fp32/common_func_fp32.h"
-#include "nnacl/winograd_transform.h"
+#include "nnacl/fp32/winograd_transform.h"
 #include "nnacl/fp32/matmul_fp32.h"
 
 // fp32 conv winograd

@@ -49,7 +49,7 @@ int TransposeFp16CPUKernel::Run() {
     for (int i = 0; i < input_perm->ElementsNum(); ++i) {
       param->perm_[i] = perm_data[i];
     }
-    for (int i = input_perm->ElementsNum(); i < 8; ++i) {
+    for (int i = input_perm->ElementsNum(); i < MAX_SHAPE_SIZE; ++i) {
       param->perm_[i] = 0;
     }
     param->num_axes_ = input_perm->ElementsNum();

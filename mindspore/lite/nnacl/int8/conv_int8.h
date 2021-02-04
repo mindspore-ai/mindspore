@@ -24,7 +24,6 @@
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/winograd_utils.h"
 #include "nnacl/int8/quantize.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/int8/matmul_int8.h"
