@@ -6,8 +6,8 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
 ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
 ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
-ENV PATH ${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}:${PYTHON_ROOT_PATH}/lib
+ENV PATH ${OMPI_ROOT_PATH}/bin:${PYTHON_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib::${PYTHON_ROOT_PATH}/lib
 
 # Install base tools
 RUN apt update \
