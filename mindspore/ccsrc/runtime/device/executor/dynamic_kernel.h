@@ -23,6 +23,7 @@
 #include <map>
 #include "ir/anf.h"
 #include "ir/tensor.h"
+#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace device {
