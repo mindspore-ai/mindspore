@@ -66,14 +66,25 @@ PrimitiveC *MergeCreator(const schema::Primitive *primitive) { return PrimitiveC
 Registry MergeRegistry(schema::PrimitiveType_Merge, MergeCreator);
 #endif
 
-int Merge::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  MS_ASSERT(inputs_.size() == 2 * outputs_.size());
-  if (!infer_flag()) {
-    return RET_INFER_INVALID;
+InferStatus Merge::AbleToInfer(const std::vector<lite::Tensor *> &inputs) {
+  for (auto &input : inputs) {
+    if (input->shape().empty()) {
+      return HasZeroShape;
+    }
+    if (input->root_tensor() != nullptr && input->root_tensor()->data_c() != nullptr) {
+      continue;
+    }
+    if (input->data_c() == nullptr) {
+      return NotAble;
+    }
   }
-  for (size_t i = 0; i < inputs_.size() / 2; i++) {
-    auto *input = inputs_[i];
-    auto *output = outputs_[i];
+  return Able;
+}
+
+int Merge::Infer(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs) {
+  for (size_t i = 0; i < inputs.size(); i++) {
+    auto *input = inputs[i];
+    auto *output = outputs[i];
     if (input == nullptr) {
       MS_LOG(ERROR) << "input tensor is nullptr";
       return RET_ERROR;
@@ -97,6 +108,36 @@ int Merge::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
     }
   }
   return RET_OK;
+}
+
+int Merge::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
+  MS_ASSERT(inputs_.size() == 2 * outputs_.size());
+  for (size_t i = 0; i < outputs_.size(); ++i) {
+    outputs_[i]->set_data_type(inputs_[i]->data_type());
+  }
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
+
+  std::vector<Tensor *> left_part_inputs{};
+  left_part_inputs.assign(inputs_.begin(), inputs_.begin() + inputs_.size() / 2);
+
+  std::vector<Tensor *> right_part_inputs{};
+  right_part_inputs.assign(inputs_.begin() + inputs_.size() / 2, inputs_.end());
+
+  if (AbleToInfer(left_part_inputs) == Able) {
+    return Infer(left_part_inputs, outputs_);
+  }
+
+  if (AbleToInfer(right_part_inputs) == Able) {
+    return Infer(right_part_inputs, outputs_);
+  }
+
+  if (AbleToInfer(left_part_inputs) == HasZeroShape && AbleToInfer(right_part_inputs) == HasZeroShape) {
+    return Infer(left_part_inputs, outputs_);
+  }
+
+  return RET_INFER_INVALID;
 }
 }  // namespace lite
 }  // namespace mindspore

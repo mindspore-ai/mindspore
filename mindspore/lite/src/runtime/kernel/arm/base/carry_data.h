@@ -34,7 +34,7 @@ class CarryDataKernel : public LiteKernel {
   int MoveData(std::vector<lite::Tensor *>::iterator dst_begin, std::vector<lite::Tensor *>::iterator dst_end,
                std::vector<lite::Tensor *>::iterator src_begin, std::vector<lite::Tensor *>::iterator src_limit);
   static int MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_tensor);
-  static int MoveTensorLiteData(lite::TensorList *dst_tensor, lite::TensorList *src_tensor);
+  static int MoveTensorListData(lite::TensorList *dst_tensor, lite::TensorList *src_tensor);
 };
 }  // namespace mindspore::kernel
 
