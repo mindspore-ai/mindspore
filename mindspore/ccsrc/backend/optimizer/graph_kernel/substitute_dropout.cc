@@ -77,7 +77,7 @@ const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, cons
   ShapeVector shape_i64;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), [](size_t x) { return SizeToLong(x); });
 
-  // The primitive should use a clone, otherwise the attr seed will be overrided.
+  // The primitive should use a clone, otherwise the attr seed will be overrode.
   AnfNodePtrList uniform_input = {NewValueNode(prim::kPrimCudnnUniformReal->Clone())};
   auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector(1, SizeToLong(shape.size())),
                                                  static_cast<void *>(&shape[0]), kNumberTypeInt64);
@@ -98,8 +98,8 @@ const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, cons
 
   // create new uniform_real_node
   auto uniform_real_node = func_graph->NewCNode(uniform_input);
-  AnfAlgo::GetCNodePrimitive(uniform_real_node)->set_attr("seed", MakeValue(SizeToLong(seed_++)));
-  AnfAlgo::GetCNodePrimitive(uniform_real_node)->set_attr("seed2", MakeValue(SizeToLong(seed_++)));
+  SetNodeAttrSafely("seed", MakeValue(SizeToLong(seed_++)), uniform_real_node);
+  SetNodeAttrSafely("seed2", MakeValue(SizeToLong(seed_++)), uniform_real_node);
   auto uniform_abstract = std::make_shared<abstract::AbstractTensor>(std::make_shared<Float>(32), shape_i64);
   uniform_real_node->set_abstract(uniform_abstract);
   uniform_real_node->set_kernel_info(std::make_shared<device::KernelInfo>());
@@ -110,7 +110,7 @@ const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, cons
   new_node_inputs.push_back(cnode->input(1));
   new_node_inputs.push_back(uniform_real_node);
   auto new_node = func_graph->NewCNode(new_node_inputs);
-  AnfAlgo::GetCNodePrimitive(new_node)->set_attr("keep_prob", AnfAlgo::GetCNodePrimitive(cnode)->GetAttr("keep_prob"));
+  SetNodeAttrSafely("keep_prob", MakeValue(AnfAlgo::GetNodeAttr<float>(cnode, "keep_prob")), new_node);
   new_node->set_abstract(old_abstract);
   new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   SetNewKernelInfo(new_node);

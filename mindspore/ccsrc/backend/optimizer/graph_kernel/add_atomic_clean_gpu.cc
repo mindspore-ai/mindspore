@@ -215,9 +215,9 @@ void AtomicCleanInsertter::CreateInplaceAssignNodeAndCorrectReturn(const FuncGra
   }
 
   auto inplace_assign_node =
-    CreateCNode({NewValueNode(std::make_shared<Primitive>("InplaceAssign")), new_parameter, atomic_add_node_, out_node},
-                sub_graph, {.format = GetFormat(out_node), .shape = GetShape(out_node), .type = GetType(out_node)});
-  AnfAlgo::SetNodeAttr("fake_output", MakeValue(fake_out), inplace_assign_node);
+    CreateCNode({NewValueNode(prim::kPrimInplaceAssign), new_parameter, atomic_add_node_, out_node}, sub_graph,
+                {.format = GetFormat(out_node), .shape = GetShape(out_node), .type = GetType(out_node)});
+  SetNodeAttrSafely("fake_output", MakeValue(fake_out), inplace_assign_node);
 
   CNodePtr new_out_node;
   if (real_output_num_ > 2) {
@@ -269,7 +269,7 @@ void AtomicCleanInsertter::ProcessOriginCNode(const AnfNodePtr &composite_node, 
   }
 
   // Add atomic attribute to reducesum node.
-  AnfAlgo::SetNodeAttr("enable_atomic_add", MakeValue(true), atomic_add_node_);
+  SetNodeAttrSafely("enable_atomic_add", MakeValue(true), atomic_add_node_);
 
   // add input
   auto inputs = composite_node->cast<CNodePtr>()->inputs();
@@ -380,7 +380,7 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
     AnfNodePtrList cast_inputs = {NewValueNode(prim::kPrimCast), value_node};
     auto cast_node_inner =
       CreateCNode(cast_inputs, new_sub_graph, {.format = format, .shape = {1}, .type = TypeIdToType(dst_type)});
-    AnfAlgo::SetNodeAttr("dst_type", MakeValue("float32"), cast_node_inner);
+    SetNodeAttrSafely("dst_type", MakeValue("float32"), cast_node_inner);
     broadcast_input_node = cast_node_inner;
   }
 
@@ -393,7 +393,7 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
                                         broadcast_input_node};
   auto broadcast_to_node_inner = CreateCNode(
     atomic_clean_inputs, new_sub_graph, {.format = format, .shape = dst_shape_vec, .type = GetType(atomic_add_node_)});
-  AnfAlgo::SetNodeAttr("shape", MakeValue(dst_shape_vec), broadcast_to_node_inner);
+  SetNodeAttrSafely("shape", MakeValue(dst_shape_vec), broadcast_to_node_inner);
 
   // Makeup sub-graph.
   new_sub_graph->set_output(broadcast_to_node_inner);

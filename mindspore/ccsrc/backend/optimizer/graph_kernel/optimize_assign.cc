@@ -191,10 +191,9 @@ bool ReplaceAssignByInplaceAssignInGraphkernel(const FuncGraphPtr &func_graph) {
     if (!AnfAlgo::CheckPrimitiveType(n, prim::kPrimAssign)) continue;
     changed = true;
     auto cnode = n->cast<CNodePtr>();
-    AnfNodePtrList inputs = {NewValueNode(prim::kPrimInplaceAssign->Clone()), cnode->input(1), cnode->input(2),
-                             cnode->input(2)};
+    AnfNodePtrList inputs = {NewValueNode(prim::kPrimInplaceAssign), cnode->input(1), cnode->input(2), cnode->input(2)};
     auto new_cnode = func_graph->NewCNode(inputs);
-    AnfAlgo::SetNodeAttr("fake_output", MakeValue(true), new_cnode);
+    SetNodeAttrSafely("fake_output", MakeValue(true), new_cnode);
     new_cnode->set_abstract(inputs.back()->abstract());
     new_cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
     std::vector<std::string> input_formats = AnfAlgo::GetAllInputFormats(cnode);

@@ -39,9 +39,9 @@ bool RaiseReductionPrecision::IsFp16ReduceSum(const AnfNodePtr &node) {
 AnfNodePtr RaiseReductionPrecision::CreateCast(const AnfNodePtr &input, const TypePtr &dst_type, std::string format) {
   auto func_graph = input->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast->Clone()), input};
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input};
   auto cnode = CreateCNode(inputs, func_graph, {.format = format, .shape = GetShape(input), .type = dst_type});
-  AnfAlgo::SetNodeAttr("dst_type", MakeValue(kernel::TypeId2String(dst_type->type_id())), cnode);
+  SetNodeAttrSafely("dst_type", MakeValue(kernel::TypeId2String(dst_type->type_id())), cnode);
   return cnode;
 }
 

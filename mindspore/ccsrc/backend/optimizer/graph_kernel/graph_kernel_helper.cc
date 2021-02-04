@@ -987,8 +987,8 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   if (AnfAlgo::IsRealKernel(cnode)) {
     // if the node only has the primitive(such as getNext) or the node's input has a feature map input
     // then the node's output is a feature map output
-    AnfAlgo::SetNodeAttr(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode);
-    AnfAlgo::SetNodeAttr(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode);
+    SetNodeAttrSafely(kIsFeatureMapOutput, MakeValue(kernel_info->is_feature_map()), cnode);
+    SetNodeAttrSafely(kIsFeatureMapInputList, MakeValue(feature_map_input_indexs), cnode);
   }
 
   // Setup kernel build info.
@@ -1020,7 +1020,8 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   return cnode;
 }
 
-void MakeCNodeSafeForAttr(const AnfNodePtr &node) {
+void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node) {
+  // Make CNode safe to set attr firstly.
   auto cnode = node->cast<CNodePtr>();
   if (cnode == nullptr) {
     return;
@@ -1029,6 +1030,9 @@ void MakeCNodeSafeForAttr(const AnfNodePtr &node) {
   auto inputs = cnode->inputs();
   new_inputs.insert(new_inputs.end(), inputs.begin() + 1, inputs.end());
   cnode->set_inputs(new_inputs);
+
+  // Set attr secondly.
+  AnfAlgo::SetNodeAttr(key, value, node);
 }
 }  // namespace opt
 }  // namespace mindspore
