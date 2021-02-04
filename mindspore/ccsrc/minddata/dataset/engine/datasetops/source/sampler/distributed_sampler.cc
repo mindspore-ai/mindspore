@@ -184,7 +184,6 @@ int64_t DistributedSamplerRT::CalculateNumSamples(int64_t num_rows) {
     if (device_id_ < remainder) shard_size++;
     if (device_id_ < offset_) shard_size--;
   } else {
-    offset_ = 0;
     shard_size = (child_num_rows + num_devices_ - 1) / num_devices_;
   }
   // add 1 to an empty shard
