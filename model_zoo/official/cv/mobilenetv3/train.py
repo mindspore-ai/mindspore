@@ -37,8 +37,10 @@ from mindspore.common import set_seed
 from mindspore.communication.management import init, get_group_size, get_rank
 
 from src.dataset import create_dataset
+from src.dataset import create_dataset_cifar
 from src.lr_generator import get_lr
 from src.config import config_gpu
+from src.config import config_cpu
 from src.mobilenetV3 import mobilenet_v3_large
 
 set_seed(1)
@@ -59,6 +61,10 @@ if args_opt.device_target == "GPU":
         context.set_auto_parallel_context(device_num=get_group_size(),
                                           parallel_mode=ParallelMode.DATA_PARALLEL,
                                           gradients_mean=True)
+elif args_opt.device_target == "CPU":
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target="CPU",
+                        save_graphs=False)
 else:
     raise ValueError("Unsupported device_target.")
 
@@ -151,58 +157,71 @@ class Monitor(Callback):
 
 
 if __name__ == '__main__':
+    config_ = None
     if args_opt.device_target == "GPU":
-        # train on gpu
-        print("train args: ", args_opt)
-        print("cfg: ", config_gpu)
+        config_ = config_gpu
+    elif args_opt.device_target == "CPU":
+        config_ = config_cpu
+    else:
+        raise ValueError("Unsupported device_target.")
+    # train on device
+    print("train args: ", args_opt)
+    print("cfg: ", config_)
 
-        # define net
-        net = mobilenet_v3_large(num_classes=config_gpu.num_classes)
-        # define loss
-        if config_gpu.label_smooth > 0:
-            loss = CrossEntropyWithLabelSmooth(
-                smooth_factor=config_gpu.label_smooth, num_classes=config_gpu.num_classes)
-        else:
-            loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-        # define dataset
-        epoch_size = config_gpu.epoch_size
+    # define net
+    net = mobilenet_v3_large(num_classes=config_.num_classes)
+    # define loss
+    if config_.label_smooth > 0:
+        loss = CrossEntropyWithLabelSmooth(
+            smooth_factor=config_.label_smooth, num_classes=config_.num_classes)
+    else:
+        loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+    # define dataset
+    epoch_size = config_.epoch_size
+    if args_opt.device_target == "GPU":
         dataset = create_dataset(dataset_path=args_opt.dataset_path,
                                  do_train=True,
-                                 config=config_gpu,
+                                 config=config_,
                                  device_target=args_opt.device_target,
                                  repeat_num=1,
-                                 batch_size=config_gpu.batch_size,
-                                 run_distribute=args_opt.run_distribute)
-        step_size = dataset.get_dataset_size()
-        # resume
-        if args_opt.pre_trained:
-            param_dict = load_checkpoint(args_opt.pre_trained)
-            load_param_into_net(net, param_dict)
-        # define optimizer
-        loss_scale = FixedLossScaleManager(
-            config_gpu.loss_scale, drop_overflow_update=False)
-        lr = Tensor(get_lr(global_step=0,
-                           lr_init=0,
-                           lr_end=0,
-                           lr_max=config_gpu.lr,
-                           warmup_epochs=config_gpu.warmup_epochs,
-                           total_epochs=epoch_size,
-                           steps_per_epoch=step_size))
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_gpu.momentum,
-                       config_gpu.weight_decay, config_gpu.loss_scale)
-        # define model
-        model = Model(net, loss_fn=loss, optimizer=opt,
-                      loss_scale_manager=loss_scale)
+                                 batch_size=config_.batch_size,
+                                 run_distribute=False)
+    elif args_opt.device_target == "CPU":
+        dataset = create_dataset_cifar(args_opt.dataset_path,
+                                       do_train=True,
+                                       batch_size=config_.batch_size)
+    else:
+        raise ValueError("Unsupported device_target.")
+    step_size = dataset.get_dataset_size()
+    # resume
+    if args_opt.pre_trained:
+        param_dict = load_checkpoint(args_opt.pre_trained)
+        load_param_into_net(net, param_dict)
+    # define optimizer
+    loss_scale = FixedLossScaleManager(
+        config_.loss_scale, drop_overflow_update=False)
+    lr = Tensor(get_lr(global_step=0,
+                       lr_init=0,
+                       lr_end=0,
+                       lr_max=config_.lr,
+                       warmup_epochs=config_.warmup_epochs,
+                       total_epochs=epoch_size,
+                       steps_per_epoch=step_size))
+    opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config_.momentum,
+                   config_.weight_decay, config_.loss_scale)
+    # define model
+    model = Model(net, loss_fn=loss, optimizer=opt,
+                  loss_scale_manager=loss_scale)
 
-        cb = [Monitor(lr_init=lr.asnumpy())]
-        if args_opt.run_distribute:
-            ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
-        else:
-            ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + "/"
-        if config_gpu.save_checkpoint:
-            config_ck = CheckpointConfig(save_checkpoint_steps=config_gpu.save_checkpoint_epochs * step_size,
-                                         keep_checkpoint_max=config_gpu.keep_checkpoint_max)
-            ckpt_cb = ModelCheckpoint(prefix="mobilenetV3", directory=ckpt_save_dir, config=config_ck)
-            cb += [ckpt_cb]
-        # begine train
-        model.train(epoch_size, dataset, callbacks=cb)
+    cb = [Monitor(lr_init=lr.asnumpy())]
+    if args_opt.run_distribute:
+        ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + str(get_rank()) + "/"
+    else:
+        ckpt_save_dir = config_gpu.save_checkpoint_path + "ckpt_" + "/"
+    if config_.save_checkpoint:
+        config_ck = CheckpointConfig(save_checkpoint_steps=config_.save_checkpoint_epochs * step_size,
+                                     keep_checkpoint_max=config_.keep_checkpoint_max)
+        ckpt_cb = ModelCheckpoint(prefix="mobilenetV3", directory=ckpt_save_dir, config=config_ck)
+        cb += [ckpt_cb]
+    # begine train
+    model.train(epoch_size, dataset, callbacks=cb)

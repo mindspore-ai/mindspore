@@ -16,6 +16,14 @@
 
 run_gpu()
 {
+    if [ $# -gt 5 ] || [ $# -lt 4 ]
+    then
+        echo "Usage:\n \
+              GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
+              CPU: sh run_train.sh CPU [DATASET_PATH]\n \
+             "
+    exit 1
+    fi
     if [ $2 -lt 1 ] && [ $2 -gt 8 ]
     then
         echo "error: DEVICE_NUM=$2 is not in (1-8)"
@@ -45,16 +53,42 @@ run_gpu()
         &> ../train.log &  # dataset train folder
 }
 
-if [ $# -gt 5 ] || [ $# -lt 4 ]
-then
-    echo "Usage:\n \
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
-          "
-exit 1
-fi
+run_cpu()
+{
+    if [ $# -gt 3 ] || [ $# -lt 2 ]
+    then
+        echo "Usage:\n \
+              GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]\n \
+              CPU: sh run_train.sh CPU [DATASET_PATH]\n \
+             "
+    exit 1
+    fi
+
+    if [ ! -d $2 ]
+    then
+        echo "error: DATASET_PATH=$2 is not a directory"
+    exit 1
+    fi
+
+    BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    export PYTHONPATH=${BASEPATH}:$PYTHONPATH
+    if [ -d "../train" ];
+    then
+        rm -rf ../train
+    fi
+    mkdir ../train
+    cd ../train || exit
+
+    python ${BASEPATH}/../train.py \
+        --dataset_path=$2 \
+        --device_target=$1 \
+        &> ../train.log &  # dataset train folder
+}
 
 if [ $1 = "GPU" ] ; then
     run_gpu "$@"
+elif [ $1 = "CPU" ] ; then
+    run_cpu "$@"
 else
     echo "Unsupported device_target"
 fi;

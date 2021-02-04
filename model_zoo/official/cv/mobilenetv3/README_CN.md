@@ -50,8 +50,8 @@ MobileNetV3总体网络架构如下：
 
 # 环境要求
 
-- 硬件：GPU
-    - 准备GPU处理器搭建硬件环境。
+- 硬件：GPU/CPU
+    - 准备GPU/CPU处理器搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
@@ -86,6 +86,7 @@ MobileNetV3总体网络架构如下：
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
 - GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
+- CPU: sh run_trian.sh CPU [DATASET_PATH]
 
 ### 启动
 
@@ -93,8 +94,10 @@ MobileNetV3总体网络架构如下：
 # 训练示例
   python:
       GPU: python train.py --dataset_path ~/imagenet/train/ --device_targe GPU
+      CPU: python train.py --dataset_path ~/cifar10/train/ --device_targe CPU
   shell:
       GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 ~/imagenet/train/
+      CPU: sh run_train.sh CPU ~/cifar10/train/
 ```
 
 ### 结果
@@ -115,6 +118,7 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
 - GPU: sh run_infer.sh GPU [DATASET_PATH] [CHECKPOINT_PATH]
+- CPU: sh run_infer.sh CPU [DATASET_PATH] [CHECKPOINT_PATH]
 
 ### 启动
 
@@ -122,9 +126,11 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 # 推理示例
   python:
     GPU: python eval.py --dataset_path ~/imagenet/val/ --checkpoint_path mobilenet_199.ckpt --device_targe GPU
+    CPU: python eval.py --dataset_path ~/cifar10/val/ --checkpoint_path mobilenet_199.ckpt --device_targe CPU
 
   shell:
     GPU: sh run_infer.sh GPU ~/imagenet/val/ ~/train/mobilenet-200_625.ckpt
+    CPU: sh run_infer.sh CPU ~/cifar10/val/ ~/train/mobilenet-200_625.ckpt
 ```
 
 > 训练过程中可以生成检查点。
