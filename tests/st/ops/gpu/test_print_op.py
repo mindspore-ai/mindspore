@@ -43,9 +43,21 @@ class PrintNetTwoInputs(nn.Cell):
         return x
 
 
+class PrintNetIndex(nn.Cell):
+    def __init__(self):
+        super(PrintNetIndex, self).__init__()
+        self.op = P.Print()
+
+    def construct(self, x):
+        self.op(x[0][0][6][3])
+        return x
+
+
 def print_testcase(nptype):
     # large shape
     x = np.arange(20808).reshape(6, 3, 34, 34).astype(nptype)
+    # a value that can be stored as int8_t
+    x[0][0][6][3] = 125
     # small shape
     y = np.arange(9).reshape(3, 3).astype(nptype)
     x = Tensor(x)
@@ -54,8 +66,10 @@ def print_testcase(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net_1 = PrintNetOneInput()
     net_2 = PrintNetTwoInputs()
+    net_3 = PrintNetIndex()
     net_1(x)
     net_2(x, y)
+    net_3(x)
 
 
 @pytest.mark.level0
