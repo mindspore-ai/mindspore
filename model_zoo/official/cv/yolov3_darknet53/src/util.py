@@ -66,8 +66,6 @@ def load_backbone(net, ckpt_path, args):
         else:
             param_not_load.append(param.name)
     print("not loading param is :", len(param_not_load))
-    for param_name in param_not_load:
-        print("param_name not load:", param_name)
 
     return net
 
