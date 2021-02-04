@@ -55,7 +55,22 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
            input0->element_shape_size_);
 
   vvector *out_shape = (vvector *)malloc(sizeof(vvector));
+  if (out_shape == NULL) {
+    return NNACL_NULL_PTR;
+  }
   out_shape->size_ = 0;
+  out_shape->shape_ = (int **)malloc((input0->element_num_ + 1) * sizeof(int *));
+  if (out_shape->shape_ == NULL) {
+    free(out_shape);
+    return NNACL_NULL_PTR;
+  }
+  out_shape->shape_size_ = (int *)malloc((input0->element_num_ + 1) * sizeof(int));
+  if (out_shape->shape_size_ == NULL) {
+    free(out_shape->shape_);
+    free(out_shape);
+    return NNACL_NULL_PTR;
+  }
+
   if (index == 0 && input0->element_num_ == 0) {  // uninitialized tensorlist
     out_shape->shape_[out_shape->size_] = (int *)(value_tensor->shape_);
     out_shape->shape_size_[out_shape->size_] = value_tensor->shape_size_;
@@ -66,6 +81,9 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     for (int i = 0; i < input0->element_num_; ++i) {
       TensorC *src_ptr = input0->tensors_[i];
       if (src_ptr == NULL) {
+        free(out_shape->shape_);
+        free(out_shape->shape_size_);
+        free(out_shape);
         return NNACL_ERR;
       }
       if (src_ptr->data_type_ != kTypeUnknown) {
@@ -83,6 +101,8 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   out_shape->shape_[index] = (int *)(value_tensor->shape_);
   out_shape->shape_size_[index] = value_tensor->shape_size_;
   MallocTensorListData(output0, input0->tensors_data_type_, out_shape);
+  free(out_shape->shape_);
+  free(out_shape->shape_size_);
   free(out_shape);
   return NNACL_OK;
 }

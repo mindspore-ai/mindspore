@@ -19,6 +19,7 @@
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/infer/adam_infer.h"
 #include "nnacl/infer/addn_infer.h"
+#include "nnacl/infer/add_sub_grad_infer.h"
 #include "nnacl/infer/apply_momentum_infer.h"
 #include "nnacl/infer/argmin_max_infer.h"
 #include "nnacl/infer/arithmetic_compare_infer.h"
@@ -153,21 +154,27 @@ void Tensor2TensorC(Tensor *src, TensorC *dst) {
 
 void TensorC2Tensor(TensorC *src, Tensor *dst) {
   dst->set_format(static_cast<schema::Format>(src->format_));
-  dst->set_data(src->data_);
-  dst->set_data_type(static_cast<TypeId>(src->data_type_));
+  dst->set_data_type(static_cast<TypeId>(src->data_type_));  // get data during the runtime period
   dst->set_shape(std::vector<int>(src->shape_, src->shape_ + src->shape_size_));
 }
 
-void TensorList2TensorListC(TensorList *src, TensorListC *dst) {
-  dst->data_type_ = src->data_type();
+int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
+  dst->data_type_ = static_cast<TypeIdC>(src->data_type());
   dst->format_ = src->format();
   dst->element_num_ = src->shape().empty() ? 0 : src->shape().at(0);
 
+  dst->tensors_ = reinterpret_cast<TensorC **>(malloc(dst->element_num_ * sizeof(TensorC *)));
+  if (dst->tensors_ == nullptr) {
+    return RET_ERROR;
+  }
+  memset(dst->tensors_, 0, dst->element_num_ * sizeof(TensorC *));
   for (size_t i = 0; i < dst->element_num_; i++) {
+    dst->tensors_[i] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
     if (dst->tensors_[i] == nullptr) {
-      dst->tensors_[i] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
+      return NNACL_ERR;
     }
-    Tensor2TensorC(src->tensors().at(i), dst->tensors_[i]);  // note: use pushback?
+    memset(dst->tensors_[i], 0, sizeof(TensorC));
+    Tensor2TensorC(src->tensors().at(i), dst->tensors_[i]);
   }
 
   dst->tensors_data_type_ = src->tensors_data_type();
@@ -176,6 +183,7 @@ void TensorList2TensorListC(TensorList *src, TensorListC *dst) {
     dst->element_shape_[i] = src->element_shape().at(i);
   }
   dst->max_elements_num_ = src->max_elements_num();
+  return NNACL_OK;
 }
 
 void TensorListC2TensorList(TensorListC *src, TensorList *dst) {
@@ -186,9 +194,7 @@ void TensorListC2TensorList(TensorListC *src, TensorList *dst) {
 
   // Set Tensors
   for (size_t i = 0; i < src->element_num_; i++) {
-    Tensor *tmp = new Tensor;
-    TensorC2Tensor(src->tensors_[i], tmp);
-    dst->SetTensor(i, tmp);
+    TensorC2Tensor(src->tensors_[i], dst->GetTensor(i));
   }
 
   dst->set_element_shape(std::vector<int>(src->element_shape_, src->element_shape_ + src->element_shape_size_));
@@ -200,12 +206,38 @@ int GenerateMergeOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vect
   int ret = RET_OK;
   for (size_t i = 0; i < outputs->size(); i++) {
     if (inputs.at(i)->data_type() == kObjectTypeTensorType) {
-      auto *output_tensorlist = malloc(sizeof(TensorListC));
+      auto *output_tensorlist = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
       if (output_tensorlist == nullptr) {
-        MS_LOG(ERROR) << "malloc tensorlist_c failed";
-        ret = RET_ERROR;
-        break;
+        return RET_ERROR;
       }
+      memset(output_tensorlist, 0, sizeof(TensorListC));
+      output_tensorlist->element_num_ = inputs[i]->shape().empty() ? 0 : inputs[i]->shape().at(0);
+      if (output_tensorlist->element_num_ != 0) {
+        output_tensorlist->tensors_ =
+          reinterpret_cast<TensorC **>(malloc(output_tensorlist->element_num_ * sizeof(TensorC *)));
+        if (output_tensorlist->tensors_ == nullptr) {
+          free(output_tensorlist);
+          output_tensorlist = nullptr;
+          return RET_ERROR;
+        }
+        memset(output_tensorlist->tensors_, 0, output_tensorlist->element_num_ * sizeof(TensorC *));
+        for (size_t j = 0; j < output_tensorlist->element_num_; j++) {
+          output_tensorlist->tensors_[j] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
+          if (output_tensorlist->tensors_[j] == nullptr) {
+            for (size_t k = 0; k < j; k++) {
+              free(output_tensorlist->tensors_[k]);
+              output_tensorlist->tensors_[k] = nullptr;
+            }
+            free(output_tensorlist->tensors_);
+            output_tensorlist->tensors_ = nullptr;
+            free(output_tensorlist);
+            output_tensorlist = nullptr;
+            return RET_ERROR;
+          }
+          memset(output_tensorlist->tensors_[j], 0, sizeof(TensorC));
+        }
+      }
+
       out_tensor_c->push_back(reinterpret_cast<TensorC *const>(output_tensorlist));
     } else {
       auto *output_tensor = NewTensorC();
@@ -227,19 +259,73 @@ int GenerateSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vec
   out_tensor_c->resize(outputs->size());
   for (size_t i = 0; i < outputs->size() / 2; i++) {
     if (inputs.at(i + 1)->data_type() == kObjectTypeTensorType) {
-      auto *output_tensorlist1 = malloc(sizeof(TensorListC));
+      auto *output_tensorlist1 = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
       if (output_tensorlist1 == nullptr) {
         MS_LOG(ERROR) << "malloc tensorlist_c failed";
         ret = RET_ERROR;
         break;
       }
-      out_tensor_c->at(i) = reinterpret_cast<TensorC *const>(output_tensorlist1);
-      auto *output_tensorlist2 = malloc(sizeof(TensorListC));
-      if (output_tensorlist2 == nullptr) {
-        MS_LOG(ERROR) << "malloc tensorlist_c failed";
-        ret = RET_ERROR;
-        break;
+
+      memset(output_tensorlist1, 0, sizeof(TensorListC));
+      output_tensorlist1->element_num_ = inputs[i + 1]->shape().empty() ? 0 : inputs[i + 1]->shape().at(0);
+      if (output_tensorlist1->element_num_ != 0) {
+        output_tensorlist1->tensors_ =
+          reinterpret_cast<TensorC **>(malloc(output_tensorlist1->element_num_ * sizeof(TensorC *)));
+        if (output_tensorlist1->tensors_ == nullptr) {
+          free(output_tensorlist1);
+          output_tensorlist1 = nullptr;
+          return RET_ERROR;
+        }
+        memset(output_tensorlist1->tensors_, 0, output_tensorlist1->element_num_ * sizeof(TensorC *));
+        for (size_t j = 0; j < output_tensorlist1->element_num_; j++) {
+          output_tensorlist1->tensors_[j] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
+          if (output_tensorlist1->tensors_[j] == nullptr) {
+            for (size_t k = 0; k < j; k++) {
+              free(output_tensorlist1->tensors_[k]);
+              output_tensorlist1->tensors_[k] = nullptr;
+            }
+            free(output_tensorlist1->tensors_);
+            output_tensorlist1->tensors_ = nullptr;
+            return RET_ERROR;
+          }
+          memset(output_tensorlist1->tensors_[j], 0, sizeof(TensorC));
+        }
       }
+
+      out_tensor_c->at(i) = reinterpret_cast<TensorC *const>(output_tensorlist1);
+
+      auto *output_tensorlist2 = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+      if (output_tensorlist2 == nullptr) {
+        return RET_ERROR;
+      }
+      memset(output_tensorlist2, 0, sizeof(TensorListC));
+      output_tensorlist2->element_num_ = inputs[i + 1]->shape().empty() ? 0 : inputs[i + 1]->shape().at(0);
+      if (output_tensorlist2->element_num_ != 0) {
+        output_tensorlist2->tensors_ =
+          reinterpret_cast<TensorC **>(malloc(output_tensorlist2->element_num_ * sizeof(TensorC *)));
+        if (output_tensorlist2->tensors_ == nullptr) {
+          free(output_tensorlist2);
+          output_tensorlist2 = nullptr;
+          return RET_ERROR;
+        }
+        memset(output_tensorlist2->tensors_, 0, output_tensorlist2->element_num_ * sizeof(TensorC *));
+        for (size_t j = 0; j < output_tensorlist2->element_num_; j++) {
+          output_tensorlist2->tensors_[j] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
+          if (output_tensorlist2->tensors_[j] == nullptr) {
+            for (size_t k = 0; k < j; k++) {
+              free(output_tensorlist2->tensors_[k]);
+              output_tensorlist2->tensors_[k] = nullptr;
+            }
+            free(output_tensorlist2->tensors_);
+            output_tensorlist2->tensors_ = nullptr;
+            free(output_tensorlist2);
+            output_tensorlist2 = nullptr;
+            return RET_ERROR;
+          }
+          memset(output_tensorlist2->tensors_[j], 0, sizeof(TensorC));
+        }
+      }
+
       out_tensor_c->at(i + outputs->size() / 2) = reinterpret_cast<TensorC *const>(output_tensorlist2);
     } else {
       auto *output_tensor1 = NewTensorC();
@@ -268,12 +354,12 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem) {
     // TensorListC ->TensorC
-    auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));  // note: malloc or new ?
+    auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
     if (tensor_list_c == nullptr) {
-      ret = RET_ERROR;
-    } else {
-      out_tensor_c->push_back(reinterpret_cast<TensorC *const>(tensor_list_c));
+      return RET_ERROR;
     }
+    memset(tensor_list_c, 0, sizeof(TensorListC));
+    out_tensor_c->push_back(reinterpret_cast<TensorC *const>(tensor_list_c));
   } else if (parameter->type_ == mindspore::schema::PrimitiveType_Merge) {
     ret = GenerateMergeOutTensorC(inputs, outputs, out_tensor_c);
   } else if (parameter->type_ == mindspore::schema::PrimitiveType_Switch) {
@@ -284,12 +370,9 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
   return ret;
 }
 
-int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
-                     OpParameter *parameter) {
-  std::vector<TensorC *> in_tensors;
-  std::vector<TensorC *> out_tensors;
-
-  int ret = 0;
+int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
+                      std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *in_tensor_c) {
+  int ret = RET_OK;
   for (auto input : inputs) {
     if (input->data_type() == kObjectTypeTensorType) {
       // Tensor ->TensorList -> TensorListC -> TensorC
@@ -300,8 +383,11 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
         break;
       }
       memset(tensor_list_c, 0, sizeof(TensorListC));
-      TensorList2TensorListC(tensor_list, tensor_list_c);
-      in_tensors.push_back(reinterpret_cast<TensorC *>(tensor_list_c));  // in_tensors[0]
+      ret = TensorList2TensorListC(tensor_list, tensor_list_c);
+      if (ret != RET_OK) {
+        return NNACL_ERR;
+      }
+      in_tensor_c->push_back(reinterpret_cast<TensorC *>(tensor_list_c));
     } else {
       // Tensor -> TensorC
       auto *tensor_c = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
@@ -310,22 +396,31 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
         break;
       }
       Tensor2TensorC(input, tensor_c);
-      in_tensors.emplace_back(tensor_c);
+      in_tensor_c->emplace_back(tensor_c);
     }
   }
+  return ret;
+}
 
+int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+                     OpParameter *parameter) {
+  std::vector<TensorC *> in_tensors;
+  std::vector<TensorC *> out_tensors;
+  int ret = 0;
+
+  ret = GenerateInTensorC(parameter, inputs, outputs, &in_tensors);
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);
     return RET_ERROR;
   }
 
   ret = GenerateOutTensorC(parameter, inputs, outputs, &out_tensors);
-
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);
     FreeAllTensorC(&out_tensors);
     return RET_ERROR;
   }
+
   auto infer_shape_func = InferManager::GetInstance()->GetInferShapeFunc(parameter->type_);
   if (infer_shape_func == nullptr) {
     MS_LOG(ERROR) << "Get infershape func failed! type:" << PrimitiveCurVersionTypeName(parameter->type_);
@@ -337,7 +432,6 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
   if (ret == RET_OK) {
     for (size_t i = 0; i < out_tensors.size(); i++) {
       if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
-        // TensorC -> TensorListC -> TensorList -> Tensor
         auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
         auto *tensor_list = reinterpret_cast<TensorList *>(outputs->at(i));
         tensor_list->set_shape({static_cast<int>(tensor_list_c->element_num_)});
@@ -384,9 +478,13 @@ static RegistryInferShape g_Deconv2dInferShape(mindspore::schema::PrimitiveType_
 static RegistryInferShape g_SquaredDifferenceInferShape(mindspore::schema::PrimitiveType_SquaredDifference,
                                                         ArithmeticInferShape);
 static RegistryInferShape g_AddInferShape(mindspore::schema::PrimitiveType_AddFusion, ArithmeticInferShape);
+static RegistryInferShape g_AddSubInferShape(mindspore::schema::PrimitiveType_AddGrad, AddSubGradInferShape);
 static RegistryInferShape g_SubInferShape(mindspore::schema::PrimitiveType_SubFusion, ArithmeticInferShape);
+static RegistryInferShape g_SubGradInferShape(mindspore::schema::PrimitiveType_SubGrad, AddSubGradInferShape);
 static RegistryInferShape g_DivInferShape(mindspore::schema::PrimitiveType_DivFusion, ArithmeticInferShape);
+static RegistryInferShape g_DivGradInferShape(mindspore::schema::PrimitiveType_DivGrad, ArithmeticGradInferShape);
 static RegistryInferShape g_MulInferShape(mindspore::schema::PrimitiveType_MulFusion, ArithmeticInferShape);
+static RegistryInferShape g_MulGradInferShape(mindspore::schema::PrimitiveType_MulGrad, ArithmeticGradInferShape);
 static RegistryInferShape g_FloorDivInferShape(mindspore::schema::PrimitiveType_FloorDiv, ArithmeticInferShape);
 static RegistryInferShape g_RealDivInferShape(mindspore::schema::PrimitiveType_RealDiv, ArithmeticInferShape);
 static RegistryInferShape g_LogicalOrInferShape(mindspore::schema::PrimitiveType_LogicalOr, ArithmeticInferShape);
@@ -408,10 +506,6 @@ static RegistryInferShape g_SkipGramInferShape(mindspore::schema::PrimitiveType_
 static RegistryInferShape g_StridedSliceInferShape(mindspore::schema::PrimitiveType_StridedSlice,
                                                    StridedSliceInferShape);
 static RegistryInferShape g_StackInferShape(mindspore::schema::PrimitiveType_Stack, StackInferShape);
-
-// note: this will be added
-// static RegistryInferShape g_ArithmeticGradInferShape(mindspore::schema::PrimitiveType_ArithmeticGrad,
-// ArithmeticGradInferShape);
 
 static RegistryInferShape g_AssignInferShape(mindspore::schema::PrimitiveType_Assign, AssignInferShape);
 static RegistryInferShape g_BnGradInferShape(mindspore::schema::PrimitiveType_BatchNormGrad, BnGradInferShape);

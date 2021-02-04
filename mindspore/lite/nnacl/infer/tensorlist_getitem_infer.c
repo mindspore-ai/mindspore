@@ -33,11 +33,11 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   if (get_index->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
-  int index_ = ((int *)(get_index->data_))[0];  // note: is it wrong?
-  if (index_ < 0 || index_ > (input0->element_num_ - 1)) {
+  int index = ((int *)(get_index->data_))[0];
+  if (index < 0 || index > (input0->element_num_ - 1)) {
     return NNACL_ERR;
   }
-  TensorC *tensor_index = input0->tensors_[index_];
+  TensorC *tensor_index = input0->tensors_[index];
   TensorC *output = outputs[0];
   if (tensor_index->data_type_ != kTypeUnknown) {
     output->data_type_ = tensor_index->data_type_;
@@ -69,10 +69,10 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
         }
       }
     }
-    if (!TensorListIsFullyDefined(element_shape, element_shape_size)) {  // note: the pre is the same judge condition
+    if (!TensorListIsFullyDefined(element_shape, element_shape_size)) {  // the pre is the same judge condition
       return NNACL_ERR;
     }
-    TensorListParameter *param = (TensorListParameter *)parameter;  // note: maybe error
+    TensorListParameter *param = (TensorListParameter *)parameter;
     output->data_type_ = param->element_dtype_;
     SetShapeArray(output, element_shape, element_shape_size);
   }

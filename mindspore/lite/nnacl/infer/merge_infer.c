@@ -29,17 +29,24 @@ int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
+
   for (size_t i = 0; i < inputs_size / 2; i++) {
+    SetDataTypeFormat(outputs[i], inputs[i]);
     if (((TensorListC *)inputs[i])->data_type_ == kObjectTypeTensorType) {
       TensorListC *input_tensorlist = (TensorListC *)inputs[i];
       TensorListC *output_tensorlist = (TensorListC *)outputs[i];
-      memcpy(output_tensorlist, input_tensorlist, sizeof(TensorListC));
-      outputs[i] = (TensorC *)output_tensorlist;
-      continue;
+      ShapeSet(output_tensorlist->element_shape_, &output_tensorlist->element_shape_size_,
+               input_tensorlist->element_shape_, input_tensorlist->element_shape_size_);
+      output_tensorlist->max_elements_num_ = input_tensorlist->max_elements_num_;
+      output_tensorlist->tensors_data_type_ = input_tensorlist->tensors_data_type_;
+
+      output_tensorlist->element_num_ = input_tensorlist->element_num_;
+      for (size_t j = 0; j < output_tensorlist->element_num_; j++) {
+        memcpy(output_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
+      }
+    } else {
+      SetShapeTensor(outputs[i], inputs[i]);
     }
-    outputs[i]->data_type_ = inputs[i]->data_type_;
-    SetShapeTensor(outputs[i], inputs[i]);
-    SetDataTypeFormat(outputs[i], inputs[i]);
   }
   return NNACL_OK;
 }

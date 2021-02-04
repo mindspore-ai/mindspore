@@ -19,6 +19,7 @@
 #include <vector>
 #include "src/tensor.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/infer/common_infer.h"
 
 namespace mindspore {
 namespace lite {
@@ -26,6 +27,7 @@ int InputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vect
 int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
 void TensorC2LiteTensor(const std::vector<TensorC *> &tensors_in, std::vector<lite::Tensor *> *tensors_out);
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
+void FreeTensorListC(TensorListC *tensorListC);
 }  // namespace lite
 }  // namespace mindspore
 

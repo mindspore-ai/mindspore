@@ -29,6 +29,7 @@ TEST_F(TensorlistSetItemInferTest, TensorlistSetItemInferTest0) {
   std::vector<TensorC *> inputs(inputs_size, NULL);
   TensorListC *input0 = new TensorListC;
   input0->element_num_ = 3;
+  input0->tensors_ = reinterpret_cast<TensorC **>(malloc(input0->element_num_ * sizeof(TensorC *)));
   input0->element_shape_size_ = 2;
   input0->element_shape_[0] = 2;
   input0->element_shape_[1] = 4;

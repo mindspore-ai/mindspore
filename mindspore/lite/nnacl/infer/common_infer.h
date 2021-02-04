@@ -110,13 +110,6 @@ typedef enum TypeIdC {
   kNumberTypeEnd
 } TypeIdC;
 
-enum PrimitiveType {
-  PrimitiveType_MaximumGrad,
-  PrimitiveType_MinimumGrad,
-  PrimitiveType_AddGrad,
-  PrimitiveType_SubGrad,
-};
-
 enum NNACLLshProjectionType {
   LshProjectionType_UNKNOWN = 0,
   LshProjectionType_SPARSE = 1,
@@ -125,24 +118,21 @@ enum NNACLLshProjectionType {
   LshProjectionType_MAX = LshProjectionType_DENSE
 };
 
-#define MAX_PTR_ELEMENT 20
 typedef struct vvector {
-  int *shape_[MAX_PTR_ELEMENT];  // note:
-  int shape_size_[MAX_PTR_ELEMENT];
-  size_t size_;
+  int **shape_;      // value of shapes
+  int *shape_size_;  // size of shape
+  size_t size_;      // number of shapes
 } vvector;
 
 typedef struct TensorListC {
   int data_type_;
-  TensorC *tensors_[MAX_PTR_ELEMENT];
-  size_t element_num_;
-
-  int tensors_data_type_;  // note: element_data_type_ ?
-  int element_shape_[MAX_SHAPE_SIZE];
-  size_t element_shape_size_;
-
   int format_;
 
+  TensorC **tensors_;
+  size_t element_num_;
+  int tensors_data_type_;  // element_data_type_, keep same as c++
+  int element_shape_[MAX_SHAPE_SIZE];
+  size_t element_shape_size_;
   int max_elements_num_;
 } TensorListC;
 
