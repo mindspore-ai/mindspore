@@ -222,8 +222,16 @@ void ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const Pa
       return;
     }
     if (this->fmk_type_ == lite::converter::FmkType_TF) {
-      for (int i = 0; i < weight_shape_size; i++) {
-        tmp_weight_data[i] = weight_data[i] * trans_scale[i % kernel_num];
+      auto group = primc->GetGroup();
+      auto cin_group = weight_tensor->tensor_shape()[3] / group;
+      int area_size = weight_tensor->tensor_shape()[0] * weight_tensor->tensor_shape()[1];
+      for (int j = 0; j < area_size; j++) {
+        for (int i = 0; i < kernel_num; ++i) {
+          for (int k = 0; k < cin_group; ++k) {
+            tmp_weight_data[k + i * cin_group + j * kernel_num * cin_group] =
+              weight_data[k + i * cin_group + j * kernel_num * cin_group] * trans_scale[i];
+          }
+        }
       }
     } else {
       auto group = primc->GetGroup();
