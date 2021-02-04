@@ -45,7 +45,7 @@ Dataset used: [COCO2014](https://cocodataset.org/#download)
 
 - Dataset size: 19G, 123,287 images, 80 object categories.
     - Train：13G, 82,783 images
-    - Val：6GM, 40,504 images
+    - Val：6G, 40,504 images
     - Annotations: 241M, Train/Val annotations
 - Data format：zip files
     - Note：Data will be processed in yolo_dataset.py, and unzip files before uses it.
