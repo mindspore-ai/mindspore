@@ -454,10 +454,13 @@ def prim_attr_register(fn):
     """
 
     def deco(self, *args, **kwargs):
+        class_name = self.__class__.__name__
+        if hasattr(self.__class__, "substitute_name"):
+            class_name = self.__class__.substitute_name
         if isinstance(self, PrimitiveWithInfer):
-            PrimitiveWithInfer.__init__(self, self.__class__.__name__)
+            PrimitiveWithInfer.__init__(self, class_name)
         elif isinstance(self, PrimitiveWithCheck):
-            PrimitiveWithCheck.__init__(self, self.__class__.__name__)
+            PrimitiveWithCheck.__init__(self, class_name)
         else:
             Primitive.__init__(self, self.__class__.__name__)
         bound_args = inspect.signature(fn).bind(self, *args, **kwargs)

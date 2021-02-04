@@ -26,6 +26,7 @@ from .. import signature as sig
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
+from ...common._decorator import deprecated
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 
 
@@ -2970,14 +2971,24 @@ class GeLU(PrimitiveWithInfer):
         return input_x
 
 
-def Gelu():
+class Gelu(PrimitiveWithInfer):
     """
-    Gaussian Error Linear Units activation function.
+    Same as operator GeLU. Gelu will be deprecated in the future.
+    Please use GeLU instead.
+    """
 
-    The usage of Gelu is deprecated. Please use GeLU.
-    """
-    logger.warning("WARN_DEPRECATED: The usage of Gelu is deprecated. Please use GeLU.")
-    return GeLU()
+    @deprecated("1.1", "GeLU", True)
+    @prim_attr_register
+    def __init__(self):
+        """Initialize GeLU"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, input_x):
+        return input_x
+
+    def infer_dtype(self, input_x):
+        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
+        return input_x
 
 
 class FastGeLU(PrimitiveWithInfer):
@@ -3022,14 +3033,25 @@ class FastGeLU(PrimitiveWithInfer):
         return input_x
 
 
-def FastGelu():
+class FastGelu(PrimitiveWithInfer):
     """
-    Fast Gaussian Error Linear Units activation function.
+    Same as operator FastGeLU. FastGelu will be deprecated in the future.
+    Please use FastGeLU instead.
+    """
 
-    The usage of FastGelu is deprecated. Please use FastGeLU.
-    """
-    logger.warning("WARN_DEPRECATED: The usage of FastGelu is deprecated. Please use FastGeLU.")
-    return FastGeLU()
+    @deprecated("1.1", "FastGeLU", True)
+    @prim_attr_register
+    def __init__(self):
+        """init FastGeLU"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, input_x):
+        return input_x
+
+    def infer_dtype(self, input_x):
+        validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
+        return input_x
+
 
 
 class GetNext(PrimitiveWithInfer):
