@@ -106,7 +106,9 @@ uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL)) {
     auto device_ptr = MallocMemFromMemPool(size);
-    MS_EXCEPTION_IF_NULL(device_ptr);
+    if (device_ptr == nullptr) {
+      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << size;
+    }
     return AddressOffset(device_ptr, 0);
   }
 

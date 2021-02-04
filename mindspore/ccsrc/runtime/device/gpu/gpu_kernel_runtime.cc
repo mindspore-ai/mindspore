@@ -302,7 +302,7 @@ void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph)
     auto output_size = kernel_mod->GetOutputSizeList();
     auto ret = mem_manager_->MallocMemFromMemPool(device_address, output_size[output_index]);
     if (!ret) {
-      MS_LOG(EXCEPTION) << "Cannot alloc address, tensor size is: " << output_size[output_index];
+      MS_LOG(EXCEPTION) << "Device memory isn't enough and alloc failed, alloc size:" << output_size[output_index];
     }
 
     for (auto &node : item) {
@@ -662,8 +662,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
         if (profiler_inst->GetEnableFlag()) {
           profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), stream_);
         }
-        CHECK_OP_RET_WITH_EXCEPT(kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_),
-                                 "Launch kernel failed.");
+        if (!kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_)) {
+          MS_LOG(EXCEPTION) << "Launch kernel failed: " << kernel->fullname_with_scope();
+        }
         if (profiler_inst->GetEnableFlag()) {
           profiler_inst->OpDataProducerEnd();
           if (profiler_inst->GetSyncEnableFlag()) {
