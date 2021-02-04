@@ -647,49 +647,6 @@ def get_bprop_fast_gelu_2(self):
 
     return bprop
 
-
-@bprop_getters.register(P.FusedBatchNorm)
-def get_bprop_fused_batch_norm(self):
-    """Grad definition for `FusedBatchNorm` operation."""
-    input_grad = G.FusedBatchNormGrad(self.epsilon, self.momentum)
-    target_cpu = False
-    if self.target == "CPU":
-        input_grad = G.FusedBatchNormGradCPU(self.epsilon, self.momentum)
-        target_cpu = True
-
-    def bprop(x, scale, b, mean, variance, out, dout):
-        saved_mean = out[3]
-        saved_variance = out[4]
-        if target_cpu:
-            out = input_grad(dout[0], x, scale, b, saved_mean, saved_variance)
-        else:
-            out = input_grad(dout[0], x, scale, saved_mean, saved_variance)
-        dx = out[0]
-        dscale = out[1]
-        dbias = out[2]
-        return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
-
-    return bprop
-
-
-@bprop_getters.register(P.FusedBatchNormEx)
-def get_bprop_fused_batch_norm_ex(self):
-    """Grad definition for `FusedBatchNormEx` operation."""
-    input_grad = G.FusedBatchNormGradEx(self.epsilon, self.momentum, self.format)
-
-    def bprop(x, scale, b, mean, variance, out, dout):
-        saved_mean = out[3]
-        saved_variance = out[4]
-        reserve = out[5]
-        out = input_grad(dout[0], x, scale, saved_mean, saved_variance, reserve)
-        dx = out[0]
-        dscale = out[1]
-        dbias = out[2]
-        return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
-
-    return bprop
-
-
 @bprop_getters.register(P.InstanceNorm)
 def get_bprop_instance_norm(self):
     """Grad definition for `InstanceNorm` operation."""
@@ -715,12 +672,14 @@ def get_bprop_batch_norm(self):
 
     def bprop(x, scale, b, mean, variance, out, dout):
         if is_training:
-            saved_reserve_1 = out[3]
-            saved_reserve_2 = out[4]
+            saved_mean = out[3]
+            saved_variance = out[4]
+            reserve = out[2]
         else:
-            saved_reserve_1 = mean
-            saved_reserve_2 = variance
-        out = input_grad(dout[0], x, scale, saved_reserve_1, saved_reserve_2)
+            saved_mean = mean
+            saved_variance = variance
+            reserve = out[2]
+        out = input_grad(dout[0], x, scale, saved_mean, saved_variance, reserve)
         dx = out[0]
         dscale = out[1]
         dbias = out[2]

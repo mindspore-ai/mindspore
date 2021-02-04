@@ -16,6 +16,10 @@ Previously MakeRefKey is an external interface that is not used, now make it an 
 
 Previously the number of outputs of these operator is different on different backends. To unify their definition we change their output on Ascend backend from multiple to a single.
 
+##### `P.FusedBatchNorm`, `P.FusedBatchNormEx` deleted ([!12115](https://gitee.com/mindspore/mindspore/pulls/12115))
+
+The FusedBatchNorm and FusedBatchNormEx interface has been deleted. Please use the batchnorm operator to replace it.
+
 # MindSpore 1.1.1 Release Notes
 
 ## MindSpore

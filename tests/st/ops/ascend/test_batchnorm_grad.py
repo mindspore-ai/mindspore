@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class Grad(nn.Cell):
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.bn = P.FusedBatchNorm()
+        self.bn = P.BatchNorm()
         self.scale = Parameter(initializer('ones', [64]), name='scale')
         self.b = Parameter(initializer('zeros', [64]), name='b')
         self.mean = Parameter(initializer('ones', [64]), name='mean')

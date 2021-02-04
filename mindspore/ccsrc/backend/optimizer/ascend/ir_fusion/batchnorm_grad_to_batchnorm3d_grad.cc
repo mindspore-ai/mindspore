@@ -33,7 +33,7 @@ CNodePtr CreateBatchNorm3DGrad(const FuncGraphPtr &graph, const CNodePtr &batchn
   MS_EXCEPTION_IF_NULL(batchnorm_grad);
   auto prim = std::make_shared<Primitive>(kBatchNorm3DGradOpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim)};
-  for (size_t i = 1; i < batchnorm_grad->size(); ++i) {
+  for (size_t i = 1; i < batchnorm_grad->size() - 1; ++i) {
     inputs.push_back(batchnorm_grad->input(i));
   }
   auto new_node = graph->NewCNode(inputs);

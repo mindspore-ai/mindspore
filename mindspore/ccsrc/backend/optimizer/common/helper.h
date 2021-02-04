@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ constexpr size_t kBN1OutputNum = 2;
 constexpr size_t kBN2OutputNum = 3;
 constexpr size_t kBN3OutputNum = 1;
 
-constexpr size_t kBNGradInputTensorNum = 5;
+constexpr size_t kBNGradInputTensorNum = 6;
+constexpr size_t kSyncBNGradInputTensorNum = 5;
 constexpr size_t kBNGradOutputNum = 3;
 
 constexpr size_t kBNGrad1OutputNum = 3;

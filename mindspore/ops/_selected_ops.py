@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,12 +44,6 @@ class ReduceMean:
 
 @op_selector
 class BiasAdd:
-    def __call__(self, *args):
-        pass
-
-
-@op_selector
-class FusedBatchNorm:
     def __call__(self, *args):
         pass
 

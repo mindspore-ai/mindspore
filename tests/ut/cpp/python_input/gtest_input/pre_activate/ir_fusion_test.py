@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import _constants as Constants
 
 # pylint: disable=unused-variable
@@ -25,7 +24,6 @@ allreduce = P.AllReduce()
 allreduce.add_prim_attr('fusion', 1)
 make_tuple = Primitive("MakeTuple")
 conv = P.Conv2D(out_channel=64, kernel_size=7, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1)
-bn = P.FusedBatchNorm()
 relu = P.ReLU()
 conv_bn1 = Primitive('ConvBN1')
 bn2_add_relu = Primitive('BN2AddRelu')
@@ -33,7 +31,6 @@ bn2_relu = Primitive('BN2Relu')
 fused_bn1 = Primitive('FusedBN1')
 fused_bn2 = Primitive('FusedBN2')
 fused_bn3 = Primitive('FusedBN3')
-bn_grad = G.FusedBatchNormGrad()
 bn_grad1 = Primitive('BNGrad1')
 bn_grad2 = Primitive('BNGrad2')
 bn_grad3 = Primitive('BNGrad3')
@@ -48,73 +45,6 @@ class FnDict:
 
     def __getitem__(self, name):
         return self.fnDict[name]
-
-
-def test_bn_split(tag):
-    """ test_split_bn_fusion """
-    fns = FnDict()
-
-    @fns
-    def before(x, scale, b, mean, variance):
-        bn_output = bn(x, scale, b, mean, variance)
-        item0 = tuple_getitem(bn_output, 0)
-        return item0
-
-    @fns
-    def after(x, scale, b, mean, variance):
-        fused_bn1_output = fused_bn1(x)
-        fused_bn2_input0 = tuple_getitem(fused_bn1_output, 0)
-        fused_bn2_input1 = tuple_getitem(fused_bn1_output, 1)
-        fused_bn2_output = fused_bn2(fused_bn2_input0, fused_bn2_input1, mean, variance)
-        fused_bn3_input1 = tuple_getitem(fused_bn2_output, 0)
-        fused_bn3_input2 = tuple_getitem(fused_bn2_output, 1)
-        fused_bn3_output = fused_bn3(x, fused_bn3_input1, fused_bn3_input2, scale, b)
-        output1 = tuple_getitem(fused_bn2_output, 2)
-        output2 = tuple_getitem(fused_bn2_output, 3)
-        output3 = tuple_getitem(fused_bn2_output, 0)
-        output4 = tuple_getitem(fused_bn2_output, 1)
-        output = make_tuple(fused_bn3_output, output1, output2, output3, output4)
-        item0 = tuple_getitem(output, 0)
-        return make_tuple(item0)
-
-    return fns[tag]
-
-
-def test_bn_grad_split(tag):
-    """ test_bn_grad_split """
-    fns = FnDict()
-
-    @fns
-    def before(dy, x, scale, save_mean, save_inv_variance):
-        bn_grad_output = bn_grad(dy, x, scale, save_mean, save_inv_variance)
-        item0 = tuple_getitem(bn_grad_output, 0)
-        item1 = tuple_getitem(bn_grad_output, 1)
-        item2 = tuple_getitem(bn_grad_output, 2)
-        output = make_tuple(item0, item1, item2)
-        res = tuple_getitem(output, 0)
-        return res
-
-    @fns
-    def after(i0, i1, i2, i3, i4):
-        bn_grad1_output = bn_grad1(i0, i1, i3)
-        bn_grad1_item0 = tuple_getitem(bn_grad1_output, 0)
-        bn_grad1_item1 = tuple_getitem(bn_grad1_output, 1)
-        bn_grad1_item2 = tuple_getitem(bn_grad1_output, 2)
-        bn_grad2_output = bn_grad2(bn_grad1_item0, bn_grad1_item1, i4, i2)
-        bn_grad2_item0 = tuple_getitem(bn_grad2_output, 0)
-        bn_grad2_item1 = tuple_getitem(bn_grad2_output, 1)
-        bn_grad2_item2 = tuple_getitem(bn_grad2_output, 2)
-        bn_grad2_item3 = tuple_getitem(bn_grad2_output, 3)
-        bn_grad2_item4 = tuple_getitem(bn_grad2_output, 4)
-        bn_grad3_output = bn_grad3(i0, bn_grad2_item2, bn_grad2_item3, bn_grad2_item4, bn_grad1_item2)
-        bn_grad_make_tuple = make_tuple(bn_grad3_output, bn_grad2_item0, bn_grad2_item1)
-        item0 = tuple_getitem(bn_grad_make_tuple, 0)
-        item1 = tuple_getitem(bn_grad_make_tuple, 1)
-        item2 = tuple_getitem(bn_grad_make_tuple, 2)
-        output = make_tuple(item0, item1, item2)
-        return make_tuple(tuple_getitem(output, 0))
-
-    return fns[tag]
 
 
 def test_all_reduce_fusion_all(tag):

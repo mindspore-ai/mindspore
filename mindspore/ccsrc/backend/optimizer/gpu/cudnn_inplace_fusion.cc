@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,7 @@ struct AnfNodeIndex {
 };
 
 // opname, output idx
-std::map<string, uint32_t> kInplaceOpNames = {{kConv2DBackpropInputOpName, 0},
-                                              {kFusedBatchNormGradExWithAddAndActivation, 3}};
+std::map<string, uint32_t> kInplaceOpNames = {{kConv2DBackpropInputOpName, 0}, {kBatchNormGradWithAddAndActivation, 3}};
 
 std::set<string> kSkipOpNames = {
   kTensorAddOpName,
@@ -51,7 +50,7 @@ std::set<string> kSkipOpNames = {
 
 // opname, input idx
 std::map<string, uint32_t> kAggregatesOpNames = {
-  {kConv2DBackpropInputOpName, 0}, {kmaxPoolGradOpName, 2}, {kFusedBatchNormGradExWithAddAndActivation, 0}};
+  {kConv2DBackpropInputOpName, 0}, {kmaxPoolGradOpName, 2}, {kBatchNormGradWithAddAndActivation, 0}};
 
 constexpr size_t inplace_node_size = 2;
 

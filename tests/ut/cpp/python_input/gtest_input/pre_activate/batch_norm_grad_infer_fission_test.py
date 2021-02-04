@@ -39,28 +39,28 @@ def test_batch_norm_grad_infer_fission(tag):
     fns = FnDict()
 
     @fns
-    def before(input0, input1, input2, input3, input4):
-        batch_norm = BatchNormGradInfer(input0, input1, input2, input3, input4)
+    def before(input0, input1, input2, input3, input4, input5):
+        batch_norm = BatchNormGradInfer(input0, input1, input2, input3, input4, input5)
         outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 1), tuple_getitem(batch_norm, 2))
         output = tuple_getitem(outputs, 0)
         return output
 
     @fns
-    def before_is_training(input0, input1, input2, input3, input4):
-        batch_norm = BatchNormGradTraining(input0, input1, input2, input3, input4)
+    def before_is_training(input0, input1, input2, input3, input4, input5):
+        batch_norm = BatchNormGradTraining(input0, input1, input2, input3, input4, input5)
         outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 1), tuple_getitem(batch_norm, 2))
         output = tuple_getitem(outputs, 0)
         return output
 
     @fns
-    def before_output3_not_null(input0, input1, input2, input3, input4):
-        batch_norm = BatchNormGradInfer(input0, input1, input2, input3, input4)
-        outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 1), tuple_getitem(batch_norm, 3))
+    def before_output3_not_null(input0, input1, input2, input3, input4, input5):
+        batch_norm = BatchNormGradInfer(input0, input1, input2, input3, input4, input5)
+        outputs = make_tuple(tuple_getitem(batch_norm, 0), tuple_getitem(batch_norm, 1), tuple_getitem(batch_norm, 2))
         output = tuple_getitem(outputs, 0)
         return output
 
     @fns
-    def after(input0, input1, input2, input3, input4):
+    def after(input0, input1, input2, input3, input4, input5):
         bn_infer_grad = BNInferGrad(input0, input2, input4)
         bn_training_update_grad = BNTrainingUpdateGrad(input0, input1, input3, input4)
         outputs = make_tuple(bn_infer_grad, tuple_getitem(bn_training_update_grad, 0),

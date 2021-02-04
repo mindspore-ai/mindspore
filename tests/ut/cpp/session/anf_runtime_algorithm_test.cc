@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,7 +221,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputTensorNum) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
   // test fused batch norm as input
-  inputs.push_back(NewValueNode(prim::kPrimFusedBatchNorm));
+  inputs.push_back(NewValueNode(prim::kPrimBatchNorm));
   auto bn = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(bn);
   std::vector<int64_t> shp{2, 32, 224, 224};
@@ -417,7 +417,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
 TEST_F(AnfRuntimeAlgorithmTest, GetOutputInferDataTypeTest) {
   auto kernel_graph = std::make_shared<KernelGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimFusedBatchNorm));
+  inputs.push_back(NewValueNode(prim::kPrimBatchNorm));
   auto bn = kernel_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(bn);
   std::vector<int64_t> shp{2, 32, 224, 224};

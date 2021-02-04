@@ -197,12 +197,12 @@ class BatchNormGrad(PrimitiveWithInfer):
         self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC', "NCDHW"], 'format', self.name)
 
-    def infer_shape(self, y_backprop_shape, x_shape, scale_shape, reserve_1_shape, reserve_2_shape):
+    def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape, reserve):
         validator.check("BatchNorm y_backprop_shape", y_backprop_shape, "BatchNorm x_shape", x_shape)
-        return (x_shape, scale_shape, scale_shape, reserve_1_shape, reserve_2_shape)
+        return (x_shape, scale_shape, scale_shape)
 
-    def infer_dtype(self, y_backprop_type, x_type, scale_type, reserve_1_type, reserve_2_type):
-        return (x_type, scale_type, scale_type, reserve_1_type, reserve_2_type)
+    def infer_dtype(self, y_backprop_type, x_type, scale_type, save_mean_shape, save_variance_shape, reserve):
+        return (x_type, scale_type, scale_type)
 
 
 class SyncBatchNormGrad(PrimitiveWithInfer):
@@ -706,53 +706,6 @@ class FlattenGrad(PrimitiveWithInfer):
             'dtype': args[0]['dtype'],
         }
         return out
-
-
-class FusedBatchNormGrad(Primitive):
-    """Gradients of FusedBatchNorm operation."""
-
-    @prim_attr_register
-    def __init__(self, epsilon=0.0, momentum=0.1):
-        self.init_prim_io_names(inputs=['dy', 'x', 'scale', 'save_mean', 'save_inv_variance'],
-                                outputs=['dx', 'bn_scale', 'bn_bias'])
-
-    def __call__(self, dy, x, scale, save_mean, save_inv_variance):
-        raise NotImplementedError
-
-
-class FusedBatchNormGradCPU(PrimitiveWithInfer):
-    """Gradients of FusedBatchNorm operation for CPU."""
-
-    @prim_attr_register
-    def __init__(self, epsilon=0.0, momentum=0.1):
-        self.init_prim_io_names(inputs=['dy', 'x', 'scale', 'bias', 'save_mean', 'save_inv_variance'],
-                                outputs=['dx', 'bn_scale', 'bn_bias'])
-        self.add_prim_attr('data_format', "NCHW")
-
-    def infer_shape(self, dy_shape, x_shape, scale_shape, bias_shape, save_mean_shape, save_inv_variance_shape):
-        return (x_shape, scale_shape, bias_shape)
-
-    def infer_dtype(self, dy_type, x_type, scale_type, bias_type, save_mean_type, save_inv_variance_type):
-        return (x_type, scale_type, bias_type)
-
-
-class FusedBatchNormGradEx(PrimitiveWithInfer):
-    """Gradients of FusedBatchNormEx operation."""
-
-    @prim_attr_register
-    def __init__(self, epsilon=0.0, momentum=0.1, data_format="NCHW"):
-        self.init_prim_io_names(inputs=['dy', 'x', 'scale', 'save_mean', 'save_inv_variance', 'reserve'],
-                                outputs=['dx', 'bn_scale', 'bn_bias'])
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
-        if context.get_context("device_target") != "GPU" and self.format == "NHWC":
-            raise ValueError("NHWC format only support in GPU target.")
-        self.add_prim_attr('data_format', self.format)
-
-    def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape, reserve_shape):
-        return (x_shape, scale_shape, scale_shape)
-
-    def infer_dtype(self, y_backprop_type, x_type, scale_type, save_mean_type, save_variance_type, reserve_type):
-        return (x_type, scale_type, scale_type)
 
 
 class InstanceNormGrad(PrimitiveWithInfer):

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/nn/fused_batch_norm_grad_ex_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/nn/batch_norm_grad_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradEx,
+MS_REG_GPU_KERNEL_ONE(BatchNormGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)    // dy
                         .AddInputAttr(kNumberTypeFloat32)    // x
@@ -29,8 +29,8 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradEx,
                         .AddOutputAttr(kNumberTypeFloat32)   // dx
                         .AddOutputAttr(kNumberTypeFloat32)   // dscale
                         .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                      FusedBatchNormGradExGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradEx,
+                      BatchNormGradGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(BatchNormGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)    // dy
                         .AddInputAttr(kNumberTypeFloat16)    // x
@@ -41,9 +41,9 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradEx,
                         .AddOutputAttr(kNumberTypeFloat16)   // dx
                         .AddOutputAttr(kNumberTypeFloat32)   // dscale
                         .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                      FusedBatchNormGradExGpuKernel, half)
+                      BatchNormGradGpuKernel, half)
 
-MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithActivation,
+MS_REG_GPU_KERNEL_ONE(BatchNormGradWithActivation,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)    // dy
                         .AddInputAttr(kNumberTypeFloat32)    // x
@@ -56,8 +56,8 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithActivation,
                         .AddOutputAttr(kNumberTypeFloat32)   // dx
                         .AddOutputAttr(kNumberTypeFloat32)   // dscale
                         .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                      FusedBatchNormGradExGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithActivation,
+                      BatchNormGradGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(BatchNormGradWithActivation,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)    // dy
                         .AddInputAttr(kNumberTypeFloat16)    // x
@@ -70,9 +70,9 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithActivation,
                         .AddOutputAttr(kNumberTypeFloat16)   // dx
                         .AddOutputAttr(kNumberTypeFloat32)   // dscale
                         .AddOutputAttr(kNumberTypeFloat32),  // dbias
-                      FusedBatchNormGradExGpuKernel, half)
+                      BatchNormGradGpuKernel, half)
 
-MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithAddAndActivation,
+MS_REG_GPU_KERNEL_ONE(BatchNormGradWithAddAndActivation,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)    // dy
                         .AddInputAttr(kNumberTypeFloat32)    // x
@@ -86,8 +86,8 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithAddAndActivation,
                         .AddOutputAttr(kNumberTypeFloat32)   // dscale
                         .AddOutputAttr(kNumberTypeFloat32)   // dbias
                         .AddOutputAttr(kNumberTypeFloat32),  // dz
-                      FusedBatchNormGradExGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithAddAndActivation,
+                      BatchNormGradGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(BatchNormGradWithAddAndActivation,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)    // dy
                         .AddInputAttr(kNumberTypeFloat16)    // x
@@ -101,6 +101,6 @@ MS_REG_GPU_KERNEL_ONE(FusedBatchNormGradExWithAddAndActivation,
                         .AddOutputAttr(kNumberTypeFloat32)   // dscale
                         .AddOutputAttr(kNumberTypeFloat32)   // dbias
                         .AddOutputAttr(kNumberTypeFloat16),  // dz
-                      FusedBatchNormGradExGpuKernel, half)
+                      BatchNormGradGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -374,7 +374,7 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
     if (kernel_name == prim::kPrimConv2D->name()) {
       conv_cnt++;
     }
-    if (kernel_name == prim::kPrimFusedBatchNormEx->name()) {
+    if (kernel_name == prim::kPrimBatchNorm->name()) {
       bn_cnt++;
     }
   }

@@ -35,7 +35,7 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_fission) {
   std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list;
-  for (size_t i = 0; i < 5; ++i) {
+  for (size_t i = 0; i < 6; ++i) {
     args_spec_list.push_back(x_abstract);
   }
   auto kg = GetKernelGraph(g, args_spec_list);
@@ -56,7 +56,7 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_no_fission1) 
   std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list;
-  for (size_t i = 0; i < 5; ++i) {
+  for (size_t i = 0; i < 6; ++i) {
     args_spec_list.push_back(x_abstract);
   }
   auto kg = GetKernelGraph(g, args_spec_list);
@@ -75,7 +75,7 @@ TEST_F(TestHWBatchNormGradInferFission, test_batch_norm_grad_infer_no_fission2) 
   std::vector<int64_t> shp_x{32, 64, 112, 112};
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
   AbstractBasePtrList args_spec_list;
-  for (size_t i = 0; i < 5; ++i) {
+  for (size_t i = 0; i < 6; ++i) {
     args_spec_list.push_back(x_abstract);
   }
   auto kg = GetKernelGraph(g, args_spec_list);

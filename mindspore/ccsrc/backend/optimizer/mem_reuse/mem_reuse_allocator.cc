@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -445,9 +445,10 @@ size_t BestFitMemReuse::GetAllocatedSize() {
 bool BestFitMemReuse::IsRelease() {
   // unable_used_node include the node type that output tensor cannot be released,
   // even if its refcount is equal to zero.
-  std::unordered_set<std::string> unable_used_node = {prim::kPrimBatchNorm->name(), prim::kPrimBatchNormGrad->name(),
-                                                      prim::kPrimFusedBatchNorm->name(),
-                                                      prim::kPrimFusedBatchNormGrad->name()};
+  std::unordered_set<std::string> unable_used_node = {
+    prim::kPrimBatchNorm->name(),
+    prim::kPrimBatchNormGrad->name(),
+  };
   return unable_used_node.find(current_kernel_->kernel_name()) == unable_used_node.end();
 }
 
@@ -494,7 +495,7 @@ void BestFitMemReuse::Reuse(const MemReuseUtil *mem_reuse_util_ptr) {
 #endif
   for (const auto &op_def_ptr : op_ptr_list_) {
     current_kernel_ = op_def_ptr;
-    // releas pre_op_def
+    // release pre_op_def
     if (pre_op != nullptr) {
       ReleasePreNodeWorkspace(pre_op.get());
     }

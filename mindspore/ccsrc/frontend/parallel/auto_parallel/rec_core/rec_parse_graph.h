@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ const std::map<std::string, OperatorType> DictOpType{
   {RESHAPE, OperatorType::kRecReshape},
   {BIAS_ADD, OperatorType::kRecBiasAdd},
   {BATCH_NORM, OperatorType::kRecBatchNorm},
-  {FUSE_BATCH_NORM, OperatorType::kRecBatchNorm},
   {LAYER_NORM, OperatorType::kRecBatchNorm},
   {SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS, OperatorType::kRecSparseSoftmaxCrossEntropyWithLogits},
   {ONEHOT, OperatorType::kRecOneHot},

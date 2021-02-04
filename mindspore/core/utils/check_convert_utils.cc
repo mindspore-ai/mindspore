@@ -130,8 +130,6 @@ static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrC
   {"MaxPoolGradGradWithArgmax", FormatAndPadUpperAttrMap},
   {"BatchNorm", DataFormatMap},
   {"BatchNormGrad", DataFormatMap},
-  {"FusedBatchNormEx", DataFormatMap},
-  {"FusedBatchNormGradEx", DataFormatMap},
   {"BiasAdd", DataFormatMap},
   {"BiasAddGrad", DataFormatMap},
   {"BinaryCrossEntropy", ReductionMap},

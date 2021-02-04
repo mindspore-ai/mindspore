@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -450,12 +450,7 @@ Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
       // Experimental support for 3D data (input_size == 3).
       if (input_size >= 1 && input_size <= 4) {
         if (dim == 0) {
-          // Currently GPU version does not support partitioning ‘FusedBatchNormEx’ in its param tensors.
-          if (ops[iter_ops]->type() == "FusedBatchNormEx" && iter_op_inputs != 0) {
-            s.push_back(1);
-          } else {
-            s.push_back(std::min(max_device_num, target_tensor_batch));
-          }
+          s.push_back(std::min(max_device_num, target_tensor_batch));
         } else {
           s.push_back(1);
         }
@@ -533,8 +528,8 @@ Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector
     return PrepareOneHot(graph, ops, iter_graph, iter_ops);
   } else if ((type == SOFTMAX) || (type == LAYER_NORM)) {
     return PrepareAxisRelatedStrategy(graph, ops, iter_graph, iter_ops);
-  } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == "_VirtualDataset") ||
-             (type == "FusedBatchNormEx") || (type == "Dropout") || (type == BATCH_MATMUL)) {
+  } else if ((type == SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS) || (type == "_VirtualDataset") || (type == "Dropout") ||
+             (type == BATCH_MATMUL)) {
     return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
   } else {
     return MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);

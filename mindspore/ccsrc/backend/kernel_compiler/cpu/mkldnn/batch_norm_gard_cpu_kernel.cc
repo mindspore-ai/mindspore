@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/mkldnn/fused_batch_norm_gard_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/mkldnn/batch_norm_gard_cpu_kernel.h"
 
 #include <string>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
@@ -22,19 +22,20 @@
 
 namespace mindspore {
 namespace kernel {
-void FusedBatchNormGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+void BatchNormGradCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = shape[1] * 2 * type_size;
+  input_size_list_.pop_back();
   // [2, c] to store scale and bias
   workspace_size_list_.emplace_back(tensor_size);
   // [2, c] to store diff_scale and diff_bias
   workspace_size_list_.emplace_back(tensor_size);
 }
 
-void FusedBatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void BatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (x_shape.size() != 4) {
@@ -72,25 +73,25 @@ void FusedBatchNormGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DIFF_SCALE_SHIFT, scale_bias_desc);
 }
 
-bool FusedBatchNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
+bool BatchNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &workspace,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 5 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Error input output size!";
   }
   auto wksp_in = reinterpret_cast<float *>(workspace[0]->addr);
   auto scale_ret = memcpy_s(wksp_in, workspace[0]->size, inputs[2]->addr, inputs[2]->size);
   auto max_size = workspace[0]->size - inputs[2]->size;
-  auto bias_ret = memcpy_s(wksp_in + (inputs[2]->size / sizeof(float)), max_size, inputs[3]->addr, inputs[3]->size);
-  if (scale_ret != 0 || bias_ret != 0) {
+  auto bias_ret = memset_s(wksp_in + (inputs[2]->size / sizeof(float)), max_size, 0., max_size);
+  if (scale_ret != 0 && bias_ret != 0) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
     return false;
   }
 
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[1]->addr);
-  SetArgumentHandle(DNNL_ARG_MEAN, inputs[4]->addr);
-  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[5]->addr);
+  SetArgumentHandle(DNNL_ARG_MEAN, inputs[3]->addr);
+  SetArgumentHandle(DNNL_ARG_VARIANCE, inputs[4]->addr);
   SetArgumentHandle(DNNL_ARG_SCALE_SHIFT, workspace[0]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_SRC, outputs[0]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_SCALE_SHIFT, workspace[1]->addr);
@@ -99,7 +100,7 @@ bool FusedBatchNormGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &
   auto wksp_out = reinterpret_cast<float *>(workspace[1]->addr);
   auto diff_scale_ret = memcpy_s(outputs[1]->addr, outputs[1]->size, wksp_out, inputs[2]->size);
   auto diff_bias_ret =
-    memcpy_s(outputs[2]->addr, outputs[2]->size, wksp_out + (outputs[1]->size / sizeof(float)), inputs[3]->size);
+    memcpy_s(outputs[2]->addr, outputs[2]->size, wksp_out + (outputs[1]->size / sizeof(float)), outputs[2]->size);
   if (diff_scale_ret != 0 || diff_bias_ret != 0) {
     MS_LOG(EXCEPTION) << "Memcpy_s error.";
     return false;

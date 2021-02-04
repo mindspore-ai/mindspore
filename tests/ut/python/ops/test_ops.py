@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1749,11 +1749,6 @@ test_case_nn_ops = [
         'desc_inputs': [[2, 16], [2, 16], [2, 16], [2, 16], [16]],
         'desc_bprop': [[2, 16], [16], [16]],
         'skip': ['backward']}),
-    ('FusedBatchNormGrad', {
-        'block': G.FusedBatchNormGrad(),
-        'desc_inputs': [[128, 64, 32, 64], [128, 64, 32, 64], [64], [64], [64]],
-        'desc_bprop': [[128, 64, 32, 64], [64], [64], [64], [64]],
-        'skip': ['backward']}),
     ('BatchNorm', {
         'block': P.BatchNorm(),
         'desc_inputs': [[128, 64, 32, 32], [64], [64], [64], [64]],
@@ -1761,8 +1756,8 @@ test_case_nn_ops = [
         'skip': []}),
     ('BatchNormGrad', {
         'block': G.BatchNormGrad(),
-        'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
-        'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
+        'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64], [64]],
+        'desc_bprop': [[128, 64, 32, 32], [64], [64]],
         'skip': ['backward']}),
     ('SyncBatchNorm', {
         'block': inner.SyncBatchNorm(),

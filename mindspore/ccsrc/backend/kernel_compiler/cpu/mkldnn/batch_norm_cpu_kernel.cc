@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 #include <string>
-#include "backend/kernel_compiler/cpu/mkldnn/fused_batch_norm_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/mkldnn/batch_norm_cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
-void FusedBatchNormCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
+void BatchNormCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   CPUKernel::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
@@ -30,16 +30,13 @@ void FusedBatchNormCPUKernel::InitInputOutputSize(const CNodePtr &kernel_node) {
   workspace_size_list_.emplace_back(tensor_size);
 }
 
-void FusedBatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void BatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto node_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (node_name == "FusedBatchNorm") {
-    momentum = AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
-    is_train = true;
-  }
+  is_train = AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
+  momentum = AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
   std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (x_shape.size() != 4) {
-    MS_LOG(EXCEPTION) << "Fused batchnorm only support nchw input!";
+    MS_LOG(EXCEPTION) << "Batchnorm only support nchw input!";
   }
   batch_size = x_shape[0];
   channel = x_shape[1];
@@ -66,9 +63,9 @@ void FusedBatchNormCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, x_desc);
 }
 
-bool FusedBatchNormCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                     const std::vector<kernel::AddressPtr> &workspace,
-                                     const std::vector<kernel::AddressPtr> &outputs) {
+bool BatchNormCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                const std::vector<kernel::AddressPtr> &workspace,
+                                const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 5 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "Error input output size!";
   }

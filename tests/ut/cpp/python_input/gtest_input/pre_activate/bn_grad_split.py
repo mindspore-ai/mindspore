@@ -49,8 +49,8 @@ def test_bn_grad_split(tag):
     fns = FnDict()
 
     @fns
-    def before(i0, i1, i2, i3, i4):
-        bn_grad_output = bn_grad(i0, i1, i2, i3, i4)
+    def before(i0, i1, i2, i3, i4, i5):
+        bn_grad_output = bn_grad(i0, i1, i2, i3, i4, i5)
         item0 = tuple_getitem(bn_grad_output, 0)
         item1 = tuple_getitem(bn_grad_output, 1)
         item2 = tuple_getitem(bn_grad_output, 2)
@@ -58,7 +58,7 @@ def test_bn_grad_split(tag):
         return output
 
     @fns
-    def after1(i0, i1, i2, i3, i4):
+    def after1(i0, i1, i2, i3, i4, i5):
         bn_grad1_output = bn_grad1(i0, i1, i3)
         bn_grad1_item0 = tuple_getitem(bn_grad1_output, 0)
         bn_grad1_item1 = tuple_getitem(bn_grad1_output, 1)
@@ -78,7 +78,7 @@ def test_bn_grad_split(tag):
         return make_tuple(output)
 
     @fns
-    def after2(i0, i1, i2, i3, i4):
+    def after2(i0, i1, i2, i3, i4, i5):
         bn_update_grad_output = bn_training_update_grad(i0, i1, i3, i4)
         update_item0 = tuple_getitem(bn_update_grad_output, 0)
         update_item1 = tuple_getitem(bn_update_grad_output, 1)
