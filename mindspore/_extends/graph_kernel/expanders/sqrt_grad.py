@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ def expand_sqrtgrad(expand_info):
         graph_scope.set_input(input_x, input_dout)
 
         # cal result
-        const_two = graph_builder.value(input_x.dtype, 2, input_x.data_format)
+        const_two = graph_builder.value(input_x.dtype, 2)
         dividend = graph_builder.emit('Mul', [input_x, const_two])
         result = graph_builder.emit('RealDiv', [input_dout, dividend])
 

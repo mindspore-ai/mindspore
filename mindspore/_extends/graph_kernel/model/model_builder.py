@@ -15,7 +15,7 @@
 """GraphKernel model builder"""
 
 import copy
-from .model import PrimLib, Tensor, Value, Operator, Graph, AlignShape, AddControlBuddy
+from .model import PrimLib, Tensor, Value, Operator, Graph, AlignShape, AddControlBuddy, DataFormat
 
 
 def get_tile_output_shape(shape, multiples):
@@ -70,7 +70,7 @@ class OpInfer:
 
         real_shape = []
         for i, _ in enumerate(shape):
-            if i not in attrs['reduce_axis']:
+            if i not in attrs['reduce_axis'] and i - len(shape) not in attrs['reduce_axis']:
                 real_shape.append(shape[i])
         return real_shape
 
@@ -106,7 +106,15 @@ class OpInfer:
     @staticmethod
     def default_infer_format_func(inputs, attrs):
         """Infer format"""
-        return inputs[0].data_format
+        result = inputs[0].data_format
+        # default_format and other_format results in other_format
+        for input_tensor in inputs[1:]:
+            data_format = input_tensor.data_format
+            if data_format != DataFormat.DEFAULT:
+                if result not in [DataFormat.DEFAULT, data_format]:
+                    raise RuntimeError("Incompatible data format %s and %s" % (data_format, result))
+                result = data_format
+        return result
 
     infer_shape_func = {
         # add special infer func here
@@ -114,13 +122,20 @@ class OpInfer:
         'Reshape': lambda inputs, attrs: attrs["shape"],
         'BroadcastTo': lambda inputs, attrs: attrs["shape"],
         'Tile': lambda inputs, attrs: get_tile_output_shape(inputs[0].shape, attrs["multiples"])[0],
+        'ExpandDims': lambda inputs, attrs: list(inputs[0].shape).insert(attrs["axis"], 1),
     }
     infer_dtype_func = {
         # add special infer func here
         'Cast': lambda inputs, attrs: attrs['dst_type'],
+        'Less': lambda inputs, attrs: "bool",
+        'LessEqual': lambda inputs, attrs: "bool",
+        'Equal': lambda inputs, attrs: "bool",
+        'Greater': lambda inputs, attrs: "bool",
+        'GreaterEqual': lambda inputs, attrs: "bool",
     }
     infer_format_func = {
         # add special infer func here
+        'Reshape': lambda inputs, attrs: "DefaultFormat",
     }
 
     @classmethod
@@ -188,18 +203,12 @@ class GraphBuilder:
             shape = [1]
         return Tensor(name, shape, dtype, data_format, para_type=para_type)
 
-    def value(self, dtype, value, data_format, name=None):
+    def value(self, dtype, value, name=None):
         """Create a new Value"""
         if name in (None, ''):
             name = self._alloc_tensor_name()
 
-        if dtype == "float16":
-            # For float16 value, it will be changed to float32 wrongly. And there is no good solution for now.
-            # So instead just declare float32 value and then cast it to float16.
-            v_fp32 = Value(name, "float32", value, data_format)
-            v = self.emit("Cast", [v_fp32], attrs={"dst_type": "float16"})
-        else:
-            v = Value(name, dtype, value, data_format)
+        v = Value(name, dtype, value)
         return v
 
     def op(self, prim, output, inputs, attrs=None):

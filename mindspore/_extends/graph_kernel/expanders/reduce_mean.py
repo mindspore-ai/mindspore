@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,20 +18,13 @@ from mindspore._extends.graph_kernel.model import model_builder as builder
 
 def expand_reducemean(expand_info):
     """ReduceMean expander"""
-
     # get op info.
     input_desc = expand_info['input_desc'][0]
     attrs = expand_info['attr']
-    axis = None
-    keep_dims = None
-    for item in attrs:
-        if 'axis' in item:
-            axis = item['axis']
-        if 'keep_dims' in item:
-            keep_dims = item['keep_dims']
-    graph_builder = builder.GraphBuilder()
+    axis = attrs['axis']
+    keep_dims = attrs['keep_dims']
 
-    # generate a graph.
+    graph_builder = builder.GraphBuilder()
     with graph_builder.graph_scope('main') as graph_scope:
         # create tensor input.
         input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
@@ -49,7 +42,7 @@ def expand_reducemean(expand_info):
             for idx in axis:
                 all_shape *= x_shape[idx]
 
-        all_shape_value = graph_builder.value(input_x.dtype, all_shape, input_x.data_format)
+        all_shape_value = graph_builder.value(input_x.dtype, all_shape)
 
         if not axis:
             sum_x = graph_builder.emit('ReduceSum', [input_x], attrs={'reduce_axis': real_axis, 'keep_dims': keep_dims})

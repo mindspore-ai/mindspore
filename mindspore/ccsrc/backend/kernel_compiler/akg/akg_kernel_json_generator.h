@@ -144,6 +144,7 @@ class AkgKernelJsonGenerator {
   std::map<std::string, AnfNodePtr> address_node_map_;
   std::map<size_t, std::vector<std::string>> sub_graphs_;
   std::map<size_t, size_t> dim_infos_;
+  bool is_basic_op_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore

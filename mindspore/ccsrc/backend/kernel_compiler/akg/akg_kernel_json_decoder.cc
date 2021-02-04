@@ -19,8 +19,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <unordered_map>
-#include <unordered_set>
+#include <map>
 #include <vector>
 #include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -46,6 +45,62 @@ namespace {
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 
+class AbstractShapeCreator {
+ public:
+  using AbstractShapeTransferFunc = std::function<ShapeVector(const ShapeVector &)>;
+  /**
+   * Get an abstract shape.
+   * For a given device_shape and format, the available abstract_shape is not unique,
+   * this interface only returns a legal abstract_shape without considering padding
+   * so that the AnfAlgo's get device shape interface can get the right device_shape.
+   */
+  static ShapeVector GetFakeAbstractShape(const ShapeVector &device_shape, const std::string &format) {
+    const std::map<std::string, AbstractShapeTransferFunc> fmap{
+      {kOpFormat_NCHW, NchwAbstractShape},
+      {kOpFormat_NHWC, NhwcAbstractShape},
+      {kOpFormat_FRAC_NZ, FractalNzAbstractShape},
+    };
+    if (format == kOpFormat_ND || format == kOpFormat_DEFAULT) {
+      return device_shape;
+    }
+    auto iter = fmap.find(format);
+    if (iter == fmap.end()) {
+      MS_LOG(WARNING) << "Unexpected format[" << format << "]";
+      return device_shape;
+    }
+    return iter->second(device_shape);
+  }
+
+ private:
+  static ShapeVector NchwAbstractShape(const ShapeVector &device_shape) { return device_shape; }
+  static ShapeVector NhwcAbstractShape(const ShapeVector &device_shape) {
+    if (device_shape.size() != 4) {
+      MS_LOG(EXCEPTION) << "Shape size of NHWC should be 4, but got " << device_shape.size();
+    }
+    return {device_shape[0], device_shape[3], device_shape[1], device_shape[2]};
+  }
+  static ShapeVector FractalNzAbstractShape(const ShapeVector &device_shape) {
+    if (device_shape.size() == 1 && (device_shape[0] == 1 || device_shape[0] % kCubeSize == 0)) {
+      return device_shape;
+    }
+    if (device_shape.size() < 4) {
+      MS_LOG(EXCEPTION) << "Shape size of FRACTAL_NZ should >= 4, but got " << device_shape.size();
+    }
+    ShapeVector shape;
+    size_t dims = device_shape.size();
+    size_t batch = dims - 4;
+    for (size_t i = 0; i < batch; ++i) {
+      shape.push_back(device_shape[i]);
+    }
+    int64_t m = device_shape[dims - 3] * device_shape[dims - 2];
+    int64_t n = device_shape[dims - 4] * device_shape[dims - 1];
+    shape.push_back(m);
+    shape.push_back(n);
+
+    return shape;
+  }
+};
+
 class CNodeDecoder {
  public:
   explicit CNodeDecoder(std::map<std::string, AnfNodePtr> *nodes_map) : nodes_map_(*nodes_map) {}
@@ -66,6 +121,7 @@ class CNodeDecoder {
       return nullptr;
     }
     CreateKernelInfo(processor);
+    CreateAbstract();
     return cnode_;
   }
 
@@ -117,12 +173,8 @@ class CNodeDecoder {
 
   bool DecodeInputDesc(const nlohmann::json &cnode_json, const FuncGraphPtr &func_graph) {
     std::string op_name = cnode_json[kJsonKeyName];
-    // new primitive.
-    auto primitive = GetPrimitive(op_name);
-    if (primitive == nullptr) {
-      MS_LOG(ERROR) << "Create primitive failed.";
-      return false;
-    }
+    auto primitive = CreatePrimitiveWithAttrs(op_name);
+    MS_EXCEPTION_IF_NULL(primitive);
 
     // collect inputs.
     auto primitive_v = NewValueNode(primitive);
@@ -142,6 +194,7 @@ class CNodeDecoder {
       }
       input_formats_.push_back(input_desc[kJsonKeyFormat]);
       input_types_.push_back(DtypeToTypeId(input_desc[kJsonKeyDataType]));
+      input_shapes_.push_back(input_desc[kJsonKeyShape]);
     }
     // new cnode.
     cnode_ = func_graph->NewCNode(inputs);
@@ -160,6 +213,7 @@ class CNodeDecoder {
       nlohmann::json output_desc = output_descs[0];
       output_formats_.push_back(output_desc[kJsonKeyFormat]);
       output_types_.push_back(DtypeToTypeId(output_desc[kJsonKeyDataType]));
+      output_shapes_.push_back(output_desc[kJsonKeyShape]);
       nodes_map_[output_desc[kJsonKeyTensorName]] = cnode_;
     } else {
       // multi outputs.
@@ -167,6 +221,7 @@ class CNodeDecoder {
         nlohmann::json output_desc = output_descs[j];
         output_formats_.push_back(output_desc[kJsonKeyFormat]);
         output_types_.push_back(DtypeToTypeId(output_desc[kJsonKeyDataType]));
+        output_shapes_.push_back(output_desc[kJsonKeyShape]);
         auto get_item =
           func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode_, NewValueNode(SizeToLong(j))});
         func_graph->AddNode(get_item);
@@ -219,72 +274,29 @@ class CNodeDecoder {
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), cnode_.get());
   }
 
-  ValuePtr CreatOpInstance(const std::string &op_name, const std::vector<ValuePtr> &attrs) {
-    // python utils.
-    constexpr auto kGetPythonOpFunc = "_get_python_op";
-    constexpr auto kParallelUtilsModule = "mindspore.parallel._utils";
-    // almost all ops are defined in this path.
-    constexpr auto kOperationsModule = "mindspore.ops.operations";
-    py::module mod = py::module::import(kOperationsModule);
-    if (!py::hasattr(mod, op_name.c_str())) {
-      MS_LOG(ERROR) << kOperationsModule << " don't have attr: " << op_name;
-      return nullptr;
-    }
-    std::vector<py::object> arg_list;
-    (void)std::transform(attrs.begin(), attrs.end(), std::back_inserter(arg_list),
-                         [](const ValuePtr &attr) { return ValuePtrToPyData(attr); });
-    py::object obj = parse::python_adapter::CallPyFn(kParallelUtilsModule, kGetPythonOpFunc, op_name, kOperationsModule,
-                                                     op_name, arg_list);
-    ValuePtr op_instance = nullptr;
-    bool succ = parse::ConvertData(obj, &op_instance);
-    if (!succ) {
-      MS_LOG(ERROR) << "Get python op " << op_name << " from " << kOperationsModule << " failed.";
-      return nullptr;
-    }
-    return op_instance;
+  void CreateAbstract() {
+    auto shape = AbstractShapeCreator::GetFakeAbstractShape(output_shapes_[0], output_formats_[0]);
+    auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(output_types_[0]), shape);
+    cnode_->set_abstract(abstract);
   }
 
-  const std::map<std::string, std::vector<std::string>> op_attrs_map_ = {
-    {kReduceSumOpName, std::vector<std::string>{kAttrKeepDims}},
-    {kReduceMaxOpName, std::vector<std::string>{kAttrKeepDims}},
-    {kReduceMinOpName, std::vector<std::string>{kAttrKeepDims}},
-    {kBroadcastToOpName, std::vector<std::string>{kAttrShape}},
-  };
-
-  PrimitivePtr GetPrimitive(const std::string &op_name) {
-    PrimitivePtr primitive{nullptr};
-    if (op_attrs_map_.count(op_name) == 0) {
-      // no attrs for op instance.
-      primitive = CreatOpInstance(op_name, std::vector<ValuePtr>{})->cast<PrimitivePtr>();
-    } else {
-      // make attrs for op instance.
-      std::vector<ValuePtr> op_attrs;
-      const auto &attr_names = op_attrs_map_.at(op_name);
-      for (const auto &attr_name : attr_names) {
-        if (cnode_attrs_.count(attr_name) == 0) {
-          MS_LOG(ERROR) << "Attr: " << attr_name << " for: " << op_name << " not found.";
-          return nullptr;
-        }
-        op_attrs.push_back(cnode_attrs_.at(attr_name));
-      }
-      primitive = CreatOpInstance(op_name, op_attrs)->cast<PrimitivePtr>();
-    }
-    if (primitive != nullptr) {
-      for (const auto &attr : cnode_attrs_) {
-        primitive->AddAttr(attr.first, attr.second);
-      }
+  PrimitivePtr CreatePrimitiveWithAttrs(const std::string &op_name) {
+    auto primitive = std::make_shared<Primitive>(op_name);
+    for (const auto &attr : cnode_attrs_) {
+      primitive->AddAttr(attr.first, attr.second);
     }
     return primitive;
   }
 
-  ScalarPtr DecodeScalar(const nlohmann::json &scalar_json) {
+  tensor::TensorPtr DecodeScalar(const nlohmann::json &scalar_json) {
     auto type_id = DtypeToTypeId(scalar_json[kJsonKeyDataType]);
     switch (type_id) {
       case kNumberTypeFloat16:
+        return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat16);
       case kNumberTypeFloat32:
-        return std::make_shared<FP32Imm>(scalar_json[kJsonKeyValue]);
+        return std::make_shared<tensor::Tensor>(static_cast<float>(scalar_json[kJsonKeyValue]), kFloat32);
       case kNumberTypeInt32:
-        return std::make_shared<Int32Imm>(scalar_json[kJsonKeyValue]);
+        return std::make_shared<tensor::Tensor>(static_cast<int64_t>(scalar_json[kJsonKeyValue]), kInt32);
       default:
         MS_LOG(ERROR) << "Unknown type: " << scalar_json[kJsonKeyDataType];
         break;
@@ -294,9 +306,8 @@ class CNodeDecoder {
 
   ValueNodePtr DecodeValueNode(const nlohmann::json &value_json, const FuncGraphPtr &func_graph) {
     MS_LOG(DEBUG) << "start decode value node, " << value_json;
-    auto scalar = DecodeScalar(value_json);
-    auto tensor = ScalarToTensor(scalar);
-
+    auto tensor = DecodeScalar(value_json);
+    MS_EXCEPTION_IF_NULL(tensor);
     auto value_node = std::make_shared<ValueNode>(tensor);
     value_node->set_abstract(tensor->ToAbstract());
     // create kernel_info fo new value node.
@@ -319,6 +330,8 @@ class CNodeDecoder {
   std::vector<std::string> output_formats_;
   std::vector<TypeId> input_types_;
   std::vector<TypeId> output_types_;
+  std::vector<ShapeVector> input_shapes_;
+  std::vector<ShapeVector> output_shapes_;
   CNodePtr cnode_{nullptr};
 };
 }  // namespace
@@ -329,11 +342,16 @@ ParameterPtr AkgKernelJsonDecoder::DecodeParameter(const nlohmann::json &paramet
   ParameterPtr new_parameter = func_graph->add_parameter();
   std::string name = parameter_json[kJsonKeyTensorName];
   new_parameter->set_name(name);
+  std::string format = parameter_json[kJsonKeyFormat];
+  TypeId dtype = DtypeToTypeId(parameter_json[kJsonKeyDataType]);
+  ShapeVector shape = AbstractShapeCreator::GetFakeAbstractShape(parameter_json[kJsonKeyShape], format);
+  auto abstract = std::make_shared<abstract::AbstractTensor>(TypeIdToType(dtype), shape);
+  new_parameter->set_abstract(abstract);
   auto kernel_info = std::make_shared<device::KernelInfo>();
   new_parameter->set_kernel_info(kernel_info);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-  builder->SetOutputsFormat(std::vector<std::string>{parameter_json[kJsonKeyFormat]});
-  builder->SetOutputsDeviceType(std::vector<TypeId>{DtypeToTypeId(parameter_json[kJsonKeyDataType])});
+  builder->SetOutputsFormat(std::vector<std::string>{format});
+  builder->SetOutputsDeviceType(std::vector<TypeId>{dtype});
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), new_parameter.get());
   nodes_map_[name] = new_parameter;
   return new_parameter;
@@ -349,6 +367,7 @@ CNodePtr AkgKernelJsonDecoder::DecodeCNode(const nlohmann::json &cnode_json, con
 AnfNodePtr AkgKernelJsonDecoder::DecodeOutput(const std::vector<nlohmann::json> &output_descs,
                                               const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> outputs{NewValueNode(prim::kPrimMakeTuple)};
+  AbstractBasePtrList output_abstract_list;
   for (const auto &output_desc : output_descs) {
     std::string name = output_desc[kJsonKeyTensorName];
     if (nodes_map_.count(name) == 0) {
@@ -356,11 +375,13 @@ AnfNodePtr AkgKernelJsonDecoder::DecodeOutput(const std::vector<nlohmann::json> 
       return nullptr;
     }
     outputs.push_back(nodes_map_[name]);
+    output_abstract_list.push_back(outputs.back()->abstract());
   }
   if (outputs.size() == 2) {
     func_graph->set_output(outputs[1]);
   } else {
     auto output = func_graph->NewCNode(outputs);
+    output->set_abstract(std::make_shared<abstract::AbstractTuple>(output_abstract_list));
     func_graph->AddNode(output);
     func_graph->set_output(output);
   }

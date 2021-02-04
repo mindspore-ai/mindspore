@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,12 +45,11 @@ def expand_gelugrad(expand_info):
         graph_scope.set_input(input_dy, input_x, input_y)
 
         # create some const var
-        const_csvalue = graph_builder.value(input_dy.dtype, CSVALUE, input_desc_0['format'])
-        const_csvalue_sqrt_two_div_pi = graph_builder.value(
-            input_dy.dtype, CSVALUE_SQRT_TWO_DIV_PI, input_desc_0['format'])
-        const_csvalue_tri = graph_builder.value(input_dy.dtype, CSVALUE_TRI, input_desc_0['format'])
-        const_one = graph_builder.value(input_dy.dtype, ONE, input_desc_0['format'])
-        const_half = graph_builder.value(input_dy.dtype, HALF, input_desc_0['format'])
+        const_csvalue = graph_builder.value(input_dy.dtype, CSVALUE)
+        const_csvalue_sqrt_two_div_pi = graph_builder.value(input_dy.dtype, CSVALUE_SQRT_TWO_DIV_PI)
+        const_csvalue_tri = graph_builder.value(input_dy.dtype, CSVALUE_TRI)
+        const_one = graph_builder.value(input_dy.dtype, ONE)
+        const_half = graph_builder.value(input_dy.dtype, HALF)
 
         # cal mul_right
         mul_double = graph_builder.emit('Mul', [input_x, input_x])

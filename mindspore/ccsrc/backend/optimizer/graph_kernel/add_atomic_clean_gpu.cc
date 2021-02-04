@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -393,6 +393,14 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
                                         broadcast_input_node};
   auto broadcast_to_node_inner = CreateCNode(
     atomic_clean_inputs, new_sub_graph, {.format = format, .shape = dst_shape_vec, .type = GetType(atomic_add_node_)});
+
+  auto device_shape = AnfAlgo::GetOutputDeviceShape(atomic_add_node_, 0);
+  dst_shape_vec.clear();
+  if (device_shape.empty()) {
+    dst_shape_vec.push_back(1);
+  } else {
+    std::transform(device_shape.begin(), device_shape.end(), std::back_inserter(dst_shape_vec), SizeToLong);
+  }
   SetNodeAttrSafely("shape", MakeValue(dst_shape_vec), broadcast_to_node_inner);
 
   // Makeup sub-graph.

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,11 +21,7 @@ def expand_logsoftmaxgrad(expand_info):
     # get op info.
     input_desc_0 = expand_info['input_desc'][0]
     input_desc_1 = expand_info['input_desc'][1]
-    attrs = expand_info['attr']
-    axis = None
-    for item in attrs:
-        if 'axis' in item:
-            axis = item['axis']
+    axis = expand_info['attr']['axis']
     graph_builder = builder.GraphBuilder()
 
     if isinstance(axis, int):

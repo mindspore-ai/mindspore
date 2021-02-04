@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,18 +20,31 @@ from mindspore import log as logger
 import mindspore._extends.graph_kernel.expanders as expanders
 
 
+def extract_expand_info(kernel_info):
+    """Convert the json into a more friendly format"""
+    input_desc = []
+    if 'input_desc' in kernel_info and kernel_info['input_desc']:
+        for desc in kernel_info['input_desc']:
+            input_desc += desc
+    attrs = {}
+    if 'attr' in kernel_info and kernel_info['attr']:
+        for attr in kernel_info["attr"]:
+            attrs[attr["name"]] = attr["value"]
+    expand_info = {
+        "name": kernel_info["name"],
+        "input_desc": input_desc,
+        "output_desc": kernel_info["output_desc"],
+        "attr": attrs,
+        "process": kernel_info["process"],
+    }
+    return expand_info
+
+
 def get_op_expander(json_str: str):
     """get op expander by json info"""
     try:
         kernel_info = json.loads(json_str)
-        expand_info = kernel_info['expand_info']
-
-        if 'name' not in expand_info:
-            logger.error("expand info have no op name")
-            return None
-        if 'process' not in expand_info:
-            logger.error("expand info have no processor info")
-            return None
+        expand_info = extract_expand_info(kernel_info)
 
         processor = expand_info['process']
         op_name = str(expand_info['name']).lower()

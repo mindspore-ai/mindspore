@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,16 +24,10 @@ def expand_layernormgrad(expand_info):
     var_desc = expand_info['input_desc'][2]
     mean_desc = expand_info['input_desc'][3]
     gamma_desc = expand_info['input_desc'][4]
-    begin_norm_axis = None
-    begin_params_axis = None
-    epsilon = 1e-11
-    for item in expand_info['attr']:
-        if 'begin_norm_axis' in item:
-            begin_norm_axis = item['begin_norm_axis']
-        if 'begin_params_axis' in item:
-            begin_params_axis = item['begin_params_axis']
-        if 'epsilon' in item:
-            epsilon = item['epsilon']
+    attrs = expand_info['attr']
+    begin_norm_axis = attrs['begin_norm_axis']
+    begin_params_axis = attrs['begin_params_axis']
+    epsilon = attrs['epsilon'] if 'epsilon' in attrs else 1e-11
 
     shape_x = x_desc['shape']
     if begin_norm_axis < 0:
@@ -57,13 +51,13 @@ def expand_layernormgrad(expand_info):
         graph_scope.set_input(x, dy, variance, mean, gamma)
 
         # set some constant val.
-        eps = graph_builder.value(x.dtype, epsilon, x.data_format)
-        const_one = graph_builder.value(x.dtype, 1.0, x.data_format)
-        const_neg_half = graph_builder.value(x.dtype, -0.5, x.data_format)
-        const_neg_two = graph_builder.value(x.dtype, -2.0, x.data_format)
-        const_two = graph_builder.value(x.dtype, 2.0, x.data_format)
-        const_neg_one = graph_builder.value(x.dtype, -1.0, x.data_format)
-        mean_cof = graph_builder.value(x.dtype, (1.0 / reduce_size), x.data_format)
+        eps = graph_builder.value(x.dtype, epsilon)
+        const_one = graph_builder.value(x.dtype, 1.0)
+        const_neg_half = graph_builder.value(x.dtype, -0.5)
+        const_neg_two = graph_builder.value(x.dtype, -2.0)
+        const_two = graph_builder.value(x.dtype, 2.0)
+        const_neg_one = graph_builder.value(x.dtype, -1.0)
+        mean_cof = graph_builder.value(x.dtype, (1.0 / reduce_size))
 
         # cal dg db
         var_eps = graph_builder.emit('Add', [variance, eps])

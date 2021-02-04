@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,18 +18,11 @@ from mindspore._extends.graph_kernel.model import model_builder as builder
 
 def expand_tile(expand_info):
     """Tile expander"""
-
-    # get op info.
     input_desc = expand_info['input_desc'][0]
-    attrs = expand_info['attr']
-    multiples = None
-    for item in attrs:
-        if 'multiples' in item:
-            multiples = item['multiples']
+    multiples = expand_info['attr']['multiples']
     output_shape, _, _, shape_compatible = builder.get_tile_output_shape(input_desc['shape'], multiples)
-    graph_builder = builder.GraphBuilder()
 
-    # generate a graph.
+    graph_builder = builder.GraphBuilder()
     with graph_builder.graph_scope('main') as graph_scope:
         # create tensor input.
         input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])

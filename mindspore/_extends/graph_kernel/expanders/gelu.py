@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,17 +40,16 @@ def expand_gelu(expand_info):
         # cal y
         mul_0 = graph_builder.emit('Mul', [input_x, input_x])
         pow_0 = graph_builder.emit('Mul', [mul_0, input_x])
-        const_csvalue = graph_builder.value(pow_0.dtype, CSVALUE, input_desc['format'])
+        const_csvalue = graph_builder.value(pow_0.dtype, CSVALUE)
         mul_1 = graph_builder.emit('Mul', [pow_0, const_csvalue])
         tanh_res = graph_builder.emit('Add', [input_x, mul_1])
-        const_csvalue_sqrt_two_div_pi = graph_builder.value(
-            tanh_res.dtype, CSVALUE_SQRT_TWO_DIV_PI, input_desc['format'])
+        const_csvalue_sqrt_two_div_pi = graph_builder.value(tanh_res.dtype, CSVALUE_SQRT_TWO_DIV_PI)
         y = graph_builder.emit('Mul', [tanh_res, const_csvalue_sqrt_two_div_pi])
 
         # cal gelu(x)
         tanh_y = graph_builder.emit('Tanh', [y])
-        const_one = graph_builder.value(tanh_y.dtype, ONE, input_desc['format'])
-        const_half = graph_builder.value(tanh_y.dtype, HALF, input_desc['format'])
+        const_one = graph_builder.value(tanh_y.dtype, ONE)
+        const_half = graph_builder.value(tanh_y.dtype, HALF)
         tanh_y_add_one = graph_builder.emit('Add', [tanh_y, const_one])
         mul_x = graph_builder.emit('Mul', [input_x, tanh_y_add_one])
         result = graph_builder.emit('Mul', [const_half, mul_x])

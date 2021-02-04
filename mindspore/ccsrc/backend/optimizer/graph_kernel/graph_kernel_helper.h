@@ -61,7 +61,6 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> MixedNodesTransToGraph(
                                                                                 AnfNodePtrList *src_outputs = nullptr);
 void SetNewKernelInfo(const AnfNodePtr &new_node, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
                       const AnfNodePtrList &outputs, kernel::Processor processor);
-AnfNodePtrList GetExpandOuts(const AnfNodePtrList &outs);
 AnfNodePtr CreateNewFuseCNode(const FuncGraphPtr &kernel_graph, const FuncGraphPtr &fg, const AnfNodePtrList &inputs,
                               const AnfNodePtrList &outputs);
 void ReplaceNewFuseCNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &new_fuse_cnode,
@@ -74,7 +73,6 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
                    std::map<std::string, AnfNodePtr> *address_node_map);
 bool AnfToJsonDesc(const std::vector<AnfNodePtrList> &graphs, const DumpOption &dump_option, nlohmann::json *op_desc);
 FuncGraphPtr JsonDescToAnf(const std::string &json_desc, const std::vector<AnfNodePtr> &inputs);
-std::unordered_set<PrimitivePtr> GetExpandOps();
 std::string ExtractGraphKernelName(const AnfNodePtrList &cnodes, const string &prefix = "", const string &postfix = "");
 std::vector<PrimitivePtr> GetFusibleOpList();
 bool IsBasicFuseOp(const AnfNodePtr &node);

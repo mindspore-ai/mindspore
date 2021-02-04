@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_H_
 #include <memory>
 #include <unordered_set>
+#include <nlohmann/json.hpp>
 #include "backend/optimizer/common/pass.h"
 #include "ir/func_graph.h"
 
@@ -31,7 +32,6 @@ class GraphKernelExpander : public Pass {
  private:
   FuncGraphPtr CreateExpandFuncGraph(const CNodePtr &node);
   bool DoExpand(const FuncGraphPtr &func_graph);
-  void ToPrimitive(const FuncGraphPtr &func_graph) const;
   void EliminateRedundantParameters(const FuncGraphPtr &func_graph, AnfNodePtrList *inputs);
   AnfNodePtr CreateExpandGraphKernel(const FuncGraphPtr &func_graph, const FuncGraphPtr &new_func_graph,
                                      const CNodePtr &node);
@@ -39,6 +39,7 @@ class GraphKernelExpander : public Pass {
     return std::any_of(expand_ops_.begin(), expand_ops_.end(),
                        [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
   }
+  bool ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
 
  private:
   std::unordered_set<PrimitivePtr> expand_ops_;

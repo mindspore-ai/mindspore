@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,16 +18,10 @@ from mindspore._extends.graph_kernel.model import model_builder as builder
 
 def expand_softmax(expand_info):
     """Softmax expander"""
-    # get op info.
     input_desc = expand_info['input_desc'][0]
-    attrs = expand_info['attr']
-    axis = None
-    for item in attrs:
-        if 'axis' in item:
-            axis = item['axis']
-    graph_builder = builder.GraphBuilder()
+    axis = expand_info['attr']['axis']
 
-    # generate a graph.
+    graph_builder = builder.GraphBuilder()
     with graph_builder.graph_scope('main') as graph_scope:
         # create tensor input.
         input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
