@@ -269,6 +269,12 @@ class Profiler:
 
         os.environ['PROFILING_MODE'] = str("false")
 
+        logger.warning(
+            '\nMemory Usage is not supported on GPU currently.\n'
+            'Please running on Ascend if you would like to see memory analysis, '
+            'otherwise, this warning can be ignored.'
+        )
+
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True):
         """
         Analyse step trace data and save the result.
