@@ -70,7 +70,7 @@ int PReluCPUKernel::ProcessInput() {
     MS_LOG(ERROR) << "malloc input_data_ failed.";
     return RET_ERROR;
   }
-  memcpy(input_data_, ori_input_, tile_block * TILE_NUM * channel_num * sizeof(float));
+  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
   return RET_OK;
 }
 
@@ -85,7 +85,7 @@ int PReluCPUKernel::ProcessShareChannelInput() {
     MS_LOG(ERROR) << "malloc input_data_ failed.";
     return RET_ERROR;
   }
-  memcpy(input_data_, ori_input_, prelu_param_->tile_block_ * 64 * sizeof(float));
+  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
 #elif ENABLE_ARM32
   prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, 32);
   input_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(prelu_param_->tile_block_ * 32 * sizeof(float)));
@@ -93,7 +93,7 @@ int PReluCPUKernel::ProcessShareChannelInput() {
     MS_LOG(ERROR) << "malloc input_data_ failed.";
     return RET_ERROR;
   }
-  memcpy(input_data_, ori_input_, prelu_param_->tile_block_ * 32 * sizeof(float));
+  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
 #else
   prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, 32);
   input_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(prelu_param_->tile_block_ * 32 * sizeof(float)));
@@ -101,7 +101,7 @@ int PReluCPUKernel::ProcessShareChannelInput() {
     MS_LOG(ERROR) << "malloc input_data_ failed.";
     return RET_ERROR;
   }
-  memcpy(input_data_, ori_input_, prelu_param_->tile_block_ * 32 * sizeof(float));
+  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
 #endif
   return RET_OK;
 }
