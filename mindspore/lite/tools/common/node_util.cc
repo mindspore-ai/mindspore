@@ -40,7 +40,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_MaxPoolFusion,
   schema::PrimitiveType_Conv2DFusion,
   schema::PrimitiveType_Conv2dTransposeFusion,
-  schema::PrimitiveType_Lrn,
+  schema::PrimitiveType_LRN,
   schema::PrimitiveType_Resize,
   schema::PrimitiveType_BatchNorm,
   schema::PrimitiveType_FusedBatchNorm,

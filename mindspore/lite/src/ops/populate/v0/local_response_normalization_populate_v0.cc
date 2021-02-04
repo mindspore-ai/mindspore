@@ -32,7 +32,7 @@ OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
     return nullptr;
   }
   memset(lrn_param, 0, sizeof(LocalResponseNormParameter));
-  lrn_param->op_parameter_.type_ = schema::PrimitiveType_Lrn;
+  lrn_param->op_parameter_.type_ = schema::PrimitiveType_LRN;
   lrn_param->depth_radius_ = local_response_normalization_prim->depth_radius();
   lrn_param->bias_ = local_response_normalization_prim->bias();
   lrn_param->alpha_ = local_response_normalization_prim->alpha();

@@ -28,7 +28,7 @@ OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
   }
   memset(lrn_param, 0, sizeof(LocalResponseNormParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_Lrn();
+  auto value = primitive->value_as_LRN();
   lrn_param->op_parameter_.type_ = primitive->value_type();
   lrn_param->depth_radius_ = value->depth_radius();
   lrn_param->bias_ = value->bias();
@@ -37,7 +37,7 @@ OpParameter *PopulateLocalResponseNormParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(lrn_param);
 }
 
-Registry LocalResponseNormalizationParameterRegistry(schema::PrimitiveType_Lrn, PopulateLocalResponseNormParameter,
+Registry LocalResponseNormalizationParameterRegistry(schema::PrimitiveType_LRN, PopulateLocalResponseNormParameter,
                                                      SCHEMA_CUR);
 
 }  // namespace lite

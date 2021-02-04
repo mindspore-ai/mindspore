@@ -505,12 +505,9 @@ static RegistryInferShape g_InstanceNormInferShape(mindspore::schema::PrimitiveT
 static RegistryInferShape g_L2NormInferShape(mindspore::schema::PrimitiveType_L2NormalizeFusion, CommonInferShape);
 static RegistryInferShape g_LeakyReluInferShape(mindspore::schema::PrimitiveType_LeakyRelu, CommonInferShape);
 
-static RegistryInferShape g_LocalResponseNormalizationInferShape(mindspore::schema::PrimitiveType_Lrn,
-                                                                 CommonInferShape);
-
 static RegistryInferShape g_LogGradInferShape(mindspore::schema::PrimitiveType_LogGrad, CommonInferShape);
 static RegistryInferShape g_LogicalNotInferShape(mindspore::schema::PrimitiveType_LogicalNot, CommonInferShape);
-static RegistryInferShape g_LrnInferShape(mindspore::schema::PrimitiveType_Lrn, CommonInferShape);
+static RegistryInferShape g_LrnInferShape(mindspore::schema::PrimitiveType_LRN, CommonInferShape);
 static RegistryInferShape g_NegInferShape(mindspore::schema::PrimitiveType_Neg, CommonInferShape);
 static RegistryInferShape g_NegGradInferShape(mindspore::schema::PrimitiveType_NegGrad, CommonInferShape);
 static RegistryInferShape g_PowerGradInferShape(mindspore::schema::PrimitiveType_PowerGrad, CommonInferShape);

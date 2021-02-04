@@ -101,7 +101,7 @@ union PrimitiveType {
     LogicalNot,
     LogicalOr,
     LpNormalization,
-    Lrn,
+    LRN,
     LshProjection,
     LSTM,
     L2NormalizeFusion,
@@ -599,7 +599,7 @@ table LpNormalization {
     p: long;
 }
 
-table Lrn {
+table LRN {
     depth_radius: long;
     bias: float;
     alpha: float;
