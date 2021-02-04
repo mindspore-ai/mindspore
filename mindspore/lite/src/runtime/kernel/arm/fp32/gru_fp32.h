@@ -26,7 +26,7 @@ class GruCPUKernel : public LiteKernel {
                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    gru_parm_ = reinterpret_cast<GruParameter *>(op_parameter_);
+    gru_param_ = reinterpret_cast<GruParameter *>(op_parameter_);
   }
 
   ~GruCPUKernel() override { FreeTmpBuffer(); }
@@ -37,15 +37,20 @@ class GruCPUKernel : public LiteKernel {
 
  private:
   void FreeTmpBuffer();
+  void FreeRunBuffer();
   int InitParam();
-  int InitBuffer();
+  int MallocRunBuffer();
   int InitWeightBias();
 
   float *gate_buffer_ = nullptr;
   float *weight_g_ptr_ = nullptr;
   float *weight_r_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
-  GruParameter *gru_parm_ = nullptr;
+  float *matmul_buffer_[2];
+  int row_tile_ = 0;
+  int col_tile_ = 0;
+  bool is_vec_ = false;
+  GruParameter *gru_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

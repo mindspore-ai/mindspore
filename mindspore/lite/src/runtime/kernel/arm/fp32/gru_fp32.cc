@@ -19,6 +19,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/gru_fp32.h"
+#include "nnacl/fp32/lstm_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -28,82 +29,109 @@ using mindspore::schema::PrimitiveType_Gru;
 
 namespace mindspore::kernel {
 void GruCPUKernel::FreeTmpBuffer() {
-  if (gate_buffer_ != nullptr) {
-    free(gate_buffer_);
-    gate_buffer_ = nullptr;
+  if (!is_vec_) {
+    if (weight_g_ptr_ != nullptr) {
+      free(weight_g_ptr_);
+      weight_g_ptr_ = nullptr;
+    }
+    if (weight_r_ptr_ != nullptr) {
+      free(weight_r_ptr_);
+      weight_r_ptr_ = nullptr;
+    }
+    if (bias_ptr_ != nullptr) {
+      free(bias_ptr_);
+      bias_ptr_ = nullptr;
+    }
   }
-  if (bias_ptr_ != nullptr) {
-    free(bias_ptr_);
-    bias_ptr_ = nullptr;
+}
+
+void GruCPUKernel::FreeRunBuffer() {
+  context_->allocator->Free(gate_buffer_);
+  if (!is_vec_) {
+    for (int i = 0; i < 2; i++) {
+      context_->allocator->Free(matmul_buffer_[i]);
+    }
   }
-  weight_g_ptr_ = nullptr;
-  weight_r_ptr_ = nullptr;
 }
 
 int GruCPUKernel::InitParam() {
   auto input = in_tensors_.front();
   MS_ASSERT(input != nullptr);
   std::vector<int> in_shape = input->shape();
-  gru_parm_->seq_len_ = in_shape.at(0);
-  gru_parm_->batch_ = in_shape.at(1);
-  gru_parm_->input_size_ = in_shape.at(2);
+  gru_param_->seq_len_ = in_shape.at(0);
+  gru_param_->batch_ = in_shape.at(1);
+  gru_param_->input_size_ = in_shape.at(2);
 
   auto weight_g = in_tensors_.at(1);
   MS_ASSERT(weight_g != nullptr);
   std::vector<int> w_shape = weight_g->shape();
-  gru_parm_->hidden_size_ = w_shape.at(1) / 3;
+  gru_param_->hidden_size_ = w_shape.at(1) / 3;
 
-  gru_parm_->input_step_ = gru_parm_->batch_ * gru_parm_->input_size_;
-  gru_parm_->output_step_ = gru_parm_->bidirectional_ ? 2 * gru_parm_->batch_ * gru_parm_->hidden_size_
-                                                      : gru_parm_->batch_ * gru_parm_->hidden_size_;
-  return RET_OK;
-}
+  gru_param_->input_step_ = gru_param_->batch_ * gru_param_->input_size_;
+  gru_param_->output_step_ = gru_param_->bidirectional_ ? 2 * gru_param_->batch_ * gru_param_->hidden_size_
+                                                        : gru_param_->batch_ * gru_param_->hidden_size_;
 
-int GruCPUKernel::InitBuffer() {
-  gate_buffer_ = reinterpret_cast<float *>(malloc(3 * gru_parm_->batch_ * gru_parm_->hidden_size_ * sizeof(float)));
-  if (gate_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc gate_buffer error.";
-    return RET_ERROR;
-  }
+#ifdef ENABLE_AVX
+  row_tile_ = C6NUM;
+  col_tile_ = C16NUM;
+#elif defined(ENABLE_ARM32)
+  row_tile_ = C12NUM;
+  col_tile_ = C4NUM;
+#elif defined(ENABLE_SSE)
+  row_tile_ = C4NUM;
+  col_tile_ = C8NUM;
+#else
+  row_tile_ = C12NUM;
+  col_tile_ = C8NUM;
+#endif
+  is_vec_ = gru_param_->batch_ == 1;
+  gru_param_->row_align_ = is_vec_ ? 1 : UP_ROUND(gru_param_->batch_, row_tile_);
+  gru_param_->col_align_ = is_vec_ ? gru_param_->hidden_size_ : UP_ROUND(gru_param_->hidden_size_, col_tile_);
   return RET_OK;
 }
 
 int GruCPUKernel::InitWeightBias() {
-  auto weight_gate = in_tensors_.at(1);
-  MS_ASSERT(weight_gate != nullptr);
-  weight_g_ptr_ = reinterpret_cast<float *>(malloc(weight_gate->ElementsNum() * sizeof(float)));
-  if (weight_g_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc weight_g_ptr_ error.";
-    return RET_ERROR;
-  }
-  memcpy(weight_g_ptr_, weight_gate->data_c(), weight_gate->ElementsNum() * sizeof(float));
+  auto weight_batch = gru_param_->bidirectional_ ? 6 : 3;
+  if (!is_vec_) {
+    // malloc and init input * weight right matrix buffer
+    auto weight_g = in_tensors_.at(1);
+    MS_ASSERT(weight_g != nullptr);
+    weight_g_ptr_ = reinterpret_cast<float *>(
+      malloc(weight_batch * gru_param_->col_align_ * gru_param_->input_size_ * sizeof(float)));
+    if (weight_g_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "GruCPUKernel malloc weight_g_ptr_ error.";
+      return RET_ERROR;
+    }
+    auto weight_i_data = reinterpret_cast<float *>(weight_g->data_c());
+    PackLstmWeight(weight_g_ptr_, weight_i_data, weight_batch, gru_param_->input_size_, gru_param_->hidden_size_,
+                   gru_param_->col_align_);
 
-  auto weight_recu = in_tensors_.at(2);
-  MS_ASSERT(weight_recu != nullptr);
-  weight_r_ptr_ = reinterpret_cast<float *>(malloc(weight_recu->ElementsNum() * sizeof(float)));
-  if (weight_r_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc weight_r_ptr_ error.";
-    return RET_ERROR;
-  }
-  memcpy(weight_r_ptr_, weight_recu->data_c(), weight_recu->ElementsNum() * sizeof(float));
+    // malloc and init state * weight right matrix buffer
+    auto weight_r = in_tensors_.at(2);
+    MS_ASSERT(weight_r != nullptr);
+    weight_r_ptr_ = reinterpret_cast<float *>(
+      malloc(weight_batch * gru_param_->col_align_ * gru_param_->hidden_size_ * sizeof(float)));
+    if (weight_r_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "GruCPUKernel malloc weight_r_ptr_ error.";
+      return RET_ERROR;
+    }
+    auto weight_r_data = reinterpret_cast<float *>(weight_r->data_c());
+    PackLstmWeight(weight_r_ptr_, weight_r_data, weight_batch, gru_param_->hidden_size_, gru_param_->hidden_size_,
+                   gru_param_->col_align_);
 
-  int bias_num = gru_parm_->bidirectional_ ? 2 * 3 * gru_parm_->hidden_size_ : 3 * gru_parm_->hidden_size_;
-  bias_ptr_ = reinterpret_cast<float *>(malloc(bias_num * sizeof(float)));
-  if (bias_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc bias_ptr_ error.";
-    return RET_ERROR;
-  }
-
-  auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
-  const int state_bias_offset = 3 * gru_parm_->hidden_size_;
-  for (int i = 0; i < state_bias_offset; i++) {
-    bias_ptr_[i] = bias_data[i] + bias_data[i + state_bias_offset];
-  }
-  if (gru_parm_->bidirectional_) {
-    bias_data += 3 * gru_parm_->hidden_size_ * 2;
-    auto backward_bias = bias_ptr_ + 3 * gru_parm_->hidden_size_;
-    for (int i = 0; i < state_bias_offset; i++) {
-      backward_bias[i] = bias_data[i] + bias_data[i + state_bias_offset];
+    // init bias
+    int bias_batch = gru_param_->bidirectional_ ? 16 : 8;
+    bias_ptr_ = reinterpret_cast<float *>(malloc(bias_batch * gru_param_->col_align_ * sizeof(float)));
+    if (bias_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "GruCPUKernel malloc bias_ptr_ error.";
+      return RET_ERROR;
+    }
+    memset(bias_ptr_, 0, bias_batch * gru_param_->col_align_ * sizeof(float));
+    auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
+    for (int i = 0; i < bias_batch; i++) {
+      auto src_batch = bias_data + i * gru_param_->hidden_size_;
+      auto dst_batch = bias_ptr_ + i * gru_param_->col_align_;
+      memcpy(dst_batch, src_batch, gru_param_->hidden_size_ * sizeof(float));
     }
   }
   return RET_OK;
@@ -117,24 +145,42 @@ int GruCPUKernel::Init() {
 }
 
 int GruCPUKernel::ReSize() {
-  FreeTmpBuffer();
   auto ret = InitParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "GruCPUKernel InitParam error.";
     return RET_ERROR;
   }
 
+  FreeTmpBuffer();
   ret = InitWeightBias();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "GruCPUKernel InitWeightBias error.";
     FreeTmpBuffer();
     return RET_ERROR;
   }
+  return RET_OK;
+}
 
-  ret = InitBuffer();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "GruCPUKernel InitBuffer error.";
-    FreeTmpBuffer();
+int GruCPUKernel::MallocRunBuffer() {
+  if (!is_vec_) {
+    matmul_buffer_[0] = reinterpret_cast<float *>(
+      context_->allocator->Malloc(3 * gru_param_->row_align_ * gru_param_->input_size_ * sizeof(float)));
+    if (matmul_buffer_[0] == nullptr) {
+      MS_LOG(ERROR) << "GruCPUKernel malloc input * weight left matirx error.";
+      return RET_ERROR;
+    }
+
+    matmul_buffer_[1] = reinterpret_cast<float *>(
+      context_->allocator->Malloc(3 * gru_param_->row_align_ * gru_param_->hidden_size_ * sizeof(float)));
+    if (matmul_buffer_[1] == nullptr) {
+      MS_LOG(ERROR) << "GruCPUKernel malloc state * weight left matirx error.";
+      return RET_ERROR;
+    }
+  }
+  gate_buffer_ = reinterpret_cast<float *>(
+    context_->allocator->Malloc(6 * gru_param_->batch_ * gru_param_->hidden_size_ * sizeof(float)));
+  if (gate_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "GruCPUKernel malloc gate_buffer error.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -153,22 +199,35 @@ int GruCPUKernel::Run() {
   MS_ASSERT(output_ptr);
   auto output_hidden_state = out_tensors_[1];
   memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float));
-  int check_seq_len = gru_parm_->seq_len_;
+  int check_seq_len = gru_param_->seq_len_;
+
   if (in_tensors_.size() == 6) {
     auto seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data_c());
-    if (!std::equal(seq_len + 1, seq_len + gru_parm_->batch_, seq_len)) {
+    if (!std::equal(seq_len + 1, seq_len + gru_param_->batch_, seq_len)) {
       MS_LOG(ERROR) << "different batch seq_len is currently not supported";
       return RET_ERROR;
     }
     check_seq_len = MSMIN(check_seq_len, MSMAX(0, seq_len[0]));
   }
+  auto ret = MallocRunBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "GruCPUKernel MallocRunBuffer error.";
+    return RET_ERROR;
+  }
 
+  if (is_vec_) {
+    weight_g_ptr_ = reinterpret_cast<float *>(in_tensors_[1]->data_c());
+    weight_r_ptr_ = reinterpret_cast<float *>(in_tensors_[2]->data_c());
+    bias_ptr_ = reinterpret_cast<float *>(in_tensors_[3]->data_c());
+  }
   MS_ASSERT(weight_g_ptr_ != nullptr);
   MS_ASSERT(weight_r_ptr_ != nullptr);
   MS_ASSERT(bias_ptr_ != nullptr);
   MS_ASSERT(gate_buffer_ != nullptr);
   Gru(output_ptr, input_ptr, weight_g_ptr_, weight_r_ptr_, bias_ptr_,
-      reinterpret_cast<float *>(output_hidden_state->data_c()), gate_buffer_, check_seq_len, gru_parm_);
+      reinterpret_cast<float *>(output_hidden_state->data_c()), gate_buffer_, matmul_buffer_, check_seq_len,
+      gru_param_);
+  FreeRunBuffer();
   return RET_OK;
 }
 
