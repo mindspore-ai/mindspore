@@ -40,6 +40,8 @@ class ConvertNetUntils():
         if subcell.activation_flag:
             act_class = subcell.activation.__class__.__name__
             act_name = act_class.lower()
+            if act_name == "fastgelu":
+                act_name = "fast_gelu"
         if subcell.out_channels == 1001:
             new_subcell = nn.Dense_Thor(in_channels=subcell.in_channels,
                                         out_channels=subcell.out_channels,

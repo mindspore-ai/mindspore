@@ -18,7 +18,7 @@ import argparse
 import ast
 from mindspore import context
 from mindspore import Tensor
-from mindspore.nn.optim.momentum import Momentum, THOR
+from mindspore.nn.optim import Momentum, THOR
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
 from mindspore.train.train_thor import ConvertModelUtils
