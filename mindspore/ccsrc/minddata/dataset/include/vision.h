@@ -519,6 +519,8 @@ class AutoContrastOperation : public TensorOperation {
 
   std::string Name() const override { return kAutoContrastOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   float cutoff_;
   std::vector<uint32_t> ignore_;
@@ -535,6 +537,8 @@ class BoundingBoxAugmentOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kBoundingBoxAugmentOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::shared_ptr<TensorOperation> transform_;
@@ -553,6 +557,8 @@ class CutMixBatchOperation : public TensorOperation {
 
   std::string Name() const override { return kCutMixBatchOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   float alpha_;
   float prob_;
@@ -570,6 +576,8 @@ class CutOutOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kCutOutOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   int32_t length_;
@@ -638,6 +646,8 @@ class MixUpBatchOperation : public TensorOperation {
 
   std::string Name() const override { return kMixUpBatchOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   float alpha_;
 };
@@ -654,6 +664,8 @@ class NormalizePadOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kNormalizePadOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<float> mean_;
@@ -698,6 +710,8 @@ class RandomAffineOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomAffineOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<float_t> degrees_;          // min_degree, max_degree
   std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
@@ -718,6 +732,8 @@ class RandomColorOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomColorOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   float t_lb_;
@@ -788,6 +804,8 @@ class RandomResizedCropOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomResizedCropOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  protected:
   std::vector<int32_t> size_;
   std::vector<float> scale_;
@@ -808,6 +826,8 @@ class RandomCropDecodeResizeOperation : public RandomResizedCropOperation {
   std::shared_ptr<TensorOp> Build() override;
 
   std::string Name() const override { return kRandomCropDecodeResizeOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 };
 
 class RandomCropWithBBoxOperation : public TensorOperation {
@@ -823,6 +843,8 @@ class RandomCropWithBBoxOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomCropWithBBoxOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<int32_t> size_;
@@ -844,6 +866,8 @@ class RandomHorizontalFlipOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomHorizontalFlipOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   float probability_;
 };
@@ -859,6 +883,8 @@ class RandomHorizontalFlipWithBBoxOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomHorizontalFlipWithBBoxOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   float probability_;
@@ -876,6 +902,8 @@ class RandomPosterizeOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomPosterizeOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<uint8_t> bit_range_;
 };
@@ -892,6 +920,8 @@ class RandomResizeOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomResizeOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<int32_t> size_;
 };
@@ -907,6 +937,8 @@ class RandomResizeWithBBoxOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomResizeWithBBoxOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<int32_t> size_;
@@ -926,6 +958,8 @@ class RandomResizedCropWithBBoxOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomResizedCropWithBBoxOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<int32_t> size_;
@@ -971,6 +1005,8 @@ class RandomSelectSubpolicyOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomSelectSubpolicyOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy_;
 };
@@ -986,6 +1022,8 @@ class RandomSharpnessOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomSharpnessOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<float> degrees_;
@@ -1003,6 +1041,8 @@ class RandomSolarizeOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomSolarizeOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<uint8_t> threshold_;
 };
@@ -1019,6 +1059,8 @@ class RandomVerticalFlipOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomVerticalFlipOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   float probability_;
 };
@@ -1034,6 +1076,8 @@ class RandomVerticalFlipWithBBoxOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomVerticalFlipWithBBoxOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   float probability_;
@@ -1070,6 +1114,8 @@ class ResizeWithBBoxOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kResizeWithBBoxOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<int32_t> size_;
@@ -1115,6 +1161,8 @@ class SoftDvppDecodeRandomCropResizeJpegOperation : public TensorOperation {
 
   std::string Name() const override { return kSoftDvppDecodeRandomCropResizeJpegOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<int32_t> size_;
   std::vector<float> scale_;
@@ -1133,6 +1181,8 @@ class SoftDvppDecodeResizeJpegOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kSoftDvppDecodeResizeJpegOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<int32_t> size_;
@@ -1162,6 +1212,8 @@ class UniformAugOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kUniformAugOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> transforms_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ class PyFuncOp : public TensorOp {
   /// \return Status
   Status CastOutput(const py::object &ret_py_obj, TensorRow *output);
   std::string Name() const override { return kPyFuncOp; }
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   py::function py_func_ptr_;

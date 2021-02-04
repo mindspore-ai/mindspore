@@ -155,8 +155,14 @@ Status MapNode::to_json(nlohmann::json *out_json) {
   for (auto op : operations_) {
     nlohmann::json op_args;
     RETURN_IF_NOT_OK(op->to_json(&op_args));
-    op_args["tensor_op_name"] = op->Name();
-    ops.push_back(op_args);
+    if (op->Name() == "PyFuncOp") {
+      ops.push_back(op_args);
+    } else {
+      nlohmann::json op_item;
+      op_item["tensor_op_params"] = op_args;
+      op_item["tensor_op_name"] = op->Name();
+      ops.push_back(op_item);
+    }
   }
   args["operations"] = ops;
   std::transform(callbacks_.begin(), callbacks_.end(), std::back_inserter(cbs),

@@ -28,7 +28,9 @@ from util import config_get_set_num_parallel_workers, config_get_set_seed
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
+import mindspore.dataset.transforms.py_transforms as py
 import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 
@@ -351,13 +353,50 @@ def test_serdes_voc_dataset(remove_json_files=True):
 
 def test_serdes_to_device(remove_json_files=True):
     """
-    Test serdes on VOC dataset pipeline.
+    Test serdes on transfer dataset pipeline.
     """
     data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
     data1 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
     data1 = data1.to_device()
     util_check_serialize_deserialize_file(data1, "transfer_dataset_pipeline", remove_json_files)
+
+
+def test_serdes_pyvision(remove_json_files=True):
+    """
+    Test serdes on py_transform pipeline.
+    """
+    data_dir = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+    data1 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
+    transforms = [
+        py_vision.Decode(),
+        py_vision.CenterCrop([32, 32]),
+        py_vision.ToTensor()
+    ]
+    data1 = data1.map(operations=py.Compose(transforms), input_columns=["image"])
+    util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
+
+
+def test_serdes_uniform_augment(remove_json_files=True):
+    """
+    Test serdes on uniform augment.
+    """
+    data_dir = "../data/dataset/testPK/data"
+    data = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+    ds.config.set_seed(1)
+
+    transforms_ua = [vision.RandomHorizontalFlip(),
+                     vision.RandomVerticalFlip(),
+                     vision.RandomColor(),
+                     vision.RandomSharpness(),
+                     vision.Invert(),
+                     vision.AutoContrast(),
+                     vision.Equalize()]
+    transforms_all = [vision.Decode(), vision.Resize(size=[224, 224]),
+                      vision.UniformAugment(transforms=transforms_ua, num_ops=5)]
+    data = data.map(operations=transforms_all, input_columns="image", num_parallel_workers=1)
+    util_check_serialize_deserialize_file(data, "uniform_augment_pipeline", remove_json_files)
 
 
 def test_serdes_exception():
