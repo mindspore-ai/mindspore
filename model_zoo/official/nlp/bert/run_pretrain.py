@@ -100,8 +100,9 @@ def _get_optimizer(args_opt, network):
             optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
     elif cfg.optimizer == "Thor":
         from src.utils import get_bert_thor_lr, get_bert_thor_damping
-        lr = get_bert_thor_lr()
-        damping = get_bert_thor_damping()
+        lr = get_bert_thor_lr(cfg.Thor.lr_max, cfg.Thor.lr_min, cfg.Thor.lr_power, cfg.Thor.lr_total_steps)
+        damping = get_bert_thor_damping(cfg.Thor.damping_max, cfg.Thor.damping_min, cfg.Thor.damping_power,
+                                        cfg.Thor.damping_total_steps)
         split_indices = None
         if bert_net_cfg.num_hidden_layers == 12:
             if bert_net_cfg.use_relative_positions:

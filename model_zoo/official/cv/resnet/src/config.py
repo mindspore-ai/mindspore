@@ -18,7 +18,7 @@ network config setting, will be used in train.py and eval.py
 from easydict import EasyDict as ed
 # config optimizer for resnet50, imagenet2012. Momentum is default, Thor is optional.
 cfg = ed({
-    'optimizer': 'Thor',
+    'optimizer': 'Momentum',
     })
 
 # config for resent50, cifar10
