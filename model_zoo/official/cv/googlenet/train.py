@@ -98,7 +98,7 @@ if __name__ == '__main__':
     elif args_opt.dataset_name == "imagenet":
         cfg = imagenet_cfg
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     # set context
     device_target = cfg.device_target
