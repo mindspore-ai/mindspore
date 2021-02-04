@@ -45,6 +45,15 @@ __global__ void ValidateInputAndInferShape(const T *range_start, const T *range_
 
   if (*error_code == DynamicRangeErrorCode::kOk) {
     int64_t real_output_shape = static_cast<int64_t>(ceil(static_cast<double>(end - start) / delta));
+
+    // verification in case of precision error during calculation of real_output_shape. one multiplication followed by
+    // one addition is much more precise than the division that occurs when calculating real_output_shape.
+    double last_value = start + (delta * (real_output_shape - 1));
+    double epsilon = 1e-6;
+    if ((end > start && last_value > end) || (start > end && last_value < end) || fabsf(last_value - end) < epsilon) {
+      real_output_shape--;
+    }
+
     if (real_output_shape > max_output_size) {
         *error_code = DynamicRangeErrorCode::kMaxSizeExceeded;
     }
