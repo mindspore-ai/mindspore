@@ -45,6 +45,27 @@ STATUS TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
     primitive->value.type = schema::PrimitiveType_LogicalAnd;
     primitive->value.value = attr.release();
     *primitiveC = PrimitiveC::Create(primitive.release());
+  } else if (tf_op.op() == "LogicalOr") {
+    auto attr = std::make_unique<schema::LogicalOrT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_LogicalOr;
+    primitive->value.value = attr.release();
+    *primitiveC = PrimitiveC::Create(primitive.release());
+  } else if (tf_op.op() == "LogicalNot") {
+    auto attr = std::make_unique<schema::LogicalNotT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_LogicalNot;
+    primitive->value.value = attr.release();
+    *primitiveC = PrimitiveC::Create(primitive.release());
+  } else {
+    MS_LOG(ERROR) << tf_op.op() << " is not supported.";
+    return RET_ERROR;
   }
   if (*primitiveC == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
@@ -59,5 +80,7 @@ STATUS TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
   return RET_OK;
 }
 TFNodeRegistrar g_tfLogicalAndParser("LogicalAnd", new TFLogicalParser());
+TFNodeRegistrar g_tfLogicalOrParser("LogicalOr", new TFLogicalParser());
+TFNodeRegistrar g_tfLogicalNotParser("LogicalNot", new TFLogicalParser());
 }  // namespace lite
 }  // namespace mindspore

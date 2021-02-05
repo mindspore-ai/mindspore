@@ -26,7 +26,7 @@ namespace lite {
 STATUS TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
                              std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF DeConvParser";
+  MS_LOG(DEBUG) << "TF DeConvParser";
   if (primitiveC == nullptr || output_size == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return RET_NULL_PTR;
@@ -71,8 +71,8 @@ STATUS TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     attr->kernelH = kernels[0];
     attr->kernelW = kernels[1];
-    attr->channelIn = kernels[2];
-    attr->channelOut = kernels[3];
+    attr->channelOut = kernels[2];
+    attr->channelIn = kernels[3];
   } else {
     attr->kernelH = -1;
     attr->kernelW = -1;
