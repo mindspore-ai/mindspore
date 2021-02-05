@@ -59,7 +59,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/update_conv2d_param_pass.cc
         ../optimizer/graph/unused_cast_node_remove_pass.cc
         ../optimizer/graph/unused_transpose_node_remove_pass.cc
-        ../optimizer/graph/identity_remove_pass.cc
+        ../optimizer/graph/redundant_op_remove_pass.cc
         ../optimizer/graph/infershape_pass.cc
         ../optimizer/graph/slice_prepose_pass.cc
         ../optimizer/graph/mindir_adjust_pass.cc

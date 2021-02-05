@@ -41,7 +41,6 @@ class AnfExporter {
   int SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      schema::CNodeT *fb_node);
   static void RemoveIfMakeTuple(const CNodePtr &cnode);
-  static void RemoveIfDepend(const CNodePtr &cnode);
 
  protected:
   int ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode);

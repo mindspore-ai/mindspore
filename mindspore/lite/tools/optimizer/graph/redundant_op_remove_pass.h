@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_REMOVE_IDENTITY_PASS_H_
-#define MINDSPORE_LITE_SRC_PASS_REMOVE_IDENTITY_PASS_H_
+#ifndef MINDSPORE_LITE_SRC_PASS_REDUNDANT_OP_REMOVE_PASS_H_
+#define MINDSPORE_LITE_SRC_PASS_REDUNDANT_OP_REMOVE_PASS_H_
 #include <string>
 #include <set>
 #include "backend/optimizer/common/pass.h"
@@ -24,11 +24,11 @@
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
-class RemoveIdentityOpPass : public Pass {
+class RemoveRedundantOpPass : public Pass {
  public:
-  RemoveIdentityOpPass() : Pass("remove_identity_pass") {}
-  ~RemoveIdentityOpPass() override = default;
-  int ReplaceIdentity(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
+  RemoveRedundantOpPass() : Pass("remove_redundant_op_pass") {}
+  ~RemoveRedundantOpPass() override = default;
+  int ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   int ReplaceTupleGetItem(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   bool Run(const FuncGraphPtr &graph) override;
 
@@ -36,4 +36,4 @@ class RemoveIdentityOpPass : public Pass {
   std::set<AnfNodePtr> remove_cnode_;
 };
 }  // namespace mindspore::opt
-#endif  // MINDSPORE_LITE_SRC_PASS_REMOVE_IDENTITY_PASS_H_
+#endif  // MINDSPORE_LITE_SRC_PASS_REDUNDANT_OP_REMOVE_PASS_H_
