@@ -174,8 +174,8 @@ class TimeMonitor(Callback):
         self.per_step_mseconds_list.append(epoch_mseconds / self.data_size)
 
 
-def test_bert_percision(enable_graph_kernel=False):
-    """test bert percision"""
+def test_bert_precision(enable_graph_kernel=False):
+    """test bert precision"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
     if enable_graph_kernel:
         context.set_context(enable_graph_kernel=True)
@@ -245,18 +245,13 @@ def test_bert_percision(enable_graph_kernel=False):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_bert_percision_graph_kernel_off():
-    test_bert_percision(enable_graph_kernel=False)
+def test_bert_precision_graph_kernel_off():
+    test_bert_precision(enable_graph_kernel=False)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_bert_percision_graph_kernel_on():
-    test_bert_percision(enable_graph_kernel=True)
+def test_bert_precision_graph_kernel_on():
+    test_bert_precision(enable_graph_kernel=True)
 
 
 if __name__ == '__main__':
-    test_bert_percision(enable_graph_kernel=False)
-    test_bert_percision(enable_graph_kernel=True)
+    test_bert_precision(enable_graph_kernel=False)
