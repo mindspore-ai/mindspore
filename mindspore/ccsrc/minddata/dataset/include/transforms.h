@@ -24,7 +24,6 @@
 
 #include "include/api/status.h"
 #include "minddata/dataset/include/constants.h"
-#include "minddata/dataset/include/tensor.h"
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
 #define INCLUDE_NLOHMANN_JSON_FWD_HPP_
@@ -104,15 +103,13 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
                       const std::vector<T> &range, bool left_open_interval = false, bool right_open_interval = false) {
   if (range.empty() || range.size() > 2) {
     std::string err_msg = "Range check expecting size 1 or 2, but got: " + std::to_string(range.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
   if ((left_open_interval && scalar <= range[0]) || (!left_open_interval && scalar < range[0])) {
     std::string interval_description = left_open_interval ? " greater than " : " greater than or equal to ";
     std::string err_msg = op_name + ":" + scalar_name + " must be" + interval_description + std::to_string(range[0]) +
                           ", got: " + std::to_string(scalar);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
   if (range.size() == 2) {
     if ((right_open_interval && scalar >= range[1]) || (!right_open_interval && scalar > range[1])) {
@@ -121,8 +118,7 @@ Status ValidateScalar(const std::string &op_name, const std::string &scalar_name
       std::string err_msg = op_name + ":" + scalar_name + " is out of range " + left_bracket +
                             std::to_string(range[0]) + ", " + std::to_string(range[1]) + right_bracket +
                             ", got: " + std::to_string(scalar);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
     }
   }
   return Status::OK();
