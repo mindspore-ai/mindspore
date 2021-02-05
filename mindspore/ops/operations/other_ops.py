@@ -374,7 +374,8 @@ class Depend(Primitive):
 
     Previously, the ControlDepend operator was used to control the execution order.
     Since the ControlDepend operator is deprecated from version 1.1, it is recommended
-    to use the Depend operator instead. The replacement method is as follows:
+    to use the Depend operator instead. The replacement method is as follows::
+
         a = A(x)                --->        a = A(x)
         b = B(y)                --->        y = Depend(y, a)
         ControlDepend(a, b)     --->        b = B(y)
