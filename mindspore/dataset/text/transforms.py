@@ -275,7 +275,7 @@ class JiebaTokenizer(TextTensorOperation):
 
 class Lookup(TextTensorOperation):
     """
-    Lookup operator that looks up a word to an id.
+    Look up a word into an id according to the input vocabulary table.
 
     Args:
         vocab (Vocab): A vocabulary object.

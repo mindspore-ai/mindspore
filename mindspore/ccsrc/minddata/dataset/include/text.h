@@ -141,7 +141,7 @@ std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_p
                                                         const JiebaMode &mode = JiebaMode::kMix,
                                                         bool with_offsets = false);
 
-/// \brief Lookup operator that looks up a word to an id.
+/// \brief Look up a word into an id according to the input vocabulary table.
 /// \param[in] vocab a Vocab object.
 /// \param[in] unknown_token word to use for lookup if the word being looked up is out of Vocabulary (oov).
 ///   If unknown_token is oov, runtime error will be thrown. If unknown_token is {}, which means that not to

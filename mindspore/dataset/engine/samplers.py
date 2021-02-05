@@ -586,7 +586,7 @@ class SubsetSampler(BuiltinSampler):
 
         for i, item in enumerate(indices):
             if not isinstance(item, numbers.Number):
-                raise TypeError("type of weights element should be number, "
+                raise TypeError("type of indices element should be number, "
                                 "but got w[{}]: {}, type: {}.".format(i, item, type(item)))
 
         self.indices = indices

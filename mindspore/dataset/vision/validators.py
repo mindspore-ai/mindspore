@@ -499,7 +499,8 @@ def check_cutout(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [length, num_patches], _ = parse_user_args(method, *args, **kwargs)
-
+        type_check(length, (int,), "length")
+        type_check(num_patches, (int,), "num_patches")
         check_value(length, (1, FLOAT_MAX_INTEGER))
         check_value(num_patches, (1, FLOAT_MAX_INTEGER))
 
@@ -613,7 +614,10 @@ def check_uniform_augment_cpp(method):
                 parsed_transforms.append(op.parse())
             else:
                 parsed_transforms.append(op)
-        type_check_list(parsed_transforms, (TensorOp, TensorOperation), "transforms")
+        type_check(parsed_transforms, (list, tuple,), "transforms")
+        for index, arg in enumerate(parsed_transforms):
+            if not isinstance(arg, (TensorOp, TensorOperation)):
+                raise TypeError("Type of Transforms[{0}] must be c_transform, but got {1}".format(index, type(arg)))
 
         return method(self, *args, **kwargs)
 

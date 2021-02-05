@@ -578,7 +578,7 @@ class Dataset:
             python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker processes. This
                 option could be beneficial if the Python operation is computational heavy (default=False).
             cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-                (default=None which means no cache is used).
+                (default=None, which means no cache is used).
             callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None).
 
 
@@ -2328,7 +2328,7 @@ class MapDataset(Dataset):
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy (default=False).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
         callbacks: (DSCallback, list[DSCallback], optional): List of Dataset callbacks to be called (Default=None)
 
         Raises:
@@ -3024,7 +3024,7 @@ class ImageFolderDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -3170,7 +3170,7 @@ class MnistDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -3234,7 +3234,7 @@ class MnistDataset(MappableDataset):
 
 class MindDataset(MappableDataset):
     """
-    A source dataset that reads MindRecord files.
+    A source dataset for reading and parsing MindRecord dataset.
 
     Args:
         dataset_file (Union[str, list[str]]): If dataset_file is a str, it represents for
@@ -3811,7 +3811,7 @@ class GeneratorDataset(MappableDataset):
 
 class TFRecordDataset(SourceDataset):
     """
-    A source dataset that reads and parses datasets stored on disk in TFData format.
+    A source dataset for reading and parsing datasets stored on disk in TFData format.
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
@@ -3843,7 +3843,7 @@ class TFRecordDataset(SourceDataset):
         shard_equal_rows (bool, optional): Get equal rows for all shards(default=False). If shard_equal_rows
             is false, number of rows of each shard may be not equal.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Examples:
         >>> import mindspore.common.dtype as mstype
@@ -3971,7 +3971,7 @@ class TFRecordDataset(SourceDataset):
 
 class ManifestDataset(MappableDataset):
     """
-    A source dataset that reads images from a manifest file.
+    A source dataset for reading images from a Manifest file.
 
     The generated dataset has two columns ['image', 'label'].
     The shape of the image column is [image_size] if decode flag is False, or [H,W,C]
@@ -4027,7 +4027,7 @@ class ManifestDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4122,7 +4122,7 @@ class ManifestDataset(MappableDataset):
 
 class Cifar10Dataset(MappableDataset):
     """
-    A source dataset that reads cifar10 data.
+    A source dataset for reading and parsing Cifar10 dataset.
 
     The generated dataset has two columns ['image', 'label'].
     The type of the image tensor is uint8. The label is a scalar uint32 tensor.
@@ -4188,7 +4188,7 @@ class Cifar10Dataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4258,7 +4258,7 @@ class Cifar10Dataset(MappableDataset):
 
 class Cifar100Dataset(MappableDataset):
     """
-    A source dataset that reads cifar100 data.
+    A source dataset for reading and parsing Cifar100 dataset.
 
     The generated dataset has three columns ['image', 'coarse_label', 'fine_label'].
     The type of the image tensor is uint8. The coarse and fine labels are each a scalar uint32 tensor.
@@ -4326,7 +4326,7 @@ class Cifar100Dataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -4404,7 +4404,7 @@ class RandomDataset(SourceDataset):
         num_parallel_workers (int, optional): Number of workers to read the data
             (default=None, number set in the config).
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
             (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided
@@ -4667,7 +4667,7 @@ class VOCDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If xml of Annotations is an invalid format.
@@ -4860,7 +4860,7 @@ class CocoDataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Raises:
         RuntimeError: If sampler and shuffle are specified at the same time.
@@ -5009,7 +5009,7 @@ class CelebADataset(MappableDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Examples:
         >>> dataset = ds.CelebADataset(dataset_dir=celeba_dataset_dir, usage='train')
@@ -5120,7 +5120,7 @@ class CLUEDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Examples:
         >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple text files
@@ -5353,7 +5353,7 @@ class CSVDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
 
     Examples:
@@ -5459,7 +5459,7 @@ class TextFileDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
-            (default=None which means no cache is used).
+            (default=None, which means no cache is used).
 
     Examples:
         >>> # contains 1 or multiple text files

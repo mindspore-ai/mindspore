@@ -108,8 +108,8 @@ def parse_padding(padding):
     if isinstance(padding, numbers.Number):
         padding = [padding] * 4
     if len(padding) == 2:
-        left = right = padding[0]
-        top = bottom = padding[1]
+        left = top = padding[0]
+        right = bottom = padding[1]
         padding = (left, top, right, bottom,)
     if isinstance(padding, list):
         padding = tuple(padding)
@@ -438,8 +438,8 @@ class Pad(ImageTensorOperation):
     Args:
         padding (Union[int, sequence]): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
-            If a tuple or list of 2 values are provided, it pads left and right
-            with the first value and top and bottom with the second value.
+            If a tuple or list of 2 values are provided, it pads the (left and top)
+            with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
         fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
@@ -674,8 +674,8 @@ class RandomCrop(ImageTensorOperation):
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, pad image firstly with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values are provided, it pads left and right
-            with the first value and top and bottom with the second value.
+            If a tuple or list of 2 values are provided, pad the (left and top)
+            with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
@@ -790,8 +790,8 @@ class RandomCropWithBBox(ImageTensorOperation):
         padding (Union[int, sequence], optional): The number of pixels to pad the image (default=None).
             If padding is not None, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
-            If a tuple or list of 2 values are provided, it pads left and right
-            with the first value and top and bottom with the second value.
+            If a tuple or list of 2 values are provided, pad the (left and top)
+            with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
@@ -845,7 +845,7 @@ class RandomCropWithBBox(ImageTensorOperation):
 
 class RandomHorizontalFlip(ImageTensorOperation):
     """
-    Flip the input image horizontally, randomly with a given probability.
+    Randomly flip the input image horizontally with a given probability.
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).
@@ -1202,12 +1202,12 @@ class RandomSharpness(ImageTensorOperation):
 
 class RandomSolarize(ImageTensorOperation):
     """
-    Invert all pixel values above a threshold.
+    Invert all pixel values with given range.
 
     Args:
         threshold (tuple, optional): Range of random solarize threshold. Threshold values should always be
-            in the range (0, 255), include at least one integer value in the given range and
-            be in (min, max) format. If min=max, then it is a single fixed magnitude operation (default=(0, 255)).
+            in the range (0, 255), include at least one integer value in the given range and be in
+            (min, max) format. If min=max, then invert all pixel values above min(max) (default=(0, 255)).
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomSolarize(threshold=(10,100))]
@@ -1225,7 +1225,7 @@ class RandomSolarize(ImageTensorOperation):
 
 class RandomVerticalFlip(ImageTensorOperation):
     """
-    Flip the input image vertically, randomly with a given probability.
+    Randomly flip the input image vertically with a given probability.
 
     Args:
         prob (float, optional): Probability of the image being flipped (default=0.5).

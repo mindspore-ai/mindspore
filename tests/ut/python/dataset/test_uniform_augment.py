@@ -186,10 +186,7 @@ def test_cpp_uniform_augment_exception_pyops(num_ops=2):
         C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
 
     logger.info("Got an exception in DE: {}".format(str(e)))
-    assert "Argument transforms[5] with value" \
-           " <mindspore.dataset.vision.py_transforms.Invert" in str(e.value)
-    assert "is not of type (<class 'mindspore._c_dataengine.TensorOp'>,"\
-           " <class 'mindspore._c_dataengine.TensorOperation'>)" in str(e.value)
+    assert "Type of Transforms[5] must be c_transform" in str(e.value)
 
 
 def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
