@@ -33,6 +33,10 @@ set(LITE_SRC
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/common/log_adapter.cc
+        ${NNACL_DIR}/int8/quantize.c
+        ${NNACL_DIR}/int8/pack_int8.c
+        ${NNACL_DIR}/int8/matmul_int8.c
+        ${NNACL_DIR}/int8/fixed_point.c
         )
 
 file(GLOB_RECURSE MICRO_ALLOCATOR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -41,6 +45,14 @@ file(GLOB_RECURSE MICRO_ALLOCATOR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 
 file(GLOB_RECURSE MICRO_GENERATOR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         generator/*.cc
+        )
+
+file(GLOB_RECURSE MICRO_OPCODERS_BASE RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/opcoders/base/*.cc
+        )
+
+file(GLOB_RECURSE MICRO_OPCODERS_CMSIS_NN RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/opcoders/cmsis-nn/*.cc
         )
 
 file(GLOB_RECURSE MICRO_UTILS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -62,6 +74,8 @@ set(MICRO_CODER_SRC
 list(APPEND MICRO_CODER_SRC
         ${MICRO_ALLOCATOR}
         ${MICRO_GENERATOR}
+        ${MICRO_OPCODERS_BASE}
+        ${MICRO_OPCODERS_CMSIS_NN}
         )
 
 add_executable(codegen main.cc

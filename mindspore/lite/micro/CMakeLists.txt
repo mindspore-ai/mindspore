@@ -7,6 +7,7 @@ include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
 include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
+include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
 
 set(FBS_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/../schema/model.fbs
