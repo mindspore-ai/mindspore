@@ -400,8 +400,18 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
     op = prim::kPrimListGetItem;
   }
 
+  if (tail_type_ == kGradFirst) {
+    if (sequeue->size() > 1 && (*sequeue)[1] != nullptr && (*sequeue)[1]->isa<abstract::AbstractUndetermined>()) {
+      ret->set_output(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(1))}));
+    } else {
+      ret->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
+    }
+
+    return ret;
+  }
+
   for (size_t i = 1; i < sequeue->size(); ++i) {
-    if (do_grad_) {
+    if (tail_type_ == kGradAll) {
       MS_EXCEPTION_IF_NULL((*sequeue)[i]);
       if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>()) {
         elems.push_back(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
@@ -581,8 +591,8 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
 
   CNodePtr inputs_bprop = nullptr;
   if (get_all_) {
-    TailPtr tail = std::make_shared<Tail>("tail", true);
-    inputs_bprop = k_child->NewCNode({NewValueNode(tail), b_app});
+    TailPtr tail_grad_all = std::make_shared<Tail>("tail_grad_all", kGradAll);
+    inputs_bprop = k_child->NewCNode({NewValueNode(tail_grad_all), b_app});
   }
 
   // Gradients wrt inputs and parameters
@@ -602,11 +612,11 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
     k_child->set_output(inputs_bprop);
     return;
   }
-
   // Gradients wrt first input.
-  // b_app returns (EnvInstance(grads wrt params), grads wrt input0, grads wrt input1, ...), so 1 is for first input
-  k_child->set_output(
-    k_child->NewCNode({NewValueNode(prim::kPrimTupleGetItem), b_app, NewValueNode(static_cast<int64_t>(1))}));
+  // b_app returns (EnvInstance(grads wrt params), grads wrt input0, grads wrt input1, ...),
+  // so obtain first input grad by setting tail_type of Tail to kGradFirst.
+  TailPtr tail_grad_first = std::make_shared<Tail>("tail_grad_first", kGradFirst);
+  k_child->set_output(k_child->NewCNode({NewValueNode(tail_grad_first), b_app}));
 }
 
 // Generate the graph.
