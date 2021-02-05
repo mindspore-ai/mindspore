@@ -99,7 +99,8 @@ enum ActivationGradType : byte {
     HSIGMOID = 13,
     THRESHOLDRELU = 14,
     LINEAR = 15,
-    UNKNOWN = 16
+    UNKNOWN = 16,
+    LOG = 17
 }
 enum ReduceType : byte {
     REDUCE_MAX = 0,
