@@ -33,6 +33,7 @@
 #include "utils/any.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
+#include "utils/check_convert_utils.h"
 #include "utils/context/context_extends.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils_py.h"
@@ -457,6 +458,27 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   }
   op_prim->EndRecordAddAttr();
 }
+
+
+void ConvertAttrToUnifyMindIR(const OpExecInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  PrimitivePtr op_prim = op_run_info->py_primitive;
+  MS_EXCEPTION_IF_NULL(op_prim);
+
+  std::string op_name = op_run_info->op_name;
+  auto attrs = op_prim->attrs();
+  for (auto attr : attrs) {
+    bool converted = CheckAndConvertUtils::ConvertAttrValueToString(op_name, attr.first, &attr.second);
+    if (converted) {
+      op_prim->set_attr(attr.first, attr.second);
+    }
+    bool converted_ir_attr = CheckAndConvertUtils::CheckIrAttrtoOpAttr(op_name, attr.first, &attr.second);
+    if (converted_ir_attr) {
+      op_prim->set_attr(attr.first, attr.second);
+    }
+  }
+}
+
 
 BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref) {
   if (utils::isa<VectorRef>(base_ref)) {
@@ -1425,6 +1447,7 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
   std::vector<tensor::TensorPtr> input_tensors;
   std::vector<int64_t> tensors_mask;
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
+  ConvertAttrToUnifyMindIR(op_exec_info);
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
 #if defined(__APPLE__)

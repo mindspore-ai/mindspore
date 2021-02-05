@@ -1083,7 +1083,7 @@ class L2NormalizeGrad(PrimitiveWithInfer):
     Gradients of L2 normalize.
 
     Args:
-        axis (int): The begin axis for the input to apply L2 normalize. Default: 0.
+        axis (Union[list(int), tuple(int), int]): The begin axis for the input to apply L2 normalize. Default: 0.
         epsilon (float): A small value added for numerical stability. Default: 1e-4.
 
     Inputs:
@@ -1097,8 +1097,13 @@ class L2NormalizeGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, axis=0, epsilon=1e-4):
-        validator.check_value_type('axis', axis, [int], self.name)
+        axis = [axis] if isinstance(axis, int) else axis
+        validator.check_value_type('axis', axis, [list, tuple], self.name)
         validator.check_value_type('epsilon', epsilon, [int, float], self.name)
+        self.add_prim_attr('axis', axis)
+        self.init_attrs['axis'] = axis
+        if len(axis) != 1:
+            raise TypeError("The length of axis must be 1, later will support multiple axis!")
 
     def infer_shape(self, input_x, out, dout):
         validator.check('input_x shape', input_x, 'out shape', out, Rel.EQ, self.name)

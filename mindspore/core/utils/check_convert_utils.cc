@@ -226,6 +226,7 @@ bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, 
   return true;
 }
 
+
 namespace {
 typedef std::map<std::string, std::function<ValuePtr(ValuePtr)>> AttrFunction;
 
@@ -240,6 +241,7 @@ ValuePtr L2NormalizeAttrConversion(ValuePtr attr) {
 std::map<std::string, AttrFunction> kIrAttrToOpAttr = {{"L2Normalize", {{"axis", L2NormalizeAttrConversion}}},
                                                        {"L2NormalizeGrad", {{"axis", L2NormalizeAttrConversion}}}};
 }  // namespace
+
 
 bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2) {
   if (vec_1.size() != vec_2.size()) {
