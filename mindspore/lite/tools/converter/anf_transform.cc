@@ -34,7 +34,7 @@
 #include "tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/mindir_inputs_adjust_pass.h"
-#include "tools/optimizer/graph/identity_remove_pass.h"
+#include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
@@ -144,7 +144,7 @@ int AnfTransform::AddConvertPass(const std::shared_ptr<opt::GraphOptimizer> &opt
 int AnfTransform::AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer,
                                    const converter::Flags *config) {
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
-  const_fold_pm->AddPass(std::make_shared<opt::RemoveIdentityOpPass>());
+  const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
   if (!config->trainModel) {
     auto inne_context_ptr = std::make_shared<lite::InnerContext>();
     inne_context_ptr->Init();
