@@ -185,7 +185,7 @@ if __name__ == '__main__':
                                  device_target=args_opt.device_target,
                                  repeat_num=1,
                                  batch_size=config_.batch_size,
-                                 run_distribute=False)
+                                 run_distribute=args_opt.run_distribute)
     elif args_opt.device_target == "CPU":
         dataset = create_dataset_cifar(args_opt.dataset_path,
                                        do_train=True,
