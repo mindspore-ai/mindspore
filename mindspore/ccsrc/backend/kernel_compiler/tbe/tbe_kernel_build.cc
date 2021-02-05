@@ -94,6 +94,7 @@ constexpr auto kJListArgs = "list_args";
 constexpr auto kJSocVersion = "socVersion";
 constexpr auto kSOC_VERSION = "SOC_VERSION";
 constexpr auto kJIsDynamicShape = "is_dynamic_shape";
+constexpr auto kJDynamicIndex = "dynamic_index";
 
 bool IsNeedChangeDefaultFormat(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -137,6 +138,10 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   op_info_json[kJAttrs] = attrs_json;
   auto soc_version = TbeKernelJsonCreator::GetSocVersion();
   op_info_json[kJSocVersion] = soc_version;
+  if (op_info_json[kJIsDynamicShape]) {
+    static int32_t dynamic_index = 0;
+    op_info_json[kJDynamicIndex] = dynamic_index++;
+  }
   std::string json_str = op_info_json.dump();
   size_t hash_id = std::hash<std::string>()(json_str);
   auto context_ptr = MsContext::GetInstance();

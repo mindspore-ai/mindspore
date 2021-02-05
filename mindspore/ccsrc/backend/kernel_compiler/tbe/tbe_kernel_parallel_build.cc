@@ -56,13 +56,11 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list, anf_node);
     // search cache
     const std::string &json_name = creator.json_name();
-    auto IsDynamicShape = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node);
-    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get()) &&
-        !IsDynamicShape) {
+    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get())) {
       continue;
     }
     // same op not need build, but need wait build finish to set kernel mode
-    if (processed_kernel.find(json_name) != processed_kernel.end() && !IsDynamicShape) {
+    if (processed_kernel.find(json_name) != processed_kernel.end()) {
       build_manger->SaveSameOpInfo(anf_node, json_name, input_size_list, output_size_list);
       continue;
     }
