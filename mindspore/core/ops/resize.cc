@@ -118,7 +118,7 @@ int64_t Resize::get_exclude_outside() const {
 
 float Resize::get_extrapolation_value() const {
   auto value_ptr = GetAttr(kExtrapolationValue);
-  return GetValue<int64_t>(value_ptr);
+  return GetValue<float>(value_ptr);
 }
 
 NearestMode Resize::get_nearest_mode() const {
