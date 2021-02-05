@@ -18,6 +18,7 @@ This is the entrance to start the cache service
 
 import os
 import stat
+import subprocess
 import sys
 import mindspore
 
@@ -30,4 +31,4 @@ def main():
     os.chmod(cache_admin, stat.S_IRWXU)
     os.chmod(cache_server, stat.S_IRWXU)
     cmd = cache_admin + " " + " ".join(sys.argv[1:])
-    os.system(cmd)
+    sys.exit(subprocess.call(cmd, shell=True))
