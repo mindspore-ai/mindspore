@@ -204,7 +204,7 @@ if(ENABLE_CONVERTER)
     include(${TOP_DIR}/cmake/external_libs/protobuf.cmake)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter)
     if(NOT WIN32)
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/micro)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/micro/coder)
     endif()
 endif()
 
