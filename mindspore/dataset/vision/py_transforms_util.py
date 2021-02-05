@@ -56,6 +56,10 @@ def normalize(img, mean, std, pad_channel=False, dtype="float32"):
     Returns:
         img (numpy.ndarray), Normalized image.
     """
+    if np.issubdtype(img.dtype, np.integer):
+        raise NotImplementedError("Unsupported image datatype: [{}], pls execute [ToTensor] before [Normalize]."
+                                  .format(img.dtype))
+
     if not is_numpy(img):
         raise TypeError("img should be NumPy image. Got {}.".format(type(img)))
 
@@ -74,6 +78,7 @@ def normalize(img, mean, std, pad_channel=False, dtype="float32"):
 
     mean = np.array(mean, dtype=img.dtype)
     std = np.array(std, dtype=img.dtype)
+
     image = (img - mean[:, None, None]) / std[:, None, None]
     if pad_channel:
         zeros = np.zeros([1, image.shape[1], image.shape[2]], dtype=np.float32)

@@ -41,6 +41,7 @@
 #include "include/api/status.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/tensor_helpers.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/core/de_tensor.h"
 #ifndef ENABLE_ANDROID
@@ -171,6 +172,18 @@ class Tensor {
     return CreateFromVector(items, TensorShape({static_cast<dsize_t>(items.size())}), out);
   }
 
+  /// Create a 1D boolean Tensor from a given list of boolean values.
+  /// \param[in] items elements of the tensor
+  /// \param[in] shape shape of the output tensor
+  /// \param[out] out output argument to hold the created Tensor
+  /// \return Status Code
+  static Status CreateFromVector(const std::vector<bool> &items, const TensorShape &shape, TensorPtr *out) {
+    std::vector<uint8_t> temp(items.begin(), items.end());
+    RETURN_IF_NOT_OK(CreateFromVector(temp, shape, out));
+    (*out)->type_ = DataType(DataType::DE_BOOL);
+    return Status::OK();
+  }
+
   /// Create a numeric scalar Tensor from the given value.
   /// \tparam T type of value
   /// \param[in] item value
@@ -282,7 +295,7 @@ class Tensor {
   const TensorShape &shape() const { return shape_; }
 
   /// Check if tensor has data
-  /// \return bool - true if tensor is empty
+  /// \return bool - true if tensor is not empty
   bool HasData() const { return data_ != nullptr; }
 
   /// Reshape the tensor. The given shape should have the same number of elements in the Tensor
@@ -367,20 +380,37 @@ class Tensor {
   }
 
   /// Handle negative indices.
+  /// \param[out] out modified index
+  /// \param[in] index
+  /// \param[in] length axis length used to modify index
+  /// \return dsize_t modified index
   static inline dsize_t HandleNeg(dsize_t index, dsize_t length) { return (index < 0) ? (index + length) : index; }
 
-  /// Slice tensor bases on the given indices. Copy the sliced data into out tensor. Only rank1 tensors are supported.
+  /// Handle negative indices for a vector of indices.
+  /// \param[out] out modified vector of indices
+  /// \param[in] index_vector vector of indices
+  /// \return std::vector<dsize_t> modified vector of indices
+  static inline std::vector<dsize_t> HandleNegIndices(std::vector<dsize_t> index_vector, std::vector<dsize_t> length) {
+    std::vector<dsize_t> indices(index_vector.size(), 0);
+    for (int i = 0; i < index_vector.size(); i++) {
+      indices[i] = HandleNeg(index_vector[i], length[i]);
+    }
+    return indices;
+  }
+
+  /// Slice tensor bases on the given indices. Copy the sliced data into out tensor.
   /// Based on the type of tensor, SliceNumeric or SliceString will be called
   /// \param[out] out Tensor
-  /// \param[in] indices vector of indices
+  /// \param[in] slice_options vector of SliceOption objects
   /// \return Status error code
-  Status Slice(TensorPtr *out, const std::vector<dsize_t> &indices);
+  Status Slice(TensorPtr *out, const std::vector<mindspore::dataset::SliceOption> slice_options);
 
-  /// Slice numeric tensors.
-  Status SliceNumeric(TensorPtr *out, const std::vector<dsize_t> &indices);
-
-  /// Slice string tensors
-  Status SliceString(TensorPtr *out, const std::vector<dsize_t> &indices);
+  /// Get slice_option according to shape and index.
+  /// \param[in] slice_option input SliceOption object
+  /// \param[in] slice_index index of SliceOption object
+  /// \param[out] output slice_option with shape info
+  /// \return Status error code
+  Status GetSliceOption(const SliceOption &slice_option, const int32_t &slice_index, SliceOption *slice_option_ptr);
 
 #ifdef ENABLE_PYTHON
   /// Constructs numpy array from input tensor
@@ -658,6 +688,12 @@ class Tensor {
 
  private:
   friend class DETensor;
+
+  /// Slice numeric tensors.
+  Status SliceNumeric(TensorPtr *out, const std::vector<std::vector<dsize_t>> &indices, const TensorShape &shape);
+
+  /// Slice string tensors
+  Status SliceString(TensorPtr *out, const std::vector<std::vector<dsize_t>> &indices, const TensorShape &shape);
 
   /// Copy raw data of a array based on shape and strides to the destination pointer
   /// \param dst [out] Pointer to the destination array where the content is to be copied
