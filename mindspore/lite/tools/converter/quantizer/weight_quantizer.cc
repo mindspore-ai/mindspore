@@ -127,6 +127,7 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
   auto already_quant = false;
   ParamValueLitePtr param_value = nullptr;
   ParameterPtr param_node = nullptr;
+  int index = 0;
   for (size_t i = 1; i < cnode->size(); i++) {
     auto inputNode = cnode->input(i);
     if (inputNode->isa<Parameter>()) {
@@ -146,6 +147,7 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
           param_value = nullptr;
           continue;
         } else {
+          index = i;
           break;
         }
       }
@@ -169,11 +171,11 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
 
   auto status = RET_ERROR;
   if (type_id_ == kNumberTypeInt8) {
-    status =
-      QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true);
+    status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
+                                 true, index - 1);
   } else if (type_id_ == kNumberTypeInt16) {
-    status =
-      QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, true);
+    status = QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
+                                  true, index - 1);
   }
   if (status == RET_CONTINUE) {
     return RET_OK;
