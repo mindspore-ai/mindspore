@@ -120,6 +120,8 @@ enum PoolMode : int64_t {
   MEAN_POOLING = 1,
 };
 
+enum GateOrderMode : int64_t { RZH = 0, ZRH = 1 };
+
 enum class LshProjectionType : int64_t { UNKNOWN = 0, SPARSE = 1, DENSE = 2 };
 
 enum PaddingMode : int64_t { CONSTANT = 0, REFLECT = 1, SYMMETRIC = 2, MODE_RESERVED = 3 };
