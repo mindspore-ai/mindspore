@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <memory>
+
 #include "mindspore/core/utils/log_adapter.h"
 #include "DvppCommon.h"
 #include "CommonDataType.h"
@@ -185,11 +186,16 @@ void DvppCommon::ReleaseDvppBuffer() {
  */
 APP_ERROR DvppCommon::GetVpcDataSize(uint32_t width, uint32_t height, acldvppPixelFormat format, uint32_t &vpcSize) {
   // Check the invalid format of VPC function and calculate the output buffer size
-  if (format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && format != PIXEL_FORMAT_YVU_SEMIPLANAR_420) {
-    MS_LOG(ERROR) << "Format[" << format << "] for VPC is not supported, just support NV12 or NV21.";
+  if (format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && format != PIXEL_FORMAT_YVU_SEMIPLANAR_420 &&
+      format != PIXEL_FORMAT_RGB_888) {
+    MS_LOG(ERROR) << "Format[" << format << "] for VPC is not supported, just support NV12 or NV21 or RGB888.";
     return APP_ERR_COMM_INVALID_PARAM;
   }
   uint32_t widthStride = DVPP_ALIGN_UP(width, VPC_WIDTH_ALIGN);
+  if (format == PIXEL_FORMAT_RGB_888) {
+    widthStride *= 3;
+  }
+
   uint32_t heightStride = DVPP_ALIGN_UP(height, VPC_HEIGHT_ALIGN);
   vpcSize = widthStride * heightStride * YUV_BGR_SIZE_CONVERT_3 / YUV_BGR_SIZE_CONVERT_2;
   return APP_ERR_OK;
@@ -254,12 +260,17 @@ APP_ERROR DvppCommon::GetVpcInputStrideSize(uint32_t width, uint32_t height, acl
 APP_ERROR DvppCommon::GetVpcOutputStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
                                              uint32_t &widthStride, uint32_t &heightStride) {
   // Check the invalidty of output format and calculate the output width and height
-  if (format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && format != PIXEL_FORMAT_YVU_SEMIPLANAR_420) {
-    MS_LOG(ERROR) << "Output format[" << format << "] for VPC is not supported, just support NV12 or NV21.";
+  if (format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && format != PIXEL_FORMAT_YVU_SEMIPLANAR_420 &&
+      format != PIXEL_FORMAT_RGB_888) {
+    MS_LOG(ERROR) << "Output format[" << format << "] for VPC is not supported, just support NV12 or NV21 or RGB888.";
     return APP_ERR_COMM_INVALID_PARAM;
   }
 
   widthStride = DVPP_ALIGN_UP(width, VPC_STRIDE_WIDTH);
+  if (format == PIXEL_FORMAT_RGB_888) {
+    widthStride *= 3;
+  }
+
   heightStride = DVPP_ALIGN_UP(height, VPC_STRIDE_HEIGHT);
   return APP_ERR_OK;
 }
@@ -373,8 +384,9 @@ APP_ERROR DvppCommon::SetDvppPicDescData(const DvppDataInfo &dataInfo, acldvppPi
  * @return: APP_ERR_OK if success, other values if failure
  */
 APP_ERROR DvppCommon::CheckResizeParams(const DvppDataInfo &input, const DvppDataInfo &output) {
-  if (output.format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && output.format != PIXEL_FORMAT_YVU_SEMIPLANAR_420) {
-    MS_LOG(ERROR) << "Output format[" << output.format << "] for VPC is not supported, just support NV12 or NV21.";
+  if (output.format != PIXEL_FORMAT_YUV_SEMIPLANAR_420 && output.format != PIXEL_FORMAT_YVU_SEMIPLANAR_420 &&
+      output.format != PIXEL_FORMAT_RGB_888) {
+    MS_LOG(ERROR) << "Output format[" << output.format << "] for VPC is not supported, only NV12 or NV21 or RGB888.";
     return APP_ERR_COMM_INVALID_PARAM;
   }
   if (((float)output.height / input.height) < MIN_RESIZE_SCALE ||
@@ -419,6 +431,7 @@ APP_ERROR DvppCommon::ResizeProcess(acldvppPicDesc &inputDesc, acldvppPicDesc &o
       return ret;
     }
   }
+
   return APP_ERR_OK;
 }
 
@@ -770,6 +783,7 @@ APP_ERROR DvppCommon::CombineCropProcess(DvppCropInputInfo &input, DvppDataInfo 
   if (ret != APP_ERR_OK) {
     return ret;
   }
+  // cropImage_所持有的成员变量 uint8_t *data通过acldvppMalloc()接口申请，位于Device上
   cropImage_ = std::make_shared<DvppDataInfo>();
   cropImage_->width = output.width;
   cropImage_->height = output.height;
@@ -840,6 +854,44 @@ APP_ERROR DvppCommon::JpegDecode(DvppDataInfo &input, DvppDataInfo &output, bool
 }
 
 /*
+ * @description: Set the description of the output image and decode
+ * @param: input specifies the input image information
+ * @param: output specifies the output image information
+ * @param: withSynchronize specifies whether to execute synchronously
+ * @return: APP_ERR_OK if success, other values if failure
+ * @attention: This function can be called only when the DvppCommon object is initialized with Init
+ */
+APP_ERROR DvppCommon::PngDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize) {
+  // Return special error code when the DvppCommon object is initialized with InitVdec
+  if (isVdec_) {
+    MS_LOG(ERROR) << "PngDecode cannot be called by the DvppCommon object which is initialized with InitVdec.";
+    return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
+  }
+
+  acldvppPicDesc *outputDesc = acldvppCreatePicDesc();
+  decodeOutputDesc_.reset(outputDesc, g_picDescDeleter);
+
+  APP_ERROR ret = SetDvppPicDescData(output, *decodeOutputDesc_);
+  if (ret != APP_ERR_OK) {
+    return ret;
+  }
+
+  ret = acldvppPngDecodeAsync(dvppChannelDesc_, input.data, input.dataSize, decodeOutputDesc_.get(), dvppStream_);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to decode png, ret = " << ret << ".";
+    return ret;
+  }
+  if (withSynchronize) {
+    ret = aclrtSynchronizeStream(dvppStream_);
+    if (ret != APP_ERR_OK) {
+      MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
+      return APP_ERR_DVPP_JPEG_DECODE_FAIL;
+    }
+  }
+  return APP_ERR_OK;
+}
+
+/*
  * @description: Get the aligned width and height of the image after decoding
  * @param: width specifies the width before alignment
  * @param: height specifies the height before alignment
@@ -851,6 +903,17 @@ void DvppCommon::GetJpegDecodeStrideSize(uint32_t width, uint32_t height, uint32
                                          uint32_t &heightStride) {
   widthStride = DVPP_ALIGN_UP(width, JPEGD_STRIDE_WIDTH);
   heightStride = DVPP_ALIGN_UP(height, JPEGD_STRIDE_HEIGHT);
+}
+
+void DvppCommon::GetPngDecodeStrideSize(uint32_t width, uint32_t height, uint32_t &widthStride, uint32_t &heightStride,
+                                        acldvppPixelFormat format) {
+  if (format == PIXEL_FORMAT_RGB_888) {
+    widthStride = DVPP_ALIGN_UP(width * 3, JPEGD_STRIDE_WIDTH);
+    heightStride = DVPP_ALIGN_UP(height, JPEGD_STRIDE_HEIGHT);
+  } else {
+    widthStride = DVPP_ALIGN_UP(width * 4, JPEGD_STRIDE_WIDTH);
+    heightStride = DVPP_ALIGN_UP(height, JPEGD_STRIDE_HEIGHT);
+  }
 }
 
 /*
@@ -887,6 +950,39 @@ APP_ERROR DvppCommon::GetJpegImageInfo(const void *data, uint32_t dataSize, uint
 }
 
 /*
+ * @description: Get picture width and height and number of channels from PNG image data
+ * @param: data specifies the memory to store the image data
+ * @param: dataSize specifies the size of the image data
+ * @param: width is used to save the image width
+ * @param: height is used to save the image height
+ * @param: components is used to save the number of channels
+ * @return: APP_ERR_OK if success, other values if failure
+ */
+APP_ERROR DvppCommon::GetPngImageInfo(const void *data, uint32_t dataSize, uint32_t &width, uint32_t &height,
+                                      int32_t &components) {
+  uint32_t widthTmp;
+  uint32_t heightTmp;
+  int32_t componentsTmp;
+  APP_ERROR ret = acldvppPngGetImageInfo(data, dataSize, &widthTmp, &heightTmp, &componentsTmp);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get image info of PNG, ret = " << ret << ".";
+    return ret;
+  }
+  if (widthTmp > MAX_PNGD_WIDTH || widthTmp < MIN_PNGD_WIDTH) {
+    MS_LOG(ERROR) << "Input width is invalid, not in [" << MIN_PNGD_WIDTH << ", " << MAX_PNGD_WIDTH << "].";
+    return APP_ERR_COMM_INVALID_PARAM;
+  }
+  if (heightTmp > MAX_PNGD_HEIGHT || heightTmp < MIN_PNGD_HEIGHT) {
+    MS_LOG(ERROR) << "Input height is invalid, not in [" << MIN_PNGD_HEIGHT << ", " << MAX_PNGD_HEIGHT << "].";
+    return APP_ERR_COMM_INVALID_PARAM;
+  }
+  width = widthTmp;
+  height = heightTmp;
+  components = componentsTmp;
+  return APP_ERR_OK;
+}
+
+/*
  * @description: Get the size of the buffer for storing decoded images based on the image data, size, and format
  * @param: data specifies the memory to store the image data
  * @param: dataSize specifies the size of the image data
@@ -900,6 +996,26 @@ APP_ERROR DvppCommon::GetJpegDecodeDataSize(const void *data, uint32_t dataSize,
   APP_ERROR ret = acldvppJpegPredictDecSize(data, dataSize, format, &outputSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to predict decode size of jpeg image, ret = " << ret << ".";
+    return ret;
+  }
+  decSize = outputSize;
+  return APP_ERR_OK;
+}
+
+/*
+ * @description: Get the size of the buffer for storing decoded images based on the PNG image data, size, and format
+ * @param: data specifies the memory to store the image data
+ * @param: dataSize specifies the size of the image data
+ * @param: format specifies the image format
+ * @param: decSize is used to store the result size
+ * @return: APP_ERR_OK if success, other values if failure
+ */
+APP_ERROR DvppCommon::GetPngDecodeDataSize(const void *data, uint32_t dataSize, acldvppPixelFormat format,
+                                           uint32_t &decSize) {
+  uint32_t outputSize;
+  APP_ERROR ret = acldvppPngPredictDecSize(data, dataSize, format, &outputSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to predict decode size of png image, ret = " << ret << ".";
     return ret;
   }
   decSize = outputSize;
@@ -923,24 +1039,27 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
   }
 
   int32_t components;
+  // Member variable of inputImage_, uint8_t *data will be on device
   inputImage_ = std::make_shared<DvppDataInfo>();
   inputImage_->format = format;
   APP_ERROR ret =
-    GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+    // GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+    GetJpegImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
     return ret;
   }
 
-  // Get the buffer size of decode output according to the input data and output format
+  // Get the buffer size(On device) of decode output according to the input data and output format
   uint32_t outBuffSize;
-  ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
+  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
+  ret = GetJpegDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
     return ret;
   }
 
-  // In TransferImageH2D function, device buffer will be alloced to store the input image
+  // In TransferImageH2D function, device buffer will be alloced to store the input image before decode
   // Need to pay attention to release of the buffer
   ret = TransferImageH2D(imageInfo, inputImage_);
   if (ret != APP_ERR_OK) {
@@ -976,6 +1095,150 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
   return APP_ERR_OK;
 }
 
+APP_ERROR DvppCommon::SinkCombineJpegdProcess(std::shared_ptr<DvppDataInfo> &input,
+                                              std::shared_ptr<DvppDataInfo> &output, bool withSynchronize) {
+  // Both input and output are locate on device, so we must release them if fail in decode
+  APP_ERROR ret = JpegDecode(*input, *output, withSynchronize);
+  if (ret != APP_ERR_OK) {
+    // Release the output buffer when decode failed, otherwise release it after use
+    RELEASE_DVPP_DATA(inputImage_->data);
+    inputImage_->data = nullptr;
+    RELEASE_DVPP_DATA(decodedImage_->data);
+    decodedImage_->data = nullptr;
+    return ret;
+  }
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppCommon::SinkCombinePngdProcess(std::shared_ptr<DvppDataInfo> &input,
+                                             std::shared_ptr<DvppDataInfo> &output, bool withSynchronize) {
+  // Both input and output are locate on device, so we must release them if fail in decode
+  APP_ERROR ret = PngDecode(*input, *output, withSynchronize);
+  if (ret != APP_ERR_OK) {
+    // Release the output buffer when decode failed, otherwise release it after use
+    RELEASE_DVPP_DATA(inputImage_->data);
+    inputImage_->data = nullptr;
+    RELEASE_DVPP_DATA(decodedImage_->data);
+    decodedImage_->data = nullptr;
+    return ret;
+  }
+  return APP_ERR_OK;
+}
+
+/*
+ * @description: Decode the image specified by imageInfo and save the result to member variable decodedImage_
+ * This function is for PNG format image
+ * @param: imageInfo specifies image information
+ * @param: format specifies the image format
+ * @param: withSynchronize specifies whether to execute synchronously
+ * @return: APP_ERR_OK if success, other values if failure
+ * @attention: This function can be called only when the DvppCommon object is initialized with Init
+ */
+APP_ERROR DvppCommon::CombinePngdProcess(const RawData &imageInfo, acldvppPixelFormat format, bool withSynchronize) {
+  // Return special error code when the DvppCommon object is initialized with InitVdec
+  if (isVdec_) {
+    MS_LOG(ERROR) << "CombinePngdProcess cannot be called by the DvppCommon object which is initialized with InitVdec.";
+    return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
+  }
+
+  int32_t components;
+  inputImage_ = std::make_shared<DvppDataInfo>();
+  inputImage_->format = format;
+  APP_ERROR ret =
+    // GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+    GetPngImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
+    return ret;
+  }
+
+  // Get the buffer size of decode output according to the input data and output format
+  uint32_t outBuffSize;
+  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
+  ret = GetPngDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
+    return ret;
+  }
+
+  // In TransferImageH2D function, device buffer will be alloced to store the input image
+  // Need to pay attention to release of the buffer
+  ret = TransferImageH2D(imageInfo, inputImage_);
+  if (ret != APP_ERR_OK) {
+    return ret;
+  }
+
+  decodedImage_ = std::make_shared<DvppDataInfo>();
+  decodedImage_->format = format;
+  decodedImage_->width = inputImage_->width;
+  decodedImage_->height = inputImage_->height;
+  GetPngDecodeStrideSize(inputImage_->width, inputImage_->height, decodedImage_->widthStride,
+                         decodedImage_->heightStride, format);
+  decodedImage_->dataSize = outBuffSize;
+  // Malloc dvpp buffer to store the output data after decoding
+  // Need to pay attention to release of the buffer
+  ret = acldvppMalloc((void **)&decodedImage_->data, decodedImage_->dataSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
+    RELEASE_DVPP_DATA(inputImage_->data);
+    return ret;
+  }
+  ret = PngDecode(*inputImage_, *decodedImage_, withSynchronize);
+  if (ret != APP_ERR_OK) {
+    // Release the output buffer when decode failed, otherwise release it after use
+    RELEASE_DVPP_DATA(inputImage_->data);
+    inputImage_->data = nullptr;
+    RELEASE_DVPP_DATA(decodedImage_->data);
+    decodedImage_->data = nullptr;
+    return ret;
+  }
+
+  return APP_ERR_OK;
+}
+
+/*
+ * @description: Transfer data from host to device
+ * @param: imageInfo specifies the image data on the host
+ * @return: APP_ERR_OK if success, other values if failure
+ */
+APP_ERROR DvppCommon::TransferYuvDataH2D(const DvppDataInfo &imageinfo) {
+  if (imageinfo.dataSize <= 0) {
+    MS_LOG(ERROR) << "The input buffer size on host should not be empty.";
+    return APP_ERR_COMM_INVALID_PARAM;
+  }
+  uint8_t *device_ptr = nullptr;
+  APP_ERROR ret = acldvppMalloc((void **)&device_ptr, imageinfo.dataSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to malloc " << imageinfo.dataSize << " bytes on dvpp, ret = " << ret << ".";
+    return ret;
+  }
+  ret = aclrtMemcpyAsync(device_ptr, imageinfo.dataSize, imageinfo.data, imageinfo.dataSize, ACL_MEMCPY_HOST_TO_DEVICE,
+                         dvppStream_);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to copy " << imageinfo.dataSize << " bytes from host to device, ret = " << ret << ".";
+    RELEASE_DVPP_DATA(device_ptr);
+    return ret;
+  }
+  ret = aclrtSynchronizeStream(dvppStream_);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
+    RELEASE_DVPP_DATA(device_ptr);
+    return ret;
+  }
+  /* Important!!! decodedImage_ speifies the image in deocded format(RGB OR YUV)
+   * Not essentailly to be the image after decode.(Specifies the data not in RAW encode format)
+   * It can also be the image after resize(Very important)
+   */
+  decodedImage_ = std::make_shared<DvppDataInfo>();
+  decodedImage_->data = device_ptr;
+  decodedImage_->dataSize = imageinfo.dataSize;
+  decodedImage_->height = imageinfo.height;
+  decodedImage_->heightStride = imageinfo.heightStride;
+  decodedImage_->width = imageinfo.width;
+  decodedImage_->widthStride = imageinfo.widthStride;
+  return APP_ERR_OK;
+}
+
 /*
  * @description: Transfer data from host to device
  * @param: imageInfo specifies the image data on the host
@@ -983,7 +1246,13 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
  * @return: APP_ERR_OK if success, other values if failure
  */
 APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shared_ptr<DvppDataInfo> &jpegInput) {
-  uint8_t *inDevBuff = nullptr;
+  // Check image buffer size validity
+  if (imageInfo.lenOfByte <= 0) {
+    MS_LOG(ERROR) << "The input buffer size on host should not be empty.";
+    return APP_ERR_COMM_INVALID_PARAM;
+  }
+
+  uint8_t *inDevBuff = nullptr;  // This pointer will be on device
   APP_ERROR ret = acldvppMalloc((void **)&inDevBuff, imageInfo.lenOfByte);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to malloc " << imageInfo.lenOfByte << " bytes on dvpp, ret = " << ret << ".";
@@ -991,8 +1260,10 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
   }
 
   // Copy the image data from host to device
-  ret = aclrtMemcpyAsync(inDevBuff, imageInfo.lenOfByte, imageInfo.data.get(), imageInfo.lenOfByte,
-                         ACL_MEMCPY_HOST_TO_DEVICE, dvppStream_);
+  // ret = aclrtMemcpyAsync(inDevBuff, imageInfo.lenOfByte, imageInfo.data.get(), imageInfo.lenOfByte,
+  //                       ACL_MEMCPY_HOST_TO_DEVICE, dvppStream_);
+  ret = aclrtMemcpyAsync(inDevBuff, imageInfo.lenOfByte, imageInfo.data, imageInfo.lenOfByte, ACL_MEMCPY_HOST_TO_DEVICE,
+                         dvppStream_);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy " << imageInfo.lenOfByte << " bytes from host to device, ret = " << ret << ".";
     RELEASE_DVPP_DATA(inDevBuff);
@@ -1008,6 +1279,114 @@ APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shar
   }
   jpegInput->data = inDevBuff;
   jpegInput->dataSize = imageInfo.lenOfByte;
+  return APP_ERR_OK;
+}
+
+/*
+ * Sink RawData(On host) into DvppDataInfo(On device)
+ */
+APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat format) {
+  if (isVdec_) {
+    MS_LOG(ERROR)
+      << "CombineJpegdProcess cannot be called by the DvppCommon object which is initialized with InitVdec.";
+    return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
+  }
+
+  int32_t components;
+  // Member variable of inputImage_, uint8_t *data will be on device
+  inputImage_ = std::make_shared<DvppDataInfo>();
+  inputImage_->format = format;
+  APP_ERROR ret =
+    // GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+    GetJpegImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
+    return ret;
+  }
+
+  // Get the buffer size(On device) of decode output according to the input data and output format
+  uint32_t outBufferSize;
+  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
+  ret = GetJpegDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBufferSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
+    return ret;
+  }
+  // In TransferImageH2D function, device buffer will be alloced to store the input image before decode
+  // Need to pay attention to release of the buffer
+  ret = TransferImageH2D(imageInfo, inputImage_);
+  if (ret != APP_ERR_OK) {
+    return ret;
+  }
+  // This part is to define the data after decode (MALLOC ON DEVICE!!)
+  decodedImage_ = std::make_shared<DvppDataInfo>();
+  decodedImage_->format = format;
+  decodedImage_->width = inputImage_->width;
+  decodedImage_->height = inputImage_->height;
+  GetJpegDecodeStrideSize(inputImage_->width, inputImage_->height, decodedImage_->widthStride,
+                          decodedImage_->heightStride);
+  // Obtain all the attributes of inputImage_
+  GetJpegDecodeStrideSize(inputImage_->width, inputImage_->height, inputImage_->widthStride, inputImage_->heightStride);
+  decodedImage_->dataSize = outBufferSize;
+  // Malloc dvpp buffer to store the output data after decoding
+  // Need to pay attention to release of the buffer
+  ret = acldvppMalloc((void **)&decodedImage_->data, decodedImage_->dataSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
+    RELEASE_DVPP_DATA(inputImage_->data);
+    return ret;
+  }
+  return APP_ERR_OK;
+}
+
+APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
+  if (isVdec_) {
+    MS_LOG(ERROR) << "CombinePngdProcess cannot be called by the DvppCommon object which is initialized with InitVdec.";
+    return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
+  }
+
+  int32_t components;
+  inputImage_ = std::make_shared<DvppDataInfo>();
+  acldvppPixelFormat format = PIXEL_FORMAT_RGB_888;
+  inputImage_->format = format;
+  APP_ERROR ret =
+    GetPngImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
+    return ret;
+  }
+
+  // Get the buffer size of decode output according to the input data and output format
+  uint32_t outBuffSize;
+  // ret = GetJpegDecodeDataSize(imageInfo.data.get(), imageInfo.lenOfByte, format, outBuffSize);
+  ret = GetPngDecodeDataSize(imageInfo.data, imageInfo.lenOfByte, format, outBuffSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get size of decode output buffer, ret = " << ret << ".";
+    return ret;
+  }
+
+  // In TransferImageH2D function, device buffer will be alloced to store the input image
+  // Need to pay attention to release of the buffer
+  ret = TransferImageH2D(imageInfo, inputImage_);
+  if (ret != APP_ERR_OK) {
+    return ret;
+  }
+
+  decodedImage_ = std::make_shared<DvppDataInfo>();
+  decodedImage_->format = format;
+  decodedImage_->width = inputImage_->width;
+  decodedImage_->height = inputImage_->height;
+  GetPngDecodeStrideSize(inputImage_->width, inputImage_->height, decodedImage_->widthStride,
+                         decodedImage_->heightStride, format);
+  decodedImage_->dataSize = outBuffSize;
+  // Malloc dvpp buffer to store the output data after decoding
+  // Need to pay attention to release of the buffer
+  ret = acldvppMalloc((void **)&decodedImage_->data, decodedImage_->dataSize);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to malloc memory on dvpp, ret = " << ret << ".";
+    RELEASE_DVPP_DATA(inputImage_->data);
+    return ret;
+  }
   return APP_ERR_OK;
 }
 

@@ -4,7 +4,7 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_definitions(-DENABLE_DVPP_INTERFACE)
 
 add_library(dvpp-utils OBJECT
-        AclProcess.cc
+        MDAclProcess.cc
         DvppCommon.cc
         ErrorCode.cpp
         ResourceManager.cc

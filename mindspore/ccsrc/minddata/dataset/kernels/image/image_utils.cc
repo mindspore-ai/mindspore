@@ -142,6 +142,12 @@ bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input) {
   return input->SizeInBytes() > kJpegMagicLen && memcmp(input->GetBuffer(), kJpegMagic, kJpegMagicLen) == 0;
 }
 
+bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input) {
+  const unsigned char *kPngMagic = (unsigned char *)"\x89\x50\x4E\x47";
+  constexpr size_t kPngMagicLen = 4;
+  return input->SizeInBytes() > kPngMagicLen && memcmp(input->GetBuffer(), kPngMagic, kPngMagicLen) == 0;
+}
+
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   if (IsNonEmptyJPEG(input)) {
     return JpegCropAndDecode(input, output);
@@ -953,7 +959,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       RETURN_STATUS_UNEXPECTED("CutOut: load image failed.");
     }
     if (input_cv->Rank() != 3 || num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C> or <H,W>.");
     }
     cv::Mat input_img = input_cv->mat();
     int32_t image_h = input_cv->shape()[0];

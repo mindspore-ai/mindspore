@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,42 +20,41 @@
 #include "include/api/context.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/data_type.h"
-#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
-Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input,
-                                           std::shared_ptr<DeviceTensor> *output) {
+Status DvppDecodeResizeJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input,
+                                       std::shared_ptr<DeviceTensor> *output) {
   IO_CHECK(input, output);
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetDeviceBuffer() != nullptr, "The input image buffer on device is empty");
-    APP_ERROR ret = processor_->JPEG_DRC();
+    APP_ERROR ret = processor_->JPEG_DR();
     if (ret != APP_ERR_OK) {
       processor_->Release();
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
-    std::shared_ptr<DvppDataInfo> CropOut(processor_->Get_Croped_DeviceData());
-    // std::cout << "Decoded size: " << decoded_width << ", " << decoded_height << std::endl;
+    std::shared_ptr<DvppDataInfo> ResizeOut(processor_->Get_Resized_DeviceData());
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output);
-    (*output)->SetAttributes(CropOut);
+    (*output)->SetAttributes(ResizeOut);
     if (!((*output)->HasDeviceData())) {
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
   } catch (const cv::Exception &e) {
-    std::string error = "[ERROR] Fail in DvppDecodeResizeCropJpegOp:" + std::string(e.what());
+    std::string error = "[ERROR] Fail in DvppDecodeResizeJpegOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
 }
 
-Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+Status DvppDecodeResizeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (!IsNonEmptyJPEG(input)) {
     RETURN_STATUS_UNEXPECTED("DvppDecodeReiszeJpegOp only support process jpeg image.");
@@ -79,16 +78,16 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     }
     int deviceId = *(resource.deviceIds.begin());
     aclrtContext context = instance->GetContext(deviceId);
-    // Second part end where we initialize the resource of D chip and set up all configures
-    MDAclProcess processor(resized_width_, resized_height_, crop_width_, crop_height_, context, true);
-    ret = processor.InitResource();
+    // Second part end where we initialize the resource of D-chip and set up all configures
+    MDAclProcess process(resized_width_, resized_height_, context, false);
+    ret = process.InitResource();
     if (ret != APP_ERR_OK) {
       instance->Release();
       std::string error = "Error in Init resource:" + std::to_string(ret);
       RETURN_STATUS_UNEXPECTED(error);
     }
 
-    ret = processor.JPEG_DRC(imageInfo);
+    ret = process.JPEG_DR(imageInfo);
     if (ret != APP_ERR_OK) {
       instance->Release();
       std::string error = "Error in dvpp processing:" + std::to_string(ret);
@@ -96,10 +95,10 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     }
 
     // Third part end where we execute the core function of dvpp
-    auto data = std::static_pointer_cast<unsigned char>(processor.Get_Memory_Data());
+    auto data = std::static_pointer_cast<unsigned char>(process.Get_Memory_Data());
     unsigned char *ret_ptr = data.get();
-    std::shared_ptr<DvppDataInfo> CropOut(processor.Get_Croped_DeviceData());
-    uint32_t dvpp_length = CropOut->dataSize;
+    std::shared_ptr<DvppDataInfo> ResizeOut(process.Get_Resized_DeviceData());
+    dsize_t dvpp_length = ResizeOut->dataSize;
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, output);
@@ -107,32 +106,29 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
     }
-    processor.device_memory_release();
-    processor.Release();
+    process.device_memory_release();
+    process.Release();
     // Last part end where we transform the processed data into a tensor which can be applied in later units.
   } catch (const cv::Exception &e) {
-    std::string error = "[ERROR] Fail in DvppDecodeResizeCropJpegOp:" + std::string(e.what());
+    std::string error = "[ERROR] Fail in DvppDecodeResizeJpegOp:" + std::string(e.what());
     RETURN_STATUS_UNEXPECTED(error);
   }
   return Status::OK();
 }
 
-Status DvppDecodeResizeCropJpegOp::OutputShape(const std::vector<TensorShape> &inputs,
-                                               std::vector<TensorShape> &outputs) {
+Status DvppDecodeResizeJpegOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   RETURN_IF_NOT_OK(TensorOp::OutputShape(inputs, outputs));
   outputs.clear();
-  TensorShape out({-1, 1, 1});  // we don't know what is output image size, but we know it should be 3 channels
+  TensorShape out({-1, 1, 1});  // we don't know what is output image size, but we know it should be 1 channels
   if (inputs[0].Rank() == 1) outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
 }
 
-Status DvppDecodeResizeCropJpegOp::SetAscendResource(const std::shared_ptr<MDAclProcess> &processor) {
+Status DvppDecodeResizeJpegOp::SetAscendResource(const std::shared_ptr<MDAclProcess> &processor) {
   processor_ = processor;
   processor_->SetResizeParas(resized_width_, resized_height_);
-  processor_->SetCropParas(crop_width_, crop_height_);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

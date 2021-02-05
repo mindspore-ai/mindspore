@@ -29,15 +29,15 @@ std::shared_ptr<ResourceManager> ResourceManager::ptr_ = nullptr;
  */
 APP_ERROR ExistFile(const std::string &filePath) {
   struct stat fileSat = {0};
-  char c[PATH_MAX_ASCEND + 1] = {0x00};
-  size_t count = filePath.copy(c, PATH_MAX_ASCEND + 1);
+  char c[PATH_MAX + 1] = {0x00};
+  size_t count = filePath.copy(c, PATH_MAX + 1);
   if (count != filePath.length()) {
     MS_LOG(ERROR) << "Failed to strcpy" << c;
     return APP_ERR_COMM_FAILURE;
   }
   // Get the absolute path of input directory
-  char path[PATH_MAX_ASCEND + 1] = {0x00};
-  if ((strlen(c) > PATH_MAX_ASCEND) || (realpath(c, path) == nullptr)) {
+  char path[PATH_MAX + 1] = {0x00};
+  if ((strlen(c) > PATH_MAX) || (realpath(c, path) == nullptr)) {
     MS_LOG(ERROR) << "Failed to get canonicalize path";
     return APP_ERR_COMM_EXIST;
   }
@@ -85,7 +85,6 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
     MS_LOG(INFO) << "Acl has been initialized, skip.";
     return APP_ERR_OK;
   }
-
   std::string &aclConfigPath = resourceInfo.aclConfigPath;
   APP_ERROR ret;
   if (aclConfigPath.length() == 0) {

@@ -24,6 +24,10 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/core/device_tensor.h"
+#ifdef ENABLE_ACL
+#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
+#endif
 
 #define IO_CHECK(input, output)                             \
   do {                                                      \
@@ -58,7 +62,12 @@ constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kCutMixBatchOp[] = "CutMixBatchOp";
 constexpr char kCutOutOp[] = "CutOutOp";
 constexpr char kCropOp[] = "CropOp";
+constexpr char kDvppCropJpegOp[] = "DvppCropJpegOp";
 constexpr char kDvppDecodeResizeCropJpegOp[] = "DvppDecodeResizeCropJpegOp";
+constexpr char kDvppDecodeResizeJpegOp[] = "DvppDecodeResizeJpegOp";
+constexpr char kDvppDecodeJpegOp[] = "DvppDecodeJpegOp";
+constexpr char kDvppDecodePngOp[] = "DvppDecodePngOp";
+constexpr char kDvppResizeJpegOp[] = "DvppResizeJpegOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kHwcToChwOp[] = "HWC2CHWOp";
 constexpr char kInvertOp[] = "InvertOp";
@@ -168,6 +177,12 @@ class TensorOp {
   // @return Status
   virtual Status Compute(const TensorRow &input, TensorRow *output);
 
+  // Perform an operation on one DeviceTensor and produce one DeviceTensor. This is for 1-to-1 column MapOp
+  // @param input shares the ownership of the Tensor (increase the ref count).
+  // @param output the address to a shared_ptr where the result will be placed.
+  // @return Status
+  virtual Status Compute(const std::shared_ptr<DeviceTensor> &input, std::shared_ptr<DeviceTensor> *output);
+
   // Returns true oif the TensorOp takes one input and returns one output.
   // @return true/false
   bool OneToOne() { return NumInput() == 1 && NumOutput() == 1; }
@@ -201,6 +216,9 @@ class TensorOp {
   virtual std::string Name() const = 0;
 
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
+#ifdef ENABLE_ACL
+  virtual Status SetAscendResource(const std::shared_ptr<MDAclProcess> &processor);
+#endif
 
  protected:
   bool is_deterministic_{true};

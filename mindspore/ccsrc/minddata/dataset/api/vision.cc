@@ -37,7 +37,13 @@
 #endif
 #include "minddata/dataset/kernels/image/decode_op.h"
 #ifdef ENABLE_ACL
+#include "minddata/dataset/include/vision_ascend.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_jpeg_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
 #endif
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/equalize_op.h"
@@ -143,10 +149,45 @@ std::shared_ptr<DecodeOperation> Decode(bool rgb) {
 }
 
 #ifdef ENABLE_ACL
+// Function to create DvppResizeOperation.
+std::shared_ptr<DvppCropJpegOperation> DvppCropJpeg(std::vector<uint32_t> crop) {
+  auto op = std::make_shared<DvppCropJpegOperation>(crop);
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+
+// Function to create DvppDecodeResizeOperation.
+std::shared_ptr<DvppDecodeResizeOperation> DvppDecodeResizeJpeg(std::vector<uint32_t> resize) {
+  auto op = std::make_shared<DvppDecodeResizeOperation>(resize);
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+
 // Function to create DvppDecodeResizeCropOperation.
 std::shared_ptr<DvppDecodeResizeCropOperation> DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop,
                                                                         std::vector<uint32_t> resize) {
   auto op = std::make_shared<DvppDecodeResizeCropOperation>(crop, resize);
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+
+// Function to create DvppDecodeJpegOperation.
+std::shared_ptr<DvppDecodeJpegOperation> DvppDecodeJpeg() {
+  auto op = std::make_shared<DvppDecodeJpegOperation>();
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+
+// Function to create DvppDecodePngOperation.
+std::shared_ptr<DvppDecodePngOperation> DvppDecodePng() {
+  auto op = std::make_shared<DvppDecodePngOperation>();
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+
+// Function to create DvppResizeOperation.
+std::shared_ptr<DvppResizeJpegOperation> DvppResizeJpeg(std::vector<uint32_t> resize) {
+  auto op = std::make_shared<DvppResizeJpegOperation>(resize);
   // Input validation
   return op->ValidateParams() ? op : nullptr;
 }
@@ -442,6 +483,232 @@ std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<
   auto op = std::make_shared<UniformAugOperation>(transforms, num_ops);
   // Input validation
   return op->ValidateParams() ? op : nullptr;
+}
+#endif
+
+#ifdef ENABLE_ACL
+// DvppCropOperation
+DvppCropJpegOperation::DvppCropJpegOperation(const std::vector<uint32_t> &crop) : crop_(crop) {}
+
+Status DvppCropJpegOperation::ValidateParams() {
+  // size
+  if (crop_.empty() || crop_.size() > 2) {
+    std::string err_msg =
+      "DvppCropJpeg: Crop resolution must be a vector of one or two elements, got: " + std::to_string(crop_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(crop_.begin(), crop_.end()) < 32 || *max_element(crop_.begin(), crop_.end()) > 2048) {
+    std::string err_msg = "Dvpp module supports crop image with resolution in range [32, 2048], got crop Parameters: ";
+    if (crop_.size() == 2) {
+      MS_LOG(ERROR) << err_msg << "[" << crop_[0] << ", " << crop_[1] << "]";
+    } else {
+      MS_LOG(ERROR) << err_msg << "[" << crop_[0] << ", " << crop_[0] << "]";
+    }
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> DvppCropJpegOperation::Build() {
+  // If size is a single value, the smaller edge of the image will be
+  // resized to this value with the same image aspect ratio.
+  uint32_t cropHeight, cropWidth;
+  // User specified the width value.
+  if (crop_.size() == 1) {
+    cropHeight = crop_[0];
+    cropWidth = crop_[0];
+  } else {
+    cropHeight = crop_[0];
+    cropWidth = crop_[1];
+  }
+  std::shared_ptr<DvppCropJpegOp> tensor_op = std::make_shared<DvppCropJpegOp>(cropHeight, cropWidth);
+  return tensor_op;
+}
+
+// DvppDecodeResizeOperation
+DvppDecodeResizeOperation::DvppDecodeResizeOperation(const std::vector<uint32_t> &resize) : resize_(resize) {}
+
+Status DvppDecodeResizeOperation::ValidateParams() {
+  // size
+  if (resize_.empty() || resize_.size() > 2) {
+    std::string err_msg = "DvppDecodeResizeJpeg: resize resolution must be a vector of one or two elements, got: " +
+                          std::to_string(resize_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(resize_.begin(), resize_.end()) < 32 || *max_element(resize_.begin(), resize_.end()) > 2048) {
+    std::string err_msg =
+      "Dvpp module supports resize image with resolution in range [32, 2048], got resize Parameters: ";
+    if (resize_.size() == 2) {
+      MS_LOG(ERROR) << err_msg << "[" << resize_[0] << ", " << resize_[1] << "]";
+    } else {
+      MS_LOG(ERROR) << err_msg << "[" << resize_[0] << ", " << resize_[0] << "]";
+    }
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> DvppDecodeResizeOperation::Build() {
+  // If size is a single value, the smaller edge of the image will be
+  // resized to this value with the same image aspect ratio.
+  uint32_t resizeHeight, resizeWidth;
+  // User specified the width value.
+  if (resize_.size() == 1) {
+    resizeHeight = resize_[0];
+    resizeWidth = 0;
+  } else {
+    resizeHeight = resize_[0];
+    resizeWidth = resize_[1];
+  }
+  std::shared_ptr<DvppDecodeResizeJpegOp> tensor_op =
+    std::make_shared<DvppDecodeResizeJpegOp>(resizeHeight, resizeWidth);
+  return tensor_op;
+}
+
+// DvppDecodeResizeCropOperation
+DvppDecodeResizeCropOperation::DvppDecodeResizeCropOperation(const std::vector<uint32_t> &crop,
+                                                             const std::vector<uint32_t> &resize)
+    : crop_(crop), resize_(resize) {}
+
+Status DvppDecodeResizeCropOperation::ValidateParams() {
+  // size
+  if (crop_.empty() || crop_.size() > 2) {
+    std::string err_msg = "DvppDecodeResizeCropJpeg: crop resolution must be a vector of one or two elements, got: " +
+                          std::to_string(crop_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (resize_.empty() || resize_.size() > 2) {
+    std::string err_msg = "DvppDecodeResizeCropJpeg: resize resolution must be a vector of one or two elements, got: " +
+                          std::to_string(resize_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(crop_.begin(), crop_.end()) < 32 || *max_element(crop_.begin(), crop_.end()) > 2048) {
+    std::string err_msg = "Dvpp module supports crop image with resolution in range [32, 2048], got Crop Parameters: ";
+    if (crop_.size() == 2) {
+      MS_LOG(ERROR) << err_msg << "[" << crop_[0] << ", " << crop_[1] << "]";
+    } else {
+      MS_LOG(ERROR) << err_msg << "[" << crop_[0] << ", " << crop_[0] << "]";
+    }
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(resize_.begin(), resize_.end()) < 32 || *max_element(resize_.begin(), resize_.end()) > 2048) {
+    std::string err_msg =
+      "Dvpp module supports resize image with resolution in range [32, 2048], got Crop Parameters: ";
+    if (resize_.size() == 2) {
+      MS_LOG(ERROR) << err_msg << "[" << resize_[0] << ", " << resize_[1] << "]";
+    } else {
+      MS_LOG(ERROR) << err_msg << "[" << resize_[0] << "]";
+    }
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (crop_.size() < resize_.size()) {
+    if (crop_[0] > MIN(resize_[0], resize_[1])) {
+      std::string err_msg =
+        "Each value of crop parameter must be smaller than corresponding resize parameter, for example: x[0] <= "
+        "y[0],  and x[1] <= y[1], please verify your input parameters.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  if (crop_.size() > resize_.size()) {
+    if (MAX(crop_[0], crop_[1]) > resize_[0]) {
+      std::string err_msg =
+        "Each value of crop parameter must be smaller than corresponding resize parameter, for example: x[0] <= "
+        "y[0],  and x[1] <= y[1], please verify your input parameters.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  if (crop_.size() == resize_.size()) {
+    for (int32_t i = 0; i < crop_.size(); ++i) {
+      if (crop_[i] > resize_[i]) {
+        std::string err_msg =
+          "Each value of crop parameter must be smaller than corresponding resize parameter, for example: x[0] <= "
+          "y[0],  and x[1] <= y[1], please verify your input parameters.";
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      }
+    }
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> DvppDecodeResizeCropOperation::Build() {
+  // If size is a single value, the smaller edge of the image will be
+  // resized to this value with the same image aspect ratio.
+  uint32_t cropHeight, cropWidth, resizeHeight, resizeWidth;
+  if (crop_.size() == 1) {
+    cropHeight = crop_[0];
+    cropWidth = crop_[0];
+  } else {
+    cropHeight = crop_[0];
+    cropWidth = crop_[1];
+  }
+  // User specified the width value.
+  if (resize_.size() == 1) {
+    resizeHeight = resize_[0];
+    resizeWidth = 0;
+  } else {
+    resizeHeight = resize_[0];
+    resizeWidth = resize_[1];
+  }
+  std::shared_ptr<DvppDecodeResizeCropJpegOp> tensor_op =
+    std::make_shared<DvppDecodeResizeCropJpegOp>(cropHeight, cropWidth, resizeHeight, resizeWidth);
+  return tensor_op;
+}
+
+// DvppDecodeJPEG
+Status DvppDecodeJpegOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> DvppDecodeJpegOperation::Build() { return std::make_shared<DvppDecodeJpegOp>(); }
+
+// DvppDecodePNG
+Status DvppDecodePngOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> DvppDecodePngOperation::Build() { return std::make_shared<DvppDecodePngOp>(); }
+
+// DvppResizeOperation
+DvppResizeJpegOperation::DvppResizeJpegOperation(const std::vector<uint32_t> &resize) : resize_(resize) {}
+
+Status DvppResizeJpegOperation::ValidateParams() {
+  // size
+  if (resize_.empty() || resize_.size() > 2) {
+    std::string err_msg = "DvppResizeJpeg: resize resolution must be a vector of one or two elements, got: " +
+                          std::to_string(resize_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(resize_.begin(), resize_.end()) < 32 || *max_element(resize_.begin(), resize_.end()) > 2048) {
+    std::string err_msg =
+      "Dvpp module supports resize image with resolution in range [32, 2048], got resize Parameters: ";
+    if (resize_.size() == 2) {
+      MS_LOG(ERROR) << err_msg << "[" << resize_[0] << ", " << resize_[1] << "]";
+    } else {
+      MS_LOG(ERROR) << err_msg << "[" << resize_[0] << ", " << resize_[0] << "]";
+    }
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> DvppResizeJpegOperation::Build() {
+  // If size is a single value, the smaller edge of the image will be
+  // resized to this value with the same image aspect ratio.
+  uint32_t resizeHeight, resizeWidth;
+  // User specified the width value.
+  if (resize_.size() == 1) {
+    resizeHeight = resize_[0];
+    resizeWidth = 0;
+  } else {
+    resizeHeight = resize_[0];
+    resizeWidth = resize_[1];
+  }
+  std::shared_ptr<DvppResizeJpegOp> tensor_op = std::make_shared<DvppResizeJpegOp>(resizeHeight, resizeWidth);
+  return tensor_op;
 }
 #endif
 

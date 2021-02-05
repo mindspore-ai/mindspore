@@ -149,6 +149,12 @@ if(ENABLE_PYTHON)
             )
 endif()
 
+if(ENABLE_ACL)
+    set(DE_UT_SRCS
+            ${DE_UT_SRCS}
+            dvpp_decode_jpeg_test.cc)
+endif()
+
 add_executable(de_ut_tests ${DE_UT_SRCS})
 
 set_target_properties(de_ut_tests PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/../lib64")

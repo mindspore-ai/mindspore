@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@
 #include <memory>
 #include <mutex>
 
+#include "include/api/status.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/util/allocator.h"
-#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -30,9 +30,11 @@ namespace dataset {
 class MemoryPool;
 class Tensor;
 class CVTensor;
+class DeviceTensor;
 
-using TensorAlloc = Allocator<Tensor>;      // An allocator for Tensors
-using CVTensorAlloc = Allocator<CVTensor>;  // An allocator CVTensors
+using TensorAlloc = Allocator<Tensor>;              // An allocator for Tensors
+using CVTensorAlloc = Allocator<CVTensor>;          // An allocator CVTensors
+using DeviceTensorAlloc = Allocator<DeviceTensor>;  // An allocator for Device_Tensors
 using IntAlloc = Allocator<dsize_t>;
 
 class GlobalContext {
@@ -83,6 +85,10 @@ class GlobalContext {
   const CVTensorAlloc *cv_tensor_allocator() const { return cv_tensor_allocator_.get(); }
 
   // Getter method
+  // @return the DeviceTensor allocator as raw pointer
+  const DeviceTensorAlloc *device_tensor_allocator() const { return device_tensor_allocator_.get(); }
+
+  // Getter method
   // @return the integer allocator as raw pointer
   const IntAlloc *int_allocator() const { return int_allocator_.get(); }
 
@@ -95,12 +101,13 @@ class GlobalContext {
   Status Init();
 
   static std::once_flag init_instance_flag_;
-  static std::unique_ptr<GlobalContext> global_context_;  // The instance of the singleton (global)
-  std::shared_ptr<MemoryPool> mem_pool_;                  // A global memory pool
-  std::shared_ptr<ConfigManager> config_manager_;         // The configs
-  std::unique_ptr<TensorAlloc> tensor_allocator_;         // An allocator for Tensors
-  std::unique_ptr<CVTensorAlloc> cv_tensor_allocator_;    // An allocator for CV Tensors
-  std::unique_ptr<IntAlloc> int_allocator_;               // An allocator for ints
+  static std::unique_ptr<GlobalContext> global_context_;        // The instance of the singleton (global)
+  std::shared_ptr<MemoryPool> mem_pool_;                        // A global memory pool
+  std::shared_ptr<ConfigManager> config_manager_;               // The configs
+  std::unique_ptr<TensorAlloc> tensor_allocator_;               // An allocator for Tensors
+  std::unique_ptr<CVTensorAlloc> cv_tensor_allocator_;          // An allocator for CV Tensors
+  std::unique_ptr<DeviceTensorAlloc> device_tensor_allocator_;  // An allocator for Device Tensors
+  std::unique_ptr<IntAlloc> int_allocator_;                     // An allocator for ints
 };
 }  // namespace dataset
 }  // namespace mindspore

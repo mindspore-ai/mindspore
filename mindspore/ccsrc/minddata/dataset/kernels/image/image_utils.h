@@ -103,6 +103,8 @@ Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
 bool IsNonEmptyJPEG(const std::shared_ptr<Tensor> &input);
 
+bool IsNonEmptyPNG(const std::shared_ptr<Tensor> &input);
+
 void JpegSetSource(j_decompress_ptr c_info, const void *data, int64_t data_size);
 
 Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x = 0, int y = 0,
