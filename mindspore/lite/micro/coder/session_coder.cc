@@ -30,6 +30,8 @@
 
 namespace mindspore::lite::micro {
 
+CoderSession::CoderSession() { allocator_ = MemoryAllocator::GetInstance(); }
+
 int CoderSession::InferShape() {
   const Model *model = coder_graph_->model();
   std::vector<lite::Tensor *> all_tensors = coder_graph_->all_tensors();
@@ -178,7 +180,6 @@ int CoderSession::Init(const std::string &model_path) {
   MS_CHECK_PTR(model);
   coder_graph_ = std::make_unique<CoderGraph>(model);
   coder_context_ = std::make_unique<CoderContext>();
-  allocator_ = MemoryAllocator::GetInstance();
   allocator_->RecordRuntimeAddrs(coder_context_->input_name(), coder_context_->buffer_name(),
                                  coder_context_->weight_name());
   MS_LOG(INFO) << "CoderSession::Init done";

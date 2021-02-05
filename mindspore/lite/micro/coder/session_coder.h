@@ -30,7 +30,7 @@
 namespace mindspore::lite::micro {
 class CoderSession {
  public:
-  CoderSession() = default;
+  CoderSession();
 
   ~CoderSession();
 

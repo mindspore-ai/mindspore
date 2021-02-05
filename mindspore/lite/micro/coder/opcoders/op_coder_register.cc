@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "opcoders/op_coder_register.h"
+#include "coder/opcoders/op_coder_register.h"
 #include <utility>
 namespace mindspore::lite::micro {
 

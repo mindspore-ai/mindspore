@@ -65,11 +65,11 @@ void MemoryAllocator::Free() {
       iter++;
     }
   }
+  malloc_weights_addr_.clear();
   for (auto &item : allocated_) {
     free(item);
     item = nullptr;
   }
-  malloc_weights_addr_.clear();
   allocated_.clear();
 }
 

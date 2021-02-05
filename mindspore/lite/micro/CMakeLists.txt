@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(micro)
+
+option(BUILD_TESTCASES "if build testcase" on)
+
 string(REPLACE "/mindspore/lite/micro" "" TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_CXX_STANDARD 17)
 include_directories(${CMAKE_BINARY_DIR})
@@ -30,7 +33,7 @@ ms_build_flatbuffers_lite(FBS_FILES
         "inner"
         )
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    MESSAGE(" ******Micro Debug********")
+    MESSAGE("******Micro Debug********")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDebug -g")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDebug -g")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
@@ -49,3 +52,6 @@ if(ENABLE_ASAN)
 endif()
 
 add_subdirectory(coder)
+if(${BUILD_TESTCASES})
+  add_subdirectory(test)
+endif()
