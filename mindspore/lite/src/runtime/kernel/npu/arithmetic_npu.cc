@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/npu/arithmetic_npu.h"
 #include <string>
-#include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;

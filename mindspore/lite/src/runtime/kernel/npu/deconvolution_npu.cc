@@ -15,8 +15,6 @@
  */
 
 #include "src/runtime/kernel/npu/deconvolution_npu.h"
-#include "src/runtime/agent/npu/npu_converter_utils.h"
-
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_DeConv2D;

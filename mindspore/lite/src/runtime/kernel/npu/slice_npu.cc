@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/npu/slice_npu.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Slice;

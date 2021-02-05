@@ -18,9 +18,7 @@
 
 #include <vector>
 #include "include/graph/op/all_ops.h"
-#include "include/graph/compatible/all_ops.h"
 #include "src/runtime/kernel/npu/convolution_base_npu.h"
-#include "src/runtime/kernel/npu/npu_kernel.h"
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore::kernel {

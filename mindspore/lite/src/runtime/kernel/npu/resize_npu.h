@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESIZE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESIZE_NPU_H_
 #include <vector>
+#include "include/graph/op/all_ops.h"
 #include "nnacl/resize_parameter.h"
 #include "src/ops/resize.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class ResizeNPUKernel : public NPUKernel {
  public:

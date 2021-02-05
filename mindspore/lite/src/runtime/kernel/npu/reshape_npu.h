@@ -17,16 +17,18 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESHAPE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESHAPE_NPU_H_
 #include <vector>
-#include "nnacl/conv_parameter.h"
-#include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
+#include "nnacl/reshape_parameter.h"
+#include "src/runtime/kernel/npu/npu_kernel.h"
 namespace mindspore::kernel {
 class ReshapeNPUKernel : public NPUKernel {
  public:
   ReshapeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                    const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+    reshape_param_ = reinterpret_cast<ReshapeParameter *>(parameter);
+  }
   ~ReshapeNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -37,6 +39,7 @@ class ReshapeNPUKernel : public NPUKernel {
 
  private:
   hiai::op::Reshape *op_ = nullptr;
+  ReshapeParameter *reshape_param_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESHAPE_NPU_H_

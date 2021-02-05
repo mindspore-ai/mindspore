@@ -17,10 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CONCAT_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CONCAT_NPU_H_
 #include <vector>
+#include "include/graph/op/all_ops.h"
 #include "nnacl/concat_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/all_ops.h"
-
 namespace mindspore::kernel {
 class ConcatNPUKernel : public NPUKernel {
  public:

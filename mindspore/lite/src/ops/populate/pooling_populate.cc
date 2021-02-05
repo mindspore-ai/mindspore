@@ -43,6 +43,18 @@ OpParameter *PopulatePoolingParameter(const mindspore::lite::PrimitiveC *primiti
   pooling_param->stride_w_ = pooling_primitive->GetStrideW();
   pooling_param->stride_h_ = pooling_primitive->GetStrideH();
   pooling_param->avg_mode_ = pooling_primitive->GetAvgMode();
+  auto pad_mode = pooling_primitive->GetPadMode();
+  switch (pad_mode) {
+    case schema::PadMode_SAME_UPPER:
+      pooling_param->pad_mode_ = Pad_Same;
+      break;
+    case schema::PadMode_VALID:
+      pooling_param->pad_mode_ = Pad_Valid;
+      break;
+    default:
+      pooling_param->pad_mode_ = Pad_No;
+      break;
+  }
 
   auto is_global = pooling_primitive->GetGlobal();
   pooling_param->global_ = is_global;

@@ -16,7 +16,6 @@
 
 #include "src/runtime/kernel/npu/softmax_npu.h"
 #include "src/kernel_registry.h"
-
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_SoftMax;

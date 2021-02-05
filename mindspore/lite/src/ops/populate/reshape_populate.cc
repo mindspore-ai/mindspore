@@ -19,6 +19,7 @@
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 #include "nnacl/reshape_parameter.h"
+#include "src/ops/reshape.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,6 +32,13 @@ OpParameter *PopulateReshapeParameter(const mindspore::lite::PrimitiveC *primiti
   }
   memset(reshape_param, 0, sizeof(ReshapeParameter));
   reshape_param->op_parameter_.type_ = primitive->Type();
+  auto reshape_lite_primitive = (lite::Reshape *)primitive;
+  auto shape = reshape_lite_primitive->GetShape();
+  reshape_param->shape_dim_ = shape.size();
+  int i = 0;
+  for (auto iter = shape.begin(); iter != shape.end(); iter++) {
+    reshape_param->shape_[i++] = *iter;
+  }
   return reinterpret_cast<OpParameter *>(reshape_param);
 }
 

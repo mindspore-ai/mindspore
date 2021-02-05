@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/npu/convolution_npu.h"
-#include "src/runtime/agent/npu/npu_converter_utils.h"
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
