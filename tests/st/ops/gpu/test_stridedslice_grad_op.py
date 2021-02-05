@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -248,8 +248,50 @@ def test_strided_slice_grad_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_strided_slice_grad_float16():
+    strided_slice_grad(np.float16)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_grad_int64():
+    strided_slice_grad(np.int64)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_grad_int32():
+    strided_slice_grad(np.int32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_strided_slice_grad_int16():
     strided_slice_grad(np.int16)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_grad_int8():
+    strided_slice_grad(np.int8)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_grad_uint64():
+    strided_slice_grad(np.uint64)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_grad_uint32():
+    strided_slice_grad(np.uint32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_strided_slice_grad_uint16():
+    strided_slice_grad(np.uint16)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
