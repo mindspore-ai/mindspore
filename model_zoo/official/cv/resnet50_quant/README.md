@@ -37,18 +37,17 @@ The overall network architecture of Resnet50 is show below:
 Dataset used: [ImageNet2012](http://www.image-net.org/)
 
 - Dataset size 224*224 colorful images in 1000 classes
-  - Train：1,281,167 images  
-  - Test： 50,000 images   
+    - Train：1,281,167 images
+    - Test： 50,000 images
 - Data format：jpeg
-  - Note：Data will be processed in dataset.py
+   - Note：Data will be processed in dataset.py
 - Download the dataset, the directory structure is as follows:
 
- ```
+ ```python
 └─dataset
     ├─ilsvrc                # train dataset
     └─validation_preprocess # evaluate dataset
 ```
-
 
 # [Features](#contents)
 
@@ -60,13 +59,12 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 # [Environment Requirements](#contents)
 
 - Hardware:Ascend
-  - Prepare hardware environment with Ascend. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
   - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
   - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
   - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
 
 # [Script description](#contents)
 
@@ -124,18 +122,19 @@ Parameters for both training and evaluation can be set in config.py
 ### Usage
 
 - Ascend: sh run_train.sh Ascend [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
+
 ### Launch
 
-```
+```bash
   # training example
   Ascend: bash run_train.sh Ascend ~/hccl.json ~/imagenet/train/ ~/pretrained_ckeckpoint
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `./train/device$i/` by default, and training log  will be redirected to `./train/device$i/train.log` like followings. 
+Training result will be stored in the example path. Checkpoints will be stored at `./train/device$i/` by default, and training log  will be redirected to `./train/device$i/train.log` like following.
 
-```
+```bash
 epoch: 1 step: 5004, loss is 4.8995576
 epoch: 2 step: 5004, loss is 3.9235563
 epoch: 3 step: 5004, loss is 3.833077
@@ -153,7 +152,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ### Launch
 
-```
+```bash
 # infer example
   shell:
       Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/Resnet50-30_5004.ckpt
@@ -163,9 +162,9 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ### Result
 
-Inference result will be stored in the example path, you can find result like the followings in `./eval/infer.log`.
+Inference result will be stored in the example path, you can find result like the following in `./eval/infer.log`.
 
-```
+```bash
 result: {'acc': 0.76576314102564111}
 ```
 
@@ -191,7 +190,7 @@ result: {'acc': 0.76576314102564111}
 | Total time                 | 8pcs: 17 hours(30 epochs with pretrained)                   |
 | Parameters (M)             | 25.5                                                        |
 | Checkpoint for Fine tuning | 197M (.ckpt file)                                           |
-| Scripts                    | [resnet50-quant script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet50_quant) | 
+| Scripts                    | [resnet50-quant script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet50_quant) |
 
 ### Inference Performance
 

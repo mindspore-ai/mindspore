@@ -93,7 +93,7 @@ class DetectionEngine:
 
     def _nms(self, dets, thresh):
         """Calculate NMS."""
-        # conver xywh -> xmin ymin xmax ymax
+        # convert xywh -> xmin ymin xmax ymax
         x1 = dets[:, 0]
         y1 = dets[:, 1]
         x2 = x1 + dets[:, 2]
@@ -185,7 +185,7 @@ class DetectionEngine:
 
                 x_top_left = x - w / 2.
                 y_top_left = y - h / 2.
-                # creat all False
+                # create all False
                 flag = np.random.random(cls_emb.shape) > sys.maxsize
                 for i in range(flag.shape[0]):
                     c = cls_argmax[i]

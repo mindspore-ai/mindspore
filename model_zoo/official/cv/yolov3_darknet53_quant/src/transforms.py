@@ -94,7 +94,7 @@ def get_interp_method(interp, sizes=()):
         Neighbors method. (used by default).
         4: Lanczos interpolation over 8x8 pixel neighborhood.
         9: Cubic for enlarge, area for shrink, bilinear for others
-        10: Random select from interpolation method metioned above.
+        10: Random select from interpolation method mentioned above.
         Note:
         When shrinking an image, it will generally look best with AREA-based
         interpolation, whereas, when enlarging an image, it will generally look best
