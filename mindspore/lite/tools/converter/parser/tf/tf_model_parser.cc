@@ -41,15 +41,32 @@ bool IsTensorListOp(const AnfNodePtr &anf_node) {
          opt::CheckPrimitiveType(anf_node, prim::kPrimTensorListReserve);
 }
 
-AnfNodePtr GetAnfNode(const std::string &name, const std::unordered_map<std::string, AnfNodePtr> &anf_node_map) {
-  AnfNodePtr ret = nullptr;
+STATUS GetAnfNodes(const std::string &name, const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
+                   std::vector<AnfNodePtr> *nodes) {
+  AnfNodePtr anf_node = nullptr;
   auto flat_anf_name = TensorFlowUtils::GetFlattenNodeName(name);
   if (anf_node_map.find(flat_anf_name) != anf_node_map.end()) {
-    ret = anf_node_map.at(flat_anf_name);
-  } else if (anf_node_map.find(name + ":0") != anf_node_map.end()) {
-    ret = anf_node_map.at(flat_anf_name + ":0");
+    anf_node = anf_node_map.at(flat_anf_name);
+    if (anf_node == nullptr) {
+      MS_LOG(ERROR) << "can't find anf node: " << flat_anf_name;
+      return RET_ERROR;
+    }
+    nodes->push_back(anf_node);
+  } else {
+    for (int i = 0;; i++) {
+      if (anf_node_map.find(name + ":" + std::to_string(i)) != anf_node_map.end()) {
+        anf_node = anf_node_map.at(flat_anf_name + ":" + std::to_string(i));
+        if (anf_node == nullptr) {
+          MS_LOG(ERROR) << "can't find anf node: " << name;
+          return RET_ERROR;
+        }
+        nodes->push_back(anf_node);
+      } else {
+        break;
+      }
+    }
   }
-  return ret;
+  return RET_OK;
 }
 
 std::string GetOriginInputName(const tensorflow::NodeDef &node,
@@ -529,16 +546,15 @@ STATUS TFModelParser::ConvertSubgraph() {
       auto tf_output_name = TensorFlowUtils::GetFlattenNodeName(t->second);
       AnfNodePtr anf_node = nullptr;
       if (tf_sub_node_map.find(tf_output_name) == tf_sub_node_map.end()) {
-        anf_node = GetAnfNode(tf_output_name, anf_sub_node_map);
+        status = GetAnfNodes(tf_output_name, anf_sub_node_map, &sub_output_nodes);
       } else {
         auto tf_real_name = GetOriginInputName(*tf_sub_node_map[tf_output_name], tf_sub_node_map);
-        anf_node = GetAnfNode(tf_real_name, anf_sub_node_map);
+        status = GetAnfNodes(tf_real_name, anf_sub_node_map, &sub_output_nodes);
       }
-      if (anf_node == nullptr) {
+      if (status != RET_OK) {
         MS_LOG(ERROR) << "can't find anf node,tf node flatten name" << tf_output_name;
         return RET_ERROR;
       }
-      sub_output_nodes.push_back(anf_node);
     }
     status = MakeAnfGraphOutputs(&sub_output_nodes, sub_func_graph);
     if (status != RET_OK) {
@@ -651,12 +667,9 @@ STATUS TFModelParser::ConvertInputNodes(const tensorflow::NodeDef &node_def,
       auto input_node = tf_node_map.at(flatten_input_name);
       flatten_input_name = GetOriginInputName(*input_node, tf_node_map);
     }
-    auto input = GetAnfNode(flatten_input_name, anf_node_map);
-    if (input == nullptr) {
-      MS_LOG(ERROR) << node_def.name() << " input " << j << ": " << input_name << " can't find parsed in_nodes";
-      return RET_ERROR;
+    if (GetAnfNodes(flatten_input_name, anf_node_map, inputs) != RET_OK) {
+      MS_LOG(WARNING) << node_def.name() << " input " << j << ": " << input_name << " can't find parsed in_nodes";
     }
-    inputs->emplace_back(input);
   }
   return RET_OK;
 }
@@ -808,13 +821,13 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
     auto it = all_node_inputs.find(pair.first);
     if (it == all_node_inputs.end() && pair.second->input_size() > 0) {  // output node not constraint to Identity
       auto origin_name = GetOriginInputName(*(pair.second), tf_root_graph_nodes_);
-      auto anf_node = GetAnfNode(origin_name, anf_root_node_map_);
-      if (anf_node == nullptr) {
-        MS_LOG(ERROR) << "can't find anf node: " << origin_name;
+      if (GetAnfNodes(origin_name, anf_root_node_map_, &output_nodes) != RET_OK) {
+        MS_LOG(ERROR) << "Get graph outputs failed";
         return RET_ERROR;
       }
-      output_nodes.push_back(anf_node);
-      graph_output_names_.push_back(anf_node->fullname_with_scope());
+      for (auto &node : output_nodes) {
+        graph_output_names_.push_back(node->fullname_with_scope());
+      }
     }
   }
   auto status = MakeAnfGraphOutputs(&output_nodes, anf_root_graph_);
