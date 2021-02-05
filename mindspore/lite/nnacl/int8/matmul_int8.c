@@ -182,40 +182,6 @@ void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int 
   return;
 }
 
-void MatMulInt8_16x4_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
-                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
-                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                       bool peroc) {
-  /* support per-layer && weight per-channel */
-  /*  row4x16-major * row16x4-major => (int8)row-major*/
-  for (int r = 0; r < row; r++) {
-    for (int c = 0; c < col; c++) {
-      int r4div = r / C4NUM, r4mod = r % C4NUM;
-      int c4div = c / C4NUM, c4mod = c % C4NUM;
-      size_t ci = r * stride + c;
-      int32_t value = 0;
-      for (int d = 0; d < deep_16; d++) {
-        int d16div = d / C16NUM, d16mod = d % C16NUM;
-        size_t ai = r4div * deep_16 * C4NUM + d16div * C4NUM * C16NUM + r4mod * C16NUM + d16mod;
-        size_t bi = c4div * deep_16 * C4NUM + d16div * C4NUM * C16NUM + c4mod * C16NUM + d16mod;
-        value = value + a[ai] * b[bi];
-      }
-      int32_t cur_input_sum =
-        peroc ? input_sum[c4div * UP_ROUND(row, C4NUM) * C4NUM + r * C4NUM + c4mod] : input_sum[r];
-      value -= cur_input_sum;
-      value += bias[c];
-      int32_t cur_left_shift = peroc ? left_shift[c] : left_shift[0];
-      int32_t cur_right_shift = peroc ? right_shift[c] : right_shift[0];
-      int32_t cur_multiplier = peroc ? multiplier[c] : multiplier[0];
-      value = MultiplyByQuantizedMultiplier(value, cur_multiplier, cur_left_shift, cur_right_shift) + output_zp;
-      value = MSMIN(maxi, value);
-      value = MSMAX(mini, value);
-      dst[ci] = (int8_t)value;
-    }
-  }
-  return;
-}
-
 void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
@@ -353,6 +319,105 @@ void MatMulInt8_4x16_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row
   return;
 }
 
+#ifdef ENABLE_ARM64
+void PackInput4x4AndInputSumPert_arm64(const int8_t *src_ic, int8_t *pack_ic, int32_t *input_sum_r, size_t src_stride,
+                                       size_t ic_4div, size_t ic_4res, int32_t filter_zp) {
+  asm volatile(
+    "dup v2.4s, wzr \n"
+    "mov x14, %[input_sum_r] \n"
+    "dup v3.4s, %w[filter_zp]  \n"
+
+    "mov x10, %[src_ic] \n"
+    "mov x11, %[pack_ic] \n"
+
+    "mov x15, #0 \n"
+    "1: \n"
+    "cmp x15, %[ic_4div] \n"
+    "add x15, x15, #4\n"
+    "mov x12, x10 \n"
+    "add x10, x10, #4\n"
+    "blt 2f \n"
+    "cmp %[ic_4res], #0\n"
+    "beq 6f \n"
+    "cmp %[ic_4res], #1\n"
+    "beq 3f \n"
+    "cmp %[ic_4res], #2\n"
+    "beq 4f \n"
+    "cmp %[ic_4res], #3\n"
+    "beq 5f \n"
+
+    "2: \n"
+    "ld1 {v0.s}[0], [x12], %[src_stride]\n"
+    "ld1 {v0.s}[1], [x12], %[src_stride]\n"
+    "ld1 {v0.s}[2], [x12], %[src_stride]\n"
+    "ld1 {v0.s}[3], [x12], %[src_stride]\n"
+
+    "st1 {v0.16b}, [x11], #16\n"
+
+    "saddlp v1.8h, v0.16b \n"
+    "saddlp v0.4s, v1.8h \n"
+    "add v2.4s, v2.4s, v0.4s \n"
+    "b 1b \n"
+
+    "3: \n" /* ic res 1 */
+    "dup v0.4s, wzr \n"
+
+    "ld1 {v0.b}[0],  [x12], %[src_stride]\n"
+    "ld1 {v0.b}[4],  [x12], %[src_stride]\n"
+    "ld1 {v0.b}[8],  [x12], %[src_stride]\n"
+    "ld1 {v0.b}[12], [x12], %[src_stride]\n"
+
+    "st1 {v0.16b}, [x11], #16\n"
+    "saddlp v1.8h, v0.16b \n"
+    "saddlp v0.4s, v1.8h \n"
+    "add v2.4s, v2.4s, v0.4s \n"
+    "b 6f \n"
+
+    "4: \n" /* ic res 2 */
+    "dup v0.4s, wzr \n"
+
+    "ld1 {v0.h}[0], [x12], %[src_stride]\n"
+    "ld1 {v0.h}[2], [x12], %[src_stride]\n"
+    "ld1 {v0.h}[4], [x12], %[src_stride]\n"
+    "ld1 {v0.h}[6], [x12], %[src_stride]\n"
+
+    "st1 {v0.16b}, [x11], #16\n"
+    "saddlp v1.8h, v0.16b \n"
+    "saddlp v0.4s, v1.8h \n"
+    "add v2.4s, v2.4s, v0.4s \n"
+    "b 6f \n"
+
+    "5: \n" /* ic res 3 */
+    "dup v0.4s, wzr \n"
+    "add x13, x12, #2 \n"
+
+    "ld1 {v0.h}[0], [x12], %[src_stride]\n"
+    "ld1 {v0.b}[2], [x13], %[src_stride]\n"
+    "ld1 {v0.h}[2], [x12], %[src_stride]\n"
+    "ld1 {v0.b}[6], [x13], %[src_stride]\n"
+    "ld1 {v0.h}[4], [x12], %[src_stride]\n"
+    "ld1 {v0.b}[10], [x13], %[src_stride]\n"
+    "ld1 {v0.h}[6], [x12], %[src_stride]\n"
+    "ld1 {v0.b}[14], [x13], %[src_stride]\n"
+
+    "st1 {v0.16b}, [x11], #16\n"
+    "saddlp v1.8h, v0.16b \n"
+    "saddlp v0.4s, v1.8h \n"
+    "add v2.4s, v2.4s, v0.4s \n"
+    "b 6f \n"
+
+    "6: \n"
+    "mul v2.4s, v2.4s, v3.4s \n"
+
+    "st1 {v2.4s}, [x14], #16 \n"
+
+    :
+    : [ src_ic ] "r"(src_ic), [ pack_ic ] "r"(pack_ic), [ input_sum_r ] "r"(input_sum_r),
+      [ src_stride ] "r"(src_stride), [ ic_4div ] "r"(ic_4div), [ ic_4res ] "r"(ic_4res), [ filter_zp ] "r"(filter_zp)
+    : "x10", "x11", "x12", "x13", "x14", "x15", "v0", "v1", "v2", "v3");
+  return;
+}
+#endif
 void PackInput4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum,
                                  size_t input_channel, size_t plane_size, int32_t filter_zp) {
   int ic4 = UP_ROUND(input_channel, C4NUM);
@@ -370,99 +435,7 @@ void PackInput4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, 
 #ifdef ENABLE_ARM64
     size_t src_stride = input_channel;
     size_t ic_4res = input_channel - ic_4div;
-    asm volatile(
-      "dup v2.4s, wzr \n"
-      "mov x14, %[input_sum_r] \n"
-      "dup v3.4s, %w[filter_zp]  \n"
-
-      "mov x10, %[src_ic] \n"
-      "mov x11, %[pack_ic] \n"
-
-      "mov x15, #0 \n"
-      "1: \n"
-      "cmp x15, %[ic_4div] \n"
-      "add x15, x15, #4\n"
-      "mov x12, x10 \n"
-      "add x10, x10, #4\n"
-      "blt 2f \n"
-      "cmp %[ic_4res], #0\n"
-      "beq 6f \n"
-      "cmp %[ic_4res], #1\n"
-      "beq 3f \n"
-      "cmp %[ic_4res], #2\n"
-      "beq 4f \n"
-      "cmp %[ic_4res], #3\n"
-      "beq 5f \n"
-
-      "2: \n"
-      "ld1 {v0.s}[0], [x12], %[src_stride]\n"
-      "ld1 {v0.s}[1], [x12], %[src_stride]\n"
-      "ld1 {v0.s}[2], [x12], %[src_stride]\n"
-      "ld1 {v0.s}[3], [x12], %[src_stride]\n"
-
-      "st1 {v0.16b}, [x11], #16\n"
-
-      "saddlp v1.8h, v0.16b \n"
-      "saddlp v0.4s, v1.8h \n"
-      "add v2.4s, v2.4s, v0.4s \n"
-      "b 1b \n"
-
-      "3: \n" /* ic res 1 */
-      "dup v0.4s, wzr \n"
-
-      "ld1 {v0.b}[0],  [x12], %[src_stride]\n"
-      "ld1 {v0.b}[4],  [x12], %[src_stride]\n"
-      "ld1 {v0.b}[8],  [x12], %[src_stride]\n"
-      "ld1 {v0.b}[12], [x12], %[src_stride]\n"
-
-      "st1 {v0.16b}, [x11], #16\n"
-      "saddlp v1.8h, v0.16b \n"
-      "saddlp v0.4s, v1.8h \n"
-      "add v2.4s, v2.4s, v0.4s \n"
-      "b 6f \n"
-
-      "4: \n" /* ic res 2 */
-      "dup v0.4s, wzr \n"
-
-      "ld1 {v0.h}[0], [x12], %[src_stride]\n"
-      "ld1 {v0.h}[2], [x12], %[src_stride]\n"
-      "ld1 {v0.h}[4], [x12], %[src_stride]\n"
-      "ld1 {v0.h}[6], [x12], %[src_stride]\n"
-
-      "st1 {v0.16b}, [x11], #16\n"
-      "saddlp v1.8h, v0.16b \n"
-      "saddlp v0.4s, v1.8h \n"
-      "add v2.4s, v2.4s, v0.4s \n"
-      "b 6f \n"
-
-      "5: \n" /* ic res 3 */
-      "dup v0.4s, wzr \n"
-      "add x13, x12, #2 \n"
-
-      "ld1 {v0.h}[0], [x12], %[src_stride]\n"
-      "ld1 {v0.b}[2], [x13], %[src_stride]\n"
-      "ld1 {v0.h}[2], [x12], %[src_stride]\n"
-      "ld1 {v0.b}[6], [x13], %[src_stride]\n"
-      "ld1 {v0.h}[4], [x12], %[src_stride]\n"
-      "ld1 {v0.b}[10], [x13], %[src_stride]\n"
-      "ld1 {v0.h}[6], [x12], %[src_stride]\n"
-      "ld1 {v0.b}[14], [x13], %[src_stride]\n"
-
-      "st1 {v0.16b}, [x11], #16\n"
-      "saddlp v1.8h, v0.16b \n"
-      "saddlp v0.4s, v1.8h \n"
-      "add v2.4s, v2.4s, v0.4s \n"
-      "b 6f \n"
-
-      "6: \n"
-      "mul v2.4s, v2.4s, v3.4s \n"
-
-      "st1 {v2.4s}, [x14], #16 \n"
-
-      :
-      : [ src_ic ] "r"(src_ic), [ pack_ic ] "r"(pack_ic), [ input_sum_r ] "r"(input_sum_r),
-        [ src_stride ] "r"(src_stride), [ ic_4div ] "r"(ic_4div), [ ic_4res ] "r"(ic_4res), [ filter_zp ] "r"(filter_zp)
-      : "x10", "x11", "x12", "x13", "x14", "x15", "v0", "v1", "v2", "v3");
+    PackInput4x4AndInputSumPert_arm64(src_ic, pack_ic, input_sum_r, src_stride, ic_4div, ic_4res, filter_zp);
 #else
     int32_t tmp_sum_value[4] = {0};
     for (int ici = 0; ici < ic_4div; ici += C4NUM) {

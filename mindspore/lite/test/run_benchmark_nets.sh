@@ -599,9 +599,9 @@ function Run_x86() {
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out --accuracyThreshold=${accuracy_limit}' >> "${run_x86_log_file}"
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}_weightquant.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}'[weight quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='x86: '${model_name}'[weight_quant] pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='x86: '${model_name}'[weight quant] failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='x86: '${model_name}'[weight_quant] failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_mindspore_weightquant_config}
 

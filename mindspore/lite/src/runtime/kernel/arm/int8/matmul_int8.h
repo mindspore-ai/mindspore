@@ -22,39 +22,18 @@
 #include "nnacl/matmul_parameter.h"
 #include "mindspore/lite/nnacl/int8/quantize.h"
 #include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/int8/matmul_base_int8.h"
 
-using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class MatmulInt8CPUKernel : public LiteKernel {
+class MatmulInt8CPUKernel : public MatmulBaseInt8CPUKernel {
  public:
   MatmulInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
-  }
-  ~MatmulInt8CPUKernel() override;
+      : MatmulBaseInt8CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~MatmulInt8CPUKernel() override = default;
   int Init() override;
   int ReSize() override;
-  int Run() override;
-  int RunImpl(int task_id);
-
- private:
-  void FreeTmpBuffer();
-
- private:
-  MatMulParameter *params_ = nullptr;
-  MatmulQuantArg quant_params_;
-  int8_t *a_r4x16_ptr_ = nullptr;
-  int8_t *b_c16x4_ptr_ = nullptr;
-  int8_t *c_ptr_ = nullptr;
-  int8_t *b_c16x4_batch_ = nullptr;
-  int *bias_ptr_ = nullptr;
-  int *input_sums_ = nullptr;
-  int *weight_bias_sums_ = nullptr;
-  int *weight_bias_sums_batch_ = nullptr;
-  int thread_stride_ = 0;
-  int thread_count_ = 0;
 };
 }  // namespace mindspore::kernel
 

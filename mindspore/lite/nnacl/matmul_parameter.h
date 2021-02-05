@@ -73,4 +73,15 @@ typedef struct MatmulQuantParameter {
   int32_t *quant_multiplier_;
 } MatmulQuantParameter;
 
+typedef struct MatmulQuantArg {
+  QuantArg input;
+  QuantArg weight;
+  QuantArg output;
+  int32_t out_act_min;
+  int32_t out_act_max;
+  int32_t left_shift;
+  int32_t right_shift;
+  int32_t quant_multiplier;
+} MatmulQuantArg;
+
 #endif  // MINDSPORE_LITE_NNACL_MATMUL_H_

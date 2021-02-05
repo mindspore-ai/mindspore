@@ -18,52 +18,19 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_FULLCONNECTION_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
 #include "include/errorcode.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
-#include "nnacl/common_func.h"
-#include "nnacl/int8/common_func_int8.h"
-#include "nnacl/int8/matmul_int8.h"
+#include "src/runtime/kernel/arm/int8/matmul_base_int8.h"
 
 namespace mindspore::kernel {
-class FullconnectionInt8CPUKernel : public LiteKernel {
+class FullconnectionInt8CPUKernel : public MatmulBaseInt8CPUKernel {
  public:
   FullconnectionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
                               const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
-  }
-  ~FullconnectionInt8CPUKernel() override {
-    FreeTmpBuffer();
-    FreeQuantParam();
-  }
-
+      : MatmulBaseInt8CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~FullconnectionInt8CPUKernel() override = default;
   int Init() override;
   int ReSize() override;
-  int Run() override;
-
- public:
-  int RunImpl(int task_id);
-
- private:
-  void InitParam();
-  void FreeTmpBuffer();
-  void FreeQuantParam();
-  int MallocQuantParam();
-
- private:
-  MatMulParameter *fc_param_ = nullptr;
-  MatmulQuantParameter quant_;
-  int thread_count_ = 1;
-  int thread_stride_ = 0;
-  int8_t *pack_a_ptr_ = nullptr;
-  int8_t *pack_b_ptr_ = nullptr;
-  int8_t *c_ptr_ = nullptr;
-  int *input_sums_ = nullptr;
-  int *weight_bias_sums_ = nullptr;
-  int *bias_ptr_ = nullptr;
-  bool filter_per_channel_ = true;
 };
 }  // namespace mindspore::kernel
 
