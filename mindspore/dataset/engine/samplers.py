@@ -83,7 +83,7 @@ def select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
             shuffle = True
             return DistributedSampler(num_shards, shard_id, shuffle=shuffle, num_samples=num_samples)
         # If shuffle is not specified, sharding disabled, use random sampler
-        if num_samples is not None:
+        if num_samples is not None and num_samples != 0:
             return RandomSampler(replacement=True, num_samples=num_samples)
         return RandomSampler(num_samples=num_samples)
     if shuffle is True:

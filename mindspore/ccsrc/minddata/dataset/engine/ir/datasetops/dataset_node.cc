@@ -212,6 +212,11 @@ std::shared_ptr<DatasetNode> DatasetNode::SetNumWorkers(int32_t num_workers) {
   return shared_from_this();
 }
 
+std::shared_ptr<DatasetNode> DatasetNode::SetDatasetCache(const std::shared_ptr<DatasetCache> &cache) {
+  cache_ = cache;
+  return shared_from_this();
+}
+
 DatasetNode::DatasetNode()
     : cache_(nullptr),
       parent_(nullptr),
