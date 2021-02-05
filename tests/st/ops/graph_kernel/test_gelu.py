@@ -85,10 +85,6 @@ def test_gelu_gpu():
     test_gelu()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_gelu_ascend():
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_gelu()
@@ -102,10 +98,6 @@ def test_gelu_grad_gpu():
     test_gelu_grad()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_gelu_grad_ascend():
     context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
     test_gelu_grad()

@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -60,10 +59,6 @@ def test_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_clip_by_norm_no_div_sum_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_clip_by_norm_no_div_sum((1, 1), (1,), (1, 1), (1,), np.float32)
