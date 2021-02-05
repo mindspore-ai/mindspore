@@ -123,6 +123,35 @@ class Compose:
         """
         return util.compose(self.transforms, *args)
 
+    @staticmethod
+    def reduce(operations):
+        """
+        Wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations
+        Args:
+            operations (list): list of tensor operations
+
+        Returns:
+            list, the reduced list of operations
+        """
+        #
+        if len(operations) == 1:
+            return operations
+
+        new_ops, start_ind, end_ind = [], 0, 0
+        for i, op in enumerate(operations):
+            if str(op).find("c_transform") >= 0:
+                # reset counts
+                if start_ind != end_ind:
+                    new_ops.append(Compose(operations[start_ind:end_ind]))
+                new_ops.append(op)
+                start_ind, end_ind = i + 1, i + 1
+            else:
+                end_ind += 1
+        # do additional check in case the last operation is a Python operation
+        if start_ind != end_ind:
+            new_ops.append(Compose(operations[start_ind:end_ind]))
+        return new_ops
+
 
 class RandomApply:
     """

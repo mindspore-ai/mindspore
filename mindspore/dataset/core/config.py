@@ -23,7 +23,7 @@ import mindspore._c_dataengine as cde
 
 __all__ = ['set_seed', 'get_seed', 'set_prefetch_size', 'get_prefetch_size', 'set_num_parallel_workers',
            'get_num_parallel_workers', 'set_monitor_sampling_interval', 'get_monitor_sampling_interval', 'load',
-           'get_callback_timeout', 'set_auto_num_workers', 'get_auto_num_workers']
+           'get_callback_timeout', 'set_auto_num_workers', 'get_auto_num_workers', '_init_device_info']
 
 INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
