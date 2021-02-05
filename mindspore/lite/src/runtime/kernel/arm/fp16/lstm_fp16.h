@@ -39,15 +39,19 @@ class LstmFp16CPUKernel : public LiteKernel {
 
  private:
   void FreeTmpBuffer();
+  void FreeRunBuffer();
   int InitParam();
-  int InitBuffer();
+  int InitWeight(const lite::Tensor *tensor, float16_t *ptr, int deep);
   int InitWeightBias();
+  int MallocRunBuffer();
 
   float16_t *gate_buffer_ = nullptr;
   float16_t *state_buffer_ = nullptr;
   float16_t *weight_i_ptr_ = nullptr;
   float16_t *weight_h_ptr_ = nullptr;
   float16_t *bias_ptr_ = nullptr;
+  float16_t *matmul_buffer_[2];
+  bool is_vec_ = false;
   LstmParameter *lstm_param_ = nullptr;
 };
 }  // namespace mindspore::kernel

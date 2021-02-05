@@ -20,6 +20,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp16/lstm_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -29,25 +30,33 @@ using mindspore::schema::PrimitiveType_Lstm;
 
 namespace mindspore::kernel {
 void LstmFp16CPUKernel::FreeTmpBuffer() {
-  if (gate_buffer_ != nullptr) {
-    free(gate_buffer_);
-    gate_buffer_ = nullptr;
+  if (!is_vec_ || in_tensors_[1]->data_type() == kNumberTypeFloat32) {
+    if (weight_i_ptr_ != nullptr) {
+      free(weight_i_ptr_);
+      weight_i_ptr_ = nullptr;
+    }
   }
-  if (state_buffer_ != nullptr) {
-    free(state_buffer_);
-    state_buffer_ = nullptr;
+  if (!is_vec_ || in_tensors_[2]->data_type() == kNumberTypeFloat32) {
+    if (weight_h_ptr_ != nullptr) {
+      free(weight_h_ptr_);
+      weight_h_ptr_ = nullptr;
+    }
   }
-  if (weight_i_ptr_ != nullptr) {
-    free(weight_i_ptr_);
-    weight_i_ptr_ = nullptr;
+  if (!is_vec_ || in_tensors_[3]->data_type() == kNumberTypeFloat32) {
+    if (bias_ptr_ != nullptr) {
+      free(bias_ptr_);
+      bias_ptr_ = nullptr;
+    }
   }
-  if (weight_h_ptr_ != nullptr) {
-    free(weight_h_ptr_);
-    weight_h_ptr_ = nullptr;
-  }
-  if (bias_ptr_ != nullptr) {
-    free(bias_ptr_);
-    bias_ptr_ = nullptr;
+}
+
+void LstmFp16CPUKernel::FreeRunBuffer() {
+  context_->allocator->Free(gate_buffer_);
+  context_->allocator->Free(state_buffer_);
+  if (!is_vec_) {
+    for (int i = 0; i < 2; i++) {
+      context_->allocator->Free(matmul_buffer_[i]);
+    }
   }
 }
 
@@ -67,87 +76,107 @@ int LstmFp16CPUKernel::InitParam() {
   lstm_param_->input_step_ = lstm_param_->batch_ * lstm_param_->input_size_;
   lstm_param_->output_step_ = lstm_param_->bidirectional_ ? 2 * lstm_param_->batch_ * lstm_param_->hidden_size_
                                                           : lstm_param_->batch_ * lstm_param_->hidden_size_;
+
+  is_vec_ = lstm_param_->batch_ == 1;
+  lstm_param_->row_align_ = is_vec_ ? lstm_param_->batch_ : UP_ROUND(lstm_param_->batch_, C16NUM);
+  lstm_param_->col_align_ = is_vec_ ? lstm_param_->hidden_size_ : UP_ROUND(lstm_param_->hidden_size_, C8NUM);
   return RET_OK;
 }
 
-int LstmFp16CPUKernel::InitBuffer() {
-  gate_buffer_ =
-    reinterpret_cast<float16_t *>(malloc(4 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
-  if (gate_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "Lstm fp16 malloc gate_buffer error.";
-    return RET_ERROR;
-  }
-  if (!(lstm_param_->smooth_ >= -FLT_EPSILON && lstm_param_->smooth_ <= FLT_EPSILON)) {
-    int buffer_size = 2 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
-    state_buffer_ = reinterpret_cast<float16_t *>(malloc(buffer_size));
-    if (state_buffer_ == nullptr) {
-      MS_LOG(ERROR) << "Lstm fp16 malloc state_buffer error.";
-      return RET_ERROR;
+int LstmFp16CPUKernel::InitWeight(const lite::Tensor *tensor, float16_t *ptr, int deep) {
+  auto weight_batch = lstm_param_->bidirectional_ ? 8 : 4;
+  if (tensor->data_type() == kNumberTypeFloat32) {
+    auto weight_data = reinterpret_cast<float *>(tensor->data_c());
+    is_vec_ ? Float32ToFloat16(weight_data, ptr, tensor->ElementsNum())
+            : PackLstmWeightFp32ToFp16(ptr, weight_data, weight_batch, deep, lstm_param_->hidden_size_,
+                                       lstm_param_->col_align_);
+  } else if (tensor->data_type() == kNumberTypeFloat16) {
+    auto weight_data = reinterpret_cast<float16_t *>(tensor->data_c());
+    if (is_vec_) {
+      ptr = weight_data;
+    } else {
+      PackLstmWeightFp16(ptr, weight_data, weight_batch, deep, lstm_param_->hidden_size_, lstm_param_->col_align_);
     }
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type of weight tensor for lstm.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
 int LstmFp16CPUKernel::InitWeightBias() {
-  // copy weight_i and weight_h
+  auto weight_batch = lstm_param_->bidirectional_ ? 8 : 4;
+  // malloc and init input * weight right matrix buffer
   auto weight_i = in_tensors_.at(1);
   MS_ASSERT(weight_i != nullptr);
-  weight_i_ptr_ = reinterpret_cast<float16_t *>(malloc(weight_i->ElementsNum() * sizeof(float16_t)));
-  if (weight_i_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "Lstm fp16 malloc weight_i_ptr_ error.";
+  if (!is_vec_ || weight_i->data_type() == kNumberTypeFloat32) {
+    weight_i_ptr_ = reinterpret_cast<float16_t *>(
+      malloc(weight_batch * lstm_param_->col_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
+    if (weight_i_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc weight_i_ptr_ error.";
+      return RET_ERROR;
+    }
+  }
+  auto ret = InitWeight(weight_i, weight_i_ptr_, lstm_param_->input_size_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmFp16CPUKernel init weight_i failed.";
     return RET_ERROR;
   }
-  auto weight_i_data = reinterpret_cast<float *>(weight_i->data_c());
-  for (size_t i = 0; i < weight_i->ElementsNum(); i++) {
-    weight_i_ptr_[i] = (float16_t)weight_i_data[i];
-  }
 
+  // malloc and init state * weight right matrix buffer
   auto weight_h = in_tensors_.at(2);
   MS_ASSERT(weight_h != nullptr);
-  weight_h_ptr_ = reinterpret_cast<float16_t *>(malloc(weight_h->ElementsNum() * sizeof(float16_t)));
-  if (weight_h_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "Lstm fp16 malloc weight_h_ error.";
-    return RET_ERROR;
-  }
-  auto weight_h_data = reinterpret_cast<float *>(weight_h->data_c());
-  for (size_t i = 0; i < weight_h->ElementsNum(); i++) {
-    weight_h_ptr_[i] = (float16_t)weight_h_data[i];
-  }
-
-  std::vector<int> w_shape = weight_i->shape();
-  auto hidden_size = w_shape.at(1) / 4;
-  // init bias
-  int bias_num = lstm_param_->bidirectional_ ? 2 * 4 * hidden_size : 4 * hidden_size;
-  bias_ptr_ = reinterpret_cast<float16_t *>(malloc(bias_num * sizeof(float16_t)));
-  if (bias_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "Lstm fp16 malloc bias_ptr_ error.";
-    return RET_ERROR;
-  }
-
-  auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
-  const int state_bias_offset = 4 * hidden_size;
-  for (int i = 0; i < state_bias_offset; i++) {
-    bias_ptr_[i] = (float16_t)(bias_data[i] + bias_data[i + state_bias_offset]);
-  }
-  if (lstm_param_->bidirectional_) {
-    bias_data += 4 * hidden_size * 2;
-    auto backward_bias = bias_ptr_ + 4 * hidden_size;
-    for (int i = 0; i < state_bias_offset; i++) {
-      backward_bias[i] = (float16_t)(bias_data[i] + bias_data[i + state_bias_offset]);
+  if (!is_vec_ || weight_h->data_type() == kNumberTypeFloat32) {
+    weight_h_ptr_ = reinterpret_cast<float16_t *>(
+      malloc(weight_batch * lstm_param_->col_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
+    if (weight_h_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc weight_h_ptr_ error.";
+      return RET_ERROR;
     }
+  }
+  ret = InitWeight(weight_h, weight_h_ptr_, lstm_param_->hidden_size_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmFp16CPUKernel init weight_h failed.";
+    return RET_ERROR;
+  }
+
+  int bias_batch = lstm_param_->bidirectional_ ? 16 : 8;
+  auto bias = in_tensors_.at(3);
+  MS_ASSERT(bias != nullptr);
+  if (!is_vec_ || bias->data_type() == kNumberTypeFloat32) {
+    bias_ptr_ = reinterpret_cast<float16_t *>(malloc(bias_batch * lstm_param_->col_align_ * sizeof(float16_t)));
+    if (bias_ptr_ == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc bias_ptr_ error.";
+      return RET_ERROR;
+    }
+    memset(bias_ptr_, 0, bias_batch * lstm_param_->col_align_ * sizeof(float16_t));
+  }
+  if (bias->data_type() == kNumberTypeFloat32) {
+    auto bias_data = reinterpret_cast<float *>(bias->data_c());
+    for (int i = 0; i < bias_batch; i++) {
+      auto src_batch = bias_data + i * lstm_param_->hidden_size_;
+      auto dst_batch = bias_ptr_ + i * lstm_param_->col_align_;
+      Float32ToFloat16(src_batch, dst_batch, lstm_param_->hidden_size_);
+    }
+  } else if (bias->data_type() == kNumberTypeFloat16) {
+    auto bias_data = reinterpret_cast<float16_t *>(bias->data_c());
+    if (is_vec_) {
+      bias_ptr_ = bias_data;
+    } else {
+      for (int i = 0; i < bias_batch; i++) {
+        auto src_batch = bias_data + i * lstm_param_->hidden_size_;
+        auto dst_batch = bias_ptr_ + i * lstm_param_->col_align_;
+        memcpy(dst_batch, src_batch, lstm_param_->hidden_size_ * sizeof(float16_t));
+      }
+    }
+  } else {
+    MS_LOG(ERROR) << "Unsupported data type of bias tensor for lstm.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
 int LstmFp16CPUKernel::Init() {
-  FreeTmpBuffer();
-  auto ret = InitWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Lstm fp16 InitWeightBias error.";
-    FreeTmpBuffer();
-    return RET_ERROR;
-  }
-
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -161,11 +190,46 @@ int LstmFp16CPUKernel::ReSize() {
     return RET_ERROR;
   }
 
-  ret = InitBuffer();
+  FreeTmpBuffer();
+  ret = InitWeightBias();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Lstm fp16 InitBuffer error.";
+    MS_LOG(ERROR) << "Lstm fp16 InitWeightBias error.";
     FreeTmpBuffer();
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int LstmFp16CPUKernel::MallocRunBuffer() {
+  if (!is_vec_) {
+    matmul_buffer_[0] = reinterpret_cast<float16_t *>(
+      context_->allocator->Malloc(4 * lstm_param_->row_align_ * lstm_param_->input_size_ * sizeof(float16_t)));
+    if (matmul_buffer_[0] == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc input * weight left matirx error.";
+      return RET_ERROR;
+    }
+
+    matmul_buffer_[1] = reinterpret_cast<float16_t *>(
+      context_->allocator->Malloc(4 * lstm_param_->row_align_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
+    if (matmul_buffer_[1] == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state * weight left matirx error.";
+      return RET_ERROR;
+    }
+  }
+
+  gate_buffer_ = reinterpret_cast<float16_t *>(
+    context_->allocator->Malloc(8 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
+  if (gate_buffer_ == nullptr) {
+    MS_LOG(ERROR) << "LstmFp16CPUKernel malloc gate_buffer error.";
+    return RET_ERROR;
+  }
+  if (!(lstm_param_->smooth_ >= -FLT_EPSILON && lstm_param_->smooth_ <= FLT_EPSILON)) {
+    int buffer_size = 2 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
+    state_buffer_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(buffer_size));
+    if (state_buffer_ == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer error.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -189,13 +253,20 @@ int LstmFp16CPUKernel::Run() {
   auto output_cell_state = out_tensors_[2];
   memcpy(output_cell_state->data_c(), cell_state->data_c(), cell_state->ElementsNum() * sizeof(float16_t));
 
-  MS_ASSERT(weight_h_ptr_);
+  auto ret = MallocRunBuffer();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmFp16CPUKernel MallocRunBuffer error.";
+    return RET_ERROR;
+  }
   MS_ASSERT(weight_i_ptr_);
+  MS_ASSERT(weight_h_ptr_);
   MS_ASSERT(bias_ptr_);
   MS_ASSERT(gate_buffer_);
   LstmFp16(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, bias_ptr_,
            reinterpret_cast<float16_t *>(output_hidden_state->data_c()),
-           reinterpret_cast<float16_t *>(output_cell_state->data_c()), gate_buffer_, state_buffer_, lstm_param_);
+           reinterpret_cast<float16_t *>(output_cell_state->data_c()), gate_buffer_, state_buffer_, matmul_buffer_,
+           lstm_param_);
+  FreeRunBuffer();
   return RET_OK;
 }
 
