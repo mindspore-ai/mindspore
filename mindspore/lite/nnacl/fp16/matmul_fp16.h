@@ -59,6 +59,8 @@ void RowMajor2Row8MajorFp16(const void *src, float16_t *dst, int row, int col, b
 
 void RowMajor2Col8MajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src);
 
+void RowMajor2ColMajorFp16(const void *src, float16_t *dst, int row, int col, bool is_fp32_src);
+
 #ifdef __cplusplus
 }
 #endif

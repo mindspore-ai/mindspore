@@ -14,65 +14,61 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_BASE_FP16_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_BASE_FP16_H_
 
+#ifdef ENABLE_NEON
+#include <arm_neon.h>
+#endif
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
-#include "include/errorcode.h"
-
-using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_MEMORY_FAILED;
-using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-class MatmulFp32BaseCPUKernel : public LiteKernel {
+class MatmulBaseFP16CPUKernel : public LiteKernel {
  public:
-  MatmulFp32BaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
+  explicit MatmulBaseFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                                   const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
-    vec_matmul_ = false;
   }
-  ~MatmulFp32BaseCPUKernel();
+  ~MatmulBaseFP16CPUKernel() override;
   int Init() override;
   int ReSize() override;
   int Run() override;
 
  public:
-  int FloatRun(int task_id);
+  int RunImpl(int task_id);
 
  protected:
-  int InitBufferA();
-  int InitBufferB();
-  int InitMatrixA(const float *src_ptr);
-  int InitMatrixB(const float *src_ptr);
-  void FreeBiasBuf();
-  int InitBiasData();
   void InitParameter();
 
  private:
+  int InitBias();
   void ResizeParameter();
+  int InitBufferA();
+  int InitBufferB();
+  void InitMatrixA(void *src_ptr);
+  void InitMatrixB(void *src_ptr, TypeId data_type);
   void FreeResizeBufA();
   void FreeResizeBufB();
 
  protected:
   MatMulParameter *params_ = nullptr;
-  float *a_pack_ptr_ = nullptr;
-  float *b_pack_ptr_ = nullptr;
 
  private:
-  int col_tile_ = 0;
-  int row_tile_ = 0;
   int thread_stride_ = 0;
   int thread_count_ = 0;
   bool vec_matmul_ = false;
-  float *bias_ptr_ = nullptr;
-  float *batch_a_ptr_ = nullptr;
-  float *batch_b_ptr_ = nullptr;
-  float *batch_c_ptr_ = nullptr;
+  float16_t *a_pack_ptr_ = nullptr;
+  float16_t *b_pack_ptr_ = nullptr;
+  float16_t *src_b_ = nullptr;
+  float16_t *bias_ptr_ = nullptr;
+  float16_t *batch_a_ptr_ = nullptr;
+  float16_t *batch_b_ptr_ = nullptr;
+  float16_t *batch_c_ptr_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
+
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_MATMUL_BASE_FP16_H_

@@ -27,10 +27,16 @@ void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col) {
 void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
-    for (int c = 0; c < col; c++) {
+    int c = 0;
+    for (; c < col; c++) {
       int cd4 = c / C4NUM;
       int cm4 = c % C4NUM;
       dst_ptr[cd4 * C4NUM * row + r * C4NUM + cm4] = src[c];
+    }
+    for (; c < UP_ROUND(col, C4NUM); c++) {
+      int cd4 = c / C4NUM;
+      int cm4 = c % C4NUM;
+      dst_ptr[cd4 * C4NUM * row + r * C4NUM + cm4] = 0;
     }
   }
   return;
@@ -39,10 +45,16 @@ void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
 void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
-    for (int c = 0; c < col; c++) {
+    int c = 0;
+    for (; c < col; c++) {
       int cd6 = c / C6NUM;
       int cm6 = c % C6NUM;
       dst_ptr[cd6 * C6NUM * row + r * C6NUM + cm6] = src[c];
+    }
+    for (; c < UP_ROUND(col, C6NUM); c++) {
+      int cd6 = c / C6NUM;
+      int cm6 = c % C6NUM;
+      dst_ptr[cd6 * C6NUM * row + r * C6NUM + cm6] = 0;
     }
   }
   return;
@@ -51,10 +63,16 @@ void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col) 
 void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
-    for (int c = 0; c < col; c++) {
+    int c = 0;
+    for (; c < col; c++) {
       int cd8 = c / C8NUM;
       int cm8 = c % C8NUM;
       dst_ptr[cd8 * C8NUM * row + r * C8NUM + cm8] = src[c];
+    }
+    for (; c < UP_ROUND(col, C8NUM); c++) {
+      int cd8 = c / C8NUM;
+      int cm8 = c % C8NUM;
+      dst_ptr[cd8 * C8NUM * row + r * C8NUM + cm8] = 0;
     }
   }
   return;
@@ -63,10 +81,16 @@ void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
 void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
-    for (int c = 0; c < col; c++) {
+    int c = 0;
+    for (; c < col; c++) {
       int cd12 = c / C12NUM;
       int cm12 = c % C12NUM;
       dst_ptr[cd12 * C12NUM * row + r * C12NUM + cm12] = src[c];
+    }
+    for (; c < UP_ROUND(col, C12NUM); c++) {
+      int cd12 = c / C12NUM;
+      int cm12 = c % C12NUM;
+      dst_ptr[cd12 * C12NUM * row + r * C12NUM + cm12] = 0;
     }
   }
   return;
@@ -75,10 +99,16 @@ void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col)
 void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
-    for (int c = 0; c < col; c++) {
+    int c = 0;
+    for (; c < col; c++) {
       int cd16 = c / C16NUM;
       int cm16 = c % C16NUM;
       dst_ptr[cd16 * C16NUM * row + r * C16NUM + cm16] = src[c];
+    }
+    for (; c < UP_ROUND(col, C16NUM); c++) {
+      int cd16 = c / C16NUM;
+      int cm16 = c % C16NUM;
+      dst_ptr[cd16 * C16NUM * row + r * C16NUM + cm16] = 0;
     }
   }
   return;
