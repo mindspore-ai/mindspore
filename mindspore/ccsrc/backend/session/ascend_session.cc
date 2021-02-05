@@ -38,6 +38,7 @@
 #include "backend/optimizer/ascend/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "backend/optimizer/ascend/mindir/maxpool_with_argmax_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/conv2d_unify_mindir.h"
+#include "backend/optimizer/ascend/mindir/optimizer_unify_output.h"
 #include "backend/optimizer/ascend/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/slice_grad_unify_mindir.h"
 #include "runtime/device/kernel_adjust.h"
@@ -221,6 +222,10 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::SliceGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::FtrlUnifyOutput>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MomentumUnifyOutput>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::RMSPropUnifyOutput>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::CenteredRMSPropUnifyOutput>());
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {

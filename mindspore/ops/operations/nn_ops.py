@@ -2415,12 +2415,8 @@ class ApplyMomentum(PrimitiveWithInfer):
         validator.check_value_type('gradient_scale', gradient_scale, [float], self.name)
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
                                 outputs=['output'])
-        self.is_tbe = context.get_context("device_target") == "Ascend"
-        self.is_ge = context.get_context("enable_ge")
 
     def infer_shape(self, v_shape, a_shape, l_shape, g_shape, m_shape):
-        if not self.is_ge and self.is_tbe:
-            return v_shape, v_shape
         return v_shape
 
     def infer_dtype(self, v_dtype, a_dtype, l_dtype, g_dtype, m_dtype):
@@ -2431,9 +2427,7 @@ class ApplyMomentum(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_types_same({"l_dtype": l_dtype}, valid_dtypes, self.name)
         validator.check_scalar_or_tensor_types_same({"g_dtype": g_dtype}, valid_dtypes, self.name)
         validator.check_scalar_or_tensor_types_same({"m_dtype": m_dtype}, valid_dtypes, self.name)
-        if not self.is_ge and self.is_tbe:
-            return g_dtype, g_dtype
-        return g_dtype
+        return v_dtype
 
 
 class SmoothL1Loss(PrimitiveWithInfer):
@@ -2765,9 +2759,8 @@ class ApplyRMSProp(PrimitiveWithInfer):
         >>> momentum = 1e-10
         >>> epsilon = 0.001
         >>> output = apply_rms(input_x, mean_square, moment, learning_rate, grad, decay, momentum, epsilon)
-        >>> print(output)
-        (Tensor(shape=[], dtype=Float32, value= 0.100112), Tensor(shape=[], dtype=Float32, value= 4),
-        Tensor(shape=[], dtype=Float32, value= 0.899888))
+        >>> output
+        Tensor(shape=[], dtype=Float32, value= 0.100112)
     """
 
     @prim_attr_register
@@ -2775,16 +2768,12 @@ class ApplyRMSProp(PrimitiveWithInfer):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['var', 'mean_square', 'moment', 'learning_rate', 'grad',
                                         'rho', 'momentum', 'epsilon'], outputs=['output'])
-        self.is_ge = context.get_context("enable_ge")
-        self.is_d = context.get_context("device_target") == "Ascend"
 
     def infer_shape(self, var_shape, mean_square_shape, moment_shape, learning_rate_shape, grad_shape, decay_shape,
                     momentum_shape, epsilon_shape):
         validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
-        if not self.is_ge and self.is_d:
-            return var_shape, var_shape, var_shape
         return var_shape
 
     def infer_dtype(self, var_dtype, mean_square_dtype, moment_dtype, learning_rate_dtype, grad_dtype, decay_dtype,
@@ -2797,8 +2786,6 @@ class ApplyRMSProp(PrimitiveWithInfer):
         validator.check_types_same_and_valid(args_decay, valid_dtypes, self.name)
         args_lr = {"learning_rate": learning_rate_dtype, "decay": decay_dtype}
         validator.check_scalar_or_tensor_types_same(args_lr, valid_dtypes, self.name, allow_mix=True)
-        if not self.is_ge and self.is_d:
-            return var_dtype, var_dtype, var_dtype
         return var_dtype
 
     def infer_value(self, var, mean_square, moment, learning_rate, grad, decay, momentum, epsilon):
@@ -2869,22 +2856,15 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         >>> epsilon = 0.05
         >>> output = centered_rms_prop(input_x, mean_grad, mean_square, moment, grad,
         ...                            learning_rate, decay, momentum, epsilon)
-        >>> print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
+        >>> output
+        Tensor(shape=[2, 2], dtype=Float32, value=
         [[-2.00000000e+00, -5.02492237e+00],
-         [-8.04984474e+00, -1.10747662e+01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  1.00000000e+00],
-         [ 2.00000000e+00,  3.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  1.00000000e+00],
-         [ 4.00000000e+00,  9.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 0.00000000e+00,  4.02492237e+00],
-         [ 8.04984474e+00,  1.20747662e+01]]))
+         [-8.04984474e+00, -1.10747662e+01]])
     """
 
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
-        self.is_ascend = context.get_context("device_target") == "Ascend"
 
     def infer_shape(self, var_shape, mean_gradient_shape, mean_square_shape, moment_shape, grad_shape,
                     learning_rate_shape, decay_shape, momentum_shape, epsilon_shape):
@@ -2892,8 +2872,6 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         validator.check("var_shape", var_shape, "mean_square_shape", mean_square_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "moment_shape", moment_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "grad_shape", grad_shape, Rel.EQ, self.name)
-        if self.is_ascend:
-            return var_shape, mean_gradient_shape, mean_square_shape, moment_shape
         return var_shape
 
     def infer_dtype(self, var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype, grad_dtype,
@@ -2907,8 +2885,6 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
         validator.check_types_same_and_valid(args_rho, valid_dtypes, self.name)
         args_lr = {"learning_rate": learning_rate_dtype, "rho": rho_dtype}
         validator.check_scalar_or_tensor_types_same(args_lr, valid_dtypes, self.name, allow_mix=True)
-        if self.is_ascend:
-            return var_dtype, mean_gradient_dtype, mean_square_dtype, moment_dtype
         return var_dtype
 
 
@@ -6185,15 +6161,8 @@ class ApplyFtrl(PrimitiveWithInfer):
           Default: -0.5. It must be a float number or a scalar tensor with float16 or float32 data type.
 
     Outputs:
-        There are three outputs for Ascend environment.
-
-        - **var** (Tensor) - represents the updated `var`.
-        - **accum** (Tensor) - represents the updated `accum`.
-        - **linear** (Tensor) - represents the updated `linear`.
-
-        There is only one output for GPU environment.
-
-        - **var** (Tensor) - This value is always zero and the input parameters has been updated in-place.
+        - **var** (Tensor) - represents the updated `var`. As the input parameters has been updated in-place, this
+          value is always zero when the platforms is GPU.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -6226,26 +6195,10 @@ class ApplyFtrl(PrimitiveWithInfer):
         >>> net = ApplyFtrlNet()
         >>> input_x = Tensor(np.random.randint(-4, 4, (2, 2)), mindspore.float32)
         >>> output = net(input_x)
-        >>> is_tbe = context.get_context("device_target") == "Ascend"
-        >>> if is_tbe:
-        ...     print(output)
-        (Tensor(shape=[2, 2], dtype=Float32, value=
+        >>> output
+        Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 4.61418092e-01,  5.30964255e-01],
-         [ 2.68715084e-01,  3.82065028e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.64236546e+01,  9.64589405e+00],
-         [ 1.43758726e+00,  9.89177322e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[-1.86994812e+03, -1.64906018e+03],
-         [-3.22187836e+02, -1.20163989e+03]]))
-         ... else:
-         ...    print(net.var.asnumpy())
-         [[0.4614181  0.5309642 ]
-          [0.2687151  0.38206503]]
-         ...    print(net.accum.asnumpy())
-         [[16.423655  9.645894 ]
-          [ 1.4375873 9.891773 ]]
-         ...    print(net.linear.asnumpy())
-         [[-1869.9479 -1649.0599]
-          [ -322.1879 -1201.6399]]
+         [ 2.68715084e-01,  3.82065028e-01]])
     """
 
     @prim_attr_register
@@ -6253,14 +6206,11 @@ class ApplyFtrl(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'lr', 'l1', 'l2', 'lr_power'],
                                 outputs=['output'])
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
-        self.is_tbe = context.get_context("device_target") == "Ascend"
 
     def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, lr_shape, l1_shape, l2_shape,
                     lr_power_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
         validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
-        if self.is_tbe:
-            return var_shape, var_shape, var_shape
         return var_shape
 
     def infer_dtype(self, var_type, accum_type, linear_type, grad_type, lr_type, l1_type, l2_type, lr_power_type):
@@ -6272,8 +6222,6 @@ class ApplyFtrl(PrimitiveWithInfer):
         validator.check_scalar_or_tensor_types_same({"l1": l1_type}, valid_dtypes, self.name)
         validator.check_scalar_or_tensor_types_same({"l2": l2_type}, valid_dtypes, self.name)
         validator.check_scalar_or_tensor_types_same({"lr_power": lr_power_type}, valid_dtypes, self.name)
-        if self.is_tbe:
-            return var_type, var_type, var_type
         return var_type
 
 

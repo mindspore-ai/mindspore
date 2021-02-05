@@ -22,7 +22,7 @@ broadcast = P.Broadcast(1)
 memcpy_async = Primitive('memcpy_async')
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
-apply_momentun = P.ApplyMomentum()
+assign_add = P.AssignAdd()
 control_depend = P.ControlDepend()
 relu = P.ReLU()
 
@@ -84,14 +84,14 @@ def test_insert_memcpy_async_for_hccl_op_cond3(tag):
     fns = FnDict()
 
     @fns
-    def before(a, b, c, d, e):
-        res = apply_momentun(a, b, c, d, e)
+    def before(a, b):
+        res = assign_add(a, b)
         res = all_reduce(res)
         return res
 
     @fns
-    def after(a, b, c, d, e):
-        res = apply_momentun(a, b, c, d, e)
+    def after(a, b):
+        res = assign_add(a, b)
         res = memcpy_async(res)
         res = all_reduce(res)
         return make_tuple(res)
