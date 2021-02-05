@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """tbe process"""
+import threading
 import traceback
 import multiprocessing
 import subprocess
@@ -137,11 +138,16 @@ class TbeProcess:
             res = "TBEException", "ERROR: [MS_BUILD_PROCESS_NUM] type should be a int num, but got :" + process_num
         return res
 
+    def close_pool(self):
+        self.__pool.terminate()
+        self.__pool.join()
+        del self.__pool
+
     def exit(self):
         if self.__pool is not None:
-            self.__pool.terminate()
-            self.__pool.join()
-            del self.__pool
+            stop_thread = threading.Thread(target=self.close_pool)
+            stop_thread.daemon = True
+            stop_thread.start()
 
     def start_compile_op(self, op_json):
         """
