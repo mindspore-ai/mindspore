@@ -71,11 +71,28 @@ set(MICRO_CODER_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/opcoders/file_collector.cc
         )
 
+file(GLOB OPCODER_SRC_SERIALIZER ${CMAKE_CURRENT_SOURCE_DIR}
+        opcoders/serializers/nnacl_serializer/*.cc
+        )
+
+file(GLOB_RECURSE OPCODER_SRC_FP32 RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        opcoders/nnacl/fp32/*.cc
+        )
+
+
+file(GLOB_RECURSE OPCODER_SRC_INT8 RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        opcoders/nnacl/int8/*.cc
+        )
+
+
 list(APPEND MICRO_CODER_SRC
         ${MICRO_ALLOCATOR}
         ${MICRO_GENERATOR}
         ${MICRO_OPCODERS_BASE}
         ${MICRO_OPCODERS_CMSIS_NN}
+        ${OPCODER_SRC_SERIALIZER}
+        ${OPCODER_SRC_FP32}
+        ${OPCODER_SRC_INT8}
         )
 
 add_executable(codegen main.cc

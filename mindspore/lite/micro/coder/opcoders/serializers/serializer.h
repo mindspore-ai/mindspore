@@ -22,6 +22,7 @@
 #include <sstream>
 #include "micro/coder/utils/print_utils.h"
 #include "micro/coder/allocator/allocator.h"
+#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_stream_utils.h"
 
 namespace mindspore::lite::micro {
 
