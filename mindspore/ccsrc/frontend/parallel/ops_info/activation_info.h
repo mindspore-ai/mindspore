@@ -82,12 +82,12 @@ class ActivationOther : public Activation {
   Status GetAttrs() override;
 };
 
-class GeluInfo : public ActivationOther {
+class GeLUInfo : public ActivationOther {
  public:
-  GeluInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+  GeLUInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
            const PrimitiveAttrs &attrs)
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<GeLUCost>()) {}
-  ~GeluInfo() override = default;
+  ~GeLUInfo() override = default;
 };
 
 class TanhInfo : public ActivationOther {

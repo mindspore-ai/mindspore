@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-"""FastGelu op"""
+"""FastGeLU op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-fast_gelu_op_info = TBERegOp("FastGelu") \
+fast_gelu_op_info = TBERegOp("FastGeLU") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
     .binfile_name("fast_gelu.so") \
@@ -33,5 +33,5 @@ fast_gelu_op_info = TBERegOp("FastGelu") \
 
 @op_info_register(fast_gelu_op_info)
 def _fast_gelu_tbe():
-    """FastGelu TBE register"""
+    """FastGeLU TBE register"""
     return

@@ -61,7 +61,7 @@ def test_virtual_dataset_3_input():
             self.virtual_dataset = _VirtualDataset()
             self.matmul1 = P.MatMul()
             self.matmul2 = P.MatMul()
-            self.gelu = P.Gelu()
+            self.gelu = P.GeLU()
             self.bn1 = bn_with_initialize(2048)
 
         def construct(self, x, y, b):

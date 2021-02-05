@@ -57,7 +57,7 @@ class Net(nn.Cell):
     def __init__(self, strategy1, strategy2):
         super().__init__()
         self.matmul = P.MatMul().shard(strategy1)
-        self.gelu = P.Gelu().shard(strategy2)
+        self.gelu = P.GeLU().shard(strategy2)
 
     def construct(self, x, y):
         out = self.matmul(x, y)

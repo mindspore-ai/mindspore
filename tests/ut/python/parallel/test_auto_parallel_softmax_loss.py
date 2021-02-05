@@ -51,7 +51,7 @@ def test_softmax_cross_entropy_loss_auto_parallel():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul(transpose_b=True)
-            self.gelu = P.Gelu()
+            self.gelu = P.GeLU()
 
         def construct(self, x, y):
             out = self.matmul(x, y)

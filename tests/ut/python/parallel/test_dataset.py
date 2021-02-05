@@ -27,7 +27,7 @@ class VirtualDatasetNet(nn.Cell):
         self.virtual_dataset = _VirtualDataset()
         self.matmul1 = P.MatMul()
         self.matmul2 = P.MatMul()
-        self.gelu = P.Gelu()
+        self.gelu = P.GeLU()
 
     def construct(self, x, y, z):
         x, y, z = self.virtual_dataset(x, y, z)

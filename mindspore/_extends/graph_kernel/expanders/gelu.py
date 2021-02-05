@@ -22,7 +22,7 @@ HALF = 0.5
 
 
 def expand_gelu(expand_info):
-    """Gelu expander"""
+    """GeLU expander"""
     # cal formula are:
     # gelu(x) is 0.5 * x * (1.0 + tanh(y))
     # y is sqrt(2.0 / pi) * (x + 0.044715 * x * x * x)

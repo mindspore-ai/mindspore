@@ -805,6 +805,7 @@ class Gather(PrimitiveWithCheck):
          [ 4. 54.]
          [ 2. 55.]]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize index_select"""
@@ -826,7 +827,8 @@ class GatherV2(PrimitiveWithCheck):
     Same as operator Gather. GatherV2 will be deprecated in the future.
     Please use Gather instead.
     """
-    #deprecate_new_name = "Gather"
+
+    # deprecate_new_name = "Gather"
 
     @deprecated("1.1", "Gather", True)
     @prim_attr_register
@@ -2270,6 +2272,29 @@ def _get_stack_shape(x_shape, x_type, axis, prim_name):
     return out_shape
 
 
+class Pack(PrimitiveWithInfer):
+    """
+    Same as operator Stack. Pack will be deprecated in the future.
+    Please use Stack instead.
+    """
+    @deprecated("1.1", "Stack", True)
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """Initialize Pack"""
+        validator.check_value_type("axis", axis, [int], self.name)
+        self.axis = axis
+
+    def __infer__(self, value):
+        x_shape = value['shape']
+        x_type = value['dtype']
+        self.add_prim_attr('num', len(x_shape))
+        all_shape = _get_stack_shape(x_shape, x_type, self.axis, self.name)
+        out = {'shape': all_shape,
+               'dtype': x_type[0],
+               'value': None}
+        return out
+
+
 class Stack(PrimitiveWithInfer):
     r"""
     Stacks a list of tensors in specified axis.
@@ -2324,26 +2349,45 @@ class Stack(PrimitiveWithInfer):
                'value': None}
         return out
 
-def Pack(axis=0):
+
+class Unpack(PrimitiveWithInfer):
     """
-    Packs a list of tensors in specified axis.
-
-    The usage of Pack is deprecated. Please use Stack.
-
+    Same as operator Unstack. Unpack will be deprecated in the future.
+    Please use Unstack instead.
     """
-    logger.warning("WARN_DEPRECATED: The usage of Pack is deprecated. Please use Stack.")
-    return Stack(axis)
+    @deprecated("1.1", "Unstack", True)
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """Initialize Unpack"""
+        validator.check_value_type("axis", axis, [int], self.name)
+        self.axis = axis
 
-
-def Unpack(axis=0):
-    """
-    Unpacks tensor in specified axis.
-
-    The usage of Unpack is deprecated. Please use Unstack.
-
-    """
-    logger.warning("WARN_DEPRECATED: The usage of Unpack is deprecated. Please use Unstack.")
-    return Unstack(axis)
+    def __infer__(self, x):
+        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
+        x_shape = list(x['shape'])
+        dim = len(x_shape)
+        validator.check_int_range(self.axis, -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
+        if self.axis < 0:
+            self.axis = self.axis + dim
+        output_num = x_shape[self.axis]
+        validator.check_value_type("num", output_num, [int], self.name)
+        validator.check_positive_int(output_num, "output_num", self.name)
+        self.add_prim_attr('num', output_num)
+        output_valid_check = x_shape[self.axis] - output_num
+        validator.check_int(output_valid_check, 0, Rel.EQ,
+                            "The dimension which to unstack divides output_num", self.name)
+        out_shapes = []
+        out_dtypes = []
+        out_shape = x_shape[:self.axis] + x_shape[self.axis + 1:]
+        for _ in range(output_num):
+            out_shapes.append(tuple(out_shape))
+            out_dtypes.append(x['dtype'])
+        out_shapes = tuple(out_shapes)
+        out_dtypes = tuple(out_dtypes)
+        out = {'shape': out_shapes,
+               'dtype': out_dtypes,
+               'value': None}
+        return out
 
 
 class Unstack(PrimitiveWithInfer):

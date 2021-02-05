@@ -128,7 +128,7 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = FLOOR;
   } else if (kernel_name == prim::kPrimReciprocal->name()) {
     operate_type_ = RECIPROCAL;
-  } else if (kernel_name == prim::kPrimGelu->name()) {
+  } else if (kernel_name == prim::kPrimGeLU->name()) {
     operate_type_ = GELU;
   } else if (kernel_name == prim::kPrimAsin->name()) {
     operate_type_ = ASIN;
