@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_COMMON_TENSOR_UTIL_H_
 #include <vector>
 #include "src/tensor.h"
+#include "src/tensorlist.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/infer/common_infer.h"
 
@@ -28,6 +29,19 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vec
 void TensorC2LiteTensor(const std::vector<TensorC *> &tensors_in, std::vector<lite::Tensor *> *tensors_out);
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
 void FreeTensorListC(TensorListC *tensorListC);
+TensorC *NewTensorC();
+void Tensor2TensorC(Tensor *src, TensorC *dst);
+void TensorC2Tensor(TensorC *src, Tensor *dst);
+int TensorList2TensorListC(TensorList *src, TensorListC *dst);
+void TensorListC2TensorList(TensorListC *src, TensorList *dst);
+int GenerateMergeOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+                            std::vector<TensorC *> *out_tensor_c);
+int GenerateSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+                             std::vector<TensorC *> *out_tensor_c);
+int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
+                      std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *in_tensor_c);
+int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
+                       std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *out_tensor_c);
 }  // namespace lite
 }  // namespace mindspore
 
