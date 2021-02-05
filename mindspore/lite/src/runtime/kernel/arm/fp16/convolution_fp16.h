@@ -44,6 +44,7 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int RunImpl(int task_id);
   int InitWeightBias();
   int InitTmpBuffer();
+  void AdjustNumberOfThread();
 
  private:
   void FreeTmpBuffer() {

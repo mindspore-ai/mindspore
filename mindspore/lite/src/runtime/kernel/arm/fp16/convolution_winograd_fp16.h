@@ -52,6 +52,7 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int InitTmpBuffer();
   int ConfigInputOutput();
   int WinogradFilterTransformFp16(const float16_t *weight_data, float *matrix_g, float *matrix_gt, int oc_block);
+  void AdjustNumberOfThread();
 
  private:
   void FreeTmpBuffer() {

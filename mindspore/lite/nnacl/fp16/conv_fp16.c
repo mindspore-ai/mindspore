@@ -160,7 +160,9 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
   int out_w_block = UP_DIV(conv_param->output_w_, conv_param->output_unit_);
   int out_h_block = UP_DIV(conv_param->output_h_, conv_param->output_unit_);
   int output_count = out_w_block * out_h_block;
-  int output_tile_count = UP_DIV(output_count, tile_num);
+  int per_thread_num = UP_DIV(output_count, conv_param->thread_num_);
+  int real_tile = per_thread_num < tile_num ? per_thread_num : tile_num;
+  int output_tile_count = UP_DIV(output_count, real_tile);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
   int input_unit_square = conv_param->input_unit_ * conv_param->input_unit_;
 
@@ -178,9 +180,12 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
     int in_batch_offset = b * in_channel * conv_param->input_h_ * conv_param->input_w_;
     int out_batch_offset = b * conv_param->output_channel_ * conv_param->output_h_ * conv_param->output_w_;
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += conv_param->thread_num_) {
-      int out_tile_index = thread_id * tile_num;
-      int cal_num = output_count - thread_id * tile_num;
-      cal_num = cal_num > tile_num ? tile_num : cal_num;
+      int out_tile_index = thread_id * real_tile;
+      int cal_num = output_count - thread_id * real_tile;
+      cal_num = cal_num > real_tile ? real_tile : cal_num;
+      if (cal_num <= 0) {
+        return;
+      }
       WinogradInputTransformFp16(input_data + in_batch_offset, trans_input + task_id * trans_input_offset,
                                  tmp_data + task_id * tmp_data_offset, cal_num, out_tile_index, out_w_block, conv_param,
                                  in_func);
@@ -189,7 +194,7 @@ void ConvWinogardFp16(float16_t *input_data, float16_t *trans_weight, const floa
       float16_t *dst_ptr = gemm_out + task_id * gemm_out_offset;
       float16_t *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
-        RowMajor2Col16MajorFp16Opt(src_ptr + i * tile_num * in_channel, tmp_col_ptr, tile_num, in_channel);
+        RowMajor2Col16MajorFp16Opt(src_ptr + i * tile_num * in_channel, tmp_col_ptr, cal_num, in_channel);
         MatMulFp16(tmp_col_ptr, trans_weight + i * in_channel * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, in_channel,
                    cal_num, oc8 * C8NUM, input_unit_square, OutType_TileC8);
       }

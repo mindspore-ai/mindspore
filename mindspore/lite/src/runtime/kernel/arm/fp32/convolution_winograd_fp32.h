@@ -70,9 +70,11 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
       col_buffer_ = nullptr;
     }
   }
-  int kernel_unit_;
-  int input_unit_;
+  int kernel_unit_{0};
+  int input_unit_{0};
   int output_unit_;
+  int oc_block_{0};
+  int tile_num_{0};
   float *origin_weight_;  // do not free
   float *origin_bias_;    // do not free
   float *tmp_data_ = nullptr;

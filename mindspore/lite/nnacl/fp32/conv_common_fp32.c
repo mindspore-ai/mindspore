@@ -40,6 +40,9 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
     for (int thread_id = task_id; thread_id < output_tile_count; thread_id += conv_param->thread_num_) {
       int start_index = thread_id * cal_num;
       int real_cal_num = (output_count - start_index) < cal_num ? (output_count - start_index) : cal_num;
+      if (real_cal_num <= 0) {
+        return;
+      }
       float *gemm_input = packed_input + task_id * deep * cal_num;
       float *col_major_gemm_input = col_major_input + task_id * deep * cal_num;
       size_t packed_input_size = deep * cal_num * sizeof(float);

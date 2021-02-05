@@ -44,7 +44,10 @@ class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
   void FreeCopiedData();
   int Init() override;
   int ReSize() override;
-  int Run() override { return fp16_conv_kernel_->Run(); }
+  int Run() override {
+    fp16_conv_kernel_->set_name(name_);
+    return fp16_conv_kernel_->Run();
+  }
 
  private:
   uint8_t need_free_ = 0b00;
