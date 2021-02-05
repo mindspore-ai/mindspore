@@ -234,7 +234,7 @@ def test_bert_thor_mlperf_8p():
         os.system("rm -rf " + str(i))
 
     print("End training...")
-    assert mean_cost < 71.5
+    assert mean_cost < 78
     assert mean_loss < 8.125
 
 

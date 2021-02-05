@@ -16,9 +16,9 @@
 import sys
 import os
 from te.platform.cce_conf import te_set_version
-from .common import get_args, get_build_in_impl_path, TBEException
+from .tbe_common import get_args, get_built_in_impl_path, TBEException
 
-build_in_impl_path = get_build_in_impl_path()
+build_in_impl_path = get_built_in_impl_path()
 
 
 def _op_select_format(kernel_info):

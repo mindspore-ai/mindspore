@@ -19,9 +19,9 @@ import sys
 from te.platform.cce_conf import te_set_version
 from te.platform.fusion_util import fusion_op
 import te
-from common import check_kernel_info, get_args, get_build_in_impl_path
+from tbe_common import check_kernel_info, get_args, get_built_in_impl_path
 
-build_in_impl_path = get_build_in_impl_path()
+build_in_impl_path = get_built_in_impl_path()
 
 # op function list
 op_build = "compile"

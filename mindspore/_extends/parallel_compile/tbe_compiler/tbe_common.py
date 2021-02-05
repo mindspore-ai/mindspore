@@ -26,8 +26,8 @@ class TBEException(Exception):
         return self.__error_msg
 
 
-def get_build_in_impl_path():
-    """get build-in tbe implement path"""
+def get_built_in_impl_path():
+    """get built-in tbe implement path"""
     tbe_impl_path = os.environ.get("TBE_IMPL_PATH")
     if tbe_impl_path is None:
         default_install_path = '/usr/local/HiAI/runtime/ops/op_impl/built-in/ai_core/tbe/'

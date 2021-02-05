@@ -40,6 +40,7 @@
 #include "toolchain/adx_datadump_server.h"
 #include "utils/trace_base.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
+#include "utils/runtime_error_codes.h"
 #include "debug/anf_ir_dump.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
@@ -105,7 +106,7 @@ std::string GetRankId() {
 }
 }  // namespace
 
-std::vector<rtTaskFailInfo> AscendKernelRuntime::task_fail_infoes_ = {};
+std::vector<rtExceptionInfo> AscendKernelRuntime::task_fail_infoes_ = {};
 const session::KernelGraph *current_graph_ = nullptr;
 std::map<std::string, uint32_t> AscendKernelRuntime::overflow_tasks_;
 AscendKernelRuntime::~AscendKernelRuntime() {
@@ -531,7 +532,7 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
   }
 }
 
-void AscendKernelRuntime::TaskFailCallback(rtTaskFailInfo *task_fail_info) {
+void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   MS_EXCEPTION_IF_NULL(task_fail_info);
   static std::mutex exception_mutex;
   std::lock_guard<std::mutex> lock(exception_mutex);
