@@ -175,7 +175,7 @@ class ELU(Cell):
         ValueError: If `alpha` is not equal to 1.0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
