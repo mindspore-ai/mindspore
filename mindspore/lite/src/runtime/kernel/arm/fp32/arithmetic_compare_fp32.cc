@@ -31,7 +31,7 @@ namespace mindspore::kernel {
 int ArithmeticCompareCPUKernel::BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count,
                                              int out_thread_stride) {
   if (dim > break_pos_) {
-    if (data_type_ == kDataTypeInt) {
+    if (in_tensors_[0]->data_type() == kNumberTypeInt) {
       return func_int32_(reinterpret_cast<int *>(input0) + out_thread_stride,
                          reinterpret_cast<int *>(input1) + out_thread_stride,
                          reinterpret_cast<uint8_t *>(output) + out_thread_stride, out_count);
@@ -40,20 +40,20 @@ int ArithmeticCompareCPUKernel::BroadcastRun(void *input0, void *input1, void *o
                       reinterpret_cast<float *>(input1) + out_thread_stride,
                       reinterpret_cast<uint8_t *>(output) + out_thread_stride, out_count);
   }
-  for (int i = 0; i < arithmeticParameter_->out_shape_[dim]; ++i) {
-    int pos0_ = arithmeticParameter_->in_shape0_[dim] == 1 ? 0 : i;
-    int pos1_ = arithmeticParameter_->in_shape1_[dim] == 1 ? 0 : i;
+  for (int i = 0; i < param_->out_shape_[dim]; ++i) {
+    int pos0_ = param_->in_shape0_[dim] == 1 ? 0 : i;
+    int pos1_ = param_->in_shape1_[dim] == 1 ? 0 : i;
     int error_code;
-    if (data_type_ == kDataTypeInt) {
-      error_code = BroadcastRun(reinterpret_cast<int *>(input0) + pos0_ * arithmeticParameter_->in_strides0_[dim],
-                                reinterpret_cast<int *>(input1) + pos1_ * arithmeticParameter_->in_strides1_[dim],
-                                reinterpret_cast<uint8_t *>(output) + i * arithmeticParameter_->out_strides_[dim],
-                                dim + 1, out_count, out_thread_stride);
+    if (in_tensors_[0]->data_type() == kNumberTypeInt) {
+      error_code = BroadcastRun(reinterpret_cast<int *>(input0) + pos0_ * param_->in_strides0_[dim],
+                                reinterpret_cast<int *>(input1) + pos1_ * param_->in_strides1_[dim],
+                                reinterpret_cast<uint8_t *>(output) + i * param_->out_strides_[dim], dim + 1, out_count,
+                                out_thread_stride);
     } else {
-      error_code = BroadcastRun(reinterpret_cast<float *>(input0) + pos0_ * arithmeticParameter_->in_strides0_[dim],
-                                reinterpret_cast<float *>(input1) + pos1_ * arithmeticParameter_->in_strides1_[dim],
-                                reinterpret_cast<uint8_t *>(output) + i * arithmeticParameter_->out_strides_[dim],
-                                dim + 1, out_count, out_thread_stride);
+      error_code = BroadcastRun(reinterpret_cast<float *>(input0) + pos0_ * param_->in_strides0_[dim],
+                                reinterpret_cast<float *>(input1) + pos1_ * param_->in_strides1_[dim],
+                                reinterpret_cast<uint8_t *>(output) + i * param_->out_strides_[dim], dim + 1, out_count,
+                                out_thread_stride);
     }
     if (error_code != RET_OK) {
       return error_code;
@@ -65,8 +65,8 @@ int ArithmeticCompareCPUKernel::BroadcastRun(void *input0, void *input1, void *o
 int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
   auto element_num = out_tensors_[0]->ElementsNum();
 
-  MS_ASSERT(thread_count_ != 0);
-  int stride = UP_DIV(element_num, thread_count_);
+  MS_ASSERT(context_->thread_num_ != 0);
+  int stride = UP_DIV(element_num, context_->thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
   if (count <= 0) {
     return RET_OK;
@@ -78,14 +78,14 @@ int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
   }
 
   int error_code;
-  if (arithmeticParameter_->broadcasting_) {  // need broadcast
-    stride = UP_DIV(outside_, thread_count_);
+  if (param_->broadcasting_) {  // need broadcast
+    stride = UP_DIV(outside_, context_->thread_num_);
     int out_count = MSMIN(stride, outside_ - stride * task_id);
     int out_thread_stride = stride * task_id;
     if (out_count <= 0) {
       return RET_OK;
     }
-    if (data_type_ == kDataTypeFloat) {
+    if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
       error_code =
         BroadcastRun(reinterpret_cast<float *>(input0_ptr_), reinterpret_cast<float *>(input1_ptr_),
                      reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c()), 0, out_count, out_thread_stride);
@@ -95,7 +95,7 @@ int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
                      reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c()), 0, out_count, out_thread_stride);
     }
   } else {  // no broadcast, neither is scalar, two same shape
-    if (data_type_ == kDataTypeFloat) {
+    if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
       error_code = func_fp32_(reinterpret_cast<float *>(input0_ptr_) + stride * task_id,
                               reinterpret_cast<float *>(input1_ptr_) + stride * task_id,
                               reinterpret_cast<uint8_t *>(out_tensors_[0]->data_c()) + stride * task_id, count);

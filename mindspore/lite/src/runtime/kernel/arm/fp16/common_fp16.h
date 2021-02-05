@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext 
 
 float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx);
 
-bool IsExistFp16Tensor(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs);
+int ConvertFp32TensorToFp16(lite::Tensor *tensor, const lite::InnerContext *ctx);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_COMMON_FP16_H_
