@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETICSELF_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETICSELF_NPU_H_
 #include <vector>
-#include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/math_defs.h"
+#include "src/runtime/kernel/npu/npu_kernel.h"
 namespace mindspore::kernel {
 class ArithmeticSelfNPUKernel : public NPUKernel {
  public:

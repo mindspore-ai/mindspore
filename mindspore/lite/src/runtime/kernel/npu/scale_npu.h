@@ -17,9 +17,9 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
 #include <vector>
+#include "include/graph/op/nn_defs.h"
 #include "nnacl/scale.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/nn_defs.h"
 namespace mindspore::kernel {
 class ScaleNPUKernel : public NPUKernel {
  public:

@@ -17,7 +17,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_BATCHNORM_NPU_H_
 
 #include <vector>
-#include "include/graph/op/all_ops.h"
 #include "include/graph/compatible/all_ops.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "nnacl/batchnorm_parameter.h"

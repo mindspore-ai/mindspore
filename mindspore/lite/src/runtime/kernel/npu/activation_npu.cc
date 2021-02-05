@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/npu/activation_npu.h"
-#include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
@@ -28,7 +27,7 @@ int ActivationNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
   if (act_param_->type_ != schema::ActivationType_RELU && act_param_->type_ != schema::ActivationType_RELU6 &&
       act_param_->type_ != schema::ActivationType_SIGMOID && act_param_->type_ != schema::ActivationType_TANH &&
       act_param_->type_ != schema::ActivationType_HSIGMOID && act_param_->type_ != schema::ActivationType_LEAKY_RELU) {
-    MS_LOG(ERROR) << "Unsupport activation type for activation op " << name_ << "when running npu";
+    MS_LOG(ERROR) << "Unsupported activation type for activation op " << name_ << "when running npu";
     return RET_ERROR;
   }
   return RET_OK;
@@ -64,7 +63,7 @@ int ActivationNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
       act_->set_attr_mode(14);
       break;
     default:
-      MS_LOG(ERROR) << "Unsupport activation type for activation op " << name_ << "when running npu";
+      MS_LOG(ERROR) << "Unsupported activation type for activation op " << name_ << "when running npu";
       return RET_ERROR;
   }
   return RET_OK;

@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/kernel/npu/eltwise_npu.h"
-#include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/agent/npu/npu_converter_utils.h"
 

@@ -29,6 +29,8 @@ typedef struct ReshapeQuantArg {
 typedef struct ReshapeParameter {
   // primitive parameter
   OpParameter op_parameter_;
+  int shape_dim_;
+  int shape_[MAX_SHAPE_SIZE];
 
   // other parameter
   ReshapeQuantArg quant_para_;

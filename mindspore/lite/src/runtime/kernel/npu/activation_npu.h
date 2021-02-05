@@ -18,10 +18,8 @@
 
 #include <vector>
 #include "include/graph/op/all_ops.h"
-#include "include/graph/compatible/all_ops.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
-
 namespace mindspore::kernel {
 class ActivationNPUKernel : public NPUKernel {
  public:

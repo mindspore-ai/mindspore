@@ -24,6 +24,10 @@ using mindspore::schema::PrimitiveType_Pooling;
 namespace mindspore::kernel {
 int PoolingNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                 OpParameter *opParameter) {
+  if (pooling_param_->pad_l_ > pooling_param_->stride_w_ || pooling_param_->pad_u_ > pooling_param_->stride_h_) {
+    MS_LOG(ERROR) << "Npu pooling does not support pad > stride.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

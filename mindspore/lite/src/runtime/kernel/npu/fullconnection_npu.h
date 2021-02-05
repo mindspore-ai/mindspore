@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_FULLCONNECTION_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_FULLCONNECTION_NPU_H_
 #include <vector>
-#include "src/runtime/kernel/npu/convolution_base_npu.h"
 #include "include/graph/op/all_ops.h"
+#include "src/runtime/kernel/npu/convolution_base_npu.h"
 #include "nnacl/matmul_parameter.h"
 namespace mindspore::kernel {
 class FullconnectionNPUKernel : public ConvolutionBaseNPUKernel {

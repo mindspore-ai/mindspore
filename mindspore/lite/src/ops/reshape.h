@@ -42,9 +42,11 @@ class Reshape : public PrimitiveC {
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   int GetFormat() const;
   std::vector<int64_t> GetShape() const;
+  std::vector<int> GetOutputShape() { return out_shape_; }
 
  private:
   int CalNewShape(const lite::Tensor *in_tensor, std::vector<int> *out_shape) const;
+  std::vector<int> out_shape_;
 };
 }  // namespace lite
 }  // namespace mindspore

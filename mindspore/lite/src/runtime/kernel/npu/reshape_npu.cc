@@ -15,9 +15,8 @@
  */
 
 #include "src/runtime/kernel/npu/reshape_npu.h"
+#include <memory>
 #include "src/kernel_registry.h"
-#include "include/graph/op/all_ops.h"
-#include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Reshape;
@@ -25,6 +24,10 @@ using mindspore::schema::PrimitiveType_Reshape;
 namespace mindspore::kernel {
 int ReshapeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                 OpParameter *opParameter) {
+  if (reshape_param_->shape_dim_ == 0) {
+    MS_LOG(ERROR) << "Npu reshape op only supports const shape.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -37,7 +40,17 @@ int ReshapeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
     return RET_ERROR;
   }
   op_->set_input_x(*npu_inputs[0]);
-  op_->set_input_shape(*npu_inputs[1]);
+
+  auto shape_op = new (std::nothrow) hiai::op::Const(name_ + "_shape");
+  std::vector<int> shape;
+  for (int i = 0; i < reshape_param_->shape_dim_; i++) {
+    shape.push_back(reshape_param_->shape_[i]);
+  }
+  ge::TensorDesc shape_tensor_desc(ge::Shape({reshape_param_->shape_dim_}), ge::FORMAT_NCHW, ge::DT_INT32);
+  ge::TensorPtr ai_shape_tensor = std::make_shared<hiai::Tensor>(shape_tensor_desc);
+  ai_shape_tensor->SetData(reinterpret_cast<uint8_t *>(shape.data()), reshape_param_->shape_dim_ * sizeof(int32_t));
+  shape_op->set_attr_value(ai_shape_tensor);
+  op_->set_input_shape(*shape_op);
   return RET_OK;
 }
 
