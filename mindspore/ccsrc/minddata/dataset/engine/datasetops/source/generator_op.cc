@@ -193,9 +193,9 @@ Status GeneratorOp::operator()() {
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(wp_.Register(tree_->AllTasks()));
   std::unique_ptr<DataBuffer> fetched_buffer;
+  int64_t num_rows_sampled = sampler_ ? sampler_->CalculateNumSamples(num_rows_) : num_rows_;
   RETURN_IF_NOT_OK(Init());
 
-  int64_t num_rows_sampled = sampler_ ? sampler_->CalculateNumSamples(num_rows_) : num_rows_;
   bool eof = false;
   while (!eof) {
     // Create new buffer each iteration

@@ -2233,6 +2233,7 @@ _GLOBAL_PYFUNC_LIST = []
 _OP_NAME = dict()
 _OP_PROCESS = dict()
 
+
 # Pyfunc worker init function
 # Python multiprocessing library forbid sending lambda function through pipe.
 # This init function allow us to add all Python function to a global collection and then fork afterwards.
@@ -3781,6 +3782,8 @@ class GeneratorDataset(MappableDataset):
             try:
                 new_op.sampler = None
                 new_op.sample_fn = sample_fn
+                new_op.source_len = min(new_op.source_len,
+                                        new_op.num_samples) if new_op.num_samples is not None else new_op.source_len
                 iter(self.source)
             except TypeError:
                 # Use generator function if input callable

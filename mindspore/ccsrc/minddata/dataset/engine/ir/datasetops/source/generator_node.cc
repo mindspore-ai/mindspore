@@ -42,7 +42,12 @@ GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<
 
 GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema,
                              int64_t source_len, std::shared_ptr<SamplerObj> sampler)
-    : MappableSourceNode(), generator_function_(generator_function), schema_(schema), reset_ancestor_(nullptr) {}
+    : MappableSourceNode(),
+      generator_function_(generator_function),
+      schema_(schema),
+      reset_ancestor_(nullptr),
+      sampler_(std::move(sampler)),
+      source_len_(source_len) {}
 
 std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
   std::shared_ptr<GeneratorNode> node;
