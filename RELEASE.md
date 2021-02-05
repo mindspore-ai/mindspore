@@ -1,3 +1,17 @@
+# MindSpore 1.2.0 Release Notes
+
+## MindSpore
+
+### API Change
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+###### `ops.ApplyFtrl`, `ops.ApplyMomentum`, `ops.ApplyRMSProp`, `ops.ApplyCenteredRMSProp` change the output on Ascend backend from multiple to a single. ([!11895](https://gitee.com/mindspore/mindspore/pulls/11895))
+
+Previously the number of outputs of these operator is different on different backends. To unify their definition we change their output on Ascend backend from multiple to a single.
+
 # MindSpore 1.1.1 Release Notes
 
 ## MindSpore
