@@ -3,13 +3,20 @@
  * Including mindspore-lite .so file, minddata-lite .so file and model file.
  * The libraries can be downloaded manually.
  */
-def mindsporeLite_Version = "mindspore-lite-maven-1.0.1"
 def targetModelFile = "src/main/assets/segment_model.ms"
 def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobile_segment_lite/segment_model.ms"
-def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/java/${mindsporeLite_Version}.zip"
-def mindSporeLibrary = "libs/${mindsporeLite_Version}.zip"
-def cleantargetMindSporeInclude = "libs"
-def targetMindSporeInclude = "libs/"
+
+def mindsporeLite_Version = "mindspore-lite-1.1.0-inference-android"
+def mindsporeLite_Version_AAR = "mindspore-lite-maven-1.1.0"
+
+def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.0/MindSpore/lite/release/android/${mindsporeLite_Version}.tar.gz"
+
+def targetRoot = "libs/"
+def mindSporeLibrary = "${targetRoot}${mindsporeLite_Version}.tar.gz"
+def mindSporeLibraryAAR = "${targetRoot}${mindsporeLite_Version}/${mindsporeLite_Version_AAR}.zip"
+
+def cleantargetMindSporeInclude = "${targetRoot}${mindsporeLite_Version}"
+def cleantargetMindSporeIncludeAAR = "${targetRoot}mindspore"
 
 
 task downloadModelFile(type: DownloadUrlTask) {
@@ -33,20 +40,47 @@ task unzipMindSporeInclude(type: Copy, dependsOn: ['downloadMindSporeLibrary']) 
     doFirst {
         println "Unzipping ${mindSporeLibrary}"
     }
-    from zipTree("${mindSporeLibrary}")
-    into "${targetMindSporeInclude}"
+    from tarTree(resources.gzip("${mindSporeLibrary}"))
+    into "${targetRoot}"
 }
 
-task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['unzipMindSporeInclude']) {
-    delete fileTree("${cleantargetMindSporeInclude}").matching {
-        include "*.zip"
+
+task unzipMindSporeIncludeAAR(type: Copy, dependsOn: ['unzipMindSporeInclude']) {
+    doFirst {
+        println "Unzipping ${mindSporeLibraryAAR}"
+    }
+    from zipTree("${mindSporeLibraryAAR}")
+    into "${targetRoot}"
+}
+
+task copyAARToRoot(type: Copy, dependsOn: ['unzipMindSporeIncludeAAR']) {
+    from('libs/mindspore/mindspore-lite/1.1.0/mindspore-lite-1.1.0.aar')
+    into "${targetRoot}"
+}
+
+task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['copyAARToRoot']) {
+    delete fileTree("${targetRoot}").matching {
+        include "*.tar.gz"
     }
 }
 
-if (file("libs/mindspore-lite-1.0.1.aar").exists()) {
+task cleanUnuseFiles(type: Delete, dependsOn: ['cleanUnusedmindsporeFiles']) {
+    delete("${cleantargetMindSporeInclude}")
+}
+
+task cleanUnuseFileAAR(type: Delete, dependsOn: ['cleanUnuseFiles']) {
+    delete("${cleantargetMindSporeIncludeAAR}")
+}
+
+
+if (file("libs/mindspore-lite-1.1.0.aar").exists()) {
     downloadMindSporeLibrary.enabled = false
     unzipMindSporeInclude.enabled = false
+    unzipMindSporeIncludeAAR.enabled = false
+    cleanUnuseFiles.enabled = false
+    cleanUnuseFileAAR.enabled = false
     cleanUnusedmindsporeFiles.enabled = false
+    copyAARToRoot.enabled = false
 }
 
 
@@ -57,7 +91,12 @@ if (file("src/main/assets/segment_model.ms").exists()) {
 preBuild.dependsOn downloadModelFile
 preBuild.dependsOn downloadMindSporeLibrary
 preBuild.dependsOn unzipMindSporeInclude
+preBuild.dependsOn unzipMindSporeIncludeAAR
+preBuild.dependsOn copyAARToRoot
 preBuild.dependsOn cleanUnusedmindsporeFiles
+preBuild.dependsOn cleanUnuseFiles
+preBuild.dependsOn cleanUnuseFileAAR
+
 
 class DownloadUrlTask extends DefaultTask {
     @Input
