@@ -85,6 +85,7 @@ class Scheduler {
   Model *src_model_ = nullptr;
   std::vector<Tensor *> *src_tensors_;
   std::vector<size_t> graph_output_node_indexes_;
+  std::map<int, OpParameter *> op_parameters_;
 };
 }  // namespace mindspore::lite
 

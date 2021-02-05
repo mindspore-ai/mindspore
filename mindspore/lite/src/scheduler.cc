@@ -48,7 +48,6 @@ using kernel::KERNEL_ARCH::kGPU;
 using kernel::KERNEL_ARCH::kNPU;
 namespace {
 constexpr int kMainSubGraphIndex = 0;
-static std::map<int, OpParameter *> g_op_parameters;
 }  // namespace
 
 int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
@@ -69,7 +68,7 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
   ret = ScheduleSubGraphToKernels(kMainSubGraphIndex, dst_kernels, nullptr, nullptr);
-  g_op_parameters.clear();
+  op_parameters_.clear();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule main subgraph to kernels failed.";
     return ret;
@@ -135,7 +134,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node, bool *infer_shape_i
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
     return RET_ERROR;
   }
-  g_op_parameters[node->output_indices_.at(0)] = parameter;
+  op_parameters_[node->output_indices_.at(0)] = parameter;
   parameter->infer_flag_ = !(*infer_shape_interrupt);
   auto ret = KernelInferShape(inputs, &outputs, parameter);
   if (ret == RET_INFER_INVALID) {
@@ -196,7 +195,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node) {
   kernel::LiteKernel *kernel = nullptr;
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
-  OpParameter *op_parameter = g_op_parameters[node->output_indices_.at(0)];
+  OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << PrimitiveTypeName(GetPrimitiveType(node->primitive_));
     return nullptr;
@@ -217,7 +216,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       if (ret == RET_ERROR) {
         ret = InferNodeShape(node, &infer_shape_interrupt);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
-          op_parameter = g_op_parameters[node->output_indices_.at(0)];
+          op_parameter = op_parameters_[node->output_indices_.at(0)];
         } else {
           MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
           return nullptr;
@@ -240,7 +239,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       if (ret == RET_ERROR) {
         ret = InferNodeShape(node, &infer_shape_interrupt);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
-          op_parameter = g_op_parameters[node->output_indices_.at(0)];
+          op_parameter = op_parameters_[node->output_indices_.at(0)];
         } else {
           MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
           return nullptr;
@@ -263,7 +262,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
       if (ret == RET_ERROR) {
         ret = InferNodeShape(node, &infer_shape_interrupt);
         if (ret == RET_INFER_INVALID || ret == RET_OK) {
-          op_parameter = g_op_parameters[node->output_indices_.at(0)];
+          op_parameter = op_parameters_[node->output_indices_.at(0)];
         } else {
           MS_LOG(ERROR) << "Try repeat infer fail: " << node->name_;
           return nullptr;
