@@ -61,10 +61,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr SearchReplaceNode(const std::string &var, const ParameterPtr &phi);
   void ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr &trueBlock, const FunctionBlockPtr &falseBlock,
                        bool unroll_loop = true);
-  // record the assign statement of self.xx weight parameter ,which will use state_setitem op
-  void SetStateAssgin(const AnfNodePtr &target, const std::string &readid);
-  void AddAutoDepend(const AnfNodePtr &target);
-  void InsertDependItemsBeforeReturn();
+  // Create cnode for the assign statement like self.target = source.
+  void SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &source);
   void AddGlobalVar(const std::string &var_name) { (void)global_vars_.insert(var_name); }
   bool IsGlobalVar(const std::string &var_name) { return global_vars_.find(var_name) != global_vars_.end(); }
   AnfNodePtr MakeResolveAstOp(const py::object &op);
@@ -73,6 +71,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
   const std::unordered_map<ParameterPtr, AnfNodePtr> &removable_phis() const { return removable_phis_; }
+  void FindIsolateVariables();
 
  private:
   // block graph
@@ -88,8 +87,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // refer to comments in Parser::func_block_list_;
   std::vector<FunctionBlock *> prev_blocks_;
 
-  // store args and variable's node
-  std::map<std::string, AnfNodePtr> vars_;
+  // store args and variable's node, use a bool flag to indicate if the variable is used.
+  std::map<std::string, std::pair<AnfNodePtr, bool>> vars_;
 
   // phi_nodes map the parameter node to variable, it can be resolved if the block's predecessors are processed
   std::map<ParameterPtr, std::string> phi_nodes_;
@@ -109,10 +108,6 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   // hold declared global variables in function
   std::set<std::string> global_vars_;
-
-  // other depend need to insert before function return nodes.
-  // summary or some other node
-  std::vector<AnfNodePtr> auto_depends_;
 
   // keeps the new made resolve symbol for the variable not found in vars_.
   std::unordered_map<std::string, AnfNodePtr> var_to_resolve_;

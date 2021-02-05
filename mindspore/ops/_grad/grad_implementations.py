@@ -266,14 +266,28 @@ def bprop_control_depend(x, y, out, dout):
     """Backpropagator for primitive `Control_depend`."""
     return C.zeros_like(x), C.zeros_like(y)
 
+
 @bprops.register("switch")
 def bprop_switch(cond, tb, fb, out, dout):
     """Backpropagator for primitive `switch`."""
     return C.zeros_like(cond), F.switch(cond, dout, C.zeros_like(tb)), \
-            F.switch(cond, C.zeros_like(fb), dout)
+        F.switch(cond, C.zeros_like(fb), dout)
+
 
 def _fprop_switch_layer(index, layers):
     """Backpropagator for primitive `switch_layer`."""
     def _bprop_switch_layer(dout):
         return dout, C.zeros_like(index), ()
     return F.switch_layer(index, layers), _bprop_switch_layer
+
+
+@bprops.register("UpdateState")
+def bprop_update_state(u_monad, x, out, dout):
+    """Backpropagator for primitive `UpdateState`."""
+    return C.zeros_like(u_monad), C.zeros_like(x)
+
+
+@bprops.register("Load")
+def bprop_load(param, u_monad, out, dout):
+    """Backpropagator for primitive `load`."""
+    return dout, C.zeros_like(u_monad)

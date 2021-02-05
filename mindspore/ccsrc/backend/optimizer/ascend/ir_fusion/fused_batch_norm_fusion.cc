@@ -53,32 +53,9 @@ void GetBNOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &bn, std::vect
 }
 }  // namespace
 
-const BaseRef FusedBatchNormFusion::DefinePattern() const {
-  std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
-  VarPtr index0 = std::make_shared<CondVar>(IsC);
-  VarPtr index1 = std::make_shared<CondVar>(IsC);
-  VarPtr index2 = std::make_shared<CondVar>(IsC);
-  VectorRef batch_norm = VectorRef({batch_norm_var_, data_input0_var_, data_input1_var_, data_input2_var_, Xs});
-  VectorRef tuple_getitem0 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index0});
-  VectorRef tuple_getitem1 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index1});
-  VectorRef tuple_getitem2 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index2});
-  VectorRef sub0 = VectorRef({prim::kPrimSub, variable_input0_var_, tuple_getitem1});
-  VectorRef sub1 = VectorRef({prim::kPrimSub, variable_input1_var_, tuple_getitem2});
-  VectorRef mul0 = VectorRef({prim::kPrimMul, sub0, constant_input0_var_});
-  VectorRef mul1 = VectorRef({prim::kPrimMul, sub1, constant_input1_var_});
-  VectorRef assign_sub0 = VectorRef({prim::kPrimAssignSub, variable_input0_var_, mul0});
-  VectorRef assign_sub1 = VectorRef({prim::kPrimAssignSub, variable_input1_var_, mul1});
-  VectorRef depend0 = VectorRef({prim::kPrimDepend, tuple_getitem0, assign_sub0});
-  return VectorRef({prim::kPrimDepend, depend0, assign_sub1});
-}
-
 ValuePtr FusedBatchNormFusion::GetFactor(const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(equiv);
-  auto iter_constant_input0 = (*equiv).find(constant_input0_var_);
-  if (iter_constant_input0 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the constant_input0 var after matched.";
-  }
-  auto constant_input = utils::cast<AnfNodePtr>(iter_constant_input0->second);
+  auto constant_input = GetAnfNodeByVar(equiv, constant_input0_var_);
   MS_EXCEPTION_IF_NULL(constant_input);
   if (!constant_input->isa<ValueNode>()) {
     return nullptr;
@@ -113,31 +90,15 @@ AnfNodePtr FusedBatchNormFusion::CreateBNTrainingReduce(const FuncGraphPtr &func
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(equiv);
   // Set input to create node
-  auto iter_data_input0 = (*equiv).find(data_input0_var_);
-  if (iter_data_input0 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the data_input0 var after matched."
-                      << " trace: " << trace::DumpSourceLines(node);
-  }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
-    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)),
-    utils::cast<AnfNodePtr>(iter_data_input0->second)};
+    NewValueNode(std::make_shared<Primitive>(kBNTrainingReduceOpName)), GetAnfNodeByVar(equiv, data_input0_var_)};
   auto bn_training_reduce = func_graph->NewCNode(bn_training_reduce_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_reduce);
   bn_training_reduce->set_scope(node->scope());
   // Set abstract
-  auto iter_data_input1 = (*equiv).find(data_input1_var_);
-  if (iter_data_input1 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the data_input1 var after matched."
-                      << " trace: " << trace::DumpSourceLines(node);
-  }
-  auto data_input1 = utils::cast<AnfNodePtr>(iter_data_input1->second);
+  auto data_input1 = GetAnfNodeByVar(equiv, data_input1_var_);
   MS_EXCEPTION_IF_NULL(data_input1);
-  auto iter_data_input2 = (*equiv).find(data_input2_var_);
-  if (iter_data_input2 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the data_input2 var after matched."
-                      << " trace: " << trace::DumpSourceLines(node);
-  }
-  auto data_input2 = utils::cast<AnfNodePtr>(iter_data_input2->second);
+  auto data_input2 = GetAnfNodeByVar(equiv, data_input2_var_);
   MS_EXCEPTION_IF_NULL(data_input2);
   AbstractBasePtrList abstract_list{data_input1->abstract(), data_input2->abstract()};
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
@@ -150,39 +111,15 @@ void FusedBatchNormFusion::GetBNTrainingUpdateInputs(const EquivPtr &equiv,
                                                      std::vector<AnfNodePtr> *bn_training_update_inputs) const {
   MS_EXCEPTION_IF_NULL(equiv);
   MS_EXCEPTION_IF_NULL(bn_training_update_inputs);
-  auto iter_data_input0 = (*equiv).find(data_input0_var_);
-  if (iter_data_input0 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the data_input0 var after matched.";
-  }
-  auto iter_data_input1 = (*equiv).find(data_input1_var_);
-  if (iter_data_input1 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the data_input1 var after matched.";
-  }
-  auto iter_data_input2 = (*equiv).find(data_input2_var_);
-  if (iter_data_input2 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the data_input2 var after matched.";
-  }
-  auto iter_variable_input0 = (*equiv).find(variable_input0_var_);
-  if (iter_variable_input0 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the variable_input0 var after matched.";
-  }
-  auto iter_variable_input1 = (*equiv).find(variable_input1_var_);
-  if (iter_variable_input1 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the variable_input1 var after matched.";
-  }
-  if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
-    MS_LOG(EXCEPTION) << "The output size of node bn_training_reduce must be " << kBNTrainingReduceOutputNum
-                      << ", but it is " << bn_training_reduce_outputs.size();
-  }
   *bn_training_update_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateOpName)),
-    utils::cast<AnfNodePtr>(iter_data_input0->second),
+    utils::cast<AnfNodePtr>(GetAnfNodeByVar(equiv, data_input0_var_)),
     bn_training_reduce_outputs[0],
     bn_training_reduce_outputs[1],
-    utils::cast<AnfNodePtr>(iter_data_input1->second),
-    utils::cast<AnfNodePtr>(iter_data_input2->second),
-    utils::cast<AnfNodePtr>(iter_variable_input0->second),
-    utils::cast<AnfNodePtr>(iter_variable_input1->second),
+    GetAnfNodeByVar(equiv, data_input1_var_),
+    GetAnfNodeByVar(equiv, data_input2_var_),
+    GetAnfNodeByVar(equiv, variable_input0_var_),
+    GetAnfNodeByVar(equiv, variable_input1_var_),
   };
 }
 
@@ -197,19 +134,9 @@ void FusedBatchNormFusion::GetBNTrainingUpdateAbstractList(const EquivPtr &equiv
     MS_LOG(EXCEPTION) << "The abstract size of node bn must not be less than " << kBnOutputNum << ", but it is "
                       << bn_abstract_tuple->elements().size() << " trace: " << trace::DumpSourceLines(bn);
   }
-  auto iter_variable_input0 = (*equiv).find(variable_input0_var_);
-  if (iter_variable_input0 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the variable_input0 var after matched."
-                      << " trace: " << trace::DumpSourceLines(bn);
-  }
-  auto variable_input0 = utils::cast<AnfNodePtr>(iter_variable_input0->second);
+  auto variable_input0 = GetAnfNodeByVar(equiv, variable_input0_var_);
+  auto variable_input1 = GetAnfNodeByVar(equiv, variable_input1_var_);
   MS_EXCEPTION_IF_NULL(variable_input0);
-  auto iter_variable_input1 = (*equiv).find(variable_input1_var_);
-  if (iter_variable_input1 == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the variable_input1 var after matched."
-                      << " trace: " << trace::DumpSourceLines(bn);
-  }
-  auto variable_input1 = utils::cast<AnfNodePtr>(iter_variable_input1->second);
   MS_EXCEPTION_IF_NULL(variable_input1);
   *abstract_list = {bn_abstract_tuple->elements()[0], variable_input0->abstract(), variable_input1->abstract(),
                     bn_abstract_tuple->elements()[1], bn_abstract_tuple->elements()[2]};
@@ -227,13 +154,7 @@ AnfNodePtr FusedBatchNormFusion::CreateBNTrainingUpdate(
   auto bn_training_update = func_graph->NewCNode(bn_training_update_inputs);
   MS_EXCEPTION_IF_NULL(bn_training_update);
   // Set abstract
-  auto iter_batch_norm = (*equiv).find(batch_norm_var_);
-  if (iter_batch_norm == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the batch_norm var after matched."
-                      << " trace: " << trace::DumpSourceLines(node);
-  }
-  AnfNodePtr bn = utils::cast<AnfNodePtr>(iter_batch_norm->second);
-  MS_EXCEPTION_IF_NULL(bn);
+  AnfNodePtr bn = GetAnfNodeByVar(equiv, batch_norm_var_);
   AbstractBasePtrList abstract_list;
   GetBNTrainingUpdateAbstractList(equiv, bn, &abstract_list);
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
@@ -247,6 +168,23 @@ AnfNodePtr FusedBatchNormFusion::CreateBNTrainingUpdate(
   AnfAlgo::SetNodeAttr(kAttrIsRef, MakeValue(true), bn_training_update);
   bn_training_update->set_scope(node->scope());
   return bn_training_update;
+}
+
+void FusedBatchNormFusion::EliminateMonadNodes(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(equiv);
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto assign_sub1 = GetAnfNodeByVar(equiv, assign_sub1_var_);
+  MS_EXCEPTION_IF_NULL(assign_sub1);
+  for (const auto &node_index : manager->node_users()[assign_sub1]) {
+    const AnfNodePtr &output = node_index.first;
+    MS_EXCEPTION_IF_NULL(output);
+    if (AnfAlgo::CheckPrimitiveType(output, prim::kPrimUpdateState)) {
+      (void)manager->Replace(output, GetAnfNodeByVar(equiv, monad0_var_));
+      break;
+    }
+  }
 }
 
 const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -271,14 +209,8 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
                       << bn_training_update_outputs.size() << " trace: " << trace::DumpSourceLines(node);
   }
   // Replace old bn outputs with new outputs
-  auto iter_batch_norm = (*equiv).find(batch_norm_var_);
-  if (iter_batch_norm == (*equiv).end()) {
-    MS_LOG(EXCEPTION) << "The equiv map is expected to contains the batch_norm var after matched."
-                      << " trace: " << trace::DumpSourceLines(node);
-  }
-  AnfNodePtr bn = utils::cast<AnfNodePtr>(iter_batch_norm->second);
   std::vector<AnfNodePtr> bn_outputs;
-  GetBNOutput(func_graph, bn, &bn_outputs);
+  GetBNOutput(func_graph, GetAnfNodeByVar(equiv, batch_norm_var_), &bn_outputs);
   auto manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   for (const auto &output : bn_outputs) {
@@ -297,7 +229,28 @@ const AnfNodePtr FusedBatchNormFusion::Process(const FuncGraphPtr &func_graph, c
       (void)manager->Replace(output, bn_training_update_outputs[index]);
     }
   }
-  return bn_training_update_outputs[0];
+  (void)manager->Replace(node, bn_training_update_outputs[0]);
+  EliminateMonadNodes(func_graph, equiv);
+  return nullptr;
+}
+
+const BaseRef FusedBatchNormFusion::DefinePattern() const {
+  std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
+  VarPtr index0 = std::make_shared<CondVar>(IsC);
+  VarPtr index1 = std::make_shared<CondVar>(IsC);
+  VarPtr index2 = std::make_shared<CondVar>(IsC);
+  VectorRef batch_norm = VectorRef({batch_norm_var_, data_input0_var_, data_input1_var_, data_input2_var_, Xs});
+  VectorRef tuple_getitem0 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index0});
+  VectorRef tuple_getitem1 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index1});
+  VectorRef tuple_getitem2 = VectorRef({prim::kPrimTupleGetItem, batch_norm, index2});
+  VectorRef sub0 = VectorRef({prim::kPrimSub, variable_input0_var_, tuple_getitem1});
+  VectorRef sub1 = VectorRef({prim::kPrimSub, variable_input1_var_, tuple_getitem2});
+  VectorRef mul0 = VectorRef({prim::kPrimMul, sub0, constant_input0_var_});
+  VectorRef mul1 = VectorRef({prim::kPrimMul, sub1, constant_input1_var_});
+  VectorRef assign_sub0 = VectorRef({assign_sub0_var_, variable_input0_var_, mul0, monad0_var_});
+  VectorRef assign_sub1 = VectorRef({assign_sub1_var_, variable_input1_var_, mul1, monad1_var_});
+  VectorRef depend0 = VectorRef({prim::kPrimDepend, tuple_getitem0, assign_sub0});
+  return VectorRef({prim::kPrimDepend, depend0, assign_sub1});
 }
 
 const BaseRef FusedBatchNormMixPrecisionFusion0::DefinePattern() const {
@@ -317,8 +270,8 @@ const BaseRef FusedBatchNormMixPrecisionFusion0::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, sub1, constant_input1_var_});
   VectorRef cast2 = VectorRef({prim::kPrimCast, mul0});
   VectorRef cast3 = VectorRef({prim::kPrimCast, mul1});
-  VectorRef assign_sub0 = VectorRef({prim::kPrimAssignSub, variable_input0_var_, cast2});
-  VectorRef assign_sub1 = VectorRef({prim::kPrimAssignSub, variable_input1_var_, cast3});
+  VectorRef assign_sub0 = VectorRef({assign_sub0_var_, variable_input0_var_, cast2, monad0_var_});
+  VectorRef assign_sub1 = VectorRef({assign_sub1_var_, variable_input1_var_, cast3, monad1_var_});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, tuple_getitem0, assign_sub0});
   return VectorRef({prim::kPrimDepend, depend0, assign_sub1});
 }
@@ -340,8 +293,8 @@ const BaseRef FusedBatchNormMixPrecisionFusion1::DefinePattern() const {
   VectorRef cast1 = VectorRef({prim::kPrimCast, sub1});
   VectorRef mul0 = VectorRef({prim::kPrimMul, cast0, constant_input0_var_});
   VectorRef mul1 = VectorRef({prim::kPrimMul, cast1, constant_input1_var_});
-  VectorRef assign_sub0 = VectorRef({prim::kPrimAssignSub, variable_input0_var_, mul0});
-  VectorRef assign_sub1 = VectorRef({prim::kPrimAssignSub, variable_input1_var_, mul1});
+  VectorRef assign_sub0 = VectorRef({assign_sub0_var_, variable_input0_var_, mul0, monad0_var_});
+  VectorRef assign_sub1 = VectorRef({assign_sub1_var_, variable_input1_var_, mul1, monad1_var_});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, tuple_getitem0, assign_sub0});
   return VectorRef({prim::kPrimDepend, depend0, assign_sub1});
 }

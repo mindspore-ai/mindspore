@@ -80,7 +80,8 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   bool is_init = false;
   bool need_change_nd = false;
   bool is_5d_input = false;
-  for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode); ++index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t index = 0; index < input_num; ++index) {
     auto pre_output_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
     if (AnfAlgo::IsFeatureMapInput(cnode, index) &&
         kHWSpecialFormatSet.find(pre_output_format) != kHWSpecialFormatSet.end()) {
@@ -140,7 +141,8 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     MS_LOG(EXCEPTION) << "Out of range cur_kernel info_match_counts " << MATCH_COUNT_PRIORITY_END;
   }
   auto pri_match_format = GetPriorityMatchFormat(kernel_node);
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     auto input_anf_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, input_index), 0).first;
     MS_EXCEPTION_IF_NULL(input_anf_node);
     // we do not take ValueNode into consideration in graph kernel.
@@ -168,7 +170,8 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
     }
   }
 
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(kernel_node); ++output_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
     // cal count of same output dtype between abstract and kernel info
     if (kernel_build_info.GetOutputDeviceType(output_index) ==
         AnfAlgo::GetOutputInferDataType(kernel_node, output_index)) {
@@ -327,14 +330,14 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   if (!AnfAlgo::HasNodeAttr(kAttrPynativeNextIndex, kernel_node) ||
       !AnfAlgo::HasNodeAttr(kAttrPynativeNextOpName, kernel_node)) {
     MS_LOG(EXCEPTION) << "The node [" << kernel_node->DebugString() << "] attr of " << kAttrPynativeNextIndex << " or "
-                      << kAttrPynativeNextOpName << " has been not setted yet!"
+                      << kAttrPynativeNextOpName << " has not been set yet!"
                       << " trace: " << trace::DumpSourceLines(kernel_node);
   }
   auto next_index = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPynativeNextIndex);
   auto next_op_name = AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrPynativeNextOpName);
   auto iter = kNextOpFormatList.find(next_op_name);
   if (iter == kNextOpFormatList.end()) {
-    MS_LOG(INFO) << "The op name " << next_op_name << "has been not setted in the next op map ";
+    MS_LOG(INFO) << "The op name " << next_op_name << "has not been set in the next op map ";
     return;
   }
   if (iter->second.size() < next_index) {
@@ -405,7 +408,8 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   MS_EXCEPTION_IF_NULL(selected_kernel_info);
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     auto input_kernel_node = AnfAlgo::GetInputNode(kernel_node, input_index);
     MS_EXCEPTION_IF_NULL(input_kernel_node);
     auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
@@ -438,7 +442,7 @@ KernelSelectStatus SetMatchedKernelInfo(const CNodePtr &kernel_node,
   bool precision_reduce = false;
   std::shared_ptr<kernel::KernelBuildInfo> selected_kernel_info = nullptr;
   // Matched kernel info
-  // Filter kernel info matched with me infered type
+  // Filter kernel info matched with me inferred type
   auto filtered_kernel_info_list = FilteredKernelInfoByDtype(kernel_node, kernel_info_list);
   if (!filtered_kernel_info_list.empty()) {
     selected_kernel_info = ChooseMatchedKernelInfo(kernel_node, filtered_kernel_info_list);

@@ -37,7 +37,8 @@ bool MemSwapManager::Init(const mindspore::session::KernelGraph *kernel_graph, s
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto output_sizes = kernel_mod->GetOutputSizeList();
 
-    for (size_t output_idx = 0; output_idx < AnfAlgo::GetOutputTensorNum(kernel); ++output_idx) {
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
+    for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
       TensorInfo tensor_info = {output_sizes[output_idx], kernel, output_idx};
       ordered_tensors_.push_back(tensor_info);
     }

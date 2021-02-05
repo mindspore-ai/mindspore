@@ -82,4 +82,8 @@ abstract::AbstractBasePtr ValueDictionary::ToAbstract() {
     [](const std::pair<std::string, ValuePtr> &item) { return std::make_pair(item.first, item.second->ToAbstract()); });
   return std::make_shared<abstract::AbstractDictionary>(kv);
 }
+
+abstract::AbstractBasePtr UMonad::ToAbstract() { return std::make_shared<abstract::AbstractUMonad>(); }
+
+abstract::AbstractBasePtr IOMonad::ToAbstract() { return std::make_shared<abstract::AbstractIOMonad>(); }
 }  // namespace mindspore

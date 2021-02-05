@@ -21,6 +21,7 @@
 #include <memory>
 #include <unordered_map>
 #include <algorithm>
+#include <iomanip>
 #include "ir/graph_utils.h"
 #include "utils/symbolic.h"
 #include "ir/meta_func_graph.h"
@@ -447,7 +448,8 @@ std::string AnfExporter::GetAnfNodeText(const FuncGraphPtr &func_graph, const An
     }
     oss << "%" << iter->second;
   } else if (node->isa<Parameter>()) {
-    oss << "%para" << GetParamIndex(func_graph, node, check_integrity_);
+    // Parameter maybe a free variable, so check it in its own funcgraph.
+    oss << "%para" << GetParamIndex(node->func_graph(), node, check_integrity_);
   } else if (IsValueNode<FuncGraph>(node)) {
     FuncGraphPtr fg = GetValueNode<FuncGraphPtr>(node);
     oss << fg->type_name() << "::fg_" << fg->debug_info()->get_id();
@@ -594,8 +596,40 @@ void AnfExporter::OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr>
       ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
           << label_manage::Label(cnode->debug_info()) << "\n";
     } else {
-      ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
+      ofs << trace::GetDebugInfo(cnode->debug_info(), "      # ", kSourceLineTipDiscard) << "#" << cnode->ToString()
+          << "\n";
     }
+  }
+}
+
+void AnfExporter::OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph) {
+  auto &order_list = func_graph->order_list();
+  if (order_list.empty()) {
+    return;
+  }
+  constexpr int width = 4;
+  ofs << "# order:\n";
+  int i = 1;
+  auto &isolate_nodes = func_graph->isolate_nodes();
+  for (auto &node : order_list) {
+    bool is_isolate = (isolate_nodes.find(node) != isolate_nodes.end());
+    const std::string isolate_str = (is_isolate ? " # isolate" : "");
+    ofs << '#' << std::setw(width) << i << ": " << node->DebugString() << isolate_str << '\n';
+    ++i;
+  }
+}
+
+void AnfExporter::OutputIsolateNodes(std::ofstream &ofs, const FuncGraphPtr &func_graph) {
+  auto &isolate_nodes = func_graph->isolate_nodes();
+  if (isolate_nodes.empty()) {
+    return;
+  }
+  constexpr int width = 4;
+  ofs << "# isolate nodes:\n";
+  int i = 1;
+  for (auto &node : isolate_nodes) {
+    ofs << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
+    ++i;
   }
 }
 
@@ -634,6 +668,9 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
   OutputCNodes(ofs, nodes, func_graph);
 
   ofs << "}\n";
+
+  OutputOrderList(ofs, func_graph);
+  OutputIsolateNodes(ofs, func_graph);
 }
 
 void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {

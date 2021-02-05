@@ -214,7 +214,8 @@ bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph
   // set real graph output node to be special who's refcount equal kMaxRefCount
   for (const auto &output : graph->outputs()) {
     MS_EXCEPTION_IF_NULL(output);
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(output); ++i) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(output);
+    for (size_t i = 0; i < input_num; ++i) {
       if (output->isa<CNode>()) {
         auto cnode = output->cast<CNodePtr>();
         auto input_node = cnode->input(i + 1);
@@ -364,7 +365,8 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
   const auto &cnodes = graph->execution_order();
   for (const auto &node : cnodes) {
     std::vector<const void *> curr_ous;
-    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(node); ++i) {
+    size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+    for (size_t i = 0; i < output_num; ++i) {
       auto it = AnfAlgo::GetOutputAddr(node, i);
       MS_EXCEPTION_IF_NULL(it);
       auto ptr = it->GetPtr();
@@ -374,7 +376,8 @@ void MemReuseChecker::CheckNormalIR(const session::KernelGraph *graph) {
     }
     (void)node_ous_.insert(std::make_pair(node.get(), curr_ous));
     std::vector<const void *> curr_ins;
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(node); ++i) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(node);
+    for (size_t i = 0; i < input_num; ++i) {
       if (i + 1 >= node->inputs().size()) {
         MS_LOG(EXCEPTION) << "Input index: " << i
                           << " is larger than input number: " << AnfAlgo::GetInputTensorNum(node);

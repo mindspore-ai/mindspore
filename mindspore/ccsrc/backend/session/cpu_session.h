@@ -46,6 +46,7 @@ class CPUSession : public SessionBasic {
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
 
  private:
+  void Reorder(std::vector<CNodePtr> *node_list);
   void SetKernelInfo(const KernelGraph *kernel_graph);
   void BuildKernel(const KernelGraph *kernel_graph);
   void SetOutputFlags(const VectorRef &base_ref, std::vector<tensor::TensorPtr> *outputs_tensors);

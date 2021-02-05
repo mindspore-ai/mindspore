@@ -32,7 +32,7 @@ from src.config import config
 from src.FaceDetection.yolov3 import HwYolov3 as backbone_HwYolov3
 from src.FaceDetection import voc_wrapper
 from src.network_define import BuildTestNetwork, get_bounding_boxes, tensor_to_brambox, \
-    parse_gt_from_anno, parse_rets, calc_recall_presicion_ap
+    parse_gt_from_anno, parse_rets, calc_recall_precision_ap
 
 plt.switch_backend('agg')
 devid = int(os.getenv('DEVICE_ID'))
@@ -186,7 +186,7 @@ def val(args):
 
     ret_list = parse_rets(ret_files_set)
     iou_thr = 0.5
-    evaluate = calc_recall_presicion_ap(ground_truth, ret_list, iou_thr)
+    evaluate = calc_recall_precision_ap(ground_truth, ret_list, iou_thr)
 
     aps_str = ''
     for cls in evaluate:

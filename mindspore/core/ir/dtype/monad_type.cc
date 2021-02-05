@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CONTROL_DEPEND_H_
-#define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CONTROL_DEPEND_H_
-
-#include "ir/anf.h"
+#include "ir/dtype/monad_type.h"
 
 namespace mindspore {
-namespace opt {
-// Automatically adding control depend based on effect order and side effect analysis.
-void AddControlDepend(const FuncGraphPtr &graph);
-}  // namespace opt
+const TypePtr kUMonadType = std::make_shared<UMonadType>();
+const TypePtr kIOMonadType = std::make_shared<IOMonadType>();
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CONTROL_DEPEND_H_

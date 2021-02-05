@@ -229,6 +229,7 @@ class AssignAdd(PrimitiveWithInfer):
     def __init__(self):
         """Initialize AssignAdd"""
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, variable, value):
         return value
@@ -284,6 +285,8 @@ class AssignSub(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize AssignSub"""
+        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, variable, value):
         return value

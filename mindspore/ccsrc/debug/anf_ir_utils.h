@@ -97,6 +97,8 @@ class AnfExporter {
 
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
   virtual void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
+  void OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph);
+  void OutputIsolateNodes(std::ofstream &ofs, const FuncGraphPtr &func_graph);
 
   int param_index;
   OrderedSet<FuncGraphPtr> func_graph_set{};

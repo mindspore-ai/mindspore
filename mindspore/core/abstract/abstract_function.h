@@ -58,6 +58,11 @@ class AbstractFuncUnion : public AbstractFunction {
   bool operator==(const AbstractFunction &other) const override;
   std::size_t hash() const override;
   AbstractFunctionPtr Copy() const override { MS_LOG(EXCEPTION) << "Cannot Copy from AbstractFuncUnion"; }
+  bool HasIsolateNodesFlag() const override {
+    bool flag = std::any_of(func_list_.cbegin(), func_list_.cend(),
+                            [](const AbstractFunctionPtr &func) { return func->HasIsolateNodesFlag(); });
+    return flag;
+  }
 
  private:
   AbstractFuncAtomPtrList func_list_;
@@ -126,13 +131,15 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
 
   std::string ToString() const override;
 
+  bool HasIsolateNodesFlag() const override { return !func_graph_->isolate_nodes().empty(); }
+
  private:
   FuncGraphPtr func_graph_;
   AnalysisContextPtr context_;
   // To discriminate different usage of same graph by using this tracking_id,
   // so different tracking_id will produce different FuncGraphAbstractClosure,
   // different FuncGraphEvaluator.
-  // Espcecially usefull for recursive func graph call, so it will not mess up
+  // Espcecially useful for recursive func graph call, so it will not mess up
   // the graph_context_ in FuncGraphEvaluator.
   // Notes: Be careful to use nullptr for this variable.
   // store it as weak_ptr to break reference cycle.
@@ -195,12 +202,16 @@ class PartialAbstractClosure : public AbstractFuncAtom {
   std::size_t hash() const override;
 
   std::string ToString() const override;
+  bool HasIsolateNodesFlag() const override { return isolate_nodes_flag_; }
+  void SetIsolateNodesFlag(bool flag) { isolate_nodes_flag_ = flag; }
 
  private:
   AbstractFuncAtomPtr fn_;
   AbstractBasePtrList args_spec_list_;
   // The CNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
+  // If the bound fn_ has isolate ndoes or arguments evaluated from function has isolate nodes.
+  bool isolate_nodes_flag_{false};
 };
 using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 

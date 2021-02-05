@@ -34,11 +34,13 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
     inputs_format.push_back(kOpFormat_DEFAULT);
   }
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(node); ++output_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
   }
@@ -78,7 +80,8 @@ const AnfNodePtr AddReluV2Fusion::Process(const FuncGraphPtr &graph, const AnfNo
 
   std::vector<TypeId> types;
   std::vector<std::vector<size_t>> shapes;
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(node); i++) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t i = 0; i < output_num; i++) {
     types.push_back(AnfAlgo::GetOutputInferDataType(node, i));
     shapes.push_back(AnfAlgo::GetOutputInferShape(node, i));
   }

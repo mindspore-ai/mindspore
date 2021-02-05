@@ -142,7 +142,8 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   }
 
   if (op_name != kAtomicAddrCleanOpName) {
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node_ptr); ++i) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(anf_node_ptr);
+    for (size_t i = 0; i < input_num; ++i) {
       if (op_name == kDynamicRNNOpName && i == 3) {
         continue;
       }
@@ -177,12 +178,16 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
       kernel_inputs.push_back(input);
     }
 
-    for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(anf_node_ptr); ++i) {
-      auto it = AnfAlgo::GetOutputAddr(anf_node_ptr, i);
-      AddressPtr output = std::make_shared<Address>();
-      output->addr = it->ptr_;
-      output->size = it->size_;
-      kernel_outputs.push_back(output);
+    // No kernel output if output of the cnode is monad, such as LabelSwitch.
+    if (!HasAbstractMonad(anf_node_ptr)) {
+      size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node_ptr);
+      for (size_t i = 0; i < output_num; ++i) {
+        auto it = AnfAlgo::GetOutputAddr(anf_node_ptr, i);
+        AddressPtr output = std::make_shared<Address>();
+        output->addr = it->ptr_;
+        output->size = it->size_;
+        kernel_outputs.push_back(output);
+      }
     }
 
     for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {

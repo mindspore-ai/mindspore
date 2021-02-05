@@ -516,7 +516,7 @@ AbstractBasePtr InferImplMakeRange(const AnalysisEnginePtr &, const PrimitivePtr
 
 AbstractBasePtr InferImplStopGradient(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tensor
+  // Inputs: any value;
   CheckArgsSize(primitive->name(), args_spec_list, 1);
   return args_spec_list[0]->Clone();
 }
@@ -642,8 +642,8 @@ AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePt
 
 AbstractBasePtr InferImplAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tensor
-  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  // Inputs: Ref, value, [universal]
+  CheckRequiredArgsSize(primitive->name(), args_spec_list, 2);
 
   MS_LOG(DEBUG) << "InferImplAssign " << args_spec_list[0];
   auto type = args_spec_list[0]->BuildType();
@@ -652,6 +652,18 @@ AbstractBasePtr InferImplAssign(const AnalysisEnginePtr &, const PrimitivePtr &p
   } else {
     return args_spec_list[0];
   }
+}
+
+AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                              const AbstractBasePtrList &args_spec_list) {
+  // Inputs: Ref/Tensor, universal
+  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  auto ref_abs = dyn_cast<abstract::AbstractRef>(args_spec_list[0]);
+  if (ref_abs != nullptr) {
+    // Return tensor value if input is Ref.
+    return ref_abs->CloneAsTensor();
+  }
+  return args_spec_list[0]->Broaden();
 }
 
 REGISTER_FRONTENT_PRIMITIVE_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof);
@@ -676,5 +688,6 @@ REGISTER_FRONTENT_PRIMITIVE_EVAL_IMPL(J, prim::kPrimJ, InferImplJ);
 REGISTER_FRONTENT_PRIMITIVE_EVAL_IMPL(BroadcastGradientArgs, prim::kPrimBroadcastGradientArgs,
                                       InferImplBroadcastGradientArgs);
 REGISTER_PRIMITIVE_EVAL_IMPL(Assign, prim::kPrimAssign, InferImplAssign);
+REGISTER_PRIMITIVE_EVAL_IMPL(Load, prim::kPrimLoad, InferImplLoad);
 }  // namespace abstract
 }  // namespace mindspore

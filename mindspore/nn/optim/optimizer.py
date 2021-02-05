@@ -447,7 +447,7 @@ class Optimizer(Cell):
             else:
                 lr = self.learning_rate(self.global_step)
 
-            F.control_depend(lr, self.assignadd(self.global_step, self.global_step_increase_tensor))
+            self.assignadd(self.global_step, self.global_step_increase_tensor)
         return lr
 
     def get_lr_parameter(self, param):
@@ -526,11 +526,7 @@ class Optimizer(Cell):
             new_param_group.append(next_params)
             for i in range(F.tuple_len(next_params)):
                 F.assign(key_group[root][i], next_params[i])
-        status = F.control_depend(optim_result, new_param_group[0][0])
-        for i in range(self.dev_num - 1):
-            status = F.depend(F.control_depend(new_param_group[i], new_param_group[i+1][0]), status)
-
-        return status
+        return new_param_group
 
     def construct(self, *hyper_params):
         raise NotImplementedError

@@ -55,6 +55,8 @@ FuncGraphPtr Grad(const FuncGraphPtr &func_graph, const pipeline::ResourceBasePt
   f->MapMorphism();
   f->Finish();
   auto res = f->k_graph();
+  auto tape = f->tape();
+  tape->set_flag(mindspore::kFuncGraphFlagBackPropEntry, true);
   if (is_top) {
     DFunctor::Clear();
   }

@@ -55,7 +55,7 @@ using mindspore::tensor::Tensor;
 namespace mindspore {
 namespace parallel {
 static const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
-static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS};
+static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 // g_RefMap, for CNode B input i is a RefKey[Parameter C],
 // it will be one item in map with key: C, and value: (B, i)
 static std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
@@ -619,7 +619,7 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
       MS_EXCEPTION_IF_NULL(prim_anf_node);
       PrimitivePtr node_prim = prim_anf_node->value()->cast<PrimitivePtr>();
       MS_EXCEPTION_IF_NULL(node_prim);
-      if (node_prim->name() == DEPEND && node_pair.second != 1) {
+      if ((node_prim->name() == DEPEND && node_pair.second != 1) || node_prim->name() == UPDATESTATE) {
         continue;
       }
       if (IsParallelCareNode(use_cnode) && use_cnode->has_user_data<OperatorInfo>()) {
@@ -803,6 +803,9 @@ void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
   std::string instance_name = CreateInstanceName(node, 0);
   std::vector<AnfNodePtr> replace_input;
   replace_input = ReplaceOpInput(replace_op, instance_name, node);
+  if (node->inputs().size() == DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+    replace_input.push_back(node->input(3));
+  }
   CNodePtr replace_node = func_graph->NewCNode(replace_input);
   MS_EXCEPTION_IF_NULL(replace_node);
   ScopePtr scope = node->scope();
@@ -1000,7 +1003,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
         for (size_t index = 0; index < cnode->inputs().size(); ++index) {
           PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
           MS_EXCEPTION_IF_NULL(prim);
-          if (prim->name() == DEPEND && index != 1) {
+          if ((prim->name() == DEPEND || prim->name() == LOAD) && index != 1) {
             continue;
           }
           if (!FindParameter(cnode->input(index), func_graph).first) {
@@ -1104,7 +1107,11 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
   MS_EXCEPTION_IF_NULL(func_graph);
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
-
+  for (auto input : node->inputs()) {
+    if (input->isa<CNode>() && HasAbstractMonad(input)) {
+      node_size--;
+    }
+  }
   if ((node->inputs().size() == 2) && (IsValueNode<ValueSequeue>(node->input(1)))) {
     MS_LOG(INFO) << "Input is ValueList, skip it.";
     return;
@@ -1417,7 +1424,8 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       std::pair<AnfNodePtr, int64_t> node_pair = std::make_pair(node, SizeToLong(i));
       g_RefMap[parameters[0]] = node_pair;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
-    } else if (IsValueNode<Tensor>(input) || input->isa<CNode>() || input->isa<Parameter>() ||
+    } else if ((input->isa<CNode>() && !HasAbstractMonad(input)) || IsValueNode<Tensor>(input) ||
+               input->isa<Parameter>() ||
                ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == 2))) {
       input_shapes = GetNodeShape(input);
     } else {
@@ -2017,6 +2025,13 @@ std::shared_ptr<TensorLayout> FindParameterNextLayout(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(manager);
   AnfNodeIndexSet node_set = manager->node_users()[node];
   for (auto &node_pair : node_set) {
+    if (IsPrimitiveCNode(node_pair.first, prim::kPrimLoad)) {
+      auto layout_param = FindParameterNextLayout(node_pair.first);
+      if (!layout_param) {
+        continue;
+      }
+      return layout_param;
+    }
     CNodePtr use_apply = node_pair.first->cast<CNodePtr>();
     if (use_apply == nullptr || !IsValueNode<Primitive>(use_apply->input(0))) {
       continue;
@@ -2109,7 +2124,8 @@ std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node) {
   if (!IsValueNode<Primitive>(cnode->input(0))) {
     return nullptr;
   }
-  if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>()) {
+  if (IsParallelCareNode(cnode) && cnode->has_user_data<OperatorInfo>() &&
+      !IsPrimitiveCNode(node, prim::kPrimReshape)) {
     auto layout_ptr = GetOutputLayoutFromCNode(cnode, 0);
     if (!layout_ptr) {
       MS_LOG(EXCEPTION) << "Failure:GetLayoutFromCNode failed";
@@ -3027,13 +3043,26 @@ ParameterUsersInfo FindParameterNodeUsers(const AnfNodePtr &node, bool (*IsCareN
   auto candidate_set = node->func_graph()->manager()->node_users()[node];
   for (auto &candidate : candidate_set) {
     auto candidate_node = candidate.first;
-    auto c = candidate_node->cast<CNodePtr>();
-    if (c == nullptr || !c->has_user_data<OperatorInfo>() || IsSomePrimitive(c, RECEIVE)) {
-      continue;
+    if (IsPrimitiveCNode(candidate_node, prim::kPrimLoad)) {
+      if (candidate.second != 1) {
+        continue;
+      }
+      auto load_node_users = node->func_graph()->manager()->node_users()[candidate_node];
+      for (auto &node_user : load_node_users) {
+        auto cnode = node_user.first->cast<CNodePtr>();
+        if (cnode == nullptr || !cnode->has_user_data<OperatorInfo>() || IsSomePrimitive(cnode, RECEIVE)) {
+          continue;
+        }
+        (void)parameter_user_info.second.second.insert(node_user);
+      }
+    } else {
+      auto c = candidate_node->cast<CNodePtr>();
+      if (c == nullptr || !c->has_user_data<OperatorInfo>() || IsSomePrimitive(c, RECEIVE)) {
+        continue;
+      }
+      (void)parameter_user_info.second.second.insert(candidate);
     }
-    (void)parameter_user_info.second.second.insert(candidate);
   }
-
   parameter_user_info.first = node->cast<ParameterPtr>()->name();
   parameter_user_info.second.first = node;
   return parameter_user_info;

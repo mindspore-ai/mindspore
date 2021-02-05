@@ -732,23 +732,6 @@ void Pipeline::Run() {
           // generate IR file in a heavily commented format, which can also be reloaded
           ExportIR(base_name + ".dat", std::to_string(i), graph);
         }
-#ifdef MS_DEBUG
-        // Dump graph cnode list
-        MS_LOG(INFO) << "Show CNode list after " << action.first;
-        graph->DumpCNodeList();
-#endif
-      }
-      if (resource_->func_graph() != nullptr) {
-        auto func_graph = resource_->func_graph();
-        if (func_graph->has_flag(GRAPH_FLAG_HAS_EFFECT)) {
-          func_graph->EraseUnusedNodeInOrder();
-          func_graph->CheckOrder();
-          for (auto fg : func_graph->func_graphs_used_total()) {
-            MS_LOG(DEBUG) << "Check order graph " << fg->ToString() << ".";
-            fg->EraseUnusedNodeInOrder();
-            fg->CheckOrder();
-          }
-        }
       }
       i++;
 #ifdef ENABLE_TIMELINE

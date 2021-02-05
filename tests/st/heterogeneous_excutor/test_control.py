@@ -28,14 +28,14 @@ class Net1(nn.Cell):
         self.relu1 = P.ReLU()
         self.relu2 = P.ReLU()
         self.mul = P.Mul()
-        self.control = P.ControlDepend()
+        self.depend = P.Depend()
 
     def construct(self, x, y):
         a = self.relu1(x)
+        y = self.depend(y, a)
         b = self.relu2(y)
         c = self.mul(a, b)
-        e = self.control(a, b)
-        return c, e
+        return c, a
 
 
 class Net2(nn.Cell):
@@ -44,14 +44,14 @@ class Net2(nn.Cell):
         self.relu1 = P.ReLU()
         self.relu2 = P.ReLU().add_prim_attr("primitive_target", "CPU")
         self.mul = P.Mul()
-        self.control = P.ControlDepend()
+        self.depend = P.Depend()
 
     def construct(self, x, y):
         a = self.relu1(x)
+        y = self.depend(y, a)
         b = self.relu2(y)
         c = self.mul(a, b)
-        e = self.control(a, b)
-        return c, e
+        return c, a
 
 
 def test_net():

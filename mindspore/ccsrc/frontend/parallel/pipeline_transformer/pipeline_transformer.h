@@ -72,6 +72,8 @@ class PipelineTransformer {
              const std::vector<AnfNodePtr> &out_input);
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, TensorInfoPtr> GetOpInfo(const AnfNodePtr &node);
+  AnfNodePtr HandleMonadDepend(const AnfNodePtr &node);
+  CNodePtr HandleMonadLoad(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, TensorInfoPtr> GetParameterPair(const AnfNodePtr &node);
   OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode);
   bool IsPipelineCareNode(const CNodePtr &cnode);

@@ -51,12 +51,14 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
       rank_size = AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrRankSize);
     }
     MS_EXCEPTION_IF_NULL(cnode);
-    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(cnode); ++input_index) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t input_index = 0; input_index < input_num; ++input_index) {
       inputs_device_format.push_back(AnfAlgo::GetInputFormat(cnode, input_index));
       inputs_device_type.push_back(AnfAlgo::GetInputDeviceDataType(cnode, input_index));
     }
     for (size_t rank_index = 0; rank_index < IntToSize(rank_size); ++rank_index) {
-      for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(cnode); ++output_index) {
+      size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+      for (size_t output_index = 0; output_index < output_num; ++output_index) {
         outputs_device_format.push_back(AnfAlgo::GetOutputFormat(cnode, output_index));
         outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(cnode, output_index));
         std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(cnode, output_index);
@@ -170,6 +172,117 @@ bool CommunicationOpFusion::GetSplitSegments(const CommunicationOpInfo &communic
   return CheckSegments(segments, communication_op_node_size, segment_index);
 }
 
+// Hard coded Load(%paraxxx, cnode()) to Load(%paraxxx, U) to prevent
+// cycle after AllReduce fused. It's a workaround.
+// case 1:
+// cnode_load = Load(%para2, cnode_u)
+// %100 = UpdateState(cnode_u, cnode_load)
+// ...
+// %109 = AssignAdd(%para485, Tensor(34), %100)
+// %110 = UpdateState(%100, xxx)
+// will convert to:
+// cnode_load = Load(%para2, U)
+// ...
+// %109 = AssignAdd(%para485, Tensor(34), cnode_u)
+// %110 = UpdateState(cnode_u, xxx)
+//
+// case 2:
+// cnode_load = Load(%para2, cnode_u)
+// %99 = make_tuple(yyy, ..., cnode_load, ...)
+// %100 = UpdateState(cnode_u, %99)
+// ...
+// %109 = AssignAdd(%para485, Tensor(34), %100)
+// %110 = UpdateState(%100, xxx)
+// will convert to:
+// cnode_load = Load(%para2, U)
+// %99 = make_tuple(yyy, ...)
+// %100 = UpdateState(cnode_u, %99)
+// ...
+// %109 = AssignAdd(%para485, Tensor(34), %100)
+// %110 = UpdateState(%100, xxx)
+//
+// case 3:
+// cnode_load = Load(%para2, cnode_u)
+// %99 = make_tuple(cnode_load)
+// %100 = UpdateState(cnode_u, %99)
+// ...
+// %109 = AssignAdd(%para485, Tensor(34), %100)
+// %110 = UpdateState(%100, xxx)
+// will convert to:
+// cnode_load = Load(%para2, U)
+// ...
+// %109 = AssignAdd(%para485, Tensor(34), cnode_u)
+// %110 = UpdateState(cnode_u, xxx)
+static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
+  auto cnode_load = BroadFirstSearchFirstOf({cnode}, [](const CNodePtr &search_cnode) {
+    if (!IsPrimitiveCNode(search_cnode, prim::kPrimLoad)) {
+      return false;
+    }
+    if (search_cnode->inputs().size() != 3) {
+      MS_LOG(EXCEPTION) << "Load CNode should have 3 inputs, but: " << search_cnode->DebugString();
+    }
+    return search_cnode->input(2)->isa<CNode>();
+  });
+  if (cnode_load != nullptr) {
+    const auto &const_u_monad = NewValueNode(kUMonad);
+    const auto &cnode_u = cnode_load->input(2);
+    MS_LOG(DEBUG) << "Replace Load with CNode U to constant U for cnode: " << cnode_load->DebugString();
+    MS_EXCEPTION_IF_NULL(cnode->func_graph());
+    MS_EXCEPTION_IF_NULL(cnode->func_graph()->manager());
+    auto manager = cnode->func_graph()->manager();
+    manager->SetEdge(cnode_load, 2, const_u_monad);
+    // Update the u_monad input of UpdateState from CNode U same as Load to constant U.
+    CNodePtr cnode_update_state = nullptr;
+    CNodePtr cnode_make_tuple = nullptr;
+    const auto &cnode_load_users = manager->node_users()[cnode_load];
+    for (auto &load_user : cnode_load_users) {
+      if (IsPrimitiveCNode(load_user.first, prim::kPrimMakeTuple)) {
+        const auto &cnode_make_tuple_users = manager->node_users()[load_user.first];
+        for (auto &make_tuple_user : cnode_make_tuple_users) {
+          if (IsPrimitiveCNode(make_tuple_user.first, prim::kPrimUpdateState)) {
+            const auto &cnode_user = make_tuple_user.first->cast<CNodePtr>();
+            if (cnode_user->input(1) == cnode_u) {
+              cnode_update_state = cnode_user;
+              cnode_make_tuple = load_user.first->cast<CNodePtr>();
+              break;
+            }
+          }
+        }
+        if (cnode_update_state != nullptr) {
+          break;
+        }
+      }
+      if (IsPrimitiveCNode(load_user.first, prim::kPrimUpdateState)) {
+        const auto &cnode_user = load_user.first->cast<CNodePtr>();
+        if (cnode_user->input(1) == cnode_u) {
+          cnode_update_state = cnode_user;
+          break;
+        }
+      }
+    }
+    if (cnode_update_state != nullptr) {
+      if (cnode_make_tuple == nullptr || cnode_make_tuple->inputs().size() == 2) {
+        // case 1 and case 3: Replace cnode_update_state to cnode_u;
+        MS_LOG(DEBUG) << "Replace UpdateState with CNode U: " << cnode_update_state->DebugString()
+                      << " ::TO:: " << cnode_u->DebugString();
+        manager->Replace(cnode_update_state, cnode_u);
+      } else if (cnode_make_tuple->inputs().size() > 2) {
+        // case 2: remove cnode_load from cnode_make_tuple;
+        MS_LOG(DEBUG) << "Drop " << cnode_load->DebugString() << " from " << cnode_make_tuple->DebugString();
+        const auto &make_tuple_inputs = cnode_make_tuple->inputs();
+        AnfNodePtrList new_tuple_inputs(make_tuple_inputs.size() - 1);
+        std::copy_if(make_tuple_inputs.cbegin(), make_tuple_inputs.cend(), new_tuple_inputs.begin(),
+                     [cnode_load](const auto &inp) { return inp != cnode_load; });
+        auto new_cnode_make_tuple = cnode_make_tuple->func_graph()->NewCNode(new_tuple_inputs);
+        manager->Replace(cnode_make_tuple, new_cnode_make_tuple);
+      } else {
+        MS_LOG(EXCEPTION) << "Cannot replace UpdateState with CNode U: " << cnode_update_state->DebugString()
+                          << " as make_tuple CNode cannot match " << cnode_make_tuple->DebugString();
+      }
+    }
+  }
+}
+
 AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr &func_graph,
                                                              const CommunicationOpInfo &communication_op_info,
                                                              size_t start_index, size_t end_index) const {
@@ -184,6 +297,9 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
   for (size_t idx = start_index; idx <= end_index; ++idx) {
     auto cnode = communication_op_info.communication_op_nodes[idx];
     MS_EXCEPTION_IF_NULL(cnode);
+    if (idx != start_index) {
+      AdjustAllReduceInputWithLoad(cnode);
+    }
     fusion_inputs.insert(fusion_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
   }
   CheckInputs(fusion_inputs);

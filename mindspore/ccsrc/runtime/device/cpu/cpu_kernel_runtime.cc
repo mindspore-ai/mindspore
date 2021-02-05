@@ -286,7 +286,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
   size_t input_idx = 0;
   for (auto &item : input_nodes) {
     MS_EXCEPTION_IF_NULL(item);
-    if (item->isa<Parameter>()) {
+    if (item->isa<Parameter>() && !HasAbstractMonad(item)) {
       auto address = AnfAlgo::GetMutableOutputAddr(item, 0);
       auto tensor = inputs[input_idx];
       auto tensor_address = tensor->device_address();

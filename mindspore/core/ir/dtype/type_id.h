@@ -79,7 +79,17 @@ enum TypeId : int {
   kNumberTypeFloat32,
   kNumberTypeFloat64,
   kNumberTypeComplex64,
-  kNumberTypeEnd
+  kNumberTypeEnd,
+  //
+  // Monad Types
+  //
+  // Monad types is placed at the end of enum,
+  // in order to keep fit with the type of existing model on the lite side.
+  kMonadTypeBegin = kNumberTypeEnd,
+  kObjectTypeMonad,
+  kObjectTypeUMonad,
+  kObjectTypeIOMonad,
+  kMonadTypeEnd
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_IR_DTYPE_TYPE_ID_H_

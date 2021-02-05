@@ -40,7 +40,8 @@ const AnfNodePtr ConvertCastFormat::Process(const FuncGraphPtr &func_graph, cons
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(cnode); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     auto input_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cnode, input_index), 0).first;
     MS_EXCEPTION_IF_NULL(input_node);
     if (!input_node->isa<CNode>()) {
@@ -77,7 +78,8 @@ void ConvertCastFormat::ChangeCastFormat(const CNodePtr &cast_node, const FuncGr
     MS_EXCEPTION_IF_NULL(node_info.first);
     auto cast_out_node = node_info.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cast_out_node);
-    for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cast_out_node); ++index) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(cast_out_node);
+    for (size_t index = 0; index < input_num; ++index) {
       if (AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(cast_out_node->cast<CNodePtr>(), index), 0).first !=
           cast_node) {
         continue;

@@ -819,6 +819,9 @@ void ReshapeCostCompute(const std::vector<AnfNodePtr> &all_nodes) {
     MS_ASSERT(cnode->inputs().size() == 3);
     // get previous node's strategy_cost_
     auto pre_node = cnode->input(1);
+    if (IsPrimitiveCNode(pre_node, prim::kPrimLoad)) {
+      pre_node = pre_node->cast<CNodePtr>()->input(1);
+    }
     int64_t out_index = 0;
     OperatorInfoPtr pre_operator_info;
     std::vector<std::shared_ptr<StrategyWithCost>> pre_stra_costs;

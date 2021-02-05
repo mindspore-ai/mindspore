@@ -112,6 +112,10 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
                                 const KernelSelectPtr &kernel_select) {
   MS_EXCEPTION_IF_NULL(node);
   auto input_node = AnfAlgo::GetInputNode(node, index);
+  if (HasAbstractMonad(input_node)) {
+    // No transfer for monad inputs.
+    return input_node;
+  }
   auto node_with_index = AnfAlgo::VisitKernel(input_node, 0);
   MS_EXCEPTION_IF_NULL(node_with_index.first);
   auto real_input = node_with_index.first;
@@ -330,8 +334,9 @@ AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePt
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
-  size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t in_num = AnfAlgo::GetInputNum(cnode);  // include monads.
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
+    // Monad inputs keep unchanged from GetTransInputNodePtr().
     AnfNodePtr input_node = GetTransInputNodePtr(func_graph, cnode, input_index, kernel_select);
     MS_EXCEPTION_IF_NULL(input_node);
     new_inputs.push_back(input_node);
@@ -352,12 +357,18 @@ AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePt
 CNodePtr InsertCastForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
-  size_t in_num = AnfAlgo::GetInputTensorNum(cnode);
+  size_t in_num = AnfAlgo::GetInputNum(cnode);  // include monads.
   for (size_t input_index = 0; input_index < in_num; ++input_index) {
+    auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
+    if (HasAbstractMonad(cur_input)) {
+      // No cast for monad inputs.
+      new_inputs.push_back(cur_input);
+      continue;
+    }
     auto prev_node = AnfAlgo::GetPrevNodeOutput(cnode, input_index);
     const auto infer_type = AnfAlgo::GetOutputInferDataType(prev_node.first, prev_node.second);
     TypeId origin_type(kTypeUnknown);
-    auto cur_input = AnfAlgo::GetInputNode(cnode, input_index);
+
     auto kernel_with_index = AnfAlgo::VisitKernelWithReturnType(cur_input, 0);
     auto real_input_node = kernel_with_index.first;
     if (kernel::IsWeightBoundary(real_input_node) || func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {

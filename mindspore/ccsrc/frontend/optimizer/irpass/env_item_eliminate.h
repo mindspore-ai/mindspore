@@ -279,15 +279,35 @@ class EnvGetSetItem : public AnfVisitor {
   bool is_match_{false};
 };
 
+// {prim::kPrimEnvGetitem, {prim::kPrimDepend, X1, X2}, item, dflt} ->
+// {prim::kPrimDepend, {prim::kPrimEnvGetitem, X1, item, dflt}, X2}
+class SwapEnvGetItemDepend : public OptimizerCaller {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+    ScopePtr scope = node->cast<CNodePtr>()->scope();
+    ScopeGuard scope_guard(scope);
+
+    PatternNode x1, x2, item, dflt;
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimEnvGetItem, PPrimitive(prim::kPrimDepend, x1, x2), item, dflt),
+                  PPrimitive(prim::kPrimDepend, PPrimitive(prim::kPrimEnvGetItem, x1, item, dflt), x2));
+    return nullptr;
+  }
+};
+
 class EnvGetItemEliminater : public OptimizerCaller {
  public:
   EnvGetItemEliminater()
       : new_env_get_item_(std::make_shared<NewEnvGetItem>()),
         add_env_get_item_(std::make_shared<AddEnvGetItem>()),
-        env_get_set_item_(std::make_shared<EnvGetSetItem>()) {
+        env_get_set_item_(std::make_shared<EnvGetSetItem>()),
+        swap_env_get_item_depend_(std::make_shared<SwapEnvGetItemDepend>()) {
     eliminaters_.emplace_back(new_env_get_item_);
     eliminaters_.emplace_back(add_env_get_item_);
     eliminaters_.emplace_back(env_get_set_item_);
+    eliminaters_.emplace_back(swap_env_get_item_depend_);
   }
   ~EnvGetItemEliminater() = default;
 
@@ -303,7 +323,7 @@ class EnvGetItemEliminater : public OptimizerCaller {
   }
 
  private:
-  OptimizerCallerPtr new_env_get_item_, add_env_get_item_, env_get_set_item_;
+  OptimizerCallerPtr new_env_get_item_, add_env_get_item_, env_get_set_item_, swap_env_get_item_depend_;
   std::vector<OptimizerCallerPtr> eliminaters_{};
 };
 

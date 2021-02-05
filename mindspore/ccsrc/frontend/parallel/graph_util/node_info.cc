@@ -48,6 +48,13 @@ bool ParameterRequireGrad(const AnfNodePtr &node_ptr) {
   return param_value->requires_grad();
 }
 
+AnfNodePtr GetRealInput(const AnfNodePtr &input) {
+  if (IsPrimitiveCNode(input, prim::kPrimLoad)) {
+    return input->cast<CNodePtr>()->input(1);
+  }
+  return input;
+}
+
 // Given the node, return whether each input is a parameter or a output of a operator.
 // The returned boolean vector should be the same order of the inputs, thus its implementation
 // is closely consistent with ExtractShape() in step_parallel.cc
@@ -70,12 +77,13 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
   for (size_t i = 1; i < node_inputs.size(); ++i) {
-    auto input = node_inputs[i];
+    auto input = GetRealInput(node_inputs[i]);
 
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       is_parameter.push_back(ParameterRequireGrad(input_parameter));
-    } else if (input->isa<CNode>() || IsValueNode<tensor::Tensor>(input) || IsValueNode<RefKey>(input)) {
+    } else if ((input->isa<CNode>() && !HasAbstractMonad(input)) || IsValueNode<tensor::Tensor>(input) ||
+               IsValueNode<RefKey>(input)) {
       is_parameter.push_back(false);
     }
   }
@@ -174,7 +182,8 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
         MS_LOG(EXCEPTION) << "Find parameter by ref key node failed";
       }
       inputs_type_len.push_back(GetInputsTypeLen(parameters[0]));
-    } else if (input->isa<CNode>() || input->isa<Parameter>() || IsValueNode<tensor::Tensor>(input)) {
+    } else if ((input->isa<CNode>() && !HasAbstractMonad(input)) || input->isa<Parameter>() ||
+               IsValueNode<tensor::Tensor>(input)) {
       // extract input shape from parameter and apply node
       inputs_type_len.push_back(GetInputsTypeLen(input));
     }

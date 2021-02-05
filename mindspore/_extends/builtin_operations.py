@@ -132,6 +132,16 @@ def Depend(value, expr):
     return value
 
 
+def UpdateState(monad, expr):
+    """Implement `UpdateState`."""
+    return monad
+
+
+def Load(value, u=None):
+    """Implement `Load`."""
+    return value
+
+
 # only used in PyNative mode
 def make_ref(key, value, ref):
     return value

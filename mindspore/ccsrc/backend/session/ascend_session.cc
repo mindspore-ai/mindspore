@@ -61,6 +61,7 @@
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/add_atomic_clean.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/session/ascend_auto_monad.h"
 #include "debug/data_dump/e2e_dump_util.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
@@ -114,6 +115,12 @@ void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::
     i++;
   }
   buf << "================== execution order ==================\n";
+}
+
+// Handle control flow by auto-monad.
+void HandleControlFlow(NotNull<KernelGraphPtr> graph) {
+  AscendAutoMonad auto_monad(graph);
+  auto_monad.Run();
 }
 
 void SetStreamDistinctionLabel(const KernelGraphPtr &graph, uint32_t label, bool is_override) {
@@ -361,16 +368,14 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
     InitRuntimeResource();
     return root_graph->graph_id();
   }
-  // create parameter for multiple branch
-  std::set<KernelGraphPtr> memo;
-  CreateMultiBranchOutput(NOT_NULL(root_graph), NOT_NULL(&memo));
-  memo.clear();
-  // insert goto labels and label_sets
-  LinkChildGraphs(NOT_NULL(root_graph));
-  // replace labelgoto with labelswitch in subgraph called multiple times
-  MultiCallGraphOptimize(NOT_NULL(root_graph));
+
+  // Handle control flow by auto-monad.
+  HandleControlFlow(NOT_NULL(root_graph));
+
   // resource initialize
   InitRuntimeResource();
+
+  std::set<KernelGraphPtr> memo;
   IrFusionPass(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
   SelectKernel(NOT_NULL(root_graph));
@@ -493,10 +498,6 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
 #if ENABLE_CPU && ENABLE_D
   InitPsWorker(graph);
 #endif
-  // Reorder optimizer order
-  auto execution_order = graph->execution_order();
-  Reorder(&execution_order);
-  graph->set_execution_order(execution_order);
   // Assign streams for control sink and hccl and so on
   AssignStream(NOT_NULL(graph));
 
@@ -1267,7 +1268,8 @@ void AscendSession::SyncDataToExtraParams(NotNull<KernelGraphPtr> graph, NotNull
 }
 
 void AscendSession::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph) {
-  AscendControlParser::ExecutorValidate(graph);
+  AscendAutoMonad auto_monad(graph);
+  auto_monad.GenerateExecuteOrder();
 }
 
 void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) {

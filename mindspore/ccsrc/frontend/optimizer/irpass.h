@@ -37,7 +37,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr special_op_eliminate_;
   SubstitutionPtr zero_like_fill_zero_;
   SubstitutionPtr adjust_all_reduce_mul_add_;
-
+  SubstitutionPtr float_depend_g_call_;
   //  ops eliminate
   SubstitutionPtr item_tuple_or_list_eliminate_;
   SubstitutionPtr tile_eliminate_;
@@ -73,6 +73,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr float_tuple_getitem_switch_;
   SubstitutionPtr float_env_getitem_switch_;
   SubstitutionPtr convert_switch_replacement_;
+  SubstitutionPtr exchange_switch_depend_value_;
 
   // AddN
   SubstitutionPtr merge_addn_;
@@ -90,6 +91,11 @@ class OptimizeIRPassLib {
   SubstitutionPtr inline_without_move_;
   SubstitutionPtr replace_applicator_;
   SubstitutionPtr specialize_transform_;
+
+  // Auto-monad related eliminaters.
+  SubstitutionPtr updatestate_eliminater_;
+  SubstitutionPtr switch_call_monad_eliminater_;
+  SubstitutionPtr stopgrad_eliminater_;
 
   // Incorporation
   SubstitutionPtr incorporate_getitem_set_;
@@ -121,6 +127,9 @@ class OptimizeIRPassLib {
 
   // RowTensor Eliminate
   SubstitutionPtr row_tensor_eliminate_;
+
+  // RowTensorAddZerosLike Eliminate
+  SubstitutionPtr row_tensor_add_zeros_like_;
 
   // SparseTensor Eliminate
   SubstitutionPtr sparse_tensor_eliminate_;
@@ -175,6 +184,13 @@ inline bool IsParam(const AnfNodePtr &node) {
     return node->isa<Parameter>();
   }
   return false;
+}
+
+inline bool IsLoad(const AnfNodePtr &node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return false;
+  }
+  return IsPrimitiveCNode(node, prim::kPrimLoad);
 }
 
 // Check if CNode Input 0 is Func Graph

@@ -27,15 +27,14 @@ _momentum_opt = C.MultitypeFuncGraph("momentum_opt")
 @_momentum_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
 def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, moment, ps_parameter, cache_enable):
     """Apply momentum optimizer to the weight parameter using Tensor."""
-    success = True
     if ps_parameter and not cache_enable:
         op_shape = P.Shape()
         _ps_pull = P.Pull()
         _ps_push = P.Push("ApplyMomentum", [])
         shapes = (op_shape(learning_rate), op_shape(gradient), op_shape(momentum))
-        success = F.depend(success, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
+        success = F.depend(True, _ps_pull(_ps_push((learning_rate, gradient, momentum), shapes), weight))
     else:
-        success = F.depend(success, opt(weight, moment, learning_rate, gradient, momentum))
+        success = F.depend(True, opt(weight, moment, learning_rate, gradient, momentum))
     return success
 
 

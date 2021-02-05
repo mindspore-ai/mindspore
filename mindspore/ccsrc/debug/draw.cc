@@ -97,7 +97,7 @@ void DrawValueNodes(const std::vector<AnfNodePtr> &nodes,
   int dup_idx = 0;
 
   for (auto &nd : nodes) {
-    for (auto &t : SuccIncoming(nd)) {
+    for (auto &t : GetInputs(nd)) {
       MS_EXCEPTION_IF_NULL(t);
       MS_EXCEPTION_IF_NULL(nd);
       if (t->isa<ValueNode>() && (*sub_graphs).find(nd->func_graph()) != (*sub_graphs).end()) {
@@ -125,7 +125,7 @@ void DrawEdges(const std::vector<AnfNodePtr> &nodes, const std::shared_ptr<BaseD
 
   // Draw edge
   for (auto &nd : nodes) {
-    auto succs = SuccIncoming(nd);
+    auto &succs = GetInputs(nd);
     auto num = succs.size();
     for (size_t i = 0; i < num; i++) {
       auto &t = succs.at(i);

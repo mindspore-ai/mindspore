@@ -40,7 +40,11 @@ from mindspore.nn.optim import Momentum
 from mindspore.train import Model
 from ....dataset_mock import MindData
 
-context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
+@pytest.fixture(scope="module", autouse=True)
+def setup_teardown():
+    context.set_context(mode=context.GRAPH_MODE, enable_sparse=True)
+    yield
+    context.set_context(enable_sparse=False)
 
 reduce_sum = P.ReduceSum()
 unsorted_segment_sum = P.UnsortedSegmentSum()

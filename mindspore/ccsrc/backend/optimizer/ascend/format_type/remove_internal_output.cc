@@ -69,7 +69,7 @@ const AnfNodePtr RemoveInternalOutput::Process(const FuncGraphPtr &func_graph, c
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  CheckCNodeInputSize(cnode, kTransOpInputNum);
+  CheckCNodeInputSize(cnode, kTransOpInputTensorNum);
   auto input_node = cnode->input(1);
   if (!AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimTupleGetItem)) {
     kernel_graph->ReplaceInternalOutput(node, input_node);

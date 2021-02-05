@@ -179,7 +179,7 @@ class LogWriter {
                        excp_type) ^                                                                                    \
     mindspore::LogStream()
 
-#define IS_OUTPUT_ON(level) (level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID]
+#define IS_OUTPUT_ON(level) ((level) >= mindspore::g_ms_submodule_log_levels[SUBMODULE_ID])
 
 #define MS_LOG(level) MS_LOG_##level
 

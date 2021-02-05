@@ -23,6 +23,7 @@
 #include <utility>
 #include <stack>
 #include <vector>
+#include <tuple>
 #include <string>
 #include <fstream>
 #include <deque>
@@ -92,10 +93,10 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
 }
 
 // search the cnodes inside this graph only
-std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret) {
+std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &starts) {
   std::deque<CNodePtr> todo(1024);
   todo.clear();
-  todo.push_back(ret);
+  todo.insert(todo.end(), starts.begin(), starts.end());
   std::vector<CNodePtr> sorted_nodes;
   auto seen = NewSeenGeneration();
   while (!todo.empty()) {
@@ -115,6 +116,33 @@ std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret) {
     }
   }
   return sorted_nodes;
+}
+
+// search the cnode match the predicate inside this graph only
+CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate) {
+  std::deque<CNodePtr> todo(1024);
+  todo.clear();
+  todo.insert(todo.end(), starts.begin(), starts.end());
+  auto seen = NewSeenGeneration();
+  while (!todo.empty()) {
+    CNodePtr top = todo.front();
+    todo.pop_front();
+    if (match_predicate(top)) {
+      return top;
+    }
+    auto inputs = top->inputs();
+    for (auto &item : inputs) {
+      if (item->seen_ == seen) {
+        continue;
+      }
+
+      if (item->isa<CNode>()) {
+        todo.push_back(item->cast<CNodePtr>());
+      }
+      item->seen_ = seen;
+    }
+  }
+  return nullptr;
 }
 
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
@@ -138,6 +166,14 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
   return sorted;
 }
 
+// PushSuccessors push cnode inputs to a vector as successors for topo sort.
+static void PushSuccessors(const CNodePtr &cnode, std::vector<AnfNodePtr> *vecs) {
+  auto &inputs = cnode->inputs();
+  vecs->reserve(vecs->size() + inputs.size());
+  // To keep evaluate order from left to right, we push inputs in reversed order.
+  vecs->insert(vecs->end(), inputs.rbegin(), inputs.rend());
+}
+
 std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
   if (node == nullptr) {
@@ -153,8 +189,7 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
     return vecs;
   } else if (node->func_graph() != nullptr) {
     if (node->isa<CNode>()) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
+      PushSuccessors(node->cast<CNodePtr>(), &vecs);
     }
     return vecs;
   }
@@ -177,8 +212,7 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
     return vecs;
   } else {
     if (node->isa<CNode>()) {
-      auto &inputs = node->cast<CNodePtr>()->inputs();
-      (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
+      PushSuccessors(node->cast<CNodePtr>(), &vecs);
     }
     return vecs;
   }
@@ -186,13 +220,9 @@ std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node) {
 
 std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node) {
   std::vector<AnfNodePtr> vecs;
-  if (node == nullptr) {
-    return vecs;
-  }
-
-  if (node->isa<CNode>()) {
-    auto &inputs = node->cast<CNodePtr>()->inputs();
-    (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode != nullptr) {
+    PushSuccessors(cnode, &vecs);
   }
   return vecs;
 }
@@ -216,9 +246,18 @@ std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &
         }
       }
     }
-    (void)vecs.insert(vecs.end(), inputs.begin(), inputs.end());
+    PushSuccessors(cnode, &vecs);
   }
   return vecs;
+}
+
+const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node) {
+  static std::vector<AnfNodePtr> empty_inputs;
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode != nullptr) {
+    return cnode->inputs();
+  }
+  return empty_inputs;
 }
 
 IncludeType AlwaysInclude(const AnfNodePtr &) { return FOLLOW; }

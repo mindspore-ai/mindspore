@@ -33,7 +33,8 @@ bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode); ++index) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t index = 0; index < input_num; ++index) {
       auto prev_input_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
       auto prev_node_out_infer_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
       auto input_format = AnfAlgo::GetInputFormat(cnode, index);

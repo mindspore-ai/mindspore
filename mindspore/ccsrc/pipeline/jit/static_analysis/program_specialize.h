@@ -98,6 +98,8 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void ProcessNode(const AnfNodePtr &node);
   void ProcessCNode(const CNodePtr &new_node);
 
+  void ProcessIsolateNodes();
+
   AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node);
   inline void AddTodoItem(const AnfNodePtr &node) { todo_.push_back(node); }
   // Get node replicated by Cloner.
@@ -112,9 +114,12 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   // Build a value node if ival is constant and not any-value
   AnfNodePtr BuildPossibleValueNode(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
                                     const AttrValueMapPtr &attrs);
-  // Build a replacable node for iconf->node; it may be a replicated forwared CNode in static analysis or just a
-  // replicated node.
-  AnfNodePtr BuildReplacedNode(const AnfNodeConfigPtr &conf);
+  // Build a replaceable node for iconf->node; it may be a replicated forward CNode in static analysis or just a
+  // replicated node. First of returned pair is the origin node or the forward cnode, second is the replaced node.
+  std::pair<AnfNodePtr, AnfNodePtr> BuildReplacedNode(const AnfNodeConfigPtr &conf);
+  // Collect CNodes which have IsolateNodes that will be replaced by a ValuedNode.
+  AnfNodePtr CollectCNodeWithIsolateNodes(const CNodePtr &c_node, const EvalResultPtr &c_node_eval_result,
+                                          const FuncGraphPtr &new_fg);
   // Build a specialized node from given argvals;
   AnfNodePtr BuildSpecializedNode(const AnfNodePtr &node, const AbstractBasePtr &abs,
                                   const AbstractBasePtrList &argvals);

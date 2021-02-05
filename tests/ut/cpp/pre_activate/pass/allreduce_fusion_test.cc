@@ -214,7 +214,7 @@ TEST_F(TestHWAllReduceFusion, test_fusion_sorted) {
   FuncGraphPtr new_graph = optimizer->Optimize(func_graph);
   EXPECT_NE(new_graph, nullptr);
   // check result
-  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_all_reduce_fusion_all", "after1");
+  FuncGraphPtr g_after = getPyFun_.CallAndParseRet("test_all_reduce_fusion_all", "after");
   EXPECT_NE(g_after, nullptr);
   EXPECT_TRUE(CheckEqualGraph(new_graph, g_after));
 }

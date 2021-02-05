@@ -61,6 +61,8 @@ std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &
 std::string CheckAttrStringSet(const std::string &op, const ValuePtr &attr, const std::string &attr_name,
                                const std::set<std::string> &val_set);
 
+void CheckRequiredArgsSize(const std::string &op, const AbstractBasePtrList &args_spec_list, size_t size_expect);
+
 template <typename T>
 struct ReportNameTraits {};
 

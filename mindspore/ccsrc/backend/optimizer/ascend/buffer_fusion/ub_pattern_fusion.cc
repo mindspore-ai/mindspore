@@ -244,7 +244,9 @@ void GetFusionScopeInputNodeList(const session::KernelGraph &kernel_graph,
           if (auto in = cnode->input(idx); std::find((*buffer_fusion_infos)[fusion_id].inputs_list.begin(),
                                                      (*buffer_fusion_infos)[fusion_id].inputs_list.end(),
                                                      in) == (*buffer_fusion_infos)[fusion_id].inputs_list.end()) {
-            (*buffer_fusion_infos)[fusion_id].inputs_list.push_back(in);
+            if (!HasAbstractMonad(in)) {
+              (*buffer_fusion_infos)[fusion_id].inputs_list.push_back(in);
+            }
           }
         }
       }

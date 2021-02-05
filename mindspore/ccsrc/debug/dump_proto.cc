@@ -156,6 +156,10 @@ void ProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseShapePtr &s
     type_proto->set_data_type(irpb::DT_STRING);
   } else if (type->isa<SymbolicKeyType>()) {
     // Do Nothing.
+  } else if (type->isa<MonadType>()) {
+    // Do Nothing.
+  } else if (type->isa<Problem>()) {
+    MS_LOG(WARNING) << "The type: " << type->type_name();
   } else {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }
@@ -218,6 +222,8 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
     type_proto->set_data_type(irpb::DT_TENSOR);
     TypePtr elem_type = dyn_cast<TensorType>(val)->element();
     type_proto->mutable_tensor_type()->set_elem_type(GetNumberDataType(elem_type));
+  } else if (val->isa<MonadType>()) {
+    value_proto->set_str_val(val->ToString());
   } else {
     MS_LOG(WARNING) << "Unsupported type " << val->type_name();
   }

@@ -269,7 +269,6 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
             self.get_status = P.NPUGetFloatStatus()
             self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -278,7 +277,6 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
-        self.add_flags(has_effect=True)
 
     def construct(self,
                   source_eos_ids,
@@ -318,16 +316,19 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
                             label_ids,
                             label_weights)
 
-        init = False
-        if not self.gpu_target:
-            # init overflow buffer
-            init = self.alloc_status()
-            # clear overflow buffer
-            self.clear_status(init)
         if sens is None:
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
+
+        init = False
+        if not self.gpu_target:
+            # init overflow buffer
+            init = self.alloc_status()
+            init = F.depend(init, loss)
+            # clear overflow buffer
+            clear_status = self.clear_status(init)
+            scaling_sens = F.depend(scaling_sens, clear_status)
 
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
@@ -347,7 +348,9 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
 
         # get the overflow buffer
         if not self.gpu_target:
-            self.get_status(init)
+            init = F.depend(init, grads)
+            get_status = self.get_status(init)
+            init = F.depend(init, get_status)
             # sum overflow buffer elements, 0:not overflow , >0:overflow
             flag_sum = self.reduce_sum(init, (0,))
         else:

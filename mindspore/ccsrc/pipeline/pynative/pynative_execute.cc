@@ -42,6 +42,7 @@
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
+#include "pipeline/jit/static_analysis/auto_monad.h"
 #include "backend/session/session_factory.h"
 #include "backend/optimizer/pass/const_input_to_attr_registry.h"
 #include "backend/optimizer/common/helper.h"
@@ -691,7 +692,13 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
   const auto &signature = prim->signatures();
   auto sig_size = signature.size();
   auto size = op_exec_info->op_inputs.size();
-  // ignore signature for cast op
+
+  // ignore monad signature
+  for (auto sig : signature) {
+    if (sig.default_value != nullptr && sig.default_value->isa<Monad>()) {
+      --sig_size;
+    }
+  }
   if (sig_size > 0 && sig_size != size) {
     MS_EXCEPTION(ValueError) << op_exec_info->op_name << " inputs size " << size << " does not match the requires "
                              << "inputs size " << sig_size;
@@ -757,7 +764,7 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
   CNodePtr cnode = nullptr;
   if (need_construct_graph()) {
     MS_EXCEPTION_IF_NULL(curr_g_);
-    cnode = curr_g_->NewCNode(inputs);
+    cnode = curr_g_->NewCNodeInOrder(inputs);
     MS_LOG(DEBUG) << "Make CNode for " << op_exec_info->op_name << " new cnode is " << cnode->DebugString(4);
   }
   return cnode;
@@ -2364,9 +2371,11 @@ FuncGraphPtr PynativeExecutor::MakeGradGraph(const py::object &cell, const FuncG
       (void)bprop_graph->transforms().emplace(std::make_pair("primal", FuncGraphTransform(g)));
     }
   }
-  DumpGraphIR("fg.ir", g);
   auto is_top = IsTopGraph(cell_id);
   MS_LOG(DEBUG) << "Grad top cell " << is_top;
+  // Before make grad graph, we need to run auto-monad on forward graph,
+  // so that side effects in forward graph can be handled in grad graph.
+  (void)pipeline::AutoMonad(g);
   set_need_replace_forward(!IsNestedGrad());
   // Obtain grad graph
   auto newfg = ad::Grad(g, r, is_top);

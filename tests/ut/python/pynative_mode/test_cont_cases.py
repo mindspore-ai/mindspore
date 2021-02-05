@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test control ops """
+import pytest
 import numpy as np
 from mindspore import dtype as ms
 from mindspore import Tensor
@@ -30,8 +31,11 @@ grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
-def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=False)
+@pytest.fixture(scope="module", autouse=True)
+def setup_teardown():
+    context.set_context(mode=context.PYNATIVE_MODE, precompile_only=True)
+    yield
+    context.set_context(mode=context.GRAPH_MODE, precompile_only=False)
 
 
 def test_while_with_param_forward_with_const_branch():
@@ -683,7 +687,7 @@ def test_if_by_if_forward():
 
 
 def test_if_by_if_forward_control_tuple_switch():
-    """tuple_get from  swtich op will generate new switch inside to eliminate tuple_get"""
+    """tuple_get from switch op will generate new switch inside to eliminate tuple_get"""
     class Branch3Net(nn.Cell):
         def __init__(self):
             super().__init__()

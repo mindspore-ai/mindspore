@@ -24,6 +24,11 @@ const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[] = "_effect_patial_order";
 const char GRAPH_FLAG_CACHE_ENABLE[] = "cache_enable";
 const char GRAPH_FLAG_RANDOM_EFFECT[] = "_random_effect";
 const char GRAPH_FLAG_SIDE_EFFECT[] = "_side_effect";
+const char GRAPH_FLAG_SIDE_EFFECT_IO[] = "side_effect_io";
+const char GRAPH_FLAG_SIDE_EFFECT_MEM[] = "side_effect_mem";
+const char GRAPH_FLAG_SIDE_EFFECT_EXCEPTION[] = "side_effect_exception";
+const char GRAPH_FLAG_SIDE_EFFECT_PROPAGATE[] = "side_effect_propagate";
+const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP[] = "side_effect_backprop";
 
 // method names of python primitive called from c++ source code
 // 1. infer method name of class 'PrimitiveWithInfer'
@@ -41,4 +46,5 @@ const char ATTR_MIN_SHAPE[] = "min_shape";
 const char ATTR_MAX_SHAPE[] = "max_shape";
 const char ATTR_MIN_VALUE[] = "min_value";
 const char ATTR_MAX_VALUE[] = "max_value";
+const char ATTR_NO_BROADEN[] = "no_broaden";
 }  // namespace mindspore

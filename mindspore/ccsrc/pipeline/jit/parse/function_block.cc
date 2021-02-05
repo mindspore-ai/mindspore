@@ -37,18 +37,54 @@ FunctionBlock::FunctionBlock(const Parser &parser) : parser_(parser) {
 
 void FunctionBlock::AddPrevBlock(const FunctionBlockPtr &block) { prev_blocks_.push_back(block.get()); }
 
+static bool CanBeIsolateNode(const std::string &var_name, const AnfNodePtr &node) {
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode == nullptr || cnode->inputs().empty()) {
+    // Not a valid cnode, can not be isolate node.
+    return false;
+  }
+  auto prim = GetValueNode<PrimitivePtr>(cnode->inputs().at(0));
+  if (prim == nullptr) {
+    // Not a primitive cnode, it may have side effects or not,
+    // we add it as an isolate node if its name is not '_' or empty.
+    // this means that code like:
+    //    _ = func_call()
+    // will be ignored even if func_call() has side effects.
+    return !var_name.empty() && var_name != "_";
+  }
+  // For primitive cnode, only those with side effects can be isolate nodes.
+  auto effect_info = GetPrimEffectInfo(prim);
+  bool has_effects = (effect_info.memory || effect_info.io);
+  return has_effects;
+}
+
 // write variable records the variable name to corresponding node
 void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr &node) {
   MS_LOG(DEBUG) << func_graph_->ToString() << " write var " << var_name << " with node " << node->DebugString();
-  vars_[var_name] = node;
+  auto [iter, is_new_name] = vars_.emplace(var_name, std::make_pair(node, false));
+  if (!is_new_name) {
+    // If a cnode variable with same name already existed but not used,
+    // add it as an isolate node. for example:
+    //   a = print(x)
+    //   a = print(y)
+    // when we write variable 'a = print(y)',
+    // the cnode 'print(x)' should added as an isolate node.
+    if (!iter->second.second && CanBeIsolateNode(var_name, iter->second.first)) {
+      func_graph_->AddIsolateNode(iter->second.first);
+    }
+    iter->second = std::make_pair(node, false);
+  }
 }
 
 // read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
   // get var node if it is found
-  if (vars_.count(var)) {
-    AnfNodePtr node = vars_[var];
+  auto found = vars_.find(var);
+  if (found != vars_.end()) {
+    auto &node = found->second.first;
     MS_EXCEPTION_IF_NULL(node);
+    // Mark the variable as used.
+    found->second.second = true;
     auto iter = resolve_to_removable_phis_.find(node);
     if (iter != resolve_to_removable_phis_.end()) {
       return iter->second;
@@ -63,7 +99,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var) {
       MS_EXCEPTION_IF_NULL(block);
       return block->ReadVariable(var);
     } else if (prev_blocks_.empty()) {
-      // get namespace and make Reslove
+      // get namespace and make Resolve
       auto it = var_to_resolve_.find(var);
       if (it != var_to_resolve_.end()) {
         return it->second;
@@ -141,7 +177,7 @@ AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const Symb
                 << ((std::string)resolve_symbol->symbol());
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(resolve_symbol);
-  auto node = func_graph()->NewCNode({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
+  auto node = func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimResolve), module_node, symbol_node});
   return node;
 }
 
@@ -264,13 +300,13 @@ void FunctionBlock::Mature() {
 // Force the conditIon node to bool using bool operation
 CNodePtr FunctionBlock::ForceToBoolNode(const AnfNodePtr &cond) {
   TraceGuard trace_guard(std::make_shared<TraceForceBool>(cond->debug_info()));
-  CNodePtr op_apply_node = func_graph()->NewCNode({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
+  CNodePtr op_apply_node = func_graph()->NewCNodeInOrder({MakeResolveOperation(NAMED_PRIMITIVE_BOOL), cond});
   return op_apply_node;
 }
 
 CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
   TraceGuard trace_guard(std::make_shared<TraceForceWhileCond>(cond->debug_info()));
-  CNodePtr op_apply_node = func_graph()->NewCNode({MakeResolveOperation("while_cond"), cond});
+  CNodePtr op_apply_node = func_graph()->NewCNodeInOrder({MakeResolveOperation("while_cond"), cond});
   return op_apply_node;
 }
 
@@ -286,11 +322,10 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, AnfNodePtr node) 
     input_nodes.emplace_back(node);
   }
 
-  CNodePtr jump = func_graph()->NewCNode(input_nodes);
+  CNodePtr jump = func_graph()->NewCNodeInOrder(input_nodes);
   jumps_[target_block.get()] = jump;
   target_block->AddPrevBlock(shared_from_this());
   func_graph()->set_output(jump);
-  InsertDependItemsBeforeReturn();
 }
 
 // Perform a conditional jump using switch operation.
@@ -302,68 +337,56 @@ void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr 
                       << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
   }
   CNodePtr switch_app =
-    func_graph()->NewCNode({NewValueNode(prim::kPrimSwitch), condNode, NewValueNode(true_block->func_graph()),
-                            NewValueNode(false_block->func_graph())});
-  CNodePtr switch_app_new = func_graph()->NewCNode({switch_app});
+    func_graph()->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), condNode, NewValueNode(true_block->func_graph()),
+                                   NewValueNode(false_block->func_graph())});
+  CNodePtr switch_app_new = func_graph()->NewCNodeInOrder({switch_app});
   func_graph()->set_output(switch_app_new);
-  InsertDependItemsBeforeReturn();
 }
 
-void FunctionBlock::SetStateAssgin(const AnfNodePtr &target, const std::string &readid) {
+// Create cnode for the assign statement like 'self.target = source'.
+// convert it to 'P.Assign(self.target, source)' and then add the cnode as isolate node.
+void FunctionBlock::SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &source) {
   const std::string primitive_name("assign");
   const std::string module_name("mindspore.ops.functional");
   ValueNodePtr assign_op = NewValueNode(prim::GetPythonOps(primitive_name, module_name, true));
-  auto source = ReadVariable(readid);
-  auto assign = func_graph()->NewCNode({assign_op, target, source});
-  WriteVariable(readid, assign);
-  MS_LOG(INFO) << "SetState read " << target->DebugString() << ", " << readid;
-  AddAutoDepend(assign);
+  auto assign = func_graph_->NewCNodeInOrder({assign_op, target, source});
+  func_graph_->AddIsolateNode(assign);
 }
 
-void FunctionBlock::AddAutoDepend(const AnfNodePtr &target) { auto_depends_.push_back(target); }
-
-void FunctionBlock::InsertDependItemsBeforeReturn() {
-  if (!prev_blocks_.empty()) {
-    for (auto &prev_block : prev_blocks_) {
-      MS_LOG(DEBUG) << "Has prev_block " << prev_block->func_graph()->debug_info().get();
+void FunctionBlock::FindIsolateVariables() {
+  //
+  // Search isolate nodes from variables, for example,
+  // variable 'a' is an isolate node in below code:
+  //
+  //    def construct(self, x, y):
+  //        a = print(x) # isolate node
+  //        return x + y
+  //
+  std::set<AnfNodePtr> used;
+  // Find used variables.
+  for (const auto &var : vars_) {
+    auto &node = var.second.first;
+    if (node == nullptr) {
+      continue;
+    }
+    bool is_used = var.second.second;
+    if (is_used) {
+      used.emplace(node);
     }
   }
-
-  ValueNodePtr make_tuple_op = NewValueNode(prim::kPrimMakeTuple);
-  ValueNodePtr depend_op = NewValueNode(prim::kPrimDepend);
-  ValueNodePtr stop_gradient_op = NewValueNode(prim::kPrimStopGradient);
-
-  if (auto_depends_.size() == 0) {
-    return;
-  }
-  AnfNodePtr state = nullptr;
-  std::vector<AnfNodePtr> vec_states;
-  vec_states.emplace_back(make_tuple_op);
-  for (auto &item : auto_depends_) {
-    MS_LOG(DEBUG) << "auto_depends " << item->ToString();
-    vec_states.emplace_back(item);
-  }
-  // if there are only make_tuple_op and another node in vec_states(the vec_states size is 2)
-  // do not need to make_tuple, just use the node.
-  if (vec_states.size() == 2) {
-    state = vec_states[1];
-  } else {
-    state = func_graph()->NewCNode(vec_states);
-  }
-
-  AnfNodePtr old_ret = nullptr;
-  auto return_node = func_graph()->get_return();
-  if (return_node) {
-    if (return_node->inputs().size() < 1) {
-      MS_LOG(EXCEPTION) << "Length of inputs of output node is less than 2";
+  // Add isolate nodes which is unused var but not found in used set.
+  for (const auto &var : vars_) {
+    auto &node = var.second.first;
+    bool is_used = var.second.second;
+    if (node == nullptr || is_used) {
+      continue;
     }
-    old_ret = return_node->input(1);
-  } else {
-    old_ret = NewValueNode(kNone);
+    auto &var_name = var.first;
+    if (used.find(node) == used.end() && CanBeIsolateNode(var_name, node)) {
+      func_graph_->AddIsolateNode(node);
+    }
   }
-  AnfNodePtr stopped = func_graph()->NewCNode({stop_gradient_op, state});
-  AnfNodePtr ret = func_graph()->NewCNode({depend_op, old_ret, stopped});
-  func_graph()->set_output(ret, true);
 }
+
 }  // namespace parse
 }  // namespace mindspore

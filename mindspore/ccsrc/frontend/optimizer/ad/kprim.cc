@@ -67,6 +67,11 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
     MS_LOG(ERROR) << "Fail to parse bprop function for " << prim->name() << ".";
     return nullptr;
   }
+  auto bprop_flag = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_BACKPROP);
+  if (bprop_flag) {
+    func_graph->set_flag(mindspore::kFuncGraphFlagReAutoMonad, true);
+  }
+
   return func_graph;
 }
 
@@ -100,6 +105,38 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
   }
 
   MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
+}
+
+static void AppendMonadOutput(const FuncGraphPtr &bprop_fg, const AnfNodePtr &monad) {
+  const auto &output = bprop_fg->output();
+  MS_EXCEPTION_IF_NULL(output);
+  auto output_cnode = output->cast<CNodePtr>();
+  if (output_cnode != nullptr) {
+    // If output_cnode has the form like (make_tuple, x, y).
+    output_cnode->add_input(monad);
+    return;
+  }
+  // If output is an empty tuple, create a (make_tuple, monad) as the new output.
+  auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
+  output_cnode = bprop_fg->NewCNode({make_tuple, monad});
+  bprop_fg->set_output(output_cnode);
+}
+
+// Append U or/and IO monad to output of Bprop funcgraph.
+static void AdjustForAutoMonad(const PrimitivePtr &prim, const FuncGraphPtr &bprop_fg) {
+  auto effect_info = GetPrimEffectInfo(prim);
+  if (effect_info.memory) {
+    MS_LOG(DEBUG) << "Append U monad for Bprop FuncGraph of Primitive " << prim->ToString();
+    auto u = NewValueNode(kUMonad);
+    u->set_abstract(kUMonad->ToAbstract());
+    AppendMonadOutput(bprop_fg, u);
+  }
+  if (effect_info.io) {
+    MS_LOG(DEBUG) << "Append IO monad for Bprop FuncGraph of Primitive " << prim->ToString();
+    auto io = NewValueNode(kIOMonad);
+    io->set_abstract(kIOMonad->ToAbstract());
+    AppendMonadOutput(bprop_fg, io);
+  }
 }
 
 FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_node,
@@ -141,8 +178,8 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
       }
     }
   }
-
-  auto expanded_fg = BpropToK(prim, bprop_fg, cnode);
+  AdjustForAutoMonad(prim, bprop_fg);
+  auto expanded_fg = BpropToK(prim, bprop_fg, nullptr, cnode);
   if (expanded_fg == nullptr) {
     MS_LOG(EXCEPTION) << "Failed convert " << prim->name()
                       << " prim bprop function to J expanded func graph. NodeInfo: "
@@ -152,7 +189,23 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   return expanded_fg;
 }
 
-AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg) {
+AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) {
+  // current_primal_fg may have extra parameters like u_monad, io_monad
+  std::vector<AnfNodePtr> extra_args;
+  // caller had checked size() - 2 is greater than 0.
+  auto bprop_fg_param_size = bprop_fg->parameters().size() - 2;
+  if (current_primal_fg != nullptr && bprop_fg_param_size < current_primal_fg->parameters().size()) {
+    auto current_primal_fg_param_size = current_primal_fg->parameters().size();
+    MS_LOG(DEBUG) << "Current Primal FuncGraph may have extra parameters(U or IO monad) which bprop don't define, so "
+                     "Insert it. Extra parameters size: "
+                  << current_primal_fg_param_size - bprop_fg_param_size;
+    for (auto i = bprop_fg_param_size; i < current_primal_fg_param_size; ++i) {
+      const auto &primal_node = current_primal_fg->parameters()[i];
+      auto extra_node = bprop_fg->NewCNode({NewValueNode(prim::GetPythonOps("zeros_like")), primal_node});
+      extra_args.push_back(extra_node);
+      MS_LOG(DEBUG) << "Insert to bprop_fg for node: " << primal_node->DebugString();
+    }
+  }
   // bprop_fg has been checked in caller
   if (IsPrimitiveCNode(bprop_fg->output(), prim::kPrimMakeTuple)) {
     // Set bprop output as (env, dx, dy, dz, ...)
@@ -163,22 +216,33 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg) {
     args.push_back(NewValueNode(prim::kPrimMakeTuple));
     args.push_back(NewValueNode(newenv));
     (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+    if (!extra_args.empty()) {
+      args.insert(args.end(), extra_args.cbegin(), extra_args.cend());
+    }
     return NewCNode(args, bprop_fg);
   }
 
   // Set bprop output as (env, dx)
   std::string model_name("mindspore.ops.composite.multitype_ops.add_impl");
   std::string python_ops("_tuple_add");
-  auto tuple = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewValueNode(newenv)}, bprop_fg);
-  return NewCNode({NewValueNode(prim::GetPythonOps(python_ops, model_name)), tuple, bprop_fg->output()}, bprop_fg);
+  auto tuple_env = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewValueNode(newenv)}, bprop_fg);
+  auto tuple_add_ops = NewValueNode(prim::GetPythonOps(python_ops, model_name));
+  if (!extra_args.empty()) {
+    extra_args.insert(extra_args.begin(), NewValueNode(prim::kPrimMakeTuple));
+    auto extra_tuple = NewCNode(extra_args, bprop_fg);
+    auto old_output_extra = NewCNode({tuple_add_ops, bprop_fg->output(), extra_tuple}, bprop_fg);
+    return NewCNode({tuple_add_ops, tuple_env, old_output_extra}, bprop_fg);
+  }
+
+  return NewCNode({tuple_add_ops, tuple_env, bprop_fg->output()}, bprop_fg);
 }
 
-void KPrim::TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &outer,
-                          std::vector<AnfNodePtr> *const transf_args) {
-  MS_EXCEPTION_IF_NULL(mng);
+static void TransformNormalArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &outer,
+                                std::vector<AnfNodePtr> *const transf_args) {
   // bprop_fg has been checked in caller
   // transform except the last 2 parameters: out, dout.
-  for (size_t i = 0; i < bprop_fg->parameters().size() - 2; ++i) {
+  auto bprop_fg_param_size = bprop_fg->parameters().size() - 2;
+  for (size_t i = 0; i < bprop_fg_param_size; ++i) {
     auto p = bprop_fg->parameters()[i];
     MS_EXCEPTION_IF_NULL(p);
 
@@ -187,6 +251,60 @@ void KPrim::TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bp
 
     (void)mng->Replace(p, transf_p);
     transf_args->push_back(transf_p);
+  }
+}
+void KPrim::TransformArgsForPrimitive(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
+                                      const PrimitivePtr &primitive, const FuncGraphPtr &outer,
+                                      std::vector<AnfNodePtr> *const transf_args) {
+  MS_EXCEPTION_IF_NULL(mng);
+  TransformNormalArgs(mng, bprop_fg, outer, transf_args);
+  // Fprop_fg for Primitive with side effect should append extra U or IO monad parameter.
+  auto effect_info = GetPrimEffectInfo(primitive);
+  if (effect_info.memory) {
+    MS_LOG(DEBUG) << "Append U monad to Fprop FuncGraph for Primitive " << primitive->ToString();
+    auto transf_p = outer->add_parameter();
+    transf_args->push_back(transf_p);
+  }
+  if (effect_info.io) {
+    MS_LOG(DEBUG) << "Append IO monad to Fprop FuncGraph for Primitive " << primitive->ToString();
+    auto transf_p = outer->add_parameter();
+    transf_args->push_back(transf_p);
+  }
+}
+
+template <typename T>
+void KPrim::TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
+                                      const T &current_primal_fg, const FuncGraphPtr &outer,
+                                      std::vector<AnfNodePtr> *const transf_args) {
+  MS_EXCEPTION_IF_NULL(mng);
+  TransformNormalArgs(mng, bprop_fg, outer, transf_args);
+  auto bprop_fg_param_size = bprop_fg->parameters().size() - 2;
+  // current_primal_fg may have extra parameters after AutoMonad
+  const auto &current_primal_fg_params = current_primal_fg->parameters();
+  if (bprop_fg_param_size < current_primal_fg_params.size()) {
+    for (auto i = bprop_fg_param_size; i < current_primal_fg_params.size(); ++i) {
+      auto p = current_primal_fg_params[i];
+      MS_EXCEPTION_IF_NULL(p);
+      // extra parameters should be Monad.
+      if (!HasAbstractMonad(p)) {
+        continue;
+      }
+      MS_LOG(DEBUG) << "Function " << current_primal_fg->ToString()
+                    << ", has extra monad parameter: " << p->DebugString()
+                    << ", abstract: " << p->abstract()->ToString();
+
+      TraceGuard trace_guard(std::make_shared<TraceGradFprop>(p->debug_info()));
+      auto transf_p = outer->add_parameter();
+
+      (void)mng->Replace(p, transf_p);
+      transf_args->push_back(transf_p);
+    }
+  }
+  if (transf_args->size() != current_primal_fg_params.size()) {
+    MS_EXCEPTION(TypeError) << "Function " << current_primal_fg->ToString()
+                            << ", The number of parameter of this primal function is "
+                            << current_primal_fg_params.size() << ", but the number of parameters of bprop is "
+                            << bprop_fg_param_size;
   }
 }
 
@@ -218,14 +336,16 @@ void KPrim::CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check
   bprop_fg->set_output(bprop_out);
 }
 
-FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr bprop_fg) {
+FuncGraphPtr KPrim::KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) {
   MS_EXCEPTION_IF_NULL(bprop_fg);
-  auto fprop_fg = bprop_fg->transforms().find("primal")->second.func_graph();
-  auto expanded_fg = BpropToK(fprop_fg, bprop_fg, nullptr);
+  // primal_fg is FuncGraph just after convert. Refer ConvertCellObjToFuncGraph.
+  // current_primal_fg is specalized and AutoMoaded primal_fg;
+  auto primal_fg = bprop_fg->transforms().find("primal")->second.func_graph();
+  auto expanded_fg = BpropToK(primal_fg, bprop_fg, current_primal_fg, nullptr);
   if (expanded_fg == nullptr) {
-    MS_LOG(EXCEPTION) << "Failed convert " << fprop_fg->ToString()
+    MS_LOG(EXCEPTION) << "Failed convert " << primal_fg->ToString()
                       << " Cell bprop function to K expanded func graph. NodeInfo: "
-                      << trace::GetDebugInfo(fprop_fg->debug_info());
+                      << trace::GetDebugInfo(primal_fg->debug_info());
   }
   return expanded_fg;
 }
@@ -283,6 +403,20 @@ FuncGraphPtr KPrim::FakeBprop(const ValueNodePtr &value_node, const pipeline::Re
     MS_LOG(EXCEPTION) << "Fail to find user for " << prim->ToString();
   }
   auto inputs_num = cnode->first->cast<CNodePtr>()->inputs().size() - 1;
+  auto effect_info = GetPrimEffectInfo(prim);
+  // Don't add U or IO monad parameters as it will be added later.
+  size_t monad_params_size = 0;
+  if (effect_info.memory) {
+    monad_params_size++;
+  }
+  if (effect_info.io) {
+    monad_params_size++;
+  }
+  if (inputs_num < monad_params_size) {
+    MS_LOG(EXCEPTION) << "Arguments number should be greater than or equal to " << monad_params_size
+                      << ", but the CNode is: " << cnode->first->DebugString();
+  }
+  inputs_num -= monad_params_size;
 
   auto func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> outputs;

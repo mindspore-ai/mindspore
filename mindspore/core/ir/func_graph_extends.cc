@@ -59,7 +59,7 @@ void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
   if (force_new_ret || return_ == nullptr) {
     std::vector<AnfNodePtr> params({NewValueNode(prim::kPrimReturn), value});
     FuncGraphPtr this_graph = shared_from_base<FuncGraph>();
-    return_ = this_graph->NewCNode(params);
+    return_ = this_graph->NewCNodeInOrder(params);
   } else {
     if (manager_.lock()) {
       manager_.lock()->SetEdge(return_, 1, value);
@@ -131,7 +131,7 @@ void FuncGraph::GenerateKwParams(const FuncGraphPtr &specialized_graph,
     std::string kw_param_name = kwarg->get_key();
     MS_EXCEPTION_IF_NULL(specialized_graph);
     AnfNodePtr param_node = specialized_graph->GetParameterByName(kw_param_name);
-    // if not find correspoding parameter node
+    // if not find corresponding parameter node
     if (param_node == nullptr) {
       if (!has_kwarg()) {
         MS_LOG(EXCEPTION) << "Got unexpected keyword argument: " << kw_param_name;
@@ -296,29 +296,6 @@ FuncGraphPtr FuncGraph::GenerateGraph(const AbstractBasePtrList &args_spec_list)
   return specialized_graph;
 }
 
-const char kPrimHasEffect[] = "_side_effect_flag";
-
-bool FuncGraph::HasEffect(const CNodePtr &cnode) {
-  auto prim = GetCNodePrimitive(cnode);
-  if (prim != nullptr && prim->isa<prim::DoSignaturePrimitive>()) {
-    auto do_sig = prim->cast<prim::DoSignaturePrimitivePtr>();
-    auto prim_val = do_sig->function();
-    if (prim_val != nullptr && prim_val->isa<Primitive>()) {
-      prim = prim_val->cast<PrimitivePtr>();
-    } else {
-      prim = nullptr;
-    }
-  }
-  if (prim != nullptr) {
-    auto effect_val = prim->GetAttr(kPrimHasEffect);
-    if (effect_val && effect_val->isa<BoolImm>()) {
-      auto effect_bool = GetValue<bool>(effect_val);
-      return effect_bool;
-    }
-  }
-  return false;
-}
-
 std::shared_ptr<OrderedSet<CNodePtr>> FindRoots(const std::vector<CNodePtr> &segment) {
   std::shared_ptr<OrderedSet<CNodePtr>> roots = std::make_shared<OrderedSet<CNodePtr>>(segment);
   for (const auto &node : segment) {
@@ -363,63 +340,5 @@ std::shared_ptr<OrderedSet<CNodePtr>> FindLeaves(const std::vector<CNodePtr> &se
     }
   }
   return nodes;
-}
-
-void FuncGraph::ReleaseFullOrderToEffectOrder() {
-  MS_LOG(DEBUG) << "Flag has_effect " << has_flag(GRAPH_FLAG_HAS_EFFECT) << ".";
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
-    std::list<AnfNodePtr> depends_order;
-    std::vector<CNodePtr> segment;
-    for (const auto &cnode : order_) {
-      if (IsPrimitiveCNode(cnode, prim::kPrimReturn)) {
-        continue;
-      }
-      if (HasEffect(cnode)) {
-        MS_LOG(DEBUG) << "Meet a effect node " << cnode->DebugString() << ".";
-        if (segment.size() > 0) {
-          auto roots = FindRoots(segment);
-          for (auto iter = roots->begin(); iter != roots->end(); (void)iter++) {
-            depends_order.push_back(*iter);
-          }
-        }
-        segment.clear();
-        depends_order.push_back(cnode);
-      } else {
-        MS_LOG(DEBUG) << "Meet a general node " << cnode->DebugString() << ".";
-        segment.push_back(cnode);
-      }
-    }
-    if (segment.size() > 1) {
-      auto roots = FindRoots(segment);
-      for (auto iter = roots->begin(); iter != roots->end(); (void)iter++) {
-        depends_order.push_back(*iter);
-      }
-    }
-    std::vector<AnfNodePtr> depend_inputs;
-    auto old_ret = output();
-    for (auto iter = depends_order.rbegin(); iter != depends_order.rend(); (void)iter++) {
-      if (*iter != old_ret) {
-        depend_inputs.push_back(*iter);
-      }
-    }
-    set_flag(GRAPH_FLAG_HAS_EFFECT, false);
-    set_flag(GRAPH_FLAG_EFFECT_PATIAL_ORDER, true);
-    if (!depend_inputs.empty()) {
-      SetEffectDepends(depend_inputs);
-    }
-  }
-}
-
-void FuncGraph::SetEffectDepends(const std::vector<AnfNodePtr> &depend_inputs) {
-  auto old_ret = output();
-  std::vector<AnfNodePtr> inputs{NewValueNode(prim::kPrimDepend), old_ret};
-  (void)inputs.insert(inputs.end(), depend_inputs.begin(), depend_inputs.end());
-  auto new_ret = NewCNode(inputs);
-  auto mng = manager();
-  if (mng) {
-    (void)mng->Replace(old_ret, new_ret);
-  } else {
-    return_->set_input(1, new_ret);
-  }
 }
 }  // namespace mindspore

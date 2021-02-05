@@ -79,7 +79,8 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
                         << args_spec_list[index]->ToString();
     }
   }
-  ret_graph->set_output(ret_graph->NewCNode(elems));
+  // Add to order list to trace if fn_node had side effect.
+  ret_graph->set_output(ret_graph->NewCNodeInOrder(elems));
   return ret_graph;
 }
 

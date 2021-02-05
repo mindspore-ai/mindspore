@@ -110,7 +110,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  CheckCNodeInputSize(cnode, 2);
+  CheckCNodeInputSize(cnode, 1);
   auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
   auto dtype = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 0);
   auto prim = AnfAlgo::GetCNodePrimitive(cnode);

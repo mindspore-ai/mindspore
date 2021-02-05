@@ -415,6 +415,10 @@ bool ConvertData(const py::object &obj, ValuePtr *const data, bool use_signature
     converted = obj.cast<TensorPtr>();
   } else if (py::isinstance<MetaTensor>(obj)) {
     converted = obj.cast<MetaTensorPtr>();
+  } else if (py::isinstance<UMonad>(obj)) {
+    converted = obj.cast<UMonadPtr>();
+  } else if (py::isinstance<IOMonad>(obj)) {
+    converted = obj.cast<IOMonadPtr>();
   } else if (py::isinstance<EnvInstance>(obj)) {
     auto env = obj.cast<std::shared_ptr<EnvInstance>>();
     converted = env;

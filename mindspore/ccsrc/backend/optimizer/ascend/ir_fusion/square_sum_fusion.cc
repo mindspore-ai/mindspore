@@ -33,10 +33,7 @@ CNodePtr GenerateSquareSumV1(const FuncGraphPtr &graph, const CNodePtr &square, 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(square);
   MS_EXCEPTION_IF_NULL(sum);
-  if (square->inputs().size() != kSquareNodeInputNum) {
-    MS_LOG(EXCEPTION) << "Square node has wrong input size"
-                      << " trace: " << trace::DumpSourceLines(square);
-  }
+  CheckCNodeInputSize(square, kSquareNodeInputTensorNum);
   auto prim = std::make_shared<Primitive>(kSquareSumV1OpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> square_sumv1_inputs = {NewValueNode(prim), square->input(1)};
@@ -60,10 +57,7 @@ CNodePtr GenerateSquareSumV2(const FuncGraphPtr &graph, const CNodePtr &square, 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(square);
   MS_EXCEPTION_IF_NULL(sum);
-  if (square->inputs().size() != kSquareNodeInputNum) {
-    MS_LOG(EXCEPTION) << "Square node has wrong input size"
-                      << " trace: " << trace::DumpSourceLines(square);
-  }
+  CheckCNodeInputSize(square, kSquareNodeInputTensorNum);
   auto prim = std::make_shared<Primitive>(kSquareSumV2OpName);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> square_sumv2_inputs = {NewValueNode(prim), square->input(1)};
@@ -84,10 +78,7 @@ std::tuple<CNodePtr, AnfNodePtr, CNodePtr> GetPrevNodes(const AnfNodePtr &node) 
   MS_EXCEPTION_IF_NULL(node);
   auto sum = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sum);
-  if (sum->inputs().size() != kSumNodeInputNum) {
-    MS_LOG(EXCEPTION) << "ReduceSumD node has wrong input size"
-                      << " trace: " << trace::DumpSourceLines(sum);
-  }
+  CheckCNodeInputSize(sum, kSumNodeInputTensorNum);
   auto square_anf = sum->input(1);
   MS_EXCEPTION_IF_NULL(square_anf);
   auto square = square_anf->cast<CNodePtr>();

@@ -51,7 +51,7 @@ bool ApplyMomentumScaleFusion::IsScalar(const BaseRef &n) {
 const BaseRef ApplyMomentumScaleFusion::DefinePattern() const {
   VectorRef scale = VectorRef({prim::kPrimMul, gradient_, scale_});
   VectorRef apply_momentum =
-    VectorRef({prim::kPrimApplyMomentum, variable_, accumulation_, learning_rate_, scale, momentum_});
+    VectorRef({prim::kPrimApplyMomentum, variable_, accumulation_, learning_rate_, scale, momentum_, monad_state_});
   return apply_momentum;
 }
 
@@ -66,17 +66,19 @@ const AnfNodePtr ApplyMomentumScaleFusion::Process(const FuncGraphPtr &graph, co
   auto learning_rate = utils::cast<AnfNodePtr>((*equiv)[learning_rate_]);
   auto gradient = utils::cast<AnfNodePtr>((*equiv)[gradient_]);
   auto momentum = utils::cast<AnfNodePtr>((*equiv)[momentum_]);
+  auto monad_state = utils::cast<AnfNodePtr>((*equiv)[monad_state_]);
   MS_EXCEPTION_IF_NULL(scale);
   MS_EXCEPTION_IF_NULL(variable);
   MS_EXCEPTION_IF_NULL(accumulation);
   MS_EXCEPTION_IF_NULL(learning_rate);
   MS_EXCEPTION_IF_NULL(gradient);
   MS_EXCEPTION_IF_NULL(momentum);
+  MS_EXCEPTION_IF_NULL(monad_state);
 
   auto prim = std::make_shared<Primitive>(kFusedScaleApplyMomentum);
   MS_EXCEPTION_IF_NULL(prim);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), scale,    variable, accumulation,
-                                    learning_rate,      gradient, momentum};
+                                    learning_rate,      gradient, momentum, monad_state};
   auto replace_node = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(replace_node);
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};

@@ -20,11 +20,18 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <unordered_map>
 #include "ir/anf.h"
 #include "ir/primitive.h"
+#include "utils/flags.h"
 
 namespace mindspore {
 namespace prim {
+inline const ValuePtr kValueOne = std::make_shared<Int64Imm>(1);
+inline const std::unordered_map<std::string, ValuePtr> kSideEffectPropagate = {
+  {mindspore::GRAPH_FLAG_SIDE_EFFECT_PROPAGATE, kValueOne},
+};
+
 constexpr auto kGather = "Gather";
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
@@ -312,6 +319,7 @@ inline const PrimitivePtr kPrimMakeRowTensor = std::make_shared<Primitive>("Make
 inline const PrimitivePtr kPrimRowTensorGetValues = std::make_shared<Primitive>("RowTensorGetValues");
 inline const PrimitivePtr kPrimRowTensorGetIndices = std::make_shared<Primitive>("RowTensorGetIndices");
 inline const PrimitivePtr kPrimRowTensorGetDenseShape = std::make_shared<Primitive>("RowTensorGetDenseShape");
+inline const PrimitivePtr kPrimRowTensorAdd = std::make_shared<Primitive>("RowTensorAdd");
 
 // SparseTensor
 inline const PrimitivePtr kPrimMakeSparseTensor = std::make_shared<Primitive>("MakeSparseTensor");
@@ -417,10 +425,12 @@ inline const PrimitivePtr kPrimGpuConvertToDynamicShape = std::make_shared<Primi
 inline const PrimitivePtr kPrimErrorOnDynamicShapeInput = std::make_shared<Primitive>("ErrorOnDynamicShapeInput");
 
 // Other miscellaneous
-inline const PrimitivePtr kPrimDepend = std::make_shared<Primitive>("Depend");
+inline const PrimitivePtr kPrimDepend = std::make_shared<Primitive>("Depend", kSideEffectPropagate);
 inline const PrimitivePtr kPrimReformat = std::make_shared<Primitive>("Reformat");
-inline const PrimitivePtr kPrimPartial = std::make_shared<Primitive>("Partial");
-inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("identity");
+inline const PrimitivePtr kPrimLoad = std::make_shared<Primitive>("Load");
+inline const PrimitivePtr kPrimUpdateState = std::make_shared<Primitive>("UpdateState");
+inline const PrimitivePtr kPrimPartial = std::make_shared<Primitive>("Partial", kSideEffectPropagate);
+inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("identity", kSideEffectPropagate);
 inline const PrimitivePtr kPrimHookBackward = std::make_shared<Primitive>("HookBackward");
 inline const PrimitivePtr kPrimPrintShapeType = std::make_shared<Primitive>("PrintShapeType");
 inline const PrimitivePtr kPrimSameTypeShape = std::make_shared<Primitive>("SameTypeShape");
@@ -438,6 +448,7 @@ inline const PrimitivePtr kPrimCustomPredict = std::make_shared<Primitive>("Cust
 inline const PrimitivePtr kPrimPriorBox = std::make_shared<Primitive>("PriorBox");
 inline const PrimitivePtr kPrimQuantDTypeCast = std::make_shared<Primitive>("QuantDTypeCast");
 inline const PrimitivePtr kPrimWhile = std::make_shared<Primitive>("While");
+inline const PrimitivePtr kPrimPull = std::make_shared<Primitive>("Pull");
 
 // Structures
 inline const PrimitivePtr kPrimMakeList = std::make_shared<Primitive>("make_list");
@@ -462,7 +473,7 @@ inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_re
 
 // Other primitive not used by backend but used in core;
 inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
-inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J");
+inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J", kSideEffectPropagate);
 
 // Used to build graph which have keyword arguments
 inline const PrimitivePtr kPrimExtractKeywordArg = std::make_shared<Primitive>("extract_keyword_arg");

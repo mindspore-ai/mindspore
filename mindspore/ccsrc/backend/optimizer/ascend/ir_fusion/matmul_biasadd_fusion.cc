@@ -31,6 +31,20 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
                                               const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(graph);
+
+  auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
+  if (matmul == nullptr || !matmul->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Get CNode MatMul failed!"
+                      << " trace: " << trace::DumpSourceLines(node);
+  }
+
+  // If there is a side-effect operator in the fusion, do not merge
+  MonadState state_matmul = GetMonadState(matmul);
+  MonadState state_node = GetMonadState(node, matmul);
+  if (!IsStateEquivalent(state_matmul, state_node)) {
+    return node;
+  }
+
   std::vector<AnfNodePtr> inputs;
   inputs.emplace_back(NewValueNode(std::make_shared<Primitive>(prim::kPrimMatMul->name())));
   inputs.emplace_back(GetAnfNodeByVar(equiv, x0_));
@@ -41,11 +55,6 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
   new_node->set_scope(node->scope());
   new_node->set_abstract(node->abstract());
 
-  auto matmul = GetAnfNodeByVar(equiv, matmul_var_);
-  if (matmul == nullptr || !matmul->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Get CNode MatMul failed!"
-                      << " trace: " << trace::DumpSourceLines(node);
-  }
   AnfAlgo::CopyNodeAttrs(matmul, new_node);
   return new_node;
 }

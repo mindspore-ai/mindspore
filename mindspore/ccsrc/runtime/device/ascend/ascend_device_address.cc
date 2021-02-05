@@ -524,6 +524,9 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
                                            const void *host_ptr) const {
   MS_LOG(INFO) << "SyncHostToDevice, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
+  if (type_id_ > kMonadTypeBegin && type_id_ < kMonadTypeEnd) {
+    return true;
+  }
   SyncStream();
   bool sync_ok = false;
   std::vector<size_t> host_shape;

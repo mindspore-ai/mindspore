@@ -362,7 +362,7 @@ class PynativeEliminater : public OptimizerCaller {
                                         CheckSymbolVNode(zeros_like_vnode.GetNode(node), "zeros_like"))) {
       auto rep = (arg).GetNode(node);
       if (rep != nullptr) {
-        if (rep->isa<ValueNode>()) {
+        if (rep->isa<ValueNode>() && !HasAbstractMonad(rep)) {
           auto value_node = rep->cast<ValueNodePtr>();
           auto new_value_node = NewValueNode(FillZero(value_node->value()));
           new_value_node->set_has_new_value(value_node->has_new_value());
@@ -436,12 +436,12 @@ class AllReduceConstElim : public OptimizerCaller {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> x;
     auto pattern = PPrimitive(prim::kPrimAllReduce, x);
-    // If AllReduce takes contant value as input and values across devices are all the same(ensured by parallel mode)
+    // If AllReduce takes constant value as input and values across devices are all the same(ensured by parallel mode)
     if (pattern.TryCapture(node) && IsVNode(x.GetNode(node)) &&
         (pattern.GetFuncGraph()->has_flag(parallel::AUTO_PARALLEL) ||
          pattern.GetFuncGraph()->has_flag(parallel::SEMI_AUTO_PARALLEL))) {
       auto cur_func_graph = pattern.GetFuncGraph();
-      // If reduce operation is sum, then multiply constant by number of devices, otherwise just return the contant
+      // If reduce operation is sum, then multiply constant by number of devices, otherwise just return the constant
       auto prim_cnode = pattern.GetOriginalNode();
       MS_EXCEPTION_IF_NULL(prim_cnode);
       auto primitive = GetCNodePrimitive(prim_cnode);
@@ -481,6 +481,37 @@ class AllReduceConstElim : public OptimizerCaller {
     return nullptr;
   }
 };
+
+// This pattern introduced by Depend(CollectCNodeWithIsolateNodes) in program_specialize.cc
+// {{prim::kPrimDepend, X, Y}, Xs}->{prim::kPrimDepend, {X, Xs}, Y}
+class FloatDependGCall : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    // as IsCNodeDup had checked the size of inputs must be greater or equal than 1, so no check here.
+    if (IsPrimitiveCNode(inputs[0], prim::kPrimDepend)) {
+      auto &depend_inputs = inputs[0]->cast<CNodePtr>()->inputs();
+      if (depend_inputs.size() != 3) {
+        return nullptr;
+      }
+      // put {Y, Xs} to new_inputs;
+      std::vector<AnfNodePtr> new_inputs({depend_inputs[1]});
+      new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
+      TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
+      ScopePtr scope = node->scope();
+      ScopeGuard scope_guard(scope);
+      auto new_call_node = node->func_graph()->NewCNode(new_inputs);
+      auto new_node = node->func_graph()->NewCNode({depend_inputs[0], new_call_node, depend_inputs[2]});
+      return new_node;
+    }
+    return nullptr;
+  }
+};
+
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

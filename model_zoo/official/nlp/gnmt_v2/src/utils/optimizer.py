@@ -414,7 +414,5 @@ class AdamWeightDecayDynamicLR(Optimizer):
                                           self.params, self.moments1, self.moments2, gradients, self.decay_flag)
 
         added_global_step = self.global_step + self.one
-        F.control_depend(lr, added_global_step)
         self.global_step = added_global_step
-
         return updated_velocity

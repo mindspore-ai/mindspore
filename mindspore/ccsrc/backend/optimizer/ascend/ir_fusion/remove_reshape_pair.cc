@@ -34,13 +34,14 @@ const AnfNodePtr RemoveReshapePair::Process(const FuncGraphPtr &func_graph, cons
                                             const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
-  auto out_reshape = CheckAnfNodeIfCNodeAndInputSize(node, kBackendReshapeInputNum);
+  auto out_reshape = CheckAnfNodeIfCNodeAndInputSize(node, kBackendReshapeInputTensorNum);
   MS_EXCEPTION_IF_NULL(out_reshape);
   // If reshape operator used by more than one other operators, reshape operator cant not be deleted  directly
   if (IsUsedByOthers(func_graph, out_reshape)) {
     return nullptr;
   }
-  auto in_reshape = CheckAnfNodeIfCNodeAndInputSize(AnfAlgo::GetInputNode(out_reshape, 0), kBackendReshapeInputNum);
+  auto in_reshape =
+    CheckAnfNodeIfCNodeAndInputSize(AnfAlgo::GetInputNode(out_reshape, 0), kBackendReshapeInputTensorNum);
   MS_EXCEPTION_IF_NULL(in_reshape);
   if (IsUsedByOthers(func_graph, in_reshape)) {
     return nullptr;

@@ -18,7 +18,6 @@
 import math
 import operator
 from functools import reduce, partial
-from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore import log as logger
 import numpy as np
@@ -855,7 +854,7 @@ class FusedBatchNorm(Primitive):
         (128, 64, 32, 64)
     """
     __mindspore_signature__ = (
-        sig.make_sig('input_x', dtype=sig.sig_dtype.T2),
+        sig.make_sig('input_x', dtype=sig.sig_dtype.T1),
         sig.make_sig('scale', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('bias', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('mean', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -952,7 +951,7 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         (128, 64, 32, 64)
     """
     __mindspore_signature__ = (
-        sig.make_sig('input_x', dtype=sig.sig_dtype.T2),
+        sig.make_sig('input_x', dtype=sig.sig_dtype.T1),
         sig.make_sig('scale', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('bias', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('mean', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -1955,6 +1954,11 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         >>> print(output.shape)
         (10, 32, 32, 32)
     """
+    __mindspore_signature__ = (
+        sig.make_sig('out_backprop', dtype=sig.sig_dtype.T),
+        sig.make_sig('filter', dtype=sig.sig_dtype.T1),
+        sig.make_sig('input_sizes', dtype=sig.sig_dtype.T2)
+    )
 
     @prim_attr_register
     def __init__(self,
@@ -2408,7 +2412,7 @@ class ApplyMomentum(PrimitiveWithInfer):
         sig.make_sig('accumulation', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('learning_rate', dtype=sig.sig_dtype.T1),
         sig.make_sig('gradient', dtype=sig.sig_dtype.T),
-        sig.make_sig('momentum', dtype=sig.sig_dtype.T2),
+        sig.make_sig('momentum', dtype=sig.sig_dtype.T2)
     )
 
     @prim_attr_register
@@ -2418,6 +2422,7 @@ class ApplyMomentum(PrimitiveWithInfer):
         validator.check_value_type('gradient_scale', gradient_scale, [float], self.name)
         self.init_prim_io_names(inputs=['variable', 'accumulation', 'learning_rate', 'gradient', 'momentum'],
                                 outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, v_shape, a_shape, l_shape, g_shape, m_shape):
         return v_shape
@@ -2687,6 +2692,7 @@ class SGD(PrimitiveWithCheck):
             raise ValueError(f"Nesterov need zero dampening!")
         self.init_prim_io_names(inputs=['parameters', 'gradient', 'learning_rate', 'accum', 'momentum', 'stat'],
                                 outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def check_shape(self, parameters_shape, gradient_shape, learning_rate_shape,
                     accum_shape, momentum_shape, stat_shape):
@@ -2771,6 +2777,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['var', 'mean_square', 'moment', 'learning_rate', 'grad',
                                         'rho', 'momentum', 'epsilon'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, mean_square_shape, moment_shape, learning_rate_shape, grad_shape, decay_shape,
                     momentum_shape, epsilon_shape):
@@ -2868,6 +2875,7 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, mean_gradient_shape, mean_square_shape, moment_shape, grad_shape,
                     learning_rate_shape, decay_shape, momentum_shape, epsilon_shape):
@@ -3045,6 +3053,7 @@ class DropoutGenMask(Primitive):
         validator.check_value_type("Seed0", Seed0, [int], self.name)
         validator.check_value_type("Seed1", Seed1, [int], self.name)
         self.add_prim_attr("_random_effect", True)
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class DropoutDoMask(PrimitiveWithInfer):
@@ -4065,6 +4074,7 @@ class Adam(PrimitiveWithInfer):
     def __init__(self, use_locking=False, use_nesterov=False):
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape):
@@ -4291,7 +4301,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
         sig.make_sig('beta2', dtype=sig.sig_dtype.T),
         sig.make_sig('epsilon', dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
@@ -4301,6 +4311,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['var', 'm', 'v', 'beta1_power', 'beta2_power', 'lr', 'beta1', 'beta2',
                                         'epsilon', 'grad', 'indices'],
                                 outputs=['var', 'm', 'v'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
@@ -4429,7 +4440,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         sig.make_sig('beta2', dtype=sig.sig_dtype.T),
         sig.make_sig('epsilon', dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
@@ -4439,6 +4450,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['var', 'm', 'v', 'beta1_power', 'beta2_power', 'lr', 'beta1', 'beta2',
                                         'epsilon', 'grad', 'indices'],
                                 outputs=['var', 'm', 'v'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
@@ -4533,13 +4545,15 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('linear', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
     def __init__(self, lr, l1, l2, lr_power, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'indices'],
                                 outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
+
         validator.check_value_type("lr", lr, [float], self.name)
         validator.check_value_type("l1", l1, [float], self.name)
         validator.check_value_type("l2", l2, [float], self.name)
@@ -4642,20 +4656,23 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         sig.make_sig('l1', dtype=sig.sig_dtype.T),
         sig.make_sig('l2', dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad', 'indices'],
                                 outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
-    def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
+    def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape,
+                    grad_shape, indices_shape):
         validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         return [1], [1]
 
-    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
+    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype,
+                    grad_dtype, indices_dtype):
         args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
         validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, [mstype.float32], self.name)
@@ -4932,12 +4949,13 @@ class ApplyAdaMax(PrimitiveWithInfer):
         sig.make_sig('beta1', dtype=sig.sig_dtype.T3),
         sig.make_sig('beta2', dtype=sig.sig_dtype.T4),
         sig.make_sig('epsilon', dtype=sig.sig_dtype.T5),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         """Initialize ApplyAdaMax"""
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, lr_shape,
                     beta1_shape, beta2_shape, epsilon_shape, grad_shape):
@@ -5061,12 +5079,13 @@ class ApplyAdadelta(PrimitiveWithInfer):
         sig.make_sig('lr', dtype=sig.sig_dtype.T1),
         sig.make_sig('rho', dtype=sig.sig_dtype.T2),
         sig.make_sig('epsilon', dtype=sig.sig_dtype.T3),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         """Initialize ApplyAdadelta"""
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, accum_shape, accum_update_shape, lr_shape, rho_shape,
                     epsilon_shape, grad_shape):
@@ -5166,12 +5185,13 @@ class ApplyAdagrad(PrimitiveWithInfer):
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('lr', dtype=sig.sig_dtype.T1),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self, update_slots=True):
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, accum_shape, lr_shape, grad_shape):
         validator.check('accum shape', accum_shape, 'var shape', var_shape, Rel.EQ, self.name)
@@ -5260,13 +5280,14 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('lr', dtype=sig.sig_dtype.T1),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self, epsilon, update_slots=True):
         validator.check_value_type("epsilon", epsilon, [float], self.name)
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, accum_shape, lr_shape, grad_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
@@ -5353,7 +5374,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
@@ -5362,6 +5383,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         validator.check_is_float(lr, "lr", self.name)
         validator.check_value_type("update_slots", update_slots, [bool], self.name)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, accum_shape, grad_shape, indices_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
@@ -5450,7 +5472,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
@@ -5459,6 +5481,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         self.epsilon = validator.check_value_type("epsilon", epsilon, [float], self.name)
         self.use_locking = validator.check_value_type("update_slots", update_slots, [bool], self.name)
         self.update_slots = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, accum_shape, grad_shape, indices_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
@@ -5553,13 +5576,14 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         sig.make_sig('lr', dtype=sig.sig_dtype.T1),
         sig.make_sig('l1', dtype=sig.sig_dtype.T2),
         sig.make_sig('l2', dtype=sig.sig_dtype.T3),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad'],
                                 outputs=['var', 'accum'])
+        self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape):
@@ -5672,19 +5696,22 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         sig.make_sig('l1', dtype=sig.sig_dtype.T2),
         sig.make_sig('l2', dtype=sig.sig_dtype.T3),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T4),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T4)
     )
 
     @prim_attr_register
     def __init__(self, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'lr', 'l1', 'l2', 'grad', 'indices'],
                                 outputs=['var', 'accum'])
+        self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
-    def check_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape):
+    def check_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape,
+                    grad_shape, indices_shape):
         validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
 
-    def check_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype, grad_dtype, indices_dtype):
+    def check_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype,
+                    grad_dtype, indices_dtype):
         args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
         validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, [mstype.float16, mstype.float32], self.name)
@@ -5772,14 +5799,16 @@ class ApplyAddSign(PrimitiveWithInfer):
         sig.make_sig('alpha', dtype=sig.sig_dtype.T2),
         sig.make_sig('sign_decay', dtype=sig.sig_dtype.T3),
         sig.make_sig('beta', dtype=sig.sig_dtype.T3),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         "Initialize ApplyAddSign"
+        self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, m_shape, lr_shape, alpha_shape, sign_decay_shape, beta_shape, grad_shape):
+    def infer_shape(self, var_shape, m_shape, lr_shape, alpha_shape, sign_decay_shape,
+                    beta_shape, grad_shape):
         validator.check('m_shape', m_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         validator.check('grad_shape', grad_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         lr_shape_len = len(lr_shape)
@@ -5800,7 +5829,8 @@ class ApplyAddSign(PrimitiveWithInfer):
             validator.check_int(beta_shape[0], 1, Rel.EQ, "beta_shape[0]", self.name)
         return var_shape, m_shape
 
-    def infer_dtype(self, var_dtype, m_dtype, lr_dtype, alpha_dtype, sign_decay_dtype, beta_dtype, grad_dtype):
+    def infer_dtype(self, var_dtype, m_dtype, lr_dtype, alpha_dtype, sign_decay_dtype,
+                    beta_dtype, grad_dtype):
         valid_dtypes = [mstype.float16, mstype.float32]
         args = {'var': var_dtype, 'm': m_dtype, 'grad': grad_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
@@ -5892,14 +5922,16 @@ class ApplyPowerSign(PrimitiveWithInfer):
         sig.make_sig('logbase', dtype=sig.sig_dtype.T),
         sig.make_sig('sign_decay', dtype=sig.sig_dtype.T),
         sig.make_sig('beta', dtype=sig.sig_dtype.T),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         "Initialize ApplyPowerSign"
+        self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, m_shape, lr_shape, logbase_shape, sign_decay_shape, beta_shape, grad_shape):
+    def infer_shape(self, var_shape, m_shape, lr_shape, logbase_shape, sign_decay_shape,
+                    beta_shape, grad_shape):
         validator.check('m_shape', m_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         validator.check('grad_shape', grad_shape, 'var_shape', var_shape, Rel.EQ, self.name)
         lr_shape_len = len(lr_shape)
@@ -5920,7 +5952,8 @@ class ApplyPowerSign(PrimitiveWithInfer):
             validator.check_int(beta_shape[0], 1, Rel.EQ, "beta_shape[0]", self.name)
         return var_shape, m_shape
 
-    def infer_dtype(self, var_dtype, m_dtype, lr_dtype, logbase_dtype, sign_decay_dtype, beta_dtype, grad_dtype):
+    def infer_dtype(self, var_dtype, m_dtype, lr_dtype, logbase_dtype, sign_decay_dtype,
+                    beta_dtype, grad_dtype):
         valid_dtypes = [mstype.float16, mstype.float32]
         args = {'var': var_dtype, 'm': m_dtype, 'grad': grad_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
@@ -5979,12 +6012,13 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('alpha', dtype=sig.sig_dtype.T1),
-        sig.make_sig('delta', dtype=sig.sig_dtype.T),
+        sig.make_sig('delta', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         "Initialize ApplyGradientDescent"
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, alpha_shape, delta_shape):
         validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
@@ -6060,12 +6094,13 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         sig.make_sig('alpha', dtype=sig.sig_dtype.T1),
         sig.make_sig('l1', dtype=sig.sig_dtype.T2),
         sig.make_sig('l2', dtype=sig.sig_dtype.T3),
-        sig.make_sig('delta', dtype=sig.sig_dtype.T),
+        sig.make_sig('delta', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
     def __init__(self):
         "Initialize ApplyGradientDescent"
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, alpha_shape, l1_shape, l2_shape, delta_shape):
         validator.check('delta shape', delta_shape, 'var shape', var_shape, Rel.EQ, self.name)
@@ -6246,6 +6281,7 @@ class ApplyFtrl(PrimitiveWithInfer):
     def __init__(self, use_locking=False):
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'lr', 'l1', 'l2', 'lr_power'],
                                 outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
     def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, lr_shape, l1_shape, l2_shape,
@@ -6254,7 +6290,8 @@ class ApplyFtrl(PrimitiveWithInfer):
         validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
         return var_shape
 
-    def infer_dtype(self, var_type, accum_type, linear_type, grad_type, lr_type, l1_type, l2_type, lr_power_type):
+    def infer_dtype(self, var_type, accum_type, linear_type, grad_type, lr_type, l1_type, l2_type,
+                    lr_power_type):
         valid_dtypes = [mstype.float16, mstype.float32]
         args = {'var': var_type, 'accum': accum_type, 'linear': linear_type, 'grad': grad_type}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
@@ -6336,7 +6373,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('linear', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
@@ -6352,6 +6389,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'indices'],
                                 outputs=['var', 'accum', 'linear'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def check_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
@@ -6443,7 +6481,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         sig.make_sig('accum', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('linear', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('grad', dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
@@ -6458,6 +6496,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
         self.l2_shrinkage = validator.check_value_type("l2_shrinkage", l2_shrinkage, [float], self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
         validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)

@@ -146,7 +146,7 @@ AnfNodePtr HyperMap::FullMake(TypePtr, const FuncGraphPtr &func_graph, const Anf
 
   (void)std::transform(arg_map.begin(), arg_map.end(), std::back_inserter(inputs),
                        [](const std::pair<AnfNodePtr, Any> &item) { return item.first; });
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraphPtr &func_graph,
@@ -180,12 +180,12 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<List> &type, const FuncGraph
     (void)std::transform(
       arg_map.begin(), arg_map.end(), std::back_inserter(inputs2),
       [&func_graph, i](const std::pair<AnfNodePtr, Any> &item) {
-        return func_graph->NewCNode({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
+        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
       });
 
-    inputs.push_back(func_graph->NewCNode(inputs2));
+    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
   }
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph,
@@ -218,12 +218,12 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Tuple> &type, const FuncGrap
 
     (void)std::transform(
       arg_map.begin(), arg_map.end(), std::back_inserter(inputs2), [&func_graph, &i](std::pair<AnfNodePtr, Any> item) {
-        return func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(i)});
+        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(i)});
       });
 
-    inputs.push_back(func_graph->NewCNode(inputs2));
+    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
   }
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph,
@@ -248,13 +248,13 @@ AnfNodePtr HyperMap::FullMake(const std::shared_ptr<Class> &type, const FuncGrap
 
     int64_t j = 0;
     for (auto item : arg_map) {
-      inputs2.push_back(func_graph->NewCNode({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
+      inputs2.push_back(func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
       j++;
     }
 
-    inputs.push_back(func_graph->NewCNode(inputs2));
+    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
   }
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 AnfNodePtr HyperMap::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_map) {
@@ -318,8 +318,8 @@ ArgsPairList HyperMap::Harmonize(const FuncGraphPtr &func_graph, const ArgsPairL
     for (auto &item : args_spec_list) {
       if (!IsSubType(item.second, type_tensor)) {
         TypePtr type_tensor_ele = std::make_shared<TensorType>(item.second);
-        ret.push_back(
-          std::make_pair(func_graph->NewCNode({NewValueNode(prim::kPrimScalarToArray), item.first}), type_tensor_ele));
+        ret.push_back(std::make_pair(func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimScalarToArray), item.first}),
+                                     type_tensor_ele));
       } else {
         ret.push_back(std::make_pair(item.first, item.second));
       }
@@ -414,14 +414,14 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
     if (tail_type_ == kGradAll) {
       MS_EXCEPTION_IF_NULL((*sequeue)[i]);
       if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>()) {
-        elems.push_back(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
+        elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
       }
     } else {
-      elems.push_back(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
+      elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
     }
   }
 
-  ret->set_output(ret->NewCNode(elems));
+  ret->set_output(ret->NewCNodeInOrder(elems));
   return ret;
 }
 
@@ -458,7 +458,7 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   }
 
   // make fprob first result, maketuple's forward result.
-  AnfNodePtr out = fg->NewCNode(params);
+  AnfNodePtr out = fg->NewCNodeInOrder(params);
 
   // make fprob second result, maketuple's backward function.
   FuncGraphPtr b = std::make_shared<FuncGraph>();
@@ -472,14 +472,14 @@ FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &arg
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
   grads.push_back(NewValueNode(newenv));
   for (int64_t i = 0; i < tuple_size; ++i) {
-    grads.push_back(b->NewCNode({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
+    grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), dout, NewValueNode(i)}));
   }
 
   b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  b->set_output(b->NewCNode(grads));
+  b->set_output(b->NewCNodeInOrder(grads));
 
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  fg->set_output(fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
+  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeTuple));
   return fg;
 }
@@ -499,7 +499,7 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   }
 
   // make fprob first result, maketuple's forward result.
-  AnfNodePtr out = fg->NewCNode(params);
+  AnfNodePtr out = fg->NewCNodeInOrder(params);
 
   // make fprob second result, maketuple's backward function.
   FuncGraphPtr b = std::make_shared<FuncGraph>();
@@ -513,14 +513,14 @@ FuncGraphPtr MakeListGradient::GenerateFuncGraph(const AbstractBasePtrList &args
   grads.push_back(NewValueNode(prim::kPrimMakeTuple));
   grads.push_back(NewValueNode(newenv));
   for (int64_t i = 0; i < list_size; ++i) {
-    grads.push_back(b->NewCNode({NewValueNode(prim::kPrimListGetItem), dout, NewValueNode(i)}));
+    grads.push_back(b->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), dout, NewValueNode(i)}));
   }
 
   b->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  b->set_output(b->NewCNode(grads));
+  b->set_output(b->NewCNodeInOrder(grads));
 
   fg->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  fg->set_output(fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
+  fg->set_output(fg->NewCNodeInOrder({NewValueNode(prim::kPrimMakeTuple), out, NewValueNode(b)}));
   (void)fg->transforms().emplace("primal", FuncGraphTransform(prim::kPrimMakeList));
   return fg;
 }
@@ -545,7 +545,7 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weigh
   if (weights != nullptr) {
     weights_node = weights;
   } else if (!weight_args.empty()) {
-    weights_node = k_child->NewCNode(weight_args);
+    weights_node = k_child->NewCNodeInOrder(weight_args);
   }
 
   std::vector<AnfNodePtr> inputs;
@@ -553,11 +553,11 @@ FuncGraphPtr GradOperation::GetGrad(const AnfNodePtr &k, const AnfNodePtr &weigh
   for (size_t i = 0; i < forward_graph_params.size(); ++i) {
     inputs.push_back(k_child->add_parameter());
   }
-  auto k_app = k_child->NewCNode(inputs);
+  auto k_app = k_child->NewCNodeInOrder(inputs);
 
   auto tuple_get_item = NewValueNode(prim::kPrimTupleGetItem);
-  auto f_app = k_child->NewCNode({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(0))});
-  auto bprop = k_child->NewCNode({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(1))});
+  auto f_app = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(0))});
+  auto bprop = k_child->NewCNodeInOrder({tuple_get_item, k_app, NewValueNode(static_cast<int64_t>(1))});
 
   GradByParameter(k_child, f_app, bprop, weights_node);
   return k_child;
@@ -573,31 +573,31 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
     bprop_arg = k_child->add_parameter();
   } else {
     auto ones_like = prim::GetPythonOps("ones_like");
-    bprop_arg = k_child->NewCNode({NewValueNode(ones_like), f_app});
+    bprop_arg = k_child->NewCNodeInOrder({NewValueNode(ones_like), f_app});
   }
 
-  AnfNodePtr b_app = k_child->NewCNode({bprop, bprop_arg});
+  AnfNodePtr b_app = k_child->NewCNodeInOrder({bprop, bprop_arg});
 
   CNodePtr fv_bprop = nullptr;
   if (get_by_list_) {
     // python code: grads = hyper_map(F.partial(env_get, env), weights)
     AnfNodePtr env =
-      k_child->NewCNode({NewValueNode(prim::kPrimTupleGetItem), b_app, NewValueNode(static_cast<int64_t>(0))});
+      k_child->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), b_app, NewValueNode(static_cast<int64_t>(0))});
     AnfNodePtr partial_env_get =
-      k_child->NewCNode({NewValueNode(prim::kPrimPartial), NewValueNode(prim::GetPythonOps("env_get")), env});
+      k_child->NewCNodeInOrder({NewValueNode(prim::kPrimPartial), NewValueNode(prim::GetPythonOps("env_get")), env});
     MetaFuncGraphPtr hyper_map = std::make_shared<HyperMap>();
-    fv_bprop = k_child->NewCNode({NewValueNode(hyper_map), partial_env_get, weights});
+    fv_bprop = k_child->NewCNodeInOrder({NewValueNode(hyper_map), partial_env_get, weights});
   }
 
   CNodePtr inputs_bprop = nullptr;
   if (get_all_) {
     TailPtr tail_grad_all = std::make_shared<Tail>("tail_grad_all", kGradAll);
-    inputs_bprop = k_child->NewCNode({NewValueNode(tail_grad_all), b_app});
+    inputs_bprop = k_child->NewCNodeInOrder({NewValueNode(tail_grad_all), b_app});
   }
 
   // Gradients wrt inputs and parameters
   if (fv_bprop != nullptr && inputs_bprop != nullptr) {
-    k_child->set_output(k_child->NewCNode({NewValueNode(kPrimMakeTuple), inputs_bprop, fv_bprop}));
+    k_child->set_output(k_child->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), inputs_bprop, fv_bprop}));
     return;
   }
 
@@ -616,7 +616,7 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   // b_app returns (EnvInstance(grads wrt params), grads wrt input0, grads wrt input1, ...),
   // so obtain first input grad by setting tail_type of Tail to kGradFirst.
   TailPtr tail_grad_first = std::make_shared<Tail>("tail_grad_first", kGradFirst);
-  k_child->set_output(k_child->NewCNode({NewValueNode(tail_grad_first), b_app}));
+  k_child->set_output(k_child->NewCNodeInOrder({NewValueNode(tail_grad_first), b_app}));
 }
 
 // Generate the graph.
@@ -659,7 +659,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(prim::kPrimJ));
   inputs.push_back(param_graph);
-  auto j = grad_fg->NewCNode(inputs);
+  auto j = grad_fg->NewCNodeInOrder(inputs);
   // df is checked in GetGrad
   FuncGraphPtr k_child = nullptr;
   {
@@ -706,26 +706,27 @@ FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_lis
 
   std::vector<AnfNodePtr> iters;
   (void)std::transform(lists.begin(), lists.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(std::string("list_iter")), item});
+    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("list_iter")), item});
   });
 
   std::vector<AnfNodePtr> nexts;
   (void)std::transform(iters.begin(), iters.end(), std::back_inserter(nexts), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(std::string("next")), item});
+    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("next")), item});
   });
 
   std::vector<AnfNodePtr> values;
   (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(values), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item});
+    return fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item});
   });
 
   (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
+    return fg_ptr->NewCNodeInOrder(
+      {NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
   });
 
   (void)values.insert(values.begin(), fn);
-  AnfNodePtr cnode_graph = fg_ptr->NewCNode(values);
-  AnfNodePtr resl = fg_ptr->NewCNode({NewValueNode(prim::kPrimMakeList), cnode_graph});
+  AnfNodePtr cnode_graph = fg_ptr->NewCNodeInOrder(values);
+  AnfNodePtr resl = fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimMakeList), cnode_graph});
 
   FuncGraphPtr fgnext_ptr = std::make_shared<FuncGraph>();
   fgnext_ptr->debug_info()->set_name("body");
@@ -736,7 +737,7 @@ FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_lis
   MakeCond(lists, fgnext_ptr, fgcond_ptr);
   MakeNext(lists, fgcond_ptr, fgnext_ptr);
 
-  CNodePtr output_cnode = fg_ptr->NewCNode({NewValueNode(fgcond_ptr), fn, resl});
+  CNodePtr output_cnode = fg_ptr->NewCNodeInOrder({NewValueNode(fgcond_ptr), fn, resl});
 
   auto inputs = output_cnode->inputs();
   (void)inputs.insert(inputs.end(), iters.begin(), iters.end());
@@ -759,7 +760,7 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
 
   std::vector<AnfNodePtr> hasnexts;
   (void)std::transform(iters.begin(), iters.end(), std::back_inserter(hasnexts), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(std::string("hasnext")), item});
+    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("hasnext")), item});
   });
 
   // cond = reduce(lambda a, b: g.apply(P.bool_and, a, b), hasnexts)
@@ -767,7 +768,7 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
   fgtrue_ptr->debug_info()->set_name("ftrue");
   fgtrue_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
 
-  CNodePtr fgtrue_output_cnode = fgtrue_ptr->NewCNode({NewValueNode(fgnext_ptr), fn, resl});
+  CNodePtr fgtrue_output_cnode = fgtrue_ptr->NewCNodeInOrder({NewValueNode(fgnext_ptr), fn, resl});
   auto inputs = fgtrue_output_cnode->inputs();
   (void)inputs.insert(inputs.end(), iters.begin(), iters.end());
   fgtrue_output_cnode->set_inputs(inputs);
@@ -778,8 +779,8 @@ void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
   fgfalse_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   fgfalse_ptr->set_output(resl);
 
-  AnfNodePtr output_cnode = fg_ptr->NewCNode({NewValueNode(prim::kPrimSwitch), NewValueNode(std::string("cond")),
-                                              NewValueNode(fgtrue_ptr), NewValueNode(fgfalse_ptr)});
+  AnfNodePtr output_cnode = fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), NewValueNode(std::string("cond")),
+                                                     NewValueNode(fgtrue_ptr), NewValueNode(fgfalse_ptr)});
   fgtrue_ptr->set_output(output_cnode);
 }
 
@@ -794,23 +795,24 @@ void ListMap::MakeNext(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr 
 
   std::vector<AnfNodePtr> nexts;
   (void)std::transform(iters.begin(), iters.end(), std::back_inserter(nexts), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(std::string("next")), item});
+    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("next")), item});
   });
 
   std::vector<AnfNodePtr> values;
   (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(values), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item, nullptr});
+    return fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item, nullptr});
   });
 
   iters.clear();
   (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
+    return fg_ptr->NewCNodeInOrder(
+      {NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
   });
 
   (void)values.insert(values.begin(), fn);
-  AnfNodePtr cnode_graph = fg_ptr->NewCNode(values);
-  AnfNodePtr resl = fg_ptr->NewCNode({NewValueNode(prim::kPrimListAppend), cnode_graph});
-  CNodePtr output_cnode = fg_ptr->NewCNode({NewValueNode(fgcond_ptr), fn, resl});
+  AnfNodePtr cnode_graph = fg_ptr->NewCNodeInOrder(values);
+  AnfNodePtr resl = fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimListAppend), cnode_graph});
+  CNodePtr output_cnode = fg_ptr->NewCNodeInOrder({NewValueNode(fgcond_ptr), fn, resl});
 
   auto inputs = output_cnode->inputs();
   (void)inputs.insert(inputs.end(), iters.begin(), iters.end());
@@ -853,15 +855,15 @@ FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_li
 
   int64_t tuple_size = SizeToLong(a_tuple->size());
   for (int64_t i = 0; i < tuple_size; ++i) {
-    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tup_a, NewValueNode(i)}));
+    elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), p_tup_a, NewValueNode(i)}));
   }
 
   tuple_size = SizeToLong(b_tuple->size());
   for (int64_t i = 0; i < tuple_size; ++i) {
-    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tup_b, NewValueNode(i)}));
+    elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), p_tup_b, NewValueNode(i)}));
   }
 
-  ret->set_output(ret->NewCNode(elems));
+  ret->set_output(ret->NewCNodeInOrder(elems));
   return ret;
 }
 
@@ -956,15 +958,15 @@ FuncGraphPtr TupleSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   elems.push_back(NewValueNode(prim::kPrimMakeTuple));
   if (step_value > 0) {
     for (int64_t index = start_index; index < stop_index; index = index + step_value) {
-      elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
+      elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
     }
   } else {
     for (int64_t index = start_index; index > stop_index; index = index + step_value) {
-      elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
+      elems.push_back(ret->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), p_tuple, NewValueNode(index)}));
     }
   }
 
-  ret->set_output(ret->NewCNode(elems));
+  ret->set_output(ret->NewCNodeInOrder(elems));
   return ret;
 }
 
@@ -978,7 +980,7 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   auto functions = ret_graph->add_parameter();
   auto index = ret_graph->add_parameter();
 
-  ret_graph->set_output(ret_graph->NewCNode({NewValueNode(prim::kPrimSwitchLayer), index, functions}));
+  ret_graph->set_output(ret_graph->NewCNodeInOrder({NewValueNode(prim::kPrimSwitchLayer), index, functions}));
   return ret_graph;
 }
 

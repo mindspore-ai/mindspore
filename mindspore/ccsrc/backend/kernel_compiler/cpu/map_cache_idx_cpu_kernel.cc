@@ -181,7 +181,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   std::vector<size_t> out_shape;
   out_shape.emplace_back(miss_count);
   std::vector<TypeId> dtypes;
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(node_); i++) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node_);
+  for (size_t i = 0; i < output_num; i++) {
     dtypes.push_back(AnfAlgo::GetOutputInferDataType(node_, i));
   }
   AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetOutputInferShape(node_, 0), out_shape, out_shape, out_shape},

@@ -163,6 +163,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimGetRefValue, {InferImplGetRefValue, true}},
     {prim::kPrimStateSetItem, {InferImplStateSetItem, true}},
     {prim::kPrimDepend, {InferImplDepend, true}},
+    {prim::kPrimUpdateState, {InferImplUpdateState, true}},
     {prim::kPrimControlDepend, {InferImplControlDepend, true}},
     // Debug
     {prim::kPrimDebug, {InferImplDebug, true}},
@@ -178,6 +179,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimRowTensorGetValues, {InferImplRowTensorGetValues, true}},
     {prim::kPrimRowTensorGetIndices, {InferImplRowTensorGetIndices, true}},
     {prim::kPrimRowTensorGetDenseShape, {InferImplRowTensorGetDenseShape, true}},
+    {prim::kPrimRowTensorAdd, {InferImplRowTensorAdd, false}},
     // Comm Ops
     {prim::kPrimAllReduce, {InferImplAllReduce, true}},
     {prim::kPrimBroadcast, {InferImplBroadcast, true}},

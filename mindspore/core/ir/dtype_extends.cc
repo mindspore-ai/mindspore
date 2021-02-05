@@ -123,7 +123,12 @@ TypePtr TypeIdToType(TypeId id) {
       return kKeyword;
     case kObjectTypeTensorType:
       return kTensorType;
+    case kObjectTypeUMonad:
+      return kUMonadType;
+    case kObjectTypeIOMonad:
+      return kIOMonadType;
     case kTypeUnknown:
+    case kMetaTypeProblem:
       return kTypeNone;
     default:
       MS_LOG(EXCEPTION) << "Not support the type: " << id;
@@ -390,6 +395,10 @@ TypePtr StringToType(const std::string &type_name) {
     type = FunctionStrToType(type_name);
   } else if (type_name == "mstype") {
     type = std::make_shared<TypeType>();
+  } else if (type_name == "UMonad") {
+    type = kUMonadType;
+  } else if (type_name == "IOMonad") {
+    type = kIOMonadType;
   } else {
     // - unsupported to convert
     // Class

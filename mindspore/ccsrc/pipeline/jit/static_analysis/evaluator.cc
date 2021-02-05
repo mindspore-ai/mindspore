@@ -97,29 +97,53 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                       << MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH)
                       << ", please call 'context.set_context(max_call_depth=value)' to adjust this value.";
   }
+  // Analysis for isolate nodes first, as some validation check in FuncGraph is isolate nodes;
+  for (const auto &node : fg->GetIsolateNodesInOrder()) {
+    AnfNodeConfigPtr node_conf = engine->MakeConfig(node, graph_context_);
+    MS_LOG(DEBUG) << "Analysis isolate_node begin, func graph: " << fg.get() << fg->ToString()
+                  << ", node_conf: " << node_conf->ToString();
+    auto isolate_base = engine->GetEvaluatedValue(node_conf)->abstract();
+    MS_LOG(DEBUG) << "Analysis isolate_node end, func graph: " << fg.get() << fg->ToString()
+                  << ", node_conf: " << node_conf->ToString() << ", abstract: " << isolate_base->ToString();
+  }
+
   const auto &all_nodes = TopoSort(func_node, SuccIncoming, [&fg](const AnfNodePtr &node) -> IncludeType {
     if (node->func_graph() != fg || node->isa<ValueNode>()) {
       return EXCLUDE;
     }
     return FOLLOW;
   });
+  bool isolate_node_propagate_flag = false;
   for (const auto &node : all_nodes) {
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, graph_context_);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg.get() << fg->ToString()
                   << ", node_conf: " << node_conf->ToString();
-    ret_base = engine->GetEvaluatedValue(node_conf)->abstract();
+    auto node_eval_result = engine->GetEvaluatedValue(node_conf);
+    ret_base = node_eval_result->abstract();
     MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg.get() << fg->ToString()
                   << ", node_conf: " << node_conf->ToString() << ", abstract: " << ret_base->ToString();
+    if (node->isa<CNode>()) {
+      isolate_node_propagate_flag |= node_eval_result->HasIsolateNodesPropagateCNodeFlag();
+      MS_LOG(DEBUG) << "Check isolate_nodes flag for node: " << node->DebugString()
+                    << ", abstract: " << ret_base->ToString()
+                    << ", flag: " << node_eval_result->HasIsolateNodesPropagateCNodeFlag();
+    }
   }
   engine->DecreaseFunctionCallDepth();
 
   MS_EXCEPTION_IF_NULL(ret_base);
   MS_LOG(DEBUG) << "BaseFuncGraph " << fg->ToString() << " eval end, evaluated abstract: " << ret_base->ToString()
                 << ", is stub: " << fg->stub();
+
   if (fg->stub()) {
-    return std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
+    ret_base = std::make_shared<AbstractUndetermined>();
   }
-  return std::make_shared<EvalResult>(ret_base, nullptr);
+  auto eval_result = std::make_shared<EvalResult>(ret_base, std::make_shared<AttrValueMap>());
+  if (isolate_node_propagate_flag) {
+    eval_result->SetIsolateNodesPropagateCNodeFlag(true);
+    eval_result->SetIsolateNodesPropagateFuncGraphFlag(true);
+  }
+  return eval_result;
 }
 
 AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {

@@ -32,6 +32,7 @@ using ActionItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 
 bool ParseAction(const ResourcePtr &res);
 bool SymbolResolveAction(const ResourcePtr &res);
+bool AutoMonadAction(const ResourcePtr &res);
 bool AbstractSpecializeAction(const ResourcePtr &res);
 bool GeOptimizeAction(const ResourcePtr &res);
 bool VmOptimizeAction(const ResourcePtr &res);

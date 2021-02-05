@@ -37,7 +37,7 @@ const AnfNodePtr DynamicRNNGradReformat::Process(const FuncGraphPtr &func_graph,
   MS_EXCEPTION_IF_NULL(node);
   auto split_v = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(split_v);
-  auto matmul = CheckAnfNodeIfCNodeAndInputSize(split_v->input(1), 3);
+  auto matmul = CheckAnfNodeIfCNodeAndInputSize(split_v->input(1), kMatMulInputTensorNum);
   MS_EXCEPTION_IF_NULL(matmul);
   auto input_node_with_idx = AnfAlgo::GetPrevNodeOutput(matmul, 0);
   auto input_node = input_node_with_idx.first;

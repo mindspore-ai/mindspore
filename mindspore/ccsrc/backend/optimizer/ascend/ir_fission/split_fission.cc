@@ -34,10 +34,7 @@ CNodePtr CreateSplitVNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inpu
 
 CNodePtr CreateBaseSplitVNode(const FuncGraphPtr &func_graph, const CNodePtr &origin_cnode) {
   MS_EXCEPTION_IF_NULL(origin_cnode);
-  if (origin_cnode->inputs().size() < kSplitInputNum) {
-    MS_LOG(EXCEPTION) << "The input number of split: " << origin_cnode->DebugString() << " should be "
-                      << kSplitInputNum - 1 << " trace: " << trace::DumpSourceLines(origin_cnode);
-  }
+  CheckCNodeInputSize(origin_cnode, kSplitInputTensorNum);
   return CreateSplitVNode(func_graph, origin_cnode->input(1));
 }
 

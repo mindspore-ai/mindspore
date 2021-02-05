@@ -207,6 +207,8 @@ class AbstractFunction : public AbstractBase {
   virtual AnfNodePtr tracking_id() const { return nullptr; }
   virtual void set_tracking_id(AnfNodePtr) {}
   virtual AnalysisContextPtr context() const { return nullptr; }
+  // Function which itself has IsolateNodes, not include used function or HOF.
+  virtual bool HasIsolateNodesFlag() const { return false; }
 };
 using AbstractFunctionPtrList = std::vector<AbstractFunctionPtr>;
 
@@ -615,6 +617,7 @@ class AbstractRef : public AbstractTensor {
     }
     return std::make_shared<AbstractRef>(ref_key_->Clone(), abs_tensor);
   }
+  AbstractBasePtr CloneAsTensor() const { return AbstractTensor::Clone(); }
   std::string ToString() const override;
   inline AbstractTensorPtr ref() { return shared_from_base<AbstractTensor>(); }
   inline AbstractBasePtr ref_key() const { return ref_key_; }
@@ -707,6 +710,53 @@ class AbstractSparseTensor : public AbstractUndetermined {
   AbstractTensorPtr values_;
   AbstractTuplePtr dense_shape_;
 };
+
+class AbstractMonad : public AbstractBase {
+ public:
+  ~AbstractMonad() override = default;
+  MS_DECLARE_PARENT(AbstractMonad, AbstractBase)
+
+  std::size_t hash() const override { return hash_combine({tid()}); }
+  TypePtr BuildType() const override { return GetTypeTrack(); }
+  AbstractBasePtr Broaden(uint8_t config) const override { return AbstractBase::Broaden(config); }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override = 0;
+  std::string ToString() const override {
+    std::ostringstream buffer;
+    buffer << type_name() << "(" << GetValueTrack()->ToString() << ")";
+    return buffer.str();
+  }
+
+ protected:
+  AbstractMonad(const ValuePtr &value, const TypePtr &type) : AbstractBase(value, type) {}
+};
+using AbstractMonadPtr = std::shared_ptr<AbstractMonad>;
+
+class AbstractUMonad : public AbstractMonad {
+ public:
+  explicit AbstractUMonad(const ValuePtr &value = kUMonad) : AbstractMonad(value, kUMonadType) {}
+  ~AbstractUMonad() override = default;
+  MS_DECLARE_PARENT(AbstractUMonad, AbstractMonad)
+
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractUMonad>(GetValueTrack()); }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+  bool operator==(const AbstractUMonad &other) const;
+  bool operator==(const AbstractBase &other) const override;
+};
+using AbstractUMonadPtr = std::shared_ptr<AbstractUMonad>;
+
+class AbstractIOMonad : public AbstractMonad {
+ public:
+  explicit AbstractIOMonad(const ValuePtr &value = kIOMonad) : AbstractMonad(value, kIOMonadType) {}
+  ~AbstractIOMonad() override = default;
+  MS_DECLARE_PARENT(AbstractIOMonad, AbstractMonad)
+
+  AbstractBasePtr Clone() const override { return std::make_shared<AbstractIOMonad>(GetValueTrack()); }
+  AbstractBasePtr Join(const AbstractBasePtr &other) override;
+  bool operator==(const AbstractIOMonad &other) const;
+  bool operator==(const AbstractBase &other) const override;
+};
+using AbstractIOMonadPtr = std::shared_ptr<AbstractIOMonad>;
+
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_ABSTRACT_VALUE_H_

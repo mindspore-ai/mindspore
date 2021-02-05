@@ -77,8 +77,8 @@ CNodePtr CreateSlice(const FuncGraphPtr &graph, const CNodePtr &unsort_segment_s
 
 bool CheckInputs(const CNodePtr &origin_node) {
   MS_EXCEPTION_IF_NULL(origin_node);
-  if (origin_node->size() != kUnsortedSegmentSumInputNum + 1) {
-    MS_LOG(DEBUG) << "UnsortedSegmentSum has wrong inputs num, not equal " << kUnsortedSegmentSumInputNum
+  if (AnfAlgo::GetInputTensorNum(origin_node) != kUnsortedSegmentSumInputTensorNum) {
+    MS_LOG(DEBUG) << "UnsortedSegmentSum has wrong inputs num, not equal " << kUnsortedSegmentSumInputTensorNum
                   << ". CNode= " << origin_node->DebugString();
     return false;
   }

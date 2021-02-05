@@ -138,7 +138,8 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
 
 void SetTensorDeviceInfo(const kernel::KernelBuildInfo &selected_kernel_info, const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     auto input_kernel_node = kernel_node->input(input_index + 1);
     MS_EXCEPTION_IF_NULL(input_kernel_node);
     auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
@@ -200,7 +201,8 @@ bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<Type
   auto inputs_format_position = iter->second.first;
   // If input position is empty, then insert all the input positions, because the input numbers of this op are variable.
   if (inputs_format_position.size() == 0) {
-    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); input_index++) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    for (size_t input_index = 0; input_index < input_num; input_index++) {
       inputs_format_position.push_back(input_index);
     }
   }
@@ -226,7 +228,8 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   auto inputs_format_position = iter->second.first;
   // If input position is empty, then insert all the input positions, because the input numbers of this op are variable.
   if (inputs_format_position.size() == 0) {
-    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); input_index++) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    for (size_t input_index = 0; input_index < input_num; input_index++) {
       inputs_format_position.push_back(input_index);
     }
   }
@@ -370,13 +373,15 @@ void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   }
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_format.emplace_back(kOpFormat_DEFAULT);
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index));
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(kernel_node); ++output_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(kOpFormat_DEFAULT);
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .. import layer
-from .. import _graph_kernels as G
+
 
 num_one = Tensor(np.ones([1]), mstype.float32)
 
 _lamb_opt = C.MultitypeFuncGraph("lamb_opt")
+
 
 @_lamb_opt.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number", "Tensor", "Tensor", "Tensor",
                     "Tensor", "Bool", "Bool")
@@ -158,67 +159,6 @@ def _update_run_op_ascend(beta1, beta2, eps, global_step, lr, weight_decay, para
     return gradient
 
 
-lamb_opt_graph_kernel = C.MultitypeFuncGraph("lamb_opt_graph_kernel")
-
-
-@lamb_opt_graph_kernel.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Number",
-                                "Tensor", "Tensor", "Tensor", "Tensor", "Bool")
-def _update_run_op_graph_kernel(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v, gradient, decay_flag):
-    """
-    Update parameters.
-
-    Args:
-        beta1 (Tensor): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
-        beta2 (Tensor): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
-        eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
-        lr (Tensor): Learning rate.
-        weight_decay (Number): Weight decay. Should be equal to or greater than 0.
-        global_step (Tensor): Global step.
-        param (Tensor): Parameters.
-        m (Tensor): m value of parameters.
-        v (Tensor): v value of parameters.
-        gradient (Tensor): Gradient of parameters.
-        decay_flag (bool): Specifies whether param update with weight decay.
-
-    Returns:
-        Tensor, the new value of v after updating.
-    """
-    op_mul = P.Mul()
-    op_square = P.Square()
-    op_cast = P.Cast()
-    op_shape = P.Shape()
-    op_pow = P.Pow()
-    op_norm = layer.Norm()
-    op_fill = P.Fill()
-    op_dtype = P.DType()
-
-    param_fp32 = op_cast(param, mstype.float32)
-    gradient_fp32 = op_cast(gradient, mstype.float32)
-
-    i6_ex = op_cast(global_step + num_one, mstype.float32)
-    i9 = op_cast(num_one, mstype.float32) - beta1
-    x1 = op_cast(num_one, mstype.float32) - beta2
-    i6 = op_cast(num_one, mstype.float32) - op_pow(beta1, i6_ex)
-    i3 = op_cast(num_one, mstype.float32) - op_pow(beta2, i6_ex)
-    i1 = op_square(gradient_fp32)
-    add3, update = G.LambNextMV()(i1, v, i3, gradient, m, i6, param, beta1, i9, beta2, x1, weight_decay, eps)
-
-    if decay_flag:
-        update = update + op_mul(weight_decay, param_fp32)
-
-    w_norm = op_norm(param_fp32)
-    g_norm = op_norm(gradient_fp32)
-    g_norm_hat = op_norm(add3)
-
-    zeros = F.zeros_like(w_norm)
-    ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
-    tens = op_fill(op_dtype(w_norm), op_shape(w_norm), 10.0)
-
-    next_param = G.LambUpdateWithLR()(g_norm, w_norm, g_norm_hat, lr, update, param, zeros, ones, tens)
-    next_v = F.control_depend(add3, next_param)
-    return next_v
-
-
 def _check_param_value(beta1, beta2, eps, prim_name):
     validator.check_value_type("beta1", beta1, [float], prim_name)
     validator.check_value_type("beta2", beta2, [float], prim_name)
@@ -323,51 +263,32 @@ class Lamb(Optimizer):
             self.global_step = Parameter(initializer(0, [1]), name='global_step')
             self.assignadd = P.AssignAdd()
         self.hyper_map = C.HyperMap()
-        self.enable_graph_kernel = context.get_context("device_target") == "Ascend" and \
-            context.get_context("enable_graph_kernel")
         self.device_ascend = context.get_context("device_target") == "Ascend"
 
     def construct(self, gradients):
         lr = self.get_lr()
-        if self.enable_graph_kernel:
-            if self.is_group:
-                if self.is_group_lr:
-                    optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel, self.beta1, self.beta2, self.eps,
-                                                            self.global_step),
-                                                  lr, self.weight_decay, self.params, self.moments1, self.moments2,
-                                                  gradients, self.decay_flags)
-                else:
-                    optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel, self.beta1, self.beta2, self.eps,
-                                                            self.global_step, lr),
-                                                  self.weight_decay, self.params, self.moments1, self.moments2,
-                                                  gradients, self.decay_flags)
-            else:
-                optim_result = self.hyper_map(F.partial(lamb_opt_graph_kernel, self.beta1, self.beta2, self.eps,
-                                                        self.global_step, lr, self.weight_decay),
-                                              self.params, self.moments1, self.moments2, gradients, self.decay_flags)
-        else:
-            lamb_opt = _lamb_opt_ascend if self.device_ascend else _lamb_opt
-            if self.is_group:
-                if self.is_group_lr:
-                    optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
-                                                            self.global_step),
-                                                  lr, self.weight_decay, self.params, self.moments1, self.moments2,
-                                                  gradients, self.decay_flags, self.optim_filter)
-                else:
-                    optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
-                                                            self.global_step, lr),
-                                                  self.weight_decay, self.params, self.moments1, self.moments2,
-                                                  gradients, self.decay_flags, self.optim_filter)
+        lamb_opt = _lamb_opt_ascend if self.device_ascend else _lamb_opt
+        if self.is_group:
+            if self.is_group_lr:
+                optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
+                                                        self.global_step),
+                                              lr, self.weight_decay, self.params, self.moments1, self.moments2,
+                                              gradients, self.decay_flags, self.optim_filter)
             else:
                 optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
-                                                        self.global_step, lr, self.weight_decay),
-                                              self.params, self.moments1, self.moments2, gradients,
-                                              self.decay_flags, self.optim_filter)
+                                                        self.global_step, lr),
+                                              self.weight_decay, self.params, self.moments1, self.moments2,
+                                              gradients, self.decay_flags, self.optim_filter)
+        else:
+            optim_result = self.hyper_map(F.partial(lamb_opt, self.beta1, self.beta2, self.eps,
+                                                    self.global_step, lr, self.weight_decay),
+                                          self.params, self.moments1, self.moments2, gradients,
+                                          self.decay_flags, self.optim_filter)
 
         if self.use_parallel:
-            self.broadcast_params(optim_result)
+            optim_result = F.depend(optim_result, self.broadcast_params(optim_result))
 
         if not self.dynamic_lr:
-            F.control_depend(lr, self.assignadd(self.global_step, 1))
+            optim_result = F.depend(optim_result, self.assignadd(self.global_step, 1))
 
         return optim_result

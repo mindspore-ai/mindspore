@@ -194,7 +194,7 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
   MS_EXCEPTION_IF_NULL(prim_cast_class);
   auto dtype_node = NewValueNode(TypeIdToType(type_id));
   auto cast_node = NewCNode({NewValueNode(prim_cast_class)}, graph);
-  return NewCNode({cast_node, param, dtype_node}, graph);
+  return graph->NewCNodeAfter(param, {cast_node, param, dtype_node});
 }
 
 void DoAutoCast(const std::string &func_name, const std::vector<Signature> &signature,
@@ -274,7 +274,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
       continue;
     }
     SignatureEnumRW sig = SignatureEnumRW::kRWDefault;
-    // If sig_size is 0 use defalut.
+    // If sig_size is 0 use default.
     if (sig_size > 0 && i < sig_size) {
       sig = signature[i].rw;
     } else if (has_var && i >= sig_size) {
@@ -289,7 +289,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
           auto source_element = source_tensor_type->element();
           if (cast_type != nullptr && IsSubType(source_element, kFloat) && *source_element != *cast_type) {
             auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
-            param = NewCNode({NewValueNode(cast), param, NewValueNode(cast_type)}, func_graph);
+            param = func_graph->NewCNodeAfter(param, {NewValueNode(cast), param, NewValueNode(cast_type)});
             type = cast_type->type_id() == kNumberTypeFloat16 ? kTensorTypeFP16 : kTensorTypeFP32;
           }
         }
@@ -309,7 +309,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   // process default
   ProcessDefault(func_name, args_spec_list.size(), signature, has_var, &op_inputs);
   DoAutoCast(func_name, signature, input_types, func_graph, &op_inputs, write_indices);
-  return func_graph->NewCNode(op_inputs);
+  return func_graph->NewCNodeInOrder(op_inputs);
 }
 }  // namespace
 

@@ -29,6 +29,7 @@
 
 #include "base/base.h"
 #include "base/user_data.h"
+#include "base/effect_info.h"
 #include "ir/kernel_info_dev.h"
 #include "ir/scope.h"
 #include "utils/info.h"
@@ -122,7 +123,7 @@ class AnfNode : public Base {
   const KernelInfoDevicePtr &kernel_info_ptr() { return kernel_info_; }
   void set_kernel_info(const KernelInfoDevicePtr &kernel_info) { kernel_info_ = kernel_info; }
 
-  AbstractBasePtr abstract() const { return abstract_; }
+  const AbstractBasePtr &abstract() const { return abstract_; }
   void set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }
 
   AbstractBasePtr intermediate_abstract() { return intermediate_abstract_; }
@@ -189,6 +190,8 @@ class AnfNode : public Base {
     return user_data_.has(T::key);
   }
 
+  void CloneUserData(const AnfNodePtr &node) { user_data_ = node->user_data_; }
+
   int64_t stage() { return stage_; }
   void set_stage(const int &stage) { stage_ = stage; }
 
@@ -225,11 +228,15 @@ class AnfNode : public Base {
 // stop_gradient_: a flag used to stop gradient.
 // Using stop_gradient() to get this flag, mainly used in ad.
 // Using set_stop_gradient() to set this flag.
-class CNode : public AnfNode {
+class CNode : public AnfNode, public EffectInfoHolder {
  public:
   CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph);
   CNode(const std::vector<AnfNodePtr> &inputs, const VarPtr &func_graph_as_var)
-      : AnfNode(nullptr), inputs_(inputs), func_graph_as_var_(func_graph_as_var), stop_gradient_(false) {}
+      : AnfNode(nullptr),
+        inputs_(inputs),
+        func_graph_as_var_(func_graph_as_var),
+        stop_gradient_(false),
+        input_tensor_num_(-1) {}
 
   ~CNode() override = default;
   MS_DECLARE_PARENT(CNode, AnfNode);
@@ -241,9 +248,9 @@ class CNode : public AnfNode {
   const size_t size() const { return inputs_.size(); }
   const AnfNodePtr input(size_t i) const { return inputs_[i]; }
   const std::vector<AnfNodePtr> &inputs() const { return inputs_; }
-  void add_input(const AnfNodePtr &input) { inputs_.push_back(input); }
+  void add_input(const AnfNodePtr &input);
   void set_input(size_t i, const AnfNodePtr &input);
-  void set_inputs(const std::vector<AnfNodePtr> &inputs) { inputs_ = inputs; }
+  void set_inputs(const std::vector<AnfNodePtr> &inputs);
 
   void add_input_value(const ValuePtr &input_value, const std::string &id) {
     inputs_value_.push_back(std::make_pair(input_value, id));
@@ -282,17 +289,27 @@ class CNode : public AnfNode {
     return iter == attrs_.cend() ? nullptr : iter->second;
   }
   bool HasAttr(const std::string &name) const { return attrs_.find(name) != attrs_.cend(); }
+  ssize_t input_tensor_num() const { return input_tensor_num_; }
+  void set_input_tensor_num(ssize_t input_tensor_num) { input_tensor_num_ = input_tensor_num; }
+
+  // Is effect have been handled.
+  bool IsEffectHandled() const { return effect_handled_; }
+
+  // Set effect handled or not.
+  void SetEffectHandled(bool handled) { effect_handled_ = handled; }
 
  private:
   std::vector<AnfNodePtr> inputs_;
   VarPtr func_graph_as_var_;
   bool stop_gradient_;
   bool in_forward_flag_ = false;
+  bool effect_handled_ = false;
   // inputs_value_ store cnode input value and id in pynative mode
   // output_value_ store cnode value and id in pynative mode
   std::vector<std::pair<ValuePtr, std::string>> inputs_value_;
   std::pair<ValuePtr, std::string> output_value_;
   std::unordered_map<std::string, ValuePtr> attrs_;
+  ssize_t input_tensor_num_ = -1;
 };
 
 // ANode represents the atomic node. It's derived Parameter and ValueNode.
@@ -344,10 +361,10 @@ class Parameter : public ANode {
     return shared_from_this() == other.shared_from_this();
   }
 
-  void set_used_by_real_kernel() { is_real_kernel_used_ = false; }
+  void set_used_by_real_kernel(bool used) { is_real_kernel_used_ = used; }
   bool is_used_by_real_kernel() { return is_real_kernel_used_; }
 
-  void set_used_by_dynamic_kernel() { is_used_by_dynamic_kernel_ = true; }
+  void set_used_by_dynamic_kernel(bool used) { is_used_by_dynamic_kernel_ = used; }
   bool is_used_by_dynamic_kernel() { return is_used_by_dynamic_kernel_; }
 
  private:
@@ -469,6 +486,9 @@ static S GetValue(const ValuePtr &value) {
 
 std::string GetCNodeFuncName(CNodePtr cnode);
 
+// used to get FuncGraphPtr from a cnode first input
+FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node);
+
 // used to check whether an AnfNode is a cnode with a kind of Primitive as first input
 bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value = nullptr);
 
@@ -477,6 +497,38 @@ PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node);
 
 // used to check whether an AnfNode is a valuenode having some Primitive value
 bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value);
+
+// Check whether two primitives are same.
+bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2);
+
+// Get number of AbstractMonad
+size_t GetAbstractMonadNum(const AbstractBasePtrList &args);
+
+// Check whether the given node has monad abstract.
+bool HasAbstractMonad(const AnfNodePtr &node);
+
+// Check whether the given node has U monad abstract.
+bool HasAbstractUMonad(const AnfNodePtr &node);
+
+// Check whether the given node has IO monad abstract.
+bool HasAbstractIOMonad(const AnfNodePtr &node);
+
+// Gets primitive attribute value as a bool flag.
+bool GetPrimitiveFlag(const PrimitivePtr &prim, const std::string &attr);
+
+// Gets effect info from a primitive by its attributes.
+EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim);
+
+struct MonadState {
+  AnfNodePtr u{nullptr};
+  AnfNodePtr io{nullptr};
+};
+
+// Get Memory/IO monad state from node.
+MonadState GetMonadState(const AnfNodePtr &node, const AnfNodePtr &skip_input = nullptr);
+
+// Check if two state is equivalent.
+bool IsStateEquivalent(const MonadState &state1, const MonadState &state2);
 
 // used to check whether a ValueNode has some kind of value
 template <typename T>

@@ -25,7 +25,7 @@ from .vm_interface import vm
 @vm_impl_getters.register(P.Assign)
 def vm_impl_assign(self):
     """Generate vm_impl function for Assign"""
-    def vm_impl(x, value):
+    def vm_impl(x, value, u=None):
         x.assign_value(value)
         return x
     return vm_impl
@@ -320,6 +320,24 @@ def vm_impl_partial(self):
 def vm_impl_depend(self):
     """Generate vm_impl function for Depend"""
     def vm_impl(value, expr):
+        return value
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.UpdateState)
+def vm_impl_updatestate(self):
+    """Generate vm_impl function for UpdateState"""
+    def vm_impl(monad, expr):
+        return monad
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.Load)
+def vm_impl_load(self):
+    """Generate vm_impl function for Load"""
+    def vm_impl(value, u=None):
         return value
 
     return vm_impl

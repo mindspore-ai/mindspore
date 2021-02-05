@@ -165,7 +165,10 @@ AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const Primitive
 AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const AbstractBasePtrList &args_spec_list) {
   if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at lest 1, but got 0";
+    MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at least 1, but got 0";
+  }
+  if (primitive->GetAttr(ATTR_NO_BROADEN) != nullptr) {
+    return args_spec_list[0];
   }
   auto depends = args_spec_list[0]->Broaden();
   // For scalar, need to set value to kAnyValue, because broaden scalar will not change the value.
@@ -173,6 +176,14 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
     depends->set_value(kAnyValue);
   }
   return depends;
+}
+
+AbstractBasePtr InferImplUpdateState(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << primitive->name() << " input args size should be at least 1, but got 0";
+  }
+  return args_spec_list[0]->Broaden();
 }
 
 AbstractBasePtr InferImplControlDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -280,6 +291,18 @@ AbstractBasePtr InferImplRowTensorGetDenseShape(const AnalysisEnginePtr &, const
   auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(row_tensor->dense_shape());
   return row_tensor->dense_shape();
+}
+
+AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_spec_list) {
+  // Inputs: row tensor and tensor.
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto row_tensor = CheckArg<AbstractRowTensor>(op_name, args_spec_list, 0);
+  auto tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(row_tensor->dense_shape());
+  MS_EXCEPTION_IF_NULL(tensor->shape());
+  return args_spec_list[0];
 }
 
 AbstractBasePtr InferImplMakeSparseTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

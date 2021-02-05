@@ -79,6 +79,7 @@ class ScalarSummary(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+        self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)
@@ -119,6 +120,7 @@ class ImageSummary(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+        self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)
@@ -162,6 +164,7 @@ class TensorSummary(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+        self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)
@@ -204,6 +207,7 @@ class HistogramSummary(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """init"""
+        self.add_prim_attr("side_effect_io", True)
 
     def __infer__(self, name, value):
         _check_summary_param(name, value, self.__class__.__name__)
@@ -267,6 +271,7 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, f):
+        self.add_prim_attr('side_effect_backprop', True)
         self.f = f
 
     def infer_shape(self, x_shape):
@@ -373,7 +378,7 @@ class Print(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        self.add_prim_attr("_side_effect", True)
+        self.add_prim_attr("side_effect_io", True)
 
     def __call__(self, *args):
         for arg in args:
@@ -383,7 +388,8 @@ class Print(PrimitiveWithInfer):
         return [1]
 
     def infer_dtype(self, *inputs):
-        for ele in inputs:
+        # check argument types except the last one (io state).
+        for ele in inputs[:-1]:
             if isinstance(ele, (tuple, list)):
                 self.infer_dtype(*ele)
             else:

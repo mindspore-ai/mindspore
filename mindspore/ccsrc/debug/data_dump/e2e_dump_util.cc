@@ -119,6 +119,9 @@ void E2eDumpUtil::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const st
   GetFileKernelName(NOT_NULL(kernel_name));
   auto output_size = AnfAlgo::GetOutputTensorNum(node);
   for (size_t j = 0; j < output_size; ++j) {
+    if (!AnfAlgo::OutputAddrExist(node, j)) {
+      continue;
+    }
     auto addr = AnfAlgo::GetOutputAddr(node, j);
     ShapeVector int_shapes;
     GetDumpIntShape(node, j, trans_flag, NOT_NULL(&int_shapes));
@@ -163,6 +166,9 @@ void E2eDumpUtil::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std
     auto kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, j);
     auto input = kernel_with_index.first;
     auto index = kernel_with_index.second;
+    if (!AnfAlgo::OutputAddrExist(input, index)) {
+      continue;
+    }
     auto addr = AnfAlgo::GetOutputAddr(input, index);
 
     std::string tensor_name;

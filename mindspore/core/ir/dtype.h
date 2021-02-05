@@ -37,6 +37,7 @@
 #include "ir/dtype/empty.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype/ref.h"
+#include "ir/dtype/monad_type.h"
 
 /* namespace to support intermediate representation definition */
 namespace mindspore {

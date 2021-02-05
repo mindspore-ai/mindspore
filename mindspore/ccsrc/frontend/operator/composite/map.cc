@@ -44,7 +44,7 @@ AnfNodePtr Map::FullMakeLeaf(const FuncGraphPtr &func_graph, const AnfNodePtr &f
     inputs.emplace_back(NewValueNode(fn_leaf_));
   }
   inputs.insert(inputs.end(), args.begin(), args.end());
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 FuncGraphPtr Map::GenerateLeafFunc(const size_t &args_size) {
@@ -98,12 +98,12 @@ AnfNodePtr Map::FullMakeList(const std::shared_ptr<List> &type, const FuncGraphP
     (void)std::transform(
       arg_pairs.begin(), arg_pairs.end(), std::back_inserter(inputs2),
       [&func_graph, i](const std::pair<AnfNodePtr, Any> &item) {
-        return func_graph->NewCNode({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
+        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), item.first, NewValueNode(i)});
       });
 
-    inputs.push_back(func_graph->NewCNode(inputs2));
+    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
   }
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph,
@@ -139,12 +139,12 @@ AnfNodePtr Map::FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGrap
     (void)std::transform(
       arg_pairs.begin(), arg_pairs.end(), std::back_inserter(inputs2),
       [&func_graph, &i](std::pair<AnfNodePtr, Any> item) {
-        return func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(i)});
+        return func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item.first, NewValueNode(i)});
       });
 
-    inputs.push_back(func_graph->NewCNode(inputs2));
+    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
   }
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGraphPtr &func_graph,
@@ -170,13 +170,13 @@ AnfNodePtr Map::FullMakeClass(const std::shared_ptr<Class> &type, const FuncGrap
 
     int64_t j = 0;
     for (auto item : arg_pairs) {
-      inputs2.push_back(func_graph->NewCNode({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
+      inputs2.push_back(func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimGetAttr), item.first, NewValueNode(j)}));
       j++;
     }
 
-    inputs.push_back(func_graph->NewCNode(inputs2));
+    inputs.push_back(func_graph->NewCNodeInOrder(inputs2));
   }
-  return func_graph->NewCNode(inputs);
+  return func_graph->NewCNodeInOrder(inputs);
 }
 
 AnfNodePtr Map::Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs) {

@@ -274,14 +274,13 @@ class CenterNetWithLossScaleCell(nn.Cell):
         self.cast = ops.Cast()
         self.alloc_status = ops.NPUAllocFloatStatus()
         self.get_status = ops.NPUGetFloatStatus()
-        self.clear_before_grad = ops.NPUClearFloatStatus()
+        self.clear_status = ops.NPUClearFloatStatus()
         self.reduce_sum = ops.ReduceSum(keep_dims=False)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = ops.LessEqual()
         self.grad_scale = GradScale()
         self.loss_scale = sens
 
-    @ops.add_flags(has_effect=True)
     def construct(self, image, hm, reg_mask, ind, wh, kps, kps_mask, reg,
                   hm_hp, hp_offset, hp_ind, hp_mask):
         """Defines the computation performed."""
@@ -292,13 +291,17 @@ class CenterNetWithLossScaleCell(nn.Cell):
         scaling_sens = self.cast(self.loss_scale, mstype.float32) * 2.0 / 2.0
         # alloc status and clear should be right before gradoperation
         init = self.alloc_status()
-        self.clear_before_grad(init)
+        init = ops.depend(init, scaling_sens)
+        clear_status = self.clear_status(init)
+        scaling_sens = ops.depend(scaling_sens, clear_status)
         grads = self.grad(self.network, weights)(image, hm, reg_mask, ind, wh, kps,
                                                  kps_mask, reg, hm_hp, hp_offset,
                                                  hp_ind, hp_mask, scaling_sens)
         grads = self.grad_reducer(grads)
         grads = self.grad_scale(scaling_sens * self.degree, grads)
-        self.get_status(init)
+        init = ops.depend(init, grads)
+        get_status = self.get_status(init)
+        init = ops.depend(init, get_status)
         flag_sum = self.reduce_sum(init, (0,))
         if self.is_distributed:
             flag_reduce = self.allreduce(flag_sum)

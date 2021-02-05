@@ -83,6 +83,8 @@ class Cloner {
   void AddTotalGraphs(const FuncGraphPtr &func_graph);
   bool CheckStatus(const FuncGraphPtr &func_graph, bool is_inline);
   void CloneAllNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
+  void CloneOrderList(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
+  void CloneIsolateNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneFuncGraphDefaultValues(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params);

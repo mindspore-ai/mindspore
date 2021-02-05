@@ -281,9 +281,8 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
             self.gpu_target = False
             self.alloc_status = P.NPUAllocFloatStatus()
             self.get_status = P.NPUGetFloatStatus()
-            self.clear_before_grad = P.NPUClearFloatStatus()
+            self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -293,7 +292,6 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
-    @C.add_flags(has_effect=True)
     def construct(self,
                   source_eos_ids,
                   source_eos_mask,
@@ -317,16 +315,18 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
                             target_mask,
                             label_ids,
                             label_weights)
+        if sens is None:
+            scaling_sens = self.loss_scale
+        else:
+            scaling_sens = sens
         init = False
         if not self.gpu_target:
             # alloc status
             init = self.alloc_status()
             # clear overflow buffer
-            self.clear_before_grad(init)
-        if sens is None:
-            scaling_sens = self.loss_scale
-        else:
-            scaling_sens = sens
+            init = F.depend(init, loss)
+            clear_status = self.clear_status(init)
+            scaling_sens = F.depend(scaling_sens, clear_status)
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
                                                  target_ids,
@@ -343,7 +343,9 @@ class TransformerTrainOneStepWithLossScaleCell(nn.Cell):
             grads = self.grad_reducer(grads)
 
         if not self.gpu_target:
-            self.get_status(init)
+            init = F.depend(init, grads)
+            get_status = self.get_status(init)
+            init = F.depend(init, get_status)
             # sum overflow buffer elements, 0: not overflow, >0: overflow
             flag_sum = self.reduce_sum(init, (0,))
         else:

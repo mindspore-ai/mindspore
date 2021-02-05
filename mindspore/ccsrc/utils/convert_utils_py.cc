@@ -159,6 +159,8 @@ py::object ValuePtrToPyData(const ValuePtr &value) {
   } else if (value->isa<FuncGraph>()) {
     // FuncGraph is not used in the backend, return None
     ret = py::none();
+  } else if (value->isa<Monad>()) {
+    ret = py::none();
   } else {
     MS_LOG(EXCEPTION) << "Unsupported convert value: " << value->ToString() << " to a PyData.";
   }
@@ -377,6 +379,27 @@ AbstractBasePtr PyList2DynamicShapeTensor(const py::object &shape_obj, const py:
   return tensor;
 }
 
+static bool IsMonadType(const py::object &type_obj) {
+  if (py::isinstance<Type>(type_obj)) {
+    auto type = type_obj.cast<Type *>();
+    return type->isa<MonadType>();
+  }
+  return false;
+}
+
+static AbstractBasePtr ToMonadAbstract(const py::object &type_obj) {
+  if (py::isinstance<Type>(type_obj)) {
+    auto type = type_obj.cast<Type *>();
+    if (type->isa<UMonadType>()) {
+      return kUMonad->ToAbstract();
+    }
+    if (type->isa<IOMonadType>()) {
+      return kIOMonad->ToAbstract();
+    }
+  }
+  MS_LOG(EXCEPTION) << "Not a monad type object: " << py::str(type_obj);
+}
+
 AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py::object &type_obj,
                                            const py::object &output) {
   if ((py::isinstance<py::list>(shape_obj) || py::isinstance<py::tuple>(shape_obj)) && py::isinstance<Type>(type_obj)) {
@@ -413,6 +436,9 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     // AbstractNone indicates there is no output for this CNode node.
     auto abstract_none = std::make_shared<abstract::AbstractNone>();
     return abstract_none;
+  } else if (IsMonadType(type_obj)) {
+    // Return monad abstract if it is monad type.
+    return ToMonadAbstract(type_obj);
   } else {
     // When sparse enabled, the undetermined might be raised and eliminated in opt passes
     auto context = MsContext::GetInstance();

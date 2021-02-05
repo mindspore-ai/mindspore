@@ -37,6 +37,12 @@ from ...ut_filter import non_graph_engine
 # pylint: disable=W0613,W0612
 # W0613: unused-argument
 
+@pytest.fixture(name='enable_check_bprop')
+def fixture_enable_check_bprop():
+    context.set_context(check_bprop=True)
+    yield
+    context.set_context(check_bprop=False)
+
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -146,8 +152,7 @@ def test_net_with_ndarray():
     net(ms.Tensor(input_data))
 
 
-def test_bprop_with_wrong_output_num():
-    context.set_context(check_bprop=True)
+def test_bprop_with_wrong_output_num(enable_check_bprop):
     class BpropWithWrongOutputNum(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
@@ -182,8 +187,7 @@ def test_bprop_with_wrong_output_num():
         grad_all(BpropWithWrongOutputNumCell())(Tensor(np.array(1).astype(np.int32)),
                                                 Tensor(np.array(2).astype(np.int32)))
 
-def test_bprop_with_wrong_output_type():
-    context.set_context(check_bprop=True)
+def test_bprop_with_wrong_output_type(enable_check_bprop):
     class BpropWithWrongOutputType(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
@@ -218,8 +222,7 @@ def test_bprop_with_wrong_output_type():
         grad_all(BpropWithWrongOutputTypeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))
 
 
-def test_bprop_with_wrong_output_shape():
-    context.set_context(check_bprop=True)
+def test_bprop_with_wrong_output_shape(enable_check_bprop):
     class BpropWithWrongOutputShape(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
@@ -307,7 +310,7 @@ class Assign(nn.Cell):
         return self.cov_step
 
 
-def test_assign():
+def test_assign(enable_check_bprop):
     context.set_context(mode=context.GRAPH_MODE)
     net = Assign()
     input_data = ms.Tensor(np.array(1).astype(np.int32))

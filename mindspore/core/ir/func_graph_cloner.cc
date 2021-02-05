@@ -93,6 +93,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   new_node->set_attrs(old_node->attrs());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
+  new_node->CloneUserData(old_node);
   if (IsParallelConsiderCNode(old_node) && new_node->scope() == kDefaultScope) {
     new_node->set_fullname_with_scope(old_node->fullname_with_scope());
   }
@@ -468,6 +469,42 @@ void Cloner::CloneAllNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &t
   const AnfNodeSet &nodes = func_graph->nodes();
   for (auto &node : nodes) {
     CloneNode(node, target_func_graph);
+  }
+  // Only func_graph is inlined, it cannot be found in repl;
+  if (repl_func_graph_.find(func_graph) != repl_func_graph_.end()) {
+    CloneOrderList(func_graph, target_func_graph);
+    CloneIsolateNodes(func_graph, target_func_graph);
+  }
+}
+
+void Cloner::CloneOrderList(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
+  for (auto &cnode : func_graph->order_list()) {
+    auto it = repl_node_.find(cnode);
+    if (it == repl_node_.end()) {
+      // For cnode which generated in Analyze phase, it cannot got from nodes API of func_graph,
+      // so it cannot be cloned in normal Clone API.
+      // If we ignore it, the order will be lost.
+      // Therefore we put this old node as placeholder to the order list of target func_graph to
+      // keep the order.
+      // It may be replaced in ProgramSpecialize.
+      // If this disconnected node is not used in target func_graph, it will be cleared after
+      // ProgramSpecialize;
+      target_func_graph->AppendOrderList(cnode);
+      continue;
+    }
+    auto repl_cnode = dyn_cast<CNode>(it->second);
+    if (repl_cnode) {
+      target_func_graph->AppendOrderList(repl_cnode);
+    }
+  }
+}
+
+void Cloner::CloneIsolateNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
+  for (auto &node : func_graph->isolate_nodes()) {
+    auto it = repl_node_.find(node);
+    if (it != repl_node_.end()) {
+      target_func_graph->AddIsolateNode(it->second);
+    }
   }
 }
 

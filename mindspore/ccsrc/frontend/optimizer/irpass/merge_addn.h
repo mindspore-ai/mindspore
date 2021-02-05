@@ -77,6 +77,14 @@ class MergeAddN : public AnfVisitor {
           is_match_ = false;
           return;
         }
+
+        MonadState state_input = GetMonadState(inputs[1]);
+        MonadState state_cnode = GetMonadState(cnode, inputs[1]);
+        if (!IsStateEquivalent(state_cnode, state_input)) {
+          is_match_ = false;
+          return;
+        }
+
         (void)Ys_.erase(Ys_.begin());
         (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args_));
         (void)std::copy(Ys_.begin(), Ys_.end(), std::back_inserter(args_));
@@ -90,6 +98,14 @@ class MergeAddN : public AnfVisitor {
           is_match_ = false;
           return;
         }
+
+        MonadState state_input = GetMonadState(inputs.back());
+        MonadState state_cnode = GetMonadState(cnode, inputs.back());
+        if (!IsStateEquivalent(state_cnode, state_input)) {
+          is_match_ = false;
+          return;
+        }
+
         Ys_.pop_back();
         (void)std::copy(Ys_.begin(), Ys_.end(), std::back_inserter(args_));
         (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args_));

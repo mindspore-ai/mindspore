@@ -123,8 +123,8 @@ CNodePtr CreateSlice(const FuncGraphPtr &graph, const CNodePtr &gather_v2, const
 
 bool CheckInputs(const CNodePtr &origin_node) {
   MS_EXCEPTION_IF_NULL(origin_node);
-  if (origin_node->size() != kGatherV2DynInputNum + 1) {
-    MS_LOG(DEBUG) << "GatherV2 in dynamic shape has wrong inputs num, not equal " << kGatherV2DynInputNum
+  if (AnfAlgo::GetInputTensorNum(origin_node) != kGatherV2DynInputTensorNum) {
+    MS_LOG(DEBUG) << "GatherV2 in dynamic shape has wrong inputs num, not equal " << kGatherV2DynInputTensorNum
                   << ". CNode= " << origin_node->DebugString();
     return false;
   }

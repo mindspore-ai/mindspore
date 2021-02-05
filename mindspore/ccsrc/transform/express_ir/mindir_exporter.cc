@@ -353,7 +353,11 @@ std::string IrExportBuilder::GetOpTypeName(const AnfNodePtr &node) {
 
 void IrExportBuilder::SetShapeToNodeProto(const TypePtr &type, const BaseShapePtr &shape,
                                           mind_ir::AttributeProto *const attr_proto, std::string *const seq_string) {
-  if (type->isa<Tuple>() && seq_string != nullptr) {
+  if (seq_string == nullptr) {
+    MS_LOG(EXCEPTION) << "seq_string is nullptr.";
+  }
+
+  if (type->isa<Tuple>()) {
     *seq_string += "Tuple[";
     auto elements = type->cast<TuplePtr>()->elements();
     auto tuple_shape = shape->cast<abstract::TupleShapePtr>()->shape();
@@ -361,13 +365,13 @@ void IrExportBuilder::SetShapeToNodeProto(const TypePtr &type, const BaseShapePt
       SetShapeToNodeProto(elements[i], tuple_shape[i], attr_proto, seq_string);
     }
     *seq_string += "],";
-  } else if (type->isa<TensorType>() && shape->isa<abstract::Shape>() && seq_string != nullptr) {
+  } else if (type->isa<TensorType>() && shape->isa<abstract::Shape>()) {
     string shape_name = "shape" + std::to_string(GetTupleIndex());
     *seq_string += shape_name + ",";
     mind_ir::TensorProto *tensor_proto = attr_proto->add_tensors();
     tensor_proto->set_name(shape_name);
     SetTensorProto(type, shape, tensor_proto);
-  } else if ((type->isa<Number>() || type->isa<String>()) && seq_string != nullptr) {
+  } else if (type->isa<Number>() || type->isa<String>() || type->isa<UMonadType>() || type->isa<IOMonadType>()) {
     *seq_string += type->type_name() + ",";
   } else {
     MS_LOG(EXCEPTION) << "Type of cnode need to be supported: " << type->type_name();
@@ -553,6 +557,14 @@ void IrExportBuilder::SetValueToAttributeProto(const ValuePtr &value, mind_ir::A
   } else if (value->isa<None>()) {
     attr_proto->set_ref_attr_name("none");
     MS_LOG(DEBUG) << "Attr string: " << value->type_name();
+  } else if (value->isa<Monad>()) {
+    if (value->isa<UMonad>()) {
+      attr_proto->set_ref_attr_name("Monad:UMonad");
+    } else if (value->isa<IOMonad>()) {
+      attr_proto->set_ref_attr_name("Monad:IOMonad");
+    } else {
+      MS_LOG(EXCEPTION) << "Unsupported Monad type: " << value->type_name();
+    }
   } else {
     MS_LOG(EXCEPTION) << "Unsupported type: " << value->type_name();
   }

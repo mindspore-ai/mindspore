@@ -41,13 +41,15 @@ const BaseRef SubstituteDropout::DefinePattern() const {
 void SetNewKernelInfo(const CNodePtr &kernel_node) {
   std::vector<std::string> inputs_format;
   std::vector<TypeId> inputs_type;
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index));
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index));
   }
   std::vector<std::string> outputs_format;
   std::vector<TypeId> outputs_type;
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(kernel_node); ++output_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(kernel_node, output_index));
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(kernel_node, output_index));
   }
@@ -69,15 +71,13 @@ const AnfNodePtr SubstituteDropout::Process(const FuncGraphPtr &func_graph, cons
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() < kDropoutInputNum) {
-    MS_LOG(EXCEPTION) << "Dropout's input num is wrong";
-  }
+  CheckCNodeInputSize(cnode, kDropoutInputTensorNum);
   AbstractBasePtr old_abstract = cnode->abstract()->Clone();
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
   ShapeVector shape_i64;
   std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), [](size_t x) { return SizeToLong(x); });
 
-  // The primitive should use a clone, otherwise the attr seed will be overrode.
+  // The primitive should use a clone, otherwise the attr seed will be overridden.
   AnfNodePtrList uniform_input = {NewValueNode(prim::kPrimCudnnUniformReal->Clone())};
   auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, ShapeVector(1, SizeToLong(shape.size())),
                                                  static_cast<void *>(&shape[0]), kNumberTypeInt64);

@@ -162,9 +162,6 @@ int64_t CompileGraph::LinConvert(const FuncGraphPtr &graph, const GraphSegmentPt
     }
   }
   AddExternal(result);
-  for (auto &o : result.outputs) {
-    Push(o);
-  }
 
   return RET_SUCCESS;
 }
@@ -377,6 +374,9 @@ void CompileGraph::AddExternal(const LinConvertResult &result) {
     args.emplace_back(Ref(result.inputs[i]));
   }
   AddInst(Instruction::kExternal, args);
+  for (auto &out : result.outputs) {
+    Push(out);
+  }
 }
 
 void TraverseGraphMap(

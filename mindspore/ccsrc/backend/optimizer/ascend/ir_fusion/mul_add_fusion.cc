@@ -67,7 +67,7 @@ const AnfNodePtr MulAddFusion::Process(const FuncGraphPtr &graph, const AnfNodeP
     return nullptr;
   }
   auto add = node->cast<CNodePtr>();
-  if (add == nullptr || add->inputs().size() != kAddInputNum) {
+  if (add == nullptr || AnfAlgo::GetInputTensorNum(add) != kAddInputTensorNum) {
     return nullptr;
   }
   CNodePtr mul = nullptr;

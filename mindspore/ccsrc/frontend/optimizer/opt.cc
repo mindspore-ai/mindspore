@@ -141,6 +141,8 @@ bool SubstitutionList::ApplyTransform(const OptimizerPtr &optimizer, const AnfNo
 #ifdef ENABLE_PROFILE
         double t = GetTime();
 #endif
+        MS_LOG(DEBUG) << "transform: " << transform->name_ << " will replace: " << node->DebugString()
+                      << " with: " << ret->DebugString();
         (void)manager->Replace(node, ret);
 #ifdef ENABLE_PROFILE
         MsProfile::StatTime("replace." + transform->name_, GetTime() - t);
@@ -204,6 +206,14 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
       auto change = ApplyTransform(optimizer, func_graph->output(), list_[i]);
       changes = changes || change;
       loop = loop || change;
+
+      // apply transform on isolate nodes.
+      auto &isolate_nodes = manager->isolate_nodes();
+      for (auto &node : isolate_nodes) {
+        change = ApplyTransform(optimizer, node, list_[i]);
+        changes = changes || change;
+        loop = loop || change;
+      }
 
       // record the status of each transform
       static const auto enable_dump_pass_ir = (common::GetEnv("ENV_DUMP_PASS_IR") == "1");

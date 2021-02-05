@@ -126,6 +126,14 @@ class ConvertSwitchReplacement : public OptimizerCaller {
       auto trans_g2 = internal::TransformGraphCondFalseBranchNodes(g2_, x_);
 
       std::vector<AnfNodePtr> params;
+      auto cnode = node->cast<CNodePtr>();
+      if (cnode && cnode->size() > 1) {
+        // There are arguments for the call of switch result,
+        // usually these are monad states added by auto-monad.
+        for (size_t i = 1; i < cnode->size(); ++i) {
+          params.push_back(cnode->inputs().at(i));
+        }
+      }
       auto fg = node->func_graph();
       auto cloned_g1 = InlineClone(trans_g1, fg, params);
       auto cloned_g2 = InlineClone(trans_g2, fg, params);
@@ -138,6 +146,25 @@ class ConvertSwitchReplacement : public OptimizerCaller {
       node, PCNode(PPrimitive(prim::kPrimSwitch, cond, true_br, false_br)).MinExtraNodes(0), ConvertSwitchLambda,
       true_br.CheckFunc(IsValueNode<FuncGraph>, node) && false_br.CheckFunc(IsValueNode<FuncGraph>, node));
 
+    return nullptr;
+  }
+};
+
+// {prim::kPrimSwitch, {prim::kPrimDepend, ValueNode, X}, G1, G2} ->
+// {prim::kPrimDepend, {prim::kPrimSwitch, ValueNode, G1, G2}, X}
+class ExchangeSwitchDependValue : public OptimizerCaller {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+    ScopePtr scope = node->cast<CNodePtr>()->scope();
+    ScopeGuard scope_guard(scope);
+
+    PatternNode<AnfNodePtr> cond, true_br, false_br, v, x;
+    MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimSwitch, PPrimitive(prim::kPrimDepend, v, x), true_br, false_br),
+                     PPrimitive(prim::kPrimDepend, PPrimitive(prim::kPrimSwitch, v, true_br, false_br), x),
+                     IsVNode(v.GetNode(node)));
     return nullptr;
   }
 };

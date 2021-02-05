@@ -113,6 +113,10 @@ void DebuggerProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseSha
     type_proto->set_data_type(debugger::DT_STRING);
   } else if (type->isa<SymbolicKeyType>()) {
     // Do Nothing.
+  } else if (type->isa<UMonadType>()) {
+    type_proto->set_data_type(debugger::DT_UMONAD);
+  } else if (type->isa<IOMonadType>()) {
+    type_proto->set_data_type(debugger::DT_IOMONAD);
   } else {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }

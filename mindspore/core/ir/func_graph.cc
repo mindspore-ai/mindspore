@@ -119,18 +119,41 @@ ValuePtr FuncGraph::get_attr(const std::string &key) {
 }
 
 CNodePtr FuncGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
-  CNodePtr cnode = std::make_shared<CNode>(inputs, shared_from_base<FuncGraph>());
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
-    order_.push_back(cnode);
-    MS_LOG(INFO) << "Graph: " << ToString() << ", push back " << cnode->DebugString() << " in order.";
-  }
+  return std::make_shared<CNode>(inputs, shared_from_base<FuncGraph>());
+}
+
+CNodePtr FuncGraph::NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs) {
+  CNodePtr cnode = NewCNode(inputs);
+  order_.push_back(cnode);
   return cnode;
 }
 
-CNodePtr FuncGraph::NewCNodeWithScope(const std::vector<AnfNodePtr> &inputs, const ScopePtr &scope) {
-  CNodePtr app = NewCNode(inputs);
-  app->set_scope(scope);
-  return app;
+CNodePtr FuncGraph::NewCNodeInFront(const std::vector<AnfNodePtr> &inputs) {
+  CNodePtr cnode = NewCNode(inputs);
+  order_.push_front(cnode);
+  return cnode;
+}
+
+CNodePtr FuncGraph::NewCNodeBefore(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs) {
+  CNodePtr cnode = NewCNode(inputs);
+  auto iter = std::find(order_.begin(), order_.end(), position);
+  order_.insert(iter, cnode);
+  return cnode;
+}
+
+CNodePtr FuncGraph::NewCNodeAfter(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs) {
+  CNodePtr cnode = NewCNode(inputs);
+  if (!position->isa<CNode>()) {
+    order_.push_front(cnode);
+    return cnode;
+  }
+  auto iter = std::find(order_.begin(), order_.end(), position);
+  if (iter == order_.end()) {
+    order_.push_front(cnode);
+    return cnode;
+  }
+  order_.insert(std::next(iter), cnode);
+  return cnode;
 }
 
 void FuncGraph::DumpCNodeList() {
@@ -557,88 +580,127 @@ AnfNodePtr FuncGraph::GetParameterByName(const std::string &name) {
   return nullptr;
 }
 
-void FuncGraph::add_parameter_obj_node(const AnfNodePtr &p) { paramter_obj_nodes_.push_back(p); }
-
 std::list<CNodePtr> FuncGraph::GetOrderedCnodes() {
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
-    MS_LOG(DEBUG) << "Return ordered cnodes.";
-    return order_;
-  } else {
-    auto this_ptr = shared_from_base<FuncGraph>();
-    auto BelongSameGraph = std::bind(IncludeBelongGraph, this_ptr, std::placeholders::_1);
-    auto SuccDepends = std::bind(SuccIncludeFV, this_ptr, std::placeholders::_1);
+  auto this_ptr = shared_from_base<FuncGraph>();
+  auto BelongSameGraph = std::bind(IncludeBelongGraph, this_ptr, std::placeholders::_1);
+  auto SuccDepends = std::bind(SuccIncludeFV, this_ptr, std::placeholders::_1);
 
-    std::list<CNodePtr> cnodes;
-    auto nodes = TopoSort(get_return(), SuccDepends, BelongSameGraph);
-    for (const auto &node : nodes) {
-      auto cnode = dyn_cast<CNode>(node);
-      if (cnode) {
-        cnodes.push_back(cnode);
-      }
+  std::list<CNodePtr> cnodes;
+  auto nodes = TopoSort(get_return(), SuccDepends, BelongSameGraph);
+  for (const auto &node : nodes) {
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode) {
+      cnodes.push_back(cnode);
     }
-    return cnodes;
   }
+  return cnodes;
 }
 
 void FuncGraph::EraseUnusedNodeInOrder() {
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
-    auto mng = manager_.lock();
-    if (mng) {
-      auto &all_nodes = nodes();
-      // Erase unused cnode.
-      for (auto it = order_.begin(); it != order_.end();) {
-        if (all_nodes.count(*it)) {
-          (void)it++;
-        } else {
-          MS_LOG(DEBUG) << "Remove node " << (*it)->ToString() << " in graph " << ToString() << " order.";
-          it = order_.erase(it);
-        }
+  auto mng = manager_.lock();
+  if (mng) {
+    auto &all_nodes = nodes();
+    // Erase unused cnode.
+    for (auto it = order_.begin(); it != order_.end();) {
+      if (!all_nodes.contains(*it)) {
+        MS_LOG(DEBUG) << "Remove node " << (*it)->ToString() << " in graph " << ToString() << " order.";
+        it = order_.erase(it);
+        continue;
       }
+      (void)it++;
     }
   }
 }
 
-void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &n) {
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT) && n && n->isa<CNode>()) {
-    order_.remove(n->cast<CNodePtr>());
-    MS_LOG(DEBUG) << "Remove the node" << n->DebugString() << " from order list.";
+void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &node) {
+  if (node) {
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode) {
+      order_.remove(cnode);
+      MS_LOG(DEBUG) << "Remove the node" << node->DebugString() << " from order list.";
+    }
   }
 }
 
-void FuncGraph::CheckOrder() {
-  if (has_flag(GRAPH_FLAG_HAS_EFFECT)) {
-    MS_LOG(DEBUG) << "Check graph " << ToString();
-    for (auto it = order_.begin(); it != order_.end(); (void)it++) {
-      for (const auto &input_node : (*it)->inputs()) {
-        if (input_node && input_node->isa<CNode>() && input_node->func_graph() == shared_from_base<FuncGraph>()) {
-          // Need to reorder the wrong order node.
-          auto found = std::find(order_.begin(), it, input_node);
-          if (found == it) {
-            DumpCNodeList();
-            MS_LOG(EXCEPTION) << "The cnode " << (*it)->DebugString() << " order in " << ToString()
-                              << " doesn't obey the input dependency, "
-                              << "as input " << input_node->DebugString() << " is not ahead of itself.";
-          }
-        }
-      }
-    }
-    auto mng = manager_.lock();
-    if (mng != nullptr) {
-      const auto &all_nodes = nodes();
-      if (all_nodes.size() != (order_.size() + parameters_.size())) {
-        DumpCNodeList();
-        MS_LOG(EXCEPTION) << "CNode order size " << order_.size() << " is not equal to managed node size "
-                          << all_nodes.size() - parameters_.size() << ".";
-      }
-    }
-    MS_LOG(DEBUG) << "Check order okay.";
+// Maintain cnode order list when a cnode is replaced by a new one.
+void FuncGraph::ReplaceInOrder(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
+  MS_EXCEPTION_IF_NULL(old_node);
+  MS_EXCEPTION_IF_NULL(new_node);
+  if (order_.empty()) {
+    // Skip if order list is empty.
+    return;
+  }
+  auto old_cnode = old_node->cast<CNodePtr>();
+  if (old_cnode == nullptr) {
+    // Skip if old node is not cnode, since order list contains cnode only.
+    return;
+  }
+  // Search old node in order list.
+  auto iter = std::find(order_.begin(), order_.end(), old_cnode);
+  if (iter == order_.end()) {
+    // Skip if old node not found in order list.
+    return;
+  }
+  auto new_cnode = new_node->cast<CNodePtr>();
+  if (new_cnode != nullptr) {
+    // Insert new node just before the old node.
+    order_.insert(iter, new_cnode);
+  }
+  // Remove old node from order list.
+  // Unused children nodes can be cleared by EraseUnusedNodeInOrder().
+  order_.erase(iter);
+  // Replace isolate node if it is.
+  ReplaceIsolateNode(old_node, new_node);
+}
+
+void FuncGraph::ReplaceIsolateNode(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
+  if (isolate_nodes_.erase(old_node) == 0) {
+    // Skip if old node is not an isloate node.
+    return;
+  }
+  if (!new_node->isa<CNode>()) {
+    // Isolate node can not replaced by a non-cnode.
+    LOG(WARNING) << "Try replace isolate node: " << old_node->DebugString() << " with: " << new_node->DebugString();
+    return;
+  }
+  // Replace old node with the new one.
+  isolate_nodes_.insert(new_node);
+  // Replace isloate node in manager.
+  auto graph_manager = manager();
+  if (graph_manager != nullptr) {
+    graph_manager->ReplaceIsolateNode(old_node, new_node);
   }
 }
+
+const std::vector<AnfNodePtr> FuncGraph::GetIsolateNodesInOrder() const {
+  if (isolate_nodes_.empty()) {
+    return {};
+  }
+  if (isolate_nodes_.size() == 1) {
+    return std::vector<AnfNodePtr>(isolate_nodes_.cbegin(), isolate_nodes_.cend());
+  }
+  std::vector<AnfNodePtr> ordered_isolate_nodes;
+  std::copy_if(order_.cbegin(), order_.cend(), std::back_inserter(ordered_isolate_nodes),
+               [&](const auto &node) { return isolate_nodes_.find(node) != isolate_nodes_.end(); });
+  return ordered_isolate_nodes;
+}
+
+static std::vector<AnfNodePtr> MakeInputNodes(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
+  std::vector<AnfNodePtr> input_node_list;
+  input_node_list.reserve(inputs.size() + 1);
+  input_node_list.emplace_back(std::make_shared<ValueNode>(primitive));
+  input_node_list.insert(input_node_list.end(), inputs.begin(), inputs.end());
+  return input_node_list;
+}
+
 CNodePtr FuncGraph::NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
-  auto primitive_node = std::make_shared<ValueNode>(primitive);
-  std::vector<AnfNodePtr> input_node_list = {primitive_node};
-  std::copy(inputs.begin(), inputs.end(), std::back_inserter(input_node_list));
+  auto input_node_list = MakeInputNodes(primitive, inputs);
   return NewCNode(input_node_list);
+}
+
+CNodePtr FuncGraph::NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {
+  auto input_node_list = MakeInputNodes(primitive, inputs);
+  return NewCNodeInOrder(input_node_list);
 }
 
 ParameterPtr FuncGraph::add_weight(const tensor::MetaTensorPtr &meta_tensor) {
@@ -667,5 +729,4 @@ size_t NewFgSeenGeneration() {
 }
 
 const PrimitivePtr FuncGraphTransform::func_graph_prim_ = std::make_shared<Primitive>("FuncGraph");
-const char kFuncGraphFlagUndetermined[] = "Undeterminate";
 }  // namespace mindspore

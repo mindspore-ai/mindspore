@@ -102,7 +102,7 @@ inline T *cast(U *source) {
 template <
   typename T, typename U,
   typename std::enable_if<std::is_base_of<Base, T>::value && std::is_base_of<Base, U>::value, T>::type * = nullptr>
-inline std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> r) {
+inline std::shared_ptr<T> dyn_cast(const std::shared_ptr<U> &r) {
   if (r != nullptr && r->template isa<T>()) {
     return std::static_pointer_cast<T>(r);
   } else {

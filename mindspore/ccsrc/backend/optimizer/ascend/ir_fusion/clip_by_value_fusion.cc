@@ -79,7 +79,7 @@ const AnfNodePtr ClipByValueFusion::Process(const FuncGraphPtr &graph, const Anf
     return nullptr;
   }
   MS_EXCEPTION_IF_NULL(minimum);
-  if (minimum->inputs().size() != kMinimumInputNum) {
+  if (AnfAlgo::GetInputTensorNum(minimum) != kMinimumInputTensorNum) {
     return nullptr;
   }
 

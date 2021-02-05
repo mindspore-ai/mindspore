@@ -69,6 +69,7 @@ class GetMaskedLMOutput(nn.Cell):
     Returns:
         Tensor, masked lm output.
     """
+
     def __init__(self, config):
         super(GetMaskedLMOutput, self).__init__()
         self.width = config.hidden_size
@@ -126,6 +127,7 @@ class GetNextSentenceOutput(nn.Cell):
     Returns:
         Tensor, next sentence output.
     """
+
     def __init__(self, config):
         super(GetNextSentenceOutput, self).__init__()
         self.log_softmax = P.LogSoftmax()
@@ -154,6 +156,7 @@ class BertPreTraining(nn.Cell):
     Returns:
         Tensor, prediction_scores, seq_relationship_score.
     """
+
     def __init__(self, config, is_training, use_one_hot_embeddings):
         super(BertPreTraining, self).__init__()
         self.bert = BertModel(config, is_training, use_one_hot_embeddings)
@@ -181,6 +184,7 @@ class BertPretrainingLoss(nn.Cell):
     Returns:
         Tensor, total loss.
     """
+
     def __init__(self, config):
         super(BertPretrainingLoss, self).__init__()
         self.vocab_size = config.vocab_size
@@ -231,6 +235,7 @@ class BertNetworkWithLoss(nn.Cell):
     Returns:
         Tensor, the loss of the network.
     """
+
     def __init__(self, config, is_training, use_one_hot_embeddings=False):
         super(BertNetworkWithLoss, self).__init__()
         self.bert = BertPreTraining(config, is_training, use_one_hot_embeddings)
@@ -265,6 +270,7 @@ class BertTrainOneStepCell(nn.TrainOneStepCell):
         optimizer (Optimizer): Optimizer for updating the weights.
         sens (Number): The adjust parameter. Default: 1.0.
     """
+
     def __init__(self, network, optimizer, sens=1.0):
         super(BertTrainOneStepCell, self).__init__(network, optimizer, sens)
         self.cast = P.Cast()
@@ -336,6 +342,7 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         optimizer (Optimizer): Optimizer for updating the weights.
         scale_update_cell (Cell): Cell to do the loss scale. Default: None.
     """
+
     def __init__(self, network, optimizer, scale_update_cell=None):
         super(BertTrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -365,9 +372,8 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
             self.gpu_target = False
             self.alloc_status = P.NPUAllocFloatStatus()
             self.get_status = P.NPUGetFloatStatus()
-            self.clear_before_grad = P.NPUClearFloatStatus()
+            self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -376,7 +382,6 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
-    @C.add_flags(has_effect=True)
     def construct(self,
                   input_ids,
                   input_mask,
@@ -403,7 +408,9 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         if not self.gpu_target:
             # alloc status and clear should be right before gradoperation
             init = self.alloc_status()
-            self.clear_before_grad(init)
+            init = F.depend(init, loss)
+            clear_status = self.clear_status(init)
+            scaling_sens = F.depend(scaling_sens, clear_status)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
                                                  token_type_id,
@@ -418,7 +425,9 @@ class BertTrainOneStepWithLossScaleCell(nn.Cell):
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         if not self.gpu_target:
-            self.get_status(init)
+            init = F.depend(init, grads)
+            get_status = self.get_status(init)
+            init = F.depend(init, get_status)
             flag_sum = self.reduce_sum(init, (0,))
         else:
             flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
@@ -483,7 +492,7 @@ class BertTrainOneStepWithLossScaleCellForAdam(nn.Cell):
             self.gpu_target = False
             self.alloc_status = P.NPUAllocFloatStatus()
             self.get_status = P.NPUGetFloatStatus()
-            self.clear_before_grad = P.NPUClearFloatStatus()
+            self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
@@ -494,7 +503,6 @@ class BertTrainOneStepWithLossScaleCellForAdam(nn.Cell):
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
-    @C.add_flags(has_effect=True)
     def construct(self,
                   input_ids,
                   input_mask,
@@ -521,7 +529,10 @@ class BertTrainOneStepWithLossScaleCellForAdam(nn.Cell):
         if not self.gpu_target:
             # alloc status and clear should be right before gradoperation
             init = self.alloc_status()
-            self.clear_before_grad(init)
+            init = F.depend(init, loss)
+            clear_status = self.clear_status(init)
+            scaling_sens = F.depend(scaling_sens, clear_status)
+
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
                                                  token_type_id,
@@ -536,7 +547,9 @@ class BertTrainOneStepWithLossScaleCellForAdam(nn.Cell):
         grads = self.hyper_map(F.partial(grad_scale, scaling_sens * self.degree), grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
         if not self.gpu_target:
-            self.get_status(init)
+            init = F.depend(init, grads)
+            get_status = self.get_status(init)
+            init = F.depend(init, get_status)
             flag_sum = self.reduce_sum(init, (0,))
         else:
             flag_sum = self.hyper_map(F.partial(_grad_overflow), grads)
@@ -607,6 +620,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         accumulation_steps (int): Number of accumulation steps before gradient update. The global batch size =
                                 batch_size * accumulation_steps. Default: 1.
     """
+
     def __init__(self, network, optimizer, scale_update_cell=None, accumulation_steps=1, enable_global_norm=False):
         super(BertTrainAccumulationAllReducePostWithLossScaleCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -639,7 +653,7 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
-        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
@@ -653,7 +667,6 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
 
-    @C.add_flags(has_effect=True)
     def construct(self,
                   input_ids,
                   input_mask,
@@ -676,7 +689,11 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
-
+        # alloc status and clear should be right before gradoperation
+        init = self.alloc_status()
+        init = F.depend(loss, init)
+        clear_status = self.clear_status(init)
+        scaling_sens = F.depend(scaling_sens, clear_status)
         # update accumulation parameters
         is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
         self.local_step = self.select(is_accu_step, self.local_step + self.one, self.one)
@@ -684,9 +701,6 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         mean_loss = self.accu_loss / self.local_step
         is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
 
-        # alloc status and clear should be right before gradoperation
-        init = self.alloc_status()
-        self.clear_before_grad(init)
         grads = self.grad(self.network, weights)(input_ids,
                                                  input_mask,
                                                  token_type_id,
@@ -700,7 +714,9 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
         accu_succ = self.hyper_map(accumulate_accu_grads, self.accu_grads, grads)
         mean_loss = F.depend(mean_loss, accu_succ)
 
-        self.get_status(init)
+        init = F.depend(init, mean_loss)
+        get_status = self.get_status(init)
+        init = F.depend(init, get_status)
         flag_sum = self.reduce_sum(init, (0,))
         overflow = self.less_equal(self.base, flag_sum)
         overflow = self.logical_or(self.not_equal(self.accu_overflow, self.zero), overflow)
@@ -718,8 +734,8 @@ class BertTrainAccumulationAllReducePostWithLossScaleCell(nn.Cell):
                 grads = C.clip_by_global_norm(grads, 1.0, None)
             else:
                 grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+            accu_overflow = F.depend(accu_overflow, grads)
             accu_overflow = self.overflow_reducer(accu_overflow)
-            F.control_depend(grads, accu_overflow)
             overflow = self.less_equal(self.base, accu_overflow)
             accu_succ = self.hyper_map(reset_accu_grads, self.accu_grads)
             overflow = F.depend(overflow, accu_succ)

@@ -45,6 +45,15 @@ struct OpMergedInfo {
 using GenAttrFuncType =
   std::function<void(ValuePtr, onnx::AttributeProto_AttributeType, onnx::AttributeProto *, const PrimitivePtr &)>;
 
+static AnfNodePtr GetRealInput(const AnfNodePtr &origin_input) {
+  AnfNodePtr input = origin_input;
+  while (IsPrimitiveCNode(input, prim::kPrimDepend) || IsPrimitiveCNode(input, prim::kPrimLoad)) {
+    // Skip Depend and Load cnodes.
+    input = input->cast<CNodePtr>()->inputs().at(1);
+  }
+  return input;
+}
+
 template <typename T, size_t rep_cnt = 0>
 void SetAttrValueToProto(const ValuePtr &value, onnx::AttributeProto_AttributeType attr_type,
                          onnx::AttributeProto *const attr_proto, const PrimitivePtr &) {
@@ -251,7 +260,7 @@ OPERATOR_ONNX_CONVERT_DEFINE(
     .Attr("strides", "strides", onnx::AttributeProto_AttributeType_INTS, SetAttrTupleValueToProto<2>))
 
 OPERATOR_ONNX_CONVERT_DEFINE(Gather, Gather, OpNameInfo())
-OPERATOR_ONNX_CONVERT_DEFINE(make_tuple, SequenceConstruct, OpNameInfo())
+OPERATOR_ONNX_CONVERT_DEFINE(MakeTuple, SequenceConstruct, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(Concat, Concat, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(RealDiv, Div, OpNameInfo())
 OPERATOR_ONNX_CONVERT_DEFINE(ReduceSum, ReduceSum, OpNameInfo())
@@ -278,7 +287,7 @@ void RegisterOpConverters(const std::function<void(OpNameInfo &&)> &fn) {
   fn(OP_CONVERT_FUNCTION_NAME(BatchNorm)());
   fn(OP_CONVERT_FUNCTION_NAME(MatMul)());
 
-  fn(OP_CONVERT_FUNCTION_NAME(make_tuple)());
+  fn(OP_CONVERT_FUNCTION_NAME(MakeTuple)());
   fn(OP_CONVERT_FUNCTION_NAME(Concat)());
   fn(OP_CONVERT_FUNCTION_NAME(RealDiv)());
   fn(OP_CONVERT_FUNCTION_NAME(BiasAdd)());
@@ -529,7 +538,12 @@ void OnnxExporter::MatchAndMark(const FuncGraphPtr &func_graph, const std::vecto
       // if the key `input` does not exist, just create a new one
       op_merged_infos[cnode].referred_count += 1;
     }
-    for (auto &input : cnode->inputs()) {
+    for (auto &orig_input : cnode->inputs()) {
+      if (HasAbstractMonad(orig_input)) {
+        // Skip monad inputs.
+        continue;
+      }
+      auto input = GetRealInput(orig_input);
       if (!input->isa<CNode>()) {
         continue;
       }
@@ -987,7 +1001,9 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
   std::vector<AnfNodePtr> op_inputs;
   // first process node input 1,2,..., since when node input is a ValueNode, here need to create a Constant Operator
   for (size_t i = 1; i < inputs.size(); i++) {
-    op_inputs.push_back(inputs[i]);
+    if (!HasAbstractMonad(inputs[i])) {
+      op_inputs.push_back(inputs[i]);
+    }
   }
   auto op_value = dyn_cast<ValueNode>(op);
   if (op_value == nullptr) {
@@ -998,7 +1014,9 @@ void OnnxExporter::ExportCNode(const FuncGraphPtr &func_graph, const CNodePtr &n
     MS_LOG(EXCEPTION) << "Need to support node op type " << op_value->value()->type_name();
   }
 
-  (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim, op_inputs, graph_proto);
+  if (!IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
+    (*node_map_ptr)[node] = ExportPrimitive(func_graph, node_map_ptr, prim, op_inputs, graph_proto);
+  }
 }
 
 size_t OnnxExporter::ExportPrimitive(const FuncGraphPtr & /*func_graph*/, std::map<AnfNodePtr, size_t> *node_map_ptr,
@@ -1103,12 +1121,13 @@ void OnnxExporter::ExportOutput(const FuncGraphPtr & /*func_graph*/, const CNode
   SetValueInfoType(arg, output_proto, false);
 }
 
-std::string OnnxExporter::GetNodeInputName(const AnfNodePtr &node, std::map<AnfNodePtr, size_t> *node_map_ptr,
+std::string OnnxExporter::GetNodeInputName(const AnfNodePtr &orig_node, std::map<AnfNodePtr, size_t> *node_map_ptr,
                                            onnx::GraphProto *const graph_proto) {
+  auto node = GetRealInput(orig_node);
   if (node->isa<CNode>()) {
     auto iter = node_map_ptr->find(node);
     if (iter == node_map_ptr->end()) {
-      MS_LOG(EXCEPTION) << "Can not find node '" << node->ToString() << "' in node_map";
+      MS_LOG(EXCEPTION) << "Can not find node '" << node->DebugString() << "' in node_map";
     }
     return std::to_string(iter->second);
   }
