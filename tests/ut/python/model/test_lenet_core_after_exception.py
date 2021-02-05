@@ -53,5 +53,6 @@ def test_lenet5_exception():
     predict = Tensor(in1)
     label = Tensor(in2)
     net = train_step_with_loss_warp(LeNet5())
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError) as info:
         _executor.compile(net, predict, label)
+    assert "x_shape[C_in] / group must equal to w_shape[C_in] = " in str(info.value)
