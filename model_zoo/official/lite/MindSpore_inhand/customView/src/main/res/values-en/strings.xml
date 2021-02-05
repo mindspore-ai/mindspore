@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialog_btn_confirm">OK</string>
+    <string name="dialog_btn_cancel">Cancel</string>
+    <string name="dialog_btn_sure">OK</string>
+</resources>

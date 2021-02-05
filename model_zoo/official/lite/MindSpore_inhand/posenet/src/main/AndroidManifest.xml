@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.mindspore.posenet">
+
+    <application
+        tools:replace="android:label"
+        android:allowBackup="true"
+        android:label="@string/posenet_app_name"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".PosenetMainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+    </application>
+
+</manifest>
+

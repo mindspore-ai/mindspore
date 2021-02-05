@@ -1,0 +1,69 @@
+<resources>
+    <string name="app_name">MindSpore掌中宝</string>
+    <string name="app_need_permission">"MindSpore需要访问 “相机” 和 “外部存储器”，请到 “应用信息 -> 权限” 中授予！"</string>
+    <string name="app_permission_by_hand">"去手动授权"</string>
+    <string name="cancel">"取消"</string>
+    <string name="confirm">"确定"</string>
+    <string name="app_download_success">"下载完成"</string>
+    <string name="app_need_install">"是否安装"</string>
+    <string name="app_is_loading">"正在下载"</string>
+    <string name="app_wait">"请稍候..."</string>
+    <string name="app_load_fail">"下载失败"</string>
+    <string name="app_update_lastest">"请升级新版本"</string>
+    <string name="title_image">Image Classification</string>
+    <string name="title_image_garbage">Garbage Classification</string>
+    <string name="title_object">Photo Detection</string>
+    <string name="title_object_camera">Camera Detection</string>
+    <string name="title_pose_net">PoseNet</string>
+    <string name="title_style_transfer">Style Transfer</string>
+    <string name="title_segmentation">Image Segmentation</string>
+
+    <string name="title_source">Code</string>
+    <string name="title_scene">Scene Detection</string>
+    <string name="title_help">FeedBack</string>
+    <string name="title_star">Star</string>
+    <string name="title_version">Version: </string>
+    <string name="title_share">Share</string>
+    <string name="title_share_commend">MindSpore掌中宝：AI爱好者的一站式协同学习、演示、体验平台\t</string>
+    <string name="title_splash_welcome">AI爱好者的一站式协同学习、演示、体验平台</string>
+
+    <string name="splash_count_down">秒</string>
+
+    <string name="main_tab_title_one">体验</string>
+    <string name="main_tab_title_two">学院</string>
+    <string name="main_tab_title_three">我的</string>
+
+    <string name="tab_experience_one">视觉图像技术</string>
+
+    <string name="experience_head_title">体验中心</string>
+    <string name="experience_head_subtitle">新一代全场景AI计算框架，邀您马上体验</string>
+    <string name="experience_head_button">合作咨询</string>
+
+    <!-- me fragment -->
+    <string name="me_title">我的</string>
+    <string name="me_share_title">一键分享</string>
+    <string name="me_up_title">一键点赞</string>
+    <string name="me_official_title">官方网站</string>
+    <string name="me_official_code_title">官方代码仓</string>
+    <string name="me_qa_title">问题反馈</string>
+    <string name="me_version_title">版本号</string>
+
+    <string name="college_summary_title">MindSpore简介</string>
+    <string name="college_cloud_title">1小时体验端云协同全流程开发</string>
+    <string name="college_quick_title">快速入门</string>
+    <string name="college_train_title">训练模型</string>
+    <string name="college_app_title">端侧应用</string>
+    <string name="college_video_title">参考视频</string>
+    <string name="college_faq_title">FAQ</string>
+    <string name="college_ask_title">论坛提问</string>
+    <string name="college_light_title">~点亮您的学习之旅~</string>
+
+    <string name="college_adapter_view">查看</string>
+    <string name="college_dialog_title">简介</string>
+    <string name="college_dialog_content">\t\t\tMindSpore是华为自研的全场景AI计算框架，
+        兼顾学术界研究的灵活性与工业界的高性能要求，支持端边云全场景业务，为开发者带来编程更简单、调试更轻松、性能更卓越、部署更灵活的体验。\n\n
+        \t\t\tMindSpore致力于构筑面向全球的开源社区，持续推动AI软硬件应用开源生态繁荣发展，已于2020年3月28日开源。\n\n
+        \t\t\t版本在不断迭代更新中，MindSpore也会持续提供更多的学习资源、支持与服务，欢迎各行各业的开发者与伙伴深度参与、贡献智慧，打造无所不及的AI应用，与我们共建AI生态。\n</string>
+    <string name="college_execute_title">" "</string>
+
+</resources>

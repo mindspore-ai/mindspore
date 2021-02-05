@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.mindspore.styletransfer">
+
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:supportsRtl="true">
+        <activity
+            android:name=".StyleMainActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.mindspore.styletransfer.fileprovider"
+            android:exported="false"
+            tools:replace="android:authorities"
+            android:grantUriPermissions="true">
+            <meta-data
+                tools:replace="android:resource"
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/style_file_paths" />
+        </provider>
+    </application>
+
+</manifest>

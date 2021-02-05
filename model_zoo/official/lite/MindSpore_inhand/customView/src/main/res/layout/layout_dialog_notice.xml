@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginStart="25dp"
+    android:layout_marginEnd="25dp"
+    android:background="@drawable/dialog_normal_white_bg"
+    tools:ignore="MissingDefaultResource">
+
+    <TextView
+        android:id="@+id/dialog_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="17dp"
+        android:textColor="@color/text_black"
+        android:textSize="16sp"
+        tools:text="简要说明" />
+
+    <TextView
+        android:id="@+id/dialog_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginEnd="22dp"
+        android:gravity="center"
+        android:textColor="@color/text_gray"
+        android:textSize="12sp"
+        tools:text="图像分类模型可以推测图片中出现物体的所属类别，并标示不同类别的可能性概率。" />
+
+
+    <ImageView
+        android:layout_marginTop="18dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/logo_with_title"
+        android:layout_gravity="center"
+        android:id="@+id/img_dialog_bottom"
+        android:layout_width="95dp"
+        android:layout_height="80dp"/>
+
+    <View
+        android:id="@+id/line_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="22dp"
+        android:background="@color/divider_gray" />
+
+
+    <TextView
+        android:id="@+id/dialog_confirm"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@null"
+        android:gravity="center"
+        android:text="@string/dialog_btn_confirm"
+        android:textColor="@color/text_black"
+        android:textSize="13sp" />
+</LinearLayout>

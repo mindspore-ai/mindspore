@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="posenet_score">得分：</string>
+    <string name="posenet_time">推理时间：</string>
+</resources>

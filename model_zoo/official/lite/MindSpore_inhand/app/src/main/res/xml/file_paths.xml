@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-path
+        path="Android/data/com.mindspore.himindspore/"
+        name="files_root" />
+
+    <files-path
+        name="Android/data/com.mindspore.himindspore/"
+        path="files_root"></files-path>
+</paths>

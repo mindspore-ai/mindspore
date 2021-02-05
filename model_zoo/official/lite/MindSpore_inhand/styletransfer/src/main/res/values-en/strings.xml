@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">StyleTransfer</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="no_pic_neededSave">Null Image needed to save</string>
+    <string name="save_success">Save success</string>
+
+    <string name="toast_original">Please select an original picture first</string>
+    <string name="toast_model_run">Previous Model still running</string>
+    <string name="title_choose_image">Choose an Image</string>
+    <string name="btn_photo">PHOTO</string>
+    <string name="btn_camera">CAMERA</string>
+    <string name="btn_recovery">RECOVERY</string>
+    <string name="btn_save">SAVE</string>
+    <string name="title_choose_style">Choose a Style</string>
+    <string name="toast_execute_fail">ModelExecute failed</string></resources>

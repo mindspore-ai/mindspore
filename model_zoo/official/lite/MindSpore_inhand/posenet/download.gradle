@@ -1,0 +1,34 @@
+/**
+ * To download necessary library from Server.
+ * Including mindspore-lite .aar file and model file.
+ * The libraries can be downloaded manually.
+ */
+def targetModelFile = "src/main/assets/posenet_model.ms"
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/posenet_lite/posenet_model.ms"
+
+task downloadModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelDownloadUrl}"
+    }
+    sourceUrl = "${modelDownloadUrl}"
+    target = file("${targetModelFile}")
+}
+
+if (file("src/main/assets/posenet_model.ms").exists()) {
+    downloadModelFile.enabled = false
+}
+
+preBuild.dependsOn downloadModelFile
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}

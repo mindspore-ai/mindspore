@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="tl_divider_color" format="color" />
+    <attr name="tl_divider_padding" format="dimension" />
+    <attr name="tl_divider_width" format="dimension" />
+    <attr name="tl_indicator_anim_duration" format="integer" />
+    <attr name="tl_indicator_anim_enable" format="boolean" />
+    <attr name="tl_indicator_bounce_enable" format="boolean" />
+    <attr name="tl_indicator_color" format="color" />
+    <attr name="tl_indicator_corner_radius" format="dimension" />
+    <attr name="tl_indicator_gravity" format="enum">
+        <enum name="TOP" value="48" />
+        <enum name="BOTTOM" value="80" />
+    </attr>
+    <attr name="tl_indicator_height" format="dimension" />
+    <attr name="tl_indicator_margin_bottom" format="dimension" />
+    <attr name="tl_indicator_margin_left" format="dimension" />
+    <attr name="tl_indicator_margin_right" format="dimension" />
+    <attr name="tl_indicator_margin_top" format="dimension" />
+    <attr name="tl_indicator_style" format="enum">
+        <enum name="NORMAL" value="0" />
+        <enum name="TRIANGLE" value="1" />
+        <enum name="BLOCK" value="2" />
+    </attr>
+    <attr name="tl_indicator_width" format="dimension" />
+    <attr name="tl_indicator_width_equal_title" format="boolean" />
+    <attr name="tl_tab_padding" format="dimension" />
+    <attr name="tl_tab_space_equal" format="boolean" />
+    <attr name="tl_tab_width" format="dimension" />
+    <attr name="tl_textAllCaps" format="boolean" />
+    <attr name="tl_textBold" format="enum">
+        <enum name="NONE" value="0" />
+        <enum name="SELECT" value="1" />
+        <enum name="BOTH" value="2" />
+    </attr>
+    <attr name="tl_textSelectColor" format="color" />
+    <attr name="tl_textUnselectColor" format="color" />
+    <attr name="tl_textsize" format="dimension" />
+    <attr name="tl_underline_color" format="color" />
+    <attr name="tl_underline_gravity" format="enum">
+        <enum name="TOP" value="48" />
+        <enum name="BOTTOM" value="80" />
+    </attr>
+    <attr name="tl_underline_height" format="dimension" />
+    <declare-styleable name="CommonTabLayout">
+        <attr name="tl_indicator_color" />
+        <attr name="tl_indicator_height" />
+        <attr name="tl_indicator_width" />
+        <attr name="tl_indicator_margin_left" />
+        <attr name="tl_indicator_margin_top" />
+        <attr name="tl_indicator_margin_right" />
+        <attr name="tl_indicator_margin_bottom" />
+        <attr name="tl_indicator_corner_radius" />
+        <attr name="tl_indicator_gravity" />
+        <attr name="tl_indicator_style" />
+        <attr name="tl_indicator_anim_enable" />
+        <attr name="tl_indicator_anim_duration" />
+        <attr name="tl_indicator_bounce_enable" />
+        <attr name="tl_underline_color" />
+        <attr name="tl_underline_height" />
+        <attr name="tl_underline_gravity" />
+        <attr name="tl_divider_color" />
+        <attr name="tl_divider_width" />
+        <attr name="tl_divider_padding" />
+        <attr name="tl_tab_padding" />
+        <attr name="tl_tab_space_equal" />
+        <attr name="tl_tab_width" />
+        <attr name="tl_textsize" />
+        <attr name="tl_textSelectColor" />
+        <attr name="tl_textUnselectColor" />
+        <attr name="tl_textBold" />
+        <attr name="tl_textAllCaps" />
+        <attr name="tl_iconWidth" format="dimension" />
+        <attr name="tl_iconHeight" format="dimension" />
+        <attr name="tl_iconVisible" format="boolean" />
+        <attr name="tl_iconGravity" format="enum">
+            <enum name="LEFT" value="3" />
+            <enum name="TOP" value="48" />
+            <enum name="RIGHT" value="5" />
+            <enum name="BOTTOM" value="80" />
+        </attr>
+        <attr name="tl_iconMargin" format="dimension" />
+    </declare-styleable>
+    <declare-styleable name="MsgView">
+        <attr name="mv_backgroundColor" format="color" />
+        <attr name="mv_cornerRadius" format="dimension" />
+        <attr name="mv_strokeWidth" format="dimension" />
+        <attr name="mv_strokeColor" format="color" />
+        <attr name="mv_isRadiusHalfHeight" format="boolean" />
+        <attr name="mv_isWidthHeightEqual" format="boolean" />
+    </declare-styleable>
+    <declare-styleable name="SegmentTabLayout">
+        <attr name="tl_indicator_color" />
+        <attr name="tl_indicator_height" />
+        <attr name="tl_indicator_margin_left" />
+        <attr name="tl_indicator_margin_top" />
+        <attr name="tl_indicator_margin_right" />
+        <attr name="tl_indicator_margin_bottom" />
+        <attr name="tl_indicator_corner_radius" />
+        <attr name="tl_indicator_anim_enable" />
+        <attr name="tl_indicator_anim_duration" />
+        <attr name="tl_indicator_bounce_enable" />
+        <attr name="tl_divider_color" />
+        <attr name="tl_divider_width" />
+        <attr name="tl_divider_padding" />
+        <attr name="tl_tab_padding" />
+        <attr name="tl_tab_space_equal" />
+        <attr name="tl_tab_width" />
+        <attr name="tl_textsize" />
+        <attr name="tl_textSelectColor" />
+        <attr name="tl_textUnselectColor" />
+        <attr name="tl_textBold" />
+        <attr name="tl_textAllCaps" />
+        <attr name="tl_bar_color" format="color" />
+        <attr name="tl_bar_stroke_color" format="color" />
+        <attr name="tl_bar_stroke_width" format="dimension" />
+    </declare-styleable>
+    <declare-styleable name="SlidingTabLayout">
+        <attr name="tl_indicator_color" />
+        <attr name="tl_indicator_height" />
+        <attr name="tl_indicator_width" />
+        <attr name="tl_indicator_margin_left" />
+        <attr name="tl_indicator_margin_top" />
+        <attr name="tl_indicator_margin_right" />
+        <attr name="tl_indicator_margin_bottom" />
+        <attr name="tl_indicator_corner_radius" />
+        <attr name="tl_indicator_gravity" />
+        <attr name="tl_indicator_style" />
+        <attr name="tl_indicator_width_equal_title" />
+        <attr name="tl_underline_color" />
+        <attr name="tl_underline_height" />
+        <attr name="tl_underline_gravity" />
+        <attr name="tl_divider_color" />
+        <attr name="tl_divider_width" />
+        <attr name="tl_divider_padding" />
+        <attr name="tl_tab_padding" />
+        <attr name="tl_tab_space_equal" />
+        <attr name="tl_tab_width" />
+        <attr name="tl_textsize" />
+        <attr name="tl_textSelectColor" />
+        <attr name="tl_textUnselectColor" />
+        <attr name="tl_textBold" />
+        <attr name="tl_textAllCaps" />
+    </declare-styleable>
+
+    <declare-styleable name="CountDownView">
+        <attr name="cd_circle_radius" format="dimension" />
+        <attr name="cd_arc_width" format="dimension" />
+        <attr name="cd_arc_color" format="color" />
+        <attr name="cd_bg_color" format="color" />
+        <attr name="cd_text_color" format="color" />
+        <attr name="cd_text_size" format="dimension" />
+        <attr name="cd_animator_time" format="integer" />
+        <attr name="cd_animator_time_unit" format="string" />
+        <attr name="cd_retreat_type" format="enum">
+
+            <enum name="forward" value="1" />
+            <enum name="back" value="2" />
+        </attr>
+        <attr name="cd_location" format="enum">
+            <enum name="left" value="1" />
+            <enum name="top" value="2" />
+            <enum name="right" value="3" />
+            <enum name="bottom" value="4" />
+        </attr>
+    </declare-styleable>
+</resources>

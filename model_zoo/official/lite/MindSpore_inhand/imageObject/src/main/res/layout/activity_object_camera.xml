@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.mindspore.imageobject.objectdetection.ui.ObjectCameraActivity">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/object_camera_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/white"
+        app:contentInsetLeft="0dp"
+        app:contentInsetStart="0dp"
+        app:contentInsetStartWithNavigation="0dp"
+        app:navigationIcon="@drawable/icon_back"
+        app:title="@string/object_camery_title"
+        app:titleTextColor="@color/black" />
+
+    <com.mindspore.imageobject.camera.CameraPreview
+        android:id="@+id/camera_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/object_camera_toolbar" />
+
+
+    <com.mindspore.imageobject.objectdetection.ui.ObjectRectView
+        android:id="@+id/objRectView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/object_camera_toolbar" />
+
+</RelativeLayout>

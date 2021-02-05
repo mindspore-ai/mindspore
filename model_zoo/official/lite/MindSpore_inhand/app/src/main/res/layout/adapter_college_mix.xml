@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="150dp">
+
+    <ImageView
+        android:id="@+id/icon_left"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginStart="20dp"
+        android:src="@drawable/college_summary_checked"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:textSize="13sp"
+        app:layout_constraintBottom_toBottomOf="@+id/icon_left"
+        app:layout_constraintStart_toEndOf="@+id/icon_left"
+        app:layout_constraintTop_toTopOf="@+id/icon_left"
+        tools:text="MindSpore简介" />
+
+    <View
+        android:id="@+id/line_view"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="22dp"
+        android:background="@color/btn_small_checked"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/icon_left"
+        app:layout_constraintTop_toBottomOf="@+id/icon_left" />
+
+    <ImageView
+        android:id="@+id/bottom_dot"
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:layout_marginStart="17dp"
+        android:src="@drawable/blue_dot"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/icon_left"
+        app:layout_constraintTop_toBottomOf="@+id/icon_left" />
+
+    <RelativeLayout
+        android:id="@+id/rl_train"
+        android:layout_width="55dp"
+        android:layout_height="60dp"
+        android:background="@drawable/item_bg_gray_rect"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/icon_left"
+        app:layout_constraintTop_toBottomOf="@+id/icon_left">
+
+        <ImageView
+            android:id="@+id/icon_train"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="13dp"
+            android:layout_marginBottom="9dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/college_train_uncheck" />
+
+        <TextView
+            android:id="@+id/tv_train"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/icon_train"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:text="@string/college_train_title"
+            android:textSize="9sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_execute"
+        android:layout_width="55dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:background="@drawable/item_bg_gray_rect"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/rl_train"
+        app:layout_constraintTop_toBottomOf="@+id/icon_left">
+
+        <ImageView
+            android:id="@+id/icon_execute"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="13dp"
+            android:layout_marginBottom="9dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/college_execute_uncheck" />
+
+        <TextView
+            android:id="@+id/tv_execute"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/icon_execute"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:text="@string/college_execute_title"
+            android:textSize="9sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_app"
+        android:layout_width="55dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:background="@drawable/item_bg_gray_rect"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/rl_execute"
+        app:layout_constraintTop_toBottomOf="@+id/icon_left">
+
+        <ImageView
+            android:id="@+id/icon_app"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="13dp"
+            android:layout_marginBottom="9dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/college_app_uncheck" />
+
+        <TextView
+            android:id="@+id/tv_app"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/icon_app"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:text="@string/college_app_title"
+            android:textSize="9sp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/rl_video"
+        android:layout_width="55dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="15dp"
+        android:background="@drawable/item_bg_gray_rect"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/rl_app"
+        app:layout_constraintTop_toBottomOf="@+id/icon_left">
+
+        <ImageView
+            android:id="@+id/icon_video"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="13dp"
+            android:layout_marginBottom="9dp"
+            android:scaleType="fitXY"
+            android:src="@drawable/college_video_uncheck" />
+
+        <TextView
+            android:id="@+id/tv_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/icon_video"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            android:text="@string/college_video_title"
+            android:textSize="9sp" />
+    </RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
