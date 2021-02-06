@@ -31,6 +31,7 @@ from ... import context
 
 env_force_bprop_seq = os.getenv("ENV_FORCE_BPROP_SEQ")
 
+
 @bprop_getters.register(P.BiasAdd)
 def get_bprop_bias_add(self):
     """Grad definition for `BiasAdd` operation."""
@@ -313,7 +314,7 @@ def _get_mean_matrix(x_shape, ksize, stride, pad_mode, x_dtype):
 
     for h in range(h_output):
         for w in range(w_output):
-            curr_input = assist_input_matrix[h*h_stride : h*h_stride + h_ksize, w*w_stride : w*w_stride + w_ksize]
+            curr_input = assist_input_matrix[h * h_stride: h * h_stride + h_ksize, w * w_stride: w * w_stride + w_ksize]
             curr_sum = np.sum(curr_input)
             if curr_sum > 0:
                 output[:, :, h, w] = 1. / curr_sum
@@ -333,10 +334,10 @@ def get_bprop_avg_pool_grad(self):
     # the parameter of AvgPoolGrad in GPU and TBE/CPU is not same
     if self.target == "GPU":
         avgpool_grad_gpu = G.AvgPoolGradGpu(
-                        kernel_size=self.kernel_size,
-                        strides=self.strides,
-                        pad_mode=self.pad_mode,
-                        data_format=self.format)
+            kernel_size=self.kernel_size,
+            strides=self.strides,
+            pad_mode=self.pad_mode,
+            data_format=self.format)
 
         def bprop_gpu(x, out, dout):
             dx = avgpool_grad_gpu(x, out, dout)
@@ -359,9 +360,9 @@ def get_bprop_avg_pool_grad(self):
 
     elif self.target == "GE":
         avgpool_grad_ge = G.AvgPoolGrad(
-                        kernel_size=self.kernel_size,
-                        strides=self.strides,
-                        pad_mode=self.pad_mode)
+            kernel_size=self.kernel_size,
+            strides=self.strides,
+            pad_mode=self.pad_mode)
         shape_op = P.Shape()
 
         def bprop_ge(x, out, dout):
@@ -372,9 +373,9 @@ def get_bprop_avg_pool_grad(self):
 
     else:
         avgpool_grad_vm = G.AvgPoolGradVm(
-                        kernel_size=self.kernel_size,
-                        strides=self.strides,
-                        pad_mode=self.pad_mode)
+            kernel_size=self.kernel_size,
+            strides=self.strides,
+            pad_mode=self.pad_mode)
         k_size_nchw = avgpool_grad_vm.kernel_size
         stride_nchw = avgpool_grad_vm.strides
         pad_mode = self.pad_mode
@@ -681,10 +682,10 @@ def get_bprop_tanh_grad(self):
     return bprop
 
 
-@bprop_getters.register(P.Gelu)
+@bprop_getters.register(P.GeLU)
 def get_bprop_gelu(self):
-    """Grad definition for `Gelu` operation."""
-    input_grad = G.GeluGrad()
+    """Grad definition for `GeLU` operation."""
+    input_grad = G.GeLUGrad()
 
     def bprop(x, out, dout):
         dx = input_grad(dout, x, out)
@@ -693,10 +694,34 @@ def get_bprop_gelu(self):
     return bprop
 
 
-@bprop_getters.register(P.FastGelu)
+@bprop_getters.register(P.Gelu)
+def get_bprop_gelu_2(self):
+    """Grad definition for `GeLU` operation."""
+    input_grad = G.GeLUGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x, out)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.FastGeLU)
 def get_bprop_fast_gelu(self):
-    """Grad definition for `FastGelu` operation."""
-    input_grad = G.FastGeluGrad()
+    """Grad definition for `FastGeLU` operation."""
+    input_grad = G.FastGeLUGrad()
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.FastGelu)
+def get_bprop_fast_gelu_2(self):
+    """Grad definition for `FastGeLU` operation."""
+    input_grad = G.FastGeLUGrad()
 
     def bprop(x, out, dout):
         dx = input_grad(dout, x)
@@ -713,6 +738,7 @@ def get_bprop_fused_batch_norm(self):
     if self.target == "CPU":
         input_grad = G.FusedBatchNormGradCPU(self.epsilon, self.momentum)
         target_cpu = True
+
     def bprop(x, scale, b, mean, variance, out, dout):
         saved_mean = out[3]
         saved_variance = out[4]
@@ -897,6 +923,7 @@ def _range_op(start, limit, delta, dtype):
     output_tensor = Tensor(list(range(start, limit, delta)), dtype)
     return output_tensor
 
+
 @constexpr
 def _get_1d_shape(in_shape):
     """helper function for Grad TopK"""
@@ -904,6 +931,7 @@ def _get_1d_shape(in_shape):
     for i in in_shape:
         out_shape *= i
     return (out_shape,)
+
 
 @bprop_getters.register(P.TopK)
 def get_bprop_top_kv2(self):
@@ -915,7 +943,6 @@ def get_bprop_top_kv2(self):
     dtype = P.DType()
 
     def bprop(input_x, k, out, dout):
-
         in_shape = shape_op(input_x)
         in_lastdim = in_shape[-1]
 
@@ -976,6 +1003,7 @@ def get_bprop_rnnt_loss(self):
     def bprop(acts, labels, act_lens, label_lens, out, dout):
         grad = out[1]
         return grad, zeros_like(labels), zeros_like(act_lens), zeros_like(label_lens)
+
     return bprop
 
 
@@ -1064,6 +1092,7 @@ def get_bprop_dynamic_rnn(self):
         dh_prev = expand_dims(dh_prev, 0)
         dc_prev = expand_dims(dc_prev, 0)
         return dx, dw, db, (0), dh_prev, dc_prev
+
     return bprop
 
 
@@ -1082,6 +1111,7 @@ def get_bprop_dynamic_gru_v2(self):
                                                                                     out_h, dy, dout_h[-1], update,
                                                                                     reset, new, hidden_new, None, None)
         return dx, dw_input, dw_hidden, db_input, db_hidden, (0), dh_prev
+
     return bprop
 
 
@@ -1181,6 +1211,7 @@ def get_bprop_binary_cross_entropy(self):
 
     return bprop
 
+
 @bprop_getters.register(P.KLDivLoss)
 def get_bprop_kl_div_loss(self):
     """Grad definition for `KLDivLoss` operation."""
@@ -1239,6 +1270,7 @@ def get_bprop_basic_lstm_cell(self):
         dxt, dht = basic_lstm_cell_input_grad(dgate, w)
         dw, db = basic_lstm_cell_weight_grad(F.depend(x, dxt), h, dgate)
         return dxt, dht, dct_1, dw, db
+
     return bprop
 
 

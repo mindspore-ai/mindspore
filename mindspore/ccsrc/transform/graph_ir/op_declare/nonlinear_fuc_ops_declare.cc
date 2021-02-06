@@ -101,27 +101,27 @@ ATTR_MAP(TanhGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TanhGrad) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(TanhGrad, prim::kPrimTanhGrad->name(), ADPT_DESC(TanhGrad))
 
-// Gelu
+// GeLU
 INPUT_MAP(Gelu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Gelu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Gelu) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(Gelu, prim::kPrimGelu->name(), ADPT_DESC(Gelu))
+REG_ADPT_DESC(Gelu, prim::kPrimGeLU->name(), ADPT_DESC(Gelu))
 
-// GeluGrad
+// GeLUGrad
 INPUT_MAP(GeluGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(y)}};
 ATTR_MAP(GeluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GeluGrad) = {{0, OUTPUT_DESC(z)}};
-REG_ADPT_DESC(GeluGrad, prim::kPrimGeluGrad->name(), ADPT_DESC(GeluGrad))
+REG_ADPT_DESC(GeluGrad, prim::kPrimGeLUGrad->name(), ADPT_DESC(GeluGrad))
 
-// FastGelu
+// FastGeLU
 INPUT_MAP(FastGelu) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(FastGelu) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FastGelu) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(FastGelu, prim::kPrimFastGelu->name(), ADPT_DESC(FastGelu))
+REG_ADPT_DESC(FastGelu, prim::kPrimFastGeLU->name(), ADPT_DESC(FastGelu))
 
-// FastGeluGrad
+// FastGeLUGrad
 INPUT_MAP(FastGeluGrad) = {{1, INPUT_DESC(dy)}, {2, INPUT_DESC(x)}};
 ATTR_MAP(FastGeluGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(FastGeluGrad) = {{0, OUTPUT_DESC(z)}};
-REG_ADPT_DESC(FastGeluGrad, prim::kPrimFastGeluGrad->name(), ADPT_DESC(FastGeluGrad))
+REG_ADPT_DESC(FastGeluGrad, prim::kPrimFastGeLUGrad->name(), ADPT_DESC(FastGeluGrad))
 }  // namespace mindspore::transform

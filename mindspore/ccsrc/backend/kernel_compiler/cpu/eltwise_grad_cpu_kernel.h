@@ -88,7 +88,7 @@ MS_REG_CPU_KERNEL(
   TanhGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCPUKernel);
-MS_REG_CPU_KERNEL(GeluGrad,
+MS_REG_CPU_KERNEL(GeLUGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)

@@ -790,12 +790,12 @@ class BNTrainingUpdateGrad(PrimitiveWithInfer):
         return (batch_mean, batch_variance)
 
 
-class GeluGrad(PrimitiveWithInfer):
-    """Gradients of Gelu operation."""
+class GeLUGrad(PrimitiveWithInfer):
+    """Gradients of GeLU operation."""
 
     @prim_attr_register
     def __init__(self):
-        """Initialize GeluGrad"""
+        """Initialize GeLUGrad"""
 
     def infer_shape(self, y_backprop_shape, x_shape, y_shape):
         return x_shape
@@ -808,12 +808,12 @@ class GeluGrad(PrimitiveWithInfer):
         return x_dtype
 
 
-class FastGeluGrad(PrimitiveWithInfer):
-    """Gradients of FastGelu operation."""
+class FastGeLUGrad(PrimitiveWithInfer):
+    """Gradients of FastGeLU operation."""
 
     @prim_attr_register
     def __init__(self):
-        """init FastGeluGrad"""
+        """init FastGeLUGrad"""
 
     def infer_shape(self, y_backprop_shape, x_shape):
         return x_shape

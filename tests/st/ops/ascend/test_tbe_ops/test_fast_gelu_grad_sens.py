@@ -61,7 +61,7 @@ class MEGeluLargeIn(Cell):
     def __init__(self):
         super(MEGeluLargeIn, self).__init__()
         self.matmul = P.MatMul()
-        self.fast_gelu = P.Gelu()
+        self.fast_gelu = P.GeLU()
 
     def construct(self, x1, x2):
         x = self.matmul(x1, x2)

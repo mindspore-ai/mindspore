@@ -147,7 +147,7 @@ void EltWiseGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = TANHGRAD;
   } else if (kernel_name == "SqrtGrad") {
     operate_type_ = SQRTGRAD;
-  } else if (kernel_name == "GeluGrad") {
+  } else if (kernel_name == "GeLUGrad") {
     operate_type_ = GELUGRAD;
   } else if (kernel_name == "AsinGrad") {
     operate_type_ = ASINGRAD;

@@ -57,7 +57,7 @@ def test_softmax_cross_entropy_loss():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul(transpose_b=True).shard(strategy1)
-            self.gelu = P.Gelu().shard(strategy2)
+            self.gelu = P.GeLU().shard(strategy2)
 
         def construct(self, x, y):
             out = self.matmul(x, y)
@@ -82,7 +82,7 @@ def test_softmax_cross_entropy_loss_repeated_calculation():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul(transpose_b=True).shard(strategy1)
-            self.gelu = P.Gelu().shard(strategy2)
+            self.gelu = P.GeLU().shard(strategy2)
 
         def construct(self, x, y):
             out = self.matmul(x, y)
@@ -107,7 +107,7 @@ def test_softmax_cross_entropy_loss_auto_batch_parallel():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul(transpose_b=True)
-            self.gelu = P.Gelu()
+            self.gelu = P.GeLU()
 
         def construct(self, x, y):
             out = self.matmul(x, y)

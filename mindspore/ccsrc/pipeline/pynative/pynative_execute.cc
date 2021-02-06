@@ -459,7 +459,6 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   op_prim->EndRecordAddAttr();
 }
 
-
 void ConvertAttrToUnifyMindIR(const OpExecInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   PrimitivePtr op_prim = op_run_info->py_primitive;
@@ -478,7 +477,6 @@ void ConvertAttrToUnifyMindIR(const OpExecInfoPtr &op_run_info) {
     }
   }
 }
-
 
 BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref) {
   if (utils::isa<VectorRef>(base_ref)) {

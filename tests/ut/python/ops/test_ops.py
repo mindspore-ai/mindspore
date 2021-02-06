@@ -1632,12 +1632,12 @@ test_case_nn_ops = [
         'block': G.BiasAddGrad(),
         'desc_inputs': [[1, 3, 3, 3]],
         'skip': ['backward']}),
-    ('Gelu', {
-        'block': P.Gelu(),
+    ('GeLU', {
+        'block': P.GeLU(),
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4]]}),
-    ('GeluGrad', {
-        'block': G.GeluGrad(),
+    ('GeLUGrad', {
+        'block': G.GeLUGrad(),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
         'desc_bprop': [[2, 2]],
         'skip': ['backward']}),
