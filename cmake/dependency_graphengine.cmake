@@ -31,6 +31,7 @@ if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
         find_submodule_lib(static_mmpa libmmpa.a ${GE_PREBUILD_PATH})
     endif()
 
+    string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     add_subdirectory(${GE_SOURCE_DIR})
     set(CMAKE_INSTALL_PREFIX ${_ge_tmp_CMAKE_INSTALL_PREFIX})
     set(ENABLE_GITEE ${_ge_tmp_ENABLE_GITEE})

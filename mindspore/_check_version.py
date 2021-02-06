@@ -84,7 +84,7 @@ class GPUEnvChecker(EnvChecker):
 
     def check_version(self):
         if not Path(self.cuda_version).is_file():
-            logger.warning("Using custom cuda path, cuda version checking is skiped, please make sure "
+            logger.warning("Using custom cuda path, cuda version checking is skipped, please make sure "
                            "cuda version is supported, you can reference to the installation guidelines "
                            "https://www.mindspore.cn/install")
             return
@@ -122,7 +122,7 @@ class AscendEnvChecker(EnvChecker):
     """ascend environment check"""
 
     def __init__(self):
-        self.version = ["1.76.22.1.220"]
+        self.version = ["1.77.11.0.110"]
         atlas_nnae_version = "/usr/local/Ascend/nnae/latest/fwkacllib/version.info"
         atlas_toolkit_version = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib/version.info"
         hisi_fwk_version = "/usr/local/Ascend/fwkacllib/version.info"
@@ -179,7 +179,7 @@ class AscendEnvChecker(EnvChecker):
 
     def check_version(self):
         if not Path(self.fwk_version).is_file():
-            logger.warning("Using custom Ascend 910 AI software package path, package version checking is skiped, "
+            logger.warning("Using custom Ascend 910 AI software package path, package version checking is skipped, "
                            "please make sure Ascend 910 AI software package version is supported, you can reference to "
                            "the installation guidelines https://www.mindspore.cn/install")
             return
@@ -321,7 +321,7 @@ def _set_pb_env():
     if os.getenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") == "cpp":
         logger.info("Current env variable `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp`. "
                     "When the checkpoint file is too large, "
-                    "it may cause memory limit error durning load checkpoint file. "
+                    "it may cause memory limit error during load checkpoint file. "
                     "This can be solved by set env `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`.")
     elif os.getenv("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION") is None:
         logger.info("Setting the env `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` to prevent memory overflow "

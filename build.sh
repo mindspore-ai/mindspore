@@ -398,6 +398,9 @@ checkopts "$@"
 echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
+cd "${BASEPATH}/graphengine"
+git submodule update --init metadef
+cd "${BASEPATH}"
 if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" || "X$ENABLE_GPU" = "Xon" ]]; then
     git submodule update --init --recursive akg
 fi

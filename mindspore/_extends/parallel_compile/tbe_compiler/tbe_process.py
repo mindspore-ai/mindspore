@@ -19,7 +19,7 @@ import subprocess
 import sys
 import os
 import json
-from .common import check_kernel_info, TBEException
+from .tbe_common import check_kernel_info, TBEException
 from .helper import _op_select_format, _check_supported
 
 
