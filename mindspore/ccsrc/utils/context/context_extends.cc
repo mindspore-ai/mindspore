@@ -22,6 +22,7 @@
 #include <atomic>
 
 #include "pybind11/pybind11.h"
+
 #include "utils/ms_utils.h"
 #include "utils/convert_utils_base.h"
 
@@ -45,7 +46,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
 
   if (ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF)) {
-    MS_LOG(DEBUG) << "ACLTDT Dataset client is already opened.";
+    MS_LOG(DEBUG) << "TDT Dataset client is already opened.";
     ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
     return true;
   }
@@ -55,8 +56,10 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
     return true;
   }
 
-  uint32_t rank_size = 1;
-  uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  unsigned int device_id;
+  unsigned int rank_size = 1;
+
+  device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
   auto rank_size_env = common::GetEnv("RANK_SIZE");
   if (rank_size_env.empty()) {
@@ -78,14 +81,14 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
 #ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *acl_handle = ms_context_ptr->get_acl_tdt_channel_handle();
-  if (acl_handle == nullptr) {
-    MS_LOG(EXCEPTION) << "Get acltdt handle failed";
+  int32_t initStatus = tdt::TdtHostInit(device_id);
+  if (initStatus != TDT_OK_CODE) {
+    MS_LOG(EXCEPTION) << "Init tsd failed, status = " << initStatus << ".";
     return false;
   }
-  ms_context_ptr->acl_tdt_print = std::thread(TensorPrint(acl_handle));
+  ms_context_ptr->tdt_print_ = std::thread(TensorPrint());
 #endif
-  MS_LOG(INFO) << "Get the acltdt handle successful, tsd reference = "
+  MS_LOG(INFO) << "Open and init tsd successful, tsd reference = "
                << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   return true;
 }
@@ -100,34 +103,28 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
   ms_context_ptr->decrease_param<uint32_t>(MS_CTX_TSD_REF);
   if (force || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) == 0) {
     ms_context_ptr->set_param<uint32_t>(MS_CTX_TSD_REF, 0);
-
 #ifdef ENABLE_TDTQUE
-    acltdtChannelHandle *acl_handle = ms_context_ptr->get_acl_tdt_channel_handle();
-    aclError stopStatus = acltdtStopChannel(acl_handle);
-    if (stopStatus != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Failed stop acl data channel for host queue ";
-    } else {
-      MS_LOG(INFO) << "Succeed stop acl data channel for host queue ";
+    int32_t stopStatus = tdt::TdtHostStop(KNpuLog);
+    if (stopStatus != TDT_OK_CODE) {
+      MS_LOG(EXCEPTION) << "Stop tsd failed, status = " << stopStatus << ".";
+      return false;
     }
-    MS_LOG(INFO) << "Succeed run cancellation callback of out-feed dequeue op ";
-
     py::gil_scoped_release gil_release;
-    aclError destrodStatus = acltdtDestroyChannel(acl_handle);
-    if (destrodStatus != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "Failed destroy acl channel for out-feed dequeue op ";
-    } else {
-      MS_LOG(INFO) << "Succeed destroy acl channel for out-feed dequeue op ";
+    int32_t destroyStatus = tdt::TdtHostDestroy();
+    if (destroyStatus != TDT_OK_CODE) {
+      MS_LOG(EXCEPTION) << "Destroy tsd failed, status = " << destroyStatus << ".";
+      return false;
     }
     try {
-      if (ms_context_ptr->acl_tdt_print.joinable()) {
-        MS_LOG(INFO) << "join acl tdt host receive process";
-        ms_context_ptr->acl_tdt_print.join();
+      if (ms_context_ptr->tdt_print_.joinable()) {
+        MS_LOG(INFO) << "join tdt host receive process";
+        ms_context_ptr->tdt_print_.join();
       }
     } catch (const std::exception &e) {
       MS_LOG(ERROR) << "tdt thread join failed: " << e.what();
     }
 #endif
-    uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = rtDeviceReset(device_id);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
@@ -136,9 +133,10 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
     MS_LOG(INFO) << "Call rtDeviceReset, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";
   } else {
-    MS_LOG(DEBUG) << "Acltdt Dataset client is used, no need to close, tsd reference = "
+    MS_LOG(DEBUG) << "TDT Dataset client is used, no need to close, tsd reference = "
                   << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";
   }
+
   return true;
 }
 #else
@@ -232,7 +230,7 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   } else {
     (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
   }
-  // Disable the global variable acc, only enable it while adding training graph in pipeline
+  // Disable the global variable acc, only enable it whlie adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";
 #endif
 }
@@ -310,7 +308,6 @@ bool PynativeInitGe(const std::shared_ptr<MsContext> &ms_context_ptr) {
       ms_context_ptr->get_param<uint32_t>(MS_CTX_GE_REF) || ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF)) {
     return true;
   }
-
   (void)OpenTsd(ms_context_ptr);
   (void)InitGe(ms_context_ptr);
   ms_context_ptr->set_param(MS_CTX_IS_PYNATIVE_GE_INIT, true);

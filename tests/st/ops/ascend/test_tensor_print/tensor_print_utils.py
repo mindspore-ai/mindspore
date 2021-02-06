@@ -54,20 +54,15 @@ def get_tensor(is_scalar, input_type):
 
 if __name__ == "__main__":
     net = TensorPrint()
-    # net(get_tensor('scalar', mindspore.bool_), get_tensor('scalar', mindspore.uint8),
-    #     get_tensor('scalar', mindspore.int8), get_tensor('scalar', mindspore.uint16),
-    #     get_tensor('scalar', mindspore.int16), get_tensor('scalar', mindspore.uint32),
-    #     get_tensor('scalar', mindspore.int32), get_tensor('scalar', mindspore.uint64),
-    #     get_tensor('scalar', mindspore.int64), get_tensor('scalar', mindspore.float16),
-    #     get_tensor('scalar', mindspore.float32), get_tensor('scalar', mindspore.float64),
-    #     get_tensor('array', mindspore.bool_), get_tensor('array', mindspore.uint8),
-    #     get_tensor('array', mindspore.int8), get_tensor('array', mindspore.uint16),
-    #     get_tensor('array', mindspore.int16), get_tensor('array', mindspore.uint32),
-    #     get_tensor('array', mindspore.int32), get_tensor('array', mindspore.uint64),
-    #     get_tensor('array', mindspore.int64), get_tensor('array', mindspore.float16),
-    #     get_tensor('array', mindspore.float32), get_tensor('array', mindspore.float64))
-
-    net(get_tensor('scalar', mindspore.bool_),
+    net(get_tensor('scalar', mindspore.bool_), get_tensor('scalar', mindspore.uint8),
+        get_tensor('scalar', mindspore.int8), get_tensor('scalar', mindspore.uint16),
+        get_tensor('scalar', mindspore.int16), get_tensor('scalar', mindspore.uint32),
+        get_tensor('scalar', mindspore.int32), get_tensor('scalar', mindspore.uint64),
+        get_tensor('scalar', mindspore.int64), get_tensor('scalar', mindspore.float16),
         get_tensor('scalar', mindspore.float32), get_tensor('scalar', mindspore.float64),
-        get_tensor('array', mindspore.bool_),
+        get_tensor('array', mindspore.bool_), get_tensor('array', mindspore.uint8),
+        get_tensor('array', mindspore.int8), get_tensor('array', mindspore.uint16),
+        get_tensor('array', mindspore.int16), get_tensor('array', mindspore.uint32),
+        get_tensor('array', mindspore.int32), get_tensor('array', mindspore.uint64),
+        get_tensor('array', mindspore.int64), get_tensor('array', mindspore.float16),
         get_tensor('array', mindspore.float32), get_tensor('array', mindspore.float64))

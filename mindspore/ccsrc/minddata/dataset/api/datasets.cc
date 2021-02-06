@@ -131,8 +131,8 @@ std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> colum
 
 #ifndef ENABLE_ANDROID
 // Function to return a transferred Node that transfers data through a device.
-bool Dataset::DeviceQueue(std::string queue_name, std::string device_type, int32_t device_id, int32_t num_epochs,
-                          bool send_epoch_end, int32_t total_batches, bool create_data_info_queue) {
+bool Dataset::DeviceQueue(std::string queue_name, std::string device_type, int32_t num_epochs, bool send_epoch_end,
+                          int32_t total_batches, bool create_data_info_queue) {
   Status rc;
 
   // Build and launch tree
@@ -144,8 +144,8 @@ bool Dataset::DeviceQueue(std::string queue_name, std::string device_type, int32
   }
 
   // Add TransferNode IR on top of dataset
-  auto ds = std::make_shared<TransferNode>(shared_from_this()->IRNode(), queue_name, device_type, device_id,
-                                           send_epoch_end, total_batches, create_data_info_queue);
+  auto ds = std::make_shared<TransferNode>(shared_from_this()->IRNode(), queue_name, device_type, send_epoch_end,
+                                           total_batches, create_data_info_queue);
 
   // Get ToDevice consumer
   auto consumer = std::make_unique<ToDevice>(num_epochs);

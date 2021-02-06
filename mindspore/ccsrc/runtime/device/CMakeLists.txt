@@ -1,6 +1,5 @@
 file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "common/*.cc"
-    "kernel_info.cc" "executor/dynamic_kernel.cc" "executor/executor_callback.cc" "kernel_runtime.cc"
-    "memory_manager.cc" "kernel_runtime_manager.cc" "convert_tensor_utils.cc"
+    "kernel_info.cc" "executor/dynamic_kernel.cc" "executor/executor_callback.cc" "kernel_runtime.cc" "memory_manager.cc" "kernel_runtime_manager.cc" "convert_tensor_utils.cc"
 )
 
 if(ENABLE_GPU)
@@ -10,8 +9,7 @@ else()
 endif()
 
 if(ENABLE_D)
-    file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc" "kernel_adjust.cc"
-        "../../minddata/dataset/engine/tdt/tdt_handle.cc")
+    file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc" "kernel_adjust.cc")
 endif()
 
 if(ENABLE_CPU)

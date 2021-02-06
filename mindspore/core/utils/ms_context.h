@@ -24,10 +24,7 @@
 #include <string>
 #include <utility>
 #include "utils/log_adapter.h"
-#include "utils/ms_utils.h"
-#ifndef NO_DLIB
-#include "acl/acl_tdt.h"
-#endif
+
 namespace mindspore {
 enum MsBackendPolicy {
   kMsBackendGeOnly = 0,
@@ -132,13 +129,11 @@ class MsContext {
 
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
-#ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *get_acl_tdt_channel_handle();
-#endif
+
   static void device_seter(DeviceSeter device) { seter_ = device; }
   static void device_type_seter(DeviceTypeSeter device_type) { device_type_seter_ = device_type; }
 
-  std::thread acl_tdt_print;
+  std::thread tdt_print_;
 
   template <typename T>
   void set_param(MsCtxParam param, const T &value) {
@@ -173,9 +168,6 @@ class MsContext {
   std::string string_params_[MsCtxParam::NUM_STRING_PARAMS];
 
   MsBackendPolicy backend_policy_;
-#ifdef ENABLE_TDTQUE
-  acltdtChannelHandle *acl_handle = nullptr;
-#endif
 };
 
 // set method implementation for type bool/int/uint32_t/float/std::string
