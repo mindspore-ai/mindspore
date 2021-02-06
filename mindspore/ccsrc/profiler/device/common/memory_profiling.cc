@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace profiler {
 
-constexpr char kOutputPath[] = "result_path";
+constexpr char kOutputPath[] = "output";
 
 std::shared_ptr<GraphMemory> MemoryProfiling::AddGraphMemoryNode(uint32_t graph_id) {
   std::shared_ptr<GraphMemory> node = std::make_shared<GraphMemory>(graph_id);

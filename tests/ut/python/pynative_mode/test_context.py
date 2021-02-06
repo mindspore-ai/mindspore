@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -96,13 +96,13 @@ def test_profiling_options():
     with pytest.raises(TypeError):
         context.set_context(profiling_options=1)
     profiling_options = {
-        "result_path": "",
+        "output": "",
         "fp_point": "",
         "bp_point": "",
         "training_trace": "on",
         "task_trace": "on",
-        "ai_core_metrics": "PipeUtilization",
-        "aicpu_trace": "on"
+        "aic_metrics": "PipeUtilization",
+        "aicpu": "on"
     }
     profiling_options = json.dumps(profiling_options)
     context.set_context(profiling_options=profiling_options)
