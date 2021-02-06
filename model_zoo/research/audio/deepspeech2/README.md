@@ -70,21 +70,27 @@ Dataset used: [LibriSpeech](<http://www.openslr.org/12>)
 .
 ├── audio
     ├── deepspeech2
-        ├── train.py                     // training scripts
-        ├── eval.py                      // testing and evaluation outputs
-        ├── export.py                    // convert mindspore model to mindir model
-        ├── labels.json                  // possible characters to map to
-        ├── README.md                    // descriptions about DeepSpeech
-        ├── deepspeech_pytorch           //
-            ├──decoder.py                // decoder from third party codes(MIT License)
+        ├── scripts
+        │   ├──run_distribute_train_gpu.sh // launch distributed training with gpu platform(8p)
+        │   ├──run_eval_cpu.sh             // launch evaluation with cpu platform
+        │   ├──run_eval_gpu.sh             // launch evaluation with gpu platform
+        │   ├──run_standalone_train_cpu.sh // launch standalone training with cpu platform
+        │   └──run_standalone_train_gpu.sh // launch standalone training with gpu platform(1p)
+        ├── train.py                       // training scripts
+        ├── eval.py                        // testing and evaluation outputs
+        ├── export.py                      // convert mindspore model to mindir model
+        ├── labels.json                    // possible characters to map to
+        ├── README.md                      // descriptions about DeepSpeech
+        ├── deepspeech_pytorch             //
+            ├──decoder.py                  // decoder from third party codes(MIT License)
         ├── src
             ├──__init__.py
-            ├──DeepSpeech.py             // DeepSpeech networks
-            ├──dataset.py                // generate dataloader and data processing entry
-            ├──config.py                 // DeepSpeech configs
-            ├──lr_generator.py           // learning rate generator
-            ├──greedydecoder.py          // modified greedydecoder for mindspore code
-            └──callback.py               // callbacks to monitor the training
+            ├──DeepSpeech.py               // DeepSpeech networks
+            ├──dataset.py                  // generate dataloader and data processing entry
+            ├──config.py                   // DeepSpeech configs
+            ├──lr_generator.py             // learning rate generator
+            ├──greedydecoder.py            // modified greedydecoder for mindspore code
+            └──callback.py                 // callbacks to monitor the training
 
 ```
 
@@ -219,11 +225,14 @@ After installing MindSpore via the official website and finishing dataset proces
 
 ```shell
 
-# standalone training
-CUDA_VISIBLE_DEVICES='0' python train.py
+# standalone training gpu
+sh ./scripts/run_standalone_train_gpu.sh [DEVICE_ID]
 
-# distributed training
-CUDA_VISIBLE_DEVICES='0,1,2,3,4,5,6,7' mpirun --allow-run-as-root -n 8 python train.py --is_distributed > log 2>&1 &
+# standalone training cpu
+sh ./scripts/run_standalone_train_cpu.sh
+
+# distributed training gpu
+sh ./scripts/run_distribute_train_gpu.sh
 
 ```
 
@@ -233,8 +242,12 @@ deepspeech_pytorch into deepspeech2 directory. After that, the file directory wi
 
 ```shell
 
-# eval
-CUDA_VISIBLE_DEVICES='0' python eval.py --pretrain_ckpt='saved_model_path'
+# eval on cpu
+sh ./scripts/run_eval_cpu.sh [PATH_CHECKPOINT]
+
+# eval on gpu
+sh ./scripts/run_eval_gpu.sh [DEVICE_ID] [PATH_CHECKPOINT]
+
 ```
 
 ## [Export MindIR](#contents)
