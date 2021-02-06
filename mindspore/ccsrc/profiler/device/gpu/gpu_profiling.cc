@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "profiler/device/gpu/gpu_profiling.h"
 
+#include <time.h>
 #include <cxxabi.h>
 #include <chrono>
 #include <cmath>
@@ -91,6 +92,14 @@ uint64_t GetHostTimeStamp() {
   return cur_time_stamp;
 }
 
+uint64_t GetHostMonoTimeStamp() {
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+  constexpr uint64_t kNSecondInSecond = 1000000000;
+  uint64_t cur_time_stamp = ts.tv_sec * kNSecondInSecond + ts.tv_nsec;
+  return cur_time_stamp;
+}
+
 std::string GetKernelFunc(const char *name) {
   char *demangledName = abi::__cxa_demangle(name, nullptr, nullptr, nullptr);
   if (demangledName != nullptr) {
@@ -100,16 +109,24 @@ std::string GetKernelFunc(const char *name) {
   }
 }
 
-void CUPTIApiExit(const std::shared_ptr<GPUProfiler> &gpu_profiler_inst, CUpti_CallbackId cb_id,
-                  const CUpti_CallbackData *cb_data) {
-  uint64_t start_timestamp = *cb_data->correlationData;
-  uint64_t end_timestamp = GetCUPTITimeStamp();
+bool IsMemcpyAsyncEvent(CUpti_CallbackId cb_id) {
   switch (cb_id) {
-    case CUPTI_DRIVER_TRACE_CBID_cuLaunchKernel:
-    case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernel:
-    case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernelMultiDevice:
-      gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuLaunchKernel", start_timestamp, end_timestamp);
-      break;
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAsync:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoDAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoHAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoDAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoHAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2DAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy3DAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoAAsync_v2:
+    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeerAsync:
+      return true;
+  }
+  return false;
+}
+
+bool IsMemcpySyncEvent(CUpti_CallbackId cb_id) {
+  switch (cb_id) {
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpy:
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoD_v2:
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoH_v2:
@@ -122,17 +139,21 @@ void CUPTIApiExit(const std::shared_ptr<GPUProfiler> &gpu_profiler_inst, CUpti_C
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2DUnaligned_v2:
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpy3D_v2:
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoA_v2:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAsync:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoDAsync_v2:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoHAsync_v2:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyDtoDAsync_v2:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyAtoHAsync_v2:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy2DAsync_v2:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpy3DAsync_v2:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyHtoAAsync_v2:
     case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeer:
-    case CUPTI_DRIVER_TRACE_CBID_cuMemcpyPeerAsync:
-      gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuMemcpy", start_timestamp, end_timestamp);
+      return true;
+  }
+  return false;
+}
+
+void CUPTIApiExit(const std::shared_ptr<GPUProfiler> &gpu_profiler_inst, CUpti_CallbackId cb_id,
+                  const CUpti_CallbackData *cb_data) {
+  uint64_t start_timestamp = *cb_data->correlationData;
+  uint64_t end_timestamp = GetCUPTITimeStamp();
+  switch (cb_id) {
+    case CUPTI_DRIVER_TRACE_CBID_cuLaunchKernel:
+    case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernel:
+    case CUPTI_DRIVER_TRACE_CBID_cuLaunchCooperativeKernelMultiDevice:
+      gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuLaunchKernel", start_timestamp, end_timestamp);
       break;
     case CUPTI_DRIVER_TRACE_CBID_cuMemAlloc:
     case CUPTI_DRIVER_TRACE_CBID_cuMemAlloc_v2:
@@ -150,6 +171,9 @@ void CUPTIApiExit(const std::shared_ptr<GPUProfiler> &gpu_profiler_inst, CUpti_C
     default:
       gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "others_api", start_timestamp, end_timestamp);
       break;
+  }
+  if (IsMemcpyAsyncEvent(cb_id) || IsMemcpySyncEvent(cb_id)) {
+    gpu_profiler_inst->EventHandleProcess(cb_id, cb_data, "cuMemcpy", start_timestamp, end_timestamp);
   }
 }
 
@@ -369,6 +393,7 @@ void GPUProfiler::Init(const std::string &profileDataPath = "") {
 
   base_time_.gpu_start_time = GetCUPTITimeStamp();
   base_time_.host_start_time = GetHostTimeStamp();
+  base_time_.host_start_monotonic_raw_time = GetHostMonoTimeStamp();
 
   profile_data_path_ = profileDataPath;
   MS_LOG(INFO) << "GPU start time(ns):" << base_time_.gpu_start_time
@@ -477,7 +502,7 @@ void GPUProfiler::SaveProfileData() {
     dataSaver.SetStepTraceOpName(step_trace_op_name);
     dataSaver.ParseOpInfo(op_info_map_);
     dataSaver.ParseEvent(events_);
-    dataSaver.WriteFile(profile_data_path_);
+    dataSaver.WriteFile(profile_data_path_, base_time_);
     SaveExtraProfileData();
   }
 }

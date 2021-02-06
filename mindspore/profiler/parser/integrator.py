@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -666,7 +666,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         )
         file_path = validate_and_normalize_path(file_path)
         if not os.path.exists(file_path):
-            logger.error("Failed to find parsed timeline file.")
+            logger.error(f"Failed to find parsed timeline file {file_path}.")
             raise ProfilerFileNotFoundException('parsed timeline file')
 
         return file_path
@@ -712,9 +712,32 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
 
         timeline_list = self._load_op_data(op_file_path) + \
                 self._load_activity_data(activity_file_path, activity_args_file_path)
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._device_id)
+        cpu_timeline_list = cpu_timeline_generator.load_cpu_op_data()
+        if cpu_timeline_list:
+            self._clock_synchronize_to_gpu(cpu_timeline_list)
+            timeline_list.extend(cpu_timeline_list)
         timeline_list.sort(key=lambda x: float(x[2]))
 
         return timeline_list
+
+    def _clock_synchronize_to_gpu(self, timeline_list):
+        """Synchronize the timestamp from device to host."""
+        start_time_file_path = os.path.join(self._profiling_dir, f"start_time_{self._device_id}.txt")
+
+        try:
+            with open(start_time_file_path) as f:
+                lines = f.readlines()
+                host_monotonic_start_time = int(lines[0].strip().split(':')[-1])
+                gpu_start_time = int(lines[1].strip().split(':')[-1])
+        except (IOError, OSError) as err:
+            logger.error(f'Error occurred when read {start_time_file_path}: {err}')
+            raise ProfilerIOException
+
+        time_diff = gpu_start_time - host_monotonic_start_time
+        start_time = 2
+        for idx, time_item in enumerate(timeline_list):
+            timeline_list[idx][start_time] = int(time_item[start_time]) + time_diff
 
     def _load_op_data(self, op_file_path):
         """Load operator data from file"""
@@ -847,7 +870,7 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             timeline_dict['pid'] = op_meta.pid
         self._timeline_meta.append(timeline_dict)
 
-    def init_timeline(self, all_reduce_info, framework_info, aicpu_info, min_cycle_counter):
+    def init_timeline(self, all_reduce_info, framework_info, aicpu_info, min_cycle_counter, source_path):
         """
         Init timeline metadata, adding all collected info.
 
@@ -862,6 +885,12 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         logger.info('Initiating timeline...')
         timeline_list = self._load_timeline_data()
+        cpu_timeline_generator = CpuTimelineGenerator(self._profiling_dir, self._device_id)
+        cpu_timeline_list = cpu_timeline_generator.get_timeline_data()
+        if cpu_timeline_list:
+            self._clock_synchronize_to_host(timeline_list, source_path)
+            timeline_list.extend(cpu_timeline_list)
+        timeline_list.sort(key=lambda x: float(x[2]))
         self._timeline_summary['op_exe_times'] = len(timeline_list)
 
         # Add AllReduce info to timeline temp list and sort by start time.
@@ -897,3 +926,72 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
 
         # Update timeline summary info
         self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
+
+    def _clock_synchronize_to_host(self, timeline_list, source_path):
+        """Synchronize the timestamp from device to host."""
+        host_start_file_path = os.path.join(source_path, f"host_start.log.{self._device_id}")
+        dev_start_file_path = os.path.join(source_path, f"dev_start.log.{self._device_id}")
+
+        try:
+            with open(host_start_file_path) as f:
+                lines = f.readlines()
+                host_monotonic = int(lines[2].strip().split(':')[1])
+        except (IOError, OSError) as err:
+            logger.error('Error occurred when read host_start.log: %s', err)
+            raise ProfilerIOException
+        try:
+            with open(dev_start_file_path) as f:
+                lines = f.readlines()
+                dev_cntvct = int(lines[2].strip().split(':')[1])
+        except (IOError, OSError) as err:
+            logger.error('Error occurred when read dev_start.log: %s', err)
+            raise ProfilerIOException
+
+        factor_ns_to_ms = 1e6
+        factor_ms_to_ten_ns = 1e5
+        factor_ten_ns_to_ns = 10
+        start_time = 2
+        for idx, time_item in enumerate(timeline_list):
+            cycle_counter = int(float(time_item[start_time]) * factor_ms_to_ten_ns)
+            host_monotonic_time = host_monotonic + (cycle_counter - dev_cntvct) * factor_ten_ns_to_ns
+            timeline_list[idx][start_time] = host_monotonic_time / factor_ns_to_ms
+
+class CpuTimelineGenerator(GpuTimelineGenerator):
+    """Generate gpu Timeline data from file."""
+    _output_op_execute_time_file_path = "cpu_op_execute_timestamp_{}.txt"
+
+    def _get_and_validate_path(self, file_name):
+        """Generate op or activity file path from file name, and validate this path."""
+        file_path = os.path.join(
+            self._profiling_dir,
+            file_name.format(self._device_id)
+        )
+        file_path = validate_and_normalize_path(file_path)
+
+        return file_path
+
+    def load_cpu_op_data(self):
+        """Load cpu operator data from file"""
+        op_file_path = self._get_and_validate_path(
+            self._output_op_execute_time_file_path)
+        timeline_list = []
+        if not os.path.exists(op_file_path):
+            logger.info("No cpu operator info.")
+            return timeline_list
+        timeline_list = self._load_op_data(op_file_path)
+
+        return timeline_list
+
+    def get_timeline_data(self):
+        """Get timeline data from file."""
+        timeline_list = self.load_cpu_op_data()
+        factor_ns_to_ms = 1e6
+        factor_us_to_ms = 1e3
+        start_time = 2
+        duration = 3
+        for idx, time_item in enumerate(timeline_list):
+            time_item[start_time] = float(time_item[start_time]) / factor_ns_to_ms
+            time_item[duration] = float(time_item[duration]) / factor_us_to_ms
+            timeline_list[idx] = time_item
+
+        return timeline_list

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "runtime/device/cpu/cpu_kernel_runtime.h"
+#include <unistd.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -29,6 +30,7 @@
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/session_basic.h"
 #include "frontend/operator/ops.h"
+#include "profiler/device/cpu/cpu_profiling.h"
 #include "utils/shape_utils.h"
 #include "utils/profile.h"
 #include "utils/trace_base.h"
@@ -376,6 +378,8 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
   static_cast<CPUMemoryManager *>(mem_manager_.get())->IncreaseAddressRefCount(kernel_graph);
 
   auto kernels = kernel_graph->execution_order();
+  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_inst);
   for (const auto &kernel : kernels) {
 #ifdef ENABLE_PROFILE
     double start_time = GetTime();
@@ -406,10 +410,17 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
       AddRuntimeAddress(device_address, &kernel_workspaces);
     }
     bool ret = true;
+    if (profiler_inst->GetEnableFlag()) {
+      uint32_t pid = getpid();
+      profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), pid);
+    }
     try {
       ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
     } catch (std::exception &e) {
       MS_LOG(EXCEPTION) << e.what() << "\nTrace:" << trace::DumpSourceLines(kernel);
+    }
+    if (profiler_inst->GetEnableFlag()) {
+      profiler_inst->OpDataProducerEnd();
     }
     if (!ret) {
       MS_LOG(EXCEPTION) << "Launch kernel failed. Trace:" << trace::DumpSourceLines(kernel);

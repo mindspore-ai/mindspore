@@ -106,6 +106,7 @@ struct OpInfo {
 struct BaseTime {
   // nanosecond
   uint64_t host_start_time = 0l;
+  uint64_t host_start_monotonic_raw_time = 0l;
   uint64_t gpu_start_time = 0l;
 };
 

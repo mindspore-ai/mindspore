@@ -85,6 +85,11 @@ class Profiler:
         os.environ['PROFILING_MODE'] = 'true'
         os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
 
+        if self._device_target:
+            from mindspore._c_expression import CPUProfiler
+            self._cpu_profiler = CPUProfiler.get_instance()
+            self._cpu_profiler.init(self._output_path)
+            self._cpu_profiler.step_profiling_enable(True)
         if self._device_target and self._device_target == "GPU":
             from mindspore._c_expression import GPUProfiler
             self._gpu_profiler = GPUProfiler.get_instance()
@@ -160,6 +165,7 @@ class Profiler:
             >>> model.train()
             >>> profiler.analyse()
         """
+        self._cpu_profiler.stop()
         if self._device_target and self._device_target == "GPU":
             self._gpu_analyse()
 
@@ -232,7 +238,7 @@ class Profiler:
 
         # analyse timeline info
         try:
-            self._analyse_timeline(aicpu_data_parser, optime_parser)
+            self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
 
@@ -330,7 +336,7 @@ class Profiler:
 
         return point_info
 
-    def _analyse_timeline(self, aicpu_parser, optime_parser):
+    def _analyse_timeline(self, aicpu_parser, optime_parser, source_path):
         """
         Analyse and parse timeline info.
 
@@ -362,7 +368,8 @@ class Profiler:
         # Add info into timeline, such as AI CPU, AllReduce, framework info.
         aicpu_info = aicpu_parser.query_aicpu_data()
         min_cycle_counter = min(aicpu_parser.min_cycle_counter, optime_parser.min_cycle_counter)
-        timeline_analyser.init_timeline(all_reduce_info, framework_info, aicpu_info, min_cycle_counter)
+        timeline_analyser.init_timeline(all_reduce_info, framework_info, aicpu_info,
+                                        min_cycle_counter, source_path)
         size_limit = 20 * 1024 * 1024  # 20MB
         timeline_analyser.write_timeline(size_limit)
         timeline_analyser.write_timeline_summary()
