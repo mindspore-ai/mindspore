@@ -54,8 +54,8 @@
 #include "runtime/device/ascend/profiling/profiling_callback_register.h"
 #include "backend/kernel_compiler/hccl/hccl_context.h"
 #ifdef ENABLE_TDTQUE
-#include "tdt/tdt_host_interface.h"
-#include "tdt/status.h"
+#include "minddata/dataset/engine/tdt/tdt_handle.h"
+using mindspore::dataset::TdtHandle;
 #endif
 
 using ge::model_runner::ModelRunner;
@@ -698,11 +698,10 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 #ifdef ENABLE_TDTQUE
     // Run task error, we should call TdtHostDestroy to release tdt to avoid DeviceQueueOp hostPush hung
     // case1: cpu usage 100% cause thread/process exit, but some tdt thread remain in backend
-    int32_t destory_status = tdt::TdtHostDestroy();
-    if (destory_status != TDT_OK_CODE) {
-      MS_LOG(WARNING) << "Destroy tsd failed, status = " << destory_status << ".";
+    if (!TdtHandle::DestroyHandle()) {
+      MS_LOG(WARNING) << "Destroy tdt channel failed.";
     } else {
-      MS_LOG(INFO) << "Destroy tsd success.";
+      MS_LOG(INFO) << "Destroy tdt channel success.";
     }
 #endif
     return false;

@@ -50,6 +50,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   } else {
     set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
   }
+
   set_param<uint32_t>(MS_CTX_MAX_CALL_DEPTH, MAX_CALL_DEPTH_DEFAULT);
   set_param<std::string>(MS_CTX_DEVICE_TARGET, target);
   set_param<int>(MS_CTX_EXECUTION_MODE, kPynativeMode);
@@ -107,4 +108,22 @@ std::string MsContext::backend_policy() const {
   }
   return "unknown";
 }
+
+#ifdef ENABLE_TDTQUE
+acltdtChannelHandle *MsContext::get_acl_tdt_channel_handle() {
+  if (acl_handle == nullptr) {
+    std::string kReceivePrefix = "TF_RECEIVE_";
+    std::string channel_name = "_npu_log";
+    uint32_t device_id = get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    acl_handle = acltdtCreateChannel(device_id, (kReceivePrefix + channel_name).c_str());
+    if (acl_handle == nullptr) {
+      MS_LOG(ERROR) << "Failed to create acltdt handle : " << channel_name;
+      return nullptr;
+    }
+    MS_LOG(INFO) << "Success to create acltdt handle: " << channel_name;
+    return acl_handle;
+  }
+  return acl_handle;
+}
+#endif
 }  // namespace mindspore
