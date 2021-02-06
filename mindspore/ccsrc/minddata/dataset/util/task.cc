@@ -23,9 +23,8 @@
 #include "minddata/dataset/util/services.h"
 #endif
 #ifdef ENABLE_TDTQUE
-#include "acl/acl_tdt.h"
+#include "tdt/tdt_host_interface.h"
 #include "tdt/status.h"
-#include "minddata/dataset/engine/tdt/tdt_handle.h"
 #endif
 
 namespace mindspore {
@@ -164,10 +163,11 @@ Status Task::Join(WaitFlag blocking) {
           if (wait_times > 5 && my_name_.find("DeviceQueueOp") != std::string::npos) {
             MS_LOG(WARNING) << "Wait " << wait_times << " seconds, "
                             << "the task: " << my_name_ << " will be destroyed by TdtHostDestory.";
-            if (!TdtHandle::DestroyHandle()) {
-              MS_LOG(WARNING) << "Destroy tdt channel failed.";
+            int32_t destory_status = tdt::TdtHostDestroy();
+            if (destory_status != TDT_OK_CODE) {
+              MS_LOG(WARNING) << "Destroy tsd failed, status = " << destory_status << ".";
             } else {
-              MS_LOG(INFO) << "Destroy tdt channel success.";
+              MS_LOG(INFO) << "Destroy tsd success.";
             }
 
             // just wait 30 seconds

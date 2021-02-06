@@ -20,10 +20,9 @@
 #include <map>
 #include "ir/dtype/type.h"
 #ifndef NO_DLIB
-#include "acl/acl_tdt.h"
 #include "tdt/tsd_client.h"
-#include "tdt/data_common.h"
 #include "tdt/tdt_host_interface.h"
+#include "tdt/data_common.h"
 #include "proto/print.pb.h"
 #include "utils/ms_context.h"
 #endif
@@ -33,11 +32,7 @@ class TensorPrint {
   TensorPrint() {}
   ~TensorPrint() = default;
 #ifndef NO_DLIB
-  explicit TensorPrint(acltdtChannelHandle *acl_handle) { acl_handle_ = acl_handle; }
   void operator()();
-
- private:
-  acltdtChannelHandle *acl_handle_ = nullptr;
 #endif
 };
 }  // namespace mindspore

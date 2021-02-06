@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,35 +23,65 @@
 #include "pybind11/pybind11.h"
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
+#ifndef NO_DLIB
+#include "tdt/tsd_client.h"
+#include "tdt/tdt_host_interface.h"
+#include "tdt/data_common.h"
+#endif
 
 namespace py = pybind11;
 namespace mindspore {
+const char kShapeSeperator[] = ",";
+const char kShapeScalar[] = "[0]";
+const char kShapeNone[] = "[]";
+static std::map<std::string, TypeId> print_type_map = {
+  {"int8_t", TypeId::kNumberTypeInt8},     {"uint8_t", TypeId::kNumberTypeUInt8},
+  {"int16_t", TypeId::kNumberTypeInt16},   {"uint16_t", TypeId::kNumberTypeUInt16},
+  {"int32_t", TypeId::kNumberTypeInt32},   {"uint32_t", TypeId::kNumberTypeUInt32},
+  {"int64_t", TypeId::kNumberTypeInt64},   {"uint64_t", TypeId::kNumberTypeUInt64},
+  {"float16", TypeId::kNumberTypeFloat16}, {"float", TypeId::kNumberTypeFloat32},
+  {"double", TypeId::kNumberTypeFloat64},  {"bool", TypeId::kNumberTypeBool}};
 
-#ifndef NO_DLIB
-static std::map<aclDataType, TypeId> print_acl_data_type_map = {
-  {ACL_INT8, TypeId::kNumberTypeInt8},       {ACL_UINT8, TypeId::kNumberTypeUInt8},
-  {ACL_INT16, TypeId::kNumberTypeInt16},     {ACL_UINT16, TypeId::kNumberTypeUInt16},
-  {ACL_INT32, TypeId::kNumberTypeInt32},     {ACL_UINT32, TypeId::kNumberTypeUInt32},
-  {ACL_INT64, TypeId::kNumberTypeInt64},     {ACL_UINT64, TypeId::kNumberTypeUInt64},
-  {ACL_FLOAT16, TypeId::kNumberTypeFloat16}, {ACL_FLOAT, TypeId::kNumberTypeFloat32},
-  {ACL_DOUBLE, TypeId::kNumberTypeFloat64},  {ACL_BOOL, TypeId::kNumberTypeBool}};
+static std::map<std::string, size_t> type_size_map = {
+  {"int8_t", sizeof(int8_t)},     {"uint8_t", sizeof(uint8_t)},   {"int16_t", sizeof(int16_t)},
+  {"uint16_t", sizeof(uint16_t)}, {"int32_t", sizeof(int32_t)},   {"uint32_t", sizeof(uint32_t)},
+  {"int64_t", sizeof(int64_t)},   {"uint64_t", sizeof(uint64_t)}, {"float16", sizeof(float) / 2},
+  {"float", sizeof(float)},       {"double", sizeof(double)},     {"bool", sizeof(bool)}};
 
-static std::map<aclDataType, size_t> acl_data_type_size_map = {
-  {ACL_INT8, sizeof(int8_t)},     {ACL_UINT8, sizeof(uint8_t)},   {ACL_INT16, sizeof(int16_t)},
-  {ACL_UINT16, sizeof(uint16_t)}, {ACL_INT32, sizeof(int32_t)},   {ACL_UINT32, sizeof(uint32_t)},
-  {ACL_INT64, sizeof(int64_t)},   {ACL_UINT64, sizeof(uint64_t)}, {ACL_FLOAT16, sizeof(float) / 2},
-  {ACL_FLOAT, sizeof(float)},     {ACL_DOUBLE, sizeof(double)},   {ACL_BOOL, sizeof(bool)}};
-
-std::string GetParseType(const aclDataType &acl_data_type) {
-  static const std::map<aclDataType, std::string> print_tensor_parse_map = {
-    {ACL_INT8, "Int8"},       {ACL_UINT8, "Uint8"},   {ACL_INT16, "Int16"},    {ACL_UINT16, "Uint16"},
-    {ACL_INT32, "Int32"},     {ACL_UINT32, "Uint32"}, {ACL_INT64, "Int64"},    {ACL_UINT64, "Uint64"},
-    {ACL_FLOAT16, "Float16"}, {ACL_FLOAT, "Float32"}, {ACL_DOUBLE, "Float64"}, {ACL_BOOL, "Bool"}};
-  auto type_iter = print_tensor_parse_map.find(acl_data_type);
-  if (type_iter == print_tensor_parse_map.end()) {
-    MS_LOG(EXCEPTION) << "type of tensor need to print is not support " << acl_data_type;
+std::string GetParseType(const std::string &tensorType_) {
+  static const std::map<std::string, std::string> print_parse_map = {
+    {"int8_t", "Int8"},     {"uint8_t", "Uint8"},   {"int16_t", "Int16"},  {"uint16_t", "Uint16"},
+    {"int32_t", "Int32"},   {"uint32_t", "Uint32"}, {"int64_t", "Int64"},  {"uint64_t", "Uint64"},
+    {"float16", "Float16"}, {"float", "Float32"},   {"double", "Float64"}, {"bool", "Bool"}};
+  auto type_iter = print_parse_map.find(tensorType_);
+  if (type_iter == print_parse_map.end()) {
+    MS_LOG(EXCEPTION) << "type of tensor need to print is not support " << tensorType_;
   }
   return type_iter->second;
+}
+
+bool ParseTensorShape(const std::string &input_shape_str, ShapeVector *const tensor_shape, size_t *dims) {
+  if (tensor_shape == nullptr) {
+    return false;
+  }
+  MS_EXCEPTION_IF_NULL(dims);
+  std::string shape_str = input_shape_str;
+  if (shape_str.size() <= 2) {
+    return false;
+  }
+  (void)shape_str.erase(shape_str.begin());
+  shape_str.pop_back();
+  shape_str += kShapeSeperator;
+  string::size_type pos_begin = 0;
+  string::size_type pos_end = shape_str.find(kShapeSeperator);
+  while (pos_end != std::string::npos) {
+    string dim_str = shape_str.substr(pos_begin, pos_end - pos_begin);
+    tensor_shape->emplace_back(std::stoi(dim_str));
+    (*dims) = (*dims) * std::stoul(dim_str);
+    pos_begin = pos_end + sizeof(kShapeSeperator) - 1;
+    pos_end = shape_str.find(kShapeSeperator, pos_begin);
+  }
+  return true;
 }
 
 bool PrintTensorToString(const char *str_data_ptr, mindspore::tensor::Tensor *const print_tensor,
@@ -60,11 +90,8 @@ bool PrintTensorToString(const char *str_data_ptr, mindspore::tensor::Tensor *co
   MS_EXCEPTION_IF_NULL(print_tensor);
   auto *tensor_data_ptr = static_cast<uint8_t *>(print_tensor->data_c());
   MS_EXCEPTION_IF_NULL(tensor_data_ptr);
-
-  size_t dest_size = static_cast<size_t>(print_tensor->data().nbytes());
-  size_t target_size = memory_size;
-
-  auto cp_ret = memcpy_s(tensor_data_ptr, dest_size, str_data_ptr, target_size);
+  auto cp_ret =
+    memcpy_s(tensor_data_ptr, static_cast<size_t>(print_tensor->data().nbytes()), str_data_ptr, memory_size);
   if (cp_ret != EOK) {
     MS_LOG(ERROR) << "Print op Failed to copy the memory to py::tensor " << cp_ret;
     return false;
@@ -73,10 +100,10 @@ bool PrintTensorToString(const char *str_data_ptr, mindspore::tensor::Tensor *co
 }
 
 template <typename T>
-void PrintScalarToString(const char *str_data_ptr, const aclDataType &acl_data_type, std::ostringstream *const buf) {
+void PrintScalarToString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
-  *buf << "Tensor(shape=[], dtype=" << GetParseType(acl_data_type) << ", value=";
+  *buf << "Tensor(shape=[], dtype=" << GetParseType(tensor_type) << ", value=";
   const T *data_ptr = reinterpret_cast<const T *>(str_data_ptr);
   if constexpr (std::is_same<T, int8_t>::value || std::is_same<T, uint8_t>::value) {
     const int int_data = static_cast<int>(*data_ptr);
@@ -86,12 +113,11 @@ void PrintScalarToString(const char *str_data_ptr, const aclDataType &acl_data_t
   }
 }
 
-void PrintScalarToBoolString(const char *str_data_ptr, const aclDataType &acl_data_type,
-                             std::ostringstream *const buf) {
+void PrintScalarToBoolString(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
   const bool *data_ptr = reinterpret_cast<const bool *>(str_data_ptr);
-  *buf << "Tensor(shape=[], dtype=" << GetParseType(acl_data_type) << ", value=";
+  *buf << "Tensor(shape=[], dtype=" << GetParseType(tensor_type) << ", value=";
   if (*data_ptr) {
     *buf << "True)\n";
   } else {
@@ -99,99 +125,89 @@ void PrintScalarToBoolString(const char *str_data_ptr, const aclDataType &acl_da
   }
 }
 
-void convertDataItem2Scalar(const char *str_data_ptr, const aclDataType &acl_data_type, std::ostringstream *const buf) {
+void convertDataItem2Scalar(const char *str_data_ptr, const string &tensor_type, std::ostringstream *const buf) {
   MS_EXCEPTION_IF_NULL(str_data_ptr);
   MS_EXCEPTION_IF_NULL(buf);
-  auto type_iter = print_acl_data_type_map.find(acl_data_type);
+  auto type_iter = print_type_map.find(tensor_type);
   auto type_id = type_iter->second;
   if (type_id == TypeId::kNumberTypeBool) {
-    PrintScalarToBoolString(str_data_ptr, acl_data_type, buf);
+    PrintScalarToBoolString(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeInt8) {
-    PrintScalarToString<int8_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<int8_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeUInt8) {
-    PrintScalarToString<uint8_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<uint8_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeInt16) {
-    PrintScalarToString<int16_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<int16_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeUInt16) {
-    PrintScalarToString<uint16_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<uint16_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeInt32) {
-    PrintScalarToString<int32_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<int32_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeUInt32) {
-    PrintScalarToString<uint32_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<uint32_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeInt64) {
-    PrintScalarToString<int64_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<int64_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeUInt64) {
-    PrintScalarToString<uint64_t>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<uint64_t>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeFloat16) {
-    PrintScalarToString<float16>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<float16>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeFloat32) {
-    PrintScalarToString<float>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<float>(str_data_ptr, tensor_type, buf);
   } else if (type_id == TypeId::kNumberTypeFloat64) {
-    PrintScalarToString<double>(str_data_ptr, acl_data_type, buf);
+    PrintScalarToString<double>(str_data_ptr, tensor_type, buf);
   } else {
-    MS_LOG(EXCEPTION) << "Cannot print scalar because of unsupported data type: " << GetParseType(acl_data_type) << ".";
+    MS_LOG(EXCEPTION) << "Cannot print scalar because of unsupported data type: " << tensor_type << ".";
   }
 }
 
-bool judgeLengthValid(const size_t str_len, const aclDataType &acl_data_type) {
-  auto type_iter = acl_data_type_size_map.find(acl_data_type);
-  if (type_iter == acl_data_type_size_map.end()) {
+bool judgeLengthValid(const size_t str_len, const string &tensor_type) {
+  auto type_iter = type_size_map.find(tensor_type);
+  if (type_iter == type_size_map.end()) {
     MS_LOG(EXCEPTION) << "type of scalar to print is not support.";
   }
   return str_len == type_iter->second;
 }
 
-bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
+#ifndef NO_DLIB
+bool ConvertDataItem2Tensor(const std::vector<tdt::DataItem> &items) {
   //  Acquire Python GIL
   py::gil_scoped_acquire gil_acquire;
   std::ostringstream buf;
   bool ret_end_sequence = false;
-
-  size_t acl_dataset_size = acltdtGetDatasetSize(acl_dataset);
-
-  for (size_t i = 0; i < acl_dataset_size; i++) {
-    acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
-    if (acltdtGetTensorTypeFromItem(item) == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
+  for (auto &item : items) {
+    if (item.dataType_ == tdt::TDT_END_OF_SEQUENCE) {
       ret_end_sequence = true;
-      MS_LOG(INFO) << "end of sequence" << std::endl;
       break;
     }
-
-    size_t dim_num = acltdtGetDimNumFromItem(item);
-    void *acl_addr = acltdtGetDataAddrFromItem(item);
-    size_t acl_data_size = acltdtGetDataSizeFromItem(item);
-    aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
-    char *acl_data = reinterpret_cast<char *>(acl_addr);
-    acl_data = const_cast<char *>(reinterpret_cast<std::string *>(acl_data)->c_str());
-    MS_EXCEPTION_IF_NULL(acl_data);
-
-    ShapeVector tensorShape;
-    tensorShape.resize(dim_num);
-
-    if (acltdtGetDimsFromItem(item, tensorShape.data(), dim_num) != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "ACL failed get dim-size from acl channel data";
-    }
-
-    if ((tensorShape.size() == 1 && tensorShape[0] == 0) || tensorShape.size() == 0) {
-      if (!judgeLengthValid(acl_data_size, acl_data_type)) {
+    std::shared_ptr<std::string> str_data_ptr = std::static_pointer_cast<std::string>(item.dataPtr_);
+    MS_EXCEPTION_IF_NULL(str_data_ptr);
+    if (item.tensorShape_ == kShapeScalar || item.tensorShape_ == kShapeNone) {
+      if (!judgeLengthValid(str_data_ptr->size(), item.tensorType_)) {
         MS_LOG(EXCEPTION) << "Print op receive data length is invalid.";
       }
-      convertDataItem2Scalar(acl_data, acl_data_type, &buf);
+      convertDataItem2Scalar(str_data_ptr->data(), item.tensorType_, &buf);
       continue;
     }
 
-    if (acl_data_type == ACL_STRING) {
-      std::string data(reinterpret_cast<const char *>(acl_data), acl_data_size);
+    ShapeVector tensor_shape;
+    size_t totaldims = 1;
+    if (!ParseTensorShape(item.tensorShape_, &tensor_shape, &totaldims)) {
+      MS_LOG(ERROR) << "Tensor print can not parse tensor shape, receive info" << item.tensorShape_;
+      continue;
+    }
+
+    if (item.tensorType_ == "string") {
+      std::string data(reinterpret_cast<const char *>(str_data_ptr->c_str()), item.dataLen_);
       buf << data << std::endl;
     } else {
-      auto type_iter = print_acl_data_type_map.find(acl_data_type);
-      if (type_iter == print_acl_data_type_map.end()) {
-        MS_LOG(ERROR) << "type of tensor need to print is not support " << GetParseType(acl_data_type);
+      auto type_iter = print_type_map.find(item.tensorType_);
+      if (type_iter == print_type_map.end()) {
+        MS_LOG(ERROR) << "type of tensor need to print is not support " << item.tensorType_;
         continue;
       }
       auto type_id = type_iter->second;
-      mindspore::tensor::Tensor print_tensor(type_id, tensorShape);
-      if (PrintTensorToString(acl_data, &print_tensor, acl_data_size)) {
+      mindspore::tensor::Tensor print_tensor(type_id, tensor_shape);
+      auto memory_size = totaldims * type_size_map[item.tensorType_];
+      if (PrintTensorToString(str_data_ptr->data(), &print_tensor, memory_size)) {
         buf << print_tensor.ToStringNoLimit() << std::endl;
       }
     }
@@ -200,63 +216,44 @@ bool ConvertDataset2Tensor(acltdtDataset *acl_dataset) {
   return ret_end_sequence;
 }
 
-bool SaveDataset2File(acltdtDataset *acl_dataset, const std::string &print_file_path, prntpb::Print print,
-                      std::fstream *output) {
+bool SaveDataItem2File(const std::vector<tdt::DataItem> &items, const std::string &print_file_path, prntpb::Print print,
+                       std::fstream *output) {
   bool ret_end_thread = false;
-
-  for (size_t i = 0; i < acltdtGetDatasetSize(acl_dataset); i++) {
-    acltdtDataItem *item = acltdtGetDataItem(acl_dataset, i);
-    MS_EXCEPTION_IF_NULL(item);
-    acltdtTensorType acl_tensor_type = acltdtGetTensorTypeFromItem(item);
-
-    if (acl_tensor_type == ACL_TENSOR_DATA_END_OF_SEQUENCE) {
-      MS_LOG(INFO) << "Acl channel received end-of-sequence for print op.";
+  for (auto &item : items) {
+    if (item.dataType_ == tdt::TDT_END_OF_SEQUENCE) {
       ret_end_thread = true;
       break;
-    } else if (acl_tensor_type == ACL_TENSOR_DATA_ABNORMAL) {
-      MS_LOG(INFO) << "Acl channel received abnormal for print op.";
-      return true;
-    } else if (acl_tensor_type == ACL_TENSOR_DATA_UNDEFINED) {
-      MS_LOG(INFO) << "Acl channel received undefined message type for print op.";
-      return false;
     }
-
     prntpb::Print_Value *value = print.add_value();
-    size_t dim_num = acltdtGetDimNumFromItem(item);
-    void *acl_addr = acltdtGetDataAddrFromItem(item);
-    size_t acl_data_size = acltdtGetDataSizeFromItem(item);
-    aclDataType acl_data_type = acltdtGetDataTypeFromItem(item);
-    char *acl_data = reinterpret_cast<char *>(acl_addr);
-    MS_EXCEPTION_IF_NULL(acl_data);
-
-    ShapeVector tensorShape;
-    tensorShape.resize(dim_num);
-
-    if (acltdtGetDimsFromItem(item, tensorShape.data(), dim_num) != ACL_SUCCESS) {
-      MS_LOG(ERROR) << "ACL failed get dim-size from acl channel data";
-    }
-
-    if ((tensorShape.size() == 1 && tensorShape[0] == 0) || tensorShape.size() == 0) {
-      if (!judgeLengthValid(acl_data_size, acl_data_type)) {
+    std::shared_ptr<std::string> str_data_ptr = std::static_pointer_cast<std::string>(item.dataPtr_);
+    MS_EXCEPTION_IF_NULL(str_data_ptr);
+    if (item.tensorShape_ == kShapeScalar || item.tensorShape_ == kShapeNone) {
+      if (!judgeLengthValid(str_data_ptr->size(), item.tensorType_)) {
         MS_LOG(ERROR) << "Print op receive data length is invalid.";
         ret_end_thread = true;
       }
     }
 
-    if (acl_data_type == ACL_STRING) {
-      std::string data(reinterpret_cast<const char *>(acl_data), acl_data_size);
+    ShapeVector tensor_shape;
+    size_t totaldims = 1;
+    if (!ParseTensorShape(item.tensorShape_, &tensor_shape, &totaldims)) {
+      MS_LOG(ERROR) << "Tensor print can not parse tensor shape, receive info" << item.tensorShape_;
+      ret_end_thread = true;
+    }
+
+    if (item.tensorType_ == "string") {
+      std::string data(reinterpret_cast<const char *>(str_data_ptr->c_str()), item.dataLen_);
       value->set_desc(data);
     } else {
-      auto parse_type = GetParseType(acl_data_type);
+      auto parse_type = GetParseType(item.tensorType_);
       prntpb::TensorProto *tensor = value->mutable_tensor();
-      if (tensorShape.size() > 1 || (tensorShape.size() == 1 && tensorShape[0] != 1)) {
-        for (const auto &dim : tensorShape) {
+      if (!(item.tensorShape_ == kShapeScalar) && !(item.tensorShape_ == kShapeNone)) {
+        for (const auto &dim : tensor_shape) {
           tensor->add_dims(static_cast<::google::protobuf::int64>(dim));
         }
       }
-
       tensor->set_tensor_type(parse_type);
-      std::string data(reinterpret_cast<const char *>(acl_data), acl_data_size);
+      std::string data(reinterpret_cast<const char *>(str_data_ptr->c_str()), item.dataLen_);
       tensor->set_tensor_content(data);
     }
 
@@ -277,37 +274,29 @@ void TensorPrint::operator()() {
   std::string print_file_path = ms_context->get_param<std::string>(MS_CTX_PRINT_FILE_PATH);
   if (print_file_path == "") {
     while (true) {
-      acltdtDataset *acl_dataset = acltdtCreateDataset();
-      if (acl_dataset == nullptr) {
-        MS_LOG(ERROR) << "Failed create acl dateaset.";
-      }
-      if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "Acltdt receive tensor failed";
+      std::vector<tdt::DataItem> bundle;
+      if (tdt::TdtHostPopData("_npu_log", bundle) != 0) {
         break;
       }
-      if (ConvertDataset2Tensor(acl_dataset)) {
+      if (ConvertDataItem2Tensor(bundle)) {
         break;
       }
     }
   } else {
     std::fstream output(print_file_path, std::ios::out | std::ios::trunc | std::ios::binary);
     while (true) {
-      acltdtDataset *acl_dataset = acltdtCreateDataset();
-      if (acl_dataset == nullptr) {
-        MS_LOG(ERROR) << "Failed create acl dateaset.";
-      }
-      if (acltdtReceiveTensor(acl_handle_, acl_dataset, -1 /* no timeout */) != ACL_SUCCESS) {
-        MS_LOG(ERROR) << "Acltdt receive tensor failed";
+      std::vector<tdt::DataItem> bundle;
+      if (tdt::TdtHostPopData("_npu_log", bundle) != 0) {
         break;
       }
-      if (SaveDataset2File(acl_dataset, print_file_path, print, &output)) {
+      if (SaveDataItem2File(bundle, print_file_path, print, &output)) {
         break;
       }
     }
     output.close();
     std::string path_string = print_file_path;
     if (chmod(common::SafeCStr(path_string), S_IRUSR) == -1) {
-      MS_LOG(ERROR) << "Modify file:" << print_file_path << " to fail.";
+      MS_LOG(ERROR) << "Modify file:" << print_file_path << " to r fail.";
       return;
     }
   }
