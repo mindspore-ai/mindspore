@@ -396,7 +396,7 @@ sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 - Notes
 
-1. 运行分布式任务时要用到由RANK_TABLE_FILE指定的hccl.json文件。您可使用[hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)生成该文件。
+1. 运行分布式任务时要用到由RANK_TABLE_FILE指定的hccl.json文件。您可使用[hccl_tools](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/utils/hccl_tools)生成该文件。
 2. PRETRAINED_MODEL应该是训练好的ResNet50检查点。如果此参数未设置，网络将从头开始训练。如果想要加载训练好的MaskRcnn检查点，需要对train.py作如下修改：
 
 ```python
@@ -455,6 +455,8 @@ sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 
 > 关于COCO2017数据集，VALIDATION_ANN_FILE_JSON参考数据集目录下的annotations/instances_val2017.json文件。  
 > 检查点可在训练过程中生成并保存，其文件夹名称以“train/checkpoint”或“train_parallel*/checkpoint”开头。
+>
+> 数据集中图片的数量要和VALIDATION_ANN_FILE_JSON文件中标记数量一致，否则精度结果展示格式可能出现异常。
 
 ### 评估结果
 
@@ -566,7 +568,7 @@ Accumulating evaluation results...
 | 速度                  | 单卡：250毫秒/步；8P: 260毫秒/步                          |
 | 总时长                | 单卡：52小时；8卡：6.6小时                                |
 | 参数（M）             | 280                                                       |
-| 脚本                  | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/maskrcnn> |
+| 脚本                  | <https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo/official/cv/maskrcnn> |
 
 ### 评估性能
 
@@ -588,4 +590,4 @@ dataset.py中设置了“create_dataset”函数内的种子，同时还使用tr
 
 # ModelZoo主页
 
-请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
+请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/r1.1/model_zoo)。
