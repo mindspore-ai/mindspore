@@ -323,6 +323,12 @@ if(ENABLE_FP16)
             )
 endif()
 
+if(SUPPORT_TRAIN)
+    file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC_GRAD
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/fp6_grad/*.cc)
+    list(APPEND TEST_SRC ${TEST_CASE_KERNEL_FP16_SRC_GRAD})
+endif()
+
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
 target_link_libraries(lite-test dl mindspore::gtest)

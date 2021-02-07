@@ -17,6 +17,11 @@ list(APPEND SDOT_FILES ${SDOT_SRC})
 list(APPEND FP16_FILES ${FP16_C_SRC})
 list(APPEND FP16_FILES ${FP16_NEON_SRC})
 
+if(SUPPORT_TRAIN)
+    file(GLOB FP16_TRAIN_SRC ${NNACL_DIR}/fp16_grad/*.c)
+    list(APPEND FP16_FILES ${FP16_TRAIN_SRC})
+endif()
+
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+dotprod+fp16")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod+fp16")
