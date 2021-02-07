@@ -102,7 +102,7 @@ class ReluReduceMeanDenseRelu(Cell):
         x_ = self.relu(x_)
         return x_
 
-# @pytest.mark.level0
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -136,8 +136,8 @@ def test_async_dump_net_multi_layer_mode1():
     if os.path.exists(npy_path):
         shutil.rmtree(npy_path)
     os.mkdir(npy_path)
-    cmd = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/dump_data_conversion.pyc " \
-        "-type offline -target numpy -i {0} -o {1}".format(dump_file_full_path, npy_path)
+    cmd = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.pyc " \
+        "convert -d {0} -out {1}".format(dump_file_full_path, npy_path)
     os.system(cmd)
     npy_file_list = os.listdir(npy_path)
     dump_result = {}
