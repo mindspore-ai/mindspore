@@ -431,7 +431,7 @@ bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 ### [Training Result](#content)
 
-Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss_rankid.log.
+Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the following in loss_rankid.log.
 
 ```bash
 # distribute training result(8p)
@@ -457,10 +457,12 @@ bash run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 
 > As for the COCO2017 dataset, VALIDATION_ANN_FILE_JSON is refer to the annotations/instances_val2017.json in the dataset directory.  
 > checkpoint can be produced and saved in training process, whose folder name begins with "train/checkpoint" or "train_parallel*/checkpoint".
+>
+> Images size in dataset should be equal to the annotation size in VALIDATION_ANN_FILE_JSON, otherwise the evaluation result cannot be displayed properly.
 
 ### [Evaluation result](#content)
 
-Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
+Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the following in log.
 
 ```bash
 Evaluate annotation type *bbox*

@@ -268,6 +268,8 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
 > 在训练过程中生成检查点。
+>
+> 数据集中图片的数量要和VALIDATION_JSON_FILE文件中标记数量一致，否则精度结果展示格式可能出现异常。
 
 ### 结果
 
