@@ -117,11 +117,6 @@ void RunGraphTask::Run() {
     MS_LOG(ERROR) << "Invalid graph id " << graph_id_;
     return;
   }
-#ifdef ENABLE_DUMP_IR
-  std::string tag = "run_graph";
-  std::string file_type = ".ir;.pb";
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, false, file_type);
-#endif
   graph->ResetGraphRunningStatus();
   try {
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);

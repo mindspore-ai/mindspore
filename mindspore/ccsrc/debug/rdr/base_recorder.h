@@ -49,7 +49,7 @@ class BaseRecorder {
   std::string GetTimeStamp() const { return timestamp_; }
 
   void SetDirectory(const std::string &directory) { directory_ = directory; }
-
+  std::string GetDirectory() const { return directory_; }
   virtual void Export() {}
 
  protected:
