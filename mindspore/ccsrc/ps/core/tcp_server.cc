@@ -330,7 +330,7 @@ void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
 
   auto conn = static_cast<class TcpConnection *>(connection);
   struct evbuffer *buf = bufferevent_get_input(bev);
-  char read_buffer[4096];
+  char read_buffer[kMessageChunkLength];
   while (EVBUFFER_LENGTH(buf) > 0) {
     int read = evbuffer_remove(buf, &read_buffer, sizeof(read_buffer));
     if (read == -1) {
