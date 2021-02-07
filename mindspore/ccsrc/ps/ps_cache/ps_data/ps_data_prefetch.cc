@@ -44,9 +44,16 @@ std::shared_ptr<PsDataChannel> PsDataPrefetch::ps_data_channel(const std::string
   return iter->second;
 }
 
-bool PsDataPrefetch::PrefetchData(const std::string &channel_name, void *data, const size_t data_size) {
+bool PsDataPrefetch::PrefetchData(const std::string &channel_name, void *data, const size_t data_size,
+                                  const std::string &data_type) {
   if (cache_enable_ == false) {
     return true;
+  }
+  // In ps cache mode, input ids are from dataset and data type transmitted from minddata must be 'int32'
+  const std::string supported_data_type = "int32";
+  if (data_type != supported_data_type) {
+    MS_LOG(ERROR) << "Parameter server cache mode need input id with data type[int32], but got[" << data_type << "]";
+    return false;
   }
   if (data == nullptr) {
     MS_LOG(WARNING) << "No data prefetch.";

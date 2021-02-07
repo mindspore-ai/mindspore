@@ -34,6 +34,7 @@ enum BlockQueueStatus_T : int { SUCCESS = 0, QUEUE_NOT_EXIST, HANDLE_NOT_EXIST, 
 
 struct DataItemGpu {
   int32_t worker_id_;
+  std::string data_type_;
   size_t data_len_;
   void *data_ptr_;
 };

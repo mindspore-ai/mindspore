@@ -301,10 +301,9 @@ Status DeviceQueueOp::PushDataToGPU() {
     }
 
     // Data prefetch only when PS mode enables cache.
-    if (items.size() > 0) {
-      if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_)) {
-        return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__, "Failed to prefetch data.");
-      }
+    if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_,
+                                                        items[0].data_type_)) {
+      return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__, "Failed to prefetch data.");
     }
     while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
       BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
@@ -434,6 +433,11 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
     if (sub_item.data_ptr_ == nullptr) {
       return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "Memory malloc failed.");
     }
+    if (curr_row[i] == nullptr) {
+      MS_LOG(ERROR) << "The pointer curr_row[" << i << "] is null";
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "TensorRow 'curr_row' contains nullptr.");
+    }
+    sub_item.data_type_ = curr_row[i]->type().ToString();
     const unsigned char *column_data = curr_row[i]->GetBuffer();
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {

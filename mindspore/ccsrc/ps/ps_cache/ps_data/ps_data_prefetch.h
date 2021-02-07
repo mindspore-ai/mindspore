@@ -37,7 +37,8 @@ class EXPORT PsDataPrefetch {
   EXPORT bool cache_enable() const { return cache_enable_; }
   EXPORT void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
   EXPORT void CreateDataChannel(const std::string &channel_name, size_t step_num);
-  EXPORT bool PrefetchData(const std::string &channel_name, void *data, const size_t data_size);
+  EXPORT bool PrefetchData(const std::string &channel_name, void *data, const size_t data_size,
+                           const std::string &data_type);
   EXPORT bool FinalizeData(const std::string &channel_name);
   EXPORT void NotifyFinalize();
   EXPORT void *data(const std::string &channel_name) const;
