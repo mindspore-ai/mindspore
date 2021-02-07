@@ -167,7 +167,6 @@ class SequentialCell(Cell):
         if _valid_cell(cell):
             self._cells[str(len(self))] = cell
         self.cell_list = list(self._cells.values())
-        return self
 
     def construct(self, input_data):
         for cell in self.cell_list:
@@ -277,7 +276,6 @@ class CellList(_CellListBase, Cell):
         """Appends a given cell to the end of the list."""
         if _valid_cell(cell):
             self._cells[str(len(self))] = cell
-        return self
 
     def set_grad(self, flag=True):
         self.requires_grad = flag
