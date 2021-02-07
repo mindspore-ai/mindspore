@@ -208,7 +208,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "neg_iou_thr": 0.3,                                                      # negative sample threshold after IOU
 "pos_iou_thr": 0.7,                                                      # positive sample threshold after IOU
 "min_pos_iou": 0.3,                                                      # minimal positive sample threshold after IOU
-"num_bboxes": 245520,                                                    # total bbox numner
+"num_bboxes": 245520,                                                    # total bbox number
 "num_gts": 128,                                                          # total ground truth number
 "num_expected_neg": 256,                                                 # negative sample number
 "num_expected_pos": 128,                                                 # positive sample number
@@ -220,7 +220,7 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 # roi_alignj
 "roi_layer": dict(type='RoIAlign', out_size=7, mask_out_size=14, sample_num=2), # ROIAlign parameters
 "roi_align_out_channels": 256,                                                  # ROIAlign out channels size
-"roi_align_featmap_strides": [4, 8, 16, 32],                                    # stride size for differnt level of ROIAling feature map
+"roi_align_featmap_strides": [4, 8, 16, 32],                                    # stride size for different level of ROIAling feature map
 "roi_align_finest_scale": 56,                                                   # finest scale ofr ROIAlign
 "roi_sample_num": 640,                                                          # sample number in ROIAling layer
 
@@ -338,7 +338,7 @@ sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 ### [Training Result](#content)
 
-Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss_rankid.log.
+Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the following in loss_rankid.log.
 
 ```bash
 # distribute training result(8p)
@@ -369,7 +369,7 @@ sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 
 ### [Evaluation result](#content)
 
-Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
+Inference result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the following in log.
 
 ```bash
 Evaluate annotation type *bbox*

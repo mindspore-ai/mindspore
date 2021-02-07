@@ -59,7 +59,7 @@ int DvppCommon::DeInit(void) {
 
     ret = acldvppDestroyChannel(dvppChannelDesc_);
     if (ret != OK) {
-        std::cout << "Failed to destory dvpp channel, ret = " << ret << "." << std::endl;
+        std::cout << "Failed to destroy dvpp channel, ret = " << ret << "." << std::endl;
         return ret;
     }
 
@@ -646,7 +646,7 @@ int DvppCommon::CombineJpegdProcess(const RawData& imageInfo, acldvppPixelFormat
         return ret;
     }
 
-    // In TransferImageH2D function, device buffer will be alloced to store the input image
+    // In TransferImageH2D function, device buffer will be allocated to store the input image
     // Need to pay attention to release of the buffer
     ret = TransferImageH2D(imageInfo, inputImage_);
     if (ret != OK) {
