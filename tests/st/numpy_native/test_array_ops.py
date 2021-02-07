@@ -22,6 +22,9 @@ import numpy as onp
 import mindspore.numpy as mnp
 from mindspore.nn import Cell
 
+from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
+    rand_bool, match_res, run_multi_test
+
 
 class Cases():
     def __init__(self):
@@ -109,81 +112,6 @@ class Cases():
             [onp.ones(3), (1, 2, 3), onp.ones(3), [4, 5, 6]],
             ([(1, 2), onp.ones(2)], (onp.ones(2), [3, 4])),
         ]
-
-
-def match_array(actual, expected, error=0):
-    if error > 0:
-        onp.testing.assert_almost_equal(actual.tolist(), expected.tolist(),
-                                        decimal=error)
-    else:
-        onp.testing.assert_equal(actual.tolist(), expected.tolist())
-
-
-def check_all_results(onp_results, mnp_results, error=0):
-    """Check all results from numpy and mindspore.numpy"""
-    for i, _ in enumerate(onp_results):
-        match_array(onp_results[i], mnp_results[i].asnumpy())
-
-
-def run_non_kw_test(mnp_fn, onp_fn):
-    """Run tests on functions with non keyword arguments"""
-    test_case = Cases()
-    for i in range(len(test_case.arrs)):
-        arrs = test_case.arrs[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-    for i in range(len(test_case.scalars)):
-        arrs = test_case.scalars[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-    for i in range(len(test_case.expanded_arrs)):
-        arrs = test_case.expanded_arrs[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-    for i in range(len(test_case.nested_arrs)):
-        arrs = test_case.nested_arrs[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-
-def rand_int(*shape):
-    """return an random integer array with parameter shape"""
-    res = onp.random.randint(low=1, high=5, size=shape)
-    if isinstance(res, onp.ndarray):
-        return res.astype(onp.float32)
-    return float(res)
-
-
-# return an random boolean array
-def rand_bool(*shape):
-    return onp.random.rand(*shape) > 0.5
-
-
-def match_res(mnp_fn, onp_fn, *arrs, **kwargs):
-    """Checks results from applying mnp_fn and onp_fn on arrs respectively"""
-    mnp_arrs = map(functools.partial(mnp.asarray, dtype='float32'), arrs)
-    mnp_res = mnp_fn(*mnp_arrs, **kwargs)
-    onp_res = onp_fn(*arrs, **kwargs)
-    match_all_arrays(mnp_res, onp_res)
-
-
-def match_all_arrays(mnp_res, onp_res, error=0):
-    if isinstance(mnp_res, (tuple, list)):
-        assert len(mnp_res) == len(onp_res)
-        for actual, expected in zip(mnp_res, onp_res):
-            match_array(actual.asnumpy(), expected, error)
-    else:
-        match_array(mnp_res.asnumpy(), onp_res, error)
-
-
-def match_meta(actual, expected):
-    # float64 and int64 are not supported, and the default type for
-    # float and int are float32 and int32, respectively
-    if expected.dtype == onp.float64:
-        expected = expected.astype(onp.float32)
-    elif expected.dtype == onp.int64:
-        expected = expected.astype(onp.int32)
-    assert actual.shape == expected.shape
-    assert actual.dtype == expected.dtype
 
 
 # Test np.transpose and np.ndarray.transpose
@@ -458,6 +386,34 @@ def test_concatenate():
     check_all_results(o_concatenate, m_concatenate)
 
 
+def mnp_append(arr1, arr2):
+    a = mnp.append(arr1, arr2)
+    b = mnp.append(arr1, arr2, axis=0)
+    c = mnp.append(arr1, arr2, axis=-1)
+    return a, b, c
+
+def onp_append(arr1, arr2):
+    a = onp.append(arr1, arr2)
+    b = onp.append(arr1, arr2, axis=0)
+    c = onp.append(arr1, arr2, axis=-1)
+    return a, b, c
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_append():
+    onp_array = onp.random.random((4, 3, 2)).astype('float32')
+    onp_value = onp.random.random((4, 3, 2)).astype('float32')
+    mnp_array = mnp.asarray(onp_array)
+    mnp_value = mnp.asarray(onp_value)
+    onp_res = onp_append(onp_array, onp_value)
+    mnp_res = mnp_append(mnp_array, mnp_value)
+    check_all_results(onp_res, mnp_res)
+
+
 def construct_arrays(n=1, ndim=1, axis=None, low=1, high=5):
     onp_array_lst = []
     mnp_array_lst = []
@@ -629,7 +585,7 @@ def onp_atleast3d(*arys):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_atleast1d():
-    run_non_kw_test(mnp_atleast1d, onp_atleast1d)
+    run_non_kw_test(mnp_atleast1d, onp_atleast1d, Cases())
 
 
 @pytest.mark.level1
@@ -639,7 +595,7 @@ def test_atleast1d():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_atleast2d():
-    run_non_kw_test(mnp_atleast2d, onp_atleast2d)
+    run_non_kw_test(mnp_atleast2d, onp_atleast2d, Cases())
 
 
 @pytest.mark.level1
@@ -649,7 +605,7 @@ def test_atleast2d():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_atleast3d():
-    run_non_kw_test(mnp_atleast3d, onp_atleast3d)
+    run_non_kw_test(mnp_atleast3d, onp_atleast3d, Cases())
 
 
 # Test np.where
@@ -856,6 +812,444 @@ def test_stack():
     match_res(mnp_stack, onp_stack, *arrs)
     for i in range(-6, 6):
         match_res(mnp.stack, onp.stack, arrs, axis=i)
+
+
+def mnp_roll(input_tensor):
+    a = mnp.roll(input_tensor, -3)
+    b = mnp.roll(input_tensor, [-2, -3], 1)
+    c = mnp.roll(input_tensor, (3, 0, -5), (-1, -2, 0))
+    d = mnp.roll(input_tensor, (4,), [0, 0, 1])
+    return a, b, c, d
+
+
+def onp_roll(input_array):
+    a = onp.roll(input_array, -3)
+    b = onp.roll(input_array, [-2, -3], 1)
+    c = onp.roll(input_array, (3, 0, -5), (-1, -2, 0))
+    d = onp.roll(input_array, (4,), [0, 0, 1])
+    return a, b, c, d
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_roll():
+    arr = rand_int(3, 4, 5)
+    match_res(mnp_roll, onp_roll, arr)
+    arr = rand_int(1, 4, 6).astype("int64")
+    match_res(mnp_roll, onp_roll, arr)
+
+
+def mnp_moveaxis(a):
+    a = mnp.moveaxis(a, 3, 3)
+    b = mnp.moveaxis(a, -1, 4)
+    c = mnp.moveaxis(a, (2, 1, 4), (0, 3, 2))
+    d = mnp.moveaxis(a, [-2, -5], [2, -4])
+    return a, b, c, d
+
+
+def onp_moveaxis(a):
+    a = onp.moveaxis(a, 3, 3)
+    b = onp.moveaxis(a, -1, 4)
+    c = onp.moveaxis(a, (2, 1, 4), (0, 3, 2))
+    d = onp.moveaxis(a, [-2, -5], [2, -4])
+    return a, b, c, d
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_moveaxis():
+    a = rand_int(2, 4, 5, 9, 6)
+    match_res(mnp_moveaxis, onp_moveaxis, a)
+    a = rand_int(2, 4, 5, 0, 6, 7, 1, 3, 8)
+    match_res(mnp_moveaxis, onp_moveaxis, a)
+
+
+def mnp_tile(x):
+    a = mnp.tile(x, 0)
+    b = mnp.tile(x, 1)
+    c = mnp.tile(x, 3)
+    d = mnp.tile(x, [5, 1])
+    e = mnp.tile(x, (3, 1, 0))
+    f = mnp.tile(x, [5, 1, 2, 3, 7])
+    return a, b, c, d, e, f
+
+
+def onp_tile(x):
+    a = onp.tile(x, 0)
+    b = onp.tile(x, 1)
+    c = onp.tile(x, 3)
+    d = onp.tile(x, [5, 1])
+    e = onp.tile(x, (3, 1, 0))
+    f = onp.tile(x, [5, 1, 2, 3, 7])
+    return a, b, c, d, e, f
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tile():
+    a = rand_int(2, 3, 4)
+    match_res(mnp_tile, onp_tile, a)
+    b = rand_int(5, 0, 8)
+    match_res(mnp_tile, onp_tile, b)
+
+
+def mnp_broadcast_to(x):
+    a = mnp.broadcast_to(x, (2, 3))
+    b = mnp.broadcast_to(x, (8, 1, 3))
+    return a, b
+
+
+def onp_broadcast_to(x):
+    a = onp.broadcast_to(x, (2, 3))
+    b = onp.broadcast_to(x, (8, 1, 3))
+    return a, b
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_broadcast_to():
+    x = rand_int()
+    match_res(mnp_broadcast_to, onp_broadcast_to, x)
+    x = rand_int(3)
+    match_res(mnp_broadcast_to, onp_broadcast_to, x)
+    x = rand_int(1, 3)
+    match_res(mnp_broadcast_to, onp_broadcast_to, x)
+
+
+def mnp_broadcast_arrays(*args):
+    return mnp.broadcast_arrays(*args)
+
+
+def onp_broadcast_arrays(*args):
+    return onp.broadcast_arrays(*args)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_broadcast_arrays():
+    test_case = Cases()
+    broadcastables = test_case.broadcastables
+    for i in range(len(broadcastables)):
+        arrs = broadcastables[i:]
+        match_res(mnp_broadcast_arrays, onp_broadcast_arrays, *arrs)
+
+
+def mnp_flip(x):
+    a = mnp.flip(x)
+    b = mnp.flip(x, 0)
+    c = mnp.flip(x, 1)
+    d = mnp.flip(x, (-3, -1))
+    return a, b, c, d
+
+
+def onp_flip(x):
+    a = onp.flip(x)
+    b = onp.flip(x, 0)
+    c = onp.flip(x, 1)
+    d = onp.flip(x, (-3, -1))
+    return a, b, c, d
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_flip():
+    x = rand_int(2, 3, 4)
+    run_multi_test(mnp_flip, onp_flip, (x,))
+
+
+def mnp_flipud(x):
+    return mnp.flipud(x)
+
+
+def onp_flipud(x):
+    return  onp.flipud(x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_flipud():
+    x = rand_int(2, 3, 4)
+    run_multi_test(mnp_flipud, onp_flipud, (x,))
+
+
+def mnp_fliplr(x):
+    return mnp.fliplr(x)
+
+
+def onp_fliplr(x):
+    return onp.fliplr(x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_fliplr():
+    x = rand_int(2, 3, 4)
+    run_multi_test(mnp_fliplr, onp_fliplr, (x,))
+
+
+def mnp_split(input_tensor):
+    a = mnp.split(input_tensor, indices_or_sections=1)
+    b = mnp.split(input_tensor, indices_or_sections=3)
+    c = mnp.split(input_tensor, indices_or_sections=(-9, -8, 6))
+    d = mnp.split(input_tensor, indices_or_sections=(3, 2, 1))
+    e = mnp.split(input_tensor, indices_or_sections=(-10, -4, 5, 10))
+    f = mnp.split(input_tensor, indices_or_sections=[0, 2], axis=1)
+    return a, b, c, d, e, f
+
+
+def onp_split(input_array):
+    a = onp.split(input_array, indices_or_sections=1)
+    b = onp.split(input_array, indices_or_sections=3)
+    c = onp.split(input_array, indices_or_sections=(-9, -8, 6))
+    d = onp.split(input_array, indices_or_sections=(3, 2, 1))
+    e = onp.split(input_array, indices_or_sections=(-10, -4, 5, 10))
+    f = onp.split(input_array, indices_or_sections=[0, 2], axis=1)
+    return a, b, c, d, e, f
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_split():
+    onp_arrs = [
+        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32'),
+        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float64')
+    ]
+    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
+        o_split = onp_split(onp_arr)
+        m_split = mnp_split(mnp_arr)
+        for expect_lst, actual_lst in zip(o_split, m_split):
+            for expect, actual in zip(expect_lst, actual_lst):
+                match_array(expect, actual.asnumpy())
+
+
+def mnp_vsplit(input_tensor):
+    a = mnp.vsplit(input_tensor, indices_or_sections=3)
+    b = mnp.vsplit(input_tensor, indices_or_sections=(-10, -4, 5, 10))
+    c = mnp.vsplit(input_tensor, indices_or_sections=[0, 2])
+    return a, b, c
+
+
+def onp_vsplit(input_array):
+    a = onp.vsplit(input_array, indices_or_sections=3)
+    b = onp.vsplit(input_array, indices_or_sections=(-10, -4, 5, 10))
+    c = onp.vsplit(input_array, indices_or_sections=[0, 2])
+    return a, b, c
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vsplit():
+    onp_arrs = [
+        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32'),
+        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float64')
+    ]
+    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
+        o_vsplit = onp_vsplit(onp_arr)
+        m_vsplit = mnp_vsplit(mnp_arr)
+        for expect_lst, actual_lst in zip(o_vsplit, m_vsplit):
+            for expect, actual in zip(expect_lst, actual_lst):
+                match_array(expect, actual.asnumpy())
+
+
+def mnp_hsplit(input_tensor):
+    a = mnp.hsplit(input_tensor, indices_or_sections=3)
+    b = mnp.hsplit(input_tensor, indices_or_sections=(-10, -4, 5, 10))
+    c = mnp.hsplit(input_tensor, indices_or_sections=[0, 2])
+    return a, b, c
+
+
+def onp_hsplit(input_array):
+    a = onp.hsplit(input_array, indices_or_sections=3)
+    b = onp.hsplit(input_array, indices_or_sections=(-10, -4, 5, 10))
+    c = onp.hsplit(input_array, indices_or_sections=[0, 2])
+    return a, b, c
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_hsplit():
+    onp_arrs = [
+        onp.random.randint(1, 5, size=(4, 9, 5)).astype('float32'),
+        onp.random.randint(1, 5, size=(4, 9, 5)).astype('float64')
+    ]
+    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
+        o_hsplit = onp_hsplit(onp_arr)
+        m_hsplit = mnp_hsplit(mnp_arr)
+        for expect_lst, actual_lst in zip(o_hsplit, m_hsplit):
+            for expect, actual in zip(expect_lst, actual_lst):
+                match_array(expect, actual.asnumpy())
+
+
+def mnp_dsplit(input_tensor):
+    a = mnp.dsplit(input_tensor, indices_or_sections=3)
+    b = mnp.dsplit(input_tensor, indices_or_sections=(-10, -4, 5, 10))
+    c = mnp.dsplit(input_tensor, indices_or_sections=[0, 2])
+    return a, b, c
+
+
+def onp_dsplit(input_array):
+    a = onp.dsplit(input_array, indices_or_sections=3)
+    b = onp.dsplit(input_array, indices_or_sections=(-10, -4, 5, 10))
+    c = onp.dsplit(input_array, indices_or_sections=[0, 2])
+    return a, b, c
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_dsplit():
+    onp_arrs = [
+        onp.random.randint(1, 5, size=(5, 4, 9)).astype('float32'),
+        onp.random.randint(1, 5, size=(5, 4, 9)).astype('float64')
+    ]
+    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
+        o_dsplit = onp_dsplit(onp_arr)
+        m_dsplit = mnp_dsplit(mnp_arr)
+        for expect_lst, actual_lst in zip(o_dsplit, m_dsplit):
+            for expect, actual in zip(expect_lst, actual_lst):
+                match_array(expect, actual.asnumpy())
+
+
+def mnp_take_along_axis(*arrs):
+    x = arrs[0]
+    a = mnp.take_along_axis(x, arrs[1], axis=None)
+    b = mnp.take_along_axis(x, arrs[2], axis=1)
+    c = mnp.take_along_axis(x, arrs[3], axis=-1)
+    d = mnp.take_along_axis(x, arrs[4], axis=0)
+    return a, b, c, d
+
+
+def onp_take_along_axis(*arrs):
+    x = arrs[0]
+    a = onp.take_along_axis(x, arrs[1], axis=None)
+    b = onp.take_along_axis(x, arrs[2], axis=1)
+    c = onp.take_along_axis(x, arrs[3], axis=-1)
+    d = onp.take_along_axis(x, arrs[4], axis=0)
+    return a, b, c, d
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_take_along_axis():
+    x = rand_int(6, 7, 8, 9)
+    indices1 = rand_int(2).astype(onp.int32)
+    indices2 = rand_int(6, 3, 8, 1).astype(onp.int32)
+    indices3 = rand_int(6, 1, 8, 5).astype(onp.int32)
+    indices4 = rand_int(4, 1, 1, 1).astype(onp.int32)
+    run_multi_test(mnp_take_along_axis, onp_take_along_axis,
+                   (x, indices1, indices2, indices3, indices4))
+
+
+def mnp_take(x, indices):
+    a = mnp.take(x, indices)
+    b = mnp.take(x, indices, axis=-1)
+    c = mnp.take(x, indices, axis=0, mode='wrap')
+    d = mnp.take(x, indices, axis=1, mode='clip')
+    return a, b, c, d
+
+
+def onp_take(x, indices):
+    a = onp.take(x, indices)
+    b = onp.take(x, indices, axis=-1)
+    c = onp.take(x, indices, axis=0, mode='wrap')
+    d = onp.take(x, indices, axis=1, mode='clip')
+    return a, b, c, d
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_take():
+    x = rand_int(2, 3, 4, 5)
+    indices = rand_int(2, 3).astype(onp.int32)
+    run_multi_test(mnp_take, onp_take, (x, indices))
+
+
+def mnp_repeat(x):
+    a = mnp.repeat(x, 2)
+    b = mnp.repeat(x, 3, axis=0)
+    c = mnp.repeat(x, (4, 1, 5), axis=1)
+    d = mnp.repeat(x, (3, 2, 1, 0, 4), axis=-1)
+    e = mnp.repeat(x, 0)
+    return a, b, c, d, e
+
+
+def onp_repeat(x):
+    a = onp.repeat(x, 2)
+    b = onp.repeat(x, 3, axis=0)
+    c = onp.repeat(x, (4, 1, 5), axis=1)
+    d = onp.repeat(x, (3, 2, 1, 0, 4), axis=-1)
+    e = onp.repeat(x, 0)
+    return a, b, c, d, e
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_repeat():
+    x = rand_int(2, 3, 4, 5)
+    run_multi_test(mnp_repeat, onp_repeat, (x,))
 
 
 class ReshapeExpandSqueeze(Cell):

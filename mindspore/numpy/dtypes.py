@@ -22,7 +22,12 @@ from ..common.dtype import (int8, int16, int32, int64, uint8, uint16, uint32, ui
 # backend for now.
 
 inf = float('inf')
+PINF = float('inf')
+NINF = float('-inf')
 nan = float('nan')
+# all three of inf, PINF, and NINF are defined in the original numpy, and as we aim for
+# consistency same thing is done here
+pi = 3.141592653589793
 
 int_ = int32
 uint = uint32

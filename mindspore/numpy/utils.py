@@ -16,11 +16,11 @@
 
 import numpy as onp
 
-import mindspore.context as context
 from ..common import Tensor
 from ..ops import functional as F
+from ..common import dtype as mstype
 
-from .utils_const import _tile_size
+from .utils_const import _tile_size, _add_unit_axes, _raise_type_error
 
 
 def _deep_list(array_like):
@@ -56,25 +56,14 @@ def _deep_tensor_to_nparray(array_like):
 
 def _check_input_for_asarray(array_like):
     """check whether array_like argument is a valid type for np.asarray conversion"""
-    if isinstance(array_like, (Tensor, list, tuple, int, float, bool, onp.ndarray)):
-        return True
-    raise TypeError("input data must be `int`, `float`, `bool`, `Tensor`, `list`, `tuple`" + \
-        f"or numpy.ndarray, but got {type(array_like)}")
+    if not isinstance(array_like, (Tensor, list, tuple, int, float, bool, onp.ndarray)):
+        _raise_type_error("input data must be `int`, `float`, `bool`, `Tensor`, `list`, `tuple`" + \
+            "or numpy.ndarray, but got ", array_like)
 
 
 def _is_scalar(shape):
     """check whether input shape is a scalar"""
     return F.shape_mul(shape) == 1
-
-
-def _is_empty(shape):
-    """Checks if the shape is empty"""
-    return F.shape_mul(shape) == 0
-
-
-def _get_device():
-    """Get the current device (`GPU`, `CPU`, `Ascend`)"""
-    return context.get_context('device_target')
 
 
 def _convert_list_tensor_to_tuple_tensor(list_of_tensor):
@@ -87,19 +76,66 @@ def _convert_list_tensor_to_tuple_tensor(list_of_tensor):
     return list_of_tensor
 
 
-def _get_mode():
-    """Get the current mode (0 is Graph mode, 1 is PyNative mode)"""
-    return context.get_context('mode')
-
-
 def _expand(x, ndim, axis=0):
-    """Expand x to ndim."""
-    while F.rank(x) < ndim:
-        x = F.expand_dims(x, axis)
-    return x
+    """Expand x to ndim from axis, which can be 0 or -1."""
+    shape = _add_unit_axes(F.shape(x), ndim, axis == -1)
+    return F.reshape(x, shape)
 
 
 def _broadcast_to(x, shape_cur, shape_to, ndim_to):
     """Broadcasts x from shape_cur to shape_to."""
     size = _tile_size(shape_cur, shape_to, ndim_to)
     return F.tile(x, size)
+
+
+def _broadcast_to_shape(x, shape):
+    """Broadcasts x from current shape to shape"""
+    ndim_to = len(shape)
+    x = _expand(x, ndim_to)
+    return _broadcast_to(x, F.shape(x), shape, ndim_to)
+
+
+def _get_size(x, axis=None):
+    """Get the number of elements along the given axis of tensor x."""
+    if axis is None or F.tuple_len(axis) == 0:
+        axis = F.make_range(x.ndim)
+    nums = 1
+    for ax in axis:
+        nums *= x.shape[ax]
+    return nums
+
+
+def _check_input_tensor(*tensors):
+    for tensor in tensors:
+        if not isinstance(tensor, Tensor):
+            _raise_type_error('expect Tensor, but got ', F.typeof(tensor))
+    return True
+
+
+def _convert_64_to_32(tensor):
+    """Convert tensor with float64/int64 types to float32/int32."""
+    if tensor.dtype == mstype.float64:
+        return tensor.astype("float32")
+    if tensor.dtype == mstype.int64:
+        return tensor.astype("int32")
+    return tensor
+
+
+def _get_dtype_from_scalar(*input_numbers):
+    """
+    Get the final dtype from series of input numbers, compared with F.typeof, we
+    return int32/float32 for python int/float instead.
+    """
+    bool_flag = True
+    int_flag = True
+    for number in input_numbers:
+        if number is not None:
+            if not isinstance(number, bool):
+                bool_flag = False
+            if not isinstance(number, int):
+                int_flag = False
+    if bool_flag:
+        return mstype.bool_
+    if int_flag:
+        return mstype.int32
+    return mstype.float32
