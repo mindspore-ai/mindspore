@@ -1,0 +1,11 @@
+Node:Softmax-3
+input Tensor:micro_speech_B+0
+input 1, 4, 
+input type:DT_INT8, format:NHWC, elementSize: 4
+input Data:
+ -50, -5, 121, -4
+output Tensor:micro_speech_B+8
+output 1, 4, 
+output type:DT_INT8, format:NHWC, elementSize: 4
+output Data:
+ -128, -128, 127, -128

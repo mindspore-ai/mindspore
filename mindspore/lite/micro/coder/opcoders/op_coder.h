@@ -26,8 +26,8 @@
 #include "include/errorcode.h"
 #include "src/lite_kernel.h"
 #include "securec/include/securec.h"
-#include "opcoders/op_coder_register.h"
-#include "micro/coder/log.h"
+#include "coder/opcoders/op_coder_register.h"
+#include "coder/log.h"
 namespace mindspore::lite::micro {
 class CoderContext;
 constexpr int kPrecision = 19;
