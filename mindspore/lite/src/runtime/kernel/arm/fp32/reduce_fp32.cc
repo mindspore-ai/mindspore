@@ -50,6 +50,7 @@ int ReduceCPUKernel::Init() {
   switch (mode_) {
     case static_cast<int>(ReduceMode_ReduceSum): {
       reducer_ = ReduceSum;
+      int_reducer_ = IntReduceSum;
       break;
     }
     case static_cast<int>(ReduceMode_ReduceMean): {

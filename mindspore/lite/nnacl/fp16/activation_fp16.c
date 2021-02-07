@@ -99,6 +99,8 @@ int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
                                  {28.0f, 28.0f, 28.0f, 28.0f},
                                  {3150.0f, 3150.0f, 3150.0f, 3150.0f},
                                  {62370.0f, 62370.0f, 62370.0f, 62370.0f}};
+  float32x4_t neg_one = {-1.0f, -1.0f, -1.0f, -1.0f};
+  float32x4_t pos_one = {1.0f, 1.0f, 1.0f, 1.0f};
   int count = (ele_num / C4NUM) * C4NUM;
   for (; i < count; i += C4NUM) {
     float32x4_t input = vcvt_f32_f16(vld1_f16(src + i));
@@ -109,7 +111,7 @@ int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
     float32x4_t b = vaddq_f32(
       vmulq_f32(vaddq_f32(vmulq_f32(vaddq_f32(vmulq_f32(paramv[3], square), paramv[4]), square), paramv[5]), square),
       paramv[2]);
-    vst1_f16(dst + i, vcvt_f16_f32(vdivq_f32(a, b)));
+    vst1_f16(dst + i, vcvt_f16_f32(vminq_f32(vmaxq_f32(vdivq_f32(a, b), neg_one), pos_one)));
   }
 #endif
   for (; i < ele_num; ++i) {
@@ -118,6 +120,8 @@ int TanhFp16(const float16_t *src, float16_t *dst, int ele_num) {
     float a = (((square + 378.0f) * square + 17325.0f) * square + 135135.0f) * input;
     float b = ((28.0f * square + 3150.0f) * square + 62370.0f) * square + 135135.0f;
     dst[i] = a / b;
+    dst[i] = MSMAX(dst[i], -1);
+    dst[i] = MSMIN(dst[i], 1);
   }
   return NNACL_OK;
 }

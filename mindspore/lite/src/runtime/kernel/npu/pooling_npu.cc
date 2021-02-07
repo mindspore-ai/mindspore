@@ -56,10 +56,11 @@ int PoolingNPUKernel::SetPoolingParam() {
 
   if (pooling_param_->round_mode_ == RoundMode_Floor) {  // no use in cpu
     pooling_->set_attr_ceil_mode(0);
+    pooling_->set_attr_data_mode(1);
   } else {
     pooling_->set_attr_ceil_mode(1);
+    pooling_->set_attr_data_mode(0);
   }
-  // todo data mode
   return RET_OK;
 }
 

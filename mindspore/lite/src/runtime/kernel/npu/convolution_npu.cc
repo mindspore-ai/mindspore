@@ -23,10 +23,6 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 int ConvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  if (conv_param_->group_ != 1) {
-    MS_LOG(WARNING) << "Only support group equals 1 for npu convolution op";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 

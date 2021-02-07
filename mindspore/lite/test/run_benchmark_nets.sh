@@ -1547,8 +1547,11 @@ function Run_arm64() {
 
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test' >> adb_run_cmd.txt
-        echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
-
+        if [[ $accuracy_limit == "-1" ]]; then
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        else
+          echo './benchmark --modelFile='${model_name}'.fp16.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold='${accuracy_limit} ' --inputShapes='${input_shapes} >> adb_run_cmd.txt
+        fi
         cat adb_run_cmd.txt >> "${run_arm64_log_file}"
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
