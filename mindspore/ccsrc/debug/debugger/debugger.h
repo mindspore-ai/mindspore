@@ -41,7 +41,7 @@ template <class T>
 using ProtoVector = google::protobuf::RepeatedPtrField<T>;
 
 namespace mindspore {
-// different types of command recieved by debugger
+// different types of command received by debugger
 // need to keep sync with client-side proto and server-side proto
 enum class DebuggerCommand {
   kExitCMD = 2,
@@ -124,7 +124,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   void SetTrainingDone(bool training_done);
 
   // returns true if reply received and mindspore version matched with mindinsight version
-  // version_check should be true if you want the function to do backend compability check with Mindinsight
+  // version_check should be true if you want the function to do backend compatibility check with Mindinsight
   bool SendMetadata(bool version_check);
 
   void LoadParametersAndConst();
@@ -186,6 +186,13 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // send command request and process reply in a loop
   // break if RunCMD
   void CommandLoop();
+
+  // Process the RunCMD
+  void ProcessRunCMD(const EventReply &reply);
+  // Process the KSetCMD
+  void ProcessKSetCMD(const EventReply &reply);
+  // Process the KViewCMD
+  void ProcessKViewCMD(const EventReply &reply);
 
   // set what nodes and conditions to watch
   void SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCondition &condition, const int32_t id,
