@@ -42,15 +42,17 @@ int ArgCompareDescFp16(const void *a, const void *b) {
   return 0;
 }
 
-void ArgMaxTopK1Fp16(const float16_t *input, float16_t *output, float16_t *output_value,
-                     const ArgMinMaxParameter *param, int pre_axis_count, int axis_count, int after_axis_count) {
+void ArgMaxTopK1Fp16(const float16_t *input, void *output, float16_t *output_value, const ArgMinMaxParameter *param,
+                     int pre_axis_count, int axis_count, int after_axis_count) {
   bool out_value = param->out_value_;
+  float16_t *outputfp16 = (float16_t *)output;
+  int *outputint = (int *)output;
   for (int i = 0; i < pre_axis_count; ++i) {
     size_t output_offset = i * after_axis_count;
     size_t input_offset = output_offset * axis_count;
     for (int j = 0; j < after_axis_count; ++j) {
       float16_t value = -FLT_MAX;
-      float16_t index = 0.0f;
+      int index = 0;
       for (int k = 0; k < axis_count; ++k) {
         float16_t value_tmp = input[input_offset + k * after_axis_count + j];
         if (value_tmp > value) {
@@ -58,7 +60,11 @@ void ArgMaxTopK1Fp16(const float16_t *input, float16_t *output, float16_t *outpu
           index = k;
         }
       }
-      output[output_offset + j] = out_value ? value : index;
+      if (out_value) {
+        outputfp16[output_offset + j] = value;
+      } else {
+        outputint[output_offset + j] = index;
+      }
       if (output_value != NULL) {
         output_value[output_offset + j] = value;
       }
@@ -66,15 +72,17 @@ void ArgMaxTopK1Fp16(const float16_t *input, float16_t *output, float16_t *outpu
   }
 }
 
-void ArgMinTopK1Fp16(const float16_t *input, float16_t *output, float16_t *output_value,
-                     const ArgMinMaxParameter *param, int pre_axis_count, int axis_count, int after_axis_count) {
+void ArgMinTopK1Fp16(const float16_t *input, void *output, float16_t *output_value, const ArgMinMaxParameter *param,
+                     int pre_axis_count, int axis_count, int after_axis_count) {
   bool out_value = param->out_value_;
+  float16_t *outputfp16 = (float16_t *)output;
+  int *outputint = (int *)output;
   for (int i = 0; i < pre_axis_count; ++i) {
     size_t output_offset = i * after_axis_count;
     size_t input_offset = output_offset * axis_count;
     for (int j = 0; j < after_axis_count; ++j) {
       float16_t value = FLT_MAX;
-      float16_t index = 0.0f;
+      int index = 0;
       for (int k = 0; k < axis_count; ++k) {
         float16_t value_tmp = input[input_offset + k * after_axis_count + j];
         if (value_tmp < value) {
@@ -82,7 +90,11 @@ void ArgMinTopK1Fp16(const float16_t *input, float16_t *output, float16_t *outpu
           index = k;
         }
       }
-      output[output_offset + j] = out_value ? value : index;
+      if (out_value) {
+        outputfp16[output_offset + j] = value;
+      } else {
+        outputint[output_offset + j] = index;
+      }
       if (output_value != NULL) {
         output_value[output_offset + j] = value;
       }
@@ -90,29 +102,37 @@ void ArgMinTopK1Fp16(const float16_t *input, float16_t *output, float16_t *outpu
   }
 }
 
-void ArgMinMaxDim0Fp16(const float16_t *input, float16_t *output, float16_t *output_value, const int *in_shape,
+void ArgMinMaxDim0Fp16(const float16_t *input, void *output, float16_t *output_value, const int *in_shape,
                        const ArgMinMaxParameter *param, COMPARE_FUNCTION compare_func) {
+  float16_t *outputfp16 = (float16_t *)output;
+  int *outputint = (int *)output;
   for (int32_t i = 0; i < param->in_strides_[0]; ++i) {
     for (int j = 0; j < in_shape[0]; ++j) {
       size_t offset = param->in_strides_[0] * j + i;
       param->arg_elements_[j].index_ = j;
-      param->arg_elements_[j].data_.f_data_ = input[offset];
+      param->arg_elements_[j].data_.f16_data_ = input[offset];
     }
     qsort(param->arg_elements_, in_shape[0], sizeof(ArgElement), *compare_func);
     for (int j = 0; j < param->topk_; ++j) {
       size_t out_offset = j * param->out_strides_[0] + i;
-      output[out_offset] = param->out_value_ ? param->arg_elements_[j].data_.f_data_ : param->arg_elements_[j].index_;
+      if (param->out_value_) {
+        outputfp16[out_offset] = param->arg_elements_[j].data_.f16_data_;
+      } else {
+        outputint[out_offset] = param->arg_elements_[j].index_;
+      }
       if (output_value != NULL) {
-        output_value[out_offset] = param->arg_elements_[j].data_.f_data_;
+        output_value[out_offset] = param->arg_elements_[j].data_.f16_data_;
       }
     }
   }
   return;
 }
 
-void ArgMinMaxDim1Fp16(const float16_t *input, float16_t *output, float16_t *output_value, const int *in_shape,
+void ArgMinMaxDim1Fp16(const float16_t *input, void *output, float16_t *output_value, const int *in_shape,
                        const ArgMinMaxParameter *param, COMPARE_FUNCTION compare_func) {
   int in_shape1 = in_shape[1];
+  float16_t *outputfp16 = (float16_t *)output;
+  int *outputint = (int *)output;
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_dim0_offset = i * param->in_strides_[0];
     size_t out_dim0_offset = i * param->out_strides_[0];
@@ -120,14 +140,18 @@ void ArgMinMaxDim1Fp16(const float16_t *input, float16_t *output, float16_t *out
       for (int k = 0; k < in_shape1; ++k) {
         size_t offset = param->in_strides_[1] * k + in_dim0_offset + j;
         param->arg_elements_[k].index_ = k;
-        param->arg_elements_[k].data_.f_data_ = input[offset];
+        param->arg_elements_[k].data_.f16_data_ = input[offset];
       }
       qsort(param->arg_elements_, in_shape1, sizeof(ArgElement), *compare_func);
       for (int k = 0; k < param->topk_; ++k) {
         size_t out_offset = out_dim0_offset + j + k * param->out_strides_[1];
-        output[out_offset] = param->out_value_ ? param->arg_elements_[k].data_.f_data_ : param->arg_elements_[k].index_;
+        if (param->out_value_) {
+          outputfp16[out_offset] = param->arg_elements_[k].data_.f16_data_;
+        } else {
+          outputint[out_offset] = param->arg_elements_[k].index_;
+        }
         if (output_value != NULL) {
-          output_value[out_offset] = param->arg_elements_[k].data_.f_data_;
+          output_value[out_offset] = param->arg_elements_[k].data_.f16_data_;
         }
       }
     }
@@ -139,6 +163,8 @@ void ArgMinMaxDim2Fp16(const float16_t *input, float16_t *output, float16_t *out
                        const ArgMinMaxParameter *param, COMPARE_FUNCTION compare_func) {
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
+  float *outputfp16 = (float *)output;
+  int *outputint = (int *)output;
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_dim0_offset = i * param->in_strides_[0];
     size_t out_dim0_offset = i * param->out_strides_[0];
@@ -149,16 +175,18 @@ void ArgMinMaxDim2Fp16(const float16_t *input, float16_t *output, float16_t *out
         for (int l = 0; l < in_shape2; ++l) {
           size_t offset = param->in_strides_[2] * l + k + in_dim1_offset;
           param->arg_elements_[l].index_ = l;
-          param->arg_elements_[l].data_.f_data_ = input[offset];
+          param->arg_elements_[l].data_.f16_data_ = input[offset];
         }
         qsort(param->arg_elements_, in_shape2, sizeof(ArgElement), *compare_func);
         for (int l = 0; l < param->topk_; ++l) {
           size_t out_offset = out_dim1_offset + k + l * param->out_strides_[2];
-
-          output[out_offset] =
-            param->out_value_ ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
+          if (param->out_value_) {
+            outputfp16[out_offset] = param->arg_elements_[l].data_.f16_data_;
+          } else {
+            outputint[out_offset] = param->arg_elements_[l].index_;
+          }
           if (output_value != NULL) {
-            output_value[out_offset] = param->arg_elements_[l].data_.f_data_;
+            output_value[out_offset] = param->arg_elements_[l].data_.f16_data_;
           }
         }
       }
@@ -171,6 +199,8 @@ void ArgMinMaxDim3Fp16(const float16_t *input, float16_t *output, float16_t *out
   int in_shape1 = in_shape[1];
   int in_shape2 = in_shape[2];
   int in_shape3 = in_shape[3];
+  float *outputfp16 = (float *)output;
+  int *outputint = (int *)output;
   for (int i = 0; i < in_shape[0]; ++i) {
     size_t in_dim0_offset = i * param->in_strides_[0];
     size_t out_dim0_offset = i * param->out_strides_[0];
@@ -183,15 +213,18 @@ void ArgMinMaxDim3Fp16(const float16_t *input, float16_t *output, float16_t *out
         for (int l = 0; l < in_shape3; ++l) {
           size_t offset = l + in_dim2_offset;
           param->arg_elements_[l].index_ = l;
-          param->arg_elements_[l].data_.f_data_ = input[offset];
+          param->arg_elements_[l].data_.f16_data_ = input[offset];
         }
         qsort(param->arg_elements_, in_shape3, sizeof(ArgElement), *compare_func);
         for (int l = 0; l < param->topk_; ++l) {
           size_t out_offset = out_dim2_offset + l;
-          output[out_offset] =
-            param->out_value_ ? param->arg_elements_[l].data_.f_data_ : param->arg_elements_[l].index_;
+          if (param->out_value_) {
+            outputfp16[out_offset] = param->arg_elements_[l].data_.f16_data_;
+          } else {
+            outputint[out_offset] = param->arg_elements_[l].index_;
+          }
           if (output_value != NULL) {
-            output_value[out_offset] = param->arg_elements_[l].data_.f_data_;
+            output_value[out_offset] = param->arg_elements_[l].data_.f16_data_;
           }
         }
       }
@@ -199,7 +232,7 @@ void ArgMinMaxDim3Fp16(const float16_t *input, float16_t *output, float16_t *out
   }
 }
 
-void ArgMinMaxFp16(const float16_t *input, float16_t *output, float16_t *output_value, const int *in_shape,
+void ArgMinMaxFp16(const float16_t *input, void *output, float16_t *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param) {
   if (param->topk_ == 1) {
     int pre_axis_count = 1;

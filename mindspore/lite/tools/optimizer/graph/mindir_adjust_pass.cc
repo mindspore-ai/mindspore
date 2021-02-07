@@ -27,6 +27,44 @@
 using mindspore::lite::PrimitiveC;
 namespace mindspore {
 namespace opt {
+int MindirAdjustPass::ValueNodeInt64Convert(AnfNodePtr anf_node) {
+  if (!utils::isa<ValueNodePtr>(anf_node)) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto valueNode = anf_node->cast<ValueNodePtr>();
+  if (valueNode->abstract() == nullptr) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(valueNode->abstract());
+  if (abstractTensor == nullptr) {
+    return lite::RET_NO_CHANGE;
+  }
+  auto value = abstractTensor->GetValueTrack();
+  if (value != nullptr && value->isa<tensor::Tensor>()) {
+    if (abstractTensor->element() == nullptr) {
+      MS_LOG(ERROR) << "abstractTensor->element() is nullptr.";
+      return RET_ERROR;
+    }
+    auto typePtr = abstractTensor->element()->GetTypeTrack();
+    if (typePtr->type_id() == kNumberTypeInt64) {
+      auto shape_vector = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
+      auto dest_tensor_info = std::make_shared<tensor::Tensor>(kNumberTypeInt32, shape_vector);
+      auto *dest_data_buf = reinterpret_cast<int32_t *>(dest_tensor_info->data_c());
+      auto src_tensor_info = value->cast<tensor::TensorPtr>();
+      auto *src_data_buf = reinterpret_cast<int64_t *>(src_tensor_info->data_c());
+      MS_ASSERT(dest_tensor_info->ElementsNum() == src_tensor_info->ElementsNum());
+      for (int i = 0; i < dest_tensor_info->ElementsNum(); i++) {
+        dest_data_buf[i] = src_data_buf[i];
+      }
+      abstractTensor->set_value(dest_tensor_info);
+      abstractTensor->set_type(TypeIdToType(kNumberTypeInt32));
+      abstractTensor->element()->set_type(TypeIdToType(kNumberTypeInt32));
+      valueNode->set_value(dest_tensor_info);
+    }
+  }
+  return lite::RET_NO_CHANGE;
+}
+
 int MindirAdjustPass::ParameterNodeConvert(AnfNodePtr anf_node) {
   if (!utils::isa<ParameterPtr>(anf_node)) {
     MS_LOG(INFO) << "only parameter node need to convert tensor.";
@@ -139,7 +177,10 @@ bool MindirAdjustPass::Run(const FuncGraphPtr &graph) {
       status = ParameterNodeConvert(node);
     } else if (utils::isa<CNodePtr>(node)) {
       status = PrimitiveConvert(node);
+    } else if (utils::isa<ValueNodePtr>(node)) {
+      status = ValueNodeInt64Convert(node);
     }
+
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       success_flag = false;

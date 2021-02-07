@@ -101,7 +101,11 @@ int ArgMin::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
     MS_LOG(ERROR) << "tensor number is error.";
   }
   output->set_format(input->format());
-  output->set_data_type(input->data_type());
+  if (GetOutMaxValue() && outputs_.size() == kSingleNum) {
+    output->set_data_type(input->data_type());
+  } else {
+    output->set_data_type(kNumberTypeInt32);
+  }
   if (!infer_flag()) {
     return RET_INFER_INVALID;
   }

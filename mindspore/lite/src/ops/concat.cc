@@ -116,6 +116,12 @@ int Concat::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
       MS_LOG(ERROR) << "All inputs should have the same dim num!";
       return RET_PARAM_INVALID;
     }
+    if ((inputs_.at(i)->data_type() != output->data_type()) &&
+        !((inputs_.at(i)->data_type() == kNumberTypeFloat16 && output->data_type() == kNumberTypeFloat32) ||
+          (inputs_.at(i)->data_type() == kNumberTypeFloat32 && output->data_type() == kNumberTypeFloat16))) {
+      MS_LOG(ERROR) << "All inputs should have the same type!";
+      return RET_PARAM_INVALID;
+    }
     auto axis_tmp = shape_tmp[axis];
     shape_tmp.erase(shape_tmp.begin() + axis);
     if (input0_shape_without_axis != shape_tmp) {

@@ -164,7 +164,31 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
     return;
   }
-  CalNewWeightTensor(conv_node, weight_tensor, kernel_num, trans_scale);
+  auto temp_weight_data = new (std::nothrow) float[weight_tensor->tensor_shape_size()];
+  if (temp_weight_data == nullptr) {
+    MS_LOG(ERROR) << "new ParamValueLite failed";
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_ERROR);
+    return;
+  }
+  auto new_weight_tensor = std::make_shared<ParamValueLite>();
+  if (new_weight_tensor == nullptr) {
+    delete temp_weight_data;
+    MS_LOG(ERROR) << "new ParamValueLite failed";
+    return;
+  }
+  new_weight_tensor->set_tensor_size(weight_tensor->tensor_size());
+  new_weight_tensor->set_tensor_shape(weight_tensor->tensor_shape());
+  new_weight_tensor->set_tensor_type(weight_tensor->tensor_type());
+  new_weight_tensor->set_format(weight_tensor->format());
+  auto ret = memcpy_s(temp_weight_data, weight_tensor->tensor_shape_size() * sizeof(float),
+                      weight_tensor->tensor_addr(), weight_tensor->tensor_shape_size() * sizeof(float));
+  if (ret != EOK) {
+    delete temp_weight_data;
+    MS_LOG(ERROR) << "memcpy_s error:" << ret;
+    return;
+  }
+  new_weight_tensor->set_tensor_addr(temp_weight_data);
+  CalNewWeightTensor(conv_node, new_weight_tensor, kernel_num, trans_scale);
   float *bias_data = nullptr;
   // conv has bias,bias_flag true
   bool bias_flag = false;
@@ -177,6 +201,7 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
     bias_data = new (std::nothrow) float[kernel_num];
     if (bias_data == nullptr) {
       MS_LOG(ERROR) << "tensor_data is nullptr";
+      delete temp_weight_data;
       return;
     }
   }
@@ -186,6 +211,16 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
     bias_node->set_name(conv_node->fullname_with_scope() + "_bias");
     conv_node->add_input(bias_node);
   }
+  auto new_weight_paramter = func_graph->add_parameter();
+  if (new_weight_paramter == nullptr) {
+    MS_LOG(ERROR) << "new_weight_paramter is nullptr";
+    delete temp_weight_data;
+    return;
+  }
+  new_weight_paramter->set_default_param(new_weight_tensor);
+  new_weight_paramter->set_abstract(conv_weight_node->abstract());
+  new_weight_paramter->set_name(conv_node->fullname_with_scope() + conv_weight_node->fullname_with_scope());
+  conv_node->set_input(kConvWeightIndex, new_weight_paramter);
 }
 void ConvTransformFusion::CalNewWeightTensor(const CNodePtr &conv_node, const ParamValueLitePtr &weight_tensor,
                                              int kernel_num, const float *trans_scale) const {
