@@ -18,7 +18,6 @@
 
 # [EfficientNet-B0 Description](#contents)
 
-
 [Paper](https://arxiv.org/abs/1905.11946): Mingxing Tan, Quoc V. Le. EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks. 2019.
 
 # [Model architecture](#contents)
@@ -27,27 +26,25 @@ The overall network architecture of EfficientNet-B0 is show below:
 
 [Link](https://arxiv.org/abs/1905.11946)
 
-
 # [Dataset](#contents)
 
 Dataset used: [imagenet](http://www.image-net.org/)
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
-  - Train: 120G, 1.2W images
-  - Test: 5G, 50000 images
+    - Train: 120G, 1.2W images
+    - Test: 5G, 50000 images
 - Data format: RGB images.
-  - Note: Data will be processed in src/dataset.py
-
+    - Note: Data will be processed in src/dataset.py
 
 # [Environment Requirements](#contents)
 
 - Hardware GPU
-  - Prepare hardware environment with GPU processor.
+    - Prepare hardware environment with GPU processor.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script description](#contents)
 
@@ -77,7 +74,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 Parameters for both training and evaluating can be set in config.py.
 
-```
+```python
 'random_seed': 1,                # fix random seed
 'model': 'efficientnet_b0',      # model name
 'drop': 0.2,                     # dropout rate
@@ -106,17 +103,17 @@ Parameters for both training and evaluating can be set in config.py.
 
 ## [Training Process](#contents)
 
-#### Usage
+### Usage
 
-```
+```python
 GPU:
     # distribute training example(8p)
-    sh run_distribute_train_for_gpu.sh 
+    sh run_distribute_train_for_gpu.sh
     # standalone training
     sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
 ```
 
-#### Launch
+### Launch
 
 ```bash
 # distributed training example(8p) for GPU
@@ -133,7 +130,7 @@ You can find checkpoint file together with result in log.
 
 ### Usage
 
-```
+```bash
 # Evaluation
 sh run_eval_for_gpu.sh DATA_DIR DEVICE_ID PATH_CHECKPOINT
 ```
@@ -148,9 +145,9 @@ sh run_eval_for_gpu.sh /dataset/eval ./checkpoint/efficientnet_b0-600_1251.ckpt
 
 #### Result
 
-Evaluation result will be stored in the scripts path. Under this, you can find result like the followings in log.
+Evaluation result will be stored in the scripts path. Under this, you can find result like the following in log.
 
-```
+```python
 acc=76.96%(TOP1)
 ```
 
@@ -186,7 +183,6 @@ acc=76.96%(TOP1)
 | outputs                    | probability               |
 | Accuracy                   | acc=76.96%(TOP1)          |
 
-
 # [ModelZoo Homepage](#contents)
- 
+
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).

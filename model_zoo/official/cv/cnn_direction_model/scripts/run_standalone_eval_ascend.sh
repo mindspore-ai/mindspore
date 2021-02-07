@@ -57,6 +57,6 @@ cd ./eval || exit
 echo "start evaluation for device $DEVICE_ID"
 env > env.log
 
-python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 #&> log &
+python eval.py --dataset_path=$PATH1 --checkpoint_path=$PATH2 > eval.log 2>&1 &
 
 cd ..

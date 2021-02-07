@@ -66,7 +66,7 @@ fi
 
 if [ $# == 2 ]
 then
-    python train.py --dataset_path=$PATH1 --pre_trained=$PATH2 &> log &
+    python train.py --dataset_path=$PATH1 --pre_trained=$PATH2 > train.log 2>&1 &
 fi
 
 cd ..

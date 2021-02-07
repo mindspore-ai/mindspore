@@ -31,7 +31,7 @@ class RandAugment:
         self.hparams = hparams
 
     def __call__(self, imgs, labels, batchInfo):
-        # assert the imgs objetc are pil_images
+        # assert the imgs object are pil_images
         ret_imgs = []
         ret_labels = []
         py_to_pil_op = P.ToPIL()

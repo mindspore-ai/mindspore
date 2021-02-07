@@ -41,6 +41,7 @@ parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
+parser.add_argument('--is_save_on_master', type=int, default=1, help='save ckpt on master or all rank')
 
 args_opt = parser.parse_args()
 
@@ -69,6 +70,13 @@ if __name__ == '__main__':
     if run_distribute:
         context.set_auto_parallel_context(device_num=rank_size, parallel_mode=ParallelMode.DATA_PARALLEL)
         init()
+
+    args_opt.rank_save_ckpt_flag = 0
+    if args_opt.is_save_on_master:
+        if rank_id == 0:
+            args_opt.rank_save_ckpt_flag = 1
+    else:
+        args_opt.rank_save_ckpt_flag = 1
 
     # create dataset
     dataset_name = config.dataset_name
@@ -100,10 +108,11 @@ if __name__ == '__main__':
     loss_cb = LossMonitor()
     cb = [time_cb, loss_cb]
     if config.save_checkpoint:
-        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
-                                     keep_checkpoint_max=config.keep_checkpoint_max)
-        ckpt_cb = ModelCheckpoint(prefix="cnn_direction_model", directory=ckpt_save_dir, config=config_ck)
-        cb += [ckpt_cb]
+        if args_opt.rank_save_ckpt_flag == 1:
+            config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
+                                         keep_checkpoint_max=config.keep_checkpoint_max)
+            ckpt_cb = ModelCheckpoint(prefix="cnn_direction_model", directory=ckpt_save_dir, config=config_ck)
+            cb += [ckpt_cb]
 
     # train model
     model.train(config.epoch_size, dataset, callbacks=cb, dataset_sink_mode=False)
