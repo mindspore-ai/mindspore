@@ -2328,8 +2328,8 @@ class SparseSoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `is_grad` is not a bool.
-        TypeError: If dtype of `logits' is neither float16 nor float32.
-        TypeError: If dtype of `labels' is neither int32 nor int64.
+        TypeError: If dtype of `logits` is neither float16 nor float32.
+        TypeError: If dtype of `labels` is neither int32 nor int64.
         ValueError: If logits_shape[0] != labels_shape[0].
 
     Supported Platforms:
