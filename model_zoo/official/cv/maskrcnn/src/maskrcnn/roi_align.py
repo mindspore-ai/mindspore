@@ -24,7 +24,7 @@ from mindspore.common.tensor import Tensor
 
 class ROIAlign(nn.Cell):
     """
-    Extract RoI features from mulitple feature map.
+    Extract RoI features from mulitiple feature map.
 
     Args:
         out_size_h (int) - RoI height.
@@ -61,7 +61,7 @@ class SingleRoIExtractor(nn.Cell):
     """
     Extract RoI features from a single level feature map.
 
-    If there are mulitple input feature levels, each RoI is mapped to a level
+    If there are multiple input feature levels, each RoI is mapped to a level
     according to its scale.
 
     Args:

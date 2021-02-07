@@ -90,7 +90,7 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config.py`.
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class information of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config.py`.
 
 # Quick Start
 
@@ -242,7 +242,7 @@ Notes:
 
 ### Result
 
-Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss_rankid.log.
+Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the following in loss_rankid.log.
 
 ```log
 # distribute training result(8p)
@@ -265,10 +265,12 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
 > checkpoint can be produced in training process.
+>
+> Images size in dataset should be equal to the annotation size in VALIDATION_JSON_FILE, otherwise the evaluation result cannot be displayed properly.
 
 ### Result
 
-Eval result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
+Eval result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the following in log.
 
 ```log
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.360

@@ -455,6 +455,8 @@ sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
 
 > 关于COCO2017数据集，VALIDATION_ANN_FILE_JSON参考数据集目录下的annotations/instances_val2017.json文件。  
 > 检查点可在训练过程中生成并保存，其文件夹名称以“train/checkpoint”或“train_parallel*/checkpoint”开头。
+>
+> 数据集中图片的数量要和VALIDATION_ANN_FILE_JSON文件中标记数量一致，否则精度结果展示格式可能出现异常。
 
 ### 评估结果
 
