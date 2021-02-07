@@ -80,11 +80,11 @@ CNodePtr StitchAtomicCleanInsertter::CreateInplaceAssignNodeAndCorrectReturn(con
   // add inplaceassign
   AnfNodePtr out_node = atomic_add_node_;  // Use result data itself, and set attr "fake_out" true.
   auto inplace_assign_node =
-    CreateCNode({NewValueNode(std::make_shared<Primitive>("InplaceAssign")), new_parameter, atomic_add_node_, out_node},
-                sub_graph, {.format = GetFormat(out_node), .shape = GetShape(out_node), .type = GetType(out_node)});
-  AnfAlgo::SetNodeAttr("fake_output", MakeValue(true), inplace_assign_node);
+    CreateCNode({NewValueNode(prim::kPrimInplaceAssign), new_parameter, atomic_add_node_, out_node}, sub_graph,
+                {.format = GetFormat(out_node), .shape = GetShape(out_node), .type = GetType(out_node)});
+  SetNodeAttrSafely("fake_output", MakeValue(true), inplace_assign_node);
   AnfAlgo::EraseNodeAttr(kAttrStitch, atomic_add_node_);
-  AnfAlgo::SetNodeAttr(kAttrStitch, MakeValue("common"), inplace_assign_node);
+  SetNodeAttrSafely(kAttrStitch, MakeValue("common"), inplace_assign_node);
   return inplace_assign_node;
 }
 

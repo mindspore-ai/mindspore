@@ -770,20 +770,17 @@ void ParallelOpFusion::SetFusedParallelOpAttrToReturnNode(const ParallelInfo &pa
     const auto &fuse_nodes = parallel_info.nodes();
     std::vector<size_t> info = {i, std::dynamic_pointer_cast<CommonDimInfo>(parallel_info.dims()[i])->dim_info()};
     if (!AnfAlgo::IsGraphKernel(fuse_nodes[i])) {
-      MakeCNodeSafeForAttr(fuse_nodes[i]);
-      AnfAlgo::SetNodeAttr(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), fuse_nodes[i]);
+      SetNodeAttrSafely(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), fuse_nodes[i]);
     } else {
       auto node_g = GetValueNode<FuncGraphPtr>((fuse_nodes[i]->cast<CNodePtr>())->input(0));
       auto out_node = node_g->output();
       if (IsPrimitiveCNode(out_node, prim::kPrimMakeTuple)) {
         auto inputs = out_node->cast<CNodePtr>()->inputs();
         for (size_t j = 1; j < inputs.size(); ++j) {
-          MakeCNodeSafeForAttr(inputs[j]);
-          AnfAlgo::SetNodeAttr(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), inputs[j]);
+          SetNodeAttrSafely(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), inputs[j]);
         }
       } else {
-        MakeCNodeSafeForAttr(out_node);
-        AnfAlgo::SetNodeAttr(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), out_node);
+        SetNodeAttrSafely(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), out_node);
       }
     }
   }
