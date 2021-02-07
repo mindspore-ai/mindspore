@@ -19,6 +19,7 @@
 #include "abstract/infer_functions.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
+
 namespace mindspore {
 namespace abstract {
 AbstractBasePtr InferImplMakeTuple(const AnalysisEnginePtr &, const PrimitivePtr &,
@@ -102,19 +103,52 @@ AbstractBasePtr InferImplMakeSlice(const AnalysisEnginePtr &, const PrimitivePtr
   // Inputs: three scalars whose value is an int32 number.
   CheckArgsSize(primitive->name(), args_spec_list, 3);
   size_t args_size = args_spec_list.size();
+  AbstractBasePtrList slice_args;
   for (size_t index = 0; index < args_size; index++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[index]);
-    if (!args_spec_list[index]->isa<AbstractScalar>() && !args_spec_list[index]->isa<AbstractNone>()) {
-      MS_EXCEPTION(TypeError) << "MakeSlice eval " << index << " parameter is neither AbstractScalar nor AbstractNone.";
-    }
-    if (args_spec_list[index]->isa<AbstractScalar>() &&
-        !dyn_cast<AbstractScalar>(args_spec_list[index])->BuildValue()->isa<Int64Imm>()) {
-      MS_EXCEPTION(TypeError) << "MakeSlice eval " << index
-                              << " parameter is an AbstractScalar, but is not an int64 number.";
+    if (args_spec_list[index]->isa<AbstractNone>()) {
+      slice_args.push_back(args_spec_list[index]);
+    } else if (args_spec_list[index]->isa<AbstractScalar>()) {
+      ValuePtr scalar_value = args_spec_list[index]->cast<AbstractScalarPtr>()->BuildValue();
+      if (scalar_value->isa<IntergerImm>()) {
+        slice_args.push_back(args_spec_list[index]);
+      } else if (scalar_value->isa<BoolImm>()) {
+        ValuePtr scalar_index = MakeValue(static_cast<int64_t>(scalar_value->cast<BoolImmPtr>()->value()));
+        slice_args.push_back(scalar_index->ToAbstract());
+      } else {
+        MS_EXCEPTION(TypeError) << "MakeSlice eval " << index
+                                << " the input scalar type should be int or bool, but got " << scalar_value->ToString();
+      }
+    } else if (args_spec_list[index]->isa<AbstractTensor>()) {
+      auto arg = args_spec_list[index]->cast<AbstractTensorPtr>();
+      TypePtr tensor_dtype = arg->element()->BuildType();
+
+      auto value = arg->BuildValue()->cast<tensor::TensorPtr>();
+      if (value == nullptr) {
+        MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor must be a const tensor.";
+      }
+      if (value->DataSize() != 1) {
+        MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor must contain only one element, but got "
+                                << value->ToString() << " has " << value->DataSize() << " elements.";
+      }
+
+      if (tensor_dtype->isa<Bool>()) {
+        auto *bool_value = static_cast<bool *>(value->data_c());
+        slice_args.push_back(MakeValue((static_cast<int64_t>(*bool_value)))->ToAbstract());
+      } else if (tensor_dtype->isa<Int>()) {
+        auto *int_value = static_cast<int64_t *>(value->data_c());
+        slice_args.push_back(MakeValue((*int_value))->ToAbstract());
+      } else {
+        MS_EXCEPTION(TypeError) << "MakeSlice eval the input tensor type must be int or bool, but got "
+                                << tensor_dtype->ToString();
+      }
+    } else {
+      MS_EXCEPTION(TypeError) << "MakeSlice eval " << index << " inputs should scalar, None or Tensor, but got"
+                              << args_spec_list[index]->ToString();
     }
   }
   // Slice: start, end, step
-  return std::make_shared<AbstractSlice>(args_spec_list[0], args_spec_list[1], args_spec_list[2]);
+  return std::make_shared<AbstractSlice>(slice_args[0], slice_args[1], slice_args[2]);
 }
 
 template <typename T>
@@ -134,7 +168,7 @@ AbstractBasePtr InferTupleOrListGetItem(const std::string &op_name, const Abstra
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got "
                              << index_value->ToString();
   }
-  int64_t idx_v = GetValue<int64_t>(index_value);
+  auto idx_v = GetValue<int64_t>(index_value);
   std::size_t nelems = queue->elements().size();
   if (idx_v >= SizeToLong(nelems) || idx_v < -SizeToLong(nelems)) {
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be in range[-" << SizeToLong(nelems) << ", "
@@ -162,7 +196,7 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
     MS_EXCEPTION(IndexError) << op_name << " evaluator index should be an int64 number, but got "
                              << index_value->ToString();
   }
-  int64_t idx_v = GetValue<int64_t>(index_value);
+  auto idx_v = GetValue<int64_t>(index_value);
   AbstractBasePtrList elements = queue->elements();
   std::size_t nelems = elements.size();
   int64_t idx_t = idx_v >= 0 ? idx_v : idx_v + SizeToLong(nelems);
