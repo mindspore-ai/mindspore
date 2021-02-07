@@ -180,7 +180,7 @@ template <typename T>
 struct AbsGradFunc {
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
     T zero = 0.0;
-    return lhs < zero ? -rhs : rhs;
+    return lhs < zero ? -rhs : lhs > zero ? rhs : zero;
   }
 };
 
@@ -188,11 +188,11 @@ template <>
 struct AbsGradFunc<half2> {
   __device__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
     half2 zero(0.0, 0.0);
-    return lhs < zero ? -rhs : rhs;
+    return lhs < zero ? -rhs : lhs > zero ? rhs : zero;
   }
 };
 
-// Element-wise Comparation
+// Element-wise Comparison
 template <typename T, typename Func>
 __global__ void ElewiseCmpKernel(const int nums, const T *x0, const T *x1, bool *y) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < nums; pos += blockDim.x * gridDim.x) {
@@ -295,7 +295,7 @@ template void ElewiseArith(const int &nums, enum BroadcastOpType op, const uint8
 template void ElewiseArith(const int &nums, enum BroadcastOpType op, const int64_t *x0, const int64_t *x1, int64_t *y,
                            cudaStream_t stream);
 
-// Broadcast comparation
+// Broadcast comparison
 __device__ __forceinline__ size_t Index(const size_t &index, const size_t &dim) { return dim == 1 ? 0 : index; }
 
 template <typename T, typename Func>
