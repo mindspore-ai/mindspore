@@ -35,7 +35,7 @@ class NetWithSparseGatherV2(nn.Cell):
     def construct(self, indices, label):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
-# @pytest.mark.level0
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -56,7 +56,7 @@ def test_ftrl_net():
                                                  [[0.6821311, 0.6821311]],
                                                  [[0.6821311, 0.6821311]]]))
 
-# @pytest.mark.level0
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
