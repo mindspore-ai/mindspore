@@ -246,31 +246,31 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
 int NPUFusionPass::Run() {
   for (size_t i = 0; i < kernels->size(); i++) {
     auto kernel = (*kernels)[i];
-    if (NPUPassUtils::IsNchw2Nhwc(kernel) || NPUPassUtils::IsNhwc2Nchw(kernel)) {
-      if (CheckFormatFusion(kernel)) {
-        i--;
-        FormatFusion(kernel);
+    if (CheckFusion(kernel)) {
+      switch (kernel->Type()) {
+        case schema::PrimitiveType_Concat:
+          i -= kernel->in_kernels().size();
+          ConcatFusion(kernel);
+          continue;
+        case schema::PrimitiveType_Add:
+        case schema::PrimitiveType_Activation:
+        case schema::PrimitiveType_Eltwise:
+          i -= kernel->in_kernels().size();
+          CommonFusion(kernel);
+          continue;
+        default:
+          continue;
       }
-      continue;
-    }
-    if (!CheckFusion(kernel)) {
-      continue;
-    }
-    switch (kernel->Type()) {
-      case schema::PrimitiveType_Concat:
-        i -= kernel->in_kernels().size();
-        ConcatFusion(kernel);
-        continue;
-      case schema::PrimitiveType_Add:
-      case schema::PrimitiveType_Activation:
-      case schema::PrimitiveType_Eltwise:
-        i -= kernel->in_kernels().size();
-        CommonFusion(kernel);
-        continue;
-      default:
-        continue;
     }
   }
+  for (size_t i = 0; i < kernels->size(); ++i) {
+    auto kernel = (*kernels)[i];
+    if (CheckFormatFusion(kernel)) {
+      i--;
+      FormatFusion(kernel);
+    }
+  }
+
   return RET_OK;
 }
 }  // namespace mindspore::lite

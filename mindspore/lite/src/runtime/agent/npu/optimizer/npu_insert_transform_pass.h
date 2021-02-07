@@ -45,8 +45,13 @@ class NPUInsertTransformPass : public NPUBasePass {
 
   int InsertPostNodes(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *trans_kernels);
 
-  int InsertNode(kernel::LiteKernel *kernel, kernel::LiteKernel *post_kernel,
+  int InsertNode(kernel::LiteKernel *kernel, kernel::LiteKernel *post_kernel, size_t post_input_index,
                  std::vector<kernel::LiteKernel *> *trans_kernels);
+  int InsertForInputTensor(kernel::LiteKernel *kernel, size_t in_tensor_index, kernel::LiteKernel *pre_kernel,
+                           std::vector<kernel::LiteKernel *> *trans_kernels);
+
+  int InsertForOutputTensor(kernel::LiteKernel *kernel, kernel::LiteKernel *post_kernel, size_t post_in_tensor_index,
+                            std::vector<kernel::LiteKernel *> *trans_kernels);
 
  private:
   int total = 0;
