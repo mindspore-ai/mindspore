@@ -944,11 +944,8 @@ class Cell(Cell_):
         """Sets the name on the first time."""
         if self._scope is None:
             self._scope = name
-        elif self._scope == 'recompute':
-            if name is None:
-                self._scope = None
-            elif name != 'recompute':
-                self._scope = self._scope + '_' + name
+        elif self._scope == 'recompute_':
+            self._scope = self._scope + name
 
     def _children_scope_recursive(self, parent_prefix='Default'):
         """Generates the scope of each layer of the network recursively."""
@@ -1129,6 +1126,16 @@ class Cell(Cell_):
             param.comm_fusion = fusion_type
         return self
 
+    def _set_recompute_scope(self, mode):
+        prefix = 'recompute_'
+        if mode is True:
+            if self._scope is None:
+                self._scope = prefix
+            elif not self._scope.startswith(prefix):
+                self._scope = prefix + self._scope
+        elif not self._scope is None and self._scope.startswith(prefix):
+            self._scope = self._scope[len(prefix):]
+
     def recompute(self, mode=True):
         """
         Set the cell recomputed. All the primitive in the cell will be set recomputed. If a primitive feeds into a grad
@@ -1137,10 +1144,7 @@ class Cell(Cell_):
             mode (bool): Specifies whether the cell is recomputed. Default: True.
         """
         Validator.check_bool(mode)
-        if mode is True:
-            self._set_scope("recompute")
-        else:
-            self._set_scope(None)
+        self._set_recompute_scope(mode)
         for cell in self.cells():
             cell.recompute(mode)
 
