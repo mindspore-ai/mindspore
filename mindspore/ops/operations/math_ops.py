@@ -366,9 +366,9 @@ class _Reduce(PrimitiveWithInfer):
 
 class ReduceMean(_Reduce):
     """
-     Reduces a dimension of a tensor by averaging all elements in the dimension.
+    Reduces a dimension of a tensor by averaging all elements in the dimension.
 
-     The dtype of the tensor to be reduced is number.
+    The dtype of the tensor to be reduced is number.
 
     Args:
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
