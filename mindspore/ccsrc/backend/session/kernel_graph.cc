@@ -374,6 +374,9 @@ void KernelGraph::CheckLoop() {
 
 void ReSetParameterValueNodeFormatAndType(const AnfNodePtr &node, const std::string &format) {
   MS_EXCEPTION_IF_NULL(node);
+  if (AnfAlgo::OutputAddrExist(node, 0)) {
+    return;
+  }
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
   kernel_build_info_builder->SetOutputsFormat({format});
