@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_CONCAT_INT8_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_CONCAT_INT8_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_CONCAT_INT8_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_CONCAT_INT8_CODER_H_
 
 #include <cstring>
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
 #include "nnacl/int8/concat_int8.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 class ConcatInt8Coder : public OperatorCoder {
  public:
   ConcatInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -52,5 +52,5 @@ class ConcatInt8Coder : public OperatorCoder {
   int8_t *input_data_{nullptr};
   int axis_ = 0;
 };
-}  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_CONCAT_INT8_CODER_H_
+}  // namespace mindspore::lite::micro::nnacl
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_CONCAT_INT8_CODER_H_

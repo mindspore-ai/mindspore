@@ -23,7 +23,7 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #define DEFAULT_ARITHMETIC_NDIMS 10
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 using mindspore::schema::PrimitiveType_Add;
 
@@ -105,5 +105,5 @@ class ArithmeticFP32Coder final : public OperatorCoder {
 
   LiteDataType data_type_{kDataTypeFloat};
 };
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl
 #endif  // MICRO_CODER_OPCODERS_FP32_ARITHMETIC_FP32_CODER_H_

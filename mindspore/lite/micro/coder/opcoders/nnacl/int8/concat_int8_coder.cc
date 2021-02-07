@@ -31,7 +31,7 @@ int MallocQuantArgForConcat(ConcatQuantArg *quant_arg, size_t input_num) {
 
 using mindspore::schema::PrimitiveType_Concat;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 int ConcatInt8Coder::Prepare(CoderContext *const context) {
   this->concat_param_ = reinterpret_cast<ConcatParameter *>(parameter_);
 
@@ -111,4 +111,4 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Concat, CPUOpCoderCreator<ConcatInt8Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

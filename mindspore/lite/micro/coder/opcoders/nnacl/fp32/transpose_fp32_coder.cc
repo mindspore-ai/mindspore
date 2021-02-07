@@ -21,7 +21,7 @@
 #include "micro/coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Transpose;
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int TransposeFp32Coder::Resize() {
   num_unit_ = static_cast<int>(input_tensor_->shape().at(transpose_parameter_->perm_[kNHWC_H]));
@@ -91,4 +91,4 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Transpose, CPUOpCoderCreator<TransposeFp32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

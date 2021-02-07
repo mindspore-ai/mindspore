@@ -20,7 +20,7 @@
 #include "micro/coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Reshape;
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int ReshapeFP32Coder::DoCode(CoderContext *const context) {
   size_t data_size = input_tensor_->Size();
@@ -36,4 +36,4 @@ int ReshapeFP32Coder::DoCode(CoderContext *const context) {
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Reshape, CPUOpCoderCreator<ReshapeFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

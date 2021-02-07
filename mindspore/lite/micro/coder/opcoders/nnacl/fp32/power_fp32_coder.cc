@@ -22,7 +22,7 @@
 
 using mindspore::schema::PrimitiveType_Power;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int PowerFP32Coder::DoCode(CoderContext *const context) {
   scale_ = reinterpret_cast<PowerParameter *>(parameter_)->scale_;
@@ -57,4 +57,4 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Power, CPUOpCoderCreator<PowerFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

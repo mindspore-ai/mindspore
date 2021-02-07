@@ -23,7 +23,7 @@
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/arithmetic_self_parameter.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 using mindspore::schema::PrimitiveType_Abs;
 
@@ -105,5 +105,5 @@ class ArithmeticSelfFP32Coder final : public OperatorCoder {
   size_t data_size_{0};
   std::string arithmetic_self_run_;
 };
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl
 #endif  // MICRO_CODER_OPCODERS_FP32_ARITHMETIC_SELF_FP32_CODER_H_

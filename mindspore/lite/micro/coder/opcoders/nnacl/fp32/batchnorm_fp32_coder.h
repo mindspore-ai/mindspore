@@ -20,7 +20,7 @@
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 class BatchnormFP32Coder final : public OperatorCoder {
  public:
@@ -38,6 +38,6 @@ class BatchnormFP32Coder final : public OperatorCoder {
   int Init();
 };
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl
 
 #endif  // MICRO_CODER_OPCODERS_FP32_CODER_H_

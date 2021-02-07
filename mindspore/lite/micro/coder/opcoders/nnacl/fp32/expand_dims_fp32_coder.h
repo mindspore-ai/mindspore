@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_EXPANDDIMS_FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_EXPANDDIMS_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_EXPANDDIMS_FP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_EXPANDDIMS_FP32_CODER_H_
 
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 class ExpandDimsFP32Coder : public OperatorCoder {
  public:
   ExpandDimsFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -38,5 +38,5 @@ class ExpandDimsFP32Coder : public OperatorCoder {
   int thread_sz_stride_{0};
   size_t data_size_{0};
 };
-}  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_EXPANDDIMS_FP32_CODER_H_
+}  // namespace mindspore::lite::micro::nnacl
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_EXPANDDIMS_FP32_CODER_H_

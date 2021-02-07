@@ -21,7 +21,7 @@
 
 using mindspore::schema::PrimitiveType_Squeeze;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int SqueezeFP32Coder::DoCode(CoderContext *const context) {
   size_t data_size = input_tensor_->Size();
@@ -42,4 +42,4 @@ int SqueezeFP32Coder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Squeeze, CPUOpCoderCreator<SqueezeFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl
