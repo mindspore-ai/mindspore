@@ -20,7 +20,6 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
-from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config, \
@@ -682,27 +681,6 @@ def test_tensor_assign_bool_index():
         net4(Ta, u_tensor)
     with pytest.raises(IndexError):
         net4(Ta, Tensor(u_scalar, mstype.int32))
-
-
-def test_trivial_call_function_twice_with_diff_key_value_para():
-    class Net(Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.arange = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
-            self.concat = P.Concat(axis=0)
-
-        def compute(self, x, is_decoder):
-            if is_decoder:
-                return self.arange[:x]
-            return self.arange[1:x + 1]
-
-        def construct(self):
-            result1 = self.compute(7, is_decoder=True)
-            result2 = self.compute(6, is_decoder=False)
-            return self.concat((result1, result2))
-
-    net = Net()
-    net()
 
 
 test_cases = [

@@ -171,10 +171,6 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
     return args_spec_list[0];
   }
   auto depends = args_spec_list[0]->Broaden();
-  // For scalar, need to set value to kAnyValue, because broaden scalar will not change the value.
-  if (depends->isa<AbstractScalar>()) {
-    depends->set_value(kAnyValue);
-  }
   return depends;
 }
 

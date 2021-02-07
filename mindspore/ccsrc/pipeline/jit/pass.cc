@@ -489,7 +489,8 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
       continue;
     }
     AbstractBasePtr par_abs = param_node->abstract();
-    if (par_abs->isa<abstract::AbstractUndetermined>()) {
+    if (par_abs->isa<abstract::AbstractUndetermined>() ||
+        (par_abs->BuildType() != nullptr && par_abs->BuildType()->isa<Number>())) {
       new_paras.push_back(param_node);
     }
   }

@@ -223,7 +223,8 @@ class DType(PrimitiveWithInfer):
         """Initialize DType"""
 
     def __infer__(self, x):
-        validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name)
+        addition_error_info = 'Perhaps you are using a mixture of tensors and scalars to operate.'
+        validator.check_subclass("input_x", x['dtype'], mstype.tensor, self.name, addition_error_info)
         out = {'shape': (),
                'dtype': mstype.type_type,
                'value': x['dtype'].element_type()}

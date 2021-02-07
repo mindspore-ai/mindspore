@@ -19,7 +19,7 @@ from mindspore import Tensor, ms_function
 from mindspore import context
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True)
+context.set_context(mode=context.PYNATIVE_MODE)
 
 
 @ms_function
@@ -33,8 +33,7 @@ def test_scalar_compute():
     p = (3, 4)
     q = [5, 6]
     w = {"x": 7, "y": 8}
-    ret = compute(int_x, int_y, p, q, w)
-    assert ret == -1
+    compute(int_x, int_y, p, q, w)
 
 
 def test_tensor_compute():

@@ -453,7 +453,7 @@ class Validator:
         return padding
 
     @staticmethod
-    def check_subclass(arg_name, type_, template_types, prim_name):
+    def check_subclass(arg_name, type_, template_types, prim_name, addition_error_info=None):
         """Checks whether some type is subclass of another type"""
         if not isinstance(template_types, Iterable):
             template_types = (template_types,)
@@ -467,9 +467,12 @@ class Validator:
                 hit = True
                 break
         if not hit:
+            if addition_error_info is None:
+                addition_error_info = ''
             type_str = (type(type_).__name__ if isinstance(type_, (tuple, list)) else "") + str(type_)
             raise TypeError(f'For \'{prim_name}\', the type of `{arg_name}` should be subclass'
-                            f' of {", ".join((str(x) for x in template_types))}, but got {type_str}.')
+                            f' of {", ".join((str(x) for x in template_types))}, but got {type_str}.'
+                            f' {addition_error_info}')
 
     @staticmethod
     def check_const_input(arg_name, arg_value, prim_name):

@@ -224,7 +224,8 @@ void DeleteLoadUserUpdateState(const FuncGraphManagerPtr &manager, const AnfNode
 // b = Load(para1, u2)
 // u3 = UpdateState(u2, x)
 void DeleteLoadUserMakeTuple(const FuncGraphManagerPtr &manager, const CNodePtr &make_tuple, const AnfNodePtr &load) {
-  AnfNodePtr other_input = nullptr;
+  // Initialize the other_input with load in case of all the inputs of the make_tuple is the same load.
+  AnfNodePtr other_input = load;
   for (size_t i = 1; i < make_tuple->size(); i++) {
     if (make_tuple->input(i) != load) {
       other_input = make_tuple->input(i);

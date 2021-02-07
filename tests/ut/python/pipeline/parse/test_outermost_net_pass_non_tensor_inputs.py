@@ -45,6 +45,17 @@ class GradNet(nn.Cell):
         return self.grad_all(self.forward_net)(tuple_a, tensor_x, list_b, tensor_y, scalar, dict_c, flag)
 
 
+class GradNet1(nn.Cell):
+    def __init__(self, net, get_all):
+        super(GradNet1, self).__init__()
+        self.forward_net = net
+        self.sens = Tensor(np.ones((2, 2), np.float32) * 5)
+        self.grad_all = C.GradOperation(get_all=get_all)
+
+    def construct(self, tuple_a, tensor_x, list_b, tensor_y, tensor_z, dict_c):
+        return self.grad_all(self.forward_net)(tuple_a, tensor_x, list_b, tensor_y, tensor_z, dict_c)
+
+
 x = Tensor(np.ones((2, 2), np.float32))
 y = Tensor(np.ones((2, 2), np.float32) * 2)
 z = Tensor(np.ones((2, 2), np.float32) * 3)
@@ -68,32 +79,17 @@ forward_net = FirstInputTupleNet()
 grad_all_inputs_net = GradNet(forward_net, get_all=True)
 
 
-def test_outermost_net_inputs_including_non_tensor():
-    forward_net(arg_t0, z, arg_l0, w, sl, args_d0, flag_0)
-    forward_net(arg_t1, z, arg_l1, x, sl, args_d1, flag_1)
-
-
-def test_grad_net_inputs_including_non_tensor():
-    assert len(grad_all_inputs_net(arg_t0, z, arg_l0, w, sl, args_d0, flag_0)) == 2
-    assert len(grad_all_inputs_net(arg_t1, z, arg_l1, x, sl, args_d1, flag_1)) == 2
-
-
 def test_grad_first_input_net():
     class FirstInputTensorNet(nn.Cell):
         def __init__(self):
             super(FirstInputTensorNet, self).__init__()
 
-        def construct(self, tensor_x, tuple_a, list_b, tensor_y, scalar, dict_c, flag):
-            if flag:
-                return tensor_x - tuple_a[2] + list_b[1][1]["x"] - tensor_y + scalar - dict_c["x"]
-            return tensor_x + tuple_a[2] - list_b[1][1]["y"] + tensor_y - scalar + dict_c["y"]
+        def construct(self, tensor_x, tuple_a, list_b, tensor_y, tensor_z, dict_c):
+            return tensor_x + tuple_a[2] - list_b[1][1]["y"] + tensor_y - tensor_z + dict_c["y"]
 
-    grad_fist_input_tensor_net = GradNet(FirstInputTensorNet(), get_all=False)
-    ret = grad_fist_input_tensor_net(z, arg_t0, arg_l0, w, sl, args_d0, flag_0)
+    grad_fist_input_tensor_net = GradNet1(FirstInputTensorNet(), get_all=False)
+    ret = grad_fist_input_tensor_net(z, arg_t0, arg_l0, w, y, args_d0)
     assert np.allclose(ret.asnumpy(), np.ones((2, 2), np.float32))
-
-    grad_fist_input_tuple_net = GradNet(forward_net, get_all=False)
-    assert not grad_fist_input_tuple_net(arg_t0, z, arg_l0, w, sl, args_d0, flag_0)
 
 
 def test_net_inputs_including_str():

@@ -414,13 +414,14 @@ def test_trainTensor_with_new_interface(num_classes=10, epoch=8, batch_size=1):
     weights = ParameterTuple(filter(lambda x: x.requires_grad, net.get_parameters()))
     optimizer = Momentum(weights, 0.1, 0.9)
 
-    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
+    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True,
+                                        sens=1.0)
     losses = []
     for i in range(0, epoch):
         data = Tensor(np.ones([batch_size, 3, 224, 224]
                               ).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
-        loss, grads = train_network(data, label, 1.0)
+        loss, grads = train_network(data, label)
         grads = F.identity(grads)
         optimizer(grads)
         losses.append(loss)
@@ -439,13 +440,14 @@ def test_big_batchSize_with_new_interface(num_classes=10, epoch=8, batch_size=33
     weights = ParameterTuple(filter(lambda x: x.requires_grad, net.get_parameters()))
     optimizer = Momentum(weights, 0.1, 0.9)
 
-    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True)
+    train_network = ForwardValueAndGrad(network=net_with_criterion, weights=weights, get_by_list=True, sens_param=True,
+                                        sens=1.0)
     losses = []
     for i in range(0, epoch):
         data = Tensor(np.ones([batch_size, 3, 224, 224]
                               ).astype(np.float32) * 0.01)
         label = Tensor(np.ones([batch_size]).astype(np.int32))
-        loss, grads = train_network(data, label, 1.0)
+        loss, grads = train_network(data, label)
         grads = F.identity(grads)
         optimizer(grads)
         losses.append(loss)

@@ -184,7 +184,7 @@ TEST_F(TestData, test_broaden) {
   AbstractBasePtr s2 = s1->Broaden();
   ASSERT_TRUE(*s1->GetTypeTrack() == *s2->GetTypeTrack());
   ASSERT_TRUE(*s1->GetValueTrack() == *MakeValue(int1));
-  ASSERT_TRUE(s2->GetValueTrack()->isa<Int64Imm>());
+  ASSERT_TRUE(s2->GetValueTrack()->isa<AnyValue>());
 
   AbstractFunctionPtr f1 = std::make_shared<FuncGraphAbstractClosure>(std::make_shared<FuncGraph>(),
                                                                       AnalysisContext::DummyContext());
@@ -196,7 +196,7 @@ TEST_F(TestData, test_broaden) {
   AbstractList* l2_cast = dynamic_cast<AbstractList*>(l2.get());
   ASSERT_TRUE(l2_cast != nullptr);
   AbstractBasePtr csr = AbstractJoin(l2_cast->elements());
-  ASSERT_TRUE(csr->GetValueTrack()->isa<Int64Imm>());
+  ASSERT_TRUE(csr->GetValueTrack()->isa<AnyValue>());
 }
 
 }  // namespace abstract

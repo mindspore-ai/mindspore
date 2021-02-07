@@ -401,7 +401,9 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
   }
 
   if (tail_type_ == kGradFirst) {
-    if (sequeue->size() > 1 && (*sequeue)[1] != nullptr && (*sequeue)[1]->isa<abstract::AbstractUndetermined>()) {
+    if (sequeue->size() > 1 && (*sequeue)[1] != nullptr &&
+        ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() ||
+         ((*sequeue)[1]->BuildType() != nullptr && (*sequeue)[1]->BuildType()->isa<Number>()))) {
       ret->set_output(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(1))}));
     } else {
       ret->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
@@ -413,7 +415,8 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
   for (size_t i = 1; i < sequeue->size(); ++i) {
     if (tail_type_ == kGradAll) {
       MS_EXCEPTION_IF_NULL((*sequeue)[i]);
-      if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>()) {
+      if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>() ||
+          ((*sequeue)[i]->BuildType() != nullptr && (*sequeue)[i]->BuildType()->isa<Number>())) {
         elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
       }
     } else {
