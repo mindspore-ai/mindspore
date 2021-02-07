@@ -19,8 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-
-#include "nnacl/winograd_transform.h"
+#include "nnacl/fp32/winograd_transform.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
 
 namespace mindspore::kernel {

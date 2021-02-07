@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/minimal_filtering_generator.h"
+#include "nnacl/base/minimal_filtering_generator.h"
 #include <string.h>
 #include <math.h>
-#include "nnacl/winograd_utils.h"
+#include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/errorcode.h"
 
 void Polynomial(const float *interval, float *m, int degree) {

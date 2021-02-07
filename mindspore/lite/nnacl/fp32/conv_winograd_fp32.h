@@ -24,7 +24,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/conv_parameter.h"
-#include "nnacl/winograd_utils.h"
+#include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 
 typedef float *TmpBufferAddress;

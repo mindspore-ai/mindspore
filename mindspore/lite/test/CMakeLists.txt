@@ -67,7 +67,7 @@ if(PLATFORM_ARM32)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "sse")
-    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/x86_64_sse/*.c)
+    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/intrinsics/sse/*.c)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
@@ -78,8 +78,8 @@ endif()
 if("${X86_64_SIMD}" STREQUAL "avx")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
-    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/x86_64_sse/*.c
-            ${LITE_DIR}/nnacl/x86_64_avx/*.c
+    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/intrinsics/sse/*.c
+            ${LITE_DIR}/nnacl/intrinsics/avx/*.c
             ${LITE_DIR}/nnacl/assembly/avx/*.S)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC

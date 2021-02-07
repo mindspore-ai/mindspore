@@ -17,7 +17,7 @@
 #include "micro/coder/opcoders/base/conv2d_base_coder.h"
 #include <string>
 #include <vector>
-#include "nnacl/winograd_utils.h"
+#include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/int8/quantize.h"
 #include "micro/coder/log.h"
 

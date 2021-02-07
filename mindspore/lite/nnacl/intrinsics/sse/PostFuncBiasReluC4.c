@@ -17,11 +17,10 @@
 #ifdef ENABLE_SSE
 #include <x86intrin.h>
 #include "nnacl/fp32/common_func_fp32.h"
+#include "nnacl/intrinsics/sse/sse_common.h"
 
 void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,
                         size_t plane_size, size_t plane_stride, size_t relu_type) {
-  __m128 relu6 = _mm_set_ps1(6.0);
-  __m128 zero = _mm_setzero_ps();
   size_t stride = oc4div + oc4mod;
   plane_stride /= sizeof(float);
   for (size_t loop_c4 = 0; loop_c4 < oc4div; loop_c4 += C4NUM) {
@@ -42,19 +41,9 @@ void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t 
       src2 = _mm_add_ps(src2, bias1);
       src3 = _mm_add_ps(src3, bias1);
       src4 = _mm_add_ps(src4, bias1);
-      switch (relu_type) {
-        case 3:
-          src1 = _mm_min_ps(src1, relu6);
-          src2 = _mm_min_ps(src2, relu6);
-          src3 = _mm_min_ps(src3, relu6);
-          src4 = _mm_min_ps(src4, relu6);
-        case 1:
-          src1 = _mm_max_ps(src1, zero);
-          src2 = _mm_max_ps(src2, zero);
-          src3 = _mm_max_ps(src3, zero);
-          src4 = _mm_max_ps(src4, zero);
-          break;
-      }
+
+      ActBlock4(&src1, &src2, &src3, &src4, relu_type == 1, relu_type == 3);
+
       _mm_storeu_ps(dst_c4, src1);
       dst_c4 += stride;
       _mm_storeu_ps(dst_c4, src2);
@@ -67,20 +56,15 @@ void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t 
     for (; plane_size_tmp > 0; plane_size_tmp -= 1) {
       __m128 src1 = _mm_loadu_ps(src);
       src1 = _mm_add_ps(src1, bias1);
-      switch (relu_type) {
-        case 3:
-          src1 = _mm_min_ps(src1, relu6);
-        case 1:
-          src1 = _mm_max_ps(src1, zero);
-          break;
-      }
+
+      ActBlock1(&src1, relu_type == 1, relu_type == 3);
+
       _mm_storeu_ps(dst_c4, src1);
       dst_c4 += stride;
       src += 4;
     }
     src += plane_stride;
   }
-
   if (oc4mod == 0) {
     return;
   }
@@ -94,13 +78,9 @@ void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t 
     __m128 src1 = _mm_loadu_ps(src);
     src += 4;
     src1 = _mm_add_ps(src1, bias1);
-    switch (relu_type) {
-      case 3:
-        src1 = _mm_min_ps(src1, relu6);
-      case 1:
-        src1 = _mm_max_ps(src1, zero);
-        break;
-    }
+
+    ActBlock1(&src1, relu_type == 1, relu_type == 3);
+
     switch (oc4mod) {
       case 1:
         _mm_store_ss(dst_c1, src1);

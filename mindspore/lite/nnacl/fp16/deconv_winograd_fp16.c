@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/fp16/deconv_winograd_fp16.h"
-#include "nnacl/minimal_filtering_generator.h"
+#include "nnacl/base/minimal_filtering_generator.h"
 
 void DeConvWgInputPackFp16(float16_t *src_ptr, float16_t *dst_ptr, int channel, int stride) {
   int ic4div = channel / C4NUM;
@@ -111,16 +111,16 @@ void DeConvWgMergeFp16(const float16_t *src, float16_t *dst, size_t src_stride, 
 }
 
 void DeConvWgCalWgFp16(float16_t *tile_in, float16_t *tile_out, float16_t *weight_buf, float16_t *tmp_buf,
-                       float16_t *at_buf, float16_t *a_mid_buf, float16_t *trans_a_buf, bool *transfered,
+                       float16_t *at_buf, float16_t *a_mid_buf, float16_t *trans_a_buf, bool *transferred,
                        float16_t *bt_buf, float16_t *b_tmp_buf, int unit_size, int w_start, int h_start,
                        ConvParameter *conv_param, DeConvParam *deconv_param) {
   int winograd_plane = unit_size * unit_size;
-  if (!transfered[unit_size]) {
+  if (!transferred[unit_size]) {
     WinogradTransLeftFp16(tile_in, at_buf, a_mid_buf, DECONV_WINOGRAD_DEFAULT_UNIT, unit_size,
                           DECONV_WINOGRAD_DEFAULT_UNIT, deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
     WinogradTransRightFp16(a_mid_buf, at_buf, trans_a_buf, unit_size, unit_size, DECONV_WINOGRAD_DEFAULT_UNIT,
                            deconv_param->ic_div4_ * DECONV_WINOGRAD_DEFAULT_TILE);
-    transfered[unit_size] = true;
+    transferred[unit_size] = true;
   }
 
   for (int index = 0; index < winograd_plane; index++) {
@@ -311,7 +311,7 @@ void DeconvWgFp16(float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_ou
   }
 
   /* compute */
-  bool transfered[DECONV_WINOGRAD_BUFFER_COUNT] = {false};
+  bool transferred[DECONV_WINOGRAD_BUFFER_COUNT] = {false};
   for (int i = 0; i < deconv_param->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param->compute_units_[i];
     if (unit->use_winograd_) {
@@ -328,7 +328,7 @@ void DeconvWgFp16(float16_t *nhwc_input_, float16_t *tile_in, float16_t *tile_ou
                                                                     DECONV_WINOGRAD_DEFAULT_TILE *
                                                                     deconv_param->oc_up4_;
       DeConvWgCalWgFp16(tile_in, tile_out, (float16_t *)unit->weight_, tmp_buf, unit->winograd_.AT_, mid_a, dst_a,
-                        transfered, unit->winograd_.BT_, tmp_b, unit->winograd_.kh_, unit->w_start_, unit->h_start_,
+                        transferred, unit->winograd_.BT_, tmp_b, unit->winograd_.kh_, unit->w_start_, unit->h_start_,
                         conv_param, deconv_param);
     } else {
       float16_t *tmp_buf = (float16_t *)unit->tmp_buffer_ + task_id * deconv_param->oc_div4_ * unit->w_size_ *

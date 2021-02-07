@@ -28,7 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Reverse;
 
 namespace mindspore::kernel {
-
 int ReverseCPUKernel::Stride(int index) {
   int stride = 1;
   for (size_t i = index + 1; i < in_tensors_.at(0)->shape().size(); ++i) {
@@ -39,7 +38,7 @@ int ReverseCPUKernel::Stride(int index) {
 
 int ReverseCPUKernel::ReSize() {
   data_size_ = in_tensors_.at(0)->ElementsNum();
-  thread_sz_count_ = MSMIN(thread_count_, data_size_);
+  thread_sz_count_ = MSMIN(op_parameter_->thread_num_, data_size_);
   thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
 
   auto *param = reinterpret_cast<ReverseParameter *>(op_parameter_);

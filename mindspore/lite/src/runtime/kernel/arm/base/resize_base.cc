@@ -30,7 +30,6 @@ namespace mindspore::kernel {
 namespace {
 constexpr int kMaxInputNum = 2;
 constexpr int kOutputNum = 1;
-constexpr int kRank = 4;
 }  // namespace
 
 int ResizeBaseCPUKernel::CheckParameters() {
@@ -113,7 +112,7 @@ int ResizeBaseCPUKernel::Init() {
 
   auto input = in_tensors_.at(0);
   auto input_shape = input->shape();
-  if (!input_shape.empty() && input_shape.size() != kRank) {
+  if (!input_shape.empty() && input_shape.size() != COMM_SHAPE_SIZE) {
     MS_LOG(ERROR) << "Resize op support input rank 4, got " << input_shape.size();
     return RET_ERROR;
   }

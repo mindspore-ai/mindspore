@@ -24,7 +24,7 @@
 #include "nnacl/fp16/conv_fp16.h"
 #include "nnacl/fp16/winograd_utils_fp16.h"
 #include "src/common/utils.h"
-#include "nnacl/minimal_filtering_generator.h"
+#include "nnacl/base/minimal_filtering_generator.h"
 
 namespace mindspore::kernel {
 class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {

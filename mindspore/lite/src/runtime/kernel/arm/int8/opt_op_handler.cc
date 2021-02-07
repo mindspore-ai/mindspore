@@ -43,7 +43,7 @@ void MatMulRInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst,
                                   size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
                                   int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini,
                                   int32_t maxi, size_t per_channel) {
-  return MatmulInt8DpNeon64(a, b, dst, UP_ROUND(row, 8), UP_ROUND(col, 8), deep_4, input_sum, bias, mini, maxi,
+  return MatmulInt8DpNeon64(a, b, dst, UP_ROUND(row, C8NUM), UP_ROUND(col, C8NUM), deep_4, input_sum, bias, mini, maxi,
                             output_zp, multiplier, left_shift, right_shift, row, col, stride, per_channel);
 }
 void MatMulDpInt8_optimize_handler(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,

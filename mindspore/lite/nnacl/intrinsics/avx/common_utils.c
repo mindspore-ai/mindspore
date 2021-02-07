@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/x86_64_avx/common_utils.h"
+#include "nnacl/intrinsics/avx/common_utils.h"
 #ifdef WIN32
 #ifdef ENABLE_AVX
 #include <stdint.h>

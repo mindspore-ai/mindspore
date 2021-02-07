@@ -72,6 +72,7 @@ typedef struct SlidingWindowParam {
   int kernel_step_;
 } SlidingWindowParam;
 
+#define OUPUT_UNIT 2
 #define DECONV_WINOGRAD_DEFAULT_UNIT 3
 #define DECONV_WINOGRAD_DEFAULT_TILE 8
 #define DECONV_WINOGRAD_BUFFER_COUNT 8
