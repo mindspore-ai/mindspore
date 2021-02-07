@@ -18,89 +18,70 @@
 #include <arm_neon.h>
 #endif
 
-void PRelu(float *input, float *output, const PReluParameter *prelu_param_, int task_id) {
-  float *negetive_slope_value = prelu_param_->slope_;
-  int c4 = prelu_param_->channel_num_ / C4NUM;
-  int channel_num = prelu_param_->channel_num_;
-  for (int j = task_id; j < prelu_param_->tile_block_; j += prelu_param_->op_parameter_.thread_num_) {
-    float *input_ptr = input + j * TILE_NUM * channel_num;
-    float *output_ptr = input_ptr;
-#ifdef ENABLE_ARM64
-    for (int i = 0; i < c4; i++) {
-      int c_offset = i * C4NUM;
-      float32x4_t slope_value = vld1q_f32(negetive_slope_value + c_offset);
-      float32x4_t v1 = vld1q_f32(input_ptr + c_offset);
-      float32x4_t v2 = vld1q_f32(input_ptr + c_offset + channel_num);
-      float32x4_t v3 = vld1q_f32(input_ptr + c_offset + 2 * channel_num);
-      float32x4_t v4 = vld1q_f32(input_ptr + c_offset + 3 * channel_num);
-      float32x4_t v5 = vld1q_f32(input_ptr + c_offset + 4 * channel_num);
-      float32x4_t v6 = vld1q_f32(input_ptr + c_offset + 5 * channel_num);
-      float32x4_t v7 = vld1q_f32(input_ptr + c_offset + 6 * channel_num);
-      float32x4_t v8 = vld1q_f32(input_ptr + c_offset + 7 * channel_num);
-
-      float32x4_t t1 = vmulq_f32(v1, slope_value);
-      float32x4_t t2 = vmulq_f32(v2, slope_value);
-      float32x4_t t3 = vmulq_f32(v3, slope_value);
-      float32x4_t t4 = vmulq_f32(v4, slope_value);
-      float32x4_t t5 = vmulq_f32(v5, slope_value);
-      float32x4_t t6 = vmulq_f32(v6, slope_value);
-      float32x4_t t7 = vmulq_f32(v7, slope_value);
-      float32x4_t t8 = vmulq_f32(v8, slope_value);
-
-      uint32x4_t flag1 = vclezq_f32(v1);
-      uint32x4_t flag2 = vclezq_f32(v2);
-      uint32x4_t flag3 = vclezq_f32(v3);
-      uint32x4_t flag4 = vclezq_f32(v4);
-      uint32x4_t flag5 = vclezq_f32(v5);
-      uint32x4_t flag6 = vclezq_f32(v6);
-      uint32x4_t flag7 = vclezq_f32(v7);
-      uint32x4_t flag8 = vclezq_f32(v8);
-
-      float32x4_t r1 = vbslq_f32(flag1, t1, v1);
-      float32x4_t r2 = vbslq_f32(flag2, t2, v2);
-      float32x4_t r3 = vbslq_f32(flag3, t3, v3);
-      float32x4_t r4 = vbslq_f32(flag4, t4, v4);
-      float32x4_t r5 = vbslq_f32(flag5, t5, v5);
-      float32x4_t r6 = vbslq_f32(flag6, t6, v6);
-      float32x4_t r7 = vbslq_f32(flag7, t7, v7);
-      float32x4_t r8 = vbslq_f32(flag8, t8, v8);
-
-      vst1q_f32(output_ptr + c_offset, r1);
-      vst1q_f32(output_ptr + c_offset + channel_num, r2);
-      vst1q_f32(output_ptr + c_offset + 2 * channel_num, r3);
-      vst1q_f32(output_ptr + c_offset + 3 * channel_num, r4);
-      vst1q_f32(output_ptr + c_offset + 4 * channel_num, r5);
-      vst1q_f32(output_ptr + c_offset + 5 * channel_num, r6);
-      vst1q_f32(output_ptr + c_offset + 6 * channel_num, r7);
-      vst1q_f32(output_ptr + c_offset + 7 * channel_num, r8);
-    }  // c4 -1 loop
-#else
-    for (int i = 0; i < TILE_NUM; ++i) {
-      int tile_offset = i * channel_num;
-      for (int k = 0; k < c4; ++k) {
-        int c4_offset = tile_offset + k * C4NUM;
-        int slope_offset = k * C4NUM;
-        for (int l = 0; l < C4NUM; ++l) {
-          const float in_data = input_ptr[c4_offset + l];
-          output_ptr[c4_offset + l] =
-            (in_data < 0 ? in_data : 0) * negetive_slope_value[slope_offset + l] + (in_data > 0 ? in_data : 0);
-        }
-      }
-    }  // c4 - 1 loop
+void PRelu(float *input, float *output, const PReluParameter *prelu_param_, int plane) {
+#ifdef ENABLE_ARM
+  float32x4_t zero_value = vdupq_n_f32(0);
 #endif
-    int c_s = c4 * C4NUM;
-    for (int m = 0; m < TILE_NUM; ++m) {
-      int offset = m * channel_num;
-      for (int k = c_s; k < channel_num; ++k) {
-        int c4_offset = offset + k;
-        const float in_data = input_ptr[c4_offset];
-        if (in_data >= 0) {
-          output_ptr[c4_offset] = in_data;
-        } else {
-          output_ptr[c4_offset] = in_data * negetive_slope_value[k];
-        }
+  int plane_tile = plane / TILE_NUM * TILE_NUM;
+  int channel_num = prelu_param_->channel_num_;
+  int plane_index = 0;
+  for (; plane_index < plane_tile; plane_index += TILE_NUM) {
+    float *in_plane_ptr = input + plane_index * channel_num;
+    float *out_plane_ptr = output + plane_index * channel_num;
+    int channel_index = 0;
+#ifdef ENABLE_ARM
+    float *negetive_slope_value = prelu_param_->slope_;
+    int div_channel = prelu_param_->channel_num_ / C4NUM * C4NUM;
+    for (; channel_index < div_channel; channel_index += C4NUM) {
+      float32x4_t slope_value = vld1q_f32(negetive_slope_value + channel_index);
+      float32x4_t v1 = vld1q_f32(in_plane_ptr + channel_index + 0 * channel_num);
+      float32x4_t v2 = vld1q_f32(in_plane_ptr + channel_index + 1 * channel_num);
+      float32x4_t v3 = vld1q_f32(in_plane_ptr + channel_index + 2 * channel_num);
+      float32x4_t v4 = vld1q_f32(in_plane_ptr + channel_index + 3 * channel_num);
+      float32x4_t v5 = vld1q_f32(in_plane_ptr + channel_index + 4 * channel_num);
+      float32x4_t v6 = vld1q_f32(in_plane_ptr + channel_index + 5 * channel_num);
+      float32x4_t v7 = vld1q_f32(in_plane_ptr + channel_index + 6 * channel_num);
+      float32x4_t v8 = vld1q_f32(in_plane_ptr + channel_index + 7 * channel_num);
+
+      float32x4_t r1 = vaddq_f32(vmulq_f32(vminq_f32(v1, zero_value), slope_value), vmaxq_f32(v1, zero_value));
+      float32x4_t r2 = vaddq_f32(vmulq_f32(vminq_f32(v2, zero_value), slope_value), vmaxq_f32(v2, zero_value));
+      float32x4_t r3 = vaddq_f32(vmulq_f32(vminq_f32(v3, zero_value), slope_value), vmaxq_f32(v3, zero_value));
+      float32x4_t r4 = vaddq_f32(vmulq_f32(vminq_f32(v4, zero_value), slope_value), vmaxq_f32(v4, zero_value));
+      float32x4_t r5 = vaddq_f32(vmulq_f32(vminq_f32(v5, zero_value), slope_value), vmaxq_f32(v5, zero_value));
+      float32x4_t r6 = vaddq_f32(vmulq_f32(vminq_f32(v6, zero_value), slope_value), vmaxq_f32(v6, zero_value));
+      float32x4_t r7 = vaddq_f32(vmulq_f32(vminq_f32(v7, zero_value), slope_value), vmaxq_f32(v7, zero_value));
+      float32x4_t r8 = vaddq_f32(vmulq_f32(vminq_f32(v8, zero_value), slope_value), vmaxq_f32(v8, zero_value));
+
+      vst1q_f32(out_plane_ptr + channel_index + 0 * channel_num, r1);
+      vst1q_f32(out_plane_ptr + channel_index + 1 * channel_num, r2);
+      vst1q_f32(out_plane_ptr + channel_index + 2 * channel_num, r3);
+      vst1q_f32(out_plane_ptr + channel_index + 3 * channel_num, r4);
+      vst1q_f32(out_plane_ptr + channel_index + 4 * channel_num, r5);
+      vst1q_f32(out_plane_ptr + channel_index + 5 * channel_num, r6);
+      vst1q_f32(out_plane_ptr + channel_index + 6 * channel_num, r7);
+      vst1q_f32(out_plane_ptr + channel_index + 7 * channel_num, r8);
+    }
+#endif
+    for (; channel_index < channel_num; channel_index++) {
+      float *in_c = in_plane_ptr + channel_index;
+      float *out_c = out_plane_ptr + channel_index;
+      for (int tile_i = 0; tile_i < TILE_NUM; tile_i++) {
+        float *in_tile = in_c + tile_i * channel_num;
+        float *out_tile = out_c + tile_i * channel_num;
+        const float in_data = in_tile[0];
+        out_tile[0] = (in_data < 0 ? in_data : 0) * prelu_param_->slope_[channel_index] + (in_data > 0 ? in_data : 0);
       }
-    }  // res loop
+    }
+  }
+
+  for (; plane_index < plane; plane_index++) {
+    float *in_plane_ptr = input + plane_index * channel_num;
+    float *out_plane_ptr = output + plane_index * channel_num;
+    for (int channel_index = 0; channel_index < channel_num; channel_index++) {
+      const float in_data = in_plane_ptr[channel_index];
+      out_plane_ptr[channel_index] =
+        (in_data < 0 ? in_data : 0) * prelu_param_->slope_[channel_index] + (in_data > 0 ? in_data : 0);
+    }
   }
 }
 

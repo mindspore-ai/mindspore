@@ -33,11 +33,10 @@ class PReluCPUKernel : public LiteKernel {
   ~PReluCPUKernel() = default;
 
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
   int DoExcute(int task_id);
   int ProcessShareChannelInput();
-  int ProcessInput();
 
  private:
   PReluParameter *prelu_param_;
