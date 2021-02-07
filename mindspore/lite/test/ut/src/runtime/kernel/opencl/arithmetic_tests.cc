@@ -112,6 +112,20 @@ TEST_F(TestOpenCL_Arithmetic, BroadcastSub2) {
   }
 }
 
+TEST_F(TestOpenCL_Arithmetic, BroadcastSub3) {
+  std::vector<int> input0_shape = {2, 3};
+  std::vector<int> input1_shape = {2, 2, 2, 3};
+  std::vector<int> output_shape = {2, 2, 2, 3};
+  float input0_data[] = {1, 2, 3, 1, 2, 3};
+  float input1_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+  float output_data[] = {0, 0, 0, -3, -3, -3, -6, -6, -6, -9, -9, -9, 0, 0, 0, -3, -3, -3, -6, -6, -6, -9, -9, -9};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(schema::PrimitiveType_Sub, input0_shape, input1_shape);
+    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
+             param, fp16_enable);
+  }
+}
+
 TEST_F(TestOpenCL_Arithmetic, BroadcastFloorMod) {
   std::vector<int> input0_shape = {1, 1, 3, 4};
   std::vector<int> input1_shape = {1, 1, 1, 4};

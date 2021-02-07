@@ -46,10 +46,6 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (param->broadcasting_ && out_tensors_.front()->DimensionSize(0) > 1) {
-    MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
-    return RET_ERROR;
-  }
   if (!IsArithmetic(Type())) {
     MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(Type());
     return RET_ERROR;

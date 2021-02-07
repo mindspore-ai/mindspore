@@ -265,18 +265,22 @@ __kernel void BroadcastNHWC4Add(__read_only image2d_t input_a, __read_only image
                                 const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // H
-  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
+  int Z = get_global_id(2);  // N * H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y * output_shape.x) {
     return;
   }
-  int a_c = X < a_shape.w ? X : a_shape.w - 1;
-  int a_w = Y < a_shape.z ? Y : a_shape.z - 1;
-  int a_h = Z < a_shape.y ? Z : a_shape.y - 1;
-  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_h));
-  int b_c = X < b_shape.w ? X : b_shape.w - 1;
-  int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
-  int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
-  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
+  int H = Z % output_shape.y;
+  int N = Z / output_shape.y;
+  int a_c = X < a_shape.w ? X : 0;
+  int a_w = Y < a_shape.z ? Y : 0;
+  int a_h = H < a_shape.y ? H : 0;
+  int a_n = N < a_shape.x ? N : 0;
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_n * a_shape.y + a_h));
+  int b_c = X < b_shape.w ? X : 0;
+  int b_w = Y < b_shape.z ? Y : 0;
+  int b_h = H < b_shape.y ? H : 0;
+  int b_n = N < b_shape.x ? N : 0;
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_n * b_shape.y + b_h));
   FLT4 result;
   if (broadcastC_flag == 0) {
     result = a + b;
@@ -294,18 +298,22 @@ __kernel void BroadcastNHWC4BiasAdd(__read_only image2d_t input_a, __read_only i
                                     const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // H
-  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
+  int Z = get_global_id(2);  // N * H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y * output_shape.x) {
     return;
   }
-  int a_c = X < a_shape.w ? X : a_shape.w - 1;
-  int a_w = Y < a_shape.z ? Y : a_shape.z - 1;
-  int a_h = Z < a_shape.y ? Z : a_shape.y - 1;
-  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_h));
-  int b_c = X < b_shape.w ? X : b_shape.w - 1;
-  int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
-  int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
-  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
+  int H = Z % output_shape.y;
+  int N = Z / output_shape.y;
+  int a_c = X < a_shape.w ? X : 0;
+  int a_w = Y < a_shape.z ? Y : 0;
+  int a_h = H < a_shape.y ? H : 0;
+  int a_n = N < a_shape.x ? N : 0;
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_n * a_shape.y + a_h));
+  int b_c = X < b_shape.w ? X : 0;
+  int b_w = Y < b_shape.z ? Y : 0;
+  int b_h = H < b_shape.y ? H : 0;
+  int b_n = N < b_shape.x ? N : 0;
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_n * b_shape.y + b_h));
   FLT4 result;
   if (broadcastC_flag == 0) {
     result = a + b;
@@ -323,18 +331,22 @@ __kernel void BroadcastNHWC4Sub(__read_only image2d_t input_a, __read_only image
                                 const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // H
-  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
+  int Z = get_global_id(2);  // N * H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y * output_shape.x) {
     return;
   }
-  int a_c = X < a_shape.w ? X : a_shape.w - 1;
-  int a_w = Y < a_shape.z ? Y : a_shape.z - 1;
-  int a_h = Z < a_shape.y ? Z : a_shape.y - 1;
-  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_h));
-  int b_c = X < b_shape.w ? X : b_shape.w - 1;
-  int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
-  int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
-  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
+  int H = Z % output_shape.y;
+  int N = Z / output_shape.y;
+  int a_c = X < a_shape.w ? X : 0;
+  int a_w = Y < a_shape.z ? Y : 0;
+  int a_h = H < a_shape.y ? H : 0;
+  int a_n = N < a_shape.x ? N : 0;
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_n * a_shape.y + a_h));
+  int b_c = X < b_shape.w ? X : 0;
+  int b_w = Y < b_shape.z ? Y : 0;
+  int b_h = H < b_shape.y ? H : 0;
+  int b_n = N < b_shape.x ? N : 0;
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_n * b_shape.y + b_h));
   FLT4 result;
   if (broadcastC_flag == 0) {
     result = a - b;
@@ -352,18 +364,22 @@ __kernel void BroadcastNHWC4Mul(__read_only image2d_t input_a, __read_only image
                                 const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // H
-  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
+  int Z = get_global_id(2);  // N * H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y * output_shape.x) {
     return;
   }
-  int a_c = X < a_shape.w ? X : a_shape.w - 1;
-  int a_w = Y < a_shape.z ? Y : a_shape.z - 1;
-  int a_h = Z < a_shape.y ? Z : a_shape.y - 1;
-  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_h));
-  int b_c = X < b_shape.w ? X : b_shape.w - 1;
-  int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
-  int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
-  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
+  int H = Z % output_shape.y;
+  int N = Z / output_shape.y;
+  int a_c = X < a_shape.w ? X : 0;
+  int a_w = Y < a_shape.z ? Y : 0;
+  int a_h = H < a_shape.y ? H : 0;
+  int a_n = N < a_shape.x ? N : 0;
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_n * a_shape.y + a_h));
+  int b_c = X < b_shape.w ? X : 0;
+  int b_w = Y < b_shape.z ? Y : 0;
+  int b_h = H < b_shape.y ? H : 0;
+  int b_n = N < b_shape.x ? N : 0;
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_n * b_shape.y + b_h));
   FLT4 result;
   if (broadcastC_flag == 0) {
     result = a * b;
@@ -381,18 +397,22 @@ __kernel void BroadcastNHWC4Div(__read_only image2d_t input_a, __read_only image
                                 const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // H
-  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
+  int Z = get_global_id(2);  // N * H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y * output_shape.x) {
     return;
   }
-  int a_c = X < a_shape.w ? X : a_shape.w - 1;
-  int a_w = Y < a_shape.z ? Y : a_shape.z - 1;
-  int a_h = Z < a_shape.y ? Z : a_shape.y - 1;
-  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_h));
-  int b_c = X < b_shape.w ? X : b_shape.w - 1;
-  int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
-  int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
-  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
+  int H = Z % output_shape.y;
+  int N = Z / output_shape.y;
+  int a_c = X < a_shape.w ? X : 0;
+  int a_w = Y < a_shape.z ? Y : 0;
+  int a_h = H < a_shape.y ? H : 0;
+  int a_n = N < a_shape.x ? N : 0;
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_n * a_shape.y + a_h));
+  int b_c = X < b_shape.w ? X : 0;
+  int b_w = Y < b_shape.z ? Y : 0;
+  int b_h = H < b_shape.y ? H : 0;
+  int b_n = N < b_shape.x ? N : 0;
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_n * b_shape.y + b_h));
   FLT4 result;
   if (broadcastC_flag == 0) {
     result = a / b;
