@@ -22,7 +22,7 @@
 
 using mindspore::schema::PrimitiveType_Nchw2Nhwc;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 int Nchw2NhwcFP32Coder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int Nchw2NhwcFP32Coder::DoCode(CoderContext *context) {
@@ -48,4 +48,4 @@ int Nchw2NhwcFP32Coder::DoCode(CoderContext *context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, CPUOpCoderCreator<Nchw2NhwcFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

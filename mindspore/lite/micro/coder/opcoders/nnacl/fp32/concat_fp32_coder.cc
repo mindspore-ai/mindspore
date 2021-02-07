@@ -21,7 +21,7 @@
 
 using mindspore::schema::PrimitiveType_Concat;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int ConcatFP32Coder::Prepare(CoderContext *const context) {
   concat_param_ = reinterpret_cast<ConcatParameter *>(parameter_);
@@ -74,4 +74,4 @@ int ConcatFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Concat, CPUOpCoderCreator<ConcatFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

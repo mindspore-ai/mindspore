@@ -21,7 +21,7 @@
 #include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "micro/coder/opcoders/file_collector.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int ArithmeticSelfFP32Coder::ReSize() {
   data_size_ = input_tensor_->ElementsNum();
@@ -101,4 +101,4 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Round, CPUOpCo
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Neg, CPUOpCoderCreator<ArithmeticSelfFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

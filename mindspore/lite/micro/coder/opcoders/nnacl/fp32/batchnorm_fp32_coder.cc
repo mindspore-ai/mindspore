@@ -24,7 +24,7 @@
 
 using mindspore::schema::PrimitiveType_BatchNorm;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int BatchnormFP32Coder::Init() {
   auto bn_parameter = reinterpret_cast<BatchNormParameter *>(parameter_);
@@ -66,4 +66,4 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_BatchNorm, CPUOpCoderCreator<BatchnormFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

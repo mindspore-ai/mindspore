@@ -19,7 +19,7 @@
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
 #include "nnacl/transpose.h"
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 class TransposeFp32Coder final : public OperatorCoder {
  public:
@@ -49,5 +49,5 @@ class TransposeFp32Coder final : public OperatorCoder {
   int *position_ = nullptr;
 };
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl
 #endif  // MICRO_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_

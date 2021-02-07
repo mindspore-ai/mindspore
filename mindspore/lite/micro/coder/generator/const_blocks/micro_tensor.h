@@ -18,7 +18,7 @@
 
 static const char micro_tensor_h[] =
   "/**\n"
-  " * Copyright 2019 Huawei Technologies Co., Ltd\n"
+  " * Copyright 2021 Huawei Technologies Co., Ltd\n"
   " *\n"
   " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
   " * you may not use this file except in compliance with the License.\n"

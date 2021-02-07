@@ -21,7 +21,7 @@
 
 using mindspore::schema::PrimitiveType_ExpandDims;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 int ExpandDimsFP32Coder::Prepare(CoderContext *const context) { return ReSize(); }
 
 int ExpandDimsFP32Coder::ReSize() {
@@ -49,4 +49,4 @@ int ExpandDimsFP32Coder::DoCode(CoderContext *const context) {
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_ExpandDims, CPUOpCoderCreator<ExpandDimsFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_ExpandDims, CPUOpCoderCreator<ExpandDimsFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

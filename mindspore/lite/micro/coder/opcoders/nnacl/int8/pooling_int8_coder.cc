@@ -25,7 +25,7 @@
 using std::string;
 
 using mindspore::schema::PrimitiveType_Pooling;
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int PoolingInt8Coder::DoCode(CoderContext *const context) {
   // attribute
@@ -79,4 +79,4 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Pooling, CPUOpCoderCreator<PoolingInt8Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

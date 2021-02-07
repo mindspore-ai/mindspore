@@ -23,7 +23,7 @@
 
 using mindspore::schema::PrimitiveType_Gather;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int GatherFP32Coder::Prepare(CoderContext *const context) { return RET_OK; }
 
@@ -66,4 +66,4 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Gather, CPUOpCoderCreator<GatherFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

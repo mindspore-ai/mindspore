@@ -21,7 +21,7 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "micro/coder/log.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int ArithmeticFP32Coder::Init(CoderContext *const context) {
   filter_tensor_ = input_tensors_.at(kWeightIndex);
@@ -370,4 +370,4 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_GreaterEqual, 
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Eltwise, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

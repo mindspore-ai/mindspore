@@ -23,7 +23,7 @@
 
 using mindspore::schema::PrimitiveType_Pad;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int PadFP32Coder::Prepare(CoderContext *const context) {
   pad_param_ = reinterpret_cast<PadParameter *>(parameter_);
@@ -100,4 +100,4 @@ int PadFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Pad, CPUOpCoderCreator<PadFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

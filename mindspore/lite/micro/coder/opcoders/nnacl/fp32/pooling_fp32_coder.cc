@@ -23,7 +23,7 @@
 
 using mindspore::schema::PrimitiveType_Pooling;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int PoolingFP32Coder::DoCode(CoderContext *const context) {
   // attribute
@@ -100,4 +100,4 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Pooling, CPUOpCoderCreator<PoolingFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

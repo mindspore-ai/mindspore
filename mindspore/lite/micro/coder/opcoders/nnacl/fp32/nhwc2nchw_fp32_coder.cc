@@ -20,7 +20,7 @@
 #include "micro/coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Nhwc2Nchw;
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 int Nhwc2NchwFP32Coder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int Nhwc2NchwFP32Coder::DoCode(CoderContext *const context) {
@@ -47,4 +47,4 @@ int Nhwc2NchwFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, CPUOpCoderCreator<Nhwc2NchwFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

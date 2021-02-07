@@ -22,7 +22,7 @@
 #include "micro/coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Slice;
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 int SliceFP32Coder::Prepare(CoderContext *const context) { return RET_OK; }
 
 int SliceFP32Coder::DoCode(CoderContext *const context) {
@@ -71,4 +71,4 @@ int SliceFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Slice, CPUOpCoderCreator<SliceFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

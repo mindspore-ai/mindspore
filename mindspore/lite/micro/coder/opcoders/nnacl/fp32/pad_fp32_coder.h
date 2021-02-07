@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_PAD_FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_PAD_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_PAD_FP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_PAD_FP32_CODER_H_
 
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
 #include "nnacl/fp32/pad_fp32.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 class PadFP32Coder : public OperatorCoder {
  public:
   PadFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -45,5 +45,5 @@ class PadFP32Coder : public OperatorCoder {
   int in_[DEFAULT_PAD_NDIMS]{0};
   int out_[DEFAULT_PAD_NDIMS]{0};
 };
-}  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_PAD_FP32_CODER_H_
+}  // namespace mindspore::lite::micro::nnacl
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_PAD_FP32_CODER_H_

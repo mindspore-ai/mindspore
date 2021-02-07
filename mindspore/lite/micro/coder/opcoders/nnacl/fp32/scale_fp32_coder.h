@@ -21,7 +21,7 @@
 #include "micro/coder/opcoders/op_coder.h"
 #include "nnacl/scale.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 class ScaleFP32Coder final : public OperatorCoder {
  public:
@@ -44,6 +44,6 @@ class ScaleFP32Coder final : public OperatorCoder {
   float *offset_{nullptr};
 };
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl
 
 #endif  // MICRO_CODER_OPCODERS_FP32__CODER_H_

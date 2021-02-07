@@ -22,7 +22,7 @@
 
 using mindspore::schema::PrimitiveType_Activation;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int ActivationFP32Coder::DoCode(CoderContext *const context) {
   // attribute
@@ -68,4 +68,4 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Activation, CPUOpCoderCreator<ActivationFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

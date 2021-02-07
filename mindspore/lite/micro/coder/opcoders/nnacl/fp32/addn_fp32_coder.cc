@@ -20,7 +20,7 @@
 #include "micro/coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_AddN;
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int AddNFP32Coder::DoCode(CoderContext *const context) {
   Tensor *input0 = input_tensors_.at(kInputIndex);
@@ -45,4 +45,4 @@ int AddNFP32Coder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_AddN, CPUOpCoderCreator<AddNFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

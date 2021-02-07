@@ -22,7 +22,7 @@
 
 using mindspore::schema::PrimitiveType_Tile;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 void TileFP32Coder::ComputeStrides(const int *shape, int *strides, int ndim) const {
   int stride = 1;
   for (int i = ndim - 1; i >= 0; i--) {
@@ -65,4 +65,4 @@ int TileFP32Coder::DoCode(CoderContext *const context) {
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Tile, CPUOpCoderCreator<TileFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

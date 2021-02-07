@@ -19,7 +19,7 @@
 #include "schema/inner/ops_generated.h"
 #include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 using mindspore::schema::PrimitiveType_AssignAdd;
 
@@ -52,4 +52,4 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_AssignAdd, CPU
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_AssignAdd, CPUOpCoderCreator<AssignAddFP32Coder>)
 
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

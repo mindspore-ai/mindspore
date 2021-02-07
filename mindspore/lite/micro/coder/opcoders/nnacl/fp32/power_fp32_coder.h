@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_POWER_FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_POWER_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_POWER_FP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_POWER_FP32_CODER_H_
 
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
 #include "nnacl/power_parameter.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 class PowerFP32Coder : public OperatorCoder {
  public:
   PowerFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -38,5 +38,5 @@ class PowerFP32Coder : public OperatorCoder {
   float scale_{0.0f};
   float shift_{0.0f};
 };
-}  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_POWER_FP32_CODER_H_
+}  // namespace mindspore::lite::micro::nnacl
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_POWER_FP32_CODER_H_

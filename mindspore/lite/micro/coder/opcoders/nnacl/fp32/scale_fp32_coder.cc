@@ -21,7 +21,7 @@
 
 using mindspore::schema::PrimitiveType_Scale;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 ScaleFP32Coder::~ScaleFP32Coder() {
   if (scale_param_->const_scale_) {
     if (scale_) {
@@ -161,4 +161,4 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Scale, CPUOpCoderCreator<ScaleFP32Coder>)
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl

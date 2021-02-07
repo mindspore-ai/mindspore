@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_TILE_FP32_CODER_H_
-#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_TILE_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_TILE_FP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_TILE_FP32_CODER_H_
 
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
 #include "nnacl/base/tile_base.h"
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 class TileFP32Coder : public OperatorCoder {
  public:
   TileFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
@@ -39,5 +39,5 @@ class TileFP32Coder : public OperatorCoder {
 
   TileParameter *tile_param_{nullptr};
 };
-}  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_TILE_FP32_CODER_H_
+}  // namespace mindspore::lite::micro::nnacl
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_TILE_FP32_CODER_H_
