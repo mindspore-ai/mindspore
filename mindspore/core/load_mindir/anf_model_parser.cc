@@ -29,6 +29,7 @@
 #include "abstract/abstract_value.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "utils/check_convert_utils.h"
 
 using std::string;
 
@@ -494,7 +495,11 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
     case FORM_PARSE_SCALAR: {
       std::size_t value_pos(0);
       if ((value_pos = ref_attr_name.find("value0")) != std::string::npos) {
-        auto res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
+        ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
+        const std::string &op_type = prim->name();
+        if (!IsLite()) {
+          CheckAndConvertUtils::ConvertAttrValueToInt(op_type, attr_name, &res);
+        }
         prim->AddAttr(attr_name, res);
         break;
       }

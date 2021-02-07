@@ -29,6 +29,7 @@
 #include "utils/convert_utils_py.h"
 #include "utils/ms_context.h"
 #include "utils/primitive_utils.h"
+#include "utils/check_convert_utils.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/pynative/pynative_execute.h"
 
@@ -280,6 +281,8 @@ void PrimitivePy::AddPyAttr(const py::str &name, const py::object &obj) {
   if (kOpAttrNameReplaceMap.find(attr_name) != kOpAttrNameReplaceMap.end()) {
     attr_name = kOpAttrNameReplaceMap[attr_name];
   }
+  const std::string &prim_name = this->name();
+  CheckAndConvertUtils::ConvertAttrValueToInt(prim_name, attr_name, &converted_ret);
   (void)this->AddAttr(attr_name, converted_ret);
 }
 

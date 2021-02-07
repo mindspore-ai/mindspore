@@ -856,7 +856,7 @@ int AnfImporterFromMindir::ParseModelConfigureInfo(const onnx::ModelProto &model
 
 int AnfImporterFromMindir::Import(const converter::Flags *flag) {
 #if SUPPORT_TRAIN
-  func_graph_ = LoadMindIR(flag->modelFile);
+  func_graph_ = LoadMindIR(flag->modelFile, true);
   if (func_graph_ != nullptr) {
     return RET_OK;
   } else {
@@ -866,7 +866,7 @@ int AnfImporterFromMindir::Import(const converter::Flags *flag) {
   onnx_model_ = ReadOnnxFromBinary(flag->modelFile);
   if (onnx_model_ == nullptr) {
     MS_LOG(DEBUG) << "Parse model failed, which is not an old mindir model";
-    func_graph_ = LoadMindIR(flag->modelFile);
+    func_graph_ = LoadMindIR(flag->modelFile, true);
     if (func_graph_ == nullptr) {
       MS_LOG(ERROR) << "The mindir model cannot be parsed, which may not match proto file.";
       return RET_GRAPH_FILE_ERR;

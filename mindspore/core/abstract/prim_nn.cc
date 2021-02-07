@@ -59,20 +59,16 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
     MS_LOG(EXCEPTION) << "Invalid ceil_mode value: " << ceil_mode << ", should be 0";
   }
 
-  std::set<std::string> available_pad_mode{"pad", "same", "valid"};
   auto pad_mode_ptr = primitive->GetAttr("pad_mode");
-  if ((pad_mode_ptr != nullptr) && pad_mode_ptr->isa<StringImm>()) {
-    auto pad_mode = pad_mode_ptr->cast<StringImmPtr>()->value();
-    if (available_pad_mode.find(pad_mode) == available_pad_mode.end()) {
-      MS_LOG(EXCEPTION) << "Unsupported pad mode: " << pad_mode << ". use pad, same, valid";
-    }
-    if (pad_mode == "valid") {
+  if (pad_mode_ptr != nullptr) {
+    int64_t pad_mode;
+    CheckAndConvertUtils::GetPadModEnumValue(pad_mode_ptr, &pad_mode, true);
+    if (pad_mode == PadMode::VALID) {
       padding = 0;
-    } else if (pad_mode == "same") {
+    } else if (pad_mode == PadMode::SAME) {
       padding = (window - 1) / 2;
     }
   }
-
   std::set<std::string> available_mode{"max", "avg"};
   auto mode_ptr = primitive->GetAttr("mode");
   if ((mode_ptr != nullptr) && mode_ptr->isa<StringImm>()) {
@@ -270,13 +266,13 @@ AbstractBasePtr InferImplFusedSparseAdam(const AnalysisEnginePtr &, const Primit
 
 void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pad_list, const int64_t x_h,
                        const int64_t x_w, const std::vector<int64_t> &kernel, const std::vector<int64_t> &stride,
-                       const std::vector<int64_t> &dilation, const std::string &pad_mode,
+                       const std::vector<int64_t> &dilation, const int64_t &pad_mode,
                        const std::vector<int64_t> &padding) {
-  if (pad_mode == "valid") {
+  if (pad_mode == PadMode::VALID) {
     output_hw->push_back(std::ceil(((x_h * 1.0) - dilation[0] * (kernel[0] - 1)) / stride[0]));
     output_hw->push_back(std::ceil(((x_w * 1.0) - dilation[1] * (kernel[1] - 1)) / stride[1]));
     pad_list->insert(pad_list->begin(), 4, 0);
-  } else if (pad_mode == "same") {
+  } else if (pad_mode == PadMode::SAME) {
     output_hw->push_back(std::ceil((x_h * 1.0) / stride[0]));
     output_hw->push_back(std::ceil((x_w * 1.0) / stride[1]));
     int64_t pad_needed_h = (output_hw->at(0) - 1) * stride[0] + dilation[0] * (kernel[0] - 1) + 1 - x_h;
@@ -287,7 +283,7 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
     pad_needed_w = std::max((int64_t)0, pad_needed_w);
     pad_list->push_back(std::floor(pad_needed_w / 2));
     pad_list->push_back(pad_needed_w - pad_list->at(2));
-  } else if (pad_mode == "pad") {
+  } else if (pad_mode == PadMode::PAD) {
     pad_list->insert(pad_list->begin(), padding.begin(), padding.end());
     output_hw->push_back(std::floor(
       1 +
@@ -296,6 +292,15 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
       1 +
       ((x_w * 1.0) + pad_list->at(2) + pad_list->at(3) - kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) / stride[1]));
   }
+}
+
+int64_t GetAndCheckFormat(const ValuePtr &value) {
+  int64_t data_format;
+  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
+  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW)) {
+    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW and NHWC";
+  }
+  return data_format;
 }
 
 AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -322,12 +327,12 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   CheckShapeAnyAndPositive(op_name + " w_shape", w_shape);
   CheckShapeAllPositive(op_name + " w_min_shape", w_min_shape);
   CheckShapeAllPositive(op_name + " w_max_shape", w_max_shape);
-  std::string data_format = CheckAttrStringSet(op_name, primitive->GetAttr("format"), "format", {"NCHW", "NHWC"});
   int64_t n_axis = 0;
   int64_t c_axis = 1;
   int64_t h_axis = 2;
   int64_t w_axis = 3;
-  if (data_format == "NHWC") {
+  int64_t data_format = GetAndCheckFormat(primitive->GetAttr("format"));
+  if (data_format == Format::NHWC) {
     c_axis = 3;
     h_axis = 1;
     w_axis = 2;
@@ -352,8 +357,8 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   std::vector<int64_t> stride = CheckAttrIntOrTuple(op_name, primitive->GetAttr("stride"), 2, 2);
   std::vector<int64_t> dilation = CheckAttrIntOrTuple(op_name, primitive->GetAttr("dilation"), 2, 2);
   std::vector<int64_t> padding = CheckAttrIntOrTuple(op_name, primitive->GetAttr("pad"), 0, 4);
-  std::string pad_mode =
-    CheckAttrStringSet(op_name, primitive->GetAttr("pad_mode"), "pad_mode", {"pad", "same", "valid"});
+  int64_t pad_mode;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr("pad_mode"), &pad_mode);
   std::vector<int64_t> output_hw;
   std::vector<int64_t> pad_list;
   std::vector<int64_t> output_hw_min;
@@ -378,7 +383,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   ShapeVector output_shape;
   ShapeVector output_shape_min;
   ShapeVector output_shape_max;
-  if (data_format == "NHWC") {
+  if (data_format == Format::NHWC) {
     output_shape = {x_shape[n_axis], output_hw[0], output_hw[1], out_channel};
     output_shape_min = {x_min_shape[n_axis], output_hw_min[0], output_hw_min[1], out_channel};
     output_shape_max = {x_max_shape[n_axis], output_hw_max[0], output_hw_max[1], out_channel};
@@ -426,16 +431,12 @@ AbstractBasePtr InferImplBiasAdd(const AnalysisEnginePtr &, const PrimitivePtr &
   ShapeVector bias_shape = bias->shape()->shape();
   ShapeVector x_min_shape = x->shape()->min_shape();
   ShapeVector x_max_shape = x->shape()->max_shape();
-  std::set<std::string> available_data_format{"NCHW", "NHWC"};
   auto data_format_ptr = primitive->GetAttr("format");
-  std::string data_format = "NCHW";
-  if ((data_format_ptr != nullptr) && data_format_ptr->isa<StringImm>()) {
-    data_format = data_format_ptr->cast<StringImmPtr>()->value();
+  int64_t data_format = Format::NCHW;
+  if (data_format_ptr != nullptr) {
+    data_format = GetAndCheckFormat(data_format_ptr);
   }
-  if (available_data_format.find(data_format) == available_data_format.end()) {
-    MS_LOG(EXCEPTION) << "Unsupported data format: " << data_format << ", use NCHW or NHWC.";
-  }
-  auto x_channel = data_format == "NHWC" ? x_shape[x_shape.size() - 1] : x_shape[1];
+  auto x_channel = data_format == Format::NHWC ? x_shape[x_shape.size() - 1] : x_shape[1];
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn = std::all_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value != Shape::SHP_ANY; });

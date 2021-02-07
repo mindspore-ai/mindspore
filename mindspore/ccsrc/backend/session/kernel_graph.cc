@@ -21,6 +21,7 @@
 #include "base/core_ops.h"
 #include "ir/param_info.h"
 #include "utils/utils.h"
+#include "utils/check_convert_utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/kernel_compiler/kernel_build_info.h"
@@ -402,9 +403,17 @@ CNodePtr KernelGraph::NewCNode(const std::vector<AnfNodePtr> &inputs) {
   }
   SetKernelInfoForNode(cnode);
   if (AnfAlgo::HasNodeAttr(kAttrFormat, cnode)) {
-    auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFormat);
-    if (attr == kOpFormat_NCDHW) {
-      ResetInFormat(cnode, kOpFormat_NCDHW);
+    auto primitive_ptr = GetCNodePrimitive(cnode);
+    MS_EXCEPTION_IF_NULL(primitive_ptr);
+    auto data_format_ptr = primitive_ptr->GetAttr(kAttrFormat);
+    MS_EXCEPTION_IF_NULL(data_format_ptr);
+    int64_t data_format;
+    bool result = CheckAndConvertUtils::GetDataFormatEnumValue(data_format_ptr, &data_format);
+    if (!result) {
+      auto attr = GetValue<std::string>(data_format_ptr);
+      if (attr == kOpFormat_NCDHW) {
+        ResetInFormat(cnode, kOpFormat_NCDHW);
+      }
     }
   }
   AnfAlgo::SetGraphId(graph_id_, cnode.get());

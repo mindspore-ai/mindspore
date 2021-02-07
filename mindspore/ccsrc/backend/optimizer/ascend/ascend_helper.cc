@@ -18,6 +18,7 @@
 #include <set>
 #include "common/trans.h"
 #include "utils/ms_utils.h"
+#include "utils/check_convert_utils.h"
 #include "backend/optimizer/common/helper.h"
 #include "utils/utils.h"
 #include "runtime/device/kernel_info.h"
@@ -66,9 +67,17 @@ void SetTransNodeAttr(const CNodePtr &trans_node) {
 std::string InitDefaultFormat(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (node->isa<CNode>() && AnfAlgo::HasNodeAttr(kAttrFormat, node->cast<CNodePtr>())) {
-    auto attr = AnfAlgo::GetNodeAttr<std::string>(node, kAttrFormat);
-    if (attr == kOpFormat_NCDHW) {
-      return kOpFormat_NCDHW;
+    auto primitive_ptr = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(primitive_ptr);
+    auto data_format_ptr = primitive_ptr->GetAttr(kAttrFormat);
+    MS_EXCEPTION_IF_NULL(data_format_ptr);
+    int64_t data_format;
+    bool result = CheckAndConvertUtils::GetDataFormatEnumValue(data_format_ptr, &data_format);
+    if (!result) {
+      auto attr = GetValue<std::string>(data_format_ptr);
+      if (attr == kOpFormat_NCDHW) {
+        return kOpFormat_NCDHW;
+      }
     }
   } else if (AnfAlgo::IsRealKernel(node)) {
     auto formats = AnfAlgo::GetAllOutputFormats(node);

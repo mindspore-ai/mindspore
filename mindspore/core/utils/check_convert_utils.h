@@ -284,8 +284,8 @@ class CheckAndConvertUtils {
   static bool ConvertAttrValueToInt(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
   static bool ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
   static AttrConverterPair GetAttrConvertPair(const std::string &op_type, const std::string &attr_name);
-  static int64_t GetDataFormatEnumValue(const std::string &value);
-  static int64_t GetPadModEnumValue(const std::string &value, bool is_upper = false);
+  static bool GetDataFormatEnumValue(const ValuePtr &value, int64_t *enum_value);
+  static void GetPadModEnumValue(const ValuePtr &value, int64_t *enum_value, bool is_upper = false);
   static bool CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
 
  private:

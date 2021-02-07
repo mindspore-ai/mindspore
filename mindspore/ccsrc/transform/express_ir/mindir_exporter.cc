@@ -26,6 +26,7 @@
 #include "ir/func_graph.h"
 #include "base/core_ops.h"
 #include "proto/mind_ir.pb.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 using FloatPtr = std::shared_ptr<Float>;
@@ -425,7 +426,9 @@ void IrExportBuilder::BuildCNode(const CNodePtr &node, mind_ir::GraphProto *cons
       MS_LOG(DEBUG) << "attr: " << attr.first << " " << attr.second->DumpText() << " " << attr.second->type_name();
       mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();
       attr_proto->set_name(attr.first);
-      SetValueToAttributeProto(attr.second, attr_proto);
+      auto attr_value = attr.second;
+      CheckAndConvertUtils::ConvertAttrValueToString(type_name, attr.first, &attr_value);
+      SetValueToAttributeProto(attr_value, attr_proto);
     }
   } else {
     MS_LOG(EXCEPTION) << "Need to support op type: " << op->type_name();

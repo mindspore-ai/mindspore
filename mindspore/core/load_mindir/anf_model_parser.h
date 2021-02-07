@@ -39,6 +39,8 @@ class MSANFModelParser {
   std::string GetProducerName() { return producer_name_; }
   std::string GetProducerVersion() { return model_version_; }
   std::string GetIrVersion() { return ir_version_; }
+  void SetLite() { is_lite_ = true; }
+  bool IsLite() { return is_lite_; }
 
  private:
   bool BuildFuncGraph(const FuncGraphPtr &outputFuncGraph, const mind_ir::GraphProto &importProto);
@@ -68,6 +70,7 @@ class MSANFModelParser {
   std::string producer_name_;
   std::string model_version_;
   std::string ir_version_;
+  bool is_lite_ = false;
   std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
 };
 }  // namespace mindspore

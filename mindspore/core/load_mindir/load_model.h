@@ -24,8 +24,8 @@
 #include "ir/func_graph.h"
 
 namespace mindspore {
-std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name);
+std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite = false);
 std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file);
-std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size);
+std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite = false);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_LOAD_MODEL_H
