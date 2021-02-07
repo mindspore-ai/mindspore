@@ -23,7 +23,7 @@
 #include "micro/coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ReduceFP32Coder : public ReduceBaseCoder {
+class ReduceFP32Coder final : public ReduceBaseCoder {
  public:
   ReduceFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const Model::Node *node, size_t node_index, Target target)

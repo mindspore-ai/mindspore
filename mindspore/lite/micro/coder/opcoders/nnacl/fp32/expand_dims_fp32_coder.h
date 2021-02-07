@@ -21,7 +21,7 @@
 #include "micro/coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ExpandDimsFP32Coder : public OperatorCoder {
+class ExpandDimsFP32Coder final : public OperatorCoder {
  public:
   ExpandDimsFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                       const Model::Node *node, size_t node_index, Target target)

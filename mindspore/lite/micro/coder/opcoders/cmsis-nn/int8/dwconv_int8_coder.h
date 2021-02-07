@@ -22,7 +22,7 @@
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
 
 namespace mindspore::lite::micro::cmsis {
-class DWConvInt8Coder : public Conv2DBaseCoder {
+class DWConvInt8Coder final : public Conv2DBaseCoder {
  public:
   DWConvInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const Model::Node *node, size_t node_index, Target target)

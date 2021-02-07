@@ -24,7 +24,7 @@
 #include "nnacl/int8/reduce_int8.h"
 #include "micro/coder/opcoders/base/reduce_base_coder.h"
 namespace mindspore::lite::micro::nnacl {
-class ReduceInt8Coder : public ReduceBaseCoder {
+class ReduceInt8Coder final : public ReduceBaseCoder {
  public:
   ReduceInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const Model::Node *node, size_t node_index, Target target)

@@ -27,7 +27,7 @@ int Nhwc2NchwFP32Coder::DoCode(CoderContext *const context) {
   // generate code .h .c
   Collect(context, {"nnacl/pack.h"}, {"pack.c"});
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   if (input_tensor_->shape().size() == 4) {
     if (input_tensor_->data_type() == kNumberTypeFloat32) {
       code.CodeFunction("PackNHWCToNCHWFp32", input_tensor_, output_tensor_, output_tensor_->Batch(),

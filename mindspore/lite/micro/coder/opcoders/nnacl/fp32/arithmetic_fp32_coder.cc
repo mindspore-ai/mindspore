@@ -123,8 +123,7 @@ int ArithmeticFP32Coder::Init(CoderContext *const context) {
 }
 
 int ArithmeticFP32Coder::BroadcastRun(const std::string &input0, const std::string &input1, const std::string &output,
-                                      int dim, int out_count, int out_thread_stride,
-                                      nnacl::NNaclFp32Serializer *const code) {
+                                      int dim, int out_count, int out_thread_stride, NNaclFp32Serializer *const code) {
   if (dim > break_pos_) {
     if (data_type_ == kDataTypeInt) {
       *code << "\t\t" << arithmetic_run_int_ << "(((" << input0 << ") + " << out_thread_stride << "), ((" << input1
@@ -270,7 +269,7 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
   int stride = UP_DIV(element_num, thread_num_);
   int count = MSMIN(stride, element_num - stride * task_id);
   MS_CHECK_TRUE(!arithmetic_run_.empty(), "arithmetic_run function is nullptr!");
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   /**
    * for nnacl's operator combine all arithmetic to nnalc/arithmetic.c
    * this solution is not suitable for micro, for the size of package.

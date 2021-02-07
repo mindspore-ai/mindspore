@@ -21,7 +21,7 @@
 #include "micro/coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::cmsis {
-class MulInt8Coder : public OperatorCoder {
+class MulInt8Coder final : public OperatorCoder {
  public:
   MulInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                const Model::Node *node, size_t node_index, Target target)

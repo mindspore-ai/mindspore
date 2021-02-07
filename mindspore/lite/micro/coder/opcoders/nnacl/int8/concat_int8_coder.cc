@@ -85,7 +85,7 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
   concat_param_->count_unit_ = count_unit_;
 
   Collect(context, {"nnacl/int8/concat_int8.h"}, {"concat_int8.c"});
-  nnacl::NNaclInt8Serializer code;
+  NNaclInt8Serializer code;
 
   int in_tensor_count = input_tensors().size();
   code << "int8_t *input_data[" << in_tensor_count << "];\n";

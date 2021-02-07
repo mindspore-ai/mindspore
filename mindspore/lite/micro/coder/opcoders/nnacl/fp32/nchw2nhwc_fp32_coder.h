@@ -23,7 +23,7 @@
 #include "nnacl/base/tile_base.h"
 
 namespace mindspore::lite::micro::nnacl {
-class Nchw2NhwcFP32Coder : public OperatorCoder {
+class Nchw2NhwcFP32Coder final : public OperatorCoder {
  public:
   Nchw2NhwcFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                      const Model::Node *node, size_t node_index, Target target)

@@ -57,7 +57,7 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
   Tensor *mean_tensor = input_tensors_.at(1);
   Tensor *var_tensor = input_tensors_.at(2);
   Collect(context, {"nnacl/fp32/batchnorm.h"}, {"nnacl/fp32/batchnorm.c"});
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   code.CodeStruct("bn_parameter", *bn_parameter);
   code.CodeFunction("BatchNorm", output_tensor_, input_tensor_, mean_tensor, var_tensor, task_id, "&bn_parameter");
   MS_LOG(INFO) << "BatchnormFP32Code has been called";

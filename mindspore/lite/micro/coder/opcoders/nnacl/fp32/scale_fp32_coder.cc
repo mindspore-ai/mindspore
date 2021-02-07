@@ -128,7 +128,7 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
   MS_CHECK_PTR(offset_tensor);
   Collect(context, {"nnacl/scale.h", "nnacl/fp32/scale.h", "nnacl/quantization/quantize.h"}, {"scale.c"});
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   code.CodeStruct("scale_parameter", *scale_param_);
 
   if (thread_num_ > 1) {

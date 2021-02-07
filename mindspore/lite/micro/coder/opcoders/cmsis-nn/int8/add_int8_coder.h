@@ -22,7 +22,7 @@
 
 namespace mindspore::lite::micro::cmsis {
 
-class AddInt8Coder : public OperatorCoder {
+class AddInt8Coder final : public OperatorCoder {
  public:
   AddInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                const Model::Node *node, size_t node_index, Target target)

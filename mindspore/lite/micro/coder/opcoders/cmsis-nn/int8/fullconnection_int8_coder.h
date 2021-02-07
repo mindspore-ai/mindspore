@@ -23,7 +23,7 @@
 #include "micro/coder/opcoders/base/full_connection_base_coder.h"
 #include "nnacl/int8/quantize.h"
 namespace mindspore::lite::micro::cmsis {
-class FullConnectionInt8Coder : public FullConnectionBaseCoder {
+class FullConnectionInt8Coder final : public FullConnectionBaseCoder {
  public:
   FullConnectionInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                           const Model::Node *node, size_t node_index, Target target)

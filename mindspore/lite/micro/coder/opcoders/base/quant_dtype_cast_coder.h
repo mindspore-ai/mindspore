@@ -23,7 +23,7 @@
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 
 namespace mindspore::lite::micro {
-class QuantDTypeCastCoder : public OperatorCoder {
+class QuantDTypeCastCoder final : public OperatorCoder {
  public:
   QuantDTypeCastCoder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                       const Model::Node *node, size_t node_index, Target target)
