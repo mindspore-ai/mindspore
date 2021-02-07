@@ -557,30 +557,6 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   return true;
 }
 
-void AkgKernelJsonGenerator::SetParallelValueToJson(const std::string &processor,
-                                                    const std::map<size_t, size_t> &dim_infos,
-                                                    nlohmann::json *sub_fusion_json) {
-  if (processor == kProcessorCuda) {
-    std::vector<size_t> cnums;
-    std::transform(dim_infos.cbegin(), dim_infos.cend(), std::back_insert_iterator(cnums),
-                   [](const std::pair<size_t, size_t> &dim) { return dim.second; });
-    (*sub_fusion_json)[kJsonKeyCoreNum] = cnums;
-  } else {
-    MS_LOG(EXCEPTION) << "Parallel fusion not support " << processor << " now.";
-  }
-}
-
-void AkgKernelJsonGenerator::AddParalleFusionJsonInfo(const std::string &processor, nlohmann::json *kernel_json) {
-  nlohmann::json parallel_fusion_json;
-  parallel_fusion_json[kJsonKeyFusionType] = "block_fusion";
-  std::vector<std::vector<std::string>> sgraphs;
-  std::transform(sub_graphs_.cbegin(), sub_graphs_.cend(), std::back_insert_iterator(sgraphs),
-                 [](const std::pair<int, std::vector<std::string>> &sg) { return sg.second; });
-  parallel_fusion_json[kJsonKeySubGraph] = sgraphs;
-  SetParallelValueToJson(processor, dim_infos_, &parallel_fusion_json);
-  (*kernel_json)[kJsonKeyParallelFusion] = parallel_fusion_json;
-}
-
 void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes,
                                            std::map<AnfNodePtr, nlohmann::json> *node_json_map,
                                            nlohmann::json *kernel_json) {
@@ -633,12 +609,8 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyOutputDesc] =
     CreateOutputsJson(anf_nodes, input_list, output_list, inputs_json, node_json_map);
 
-  auto processor = GetProcessorStr(anf_nodes[0]);
-
   // Add parallel fusion information.
-  if (!sub_graphs_.empty()) {
-    AddParalleFusionJsonInfo(processor, kernel_json);
-  }
+  GenParallelJson(anf_nodes, input_list, output_list, node_json_map, kernel_json);
 
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = "Fused_";
@@ -660,7 +632,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyId] = GetOpCntInc();
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = processor;
+  (*kernel_json)[kJsonKeyProcess] = GetProcessorStr(anf_nodes[0]);
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString() + "." + fg->debug_info()->get_id();
 
@@ -755,6 +727,70 @@ nlohmann::json AkgKernelJsonGenerator::CreateInputsJson(const std::vector<AnfNod
   return inputs_json;
 }
 
+void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                             const std::vector<AnfNodePtr> &input_list,
+                                             const std::vector<AnfNodePtr> &output_list,
+                                             const std::map<AnfNodePtr, nlohmann::json> &node_json_map,
+                                             nlohmann::json *kernel_json) {
+  std::map<size_t, std::pair<size_t, std::vector<std::string>>> sub_graphs_info;
+  std::string fusion_type;
+  std::vector<std::vector<int>> type_info;
+
+  auto output_index = GetOutputIndex(anf_nodes, input_list, output_list);
+  for (size_t i = 0; i < output_index.size(); ++i) {
+    auto [tmp_output, tmp_output_index] = output_index[i];
+    bool found = std::any_of(input_list.cbegin(), input_list.cend(),
+                             [&tmp_output](const AnfNodePtr &in) { return tmp_output == in; });
+    if (!found) {
+      auto tcnode = tmp_output->cast<CNodePtr>();
+      if (tcnode == nullptr) {
+        return;
+      }
+      // Get dim info.
+      if (AnfAlgo::HasNodeAttr(kAttrParallelDimInfo, tcnode)) {
+        auto info = AnfAlgo::GetNodeAttr<std::vector<size_t>>(tcnode, kAttrParallelDimInfo);
+        if (info.size() != 2) {
+          MS_LOG(EXCEPTION) << "Parallel dim info is invalid!";
+        }
+        auto tensor_name =
+          GetTensorName(node_json_map.at(tmp_output), kJsonKeyOutputDesc, std::make_pair(0, tmp_output_index));
+        sub_graphs_info[info[0]].second.push_back(tensor_name);
+        sub_graphs_info[info[0]].first = info[1];
+      }
+      // Get fusion type.
+      if (AnfAlgo::HasNodeAttr(kAttrParallelFusionType, tcnode)) {
+        fusion_type = AnfAlgo::GetNodeAttr<std::string>(tcnode, kAttrParallelFusionType);
+      }
+      // Get fusion type info.
+      if (AnfAlgo::HasNodeAttr(kAttrParallelTypeInfo, tcnode)) {
+        type_info = AnfAlgo::GetNodeAttr<std::vector<std::vector<int>>>(tcnode, kAttrParallelTypeInfo);
+      }
+    }
+  }
+
+  if (!sub_graphs_info.empty()) {
+    auto processor = GetProcessorStr(anf_nodes[0]);
+    if (processor != kProcessorCuda) {
+      MS_LOG(EXCEPTION) << "Parallel fusion not support " << processor << " now.";
+    }
+
+    nlohmann::json parallel_fusion_json;
+    parallel_fusion_json[kJsonKeyFusionType] = fusion_type;
+    parallel_fusion_json[kJsonKeyTypeInfo] = type_info;
+    std::vector<std::vector<std::string>> sgraphs;
+    std::vector<size_t> cnums;
+    std::for_each(sub_graphs_info.cbegin(), sub_graphs_info.cend(),
+                  [&sgraphs, &cnums](const std::pair<size_t, std::pair<size_t, std::vector<std::string>>> &sg_info) {
+                    sgraphs.push_back(sg_info.second.second);
+                    cnums.push_back(sg_info.second.first);
+                  });
+    parallel_fusion_json[kJsonKeySubGraph] = sgraphs;
+    parallel_fusion_json[kJsonKeyCoreNum] = cnums;
+
+    (*kernel_json)[kJsonKeyParallelFusion] = parallel_fusion_json;
+  }
+}
+
 nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNodePtr> &anf_nodes,
                                                          const std::vector<AnfNodePtr> &input_list,
                                                          const std::vector<AnfNodePtr> &output_list,
@@ -785,17 +821,6 @@ nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNo
         output_shape.push_back(1);
       }
       output_desc_json[kJsonKeyShape] = output_shape;
-      if (auto tcnode = tmp_output.first->cast<CNodePtr>();
-          tcnode && AnfAlgo::HasNodeAttr(kAttrParallelDimInfo, tcnode)) {
-        auto info = AnfAlgo::GetNodeAttr<std::vector<size_t>>(tcnode, kAttrParallelDimInfo);
-        if (info.size() != 2) {
-          MS_LOG(EXCEPTION) << "Parallel dim info is invalid!";
-        }
-        sub_graphs_[info[0]].push_back(output_desc_json[kJsonKeyTensorName]);
-        if (dim_infos_.find(info[0]) == dim_infos_.end()) {
-          dim_infos_[info[0]] = info[1];
-        }
-      }
     }
     outputs_json.emplace_back(output_desc_json);
   }

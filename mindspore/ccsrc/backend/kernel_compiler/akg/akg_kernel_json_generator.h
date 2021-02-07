@@ -54,6 +54,7 @@ constexpr auto kJsonKeyParallelFusion = "parallel_fusion";
 constexpr auto kJsonKeyFusionType = "fusion_type";
 constexpr auto kJsonKeySubGraph = "sub_graph";
 constexpr auto kJsonKeyCoreNum = "core_num";
+constexpr auto kJsonKeyTypeInfo = "type_info";
 constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
 constexpr auto kJsonKeyStitchOp = "stitch_op";
 constexpr auto kJsonKeyStitchAtomicOp = "stitch_atomic_op";
@@ -89,8 +90,6 @@ class AkgKernelJsonGenerator {
     input_tensor_idx_.clear();
     address_node_map_.clear();
     output_tensor_idx_ = 0;
-    sub_graphs_.clear();
-    dim_infos_.clear();
   }
   void set_dump_option(DumpOption dump_option) { dump_option_ = dump_option; }
   std::map<std::string, AnfNodePtr> address_node_map() { return address_node_map_; }
@@ -127,9 +126,10 @@ class AkgKernelJsonGenerator {
   std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index);
   void SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json);
   OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node);
-  void SetParallelValueToJson(const std::string &processor, const std::map<size_t, size_t> &dim_infos,
-                              nlohmann::json *sub_fusion_json);
-  void AddParalleFusionJsonInfo(const std::string &processor, nlohmann::json *kernel_json);
+  void CollectParallelDimInfo(const AnfNodePtr &anf_node);
+  void GenParallelJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
+                       const std::vector<AnfNodePtr> &output_list,
+                       const std::map<AnfNodePtr, nlohmann::json> &node_json_map, nlohmann::json *kernel_json);
 
   DumpOption dump_option_;
   static int op_cnt_;
@@ -142,8 +142,6 @@ class AkgKernelJsonGenerator {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::map<std::string, AnfNodePtr> address_node_map_;
-  std::map<size_t, std::vector<std::string>> sub_graphs_;
-  std::map<size_t, size_t> dim_infos_;
   bool is_basic_op_{false};
 };
 }  // namespace kernel

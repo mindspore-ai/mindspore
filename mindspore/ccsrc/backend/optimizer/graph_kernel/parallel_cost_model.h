@@ -29,6 +29,7 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/graph_kernel/parallel_cost_model.h"
 #include "backend/session/kernel_graph.h"
+#include "pipeline/jit/parse/python_adapter.h"
 #include "utils/ms_context.h"
 
 namespace mindspore {
@@ -55,12 +56,50 @@ class CommonDimInfo : public DimInfo {
 using DimInfoPtr = std::shared_ptr<DimInfo>;
 using CommonDimInfoPtr = std::shared_ptr<CommonDimInfo>;
 
+class FusionInfo {
+ public:
+  FusionInfo() = default;
+  explicit FusionInfo(const std::string &type) : fusion_type_(type) {}
+  ~FusionInfo() = default;
+  std::string FusionType() { return fusion_type_; }
+  virtual bool ExistTypeInfo() { return false; }
+
+ private:
+  std::string fusion_type_{"none"};
+};
+
+class BlockFusionInfo : public FusionInfo {
+ public:
+  BlockFusionInfo() : FusionInfo("block_fusion") {}
+  ~BlockFusionInfo() = default;
+  bool ExistTypeInfo() { return false; }
+};
+
+class BlockPipelineFusionInfo : public FusionInfo {
+ public:
+  explicit BlockPipelineFusionInfo(const std::vector<std::vector<int>> &ids)
+      : FusionInfo("block_pipeline_fusion"), pipeline_ids_(ids) {}
+  ~BlockPipelineFusionInfo() = default;
+  bool ExistTypeInfo() { return true; }
+  std::vector<std::vector<int>> PipelineIds() { return pipeline_ids_; }
+
+ private:
+  std::vector<std::vector<int>> pipeline_ids_;
+};
+
+using FusionInfoPtr = std::shared_ptr<FusionInfo>;
+using BlockFusionInfoPtr = std::shared_ptr<BlockFusionInfo>;
+using BlockPipelineFusionInfoPtr = std::shared_ptr<BlockPipelineFusionInfo>;
+
 class ParallelCostModel {
  public:
   ParallelCostModel() {}
   ~ParallelCostModel() {}
   int GetNodeCalAmount(const AnfNodePtr &node);
-  std::tuple<std::vector<DimInfoPtr>, int> CalFuseInfo(const AnfNodePtrList &nodes);
+  std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> CalFuseInfo(const AnfNodePtrList &nodes);
+
+ private:
+  FusionInfoPtr ProcessFusionInfo(py::object fusion_type, py::object type_info);
 };
 
 using ParallelCostModelPtr = std::shared_ptr<ParallelCostModel>;

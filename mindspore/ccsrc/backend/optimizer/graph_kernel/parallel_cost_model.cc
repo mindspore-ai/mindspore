@@ -47,7 +47,7 @@ int ParallelCostModel::GetNodeCalAmount(const AnfNodePtr &node) {
   return py::cast<int>(ret);
 }
 
-std::tuple<std::vector<DimInfoPtr>, int> ParallelCostModel::CalFuseInfo(const AnfNodePtrList &nodes) {
+std::tuple<std::vector<DimInfoPtr>, int, FusionInfoPtr> ParallelCostModel::CalFuseInfo(const AnfNodePtrList &nodes) {
   nlohmann::json json_desc;
   std::vector<AnfNodePtrList> graphs;
   std::transform(nodes.begin(), nodes.end(), std::back_inserter(graphs),
@@ -65,7 +65,7 @@ std::tuple<std::vector<DimInfoPtr>, int> ParallelCostModel::CalFuseInfo(const An
   }
 
   py::tuple ret_tuple = py::cast<py::tuple>(ret);
-  if (!py::isinstance<py::tuple>(ret_tuple) || ret_tuple.size() != 2) {
+  if (!py::isinstance<py::tuple>(ret_tuple) || ret_tuple.size() != 4) {
     MS_LOG(EXCEPTION) << "Parallel cost model should return a tuple with two elements!";
   }
 
@@ -75,8 +75,41 @@ std::tuple<std::vector<DimInfoPtr>, int> ParallelCostModel::CalFuseInfo(const An
     dim_infos.push_back(std::make_shared<CommonDimInfo>(py::cast<int>(dim_list[i])));
   }
   int benefit = py::cast<int>(ret_tuple[1]);
+  auto fusion_info = ProcessFusionInfo(ret_tuple[2], ret_tuple[3]);
 
-  return std::make_tuple(dim_infos, benefit);
+  return std::make_tuple(dim_infos, benefit, fusion_info);
+}
+
+FusionInfoPtr ParallelCostModel::ProcessFusionInfo(py::object fusion_type, py::object type_info) {
+  if (!py::isinstance<py::str>(fusion_type)) {
+    MS_LOG(EXCEPTION) << "Fusion type for parallel is invalid!";
+  }
+
+  std::string fusion_type_name = py::cast<std::string>(fusion_type);
+
+  FusionInfoPtr fusion_info;
+  if (fusion_type_name == "block_fusion") {
+    fusion_info = std::make_shared<BlockFusionInfo>();
+  } else if (fusion_type_name == "block_pipeline_fusion") {
+    if (!py::isinstance<py::list>(type_info)) {
+      MS_LOG(EXCEPTION) << "Fusion type info for block pipe fusion type is invalid!";
+    }
+    std::vector<std::vector<int>> pipeline_ids;
+    py::list pipeline_ids_list = py::cast<py::list>(type_info);
+    for (size_t i = 0; i < pipeline_ids_list.size(); ++i) {
+      std::vector<int> part_ids;
+      py::list inner_ids_list = py::cast<py::list>(pipeline_ids_list[i]);
+      for (size_t j = 0; j < inner_ids_list.size(); ++j) {
+        part_ids.push_back(py::cast<int>(inner_ids_list[j]));
+      }
+      pipeline_ids.push_back(part_ids);
+    }
+
+    fusion_info = std::make_shared<BlockPipelineFusionInfo>(pipeline_ids);
+  } else {
+    MS_LOG(EXCEPTION) << "Unsupported parallel fusion type: " << fusion_type_name;
+  }
+  return fusion_info;
 }
 
 ParallelCostModelPtr ParellelCostModelWarehouse::GetParallelCostModel(const std::string &target) {

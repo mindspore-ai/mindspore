@@ -553,7 +553,7 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
       std::tie(other_candidates, std::ignore) =
         GetAvaliableNodesByOffset(i, tc, sorted_candidates_used, candidates, std::set<int>());
       int benefit;
-      std::tie(std::ignore, benefit) = cost_model_ptr_->CalFuseInfo(other_candidates);
+      std::tie(std::ignore, benefit, std::ignore) = cost_model_ptr_->CalFuseInfo(other_candidates);
       if (benefit > 0) {
         begin = mid + 1;
       } else {
@@ -567,12 +567,12 @@ std::tuple<std::vector<bool>, std::vector<ParallelInfo>> ParallelOpFusion::DoSea
       AnfNodePtrList other_candidates;
       std::tie(other_candidates, std::ignore) =
         GetAvaliableNodesByOffset(i, tc, sorted_candidates_used, candidates, std::set<int>());
-      auto [dim_infos, benefit] = cost_model_ptr_->CalFuseInfo(other_candidates);
+      auto [dim_infos, benefit, fusion_info] = cost_model_ptr_->CalFuseInfo(other_candidates);
       if (benefit <= 0) {
         MS_LOG(EXCEPTION) << "Internal error in candidate search!";
       }
       max_benefit = benefit;
-      best_parallel_info = ParallelInfo(other_candidates, dim_infos);
+      best_parallel_info = ParallelInfo(other_candidates, dim_infos, fusion_info);
       i += begin - 1;
     }
 
@@ -676,10 +676,13 @@ std::vector<ParallelInfo> ParallelOpFusion::SearchFusableParallelCNodes(
 }
 
 void ParallelOpFusion::SetFusedParallelOpAttrToReturnNode(const ParallelInfo &parallel_info) {
+  AnfNodePtr attach_node;
+  // Dim info should be attach to each segment's output.
   for (size_t i = 0; i < parallel_info.GetSize(); ++i) {
     const auto &fuse_nodes = parallel_info.nodes();
     std::vector<size_t> info = {i, std::dynamic_pointer_cast<CommonDimInfo>(parallel_info.dims()[i])->dim_info()};
     if (!AnfAlgo::IsGraphKernel(fuse_nodes[i])) {
+      attach_node = fuse_nodes[i];
       SetNodeAttrSafely(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), fuse_nodes[i]);
     } else {
       auto node_g = GetValueNode<FuncGraphPtr>((fuse_nodes[i]->cast<CNodePtr>())->input(0));
@@ -689,11 +692,16 @@ void ParallelOpFusion::SetFusedParallelOpAttrToReturnNode(const ParallelInfo &pa
         for (size_t j = 1; j < inputs.size(); ++j) {
           SetNodeAttrSafely(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), inputs[j]);
         }
+        attach_node = inputs[1];
       } else {
+        attach_node = out_node;
         SetNodeAttrSafely(kAttrParallelDimInfo, MakeValue<std::vector<size_t>>(info), out_node);
       }
     }
   }
+
+  // Fusion info is ok to attach to one of the segments.
+  SetFusionInfoAttrToNode(attach_node, parallel_info);
 }
 
 void PostProcessForNewSubGraphCNode(const AnfNodePtr &node, const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -741,6 +749,17 @@ void PostProcessForNewSubGraphCNode(const AnfNodePtr &node, const std::shared_pt
   }
 }
 
+void ParallelOpFusion::SetFusionInfoAttrToNode(const AnfNodePtr &node, const ParallelInfo &parallel_info) {
+  auto fusion_type = parallel_info.fusion_info()->FusionType();
+  AnfAlgo::SetNodeAttr(kAttrParallelFusionType, MakeValue<std::string>(fusion_type), node);
+  if (parallel_info.fusion_info()->ExistTypeInfo()) {
+    if (auto pipeline_fusion = std::dynamic_pointer_cast<BlockPipelineFusionInfo>(parallel_info.fusion_info())) {
+      AnfAlgo::SetNodeAttr(kAttrParallelTypeInfo,
+                           MakeValue<std::vector<std::vector<int>>>(pipeline_fusion->PipelineIds()), node);
+    }
+  }
+}
+
 bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo> &parallel_infos,
                                                  const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   bool changed = false;
@@ -755,6 +774,7 @@ bool ParallelOpFusion::CreateParallelOpSubGraphs(const std::vector<ParallelInfo>
     AnfNodePtr sg_node;
     std::tie(sg_node, std::ignore) = FuseNodesToSubGraph(fuse_nodes, kernel_graph, "parallel");
     PostProcessForNewSubGraphCNode(sg_node, kernel_graph);
+    AnfAlgo::SetNodeAttr(kAttrCompositeType, MakeValue("parallel_fusion"), sg_node);
     DumpParallelFusionDetail(fuse_nodes, sg_node);
   }
 

@@ -37,10 +37,12 @@ namespace opt {
 class ParallelInfo {
  public:
   ParallelInfo() = default;
-  ParallelInfo(const AnfNodePtrList &nodes, const std::vector<DimInfoPtr> &dims) : nodes_(nodes), dims_(dims) {}
+  ParallelInfo(const AnfNodePtrList &nodes, const std::vector<DimInfoPtr> &dims, const FusionInfoPtr &fusion_info)
+      : nodes_(nodes), dims_(dims), fusion_info_(fusion_info) {}
   ParallelInfo(const ParallelInfo &obj) {
     nodes_ = obj.nodes_;
     dims_ = obj.dims_;
+    fusion_info_ = obj.fusion_info_;
   }
   ~ParallelInfo() = default;
 
@@ -52,10 +54,12 @@ class ParallelInfo {
   }
   const AnfNodePtrList &nodes() const { return nodes_; }
   const std::vector<DimInfoPtr> &dims() const { return dims_; }
+  const FusionInfoPtr &fusion_info() const { return fusion_info_; }
 
  private:
   AnfNodePtrList nodes_;
   std::vector<DimInfoPtr> dims_;
+  FusionInfoPtr fusion_info_;
 };
 
 class ParallelConfig {
@@ -101,6 +105,8 @@ class ParallelOpFusion : public Pass {
                                       std::vector<ParallelInfo> *parallel_infos);
 
   std::vector<ParallelInfo> SearchFusableParallelCNodes(const std::vector<std::vector<AnfNodePtrList>> &groups);
+
+  void SetFusionInfoAttrToNode(const AnfNodePtr &node, const ParallelInfo &parallel_info);
 
   void SetFusedParallelOpAttrToReturnNode(const ParallelInfo &parallel_info);
 

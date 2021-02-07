@@ -28,10 +28,8 @@ def estimate_ops(json_str: str):
         for gd in graph_descs:
             graphs.append(model.load_composite(gd).graph)
         estimation = model.parallel_estimate(graphs)
-        if estimation.fusion_type == "block_fusion" and estimation.gain > 0:
-            res = (estimation.block_assign, estimation.gain)
-        else:
-            res = ([0 for g in graphs], 0)
+        res = (estimation.block_assign, estimation.gain,
+               estimation.fusion_type, estimation.type_info)
         return res
     except jd.JSONDecodeError:
         logger.error(traceback.format_exc())

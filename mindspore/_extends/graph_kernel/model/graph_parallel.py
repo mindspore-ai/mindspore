@@ -17,11 +17,12 @@ from .model import PrimLib
 
 
 class ParalGain:
-    def __init__(self, fusion_type, bottleneck, gain, block_assign):
+    def __init__(self, fusion_type, bottleneck, gain, block_assign, type_info):
         self.fusion_type = fusion_type
         self.bottleneck = bottleneck
         self.gain = gain
         self.block_assign = block_assign
+        self.type_info = type_info
 
 
 class ScheduleAnalyzer:
@@ -30,6 +31,7 @@ class ScheduleAnalyzer:
     MAX_SM = 80  # Volta
     MAX_NUM_THREADS = 1024
     MAX_BLOCK = 256
+    PIPELINE_OP_THREADHOLD = 5
 
     def __init__(self, graph):
         self.graph = graph
@@ -132,11 +134,141 @@ class ScheduleAnalyzer:
         else:
             self.default_analyze()
 
+    def suitable_to_pipeline(self):
+        """judge whether is suitable to be pipeline optimized"""
+        # Reduce is not suitable
+        def _contain_reduce(ops):
+            for op in ops:
+                # Reduce may make the tiling bad.
+                if PrimLib.primtives.get(op.prim, None) == PrimLib.REDUCE:
+                    return True
+            return False
+
+        suitable = True
+        if _contain_reduce(self.ops):
+            suitable = False
+        return suitable
+
+    @staticmethod
+    def k_mean(data, class_n=2, exclude_id=()):
+        """
+        Find k clusters in which element is close to each other.
+
+        Args:
+            data (list): Elements' information.
+            class_n (int): Number of clusters wanted to be analyzed, default is 2.
+            exclude_id (tuple[int]): The list of excluded element's index, default is ().
+
+        Returns:
+            classes (list[list[int]]): The list of clusters. Each cluster is a list of indices.
+        """
+        def _cal_mean(classes):
+            class_datas = [[data[cid] for cid in cls] for cls in classes]
+            return [sum(cls) / len(cls) if cls else float('inf') for cls in class_datas]
+
+        def _cal_distance(a, b):
+            return abs(a - b)
+
+        def _check_different(old_classes, new_classes):
+            for o, n in zip(old_classes, new_classes):
+                if o != n:
+                    return True
+            return False
+
+        if len(data) < class_n:
+            return None
+        classes = []
+        for i, _ in enumerate(data):
+            if i in exclude_id:
+                continue
+            if len(classes) >= class_n:
+                break
+            classes.append([i])
+        changed = True
+        while changed:
+            new_classes = [[] for cls in classes]
+            means = _cal_mean(classes)
+            for idx, d in enumerate(data):
+                if idx in exclude_id:
+                    continue
+                min_idx = -1
+                min_dis = float('inf')
+                for i, m in enumerate(means):
+                    cur_dis = _cal_distance(m, d)
+                    min_idx = i if min_dis > cur_dis else min_idx
+                    min_dis = cur_dis if min_dis > cur_dis else min_dis
+                new_classes[min_idx].append(idx)
+            changed = _check_different(classes, new_classes)
+            classes = new_classes
+        return classes
+
+    @staticmethod
+    def pipeline_fusion_analyze(blocks, op_sizes, exclude_id):
+        """analyze whether the segments can be pipeline optimized"""
+        # op size first, block second.
+        def _simple_factor(block, op_size):
+            return block + 5 * op_size
+
+        def _take_second(elem):
+            return elem[1]
+
+        simple_indicators = [_simple_factor(b, s)
+                             for b, s in zip(blocks, op_sizes)]
+        # 2 classes, one heavy, the other light
+        classes = ScheduleAnalyzer.k_mean(simple_indicators, 2, exclude_id)
+        if not classes:
+            return []
+        means = [sum([simple_indicators[idx] for idx in cls]) /
+                 len(cls) if cls else float('inf') for cls in classes]
+
+        # The target two clusters should be a heavy one and a light one.
+        # The light one maybe suitable to run with pipeline optimized.
+        classes_infos = [[cls, m] for cls, m in zip(classes, means)]
+        classes_infos.sort(key=_take_second)
+        pipeline_target = None
+        for ci in classes_infos:
+            if ci:
+                pipeline_target = ci
+                break
+        pipeline_gids, pipeline_mean = pipeline_target
+        if pipeline_mean > _simple_factor(float(ScheduleAnalyzer.MAX_SM) / len(blocks),
+                                          ScheduleAnalyzer.PIPELINE_OP_THREADHOLD):
+            return []
+
+        pipeline_blocks = []
+        pipeline_weight = len(pipeline_gids)
+        # Try to make two paralleled at least.
+        if pipeline_weight > 3 and pipeline_weight > len(blocks) / 2:
+            if len(pipeline_gids[:pipeline_weight // 2]) > 1:
+                pipeline_blocks.append(pipeline_gids[:pipeline_weight // 2])
+            if len(pipeline_gids[pipeline_weight // 2:]) > 1:
+                pipeline_blocks.append(pipeline_gids[pipeline_weight // 2:])
+        elif pipeline_weight > 1:
+            pipeline_blocks.append(pipeline_gids)
+        return pipeline_blocks
+
+    @staticmethod
+    def fusion_consult(blocks, op_sizes, exclude_gid):
+        """get a recommendation for parallel fusion"""
+        # Default is block fusion
+        fusion_type = "block_fusion"
+        type_info = None
+
+        activate_pipeline_optimization = False # Disable pipeline optimization for now.
+        if activate_pipeline_optimization:
+            pipeline_info = ScheduleAnalyzer.pipeline_fusion_analyze(
+                blocks, op_sizes, exclude_gid)
+            if pipeline_info:
+                fusion_type = "block_pipeline_fusion"
+                type_info = pipeline_info
+
+        return fusion_type, type_info
+
 
 def block_parallel_estimate(graphs):
     """estimate block parallel gain"""
-    sum_block, max_weight, sum_weight, blocks = 0, 0, 0, []
-    for g in graphs:
+    sum_block, max_weight, sum_weight, blocks, op_sizes, exclude_gid = 0, 0, 0, [], [], []
+    for gid, g in enumerate(graphs):
         s = ScheduleAnalyzer(g)
         s.analyze()
         sum_block += s.block_num
@@ -144,9 +276,14 @@ def block_parallel_estimate(graphs):
             max_weight = s.block_weight
         sum_weight += s.block_weight
         blocks.append(s.block_num)
+        op_sizes.append(len(s.ops))
+        if not s.suitable_to_pipeline():
+            exclude_gid.append(gid)
     if sum_block > ScheduleAnalyzer.MAX_SM * 32:
-        return ParalGain("none", sum_weight, 0, [])
-    return ParalGain("block_fusion", max_weight, sum_weight - max_weight, blocks)
+        return ParalGain("none", sum_weight, 0, [0 for _ in graphs], None)
+
+    fusion_type, type_info = ScheduleAnalyzer.fusion_consult(blocks, op_sizes, tuple(exclude_gid))
+    return ParalGain(fusion_type, max_weight, sum_weight - max_weight, blocks, type_info)
 
 
 def parallel_estimate(graphs):
