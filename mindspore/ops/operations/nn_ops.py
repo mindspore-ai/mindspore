@@ -1459,7 +1459,6 @@ class Conv2D(PrimitiveWithCheck):
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('groups', self.group)
-        self.add_prim_attr('offset_a', 0)
 
     def check_shape(self, x_shape, w_shape, b_shape=None):
         x_shape_norm = x_shape if self.format == "NCHW" else (x_shape[0], x_shape[3], x_shape[1], x_shape[2])
