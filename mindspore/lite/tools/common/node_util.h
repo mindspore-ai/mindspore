@@ -29,6 +29,18 @@
 
 namespace mindspore {
 namespace lite {
+template <typename T>
+int CreateOperator(const std::unique_ptr<schema::PrimitiveT> &primitive, schema::PrimitiveType type) {
+  auto attr = std::make_unique<T>();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "new attr failed";
+    return RET_NULL_PTR;
+  }
+  primitive->value.type = type;
+  primitive->value.value = attr.release();
+  return RET_OK;
+}
+
 using STATUS = int;
 STATUS BroadCastQuantParam(schema::MetaGraphT *graphT, const std::unique_ptr<schema::CNodeT> &node);
 
@@ -92,6 +104,226 @@ STATUS SetFilterDim(schema::TensorT *tensor, kTransFilterType type, int32_t filt
                     int32_t filterW);
 
 template <typename T>
+static void TransKHWC2CHWK(int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW, T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int k = 0; k < filterK; ++k) {
+    for (int h = 0; h < filterH; ++h) {
+      for (int w = 0; w < filterW; ++w) {
+        for (int c = 0; c < filterC; ++c) {
+          p1Buff = srcData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
+          p2Buff = dstData + ((c * filterK * filterH * filterW) + (h * filterK * filterW) + (w * filterK) + (k));
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static void TransKHWC2HWCK(int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW, T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int k = 0; k < filterK; ++k) {
+    for (int h = 0; h < filterH; ++h) {
+      for (int w = 0; w < filterW; ++w) {
+        for (int c = 0; c < filterC; ++c) {
+          p1Buff = srcData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
+          p2Buff = dstData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static void TransCKHW(kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW,
+                      T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int c = 0; c < filterC; ++c) {
+    for (int k = 0; k < filterK; ++k) {
+      for (int h = 0; h < filterH; ++h) {
+        for (int w = 0; w < filterW; ++w) {
+          p1Buff = srcData + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
+          if (type == kCKHW2HWCK) {
+            p2Buff = dstData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
+          } else if (type == kCKHW2KHWC) {
+            p2Buff = dstData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
+          } else {
+            p2Buff = dstData + ((h * filterW * filterK * filterC) + (w * filterK * filterC) + (k * filterC) + (c));
+          }
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static void TransKCHW(kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW,
+                      T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int k = 0; k < filterK; ++k) {
+    for (int c = 0; c < filterC; ++c) {
+      for (int h = 0; h < filterH; ++h) {
+        for (int w = 0; w < filterW; ++w) {
+          p1Buff = srcData + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
+          if (type == kKCHW2HWCK) {
+            p2Buff = dstData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
+          } else if (type == kKCHW2KHWC) {
+            p2Buff = dstData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
+          } else if (type == kKCHW2CKHW) {
+            p2Buff = dstData + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
+          } else {
+            p2Buff = dstData + ((h * filterW * filterK * filterC) + (w * filterK * filterC) + (k * filterC) + (c));
+          }
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static void TransCHWK(kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW,
+                      T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int c = 0; c < filterC; ++c) {
+    for (int h = 0; h < filterH; ++h) {
+      for (int w = 0; w < filterW; ++w) {
+        for (int k = 0; k < filterK; ++k) {
+          p1Buff = srcData + ((c * filterH * filterW * filterK) + (h * filterW * filterK) + (w * filterK) + (k));
+          if (type == kCHWK2HWCK) {
+            p2Buff = dstData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
+          } else {
+            p2Buff = dstData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
+          }
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static void TransHWCK(kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW,
+                      T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int h = 0; h < filterH; ++h) {
+    for (int w = 0; w < filterW; ++w) {
+      for (int c = 0; c < filterC; ++c) {
+        for (int k = 0; k < filterK; ++k) {
+          p1Buff = srcData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
+          if (type == kHWCK2KCHW) {
+            p2Buff = dstData + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
+          } else {
+            p2Buff = dstData + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
+          }
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static void TransHWKC(kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW,
+                      T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int h = 0; h < filterH; ++h) {
+    for (int w = 0; w < filterW; ++w) {
+      for (int c = 0; c < filterC; ++c) {
+        for (int k = 0; k < filterK; ++k) {
+          p1Buff = srcData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (k * filterC) + (c));
+          if (type == kHWKC2KCHW) {
+            p2Buff = dstData + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
+          } else {
+            p2Buff = dstData + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
+          }
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static void TransNHWC(kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW,
+                      T *srcData, T *dstData) {
+  T *p1Buff = nullptr;
+  T *p2Buff = nullptr;
+  for (int k = 0; k < filterK; ++k) {
+    for (int h = 0; h < filterH; ++h) {
+      for (int w = 0; w < filterW; ++w) {
+        for (int c = 0; c < filterC; ++c) {
+          p1Buff = srcData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (k * filterC) + (c));
+          if (type == kNHWC2HWCK) {
+            p2Buff = dstData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
+          } else if (type == kNHWC2CKHW) {
+            p2Buff = dstData + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
+          } else {
+            p2Buff = dstData + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
+          }
+          *p2Buff = *p1Buff;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
+static STATUS TransFilterData(kTransFilterType type, int32_t filterK, int32_t filterC, int32_t filterH, int32_t filterW,
+                              T *srcData, T *dstData) {
+  switch (type) {
+    case kCHWK2HWCK:
+    case kCHWK2KHWC: {
+      TransCHWK(type, filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    case kKHWC2HWCK: {
+      TransKHWC2HWCK(filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    case kKCHW2HWCK:
+    case kKCHW2CKHW:
+    case kKCHW2KHWC:
+    case kKCHW2HWKC: {
+      TransKCHW(type, filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    case kCKHW2HWCK:
+    case kCKHW2KHWC:
+    case kCKHW2HWKC: {
+      TransCKHW(type, filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    case kHWCK2KCHW:
+    case kHWCK2CKHW: {
+      TransHWCK(type, filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    case kHWKC2KCHW:
+    case kHWKC2CKHW: {
+      TransHWKC(type, filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    case kNHWC2HWCK:
+    case kNHWC2KCHW:
+    case kNHWC2CKHW: {
+      TransNHWC(type, filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    case kKHWC2CHWK: {
+      TransKHWC2CHWK(filterK, filterC, filterH, filterW, srcData, dstData);
+    } break;
+    default: {
+      MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
+template <typename T>
 static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, int32_t filterK, int32_t filterC,
                               int32_t filterH, int32_t filterW) {
   MS_ASSERT(tensor != nullptr);
@@ -113,175 +345,10 @@ static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, in
     MS_LOG(ERROR) << "weightData is nullptr";
     return RET_ERROR;
   }
-  T *p1Buff = nullptr;
-  T *p2Buff = nullptr;
-  switch (type) {
-    case kCHWK2HWCK:
-    case kCHWK2KHWC: {
-      for (int c = 0; c < filterC; ++c) {
-        for (int h = 0; h < filterH; ++h) {
-          for (int w = 0; w < filterW; ++w) {
-            for (int k = 0; k < filterK; ++k) {
-              p1Buff = weightData + ((c * filterH * filterW * filterK) + (h * filterW * filterK) + (w * filterK) + (k));
-              if (type == kCHWK2HWCK) {
-                p2Buff =
-                  buf.get() + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
-              } else {
-                p2Buff =
-                  buf.get() + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
-              }
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    case kKHWC2HWCK: {
-      for (int k = 0; k < filterK; ++k) {
-        for (int h = 0; h < filterH; ++h) {
-          for (int w = 0; w < filterW; ++w) {
-            for (int c = 0; c < filterC; ++c) {
-              p1Buff = weightData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
-              p2Buff = buf.get() + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    case kKCHW2HWCK:
-    case kKCHW2CKHW:
-    case kKCHW2KHWC:
-    case kKCHW2HWKC: {
-      for (int k = 0; k < filterK; ++k) {
-        for (int c = 0; c < filterC; ++c) {
-          for (int h = 0; h < filterH; ++h) {
-            for (int w = 0; w < filterW; ++w) {
-              p1Buff = weightData + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
-              if (type == kKCHW2HWCK) {
-                p2Buff =
-                  buf.get() + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
-              } else if (type == kKCHW2KHWC) {
-                p2Buff =
-                  buf.get() + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
-              } else if (type == kKCHW2CKHW) {
-                p2Buff =
-                  buf.get() + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
-              } else {
-                p2Buff =
-                  buf.get() + ((h * filterW * filterK * filterC) + (w * filterK * filterC) + (k * filterC) + (c));
-              }
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    case kCKHW2HWCK:
-    case kCKHW2KHWC:
-    case kCKHW2HWKC: {
-      for (int c = 0; c < filterC; ++c) {
-        for (int k = 0; k < filterK; ++k) {
-          for (int h = 0; h < filterH; ++h) {
-            for (int w = 0; w < filterW; ++w) {
-              p1Buff = weightData + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
-              if (type == kCKHW2HWCK) {
-                p2Buff =
-                  buf.get() + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
-              } else if (type == kCKHW2KHWC) {
-                p2Buff =
-                  buf.get() + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
-              } else {
-                p2Buff =
-                  buf.get() + ((h * filterW * filterK * filterC) + (w * filterK * filterC) + (k * filterC) + (c));
-              }
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    case kHWCK2KCHW:
-    case kHWCK2CKHW: {
-      for (int h = 0; h < filterH; ++h) {
-        for (int w = 0; w < filterW; ++w) {
-          for (int c = 0; c < filterC; ++c) {
-            for (int k = 0; k < filterK; ++k) {
-              p1Buff = weightData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
-              if (type == kHWCK2KCHW) {
-                p2Buff =
-                  buf.get() + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
-              } else {
-                p2Buff =
-                  buf.get() + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
-              }
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    case kHWKC2KCHW:
-    case kHWKC2CKHW: {
-      for (int h = 0; h < filterH; ++h) {
-        for (int w = 0; w < filterW; ++w) {
-          for (int c = 0; c < filterC; ++c) {
-            for (int k = 0; k < filterK; ++k) {
-              p1Buff = weightData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (k * filterC) + (c));
-              if (type == kHWKC2KCHW) {
-                p2Buff =
-                  buf.get() + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
-              } else {
-                p2Buff =
-                  buf.get() + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
-              }
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    case kNHWC2HWCK:
-    case kNHWC2KCHW:
-    case kNHWC2CKHW: {
-      for (int k = 0; k < filterK; ++k) {
-        for (int h = 0; h < filterH; ++h) {
-          for (int w = 0; w < filterW; ++w) {
-            for (int c = 0; c < filterC; ++c) {
-              p1Buff = weightData + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (k * filterC) + (c));
-              if (type == kNHWC2HWCK) {
-                p2Buff =
-                  buf.get() + ((h * filterW * filterC * filterK) + (w * filterC * filterK) + (c * filterK) + (k));
-              } else if (type == kNHWC2CKHW) {
-                p2Buff =
-                  buf.get() + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
-              } else {
-                p2Buff =
-                  buf.get() + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
-              }
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    case kKHWC2CHWK: {
-      for (int k = 0; k < filterK; ++k) {
-        for (int h = 0; h < filterH; ++h) {
-          for (int w = 0; w < filterW; ++w) {
-            for (int c = 0; c < filterC; ++c) {
-              p1Buff = weightData + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
-              p2Buff = buf.get() + ((c * filterK * filterH * filterW) + (h * filterK * filterW) + (w * filterK) + (k));
-              *p2Buff = *p1Buff;
-            }
-          }
-        }
-      }
-    } break;
-    default: {
-      MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
-      return RET_ERROR;
-    }
+
+  if (TransFilterData(type, filterK, filterC, filterH, filterW, weightData, buf.get()) != RET_OK) {
+    MS_LOG(ERROR) << "TransFilterData failed";
+    return RET_ERROR;
   }
 
   auto ret = ::memcpy_s(tensor->data.data(), count * sizeof(T), buf.get(), count * sizeof(T));
