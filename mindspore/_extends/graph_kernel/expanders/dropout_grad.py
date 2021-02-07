@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,20 +21,15 @@ def expand_dropoutgrad(expand_info):
     # get op info.
     dy_desc = expand_info['input_desc'][0]
     mask_desc = expand_info['input_desc'][1]
-    keep_prob = None
-    for attr in expand_info['attr']:
-        if 'keep_prob' in attr:
-            keep_prob = attr['keep_prob']
-    if keep_prob is None:
-        raise RuntimeError("keep_prob does not exist in attrs.")
-    # generate a graph.
+    keep_prob = expand_info['attr']['keep_prob']
+
     graph_builder = builder.GraphBuilder()
     with graph_builder.graph_scope('main') as graph_scope:
         # create tensor input.
         input_dy = graph_builder.tensor(dy_desc['shape'], dy_desc['data_type'], dy_desc['format'])
         input_mask = graph_builder.tensor(mask_desc['shape'], mask_desc['data_type'], mask_desc['format'])
         graph_scope.set_input(input_dy, input_mask)
-        r_keep_prob = graph_builder.value(input_dy.dtype, 1.0 / keep_prob, "DefaultFormat")
+        r_keep_prob = graph_builder.value(input_dy.dtype, 1.0 / keep_prob)
         # create op.
         result = graph_builder.emit('Mul', [input_dy, r_keep_prob])
         result = graph_builder.emit('Mul', [result, input_mask])

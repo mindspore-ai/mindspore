@@ -80,10 +80,12 @@ class OpInfoExtractor {
   }
 
   void ExtractOutputs(const OpInfoPtr &op_info) {
-    // only support single output in op desc.
-    auto io_info = std::make_shared<OpIOInfo>();
-    io_info->set_name("output");
-    op_info->add_outputs_ptr(io_info);
+    size_t output_tensor_num = AnfAlgo::GetOutputTensorNum(cnode_);
+    for (size_t i = 0; i < output_tensor_num; i++) {
+      auto io_info = std::make_shared<OpIOInfo>();
+      io_info->set_name("output_" + std::to_string(i));
+      op_info->add_outputs_ptr(io_info);
+    }
   }
 
   bool ExcludeAttr(const std::string &name) {
@@ -204,8 +206,7 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
       input_desc_json[kJsonKeyName] = input_ptr->name();
       input_desc_json[kJsonKeyTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
       auto input_shape = this->GetInputShape(anf_node, real_input_index);
-      if (dump_option_.extract_opinfo_from_anfnode &&
-          GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
+      if (!is_basic_op_ && GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
         MS_LOG(DEBUG) << "Take input[" << real_input_index << "] of [" << anf_node->DebugString(2)
                       << "] as const tensor, shape: [" << Vector2Str(input_shape)
                       << "], value: " << input_desc_json[kJsonKeyValue];
@@ -529,9 +530,9 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(kernel_json);
   std::string op_name = AnfAlgo::GetCNodeName(anf_node);
-  MS_LOG(INFO) << "Akg start generate kernel json desc, full scope name is : " << anf_node->fullname_with_scope();
+  MS_LOG(DEBUG) << "Akg start generate kernel json desc, full scope name is : " << anf_node->fullname_with_scope();
   SetAkgKernelAttrs(anf_node);
-  dump_option_.extract_opinfo_from_anfnode = false;
+  is_basic_op_ = true;
   if (!GenerateSingleKernelJson(anf_node, kernel_json)) {
     MS_LOG(ERROR) << "Op[" << anf_node->fullname_with_scope() << "] create single kernel json failed.";
     return false;
@@ -551,8 +552,8 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
     return false;
   }
 
-  MS_LOG(INFO) << "Akg create kernel json desc success, full scope name is : " << anf_node->fullname_with_scope()
-               << ", json info name is : " << kernel_name_;
+  MS_LOG(DEBUG) << "Akg create kernel json desc success, full scope name is : " << anf_node->fullname_with_scope()
+                << ", json info name is : " << kernel_name_;
   return true;
 }
 
@@ -613,10 +614,11 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
                   << "].";
     return false;
   }
-  MS_LOG(INFO) << "Fusion nodes: [" << output_list.size() << "], input_list: [" << anf_nodes.size()
-               << "], output_list: [" << input_list.size() << "].";
+  MS_LOG(DEBUG) << "Fusion nodes: [" << output_list.size() << "], input_list: [" << anf_nodes.size()
+                << "], output_list: [" << input_list.size() << "].";
   std::map<AnfNodePtr, nlohmann::json> node_json_map;
-  dump_option_.extract_opinfo_from_anfnode = true;
+  is_basic_op_ = false;
+  dump_option_.extract_opinfo_from_anfnode = true;  // always extract from anfnode for composite ops.
   if (!GenSingleJsons(anf_nodes, &node_json_map)) return false;
 
   UpdateTensorName(anf_nodes, &node_json_map);

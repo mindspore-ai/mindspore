@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ def expand_tanhgrad(expand_info):
         # create tensor input.
         input_y = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
         input_dy = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        const_one = graph_builder.value(input_y.dtype, ONE, input_y.data_format)
+        const_one = graph_builder.value(input_y.dtype, ONE)
         graph_scope.set_input(input_y, input_dy)
 
         # cal result

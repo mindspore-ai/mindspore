@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,88 +36,40 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr auto kJsonKeyExpandInfo = "expand_info";
-
-#define GET_VALUE_FOR_JSON(JSON, VALUE, VALUE_ELEM, TYPE_NAME, TYPE) \
-  if (VALUE_ELEM->isa<TYPE_NAME>()) {                                \
-    JSON = GetValue<TYPE>(VALUE);                                    \
-  }
-
-nlohmann::json ExpandAttrJsonInfo(const CNodePtr &cnode) {
-  nlohmann::json attrs_json;
-  if (auto prim = GetCNodePrimitive(cnode); prim != nullptr) {
-    auto attrs = prim->attrs();
-    for (const auto &[k, v] : attrs) {
-      nlohmann::json attr_json;
-      MS_LOG(DEBUG) << "attr key is : " << k << " and value type is : " << v->type_name();
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, Int32Imm, int);
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, Int64Imm, int64_t);
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, UInt32Imm, uint32_t);
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, UInt64Imm, uint64_t);
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, FP32Imm, float);
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, FP64Imm, double);
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, BoolImm, bool);
-      GET_VALUE_FOR_JSON(attr_json[k], v, v, StringImm, std::string);
-
-      if (v->isa<ValueList>() || v->isa<ValueTuple>()) {
-        auto vec = v->isa<ValueList>() ? v->cast<ValueListPtr>()->value() : v->cast<ValueTuplePtr>()->value();
-        if (!vec.empty()) {
-          MS_LOG(DEBUG) << "value type is : " << vec[0]->type_name();
-          GET_VALUE_FOR_JSON(attr_json[k], v, vec[0], Int32Imm, std::vector<int>);
-          GET_VALUE_FOR_JSON(attr_json[k], v, vec[0], Int64Imm, std::vector<int64_t>);
-          GET_VALUE_FOR_JSON(attr_json[k], v, vec[0], UInt32Imm, std::vector<uint32_t>);
-          GET_VALUE_FOR_JSON(attr_json[k], v, vec[0], UInt64Imm, std::vector<uint64_t>);
-          GET_VALUE_FOR_JSON(attr_json[k], v, vec[0], FP32Imm, std::vector<float>);
-          GET_VALUE_FOR_JSON(attr_json[k], v, vec[0], FP64Imm, std::vector<double>);
-          GET_VALUE_FOR_JSON(attr_json[k], v, vec[0], StringImm, std::vector<std::string>);
-        }
-      }
-      if (!attr_json.empty()) {
-        attrs_json.push_back(attr_json);
-      }
-    }
-  }
-  return attrs_json;
-}
-
-bool ExpandJsonInfo(const CNodePtr &cnode, nlohmann::json *kernel_json) {
-  MS_EXCEPTION_IF_NULL(kernel_json);
-  if (kernel_json->find(kJsonKeyExpandInfo) != kernel_json->end()) {
-    return false;
-  }
-
-  nlohmann::json expand_info;
-  expand_info[kernel::kJsonKeyAttr] = ExpandAttrJsonInfo(cnode);
-  expand_info[kernel::kJsonKeyName] = AnfAlgo::GetCNodeName(cnode);
-  expand_info[kernel::kJsonKeyProcess] = kernel::GetProcessorStr(cnode);
-  std::vector<nlohmann::json> inputs_info;
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(cnode); ++i) {
-    nlohmann::json input_info;
-    input_info[kernel::kJsonKeyFormat] = AnfAlgo::GetInputFormat(cnode, i);
-    input_info[kernel::kJsonKeyInferShape] = AnfAlgo::GetPrevNodeOutputInferShape(cnode, i);
-    input_info[kernel::kJsonKeyShape] = AnfAlgo::GetInputDeviceShape(cnode, i);
-    input_info[kernel::kJsonKeyInferDataType] =
-      kernel::TypeId2String(AnfAlgo::GetPrevNodeOutputInferDataType(cnode, i));
-    input_info[kernel::kJsonKeyDataType] = kernel::TypeId2String(AnfAlgo::GetInputDeviceDataType(cnode, i));
-    inputs_info.push_back(input_info);
-  }
-  expand_info[kernel::kJsonKeyInputDesc] = inputs_info;
-
-  std::vector<nlohmann::json> outputs_info;
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(cnode); ++i) {
-    nlohmann::json output_info;
-    output_info[kernel::kJsonKeyFormat] = AnfAlgo::GetOutputFormat(cnode, i);
-    output_info[kernel::kJsonKeyInferShape] = AnfAlgo::GetOutputInferShape(cnode, i);
-    output_info[kernel::kJsonKeyShape] = AnfAlgo::GetOutputDeviceShape(cnode, i);
-    output_info[kernel::kJsonKeyInferDataType] = kernel::TypeId2String(AnfAlgo::GetOutputInferDataType(cnode, i));
-    output_info[kernel::kJsonKeyDataType] = kernel::TypeId2String(AnfAlgo::GetOutputDeviceDataType(cnode, i));
-    outputs_info.push_back(output_info);
-  }
-  expand_info[kernel::kJsonKeyOutputDesc] = outputs_info;
-  (*kernel_json)[kJsonKeyExpandInfo] = expand_info;
-  return true;
+std::unordered_set<PrimitivePtr> GetExpandOps() {
+  std::unordered_set<PrimitivePtr> expand_ops = {
+    prim::kPrimSquare,
+    prim::kPrimGeLUGrad,
+#if ENABLE_D
+    prim::kPrimTile,
+    prim::kPrimSqrtGrad,
+    prim::kPrimClipByNormNoDivSum,
+#elif ENABLE_GPU
+    prim::kPrimBiasAdd,
+    prim::kPrimBiasAddGrad,
+    prim::kPrimGeLU,
+    prim::kPrimFusedAdam,
+    prim::kPrimFusedAdamWeightDecay,
+    prim::kPrimReduceMean,
+    prim::kPrimMaximumGrad,
+    prim::kPrimMinimumGrad,
+    prim::kPrimGkDropout,
+    prim::kPrimDropoutGrad,
+    prim::kPrimSoftmax,
+    prim::kPrimLayerNorm,
+    prim::kPrimLayerNormGrad,
+#endif
+  };
+  return expand_ops;
 }
 }  // namespace
+
+bool GraphKernelExpander::ExpandJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
+  DumpOption dump_option;
+  dump_option.extract_opinfo_from_anfnode = true;
+  kernel::AkgKernelJsonGenerator json_generator(dump_option);
+  return json_generator.CollectJson(node, kernel_json);
+}
 
 FuncGraphPtr GraphKernelExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   nlohmann::json kernel_json;
@@ -213,31 +165,9 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
 
     // replace origin node.
     (void)mng->Replace(node, graph_kernel_node);
-
-    ToPrimitive(AnfAlgo::GetCNodeFuncGraphPtr(graph_kernel_node));
     changed = true;
   }
   return changed;
-}
-
-void GraphKernelExpander::ToPrimitive(const FuncGraphPtr &func_graph) const {
-  auto todos = TopoSort(func_graph->get_return());
-  std::reverse(todos.begin(), todos.end());
-  auto mng = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  for (const auto &n : todos) {
-    auto cnode = n->cast<CNodePtr>();
-    if (cnode == nullptr) {
-      continue;
-    }
-
-    auto origin_prim = AnfAlgo::GetCNodePrimitive(cnode);
-    MS_EXCEPTION_IF_NULL(origin_prim);
-    if (!origin_prim->isa<PrimitivePy>()) {
-      continue;
-    }
-    cnode->set_input(0, std::make_shared<ValueNode>(std::make_shared<Primitive>(*origin_prim)));
-  }
 }
 
 bool GraphKernelExpander::Run(const FuncGraphPtr &func_graph) {

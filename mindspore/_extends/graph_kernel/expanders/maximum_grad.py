@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,16 +23,10 @@ def expand_maximumgrad(expand_info):
     input_desc_1 = expand_info['input_desc'][1]
     input_desc_2 = expand_info['input_desc'][2]
     attrs = expand_info['attr']
-    grad_x = None
-    grad_y = None
-    for item in attrs:
-        if 'grad_x' in item:
-            grad_x = item['grad_x']
-        if 'grad_y' in item:
-            grad_y = item['grad_y']
-    graph_builder = builder.GraphBuilder()
+    grad_x = attrs['grad_x'] if 'grad_x' in attrs else True
+    grad_y = attrs['grad_y'] if 'grad_y' in attrs else True
 
-    # generate a graph.
+    graph_builder = builder.GraphBuilder()
     with graph_builder.graph_scope('main') as graph_scope:
         # create tensor input.
         input_x = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
