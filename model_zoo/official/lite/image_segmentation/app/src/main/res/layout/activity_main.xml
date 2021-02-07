@@ -19,7 +19,7 @@
             android:drawablePadding="5dp"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:text="MS ImageSegmentation"
+            android:text="Image Segmentation"
             android:textColor="#ffffff"
             android:textSize="20sp" />
     </androidx.appcompat.widget.Toolbar>
