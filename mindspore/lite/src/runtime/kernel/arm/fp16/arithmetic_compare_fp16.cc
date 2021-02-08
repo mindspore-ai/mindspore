@@ -126,6 +126,9 @@ int ArithmeticCompareFP16CPUKernel::DoArithmetic(int task_id) {
   int cur_offset = stride_per_thread * task_id;
   int cur_count = param_->broadcasting_ ? MSMIN(stride_per_thread, outside_ - cur_offset)
                                         : MSMIN(stride_per_thread, param_->out_elements_num_ - cur_offset);
+  if (cur_count <= 0) {
+    return RET_OK;
+  }
 
   int ret = RET_OK;
   if (param_->broadcasting_) {

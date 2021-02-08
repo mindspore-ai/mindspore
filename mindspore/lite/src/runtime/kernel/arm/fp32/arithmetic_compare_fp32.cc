@@ -68,6 +68,9 @@ int ArithmeticCompareCPUKernel::DoArithmetic(int task_id) {
   MS_ASSERT(thread_count_ != 0);
   int stride = UP_DIV(element_num, thread_count_);
   int count = MSMIN(stride, element_num - stride * task_id);
+  if (count <= 0) {
+    return RET_OK;
+  }
 
   if (func_fp32_ == nullptr) {
     MS_LOG(ERROR) << "func_fp32_ function is nullptr!";

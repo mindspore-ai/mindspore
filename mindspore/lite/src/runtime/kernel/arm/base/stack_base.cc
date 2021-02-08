@@ -55,7 +55,7 @@ int StackBaseCPUKernel::ReSize() {
   axis_ = param->axis_ < 0 ? param->axis_ + input0_shape.size() + 1 : param->axis_;
   auto input_nums = in_tensors_.size();
   if (input_nums == 1) {
-    copy_size_ = in_tensors_.front()->Size();
+    copy_size_ = in_tensors_.front()->ElementsNum() * data_type_size_;
   } else {
     MS_ASSERT(input_nums > 1);
     copy_size_ = GetCopyNum(input0_shape, axis_, input0_shape.size()) * data_type_size_;
