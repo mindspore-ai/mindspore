@@ -46,11 +46,7 @@ def _init_device_info():
         rank_id = _get_global_rank()
         parallel_mode = auto_parallel_context().get_parallel_mode()
         if parallel_mode == "stand_alone":
-            cuda_device_info = os.getenv("CUDA_VISIBLE_DEVICES")
-            if cuda_device_info:
-                cuda_id = int(cuda_device_info.split(",")[0].strip())
-                if cuda_id != rank_id:
-                    rank_id = cuda_id
+            rank_id = context.get_context("device_id")
         _config.set_rank_id(rank_id)
     elif context.get_context("device_target") == "Ascend":
         # Ascend is a special scenario, we'd better get rank info from env

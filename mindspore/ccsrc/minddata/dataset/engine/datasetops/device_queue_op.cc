@@ -240,10 +240,24 @@ Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
 #endif
 
 #ifdef ENABLE_GPUQUE
-Status DeviceQueueOp::LaunchParallelCopyThread() {
+Status DeviceQueueOp::SetThreadDevice() {
   // Without cudaSetDevice cuda memory will allocate on GPU:0 as default
-  // and will overload in distribute scenario, so don't remove this line
-  cudaSetDevice(rank_id_);
+  // and will overload in distribute scenario.
+  auto ret = cudaSetDevice(rank_id_);
+  if (ret != cudaSuccess) {
+    std::string err;
+    err += "cudaSetDevice failed, ret[";
+    err += std::to_string(static_cast<int>(ret));
+    err += "], ";
+    err += cudaGetErrorString(ret);
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err);
+  }
+  return Status::OK();
+}
+
+Status DeviceQueueOp::LaunchParallelCopyThread() {
+  // Every thread use cuda api should SetThreadDevice
+  RETURN_IF_NOT_OK(SetThreadDevice());
   // CircularPool may not safe under multi-threads scenario, so one worker with one pool
   for (int i = 0; i < num_workers_; i++) {
     std::shared_ptr<MemoryPool> pool;
@@ -262,9 +276,8 @@ Status DeviceQueueOp::LaunchParallelCopyThread() {
 }
 
 Status DeviceQueueOp::PushDataToGPU() {
-  // Without cudaSetDevice cuda memory will allocate on GPU:0 as default
-  // and will overload in distribute scenario, so don't remove this line
-  cudaSetDevice(rank_id_);
+  // Every thread use cuda api should SetThreadDevice
+  RETURN_IF_NOT_OK(SetThreadDevice());
   TaskManager::FindMe()->Post();
   uint64_t batch_start_time = 0;
   uint64_t end_time = 0;
@@ -357,9 +370,8 @@ Status DeviceQueueOp::PushDataToGPU() {
 
 // WorkEntry of DeviceQueueOp just do multi_threads memcpy for performance optimization.
 Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
-  // Without cudaSetDevice cuda memory will allocate on GPU:0 as default
-  // and will overload in distribute scenario, so don't remove this line
-  cudaSetDevice(rank_id_);
+  // Every thread use cuda api should SetThreadDevice
+  RETURN_IF_NOT_OK(SetThreadDevice());
   TaskManager::FindMe()->Post();
   std::unique_ptr<DataBuffer> current_buffer;
   uint32_t batch_num = 0;
