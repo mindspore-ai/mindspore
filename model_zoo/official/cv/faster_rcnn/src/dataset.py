@@ -21,12 +21,12 @@ import numpy as np
 from numpy import random
 
 import mmcv
-from mindspore import context
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 from mindspore.mindrecord import FileWriter
 from src.config import config
 import cv2
+
 
 def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     """Calculate the ious between each bbox of bboxes1 and bboxes2.
@@ -72,6 +72,7 @@ def bbox_overlaps(bboxes1, bboxes2, mode='iou'):
     if exchange:
         ious = ious.T
     return ious
+
 
 class PhotoMetricDistortion:
     """Photo Metric Distortion"""
@@ -133,6 +134,7 @@ class PhotoMetricDistortion:
 
         return img, boxes, labels
 
+
 class Expand:
     """expand image"""
     def __init__(self, mean=(0, 0, 0), to_rgb=True, ratio_range=(1, 4)):
@@ -157,6 +159,7 @@ class Expand:
         boxes += np.tile((left, top), 2)
         return img, boxes, labels
 
+
 def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """rescale operation for image"""
     img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
@@ -171,6 +174,7 @@ def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_shape[0] - 1)
 
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """resize operation for image"""
@@ -189,6 +193,7 @@ def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
+
 def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
     """resize operation for image of eval"""
     img_data = img
@@ -206,17 +211,20 @@ def resize_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
+
 def impad_to_multiple_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """impad operation for image"""
     img_data = mmcv.impad(img, (config.img_height, config.img_width))
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
+
 def imnormalize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """imnormalize operation for image"""
     img_data = mmcv.imnormalize(img, np.array([123.675, 116.28, 103.53]), np.array([58.395, 57.12, 57.375]), True)
     img_data = img_data.astype(np.float32)
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """flip operation for image"""
@@ -230,21 +238,18 @@ def flip_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return (img_data, img_shape, flipped, gt_label, gt_num)
 
+
 def transpose_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """transpose operation for image"""
     img_data = img.transpose(2, 0, 1).copy()
-    if context.get_context("device_target") == "Ascend":
-        img_data = img_data.astype(np.float16)
-        img_shape = img_shape.astype(np.float16)
-        gt_bboxes = gt_bboxes.astype(np.float16)
-    else:
-        img_data = img_data.astype(np.float32)
-        img_shape = img_shape.astype(np.float32)
-        gt_bboxes = gt_bboxes.astype(np.float32)
+    img_data = img_data.astype(np.float32)
+    img_shape = img_shape.astype(np.float32)
+    gt_bboxes = gt_bboxes.astype(np.float32)
     gt_label = gt_label.astype(np.int32)
     gt_num = gt_num.astype(np.bool)
 
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def photo_crop_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """photo crop operation for image"""
@@ -253,12 +258,14 @@ def photo_crop_column(img, img_shape, gt_bboxes, gt_label, gt_num):
 
     return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
+
 def expand_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """expand operation for image"""
     expand = Expand()
     img, gt_bboxes, gt_label = expand(img, gt_bboxes, gt_label)
 
     return (img, img_shape, gt_bboxes, gt_label, gt_num)
+
 
 def preprocess_fn(image, box, is_training):
     """Preprocess function for dataset."""
@@ -314,6 +321,7 @@ def preprocess_fn(image, box, is_training):
 
     return _data_aug(image, box, is_training)
 
+
 def create_coco_label(is_training):
     """Get image path and annotation from COCO."""
     from pycocotools.coco import COCO
@@ -364,6 +372,7 @@ def create_coco_label(is_training):
 
     return image_files, image_anno_dict
 
+
 def anno_parser(annos_str):
     """Parse annotation from string to list."""
     annos = []
@@ -371,6 +380,7 @@ def anno_parser(annos_str):
         anno = list(map(int, anno_str.strip().split(',')))
         annos.append(anno)
     return annos
+
 
 def filter_valid_data(image_dir, anno_path):
     """Filter valid image file, which both in image_dir and anno_path."""
@@ -392,6 +402,7 @@ def filter_valid_data(image_dir, anno_path):
             image_anno_dict[image_path] = anno_parser(line_split[1:])
             image_files.append(image_path)
     return image_files, image_anno_dict
+
 
 def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="fasterrcnn.mindrecord", file_num=8):
     """Create MindRecord file."""
@@ -416,6 +427,7 @@ def data_to_mindrecord_byte_image(dataset="coco", is_training=True, prefix="fast
         row = {"image": img, "annotation": annos}
         writer.write_raw_data([row])
     writer.commit()
+
 
 def create_fasterrcnn_dataset(mindrecord_file, batch_size=2, device_num=1, rank_id=0, is_training=True,
                               num_parallel_workers=8):

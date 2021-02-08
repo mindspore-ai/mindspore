@@ -19,7 +19,6 @@ import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore import context
 
 
 class Proposal(nn.Cell):
@@ -103,9 +102,8 @@ class Proposal(nn.Cell):
         self.tile = P.Tile()
         self.set_train_local(config, training=True)
 
-        _mode_16 = bool(context.get_context("device_target") == "Ascend")
-        self.dtype = np.float16 if _mode_16 else np.float32
-        self.ms_type = mstype.float16 if _mode_16 else mstype.float32
+        self.dtype = np.float32
+        self.ms_type = mstype.float32
 
         self.multi_10 = Tensor(10.0, self.ms_type)
 
@@ -134,10 +132,7 @@ class Proposal(nn.Cell):
         self.topKv2 = P.TopK(sorted=True)
         self.topK_shape_stage2 = (self.max_num, 1)
         self.min_float_num = -65536.0
-        if context.get_context("device_target") == "Ascend":
-            self.topK_mask = Tensor(self.min_float_num * np.ones(total_max_topk_input, np.float16))
-        else:
-            self.topK_mask = Tensor(self.min_float_num * np.ones(total_max_topk_input, np.float32))
+        self.topK_mask = Tensor(self.min_float_num * np.ones(total_max_topk_input, np.float32))
 
     def construct(self, rpn_cls_score_total, rpn_bbox_pred_total, anchor_list):
         proposals_tuple = ()

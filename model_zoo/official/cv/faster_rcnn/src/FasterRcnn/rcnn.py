@@ -28,18 +28,21 @@ class DenseNoTranpose(nn.Cell):
     """Dense method"""
     def __init__(self, input_channels, output_channels, weight_init):
         super(DenseNoTranpose, self).__init__()
-        if context.get_context("device_target") == "Ascend":
-            self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float16))
-            self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16))
-        else:
-            self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float32))
-            self.bias = Parameter(initializer("zeros", [output_channels], mstype.float32))
+        self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float32))
+        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float32))
 
         self.matmul = P.MatMul(transpose_b=False)
         self.bias_add = P.BiasAdd()
+        self.cast = P.Cast()
+        self.device_type = "Ascend" if context.get_context("device_target") == "Ascend" else "Others"
 
     def construct(self, x):
-        output = self.bias_add(self.matmul(x, self.weight), self.bias)
+        if self.device_type == "Ascend":
+            x = self.cast(x, mstype.float16)
+            weight = self.cast(self.weight, mstype.float16)
+            output = self.bias_add(self.cast(self.matmul(x, weight), mstype.float32), self.bias)
+        else:
+            output = self.bias_add(self.matmul(x, self.weight), self.bias)
         return output
 
 
@@ -72,9 +75,8 @@ class Rcnn(nn.Cell):
                  ):
         super(Rcnn, self).__init__()
         cfg = config
-        _mode_16 = bool(context.get_context("device_target") == "Ascend")
-        self.dtype = np.float16 if _mode_16 else np.float32
-        self.ms_type = mstype.float16 if _mode_16 else mstype.float32
+        self.dtype = np.float32
+        self.ms_type = mstype.float32
         self.rcnn_loss_cls_weight = Tensor(np.array(cfg.rcnn_loss_cls_weight).astype(self.dtype))
         self.rcnn_loss_reg_weight = Tensor(np.array(cfg.rcnn_loss_reg_weight).astype(self.dtype))
         self.rcnn_fc_out_channels = cfg.rcnn_fc_out_channels

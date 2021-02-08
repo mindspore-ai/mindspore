@@ -16,7 +16,6 @@
 
 import numpy as np
 import mindspore.nn as nn
-from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.common import dtype as mstype
@@ -25,22 +24,19 @@ from mindspore.common.initializer import initializer
 
 def bias_init_zeros(shape):
     """Bias init method."""
-    if context.get_context("device_target") == "Ascend":
-        return Tensor(np.array(np.zeros(shape).astype(np.float32)).astype(np.float16))
     return Tensor(np.array(np.zeros(shape).astype(np.float32)))
+
 
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad'):
     """Conv2D wrapper."""
     shape = (out_channels, in_channels, kernel_size, kernel_size)
-    if context.get_context("device_target") == "Ascend":
-        weights = initializer("XavierUniform", shape=shape, dtype=mstype.float16).to_tensor()
-    else:
-        weights = initializer("XavierUniform", shape=shape, dtype=mstype.float32).to_tensor()
+    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float32).to_tensor()
     shape_bias = (out_channels,)
     biass = bias_init_zeros(shape_bias)
     return nn.Conv2d(in_channels, out_channels,
                      kernel_size=kernel_size, stride=stride, padding=padding,
                      pad_mode=pad_mode, weight_init=weights, has_bias=True, bias_init=biass)
+
 
 class FeatPyramidNeck(nn.Cell):
     """
