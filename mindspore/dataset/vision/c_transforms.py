@@ -62,6 +62,7 @@ class ImageTensorOperation(TensorOperation):
     """
     Base class of Image Tensor Ops
     """
+
     def __call__(self, input_tensor):
         if not isinstance(input_tensor, list):
             input_list = [input_tensor]
@@ -93,10 +94,8 @@ DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
                     Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
                     Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
 
-
 DE_C_IMAGE_BATCH_FORMAT = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
                            ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
-
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
@@ -307,6 +306,7 @@ class Equalize(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
     def parse(self):
         return cde.EqualizeOperation()
 
@@ -337,6 +337,7 @@ class Invert(ImageTensorOperation):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+
     def parse(self):
         return cde.InvertOperation()
 
@@ -729,7 +730,7 @@ class RandomCrop(ImageTensorOperation):
 
 class RandomCropDecodeResize(ImageTensorOperation):
     """
-    Equivalent to RandomResizedCrop, but crops before decodes.
+    A combination of `Crop`, `Decode` and `Resize`. It will get better performance for JPEG images.
 
     Args:
         size (Union[int, sequence]): The size of the output image.
@@ -813,7 +814,7 @@ class RandomCropWithBBox(ImageTensorOperation):
 
     Examples:
         >>> decode_op = c_vision.Decode()
-        >>> random_crop_with_bbox_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+        >>> random_crop_with_bbox_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
         >>> transforms_list = [decode_op, random_crop_with_bbox_op]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])

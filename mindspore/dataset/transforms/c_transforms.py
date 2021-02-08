@@ -59,23 +59,24 @@ class OneHot(cde.OneHotOp):
 
 class Fill(cde.FillOp):
     """
-    Tensor operation to create a tensor filled with input scalar value.
+    Tensor operation to fill all elements in the tensor with the specified value.
     The output tensor will have the same shape and type as the input tensor.
 
     Args:
         fill_value (Union[str, bytes, int, float, bool])) : scalar value
-            to fill created tensor with.
+            to fill the tensor with.
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore.dataset import GeneratorDataset
-        >>> # Generate 1d int numpy array from 0 - 63
+        >>> # generate a 1D integer numpy array from 0 to 4
         >>> def generator_1d():
-        >>>     for i in range(64):
+        ...     for i in range(5):
         ...         yield (np.array([i]),)
-        >>> generator_dataset = GeneratorDataset(generator_1d,column_names='col')
+        >>> generator_dataset = ds.GeneratorDataset(generator_1d, column_names="col1")
+        >>> # [[0], [1], [2], [3], [4]]
         >>> fill_op = c_transforms.Fill(3)
         >>> generator_dataset = generator_dataset.map(operations=fill_op)
+        >>> # [[3], [3], [3], [3], [3]]
     """
 
     @check_fill_value
@@ -351,6 +352,8 @@ class Unique(cde.UniqueOp):
         >>> # +---------+-----------------+---------+
 
     """
+
+
 class Compose():
     """
     Compose a list of transforms into a single transform.
@@ -375,6 +378,7 @@ class Compose():
             else:
                 operations.append(op)
         return cde.ComposeOperation(operations)
+
 
 class RandomApply():
     """
