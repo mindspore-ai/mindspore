@@ -51,6 +51,10 @@ class PyFuncOp : public TensorOp {
   std::string Name() const override { return kPyFuncOp; }
   Status to_json(nlohmann::json *out_json) override;
 
+  /// \brief Check whether this pyfunc op is deterministic
+  /// \return True if this pyfunc op is random
+  bool IsRandom();
+
  private:
   py::function py_func_ptr_;
   DataType::Type output_type_;

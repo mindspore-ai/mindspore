@@ -45,6 +45,11 @@ DE_PY_BORDER_TYPE = {Border.CONSTANT: 'constant',
                      Border.SYMMETRIC: 'symmetric'}
 
 
+def not_random(function):
+    function.random = False
+    return function
+
+
 class ToTensor:
     """
     Convert the input NumPy image array or PIL image of shape (H, W, C) to a NumPy ndarray of shape (C, H, W).
@@ -70,6 +75,7 @@ class ToTensor:
 
     def __init__(self, output_type=np.float32):
         self.output_type = output_type
+        self.random = False
 
     def __call__(self, img):
         """
@@ -105,6 +111,7 @@ class ToType:
 
     def __init__(self, output_type):
         self.output_type = output_type
+        self.random = False
 
     def __call__(self, img):
         """
@@ -131,6 +138,9 @@ class HWC2CHW:
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
+
+    def __init__(self):
+        self.random = False
 
     def __call__(self, img):
         """
@@ -160,6 +170,9 @@ class ToPIL:
         ...                                                 input_columns="image")
     """
 
+    def __init__(self):
+        self.random = False
+
     def __call__(self, img):
         """
         Call method.
@@ -186,6 +199,9 @@ class Decode:
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns="image")
     """
+
+    def __init__(self):
+        self.random = False
 
     def __call__(self, img):
         """
@@ -227,6 +243,7 @@ class Normalize:
     def __init__(self, mean, std):
         self.mean = mean
         self.std = std
+        self.random = False
 
     def __call__(self, img):
         """
@@ -271,6 +288,7 @@ class NormalizePad:
         self.mean = mean
         self.std = std
         self.dtype = dtype
+        self.random = False
 
     def __call__(self, img):
         """
@@ -456,6 +474,7 @@ class Resize:
     def __init__(self, size, interpolation=Inter.BILINEAR):
         self.size = size
         self.interpolation = DE_PY_INTER_MODE[interpolation]
+        self.random = False
 
     def __call__(self, img):
         """
@@ -550,6 +569,7 @@ class CenterCrop:
     @check_crop
     def __init__(self, size):
         self.size = size
+        self.random = False
 
     def __call__(self, img):
         """
@@ -700,6 +720,7 @@ class FiveCrop:
     @check_crop
     def __init__(self, size):
         self.size = size
+        self.random = False
 
     def __call__(self, img):
         """
@@ -744,6 +765,7 @@ class TenCrop:
             size = (size, size)
         self.size = size
         self.use_vertical_flip = use_vertical_flip
+        self.random = False
 
     def __call__(self, img):
         """
@@ -781,6 +803,7 @@ class Grayscale:
     @check_num_channels
     def __init__(self, num_output_channels=1):
         self.num_output_channels = num_output_channels
+        self.random = False
 
     def __call__(self, img):
         """
@@ -884,6 +907,7 @@ class Pad:
         self.padding = padding
         self.fill_value = fill_value
         self.padding_mode = DE_PY_BORDER_TYPE[padding_mode]
+        self.random = False
 
     def __call__(self, img):
         """
@@ -1030,6 +1054,7 @@ class Cutout:
     def __init__(self, length, num_patches=1):
         self.length = length
         self.num_patches = num_patches
+        self.random = False
 
     def __call__(self, np_img):
         """
@@ -1087,6 +1112,7 @@ class LinearTransformation:
     def __init__(self, transformation_matrix, mean_vector):
         self.transformation_matrix = transformation_matrix
         self.mean_vector = mean_vector
+        self.random = False
 
     def __call__(self, np_img):
         """
@@ -1229,6 +1255,7 @@ class MixUp:
         self.batch_size = batch_size
         self.alpha = alpha
         self.is_single = is_single
+        self.random = False
 
     def __call__(self, image, label):
         """
@@ -1268,6 +1295,7 @@ class RgbToHsv:
 
     def __init__(self, is_hwc=False):
         self.is_hwc = is_hwc
+        self.random = False
 
     def __call__(self, rgb_imgs):
         """
@@ -1304,6 +1332,7 @@ class HsvToRgb:
 
     def __init__(self, is_hwc=False):
         self.is_hwc = is_hwc
+        self.random = False
 
     def __call__(self, hsv_imgs):
         """
@@ -1414,6 +1443,7 @@ class AutoContrast:
     def __init__(self, cutoff=0.0, ignore=None):
         self.cutoff = cutoff
         self.ignore = ignore
+        self.random = False
 
     def __call__(self, img):
         """
@@ -1443,6 +1473,9 @@ class Invert:
         ...                                                 input_columns="image")
     """
 
+    def __init__(self):
+        self.random = False
+
     def __call__(self, img):
         """
         Call method.
@@ -1471,6 +1504,9 @@ class Equalize:
         ...                                                 input_columns="image")
 
     """
+
+    def __init__(self):
+        self.random = False
 
     def __call__(self, img):
         """
@@ -1516,6 +1552,7 @@ class UniformAugment:
     def __init__(self, transforms, num_ops=2):
         self.transforms = transforms
         self.num_ops = num_ops
+        self.random = False
 
     def __call__(self, img):
         """

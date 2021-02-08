@@ -30,6 +30,9 @@
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
+#ifdef ENABLE_PYTHON
+#include "minddata/dataset/kernels/py_func_op.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -78,7 +81,12 @@ Status OneHotOperation::ValidateParams() {
 std::shared_ptr<TensorOp> OneHotOperation::Build() { return std::make_shared<OneHotOp>(num_classes_); }
 
 // PreBuiltOperation
-PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(tensor_op) {}
+PreBuiltOperation::PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op) : op_(tensor_op) {
+#ifdef ENABLE_PYTHON
+  auto pyfunc_tensor_op = std::dynamic_pointer_cast<PyFuncOp>(tensor_op);
+  if (pyfunc_tensor_op && pyfunc_tensor_op->IsRandom()) random_op_ = true;
+#endif
+}
 
 Status PreBuiltOperation::ValidateParams() { return Status::OK(); }
 

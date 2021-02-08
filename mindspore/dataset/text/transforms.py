@@ -552,6 +552,7 @@ class PythonTokenizer:
     @check_python_tokenizer
     def __init__(self, tokenizer):
         self.tokenizer = np.vectorize(lambda x: np.array(tokenizer(x), dtype='U'), signature='()->(n)')
+        self.random = False
 
     def __call__(self, in_array):
         in_array = to_str(in_array)
