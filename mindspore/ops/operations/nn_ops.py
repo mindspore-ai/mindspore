@@ -441,7 +441,7 @@ class SeLU(PrimitiveWithInfer):
         return x_dtype
 
 
-class ReLU6(PrimitiveWithInfer):
+class ReLU6(PrimitiveWithCheck):
     r"""
     Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
 
@@ -477,12 +477,11 @@ class ReLU6(PrimitiveWithInfer):
         """Initialize ReLU6"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
-    def infer_shape(self, input_x):
-        return input_x
+    def check_shape(self, input_x):
+        pass
 
-    def infer_dtype(self, input_x):
+    def check_dtype(self, input_x):
         validator.check_tensor_dtype_valid('input_x', input_x, (mstype.float16, mstype.float32), self.name)
-        return input_x
 
 
 class ReLUV2(PrimitiveWithInfer):
