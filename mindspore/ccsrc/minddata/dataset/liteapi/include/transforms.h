@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include "include/constants.h"
-#include "include/status.h"
+#include "include/api/status.h"
 
 namespace mindspore {
 namespace dataset {

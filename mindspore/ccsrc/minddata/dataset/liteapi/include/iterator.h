@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "include/status.h"
+#include "include/api/status.h"
+#include "include/api/types.h"
 
 namespace mindspore {
 namespace dataset {
@@ -37,8 +38,8 @@ class IteratorConsumer;
 
 class Dataset;
 
-using TensorMap = std::unordered_map<std::string, std::shared_ptr<Tensor>>;
-using TensorVec = std::vector<std::shared_ptr<Tensor>>;
+using MSTensorMap = std::unordered_map<std::string, mindspore::MSTensor>;
+using MSTensorVec = std::vector<mindspore::MSTensor>;
 
 // Abstract class for iterating over the dataset.
 class Iterator {
@@ -51,20 +52,21 @@ class Iterator {
 
   /// \brief Method for building and launching the pipeline.
   /// \param[in] ops - a vector of DatasetOp in the data pipeline.
+  /// \param[in] num_epochs Number of epochs passed down to EpochCtrlNode, default -1, infinite epochs
   /// \return - a Status error code, returns OK if no error encountered.
-  Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds);
+  Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a map(with column name).
   /// \param[out] row - the output tensor row.
-  /// \return Returns true if no error encountered else false.
-  bool GetNextRow(TensorMap *row);
+  /// \return - a Status error code, returns OK if no error encountered.
+  Status GetNextRow(MSTensorMap *row);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row - the output tensor row.
-  /// \return Returns true if no error encountered else false.
-  bool GetNextRow(TensorVec *row);
+  /// \return - a Status error code, returns OK if no error encountered.
+  Status GetNextRow(MSTensorVec *row);
 
   /// \brief Function to shut down the data pipeline.
   void Stop();
@@ -73,7 +75,7 @@ class Iterator {
    public:
     explicit _Iterator(Iterator *lt) : lt_{lt}, cur_row_{nullptr} {
       if (lt_) {
-        cur_row_ = new TensorMap();
+        cur_row_ = new MSTensorMap();
         lt_->GetNextRow(cur_row_);
       }
     }
@@ -95,16 +97,16 @@ class Iterator {
         cur_row_ = nullptr;
       }
       return *this;
-    }                                             // prefix ++ overload
-    TensorMap &operator*() { return *cur_row_; }  // dereference operator
-    TensorMap *operator->() { return cur_row_; }
+    }                                               // prefix ++ overload
+    MSTensorMap &operator*() { return *cur_row_; }  // dereference operator
+    MSTensorMap *operator->() { return cur_row_; }
 
     bool operator!=(const _Iterator &rhs) { return cur_row_ != rhs.cur_row_; }
 
    private:
     int ind_;  // the cur node our Iterator points to
     Iterator *lt_;
-    TensorMap *cur_row_;
+    MSTensorMap *cur_row_;
   };
 
   _Iterator begin() { return _Iterator(this); }

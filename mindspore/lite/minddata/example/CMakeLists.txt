@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.14.1)
 project(testlenet)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/local/include -std=c++17 -Werror
--Wall -Wno-deprecated-declarations -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -fPIC")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
-set(DepDIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.1.0-inference-linux-x64/minddata")
+set(MD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.1.0-inference-linux-x64/minddata")
+set(MS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/mindspore-lite-1.1.0-inference-linux-x64/")
 
-include_directories(${DepDIR})
-
+include_directories(${MD_DIR})
+include_directories(${MS_DIR})
 
 
 add_executable(testlenet
@@ -16,7 +16,8 @@ add_executable(testlenet
         )
 
 target_link_libraries(testlenet
-        ${DepDIR}/lib/libminddata-lite.so
-        ${DepDIR}/third_party/libjpeg-turbo/lib/libjpeg.so.62
-        ${DepDIR}/third_party/libjpeg-turbo/lib/libturbojpeg.so.0
+        ${MD_DIR}/lib/libminddata-lite.so
+        ${MD_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so.62
+        ${MD_DIR}/third_party/libjpeg-turbo/lib/libturbojpeg.so.0
+        ${MS_DIR}/lib/libmindspore-lite.so
         pthread)

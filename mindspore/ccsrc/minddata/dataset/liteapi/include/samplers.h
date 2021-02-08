@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "include/status.h"
+#include "include/api/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -29,7 +29,7 @@ namespace dataset {
 // Internal Sampler class forward declaration
 class SamplerRT;
 
-class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
+class SamplerObj {
  public:
   /// \brief Constructor
   SamplerObj();
@@ -43,11 +43,11 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
 
   /// \brief Pure virtual function to convert a SamplerObj class into a runtime sampler object
   /// \return Shared pointers to the newly created Sampler
-  virtual std::shared_ptr<SamplerRT> Build() = 0;
+  virtual std::shared_ptr<SamplerRT> SamplerBuild() = 0;
 
   /// \brief Pure virtual function to copy a SamplerObj class
   /// \return Shared pointers to the newly copied SamplerObj
-  virtual std::shared_ptr<SamplerObj> Copy() = 0;
+  virtual std::shared_ptr<SamplerObj> SamplerCopy() = 0;
 
   /// \brief Function for derived class to get the shard id of sampler
   /// \return The shard id of the derived sampler
@@ -56,7 +56,9 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
   /// \brief Adds a child to the sampler
   /// \param[in] child The sampler to be added as child
   /// \return the Status code returned
-  Status AddChild(std::shared_ptr<SamplerObj> child);
+  Status AddChildSampler(std::shared_ptr<SamplerObj> child);
+
+  std::vector<std::shared_ptr<SamplerObj>> GetChild() { return children_; }
 
  protected:
   /// \brief A function that calls build on the children of this sampler
@@ -71,6 +73,7 @@ class PKSamplerObj;
 class PreBuiltSamplerObj;
 class RandomSamplerObj;
 class SequentialSamplerObj;
+class SubsetSamplerObj;
 class SubsetRandomSamplerObj;
 class WeightedRandomSamplerObj;
 
@@ -112,6 +115,13 @@ std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement = false, int64_
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
 
+/// Function to create a Subset  Sampler.
+/// \notes Samples the elements from a sequence of indices.
+/// \param[in] indices - A vector sequence of indices.
+/// \param[in] num_samples - The number of samples to draw (default to all elements).
+/// \return Shared pointer to the current Sampler.
+std::shared_ptr<SubsetSamplerObj> SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
+
 /// Function to create a Subset Random Sampler.
 /// \notes Samples the elements randomly from a sequence of indices.
 /// \param[in] indices - A vector sequence of indices.
@@ -135,15 +145,15 @@ class DistributedSamplerObj : public SamplerObj {
   DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples, uint32_t seed,
                         int64_t offset, bool even_dist);
 
-  ~DistributedSamplerObj() = default;
+  virtual ~DistributedSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> Build() override;
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
 
-  std::shared_ptr<SamplerObj> Copy() override {
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_,
                                                            offset_, even_dist_);
     for (auto child : children_) {
-      sampler->AddChild(child);
+      sampler->AddChildSampler(child);
     }
     return sampler;
   }
@@ -168,14 +178,14 @@ class PKSamplerObj : public SamplerObj {
  public:
   PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples);
 
-  ~PKSamplerObj() = default;
+  virtual ~PKSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> Build() override;
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
 
-  std::shared_ptr<SamplerObj> Copy() override {
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
     for (auto child : children_) {
-      sampler->AddChild(child);
+      sampler->AddChildSampler(child);
     }
     return sampler;
   }
@@ -194,9 +204,9 @@ class PreBuiltSamplerObj : public SamplerObj {
 
   ~PreBuiltSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> Build() override;
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
 
-  std::shared_ptr<SamplerObj> Copy() override;
+  std::shared_ptr<SamplerObj> SamplerCopy() override;
 
   Status ValidateParams() override;
 
@@ -206,16 +216,16 @@ class PreBuiltSamplerObj : public SamplerObj {
 
 class RandomSamplerObj : public SamplerObj {
  public:
-  RandomSamplerObj(bool replacement, int64_t num_samples);
+  RandomSamplerObj(bool replacement, int64_t num_samples, bool reshuffle_each_epoch = true);
 
-  ~RandomSamplerObj() = default;
+  virtual ~RandomSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> Build() override;
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
 
-  std::shared_ptr<SamplerObj> Copy() override {
-    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_);
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
+    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
     for (auto child : children_) {
-      sampler->AddChild(child);
+      sampler->AddChildSampler(child);
     }
     return sampler;
   }
@@ -225,20 +235,21 @@ class RandomSamplerObj : public SamplerObj {
  private:
   bool replacement_;
   int64_t num_samples_;
+  bool reshuffle_each_epoch_;
 };
 
 class SequentialSamplerObj : public SamplerObj {
  public:
   SequentialSamplerObj(int64_t start_index, int64_t num_samples);
 
-  ~SequentialSamplerObj() = default;
+  virtual ~SequentialSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> Build() override;
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
 
-  std::shared_ptr<SamplerObj> Copy() override {
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
     for (auto child : children_) {
-      sampler->AddChild(child);
+      sampler->AddChildSampler(child);
     }
     return sampler;
   }
@@ -250,41 +261,60 @@ class SequentialSamplerObj : public SamplerObj {
   int64_t num_samples_;
 };
 
-class SubsetRandomSamplerObj : public SamplerObj {
+class SubsetSamplerObj : public SamplerObj {
  public:
-  SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
+  SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
 
-  ~SubsetRandomSamplerObj() = default;
+  virtual ~SubsetSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> Build() override;
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
 
-  std::shared_ptr<SamplerObj> Copy() override {
-    auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
+    auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
     for (auto child : children_) {
-      sampler->AddChild(child);
+      sampler->AddChildSampler(child);
     }
     return sampler;
   }
 
   Status ValidateParams() override;
 
- private:
+ protected:
   const std::vector<int64_t> indices_;
   int64_t num_samples_;
+};
+
+class SubsetRandomSamplerObj : public SubsetSamplerObj {
+ public:
+  SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
+
+  ~SubsetRandomSamplerObj() = default;
+
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
+
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
+    auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
+    for (auto child : children_) {
+      sampler->AddChildSampler(child);
+    }
+    return sampler;
+  }
+
+ private:
 };
 
 class WeightedRandomSamplerObj : public SamplerObj {
  public:
   explicit WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
 
-  ~WeightedRandomSamplerObj() = default;
+  virtual ~WeightedRandomSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> Build() override;
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
 
-  std::shared_ptr<SamplerObj> Copy() override {
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
     for (auto child : children_) {
-      sampler->AddChild(child);
+      sampler->AddChildSampler(child);
     }
     return sampler;
   }

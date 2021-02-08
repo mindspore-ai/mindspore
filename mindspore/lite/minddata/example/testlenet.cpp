@@ -28,12 +28,11 @@
 #include "include/iterator.h"
 #include "include/vision_lite.h"
 #include "include/transforms.h"
-#include "include/tensor.h"
+#include "include/api/types.h"
 
 using mindspore::dataset::Dataset;
 using mindspore::dataset::Iterator;
 using mindspore::dataset::Mnist;
-using mindspore::dataset::Tensor;
 using mindspore::dataset::TensorOperation;
 
 int main(int argc, char **argv) {
@@ -43,18 +42,18 @@ int main(int argc, char **argv) {
   std::shared_ptr<TensorOperation> resize = mindspore::dataset::vision::Resize({32, 32});
   ds = ds->Map({resize});
 
-  ds->Shuffle(2);
-  ds->Batch(2);
+  ds = ds->Shuffle(2);
+  ds = ds->Batch(2);
 
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
 
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    auto image = row["image"];
+    // auto image = row["image"];
     iter->GetNextRow(&row);
   }
 
