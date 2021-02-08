@@ -246,7 +246,8 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
   default_param->set_tensor_shape(shape);
   default_param->set_tensor_type(kNumberTypeFloat32);
   default_param->set_format(schema::Format_NHWC);
-  auto tensor_data = new (std::nothrow) float[hidden_size * 8];
+
+  std::unique_ptr<float[]> tensor_data(new (std::nothrow) float[hidden_size * 8]);
 
   auto forget_bias_node = utils::cast<AnfNodePtr>((*body_equiv)[forget_bias_]);
   if (forget_bias_node == nullptr) {
@@ -271,13 +272,12 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
       }
     }
   }
-  default_param->SetTensorData(tensor_data, hidden_size * 8 * 4);
+  default_param->SetTensorData(tensor_data.release(), hidden_size * 8 * 4);
   new_bias->set_default_param(default_param);
   std::vector<int64_t> shape_vector_i(shape.begin(), shape.end());
   auto abstract_tensor_i = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector_i);
   if (abstract_tensor_i == nullptr) {
     MS_LOG(ERROR) << "abstract_tensor is nullptr";
-    delete[] tensor_data;
     return RET_ERROR;
   }
   new_bias->set_abstract(abstract_tensor_i);

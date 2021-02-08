@@ -31,7 +31,7 @@
 namespace mindspore::opt {
 
 ValueNodePtr IfPass::GetSwitchAnfPrim() {
-  auto switch_primitiveT = new (std::nothrow) schema::PrimitiveT;
+  std::unique_ptr<schema::PrimitiveT> switch_primitiveT(new (std::nothrow) schema::PrimitiveT);
   if (switch_primitiveT == nullptr) {
     MS_LOG(ERROR) << "new switch_primitiveT failed";
     return nullptr;
@@ -43,7 +43,7 @@ ValueNodePtr IfPass::GetSwitchAnfPrim() {
     return nullptr;
   }
 
-  auto partial_prim = std::make_shared<lite::Partial>(switch_primitiveT);
+  auto partial_prim = std::make_shared<lite::Partial>(switch_primitiveT.release());
   ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
   return partial_anf_prim;
 }
