@@ -19,6 +19,8 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
 #endif
+#include "minddata/dataset/kernels/ir/validators.h"
+
 // Kernel image headers (in alphabetical order)
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
