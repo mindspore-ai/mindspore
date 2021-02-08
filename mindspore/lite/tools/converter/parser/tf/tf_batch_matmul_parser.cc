@@ -35,7 +35,7 @@ STATUS TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "New PrimitiveT failed";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::BatchMatMulT>();
+  auto attr = std::make_unique<schema::MatMulT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new attr failed";
     return RET_NULL_PTR;
@@ -45,13 +45,13 @@ STATUS TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
     return RET_ERROR;
   }
-  attr->transpose_a = attr_value.b();
+  attr->transposeA = attr_value.b();
   if (!TensorFlowUtils::FindAttrValue(tf_op, "adj_y", &attr_value)) {
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
     return RET_ERROR;
   }
-  attr->transpose_b = attr_value.b();
-  primitive->value.type = schema::PrimitiveType_BatchMatMul;
+  attr->transposeB = attr_value.b();
+  primitive->value.type = schema::PrimitiveType_MatMul;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {

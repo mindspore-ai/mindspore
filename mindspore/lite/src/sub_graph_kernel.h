@@ -20,6 +20,7 @@
 #include <utility>
 #include <string>
 #include <vector>
+#include <map>
 #include "src/lite_kernel.h"
 #include "src/executor.h"
 #include "src/common/log_adapter.h"
@@ -179,9 +180,11 @@ class CpuFp16SubGraph : public CpuSubGraph {
 
  private:
   void FreeOriginInputData();
+  int Float32TensorToFloat16Tensor(lite::Tensor *tensor);
+  int Float16TensorToFloat32Tensor(lite::Tensor *tensor);
 
  private:
-  std::vector<DataStore *> origin_input_data_{};
+  std::map<lite::Tensor *, DataStore *> origin_input_data_;
 };
 #endif
 }  // namespace mindspore::kernel

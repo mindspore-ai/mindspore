@@ -125,6 +125,9 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   MS_ASSERT(inputs_.at(1) != nullptr);
   MS_ASSERT(inputs_.at(2) != nullptr);
   auto input0 = reinterpret_cast<TensorList *>(inputs_.at(0));
+  if (input0->root_tensor() != nullptr) {
+    input0 = reinterpret_cast<TensorList *>(input0->root_tensor());
+  }
   auto get_index = inputs_.at(1);
   MS_ASSERT(get_index != nullptr);
   if (get_index->ElementsNum() != 1) {
