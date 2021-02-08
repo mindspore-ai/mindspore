@@ -15,8 +15,8 @@
 """ test loss """
 import numpy as np
 import pytest
-import mindspore.common.dtype as mstype
-import mindspore.nn as nn
+from mindspore.common import dtype as mstype
+from mindspore import nn
 from mindspore import Tensor
 from ..ut_filter import non_graph_engine
 
@@ -106,4 +106,57 @@ def test_dice_loss_check_shape():
     y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
     y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)
     with pytest.raises(ValueError):
+        loss(y_pred, y)
+
+
+def test_multi_class_dice_loss():
+    """ test_multi_class_dice_loss """
+    loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation="softmax")
+    y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
+    y = Tensor(np.array([[0, 1], [1, 0], [0, 1]]), mstype.float32)
+    loss(y_pred, y)
+
+
+def test_multi_class_dice_loss_check_shape():
+    """ test_multi_class_dice_loss """
+    loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation="softmax")
+    y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
+    y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)
+    with pytest.raises(ValueError):
+        loss(y_pred, y)
+
+
+def test_multi_class_dice_loss_init_weight():
+    """ test_multi_class_dice_loss """
+    with pytest.raises(TypeError):
+        loss = nn.MultiClassDiceLoss(weights='1', ignore_indiex=None, activation="softmax")
+        y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
+        y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)
+        loss(y_pred, y)
+
+
+def test_multi_class_dice_loss_init_ignore_indiex():
+    """ test_multi_class_dice_loss """
+    with pytest.raises(TypeError):
+        loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex="2", activation="softmax")
+        y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
+        y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)
+        loss(y_pred, y)
+
+
+def test_multi_class_dice_loss_init_activation():
+    """ test_multi_class_dice_loss """
+    with pytest.raises(TypeError):
+        loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation=2)
+        y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
+        y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)
+        loss(y_pred, y)
+
+
+def test_multi_class_dice_loss_init_activation2():
+    """ test_multi_class_dice_loss """
+    with pytest.raises(KeyError):
+        loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation='www')
+        y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
+        y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)
         loss(y_pred, y)
