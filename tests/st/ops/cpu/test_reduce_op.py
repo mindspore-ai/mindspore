@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,6 +60,27 @@ class NetReduce(nn.Cell):
                 self.reduce_min(indice, self.axis5),
                 self.reduce_min(indice, self.axis6))
 
+
+class NetReduceLogic(nn.Cell):
+    def __init__(self):
+        super(NetReduceLogic, self).__init__()
+        self.axis0 = 0
+        self.axis1 = -1
+        self.axis2 = (0, 1, 2)
+        self.axis3 = ()
+        self.reduce_all = P.ReduceAll(False)
+        self.reduce_any = P.ReduceAny(False)
+
+    @ms_function
+    def construct(self, indice):
+        return (self.reduce_all(indice, self.axis0),
+                self.reduce_all(indice, self.axis1),
+                self.reduce_all(indice, self.axis2),
+                self.reduce_all(indice, self.axis3),
+                self.reduce_any(indice, self.axis0),
+                self.reduce_any(indice, self.axis1),
+                self.reduce_any(indice, self.axis2),
+                self.reduce_any(indice, self.axis3),)
 
 
 @pytest.mark.level0
@@ -125,4 +146,38 @@ def test_reduce():
     assert (output[16].asnumpy() == expect_11).all()
     assert (output[17].asnumpy() == 0.0).all()
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_reduce_logic():
+    reduce_logic = NetReduceLogic()
+    indice_bool = Tensor([[[False, True, True, True, False, True],
+                           [True, True, True, True, True, False]],
+                          [[True, False, True, True, False, True],
+                           [True, False, False, True, True, True]],
+                          [[True, True, True, False, False, False],
+                           [True, True, True, False, True, True]]])
+    output = reduce_logic(indice_bool)
+    expect_all_1 = np.array([[False, False, True, False, False, False],
+                             [True, False, False, False, True, False]])
+    expect_all_2 = np.array([[False, False], [False, False], [False, False]])
+    expect_all_3 = False
+    expect_all_4 = False
+    expect_any_1 = np.array([[True, True, True, True, False, True], [True, True, True, True, True, True]])
+    expect_any_2 = np.array([[True, True], [True, True], [True, True]])
+    expect_any_3 = True
+    expect_any_4 = True
+
+    assert (output[0].asnumpy() == expect_all_1).all()
+    assert (output[1].asnumpy() == expect_all_2).all()
+    assert (output[2].asnumpy() == expect_all_3).all()
+    assert (output[3].asnumpy() == expect_all_4).all()
+    assert (output[4].asnumpy() == expect_any_1).all()
+    assert (output[5].asnumpy() == expect_any_2).all()
+    assert (output[6].asnumpy() == expect_any_3).all()
+    assert (output[7].asnumpy() == expect_any_4).all()
+
+
 test_reduce()
+test_reduce_logic()
