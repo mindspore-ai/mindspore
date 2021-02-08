@@ -25,7 +25,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_BiasGrad;
+using mindspore::schema::PrimitiveType_BiasAddGrad;
 
 namespace mindspore::kernel {
 
@@ -90,7 +90,7 @@ kernel::LiteKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::Tensor 
                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_BiasGrad);
+  MS_ASSERT(desc.type == schema::PrimitiveType_BiasAddGrad);
   auto *kernel = new (std::nothrow) BiasGradCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BiasGradCPUKernel fail!";
@@ -108,5 +108,5 @@ kernel::LiteKernel *CpuBiasGradFp32KernelCreator(const std::vector<lite::Tensor 
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BiasGrad, CpuBiasGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BiasAddGrad, CpuBiasGradFp32KernelCreator)
 }  // namespace mindspore::kernel

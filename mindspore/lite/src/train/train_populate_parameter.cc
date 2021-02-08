@@ -160,51 +160,55 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
-OpParameter *PopulatePoolingGradParameter(const void *prim) {
+OpParameter *PopulateMaxPoolGradParameter(const void *prim) {
   PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_PoolingGrad();
+  auto value = primitive->value_as_MaxPoolGrad();
   pooling_param->op_parameter_.type_ = primitive->value_type();
 
-  pooling_param->global_ = value->global();
-  pooling_param->window_w_ = static_cast<int>(value->window()->Get(1));
-  pooling_param->window_h_ = static_cast<int>(value->window()->Get(0));
+  pooling_param->global_ = false;
+  pooling_param->window_w_ = static_cast<int>(value->kernel_size()->Get(1));
+  pooling_param->window_h_ = static_cast<int>(value->kernel_size()->Get(0));
 
-  pooling_param->pad_u_ = static_cast<int>(value->pad_list()->Get(0));
-  pooling_param->pad_d_ = static_cast<int>(value->pad_list()->Get(1));
-  pooling_param->pad_l_ = static_cast<int>(value->pad_list()->Get(2));
-  pooling_param->pad_r_ = static_cast<int>(value->pad_list()->Get(3));
-  pooling_param->stride_w_ = static_cast<int>(value->stride()->Get(1));
-  pooling_param->stride_h_ = static_cast<int>(value->stride()->Get(0));
+  pooling_param->pad_u_ = 0;
+  pooling_param->pad_d_ = 0;
+  pooling_param->pad_l_ = 0;
+  pooling_param->pad_r_ = 0;
+  pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
+  pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
 
-  pooling_param->pool_mode_ = PoolMode_No;
   pooling_param->round_mode_ = RoundMode_No;
+  pooling_param->pool_mode_ = PoolMode_MaxPool;
+  return reinterpret_cast<OpParameter *>(pooling_param);
+}
 
-  switch (value->pool_mode()) {
-    case schema::PoolMode_MAX_POOLING:
-      pooling_param->pool_mode_ = PoolMode_MaxPool;
-      break;
-    case schema::PoolMode_MEAN_POOLING:
-      pooling_param->pool_mode_ = PoolMode_AvgPool;
-      break;
-    default:
-      break;
+OpParameter *PopulateAvgPoolGradParameter(const void *prim) {
+  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  if (pooling_param == nullptr) {
+    MS_LOG(ERROR) << "malloc PoolingParameter failed.";
+    return nullptr;
   }
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_AvgPoolGrad();
+  pooling_param->op_parameter_.type_ = primitive->value_type();
 
-  switch (value->round_mode()) {
-    case schema::RoundMode_FLOOR:
-      pooling_param->round_mode_ = RoundMode_Floor;
-      break;
-    case schema::RoundMode_CEIL:
-      pooling_param->round_mode_ = RoundMode_Ceil;
-      break;
-    default:
-      break;
-  }
+  pooling_param->global_ = false;
+  pooling_param->window_w_ = static_cast<int>(value->kernel_size()->Get(1));
+  pooling_param->window_h_ = static_cast<int>(value->kernel_size()->Get(0));
+
+  pooling_param->pad_u_ = 0;
+  pooling_param->pad_d_ = 0;
+  pooling_param->pad_l_ = 0;
+  pooling_param->pad_r_ = 0;
+  pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
+  pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
+
+  pooling_param->round_mode_ = RoundMode_No;
+  pooling_param->pool_mode_ = PoolMode_AvgPool;
   return reinterpret_cast<OpParameter *>(pooling_param);
 }
 
@@ -431,7 +435,8 @@ OpParameter *PopulateArithmeticGradParameter(const void *prim) {
 void PopulateTrainParameters() {
   lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter,
                                                 lite::SCHEMA_CUR);
-  lite::Registry BiasGradParameterRegistry(schema::PrimitiveType_BiasGrad, PopulateBiasGradParameter, lite::SCHEMA_CUR);
+  lite::Registry BiasGradParameterRegistry(schema::PrimitiveType_BiasAddGrad, PopulateBiasGradParameter,
+                                           lite::SCHEMA_CUR);
   lite::Registry SoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SoftmaxCrossEntropyWithLogits,
                                                       PopulateSoftmaxCrossEntropyParameter, lite::SCHEMA_CUR);
   lite::Registry SparseSoftmaxCrossEntropyParameterRegistry(
@@ -443,7 +448,9 @@ void PopulateTrainParameters() {
                                                    PopulateConvolutionGradFilterParameter, lite::SCHEMA_CUR);
   lite::Registry Conv2DGradInputParameterRegistry(schema::PrimitiveType_Conv2DBackpropInputFusion,
                                                   PopulateConvolutionGradInputParameter, lite::SCHEMA_CUR);
-  lite::Registry PoolingParameterRegistry(schema::PrimitiveType_PoolingGrad, PopulatePoolingGradParameter,
+  lite::Registry avgPoolParameterRegistry(schema::PrimitiveType_AvgPoolGrad, PopulateAvgPoolGradParameter,
+                                          lite::SCHEMA_CUR);
+  lite::Registry maxPoolParameterRegistry(schema::PrimitiveType_MaxPoolGrad, PopulateMaxPoolGradParameter,
                                           lite::SCHEMA_CUR);
   lite::Registry PowerGradParameterRegistry(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter,
                                             lite::SCHEMA_CUR);

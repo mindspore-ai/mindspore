@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/grad/bias_grad.h"
+#include "ops/grad/bias_add_grad.h"
 #include <string>
 #include <algorithm>
 #include <memory>
@@ -26,10 +26,22 @@
 
 namespace mindspore {
 namespace ops {
-AbstractBasePtr BiasGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args) {
+void BiasAddGrad::Init(const Format format) { this->set_format(format); }
+
+void BiasAddGrad::set_format(const Format format) {
+  int64_t f = format;
+  AddAttr(kFormat, MakeValue(f));
+}
+
+Format BiasAddGrad::get_format() const {
+  auto value_ptr = GetAttr(kFormat);
+  return Format(GetValue<int64_t>(value_ptr));
+}
+
+AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto bias_prim = primitive->cast<PrimBiasGradPtr>();
+  auto bias_prim = primitive->cast<PrimBiasAddGradPtr>();
   MS_EXCEPTION_IF_NULL(bias_prim);
   auto prim_name = bias_prim->name();
   CheckAndConvertUtils::CheckInteger("bias_grad_infer", input_args.size(), kEqual, 1, prim_name);
@@ -46,7 +58,8 @@ AbstractBasePtr BiasGradInfer(const abstract::AnalysisEnginePtr &, const Primiti
 
   return std::make_shared<abstract::AbstractTensor>(intype, inshape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BiasGrad, prim::kPrimBiasGrad, BiasGradInfer);
-REGISTER_PRIMITIVE_C(kNameBiasGrad, BiasGrad);
+
+REGISTER_PRIMITIVE_EVAL_IMPL(BiasAddGrad, prim::kPrimBiasAddGrad, BiasAddGradInfer);
+REGISTER_PRIMITIVE_C(kNameBiasAddGrad, BiasAddGrad);
 }  // namespace ops
 }  // namespace mindspore

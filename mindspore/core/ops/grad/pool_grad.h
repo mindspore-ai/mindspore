@@ -36,14 +36,16 @@ class PoolGrad : public PrimitiveC {
   ~PoolGrad() = default;
   MS_DECLARE_PARENT(PoolGrad, PrimitiveC);
   virtual void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &strides = {1},
-                    const PadMode &pad_mode = VALID);
+                    const PadMode &pad_mode = VALID, const Format &format = NCHW);
   virtual void set_kernel_size(const std::vector<int64_t> &kernel_size);
   virtual void set_strides(const std::vector<int64_t> &strides);
   void set_pad_mode(const PadMode &pad_mode);
+  void set_format(const Format &format);
 
   std::vector<int64_t> get_kernel_size() const;
   std::vector<int64_t> get_strides() const;
   PadMode get_pad_mode() const;
+  Format get_format() const;
   std::vector<int64_t> _grad_check_vector(const std::string arg_name, const std::vector<int64_t> arg_val,
                                           const std::string op_name);
 };

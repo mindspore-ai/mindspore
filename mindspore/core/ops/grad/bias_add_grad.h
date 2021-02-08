@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_BIAS_GRAD_H_
-#define MINDSPORE_CORE_OPS_BIAS_GRAD_H_
+#ifndef MINDSPORE_CORE_OPS_BIAS_ADD_GRAD_H_
+#define MINDSPORE_CORE_OPS_BIAS_ADD_GRAD_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -26,18 +26,20 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameBiasGrad = "BiasGrad";
-class BiasGrad : public PrimitiveC {
+constexpr auto kNameBiasAddGrad = "BiasAddGrad";
+class BiasAddGrad : public PrimitiveC {
  public:
-  BiasGrad() : PrimitiveC(kNameBiasGrad) {}
-  ~BiasGrad() = default;
-  MS_DECLARE_PARENT(BiasGrad, PrimitiveC);
-  void Init();
+  BiasAddGrad() : PrimitiveC(kNameBiasAddGrad) {}
+  ~BiasAddGrad() = default;
+  MS_DECLARE_PARENT(BiasAddGrad, PrimitiveC);
+  void Init(const Format format);
+  void set_format(const Format format);
+  Format get_format() const;
 };
-AbstractBasePtr BiasGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<AbstractBasePtr> &input_args);
-using PrimBiasGradPtr = std::shared_ptr<BiasGrad>;
+AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<AbstractBasePtr> &input_args);
+using PrimBiasAddGradPtr = std::shared_ptr<BiasAddGrad>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_BIAS_GRAD_H_
+#endif  // MINDSPORE_CORE_OPS_BIAS_ADD_GRAD_H_

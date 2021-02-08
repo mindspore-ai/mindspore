@@ -54,7 +54,7 @@ TEST_F(TestBiasGradFp32, BiasGradFp32) {
   ctx.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasGrad};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasAddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), &ctx, desc);
@@ -103,7 +103,7 @@ TEST_F(TestBiasGradFp32, BiasGrad2DFp32) {
   ctx.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasGrad};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BiasAddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bias_param), &ctx, desc);
