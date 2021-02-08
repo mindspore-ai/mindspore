@@ -251,6 +251,17 @@ int OpenCLSubGraph::UpdateTensorDataTypePass() {
     for (auto iv : nodes_) {
       MS_ASSERT(iv);
       auto cur_outs = iv->out_tensors();
+      // if softmax is last kernel, output fp32 tensor
+      if (iv->Type() == schema::PrimitiveType_SoftMax) {
+        bool last_kernel = true;
+        for (auto k : iv->out_kernels()) {
+          if (k->Type() != schema::PrimitiveType_ToFormat) {
+            last_kernel = false;
+            break;
+          }
+        }
+        if (last_kernel) continue;
+      }
       for (auto jv : cur_outs) {
         if (out_set.count(jv) == 0) {
           MS_ASSERT(jv);
