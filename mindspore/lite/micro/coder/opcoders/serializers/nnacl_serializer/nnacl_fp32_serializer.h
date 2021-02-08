@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_SERIALIZER_H_
-#define MICRO_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_SERIALIZER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_SERIALIZER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_SERIALIZER_H_
 #include <string>
 #include <sstream>
 #include "micro/coder/opcoders/serializers/serializer.h"
@@ -48,4 +48,4 @@ class NNaclFp32Serializer : public Serializer {
 };
 
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MICRO_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_ERIALIZER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_ERIALIZER_H_

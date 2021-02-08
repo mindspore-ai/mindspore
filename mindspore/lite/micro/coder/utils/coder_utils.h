@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MICRO_CODER_CODER_UTILS_CODER_UTILS_H_
-#define MICRO_CODER_CODER_UTILS_CODER_UTILS_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
+#define MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
 
+#include <set>
 #include <limits>
 #include <vector>
+#include <memory>
 #include <string>
 #include "include/errorcode.h"
 #include "securec/include/securec.h"
 #include "src/tensor.h"
+#include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro {
 
-constexpr int kSubSize = 2;
-constexpr int kDefaultDims = 4;
+constexpr int kWeightPrecision = 9;
 
-std::string EnumNameDataType(TypeId type);
+std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
+                                         const std::vector<std::unique_ptr<OperatorCoder>> &opcoders);
+
+void PrintTensorData(const lite::Tensor *tensor, std::ofstream &ofs);
+
+std::set<OperatorCoder *> FindInferenceOpcoders(OperatorCoder *edge);
 
 }  // namespace mindspore::lite::micro
 
-#endif  // MICRO_CODER_CODER_UTILS_CODER_UTILS_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_

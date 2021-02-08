@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_CODER_GRAPH_NODE_H_
-#define MICRO_CODER_GRAPH_NODE_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_GRAPH_H_
+#define MINDSPORE_LITE_MICRO_CODER_GRAPH_H_
 
 #include <map>
 #include <memory>
@@ -28,6 +28,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/common/graph_util.h"
 #include "src/tensor.h"
+
 namespace mindspore::lite::micro {
 class CoderGraph {
  public:
@@ -80,4 +81,4 @@ class CoderGraph {
   Model *model_{nullptr};
 };
 }  // namespace mindspore::lite::micro
-#endif  // MICRO_CODER_GRAPH_NODE_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GRAPH_H_

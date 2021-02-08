@@ -13,9 +13,7 @@ include_directories(${LITE_DIR})
 include_directories(${TOP_DIR}/mindspore/core/)
 
 #include coder
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/utils)
 include(${MICRO_DIR}/cmake/file_list.cmake)
 add_executable(codegen main.cc ${FILE_SET})
 add_dependencies(codegen fbs_src)

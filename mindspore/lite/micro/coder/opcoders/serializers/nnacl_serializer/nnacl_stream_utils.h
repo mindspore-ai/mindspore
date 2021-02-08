@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_
-#define LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_
 #include <sstream>
 #include <string>
 #include "nnacl/pooling_parameter.h"
@@ -62,4 +62,4 @@ inline std::ostream &operator<<(std::ostream &code, DataOrder data_order) {
   return code;
 }
 }  // namespace mindspore::lite::micro
-#endif  // LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_

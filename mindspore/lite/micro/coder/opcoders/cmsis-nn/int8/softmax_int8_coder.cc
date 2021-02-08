@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/cmsis-nn/int8/softmax_int8_coder.h"
+#include "coder/opcoders/cmsis-nn/int8/softmax_int8_coder.h"
 #include <limits>
-#include "micro/coder/opcoders/serializers/serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_SoftMax;
 namespace mindspore::lite::micro::cmsis {

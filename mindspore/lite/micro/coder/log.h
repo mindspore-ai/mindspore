@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_LOG_H_
-#define MICRO_LOG_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_LOG_H_
+#define MINDSPORE_LITE_MICRO_CODER_LOG_H_
 
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -86,6 +86,23 @@
     }                                    \
   } while (0)
 
+#define MS_CHECK_TRUE_WITH_EXE(code, msg, FUNC) \
+  do {                                          \
+    if (!(code)) {                              \
+      MS_LOG(ERROR) << msg;                     \
+      FUNC;                                     \
+      return mindspore::lite::RET_ERROR;        \
+    }                                           \
+  } while (0)
+
+#define MS_CHECK_TRUE_WITHOUT_RET(code, msg) \
+  do {                                       \
+    if (!(code)) {                           \
+      MS_LOG(ERROR) << msg;                  \
+      return;                                \
+    }                                        \
+  } while (0)
+
 #define MS_CHECK_TRUE_RET_NULL(code, msg) \
   do {                                    \
     if (!(code)) {                        \
@@ -102,4 +119,4 @@
     }                                     \
   } while (0)
 
-#endif  // MICRO_LOG_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_LOG_H_

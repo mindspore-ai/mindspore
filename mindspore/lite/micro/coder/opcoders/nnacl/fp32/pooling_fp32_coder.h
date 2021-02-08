@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_CODER_OPCODERS_FP32_POOLFP32_CODER_H_
-#define MICRO_CODER_OPCODERS_FP32_POOLFP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_POOLFP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_POOLFP32_CODER_H_
 
 #include <vector>
 #include "micro/coder/opcoders/op_coder.h"
@@ -36,4 +36,4 @@ class PoolingFP32Coder final : public OperatorCoder {
 
 }  // namespace mindspore::lite::micro::nnacl
 
-#endif  // MICRO_CODER_OPCODERS_FP32__CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_CODER_H_

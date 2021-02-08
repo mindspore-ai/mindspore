@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/fp32/nchw2nhwc_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/nchw2nhwc_fp32_coder.h"
 #include <vector>
 #include <string>
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Nchw2Nhwc;
 

@@ -21,8 +21,8 @@
 #include <map>
 #include "schema/inner/model_generated.h"
 #include "tools/common/flag_parser.h"
-#include "coder/session_coder.h"
-#include "coder/coder_context.h"
+#include "coder/session.h"
+#include "coder/context.h"
 #include "utils/dir_utils.h"
 #include "securec/include/securec.h"
 #include "src/common/file_utils.h"

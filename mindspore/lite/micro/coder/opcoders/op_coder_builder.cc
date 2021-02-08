@@ -45,7 +45,7 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
     MS_CHECK_PTR_RET_NULL(inputs_.at(kInputIndex));
     MS_CHECK_PTR_RET_NULL(outputs_.at(kOutputIndex));
   }
-  std::unique_ptr<OperatorCoder> op_coder = creator_func(inputs_, outputs_, node_, node_index_, target_);
+  std::unique_ptr<OperatorCoder> op_coder = creator_func(inputs_, outputs_, node_, node_index_++, target_);
   if (!op_coder) {
     MS_LOG(ERROR) << "coderFactor create a null op_coder: " << node_->name_ << " primitive type: "
                   << mindspore::schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive_type))
@@ -59,8 +59,8 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
                   << schema::EnumNamePrimitiveType((schema::PrimitiveType)(primitive_type));
     return nullptr;
   }
-  op_coder->set_input_tensor_indices(&input_indices_);
-  op_coder->set_output_tensor_indices(&output_indices_);
+  op_coder->set_input_tensor_indices(input_indices_);
+  op_coder->set_output_tensor_indices(output_indices_);
   int thread_num = this->mode_ == CodeMode::Code_Android ? kMAX_THREAD_NUM_SUPPORT : 1;
   op_coder->set_thread_num(thread_num);
   parameter->thread_num_ = thread_num;

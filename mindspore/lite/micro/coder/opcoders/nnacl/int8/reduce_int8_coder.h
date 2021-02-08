@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_LITE_MICRO_CODER_OPCODERS_INT8_REDUCE_INT8_CODER_H_
-#define MICRO_LITE_MICRO_CODER_OPCODERS_INT8_REDUCE_INT8_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_INT8_REDUCE_INT8_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_INT8_REDUCE_INT8_CODER_H_
 
 #include <string>
 #include <vector>
 #include "coder/opcoders/op_coder.h"
 #include "nnacl/int8/quantize.h"
 #include "nnacl/int8/reduce_int8.h"
-#include "micro/coder/opcoders/base/reduce_base_coder.h"
+#include "coder/opcoders/base/reduce_base_coder.h"
 namespace mindspore::lite::micro::nnacl {
 class ReduceInt8Coder final : public ReduceBaseCoder {
  public:
@@ -52,4 +52,4 @@ class ReduceInt8Coder final : public ReduceBaseCoder {
   std::vector<QuantMulArg *> sum_square_multipliers_;
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MICRO_LITE_MICRO_CODER_OPCODERS_INT8_REDUCE_INT8_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_INT8_REDUCE_INT8_CODER_H_

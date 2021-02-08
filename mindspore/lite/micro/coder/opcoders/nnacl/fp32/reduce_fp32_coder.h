@@ -19,8 +19,8 @@
 
 #include <string>
 #include <vector>
-#include "micro/coder/opcoders/base/reduce_base_coder.h"
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/base/reduce_base_coder.h"
+#include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
 class ReduceFP32Coder final : public ReduceBaseCoder {

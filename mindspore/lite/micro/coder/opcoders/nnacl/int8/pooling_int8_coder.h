@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
 

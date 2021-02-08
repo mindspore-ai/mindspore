@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/cmsis-nn/int8/dwconv_int8_coder.h"
+#include "coder/opcoders/cmsis-nn/int8/dwconv_int8_coder.h"
 #include <string>
-#include "micro/coder/opcoders/serializers/serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/log.h"
+#include "coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/log.h"
 
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 

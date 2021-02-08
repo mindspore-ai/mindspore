@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_CODER_OPCODERS_FP32_ACTIVATIONFP32_CODER_H_
-#define MICRO_CODER_OPCODERS_FP32_ACTIVATIONFP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ACTIVATIONFP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ACTIVATIONFP32_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
 

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
-#define MICRO_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/transpose.h"
 namespace mindspore::lite::micro::nnacl {
 
@@ -50,4 +50,4 @@ class TransposeFp32Coder final : public OperatorCoder {
 };
 
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MICRO_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_FP32_TRANSPOSE_FP32_CODER_H_

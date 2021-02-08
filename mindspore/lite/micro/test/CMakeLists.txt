@@ -2,6 +2,7 @@ string(REPLACE "/test" "" MICRO_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 string(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 string(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(LITE_DIR ${MICRO_DIR}/..)
+set(NNACL_DIR ${LITE_DIR}/nnacl)
 set(3RD_DIR ${TOP_DIR}/third_party)
 
 set(BUILD_LITE "on")

@@ -18,7 +18,7 @@
 #define MICRO_CODER_OPCODERS_FP32_SCALEFP32_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/scale.h"
 
 namespace mindspore::lite::micro::nnacl {

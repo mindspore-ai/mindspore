@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/cmsis-nn/int8/add_int8_coder.h"
+#include "coder/opcoders/cmsis-nn/int8/add_int8_coder.h"
 #include <algorithm>
 #include <limits>
 #include "micro/coder/opcoders/serializers/serializer.h"
 #include "nnacl/arithmetic.h"
 #include "nnacl/int8/quantize.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/log.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/log.h"
 
 using mindspore::schema::PrimitiveType_Add;
 

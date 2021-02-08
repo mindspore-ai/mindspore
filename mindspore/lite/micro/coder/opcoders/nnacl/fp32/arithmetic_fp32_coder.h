@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_CODER_OPCODERS_FP32_ARITHMETIC_FP32_CODER_H_
-#define MICRO_CODER_OPCODERS_FP32_ARITHMETIC_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ARITHMETIC_FP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ARITHMETIC_FP32_CODER_H_
 
 #include <vector>
 #include <string>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #define DEFAULT_ARITHMETIC_NDIMS 10
 namespace mindspore::lite::micro::nnacl {
 
@@ -106,4 +106,4 @@ class ArithmeticFP32Coder final : public OperatorCoder {
   LiteDataType data_type_{kDataTypeFloat};
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MICRO_CODER_OPCODERS_FP32_ARITHMETIC_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ARITHMETIC_FP32_CODER_H_

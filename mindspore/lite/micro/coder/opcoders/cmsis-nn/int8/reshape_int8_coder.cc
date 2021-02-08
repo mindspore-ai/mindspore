@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/cmsis-nn/int8/reshape_int8_coder.h"
+#include "coder/opcoders/cmsis-nn/int8/reshape_int8_coder.h"
 #include <vector>
 #include <string>
-#include "micro/coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/serializers/serializer.h"
 
 using mindspore::schema::PrimitiveType_Reshape;
 

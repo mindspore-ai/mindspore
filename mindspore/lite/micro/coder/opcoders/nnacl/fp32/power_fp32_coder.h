@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_POWER_FP32_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/power_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {

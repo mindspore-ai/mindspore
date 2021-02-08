@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MICRO_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_
-#define MICRO_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_
 #include <ostream>
 #include <string>
 #include "nnacl/pooling_parameter.h"
@@ -48,4 +48,4 @@ class NNaclInt8Serializer : public Serializer {
 };
 
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MICRO_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_

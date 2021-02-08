@@ -14,31 +14,160 @@
  * limitations under the License.
  */
 #include "coder/utils/coder_utils.h"
+#include <set>
+#include <queue>
 #include <string>
+#include <memory>
+#include <fstream>
+#include "coder/log.h"
+#include "coder/utils/type_cast.h"
+#include "coder/allocator/allocator.h"
 
 namespace mindspore::lite::micro {
+template <typename T>
+void TensorDataToFile(const lite::Tensor *tensor, std::ofstream &ofs) {
+  const int NUM = 45;
+  T *data = reinterpret_cast<T *>(tensor->data_c());
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr";
+    return;
+  }
+  ofs << "{\n";
+  if (typeid(T) == typeid(float)) {
+    ofs.precision(kWeightPrecision);
+  }
+  int len = tensor->ElementsNum();
+  for (int i = 0; i < len; ++i) {
+    ofs << data[i] << ", ";
+    if (i % NUM == NUM - 1) {
+      ofs << "\n";
+    }
+  }
+  ofs << "\n};\n\n";
+}
 
-std::string EnumNameDataType(TypeId type) {
-  switch (type) {
-    case kNumberTypeInt:
-      return "kNumberTypeInt";
-    case kNumberTypeInt8:
-      return "kNumberTypeInt8";
-    case kNumberTypeInt16:
-      return "kNumberTypeInt16";
-    case kNumberTypeInt32:
-      return "kNumberTypeInt32";
+void PrintTensorData(const lite::Tensor *tensor, std::ofstream &ofs) {
+  TypeId type = tensor->data_type();
+  switch (tensor->data_type()) {
+    case kNumberTypeFloat:
     case kNumberTypeFloat32:
-      return "kNumberTypeFloat32";
-    case kNumberTypeFloat16:
-      return "kNumberTypeFloat16";
-    case kNumberTypeFloat64:
-      return "kNumberTypeFloat64";
-    case kTypeUnknown:
-      return "kTypeUnknown";
+      TensorDataToFile<float>(tensor, ofs);
+      break;
+    case kNumberTypeInt8:
+      TensorDataToFile<int8_t>(tensor, ofs);
+      break;
+    case kNumberTypeInt:
+    case kNumberTypeInt32:
+      TensorDataToFile<int32_t>(tensor, ofs);
+    case kNumberTypeInt64:
+      TensorDataToFile<int64_t>(tensor, ofs);
+      break;
+    case kNumberTypeUInt8:
+      TensorDataToFile<uint8_t>(tensor, ofs);
+      break;
+    case kNumberTypeUInt32:
+      TensorDataToFile<uint32_t>(tensor, ofs);
+      break;
     default:
-      return "unsupported type, " + std::to_string(type);
+      MS_LOG(ERROR) << "unsupported data type: " << EnumNameDataType(type);
+      break;
   }
 }
 
+template <typename T>
+std::string ArrayToString(const std::vector<T> &array) {
+  std::string result = "{";
+  std::for_each(array.begin(), array.end(), [&result](const T &t) { result += std::to_string(t) + ", "; });
+  return result + "}";
+}
+
+std::string TensorsToString(const std::vector<Tensor *> &tensors, const std::string &is_input) {
+  MemoryAllocator *allocator = MemoryAllocator::GetInstance();
+  std::string info;
+  for (const auto &tensor : tensors) {
+    if (tensor->category() == Tensor::Category::CONST_TENSOR) {
+      continue;
+    }
+    info += "      {\n";
+    info += "      int dim[] = " + ArrayToString(tensor->shape()) + ";\n";
+    info += "      MicroTensor tensor = {";
+    info += EnumMicroTensorDataType(tensor->data_type()) + ", ";
+    info += EnumMicroTensorFormat(tensor->format()) + ", ";
+    info += std::to_string(tensor->shape().size()) + ", dim, ";
+    info += allocator->GetRuntimeAddr(tensor) + "};\n";
+    info += "      fprintf(output_file, \"" + is_input + " Tensor: " + allocator->GetRuntimeAddr(tensor) + "\\n\");\n";
+    info += "      PrintTensor(&tensor, output_file, \"" + is_input + "\");\n";
+    info += "      }\n";
+  }
+  return info;
+}
+
+std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
+                                         const std::vector<std::unique_ptr<OperatorCoder>> &opcoders) {
+  std::vector<std::string> results;
+  if (blocks.size() != opcoders.size()) {
+    MS_LOG(ERROR) << "error, coder blocks size is not equal to opcoders size";
+    return results;
+  }
+  size_t num = opcoders.size();
+  for (size_t i = 0; i < num; ++i) {
+    auto &opcoder = opcoders.at(i);
+    std::string code = blocks.at(i);
+    std::string name = opcoder->ID();
+    code += "    {\n";
+    code += "      FILE *output_file = fopen(\"./" + name + ".ir\", \"w\");\n";
+    code += "      fprintf(output_file, \"Node:" + name + "\\n\");\n";
+    code += TensorsToString(opcoder->input_tensors(), "input");
+    code += TensorsToString(opcoder->output_tensors(), "output");
+    code += "      fclose(output_file);\n";
+    code += "    }\n";
+    results.emplace_back(code);
+  }
+  return results;
+}
+
+std::vector<std::string> SplitString(std::string str, const std::string &pattern) {
+  std::vector<std::string> results;
+  if (str.empty()) {
+    MS_LOG(ERROR) << "source string is empty";
+    return results;
+  }
+  str += pattern;
+  while (!str.empty()) {
+    size_t size = str.size();
+    size_t pos = str.find(pattern);
+    std::string sub_string = str.substr(0, pos);
+    results.push_back(sub_string);
+    str = str.substr(pos + 1, size);
+  }
+  return results;
+}
+
+std::set<OperatorCoder *> FindInferenceOpcoders(OperatorCoder *edge) {
+  std::set<OperatorCoder *> subgraph;
+  std::queue<OperatorCoder *> to_visit;
+  to_visit.push(edge);
+  while (!to_visit.empty()) {
+    size_t size = to_visit.size();
+    for (size_t i = 0; i < size; ++i) {
+      OperatorCoder *curr = to_visit.front();
+      to_visit.pop();
+      if (subgraph.find(curr) != subgraph.end()) {
+        continue;
+      }
+      subgraph.insert(curr);
+      for (const auto &op : curr->input_ops()) {
+        to_visit.push(op);
+      }
+    }
+  }
+  auto item = subgraph.find(edge);
+  if (item == subgraph.end()) {
+    MS_LOG(ERROR) << "failed to find the edge in the subgraph";
+    return subgraph;
+  }
+  // erase edge operator coder from subgraph
+  subgraph.erase(item);
+  return subgraph;
+}
 }  // namespace mindspore::lite::micro

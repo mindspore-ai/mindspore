@@ -19,7 +19,7 @@
 
 namespace mindspore::lite::micro::test {
 TEST(GenerateCodeTest, mnist_x86) {
-  const char *argv[] = {"./codegen", "--modelPath=../example/mnist.ms", "--moduleName=mnist", "--codePath=.",
+  const char *argv[] = {"./codegen", "--modelPath=../example/mnist/mnist.ms", "--moduleName=mnist", "--codePath=.",
                         "--isWeightFile"};
   STATUS status = RunCoder(5, argv);
   ASSERT_EQ(status, RET_OK);

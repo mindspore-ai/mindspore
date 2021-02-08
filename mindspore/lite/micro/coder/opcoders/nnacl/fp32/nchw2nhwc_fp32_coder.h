@@ -19,7 +19,7 @@
 
 #include <string>
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/base/tile_base.h"
 
 namespace mindspore::lite::micro::nnacl {

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MICRO_CODER_SESSION_CODER_H_
-#define MICRO_CODER_SESSION_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_SESSION_H_
+#define MINDSPORE_LITE_MICRO_CODER_SESSION_H_
 
 #include <map>
 #include <string>
 #include <vector>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "coder/coder_graph.h"
-#include "coder/coder_context.h"
+#include "coder/graph.h"
+#include "coder/context.h"
 #include "coder/coder_config.h"
 #include "coder/allocator/allocator.h"
 #include "coder/opcoders/op_coder.h"
@@ -43,7 +43,7 @@ class CoderSession {
   int GenerateCode();
 
  private:
-  int InitNodesInputsAndOutputs();
+  int InitOpcodersInputsAndOutputs();
   int InitTensorsRef();
   int ConvertTensors();
   int CreateOpCoders();
@@ -53,7 +53,7 @@ class CoderSession {
   void EndCode();
 
   std::unique_ptr<CoderGraph> coder_graph_{nullptr};
-  std::unique_ptr<CoderContext> coder_context_{nullptr};
+  std::unique_ptr<CoderContext> context_{nullptr};
   MemoryAllocator *allocator_{nullptr};
   std::vector<std::unique_ptr<OperatorCoder>> op_coders_;
 };
@@ -61,4 +61,4 @@ class CoderSession {
 std::shared_ptr<CoderSession> CreateCoderSession();
 
 }  // namespace mindspore::lite::micro
-#endif  // MICRO_CODER_SESSION_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_SESSION_H_
