@@ -40,7 +40,6 @@ def _read_file(filename):
 
 
 readme = _read_file('README.md')
-release = _read_file('RELEASE.md')
 
 
 def _write_version(file):
@@ -195,7 +194,7 @@ setup(
     },
     description='MindSpore is a new open source deep learning training/inference '
     'framework that could be used for mobile, edge and cloud scenarios.',
-    long_description="\n\n".join([readme, release]),
+    long_description="\n\n".join(readme),
     long_description_content_type="text/markdown",
     packages=find_packages(),
     package_data=package_data,
