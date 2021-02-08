@@ -14,32 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_BATCH_MATMUL_H_
-#define LITE_MINDSPORE_LITE_C_OPS_BATCH_MATMUL_H_
-
 #include <vector>
 #include <set>
 #include <cmath>
+
 #include "src/ops/primitive_c.h"
+
+#ifndef LITE_MINDSPORE_LITE_C_OPS_LIN_SPACE_H_
+#define LITE_MINDSPORE_LITE_C_OPS_LIN_SPACE_H_
 
 namespace mindspore {
 namespace lite {
-class BatchMatMul : public PrimitiveC {
+class LinSpace : public PrimitiveC {
  public:
-  BatchMatMul() = default;
-  ~BatchMatMul() = default;
+  LinSpace() = default;
+  ~LinSpace() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(BatchMatMul, PrimitiveC);
-  explicit BatchMatMul(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-  void SetTransposeA(bool transpose_a);
-  void SetTransposeB(bool transpose_b);
+  MS_DECLARE_PARENT(LinSpace, PrimitiveC);
+  explicit LinSpace(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  bool GetTransposeA() const;
-  bool GetTransposeB() const;
+  int InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_MINDSPORE_LITE_C_OPS_BATCH_MATMUL_H_
+#endif  // LITE_MINDSPORE_LITE_C_OPS_LIN_SPACE_H_

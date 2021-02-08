@@ -58,6 +58,11 @@ STATUS TFArithmeticSelfParser::Parse(const tensorflow::NodeDef &tf_op,
     status = CreateOperator<schema::SquareT>(primitive, schema::PrimitiveType_Square);
   } else if (tf_op.op() == "Pow") {
     status = CreateOperator<schema::PowerT>(primitive, schema::PrimitiveType_Power);
+  } else if (tf_op.op() == "Abs") {
+    status = CreateOperator<schema::PowerT>(primitive, schema::PrimitiveType_Abs);
+  } else {
+    MS_LOG(ERROR) << "unsupported arithmetic self type:" << tf_op.op();
+    return RET_ERROR;
   }
   if (status != RET_OK) {
     return status;
@@ -85,5 +90,6 @@ TFNodeRegistrar g_tfFloorParser("Floor", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfLogParser("Log", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfSqrtParser("Sqrt", new TFArithmeticSelfParser());
 TFNodeRegistrar g_tfPowParser("Pow", new TFArithmeticSelfParser());
+TFNodeRegistrar g_tfAbsParser("Abs", new TFArithmeticSelfParser());
 }  // namespace lite
 }  // namespace mindspore

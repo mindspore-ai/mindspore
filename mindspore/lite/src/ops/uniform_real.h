@@ -14,32 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_BATCH_MATMUL_H_
-#define LITE_MINDSPORE_LITE_C_OPS_BATCH_MATMUL_H_
+#ifndef LITE_MINDSPORE_LITE_C_OPS_UNIFORM_REAL_H_
+#define LITE_MINDSPORE_LITE_C_OPS_UNIFORM_REAL_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 #include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
-class BatchMatMul : public PrimitiveC {
+class UniformReal : public PrimitiveC {
  public:
-  BatchMatMul() = default;
-  ~BatchMatMul() = default;
+  UniformReal() = default;
+  ~UniformReal() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(BatchMatMul, PrimitiveC);
-  explicit BatchMatMul(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  MS_DECLARE_PARENT(UniformReal, PrimitiveC);
+  explicit UniformReal(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-  void SetTransposeA(bool transpose_a);
-  void SetTransposeB(bool transpose_b);
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  bool GetTransposeA() const;
-  bool GetTransposeB() const;
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
+  int GetSeed() const;
+  int GetSeed2() const;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_MINDSPORE_LITE_C_OPS_BATCH_MATMUL_H_
+
+#endif  // LITE_MINDSPORE_LITE_C_OPS_UNIFORM_REAL_H_

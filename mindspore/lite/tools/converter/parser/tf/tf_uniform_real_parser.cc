@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_batch_matmul_parser.h"
+#include "tools/converter/parser/tf/tf_uniform_real_parser.h"
 #include <string>
 #include <memory>
 #include <map>
@@ -22,36 +22,37 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
+STATUS TFUniformRealParser::Parse(const tensorflow::NodeDef &tf_op,
                                   const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                   PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(DEBUG) << "TF BatchMatMulParser";
+  MS_LOG(DEBUG) << "TF UniformRealParser";
   if (primitiveC == nullptr || output_size == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return RET_NULL_PTR;
   }
+
   auto primitive = std::make_unique<schema::PrimitiveT>();
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "New PrimitiveT failed";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::BatchMatMulT>();
+  auto attr = std::make_unique<schema::UniformRealT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new attr failed";
     return RET_NULL_PTR;
   }
   tensorflow::AttrValue attr_value;
-  if (!TensorFlowUtils::FindAttrValue(tf_op, "adj_x", &attr_value)) {
-    MS_LOG(ERROR) << "The begin_mask attr should be specified";
+  if (!TensorFlowUtils::FindAttrValue(tf_op, "seed", &attr_value)) {
+    MS_LOG(ERROR) << "The seed attr should be specified";
     return RET_ERROR;
   }
-  attr->transpose_a = attr_value.b();
-  if (!TensorFlowUtils::FindAttrValue(tf_op, "adj_y", &attr_value)) {
-    MS_LOG(ERROR) << "The begin_mask attr should be specified";
+  attr->seed = attr_value.i();
+  if (!TensorFlowUtils::FindAttrValue(tf_op, "seed2", &attr_value)) {
+    MS_LOG(ERROR) << "The seed2 attr should be specified";
     return RET_ERROR;
   }
-  attr->transpose_b = attr_value.b();
-  primitive->value.type = schema::PrimitiveType_BatchMatMul;
+  attr->seed2 = attr_value.i();
+  primitive->value.type = schema::PrimitiveType_UniformReal;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {
@@ -59,14 +60,9 @@ STATUS TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
     return RET_ERROR;
   }
   *output_size = 1;
-  for (int i = 0; i < tf_op.input_size(); ++i) {
-    auto status = AddOpInput(tf_op, i, inputs);
-    if (status != RET_OK) {
-      return status;
-    }
-  }
-  return RET_OK;
+  auto status = AddOpInput(tf_op, 0, inputs);
+  return status;
 }
-TFNodeRegistrar g_tfBatchMatMulParser("BatchMatMul", new TFBatchMatMulParser());
+TFNodeRegistrar g_tfRandomUniformParser("RandomUniform", new TFUniformRealParser());
 }  // namespace lite
 }  // namespace mindspore
