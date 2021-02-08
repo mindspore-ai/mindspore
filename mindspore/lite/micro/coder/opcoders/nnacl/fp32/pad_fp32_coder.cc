@@ -82,7 +82,7 @@ int PadFP32Coder::DoCode(CoderContext *const context) {
   int task_id = thread_num_ - 1;
   Collect(context, {"nnacl/fp32/pad.h", "nnacl/pad_parameter.h"}, {"nnacl/fp32/pad.c"});
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   code.CodeArray("in_", in_, DEFAULT_PAD_NDIMS);
   code.CodeArray("out_", out_, DEFAULT_PAD_NDIMS);
   code.CodeArray("padding_", pad_param_->paddings_, MAX_PAD_SIZE);

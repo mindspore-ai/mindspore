@@ -34,7 +34,7 @@ int AssignAddFP32Coder::DoCode(CoderContext *const context) {
     return RET_ERROR;
   }
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   // Get Tensor Pointer
   std::string input0_str = allocator_->GetRuntimeAddr(input0);
   std::string input1_str = allocator_->GetRuntimeAddr(input1);

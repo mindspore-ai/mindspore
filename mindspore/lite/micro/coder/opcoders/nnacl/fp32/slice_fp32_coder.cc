@@ -34,7 +34,7 @@ int SliceFP32Coder::DoCode(CoderContext *const context) {
   std::vector<int> begin = primitive_slice->GetPostProcessBegin();
   std::vector<int> size = primitive_slice->GetPostProcessSize();
   std::vector<int> input_shape = input_tensor_->shape();
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   for (int i = 0; i < param->param_length_; i++) {
     param->shape_[i] = input_shape.at(i);
   }

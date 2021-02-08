@@ -23,7 +23,7 @@
 #include "nnacl/int8/concat_int8.h"
 
 namespace mindspore::lite::micro::nnacl {
-class ConcatInt8Coder : public OperatorCoder {
+class ConcatInt8Coder final : public OperatorCoder {
  public:
   ConcatInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const Model::Node *node, size_t node_index, Target target)

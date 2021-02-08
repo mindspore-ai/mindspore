@@ -21,7 +21,7 @@
 #include "micro/coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
-class SliceFP32Coder : public OperatorCoder {
+class SliceFP32Coder final : public OperatorCoder {
  public:
   SliceFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                  const Model::Node *node, size_t node_index, Target target)

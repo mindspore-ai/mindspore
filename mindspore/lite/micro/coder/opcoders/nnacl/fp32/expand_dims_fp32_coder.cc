@@ -35,7 +35,7 @@ int ExpandDimsFP32Coder::ReSize() {
 int ExpandDimsFP32Coder::DoCode(CoderContext *const context) {
   // generate code .h .c
   Collect(context, {"nnacl/fp32/expandDims.h"}, {"nnacl/fp32/expandDims.c"});
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   int task_id = 0;
   size_t size = MSMIN(thread_sz_stride_, static_cast<int>(data_size_ - task_id * thread_sz_stride_));
   if (!size) {

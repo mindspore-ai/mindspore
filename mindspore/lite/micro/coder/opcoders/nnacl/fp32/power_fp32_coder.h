@@ -22,7 +22,7 @@
 #include "nnacl/power_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
-class PowerFP32Coder : public OperatorCoder {
+class PowerFP32Coder final : public OperatorCoder {
  public:
   PowerFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                  const Model::Node *node, size_t node_index, Target target)

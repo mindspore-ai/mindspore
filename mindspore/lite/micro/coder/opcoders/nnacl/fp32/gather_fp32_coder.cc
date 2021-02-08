@@ -34,7 +34,7 @@ int GatherFP32Coder::DoCode(CoderContext *context) {
   // generate code .h .c
   Collect(context, {"nnacl/fp32/gather.h"}, {"nnacl/fp32/gather.c"});
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   std::vector<int> in_shape = input0->shape();
   int in_rank = in_shape.size();
   int indices_element_size = input1->ElementsNum();

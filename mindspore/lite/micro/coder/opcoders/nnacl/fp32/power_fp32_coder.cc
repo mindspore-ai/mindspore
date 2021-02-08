@@ -49,7 +49,7 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   }
   // generate code .h .c
   Collect(context, {"nnacl/power.h"}, {"power.c"});
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   code.CodeFunction("Power", input_tensor_, cur_exp_str, output_tensor_, len, scale_, shift_, broadcast);
   context->AppendCode(code.str());
   return RET_OK;

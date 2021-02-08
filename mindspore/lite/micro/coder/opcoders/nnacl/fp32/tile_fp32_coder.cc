@@ -53,7 +53,7 @@ int TileFP32Coder::DoCode(CoderContext *const context) {
   // generate code .h .c
   Collect(context, {"nnacl/fp32/tile.h"}, {"nnacl/fp32/tile.c"});
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
 
   code.CodeStruct("tile_parameter", *tile_param_);
   // call the op function

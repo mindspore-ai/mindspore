@@ -28,7 +28,7 @@ int SqueezeFP32Coder::DoCode(CoderContext *const context) {
   // generate code .h .c
   Collect(context, {"nnacl/squeeze.h"}, {"nnacl/squeeze.c"});
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
 
   // call the op function
   if (input_tensor_->data_type() == kNumberTypeInt32) {

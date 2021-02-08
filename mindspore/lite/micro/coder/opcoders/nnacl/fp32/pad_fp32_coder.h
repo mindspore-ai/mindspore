@@ -22,7 +22,7 @@
 #include "nnacl/fp32/pad_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {
-class PadFP32Coder : public OperatorCoder {
+class PadFP32Coder final : public OperatorCoder {
  public:
   PadFP32Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                const Model::Node *node, size_t node_index, Target target)

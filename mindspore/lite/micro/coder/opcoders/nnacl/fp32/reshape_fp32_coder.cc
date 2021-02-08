@@ -27,7 +27,7 @@ int ReshapeFP32Coder::DoCode(CoderContext *const context) {
 
   Collect(context, {"nnacl/reshape.h"}, {"reshape.c"});
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   code.CodeFunction("Reshape", input_tensor_, output_tensor_, data_size);
   context->AppendCode(code.str());
   return RET_OK;

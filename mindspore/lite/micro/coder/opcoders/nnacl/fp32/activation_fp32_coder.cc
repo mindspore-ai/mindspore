@@ -38,7 +38,7 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
   } else {
     Collect(context, {"nnacl/fp32/activation.h"}, {"activation.c"});
   }
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   switch (activation_parameter->type_) {
     case schema::ActivationType_RELU:
       code.CodeFunction("Fp32Relu", input_tensor_, count, output_tensor_);

@@ -221,8 +221,8 @@ int ReduceInt8Coder::DoCode(CoderContext *const context) {
       code.CodeFunction(reducer_, outer_size_, inner_size_, axis_size_, begin_src_data_src, dst_addr, ptr_quan_arg_i,
                         task_id, thread_num_);
     } else {
-      code.CodeFunction(last_reducer_, outer_size_, inner_size_, axis_size_, src_addr, dst_addr, ptr_quan_arg_i,
-                        task_id, thread_num_);
+      code.CodeFunction(last_reducer_, outer_size_, inner_size_, axis_size_, begin_src_data_src, dst_addr,
+                        ptr_quan_arg_i, task_id, thread_num_);
     }
     begin_src_data_src = dst_addr;
   }

@@ -41,7 +41,7 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
 
   pooling_parameter->thread_num_ = pooling_parameter->op_parameter_.thread_num_;
 
-  nnacl::NNaclFp32Serializer code;
+  NNaclFp32Serializer code;
   code.CodeStruct("pooling_parameter", *pooling_parameter);
   float minf = -FLT_MAX;
   float maxf = FLT_MAX;
