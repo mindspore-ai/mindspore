@@ -3535,7 +3535,8 @@ class TFRecordDataset(SourceDataset):
         shard_id (int, optional): The shard ID within num_shards (default=None). This
             argument can only be specified when num_shards is also specified.
         shard_equal_rows (bool, optional): Get equal rows for all shards(default=False). If shard_equal_rows
-            is false, number of rows of each shard may be not equal.
+            is false, number of rows of each shard may be not equal. This
+            argument should only be specified when num_shards is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
