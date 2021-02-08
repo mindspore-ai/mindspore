@@ -353,7 +353,10 @@ bool PsCacheManager::ProcessData() {
   struct timeval start_time, end_time;
   const uint64_t kUSecondInSecond = 1000000;
   (void)gettimeofday(&start_time, nullptr);
-  auto data = PsDataPrefetch::GetInstance().data(channel_name_);
+  void *data = nullptr;
+  if (!PsDataPrefetch::GetInstance().QueryData(channel_name_, &data)) {
+    return false;
+  }
   if (data == nullptr) {
     MS_LOG(INFO) << "No data process, channel name:" << channel_name_;
     std::unique_lock<std::mutex> locker(data_mutex_);
