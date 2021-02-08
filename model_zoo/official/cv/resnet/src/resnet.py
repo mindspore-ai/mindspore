@@ -74,8 +74,6 @@ def _calculate_fan_in_and_fan_out(tensor):
         num_output_fmaps = tensor[0]
         receptive_field_size = 1
         if dimensions > 2:
-            import time
-            time.sleep(10)
             receptive_field_size = tensor[2] * tensor[3]
         fan_in = num_input_fmaps * receptive_field_size
         fan_out = num_output_fmaps * receptive_field_size
