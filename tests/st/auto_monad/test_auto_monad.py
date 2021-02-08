@@ -1427,3 +1427,43 @@ def test_if_cast():
     r1 = net(beta1, beta2)
     expect = Tensor(np.array([3]).astype(np.float32))
     np.testing.assert_array_equal(r1.asnumpy(), expect.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_multi_add_assign():
+    class Net(Cell):
+        def __init__(self, i1):
+            super(Net, self).__init__()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.mul = P.Mul()
+            self.assign = P.Assign()
+            self.p = Parameter(i1, name='para')
+
+        def construct(self, a, d, e):
+            res1 = self.add(self.add(self.add(self.p, a), a), a)
+            mul = self.mul(d, e)
+            self.assign(self.p, mul)
+            res2 = self.sub(self.p, e)
+            return res2, res1
+
+    def numpy_out(p, a, d, e):
+        res1 = p + a + a + a
+        res_as = d * e
+        res2 = d * e - e
+        return res2, res1, res_as
+
+    p = (np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+    i0 = (np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+    i1 = (np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+    i2 = (np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+
+    net = Net(Tensor(p))
+    r2, r1 = net(Tensor(i0), Tensor(i1), Tensor(i2))
+
+    outputs = [r2.asnumpy(), r1.asnumpy(), net.p.data.asnumpy()]
+    expects = numpy_out(p, i0, i1, i2)
+    np.testing.assert_array_equal(outputs, expects)
