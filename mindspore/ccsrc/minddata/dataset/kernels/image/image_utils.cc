@@ -103,8 +103,12 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     RETURN_STATUS_UNEXPECTED("Resize: load image failed.");
   }
   if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("Resize: input is not in shape of <H,W,C> or <H,W>");
+    RETURN_STATUS_UNEXPECTED("Resize: input tensor is not in shape of <H,W,C> or <H,W>");
   }
+  if (input_cv->shape()[2] != 3 && input_cv->shape()[2] != 1) {
+    RETURN_STATUS_UNEXPECTED("Resize: channel of input tesnor is not in 1 or 3.");
+  }
+
   cv::Mat in_image = input_cv->mat();
   // resize image too large or too small
   if (output_height > in_image.rows * 1000 || output_width > in_image.cols * 1000) {

@@ -145,6 +145,28 @@ def test_slice_multiple_rows():
         np.testing.assert_array_equal(exp_d, d['col'])
 
 
+def test_slice_none_and_ellipsis():
+    """
+    Test passing None and Ellipsis to Slice
+    """
+    dataset = [[1], [3, 4, 5], [1, 2], [1, 2, 3, 4, 5, 6, 7]]
+    exp_dataset = [[1], [3, 4, 5], [1, 2], [1, 2, 3, 4, 5, 6, 7]]
+
+    def gen():
+        for row in dataset:
+            yield (np.array(row),)
+
+    data = ds.GeneratorDataset(gen, column_names=["col"])
+    data = data.map(operations=ops.Slice(None))
+    for (d, exp_d) in zip(data.create_dict_iterator(output_numpy=True), exp_dataset):
+        np.testing.assert_array_equal(exp_d, d['col'])
+
+    data = ds.GeneratorDataset(gen, column_names=["col"])
+    data = data.map(operations=ops.Slice(Ellipsis))
+    for (d, exp_d) in zip(data.create_dict_iterator(output_numpy=True), exp_dataset):
+        np.testing.assert_array_equal(exp_d, d['col'])
+
+
 def test_slice_obj_neg():
     slice_compare([1, 2, 3, 4, 5], slice(-1, -5, -1), [5, 4, 3, 2])
     slice_compare([1, 2, 3, 4, 5], slice(-1), [1, 2, 3, 4])

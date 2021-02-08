@@ -51,12 +51,19 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
   Status rc = dataset::Tensor::CreateFromMemory(dataset::TensorShape(input.Shape()),
                                                 MSTypeToDEType(static_cast<TypeId>(input.DataType())),
                                                 (const uchar *)(input.Data().get()), input.DataSize(), &de_tensor);
-  RETURN_IF_NOT_OK(rc);
+  if (rc.IsError()) {
+    MS_LOG(ERROR) << rc;
+    RETURN_IF_NOT_OK(rc);
+  }
 
   // Apply transforms on tensor
   for (auto &t : transforms) {
     std::shared_ptr<dataset::Tensor> de_output;
-    RETURN_IF_NOT_OK(t->Compute(de_tensor, &de_output));
+    Status rc_ = t->Compute(de_tensor, &de_output);
+    if (rc_.IsError()) {
+      MS_LOG(ERROR) << rc_;
+      RETURN_IF_NOT_OK(rc_);
+    }
 
     // For next transform
     de_tensor = std::move(de_output);
@@ -90,14 +97,21 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     Status rc = dataset::Tensor::CreateFromMemory(dataset::TensorShape(tensor.Shape()),
                                                   MSTypeToDEType(static_cast<TypeId>(tensor.DataType())),
                                                   (const uchar *)(tensor.Data().get()), tensor.DataSize(), &de_tensor);
-    RETURN_IF_NOT_OK(rc);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << rc;
+      RETURN_IF_NOT_OK(rc);
+    }
     de_tensor_list.emplace_back(std::move(de_tensor));
   }
 
   // Apply transforms on tensor
   for (auto &t : transforms) {
     TensorRow de_output_list;
-    RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
+    Status rc = t->Compute(de_tensor_list, &de_output_list);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << rc;
+      RETURN_IF_NOT_OK(rc);
+    }
     // For next transform
     de_tensor_list = std::move(de_output_list);
   }

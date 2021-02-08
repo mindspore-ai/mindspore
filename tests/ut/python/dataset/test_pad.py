@@ -72,6 +72,26 @@ def test_pad_op():
         assert mse < 0.01
 
 
+def test_pad_op2():
+    """
+    Test Pad op2
+    """
+    logger.info("test padding parameter with size 2")
+
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    decode_op = c_vision.Decode()
+    resize_op = c_vision.Resize([90, 90])
+    pad_op = c_vision.Pad((100, 9,))
+    ctrans = [decode_op, resize_op, pad_op]
+
+    data1 = data1.map(operations=ctrans, input_columns=["image"])
+    for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
+        logger.info(data["image"].shape)
+        # It pads left, top with 100 and right, bottom with 9,
+        # so the final size of image is 90 + 100 + 9 = 199
+        assert data["image"].shape[0] == 199
+        assert data["image"].shape[1] == 199
+
 
 def test_pad_grayscale():
     """

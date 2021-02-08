@@ -825,8 +825,8 @@ std::shared_ptr<TensorOp> PadOperation::Build() {
       break;
     case 2:
       pad_left = padding_[0];
-      pad_top = padding_[1];
-      pad_right = padding_[0];
+      pad_top = padding_[0];
+      pad_right = padding_[1];
       pad_bottom = padding_[1];
       break;
     default:
@@ -1096,8 +1096,8 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
       break;
     case 2:
       pad_left = padding_[0];
-      pad_top = padding_[1];
-      pad_right = padding_[0];
+      pad_top = padding_[0];
+      pad_right = padding_[1];
       pad_bottom = padding_[1];
       break;
     default:
@@ -1215,8 +1215,8 @@ std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
       break;
     case 2:
       pad_left = padding_[0];
-      pad_top = padding_[1];
-      pad_right = padding_[0];
+      pad_top = padding_[0];
+      pad_right = padding_[1];
       pad_bottom = padding_[1];
       break;
     default:

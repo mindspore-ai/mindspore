@@ -1357,7 +1357,8 @@ class RandomColor:
 
 class RandomSharpness:
     """
-    Adjust the sharpness of the input PIL image by a random degree.
+    Adjust the sharpness of the input PIL image by a fixed or random degree. Degree of 0.0 gives a blurred image,
+    degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
 
     Args:
         degrees (sequence): Range of random sharpness adjustment degrees.

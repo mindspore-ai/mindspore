@@ -39,13 +39,14 @@ class OneHot(cde.OneHotOp):
     Tensor operation to apply one hot encoding.
 
     Args:
-        num_classes (int): Number of classes of the label.
+        num_classes (int): Number of classes of objects in dataset.
             It should be larger than the largest label number in the dataset.
 
     Raises:
         RuntimeError: feature size is bigger than num_classes.
 
     Examples:
+        >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
         >>> onehot_op = c_transforms.OneHot(num_classes=10)
         >>> mnist_dataset = mnist_dataset.map(operations=onehot_op, input_columns=["label"])
     """
@@ -114,13 +115,13 @@ class _SliceOption(cde.SliceOption):
     Internal class SliceOption to be used with SliceOperation
 
     Args:
-        _SliceOption(Union[int, list(int), slice, None, Ellipses, bool, _SliceOption]):
+        _SliceOption(Union[int, list(int), slice, None, Ellipsis, bool, _SliceOption]):
 
             1.  :py:obj:`int`: Slice this index only along the dimension. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices along the dimension. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object along the dimension.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
-            5.  :py:obj:`Ellipses`: Slice the whole dimension. Similar to `:` in Python indexing.
+            5.  :py:obj:`Ellipsis`: Slice the whole dimension. Similar to `:` in Python indexing.
             6.  :py:obj:`boolean`: Slice the whole dimension. Similar to `:` in Python indexing.
     """
 
@@ -143,16 +144,16 @@ class Slice(cde.SliceOp):
     (Currently only rank-1 tensors are supported).
 
     Args:
-        *slices(Union[int, list(int), slice, None, Ellipses]):
+        *slices(Union[int, list(int), slice, None, Ellipsis]):
             Maximum `n` number of arguments to slice a tensor of rank `n`.
             One object in slices can be one of:
 
             1.  :py:obj:`int`: Slice this index only along the first dimension. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices along the first dimension. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object along the first dimension.
-                Similar to `start:stop:step`.
+                Similar to start:stop:step.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
-            5.  :py:obj:`Ellipses`: Slice the whole dimension. Similar to `:` in Python indexing.
+            5.  :py:obj:`Ellipsis`: Slice the whole dimension. Similar to `:` in Python indexing.
 
     Examples:
         >>> # Data before
@@ -232,7 +233,7 @@ class Mask(cde.MaskOp):
 
 class PadEnd(cde.PadEndOp):
     """
-    Pad input tensor according to `pad_shape`, need to have same rank.
+    Pad input tensor according to pad_shape, need to have same rank.
 
     Args:
         pad_shape (list(int)): List of integers representing the shape needed. Dimensions that set to `None` will
@@ -295,7 +296,7 @@ class Concatenate(cde.ConcatenateOp):
 
 class Duplicate(cde.DuplicateOp):
     """
-    Duplicate the input tensor to a new output tensor. The input tensor is carried over to the output list.
+    Duplicate the input tensor to output, only support transform one column each time.
 
     Examples:
         >>> # Data before
@@ -405,7 +406,7 @@ class RandomApply():
 
 class RandomChoice():
     """
-    Randomly selects one transform from a list of transforms to perform operation.
+    Randomly select one transform from a list of transforms to perform operation.
 
     Args:
         transforms (list): List of transformations to be chosen from to apply.

@@ -200,8 +200,8 @@ std::shared_ptr<NormalizePadOperation> NormalizePad(const std::vector<float> &me
 /// \notes Pads the image according to padding parameters
 /// \param[in] padding A vector representing the number of pixels to pad the image
 ///    If vector has one value, it pads all sides of the image with that value.
-///    If vector has two values, it pads left and right with the first and
-///    top and bottom with the second value.
+///    If vector has two values, it pads left and top with the first and
+///    right and bottom with the second value.
 ///    If vector has four values, it pads left, top, right, and bottom with
 ///    those values respectively.
 /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
@@ -270,8 +270,12 @@ std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float>
 /// \param[in] size A vector representing the output size of the cropped image.
 ///     If size is a single value, a square crop of size (size, size) is returned.
 ///     If size has 2 values, it should be (height, width).
-/// \param[in] padding A vector with the value of pixels to pad the image. If 4 values are provided,
-///     it pads the left, top, right and bottom respectively.
+/// \param[in] padding A vector representing the number of pixels to pad the image
+///    If vector has one value, it pads all sides of the image with that value.
+///    If vector has two values, it pads left and top with the first and
+///    right and bottom with the second value.
+///    If vector has four values, it pads left, top, right, and bottom with
+///    those values respectively.
 /// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
 ///     the given output size.
 /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is
@@ -304,8 +308,12 @@ std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(
 /// \param[in] size A vector representing the output size of the cropped image.
 ///     If size is a single value, a square crop of size (size, size) is returned.
 ///     If size has 2 values, it should be (height, width).
-/// \param[in] padding A vector with the value of pixels to pad the image. If 4 values are provided,
-///     it pads the left, top, right and bottom respectively.
+/// \param[in] padding A vector representing the number of pixels to pad the image
+///    If vector has one value, it pads all sides of the image with that value.
+///    If vector has two values, it pads left and top with the first and
+///    right and bottom with the second value.
+///    If vector has four values, it pads left, top, right, and bottom with
+///    those values respectively.
 /// \param[in] pad_if_needed A boolean whether to pad the image if either side is smaller than
 ///     the given output size.
 /// \param[in] fill_value A vector representing the pixel intensity of the borders if the padding_mode is

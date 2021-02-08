@@ -26,11 +26,13 @@ class OneHotOp:
     Apply one hot encoding transformation to the input label, make label be more smoothing and continuous.
 
     Args:
-        num_classes (int): Number of classes of objects in dataset. Value must be larger than 0.
+        num_classes (int): Number of classes of objects in dataset.
+            It should be larger than the largest label number in the dataset.
         smoothing_rate (float, optional): Adjustable hyperparameter for label smoothing level.
             (Default=0.0 means no smoothing is applied.)
 
     Examples:
+        >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
         >>> transforms_list = [py_transforms.OneHotOp(num_classes=10, smoothing_rate=0.1)]
         >>> transform = py_transforms.Compose(transforms_list)
         >>> mnist_dataset = mnist_dataset(input_columns=["label"], operations=transform)
@@ -83,14 +85,14 @@ class Compose:
         >>>
         >>> # Compose is also be invoked implicitly, by just passing in a list of ops
         >>> # the above example then becomes:
-        >>> transform_list = [py_vision.Decode(),
-        ...                   py_vision.RandomHorizontalFlip(0.5),
-        ...                   py_vision.ToTensor(),
-        ...                   py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        ...                   py_vision.RandomErasing()]
+        >>> transforms_list = [py_vision.Decode(),
+        ...                    py_vision.RandomHorizontalFlip(0.5),
+        ...                    py_vision.ToTensor(),
+        ...                    py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        ...                    py_vision.RandomErasing()]
         >>>
         >>> # apply the transform to the dataset through dataset.map()
-        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transform_list, input_columns=["image"])
+        >>> image_folder_dataset_1 = image_folder_dataset_1.map(operations=transforms_list, input_columns=["image"])
         >>>
         >>> # Certain C++ and Python ops can be combined, but not all of them
         >>> # An example of combined operations
@@ -163,9 +165,9 @@ class RandomApply:
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>> transform_list = [py_vision.RandomHorizontalFlip(0.5),
-        ...                   py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        ...                   py_vision.RandomErasing()]
+        >>> transforms_list = [py_vision.RandomHorizontalFlip(0.5),
+        ...                    py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        ...                    py_vision.RandomErasing()]
         >>> transforms = Compose([py_vision.Decode(),
         ...                       py_transforms.RandomApply(transforms_list, prob=0.6),
         ...                       py_vision.ToTensor()])
@@ -199,11 +201,11 @@ class RandomChoice:
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose, RandomChoice
-        >>> transform_list = [py_vision.RandomHorizontalFlip(0.5),
-        ...                   py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        ...                   py_vision.RandomErasing()]
+        >>> transforms_list = [py_vision.RandomHorizontalFlip(0.5),
+        ...                    py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        ...                    py_vision.RandomErasing()]
         >>> transforms = Compose([py_vision.Decode(),
-        ...                       py_transforms.RandomChoice(transform_list),
+        ...                       py_transforms.RandomChoice(transforms_list),
         ...                       py_vision.ToTensor()])
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms, input_columns=["image"])
     """
@@ -234,9 +236,9 @@ class RandomOrder:
 
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>> transform_list = [py_vision.RandomHorizontalFlip(0.5),
-        ...                   py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        ...                   py_vision.RandomErasing()]
+        >>> transforms_list = [py_vision.RandomHorizontalFlip(0.5),
+        ...                    py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
+        ...                    py_vision.RandomErasing()]
         >>> transforms = Compose([py_vision.Decode(),
         ...                       py_transforms.RandomOrder(transforms_list),
         ...                       py_vision.ToTensor()])

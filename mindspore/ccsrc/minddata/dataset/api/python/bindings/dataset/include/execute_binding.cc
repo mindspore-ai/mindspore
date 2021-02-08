@@ -31,12 +31,7 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                     .def("__call__",
                          [](Execute &self, const std::shared_ptr<Tensor> &de_tensor) {
                            auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
-                           Status rc = self(ms_tensor, &ms_tensor);
-                           if (rc.IsError()) {
-                             THROW_IF_ERROR([&rc]() {
-                               RETURN_STATUS_UNEXPECTED("Failed to execute transform op, " + rc.ToString());
-                             }());
-                           }
+                           THROW_IF_ERROR(self(ms_tensor, &ms_tensor));
                            std::shared_ptr<dataset::Tensor> de_output_tensor;
                            dataset::Tensor::CreateFromMemory(dataset::TensorShape(ms_tensor.Shape()),
                                                              MSTypeToDEType(static_cast<TypeId>(ms_tensor.DataType())),
@@ -51,11 +46,7 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                         auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(tensor));
                         ms_input_tensor_list.emplace_back(std::move(ms_tensor));
                       }
-                      Status rc = self(ms_input_tensor_list, &ms_output_tensor_list);
-                      if (rc.IsError()) {
-                        THROW_IF_ERROR(
-                          [&rc]() { RETURN_STATUS_UNEXPECTED("Failed to execute transform op, " + rc.ToString()); }());
-                      }
+                      THROW_IF_ERROR(self(ms_input_tensor_list, &ms_output_tensor_list));
                       std::vector<std::shared_ptr<dataset::Tensor>> de_output_tensor_list;
                       for (auto &tensor : ms_output_tensor_list) {
                         std::shared_ptr<dataset::Tensor> de_output_tensor;
