@@ -116,28 +116,20 @@ void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
 }
 
 void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
+  std::string err_msg = "RDR path parse failed. The RDR path will be a default value: '" + rdr_path_ +
+                        "'. Please check the settings about '" + kRdrSettings + "' in config file '" + config_file_ +
+                        "' set by 'env_config_path' in context.";
+
   if (!CheckJsonStringType(content, kRdrSettings, kPath)) {
-    MS_LOG(WARNING) << "The RDR path will be a default value: '" << rdr_path_ << "'.";
+    MS_LOG(WARNING) << err_msg;
     return;
   }
+
   std::string path = content;
-  if (!std::all_of(path.begin(), path.end(),
-                   [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '/'; })) {
-    MS_LOG(WARNING) << "The path in " << kRdrSettings
-                    << " only support alphabets, digit or {'-', '_', '/'}, but got:" << path << "."
-                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
+  if (!Common::IsPathValid(path, maxDirectoryLength, err_msg, false)) {
     return;
   }
-  if (path.empty()) {
-    MS_LOG(WARNING) << "The path in " << kRdrSettings << " is empty."
-                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
-    return;
-  }
-  if (path[0] != '/') {
-    MS_LOG(WARNING) << "The path in " << kRdrSettings << " only support absolute path and should start with '/'."
-                    << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
-    return;
-  }
+
   if (path.back() != '/') {
     path += '/';
   }
@@ -146,7 +138,7 @@ void EnvConfigParser::ParseRdrPath(const nlohmann::json &content) {
 
 void EnvConfigParser::ParseRdrEnable(const nlohmann::json &content) {
   if (!content.is_boolean()) {
-    MS_LOG(WARNING) << "Json Parse Failed. 'enable' in " << kRdrSettings << " should be boolean."
+    MS_LOG(WARNING) << "Json parse failed. 'enable' in " << kRdrSettings << " should be boolean."
                     << " Please check the config file '" << config_file_ << "' set by 'env_config_path' in context.";
     rdr_enabled_ = false;
     return;

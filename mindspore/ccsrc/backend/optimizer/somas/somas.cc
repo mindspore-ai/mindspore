@@ -381,9 +381,9 @@ bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
 #ifdef ENABLE_DUMP_IR
   SubModuleId module = SubModuleId::SM_OPTIMIZER;
   std::string tag = "somas";
-  std::string filename = "somas_pre_processed_info_" + std::to_string(graph->graph_id()) + ".ir";
+  std::string filename = "somas_pre_processed_info_" + std::to_string(graph->graph_id());
   mindspore::RDR::RecordString(module, tag, SomasInfo(), filename);
-  filename = "somas_offline_log_" + std::to_string(graph->graph_id()) + ".ir";
+  filename = "somas_offline_log_" + std::to_string(graph->graph_id());
   mindspore::RDR::RecordString(module, tag, Offline(), filename);
 #endif
 
@@ -673,7 +673,7 @@ void Somas::InitBasicInfo(const session::KernelGraph *graph) {
 #ifdef ENABLE_DUMP_IR
   SubModuleId module = SubModuleId::SM_OPTIMIZER;
   std::string tag = "somas";
-  std::string filename = "somas_initial_info_" + std::to_string(graph->graph_id()) + ".ir";
+  std::string filename = "somas_initial_info_" + std::to_string(graph->graph_id());
   mindspore::RDR::RecordString(module, tag, SomasInfo(), filename);
 #endif
 

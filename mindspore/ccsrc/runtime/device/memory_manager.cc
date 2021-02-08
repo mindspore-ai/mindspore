@@ -76,10 +76,10 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
   SubModuleId module = SubModuleId::SM_OPTIMIZER;
   std::string tag = "somas";
 
-  std::string filename = "somas_allocate_info_" + std::to_string(graph->graph_id()) + ".ir";
+  std::string filename = "somas_allocate_info_" + std::to_string(graph->graph_id());
   mindspore::RDR::RecordString(module, tag, somas_reuse_util_ptr_->SomasInfo(), filename);
 
-  filename = "somas_mem_info_" + std::to_string(graph->graph_id()) + ".ir";
+  filename = "somas_mem_info_" + std::to_string(graph->graph_id());
   mindspore::RDR::RecordString(module, tag, somas_reuse_util_ptr_->SomasMemory(), filename);
 #endif
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);

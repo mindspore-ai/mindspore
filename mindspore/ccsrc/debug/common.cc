@@ -170,4 +170,105 @@ std::optional<std::string> Common::GetEnvConfigFile() {
   }
   return config_file;
 }
+
+bool Common::IsStrLengthValid(const std::string &str, const int &length_limit, const std::string &error_message,
+                              const bool &print_str) {
+  const int len_str = str.length();
+  if (len_str > length_limit) {
+    std::ostringstream msg;
+    if (print_str) {
+      msg << error_message << "The string is " << str << ", its length is " << str.length();
+    } else {
+      msg << error_message << "The length is " << str.length();
+    }
+    msg << ", exceeding the limit of " << length_limit << ".";
+    MS_LOG(WARNING) << msg.str();
+    return false;
+  }
+  return true;
+}
+
+bool Common::IsEveryFilenameValid(const std::string &path, const int &length_limit, const std::string &error_message) {
+  int left_pos = 0;
+  int len_path = path.length();
+  for (int i = 0; i < len_path; i++) {
+    if (i != 0) {
+      if (path[i] == '\\' || path[i] == '/') {
+        int cur_len = i - left_pos;
+        if (cur_len > length_limit) {
+          MS_LOG(WARNING) << error_message << "The name length of '" << path.substr(left_pos, cur_len) << "' is "
+                          << cur_len << ". It is out of the limit which is " << length_limit << ".";
+          return false;
+        }
+        left_pos = i + 1;
+      }
+    }
+  }
+  if (!(path[len_path - 1] == '\\' || path[len_path - 1] == '/')) {
+    int cur_len = len_path - left_pos;
+    if (cur_len > length_limit) {
+      MS_LOG(WARNING) << error_message << "The name length of '" << path.substr(left_pos, cur_len) << "' is " << cur_len
+                      << ". It is out of the limit which is " << length_limit << ".";
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Common::IsPathValid(const std::string &path, const int &length_limit, const std::string &error_message,
+                         const bool &print_str) {
+  std::string err_msg = "Detail: ";
+  if (!error_message.empty()) {
+    err_msg = error_message + " " + err_msg;
+  }
+
+  if (path.empty()) {
+    MS_LOG(WARNING) << err_msg << "The path is empty.";
+    return false;
+  }
+
+  if (!IsStrLengthValid(path, length_limit, err_msg, print_str)) {
+    return false;
+  }
+
+  if (!std::all_of(path.begin(), path.end(),
+                   [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '/'; })) {
+    MS_LOG(WARNING) << err_msg << "The path only support alphabets, digit or {'-', '_', '/'}, but got:" << path << ".";
+    return false;
+  }
+
+  if (path[0] != '/') {
+    MS_LOG(WARNING) << err_msg << "The path only support absolute path and should start with '/'.";
+    return false;
+  }
+
+  if (!IsEveryFilenameValid(path, maxOSFilenameLength, err_msg)) {
+    return false;
+  }
+  return true;
+}
+
+bool Common::IsFilenameValid(const std::string &filename, const int &length_limit, const std::string &error_message) {
+  std::string err_msg = "Detail: ";
+  if (!error_message.empty()) {
+    err_msg = error_message + " " + err_msg;
+  }
+
+  if (filename.empty()) {
+    MS_LOG(WARNING) << err_msg << "The filename is empty.";
+    return false;
+  }
+
+  if (!IsStrLengthValid(filename, length_limit, err_msg)) {
+    return false;
+  }
+
+  if (!std::all_of(filename.begin(), filename.end(),
+                   [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '.'; })) {
+    MS_LOG(WARNING) << err_msg << "The filename only support alphabets, digit or {'-', '_', '.'}, but got:" << filename
+                    << ".";
+    return false;
+  }
+  return true;
+}
 }  // namespace mindspore

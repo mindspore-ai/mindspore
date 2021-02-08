@@ -10,6 +10,7 @@ set(_DEBUG_SRC_LIST
 
 if(ENABLE_DUMP_IR)
     list(APPEND _DEBUG_SRC_LIST
+        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/base_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_exec_order_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/string_recorder.cc"
