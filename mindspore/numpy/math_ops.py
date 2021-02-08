@@ -963,11 +963,13 @@ def tensordot(a, b, axes=2):
     non-negative integer_like scalar, `N`; if it is such, then the last `N` dimensions of
     `a` and the first `N` dimensions of `b` are summed over.
     Three common use cases are:
+
         ``axes = 0`` : tensor product
 
         ``axes = 1`` : tensor dot product
 
         ``axes = 2`` : (default) tensor double contraction
+
     When axes is integer_like, the sequence for evaluation will be: first the `-Nth`
     axis in `a` and 0th axis in `b`, and the -1th axis in `a` and `Nth` axis in `b` last.
     When there is more than one axis to sum over - and they are not the last (first)

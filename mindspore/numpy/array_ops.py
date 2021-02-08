@@ -561,7 +561,7 @@ def vstack(tup):
     """
     Stacks tensors in sequence vertically.
     This is equivalent to concatenation along the first axis. 1-D tensors should firstly be reshaped to `(1, N)`,
-        and then be concatenated along the first axis.
+    and then be concatenated along the first axis.
 
     Args:
         tup (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The tensors must have the same shape
