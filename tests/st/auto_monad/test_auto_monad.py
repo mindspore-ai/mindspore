@@ -48,7 +48,6 @@ def _with_save_graphs():
     clean_all_ir_files('./')
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print():
     class Print(Cell):
         def __init__(self):
@@ -72,7 +71,6 @@ def test_print():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_add():
     class Print_Add(Cell):
         def __init__(self):
@@ -100,7 +98,6 @@ def test_print_add():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_assign():
     class Print_Assign(Cell):
         def __init__(self):
@@ -128,7 +125,6 @@ def test_print_assign():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_assign_add():
     class Print_Assign_Add(Cell):
         def __init__(self):
@@ -159,7 +155,6 @@ def test_print_assign_add():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_while():
     class Print_While(Cell):
         def __init__(self):
@@ -194,7 +189,6 @@ def test_print_while():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_if():
     class Print_If(Cell):
         def __init__(self):
@@ -225,7 +219,6 @@ def test_print_if():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_assign_while():
     class Print_Assign_While(Cell):
         def __init__(self):
@@ -269,7 +262,6 @@ def test_print_assign_while():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_assign_if():
     class Print_Assign_If(Cell):
         def __init__(self):
@@ -525,7 +517,6 @@ def test_for():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_for():
     class Print_For(Cell):
         def __init__(self):
@@ -562,7 +553,6 @@ def test_print_for():
     check_output(cap.output, patterns)
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_print_assign_for():
     class Print_Assign_For(Cell):
         def __init__(self):
@@ -749,7 +739,6 @@ def test_multi_assign_addn():
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.skip(reason="Ignore print detection")
 def test_multi_assign_print():
     class Multi_Assign_Print(Cell):
         def __init__(self):
@@ -1285,10 +1274,6 @@ def use_build_train_network_check_cast_num(network, level, inputs, label, cast_n
     return out_me
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_auto_mixed_precision_train_prelunet(with_save_graphs):
     net2 = NetRrelu(3, 12)
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
@@ -1313,22 +1298,14 @@ class AssignNet(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_auto_mixed_precision_train_021(pynative_save_graphs):
+def test_auto_mixed_precision_train_1(pynative_save_graphs):
     net = AssignNet()
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
     label32 = Tensor(np.zeros([1, 3]).astype(np.float32))
     use_build_train_network_check_cast_num(net, "O0", input32, label32, 0)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_auto_mixed_precision_train_022(pynative_save_graphs):
+def test_auto_mixed_precision_train_2(pynative_save_graphs):
     net = AssignNet()
     input32 = Tensor(np.ones([1, 3, 2, 2]).astype(np.float32))
     label32 = Tensor(np.zeros([1, 3]).astype(np.float32))
@@ -1406,11 +1383,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
     return out_me
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_auto_mixed_precision_controlflow_auto_1(pynative_save_graphs):
+def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     net = MixControlNet(3, 5)
     input_x = Tensor(
         np.random.randint(2, size=(1, 3, 2, 2)).astype((np.float32)))
