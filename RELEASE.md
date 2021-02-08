@@ -72,7 +72,7 @@ Previously the kernel size and pad mode attrs of pooling ops are named "ksize" a
 </tr>
 </table>
 
-##### `ops.TensorAdd`, change API name to `ops.Add` ([!11568](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11568))
+##### `ops.TensorAdd`, change API name to `ops.Add` ([!11568](https://gitee.com/mindspore/mindspore/pulls/11568))
 
 The operator name TensorAdd is not standardized, it is changed to Add. The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
 
@@ -102,7 +102,7 @@ The operator name TensorAdd is not standardized, it is changed to Add. The old i
 </tr>
 </table>
 
-##### `ops.Gelu`, `ops.GeluGrad`, `ops.FastGelu`, `ops.FastGeluGrad`, change API name to `ops.GeLU`, `ops.GeLUGrad`, `ops.FastGeLU`, `ops.FastGeLUGrad` ([!11603](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11603))
+##### `ops.Gelu`, `ops.GeluGrad`, `ops.FastGelu`, `ops.FastGeluGrad`, change API name to `ops.GeLU`, `ops.GeLUGrad`, `ops.FastGeLU`, `ops.FastGeLUGrad` ([!11603](https://gitee.com/mindspore/mindspore/pulls/11603))
 
 Gelu, GeluGrad, FastGelu, and FastGeluGrad names are unified into ReLU naming rules, "lu" is changed to the uppercase "LU". The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
 
@@ -138,7 +138,7 @@ Gelu, GeluGrad, FastGelu, and FastGeluGrad names are unified into ReLU naming ru
 </tr>
 </table>
 
-##### `ops.GatherV2`, change API name to `ops.Gather` ([!11713](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11713))
+##### `ops.GatherV2`, change API name to `ops.Gather` ([!11713](https://gitee.com/mindspore/mindspore/pulls/11713))
 
 GatherV2 is changed to Gather. The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
 
@@ -168,7 +168,7 @@ GatherV2 is changed to Gather. The old interface can be used continuously, but w
 </tr>
 </table>
 
-##### `ops.Pack`、`ops.Unpack`, change API name to `ops.Stack`、`ops.Unstack` ([!11828](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11828))
+##### `ops.Pack`、`ops.Unpack`, change API name to `ops.Stack`、`ops.Unstack` ([!11828](https://gitee.com/mindspore/mindspore/pulls/11828))
 
 Pack is changed to Stack, and Unpack is changed to Unstack. The old interface can be used continuously, but will be deleted in subsequent versions, it is recommended to use and switch to the latest interface.
 
@@ -200,7 +200,7 @@ Pack is changed to Stack, and Unpack is changed to Unstack. The old interface ca
 </tr>
 </table>
 
-##### `ops.ControlDepend`, add deprecated to ControlDepend ([!11844](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11844))
+##### `ops.ControlDepend`, add deprecated to ControlDepend ([!11844](https://gitee.com/mindspore/mindspore/pulls/11844))
 
 ControlDepend is deprecated and will be removed in a future version, use Depend instead.
 
@@ -229,7 +229,7 @@ Note:
 </tr>
 </table>
 
-##### `ops.Depend`, add operator description and use case ([!11815](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11815)), ([!11879](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/11879))
+##### `ops.Depend`, add operator description and use case ([!11815](https://gitee.com/mindspore/mindspore/pulls/11815)), ([!11879](https://gitee.com/mindspore/mindspore/pulls/11879))
 
 Since the ControlDepend operator will be deprecated from version 1.2, it is recommended to use the Depend operator instead.
 
