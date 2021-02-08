@@ -551,6 +551,7 @@ def set_context(**kwargs):
         enable_profiling (bool): Whether to open profiling. Default: False.
         profiling_options (str): Set profiling collection options, operators can profiling data here.
             The values of profiling collection options are as follows, supporting the collection of multiple data.
+
             - output: the saving the path of the profiling collection result file. The directory spectified by this
               parameter needs to be created in advance on the training environment (container or host side) and ensure
               that the running user configured during installation has read and write permissions.It supports the
@@ -586,6 +587,7 @@ def set_context(**kwargs):
               Memory: percentage of external memory read and write instructions.
               MemoryL0: percentage of internal memory read and write instructions.
               ResourceConflictRatio: proportion of pipline queue instructions.
+
             The profiling_options is like '{"output":'/home/data/output','training_trace':'on'}'
 
         check_bprop (bool): Whether to check bprop. Default: False.
