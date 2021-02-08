@@ -199,14 +199,15 @@ class JiebaTokenizer(TextTensorOperation):
         Add user defined word to JiebaTokenizer's dictionary.
 
         Args:
-            user_dict (Union[str, dict]): Dictionary to be added, file path or Python dictionary,
+            user_dict (Union[str, dict]): One of the two loading methods is file path(str) loading
+                (according to the Jieba dictionary format) and the other is Python dictionary(dict) loading,
                 Python Dict format: {word1:freq1, word2:freq2,...}.
                 Jieba dictionary format : word(required), freq(optional), such as:
 
                 .. code-block::
 
                     word1 freq1
-                    word2
+                    word2 None
                     word3 freq3
 
         Examples:
