@@ -6607,7 +6607,7 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         return var_dtype, accum_dtype, linear_dtype
 
 
-class Dropout(PrimitiveWithInfer):
+class Dropout(PrimitiveWithCheck):
     """
     During training, randomly zeroes some of the elements of the input tensor with probability.
 
@@ -6650,15 +6650,12 @@ class Dropout(PrimitiveWithInfer):
         self.seed1 = validator.check_value_type("Seed1", Seed1, [int], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0, 1, Rel.INC_RIGHT, "keep_prob", self.name)
 
-    def infer_shape(self, x_shape):
+    def check_shape(self, x_shape):
         validator.check_int(len(x_shape), 1, Rel.GE, "x_shape", self.name)
-        mask_shape = x_shape
-        return x_shape, mask_shape
 
-    def infer_dtype(self, x_dtype):
+    def check_dtype(self, x_dtype):
         valid_dtypes = (mstype.float16, mstype.float32)
         validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-        return x_dtype, x_dtype
 
 
 class Dropout3d(PrimitiveWithInfer):

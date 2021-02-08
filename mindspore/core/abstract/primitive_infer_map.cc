@@ -145,6 +145,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimBpropCut, {InferImplBpropCut, true}},
     {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
     {prim::kPrimLayerNormGrad, {InferImplLayerNormGrad, true}},
+    {prim::kPrimDropout, {InferImplDropout, true}},
     {prim::kPrimDropoutGenMask, {InferImplDropoutGenMask, true}},
     {prim::kPrimSparseApplyFtrl, {InferImplSparseApplyFtrl, true}},
     {prim::kPrimSparseApplyProximalAdagrad, {InferImplSparseApplyProximalAdagrad, true}},
