@@ -20,7 +20,6 @@ import operator
 from functools import reduce, partial
 from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
-from mindspore import log as logger
 import numpy as np
 from ... import context
 from .. import signature as sig
@@ -3699,6 +3698,99 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
         args = {"x_dtype": x_dtype, "y_dtype": y_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return x_dtype
+
+
+class BCEWithLogitsLoss(PrimitiveWithInfer):
+    r"""
+    Adds sigmoid activation function to input `predict`, and uses the given logits to compute binary cross entropy
+    between the target and the output.
+
+    Sets input predict as `X`, input target as `Y`, output as `L`. Then,
+
+    .. math::
+        p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
+
+    .. math::
+        L_{ij} = -[Y_{ij} * log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+
+    Then,
+
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{`none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        \end{cases}
+
+    Args:
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+            If "none", do not perform reduction. Default:`mean`.
+
+    Inputs:
+        - **predict** (Tensor) - Input logits. Data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth label. Has the same shape with `predict`.
+          Data type must be float16 or float32.
+        - **weight** (Tensor) - A rescaling weight applied to the loss of each batch element. It must can be
+          broadcast to a tensor with shape of `predict`. Data type must be float16 or float32.
+        - **pos_weight** (Tensor) - A weight of positive examples. Must be a vector with length equal to the
+          number of classes. It must can be broadcast to a tensor with shape of `predict`.
+          Data type must be float16 or float32.
+
+    Outputs:
+        Scalar. If reduction is "none", it's a tensor with the same shape and type as input `predict`.
+
+    Raises:
+        TypeError: If data type of any input is neither float16 nor float32.
+        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `predict`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
+        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
+        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]).astype(np.float32))
+        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]).astype(np.float32))
+        >>> loss = ops.BCEWithLogitsLoss()
+        >>> output = loss(predict, target, weight, pos_weight)
+        >>> print(output)
+        0.3463612
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction='mean'):
+        """Initialize BCEWithLogitsLoss"""
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+
+    def infer_shape(self, predict, target, weight, pos_weight):
+        validator.check('predict_shape', predict, 'target_shape', target, Rel.EQ, self.name)
+        reversed_weight_shape = tuple(reversed(weight))
+        reversed_target = tuple(reversed(predict))
+        for i, v in enumerate(reversed_weight_shape):
+            if v not in (reversed_target[i], 1):
+                raise ValueError(f"For {self.name}, shapes can not broadcast. "
+                                 f"predict: {tuple(predict)}, weight shape {tuple(weight)}.")
+
+        reversed_pos_shape = tuple(reversed(pos_weight))
+        reversed_target = tuple(reversed(predict))
+        for i, v in enumerate(reversed_pos_shape):
+            if v not in (reversed_target[i], 1):
+                raise ValueError(f"For {self.name}, shapes can not broadcast. "
+                                 f"predict: {tuple(predict)}, weight shape {tuple(weight)}.")
+
+        if self.reduction in ('mean', 'sum'):
+            shape = []
+        else:
+            shape = predict
+        return shape
+
+    def infer_dtype(self, predict, target, weight, pos_weight):
+        validator.check_tensor_dtype_valid('predict dtype', predict, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('target dtype', target, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('weight dtype', weight, [mstype.float16, mstype.float32], self.name)
+        validator.check_tensor_dtype_valid('pos_weight dtype', pos_weight, [mstype.float16, mstype.float32], self.name)
+        return predict
 
 
 class Pad(PrimitiveWithInfer):

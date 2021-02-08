@@ -2058,6 +2058,10 @@ test_case_nn_ops = [
         'block': P.L2Loss(),
         'desc_inputs': [Tensor(np.array([[1, 1], [2, 2], [3, 3], [4, 4]]), mstype.float16)],
         'desc_bprop': []}),
+    ('BCEWithLogitsLoss', {
+        'block': P.BCEWithLogitsLoss(),
+        'desc_inputs': [[3, 3], [3, 3], [3, 3], [3, 3]],
+        'desc_bprop': []}),
     ('ResizeBilinear', {
         'block': P.ResizeBilinear((5, 5)),
         'desc_inputs': [Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mstype.float16)],

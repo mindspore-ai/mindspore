@@ -32,6 +32,7 @@
 #include "backend/optimizer/ascend/ir_fission/layer_norm_grad_split.h"
 #include "backend/optimizer/ascend/ir_fission/unsorted_segment_sum_fission.h"
 #include "backend/optimizer/ascend/ir_fission/gather_v2_ds_fission.h"
+#include "backend/optimizer/ascend/ir_fission/bce_with_logits_loss_fission.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/square_sum_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
@@ -191,6 +192,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ReduceMinFission>());
   ir_fusion_pm->AddPass(std::make_shared<UnsortSegmentSumFission>());
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
+  ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
 }
 }  // namespace
 void AscendGraphKernelCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
@@ -333,6 +335,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);

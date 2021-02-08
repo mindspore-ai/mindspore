@@ -1212,6 +1212,32 @@ def get_bprop_binary_cross_entropy(self):
     return bprop
 
 
+@bprop_getters.register(P.BCEWithLogitsLoss)
+def get_bprop_ce_with_logits_loss(self):
+    """Grad definition for `BCEWithLogitsLoss` operation."""
+    reduction = self.reduction
+    mul = P.Mul()
+    sigmoid = P.Sigmoid()
+    add = P.TensorAdd()
+    sub = P.Sub()
+    size = P.Size()
+
+    def bprop(predict, target, weight, pos_weight, out, dout):
+        sigmoid_input = sigmoid(predict)
+        if pos_weight is not None:
+            t = mul(target, pos_weight)
+            dx = mul(sub(mul(sub(add(t, 1), target), sigmoid_input), t), dout)
+        else:
+            dx = mul((sigmoid_input - target), dout)
+        if weight is not None:
+            dx = mul(dx, weight)
+        if reduction == 'mean':
+            dx = dx / size(dx)
+        return dx, zeros_like(target), zeros_like(weight), zeros_like(pos_weight)
+
+    return bprop
+
+
 @bprop_getters.register(P.KLDivLoss)
 def get_bprop_kl_div_loss(self):
     """Grad definition for `KLDivLoss` operation."""
