@@ -26,19 +26,15 @@
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
 
+// FIXME - This internal IR header will be removed when external API classes are provided
+#include "minddata/dataset/kernels/ir/vision/vision_ir.h"
+
 namespace mindspore {
 namespace dataset {
 
 // Transform operations for performing computer vision.
 namespace vision {
 
-// Char arrays storing name of corresponding classes (in alphabetical order)
-constexpr char kCenterCropOperation[] = "CenterCrop";
-constexpr char kCropOperation[] = "Crop";
-constexpr char kDecodeOperation[] = "Decode";
-constexpr char kNormalizeOperation[] = "Normalize";
-constexpr char kResizeOperation[] = "Resize";
-constexpr char kRotateOperation[] = "Rotate";
 // Transform Op classes (in alphabetical order)
 class CenterCropOperation;
 class CropOperation;
@@ -88,119 +84,12 @@ std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vect
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size,
                                         InterpolationMode interpolation = InterpolationMode::kLinear);
+
 /// \brief Applies an rotate transformation to an image.
 /// \notes Rotate the input image using a specified angle id.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<RotateOperation> Rotate();
 
-class CenterCropOperation : public TensorOperation {
- public:
-  explicit CenterCropOperation(std::vector<int32_t> size);
-
-  ~CenterCropOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kCenterCropOperation; }
-
-  Status to_json(nlohmann::json *out_json) override;
-
- private:
-  std::vector<int32_t> size_;
-};
-
-class CropOperation : public TensorOperation {
- public:
-  CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);
-
-  ~CropOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kCropOperation; }
-
- private:
-  std::vector<int32_t> coordinates_;
-  std::vector<int32_t> size_;
-};
-class DecodeOperation : public TensorOperation {
- public:
-  explicit DecodeOperation(bool rgb = true);
-
-  ~DecodeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDecodeOperation; }
-
-  Status to_json(nlohmann::json *out_json) override;
-
- private:
-  bool rgb_;
-};
-
-class NormalizeOperation : public TensorOperation {
- public:
-  NormalizeOperation(std::vector<float> mean, std::vector<float> std);
-
-  ~NormalizeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kNormalizeOperation; }
-
-  Status to_json(nlohmann::json *out_json) override;
-
- private:
-  std::vector<float> mean_;
-  std::vector<float> std_;
-};
-
-class ResizeOperation : public TensorOperation {
- public:
-  explicit ResizeOperation(std::vector<int32_t> size,
-                           InterpolationMode interpolation_mode = InterpolationMode::kLinear);
-
-  ~ResizeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kResizeOperation; }
-
-  Status to_json(nlohmann::json *out_json) override;
-
- private:
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
-};
-
-class RotateOperation : public TensorOperation {
- public:
-  RotateOperation();
-
-  ~RotateOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kRotateOperation; }
-
-  void setAngle(uint64_t angle_id);
-
- private:
-  std::shared_ptr<TensorOp> rotate_op;
-};
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

@@ -20,8 +20,7 @@
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision.h"
-#include "minddata/dataset/include/vision_lite.h"
+#include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 
 namespace mindspore {
 namespace dataset {

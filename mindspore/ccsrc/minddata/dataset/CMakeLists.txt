@@ -97,6 +97,7 @@ add_dependencies(engine-ir-datasetops core)
 add_dependencies(engine-ir-datasetops-source core)
 add_dependencies(engine-ir-cache core)
 add_dependencies(kernels-ir core)
+add_dependencies(kernels-ir-vision core)
 
 if(ENABLE_ACL)
     add_dependencies(kernels-dvpp-image core dvpp-utils)
@@ -146,6 +147,7 @@ set(submodules
         $<TARGET_OBJECTS:text>
         $<TARGET_OBJECTS:text-kernels>
         $<TARGET_OBJECTS:kernels-ir>
+        $<TARGET_OBJECTS:kernels-ir-vision>
         )
 
 if(ENABLE_ACL)
