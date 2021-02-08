@@ -116,8 +116,6 @@ class MS_API NetTrain {
 
   int ReadInputFile();
 
-  int ReadCalibData();
-
   int CompareOutput();
 
   int InitCallbackParameter();
@@ -140,78 +138,49 @@ class MS_API NetTrain {
 
   // tensorData need to be converter first
   template <typename T>
-  float CompareData(const std::string &nodeName, std::vector<int> msShape, T *msTensorData) {
-    auto iter = this->data_.find(nodeName);
-    if (iter != this->data_.end()) {
-      std::vector<size_t> castedMSShape;
-      size_t shapeSize = 1;
-      for (int64_t dim : msShape) {
-        castedMSShape.push_back(size_t(dim));
-        shapeSize *= dim;
+  float CompareData(const float *refOutput, int size, T *msTensorData) {
+    size_t errorCount = 0;
+    float meanError = 0;
+    std::cout << "Data of model output: ";
+    for (int j = 0; j < size; j++) {
+      if (j < 50) {
+        std::cout << static_cast<float>(msTensorData[j]) << " ";
       }
 
-      CheckTensor *calibTensor = iter->second;
-      if (calibTensor->shape != castedMSShape) {
-        std::ostringstream oss;
-        oss << "Shape of mslite output(";
-        for (auto dim : castedMSShape) {
-          oss << dim << ",";
-        }
-        oss << ") and shape source model output(";
-        for (auto dim : calibTensor->shape) {
-          oss << dim << ",";
-        }
-        oss << ") are different";
-        std::cerr << oss.str() << std::endl;
-        MS_LOG(ERROR) << oss.str().c_str();
+      if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
+        std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
+        MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
         return RET_ERROR;
       }
-      size_t errorCount = 0;
-      float meanError = 0;
-      std::cout << "Data of node " << nodeName << " : ";
-      for (size_t j = 0; j < shapeSize; j++) {
-        if (j < 50) {
-          std::cout << static_cast<float>(msTensorData[j]) << " ";
-        }
 
-        if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
-          std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
-          MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
-          return RET_ERROR;
-        }
-
-        auto tolerance = absoluteTolerance + relativeTolerance * fabs(calibTensor->data.at(j));
-        auto absoluteError = std::fabs(msTensorData[j] - calibTensor->data.at(j));
-        if (absoluteError > tolerance) {
-          if (fabs(calibTensor->data.at(j)) == 0) {
-            if (absoluteError > 1e-5) {
-              meanError += absoluteError;
-              errorCount++;
-            } else {
-              continue;
-            }
-          } else {
-            // just assume that atol = rtol
-            meanError += absoluteError / (fabs(calibTensor->data.at(j)) + FLT_MIN);
+      auto tolerance = absoluteTolerance + relativeTolerance * fabs(refOutput[j]);
+      auto absoluteError = std::fabs(msTensorData[j] - refOutput[j]);
+      if (absoluteError > tolerance) {
+        if (fabs(refOutput[j]) == 0) {
+          if (absoluteError > 1e-5) {
+            meanError += absoluteError;
             errorCount++;
+          } else {
+            continue;
           }
+        } else {
+          // just assume that atol = rtol
+          meanError += absoluteError / (fabs(refOutput[j]) + FLT_MIN);
+          errorCount++;
         }
       }
-      std::cout << std::endl;
-      if (meanError > 0.0f) {
-        meanError /= errorCount;
-      }
-
-      if (meanError <= 0.0000001) {
-        std::cout << "Mean bias of node/tensor " << nodeName << " : 0%" << std::endl;
-      } else {
-        std::cout << "Mean bias of node/tensor " << nodeName << " : " << meanError * 100 << "%" << std::endl;
-      }
-      return meanError;
-    } else {
-      MS_LOG(INFO) << "%s is not in Source Model output", nodeName.c_str();
-      return RET_ERROR;
     }
+    std::cout << std::endl;
+    if (meanError > 0.0f) {
+      meanError /= errorCount;
+    }
+
+    if (meanError <= 0.0000001) {
+      std::cout << "Mean bias of tensor: 0%" << std::endl;
+    } else {
+      std::cout << "Mean bias of tensor: " << meanError * 100 << "%" << std::endl;
+    }
+    return meanError;
   }
 
   int MarkPerformance();

@@ -71,7 +71,7 @@ void backwardP1(const float *restrict in, const float *restrict yt, const float 
 void backwardP2(const float *restrict in, const float *restrict yt, const float *restrict mean,
                 const float *restrict invar, const float *restrict scale, int size, int total_size, int ch,
                 const float *dxhat_sum, const float *dxhathat_sum, float *restrict dx) {
-  float N = (float)total_size;
+  const float N = (float)total_size;
   for (int i = 0; i < size; i++) {
     for (int c = 0; c < ch; c++) {
       // dx_2

@@ -360,14 +360,14 @@ session::TrainSession *session::TrainSession::CreateSession(const char *model_bu
   }
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "init sesssion failed";
+    MS_LOG(ERROR) << "init session failed";
     delete session;
     return nullptr;
   }
 
   ret = session->CompileTrainGraph(model);
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "Compiling Train Graph sesssion failed";
+    MS_LOG(ERROR) << "Compiling Train Graph session failed";
     delete session;
     return nullptr;
   }

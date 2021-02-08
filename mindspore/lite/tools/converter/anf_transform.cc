@@ -144,8 +144,8 @@ int AnfTransform::AddConvertPass(const std::shared_ptr<opt::GraphOptimizer> &opt
 int AnfTransform::AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer,
                                    const converter::Flags *config) {
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
-  const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
   if (!config->trainModel) {
+    const_fold_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>());
     auto inne_context_ptr = std::make_shared<lite::InnerContext>();
     inne_context_ptr->Init();
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(inne_context_ptr));

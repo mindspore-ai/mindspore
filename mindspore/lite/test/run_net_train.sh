@@ -71,6 +71,7 @@ function Run_Converter() {
 # Run on x86 platform:
 function Run_x86() {
     # Run mindspore converted train models:
+    fail=0
     while read line; do
         model_name=${line}
         if [[ $model_name == \#* ]]; then
@@ -80,21 +81,23 @@ function Run_x86() {
         echo ${model_name}'_train' >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-train-linux-x64' >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
-        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_outputs.bin --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
+        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
         echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
         LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib \
         ${run_valgrind}./benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}_train.ms \
         --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
-        --expectedDataFile=${train_io_path}/${model_name}_outputs.bin \
+        --expectedDataFile=${train_io_path}/${model_name}_output \
         --exportFile=${ms_models_path}/${model_name}_train_exported.ms >> "${run_x86_log_file}" \
         --epochs=${epoch_num} --numThreads=${threads}
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
             run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            fail=1
         fi
     done < ${models_mindspore_train_config}
+    return ${fail}
 }
 
 # Run on arm platform: 
@@ -157,7 +160,7 @@ function Run_arm() {
     echo 'chmod 777 benchmark_train' >> ${adb_cmd_file}
 
     adb -s ${device_id} shell < ${adb_cmd_file}
-    
+    fail=0
     # Run mindir converted train models:
     while read line; do
         model_name=${line}
@@ -167,7 +170,7 @@ function Run_arm() {
 
         # run benchmark_train test without clib data
         echo ${model_name}'_train' >> "${run_arm_log_file}"
-        adb -s ${device_id} push ${train_io_path}/${model_name}_input*.bin ${train_io_path}/${model_name}_outputs.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
+        adb -s ${device_id} push ${train_io_path}/${model_name}_input*.bin ${train_io_path}/${model_name}_output*.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
         echo 'cd /data/local/tmp/benchmark_train_test' > ${adb_cmd_run_file}
         echo 'chmod 777 benchmark_train' >> ${adb_cmd_run_file}
         if [ "$1" == arm64 ]; then
@@ -182,7 +185,7 @@ function Run_arm() {
         --epochs=${epoch_num} \
         --modelFile=${model_name}_train.ms \
         --inDataFile=${tmp_dir}/${model_name}_input1.bin,${tmp_dir}/${model_name}_input2.bin \
-        --expectedDataFile=${tmp_dir}/${model_name}_outputs.bin \
+        --expectedDataFile=${tmp_dir}/${model_name}_output \
         --exportFile=${tmp_dir}/${model_name}_train_exported.ms \
         --numThreads=${threads}
 ENDM
@@ -195,8 +198,11 @@ ENDM
             run_result=$1': '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
             run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file};
+            fail=1
         fi
+        
     done < ${models_mindspore_train_config}
+    return ${fail}
 }
 
 # Print start msg before run testcase

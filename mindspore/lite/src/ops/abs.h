@@ -20,8 +20,8 @@
 
 #include "src/ops/arithmetic_self.h"
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_ABS_H_
-#define LITE_MINDSPORE_LITE_C_OPS_ABS_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_ABS_H_
+#define MINDSPORE_LITE_SRC_OPS_ABS_H_
 
 namespace mindspore {
 namespace lite {
@@ -32,10 +32,11 @@ class Abs : public ArithmeticSelf {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Abs, ArithmeticSelf);
   explicit Abs(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // LITE_MINDSPORE_LITE_C_OPS_ABS_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_ABS_H_
