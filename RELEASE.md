@@ -8,6 +8,10 @@
 
 ##### Python API
 
+###### Turn `ops.MakeRefKey` into an internal interface ([!12010](https://gitee.com/mindspore/mindspore/pulls/12010))
+
+Previously MakeRefKey is an external interface that is not used, now make it an internal interface with the same usage. We do not recommend users to use this interface, and we will remove the relevant introduction of this interface from the official website.
+
 ###### `ops.ApplyFtrl`, `ops.ApplyMomentum`, `ops.ApplyRMSProp`, `ops.ApplyCenteredRMSProp` change the output on Ascend backend from multiple to a single. ([!11895](https://gitee.com/mindspore/mindspore/pulls/11895))
 
 Previously the number of outputs of these operator is different on different backends. To unify their definition we change their output on Ascend backend from multiple to a single.
