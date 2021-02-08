@@ -43,7 +43,9 @@ const BaseRef MomentumLossscaleFusion::DefinePattern() const {
   VarPtr X1 = std::make_shared<Var>();
   VarPtr X2 = std::make_shared<Var>();
   VarPtr X4 = std::make_shared<Var>();
-  return VectorRef({prim::kPrimApplyMomentum, X0, X1, X2, VectorRef({prim::kPrimMul, Xs}), X4});
+  // UpdateState node
+  VarPtr X5 = std::make_shared<Var>();
+  return VectorRef({prim::kPrimApplyMomentum, X0, X1, X2, VectorRef({prim::kPrimMul, Xs}), X4, X5});
 }
 
 const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
@@ -52,14 +54,15 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  CheckCNodeInputSize(cnode, kApplyMomentumInputNum);
+  CheckCNodeInputSize(cnode, kApplyMomentumInputTensorNum);
   AnfNodePtr mul = cnode->input(4);
   MS_EXCEPTION_IF_NULL(mul);
   auto mul_cnode = mul->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(mul_cnode);
-  CheckCNodeInputSize(mul_cnode, kMulInputNum);
+  CheckCNodeInputSize(mul_cnode, kMulInputTensorNum);
   size_t value_node_index = 0;
-  for (size_t i = 1; i < kMulInputNum; ++i) {
+  // All real inputs include 1prim + x*TensorInput
+  for (size_t i = 1; i < kMulInputTensorNum + 1; ++i) {
     if (CheckValueNodeInputOfMul(mul_cnode->input(i))) {
       value_node_index = i;
       break;
@@ -70,12 +73,16 @@ const AnfNodePtr MomentumLossscaleFusion::Process(const FuncGraphPtr &func_graph
     return nullptr;
   }
   auto new_prim = std::make_shared<Primitive>(kFusedMulApplyMomentumOpName);
+  auto depend_prim = NewValueNode(prim::kPrimDepend);
+  auto depend = func_graph->NewCNode({depend_prim, cnode->input(5), cnode->input(6)});  // depend on monad
+  depend->set_abstract(cnode->input(5)->abstract());
+  depend->set_scope(cnode->input(5)->scope());
   std::vector<AnfNodePtr> new_node_inputs{NewValueNode(new_prim),
                                           cnode->input(1),
                                           cnode->input(2),
                                           cnode->input(3),
-                                          mul_cnode->input(kMulInputNum - value_node_index),
-                                          cnode->input(5),
+                                          mul_cnode->input(kMulInputTensorNum + 1 - value_node_index),
+                                          depend,
                                           mul_cnode->input(value_node_index)};
   auto new_node = func_graph->NewCNode(new_node_inputs);
   MS_EXCEPTION_IF_NULL(new_node);

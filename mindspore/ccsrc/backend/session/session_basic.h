@@ -190,7 +190,6 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_graph, VectorRef *const outputs,
                      const std::vector<tensor::TensorPtr> &input_tensors) const;
   void UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kernel_graph, OpRunInfo *op_run_info) const;
-  void Reorder(std::vector<CNodePtr> *node_list);
   void Summary(KernelGraph *graph);
   // create graph output for RunOp
   void CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph);

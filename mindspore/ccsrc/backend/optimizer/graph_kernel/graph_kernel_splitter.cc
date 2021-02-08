@@ -629,7 +629,7 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
     }
     GetValidKernelNodes();
     // call CostModel to get a split plan.
-    if (!SplitByCostModel() || split_plan_.size() != need_inline_.size()) {
+    if (!SplitByCostModel() || split_plan_.size() != need_inline_.size() || split_plan_.empty()) {
       split_plan_.clear();
       need_inline_.clear();
       return;

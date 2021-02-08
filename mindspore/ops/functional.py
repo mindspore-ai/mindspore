@@ -177,6 +177,7 @@ make_row_tensor = Primitive('MakeRowTensor')
 row_tensor_get_values = Primitive('RowTensorGetValues')
 row_tensor_get_indices = Primitive('RowTensorGetIndices')
 row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
+row_tensor_add = Primitive('RowTensorAdd')
 
 make_sparse_tensor = Primitive('MakeSparseTensor')
 sparse_tensor_get_values = Primitive('SparseTensorGetValues')

@@ -109,7 +109,10 @@ bool DependFormater::Run(const FuncGraphPtr &func_graph) {
   // 1. Try to remove redundant depend.
   bool changed = false;
   auto nodes = TopoSort(func_graph->get_return());
-  std::for_each(nodes.rbegin(), nodes.rend(), [&changed, &mng](const AnfNodePtr &node) {
+  std::for_each(nodes.rbegin(), nodes.rend(), [&changed, &mng](const AnfNodePtr &node) -> void {
+    if (HasAbstractMonad(node)) {
+      return;
+    }
     if (RemoveRedundantDepend(node, mng)) {
       changed = true;
     }
@@ -126,7 +129,8 @@ bool DependFormater::Run(const FuncGraphPtr &func_graph) {
 
   // Find depend and its free nodes.
   for (const auto &node : nodes) {
-    if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    if (!IsPrimitiveCNode(node, prim::kPrimDepend) ||
+        HasAbstractMonad(node->cast<CNodePtr>()->input(kDependAttachNodeIndex))) {
       continue;
     }
 

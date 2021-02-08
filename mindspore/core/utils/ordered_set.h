@@ -146,11 +146,18 @@ class OrderedSet {
     MS_LOG(EXCEPTION) << "pop() on empty OrderedSet";
   }
 
-  T back() {
+  T &back() {
     if (ordered_data_.size() != 0) {
       return ordered_data_.back();
     }
     MS_LOG(EXCEPTION) << "back() on empty OrderedSet";
+  }
+
+  T &front() {
+    if (ordered_data_.size() != 0) {
+      return ordered_data_.front();
+    }
+    MS_LOG(EXCEPTION) << "front() on empty OrderedSet";
   }
 
   // Return true if there are no common elements

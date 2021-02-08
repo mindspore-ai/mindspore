@@ -243,9 +243,8 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
-        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -254,7 +253,6 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
         self.loss_scaling_manager = scale_update_cell
         if scale_update_cell:
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32))
-        self.add_flags(has_effect=True)
 
         self.loss_scalar = P.ScalarSummary()
 
@@ -291,14 +289,16 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
                             target_ids,
                             label_ids,
                             label_weights)
-        # Alloc status.
-        init = self.alloc_status()
-        # Clear overflow buffer.
-        self.clear_before_grad(init)
         if sens is None:
             scaling_sens = self.loss_scale
         else:
             scaling_sens = sens
+        # Alloc status.
+        init = self.alloc_status()
+        # Clear overflow buffer.
+        init = F.depend(init, loss)
+        clear_status = self.clear_status(init)
+        scaling_sens = F.depend(scaling_sens, clear_status)
         grads = self.grad(self.network, weights)(source_ids,
                                                  source_mask,
                                                  target_ids,
@@ -312,7 +312,9 @@ class GNMTTrainOneStepWithLossScaleCell(nn.Cell):
         if self.reducer_flag:
             # Apply grad reducer on grads.
             grads = self.grad_reducer(grads)
-        self.get_status(init)
+        init = F.depend(init, grads)
+        get_status = self.get_status(init)
+        init = F.depend(init, get_status)
         flag_sum = self.reduce_sum(init, (0,))
 
         if self.is_distributed:

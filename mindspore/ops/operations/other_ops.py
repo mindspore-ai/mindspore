@@ -15,6 +15,7 @@
 
 """Other operators."""
 import functools
+from mindspore.common import monad
 from .. import signature as sig
 from ..._checkparam import Validator as validator, Rel
 from ...common import dtype as mstype
@@ -58,12 +59,14 @@ class Assign(PrimitiveWithCheck):
     """
     __mindspore_signature__ = (
         sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('value', dtype=sig.sig_dtype.T)
+        sig.make_sig('value', dtype=sig.sig_dtype.T),
+        sig.make_sig('u', default=monad.U, dtype=sig.sig_dtype.T1)
     )
 
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def check_dtype(self, variable, value):
         types = mstype.number_type + (mstype.bool_,)
@@ -108,6 +111,28 @@ class InplaceAssign(PrimitiveWithInfer):
     def infer_dtype(self, x, y, z):
         return z
 
+class Load(PrimitiveWithCheck):
+    """
+    Load `Parameter` to a value.
+
+    Inputs:
+        - **variable** (Parameter) - The `Parameter`.
+
+    Outputs:
+        Tensor - The loaded parameter tensor value.
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('variable', sig.sig_rw.RW_READ, dtype=sig.sig_dtype.T),
+        sig.make_sig('u', dtype=sig.sig_dtype.T1)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['ref', 'u'], outputs=['output'])
+
+    def check_dtype(self, variable):
+        if variable != mstype.type_refkey:
+            validator.check_tensor_type_same({"variable": variable}, mstype.number_type, self.name)
 
 class BoundingBoxEncode(PrimitiveWithInfer):
     """
@@ -354,9 +379,12 @@ class Partial(Primitive):
         FunctionType, partial function binded with arguments.
     """
 
+    # Side effect will propagated from the first argument to return value.
+    side_effect_propagate = 1
+
     @prim_attr_register
     def __init__(self):
-        pass
+        self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, *args):
         func = args[0].__call__
@@ -419,13 +447,34 @@ class Depend(Primitive):
          [0.2 0.2 0.2 0.2 0.2]]
     """
 
+    # Side effect will propagated from the first argument to return value.
+    side_effect_propagate = 1
+
     @prim_attr_register
     def __init__(self):
-        pass
+        self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, value, expr):
         return value
 
+class UpdateState(Primitive):
+    """
+    UpdateState is used for update side-effect state.
+
+    Inputs:
+        - **value** (State) - the state value to be updated.
+        - **expr** (Expression) - the expression to evaluate before state changes.
+
+    Outputs:
+        State, the updated state value.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def __call__(self, state, expr):
+        return state
 
 class CheckBprop(PrimitiveWithInfer):
     """
@@ -647,9 +696,12 @@ class identity(Primitive):
         The same as input.
     """
 
+    # Side effect will propagated from the first argument to return value.
+    side_effect_propagate = 1
+
     @prim_attr_register
     def __init__(self):
-        pass
+        self.add_prim_attr('side_effect_propagate', 1)
 
     def __call__(self, x):
         return x

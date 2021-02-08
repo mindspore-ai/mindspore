@@ -58,6 +58,9 @@ CNodePtr GetRealPrevCNode(const AnfNodePtr &node, size_t index, std::vector<Kern
   } else if (IsPrimitive(input0, prim::kPrimDepend) || IsPrimitive(input0, prim::kPrimControlDepend)) {
     pass_vector->push_back(make_pair(cnode, IntToSize(1)));
     return GetRealPrevCNode(cnode->input(1), 0, pass_vector);
+  } else if (IsPrimitive(input0, prim::kPrimUpdateState)) {
+    pass_vector->push_back(make_pair(cnode, IntToSize(kUpdateStateRealInput)));
+    return GetRealPrevCNode(cnode->input(kUpdateStateRealInput), 0, pass_vector);
   } else {
     return nullptr;
   }

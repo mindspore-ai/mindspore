@@ -98,7 +98,8 @@ bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "Skip trans op";
       continue;
     }
-    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(cnode); input_index++) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+    for (size_t input_index = 0; input_index < input_num; input_index++) {
       std::vector<CNodePtr> trans_road;
       bool first_flag = true;
       auto final_node = ParamTransRoad(func_graph, AnfAlgo::GetInputNode(cnode, input_index), first_flag, &trans_road);

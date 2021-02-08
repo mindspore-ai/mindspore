@@ -28,8 +28,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-const size_t kCastInputNum = 2;
-const size_t kTupleGetitemInputNum = 3;
 bool AlternativeKernelInfoForInput(const CNodePtr &node, const TypeId dst_type, const size_t change_idx,
                                    const std::shared_ptr<kernel::KernelBuildInfo> &candidate_kernel_info) {
   if (node == nullptr || node->kernel_info() == nullptr || candidate_kernel_info == nullptr) {
@@ -126,7 +124,8 @@ void ChangeNodeInferInfo(const CNodePtr &cnode, const CNodePtr &cast, const size
   auto cast_shape = AnfAlgo::GetOutputInferShape(cast, 0);
   std::vector<Shape> shapes;
   std::vector<TypeId> types;
-  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  for (size_t index = 0; index < output_num; ++index) {
     if (cast_index == index) {
       shapes.emplace_back(cast_shape);
       types.emplace_back(cast_dtype);
@@ -175,7 +174,7 @@ AnfNodePtr MergeCastToNextOp(const FuncGraphPtr &graph, const CNodePtr &node, co
                << "ori kernel info" << ori_kernel_info->ToString() << "alternative kernel info"
                << (*alternative_kernel_info)->ToString();
   AnfAlgo::SetSelectKernelBuildInfo(*alternative_kernel_info, next_cnode.get());
-  if (node->inputs().size() < kCastInputNum) {
+  if (AnfAlgo::GetInputTensorNum(node) < kCastInputTensorNum) {
     MS_LOG(EXCEPTION) << "Op[" << node->DebugString() << "] has wrong input num:";
   }
   return node->input(1);
@@ -188,9 +187,7 @@ bool GetPriorOp(const AnfNodePtr &x_node, CNodePtr *prior_op, bool *single_outpu
     *prior_op = x_cnode;
     // when x_node is tuple_getitem
     if (AnfAlgo::GetCNodeName(x_node) == prim::kPrimTupleGetItem->name()) {
-      if (x_cnode->inputs().size() < kTupleGetitemInputNum) {
-        MS_LOG(EXCEPTION) << "tuple getitem node has wrong input num" << x_cnode->inputs().size();
-      }
+      CheckCNodeInputSize(x_cnode, kTupleGetItemInputTensorNum);
       MS_EXCEPTION_IF_NULL(output_idx);
       AnfNodePtr input1 = x_cnode->input(1);
       MS_EXCEPTION_IF_NULL(input1);
@@ -214,9 +211,7 @@ bool GetPriorOp(const AnfNodePtr &x_node, CNodePtr *prior_op, bool *single_outpu
 AnfNodePtr MergeCastToPriorOp(const FuncGraphPtr &graph, const CNodePtr &cur_node, const KernelQueryPtr kernel_query) {
   MS_EXCEPTION_IF_NULL(cur_node);
   MS_EXCEPTION_IF_NULL(kernel_query);
-  if (cur_node->inputs().size() < kCastInputNum) {
-    MS_LOG(EXCEPTION) << "op[Cast] has wrong input num:";
-  }
+  CheckCNodeInputSize(cur_node, kCastInputTensorNum);
   AnfNodePtr x_node = cur_node->input(1);
   if (IsUsedByOthers(graph, x_node)) {
     return nullptr;

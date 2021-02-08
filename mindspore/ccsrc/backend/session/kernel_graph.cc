@@ -383,7 +383,8 @@ void ReSetParameterValueNodeFormatAndType(const AnfNodePtr &node, const std::str
 
 void KernelGraph::ResetInFormat(const AnfNodePtr &node, const std::string &format) const {
   MS_EXCEPTION_IF_NULL(node);
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(node); i++) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_num; i++) {
     auto in_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), i);
     MS_EXCEPTION_IF_NULL(in_node);
     if ((in_node->isa<Parameter>() || in_node->isa<ValueNode>()) &&
@@ -438,7 +439,8 @@ void KernelGraph::CreateKernelInfoFromNewParameter(const CNodePtr &cnode) {
     }
     auto anf_cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(anf_cnode);
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_cnode); ++i) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(anf_cnode);
+    for (size_t i = 0; i < input_num; ++i) {
       auto input_node = anf_cnode->input(i + 1);
       MS_EXCEPTION_IF_NULL(input_node);
       if (IsValueNode<tensor::Tensor>(input_node)) {
@@ -488,7 +490,8 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     std::vector<size_t> feature_map_input_indexs;
 #endif
     kernel_info->set_feature_map_flag(false);
-    for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(node); ++index) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(node);
+    for (size_t index = 0; index < input_num; ++index) {
       if (AnfAlgo::IsFeatureMapInput(node, index)) {
         kernel_info->set_feature_map_flag(true);
         feature_map_input_indexs.push_back(index);
@@ -647,7 +650,8 @@ AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
   std::vector<TypeId> types;
   std::vector<std::vector<size_t>> shapes;
   std::vector<AnfNodePtr> make_tuple_inputs_list = {mindspore::NewValueNode(prim::kPrimMakeTuple)};
-  for (size_t tuple_out_index = 0; tuple_out_index < AnfAlgo::GetOutputTensorNum(node); ++tuple_out_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t tuple_out_index = 0; tuple_out_index < output_num; ++tuple_out_index) {
     make_tuple_inputs_list.emplace_back(CreatTupleGetItemNode(node, tuple_out_index));
     types.push_back(AnfAlgo::GetOutputInferDataType(node, tuple_out_index));
     shapes.emplace_back(AnfAlgo::GetOutputInferShape(node, tuple_out_index));
@@ -886,7 +890,6 @@ void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
   node_output_edges_.clear();
   node_input_num_.clear();
   node_input_edges_.clear();
-  std::vector<AnfNodePtr> control_depends;
   std::unordered_set<AnfNodePtr> visited_nodes;
   std::queue<AnfNodePtr> que;
   que.push(get_return());
@@ -898,24 +901,18 @@ void KernelGraph::UpdateNodeEdgeList(std::queue<AnfNodePtr> *seed_nodes) {
       seed_nodes->push(node);
       continue;
     }
-    if (!node->isa<CNode>()) {
+    auto cnode = dyn_cast<CNode>(node);
+    if (cnode == nullptr) {
       continue;
     }
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    // handle data links
-    for (const auto &input : cnode->inputs()) {
-      size_t depend_edge_num = 1;
-      // handle control depend,all inputs of control depend has no depend edge
-      if (HandleControlDependNode(input, &que, &visited_nodes)) {
-        control_depends.push_back(input);
-        depend_edge_num = 0;
-      }
+    auto &inputs = cnode->inputs();
+    // We push inputs from right to left, so that them can be evaluated from left to right.
+    for (auto iter = inputs.rbegin(); iter != inputs.rend(); ++iter) {
+      auto &input = *iter;
       PushNoVisitedNode(input, &que, &visited_nodes);
-      AddDependEdge(node, input, depend_edge_num);
+      AddDependEdge(node, input, 1);
     }
   }
-  UpdateControlDependRelations(control_depends);
 }
 
 void KernelGraph::AddValueNodeToGraph(const ValueNodePtr &value_node) { (void)graph_value_nodes_.insert(value_node); }
@@ -984,7 +981,6 @@ void KernelGraph::ReplaceNode(NotNull<AnfNodePtr> old_anf_node, NotNull<AnfNodeP
           output_cnode->set_input(i, new_anf_node);
         }
       }
-      ReplaceGraphInput(old_anf_node, new_anf_node);
     }
     // update front to backend map
     FrontBackendlMapUpdate(old_anf_node, new_anf_node);
@@ -1041,6 +1037,9 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const std::vector<Primiti
 }
 
 void KernelGraph::PrintGraphExecuteOrder() const {
+  if (!(IS_OUTPUT_ON(INFO))) {
+    return;
+  }
   MS_LOG(INFO) << "Graph " << graph_id_ << " execution order:";
   for (size_t i = 0; i < execution_order_.size(); i++) {
     CNodePtr cur_cnode_ptr = execution_order_[i];

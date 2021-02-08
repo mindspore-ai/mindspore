@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 from mindspore import RowTensor
 from mindspore import context, nn, Tensor, ParameterTuple
@@ -20,8 +21,11 @@ from mindspore.common import ms_function
 from mindspore.ops import composite as C
 
 
-def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=False)
+@pytest.fixture(scope="module", autouse=True)
+def setup_teardown():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    yield
+    context.set_context(mode=context.GRAPH_MODE)
 
 
 class _Grad(nn.Cell):

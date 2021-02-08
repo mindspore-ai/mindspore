@@ -37,7 +37,8 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
   plant_inputs.push_back(AnfAlgo::GetCNodePrimitiveNode(cnode_ptr));
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(cnode_ptr); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(cnode_ptr);
+  for (size_t i = 0; i < input_num; ++i) {
     auto input_node = AnfAlgo::GetInputNode(cnode_ptr, i);
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<CNode>() && AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimMakeTuple)) {
@@ -45,7 +46,8 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
       dyn_input_sizes.push_back(input_size);
       auto make_tuple = input_node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(make_tuple);
-      for (size_t j = 0; j < AnfAlgo::GetInputTensorNum(make_tuple); ++j) {
+      size_t tuple_input_num = AnfAlgo::GetInputTensorNum(make_tuple);
+      for (size_t j = 0; j < tuple_input_num; ++j) {
         auto dyn_input_node = AnfAlgo::GetInputNode(make_tuple, j);
         MS_EXCEPTION_IF_NULL(dyn_input_node);
         if (IsValueNode<tensor::Tensor>(dyn_input_node)) {

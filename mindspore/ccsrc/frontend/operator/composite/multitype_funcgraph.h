@@ -53,7 +53,7 @@ class MultitypeFuncGraph : public MetaFuncGraph {
   }
 
  private:
-  const py::function SignMatch(const TypePtrList &types);
+  const std::pair<py::function, bool> SignMatch(const TypePtrList &types);
   std::unordered_map<TypePtrList, specialize_fn, TypeListHasher, TypeListEqual> fn_cache_;
   std::unordered_map<TypePtrList, py::function, TypeListHasher, TypeListEqual> fn_cache_py_;
 };

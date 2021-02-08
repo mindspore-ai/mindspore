@@ -33,10 +33,7 @@ void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_grad_node);
   const auto &bn_grad_inputs = bn_grad_node->inputs();
-  if (bn_grad_inputs.size() < kBNGradInputNum) {
-    MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size."
-                      << " trace: " << trace::DumpSourceLines(bn_grad_node);
-  }
+  CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
   std::vector<AnfNodePtr> bn_update_grad_inputs = {
     NewValueNode(std::make_shared<Primitive>(kBNTrainingUpdateGradOpName)), bn_grad_inputs[1], bn_grad_inputs[2],
     bn_grad_inputs[4], bn_grad_inputs[5]};
@@ -60,10 +57,7 @@ void CreateOutputsOfReduceGrad(const FuncGraphPtr &graph, const CNodePtr &bn_gra
   MS_EXCEPTION_IF_NULL(bn_grad_node);
   MS_EXCEPTION_IF_NULL(bn_reduce_grad_outputs);
   const auto &bn_grad_inputs = bn_grad_node->inputs();
-  if (bn_grad_inputs.size() < kBNGradInputNum) {
-    MS_LOG(EXCEPTION) << "BNGrad has wrong inputs size"
-                      << " trace: " << trace::DumpSourceLines(bn_grad_node);
-  }
+  CheckCNodeInputSize(bn_grad_node, kBNGradInputTensorNum);
   if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
     MS_LOG(EXCEPTION) << "BNTrainingReduceGrad_outputs has wrong size"
                       << " trace: " << trace::DumpSourceLines(bn_grad_node);

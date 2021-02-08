@@ -375,8 +375,8 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
     def construct(self, x):
         if self.training:
             min_up, max_up = self.ema_update(x, self.minq, self.maxq)
-            P.Assign()(self.minq, min_up)
-            P.Assign()(self.maxq, max_up)
+            self.minq = min_up
+            self.maxq = max_up
             out = self.fake_quant_train(x, self.minq, self.maxq)
         else:
             out = self.fake_quant_infer(x, self.minq, self.maxq)
@@ -765,14 +765,14 @@ class Conv2dBnFoldQuant(Cell):
             if self.training:
                 out = self.batchnorm_fold2_train(out, self.beta, self.gamma,
                                                  batch_std, batch_mean, running_std, running_mean, self.step)
-                F.control_depend(out, self.assignadd(self.step, self.one))
+                self.assignadd(self.step, self.one)
             else:
                 out = self.batchnorm_fold2_infer(out, self.beta, self.gamma,
                                                  batch_std, batch_mean, running_std, running_mean, self.step)
         else:
             if self.training:
                 out = self.batchnorm_fold2_train(out, self.beta, self.gamma, batch_std, batch_mean, running_std)
-                F.control_depend(out, self.assignadd(self.step, self.one))
+                self.assignadd(self.step, self.one)
             else:
                 out = self.batchnorm_fold2_infer(out, self.beta, self.gamma, running_std, running_mean, running_std)
         return out

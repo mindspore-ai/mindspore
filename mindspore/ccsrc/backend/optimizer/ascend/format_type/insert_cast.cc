@@ -129,9 +129,21 @@ AnfNodePtr ProcessGraphKernelOp(const FuncGraphPtr &func_graph, const AnfNodePtr
   auto mng = sub_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   std::vector<AnfNodePtr> todo;
-  std::vector<std::pair<AnfNodePtr, size_t>> graph_rets;
   kernel::GetValidKernelNodes(sub_graph, &todo);
-  kernel::GetGraphRealOutput(sub_graph, &graph_rets);
+  auto outputs = AnfAlgo::GetAllOutput(sub_graph->output(), {prim::kPrimTupleGetItem});
+  std::vector<std::pair<AnfNodePtr, size_t>> graph_rets;
+  for (auto &output : outputs) {
+    size_t index = 0;
+    if (IsPrimitiveCNode(output, prim::kPrimTupleGetItem)) {
+      ValuePtr tuple_index_value = GetValueNode(output->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
+      MS_EXCEPTION_IF_NULL(tuple_index_value);
+      if (!tuple_index_value->isa<Int64Imm>()) {
+        MS_LOG(EXCEPTION) << "The index of tuple getitem is not int64";
+      }
+      index = tuple_index_value->cast<Int64ImmPtr>()->value();
+    }
+    graph_rets.emplace_back(std::pair<AnfNodePtr, size_t>(output, index));
+  }
   for (auto &t : todo) {
     AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), t);
     // process input

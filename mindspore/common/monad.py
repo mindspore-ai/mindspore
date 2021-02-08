@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-GraphKernel.
+"""Define Monad default value."""
+from .._c_expression import IOMonad, UMonad
 
-GraphKernel provides a unified style to express graph and kernel for user.
-It breaks the boundary between graph and kernel and provides more opportunities to do compile optimization.
-"""
-from .graph_kernels import LambUpdateWithLR, LambNextMV
+# Universe monad default value.
+U = UMonad()
 
-__all__ = ['LambUpdateWithLR', 'LambNextMV']
+# IO monad default value.
+IO = IOMonad()
+
+__all__ = ['U', 'IO']

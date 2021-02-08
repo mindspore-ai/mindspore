@@ -1052,10 +1052,16 @@ size_t TbeKernelBuild::GetOptionalInput(const mindspore::CNodePtr &cnode, bool i
   auto node_name = AnfAlgo::GetCNodeName(cnode);
   auto op_info = tbe::TbeDynamicShapeUtil::FindOp(node_name, cnode);
   MS_EXCEPTION_IF_NULL(cnode);
-  if (op_info->inputs_ptr().size() < (cnode->inputs().size() - 1)) {
+  auto node_inputs_size = cnode->inputs().size();
+  for (auto &input : cnode->inputs()) {
+    if (HasAbstractMonad(input)) {
+      node_inputs_size--;
+    }
+  }
+  if (op_info->inputs_ptr().size() < (node_inputs_size - 1)) {
     MS_EXCEPTION(ArgumentError) << "op info error, node name:" << cnode->fullname_with_scope();
   }
-  return (op_info->inputs_ptr().size() + 1 - cnode->inputs().size());
+  return (op_info->inputs_ptr().size() + 1 - node_inputs_size);
 }
 
 std::string TbeKernelBuild::GetRealOpType(const std::string &origin_type) {
@@ -1103,6 +1109,9 @@ bool TbeKernelBuild::GenFusionComputeInputJson(const mindspore::CNodePtr &cnode,
   bool is_dynamic_input = IsDynamicInput(cnode);
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     auto input = cnode->input(i);
+    if (HasAbstractMonad(input)) {
+      continue;
+    }
     auto kernel_idx = AnfAlgo::VisitKernel(input, 0);
     auto real_node = kernel_idx.first;
     size_t real_idx = kernel_idx.second;

@@ -423,6 +423,9 @@ constexpr auto kControlDependMode = "depend_mode";
 constexpr auto kRealInputIndexInDepend = 1;
 constexpr auto kDependAttachNodeIndex = 2;
 constexpr auto kDependInputSize = 3;
+// index define of UpdateState
+constexpr auto kUpdateStateStateInput = 1;
+constexpr auto kUpdateStateRealInput = 2;
 // format
 constexpr auto kOpFormat_DEFAULT = "DefaultFormat";
 constexpr auto kOpFormat_NC1KHKWHWC0 = "NC1KHKWHWC0";
@@ -484,10 +487,11 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kSparseApplyFtrlV2Name,
                                                kSGDName,
                                                kLARSUpdateName,
-                                               kPullOpName,
                                                kCombineMomentumWeightOpName,
                                                kCombineMomentumOpName,
                                                kSparseApplyProximalAdagradOpName};
+
+const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {
   kOpFormat_FRACTAL_Z_3D, kOpFormat_NC1KHKWHWC0,   kOpFormat_NC1HWC0,         kOpFormat_FRAC_NZ,  kOpFormat_C1HWNCoC0,

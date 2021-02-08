@@ -208,5 +208,16 @@ std::string CheckAttrStringSet(const std::string &op, const ValuePtr &attr, cons
   }
   return attr_val;
 }
+
+void CheckRequiredArgsSize(const std::string &op, const mindspore::abstract::AbstractBasePtrList &args_spec_list,
+                           size_t size_expect) {
+  if (args_spec_list.size() < size_expect) {
+    MS_LOG(EXCEPTION) << op << " required input args size " << size_expect << ", but got " << args_spec_list.size();
+  }
+  for (size_t i = 0; i < size_expect; i++) {
+    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
+  }
+}
+
 }  // namespace abstract
 }  // namespace mindspore

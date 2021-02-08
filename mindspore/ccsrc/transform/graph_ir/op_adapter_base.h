@@ -68,8 +68,10 @@ using CustomOperator = ge::CustomOperator;
 struct OutHandler {
   OperatorPtr op;
   std::string out;
-  OutHandler() : op(nullptr), out("") {}
-  OutHandler(const OperatorPtr &op, const std::string out) : op(op), out(out) {}
+  AnfNodePtr node;
+  OutHandler() : op(nullptr), out(""), node(nullptr) {}
+  OutHandler(const OperatorPtr &op, const std::string out, const AnfNodePtr &node = nullptr)
+      : op(op), out(out), node(node) {}
 };
 
 struct ControlEdge {

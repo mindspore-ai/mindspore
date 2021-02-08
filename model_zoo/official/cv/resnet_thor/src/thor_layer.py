@@ -586,7 +586,6 @@ class Conv2d_Thor(_Conv):
             matrix_A_inv = self.reshape(matrix_A_inv, self.matrix_A_device_temp_shape)
             matrix_A_inv = self.transpose(matrix_A_inv, (2, 0, 1, 3))
             self.matrix_A_inv = matrix_A_inv
-            self.matrix_G_inv = self.fake_G
             out = self.conv2d(x, self.weight)
             out = self.getG(out)
         else:
@@ -751,7 +750,6 @@ class Dense_Thor(Cell):
             matrix_A_inv = self.transpose(matrix_A_inv, (2, 0, 1, 3))
             matrix_A_inv = self.cast(matrix_A_inv, mstype.float16)
             self.matrix_A_inv = matrix_A_inv
-            self.matrix_G_inv = self.fake_G
             output = self.matmul(x, self.weight)
             output = self.getG(output)
         else:

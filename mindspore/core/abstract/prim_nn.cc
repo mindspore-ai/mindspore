@@ -406,7 +406,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
 AbstractBasePtr InferImplConv2DBackpropInput(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const AbstractBasePtrList &args_spec_list) {
   // Inputs: three tensors(doutput, input, filters).
-  CheckArgsSize(primitive->name(), args_spec_list, 3);
+  CheckRequiredArgsSize(primitive->name(), args_spec_list, 3);
   return args_spec_list[1]->Broaden();
 }
 
@@ -580,7 +580,7 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
   // Inputs: a tuple and a tensor.
   // Outputs: mask.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  CheckRequiredArgsSize(op_name, args_spec_list, 2);
   AbstractTuplePtr x_shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
   AbstractTensorPtr keep_prob = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
 
@@ -627,7 +627,7 @@ AbstractBasePtr InferImplDropoutGenMask(const AnalysisEnginePtr &, const Primiti
 
 AbstractBasePtr InferImplSparseApplyFtrl(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const AbstractBasePtrList &args_spec_list) {
-  CheckArgsSize(primitive->name(), args_spec_list, 5);
+  CheckRequiredArgsSize(primitive->name(), args_spec_list, 5);
   AbstractBasePtrList elements;
   for (size_t i = 0; i < 3; ++i) {
     elements.push_back(args_spec_list[i]->Clone()->Broaden());
@@ -637,7 +637,7 @@ AbstractBasePtr InferImplSparseApplyFtrl(const AnalysisEnginePtr &, const Primit
 
 AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                     const AbstractBasePtrList &args_spec_list) {
-  CheckArgsSize(primitive->name(), args_spec_list, 7);
+  CheckRequiredArgsSize(primitive->name(), args_spec_list, 7);
   AbstractBasePtrList elements;
   for (size_t i = 0; i < 2; ++i) {
     elements.push_back(args_spec_list[i]->Clone()->Broaden());
@@ -647,7 +647,7 @@ AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, c
 
 AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_spec_list) {
-  CheckArgsSize(primitive->name(), args_spec_list, 6);
+  CheckRequiredArgsSize(primitive->name(), args_spec_list, 6);
   AbstractBasePtrList elements;
   elements.push_back(args_spec_list[0]->Clone()->Broaden());
   return std::make_shared<AbstractTuple>(elements);

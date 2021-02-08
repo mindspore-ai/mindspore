@@ -249,7 +249,8 @@ KernelRefCountPtr MemReuseUtil::GetRef(const AnfNodePtr &node, int output_idx) {
   if (node == nullptr) {
     MS_LOG(EXCEPTION) << "The node pointer is a nullptr.";
   }
-  if (node->isa<CNode>()) {
+  // Get ref count for cnode, except monad cnode.
+  if (node->isa<CNode>() && !HasAbstractMonad(node)) {
     auto ak_node = node->cast<CNodePtr>();
     auto key = ak_node.get();
     MemReuseChecker::GetInstance().CheckOutRef(kernel_output_refs_, ak_node, IntToSize(output_idx));
@@ -314,7 +315,8 @@ void MemReuseUtil::SetKernelDefInputs() {
       MS_LOG(EXCEPTION) << "kernel [" << kernel->fullname_with_scope() << "] is not init.";
     }
     auto kernel_def = iter->second;
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+    for (size_t i = 0; i < input_num; ++i) {
       auto ref_ptr = GetKernelInputRef(kernel, i);
       if (ref_ptr != nullptr) {
         // set the inputs of this kernel_def

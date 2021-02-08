@@ -103,28 +103,23 @@ bool HasPathToParamUser(const AnfNodePtr &gk_node, const AnfNodePtr &param_user)
   return result;
 }
 
-AnfNodePtr AddControlDepend(const FuncGraphPtr &func_graph, const AnfNodePtr &getitem, const AnfNodePtr &param_user) {
-  auto mng = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  AnfNodePtrList cd_inputs = {NewValueNode(prim::kPrimControlDepend), getitem, param_user};
-  auto cd_node = func_graph->NewCNode(cd_inputs);
-  func_graph->AddNode(cd_node);
-  return cd_node;
-}
+void KeepExecOrder(const FuncGraphPtr &func_graph, const AnfNodePtr &gk_node, const AnfNodePtr &par_user_node,
+                   const FuncGraphManagerPtr &mng) {
+  // Insert update_state_node, need mount a monad node.
+  auto u = NewValueNode(kUMonad);
+  u->set_abstract(kUMonad->ToAbstract());
+  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, gk_node};
+  auto update_state_node = func_graph->NewCNode(update_state_inputs);
+  update_state_node->set_abstract(gk_node->abstract());
+  func_graph->AddNode(update_state_node);
 
-void LinkControlDepends(const FuncGraphPtr &func_graph, const AnfNodePtrList &cd_nodes) {
-  auto mng = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto output_tuple = func_graph->output()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(output_tuple);
-  auto cur_node = output_tuple->input(1);
-  for (const auto &cd : cd_nodes) {
-    AnfNodePtrList depend_inputs = {NewValueNode(prim::kPrimDepend), cur_node, cd};
-    auto depend_node = func_graph->NewCNode(depend_inputs);
-    depend_node->set_abstract(depend_inputs[1]->abstract());
-    cur_node = depend_node;
-  }
-  mng->Replace(output_tuple->input(1), cur_node);
+  // Insert load_node
+  AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), par_user_node, update_state_node};
+  auto load_node = func_graph->NewCNode(load_inputs);
+  load_node->set_abstract(par_user_node->abstract());
+  func_graph->AddNode(load_node);
+
+  mng->Replace(gk_node, par_user_node);
 }
 
 int64_t GetitemIndex(const AnfNodePtr &getitem) {
@@ -133,11 +128,10 @@ int64_t GetitemIndex(const AnfNodePtr &getitem) {
   return GetValue<int64_t>(value_ptr);
 }
 
-AnfNodePtrList UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &cnode,
-                                        const AnfNodePtr &assign_to, int64_t removed_index) {
+void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &cnode, const AnfNodePtr &assign_to,
+                              int64_t removed_index) {
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
-  AnfNodePtrList cd_nodes;
   for (const auto &getitem_iter : mng->node_users()[cnode]) {
     auto getitem = getitem_iter.first;
     if (GetitemIndex(getitem) != removed_index) continue;
@@ -152,13 +146,10 @@ AnfNodePtrList UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const An
       if (!AnfAlgo::IsRealKernel(getitem_user) || HasPathToParamUser(cnode, getitem_user)) {
         continue;
       }
-      // keep execution order: cnode -> getitem_user
-      auto cd_node = AddControlDepend(func_graph, getitem, getitem_user);
-      cd_nodes.push_back(cd_node);
+      KeepExecOrder(func_graph, cnode, getitem_user, mng);
     }
     break;
   }
-  return cd_nodes;
 }
 
 bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
@@ -166,7 +157,6 @@ bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
 
   bool changed = false;
-  AnfNodePtrList control_depend_nodes;
   for (const auto &n : todos) {
     if (!AnfAlgo::IsGraphKernel(n)) continue;
     auto cnode = n->cast<CNodePtr>();
@@ -174,11 +164,9 @@ bool RepalceOutputByParameter(const FuncGraphPtr &func_graph) {
     if (replaceable_nodes.empty()) continue;
     changed = true;
     for (const auto &iter : replaceable_nodes) {
-      auto cd_nodes = UpdateUsersOfGraphKernel(func_graph, cnode, iter.second, iter.first);
-      control_depend_nodes.insert(control_depend_nodes.end(), cd_nodes.begin(), cd_nodes.end());
+      UpdateUsersOfGraphKernel(func_graph, cnode, iter.second, iter.first);
     }
   }
-  LinkControlDepends(func_graph, control_depend_nodes);
   return changed;
 }
 

@@ -31,7 +31,8 @@ bool IsPyNativeMode() {
 bool HcomUtil::GetKernelInputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_intput_shape_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(hccl_kernel_intput_shape_list);
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
+  for (size_t i = 0; i < input_num; ++i) {
     std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
     hccl_kernel_intput_shape_list->emplace_back(shape_i);
   }
@@ -42,7 +43,8 @@ bool HcomUtil::GetKernelInputShape(const AnfNodePtr &anf_node, vector<vector<siz
 bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_output_shape_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(hccl_kernel_output_shape_list);
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(anf_node); ++i) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(anf_node);
+  for (size_t i = 0; i < output_num; ++i) {
     std::vector<size_t> shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     hccl_kernel_output_shape_list->emplace_back(shape_i);
   }
@@ -53,11 +55,12 @@ bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<si
 bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(data_type_list);
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(anf_node); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(anf_node);
+  for (size_t i = 0; i < input_num; ++i) {
     auto type_ptr = AnfAlgo::GetPrevNodeOutputDeviceDataType(anf_node, i);
     auto iter = CONST_OP_HCOM_DATA_TYPE_MAP.find(type_ptr);
     if (iter == CONST_OP_HCOM_DATA_TYPE_MAP.end()) {
-      MS_LOG(EXCEPTION) << "HcomDataType cann't support Current Ascend Data Type : " << type_ptr;
+      MS_LOG(EXCEPTION) << "HcomDataType can't support Current Ascend Data Type : " << type_ptr;
     }
     data_type_list->emplace_back(iter->second);
   }

@@ -97,7 +97,9 @@ class AnfRuntimeAlgorithm {
   static bool HasNodeAttr(const std::string &key, const CNodePtr &node);
   // delete attr of anf node
   static void EraseNodeAttr(const std::string &key, AnfNodePtr node);
-  // get the num of input real_kernel(which can be build and run in device)
+  // get the num of inputs include monads for a cnode
+  static size_t GetInputNum(const CNodePtr &cnode);
+  // get the num of inputs exclude monads for real_kernel (which can be build and run in device)
   static size_t GetInputTensorNum(const AnfNodePtr &node);
   // get the num of output real_kernel(which can be build and run in device)
   static size_t GetOutputTensorNum(const AnfNodePtr &node);
@@ -221,7 +223,8 @@ class AnfRuntimeAlgorithm {
   static bool IsSwitchCall(const CNodePtr &call_node);
   static bool IsScalarInput(const CNodePtr &cnode, size_t index);
   static bool IsScalarOutput(const CNodePtr &cnode, size_t index);
-  static void ReorderExecList(NotNull<std::vector<CNodePtr> *> node_list);
+  static void ReorderOptimizerExecList(NotNull<std::vector<CNodePtr> *> node_list);
+  static void ReorderPosteriorExecList(NotNull<std::vector<CNodePtr> *> node_list);
   // get fix output precision of cnode.
   static TypeId GetCNodeOutputPrecision(const AnfNodePtr &node);
   // get fix output precision from prev node, input_idx is the input index of current node related to prev node.

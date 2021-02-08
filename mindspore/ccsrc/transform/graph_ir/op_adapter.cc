@@ -140,8 +140,7 @@ Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, cons
 Status OpAdapterImpl::SetNormalOpInput(const OperatorPtr &op, int index, const OperatorPtr &input) {
   MS_EXCEPTION_IF_NULL(op);
   auto it = input_map_.find(index);
-  if (it != input_map_.end()) {
-    MS_EXCEPTION_IF_NULL(input);
+  if (input != nullptr && it != input_map_.end()) {
     MS_LOG(DEBUG) << "Link op " << input->GetName() << " to " << op->GetName() << ":" << it->second.name;
     it->second.set_op(op, input);
     return SUCCESS;

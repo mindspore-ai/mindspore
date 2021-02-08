@@ -70,7 +70,8 @@ const BaseRef FtrlUnifyOutput::DefinePattern() const {
   VarPtr l1 = std::make_shared<Var>();
   VarPtr l2 = std::make_shared<Var>();
   VarPtr lr_power = std::make_shared<Var>();
-  VectorRef pattern({prim::kPrimApplyFtrl, var, accum, linear, grad, lr, l1, l2, lr_power});
+  VarPtr u = std::make_shared<SeqVar>();
+  VectorRef pattern({prim::kPrimApplyFtrl, var, accum, linear, grad, lr, l1, l2, lr_power, u});
   return pattern;
 }
 
@@ -84,7 +85,8 @@ const BaseRef MomentumUnifyOutput::DefinePattern() const {
   VarPtr lr = std::make_shared<Var>();
   VarPtr grad = std::make_shared<Var>();
   VarPtr momentum = std::make_shared<Var>();
-  VectorRef pattern({prim::kPrimApplyMomentum, var, accum, lr, grad, momentum});
+  VarPtr u = std::make_shared<SeqVar>();
+  VectorRef pattern({prim::kPrimApplyMomentum, var, accum, lr, grad, momentum, u});
   return pattern;
 }
 
@@ -114,7 +116,8 @@ const BaseRef CenteredRMSPropUnifyOutput::DefinePattern() const {
   VarPtr rho = std::make_shared<Var>();
   VarPtr momentum = std::make_shared<Var>();
   VarPtr epsilon = std::make_shared<Var>();
-  VectorRef pattern({prim::kPrimApplyCenteredRMSProp, var, mg, ms, mom, grad, lr, rho, momentum, epsilon});
+  VarPtr u = std::make_shared<SeqVar>();
+  VectorRef pattern({prim::kPrimApplyCenteredRMSProp, var, mg, ms, mom, grad, lr, rho, momentum, epsilon, u});
   return pattern;
 }
 

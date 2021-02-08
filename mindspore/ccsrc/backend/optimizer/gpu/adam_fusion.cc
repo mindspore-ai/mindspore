@@ -34,11 +34,13 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
     inputs_format.push_back(kOpFormat_DEFAULT);
   }
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(node); ++output_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
   }
@@ -51,19 +53,30 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
 }  // namespace
 
 const BaseRef AdamFusion::DefinePattern() const {
-  VectorRef next_m = VectorRef(
-    {prim::kPrimAdd, VectorRef({prim::kPrimMul, beta1_, m_}), VectorRef({prim::kPrimMul, one_sub_beta1_, gradient_})});
+  VectorRef load_m = VectorRef({prim::kPrimLoad, m_, u_});
+  VectorRef next_m = VectorRef({prim::kPrimAdd, VectorRef({prim::kPrimMul, beta1_, load_m}),
+                                VectorRef({prim::kPrimMul, one_sub_beta1_, gradient_})});
+
+  VectorRef load_v = VectorRef({prim::kPrimLoad, v_, u_});
   VectorRef next_v =
-    VectorRef({prim::kPrimAdd, VectorRef({prim::kPrimMul, beta2_, v_}),
+    VectorRef({prim::kPrimAdd, VectorRef({prim::kPrimMul, beta2_, load_v}),
                VectorRef({prim::kPrimMul, one_sub_beta2_, VectorRef({prim::kPrimSquare, gradient_})})});
+
   VectorRef update =
     VectorRef({prim::kPrimRealDiv, next_m, VectorRef({prim::kPrimAdd, eps_, VectorRef({prim::kPrimSqrt, next_v})})});
   VectorRef update_with_lr = VectorRef({prim::kPrimMul, lr_, update});
   VectorRef next_param = VectorRef({prim::kPrimSub, param_, update_with_lr});
 
-  next_param = VectorRef({prim::kPrimDepend, next_param, VectorRef({prim::kPrimAssign, param_, next_param})});
-  next_param = VectorRef({prim::kPrimDepend, next_param, VectorRef({prim::kPrimAssign, m_, next_m})});
-  next_param = VectorRef({prim::kPrimDepend, next_param, VectorRef({prim::kPrimAssign, v_, next_v})});
+  VectorRef assign_param = VectorRef({prim::kPrimAssign, param_, next_param, u2_});
+  VectorRef next_state = VectorRef({prim::kPrimUpdateState, u2_, assign_param});
+  next_param = VectorRef({prim::kPrimDepend, next_param, assign_param});
+
+  VectorRef assign_m = VectorRef({prim::kPrimAssign, m_, next_m, next_state});
+  next_state = VectorRef({prim::kPrimUpdateState, next_state, assign_m});
+  next_param = VectorRef({prim::kPrimDepend, next_param, assign_m});
+
+  VectorRef assign_v = VectorRef({prim::kPrimAssign, v_, next_v, next_state});
+  next_param = VectorRef({prim::kPrimDepend, next_param, assign_v});
   return next_param;
 }
 
@@ -81,6 +94,7 @@ const AnfNodePtr AdamFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr
   auto m_input = utils::cast<AnfNodePtr>((*equiv)[m_]);
   auto v_input = utils::cast<AnfNodePtr>((*equiv)[v_]);
   auto gradient_input = utils::cast<AnfNodePtr>((*equiv)[gradient_]);
+  auto u_input = utils::cast<AnfNodePtr>((*equiv)[u_]);
   MS_EXCEPTION_IF_NULL(beta1_input);
   MS_EXCEPTION_IF_NULL(one_sub_beta1_input);
   MS_EXCEPTION_IF_NULL(beta2_input);
@@ -91,13 +105,30 @@ const AnfNodePtr AdamFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr
   MS_EXCEPTION_IF_NULL(m_input);
   MS_EXCEPTION_IF_NULL(v_input);
   MS_EXCEPTION_IF_NULL(gradient_input);
+  MS_EXCEPTION_IF_NULL(u_input);
 
+  // Use depend(param, u) to maintain the execution order of FusedAdam and the previous operators.
+  auto prim_depend = std::make_shared<Primitive>(prim::kPrimDepend->name());
+  MS_EXCEPTION_IF_NULL(prim_depend);
+  std::vector<AnfNodePtr> param_inputs = {NewValueNode(prim_depend), param_input, u_input};
+  auto param = graph->NewCNode(param_inputs);
+  MS_EXCEPTION_IF_NULL(param);
+  param->set_abstract(param_input->abstract());
+
+  // Fused into a FusedAdam operator.
   auto prim = std::make_shared<Primitive>(kFusedAdamName);
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {
-    NewValueNode(prim), beta1_input, one_sub_beta1_input, beta2_input, one_sub_beta2_input,
-    eps_input,          lr_input,    param_input,         m_input,     v_input,
-    gradient_input};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim),
+                                    beta1_input,
+                                    one_sub_beta1_input,
+                                    beta2_input,
+                                    one_sub_beta2_input,
+                                    eps_input,
+                                    lr_input,
+                                    param,
+                                    m_input,
+                                    v_input,
+                                    gradient_input};
   auto adam = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(adam);
   auto types = {AnfAlgo::GetOutputInferDataType(node, 0)};
@@ -107,6 +138,30 @@ const AnfNodePtr AdamFusion::Process(const FuncGraphPtr &graph, const AnfNodePtr
 
   auto build_info = GenerateKernelBuildInfo(adam);
   AnfAlgo::SetSelectKernelBuildInfo(build_info, adam.get());
+
+  // Replace the parameters of the last UpdateState to maintain
+  // the execution order of FusedAdam and the following operators.
+  // n represents the operator assign_v in {prim::kPrimDepend, next_param, assign_v}
+  auto n = node->cast<CNodePtr>()->input(2);
+  auto fg = n->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto mgr = fg->manager();
+  MS_EXCEPTION_IF_NULL(mgr);
+  auto &node_users = mgr->node_users();
+  auto iter = node_users.find(n);
+  if (iter == node_users.end()) {
+    MS_LOG(EXCEPTION) << "Can not find node : " << n->DebugString();
+  }
+
+  auto &users = iter->second;
+  for (auto &user : users) {
+    if (IsPrimitiveCNode(user.first, prim::kPrimUpdateState)) {
+      (user.first)->cast<CNodePtr>()->set_input(1, u_input);
+      (user.first)->cast<CNodePtr>()->set_input(2, adam);
+      break;
+    }
+  }
+
   return adam;
 }
 }  // namespace opt

@@ -177,6 +177,7 @@ bool GraphKernelExpander::Run(const FuncGraphPtr &func_graph) {
     std::shared_ptr<Pass> pass = std::make_shared<opt::SubstituteDropout>();
     pass->Run(func_graph);
   }
+
   auto mng = func_graph->manager();
   if (mng == nullptr) {
     mng = Manage(func_graph, true);

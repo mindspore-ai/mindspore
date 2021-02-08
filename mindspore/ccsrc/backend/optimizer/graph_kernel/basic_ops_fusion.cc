@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,9 +149,18 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
     }
 
     auto fuse_nodes = FindFuseCNodes(node, depend_prior);
-    if (fuse_nodes.empty() || (fuse_nodes.size() == 1 && AnfAlgo::IsGraphKernel(fuse_nodes[0]))) {
+    if (fuse_nodes.empty()) {
       continue;
     }
+
+    if (fuse_nodes.size() == 1) {
+      // Do not fuse a single GraphKernel again.
+      // Do not fuse a single Assign.
+      if (AnfAlgo::IsGraphKernel(fuse_nodes[0]) || IsPrimitiveCNode(fuse_nodes[0], prim::kPrimAssign)) {
+        continue;
+      }
+    }
+
     changed = true;
     fused_ops->insert(fuse_nodes.begin(), fuse_nodes.end());
     AnfNodePtr fused_new_node;

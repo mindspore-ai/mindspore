@@ -29,7 +29,6 @@
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "common/trans.h"
 #include "runtime/context.h"
-#include "runtime/device/ascend/ascend_label_assign.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "framework/ge_runtime/model_runner.h"
 #include "runtime/device/ascend/tasksink/task_generator.h"
@@ -425,7 +424,6 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   }
   AscendStreamAssign &assign_instance = AscendStreamAssign::GetInstance();
   AscendResourceMng &resource_manager = AscendResourceMng::GetInstance();
-  AscendLabelAssign &label_assign_instance = AscendLabelAssign::GetInstance();
   // the streams' flag not HEAD_STREAM
   std::vector<uint32_t> wait_active_stream_list;
   assign_instance.GetWaitStreams(&wait_active_stream_list);
@@ -433,14 +431,13 @@ bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   assign_instance.GetHcomStreams(&force_copy_stream_list);
   MS_LOG(INFO) << "Call DavinciModel total stream num:" << resource_manager.get_cur_stream_num()
                << ", total event num:" << resource_manager.get_cur_event_num()
-               << ", total label num:" << label_assign_instance.GetLabelNum(NOT_NULL(graph))
+               << ", total label num:" << graph->label_num()
                << ", wait_active_stream_list size:" << wait_active_stream_list.size()
                << ", force_copy_stream_list size:" << force_copy_stream_list.size();
   std::vector<std::shared_ptr<ge::model_runner::OpInfo>> empty_list;
   auto model = std::make_shared<ge::model_runner::DavinciModel>(
     task_info_list, empty_list, empty_list, empty_list, empty_list, wait_active_stream_list, force_copy_stream_list, 0,
-    0, 0, 0, 0, 0, resource_manager.get_cur_stream_num(), label_assign_instance.GetLabelNum(NOT_NULL(graph)),
-    resource_manager.get_cur_event_num(), 0);
+    0, 0, 0, 0, 0, resource_manager.get_cur_stream_num(), graph->label_num(), resource_manager.get_cur_event_num(), 0);
   auto ret = graph_model_map_.insert(std::make_pair(graph->graph_id(), model));
   if (!ret.second) {
     MS_LOG(EXCEPTION) << "Duplicate GraphId! Please check in ascend_session.";

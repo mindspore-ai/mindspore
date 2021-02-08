@@ -185,6 +185,10 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"astype", std::string("astype")},               // P.cast()
                                          {"__bool__", std::string("tensor_bool")},        // C.tensor_bool
                                        }},
+                                      {kObjectTypeRowTensorType,
+                                       {
+                                         {"__add__", prim::kPrimRowTensorAdd},  // P.row_tensor_add
+                                       }},
                                       {kObjectTypeJTagged, {}},
                                       {kObjectTypeSymbolicKeyType, {}},
                                       {kObjectTypeEnvType, {}}};

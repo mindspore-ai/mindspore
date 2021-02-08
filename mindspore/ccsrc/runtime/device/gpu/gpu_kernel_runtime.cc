@@ -921,7 +921,8 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(kernel_inputs);
   MS_EXCEPTION_IF_NULL(mem_reuse_util_);
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t i = 0; i < input_num; ++i) {
     DeviceAddressPtr device_address;
     if (mem_reuse_util_->is_all_nop_node()) {
       // Graph may be all nop nodes and not remove nop node, so this can not skip nop node.
@@ -1099,7 +1100,8 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
     return;
   }
   // Free the input of kernel by reference count.
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t i = 0; i < input_num; ++i) {
     if (AnfAlgo::IsInplaceNode(kernel, "aggregate")) {
       auto primitive = AnfAlgo::GetCNodePrimitive(kernel);
       auto index = GetValue<uint32_t>(primitive->GetAttr("aggregate_input_index"));
@@ -1137,7 +1139,8 @@ void GPUKernelRuntime::FreeKernelDynamicRes(const mindspore::AnfNodePtr &kernel)
     }
   }
   // Free the output of kernel, if output has no reference.
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(kernel); ++i) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel);
+  for (size_t i = 0; i < output_num; ++i) {
     auto kernel_ref_count_ptr = mem_reuse_util_->GetRef(cnode, i);
     if (kernel_ref_count_ptr == nullptr) {
       continue;

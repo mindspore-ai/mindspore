@@ -69,9 +69,8 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
         self.cast = P.Cast()
         self.alloc_status = P.NPUAllocFloatStatus()
         self.get_status = P.NPUGetFloatStatus()
-        self.clear_before_grad = P.NPUClearFloatStatus()
+        self.clear_status = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
-        self.depend_parameter_use = P.ControlDepend(depend_mode=1)
         self.base = Tensor(1, mstype.float32)
         self.less_equal = P.LessEqual()
         self.hyper_map = C.HyperMap()
@@ -81,7 +80,6 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
             self.loss_scale = Parameter(Tensor(scale_update_cell.get_loss_scale(), dtype=mstype.float32),
                                         name="loss_scale")
 
-    @C.add_flags(has_effect=True)
     def construct(self, x, sens=None):
         """Defines the computation performed."""
         weights = self.weights
@@ -92,12 +90,16 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
             scaling_sens = sens
         # alloc status and clear should be right before gradoperation
         init = self.alloc_status()
-        self.clear_before_grad(init)
+        init = F.depend(init, loss)
+        clear_status = self.clear_status(init)
+        scaling_sens = F.depend(scaling_sens, clear_status)
         grads = self.grad(self.network, weights)(x, self.cast(scaling_sens, mstype.float32))
         # apply grad reducer on grads
         grads = self.grad_reducer(grads)
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
-        self.get_status(init)
+        init = F.depend(init, grads)
+        get_status = self.get_status(init)
+        init = F.depend(init, get_status)
         flag_sum = self.reduce_sum(init, (0,))
         cond = self.less_equal(self.base, flag_sum)
         overflow = cond

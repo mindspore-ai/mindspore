@@ -45,9 +45,7 @@ const AnfNodePtr GetitemTuple::Process(const FuncGraphPtr &, const AnfNodePtr &n
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr tuple_getitem = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(tuple_getitem);
-  if (tuple_getitem->inputs().size() < kTupleGetitemInputNum) {
-    MS_LOG(EXCEPTION) << "tuple getitem's input num is wrong";
-  }
+  CheckCNodeInputSize(tuple_getitem, kTupleGetItemInputTensorNum);
   AnfNodePtr make_tuple_anf = tuple_getitem->input(kRealInputNodeIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(make_tuple_anf);
   AnfNodePtr index_node = tuple_getitem->input(kInputNodeOutputIndexInTupleGetItem);

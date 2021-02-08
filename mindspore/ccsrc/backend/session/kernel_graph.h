@@ -110,6 +110,7 @@ class KernelGraph : public FuncGraph {
   // trans tuple output to maketuple + no_tuple out
   AnfNodePtr TransTupleToMakeTuple(const AnfNodePtr &node);
   void set_execution_order(const std::vector<CNodePtr> &order) { execution_order_ = order; }
+  void set_execution_order(std::vector<CNodePtr> &&order) { execution_order_ = std::move(order); }
   const std::vector<CNodePtr> &execution_order() const { return execution_order_; }
   void SetExecOrderByDefault();
   uint32_t graph_id() const { return graph_id_; }
@@ -273,6 +274,9 @@ class KernelGraph : public FuncGraph {
   }
   // end of handle graph dependency
 
+  uint32_t label_num() const { return label_num_; }
+  void set_label_num(uint32_t num) { label_num_ = num; }
+
  private:
   // remove value node form graph
   bool RemoveValueNodeFromGraph(const ValueNodePtr &value_node);
@@ -358,6 +362,10 @@ class KernelGraph : public FuncGraph {
   bool first_step_{true};
   bool has_optimizer_{false};
   bool is_dynamic_shape_{false};
+
+  // Number of labels. This is also the 'batch_num' for DavinciModel,
+  // It should be 1 if no labels used for control flow.
+  uint32_t label_num_ = 1;
 };
 }  // namespace session
 using KernelGraphPtr = std::shared_ptr<session::KernelGraph>;

@@ -88,6 +88,10 @@ enum DataType {
   DT_ANYTHING = 40;     // type anything
   DT_REFKEY = 41;     // type refkey
   DT_REF = 42;     // type ref
+
+  // auto_monad type
+  DT_UMONAD = 43;
+  DT_IOMONAD = 44;
 }
 
 // Value definition for attribute value or parameter default value
@@ -255,7 +259,7 @@ message ModelProto {
   // The parameterized graph that is evaluated to execute the model.
   optional GraphProto graph = 4;
 
-  // metadata info of opeartors
+  // metadata info of operators
   optional OperatorSetProto metadata_operators = 5;
 };
 

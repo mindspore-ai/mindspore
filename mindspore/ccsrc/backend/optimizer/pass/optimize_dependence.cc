@@ -43,7 +43,7 @@ AnfNodePtr GetReplaceNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node
   if (!IsNotRealUsedByOthers(func_graph, cnode)) {
     return nullptr;
   }
-  CheckCNodeInputSize(cnode, kSingleInputIndex + 1);
+  CheckCNodeInputSize(cnode, kSingleInputIndex);
   return cnode->input(kSingleInputIndex);
 }
 
@@ -55,7 +55,8 @@ AnfNodePtr ReplaceMakeTuple(const FuncGraphPtr &func_graph, const CNodePtr &cnod
   }
   std::vector<AnfNodePtr> new_make_tuple_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
   bool need_update = false;
-  for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode); ++index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t index = 0; index < input_num; ++index) {
     auto input = AnfAlgo::GetInputNode(cnode, index);
     AnfNodePtr replace_input = GetReplaceNode(func_graph, input);
     // If replace input is not null, it will be the input of the TransData or Cast.
@@ -91,6 +92,29 @@ const BaseRef OptimizeDependence::DefinePattern() const {
   return VectorRef({X, Xs});
 }
 
+std::pair<AnfNodePtr, size_t> SearchTransDataAndCast(const AnfNodePtr &node, bool is_first_node) {
+  if (node == nullptr || !node->isa<CNode>()) {
+    return std::pair<AnfNodePtr, size_t>(nullptr, 0);
+  }
+  // get real input of depend and update state.
+  size_t replace_input_index = 0;
+  if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend)) {
+    replace_input_index = is_first_node ? kDependAttachNodeIndex : kRealInputIndexInDepend;
+  } else if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState)) {
+    replace_input_index = is_first_node ? kUpdateStateStateInput : kUpdateStateRealInput;
+  } else {
+    return std::pair<AnfNodePtr, size_t>(nullptr, 0);
+  }
+  // check whether real input is cast or trans data
+  auto real_input = node->cast<CNodePtr>()->input(replace_input_index);
+  if (AnfAlgo::CheckPrimitiveType(real_input, prim::kPrimCast) ||
+      AnfAlgo::CheckPrimitiveType(real_input, prim::KPrimTransData) ||
+      AnfAlgo::CheckPrimitiveType(real_input, prim::kPrimMakeTuple)) {
+    return std::pair<AnfNodePtr, size_t>(node, replace_input_index);
+  }
+  return SearchTransDataAndCast(real_input, false);
+}
+
 const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                              const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -98,42 +122,36 @@ const AnfNodePtr OptimizeDependence::Process(const FuncGraphPtr &func_graph, con
   if (!node->isa<CNode>()) {
     return nullptr;
   }
-  auto node_name = AnfAlgo::GetCNodeName(node);
-  if (node_name != prim::kPrimControlDepend->name() && node_name != prim::kPrimDepend->name()) {
+  // Get the cnode with repalce input index
+  auto cnode_with_input_index = SearchTransDataAndCast(node, true);
+  if (cnode_with_input_index.first == nullptr) {
     return nullptr;
   }
-  size_t index = 0;
-  auto depend_cnode = node->cast<CNodePtr>();
+  size_t replace_index = cnode_with_input_index.second;
+  auto depend_cnode = cnode_with_input_index.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(depend_cnode);
-  std::vector<AnfNodePtr> new_depend_inputs = {depend_cnode->input(kAnfPrimitiveIndex)};
-  if (node_name == prim::kPrimDepend->name()) {
-    index = 1;
-    new_depend_inputs.push_back(depend_cnode->input(kRealInputIndexInDepend));
+  // Get new node which will act as new input of depend or UpdateState.
+  std::vector<AnfNodePtr> new_depend_inputs = depend_cnode->inputs();
+  auto replace_node = GetConvertNode(func_graph, depend_cnode, replace_index);
+  if (replace_node == nullptr) {
+    return nullptr;
   }
-  if (AnfAlgo::GetInputTensorNum(depend_cnode) < 2) {
-    MS_LOG(EXCEPTION) << "The depend node input size is at less size 2,but got "
-                      << AnfAlgo::GetInputTensorNum(depend_cnode) << depend_cnode->DebugString();
-  }
-  auto input_num = AnfAlgo::GetInputTensorNum(depend_cnode);
-  while (index < input_num) {
-    auto replace_node = GetConvertNode(func_graph, node, index);
-    MS_EXCEPTION_IF_NULL(replace_node);
-    new_depend_inputs.push_back(replace_node);
-    ++index;
-  }
+  new_depend_inputs[replace_index] = replace_node;
+  // Because depend's input has been changed, so a new depend(UpdateState) node will be created to replaced the old one.
   auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
   CNodePtr new_depend = nullptr;
   if (kernel_graph == nullptr) {
     new_depend = func_graph->NewCNode(new_depend_inputs);
     MS_EXCEPTION_IF_NULL(new_depend);
-    new_depend->set_abstract(node->abstract());
-    new_depend->set_scope(node->scope());
+    new_depend->set_abstract(depend_cnode->abstract());
+    new_depend->set_scope(depend_cnode->scope());
   } else {
     new_depend = kernel_graph->NewCNode(depend_cnode);
     MS_EXCEPTION_IF_NULL(new_depend);
     new_depend->set_inputs(new_depend_inputs);
   }
-  return new_depend;
+  func_graph->manager()->Replace(depend_cnode, new_depend);
+  return nullptr;
 }
 
 const AnfNodePtr OptimizeDependence::GetConvertNode(const FuncGraphPtr &graph, const AnfNodePtr &node,
@@ -141,10 +159,10 @@ const AnfNodePtr OptimizeDependence::GetConvertNode(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto depend_cnode = node->cast<CNodePtr>();
-  auto replacing_node = AnfAlgo::GetInputNode(depend_cnode, index);
+  auto replacing_node = depend_cnode->input(index);
   MS_EXCEPTION_IF_NULL(replacing_node);
   if (!replacing_node->isa<CNode>()) {
-    return replacing_node;
+    return nullptr;
   }
   auto replacing_cnode = replacing_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(replacing_cnode);
@@ -154,10 +172,6 @@ const AnfNodePtr OptimizeDependence::GetConvertNode(const FuncGraphPtr &graph, c
     return make_tuple_replace_node;
   }
   AnfNodePtr replace_node = GetReplaceNode(graph, replacing_cnode);
-  if (replace_node == nullptr) {
-    MS_LOG(DEBUG) << "Can not find the TransData or Cast with single output node. Depend node: " << node->DebugString();
-    return replacing_node;
-  }
   return replace_node;
 }
 }  // namespace opt

@@ -132,17 +132,6 @@ def test_all_reduce_fusion_all(tag):
 
     @fns
     def after(x1, x2, x3, x4, x5):
-        ar = allreduce(x5, x4, x3, x2, x1)
-        y5 = tuple_getitem(ar, 0)
-        y4 = tuple_getitem(ar, 1)
-        y3 = tuple_getitem(ar, 2)
-        y2 = tuple_getitem(ar, 3)
-        y1 = tuple_getitem(ar, 4)
-        res = make_tuple(y1, y2, y3, y4, y5)
-        return make_tuple(res)
-
-    @fns
-    def after1(x1, x2, x3, x4, x5):
         ar = allreduce(x1, x2, x3, x4, x5)
         y1 = tuple_getitem(ar, 0)
         y2 = tuple_getitem(ar, 1)
@@ -170,13 +159,13 @@ def test_all_reduce_fusion_group(tag):
 
     @fns
     def after1(x1, x2, x3, x4, x5):
-        ar1 = allreduce(x5, x4)
-        ar2 = allreduce(x3, x2, x1)
-        y4 = tuple_getitem(ar1, 1)
-        y5 = tuple_getitem(ar1, 0)
-        y1 = tuple_getitem(ar2, 2)
-        y2 = tuple_getitem(ar2, 1)
+        ar1 = allreduce(x1, x2)
+        ar2 = allreduce(x3, x4, x5)
+        y1 = tuple_getitem(ar1, 0)
+        y2 = tuple_getitem(ar1, 1)
         y3 = tuple_getitem(ar2, 0)
+        y4 = tuple_getitem(ar2, 1)
+        y5 = tuple_getitem(ar2, 2)
         res = make_tuple(y1, y2, y3, y4, y5)
         return make_tuple(res)
 
@@ -184,11 +173,11 @@ def test_all_reduce_fusion_group(tag):
     def after2(x1, x2, x3, x4, x5):
         ar1 = allreduce(x1, x3, x5)
         ar2 = allreduce(x2, x4)
-        y1 = tuple_getitem(ar1, 2)
+        y1 = tuple_getitem(ar1, 0)
         y3 = tuple_getitem(ar1, 1)
-        y5 = tuple_getitem(ar1, 0)
-        y2 = tuple_getitem(ar2, 1)
-        y4 = tuple_getitem(ar2, 0)
+        y5 = tuple_getitem(ar1, 2)
+        y2 = tuple_getitem(ar2, 0)
+        y4 = tuple_getitem(ar2, 1)
         output = make_tuple(y1, y2, y3, y4, y5)
         return make_tuple(output)
 

@@ -31,6 +31,7 @@
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/parse_base.h"
 #include "pipeline/jit/parse/data_converter.h"
+#include "pipeline/jit/static_analysis/auto_monad.h"
 #include "abstract/abstract_value.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "pipeline/jit/static_analysis/program_specialize.h"
@@ -106,7 +107,9 @@ FuncGraphPtr Renormalize(const ResourcePtr &res, const FuncGraphPtr &func_graph,
   MsProfile::StatTime("renormalize.infer", t2 - t1);
   MsProfile::StatTime("renormalize.specialize", t3 - t2);
 #endif
+
   MS_LOG(DEBUG) << "Renormalize end";
+
   return ret;
 }
 
@@ -167,11 +170,11 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     auto base_graph = cloner->cloned_func_graph()[fg];
     MS_LOG(DEBUG) << "Basegraph:" << base_graph->ToString();
 
-    if (fg->paramter_obj_nodes().size() == 0 || graphs.size() <= 1) {
+    if (fg->used_global_parameters().empty() || graphs.size() <= 1) {
       continue;
     }
     auto &cloned_nodes = *cloner->cloned_node();
-    for (auto &fv : fg->paramter_obj_nodes()) {
+    for (auto &fv : fg->used_global_parameters()) {
       TraceGuard guard(std::make_shared<TraceCombileLikeGraphs>(fv->debug_info()));
       auto param = base_graph->add_parameter();
       auto &node_users = res->manager()->node_users()[fv];
@@ -185,10 +188,10 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
         repl_n->set_input(n.second, param);
       }
     }
-    MS_LOG(DEBUG) << "Fg0 paramter_obj_nodes size :" << fg->paramter_obj_nodes().size();
+    MS_LOG(DEBUG) << "Fg0 used_global_parameters size :" << fg->used_global_parameters().size();
 
     for (auto &g : graphs) {
-      auto fvs = g->paramter_obj_nodes();
+      auto &fvs = g->used_global_parameters();
       std::vector<AnfNodePtr> new_node_inputs;
       new_node_inputs.push_back(NewValueNode(base_graph));
       for (auto &p : g->parameters()) {
@@ -196,7 +199,7 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
         new_node_inputs.push_back(para_after_cast);
       }
       (void)new_node_inputs.insert(new_node_inputs.end(), fvs.begin(), fvs.end());
-      AnfNodePtr out = g->NewCNode(new_node_inputs);
+      AnfNodePtr out = g->NewCNodeBefore(g->get_return(), new_node_inputs);
       g->set_output(out);
       MS_LOG(DEBUG) << "Combine graph newout:" << out->DebugString(4);
     }
@@ -209,21 +212,33 @@ bool SymbolResolveAction(const ResourcePtr &res) {
   if (res->manager() == nullptr) {
     MS_LOG(EXCEPTION) << "SymbolResolve error, manager is null";
   }
-  if (res->func_graph() == nullptr) {
+  auto func_graph = res->func_graph();
+  if (func_graph == nullptr) {
     MS_LOG(EXCEPTION) << "SymbolResolve error, graph is null";
   }
-  FuncGraphPtr func_graph = res->func_graph();
-  auto succ = parse::ResolveFuncGraph(func_graph, res);
-
+  bool ret = parse::ResolveFuncGraph(func_graph, res);
   // Remove unused nodes in cnode order list.
-  func_graph->EraseUnusedNodeInOrder();
-  func_graph->ReleaseFullOrderToEffectOrder();
-  for (auto fg : func_graph->func_graphs_used_total()) {
-    MS_EXCEPTION_IF_NULL(fg);
-    fg->EraseUnusedNodeInOrder();
-    fg->ReleaseFullOrderToEffectOrder();
+  if (func_graph) {
+    func_graph->EraseUnusedNodeInOrder();
+    for (auto fg : func_graph->func_graphs_used_total()) {
+      if (fg) {
+        fg->EraseUnusedNodeInOrder();
+      }
+    }
   }
-  return succ;
+  return ret;
+}
+
+bool AutoMonadAction(const ResourcePtr &res) {
+  if (res->manager() == nullptr) {
+    MS_LOG(EXCEPTION) << "Auto-Monad failed, manager is null";
+  }
+  auto func_graph = res->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "Auto-Monad failed, graph is null";
+  }
+  (void)pipeline::AutoMonad(func_graph);
+  return true;
 }
 
 bool InferenceOptPrepareAction(const ResourcePtr &res) {
@@ -269,6 +284,16 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
   // Specialize
   FuncGraphPtr new_fg = ProgramSpecialize(res, result.context->func_graph(), result.context);
   res->set_func_graph(new_fg);
+
+  // Remove unused nodes in cnode order list, this is prepared for auto-monad.
+  if (new_fg) {
+    new_fg->EraseUnusedNodeInOrder();
+    for (auto fg : new_fg->func_graphs_used_total()) {
+      if (fg) {
+        fg->EraseUnusedNodeInOrder();
+      }
+    }
+  }
 
   MS_LOG(DEBUG) << "End graph: " << new_fg->ToString() << ", return: " << new_fg->get_return()->DebugString(true);
   return true;
@@ -447,7 +472,7 @@ bool StartPSSchedulerAction(const ResourcePtr &res) {
 #endif
 
 // The parallel primitive related valuenode might be partitioned so that its value changes by device,
-// that will result in a syncronization error due to different executing order.
+// that will result in a synchronization error due to different executing order.
 // Here we temporarily avoid the problem by skipping valuenode merging used by parallel related primitive,
 // the final solution will be proposed later as a parallel feature.
 bool KeepValueNodeDuplication(const AnfNodePtr &value_node, const ResourcePtr &res) {
@@ -558,6 +583,7 @@ static std::vector<ActionItem> CommonPipeline() {
 
   // Resolve the python func
   actions.emplace_back(std::make_pair("symbol_resolve", SymbolResolveAction));
+
   auto multi_graphs = parallel::CostModelContext::GetInstance()->is_multi_subgraphs();
   if (!multi_graphs) {
     actions.emplace_back(std::make_pair("combine_like_graphs", CombineLikeGraphs));
@@ -566,6 +592,8 @@ static std::vector<ActionItem> CommonPipeline() {
   actions.emplace_back(std::make_pair("inference_opt_prepare", InferenceOptPrepareAction));
   // Evaluate type and shape, and specialize
   actions.emplace_back(std::make_pair("abstract_specialize", AbstractSpecializeAction));
+  // Auto-monad for side-effects handling.
+  actions.emplace_back(std::make_pair("auto_monad", AutoMonadAction));
   // Do data structure simplifications and inline
   actions.emplace_back(std::make_pair("inline", OptInlineAction));
   // Add pre-ad, post-inline python pass stub

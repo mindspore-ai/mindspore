@@ -29,36 +29,34 @@
 
 namespace mindspore {
 namespace opt {
-constexpr size_t kTransOpInputNum = 2;
-constexpr size_t kCastInputNum = 2;
-constexpr size_t kDependInputNum = 3;
-constexpr size_t kReluInputNum = 2;
-constexpr size_t kReluGradInputNum = 3;
-constexpr size_t kAddInputNum = 3;
-constexpr size_t kAddNInputNum = 3;
-constexpr size_t kTupleGetitemInputNum = 3;
-constexpr size_t kConvInputNum = 3;
-constexpr size_t kRealDivInputNum = 3;
-constexpr size_t kSqrtInputNum = 2;
-constexpr size_t kMulInputNum = 3;
-constexpr size_t kRsqrtInputNum = 2;
-constexpr size_t kSubInputNum = 3;
-constexpr size_t kAssignSubInputNum = 3;
-constexpr size_t kDropoutInputNum = 2;
+constexpr size_t kTransOpInputTensorNum = 1;
+constexpr size_t kCastInputTensorNum = 1;
+constexpr size_t kDependInputTensorNum = 2;
+constexpr size_t kReluInputTensorNum = 1;
+constexpr size_t kReluGradInputTensorNum = 2;
+constexpr size_t kAddInputTensorNum = 2;
+constexpr size_t kTupleGetItemInputTensorNum = 2;
+constexpr size_t kConvInputTensorNum = 2;
+constexpr size_t kRealDivInputTensorNum = 2;
+constexpr size_t kSqrtInputTensorNum = 1;
+constexpr size_t kMatMulInputTensorNum = 2;
+constexpr size_t kMulInputTensorNum = 2;
+constexpr size_t kSubInputTensorNum = 2;
+constexpr size_t kAssignSubInputTensorNum = 2;
+constexpr size_t kDropoutInputTensorNum = 1;
+constexpr size_t kAssignInputTensorNum = 2;
 
 constexpr size_t kConvBn1OutputNum = 3;
 constexpr size_t kBn2ReluOutputNum = 4;
 
-constexpr size_t kBnInputNum = 6;
+constexpr size_t kBnInputTensorNum = 5;
 constexpr size_t kBnOutputNum = 5;
-constexpr size_t kBatchNormInputNum = 5;
-constexpr size_t kBatchNormOutputNum = 5;
 
 constexpr size_t kBN1OutputNum = 2;
 constexpr size_t kBN2OutputNum = 3;
 constexpr size_t kBN3OutputNum = 1;
 
-constexpr size_t kBNGradInputNum = 6;
+constexpr size_t kBNGradInputTensorNum = 5;
 constexpr size_t kBNGradOutputNum = 3;
 
 constexpr size_t kBNGrad1OutputNum = 3;
@@ -72,10 +70,10 @@ constexpr size_t kBNTrainingUpdateV3OutputNum = 5;
 constexpr size_t kBNTrainingUpdateGradOutputNum = 2;
 
 constexpr size_t kSingleOutputNum = 1;
-constexpr size_t kSumNodeInputNum = 2;
-constexpr size_t kSquareNodeInputNum = 2;
+constexpr size_t kSumNodeInputTensorNum = 1;
+constexpr size_t kSquareNodeInputTensorNum = 1;
 constexpr size_t kSquareSumv2OutputNum = 2;
-constexpr size_t kMinimumInputNum = 3;
+constexpr size_t kMinimumInputTensorNum = 2;
 
 constexpr size_t kLambNextMVWithDecayInputNum = 7;
 constexpr size_t kLambNextMVWithDecayConstantMulInputNum = 5;
@@ -85,26 +83,25 @@ constexpr size_t kLambNextRightOutputNum = 2;
 constexpr size_t kLambUpdateWithLrV2InputNum = 8;
 constexpr size_t kLambNextMVRuleInputNum = 14;
 constexpr size_t kLambNextMVRuleOutputNum = 4;
-constexpr size_t kBackendReshapeInputNum = 2;
-constexpr size_t kBackendTransposeInputNum = 2;
+constexpr size_t kBackendReshapeInputTensorNum = 1;
+constexpr size_t kBackendTransposeInputTensorNum = 1;
 constexpr size_t kAdamApplyOneWithDecayOutputNum = 3;
-constexpr size_t kLayerNormBetaGammaBackpropInputNum = 5;
+constexpr size_t kLayerNormBetaGammaBackpropInputTensorNum = 4;
 constexpr size_t kLayerNormBetaGammaBackpropOutputNum = 2;
-constexpr size_t kLayerNormGradInputNum = 6;
+constexpr size_t kLayerNormGradInputTensorNum = 5;
 constexpr size_t kAdamApplyOneOutputNum = 3;
-constexpr size_t kBackendTransDataInputNum = 2;
-constexpr size_t kApplyMomentumInputNum = 6;
-constexpr size_t kBiasAddInputNum = 3;
-constexpr size_t kTopkInputNum = 3;
-constexpr size_t kLarsV2InputNum = 5;
+constexpr size_t kApplyMomentumInputTensorNum = 5;
+constexpr size_t kBiasAddInputTensorNum = 2;
+constexpr size_t kTopkInputTensorNum = 2;
+constexpr size_t kLarsV2InputTensorNum = 4;
 constexpr size_t kFusedMulApplyMomentumOutputNum = 2;
-constexpr size_t kSplitInputNum = 2;
-constexpr size_t kGatherV2DynInputNum = 3;
-constexpr size_t kUnsortedSegmentSumInputNum = 2;
+constexpr size_t kSplitInputTensorNum = 1;
+constexpr size_t kGatherV2DynInputTensorNum = 3;
+constexpr size_t kUnsortedSegmentSumInputTensorNum = 2;
 constexpr size_t kSoftmaxCrossEntropyWithLogitsOutputNum = 2;
-constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsInputNum = 3;
+constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum = 2;
 constexpr size_t kOneHotOutputNum = 1;
-constexpr size_t kOneHotInputNum = 5;
+constexpr size_t kOneHotInputTensorNum = 4;
 
 enum FusedBatchNormInput {
   kX = 1,
@@ -137,7 +134,7 @@ bool Visited(const BaseRef &n);
 // check if the input node is CNode, then check it's input_size, return CNodePtr if check success.
 CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size);
 
-void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_size);
+void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_num);
 
 bool HasSymmetricalKernelInfo(const AnfNodePtr &node_x, const AnfNodePtr &node_y);
 

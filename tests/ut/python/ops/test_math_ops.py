@@ -24,6 +24,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -272,12 +273,14 @@ class NpuFloatNet(nn.Cell):
         self.sub = P.Sub()
         self.neg = P.Neg()
 
-    @C.add_flags(has_effect=True)
     def construct(self, x):
         init = self.alloc_status()
-        self.clear_status(init)
+        clear_status = self.clear_status(init)
+        x = F.depend(x, clear_status) # let x depend on clear_status
         res = self.sub(x, self.neg(x))
-        self.get_status(init)
+        init = F.depend(init, res) # let get_status depend on res
+        get_status = self.get_status(init)
+        init = F.depend(init, get_status) # let reduce_sum depend on get_statusk
         flag_sum = self.reduce_sum(init, (0,))
         base = self.cast(self.fill(self.dtype(res), self.shape_op(res), 0.0), self.dtype(flag_sum))
         cond = self.less(base, flag_sum)

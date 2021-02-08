@@ -14,6 +14,7 @@
 # ============================================================================
 """ test ADA_GRAD """
 
+import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -23,7 +24,12 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Adagrad
 from mindspore.ops import operations as P
 
-context.set_context(enable_sparse=True)
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_teardown():
+    context.set_context(enable_sparse=True)
+    yield
+    context.set_context(enable_sparse=False)
 
 
 class Net(nn.Cell):

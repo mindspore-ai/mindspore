@@ -42,6 +42,7 @@ class CSE {
 
  private:
   bool BuildOrderGroupAndDoReplace(const FuncGraphManagerPtr manager) const;
+  bool ReplaceAutoMonadNode(const FuncGraphManagerPtr &manager) const;
   bool DoReplace(const FuncGraphManagerPtr manager, const std::vector<std::size_t> &order_group,
                  std::unordered_map<std::size_t, std::vector<AnfNodePtr>> *groups) const;
 };

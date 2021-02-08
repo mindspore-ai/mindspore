@@ -133,7 +133,6 @@ class Embedding_Thor(Cell):
                 matrix_A_inv = self.inv(matrix_A)
                 matrix_A_inv = self.cast(matrix_A_inv, mstype.float16)
                 self.matrix_A_inv = matrix_A_inv
-                self.matrix_G_inv = self.fake_G
                 output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
                 output_for_reshape = self.getG(output_for_reshape)
             else:
@@ -253,7 +252,6 @@ class Dense_Thor(Cell):
             matrix_A_inv = self.matrix_combine(matrix_A_inv)
             matrix_A_inv = self.cast(matrix_A_inv, mstype.float16)
             self.matrix_A_inv = matrix_A_inv
-            self.matrix_G_inv = self.fake_G
             output = self.matmul(x, self.weight)
             output = self.getG(output)
         else:

@@ -81,7 +81,7 @@ void PrintNodeInputType(std::ostringstream &buffer, const AnfNodePtr &nd) {
     return;
   }
 
-  std::vector<AnfNodePtr> inputs = SuccIncoming(nd);
+  const auto &inputs = GetInputs(nd);
   size_t len = inputs.size();
   if (len > 1) {
     // skip inputs[0] which is Primitive value node
@@ -137,7 +137,8 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
   }
 
   gsub->buffer << "      : (";
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(node); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_num; ++i) {
     if (i != 0) {
       gsub->buffer << ", ";
     }
@@ -147,7 +148,8 @@ void DumpKernelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> 
     PrintKernelFormatAndType(gsub->buffer, format, type, shape);
   }
   gsub->buffer << ") -> (";
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(node); ++i) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t i = 0; i < output_num; ++i) {
     if (i != 0) {
       gsub->buffer << ", ";
     }
@@ -238,7 +240,7 @@ void DumpOperands(const AnfNodePtr &nd, OrderedMap<AnfNodePtr, int32_t> *para_ma
   }
 
   gsub->buffer << "(";
-  std::vector<AnfNodePtr> inputs = SuccIncoming(nd);
+  const auto &inputs = GetInputs(nd);
   size_t len = inputs.size();
   if (len > 1) {
     // skip inputs[0] which is Primitive valuenode

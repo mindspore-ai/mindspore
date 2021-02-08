@@ -18,12 +18,17 @@
 @Date  : 2020-08-04
 @Desc  : test mindspore sparse pynative
 """
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context, Tensor, RowTensor, SparseTensor
 from mindspore.ops import composite as C
 
-context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=True)
+@pytest.fixture(scope="module", autouse=True)
+def setup_teardown():
+    context.set_context(mode=context.PYNATIVE_MODE, enable_sparse=True)
+    yield
+    context.set_context(mode=context.GRAPH_MODE, enable_sparse=False)
 
 
 grad_all = C.GradOperation(get_all=True)

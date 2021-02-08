@@ -129,6 +129,21 @@ def _tensor_add_tensor(x, y):
     return F.tensor_add(x, y)
 
 
+@add.register("RowTensor", "Tensor")
+def add_rowtensor_tensor(x, y):
+    """
+   Adds RowTensor and Tensor.
+
+   Args:
+       x (RowTensor): x
+       y (Tensor): y
+
+   Returns:
+       RowTensor, the dtype is same as x.
+   """
+    return F.row_tensor_add(x, y)
+
+
 @_add_backward.register("EnvType", "EnvType")
 def _add_env(x, y):
     """
@@ -172,6 +187,49 @@ def _add_addn(x, y):
        Tensor, the dtype is same as x.
    """
     return F.addn((x, y))
+
+
+@_add_backward.register("UMonad", "UMonad")
+def _add_umonad_umonad(x, y):
+    """
+   Adds two monad.
+
+   Args:
+       x (UMonad): x
+       y (UMonad): y
+
+   Returns:
+       Monad, the dtype is same as x.
+   """
+    return x
+
+@_add_backward.register("IOMonad", "IOMonad")
+def _add_iomonad_iomonad(x, y):
+    """
+   Adds two monad.
+
+   Args:
+       x (IOMonad): x
+       y (IOMonad): y
+
+   Returns:
+       Monad, the dtype is same as x.
+   """
+    return x
+
+@_add_backward.register("RowTensor", "Tensor")
+def _add_rowtensor_tensor(x, y):
+    """
+   Adds RowTensor and Tensor.
+
+   Args:
+       x (RowTensor): x
+       y (Tensor): y
+
+   Returns:
+       RowTensor, the dtype is same as x.
+   """
+    return x + y
 
 
 hyper_add = base.HyperMap(_add_backward)

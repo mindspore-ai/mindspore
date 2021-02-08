@@ -64,6 +64,7 @@ class MSANFModelParser {
   bool GetAttrValueForValueNode(const std::string &value_node_name, const mind_ir::AttributeProto &attr_tensor);
   bool ObtainValueNodeInTypeForm(const string &value_node_name, const mind_ir::TensorProto &attr_tensor);
   bool ObtainValueNodeInNoneForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
+  bool ObtainValueNodeInMonadForm(const std::string &value_node_name, const mind_ir::AttributeProto &attr_proto);
   std::unordered_map<std::string, abstract::AbstractBasePtr> GetAbstractForCNode(
     const mind_ir::AttributeProto &attr_proto);
 

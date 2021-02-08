@@ -41,6 +41,7 @@ using IncludeFunc = std::function<IncludeType(const AnfNodePtr &)>;
 using FilterFunc = std::function<bool(const AnfNodePtr &)>;
 using SuccFunc = std::function<std::vector<AnfNodePtr>(AnfNodePtr)>;
 using SearchFunc = std::function<std::vector<AnfNodePtr>(const AnfNodePtr &, const IncludeFunc &)>;
+using MatchFunc = std::function<bool(const CNodePtr &)>;
 
 std::vector<AnfNodePtr> DeepScopedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include);
 std::vector<AnfNodePtr> DeepUsedGraphSearch(const AnfNodePtr &root, const IncludeFunc &include);
@@ -50,6 +51,8 @@ std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node);
 std::vector<AnfNodePtr> SuccDeeperSimple(const AnfNodePtr &node);
 std::vector<AnfNodePtr> SuccIncoming(const AnfNodePtr &node);
 std::vector<AnfNodePtr> SuccIncludeFV(const FuncGraphPtr &fg, const AnfNodePtr &node);
+
+const std::vector<AnfNodePtr> &GetInputs(const AnfNodePtr &node);
 
 IncludeType AlwaysInclude(const AnfNodePtr &node);
 IncludeType IncludeBelongGraph(const FuncGraphPtr &fg, const AnfNodePtr &node);
@@ -68,8 +71,11 @@ std::vector<AnfNodePtr> DeepUsersSearch(const AnfNodePtr &root, const IncludeFun
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ = SuccIncoming,
                                  const IncludeFunc &include = AlwaysInclude);
 
-std::vector<CNodePtr> BroadFirstSearchGraphCNodes(CNodePtr ret);
+std::vector<CNodePtr> BroadFirstSearchGraphCNodes(const std::vector<CNodePtr> &starts);
 std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root);
+
+CNodePtr BroadFirstSearchFirstOf(const std::vector<CNodePtr> &starts, const MatchFunc &match_predicate);
+
 class FuncGraphIndex {
  public:
   explicit FuncGraphIndex(const FuncGraphPtr &fg, const SearchFunc &search = DeepScopedGraphSearch,

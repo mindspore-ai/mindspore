@@ -305,52 +305,14 @@ void AtomicCleanInsertter::AddDepend(const FuncGraphPtr &main_graph, const AnfNo
   user_cnode->set_input(index, depend_cnode);
 }
 
-AnfNodePtr AtomicCleanInsertter::AddControlDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &prior_node,
-                                                  const AnfNodePtr &behind_node, const AnfNodePtr &patron_node) {
-  // Create control depend, first input is composite op, second is user
-  AnfNodePtrList cd_inputs = {NewValueNode(prim::kPrimControlDepend), prior_node, behind_node};
-  auto control_depend_cnode = main_graph->NewCNode(cd_inputs);
-  main_graph->AddNode(control_depend_cnode);
-
-  // Create depend node to hold new control depend node.
-  AnfNodePtrList d_inputs = {NewValueNode(prim::kPrimDepend), patron_node, control_depend_cnode};
-  auto depend_cnode = main_graph->NewCNode(d_inputs);
-  depend_cnode->set_abstract(patron_node->abstract());
-  main_graph->AddNode(depend_cnode);
-
-  return depend_cnode;
-}
-
-std::tuple<AnfNodePtr, AnfNodePtr, int> AtomicCleanInsertter::FindPatronNode(const KernelGraphPtr &main_graph) {
-  auto mng = main_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(main_graph, true);
-    main_graph->set_manager(mng);
-  }
-
-  AnfNodePtr patron_node;
-
-  auto return_cnode = main_graph->get_return()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(return_cnode);
-  auto output_node = return_cnode->input(kFirstDataInputIndex);
-  if (IsPrimitiveCNode(output_node, prim::kPrimMakeTuple)) {
-    auto output_cnode = output_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(output_cnode);
-    patron_node = output_cnode->input(kFirstDataInputIndex);
-  } else {
-    patron_node = output_node;
-  }
-
-  auto &user_nodes = mng->node_users()[patron_node];
-  auto user = user_nodes.begin();
-  return std::make_tuple(patron_node, user->first, user->second);
-}
-
-void AtomicCleanInsertter::PostprocessForLastPatron(const AnfNodePtr &patron_node, const AnfNodePtr &patron_user,
-                                                    int index) {
-  auto patron_user_cnode = patron_user->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(patron_user_cnode);
-  patron_user_cnode->set_input(index, patron_node);
+CNodePtr AtomicCleanInsertter::InsertUpdateState(const KernelGraphPtr &main_graph, const CNodePtr &composite_node) {
+  // Insert update_state_node, need mount a monad node.
+  auto u = NewValueNode(kUMonad);
+  u->set_abstract(kUMonad->ToAbstract());
+  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, composite_node};
+  auto update_state_cnode = main_graph->NewCNode(update_state_inputs);
+  main_graph->AddNode(update_state_cnode);
+  return update_state_cnode;
 }
 
 CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type) {
@@ -474,24 +436,21 @@ std::vector<std::pair<AnfNodePtr, int> > AtomicCleanInsertter::FindOriginCNodeUs
 }
 
 void AtomicCleanInsertter::ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
-                                                  const AnfNodePtr &broadcast_to_node, const FuncGraphManagerPtr &mng) {
+                                                  const AnfNodePtr &broadcast_to_node,
+                                                  const AnfNodePtr &update_state_node, const FuncGraphManagerPtr &mng) {
   // 1. find users, change getitem index if needed.
   std::vector<std::pair<AnfNodePtr, int> > reduce_user_nodes =
     FindOriginCNodeUsers(main_graph, composite_node, mng, true);
   for (const auto &[user_node, index] : reduce_user_nodes) {
-    // 2. set ac output as user's input.
-    // 3. Make sure modified composite node running first.
-    //    * To not change the origin node's dependency relation, add ControlDepend and Depend node.
-    //    * For Return node and output node, ControlDepend node will change the order of these two node, which will may
-    //      main graph running failed. So only add Depend node to meet the need of execute order.
-    if (IsPrimitiveCNode(user_node, prim::kPrimReturn) || user_node == main_graph->output()) {
-      AddDepend(main_graph, broadcast_to_node, composite_node, user_node, index);
-    } else {
-      auto user_cnode = user_node->cast<CNodePtr>();
-      MS_EXCEPTION_IF_NULL(user_cnode);
-      user_cnode->set_input(index, broadcast_to_node);
-      to_process_order_.emplace_back(composite_node, user_node);
-    }
+    // 2. Make sure modified composite node running first, So firstly, create load_node, then add edge to connect
+    // update_state_node, broadcat_node and load_node to keep order.
+    AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), broadcast_to_node, update_state_node};
+    auto load_node = main_graph->NewCNode(load_inputs);
+    main_graph->AddNode(load_node);
+    auto user_cnode = user_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(user_cnode);
+    user_cnode->set_input(index, load_node);
+    to_process_order_.emplace_back(composite_node, user_node);
   }
 }
 
@@ -509,8 +468,11 @@ void AtomicCleanInsertter::InsertAtomicClean(const KernelGraphPtr &main_graph, c
   // Note: if it's single output, this will increase total memory because of a fake out.
   ProcessOriginCNode(origin_composite_node, broadcast_to_node, mng);
 
-  // Replace origin ReduceSum's user with atomic clean output, and add control depend from composite op to user.
-  ProcessOriginCNodeUser(main_graph, origin_composite_node, broadcast_to_node, mng);
+  // Insert update_state_node to keep execution order.
+  auto update_state_node = InsertUpdateState(main_graph, origin_composite_node);
+
+  // Replace origin ReduceSum's user with atomic clean output
+  ProcessOriginCNodeUser(main_graph, origin_composite_node, broadcast_to_node, update_state_node, mng);
   MS_LOG(INFO) << "Target node: " << origin_composite_node->fullname_with_scope()
                << ", clean node: " << broadcast_to_node->fullname_with_scope();
 }
@@ -554,14 +516,6 @@ bool AtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
   }
 
   if (changed) {
-    if (!to_process_order_.empty()) {
-      auto [patron_node, patron_user, user_index] = FindPatronNode(kernel_graph);
-      for (const auto &[prior, behind] : to_process_order_) {
-        patron_node = AddControlDepend(kernel_graph, prior, behind, patron_node);
-      }
-      PostprocessForLastPatron(patron_node, patron_user, user_index);
-    }
-
     mng->RemoveRoots();
     mng->KeepRoots({func_graph});
   }

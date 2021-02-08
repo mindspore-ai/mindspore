@@ -775,6 +775,10 @@ void ParameterServer<T>::GetEmbeddingTableParamPtr() {
     std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
     if (cnode_name == kEmbeddingLookupOpName || cnode_name == kGatherV2OpName || cnode_name == kSparseGatherV2OpName) {
       auto embedding_table = AnfAlgo::GetInputNode(cnode, 0);
+      if (IsPrimitiveCNode(embedding_table, prim::kPrimLoad)) {
+        auto embedding_cnode = embedding_table->cast<CNodePtr>();
+        embedding_table = AnfAlgo::GetInputNode(embedding_cnode, 0);
+      }
       MS_EXCEPTION_IF_NULL(embedding_table);
       if (embedding_table->isa<Parameter>()) {
         MS_LOG(INFO) << "Embedding table name is " << embedding_table->fullname_with_scope() << ", key is " << count;

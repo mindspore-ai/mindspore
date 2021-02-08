@@ -42,6 +42,16 @@ class RowTensorEliminater : public OptimizerCaller {
     return nullptr;
   }
 };
+
+// {prim::kPrimRowTensorAdd, rowtensor, zeros_like(x)} -> rowtensor
+class RowTensorAddZerosLike : public AnfVisitor {
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    PatternNode x, y;
+    auto zeros_like = PPrimitive(prim::kPrimZerosLike, y);
+    MATCH_REPLACE(node, PPrimitive(prim::kPrimRowTensorAdd, x, zeros_like), x);
+    return nullptr;
+  }
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

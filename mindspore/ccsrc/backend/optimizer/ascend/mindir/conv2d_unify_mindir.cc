@@ -136,10 +136,7 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
 CNodePtr CreateDepthwiseConv2D(const FuncGraphPtr &graph, const CNodePtr &conv2d, const CNodePtr &transpose) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(conv2d);
-  if (conv2d->inputs().size() != kConvInputNum) {
-    MS_LOG(EXCEPTION) << "Conv2D's input number should be " << kConvInputNum - 1 << ", but got "
-                      << conv2d->inputs().size() - 1;
-  }
+  CheckCNodeInputSize(conv2d, kConvInputTensorNum);
   std::vector<AnfNodePtr> depth_conv_inputs = {NewValueNode(std::make_shared<Primitive>(kDepthwiseConv2dNativeOpName)),
                                                conv2d->input(1), transpose};
   auto depth_conv = graph->NewCNode(depth_conv_inputs);
@@ -270,11 +267,7 @@ const AnfNodePtr Conv2DUnifyMindIR::Process(const FuncGraphPtr &graph, const Anf
   if (!NeedUpdate(conv2d, input_shape, output_shape)) {
     return nullptr;
   }
-
-  if (conv2d->inputs().size() != kConvInputNum) {
-    MS_LOG(EXCEPTION) << "Conv2D's input number should be " << kConvInputNum - 1 << ", but got "
-                      << conv2d->inputs().size() - 1;
-  }
+  CheckCNodeInputSize(conv2d, kConvInputTensorNum);
   auto transpose = CreateTranspose(graph, conv2d, conv2d->input(2), true);
   auto depth_conv = CreateDepthwiseConv2D(graph, conv2d, transpose);
   SetConv2DAttrs(conv2d, depth_conv);

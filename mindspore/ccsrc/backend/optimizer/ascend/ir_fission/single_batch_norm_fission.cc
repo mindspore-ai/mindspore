@@ -76,8 +76,8 @@ AnfNodePtr CreateBNTrainingUpdateV3(const FuncGraphPtr &func_graph, const AnfNod
 
   auto bn_abstract_tuple = dyn_cast<abstract::AbstractTuple>(bn->abstract());
   MS_EXCEPTION_IF_NULL(bn_abstract_tuple);
-  if (bn_abstract_tuple->elements().size() != kBatchNormOutputNum) {
-    MS_LOG(EXCEPTION) << "The abstract size of node bn must be " << kBatchNormOutputNum << ", but it is "
+  if (bn_abstract_tuple->elements().size() != kBnOutputNum) {
+    MS_LOG(EXCEPTION) << "The abstract size of node bn must be " << kBnOutputNum << ", but it is "
                       << bn_abstract_tuple->elements().size() << " trace: " << trace::DumpSourceLines(bn);
   }
   bn_training_update_v3->set_abstract(bn->abstract());

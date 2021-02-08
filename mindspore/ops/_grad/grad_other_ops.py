@@ -26,7 +26,7 @@ from .grad_base import bprop_getters
 def get_bprop_assign(self):
     """Generate bprop for Assign"""
     def bprop(x, y, out, dout):
-        return (x, zeros_like(y))
+        return (dout, zeros_like(y))
     return bprop
 
 

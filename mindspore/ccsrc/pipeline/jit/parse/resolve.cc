@@ -109,7 +109,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
     node->set_abstract(abs);
     para_node = node;
   }
-  func_graph->add_parameter_obj_node(para_node);
+  func_graph->add_used_global_parameters(para_node);
   return para_node;
 }
 

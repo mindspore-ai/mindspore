@@ -156,7 +156,7 @@ class CenterfaceMobilev2(nn.Cell):
 
 class CenterFaceLoss(nn.Cell):
     """
-    Loss method defination.
+    Loss method definition.
     """
     def __init__(self, wh_weight, reg_offset, off_weight, hm_weight, lm_weight):
         super(CenterFaceLoss, self).__init__()
@@ -260,8 +260,10 @@ class TrainingWrapper(nn.Cell):
 
         # init overflow buffer
         init = self.alloc_status()
+        init = F.depend(init, loss)
         # clear overflow buffer
-        self.clear_status(init)
+        clear_status = self.clear_status(init)
+        loss = F.depend(loss, clear_status)
 
         #sens = sens_input #P.Fill()(P.DType()(loss), P.Shape()(loss), sens_input) # user can contral loss scale by add a sens_input
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
@@ -272,7 +274,9 @@ class TrainingWrapper(nn.Cell):
             grads = self.grad_reducer(grads)
 
         # get the overflow buffer
-        self.get_status(init)
+        init = F.depend(init, grads)
+        get_status = self.get_status(init)
+        init = F.depend(init, get_status)
         # sum overflow buffer elements, 0:not overflow , >0:overflow
         flag_sum = self.reduce_sum(init, (0,))
         if self.is_distributed:

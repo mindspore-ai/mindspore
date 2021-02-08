@@ -84,7 +84,7 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
     }
   }
 
-  std::vector<PrimitivePtr> adapter_convert_ops = {prim::kPrimDepend, prim::kPrimControlDepend};
+  std::vector<PrimitivePtr> adapter_convert_ops = {prim::kPrimDepend, prim::kPrimControlDepend, prim::kPrimLoad};
   for (auto &item : adapter_convert_ops) {
     if (IsPrimitiveCNode(node, item)) {
       return true;
@@ -149,6 +149,10 @@ FuncGraphPtr TransformGraphCondBranchNodes(
     // if the apply input does not belong to graph, insert a switch node
     for (size_t index = 0; index < inputs.size(); index++) {
       auto input_node = inputs[index];
+      if (HasAbstractMonad(input_node)) {
+        // Do not guard with switch for monad inputs.
+        continue;
+      }
       MS_EXCEPTION_IF_NULL(input_node);
       // for some ops input should not guard it with switch
       if (InConvertWhiteList(node, index)) {

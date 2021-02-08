@@ -30,7 +30,7 @@ std::string KernelBuildInfo::GetInputFormat(size_t input_index) const {
 
 std::string KernelBuildInfo::GetOutputFormat(size_t output_index) const {
   if (output_index >= outputs_format_.size()) {
-    MS_LOG(ERROR) << "The index [" << output_index << "] is exceed the number of input node";
+    MS_LOG(ERROR) << "The index [" << output_index << "] is exceed the number of output";
     return kInvalidFormat;
   }
   return outputs_format_[output_index];

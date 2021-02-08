@@ -27,15 +27,20 @@ namespace opt {
 class FusedBatchNormFusion : public PatternProcessPass {
  public:
   explicit FusedBatchNormFusion(const std::string &name = "fused_batch_norm_fusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph),
-        data_input0_var_(std::make_shared<Var>()),
-        data_input1_var_(std::make_shared<Var>()),
-        data_input2_var_(std::make_shared<Var>()),
-        variable_input0_var_(std::make_shared<Var>()),
-        variable_input1_var_(std::make_shared<Var>()),
-        constant_input0_var_(std::make_shared<Var>()),
-        constant_input1_var_(std::make_shared<Var>()),
-        batch_norm_var_(std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimBatchNorm->name()))) {}
+      : PatternProcessPass(name, multigraph) {
+    data_input0_var_ = std::make_shared<Var>();
+    data_input1_var_ = std::make_shared<Var>();
+    data_input2_var_ = std::make_shared<Var>();
+    variable_input0_var_ = std::make_shared<Var>();
+    variable_input1_var_ = std::make_shared<Var>();
+    constant_input0_var_ = std::make_shared<Var>();
+    constant_input1_var_ = std::make_shared<Var>();
+    batch_norm_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimBatchNorm->name()));
+    assign_sub0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAssignSub->name()));
+    assign_sub1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAssignSub->name()));
+    monad0_var_ = std::make_shared<Var>();
+    monad1_var_ = std::make_shared<Var>();
+  }
   ~FusedBatchNormFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
@@ -50,6 +55,7 @@ class FusedBatchNormFusion : public PatternProcessPass {
   AnfNodePtr CreateBNTrainingUpdate(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv,
                                     const std::vector<AnfNodePtr> &bn_training_reduce_outputs) const;
   ValuePtr GetFactor(const EquivPtr &equiv) const;
+  void EliminateMonadNodes(const FuncGraphPtr &func_graph, const EquivPtr &equiv) const;
 
   VarPtr data_input0_var_;
   VarPtr data_input1_var_;
@@ -59,6 +65,10 @@ class FusedBatchNormFusion : public PatternProcessPass {
   VarPtr constant_input0_var_;
   VarPtr constant_input1_var_;
   VarPtr batch_norm_var_;
+  VarPtr assign_sub0_var_;
+  VarPtr assign_sub1_var_;
+  VarPtr monad0_var_;
+  VarPtr monad1_var_;
 };
 
 class FusedBatchNormMixPrecisionFusion0 : public FusedBatchNormFusion {

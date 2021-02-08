@@ -97,7 +97,8 @@ void ProcessThroughPassCNode(std::function<bool(const AnfNodePtr &)> pass_fn,
 
 void ProcessDependCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
   for (auto &[node, node_rel] : (*node_rels)) {
-    if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    if (!IsPrimitiveCNode(node, prim::kPrimDepend) ||
+        HasAbstractMonad(node->cast<CNodePtr>()->input(kDependAttachNodeIndex))) {
       continue;
     }
 
@@ -116,96 +117,6 @@ void ProcessDependCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
 
   // Eliminate depend node of node relations.
   ProcessThroughPassCNode([](const AnfNodePtr &node) { return IsOneOf(node, {prim::kPrimDepend}); }, node_rels);
-}
-
-std::tuple<std::pair<AnfNodePtr, AnfNodePtr>, std::pair<AnfNodePtrList, AnfNodePtrList>> FindRelationOfControlDepend(
-  const AnfNodePtr &node, OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
-  auto cnode = node->cast<CNodePtr>();
-  auto prior_node = cnode->input(kControlDependPriorIndex);
-  auto behind_node = cnode->input(kControlDependBehindIndex);
-  MS_EXCEPTION_IF_NULL(prior_node);
-  MS_EXCEPTION_IF_NULL(behind_node);
-
-  OrderedSet<AnfNodePtr> prior_nodes;
-  prior_nodes.insert(prior_node);
-  OrderedSet<AnfNodePtr> behind_nodes;
-  behind_nodes.insert(behind_node);
-
-  int64_t depend_mode = 0;
-  if (AnfAlgo::HasNodeAttr(kControlDependMode, cnode)) {
-    depend_mode = AnfAlgo::GetNodeAttr<int64_t>(cnode, kControlDependMode);
-  }
-  if (prior_node->isa<Parameter>() && depend_mode == 1) {
-    prior_nodes = (*node_rels)[prior_node].nexts;
-  }
-  if (behind_node->isa<Parameter>()) {
-    behind_nodes = depend_mode == 1 ? (*node_rels)[behind_node].nexts : OrderedSet<AnfNodePtr>();
-  }
-
-  // Get real nodes.
-  AnfNodePtrList real_prior_nodes;
-  std::set<AnfNodePtr> prior_visited;
-  for (const auto &tmp : prior_nodes) {
-    AnfAlgo::GetAllFatherRealNode(tmp, &real_prior_nodes, &prior_visited);
-  }
-  AnfNodePtrList real_behind_nodes;
-  std::set<AnfNodePtr> behind_visited;
-  for (const auto &tmp : behind_nodes) {
-    AnfAlgo::GetAllFatherRealNode(tmp, &real_behind_nodes, &behind_visited);
-  }
-
-  return std::make_tuple(std::make_pair(prior_node, behind_node), std::make_pair(real_prior_nodes, real_behind_nodes));
-}
-
-void ReLinkNodesOfControlDependByRelation(const std::unordered_map<AnfNodePtr, AnfNodePtrList> &control_depend_info,
-                                          OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
-  // Relink and its log.
-  for (const auto &m : control_depend_info) {
-    const auto &prior = m.second[0];
-    const auto &behind = m.second[1];
-    (*node_rels)[prior].nexts.insert(behind);
-    (*node_rels)[behind].pres.insert(prior);
-    MS_LOG(DEBUG) << "Relink relation of " << m.first->fullname_with_scope() << ": " << prior->fullname_with_scope()
-                  << " -> " << behind->fullname_with_scope();
-  }
-}
-
-void ProcessControlDependCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
-  std::unordered_map<AnfNodePtr, AnfNodePtrList> control_depend_info;
-  AnfNodePtrList latter_to_be_erased;
-
-  // Collect ControlDepend node and its input and output nodes.
-  for (auto &[node, node_rel] : (*node_rels)) {
-    if (!IsPrimitiveCNode(node, prim::kPrimControlDepend)) {
-      continue;
-    }
-
-    auto [direct_relation, real_relations] = FindRelationOfControlDepend(node, node_rels);
-    auto &[prior_node, behind_node] = direct_relation;
-    auto &[real_prior_nodes, real_behind_nodes] = real_relations;
-
-    (*node_rels)[prior_node].nexts.erase(node);
-    (*node_rels)[behind_node].nexts.erase(node);
-    node_rel.pres.erase(prior_node);
-    node_rel.pres.erase(behind_node);
-
-    for (auto &first_node : real_prior_nodes) {
-      for (auto &second_node : real_behind_nodes) {
-        MS_EXCEPTION_IF_NULL(first_node);
-        MS_EXCEPTION_IF_NULL(second_node);
-        control_depend_info.insert({node, {first_node, second_node}});
-      }
-    }
-    latter_to_be_erased.push_back(node);
-  }
-
-  // Delete ControlDepend node before relink its relation.
-  for (const auto &node : latter_to_be_erased) {
-    node_rels->erase(node);
-  }
-
-  // Rebuild relation between prior and behind node.
-  ReLinkNodesOfControlDependByRelation(control_depend_info, node_rels);
 }
 
 void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
@@ -538,7 +449,6 @@ OrderedMap<AnfNodePtr, NodeRelation> ParallelOpFusion::GenAnalysisGraph(const An
   }
 
   ProcessDependCNode(&node_rels);
-  ProcessControlDependCNode(&node_rels);
   ProcessThroughPassCNode(
     [](const AnfNodePtr &node) {
       return IsOneOf(node, {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimSqueeze, prim::kPrimTupleGetItem});

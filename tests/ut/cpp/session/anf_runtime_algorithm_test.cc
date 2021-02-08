@@ -86,18 +86,12 @@ TEST_F(AnfRuntimeAlgorithmTest, VisitKernel) {
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add_second.get());
   EXPECT_EQ(kernel_with_index.second, 0);
-  // test depend or control depend node as input
+  // test depend node as input
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), add, add_second};
   auto depend = kernel_graph->NewCNode(depend_inputs);
   kernel_with_index = AnfAlgo::VisitKernel(depend, 0);
   EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
   EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add.get());
-  EXPECT_EQ(kernel_with_index.second, 0);
-  std::vector<AnfNodePtr> control_depend_inputs{NewValueNode(prim::kPrimControlDepend), add_second, add};
-  auto control_depend = kernel_graph->NewCNode(control_depend_inputs);
-  kernel_with_index = AnfAlgo::VisitKernel(control_depend, 0);
-  EXPECT_NE(kernel_with_index.first->cast<CNodePtr>(), nullptr);
-  EXPECT_EQ((kernel_with_index.first->cast<CNodePtr>()).get(), add_second.get());
   EXPECT_EQ(kernel_with_index.second, 0);
 }
 

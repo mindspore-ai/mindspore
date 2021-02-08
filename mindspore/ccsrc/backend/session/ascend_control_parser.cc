@@ -796,7 +796,7 @@ std::vector<CNodePtr> AscendControlParser::RecurseGraph(NotNull<KernelGraphPtr> 
   if (cnodes.rbegin() != cnodes.rend() && *cnodes.rbegin() == end_label_goto) {
     cnodes.pop_back();
   }
-  AnfAlgo::ReorderExecList(NOT_NULL(&cnodes));
+  AnfAlgo::ReorderOptimizerExecList(NOT_NULL(&cnodes));
   if (end_label_goto != nullptr) {
     cnodes.push_back(end_label_goto);
   }

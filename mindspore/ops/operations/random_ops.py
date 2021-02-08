@@ -50,6 +50,7 @@ class StandardNormal(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize StandardNormal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
@@ -101,6 +102,7 @@ class StandardLaplace(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize StandardLaplace"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('seed2', seed2, [int], self.name)
 
@@ -158,6 +160,7 @@ class Gamma(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize Gamma"""
         self.init_prim_io_names(inputs=['shape', 'alpha', 'beta'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
@@ -216,6 +219,7 @@ class Poisson(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize Poisson"""
         self.init_prim_io_names(inputs=['shape', 'mean'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
@@ -278,6 +282,7 @@ class UniformInt(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformInt"""
         self.init_prim_io_names(inputs=['shape', 'minval', 'maxval'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
@@ -331,6 +336,7 @@ class UniformReal(PrimitiveWithInfer):
     def __init__(self, seed=0, seed2=0):
         """Initialize UniformReal"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
 
@@ -394,6 +400,7 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         Validator.check_positive_int(count, "count", self.name)
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('seed2', seed2, [int], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, x_shape):
         Validator.check_int(len(x_shape), 1, Rel.GE, "input_x rank", self.name)
@@ -450,6 +457,7 @@ class RandomCategorical(PrimitiveWithInfer):
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
         self.init_prim_io_names(inputs=['logits', 'num_samples', 'seed'],
                                 outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def __infer__(self, logits, num_samples, seed):
         logits_dtype = logits['dtype']
@@ -508,6 +516,7 @@ class Multinomial(PrimitiveWithInfer):
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
         self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def __infer__(self, inputs, num_samples):
         input_shape = inputs["shape"]

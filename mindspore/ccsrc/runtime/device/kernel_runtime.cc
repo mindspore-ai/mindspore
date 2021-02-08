@@ -115,7 +115,8 @@ void KernelRuntime::RunOpClearMemory(const session::KernelGraph *graph) {
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     // clear output memory resource
-    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    for (size_t index = 0; index < output_num; ++index) {
       AnfAlgo::SetOutputAddr(nullptr, index, cnode.get());
     }
     // clear workspace memory resource
@@ -524,7 +525,8 @@ void KernelRuntime::AssignCommunicationNodeInputMem(MemType type, const AnfNodeP
   MS_EXCEPTION_IF_NULL(mem_manager_);
   size_t total_size = 0;
   std::vector<std::pair<DeviceAddressPtr, size_t>> addr_size;
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(node); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_num; ++i) {
     auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(node, i);
     auto input_node = input_node_with_index.first;
     DeviceAddressPtr address = nullptr;
@@ -825,7 +827,8 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto visit_nop_node = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode);
-  for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(kernel); ++i) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t i = 0; i < input_num; ++i) {
     auto op_name = AnfAlgo::GetCNodeName(cnode);
     constexpr auto none_placeholder_index = 3;
     if (op_name == kDynamicRNNOpName && i == none_placeholder_index) {
@@ -993,7 +996,8 @@ void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
     if (parameter->used_graph_count() != 0) {
       continue;
     }
-    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(input_node); ++index) {
+    size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
+    for (size_t index = 0; index < output_num; ++index) {
       if (!AnfAlgo::OutputAddrExist(input_node, index)) {
         continue;
       }
@@ -1009,7 +1013,8 @@ void KernelRuntime::ClearOutputAddress(const std::vector<AnfNodePtr> &inputs,
   }
   // clear cnode output address.
   for (const auto &cnode : execution_order) {
-    for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(cnode); ++index) {
+    size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+    for (size_t index = 0; index < output_num; ++index) {
       if (!AnfAlgo::OutputAddrExist(cnode, index)) {
         continue;
       }

@@ -146,7 +146,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   new_cnode->set_abstract(cnode->abstract());
   new_cnode->set_scope(cnode->scope());
   AnfAlgo::CopyNodeAttrs(cnode, new_cnode);
-  CheckCNodeInputSize(new_cnode, kTopkInputNum);
+  CheckCNodeInputSize(new_cnode, kTopkInputTensorNum);
   // Convert the tensor input to scalar and convert it to attr
   auto input_k = new_cnode->input(kTopkIndexK + 1);
   MS_EXCEPTION_IF_NULL(input_k);

@@ -91,7 +91,7 @@ const AnfNodePtr LayerNormGradSplit::Process(const FuncGraphPtr &graph, const An
     return nullptr;
   }
   auto cnode = node->cast<CNodePtr>();
-  if (cnode->inputs().size() != kLayerNormGradInputNum) {
+  if (AnfAlgo::GetInputTensorNum(cnode) != kLayerNormGradInputTensorNum) {
     return nullptr;
   }
 

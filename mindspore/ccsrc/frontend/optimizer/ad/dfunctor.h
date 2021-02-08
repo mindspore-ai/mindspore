@@ -60,6 +60,7 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   // Map morphism in D category to K category.
   void MapMorphism();
   FuncGraphPtr k_graph();
+  FuncGraphPtr tape();
   // Construct user defined k object.
   FuncGraphPtr KUserDefined(const FuncGraphPtr &primal);
   // Register functor objects to form a global view.
@@ -138,7 +139,9 @@ class KPrim {
   FuncGraphPtr KPrimitive(const CNodePtr &primal_user, const ValueNodePtr &value_node,
                           const pipeline::ResourceBasePtr &resources);
   MetaFuncGraphPtr KMetaFuncGraph(const PrimitivePtr &prim);
-  FuncGraphPtr KUserDefinedCellBprop(FuncGraphPtr bprop);
+  // bprop_fg and primal_fg in bprop_fg's transforms are FuncGraph just after convert.
+  // current_primal_fg is the specialized and AutoMonaded primal_fg.
+  FuncGraphPtr KUserDefinedCellBprop(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg);
 
   void clear() {
     bprop_registry_meta_.clear();
@@ -151,11 +154,19 @@ class KPrim {
   FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
   FuncGraphPtr BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
   // Given a bprop rule, do the K mapping.
+  // current_primal_fg is only valid for user defined bprop for Cell, not for Primitive.
+  // Refer the comment in KUserDefinedCellBprop.
   template <typename T>
-  FuncGraphPtr BpropToK(const T &primal, const FuncGraphPtr &bprop_g, const CNodePtr &cnode);
-  AnfNodePtr BuildOutput(const FuncGraphPtr &bprop_fg);
-  void TransformArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &outer,
-                     std::vector<AnfNodePtr> *const transf_args);
+  FuncGraphPtr BpropToK(const T &primal, const FuncGraphPtr &bprop_g, const FuncGraphPtr &current_primal_fg,
+                        const CNodePtr &cnode);
+  AnfNodePtr BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg);
+  void TransformArgsForPrimitive(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
+                                 const PrimitivePtr &primitive, const FuncGraphPtr &outer,
+                                 std::vector<AnfNodePtr> *const transf_args);
+  template <typename T>
+  void TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
+                                 const T &current_primal_fg, const FuncGraphPtr &outer,
+                                 std::vector<AnfNodePtr> *const transf_args);
   void CheckBprop(const FuncGraphPtr &bprop_fg, const string &prim_to_check);
 
   Registry bprop_registry_;
@@ -163,7 +174,8 @@ class KPrim {
 };
 
 template <typename T>
-FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, const CNodePtr &cnode) {
+FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg,
+                             const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(primal);
   MS_EXCEPTION_IF_NULL(bprop_fg);
   CheckBprop(bprop_fg, primal->ToString());
@@ -177,7 +189,13 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
   cloned_bprop_fg->debug_info()->set_name("");
   cloned_bprop_fg->debug_info()->set_trace_info(std::make_shared<TraceGradBprop>(debug_info));
 
-  AnfNodePtr bout = BuildOutput(cloned_bprop_fg);
+  // Make sure (out, dout) provided.
+  if (cloned_bprop_fg->parameters().size() < 2) {
+    MS_LOG(EXCEPTION) << "Primitive or Cell " << primal->ToString()
+                      << " bprop requires out and dout at least, but only got " << cloned_bprop_fg->parameters().size()
+                      << " params. NodeInfo: " << trace::GetDebugInfo(cloned_bprop_fg->debug_info());
+  }
+  AnfNodePtr bout = BuildOutput(cloned_bprop_fg, current_primal_fg);
   cloned_bprop_fg->set_output(bout);
 
   FuncGraphPtr outer = nullptr;
@@ -190,24 +208,30 @@ FuncGraphPtr KPrim::BpropToK(const T &primal, const FuncGraphPtr &bprop_fg, cons
 
   auto mng = Manage({cloned_bprop_fg, outer}, false);
 
-  // Make sure (out, dout) provided.
-  if (cloned_bprop_fg->parameters().size() < 2) {
-    MS_LOG(EXCEPTION) << "Primitive or Cell " << primal->ToString()
-                      << " bprop requires out and dout at least, but only got " << cloned_bprop_fg->parameters().size()
-                      << " params. NodeInfo: " << trace::GetDebugInfo(cloned_bprop_fg->debug_info());
-  }
-
   // In a bprop definition, the last two param should be out and dout.
-  auto dout = cloned_bprop_fg->parameters()[cloned_bprop_fg->parameters().size() - 1];
-  auto out_param = cloned_bprop_fg->parameters()[cloned_bprop_fg->parameters().size() - 2];
-  std::vector<AnfNodePtr> transf_args;
-  TransformArgs(mng, cloned_bprop_fg, outer, &transf_args);
+  auto param_size = cloned_bprop_fg->parameters().size();
+  auto param_num = param_size - 1;
+  auto dout = cloned_bprop_fg->parameters()[param_num];
+  param_num--;
+  auto out_param = cloned_bprop_fg->parameters()[param_num];
 
-  (void)transf_args.insert(transf_args.begin(), NewValueNode(primal));
+  std::vector<AnfNodePtr> transf_args;
+
+  if constexpr (std::is_same<T, PrimitivePtr>::value) {
+    PrimitivePtr primitive = primal;
+    TransformArgsForPrimitive(mng, cloned_bprop_fg, primal, outer, &transf_args);
+    (void)transf_args.insert(transf_args.begin(), NewValueNode(primal));
+  } else {
+    TransformArgsForFuncGraph(mng, cloned_bprop_fg, current_primal_fg, outer, &transf_args);
+    (void)transf_args.insert(transf_args.begin(), NewValueNode(current_primal_fg));
+  }
   CNodePtr out_value = nullptr;
   if (cnode != nullptr) {  // Set equiv debug info. for Primitive CNode out.
     TraceGuard trace_guard(std::make_shared<TraceEquiv>(cnode->debug_info()));
     out_value = outer->NewCNode(transf_args);
+    if constexpr (std::is_same<T, PrimitivePtr>::value) {
+      out_value->CloneUserData(cnode);
+    }
   } else {
     out_value = outer->NewCNode(transf_args);
   }

@@ -37,9 +37,10 @@ class AtomicCleanInsertter : public Pass {
   virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
   virtual void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
                                   const FuncGraphManagerPtr &mng);
-  void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &mng);
   void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,
                  const AnfNodePtr &user_node, int index);
+  void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &mng);
+  CNodePtr InsertUpdateState(const KernelGraphPtr &main_graph, const CNodePtr &composite_node);
   CNodePtr atomic_add_node_{nullptr};
 
  private:
@@ -48,11 +49,8 @@ class AtomicCleanInsertter : public Pass {
   CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type);
   void CreateInplaceAssignNodeAndCorrectReturn(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
   void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
-                              const AnfNodePtr &broadcast_to_node, const FuncGraphManagerPtr &mng);
-  std::tuple<AnfNodePtr, AnfNodePtr, int> FindPatronNode(const KernelGraphPtr &main_graph);
-  AnfNodePtr AddControlDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &prior_node,
-                              const AnfNodePtr &behind_node, const AnfNodePtr &patron_node);
-  void PostprocessForLastPatron(const AnfNodePtr &patron_node, const AnfNodePtr &patron_user, int index);
+                              const AnfNodePtr &broadcast_to_node, const AnfNodePtr &update_state_node,
+                              const FuncGraphManagerPtr &mng);
   std::vector<std::pair<AnfNodePtr, int>> FindOriginCNodeUsers(const KernelGraphPtr &main_graph,
                                                                const AnfNodePtr &composite_node,
                                                                const FuncGraphManagerPtr &mng, bool correct_index);

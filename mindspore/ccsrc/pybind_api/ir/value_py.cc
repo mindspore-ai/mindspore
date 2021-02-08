@@ -21,9 +21,11 @@
 #include "abstract/abstract_value.h"
 
 namespace mindspore {
-// Define python 'RefKey' class.
+// Define python class for values.
 REGISTER_PYBIND_DEFINE(
-  RefKey, ([](const py::module *m) {
+  Values, ([](const py::module *m) {
     (void)py::class_<RefKey, std::shared_ptr<RefKey>>(*m, "RefKey").def(py::init<std::string>(), py::arg("tag"));
+    (void)py::class_<UMonad, std::shared_ptr<UMonad>>(*m, "UMonad").def(py::init());
+    (void)py::class_<IOMonad, std::shared_ptr<IOMonad>>(*m, "IOMonad").def(py::init());
   }));
 }  // namespace mindspore

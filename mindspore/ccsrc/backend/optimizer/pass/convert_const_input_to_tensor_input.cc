@@ -107,9 +107,7 @@ AnfNodePtr ProcessGraphKernelOp(const AnfNodePtr &node) {
   auto mng = sub_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   std::vector<AnfNodePtr> todo;
-  std::vector<std::pair<AnfNodePtr, size_t>> graph_rets;
   kernel::GetValidKernelNodes(sub_graph, &todo);
-  kernel::GetGraphRealOutput(sub_graph, &graph_rets);
 
   for (auto &t : todo) {
     auto t_new_node = ConstInputToTensorInput(sub_graph, t->cast<CNodePtr>());

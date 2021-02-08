@@ -43,9 +43,14 @@ class Func(nn.Cell):
         init = self.alloc_status()
         sum_ = add(x, y)
         product = mul1(x, y)
-        flag = self.get_status(init)
+        init = F.depend(init, sum_)
+        init = F.depend(init, product)
+        get_status = self.get_status(init)
+        sum_ = F.depend(sum_, get_status)
+        product = F.depend(product, get_status)
         out = add2(sum_, product)
-        clear = self.clear_status(flag)
+        init = F.depend(init, out)
+        clear = self.clear_status(init)
         out = F.depend(out, clear)
         return out
 
@@ -65,11 +70,16 @@ class Net(nn.Cell):
         init = self.alloc_status()
         sum1 = add(x, y)
         dx = grad_s(self.func)(x, y, sens)
-        flag = self.get_status(init)
+        init = F.depend(init, sum1)
+        init = F.depend(init, dx)
+        get_status = self.get_status(init)
+        sum1 = F.depend(sum1, get_status)
+        dx = F.depend(dx, get_status)
         sum2 = add2(sum1, dx[0])
         sum3 = add2(y, dx[1])
         out = add2(sum2, sum3)
-        clear = self.clear_status(flag)
+        init = F.depend(init, out)
+        clear = self.clear_status(init)
         out = F.depend(out, clear)
         return out
 
@@ -78,7 +88,6 @@ def test_add():
     x = Tensor(np.ones([3, 3]).astype(np.float32))
     y = Tensor(np.ones([3, 3]).astype(np.float32))
     func = Func()
-    func.add_flags(has_effect=True)
     func(x, y)
 
 
@@ -87,7 +96,6 @@ def test_sens():
     y = Tensor(np.ones([3, 3]).astype(np.float32))
     sens = Tensor(np.ones([3, 3]).astype(np.float32))
     net = Net()
-    net.add_flags(has_effect=True)
     _ = net(x, y, sens)
 
 
@@ -104,11 +112,16 @@ class Net_hyper(nn.Cell):
         add1 = add(x, y)
         sum1 = C.hyper_add([add1, add1], [x, y])
         dx = grad_s(self.func)(x, y, sens)
-        flag = self.get_status(init)
+        init = F.depend(init, sum1)
+        init = F.depend(init, dx)
+        get_status = self.get_status(init)
+        sum1 = F.depend(sum1, get_status)
+        dx = F.depend(dx, get_status)
         sum2 = add2(sum1[0], dx[0])
         sum3 = add2(sum1[1], dx[1])
         out = C.hyper_add([sum2, sum2], [sum3, sum3])
-        clear = self.clear_status(flag)
+        init = F.depend(init, out)
+        clear = self.clear_status(init)
         out = F.depend(out, clear)
         return out
 
@@ -118,7 +131,6 @@ def test_hyper_add():
     y = Tensor(np.ones([3, 3]).astype(np.float32))
     sens = Tensor(np.ones([3, 3]).astype(np.float32))
     net = Net_hyper()
-    net.add_flags(has_effect=True)
     _ = net(x, y, sens)
 
 
@@ -134,12 +146,14 @@ def test_keep_order_io_effect_exception_return_dtype():
             self.sub = P.Sub()
             self.neg = P.Neg()
 
-        @C.add_flags(has_effect=True)
         def construct(self, x):
             init = self.alloc_status()
-            self.clear_status(init)
+            clear_status = self.clear_status(init)
+            x = F.depend(x, clear_status)
             res = self.sub(x, self.neg(x))
-            self.get_status(init)
+            init = F.depend(init, res)
+            get_status = self.get_status(init)
+            res = F.depend(res, get_status)
             dtype = self.dtype(res)
             return dtype
 

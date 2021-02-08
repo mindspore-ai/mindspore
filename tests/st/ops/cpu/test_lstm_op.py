@@ -354,7 +354,7 @@ def test_grad():
     input_size = 3
     hidden_size = 2
     num_layers = 1
-    has_bias = False
+    has_bias = True
     bidirectional = False
     dropout = 0.0
     net = Grad(Net(seq_len, batch_size, input_size, hidden_size, num_layers, has_bias, bidirectional, dropout))

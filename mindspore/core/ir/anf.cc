@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <queue>
 #include <unordered_map>
 
 #include "base/core_ops.h"
@@ -31,7 +32,11 @@
 namespace mindspore {
 // namespace to support intermediate representation definition
 CNode::CNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph)
-    : AnfNode(func_graph), inputs_(inputs), stop_gradient_(false), output_value_(std::make_pair(nullptr, "")) {}
+    : AnfNode(func_graph),
+      inputs_(inputs),
+      stop_gradient_(false),
+      output_value_(std::make_pair(nullptr, "")),
+      input_tensor_num_(-1) {}
 
 // Check if CNode is an apply with the specific Primitive.
 bool CNode::IsApply(const PrimitivePtr &value) const {
@@ -49,7 +54,20 @@ bool CNode::IsApply(const PrimitivePtr &value) const {
   return false;
 }
 
-void CNode::set_input(size_t i, const AnfNodePtr &new_input) { inputs_[i] = new_input; }
+void CNode::add_input(const AnfNodePtr &input) {
+  inputs_.push_back(input);
+  input_tensor_num_ = -1;
+}
+
+void CNode::set_input(size_t i, const AnfNodePtr &new_input) {
+  inputs_[i] = new_input;
+  input_tensor_num_ = -1;
+}
+
+void CNode::set_inputs(const std::vector<AnfNodePtr> &inputs) {
+  inputs_ = inputs;
+  input_tensor_num_ = -1;
+}
 
 std::string CNode::DebugString(int recursive_level) const {
   std::ostringstream buffer;
@@ -128,8 +146,7 @@ std::string ValueNode::fullname_with_scope() {
 }
 
 bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
+  auto cnode = dyn_cast<CNode>(node);
   if (cnode == nullptr) {
     return false;
   }
@@ -171,6 +188,14 @@ std::string GetCNodeFuncName(const CNodePtr cnode) {
   return "";
 }
 
+FuncGraphPtr GetCNodeFuncGraph(const AnfNodePtr &node) {
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode != nullptr && cnode->size() > 0) {
+    return GetValueNode<FuncGraphPtr>(cnode->input(0));
+  }
+  return nullptr;
+}
+
 bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value) {
   if (IsValueNode<Primitive>(node)) {
     PrimitivePtr fn_value = GetValueNode<PrimitivePtr>(node);
@@ -180,6 +205,99 @@ bool IsPrimitive(const AnfNodePtr &node, const PrimitivePtr &value) {
     }
   }
   return false;
+}
+
+bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2) {
+  if (prim1 == nullptr || prim2 == nullptr) {
+    return false;
+  }
+  return (prim1 == prim2) || (prim1->Hash() == prim2->Hash() && prim1->name() == prim2->name());
+}
+
+size_t GetAbstractMonadNum(const AbstractBasePtrList &args) {
+  size_t num = 0;
+  for (auto &arg : args) {
+    if (arg->isa<abstract::AbstractMonad>()) {
+      ++num;
+    }
+  }
+  return num;
+}
+
+template <typename T>
+bool HasAbstract(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  const auto &abs = node->abstract();
+  return (abs != nullptr && abs->isa<T>());
+}
+
+bool HasAbstractMonad(const AnfNodePtr &node) { return HasAbstract<abstract::AbstractMonad>(node); }
+
+bool HasAbstractUMonad(const AnfNodePtr &node) { return HasAbstract<abstract::AbstractUMonad>(node); }
+
+bool HasAbstractIOMonad(const AnfNodePtr &node) { return HasAbstract<abstract::AbstractIOMonad>(node); }
+
+bool GetPrimitiveFlag(const PrimitivePtr &prim, const std::string &attr) {
+  if (prim != nullptr) {
+    auto flag = prim->GetAttr(attr);
+    if (flag && flag->isa<BoolImm>()) {
+      return GetValue<bool>(flag);
+    }
+  }
+  return false;
+}
+
+EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim) {
+  bool mem = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM);
+  bool io = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_IO);
+  return {EffectInfo::kDetected, mem, io, false};
+}
+
+MonadState GetMonadState(const AnfNodePtr &node, const AnfNodePtr &skip_input) {
+  if (node == nullptr) {
+    return {};
+  }
+  MonadState state;
+  size_t seen = NewSeenGeneration();
+  std::queue<AnfNodePtr> que;
+  que.push(node);
+  while (!que.empty()) {
+    auto n = que.front();
+    que.pop();
+
+    // check whether this node has been matched or should be skipped.
+    if (n == nullptr || n->seen_ == seen || n == skip_input) {
+      continue;
+    }
+    n->seen_ = seen;
+
+    // check whether this node has monad abstract.
+    if (state.u == nullptr && HasAbstractUMonad(n)) {
+      state.u = n;
+    } else if (state.io == nullptr && HasAbstractIOMonad(n)) {
+      state.io = n;
+    } else {
+      auto cnode = dyn_cast<CNode>(n);
+      if (cnode != nullptr) {
+        for (auto it = cnode->inputs().rbegin(); it != cnode->inputs().rend(); ++it) {
+          que.push(*it);
+        }
+      }
+      continue;
+    }
+
+    if (state.u != nullptr && state.io != nullptr) {
+      return state;
+    }
+  }
+  return state;
+}
+
+bool IsStateEquivalent(const MonadState &state1, const MonadState &state2) {
+  return (state1.u == nullptr || state2.u == nullptr || state1.u == state2.u) &&
+         (state1.io == nullptr || state2.io == nullptr || state1.io == state2.io);
 }
 
 size_t NewSeenGeneration() {
@@ -246,6 +364,11 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
   }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  const std::string primitive_target = "primitive_target";
+  auto ud_target = cnode->user_data<std::string>(primitive_target);
+  if (ud_target != nullptr) {
+    return *ud_target.get();
+  }
   auto attr_input = cnode->input(0);
   if (attr_input == nullptr) {
     return default_target;
@@ -262,14 +385,14 @@ std::string GetCNodeTarget(const AnfNodePtr &node) {
     return default_target;
   }
   auto primitive = value->cast<PrimitivePtr>();
-  auto att_target = primitive->GetAttr("primitive_target");
+  auto att_target = primitive->GetAttr(primitive_target);
   if (att_target != nullptr) {
     if (IsPrimitive(attr_input, prim::kPrimImageSummary) || IsPrimitive(attr_input, prim::kPrimScalarSummary) ||
         IsPrimitive(attr_input, prim::kPrimTensorSummary) || IsPrimitive(attr_input, prim::kPrimHistogramSummary) ||
         IsPrimitive(attr_input, prim::kPrimStateSetItem) || IsPrimitive(attr_input, prim::kPrimDepend) ||
         IsPrimitive(attr_input, prim::kPrimControlDepend) || IsPrimitive(attr_input, prim::kPrimReturn) ||
         IsPrimitive(attr_input, prim::kPrimPartial)) {
-      primitive->EraseAttr("primitive_target");
+      primitive->EraseAttr(primitive_target);
       return default_target;
     }
     if (!att_target->isa<StringImm>()) {

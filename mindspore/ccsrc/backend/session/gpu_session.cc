@@ -28,6 +28,7 @@
 #include "backend/optimizer/gpu/batch_norm_relu_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_relu_grad_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_add_relu_fusion.h"
+#include "backend/optimizer/gpu/post_batch_norm_add_relu_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_add_relu_grad_fusion.h"
 #include "backend/optimizer/gpu/combine_momentum_fusion.h"
 #include "backend/optimizer/gpu/combine_cast_fusion.h"
@@ -57,6 +58,7 @@
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
 #include "backend/optimizer/graph_kernel/parallel_fusion.h"
 #include "backend/optimizer/graph_kernel/optimize_assign.h"
+#include "backend/optimizer/graph_kernel/split_assign.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
@@ -151,6 +153,7 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   pm->AddPass(std::make_shared<opt::BatchNormReluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormReluGradFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluFusion>());
+  pm->AddPass(std::make_shared<opt::PostBatchNormAddReluFusion>());
   pm->AddPass(std::make_shared<opt::BatchNormAddReluGradFusion>());
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOp>());
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
@@ -185,6 +188,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
+  pm->AddPass(std::make_shared<opt::SplitAssign>());
   pm->AddPass(std::make_shared<opt::DependFormater>());  // Make more fusion opportunity.
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
@@ -245,6 +249,30 @@ void GPUSession::RunOpClearMemory(KernelGraph *kernel_graph) const {
   runtime_instance->RunOpClearMemory(kernel_graph);
 }
 
+namespace {
+constexpr auto kAssignInputSize = 3;
+constexpr auto kAssignUpdateIndex = 1;
+bool UpdatedByAssign(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto manager = kernel_graph->manager();
+  if (manager == nullptr) {
+    return false;
+  }
+  auto &node_users = manager->node_users();
+  auto iter = node_users.find(node);
+  if (iter == node_users.end()) {
+    return false;
+  }
+  auto &users = iter->second;
+  return std::any_of(users.begin(), users.end(), [](const std::pair<AnfNodePtr, int64_t> &user) {
+    MS_EXCEPTION_IF_NULL(user.first);
+    auto output_cnode = user.first->cast<CNodePtr>();
+    return output_cnode != nullptr && IsPrimitiveCNode(output_cnode, prim::kPrimAssign) &&
+           user.second == kAssignUpdateIndex && output_cnode->inputs().size() > kAssignInputSize;
+  });
+}
+}  // namespace
+
 void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
                                const std::vector<tensor::TensorPtr> &inputs_const) const {
   std::vector<tensor::TensorPtr> inputs(inputs_const);
@@ -285,7 +313,7 @@ void GPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
         }
       }
       if (need_sync) {
-        if (AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>()) ||
+        if (AnfAlgo::IsParameterWeight(input_node->cast<ParameterPtr>()) || UpdatedByAssign(kernel_graph, input_node) ||
             ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
           tensor->set_device_address(device_address);
         }
@@ -365,10 +393,6 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   }
   // Build kernel if node is cnode
   BuildKernel(graph);
-  // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
-  auto execution_order = graph->execution_order();
-  Reorder(&execution_order);
-  graph->set_execution_order(execution_order);
   // Get summary nodes.
   SetSummaryNodes(graph.get());
   // Dump .pb graph after graph optimization

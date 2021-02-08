@@ -248,7 +248,8 @@ class TrainOneStepCell(Cell):
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(*inputs, sens)
         grads = self.grad_reducer(grads)
-        return F.depend(loss, self.optimizer(grads))
+        loss = F.depend(loss, self.optimizer(grads))
+        return loss
 
 
 class GetNextSingleOp(Cell):
@@ -291,7 +292,7 @@ class _VirtualDatasetCell(Cell):
     """
     Wrap the network with virtual dataset to convert data parallel layout to model parallel layout.
 
-    _VirtualDataset is a virtual Primitive, it does not exist in the final executing graph. Inputs and outpus
+    _VirtualDataset is a virtual Primitive, it does not exist in the final executing graph. Inputs and outputs
     of _VirtualDataset are distributed in data parallel pattern, tensor redistribution Primitives is inserted
     dynamically during the graph compile process.
 

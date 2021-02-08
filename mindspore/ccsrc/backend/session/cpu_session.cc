@@ -52,6 +52,9 @@ ParameterPtr CPUSession::CreateNewParameterFromParameter(const AnfNodePtr &anf, 
   return new_parameter;
 }
 
+// Remove after PS feature finish adapting push/pull in auto_monad.
+void CPUSession::Reorder(std::vector<CNodePtr> *node_list) { AnfAlgo::ReorderPosteriorExecList(NOT_NULL(node_list)); }
+
 void CPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -81,14 +84,17 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
 #endif
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
-  // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
+
+  // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = graph->execution_order();
   Reorder(&execution_order);
   graph->set_execution_order(execution_order);
+
   // runtime init
   if (!runtime_.Init()) {
     MS_LOG(EXCEPTION) << "Kernel runtime init error.";
   }
+
   MS_LOG(INFO) << "Assign kernel address";
   runtime_.AssignKernelAddress(graph.get());
   return graph_id;
@@ -186,7 +192,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
-  // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
+  // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = kernel_graph->execution_order();
   Reorder(&execution_order);
   kernel_graph->set_execution_order(execution_order);

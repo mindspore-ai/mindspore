@@ -31,6 +31,7 @@ class ApplyMomentumScaleFusion : public PatternProcessPass {
     learning_rate_ = std::make_shared<Var>();
     gradient_ = std::make_shared<Var>();
     momentum_ = std::make_shared<Var>();
+    monad_state_ = std::make_shared<Var>();
   }
   ~ApplyMomentumScaleFusion() override = default;
   const BaseRef DefinePattern() const override;
@@ -45,6 +46,7 @@ class ApplyMomentumScaleFusion : public PatternProcessPass {
   VarPtr learning_rate_;
   VarPtr gradient_;
   VarPtr momentum_;
+  VarPtr monad_state_;
 };
 }  // namespace opt
 }  // namespace mindspore

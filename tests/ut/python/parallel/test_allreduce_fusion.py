@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import numpy as np
+import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -25,7 +26,6 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.train import Model
 from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
-import pytest
 
 
 class Dataset(MindData):

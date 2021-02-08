@@ -37,9 +37,7 @@ fake_quant_perchannel_op_info = TBERegOp("FakeQuantPerChannel") \
     .input(2, "max", None, "required", None) \
     .output(0, "y", True, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .get_op_info()
 
 

@@ -27,6 +27,7 @@
 #include <utility>
 #include <map>
 #include <set>
+#include <unordered_set>
 
 #ifdef DEBUG
 #include <stack>
@@ -45,6 +46,9 @@ namespace abstract {
 using AttrValueMap = std::unordered_map<std::string, ValuePtr>;
 using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
 
+inline const int kIsolateNodesPropagateCNodeFlag = 1;
+inline const int kIsolateNodesPropagateFuncGraphFlag = 2;
+
 // the class to save evaluated result: abstract value and modified attribute
 class EvalResult : public Base {
  public:
@@ -54,12 +58,46 @@ class EvalResult : public Base {
   AbstractBasePtr abstract() { return abstract_; }
   AttrValueMapPtr attribute() { return attribute_; }
 
+  std::shared_ptr<EvalResult> Clone() const {
+    auto cloned = std::make_shared<EvalResult>(abstract_, attribute_);
+    cloned->SetIsolateNodesPropagateCNodeFlag(HasIsolateNodesPropagateCNodeFlag());
+    cloned->SetIsolateNodesPropagateFuncGraphFlag(HasIsolateNodesPropagateFuncGraphFlag());
+    return cloned;
+  }
+  // The related AbstractBase is evaluated from CNode which input has isolate nodes.
+  // This flag is propagated to all user node.
+  // When a node A can be specialized to a ValueNode, we should check if that node A has this flag,
+  // if it has, then the original FuncGraph call should be depended, so it's side effect will not
+  // be lost.
+  bool HasIsolateNodesPropagateCNodeFlag() const {
+    auto iter = eval_attr_.find(kIsolateNodesPropagateCNodeFlag);
+    if (iter != eval_attr_.end()) {
+      return GetValue<bool>(iter->second);
+    }
+    return false;
+  }
+  void SetIsolateNodesPropagateCNodeFlag(bool flag) { eval_attr_[kIsolateNodesPropagateCNodeFlag] = MakeValue(flag); }
+
+  // FuncGraph itself may not have IsoloateNodes, but the used FuncGraph or HOF call may have IsolateNodes;
+  bool HasIsolateNodesPropagateFuncGraphFlag() const {
+    auto iter = eval_attr_.find(kIsolateNodesPropagateFuncGraphFlag);
+    if (iter != eval_attr_.end()) {
+      return GetValue<bool>(iter->second);
+    }
+    return false;
+  }
+  void SetIsolateNodesPropagateFuncGraphFlag(bool flag) {
+    eval_attr_[kIsolateNodesPropagateFuncGraphFlag] = MakeValue(flag);
+  }
+
  private:
   AbstractBasePtr abstract_;
+  // Attribute related to PrimEvaluator;
   AttrValueMapPtr attribute_;
+  std::unordered_map<int, ValuePtr> eval_attr_;
 };
-
 using EvalResultPtr = std::shared_ptr<EvalResult>;
+
 // Superclass for AnfNodeConfig and VirtualConfig.
 class Config : public Base {
  public:
@@ -174,7 +212,6 @@ struct AnalysisResult {
   AnalysisContextPtr context;
 };
 
-using EvalTraceRevIter = std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>>::reverse_iterator;
 struct PartialAppHasher {
   std::size_t operator()(const std::pair<AbstractFunctionPtr, AbstractBasePtrList> &p) const {
     auto h1 = std::hash<AbstractFunctionPtr>{}(p.first);
@@ -222,16 +259,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
 
   // Set the analysis result for orig to the result for new.
   // This sets an entry in anfnode_config_map from orig to new.
-  EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf) {
-    // Use anfnode_config_map_[orig_conf] = new_conf will require AnfNodeConfig provide copy constructor.
-    (void)anfnode_config_map_.emplace(orig_conf, new_conf);
-    MS_LOG(DEBUG) << "Forward orig_conf: " << orig_conf->node()->DebugString()
-                  << ", to new_conf: " << new_conf->node()->DebugString();
-    forward_count_++;
-    auto res = GetEvaluatedValue(new_conf);
-    forward_count_--;
-    return res;
-  }
+  EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf);
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
   AnalysisCache cache_;
@@ -253,6 +281,33 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   void CheckNoStackInSameFuncGraph(const AnfNodeConfigPtr &conf);
 
  private:
+  // Should compare Args based on value other than pointer;
+  struct EvaluatorArgs {
+    EvaluatorArgs(const EvaluatorPtr &eval, const AbstractBasePtrList &args) : evaluator_(eval), args_(args) {}
+    bool operator==(const EvaluatorArgs &other) const {
+      if (evaluator_ != other.evaluator_) {
+        return false;
+      }
+      if (AbstractBasePtrListDeepEqual(args_, other.args_)) {
+        return true;
+      }
+      return false;
+    }
+    bool operator!=(const EvaluatorArgs &other) { return !(*this == other); }
+
+    EvaluatorPtr evaluator_;
+    AbstractBasePtrList args_;
+  };
+  using EvalTraceRevIter = std::list<EvaluatorArgs>::reverse_iterator;
+  struct EvaluatorArgsHasher {
+    std::size_t operator()(const EvaluatorArgs &eval_args) const {
+      return hash_combine(std::hash<EvaluatorPtr>{}(eval_args.evaluator_), AbstractBasePtrListHash(eval_args.args_));
+    }
+  };
+  struct EvaluatorArgsEqual {
+    bool operator()(const EvaluatorArgs &lhs, const EvaluatorArgs &rhs) const { return lhs == rhs; }
+  };
+
   void SetUndeterminedFlag(const EvaluatorPtr &evaluator);
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
                                      const AbstractBasePtrList &args_spec_list, const EvalTraceRevIter &it,
@@ -266,9 +321,9 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
     constructors_app_;
   AnfNodeConfigMap anfnode_config_map_;
   // Use a list to trace multiple evaluators.
-  std::list<std::pair<EvaluatorPtr, AbstractBasePtrList>> eval_trace_;
+  std::list<EvaluatorArgs> eval_trace_;
   std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
-  std::set<std::pair<EvaluatorPtr, AbstractBasePtrList>> continued_evals_;
+  std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
 
   AnalysisContextPtr Run(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
                          const ConfigPtrList &args_conf_list);

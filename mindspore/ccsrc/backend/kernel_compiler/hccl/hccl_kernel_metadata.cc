@@ -63,13 +63,15 @@ void HcclMetadataInfo(const CNodePtr &kernel_node, std::vector<std::shared_ptr<K
   for (const auto &type : kHcclSupportTypes) {
     std::vector<std::string> inputs_format{};
     std::vector<TypeId> inputs_type{};
-    for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    for (size_t input_index = 0; input_index < input_num; ++input_index) {
       inputs_format.emplace_back(GetKernelFormat(kernel_node, input_index));
       inputs_type.push_back(type);
     }
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_type;
-    for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(kernel_node); ++output_index) {
+    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+    for (size_t output_index = 0; output_index < output_num; ++output_index) {
       if (op_name == kReduceScatter && AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrFusion) > 0) {
         outputs_format.emplace_back(GetKernelFormat(kernel_node, 0));
       } else {

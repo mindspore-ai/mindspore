@@ -314,6 +314,7 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   void MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users = false);
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
   void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value);
+  void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value);
   void MoveAllCNodeDropGraph(FuncGraphPtr source, FuncGraphPtr target, const ScopePtr &scope);
 
   FuncGraphTransaction Transact();
@@ -350,6 +351,15 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
 
   IncludeType Limit(const AnfNodePtr &node);
 
+  // Gets isolate nodes that not related to output, e.g. side-effect calls.
+  const std::set<AnfNodePtr> &isolate_nodes() const { return isolate_nodes_; }
+
+  // Replace node in isolate node list.
+  void ReplaceIsolateNode(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
+
+  // Clear all isolate nodes.
+  void ClearIsolateNodes();
+
   // Static Analysis
   NodeUsersMap node_users_;
   AnfNodeSet all_nodes_;  // managed nodes
@@ -383,6 +393,9 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   std::shared_ptr<RecursiveComputer> recursive_;
   std::shared_ptr<FuncGraphJTotalComputer> j_total_;
 
+  // Isolate Nodes
+  std::set<AnfNodePtr> isolate_nodes_;
+
   bool is_manage_;
   std::function<IncludeType(AnfNodePtr)> limit_;
 };
@@ -406,8 +419,10 @@ class FuncGraphTransaction {
   // replace old_node with new_node
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
 
-  // set esge, i.e., declare setting node.inputs[key] to value.
+  // set edge, i.e., declare setting node.inputs[key] to value.
   void SetEdge(const AnfNodePtr &src_node, int k, const AnfNodePtr &v);
+  // Add edge, i.e., append value to node.inputs.
+  void AddEdge(const AnfNodePtr &src_node, const AnfNodePtr &v);
 
   // commit all changes
   void Commit();
@@ -454,8 +469,20 @@ struct ArgsOfSetEdge {
   }
 };
 
+// args for add edge
+struct ArgsOfAddEdge {
+  CNodePtr root_node;
+  AnfNodePtr new_node;
+  bool operator==(const ArgsOfAddEdge &other) const { return &other == this; }
+
+  friend std::ostream &operator<<(std::ostream &os, const ArgsOfAddEdge &other) {
+    os << "[ArgsOfAddEdge]";
+    return os;
+  }
+};
+
 struct Change {
-  enum OpName { kTxSetParams, kTxSetEdge, kTxAddParam };
+  enum OpName { kTxSetParams, kTxSetEdge, kTxAddParam, kTxAddEdge };
   OpName op;
   Any args;
   Change(OpName name, const Any &para) : op(name), args(para) {}

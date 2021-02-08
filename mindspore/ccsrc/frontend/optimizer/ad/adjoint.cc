@@ -36,7 +36,7 @@ Adjoint::Adjoint(const AnfNodePtr &primal, const AnfNodePtr &k, const FuncGraphP
     MS_LOG(DEBUG) << "Add hole for " << primal->ToString() << " " << k_->ToString();
   }
 
-  dout_hole_ = caller_->NewCNode({NewValueNode(prim::GetPythonOps("zeros_like")), k_});
+  dout_hole_ = caller_->NewCNodeInFront({NewValueNode(prim::GetPythonOps("zeros_like")), k_});
   RegisterKUser(dout_hole_->cast<CNodePtr>(), 1);
 }
 

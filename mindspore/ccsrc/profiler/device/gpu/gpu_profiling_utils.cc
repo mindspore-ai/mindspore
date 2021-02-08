@@ -120,7 +120,8 @@ void ProfilingUtils::SetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order
   if (iter != cnode_exec_order.rend()) {
     // store communication op input nodes' name
     std::set<std::string> ar_input_node_names;
-    for (size_t i = 0; i < AnfAlgo::GetInputTensorNum(*iter); ++i) {
+    size_t input_num = AnfAlgo::GetInputTensorNum(*iter);
+    for (size_t i = 0; i < input_num; ++i) {
       auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(*iter, i);
       auto input_node = input_node_with_index.first;
       ar_input_node_names.insert(input_node->fullname_with_scope());

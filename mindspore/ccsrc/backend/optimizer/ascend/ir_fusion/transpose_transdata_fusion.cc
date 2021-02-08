@@ -33,9 +33,9 @@ const AnfNodePtr TransposeTransDataFusion::Process(const FuncGraphPtr &func_grap
                                                    const EquivPtr &equiv) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
-  auto transdata_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kBackendTransposeInputNum);
+  auto transdata_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kBackendTransposeInputTensorNum);
   MS_EXCEPTION_IF_NULL(transdata_cnode);
-  auto transpose_cnode = CheckAnfNodeIfCNodeAndInputSize(transdata_cnode->input(1), kBackendTransDataInputNum);
+  auto transpose_cnode = CheckAnfNodeIfCNodeAndInputSize(transdata_cnode->input(1), kTransOpInputTensorNum);
   MS_EXCEPTION_IF_NULL(transpose_cnode);
   auto transpose_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(transpose_cnode);
   auto transdata_kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(transdata_cnode);

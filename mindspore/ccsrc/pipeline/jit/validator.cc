@@ -109,6 +109,11 @@ void ValidateAbstract(const AnfNodePtr &node) {
     return;
   }
 
+  // UMonad or IOMonad
+  if (ptrBase->isa<abstract::AbstractMonad>()) {
+    return;
+  }
+
   // Other types show exception
   MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString();
 }

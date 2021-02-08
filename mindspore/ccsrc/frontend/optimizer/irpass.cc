@@ -23,6 +23,8 @@
 #include "frontend/optimizer/irpass/grad_var_prepare.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/inline.h"
+#include "frontend/optimizer/irpass/updatestate_eliminate.h"
+#include "frontend/optimizer/irpass/stopgrad_eliminate.h"
 #include "frontend/optimizer/irpass/incorporate_call.h"
 #include "frontend/optimizer/irpass/incorporate_getitem.h"
 #include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
@@ -65,6 +67,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<ZeroLikeFillZero>(), "zero_like_fill_zero", prim::kPrimZerosLike);
   adjust_all_reduce_mul_add_ =
     MakeSubstitution(std::make_shared<AdjustAllReduceMulAdd>(), "adjust_all_reduce_mul_add", prim::kPrimAddN);
+  float_depend_g_call_ = MakeSubstitution(std::make_shared<FloatDependGCall>(), "float_depend_g_call", IsCNodeDup);
 
   // ops eliminate
   item_tuple_or_list_eliminate_ = MakeSubstitution(
@@ -128,6 +131,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<FloatEnvGetItemSwitch>(), "float_env_getitem_switch", prim::kPrimEnvGetItem);
   convert_switch_replacement_ =
     MakeSubstitution(std::make_shared<ConvertSwitchReplacement>(), "convert_switch_replacement", IsCNodeDup);
+  exchange_switch_depend_value_ =
+    MakeSubstitution(std::make_shared<ExchangeSwitchDependValue>(), "exchange_switch_depend_value", prim::kPrimSwitch);
 
   // Addn
   merge_addn_ = MakeSubstitution(std::make_shared<MergeAddN>(), "merge_addn", prim::kPrimAddN);
@@ -144,6 +149,16 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<ReplaceApplicator>(), "replace_applicator", IsValueNode<FuncGraph>);
   specialize_transform_ =
     MakeSubstitution(std::make_shared<SpecializeOnGraphArguments>(), "specialize_transform", IsCNodeGraph);
+
+  // UpdateState eliminate
+  updatestate_eliminater_ =
+    MakeSubstitution(std::make_shared<UpdatestateEliminater>(), "updatestate_eliminater", prim::kPrimUpdateState);
+  switch_call_monad_eliminater_ = MakeSubstitution(std::make_shared<SwitchCallMonadParameterEliminater>(),
+                                                   "switch_call_monad_eliminater", IsCNodeDup);
+
+  // StopGradient eliminate
+  stopgrad_eliminater_ =
+    MakeSubstitution(std::make_shared<StopGradientEliminater>(), "stopgrad_eliminater", prim::kPrimStopGradient);
 
   // Incorporation
   incorporate_getitem_set_ =
@@ -186,6 +201,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   row_tensor_eliminate_ = MakeSubstitution(
     std::make_shared<RowTensorEliminater>(), "row_tensor_eliminate",
     {prim::kPrimRowTensorGetIndices, prim::kPrimRowTensorGetValues, prim::kPrimRowTensorGetDenseShape});
+
+  // RowTensorAddZerosLike Eliminate
+  row_tensor_add_zeros_like_ =
+    MakeSubstitution(std::make_shared<RowTensorAddZerosLike>(), "row_tensor_add_zeros_like", prim::kPrimRowTensorAdd);
 
   // SparseTensor Eliminate
   sparse_tensor_eliminate_ = MakeSubstitution(

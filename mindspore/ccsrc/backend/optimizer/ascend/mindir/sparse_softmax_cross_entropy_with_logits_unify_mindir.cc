@@ -109,12 +109,7 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(one_hot_node);
-
-  if (sparse_softmax_node->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "sparse_softmax_cross_entropy_with_logits's input size not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
-
+  CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(kSoftmaxCrossEntropyWithLogitsOpName)),
                                     sparse_softmax_node->input(1), one_hot_node};
   auto softmax_node = graph->NewCNode(inputs);
@@ -162,10 +157,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(softmax_output_node);
-  if (sparse_softmax_node->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "sparse_softmax_cross_entropy_with_logits's input size not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
+  CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
   auto axis_value = GetAxis(softmax_output_node);
   auto axis_node = GetAxisNode(softmax_output_node);
@@ -200,9 +192,7 @@ CNodePtr CreateReduceMean(const FuncGraphPtr &graph, const CNodePtr &sparse_soft
 CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(real_div_node);
-  if (real_div_node->size() != kRealDivInputNum) {
-    MS_LOG(EXCEPTION) << "Op real_div's input num not equal " << kRealDivInputNum;
-  }
+  CheckCNodeInputSize(real_div_node, kRealDivInputTensorNum);
 
   int64_t axis = -1;
   auto axis_node = NewValueNode(axis);
@@ -230,9 +220,8 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
 CNodePtr CreateExpandDimsPynative(const FuncGraphPtr &graph, const CNodePtr &real_div_node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(real_div_node);
-  if (real_div_node->size() != kRealDivInputNum) {
-    MS_LOG(EXCEPTION) << "Op real_div's input num not equal " << kRealDivInputNum;
-  }
+  CheckCNodeInputSize(real_div_node, kRealDivInputTensorNum);
+
   int64_t axis = -1;
   auto expand_dims_primitive = std::make_shared<Primitive>(kExpandDimsOpName);
   std::vector<std::string> input_names = {"x"};
@@ -257,13 +246,8 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(mul_node);
-  if (sparse_softmax_node->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "sparse_softmax_cross_entropy_with_logits's input size not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
-  if (mul_node->size() != kMulInputNum) {
-    MS_LOG(EXCEPTION) << "Op Mul's input not equal " << kMulInputNum;
-  }
+  CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
+  CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
   auto labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   std::vector<int64_t> multiple_value;
@@ -310,12 +294,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   MS_EXCEPTION_IF_NULL(tile_node);
-
-  if (sparse_softmax_node->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "sparse_softmax_cross_entropy_with_logits's input size not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
-
+  CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   std::vector<size_t> labels_shape = AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
   if (labels_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "label's shape should be 1-D.";
@@ -343,9 +322,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
 
 CNodePtr GetSparseNode(const CNodePtr &depend_node, size_t index) {
   MS_EXCEPTION_IF_NULL(depend_node);
-  if (depend_node->size() != kDependInputNum) {
-    MS_LOG(EXCEPTION) << "Op Depend's input not equal " << kDependInputNum;
-  }
+  CheckCNodeInputSize(depend_node, kDependInputTensorNum);
   auto sparse_node = depend_node->input(index);
   MS_EXCEPTION_IF_NULL(sparse_node);
   return sparse_node->cast<CNodePtr>();
@@ -353,9 +330,7 @@ CNodePtr GetSparseNode(const CNodePtr &depend_node, size_t index) {
 
 CNodePtr GetDependNode(const CNodePtr &mul_node) {
   MS_EXCEPTION_IF_NULL(mul_node);
-  if (mul_node->size() != kMulInputNum) {
-    MS_LOG(EXCEPTION) << "Op Mul's input not equal " << kMulInputNum;
-  }
+  CheckCNodeInputSize(mul_node, kMulInputTensorNum);
   auto depend_node = mul_node->input(1);
   MS_EXCEPTION_IF_NULL(depend_node);
   return depend_node->cast<CNodePtr>();
@@ -413,10 +388,7 @@ const AnfNodePtr SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(const F
 
   auto sparse_softmax_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
-  if (sparse_softmax_node->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "Op SparseSoftmaxCrossEntropyWithLogits's input not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
+  CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
   if (AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse_softmax_node) &&
       AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad)) {
     return nullptr;
@@ -451,17 +423,12 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
 
   auto mul_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(mul_node);
-  if (mul_node->size() != kMulInputNum) {
-    MS_LOG(EXCEPTION) << "Op Mul's input not equal " << kMulInputNum;
-  }
+  CheckCNodeInputSize(mul_node, kMulInputTensorNum);
 
   auto depend_node = GetDependNode(mul_node);
   auto sparse_softmax_node = GetSparseNode(depend_node, 2);
   auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1);
-  if (sparse_softmax_node_grad->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "Op SparseSoftmaxCrossEntropyWithLogits's input not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
+  CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad);
@@ -538,10 +505,8 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
 
   auto sparse_softmax_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
-  if (sparse_softmax_node->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "Op SparseSoftmaxCrossEntropyWithLogits's input not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
+  CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
+
   if (AnfAlgo::HasNodeAttr(kAttrIsGrad, sparse_softmax_node) &&
       AnfAlgo::GetNodeAttr<bool>(sparse_softmax_node, kAttrIsGrad)) {
     return nullptr;
@@ -573,17 +538,12 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
 
   auto mul_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(mul_node);
-  if (mul_node->size() != kMulInputNum) {
-    MS_LOG(EXCEPTION) << "Op Mul's input not equal " << kMulInputNum;
-  }
+  CheckCNodeInputSize(mul_node, kMulInputTensorNum);
+
   auto sparse_softmax_node = mul_node->input(1);
   auto sparse_softmax_node_grad = sparse_softmax_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sparse_softmax_node_grad);
-
-  if (sparse_softmax_node_grad->size() != kSparseSoftmaxCrossEntropyWithLogitsInputNum) {
-    MS_LOG(EXCEPTION) << "Op SparseSoftmaxCrossEntropyWithLogits's input not equal "
-                      << kSparseSoftmaxCrossEntropyWithLogitsInputNum;
-  }
+  CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad);

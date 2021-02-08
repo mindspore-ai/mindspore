@@ -162,7 +162,8 @@ CNodePtr DealRefTransAndCast::DealRefForMultipleOutput(const FuncGraphPtr &func_
   std::vector<AnfNodePtr> make_tuple_inputs;
   AbstractBasePtrList abstract_list;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(cnode); ++output_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
     CNodePtr final_node = CreatTupleGetItemNode(func_graph, cnode, output_index);
     // deal with ref output
     if (ref_infos.count(output_index) != 0) {

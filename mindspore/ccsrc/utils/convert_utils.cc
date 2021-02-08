@@ -179,8 +179,8 @@ bool SameSubgraph(const AnfNodePtr &root1, const AnfNodePtr &root2, FuncGraphPai
     AnfNodePtr node2 = todo.top().second;
 
     bool condition = false;
-    std::vector<AnfNodePtr> s1 = SuccIncoming(node1);
-    std::vector<AnfNodePtr> s2 = SuccIncoming(node2);
+    const auto &s1 = GetInputs(node1);
+    const auto &s2 = GetInputs(node2);
 
     if (s1.size() != s2.size()) {
       return false;

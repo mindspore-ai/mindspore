@@ -57,7 +57,7 @@ const AnfNodePtr InsertPadForNMSWithMask::Process(const FuncGraphPtr &func_graph
     return nullptr;
   }
   std::vector<AnfNodePtr> new_inputs = {AnfAlgo::GetCNodePrimitiveNode(cnode)};
-  for (size_t input_idx = 0; input_idx < AnfAlgo::GetInputTensorNum(cnode); input_idx++) {
+  for (size_t input_idx = 0; input_idx < input_num; input_idx++) {
     auto cur_input = AnfAlgo::GetInputNode(cnode, input_idx);
     auto origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(cnode, input_idx);
     auto origin_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, input_idx);

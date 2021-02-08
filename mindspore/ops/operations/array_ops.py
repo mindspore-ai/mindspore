@@ -59,6 +59,7 @@ class _ScatterOp(PrimitiveWithInfer):
         """Initialize _ScatterOp"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, x_shape, indices_shape, updates_shape):
         self._check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
@@ -98,6 +99,7 @@ class _ScatterOp_Dynamic(PrimitiveWithCheck):
         """Initialize _ScatterOp_Dynamic"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def check_shape(self, x_shape, indices_shape, updates_shape):
         self._check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
@@ -3320,6 +3322,8 @@ class ScatterUpdate(_ScatterOp_Dynamic):
         """Initialize ScatterUpdate"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
+
 
 
 class ScatterNdUpdate(_ScatterNdOp):
@@ -3375,6 +3379,7 @@ class ScatterNdUpdate(_ScatterNdOp):
         """Initialize ScatterNdUpdate"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'value'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
@@ -3426,12 +3431,6 @@ class ScatterMax(_ScatterOp):
         [[88. 88. 88.]
          [88. 88. 88.]]
     """
-
-    @prim_attr_register
-    def __init__(self, use_locking=True):
-        """Initialize ScatterMax"""
-        self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
-        validator.check_value_type('use_locking', use_locking, (bool,), self.name)
 
 
 class ScatterMin(_ScatterOp):
@@ -3528,6 +3527,7 @@ class ScatterAdd(_ScatterOp_Dynamic):
         """Initialize ScatterAdd"""
         validator.check_value_type('use_locking', use_locking, [bool], self.name)
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class ScatterSub(_ScatterOp):
@@ -3800,6 +3800,7 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
     def __init__(self):
         """Initialize ScatterNonAliasingAdd"""
         self.init_prim_io_names(inputs=['x', 'indices', 'updates'], outputs=['y'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_dtype(self, x_dtype, indices_dtype, updates_dtype):
         validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
@@ -4919,9 +4920,13 @@ class Identity(PrimitiveWithInfer):
         [1 2 3 4]
     """
 
+    # Side effect is identity with input.
+    side_effect_propagate = 1
+
     @prim_attr_register
     def __init__(self):
         """Initialize identity"""
+        self.add_prim_attr('side_effect_propagate', 1)
 
     def __infer__(self, x):
         validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)

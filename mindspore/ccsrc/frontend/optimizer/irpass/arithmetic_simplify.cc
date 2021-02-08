@@ -83,7 +83,8 @@ AnfNodePtr ArithmeticSimplify2::operator()(const OptimizerPtr &, const AnfNodePt
 
   // Multiply by zero
   MATCH_REPLACE_IF(node, x * zero_, zero_.WithShapeAs(node),
-                   !zero_.CheckFunc(IsParam, node) && x.GetNode(node)->func_graph() == node->func_graph());
+                   !zero_.CheckFunc(IsParam, node) && !x.CheckFunc(IsLoad, node) &&
+                     x.GetNode(node)->func_graph() == node->func_graph());
   auto zero_prim = PPrimitive(prim::kPrimZerosLike, y);
   MATCH_REPLACE_IF(node, x * zero_prim, zero_.WithShapeAs(node),
                    !zero_prim.CheckFunc(IsParam, node) && x.GetNode(node)->func_graph() == node->func_graph());

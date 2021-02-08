@@ -139,9 +139,9 @@ bool CheckCache(const std::string &kernel_name) {
   std::string kernel_json = bin_map->Search(kernel_name);
   bool ret = (!kernel_json.empty());
   if (ret) {
-    MS_LOG(INFO) << "Kernel name:" << kernel_name << " has registed.";
+    MS_LOG(INFO) << "Kernel name:" << kernel_name << " has registered.";
   } else {
-    MS_LOG(INFO) << "Kernel name:" << kernel_name << " will been registed.";
+    MS_LOG(INFO) << "Kernel name:" << kernel_name << " will been registered.";
   }
   return ret;
 }
@@ -730,30 +730,6 @@ bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann:
   return false;
 }
 
-void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<AnfNodePtr, size_t>> *node_list) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(node_list);
-  auto output = func_graph->output();
-  MS_EXCEPTION_IF_NULL(output);
-  if (AnfAlgo::IsRealKernel(output)) {
-    // single output.
-    node_list->push_back(std::make_pair(output, 0));
-    return;
-  } else if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
-    auto output_cnode = output->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(output_cnode);
-    // multi output.
-    auto &inputs = output_cnode->inputs();
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      auto in_with_idx = AnfAlgo::VisitKernel(inputs[i], 0);
-      node_list->push_back(in_with_idx);
-    }
-    return;
-  }
-  MS_EXCEPTION(ArgumentError) << "Unknown  output type: " << output->DebugString(2)
-                              << " of graph: " << func_graph->ToString();
-}
-
 bool IsWeightBoundary(const AnfNodePtr &node) {
   if (node->isa<ValueNode>()) {
     return true;
@@ -776,7 +752,7 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto axis_attr = primitive->GetAttr(kAxis);
   if (axis_attr == nullptr) {
-    MS_LOG(ERROR) << "This node does't have axie attr.";
+    MS_LOG(ERROR) << "This node doesn't have axie attr.";
     return std::vector<int64_t>();
   }
   std::vector<int64_t> axis_list;

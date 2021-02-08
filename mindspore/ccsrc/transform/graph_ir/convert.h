@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <map>
+#include <set>
 #include <vector>
 #include <unordered_map>
 #include <string>
@@ -163,7 +164,7 @@ class DfGraphConvertor {
   void TraceOutputFromParameter(const AnfNodePtr &anf_out);
   void TraceOutputFromTupleGetItem(const AnfNodePtr &anf_out);
   void SetNodeInput(AnfNodePtr node);
-  void SetOpControlInput(const AnfNodePtr node);
+  void SetOpControlInput(const AnfNodePtr &node);
   void UpdateOpDesc(AnfNodePtr node);
   void SetSubgraph(AnfNodePtr node);
   void ProcessSubgraph(AnfNodePtr node, const std::vector<AnfNodePtr> &inputs);
@@ -171,6 +172,19 @@ class DfGraphConvertor {
   void DrawCNode(const CNodePtr node, const OpAdapterPtr adpt);
   void UpdateDataOpDesc(const AnfNodePtr &it, const OperatorPtr &op) const;
   void AddGraphConstInput(const OperatorPtr &op);
+  OperatorPtr ToOperatorPtr(const AnfNodePtr &node);
+  bool IsSourceEdgeNode(const AnfNodePtr &node);
+  bool IsControlEdgeNode(const AnfNodePtr &node);
+  void AddEdgeForLoad(const AnfNodePtr &node);
+  void AddEdgeToCache(const AnfNodePtr &src, const AnfNodePtr &dest);
+  void FindDestOps(const AnfNodePtr &node, const std::shared_ptr<std::vector<AnfNodePtr>> &node_list, bool top);
+  AnfNodePtr ParseLoadInput(const CNodePtr &cnode);
+  void AutoMonadSetControlInput(const AnfNodePtr &node);
+  void AutoMonadCollectInput(const AnfNodePtr &node);
+  void AutoMonadSetInput(const AnfNodePtr &node);
+  void SetTupleOpInput(const OpAdapterPtr &adpt, const CNodePtr &node, const AnfNodePtr &pred, const OperatorPtr &src,
+                       int index);
+  void UpdateTupleOutCache(void);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};
@@ -181,6 +195,7 @@ class DfGraphConvertor {
   std::unordered_map<AnfNode *, DfGraph> branches_map_;
   std::unordered_map<AnfNode *, OperatorPtr> op_cache_;
   std::unordered_map<AnfNode *, std::vector<ControlEdge>> control_depend_cache_;
+  std::unordered_map<AnfNodePtr, std::set<AnfNodePtr>> monad_control_edge_cache_;
   /* record "tuple_getitem"<->"out_handler" mapping */
   std::unordered_map<AnfNode *, OutHandler> out_handle_cache_;
   /* record "make_tuple"<->"out_handler vector" mapping */

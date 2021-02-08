@@ -32,9 +32,7 @@ const size_t kReluV2OutputNum = 2;
 
 CNodePtr GetRelu(const CNodePtr &relu_grad) {
   MS_EXCEPTION_IF_NULL(relu_grad);
-  if (relu_grad->size() != kReluGradInputNum) {
-    MS_LOG_EXCEPTION << "ReluGrad has wrong input size " << relu_grad->size();
-  }
+  CheckCNodeInputSize(relu_grad, kReluGradInputTensorNum);
   auto relu_anf = relu_grad->input(2);
   MS_EXCEPTION_IF_NULL(relu_anf);
   return relu_anf->cast<CNodePtr>();
@@ -47,11 +45,13 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
   std::vector<TypeId> outputs_type;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
 
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(node); ++input_index) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
     inputs_type.push_back(AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
     inputs_format.push_back(kOpFormat_DEFAULT);
   }
-  for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(node); ++output_index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_type.push_back(AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
   }
@@ -65,9 +65,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
 CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(relu);
-  if (relu->size() != kReluInputNum) {
-    MS_LOG_EXCEPTION << "Relu has wrong input size " << relu->size();
-  }
+  CheckCNodeInputSize(relu, kReluInputTensorNum);
 
   auto prim = std::make_shared<Primitive>(kReluV2OpName);
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), relu->input(1)};
@@ -106,7 +104,8 @@ CNodePtr CreateReluGradV2(const FuncGraphPtr &graph, const CNodePtr &relu_grad, 
 
   std::vector<TypeId> types;
   std::vector<std::vector<size_t>> shapes;
-  for (size_t i = 0; i < AnfAlgo::GetOutputTensorNum(relu_grad); i++) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(relu_grad);
+  for (size_t i = 0; i < output_num; i++) {
     types.push_back(AnfAlgo::GetOutputInferDataType(relu_grad, i));
     shapes.push_back(AnfAlgo::GetOutputInferShape(relu_grad, i));
   }

@@ -79,14 +79,35 @@ void MultitypeFuncGraph::PyRegister(const py::tuple &tuple, const py::function &
   Register(types, py_fn);
 }
 
+namespace {
+bool HasUMonadType(const TypePtrList &types) {
+  auto types_size = types.size();
+  // If UMonad is the only type, ignore it.
+  if (types_size > 1) {
+    auto last_type = types[types_size - 1];
+    if (IsIdentidityOrSubclass(last_type, kUMonadType)) {
+      MS_LOG(DEBUG) << "Have Extra UMonad type";
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
 // Return Exact match if exists,  else return non ambiguous sub class match
 // Return py::none() if matching is ambiguous
-const py::function MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
+const std::pair<py::function, bool> MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
   // Exact match
   for (auto &item : fn_cache_py_) {
+    bool has_extra_u_monad = false;
     TypePtrList sign = item.first;
-    if (sign.size() != types.size()) {
-      continue;
+    auto types_size = types.size();
+    if (sign.size() != types_size) {
+      // Don't take the UMonad type into account.
+      has_extra_u_monad = (types_size > 1) && (sign.size() == (types_size - 1)) && HasUMonadType(types);
+      if (!has_extra_u_monad) {
+        continue;
+      }
     }
     auto match = true;
     for (size_t i = 0; i < sign.size(); ++i) {
@@ -98,13 +119,14 @@ const py::function MultitypeFuncGraph::SignMatch(const TypePtrList &types) {
     if (!match) {
       continue;
     }
-    return item.second;
+    return std::pair(item.second, has_extra_u_monad);
   }
-  return py::none();
+  return std::pair(py::none(), false);
 }
 
 FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
-  auto py_fn = SignMatch(types);
+  auto py_fn_pair = SignMatch(types);
+  auto py_fn = py_fn_pair.first;
   std::ostringstream buffer;
   buffer << types;
   if (!py_fn.is_none()) {
@@ -113,6 +135,10 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
       MS_LOG(EXCEPTION) << "Fail to parse overload function " << buffer.str();
     }
     MS_LOG(DEBUG) << "Find overload function " << buffer.str() << ", function: " << func_graph->ToString();
+    if (py_fn_pair.second) {
+      MS_LOG(DEBUG) << "Add extra UMoand type for func_graph: " << func_graph->ToString();
+      func_graph->add_parameter();
+    }
     return func_graph;
   }
   auto stub = GenerateStubFunc(types);

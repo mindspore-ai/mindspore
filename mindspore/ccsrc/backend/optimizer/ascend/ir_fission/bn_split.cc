@@ -32,8 +32,8 @@ bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &
                                      std::vector<AnfNodePtr> *bn_training_reduce_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_cnode);
-  if (bn_cnode->inputs().size() != kBnInputNum) {
-    MS_LOG(INFO) << "FusedbatchNorm's input size less than " << kBnInputNum << ". " << bn_cnode->DebugString();
+  if (AnfAlgo::GetInputTensorNum(bn_cnode) != kBnInputTensorNum) {
+    MS_LOG(INFO) << "FusedbatchNorm's input size less than " << kBnInputTensorNum << ". " << bn_cnode->DebugString();
     return false;
   }
   std::vector<AnfNodePtr> bn_training_reduce_inputs = {
@@ -64,10 +64,7 @@ AnfNodePtr CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNod
                                            const std::vector<AnfNodePtr> &bn_training_reduce_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(bn_cnode);
-  if (bn_cnode->inputs().size() != kBnInputNum) {
-    MS_LOG(EXCEPTION) << "BN node has wrong input size"
-                      << " trace: " << trace::DumpSourceLines(bn_cnode);
-  }
+  CheckCNodeInputSize(bn_cnode, kBnInputTensorNum);
   if (bn_training_reduce_outputs.size() != kBNTrainingReduceOutputNum) {
     MS_LOG(EXCEPTION) << "BN1 outputs has wrong input size"
                       << " trace: " << trace::DumpSourceLines(bn_cnode);
@@ -102,8 +99,8 @@ AnfNodePtr SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr
 
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() < kBnInputNum) {
-    MS_LOG(INFO) << "op[FusedBatchNorm] has less than " << kBnInputNum << " inputs.";
+  if (AnfAlgo::GetInputTensorNum(cnode) < kBnInputTensorNum) {
+    MS_LOG(INFO) << "op[" << cnode->DebugString() << "] has less input than " << kBnInputTensorNum << " inputs.";
     return nullptr;
   }
   // Create BNTrainingReduce node and get outputs of BNTrainingReduce

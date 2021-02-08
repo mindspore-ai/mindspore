@@ -177,6 +177,16 @@ Status DropoutDoMaskInfo::InitForCostModel(const StrategyPtr &strategy) {
   return SUCCESS;
 }
 
+size_t GetNonMonadInputSize(const CNodePtr &cnode) {
+  size_t cnode_non_monad_size = cnode->size();
+  for (auto &input : cnode->inputs()) {
+    if (HasAbstractMonad(input)) {
+      cnode_non_monad_size--;
+    }
+  }
+  return cnode_non_monad_size;
+}
+
 PrimitivePtr GetDropoutGenMaskPrim(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
@@ -190,7 +200,8 @@ PrimitivePtr GetDropoutGenMaskPrim(const CNodePtr &cnode) {
   }
 
   auto dropout_gen_mask_cnode = dropout_gen_mask->cast<CNodePtr>();
-  if (dropout_gen_mask_cnode->size() != DROPOUT_GEN_MASK_CNODE_INPUT_SIZE) {
+  size_t cnode_non_monad_size = GetNonMonadInputSize(dropout_gen_mask_cnode);
+  if (cnode_non_monad_size != DROPOUT_GEN_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of dropout gen mask cnode's inputs must be " << DROPOUT_GEN_MASK_CNODE_INPUT_SIZE;
   }
   if (!IsValueNode<Primitive>(dropout_gen_mask_cnode->input(0))) {
@@ -220,7 +231,8 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
   }
 
   auto dropout_gen_mask_cnode = dropout_gen_mask->cast<CNodePtr>();
-  if (dropout_gen_mask_cnode->size() != DROPOUT_GEN_MASK_CNODE_INPUT_SIZE) {
+  size_t cnode_non_monad_size = GetNonMonadInputSize(dropout_gen_mask_cnode);
+  if (cnode_non_monad_size != DROPOUT_GEN_MASK_CNODE_INPUT_SIZE) {
     MS_LOG(EXCEPTION) << "The size of dropout gen mask cnode's inputs must be " << DROPOUT_GEN_MASK_CNODE_INPUT_SIZE;
   }
 

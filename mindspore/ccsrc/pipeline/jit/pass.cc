@@ -32,7 +32,6 @@
 #include "frontend/optimizer/graph_kernel_reuse.h"
 #include "frontend/optimizer/clean.h"
 #include "frontend/optimizer/irpass.h"
-#include "frontend/optimizer/control_depend.h"
 #include "frontend/optimizer/graph_transform.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
@@ -41,9 +40,11 @@
 #include "frontend/optimizer/recompute.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
+#include "pipeline/jit/static_analysis/auto_monad.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
 #endif
+
 namespace mindspore {
 namespace pipeline {
 using OptPassGroupMap = opt::OptPassGroupMap;
@@ -90,13 +91,19 @@ bool CleanAfterOptAPass(const ResourcePtr &res) {
 }
 
 namespace {
+bool ReAutoMonadWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &) { return ReAutoMonad(root); }
+
 OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig a_1 = opt::OptPassConfig({
     irpass.switch_layer_defer_inline_,
     irpass.switch_simplify_,
+    irpass.exchange_switch_depend_value_,
+    irpass.float_depend_g_call_,
 
     // Safe inlining
     irpass.inline_,
+    irpass.updatestate_eliminater_,
+    irpass.stopgrad_eliminater_,
     irpass.partial_eliminate_,
     irpass.replace_applicator_,
 
@@ -122,6 +129,8 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
 
     // Safe inlining
     irpass.inline_,
+    irpass.updatestate_eliminater_,
+    irpass.stopgrad_eliminater_,
     irpass.sparse_tensor_eliminate_,
   });
   opt::OptPassConfig a_2 = opt::OptPassConfig({
@@ -147,6 +156,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.switch_layer_defer_inline_,
     irpass.replace_applicator_,
     irpass.mirror_mini_step_elim_,
+    irpass.row_tensor_add_zeros_like_,
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);
@@ -167,6 +177,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"resolve", resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
+                         {"auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper)},
                          {"cse", opt::OptPassConfig(opt::CSEPass(false))},
                          {"a_3", a_3}});
 
@@ -183,6 +194,9 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
   opt::OptPassConfig c_1 = opt::OptPassConfig({
     // Safe inlining,
     irpass.inline_,
+    irpass.updatestate_eliminater_,
+    irpass.switch_call_monad_eliminater_,
+    irpass.stopgrad_eliminater_,
     irpass.partial_eliminate_,
   });
 
@@ -206,8 +220,9 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig b_1 = opt::OptPassConfig(
     {irpass.zero_like_fill_zero_, irpass.item_tuple_or_list_eliminate_, irpass.float_tuple_getitem_switch_,
-     irpass.reset_defer_inline_, irpass.inline_, irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_,
-     irpass.incorporate_env_getitem_, irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
+     irpass.reset_defer_inline_, irpass.inline_, irpass.updatestate_eliminater_, irpass.stopgrad_eliminater_,
+     irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_, irpass.incorporate_env_getitem_,
+     irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
      irpass.incorporate_env_getitem_switch_layer_, irpass.value_based_eliminate_, irpass.receive_eliminate_});
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.replace_refkey_by_param_,
@@ -380,22 +395,6 @@ bool OptPassRNGroup(const ResourcePtr &res) { return OptPassGroup(res, "renormal
 
 bool OptPassGradEpilogueGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_grad_epilogue"); }
 
-bool AddControlDependPass(const ResourcePtr &res) {
-  FuncGraphPtr func_graph = res->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-
-  if (func_graph->has_flag(GRAPH_FLAG_EFFECT_PATIAL_ORDER)) {
-    opt::AddControlDepend(func_graph);
-  }
-  for (auto fg : func_graph->func_graphs_used_total()) {
-    MS_EXCEPTION_IF_NULL(fg);
-    if (fg->has_flag(GRAPH_FLAG_EFFECT_PATIAL_ORDER)) {
-      opt::AddControlDepend(fg);
-    }
-  }
-  return true;
-}
-
 bool AddRecomputationPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
   opt::InsertRecomputedNodes(res->func_graph());
@@ -532,7 +531,6 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
                                    {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
                                    {"add_cache_embedding", AddCacheEmbeddingPass},
-                                   {"add_control_depend", AddControlDependPass},
                                    {"add_recomputation", AddRecomputationPass},
                                    {"cse_after_recomputation", OptAfterRecomputeGroup}};
 
@@ -540,7 +538,6 @@ std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_a", OptPassAGroup},
                                    {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},
-                                   {"add_control_depend", AddControlDependPass},
                                    {"opt_control", ControlGroup},
                                    {"opt_prepare", PrepareGroup},
                                    {"cconv", CconvPass}};

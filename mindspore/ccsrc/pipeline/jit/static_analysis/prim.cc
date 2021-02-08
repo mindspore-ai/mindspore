@@ -46,8 +46,8 @@ namespace mindspore {
 namespace abstract {
 using mindspore::parse::PyObjectWrapper;
 
-std::unordered_set<std::string> prims_to_skip_undetermined_infer{"make_tuple", "make_list", "switch", "env_setitem",
-                                                                 "env_getitem"};
+std::unordered_set<std::string> prims_to_skip_undetermined_infer{
+  "make_tuple", "make_list", "switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         AnfNodeConfigPtr out_conf) {
@@ -187,7 +187,7 @@ AnfNodePtr MixedPrecisionCastHelper(const AnfNodePtr &source_node, const Abstrac
     if (x->element()->BuildType()->isa<Float>()) {
       auto cast = prim::GetPythonOps("cast", "mindspore.ops.functional");
       MS_EXCEPTION_IF_NULL(cast);
-      target_node = func_graph->NewCNode({NewValueNode(cast), source_node, target_type});
+      target_node = func_graph->NewCNodeAfter(source_node, {NewValueNode(cast), source_node, target_type});
     }
   } else if (node_type->isa<AbstractTuple>()) {
     auto x = node_type->cast<AbstractTuplePtr>();
@@ -442,6 +442,10 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic[ATTR_SHAPE] = py::none();
     dic[ATTR_DTYPE] = arg->BuildType();
     dic[ATTR_VALUE] = py::none();
+  } else if (abs_base->isa<AbstractMonad>()) {
+    dic[ATTR_SHAPE] = py::none();
+    dic[ATTR_DTYPE] = abs_base->BuildType();
+    dic[ATTR_VALUE] = py::none();
   } else {
     auto value = abs_base->BuildValue();
     if ((*value == *kAnyValue)) {
@@ -472,8 +476,10 @@ py::tuple PreparePyInputs(const PrimitivePyPtr &prim_py, const AbstractBasePtrLi
     args_ptr = &args;
   }
 
-  py::tuple py_args(args_ptr->size());
-  for (size_t i = 0; i < args_ptr->size(); i++) {
+  // The monad parameter is defined at the end of the parameter and needs to be ignored
+  std::size_t size_args = args_ptr->size() - GetAbstractMonadNum(*args_ptr);
+  py::tuple py_args(size_args);
+  for (size_t i = 0; i < size_args; i++) {
     auto arg_i = (*args_ptr)[i];
     py_args[i] = ConvertAbstractToPython(arg_i);
   }
@@ -582,7 +588,8 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   AbstractBasePtr abs_base = eval_impl_(engine, prim_, args);
   prim_->EndRecordAddAttr();
   auto added_attrs = prim_->evaluate_added_attrs();
-  return std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+  auto eval_result = std::make_shared<EvalResult>(abs_base, std::make_shared<AttrValueMap>(added_attrs));
+  return eval_result;
 }
 
 EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
@@ -800,12 +807,16 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &engin
   // item_name to func addr from obj_map
   parse::SymbolPtr symbol = item_v->cast<parse::SymbolPtr>();
   parse::NameSpacePtr name_space = data_v->cast<parse::NameSpacePtr>();
-  FuncGraphPtr func_graph = out_conf->node()->func_graph();
+  auto out_node = out_conf->node();
+  FuncGraphPtr func_graph = out_node->func_graph();
 
-  auto new_node = parse::ResolveSymbol(func_graph->manager(), name_space, symbol, out_conf->node());
+  auto new_node = parse::ResolveSymbol(func_graph->manager(), name_space, symbol, out_node);
   if (new_node == nullptr) {
     MS_LOG(EXCEPTION) << "Resolve node failed";
   }
+
+  // Replace old node with the resolved new node in order list.
+  func_graph->ReplaceInOrder(out_node, new_node);
 
   AnalysisEnginePtr eng = out_conf->engine();
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context());
@@ -1114,7 +1125,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
     }
 
     AbstractBasePtr ret = ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
-    auto infer_result = std::make_shared<EvalResult>(ret, nullptr);
+    auto infer_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
     (*cache_)[args_spec_list] = infer_result;
     return infer_result;
   }
@@ -1171,9 +1182,11 @@ class PartialEvaluator : public Evaluator {
       }
     }
 
-    (void)std::transform(
-      args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
-      [](const ConfigPtr &config) -> AbstractBasePtr { return config->GetEvaluatedValue()->abstract(); });
+    std::vector<EvalResultPtr> eval_result_list;
+    (void)std::transform(args_conf_list.cbegin() + 1, args_conf_list.cend(), std::back_inserter(eval_result_list),
+                         [](const ConfigPtr &config) -> EvalResultPtr { return config->GetEvaluatedValue(); });
+    (void)std::transform(eval_result_list.cbegin(), eval_result_list.cend(), std::back_inserter(args_spec_list),
+                         [](const EvalResultPtr &eval_result) -> AbstractBasePtr { return eval_result->abstract(); });
     AbstractBasePtrList args(args_spec_list.begin() + 1, args_spec_list.end());
 
     auto cnode = out_conf->node()->cast<CNodePtr>();
@@ -1183,17 +1196,25 @@ class PartialEvaluator : public Evaluator {
                         << ", args_conf_list: " << mindspore::ToString(args_conf_list);
     }
 
+    auto flag = std::any_of(eval_result_list.cbegin(), eval_result_list.cend(), [](const EvalResultPtr &eval_result) {
+      MS_LOG(DEBUG) << "Propagate isolate nodes flag from: " << eval_result->abstract()->ToString()
+                    << ", flag: " << eval_result->HasIsolateNodesPropagateCNodeFlag();
+      return eval_result->HasIsolateNodesPropagateCNodeFlag();
+    });
     AbstractFuncAtomPtrList partial_funcs_list;
-    auto build_partial = [args, cnode, &partial_funcs_list](const AbstractFuncAtomPtr &atom_func) {
+    auto build_partial = [args, cnode, flag, &partial_funcs_list](const AbstractFuncAtomPtr &atom_func) {
       auto new_func = std::make_shared<PartialAbstractClosure>(atom_func, args, cnode);
       partial_funcs_list.push_back(new_func);
+      if (atom_func->HasIsolateNodesFlag() || flag) {
+        new_func->SetIsolateNodesFlag(true);
+      }
     };
     func->Visit(build_partial);
 
     auto ret = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
-    auto infer_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
-    (*cache_)[args_spec_list] = infer_result;
-    return infer_result;
+    auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
+    (*cache_)[args_spec_list] = eval_result;
+    return eval_result;
   }
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &) override {

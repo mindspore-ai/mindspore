@@ -25,12 +25,14 @@ class ApplyMomentumWeightDecayFusion : public PatternProcessPass {
  public:
   explicit ApplyMomentumWeightDecayFusion(bool multigraph = true)
       : PatternProcessPass("momentum_weightdecay_fusion", multigraph) {
+    monad_ = std::make_shared<Var>();
     weight_decay_ = std::make_shared<Var>();
     variable_ = std::make_shared<Var>();
     accumulation_ = std::make_shared<Var>();
     learning_rate_ = std::make_shared<Var>();
     gradient_ = std::make_shared<Var>();
     momentum_ = std::make_shared<Var>();
+    monad_state_ = std::make_shared<Var>();
   }
   ~ApplyMomentumWeightDecayFusion() override = default;
   const BaseRef DefinePattern() const override;
@@ -39,12 +41,14 @@ class ApplyMomentumWeightDecayFusion : public PatternProcessPass {
  private:
   static bool IsScalar(const BaseRef &n);
 
+  VarPtr monad_;
   VarPtr weight_decay_;
   VarPtr variable_;
   VarPtr accumulation_;
   VarPtr learning_rate_;
   VarPtr gradient_;
   VarPtr momentum_;
+  VarPtr monad_state_;
 };
 }  // namespace opt
 }  // namespace mindspore

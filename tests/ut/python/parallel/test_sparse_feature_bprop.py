@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test sparse feature bprop """
+import pytest
 import numpy as np
 
 import mindspore as ms
@@ -29,6 +30,14 @@ from mindspore.nn import TrainOneStepCell, Adam
 grad_all = C.GradOperation(get_all=True)
 
 
+@pytest.fixture(name="test_context")
+def _test_context():
+    context.set_context(enable_sparse=True)
+    yield
+    context.set_context(enable_sparse=False)
+    context.reset_auto_parallel_context()
+
+
 class GradWrap(nn.Cell):
     def __init__(self, network):
         super(GradWrap, self).__init__()
@@ -37,9 +46,8 @@ class GradWrap(nn.Cell):
     def construct(self, x):
         return grad_all(self.network)(x)
 
-def test_bprop_with_sparse_feature_allreduce():
+def test_bprop_with_sparse_feature_allreduce(test_context):
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="hybrid_parallel")
-    context.set_context(enable_sparse=True)
 
     class Net(nn.Cell):
         def __init__(self, axis=0, shape=None):
@@ -64,9 +72,8 @@ def test_bprop_with_sparse_feature_allreduce():
     _executor.compile(net, x)
 
 
-def test_bprop_with_sparse_feature_mirror():
+def test_bprop_with_sparse_feature_mirror(test_context):
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
-    context.set_context(enable_sparse=True)
 
     class Net(nn.Cell):
         def __init__(self, shape=None):
@@ -95,9 +102,8 @@ def test_bprop_with_sparse_feature_mirror():
     compile_net(net)
 
 
-def test_bprop_with_sparse_feature_dataparallel():
+def test_bprop_with_sparse_feature_dataparallel(test_context):
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="data_parallel")
-    context.set_context(enable_sparse=True)
 
     class Net(nn.Cell):
         def __init__(self, axis=0, shape=None):

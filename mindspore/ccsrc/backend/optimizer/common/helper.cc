@@ -124,18 +124,16 @@ CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_si
     MS_LOG(EXCEPTION) << "The node is expected to be a cnode";
   }
   auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != input_size) {
-    auto op_name = AnfAlgo::GetCNodeName(cnode);
-    MS_LOG(EXCEPTION) << "op[" + op_name + "] has less than " << input_size << " inputs.";
-  }
+  CheckCNodeInputSize(cnode, input_size);
   return cnode;
 }
 
-void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_size) {
+void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().size() != input_size) {
-    MS_LOG(EXCEPTION) << "The input size of node " + cnode->DebugString() + " is not equal to " << input_size;
+  auto real_input_tensor_num = AnfAlgo::GetInputTensorNum(cnode);
+  if (real_input_tensor_num != input_tensor_size) {
+    MS_LOG(EXCEPTION) << "The input tensor size[" << real_input_tensor_num
+                      << "] of node " + cnode->DebugString() + " is not equal to " << input_tensor_size;
   }
 }
 
@@ -149,17 +147,15 @@ bool HasSymmetricalKernelInfo(const AnfNodePtr &node_x, const AnfNodePtr &node_y
 const AnfNodePtr EliminateDependTransop(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
 
-  auto transop_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kTransOpInputNum);
+  auto transop_cnode = CheckAnfNodeIfCNodeAndInputSize(node, kTransOpInputTensorNum);
   MS_EXCEPTION_IF_NULL(transop_cnode);
-  auto depend_cnode = CheckAnfNodeIfCNodeAndInputSize(transop_cnode->input(kCastInputNum - 1), kDependInputNum);
-  auto prev_transop_cnode = CheckAnfNodeIfCNodeAndInputSize(depend_cnode->input(1), kTransOpInputNum);
-  MS_EXCEPTION_IF_NULL(depend_cnode->input(kDependInputNum - 1));
-  MS_EXCEPTION_IF_NULL(prev_transop_cnode->input(kTransOpInputNum - 1));
-  auto transed_node = prev_transop_cnode->input(kTransOpInputNum - 1);
+  auto depend_cnode = CheckAnfNodeIfCNodeAndInputSize(transop_cnode->input(1), kDependInputTensorNum);
+  auto prev_transop_cnode = CheckAnfNodeIfCNodeAndInputSize(depend_cnode->input(1), kTransOpInputTensorNum);
+  auto transed_node = prev_transop_cnode->input(1);
   MS_EXCEPTION_IF_NULL(transed_node);
 
   std::vector<AnfNodePtr> replace_depend_inputs{NewValueNode(prim::kPrimDepend), transed_node,
-                                                depend_cnode->input(kDependInputNum - 1)};
+                                                depend_cnode->input(kDependAttachNodeIndex)};
   AnfNodePtr replace_depend = func_graph->NewCNode(replace_depend_inputs);
   MS_EXCEPTION_IF_NULL(replace_depend);
   auto transed_abstract = transed_node->abstract();
@@ -422,11 +418,11 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(con
   }
   auto output_info_list = iter->second;
   for (const auto &output_info : output_info_list) {
-    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimControlDepend->name()) {
-      continue;
-    }
     if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimDepend->name() &&
         output_info.second == kDependAttachNodeIndex) {
+      continue;
+    }
+    if (AnfAlgo::GetCNodeName(output_info.first) == prim::kPrimUpdateState->name()) {
       continue;
     }
     output_node_list->push_back(output_info);
@@ -537,6 +533,9 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
   bool need_update = false;
   for (size_t i = 0; i < inputs.size() - 1; ++i) {
     auto input_node = inputs[i + 1];
+    if (AnfAlgo::CheckPrimitiveType(input_node, prim::kPrimDepend)) {
+      input_node = AnfAlgo::VisitKernel(input_node, 0).first;
+    }
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>()) {
       auto value_node = input_node->cast<ValueNodePtr>();
@@ -548,7 +547,7 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
       primitive->set_attr(input_names_vec[i], value_node->value());
       need_update = true;
     } else {
-      new_inputs.push_back(input_node);
+      new_inputs.push_back(inputs[i + 1]);
     }
   }
   if (need_update) {
@@ -785,7 +784,8 @@ ValueNodePtr MakeValueNode(const ValueNodePtr &value_node) {
   kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{kOpFormat_DEFAULT});
   // set value node initial device data type = infer data type
   std::vector<TypeId> types;
-  for (size_t index = 0; index < AnfAlgo::GetOutputTensorNum(value_node); ++index) {
+  size_t output_num = AnfAlgo::GetOutputTensorNum(value_node);
+  for (size_t index = 0; index < output_num; ++index) {
     types.push_back(kTypeUnknown);
   }
   kernel_build_info_builder->SetOutputsDeviceType(types);

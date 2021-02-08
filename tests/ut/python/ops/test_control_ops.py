@@ -613,18 +613,6 @@ def test_switch_layer_single_layer():
     net2(x, i)
 
 
-def test_control_depend_check():
-    with pytest.raises(TypeError) as e:
-        P.ControlDepend(0.0)
-        print(e)
-    with pytest.raises(ValueError) as e:
-        P.ControlDepend(2)
-        print(e)
-    with pytest.raises(TypeError) as e:
-        P.ControlDepend((2,))
-        print(e)
-
-
 def test_if_nested_compile():
     class Net(nn.Cell):
         def __init__(self, auto_prefix=True):

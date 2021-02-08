@@ -26,8 +26,10 @@ void DoRefresh(const CNodePtr &cnode) {
   if (cnode == nullptr) {
     MS_LOG(EXCEPTION) << "node is nullptr";
   }
-  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(cnode); input_index++) {
-    auto input_kernel_node = AnfAlgo::GetInputNode(cnode, input_index);
+  size_t input_num = AnfAlgo::GetInputTensorNum(cnode);
+  for (size_t input_index = 0; input_index < input_num; input_index++) {
+    auto input_kernel_node = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(cnode, input_index), 0).first;
+    MS_EXCEPTION_IF_NULL(input_kernel_node);
     if (input_kernel_node->isa<Parameter>()) {
       std::shared_ptr<kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder =
         std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();

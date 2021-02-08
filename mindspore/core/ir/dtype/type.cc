@@ -137,6 +137,12 @@ const char *ObjectIdLabel(const TypeId &v) {
       return "kObjectTypeRefKey";
     case kObjectTypeRef:
       return "kObjectTypeRef";
+    case kObjectTypeMonad:
+      return "kObjectTypeMonad";
+    case kObjectTypeUMonad:
+      return "kObjectTypeUMonad";
+    case kObjectTypeIOMonad:
+      return "kObjectTypeIOMonad";
     default:
       return "[Unknown Type Id]";
   }
@@ -184,6 +190,9 @@ const char *TypeIdLabel(const TypeId &v) {
     return MetaIdLabel(v);
   } else {
     if (v < kObjectTypeEnd) {
+      return ObjectIdLabel(v);
+    } else if (v > kMonadTypeBegin && v < kMonadTypeEnd) {
+      // Monad Types is ObjectType
       return ObjectIdLabel(v);
     } else {
       return NumberIdLabel(v);

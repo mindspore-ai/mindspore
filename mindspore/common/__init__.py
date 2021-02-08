@@ -14,6 +14,7 @@
 # ============================================================================
 """Top-level reference to dtype of common module."""
 from . import dtype
+from . import monad
 from .api import ms_function
 from .dtype import *
 from .parameter import Parameter, ParameterTuple
@@ -27,5 +28,6 @@ __all__.extend([
     'ms_function',  # api
     'Parameter', 'ParameterTuple',  # parameter
     "dtype",
+    'monad',
     "set_seed", "get_seed"  # random seed
     ])

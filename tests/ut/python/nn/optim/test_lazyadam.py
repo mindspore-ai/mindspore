@@ -23,7 +23,12 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import LazyAdam
 from mindspore.ops import operations as P
 
-context.set_context(enable_sparse=True)
+@pytest.fixture(scope="module", autouse=True)
+def setup_teardown():
+    context.set_context(enable_sparse=True)
+    yield
+    context.set_context(enable_sparse=False)
+
 
 class Net(nn.Cell):
     """ Net definition """

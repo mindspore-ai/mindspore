@@ -120,6 +120,34 @@ def _zeros_like_dict(x):
     return F.make_dict(keys, new_values)
 
 
+@zeros_like_leaf.register("UMonad")
+def _zeros_like_u_monad(x):
+    """
+    U Monad.
+
+    Args:
+        x (UMonad):
+
+    Returns:
+        x.
+    """
+    return x
+
+
+@zeros_like_leaf.register("IOMonad")
+def _zeros_like_io_monad(x):
+    """
+    IO Monad.
+
+    Args:
+        x (IOMonad):
+
+    Returns:
+        x.
+    """
+    return x
+
+
 # zeros_like is an object that will generate graph of zero_like operation for different type
 zeros_like = base.HyperMap(zeros_like_leaf)
 """`zeros_like` is an object that will generate graph of `zero_like` operation for different type."""

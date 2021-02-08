@@ -42,11 +42,11 @@ class DeepFirstSearcher : public AnfIrVisitor {
 
   std::vector<AnfNodePtr> Search(const AnfNodePtr &root) {
     if (root == nullptr) {
-      return res_;
+      return std::move(res_);
     }
     seen_ = NewSeenGeneration();
     Visit(root);
-    return res_;
+    return std::move(res_);
   }
 
   void Visit(const AnfNodePtr &node) override {

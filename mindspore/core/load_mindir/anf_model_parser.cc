@@ -43,14 +43,13 @@ enum ParseForm : int {
   FORM_PARSE_SCALAR = 1,
   FORM_PARSE_TENSOR = 2,
   FORM_PARSE_NONE = 3,
-  FORM_PARSE_UNDEFINE = 4,
+  FORM_PARSE_MONAD = 4,
+  FORM_PARSE_UNDEFINE = 5,
 };
 
-static std::map<std::string, ParseForm> kParseTypeSwitchMap{{"type", FORM_PARSE_TYPE},
-                                                            {"scalar", FORM_PARSE_SCALAR},
-                                                            {"tensor", FORM_PARSE_TENSOR},
-                                                            {"none", FORM_PARSE_NONE},
-                                                            {"", FORM_PARSE_UNDEFINE}};
+static std::map<std::string, ParseForm> kParseTypeSwitchMap{
+  {"type", FORM_PARSE_TYPE}, {"scalar", FORM_PARSE_SCALAR}, {"tensor", FORM_PARSE_TENSOR},
+  {"none", FORM_PARSE_NONE}, {"Monad", FORM_PARSE_MONAD},   {"", FORM_PARSE_UNDEFINE}};
 
 static std::unordered_map<int, TypeId> kDefaultValueSwitchMap{
   {mind_ir::TensorProto_DataType_BOOL, kNumberTypeBool},
@@ -574,6 +573,29 @@ bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_n
   return true;
 }
 
+bool MSANFModelParser::ObtainValueNodeInMonadForm(const std::string &value_node_name,
+                                                  const mind_ir::AttributeProto &attr_proto) {
+  const std::string &ref_attr_name = attr_proto.ref_attr_name();
+  if (ref_attr_name.find("UMonad") != std::string::npos) {
+    const ValuePtr kUMonad = std::make_shared<UMonad>();
+    auto monad_abs = kUMonad->ToAbstract();
+    auto new_value_node = NewValueNode(kUMonad);
+    MS_EXCEPTION_IF_NULL(new_value_node);
+    new_value_node->set_abstract(monad_abs);
+    anfnode_build_map_[value_node_name] = new_value_node;
+  } else if (ref_attr_name.find("IOMonad") != std::string::npos) {
+    const ValuePtr kIOMonad = std::make_shared<IOMonad>();
+    auto monad_abs = kIOMonad->ToAbstract();
+    auto new_value_node = NewValueNode(kIOMonad);
+    MS_EXCEPTION_IF_NULL(new_value_node);
+    new_value_node->set_abstract(monad_abs);
+    anfnode_build_map_[value_node_name] = new_value_node;
+  } else {
+    return false;
+  }
+  return true;
+}
+
 bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_name,
                                                 const mind_ir::AttributeProto &attr_proto) {
   if (!attr_proto.has_ref_attr_name()) {
@@ -589,6 +611,8 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
     type = ref_attr_name.substr(pos, string("type:").length() - 1);
   } else if ((pos = ref_attr_name.find("tensor:")) != std::string::npos) {
     type = ref_attr_name.substr(pos, string("tensor:").length() - 1);
+  } else if ((pos = ref_attr_name.find("Monad:")) != std::string::npos) {
+    type = ref_attr_name.substr(pos, string("Monad:").length() - 1);
   } else if (ref_attr_name == "none") {
     type = ref_attr_name;
   }
@@ -618,6 +642,10 @@ bool MSANFModelParser::GetAttrValueForValueNode(const std::string &value_node_na
     }
     case FORM_PARSE_NONE: {
       ObtainValueNodeInNoneForm(value_node_name, attr_proto);
+      break;
+    }
+    case FORM_PARSE_MONAD: {
+      ObtainValueNodeInMonadForm(value_node_name, attr_proto);
       break;
     }
     default:
@@ -722,11 +750,17 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   MS_EXCEPTION_IF_NULL(cnode_ptr);
 
   if (0 == kv.size()) {
-    AbstractBasePtrList elem;
-    for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
-      elem.push_back(cnode_ptr->input(index)->abstract());
+    if (node_type == "UpdateState") {
+      const ValuePtr kUMonad = std::make_shared<UMonad>();
+      auto monad_abs = kUMonad->ToAbstract();
+      cnode_ptr->set_abstract(monad_abs);
+    } else {
+      AbstractBasePtrList elem;
+      for (size_t index = 1; index < cnode_ptr->inputs().size(); ++index) {
+        elem.push_back(cnode_ptr->input(index)->abstract());
+      }
+      cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     }
-    cnode_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
   } else if (1 == kv.size()) {
     std::unordered_map<std::string, abstract::AbstractBasePtr>::iterator iter = kv.begin();
     cnode_ptr->set_abstract(iter->second);

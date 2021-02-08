@@ -31,7 +31,7 @@ const AnfNodePtr TransDataSplit::Process(const FuncGraphPtr &func_graph, const A
                                          const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   if (node != nullptr && node->isa<CNode>() && AnfAlgo::GetCNodeName(node) == kTransDataOpName) {
-    CheckCNodeInputSize(node->cast<CNodePtr>(), kBackendTransDataInputNum);
+    CheckCNodeInputSize(node->cast<CNodePtr>(), kTransOpInputTensorNum);
     if (IsFormatInvaild(node)) {
       TraceGuard guard(std::make_shared<TraceOpt>(node->debug_info()));
       return DoSplit(func_graph, node);

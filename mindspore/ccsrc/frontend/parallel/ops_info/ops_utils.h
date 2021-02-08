@@ -374,6 +374,8 @@ constexpr char EMBED[] = "embed";
 constexpr char CREATINSTANCE[] = "create_instance";
 constexpr char REF_TO_EMBED[] = "RefToEmbed";
 constexpr char STOP_GRADIENT[] = "stop_gradient";
+constexpr char UPDATESTATE[] = "UpdateState";
+constexpr char LOAD[] = "Load";
 
 // Batch parallel black list
 constexpr char TENSOR_SCATTER_UPDATE[] = "TensorScatterUpdate";

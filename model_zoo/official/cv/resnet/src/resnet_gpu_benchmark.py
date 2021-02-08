@@ -123,6 +123,9 @@ class ResidualBlock(nn.Cell):
 
     def construct(self, x):
         identity = x
+        if self.down_sample:
+            identity = self.down_sample_layer(identity)
+
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
@@ -132,10 +135,7 @@ class ResidualBlock(nn.Cell):
         out = self.conv3(out)
         out = self.bn3(out)
 
-        if self.down_sample:
-            identity = self.down_sample_layer(identity)
-
-        out = self.add(out, identity)
+        out = self.add(identity, out)
         out = self.relu(out)
 
         return out
