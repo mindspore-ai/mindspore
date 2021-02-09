@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kSliceGradInputNum = 4;
+constexpr size_t kSliceGradInputTensorNum = 4;
 
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -63,7 +63,7 @@ const AnfNodePtr SliceGradUnifyMindIR::Process(const FuncGraphPtr &graph, const 
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
 
-  auto slice_grad = CheckAnfNodeIfCNodeAndInputSize(node, kSliceGradInputNum + 1);
+  auto slice_grad = CheckAnfNodeIfCNodeAndInputSize(node, kSliceGradInputTensorNum);
   std::vector<AnfNodePtr> pad_inputs = {NewValueNode(std::make_shared<Primitive>(kPadOpName)), slice_grad->input(1)};
   auto pad = graph->NewCNode(pad_inputs);
   MS_EXCEPTION_IF_NULL(pad);
