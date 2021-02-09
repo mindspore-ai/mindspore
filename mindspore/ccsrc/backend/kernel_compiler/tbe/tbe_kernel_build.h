@@ -60,14 +60,17 @@ class TbeKernelBuild {
                                         std::vector<nlohmann::json> *input_desc_list, size_t *index);
   static std::vector<size_t> GetDescOutputIndex(const std::vector<int64_t> &output_used_nums);
   static bool GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode,
-                                         std::vector<nlohmann::json> *output_desc_list);
+                                         std::vector<nlohmann::json> *output_desc_list,
+                                         std::vector<nlohmann::json> *output_data_desc_list);
   static void GenPreDescJson(nlohmann::json *output_desc);
   static void GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode, nlohmann::json *compute_op_str,
                                          std::string *fusion_kernel_name);
-  static void GenFusionComputePreBuildJson(const mindspore::CNodePtr &cnode, nlohmann::json *compute_op_str);
   static void GenDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t node_out_idx,
                           size_t desc_output_idx, nlohmann::json *output_desc,
                           FusionDataType fusion_data_type = kFusionNormal);
+  static void GenFusionOutputDescJson(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t node_out_idx,
+                                      size_t desc_output_idx, nlohmann::json *output_desc,
+                                      nlohmann::json *output_data_desc);
   static void GenSuffixDescJson(nlohmann::json *output_desc);
   static void GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t index,
                                   size_t output_index, nlohmann::json *output_desc);
