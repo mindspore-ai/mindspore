@@ -35,6 +35,7 @@ union PrimitiveType {
     AssignAdd,
     AudioSpectrogram,
     AvgPoolFusion,
+    AvgPoolGrad,
     BatchNorm,
     BatchNormGrad,
     BatchToSpace,
@@ -42,7 +43,7 @@ union PrimitiveType {
     BiasAdd,
     BinaryCrossEntropy,
     BinaryCrossEntropyGrad,
-    BiasGrad,
+    BiasAddGrad,
     BroadcastTo,
     Cast,
     Ceil,
@@ -109,6 +110,7 @@ union PrimitiveType {
     Maximum,
     MaximumGrad,
     MaxPoolFusion,
+    MaxPoolGrad,
     Merge,
     Mfcc,
     Minimum,
@@ -282,6 +284,13 @@ table AvgPoolFusion {
     activation_type: ActivationType = 0;
 }
 
+table AvgPoolGrad {
+    kernel_size: [long];
+    strides: [long];
+    pad_mode: PadMode;
+    format: Format;
+}
+
 table BatchNorm {
     epsilon: float;
     format: Format;
@@ -314,7 +323,7 @@ table BinaryCrossEntropyGrad {
     reduction: Reduction = 1;
 }
 
-table BiasGrad {
+table BiasAddGrad {
 }
 
 table BroadcastTo {
@@ -649,6 +658,13 @@ table MaxPoolFusion {
     format: Format;
     global: bool;
     activation_type: ActivationType = 0;
+}
+
+table MaxPoolGrad {
+    kernel_size: [long];
+    strides: [long];
+    pad_mode: PadMode;
+    format: Format;
 }
 
 table Merge {

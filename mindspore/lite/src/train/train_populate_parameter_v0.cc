@@ -511,7 +511,7 @@ OpParameter *PopulateBiasGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
-  arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_BiasGrad;
+  arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_BiasAddGrad;
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 

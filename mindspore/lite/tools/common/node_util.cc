@@ -28,8 +28,9 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
 #ifdef SUPPORT_TRAIN
   schema::PrimitiveType_Conv2DBackpropFilterFusion,
   schema::PrimitiveType_Conv2DBackpropInputFusion,
-  schema::PrimitiveType_PoolingGrad,
-  schema::PrimitiveType_BiasGrad,
+  schema::PrimitiveType_AvgPoolGrad,
+  schema::PrimitiveType_MaxPoolGrad,
+  schema::PrimitiveType_BiasAddGrad,
   schema::PrimitiveType_BatchNormGrad,
   schema::PrimitiveType_ActivationGrad,
   schema::PrimitiveType_ApplyMomentum,
@@ -56,7 +57,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
 
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
 #ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_ActivationGrad,
+  schema::PrimitiveType_AvgPoolGrad, schema::PrimitiveType_MaxPoolGrad, schema::PrimitiveType_ActivationGrad,
   schema::PrimitiveType_Conv2DBackpropFilterFusion, schema::PrimitiveType_BatchNormGrad
 #endif
 };

@@ -138,8 +138,8 @@ TEST_F(NetworkTest, tuning_layer) {
     node->inputIndex = {7};
     node->outputIndex = {8};
     node->primitive = std::make_unique<schema::PrimitiveT>();
-    node->primitive->value.type = schema::PrimitiveType_BiasGrad;
-    auto primitive = new schema::BiasGradT;
+    node->primitive->value.type = schema::PrimitiveType_BiasAddGrad;
+    auto primitive = new schema::BiasAddGradT;
     ASSERT_NE(primitive, nullptr);
     node->primitive->value.value = primitive;
     node->name = "BiasGrad";

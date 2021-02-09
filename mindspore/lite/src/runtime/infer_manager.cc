@@ -269,7 +269,7 @@ static RegistryInferShape g_LayerNormInferShape(mindspore::schema::PrimitiveType
 static RegistryInferShape g_UnsortedSegmentSumInferShape(mindspore::schema::PrimitiveType_UnsortedSegmentSum,
                                                          UnsortedSegmentSumInferShape);
 static RegistryInferShape g_AddnInferShape(mindspore::schema::PrimitiveType_AddN, AddnInferShape);
-static RegistryInferShape g_BiasGradInferShape(mindspore::schema::PrimitiveType_BiasGrad, BiasGradInferShape);
+static RegistryInferShape g_BiasGradInferShape(mindspore::schema::PrimitiveType_BiasAddGrad, BiasGradInferShape);
 static RegistryInferShape g_FullConnectionInferShape(mindspore::schema::PrimitiveType_FullConnection,
                                                      FullConnectionInferShape);
 static RegistryInferShape g_CropInferShape(mindspore::schema::PrimitiveType_Crop, CropInferShape);
@@ -279,7 +279,8 @@ static RegistryInferShape g_FusedBatchnormInferShape(mindspore::schema::Primitiv
                                                      FusedBatchNormInferShape);
 static RegistryInferShape g_SoftmaxInferShape(mindspore::schema::PrimitiveType_Softmax, SoftMaxInferShape);
 static RegistryInferShape g_RoiPoolingInferShape(mindspore::schema::PrimitiveType_ROIPooling, ROIPoolingInferShape);
-static RegistryInferShape g_PoolingGradInferShape(mindspore::schema::PrimitiveType_PoolingGrad, PoolingGradInferShape);
+static RegistryInferShape g_avgPoolGradInferShape(mindspore::schema::PrimitiveType_AvgPoolGrad, PoolingGradInferShape);
+static RegistryInferShape g_maxPoolGradInferShape(mindspore::schema::PrimitiveType_MaxPoolGrad, PoolingGradInferShape);
 static RegistryInferShape g_WhileInferShape(mindspore::schema::PrimitiveType_While, WhileInferShape);
 static RegistryInferShape g_BinaryCrossEntropyInferShape(mindspore::schema::PrimitiveType_BinaryCrossEntropy,
                                                          BinaryCrossEntropyInferShape);

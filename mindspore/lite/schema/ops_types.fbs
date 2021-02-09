@@ -79,30 +79,6 @@ enum ActivationType : byte {
     UNKNOW = 20
 }
 
-enum ActivationGradType : byte {
-    NO_ACTIVATION = 0,
-    RELU = 1,
-    SIGMOID = 2,
-    RELU6 = 3,
-    ELU = 4,
-    LEAKY_RELU = 5,
-    ABS = 6,
-    RELU1 = 7,
-    SOFTSIGN = 8,
-    SOFTPLUS = 9,
-    TANH = 10,
-    SELU = 11,
-    HSWISH = 12,
-    HSIGMOID = 13,
-    THRESHOLDRELU = 14,
-    LINEAR = 15,
-    HARD_TANH = 16,
-    SIGN = 17,
-    SWISH = 18,
-    GELU = 19,
-    UNKNOW = 20
-}
-
 enum ReduceMode : byte {
     ReduceMean = 0,
     ReduceMax = 1,

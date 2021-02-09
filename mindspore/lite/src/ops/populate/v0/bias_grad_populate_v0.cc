@@ -28,7 +28,7 @@ OpParameter *PopulateBiasGradParameter(const void *prim) {
     return nullptr;
   }
   memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_BiasGrad;
+  arithmetic_param->op_parameter_.type_ = schema::PrimitiveType_BiasAddGrad;
 
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }

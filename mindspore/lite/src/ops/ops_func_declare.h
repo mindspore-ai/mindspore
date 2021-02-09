@@ -179,7 +179,8 @@
 #include "ops/zeros_like.h"
 #include "ops/grad/activation_grad.h"
 #include "ops/grad/add_grad.h"
-#include "ops/grad/bias_grad.h"
+#include "ops/grad/avg_pool_grad.h"
+#include "ops/grad/bias_add_grad.h"
 #include "ops/grad/batch_norm_grad.h"
 #include "ops/grad/binary_cross_entropy_grad.h"
 #include "ops/grad/de_conv2d_grad_filter.h"
@@ -188,6 +189,7 @@
 #include "ops/grad/flatten_grad.h"
 #include "ops/grad/group_conv2d_grad_input.h"
 #include "ops/grad/log_grad.h"
+#include "ops/grad/max_pool_grad.h"
 #include "ops/grad/maximum_grad.h"
 #include "ops/grad/minimum_grad.h"
 #include "ops/grad/mul_grad.h"
@@ -256,12 +258,13 @@ FUNC_MSOP2SCHEMAOP_DECLARE(AssignAdd);
 FUNC_MSOP2SCHEMAOP_DECLARE(Atan);
 FUNC_MSOP2SCHEMAOP_DECLARE(AudioSpectrogram);
 FUNC_MSOP2SCHEMAOP_DECLARE(AvgPoolFusion);
+FUNC_MSOP2SCHEMAOP_DECLARE(AvgPoolGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(BatchNorm);
 FUNC_MSOP2SCHEMAOP_DECLARE(BatchNormGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(BatchToSpace);
 FUNC_MSOP2SCHEMAOP_DECLARE(BatchToSpaceND);
 FUNC_MSOP2SCHEMAOP_DECLARE(BiasAdd);
-FUNC_MSOP2SCHEMAOP_DECLARE(BiasGrad);
+FUNC_MSOP2SCHEMAOP_DECLARE(BiasAddGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(BinaryCrossEntropy);
 FUNC_MSOP2SCHEMAOP_DECLARE(BinaryCrossEntropyGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(BroadcastTo);
@@ -333,6 +336,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(MatMul);
 FUNC_MSOP2SCHEMAOP_DECLARE(Maximum);
 FUNC_MSOP2SCHEMAOP_DECLARE(MaximumGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(MaxPoolFusion);
+FUNC_MSOP2SCHEMAOP_DECLARE(MaxPoolGrad);
 FUNC_MSOP2SCHEMAOP_DECLARE(Merge);
 FUNC_MSOP2SCHEMAOP_DECLARE(Mfcc);
 FUNC_MSOP2SCHEMAOP_DECLARE(Minimum);
