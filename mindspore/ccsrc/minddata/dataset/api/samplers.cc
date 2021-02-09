@@ -173,21 +173,23 @@ DistributedSamplerObj::DistributedSamplerObj(int64_t num_shards, int64_t shard_i
 
 Status DistributedSamplerObj::ValidateParams() {
   if (num_shards_ <= 0) {
-    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid num_shards: " + std::to_string(num_shards_));
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: num_shards must be greater than 0, but got: " +
+                             std::to_string(num_shards_));
   }
 
   if (shard_id_ < 0 || shard_id_ >= num_shards_) {
-    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid input, shard_id: " + std::to_string(shard_id_) +
-                             ", num_shards: " + std::to_string(num_shards_));
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: shard_id must be in range [0, " + std::to_string(num_shards_) +
+                             "), but got: " + std::to_string(shard_id_));
   }
 
   if (num_samples_ < 0) {
-    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid num_samples: " + std::to_string(num_samples_));
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: num_samples must be greater than or equal to 0, but got: " +
+                             std::to_string(num_samples_));
   }
 
   if (offset_ > num_shards_) {
-    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid offset: " + std::to_string(offset_) +
-                             ", which should be no more than num_shards: " + std::to_string(num_shards_));
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: offset must be no more than num_shards(" +
+                             std::to_string(num_shards_) + "), but got: " + std::to_string(offset_));
   }
 
   return Status::OK();
@@ -237,11 +239,12 @@ PKSamplerObj::PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples)
 
 Status PKSamplerObj::ValidateParams() {
   if (num_val_ <= 0) {
-    RETURN_STATUS_UNEXPECTED("PKSampler: invalid num_val: " + std::to_string(num_val_));
+    RETURN_STATUS_UNEXPECTED("PKSampler: num_val must be greater than 0, but got: " + std::to_string(num_val_));
   }
 
   if (num_samples_ < 0) {
-    RETURN_STATUS_UNEXPECTED("PKSampler: invalid num_samples: " + std::to_string(num_samples_));
+    RETURN_STATUS_UNEXPECTED("PKSampler: num_samples must be greater than or equal to 0, but got: " +
+                             std::to_string(num_samples_));
   }
   return Status::OK();
 }
@@ -334,7 +337,8 @@ RandomSamplerObj::RandomSamplerObj(bool replacement, int64_t num_samples, bool r
 
 Status RandomSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
-    RETURN_STATUS_UNEXPECTED("RandomSampler: invalid num_samples: " + std::to_string(num_samples_));
+    RETURN_STATUS_UNEXPECTED("RandomSampler: num_samples must be greater than or equal to 0, but got: " +
+                             std::to_string(num_samples_));
   }
   return Status::OK();
 }
@@ -381,11 +385,13 @@ SequentialSamplerObj::SequentialSamplerObj(int64_t start_index, int64_t num_samp
 
 Status SequentialSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
-    RETURN_STATUS_UNEXPECTED("SequentialSampler: invalid num_samples: " + std::to_string(num_samples_));
+    RETURN_STATUS_UNEXPECTED("SequentialSampler: num_samples must be greater than or equal to 0, but got: " +
+                             std::to_string(num_samples_));
   }
 
   if (start_index_ < 0) {
-    RETURN_STATUS_UNEXPECTED("SequentialSampler: invalid start_index: " + std::to_string(start_index_));
+    RETURN_STATUS_UNEXPECTED("SequentialSampler: start_index_ must be greater than or equal to 0, but got: " +
+                             std::to_string(start_index_));
   }
 
   return Status::OK();
@@ -431,7 +437,8 @@ SubsetSamplerObj::SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_sam
 
 Status SubsetSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
-    RETURN_STATUS_UNEXPECTED("SubsetRandomSampler: invalid num_samples: " + std::to_string(num_samples_));
+    RETURN_STATUS_UNEXPECTED("SubsetRandomSampler: num_samples must be greater than or equal to 0, but got: " +
+                             std::to_string(num_samples_));
   }
 
   return Status::OK();
@@ -530,7 +537,8 @@ Status WeightedRandomSamplerObj::ValidateParams() {
     RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: elements of weights vector must not be all zero");
   }
   if (num_samples_ < 0) {
-    RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: invalid num_samples: " + std::to_string(num_samples_));
+    RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: num_samples must be greater than or equal to 0, but got: " +
+                             std::to_string(num_samples_));
   }
   return Status::OK();
 }

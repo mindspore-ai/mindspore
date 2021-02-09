@@ -615,16 +615,19 @@ class RandomColorAdjust(ImageTensorOperation):
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 
     Args:
-        brightness (Union[float, tuple], optional): Brightness adjustment factor (default=(1, 1)). Cannot be negative.
+        brightness (Union[float, list, tuple], optional): Brightness adjustment factor (default=(1, 1)).
+            Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
             If it is a sequence, it should be [min, max] for the range.
-        contrast (Union[float, tuple], optional): Contrast adjustment factor (default=(1, 1)). Cannot be negative.
+        contrast (Union[float, list, tuple], optional): Contrast adjustment factor (default=(1, 1)).
+            Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-contrast), 1+contrast].
             If it is a sequence, it should be [min, max] for the range.
-        saturation (Union[float, tuple], optional): Saturation adjustment factor (default=(1, 1)). Cannot be negative.
+        saturation (Union[float, list, tuple], optional): Saturation adjustment factor (default=(1, 1)).
+            Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-saturation), 1+saturation].
             If it is a sequence, it should be [min, max] for the range.
-        hue (Union[float, tuple], optional): Hue adjustment factor (default=(0, 0)).
+        hue (Union[float, list, tuple], optional): Hue adjustment factor (default=(0, 0)).
             If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 

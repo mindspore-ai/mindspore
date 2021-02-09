@@ -391,12 +391,12 @@ def test_weighted_random_sampler_exception():
     Test error cases for WeightedRandomSampler
     """
     logger.info("Test error cases for WeightedRandomSampler")
-    error_msg_1 = "type of weights element should be number"
+    error_msg_1 = "type of weights element must be number"
     with pytest.raises(TypeError, match=error_msg_1):
         weights = ""
         ds.WeightedRandomSampler(weights)
 
-    error_msg_2 = "type of weights element should be number"
+    error_msg_2 = "type of weights element must be number"
     with pytest.raises(TypeError, match=error_msg_2):
         weights = (0.9, 0.8, 1.1)
         ds.WeightedRandomSampler(weights)
