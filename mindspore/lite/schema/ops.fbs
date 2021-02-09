@@ -126,7 +126,6 @@ union PrimitiveType {
     OnesLike,
     PadFusion,
     PartialFusion,
-    PoolingGrad,
     PowerGrad,
     PowFusion,
     PriorBox,
@@ -723,17 +722,6 @@ table PadFusion {
 
 table PartialFusion {
     sub_graph_index: long;
-}
-
-table PoolingGrad {
-    format: Format = 0;
-    pool_mode: PoolMode;
-    global: bool;
-    window: [long];
-    stride: [long];
-    pad_mode: PadMode;
-    pad_list: [long];
-    round_mode: RoundMode;
 }
 
 table PowerGrad {
