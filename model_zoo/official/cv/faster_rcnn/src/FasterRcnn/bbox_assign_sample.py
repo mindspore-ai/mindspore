@@ -23,7 +23,7 @@ import mindspore.common.dtype as mstype
 
 class BboxAssignSample(nn.Cell):
     """
-    Bbox assigner and sampler defination.
+    Bbox assigner and sampler definition.
 
     Args:
         config (dict): Config.
