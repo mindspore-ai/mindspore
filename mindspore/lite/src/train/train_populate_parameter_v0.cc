@@ -262,7 +262,7 @@ OpParameter *PopulatePoolingGradParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
-  pooling_param->op_parameter_.type_ = schema::PrimitiveType_PoolingGrad;
+
   auto poolingGrad_prim = prim->value_as_PoolingGrad();
 
   pooling_param->global_ = poolingGrad_prim->global();
@@ -282,12 +282,15 @@ OpParameter *PopulatePoolingGradParameter(const void *primitive) {
   switch (poolingGrad_prim->poolingMode()) {
     case schema::v0::PoolMode_MAX_POOLING:
       pooling_param->pool_mode_ = PoolMode_MaxPool;
+      pooling_param->op_parameter_.type_ = schema::PrimitiveType_MaxPoolGrad;
       break;
     case schema::v0::PoolMode_MEAN_POOLING:
       pooling_param->pool_mode_ = PoolMode_AvgPool;
+      pooling_param->op_parameter_.type_ = schema::PrimitiveType_AvgPoolGrad;
       break;
     default:
-      break;
+      MS_LOG(ERROR) << "unkown pooling mode: " << poolingGrad_prim->poolingMode();
+      return nullptr;
   }
 
   switch (poolingGrad_prim->roundMode()) {
