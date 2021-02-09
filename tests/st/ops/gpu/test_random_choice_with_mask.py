@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
+
 class RCWM_count_in(nn.Cell):
     def __init__(self):
         super(RCWM_count_in, self).__init__()
@@ -28,6 +29,7 @@ class RCWM_count_in(nn.Cell):
 
     def construct(self, x):
         return self.RCWM_count_in(x)
+
 
 class RCWM_count_out(nn.Cell):
     def __init__(self):
@@ -37,6 +39,7 @@ class RCWM_count_out(nn.Cell):
     def construct(self, x):
         return self.RCWM_count_out(x)
 
+
 class RCWM_3D(nn.Cell):
     def __init__(self):
         super(RCWM_3D, self).__init__()
@@ -44,6 +47,16 @@ class RCWM_3D(nn.Cell):
 
     def construct(self, x):
         return self.RCWM_3D(x)
+
+
+class RCWM_1D(nn.Cell):
+    def __init__(self):
+        super(RCWM_1D, self).__init__()
+        self.RCWM_1D = P.RandomChoiceWithMask(count=10, seed=9)
+
+    def construct(self, x):
+        return self.RCWM_1D(x)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -58,12 +71,14 @@ def test_RCWM_3D():
     assert output1.shape == expect1
     assert output2.shape == expect2
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_out():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]).astype(np.bool))
+    input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
+                                    [0, 0, 0, 1]]).astype(np.bool))
     expect1 = (10, 2)
     expect2 = (10,)
     rcwm = RCWM_count_out()
@@ -71,15 +86,36 @@ def test_RCWM_count_out():
     assert output1.shape == expect1
     assert output2.shape == expect2
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_RCWM_count_in():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]).astype(np.bool))
+    input_tensor = Tensor(np.array([[1, 0, 1, 0], [0, 0, 0, 1], [1, 1, 1, 1],
+                                    [0, 0, 0, 1]]).astype(np.bool))
     expect1 = (4, 2)
     expect2 = (4,)
     rcwm = RCWM_count_in()
     output1, output2 = rcwm(input_tensor)
     assert output1.shape == expect1
     assert output2.shape == expect2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_RCWM_1D():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_tensor = Tensor(
+        np.array([1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1]).astype(np.bool))
+    expect_index = np.array([[11], [9], [2], [15], [10], [7],
+                             [8], [0], [0], [0]]).astype(np.int32)
+    expect_mask = np.array(
+        [True, True, True, True, True, True, True, True, False, False])
+    rcwm = RCWM_1D()
+    output1, output2 = rcwm(input_tensor)
+    print(output1.asnumpy())
+    print(output2)
+    assert np.array_equal(output1.asnumpy(), expect_index)
+    assert np.array_equal(output2.asnumpy(), expect_mask)

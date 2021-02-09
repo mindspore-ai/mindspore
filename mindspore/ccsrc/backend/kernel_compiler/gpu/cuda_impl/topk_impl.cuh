@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_TOPK_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_TOPK_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_TOPK_IMPL_CUH_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_TOPK_IMPL_CUH_
 
 #include <cuda_runtime.h>
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T, typename S>
-void TopK(const size_t &outer, const size_t &inner, const T *input_addr, const S *k, T *output, S *indices,
-          T *data_buff, S *index_buff, cudaStream_t stream);
+void FastTopK(const int outer, const int inner, const T *input_addr, const S *k, T *output, S *indices, const T initK,
+              cudaStream_t stream);
 
-template <typename T, typename S>
-void BitonicSortByKey(const size_t &outer, const size_t &inner, T *input, S *indices, T *data_buff, S *index_buff,
-                      cudaStream_t stream);
-size_t RoundUpPower2(size_t v);
-
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_TOPK_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_TOPK_IMPL_CUH_
