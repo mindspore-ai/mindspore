@@ -26,10 +26,15 @@
 #include "parser/tf/tf_converter.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "include/version.h"
+// #include "src/train/train_populate_parameter.h"
 
 namespace mindspore {
 namespace lite {
 using FmkType = converter::FmkType;
+
+MindsporeImporter::MindsporeImporter() = default;
+// MindsporeImporter::MindsporeImporter() { kernel::PopulateTrainParameters(); }
+
 std::unique_ptr<Converter> Converter::CreateConverter(converter::FmkType fmk) {
   switch (fmk) {
     case FmkType::FmkType_MS:

@@ -28,8 +28,13 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
     return NNACL_NULL_PTR;
   }
   SetDataTypeFormat(out, in0);
-  Conv2dGradInputParameter *param = (Conv2dGradInputParameter *)parameter;
-  SetShapeArray(out, param->input_shape_, param->input_shape_size_);
+
+  size_t shape_size_ = in0->shape_size_;
+  int shape_[MAX_SHAPE_SIZE];
+  for (int i = 0; i < shape_size_; i++) {
+    shape_[i] = in0->shape_[i];
+  }
+  SetShapeArray(out, shape_, shape_size_);
 
   return NNACL_OK;
 }

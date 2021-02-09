@@ -117,10 +117,12 @@ constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
 constexpr auto kNameSlice = "Slice";
+constexpr auto kNameReluGrad = "ReluGrad";
+
 std::map<std::string, mindspore::ActivationType> activation_map = {
   {ops::kNameElu, mindspore::ELU},   {ops::kNameGeLU, mindspore::GELU},   {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
   {ops::kNameReLU, mindspore::RELU}, {ops::kNameReLU6, mindspore::RELU6}, {ops::kNameSigmoid, mindspore::SIGMOID},
-  {ops::kNameTanh, mindspore::TANH}};
+  {ops::kNameTanh, mindspore::TANH}, {kNameReluGrad, mindspore::RELU}};
 
 std::map<std::string, mindspore::ReduceMode> reduce_map = {
   {ops::kNameReduceAll, mindspore::Reduce_All}, {ops::kNameReduceASum, mindspore::Reduce_ASum},
@@ -471,6 +473,7 @@ REGIST_PRIMITIVE_ADJUST(kNameReduceProd, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReduceSum, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReduceSumSquare, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReLU, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameReluGrad, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameReLU6, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameResizeBilinear, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighbor, MoveAttrMapResize)

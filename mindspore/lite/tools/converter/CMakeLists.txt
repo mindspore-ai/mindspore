@@ -100,6 +100,7 @@ set(LITE_SRC
 if (SUPPORT_TRAIN)
     set(LITE_SRC
             ${LITE_SRC}
+            ${SRC_DIR}/train/train_populate_parameter.cc
             )
 
 endif ()

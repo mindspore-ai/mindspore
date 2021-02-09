@@ -35,7 +35,7 @@ TEST_F(TestMaxPoolGrad, test_ops_max_pool_grad1) {
   auto max_pool_grad = std::make_shared<MaxPoolGrad>();
   max_pool_grad->Init({1}, {1}, VALID, NCHW);
   EXPECT_EQ(max_pool_grad->get_pad_mode(), VALID);
-  EXPECT_EQ(max_pool_grad->get_data_format(), NCHW);
+  EXPECT_EQ(max_pool_grad->get_format(), NCHW);
   auto input0 = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{1});
   auto input1 = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{1});
   auto input2 = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{1});

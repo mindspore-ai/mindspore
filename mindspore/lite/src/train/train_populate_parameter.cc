@@ -232,6 +232,7 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
     MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
+  memset(param, 0, sizeof(ConvParameter));
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_Conv2DBackpropFilterFusion();
   param->op_parameter_.type_ = primitive->value_type();

@@ -333,25 +333,21 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *primitive) {
   }
   auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
 
-  Conv2dGradFilterParameter *param_grad =
-    reinterpret_cast<Conv2dGradFilterParameter *>(malloc(sizeof(Conv2dGradFilterParameter)));
-  if (param_grad == nullptr) {
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
-  auto *param = &param_grad->op_parameter_;
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropFilterFusion;
 
   auto convolutionGradFilter_prim = prim->value_as_Conv2DGradFilter();
   auto fb_vector = convolutionGradFilter_prim->filter_shape();
   auto filter_shape = std::vector<int>(fb_vector->begin(), fb_vector->end());
   if (filter_shape.size() > MAX_SHAPE_SIZE) {
-    free(param_grad);
+    free(param);
     MS_LOG(ERROR) << "ConvolutionGradFilter filter shape too big.";
     return nullptr;
   }
-  memcpy(param_grad->filter_shape_, filter_shape.data(), filter_shape.size() * sizeof(int));
-  param_grad->filter_shape_size_ = filter_shape.size();
   param->kernel_h_ = convolutionGradFilter_prim->kernelH();
   param->kernel_w_ = convolutionGradFilter_prim->kernelW();
   param->stride_h_ = convolutionGradFilter_prim->strideH();
@@ -375,7 +371,7 @@ OpParameter *PopulateConvolutionGradFilterParameter(const void *primitive) {
       break;
   }
 
-  return reinterpret_cast<OpParameter *>(param_grad);
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 OpParameter *PopulateConvolutionGradInputParameter(const void *primitive) {
@@ -385,25 +381,21 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *primitive) {
   }
   auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
 
-  Conv2dGradInputParameter *param_grad =
-    reinterpret_cast<Conv2dGradInputParameter *>(malloc(sizeof(Conv2dGradInputParameter)));
-  if (param_grad == nullptr) {
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
-  auto *param = &param_grad->op_parameter_;
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropInputFusion;
 
   auto convolutionGradInput_prim = prim->value_as_Conv2DGradInput();
   auto fb_vector = convolutionGradInput_prim->input_shape();
   auto filter_shape = std::vector<int>(fb_vector->begin(), fb_vector->end());
   if (filter_shape.size() > MAX_SHAPE_SIZE) {
-    free(param_grad);
+    free(param);
     MS_LOG(ERROR) << "ConvolutionGradInput input shape too big.";
     return nullptr;
   }
-  memcpy(param_grad->input_shape_, filter_shape.data(), filter_shape.size() * sizeof(int));
-  param_grad->input_shape_size_ = filter_shape.size();
   param->kernel_h_ = convolutionGradInput_prim->kernelH();
   param->kernel_w_ = convolutionGradInput_prim->kernelW();
   param->stride_h_ = convolutionGradInput_prim->strideH();
@@ -427,7 +419,7 @@ OpParameter *PopulateConvolutionGradInputParameter(const void *primitive) {
       break;
   }
 
-  return reinterpret_cast<OpParameter *>(param_grad);
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 OpParameter *PopulateGroupConvolutionGradInputParameter(const void *primitive) {
@@ -437,25 +429,21 @@ OpParameter *PopulateGroupConvolutionGradInputParameter(const void *primitive) {
   }
   auto *prim = static_cast<const schema::v0::Primitive *>(primitive);
 
-  GroupConv2dGradInputParameter *param_grad =
-    reinterpret_cast<GroupConv2dGradInputParameter *>(malloc(sizeof(GroupConv2dGradInputParameter)));
-  if (param_grad == nullptr) {
+  ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "new Param for conv grad filter failed.";
     return nullptr;
   }
-  auto *param = &param_grad->op_parameter_;
   param->op_parameter_.type_ = schema::PrimitiveType_Conv2DBackpropInputFusion;
 
   auto groupConvolutionGradInput_prim = prim->value_as_GroupConv2DGradInput();
   auto fb_vector = groupConvolutionGradInput_prim->input_shape();
   auto filter_shape = std::vector<int>(fb_vector->begin(), fb_vector->end());
   if (filter_shape.size() > MAX_SHAPE_SIZE) {
-    free(param_grad);
+    free(param);
     MS_LOG(ERROR) << "GroupConvolutionGradInput input shape too big.";
     return nullptr;
   }
-  memcpy(param_grad->input_shape_, filter_shape.data(), filter_shape.size() * sizeof(int));
-  param_grad->input_shape_size_ = filter_shape.size();
   param->kernel_h_ = groupConvolutionGradInput_prim->kernelH();
   param->kernel_w_ = groupConvolutionGradInput_prim->kernelW();
   param->stride_h_ = groupConvolutionGradInput_prim->strideH();
@@ -479,7 +467,7 @@ OpParameter *PopulateGroupConvolutionGradInputParameter(const void *primitive) {
       break;
   }
 
-  return reinterpret_cast<OpParameter *>(param_grad);
+  return reinterpret_cast<OpParameter *>(param);
 }
 
 OpParameter *PopulatePowerGradParameter(const void *primitive) {

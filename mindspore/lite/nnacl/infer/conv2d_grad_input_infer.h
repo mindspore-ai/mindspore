@@ -23,12 +23,6 @@
 extern "C" {
 #endif
 
-typedef struct Conv2dGradInputParameter {
-  ConvParameter op_parameter_;
-  int input_shape_[MAX_SHAPE_SIZE];
-  size_t input_shape_size_;
-} Conv2dGradInputParameter;
-
 int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter);
 
