@@ -39,6 +39,7 @@ from tests.st.networks.models.resnet50.src.config import config
 from tests.st.networks.models.resnet50.src.metric import DistAccuracy, ClassifyCorrectCell
 from tests.st.networks.models.resnet50.src.CrossEntropySmooth import CrossEntropySmooth
 from tests.st.networks.models.resnet50.src_thor.config import config as thor_config
+from tests.st.networks.models.resnet50.src_thor.dataset import create_dataset as create_dataset_thor
 from tests.st.networks.models.resnet50.src_thor.model_thor import Model as THOR_Model
 from tests.st.networks.models.resnet50.src_thor.resnet import resnet50 as resnet50_thor
 
@@ -250,8 +251,8 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
                               num_classes=thor_config.class_num)
 
     # train dataset
-    dataset = create_dataset(dataset_path=dataset_path, do_train=True,
-                             repeat_num=1, batch_size=thor_config.batch_size)
+    dataset = create_dataset_thor(dataset_path=dataset_path, do_train=True,
+                                  repeat_num=1, batch_size=thor_config.batch_size)
 
     step_size = dataset.get_dataset_size()
     eval_interval = thor_config.eval_interval
@@ -367,5 +368,5 @@ def test_resnet_and_resnet_thor_imagenet_4p():
     for i in range(4, device_num + 4):
         os.system("rm -rf " + str(i))
     print("End training...")
-    assert thor_acc > 0.22
+    assert thor_acc > 0.25
     assert thor_cost < 25
