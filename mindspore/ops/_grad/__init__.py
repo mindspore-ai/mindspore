@@ -15,7 +15,7 @@
 
 """grad impl."""
 from . import grad_array_ops, grad_comm_ops, grad_debug_ops, grad_implementations, \
-               grad_math_ops, grad_nn_ops, grad_other_ops, grad_quant_ops, grad_sparse
+               grad_math_ops, grad_nn_ops, grad_other_ops, grad_quant_ops, grad_sparse, grad_inner_ops
 from .grad_base import get_bprop_fn
 
 __all__ = ['get_bprop_fn']
