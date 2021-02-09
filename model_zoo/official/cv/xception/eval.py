@@ -20,7 +20,7 @@ from mindspore.common import set_seed
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 from src.Xception import xception
-from src.config import config
+from src.config import config_gpu, config_ascend
 from src.dataset import create_dataset
 from src.loss import CrossEntropySmooth
 
@@ -28,14 +28,21 @@ set_seed(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Image classification')
-    parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
+    parser.add_argument('--device_target', type=str, default='GPU', help='Device target')
     parser.add_argument('--device_id', type=int, default=0, help='Device id')
     parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
     parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
+
     args_opt = parser.parse_args()
+    if args_opt.device_target == "Ascend":
+        config = config_ascend
+    elif args_opt.device_target == "GPU":
+        config = config_gpu
+    else:
+        raise ValueError("Unsupported device_target.")
 
     context.set_context(device_id=args_opt.device_id)
-    context.set_context(mode=context.GRAPH_MODE, device_target='Ascend', save_graphs=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, save_graphs=False)
 
     # create dataset
     dataset = create_dataset(args_opt.dataset_path, do_train=False, batch_size=config.batch_size, device_num=1, rank=0)
@@ -59,5 +66,5 @@ if __name__ == '__main__':
     model = Model(net, loss_fn=loss, metrics=eval_metrics)
 
     # eval model
-    res = model.eval(dataset, dataset_sink_mode=False)
+    res = model.eval(dataset, dataset_sink_mode=True)
     print("result:", res, "ckpt=", args_opt.checkpoint_path)

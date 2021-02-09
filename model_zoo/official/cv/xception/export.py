@@ -19,7 +19,7 @@ import numpy as np
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
 from src.Xception import xception
-from src.config import config
+from src.config import config_ascend, config_gpu
 
 parser = argparse.ArgumentParser(description="Image classification")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
@@ -29,13 +29,19 @@ parser.add_argument("--height", type=int, default=299, help="input height")
 parser.add_argument("--file_name", type=str, default="xception", help="xception output file name.")
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"],
                     default="MINDIR", help="file format")
-parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
+parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="GPU",
                     help="device target")
+
 args = parser.parse_args()
+if args.device_target == "Ascend":
+    config = config_ascend
+elif args.device_target == "GPU":
+    config = config_gpu
+else:
+    raise ValueError("Unsupported device_target.")
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-if args.device_target == "Ascend":
-    context.set_context(device_id=args.device_id)
+context.set_context(device_id=args.device_id)
 
 if __name__ == "__main__":
     # define net

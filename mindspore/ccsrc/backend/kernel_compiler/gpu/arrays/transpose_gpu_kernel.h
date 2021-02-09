@@ -22,6 +22,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/transpose_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/transpose_impl_opt.cuh"
 namespace mindspore {
 namespace kernel {
 template <typename T>
@@ -49,7 +50,23 @@ class TransposeGpuFwdKernel : public GpuKernel {
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync input_axis failed");
     size_t size = input_size_ / sizeof(T);
-    CalTranspose(size, input, input_shape, input_axis, shape_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
+
+    size_t *h_input_shape = &input_shape_[0];
+    size_t *h_input_axis = &input_axis_[0];
+    // nhwc->nchw: 0,3,1,2
+    if (shape_size_ == 4 && h_input_axis[0] == 0 && h_input_axis[1] == 3 && h_input_axis[2] == 1 &&
+        h_input_axis[3] == 2) {
+      CalNHWC2NCHWInterface(size, shape_size_, input, h_input_shape, h_input_axis, input_shape, input_axis, output,
+                            reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else if (shape_size_ == 4 && h_input_axis[0] == 0 && h_input_axis[1] == 2 && h_input_axis[2] == 3 &&
+               h_input_axis[3] == 1) {
+      // nchw->nhwc: 0,2,3,1
+      CalNCHW2NHWCInterface(size, shape_size_, input, h_input_shape, h_input_axis, input_shape, input_axis, output,
+                            reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      CalTranspose(size, input, input_shape, input_axis, shape_size_, output,
+                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     return true;
   }
 
