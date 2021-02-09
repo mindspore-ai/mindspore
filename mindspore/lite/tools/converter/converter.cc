@@ -178,6 +178,7 @@ int RunConverter(int argc, const char **argv) {
   delete fb_graph;
   MS_LOG(INFO) << "CONVERT RESULT SUCCESS:" << status;
   std::cout << "CONVERT RESULT SUCCESS:" << status << std::endl;
+
   return status;
 }
 }  // namespace lite
