@@ -16,6 +16,7 @@
 #include <cmath>
 #include <string>
 #include <thread>
+#include <map>
 #include "backend/kernel_compiler/cpu/arithmetic_self_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -107,6 +108,34 @@ void ACos(const T *in, T *out, size_t start, size_t end) {
     out[i] = acos(in[i]);
   }
 }
+
+template <typename T>
+void Atan(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = atan(in[i]);
+  }
+}
+
+template <typename T>
+void Sin(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = sin(in[i]);
+  }
+}
+
+template <typename T>
+void Cos(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = cos(in[i]);
+  }
+}
+
+template <typename T>
+void Tan(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = tan(in[i]);
+  }
+}
 }  // namespace
 
 void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -134,6 +163,14 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = ASIN;
   } else if (kernel_name == prim::kPrimACos->name()) {
     operate_type_ = ACOS;
+  } else if (kernel_name == prim::kPrimAtan->name()) {
+    operate_type_ = ATAN;
+  } else if (kernel_name == prim::kPrimSin->name()) {
+    operate_type_ = SIN;
+  } else if (kernel_name == prim::kPrimCos->name()) {
+    operate_type_ = COS;
+  } else if (kernel_name == prim::kPrimTan->name()) {
+    operate_type_ = TAN;
   }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   target_dtype_ = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
@@ -214,31 +251,18 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
     MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
     return;
   }
+  static const std::map<OperateType, std::function<void(const T *in, T *out, size_t start, size_t end)>>
+    kArithmeticOpFuncMap = {{SQUARE, Square<T>},     {SIGN, Sign<T>},
+                            {NEG, Neg<T>},           {LOGICALNOT, LogicalNot<T>},
+                            {ONESLIKE, OnesLike<T>}, {ZEROSLIKE, ZerosLike<T>},
+                            {FLOOR, Floor<T>},       {RECIPROCAL, Reciprocal<T>},
+                            {GELU, Gelu<T>},         {SIN, Sin<T>},
+                            {COS, Cos<T>},           {TAN, Tan<T>},
+                            {ASIN, Asin<T>},         {ACOS, ACos<T>},
+                            {ATAN, Atan<T>}};
   while (start < lens) {
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    if (operate_type_ == SQUARE) {
-      threads.emplace_back(std::thread(Square<T>, input, output, start, end));
-    } else if (operate_type_ == NEG) {
-      threads.emplace_back(std::thread(Neg<T>, input, output, start, end));
-    } else if (operate_type_ == LOGICALNOT) {
-      threads.emplace_back(std::thread(LogicalNot<T>, input, output, start, end));
-    } else if (operate_type_ == ONESLIKE) {
-      threads.emplace_back(std::thread(OnesLike<T>, input, output, start, end));
-    } else if (operate_type_ == ZEROSLIKE) {
-      threads.emplace_back(std::thread(ZerosLike<T>, input, output, start, end));
-    } else if (operate_type_ == SIGN) {
-      threads.emplace_back(std::thread(Sign<T>, input, output, start, end));
-    } else if (operate_type_ == FLOOR) {
-      threads.emplace_back(std::thread(Floor<T>, input, output, start, end));
-    } else if (operate_type_ == RECIPROCAL) {
-      threads.emplace_back(std::thread(Reciprocal<T>, input, output, start, end));
-    } else if (operate_type_ == GELU) {
-      threads.emplace_back(std::thread(Gelu<T>, input, output, start, end));
-    } else if (operate_type_ == ASIN) {
-      threads.emplace_back(std::thread(Asin<T>, input, output, start, end));
-    } else if (operate_type_ == ACOS) {
-      threads.emplace_back(std::thread(ACos<T>, input, output, start, end));
-    }
+    threads.emplace_back(std::thread(kArithmeticOpFuncMap.at(operate_type_), input, output, start, end));
     start += once_compute_size;
   }
   for (size_t i = 0; i < threads.size(); ++i) {

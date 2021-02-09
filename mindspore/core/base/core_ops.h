@@ -387,6 +387,7 @@ inline const PrimitivePtr kPrimSign = std::make_shared<Primitive>("Sign");
 inline const PrimitivePtr kPrimACos = std::make_shared<Primitive>("ACos");
 inline const PrimitivePtr kPrimAsinGrad = std::make_shared<Primitive>("AsinGrad");
 inline const PrimitivePtr kPrimACosGrad = std::make_shared<Primitive>("ACosGrad");
+inline const PrimitivePtr kPrimAtanGrad = std::make_shared<Primitive>("AtanGrad");
 inline const PrimitivePtr kPrimFloorMod = std::make_shared<Primitive>("FloorMod");
 inline const PrimitivePtr kPrimWhere = std::make_shared<Primitive>("Where");
 
