@@ -276,6 +276,8 @@ union PrimitiveType {
     StridedSliceGrad,
     IsFinite,
     BatchMatMul,
+    LinSpace,
+    UniformReal
 }
 
 enum QuantType: int {

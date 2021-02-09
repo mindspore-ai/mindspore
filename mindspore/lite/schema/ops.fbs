@@ -1281,6 +1281,14 @@ table IsFinite {
 }
 
 table BatchMatMul {
-    adj_x : bool = false;
-    adj_y : bool = false;
+    transpose_a :bool;
+    transpose_b :bool;
+}
+
+table LinSpace {
+}
+
+table UniformReal {
+    seed : int;
+    seed2 : int;
 }
