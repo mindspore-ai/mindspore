@@ -606,9 +606,9 @@ class BCELoss(_Loss):
 
     .. math::
         \ell(x, y) = \begin{cases}
-        L, & \text{if reduction} = \text{`none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     Note:
@@ -630,9 +630,9 @@ class BCELoss(_Loss):
         Otherwise, the output is a scalar.
 
     Raises:
-        TypeError: If dtype of `inputs`, `labels` or `weight`(if given) is neither float16 not float32.
+        TypeError: If dtype of `inputs`, `labels` or `weight` (if given) is neither float16 not float32.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-        ValueError: If shape of `inputs` is not the same as `labels` or `weight`(if given).
+        ValueError: If shape of `inputs` is not the same as `labels` or `weight` (if given).
 
     Supported Platforms:
         ``Ascend`` ``GPU``
