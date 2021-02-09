@@ -64,7 +64,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, Poolin
 #ifdef ENABLE_ARM
               float *out_vec = out + (xw + in_w * xh) * channel + ic;
               float32x4_t outr = vld1q_f32(out + (xw + in_w * xh) * channel + ic);
-              float32x4_t outs = vaddq_s32(outr, delta);
+              float32x4_t outs = vaddq_f32(outr, delta);
               vst1q_f32(out_vec, outs);
 #else
 
@@ -94,7 +94,7 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, int count, Poolin
 #ifdef ENABLE_ARM
 static int32x4_t MaxIndex(float32x4_t in, float32x4_t *max, int32x4_t index, int32x4_t prev_index) {
   uint32x4_t res = vcgtq_f32(in, *max);
-  uint32x4_t m_index = vbslq_f32(res, index, prev_index);
+  int32x4_t m_index = vbslq_s32(res, index, prev_index);
   *max = vbslq_f32(res, in, *max);
   return m_index;
 }
@@ -127,7 +127,7 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
         int kw_s = MSMAX(0, over_w);
         int kw_e = MSMIN(win_w, in_w + over_w);
         int ic = 0;
-        for (; ic < channel - 4; ic += 4) {
+        for (; ic < (channel & ~3); ic += 4) {
           int idx = (yw + yh * output_w) * channel + ic;
 #ifdef ENABLE_ARM
           uint32x4_t max_idx = vdupq_n_u32(0);
@@ -170,9 +170,8 @@ void MaxPoolingGrad(const float *input_ptr, const float *dy_ptr, float *output_p
           float delta = dyPtr[idx];
           for (int kh = kh_s; kh < kh_e; kh++) {
             int xh = yh * stride_h + kh - pad_h;
-            int loop = kw_e - kw_s;
-            for (int kw = 0; kw < loop; kw++) {
-              int xw = yw * stride_w + kw + kw_s - pad_w;
+            for (int kw = kw_e; kw < kw_s; kw++) {
+              int xw = yw * stride_w + kw - pad_w;
               int val_idx = (xw + in_w * xh) * channel + ic;
               float val = inPtr[val_idx];
               if (val > max_val) {

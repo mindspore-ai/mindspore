@@ -32,6 +32,42 @@ static const char *DELIM_COLON = ":";
 static const char *DELIM_COMMA = ",";
 static const char *DELIM_SLASH = "/";
 
+namespace {
+float *ReadFileBuf(const char *file, size_t *size) {
+  if (file == nullptr) {
+    MS_LOG(ERROR) << "file is nullptr";
+    return nullptr;
+  }
+  MS_ASSERT(size != nullptr);
+  std::string real_path = RealPath(file);
+  std::ifstream ifs(real_path);
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "file: " << real_path << " is not exist";
+    return nullptr;
+  }
+
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "file: " << real_path << " open failed";
+    return nullptr;
+  }
+
+  ifs.seekg(0, std::ios::end);
+  *size = ifs.tellg();
+  std::unique_ptr<float[]> buf((new (std::nothrow) float[*size / sizeof(float) + 1]));
+  if (buf == nullptr) {
+    MS_LOG(ERROR) << "malloc buf failed, file: " << real_path;
+    ifs.close();
+    return nullptr;
+  }
+
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(reinterpret_cast<char *>(buf.get()), *size);
+  ifs.close();
+
+  return buf.release();
+}
+}  // namespace
+
 int NetTrain::GenerateRandomData(size_t size, void *data) {
   MS_ASSERT(data != nullptr);
   char *casted_data = static_cast<char *>(data);
@@ -113,82 +149,34 @@ int NetTrain::ReadInputFile() {
   return RET_OK;
 }
 
-// calibData is FP32
-int NetTrain::ReadCalibData() {
-  const char *calib_data_path = flags_->data_file_.c_str();
-  // read calib data
-  std::ifstream in_file(calib_data_path);
-  if (!in_file.good()) {
-    std::cerr << "file: " << calib_data_path << " is not exist" << std::endl;
-    MS_LOG(ERROR) << "file: " << calib_data_path << " is not exist";
-    return RET_ERROR;
-  }
-
-  if (!in_file.is_open()) {
-    std::cerr << "file: " << calib_data_path << " open failed" << std::endl;
-    MS_LOG(ERROR) << "file: " << calib_data_path << " open failed";
-    in_file.close();
-    return RET_ERROR;
-  }
-
-  std::string line;
-
-  MS_LOG(INFO) << "Start reading calibData file";
-  std::string tensor_name;
-  while (!in_file.eof()) {
-    getline(in_file, line);
-    std::stringstream string_line1(line);
-    size_t dim = 0;
-    string_line1 >> tensor_name >> dim;
-    std::vector<size_t> dims;
-    size_t shape_size = 1;
-    for (size_t i = 0; i < dim; i++) {
-      size_t tmp_dim;
-      string_line1 >> tmp_dim;
-      dims.push_back(tmp_dim);
-      shape_size *= tmp_dim;
-    }
-
-    getline(in_file, line);
-    std::stringstream string_line2(line);
-    std::vector<float> tensor_data;
-    for (size_t i = 0; i < shape_size; i++) {
-      float tmp_data;
-      string_line2 >> tmp_data;
-      tensor_data.push_back(tmp_data);
-    }
-    auto *check_tensor = new CheckTensor(dims, tensor_data);
-    this->data_.insert(std::make_pair(tensor_name, check_tensor));
-  }
-  in_file.close();
-  MS_LOG(INFO) << "Finish reading calibData file";
-  return RET_OK;
-}
-
 int NetTrain::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
   int total_size = 0;
   bool has_error = false;
-
-  for (const auto &calib_tensor : data_) {
-    std::string node_or_tensor_name = calib_tensor.first;
-    auto tensors = session_->GetOutputsByNodeName(node_or_tensor_name);
-    mindspore::tensor::MSTensor *tensor = nullptr;
-    if (tensors.empty() || tensors.size() != 1) {
-      MS_LOG(INFO) << "Cannot find output node: " << node_or_tensor_name
-                   << " or node has more than one output tensor, switch to GetOutputByTensorName";
-      tensor = session_->GetOutputByTensorName(node_or_tensor_name);
-      if (tensor == nullptr) {
-        MS_LOG(ERROR) << "Cannot find output tensor " << node_or_tensor_name << ", get model output failed";
-        return RET_ERROR;
-      }
-    } else {
-      tensor = tensors.front();
-    }
-    MS_ASSERT(tensor->MutableData() != nullptr);
+  auto tensors_list = session_->GetOutputs();
+  if (tensors_list.empty()) {
+    MS_LOG(ERROR) << "Cannot find output tensors, get model output failed";
+    return RET_ERROR;
+  }
+  mindspore::tensor::MSTensor *tensor = nullptr;
+  int i = 1;
+  for (auto it = tensors_list.begin(); it != tensors_list.end(); ++it) {
+    tensor = session_->GetOutputByTensorName(it->first);
     auto outputs = tensor->MutableData();
-    float bias = CompareData<float>(node_or_tensor_name, tensor->shape(), reinterpret_cast<float *>(outputs));
+    size_t size;
+    std::string output_file = flags_->data_file_ + std::to_string(i) + ".bin";
+    auto *bin_buf = ReadFileBuf(output_file.c_str(), &size);
+    if (bin_buf == nullptr) {
+      MS_LOG(ERROR) << "ReadFile return nullptr";
+      return RET_ERROR;
+    }
+    if (size != tensor->Size()) {
+      MS_LOG(ERROR) << "Output buffer and output file differ by size. Tensor size: " << tensor->Size()
+                    << ", read size: " << size;
+      return RET_ERROR;
+    }
+    float bias = CompareData<float>(bin_buf, tensor->ElementsNum(), reinterpret_cast<float *>(outputs));
     if (bias >= 0) {
       total_bias += bias;
       total_size++;
@@ -196,6 +184,8 @@ int NetTrain::CompareOutput() {
       has_error = true;
       break;
     }
+    i++;
+    delete bin_buf;
   }
 
   if (!has_error) {
@@ -206,7 +196,8 @@ int NetTrain::CompareOutput() {
       mean_bias = 0;
     }
 
-    std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%" << std::endl;
+    std::cout << "Mean bias of all nodes/tensors: " << mean_bias << "%"
+              << " threshold is:" << this->flags_->accuracy_threshold_ << std::endl;
     std::cout << "=======================================================" << std::endl << std::endl;
 
     if (mean_bias > this->flags_->accuracy_threshold_) {
@@ -294,13 +285,6 @@ int NetTrain::MarkAccuracy() {
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Inference error " << status;
     std::cerr << "Inference error " << status << std::endl;
-    return status;
-  }
-
-  status = ReadCalibData();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Read calib data error " << status;
-    std::cerr << "Read calib data error " << status << std::endl;
     return status;
   }
 
@@ -454,7 +438,7 @@ int NetTrain::RunNetTrain() {
       std::cout << "Run SaveToFile error";
       return RET_ERROR;
     }
-
+    // delete session_;
     status = RunExportedNet();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run Exported model error: " << status;

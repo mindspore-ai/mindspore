@@ -99,6 +99,41 @@ void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
   }
 }
 
+void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
+  bool hasDepend = false;
+  std::vector<AnfNodePtr> inputs;
+  inputs.clear();
+
+  inputs.emplace_back(cnode->input(0));
+  for (size_t i = 1; i < cnode->inputs().size(); ++i) {
+    AnfNodePtr inputNode = cnode->input(i);
+    if (!inputNode->isa<CNode>()) {
+      inputs.emplace_back(cnode->input(i));
+      continue;
+    }
+    auto dependNode = utils::cast<CNodePtr>(inputNode);
+    if (IsPrimitiveCNode(dependNode, schema::PrimitiveType_Depend) ||
+        IsPrimitiveCNode(dependNode, schema::PrimitiveType_ControlDepend)) {
+      hasDepend = true;
+      bool maskOut = (dependNode->inputs().size() == 3);
+      for (size_t j = 1; j < dependNode->inputs().size(); ++j) {
+        AnfNodePtr dependInputNode = dependNode->input(j);
+        if (dependInputNode->isa<CNode>()) {
+          inputs.emplace_back(dependInputNode);
+          if (maskOut) {
+            break;
+          }
+        }
+      }
+    } else {
+      inputs.emplace_back(cnode->input(i));
+    }
+  }
+  if (hasDepend) {
+    cnode->set_inputs(inputs);
+  }
+}
+
 int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
                                    const std::shared_ptr<PrimitiveC> &primitive,
                                    const std::unique_ptr<schema::CNodeT> &dst_node) {
@@ -291,8 +326,17 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
         break;
       }
     }
+
     RemoveIfMakeTuple(cnode);
+#ifdef SUPPORT_TRAIN
+    RemoveIfDepend(cnode);
+#endif
+
     if ((primitive_c->Type() == schema::PrimitiveType_TupleGetItem) ||
+#ifdef SUPPORT_TRAIN
+        (primitive_c->Type() == schema::PrimitiveType_Depend) ||
+        (primitive_c->Type() == schema::PrimitiveType_ControlDepend) ||
+#endif
         (primitive_c->Type() == schema::PrimitiveType_MakeTuple)) {
       continue;
     }

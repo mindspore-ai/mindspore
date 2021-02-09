@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_COMMON_ANF_EXPORTER_ANF_EXPORTER_H_
-#define MINDSPORE_LITE_TOOLS_COMMON_ANF_EXPORTER_ANF_EXPORTER_H_
+#ifndef MINDSPORE_LITE_TOOLS_ANF_EXPORTER_ANF_EXPORTER_H_
+#define MINDSPORE_LITE_TOOLS_ANF_EXPORTER_ANF_EXPORTER_H_
 
 #include <map>
 #include <string>
@@ -41,6 +41,7 @@ class AnfExporter {
   int SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      schema::CNodeT *fb_node);
   static void RemoveIfMakeTuple(const CNodePtr &cnode);
+  static void RemoveIfDepend(const CNodePtr &cnode);
 
  protected:
   int ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode);
@@ -97,4 +98,4 @@ class AnfExporter {
 // and clear.
 schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_COMMON_ANF_EXPORTER_ANF_EXPORTER_H_
+#endif  // MINDSPORE_LITE_TOOLS_ANF_EXPORTER_ANF_EXPORTER_H_

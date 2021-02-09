@@ -43,7 +43,7 @@ int ArithmeticSelfGradCPUKernel::Init() {
       self_grad_operation_ = ElementDiv;
       break;
     default:
-      MS_LOG(ERROR) << "Unsupport type: " << type;
+      MS_LOG(ERROR) << "Unsupported type: " << type;
       return RET_ERROR;
   }
   return RET_OK;

@@ -529,6 +529,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   const auto &op_type = prim.name();
   if (op_type == "ReLU" || op_type == "ReLU6" || op_type == "Sigmoid" || op_type == "HSwish" || op_type == "HSigmoid") {
     return NewPrimitiveC<Activation>(prim, inputs, quantType);
+  } else if (op_type == "Abs") {
+    return NewPrimitiveC<Abs>(prim, inputs, quantType);
   } else if (op_type == "AddN") {
     return NewPrimitiveC<AddN>(prim, inputs, quantType);
   } else if (op_type == "BatchNorm") {
@@ -539,6 +541,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Concat>(prim, inputs, quantType);
   } else if (op_type == "Conv2D") {
     return NewPrimitiveC<Conv2D>(prim, inputs, quantType);
+  } else if (op_type == "Cos") {
+    return NewPrimitiveC<Cos>(prim, inputs, quantType);
   } else if (op_type == "DepthwiseConv2dNative" || op_type == "DepthwiseConv2D") {
     return NewPrimitiveC<DepthwiseConv2D>(prim, inputs, quantType);
   } else if (op_type == "Dequant") {
@@ -559,6 +563,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Quant>(prim, inputs, quantType);
   } else if (op_type == "RealDiv") {
     return NewPrimitiveC<RealDiv>(prim, inputs, quantType);
+  } else if (op_type == "Reciprocal") {
+    return NewPrimitiveC<Reciprocal>(prim, inputs, quantType);
   } else if (op_type == "ReduceMax") {
     return NewPrimitiveC<Reduce>(prim, inputs, quantType);
   } else if (op_type == "ReduceMean") {
@@ -573,6 +579,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Reduce>(prim, inputs, quantType);
   } else if (op_type == "Reshape") {
     return NewPrimitiveC<Reshape>(prim, inputs, quantType);
+  } else if (op_type == "Sin") {
+    return NewPrimitiveC<Sin>(prim, inputs, quantType);
   } else if (op_type == "Slice") {
     return NewPrimitiveC<Slice>(prim, inputs, quantType);
   } else if (op_type == "Squeeze") {
