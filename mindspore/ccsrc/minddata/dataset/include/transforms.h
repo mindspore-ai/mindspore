@@ -25,39 +25,11 @@
 #include "include/api/status.h"
 #include "minddata/dataset/include/constants.h"
 
-// (TEMPORARY) will be removed when Tensor op ir moved down
-#include "minddata/dataset/kernels/ir/tensor_operation.h"
-
-#ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
-#define INCLUDE_NLOHMANN_JSON_FWD_HPP_
-namespace nlohmann {
-template <typename T = void, typename SFINAE = void>
-struct adl_serializer;
-template <template <typename U, typename V, typename... Args> class ObjectType = std::map,
-          template <typename U, typename... Args> class ArrayType = std::vector, class StringType = std::string,
-          class BooleanType = bool, class NumberIntegerType = std::int64_t, class NumberUnsignedType = std::uint64_t,
-          class NumberFloatType = double, template <typename U> class AllocatorType = std::allocator,
-          template <typename T, typename SFINAE = void> class JSONSerializer = adl_serializer>
-class basic_json;
-template <typename BasicJsonType>
-class json_pointer;
-using json = basic_json<>;
-}  // namespace nlohmann
-#endif  // INCLUDE_NLOHMANN_JSON_FWD_HPP_
+// FIXME - This internal IR header will be removed when external API classes are provided
+#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 
 namespace mindspore {
 namespace dataset {
-
-// Char arrays storing name of corresponding classes (in alphabetical order)
-constexpr char kComposeOperation[] = "Compose";
-constexpr char kDuplicateOperation[] = "Duplicate";
-constexpr char kOneHotOperation[] = "OneHot";
-constexpr char kPreBuiltOperation[] = "PreBuilt";
-constexpr char kRandomApplyOperation[] = "RandomApply";
-constexpr char kRandomChoiceOperation[] = "RandomChoice";
-constexpr char kRandomSelectSubpolicyOperation[] = "RandomSelectSubpolicy";
-constexpr char kTypeCastOperation[] = "TypeCast";
-constexpr char kUniqueOperation[] = "Unique";
 
 // Transform operations for performing data transformation.
 namespace transforms {
@@ -118,134 +90,6 @@ std::shared_ptr<TypeCastOperation> TypeCast(std::string data_type);
 ///     the same order that they occur in the input tensor.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<UniqueOperation> Unique();
-#endif
-
-/* ####################################### Derived TensorOperation classes ################################# */
-
-class ComposeOperation : public TensorOperation {
- public:
-  explicit ComposeOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms);
-
-  ~ComposeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kComposeOperation; }
-
- private:
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
-};
-
-class DuplicateOperation : public TensorOperation {
- public:
-  DuplicateOperation() = default;
-
-  ~DuplicateOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDuplicateOperation; }
-};
-
-class OneHotOperation : public TensorOperation {
- public:
-  explicit OneHotOperation(int32_t num_classes_);
-
-  ~OneHotOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kOneHotOperation; }
-
- private:
-  float num_classes_;
-};
-
-class PreBuiltOperation : public TensorOperation {
- public:
-  explicit PreBuiltOperation(std::shared_ptr<TensorOp> tensor_op);
-
-  ~PreBuiltOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override;
-
-  Status to_json(nlohmann::json *out_json) override;
-
- private:
-  std::shared_ptr<TensorOp> op_;
-};
-
-class RandomApplyOperation : public TensorOperation {
- public:
-  explicit RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob);
-
-  ~RandomApplyOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kRandomApplyOperation; }
-
- private:
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
-  double prob_;
-};
-
-class RandomChoiceOperation : public TensorOperation {
- public:
-  explicit RandomChoiceOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms);
-
-  ~RandomChoiceOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kRandomChoiceOperation; }
-
- private:
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
-};
-class TypeCastOperation : public TensorOperation {
- public:
-  explicit TypeCastOperation(std::string data_type);
-
-  ~TypeCastOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kTypeCastOperation; }
-
- private:
-  std::string data_type_;
-};
-
-#ifndef ENABLE_ANDROID
-class UniqueOperation : public TensorOperation {
- public:
-  UniqueOperation() = default;
-
-  ~UniqueOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kUniqueOperation; }
-};
 #endif
 }  // namespace transforms
 }  // namespace dataset

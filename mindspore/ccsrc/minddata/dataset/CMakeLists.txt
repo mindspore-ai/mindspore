@@ -92,11 +92,14 @@ add_dependencies(engine core)
 add_dependencies(callback core)
 add_dependencies(text core)
 add_dependencies(text-kernels core)
+add_dependencies(text-ir core)
+add_dependencies(text-ir-kernels core)
 add_dependencies(cpp-API core)
 add_dependencies(engine-ir-datasetops core)
 add_dependencies(engine-ir-datasetops-source core)
 add_dependencies(engine-ir-cache core)
 add_dependencies(kernels-ir core)
+add_dependencies(kernels-ir-data core)
 add_dependencies(kernels-ir-vision core)
 
 if(ENABLE_ACL)
@@ -146,7 +149,10 @@ set(submodules
         $<TARGET_OBJECTS:engine>
         $<TARGET_OBJECTS:text>
         $<TARGET_OBJECTS:text-kernels>
+        $<TARGET_OBJECTS:text-ir>
+        $<TARGET_OBJECTS:text-ir-kernels>
         $<TARGET_OBJECTS:kernels-ir>
+        $<TARGET_OBJECTS:kernels-ir-data>
         $<TARGET_OBJECTS:kernels-ir-vision>
         )
 
