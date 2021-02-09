@@ -129,10 +129,6 @@ class SideEffectCastAll(Cell):
         return out_a, out_b
 
 
-# @pytest.mark.level0
-# @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.env_onecard
-@pytest.mark.skip(reason="not stable")
 def test_side_effect_castall():
     clear_files()
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
@@ -230,8 +226,9 @@ class SideEffectTwoAssignTwoAddnDependencyNet(Cell):
         return grad_out
 
 
-# an infinite loop exists.
-@pytest.mark.skip(reason="not supported yet")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_ctrl_while_by_while_and_if_in_first_while():
     class Net(Cell):
         def __init__(self):
@@ -265,8 +262,9 @@ def test_ctrl_while_by_while_and_if_in_first_while():
     net(input_me_a)
 
 
-# an infinite loop exists.
-@pytest.mark.skip(reason="not supported yet")
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_ctrl_while_by_while_and_while_in_first_while():
     class Net(Cell):
         def __init__(self):
@@ -336,10 +334,6 @@ class InplaceNet(Cell):
         return output
 
 
-# @pytest.mark.level0
-# @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.env_onecard
-@pytest.mark.skip(reason="not stable")
 def test_ir_fusion_inplace_bn_conv_conv():
     clear_files()
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
@@ -467,11 +461,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
     return out_me
 
 
-# @pytest.mark.level0
-# @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.env_onecard
-@pytest.mark.skip(reason="not stable")
-def test_auto_mixed_precision_controlflow_auto_1():
+def test_auto_mixed_precision_controlflow_auto():
     context.set_context(mode=context.PYNATIVE_MODE, save_graphs=True)
     net = MixControlNet(3, 5)
     input_x = Tensor(
@@ -485,10 +475,6 @@ def test_auto_mixed_precision_controlflow_auto_1():
                                                        label, cast_num)
 
 
-# @pytest.mark.level0
-# @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.env_onecard
-@pytest.mark.skip(reason="not stable")
 def test_updatestate_between_assigns():
     class UpdateState_Assigns(Cell):
         def __init__(self):
@@ -514,10 +500,6 @@ def test_updatestate_between_assigns():
         assert len(updatestate_num) == 1
 
 
-# @pytest.mark.level0
-# @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.env_onecard
-@pytest.mark.skip(reason="not stable")
 def test_updatestate_between_maketuple_assign():
     class UpdateState_MakeTuple_Assign(Cell):
         def __init__(self):
@@ -545,10 +527,6 @@ def test_updatestate_between_maketuple_assign():
         assert len(updatestate_num) == 1
 
 
-# @pytest.mark.level0
-# @pytest.mark.platform_x86_gpu_training
-# @pytest.mark.env_onecard
-@pytest.mark.skip(reason="not stable")
 def test_updatestate_between_assign_maketuple():
     class UpdateState_Assign_MakeTuple(Cell):
         def __init__(self):
