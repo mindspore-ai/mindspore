@@ -3472,7 +3472,7 @@ class GeneratorDataset(MappableDataset):
                 new_op.sampler = None
                 new_op.sample_fn = sample_fn
                 new_op.source_len = min(new_op.source_len,
-                                        new_op.num_samples) if new_op.num_samples is not None else new_op.source_len
+                                        new_op.num_samples) if new_op.num_samples != 0 else new_op.source_len
                 iter(self.source)
             except TypeError:
                 # Use generator function if input callable

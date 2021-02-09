@@ -87,9 +87,8 @@ PYBIND_REGISTER(DatasetNode, 1, ([](const py::module *m) {
                            return num_workers ? self->SetNumWorkers(*num_workers) : self;
                          })
                     .def("set_cache_client",
-                         [](std::shared_ptr<DatasetNode> self) {
-                           std::shared_ptr<DatasetCache> dc = nullptr;
-                           return self->SetDatasetCache(dc);
+                         [](std::shared_ptr<DatasetNode> self, std::shared_ptr<CacheClient> cc) {
+                           return self->SetDatasetCache(toDatasetCache(std::move(cc)));
                          })
                     .def(
                       "Zip",
