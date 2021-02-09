@@ -105,7 +105,7 @@ In this example, the build process automatically downloads the `mindspore-lite-1
 
 Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
 
-mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz [Download link](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/mindspore-lite-1.0.1-runtime-arm64-cpu.tar.gz)
+mindspore-lite-1.1.0-inference-android.tar.gz [Download link](https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.0/MindSpore/lite/release/android/mindspore-lite-1.1.0-inference-android.tar.gz)
 
 ```text
 android{
