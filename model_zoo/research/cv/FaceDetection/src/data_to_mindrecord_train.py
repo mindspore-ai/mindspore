@@ -38,7 +38,7 @@ def prepare_file_paths():
     anno_files = []
     for dataset_root in dataset_root_list:
         if not os.path.isdir(dataset_root):
-            raise ValueError("dataset root is unvalid!")
+            raise ValueError("dataset root is invalid!")
         anno_dir = os.path.join(dataset_root, "Annotations")
         image_dir = os.path.join(dataset_root, "JPEGImages")
         if is_train:

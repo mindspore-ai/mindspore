@@ -139,7 +139,7 @@ def get_model(args):
         load_param_into_net(net, param_dict_new)
         args.logger.info('INFO, ------------- load model success--------------')
     else:
-        args.logger.info('ERROR, not supprot file:{}, please check weight in config.py'.format(args.weight))
+        args.logger.info('ERROR, not support file:{}, please check weight in config.py'.format(args.weight))
         return 0
     net.set_train(False)
     return net
