@@ -18,13 +18,13 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
+
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/include/vision.h"
-#include "minddata/dataset/include/vision_lite.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
+#include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 
 namespace mindspore {
 namespace dataset {
