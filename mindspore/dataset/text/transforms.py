@@ -63,6 +63,7 @@ class TextTensorOperation(TensorOperation):
     """
     Base class of Text Tensor Ops
     """
+
     def __call__(self, input_tensor):
         if not isinstance(input_tensor, list):
             input_list = [input_tensor]
@@ -95,12 +96,10 @@ DE_C_INTER_JIEBA_MODE = {
     JiebaMode.HMM: cde.JiebaMode.DE_JIEBA_HMM
 }
 
-
 DE_C_INTER_SENTENCEPIECE_LOADTYPE = {
     SPieceTokenizerLoadType.FILE: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KFILE,
     SPieceTokenizerLoadType.MODEL: cde.SPieceTokenizerLoadType.DE_SPIECE_TOKENIZER_LOAD_KMODEL
 }
-
 
 DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
     SPieceTokenizerOutType.STRING: cde.SPieceTokenizerOutType.DE_SPIECE_TOKENIZER_OUTTYPE_KString,
@@ -282,7 +281,7 @@ class Lookup(TextTensorOperation):
         vocab (Vocab): A vocabulary object.
         unknown_token (str, optional): Word used for lookup if the word being looked up is out-of-vocabulary (OOV).
             If unknown_token is OOV, a runtime error will be thrown (default=None).
-        data_type (mindspore.dtype, optional): mindspore.dtype that lookup maps string to (default=mstype.int32)
+        data_type (mindspore.dtype, optional): mindspore.dtype that lookup maps string to (default=mindspore.int32)
 
     Examples:
         >>> # Load vocabulary from list
@@ -309,18 +308,19 @@ class Ngram(TextTensorOperation):
     Refer to https://en.wikipedia.org/wiki/N-gram#Examples for an overview of what n-gram is and how it works.
 
     Args:
-        n (list[int]):  n in n-gram, n >= 1. n is a list of positive integers. For example, if n=[4,3], then the result
+        n (list[int]): n in n-gram, which is a list of positive integers. For example, if n=[4, 3], then the result
             would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
-            for a n-gram, an empty string will be returned. For example, 3 grams on ["mindspore","best"] will result in
+            for a n-gram, an empty string will be returned. For example, 3 grams on ["mindspore", "best"] will result in
             an empty string produced.
-        left_pad (tuple, optional): ("pad_token", pad_width). Padding performed on left side of the sequence. pad_width
-            will be capped at n-1. left_pad=("_",2) would pad left side of the sequence with "__" (default=None).
-        right_pad (tuple, optional): ("pad_token", pad_width). Padding performed on right side of the sequence.
-            pad_width will be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--"
-            (default=None).
-        separator (str, optional): symbol used to join strings together. For example. if 2-gram is
+        left_pad (tuple, optional): Padding performed on left side of the sequence shaped like ("pad_token", pad_width).
+            `pad_width` will be capped at n-1. For example, specifying left_pad=("_", 2) would pad left side of the
+            sequence with "__" (default=None).
+        right_pad (tuple, optional): Padding performed on right side of the sequence shaped like
+            ("pad_token", pad_width). `pad_width` will be capped at n-1. For example, specifying right_pad=("-", 2)
+            would pad right side of the sequence with "--" (default=None).
+        separator (str, optional): Symbol used to join strings together. For example. if 2-gram is
             ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
-            (default=None, which means whitespace is used).
+            (default=None, which will use whitespace as separator).
 
     Examples:
         >>> text_file_dataset = text_file_dataset.map(operations=text.Ngram(3, separator=""))
@@ -389,6 +389,7 @@ class SlidingWindow(TextTensorOperation):
         >>> # |   [3,4,5]]  |
         >>> # +--------------+
     """
+
     @check_slidingwindow
     def __init__(self, width, axis=0):
         self.width = width
@@ -557,6 +558,7 @@ class PythonTokenizer:
         tokens = self.tokenizer(in_array)
         return tokens
 
+
 if platform.system().lower() != 'windows':
     DE_C_INTER_NORMALIZE_FORM = {
         NormalizeForm.NONE: cde.NormalizeForm.DE_NORMALIZE_NONE,
@@ -575,12 +577,12 @@ if platform.system().lower() != 'windows':
             BasicTokenizer is not supported on Windows platform yet.
 
         Args:
-            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
+            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8 with `NFD` mode, RegexReplace operation
                 on input text to fold the text to lower case and strip accents characters. If False, only apply
-                NormalizeUTF8('normalization_form' mode) operation on input text (default=False).
-            keep_whitespace (bool, optional): If True, the whitespace will be kept in out tokens (default=False).
+                NormalizeUTF8 operation with the specified mode on input text (default=False).
+            keep_whitespace (bool, optional): If True, the whitespace will be kept in output tokens (default=False).
             normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode. This is
-                only effective when 'lower_case' is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
+                only effective when `lower_case` is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
             preserve_unused_token (bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
@@ -637,14 +639,14 @@ if platform.system().lower() != 'windows':
             vocab (Vocab): A vocabulary object.
             suffix_indicator (str, optional): Used to show that the subword is the last part of a word (default='##').
             max_bytes_per_token (int, optional): Tokens exceeding this length will not be further split (default=100).
-            unknown_token (str, optional): When a token cannot be found: if 'unknown_token' is empty string,
-                return the token directly, else return 'unknown_token'(default='[UNK]').
-            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8(NFD mode), RegexReplace operation
+            unknown_token (str, optional): When an unknown token is found, return the token directly if `unknown_token`
+                is an empty string, else return `unknown_token` instead (default='[UNK]').
+            lower_case (bool, optional): If True, apply CaseFold, NormalizeUTF8 with `NFD` mode, RegexReplace operation
                 on input text to fold the text to lower case and strip accented characters. If False, only apply
-                NormalizeUTF8('normalization_form' mode) operation on input text (default=False).
+                NormalizeUTF8 operation with the specified mode on input text (default=False).
             keep_whitespace (bool, optional): If True, the whitespace will be kept in out tokens (default=False).
             normalization_form (NormalizeForm, optional): Used to specify a specific normalize mode,
-                only effective when 'lower_case' is False. See NormalizeUTF8 for details (default='NONE').
+                only effective when `lower_case` is False. See NormalizeUTF8 for details (default=NormalizeForm.NONE).
             preserve_unused_token (bool, optional): If True, do not split special tokens like
                 '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]' (default=True).
             with_offsets (bool, optional): If or not output offsets of tokens (default=False).
@@ -703,7 +705,8 @@ if platform.system().lower() != 'windows':
 
     class CaseFold(TextTensorOperation):
         """
-        Apply case fold operation on UTF-8 string tensor.
+        Apply case fold operation on UTF-8 string tensor, which is aggressive that can convert more characters into
+        lower case.
 
         Note:
             CaseFold is not supported on Windows platform yet.

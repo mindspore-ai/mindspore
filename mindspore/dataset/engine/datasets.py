@@ -1732,10 +1732,7 @@ class MappableDataset(SourceDataset):
             new_sampler (Sampler): The sampler to use for the current dataset.
 
         Examples:
-            >>> # Note: A SequentialSampler is created by default
-            >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir)
-            >>>
-            >>> # Use a DistributedSampler instead of the SequentialSampler
+            >>> # use a DistributedSampler instead
             >>> new_sampler = ds.DistributedSampler(10, 2)
             >>> dataset.use_sampler(new_sampler)
         """
@@ -2888,15 +2885,15 @@ class MnistDataset(MappableDataset):
 
     The generated dataset has two columns ['image', 'label'].
     The type of the image tensor is uint8. The label is a scalar uint32 tensor.
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive. The table
     below shows what input arguments are allowed and their expected behavior.
 
     .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
        :widths: 25 25 50
        :header-rows: 1
 
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
+       * - Parameter `sampler`
+         - Parameter `shuffle`
          - Expected Order Behavior
        * - None
          - None
@@ -2937,19 +2934,19 @@ class MnistDataset(MappableDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be "train", "test" or "all" . "train" will read from 60,000
             train samples, "test" will read from 10,000 test samples, "all" will read from all 70,000 samples.
-            (default=None, all samples)
+            (default=None, will read all samples)
         num_samples (int, optional): The number of images to be included in the dataset
-            (default=None, all images).
+            (default=None, will read all images).
         num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, set in the config).
+            (default=None, will use value set in the config).
         shuffle (bool, optional): Whether or not to perform shuffle on the dataset
             (default=None, expected order behavior shown in the table).
         sampler (Sampler, optional): Object used to choose samples from the
             dataset (default=None, expected order behavior shown in the table).
         num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
-            When this argument is specified, 'num_samples' reflects the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+            When this argument is specified, `num_samples` reflects the max sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
@@ -3587,15 +3584,15 @@ class ManifestDataset(MappableDataset):
     The shape of the image column is [image_size] if decode flag is False, or [H,W,C]
     otherwise.
     The type of the image tensor is uint8. The label is a scalar uint64 tensor.
-    This dataset can take in a sampler. 'sampler' and 'shuffle' are mutually exclusive. The table
+    This dataset can take in a sampler. `sampler` and `shuffle` are mutually exclusive. The table
     below shows what input arguments are allowed and their expected behavior.
 
-    .. list-table:: Expected Order Behavior of Using 'sampler' and 'shuffle'
+    .. list-table:: Expected Order Behavior of Using `sampler` and `shuffle`
        :widths: 25 25 50
        :header-rows: 1
 
-       * - Parameter 'sampler'
-         - Parameter 'shuffle'
+       * - Parameter `sampler`
+         - Parameter `shuffle`
          - Expected Order Behavior
        * - None
          - None
@@ -3618,11 +3615,11 @@ class ManifestDataset(MappableDataset):
 
     Args:
         dataset_file (str): File to be read.
-        usage (str, optional): acceptable usages include train, eval and inference (default="train").
+        usage (str, optional): Acceptable usages include "train", "eval" and "inference" (default="train").
         num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
+            (default=None, will include all images).
         num_parallel_workers (int, optional): Number of workers to read the data
-            (default=None, number set in the config).
+            (default=None, will use value set in the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None, expected
             order behavior shown in the table).
         sampler (Sampler, optional): Object used to choose samples from the
@@ -3632,10 +3629,10 @@ class ManifestDataset(MappableDataset):
             class will be given a unique index starting from 0).
         decode (bool, optional): decode the images after reading (default=False).
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into (default=None). When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
@@ -4195,7 +4192,8 @@ class CocoDataset(MappableDataset):
     """
     A source dataset for reading and parsing COCO dataset.
 
-    CocoDataset support four kinds of task: 2017 Train/Val/Test Detection, Keypoints, Stuff, Panoptic.
+    `CocoDataset` supports four kinds of tasks, which are Object Detection, Keypoint Detection, Stuff Segmentation and
+    Panoptic Segmentation of 2017 Train/Val/Test dataset.
 
     The generated dataset has multi-columns :
 
@@ -4339,11 +4337,12 @@ class CocoDataset(MappableDataset):
 
 class CelebADataset(MappableDataset):
     """
-    A source dataset for reading and parsing CelebA dataset. Currently supported: list_attr_celeba.txt only.
+    A source dataset for reading and parsing CelebA dataset. Only support to read `list_attr_celeba.txt` currently,
+    which is the attribute annotations of the dataset.
 
     Note:
         The generated dataset has two columns ['image', 'attr'].
-        The type of the image tensor is uint8. The attribute tensor is uint32 and one hot type.
+        The image tensor is of the uint8 type. The attribute tensor is of the uint32 type and one hot encoded.
 
     Citation of CelebA dataset.
 
@@ -4376,20 +4375,20 @@ class CelebADataset(MappableDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_parallel_workers (int, optional): Number of workers to read the data (default=value set in the config).
+        num_parallel_workers (int, optional): Number of workers to read the data (default=None, will use value set in
+            the config).
         shuffle (bool, optional): Whether to perform shuffle on the dataset (default=None).
-        usage (str): one of 'all', 'train', 'valid' or 'test'.
+        usage (str): one of 'all', 'train', 'valid' or 'test' (default='all', will read all samples).
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
         decode (bool, optional): decode the images after reading (default=False).
-        extensions (list[str], optional): List of file extensions to be
-            included in the dataset (default=None).
-        num_samples (int, optional): The number of images to be included in the dataset.
-            (default=None, all images).
+        extensions (list[str], optional): List of file extensions to be included in the dataset (default=None).
+        num_samples (int, optional): The number of images to be included in the dataset
+            (default=None, will include all images).
         num_shards (int, optional): Number of shards that the dataset will be divided
-            into (default=None). When this argument is specified, 'num_samples' reflects
+            into (default=None). When this argument is specified, `num_samples` reflects
             the max sample number of per shard.
-        shard_id (int, optional): The shard ID within num_shards (default=None). This
-            argument can only be specified when num_shards is also specified.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This
+            argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.
             (default=None, which means no cache is used).
 
