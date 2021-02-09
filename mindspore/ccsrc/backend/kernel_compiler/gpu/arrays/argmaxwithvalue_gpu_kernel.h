@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ namespace kernel {
 template <typename T, typename S>
 class ArgmaxWithValueGpuKernel : public GpuKernel {
  public:
-  ArgmaxWithValueGpuKernel() : input_size_(0), output_size_(0), bound_(0), outerSize_(0), innerSize_(0) {}
+  ArgmaxWithValueGpuKernel() { ResetResource(); }
   ~ArgmaxWithValueGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -73,6 +73,17 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
     }
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_size_ = 0;
+    output_size_ = 0;
+    bound_ = 0;
+    outerSize_ = 0;
+    innerSize_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:

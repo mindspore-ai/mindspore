@@ -1068,5 +1068,64 @@ AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   return std::make_shared<AbstractTensor>(range_start_type, shape);
 }
+
+AbstractBasePtr InferImplArgMaxWithValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  // check keep_dims
+  ValuePtr keep_dims = primitive->GetAttr("keep_dims");
+  MS_EXCEPTION_IF_NULL(keep_dims);
+  if (!keep_dims->isa<BoolImm>()) {
+    MS_LOG(EXCEPTION) << "keep_dims should be Bool.";
+  }
+  bool keep_dims_value = GetValue<bool>(keep_dims);
+  // check axis
+  ValuePtr axis = primitive->GetAttr("axis");
+  MS_EXCEPTION_IF_NULL(axis);
+  if (!axis->isa<Int32Imm>() && !axis->isa<Int64Imm>()) {
+    MS_LOG(EXCEPTION) << "axis should be Int.";
+  }
+  // check axis convert negative to positive value
+  auto check_axis = [](int64_t &axis, const size_t dim) -> void {
+    int64_t dim_ = static_cast<int64_t>(dim);
+    if (axis < -dim_ || axis >= dim_) {
+      MS_LOG(EXCEPTION) << "axis should be in [" << -dim_ << ", " << dim_ << "). But got axis = " << axis << ".";
+    }
+    if (axis >= -dim_ && axis < 0) {
+      axis += dim_;
+    }
+    return;
+  };
+  // main calculate shape func
+  auto cal_shape = [axis, keep_dims_value, check_axis](ShapeVector &shape, const ShapeVector &x_shape) -> void {
+    shape.insert(shape.end(), x_shape.begin(), x_shape.end());
+    int64_t axis_value = GetValue<int64_t>(axis);
+    check_axis(axis_value, x_shape.size());
+    if (keep_dims_value) {
+      shape[axis_value] = 1;
+    } else {
+      shape.erase(std::begin(shape) + axis_value);
+    }
+  };
+  ShapeVector shape = {};
+  ShapeVector min_shape = {};
+  ShapeVector max_shape = {};
+  ShapeVector x_shape = x->shape()->shape();
+  ShapeVector x_min_shape = x->shape()->min_shape();
+  ShapeVector x_max_shape = x->shape()->max_shape();
+  (void)CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
+  cal_shape(shape, x_shape);
+  cal_shape(min_shape, x_min_shape);
+  cal_shape(max_shape, x_max_shape);
+  TypePtr idx_type = kInt32;
+  auto index = std::make_shared<AbstractTensor>(idx_type, std::make_shared<Shape>(shape, min_shape, max_shape));
+  auto value = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
+  AbstractBasePtrList result = {index, value};
+  return std::make_shared<AbstractTuple>(result);
+}
 }  // namespace abstract
 }  // namespace mindspore

@@ -74,6 +74,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimAddN, {InferImplAddN, true}},
     {prim::kPrimMatMul, {InferImplMatMul, true}},
     {prim::kPrimBatchMatMul, {InferImplBatchMatMul, true}},
+    {prim::kPrimLess, {InferImplLess, true}},
     // Array
     {prim::kPrimScalarToArray, {InferImplScalarToArray, true}},
     {prim::kPrimArrayToScalar, {InferImplArrayToScalar, true}},
@@ -108,6 +109,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSequenceMask, {InferImplSequenceMask, true}},
     {prim::kPrimConcat, {InferImplConcat, true}},
     {prim::kPrimRange, {InferImplRange, true}},
+    {prim::kPrimArgMaxWithValue, {InferImplArgMaxWithValue, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
     {prim::kPrimMakeList, {InferImplMakeList, true}},
