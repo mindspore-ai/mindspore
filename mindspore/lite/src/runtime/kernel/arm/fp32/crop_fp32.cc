@@ -43,8 +43,6 @@ int CropCPUKernel::Init() {
   return ReSize();
 }
 
-int CropCPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
-
 int CropCPUKernel::CropParallelRun(int thread_id) {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
@@ -69,6 +67,7 @@ int CropCPUKernel::Run() {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;
     return RET_ERROR;
   }
+  FreeTmpBuffer();
   return RET_OK;
 }
 

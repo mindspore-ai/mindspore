@@ -31,8 +31,6 @@ int CropFp16CPUKernel::Init() {
   return ReSize();
 }
 
-int CropFp16CPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
-
 int CropFp16CPUKernel::DoExecute(int task_id) {
   Fp16Crop(input_ptr_, output_ptr_, task_id, crop_para_);
   return RET_OK;
@@ -59,6 +57,7 @@ int CropFp16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed: " << ret;
   }
+  FreeTmpBuffer();
   return ret;
 }
 
