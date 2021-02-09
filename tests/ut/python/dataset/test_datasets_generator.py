@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import copy
 import numpy as np
 import pytest
 
@@ -745,6 +746,18 @@ def manual_test_generator_keyboard_interrupt():
         pass
 
 
+def test_explicit_deepcopy():
+    """
+    Test explicit_deepcopy
+    """
+    logger.info("Test explicit_deepcopy")
+
+    ds1 = ds.NumpySlicesDataset([1, 2], shuffle=False)
+    ds2 = copy.deepcopy(ds1)
+    for d1, d2 in zip(ds1, ds2):
+        assert d1 == d2
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -780,3 +793,4 @@ if __name__ == "__main__":
     test_generator_dataset_size_3()
     test_generator_dataset_size_4()
     test_generator_dataset_size_5()
+    test_explicit_deepcopy()
