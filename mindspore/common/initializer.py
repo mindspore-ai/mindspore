@@ -420,6 +420,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
 
 
     Examples:
+        >>> import mindspore
+        >>> from mindspore.common.initializer import initializer, One
         >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
         >>> tensor = initializer(One(), [1, 2, 3], mindspore.float32)
         >>> tensor = initializer(0, [1, 2, 3], mindspore.float32)
