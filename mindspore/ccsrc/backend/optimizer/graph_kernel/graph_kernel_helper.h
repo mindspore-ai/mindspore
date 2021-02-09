@@ -89,6 +89,7 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
 
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info);
 void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfNodePtr &node);
+bool IsKeepBasicNode(const AnfNodePtr &node);
 
 template <typename T>
 ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t data_length) {
