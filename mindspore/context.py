@@ -257,6 +257,9 @@ class _Context:
 
     def set_env_config_path(self, env_config_path):
         """Check and set env_config_path."""
+        if not self._context_handle.enable_dump_ir():
+            raise ValueError("The 'env_config_path' is not supported, please turn on ENABLE_DUMP_IR "
+                             "and recompile source to enable it.")
         env_config_path = os.path.realpath(env_config_path)
         if not os.path.isfile(env_config_path):
             raise ValueError("The %r set by 'env_config_path' should be an existing json file." % env_config_path)

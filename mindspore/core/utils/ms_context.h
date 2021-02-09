@@ -127,6 +127,7 @@ class MsContext {
   using DeviceTypeSeter = std::function<void(std::shared_ptr<MsContext> &)>;
   static std::shared_ptr<MsContext> GetInstance();
 
+  bool enable_dump_ir() const;
   std::string backend_policy() const;
   bool set_backend_policy(const std::string &policy);
 

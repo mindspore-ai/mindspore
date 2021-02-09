@@ -101,6 +101,7 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")
                            .def("set_param", &mindspore::MsCtxSetParameter, "Set value for specified parameter.")
                            .def("get_backend_policy", &mindspore::MsContext::backend_policy, "Get backend policy.")
-                           .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.");
+                           .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.")
+                           .def("enable_dump_ir", &mindspore::MsContext::enable_dump_ir, "Get the ENABLE_DUMP_IR.");
                        }));
 }  // namespace mindspore
