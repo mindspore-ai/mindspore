@@ -37,7 +37,7 @@ TEST_F(MindDataTestPipeline, TestRepeatSetNumWorkers) {
   ASSERT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
@@ -51,5 +51,4 @@ TEST_F(MindDataTestPipeline, TestRepeatSetNumWorkers) {
 
   // Manually terminate the pipeline
   iter->Stop();
-
 }

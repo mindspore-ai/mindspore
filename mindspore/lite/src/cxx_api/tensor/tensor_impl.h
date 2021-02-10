@@ -30,7 +30,7 @@ namespace mindspore {
 class MSTensor::Impl {
  public:
   Impl() {}
-  ~Impl() = default;
+  virtual ~Impl() = default;
   explicit Impl(tensor::MSTensor *tensor) : lite_tensor_(tensor) {
     if (tensor != nullptr) {
       tensor_name_ = tensor->tensor_name();
@@ -42,7 +42,7 @@ class MSTensor::Impl {
   Impl(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
        size_t data_len);
 
-  const std::string &Name() const {
+  virtual const std::string &Name() const {
     static std::string empty = "";
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
@@ -51,7 +51,7 @@ class MSTensor::Impl {
     return tensor_name_;
   }
 
-  enum DataType DataType() const {
+  virtual enum DataType DataType() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return DataType::kTypeUnknown;
@@ -67,7 +67,7 @@ class MSTensor::Impl {
     return static_cast<int64_t>(lite_tensor_->ElementsNum());
   }
 
-  const std::vector<int64_t> &Shape() {
+  virtual const std::vector<int64_t> &Shape() {
     static std::vector<int64_t> empty;
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
@@ -79,7 +79,7 @@ class MSTensor::Impl {
     return shape_;
   }
 
-  std::shared_ptr<const void> Data() const {
+  virtual std::shared_ptr<const void> Data() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
@@ -93,14 +93,14 @@ class MSTensor::Impl {
     return std::shared_ptr<const void>(lite_tensor_->MutableData(), [](const void *) {});
   }
 
-  void *MutableData() {
+  virtual void *MutableData() {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return nullptr;
     }
     return lite_tensor_->MutableData();
   }
-  size_t DataSize() const {
+  virtual size_t DataSize() const {
     if (lite_tensor_ == nullptr) {
       MS_LOG(ERROR) << "Invalid tensor.";
       return 0;
@@ -108,9 +108,9 @@ class MSTensor::Impl {
     return lite_tensor_->Size();
   }
 
-  bool IsDevice() const { return false; }
+  virtual bool IsDevice() const { return false; }
 
-  std::shared_ptr<Impl> Clone() const {
+  virtual std::shared_ptr<Impl> Clone() const {
     MS_LOG(ERROR) << "Unsupported feature.";
     return nullptr;
   }

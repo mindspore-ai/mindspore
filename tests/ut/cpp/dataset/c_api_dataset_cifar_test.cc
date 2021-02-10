@@ -39,7 +39,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("image"), row.end());
@@ -48,8 +48,8 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    // auto image = row["image"];
+    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
   }
 
@@ -94,7 +94,7 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("image"), row.end());
@@ -103,8 +103,8 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    // auto image = row["image"];
+    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
   }
 
@@ -177,7 +177,7 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("image"), row.end());
@@ -187,8 +187,8 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    // auto image = row["image"];
+    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
   }
 

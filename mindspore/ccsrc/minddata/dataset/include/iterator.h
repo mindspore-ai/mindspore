@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <vector>
 #include "include/api/status.h"
+#include "include/api/types.h"
 
 namespace mindspore {
 namespace dataset {
@@ -37,8 +38,8 @@ class IteratorConsumer;
 
 class Dataset;
 
-using TensorMap = std::unordered_map<std::string, std::shared_ptr<Tensor>>;
-using TensorVec = std::vector<std::shared_ptr<Tensor>>;
+using MSTensorMap = std::unordered_map<std::string, mindspore::MSTensor>;
+using MSTensorVec = std::vector<mindspore::MSTensor>;
 
 // Abstract class for iterating over the dataset.
 class Iterator {
@@ -58,14 +59,14 @@ class Iterator {
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a map(with column name).
   /// \param[out] row - the output tensor row.
-  /// \return Returns true if no error encountered else false.
-  bool GetNextRow(TensorMap *row);
+  /// \return - a Status error code, returns OK if no error encountered.
+  Status GetNextRow(MSTensorMap *row);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row - the output tensor row.
-  /// \return Returns true if no error encountered else false.
-  bool GetNextRow(TensorVec *row);
+  /// \return - a Status error code, returns OK if no error encountered.
+  Status GetNextRow(MSTensorVec *row);
 
   /// \brief Function to shut down the data pipeline.
   void Stop();
@@ -74,7 +75,7 @@ class Iterator {
    public:
     explicit _Iterator(Iterator *lt) : lt_{lt}, cur_row_{nullptr} {
       if (lt_) {
-        cur_row_ = new TensorMap();
+        cur_row_ = new MSTensorMap();
         lt_->GetNextRow(cur_row_);
       }
     }
@@ -96,16 +97,16 @@ class Iterator {
         cur_row_ = nullptr;
       }
       return *this;
-    }                                             // prefix ++ overload
-    TensorMap &operator*() { return *cur_row_; }  // dereference operator
-    TensorMap *operator->() { return cur_row_; }
+    }                                               // prefix ++ overload
+    MSTensorMap &operator*() { return *cur_row_; }  // dereference operator
+    MSTensorMap *operator->() { return cur_row_; }
 
     bool operator!=(const _Iterator &rhs) { return cur_row_ != rhs.cur_row_; }
 
    private:
     int ind_;  // the cur node our Iterator points to
     Iterator *lt_;
-    TensorMap *cur_row_;
+    MSTensorMap *cur_row_;
   };
 
   _Iterator begin() { return _Iterator(this); }

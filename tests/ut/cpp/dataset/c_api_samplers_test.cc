@@ -69,14 +69,14 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    // auto image = row["image"];
+    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
   }
 
@@ -198,7 +198,7 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess) {
   // Iterate the dataset and get each row
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
@@ -230,7 +230,7 @@ TEST_F(MindDataTestPipeline, TestSamplerAddChild) {
   // Iterate the dataset and get each row
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
-  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
