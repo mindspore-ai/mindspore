@@ -8,11 +8,12 @@ if(ENABLE_PYTHON)
             python/bindings/dataset/engine/datasetops/bindings.cc
             python/bindings/dataset/engine/datasetops/source/bindings.cc
             python/bindings/dataset/engine/gnn/bindings.cc
-            python/bindings/dataset/include/datasets_bindings.cc
-            python/bindings/dataset/include/iterator_bindings.cc
-            python/bindings/dataset/include/execute_binding.cc
-            python/bindings/dataset/include/sampler_bindings.cc
-            python/bindings/dataset/include/schema_bindings.cc
+            python/bindings/dataset/engine/ir/consumer/bindings.cc
+            python/bindings/dataset/engine/ir/datasetops/bindings.cc
+            python/bindings/dataset/engine/ir/datasetops/source/bindings.cc
+            python/bindings/dataset/engine/ir/datasetops/source/samplers/bindings.cc
+            python/bindings/dataset/engine/ir/execute/bindings.cc
+            python/bindings/dataset/engine/ir/schema/bindings.cc
             python/bindings/dataset/kernels/bindings.cc
             python/bindings/dataset/kernels/data/bindings.cc
             python/bindings/dataset/kernels/ir/bindings.cc
