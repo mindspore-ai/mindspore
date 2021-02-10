@@ -22,7 +22,7 @@ from mindspore.common.tensor import Tensor
 
 class BboxAssignSampleForRcnn(nn.Cell):
     """
-    Bbox assigner and sampler defination.
+    Bbox assigner and sampler definition.
 
     Args:
         config (dict): Config.

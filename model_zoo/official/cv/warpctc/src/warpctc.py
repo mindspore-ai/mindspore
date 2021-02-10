@@ -45,10 +45,10 @@ class StackedRNN(nn.Cell):
         self.rnn1 = P.DynamicRNN(forget_bias=0.0)
         self.rnn2 = P.DynamicRNN(forget_bias=0.0)
 
-        self.w1 = Parameter(np.random.uniform(-k, k, (input_size + hidden_size, 4 * hidden_size)).astype(np.float16))
-        self.w2 = Parameter(np.random.uniform(-k, k, (hidden_size + hidden_size, 4 * hidden_size)).astype(np.float16))
-        self.b1 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16))
-        self.b2 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float16))
+        self.w1 = Parameter(np.random.uniform(-k, k, (input_size + hidden_size, 4 * hidden_size)).astype(np.float32))
+        self.w2 = Parameter(np.random.uniform(-k, k, (hidden_size + hidden_size, 4 * hidden_size)).astype(np.float32))
+        self.b1 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float32))
+        self.b2 = Parameter(np.random.uniform(-k, k, (4 * hidden_size)).astype(np.float32))
 
         self.h1 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
         self.h2 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
@@ -56,22 +56,30 @@ class StackedRNN(nn.Cell):
         self.c1 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
         self.c2 = Tensor(np.zeros(shape=(1, batch_size, hidden_size)).astype(np.float16))
 
-        self.fc_weight = Tensor(np.random.random((hidden_size, num_class)).astype(np.float16))
-        self.fc_bias = Tensor(np.random.random(self.num_class).astype(np.float16))
+        self.fc_weight = Parameter(np.random.random((hidden_size, num_class)).astype(np.float32))
+        self.fc_bias = Parameter(np.random.random(self.num_class).astype(np.float32))
 
         self.reshape = P.Reshape()
         self.transpose = P.Transpose()
         self.matmul = nn.MatMul()
+        self.cast = P.Cast()
 
     def construct(self, x):
         x = self.transpose(x, (1, 0, 2, 3))
         x = self.reshape(x, (-1, self.batch_size, self.input_size))
 
-        y1, _, _, _, _, _, _, _ = self.rnn1(x, self.w1, self.b1, None, self.h1, self.c1)
-        y2, _, _, _, _, _, _, _ = self.rnn2(y1, self.w2, self.b2, None, self.h2, self.c2)
+        w1 = self.cast(self.w1, mstype.float16)
+        w2 = self.cast(self.w2, mstype.float16)
+        b1 = self.cast(self.b1, mstype.float16)
+        b2 = self.cast(self.b2, mstype.float16)
+        fc_weight = self.cast(self.fc_weight, mstype.float16)
+        fc_bias = self.cast(self.fc_bias, mstype.float16)
+
+        y1, _, _, _, _, _, _, _ = self.rnn1(x, w1, b1, None, self.h1, self.c1)
+        y2, _, _, _, _, _, _, _ = self.rnn2(y1, w2, b2, None, self.h2, self.c2)
 
         # [time_step, bs, hidden_size] * [hidden_size, num_class] + [num_class]
-        output = self.matmul(y2, self.fc_weight) + self.fc_bias
+        output = self.matmul(y2, fc_weight) + fc_bias
         return output
 
 

@@ -16,7 +16,7 @@
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then 
     echo "Usage: sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
-    DEVICE_ID is optional, it can be setted by environment variable device_id, otherwise the value is zero"
+    DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
 
@@ -93,7 +93,7 @@ if [ $? -ne 0 ]; then
 fi
 infer
 if [ $? -ne 0 ]; then
-    echo "excute inference failed"
+    echo "execute inference failed"
     exit 1
 fi
 cal_acc
