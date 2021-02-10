@@ -21,8 +21,20 @@ int Conv2dGradFilterInferShape(const TensorC *const *inputs, size_t inputs_size,
   if (inputs_size < 2 || outputs_size != 1) {
     return NNACL_ERR;
   }
-  Conv2dGradFilterParameter *param = (Conv2dGradFilterParameter *)parameter;
+  ConvParameter *param = (ConvParameter *)parameter;
   SetDataTypeFormat(outputs[0], inputs[0]);
-  SetShapeArray(outputs[0], param->filter_shape_, param->filter_shape_size_);
+
+  size_t filter_shape_size_ = 4;
+  int filter_shape_[MAX_SHAPE_SIZE];
+  filter_shape_[0] = inputs[0]->shape_[inputs[0]->shape_size_ - 1];
+  filter_shape_[1] = param->kernel_h_;
+  filter_shape_[2] = param->kernel_w_;
+  if (param->group_ == 1) {
+    filter_shape_[3] = inputs[1]->shape_[inputs[1]->shape_size_ - 1];
+  } else {
+    filter_shape_[3] = 1;
+  }
+
+  SetShapeArray(outputs[0], filter_shape_, filter_shape_size_);
   return NNACL_OK;
 }

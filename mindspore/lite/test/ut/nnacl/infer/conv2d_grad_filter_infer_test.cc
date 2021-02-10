@@ -32,11 +32,8 @@ TEST_F(Conv2dGradFilterInferTest, Conv2dGradFilterInferTest0) {
   inputs[1] = new TensorC;
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
-  Conv2dGradFilterParameter *parameter = new Conv2dGradFilterParameter;
-  parameter->op_parameter_.op_parameter_.infer_flag_ = true;
-  parameter->filter_shape_size_ = 2;
-  parameter->filter_shape_[0] = 3;
-  parameter->filter_shape_[1] = 4;
+  ConvParameter *parameter = new ConvParameter;
+  parameter->op_parameter_.infer_flag_ = true;
   int ret = Conv2dGradFilterInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                        reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

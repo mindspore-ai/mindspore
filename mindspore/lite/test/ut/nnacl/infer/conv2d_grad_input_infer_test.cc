@@ -32,11 +32,8 @@ TEST_F(Conv2dGradInputInferTest, Conv2dGradInputInferTest0) {
   inputs[0]->format_ = Format_NHWC;
   std::vector<TensorC *> outputs(1, NULL);
   outputs[0] = new TensorC;
-  Conv2dGradInputParameter *parameter = new Conv2dGradInputParameter;
-  parameter->op_parameter_.op_parameter_.infer_flag_ = true;
-  parameter->input_shape_size_ = 2;
-  parameter->input_shape_[0] = 4;
-  parameter->input_shape_[1] = 3;
+  ConvParameter *parameter = new ConvParameter;
+  parameter->op_parameter_.infer_flag_ = true;
   int ret = Conv2dGradInputInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                       reinterpret_cast<OpParameter *>(parameter));
   ASSERT_EQ(ret, NNACL_OK);

@@ -49,7 +49,7 @@ class Converter {
 
 class MindsporeImporter : public Converter {
  public:
-  MindsporeImporter() = default;
+  MindsporeImporter();
 
   ~MindsporeImporter() override = default;
 

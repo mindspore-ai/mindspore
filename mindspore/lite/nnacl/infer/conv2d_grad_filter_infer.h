@@ -23,12 +23,6 @@
 extern "C" {
 #endif
 
-typedef struct Conv2dGradFilterParameter {
-  ConvParameter op_parameter_;
-  int filter_shape_[MAX_SHAPE_SIZE];
-  size_t filter_shape_size_;
-} Conv2dGradFilterParameter;
-
 int Conv2dGradFilterInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                                OpParameter *parameter);
 
