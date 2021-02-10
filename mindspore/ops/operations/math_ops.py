@@ -791,9 +791,10 @@ class MatMul(PrimitiveWithCheck):
 
 class BatchMatMul(MatMul):
     """
-    Computes matrix multiplication between two tensors by batch
+    Computes matrix multiplication between two tensors by batch.
 
-    `result[..., :, :] = tensor(a[..., :, :]) * tensor(b[..., :, :])`.
+    .. math::
+        \text{output}[..., :, :] = \text{matrix}(a[..., :, :]) * \text{matrix}(b[..., :, :])
 
     The two input tensors must have the same rank and the rank must be not less than `3`.
 
