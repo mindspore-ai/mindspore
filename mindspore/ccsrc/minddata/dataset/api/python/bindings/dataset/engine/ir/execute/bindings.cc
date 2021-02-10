@@ -58,5 +58,6 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                       return de_output_tensor_list;
                     });
                 }));
+
 }  // namespace dataset
 }  // namespace mindspore
