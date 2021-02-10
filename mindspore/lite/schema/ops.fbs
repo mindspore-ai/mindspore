@@ -200,7 +200,7 @@ table Activation {
 }
 
 table ActivationGrad {
-    type: ActivationType;
+    activation_type: ActivationType;
     alpha: float;
 }
 

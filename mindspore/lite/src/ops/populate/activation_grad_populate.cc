@@ -30,7 +30,7 @@ OpParameter *PopulateActivationGradParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_ActivationGrad();
   act_param->op_parameter.type_ = primitive->value_type();
-  act_param->type_ = static_cast<int>(value->type());
+  act_param->type_ = static_cast<int>(value->activation_type());
   act_param->alpha_ = value->alpha();
   return reinterpret_cast<OpParameter *>(act_param);
 }

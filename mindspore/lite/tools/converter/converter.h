@@ -49,7 +49,11 @@ class Converter {
 
 class MindsporeImporter : public Converter {
  public:
+#ifdef SUPPORT_TRAIN
   MindsporeImporter();
+#else
+  MindsporeImporter() = default;
+#endif
 
   ~MindsporeImporter() override = default;
 
