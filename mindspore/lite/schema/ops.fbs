@@ -35,6 +35,7 @@ union PrimitiveType {
     AssignAdd,
     AudioSpectrogram,
     AvgPoolFusion,
+    AvgPoolGrad,
     BatchNorm,
     BatchNormGrad,
     BatchToSpace,
@@ -109,6 +110,7 @@ union PrimitiveType {
     Maximum,
     MaximumGrad,
     MaxPoolFusion,
+    MaxPoolGrad,
     Merge,
     Mfcc,
     Minimum,
@@ -185,8 +187,6 @@ union PrimitiveType {
     While,
     Where,
     ZerosLike,
-    AvgPoolGrad,
-    MaxPoolGrad,
 }
 
 table Abs {
