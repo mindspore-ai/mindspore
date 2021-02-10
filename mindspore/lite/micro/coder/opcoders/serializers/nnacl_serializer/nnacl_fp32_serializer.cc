@@ -66,6 +66,16 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParamete
                  conv_parameter.input_unit_, conv_parameter.output_unit_, conv_parameter.act_type_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const MatMulParameter &mat_mul_parameter) {
+  CodeBaseStruct("MatMulParameter", name, mat_mul_parameter.op_parameter_, mat_mul_parameter.has_bias_,
+                 mat_mul_parameter.row_, mat_mul_parameter.col_, mat_mul_parameter.row_4_, mat_mul_parameter.row_6_,
+                 mat_mul_parameter.row_12_, mat_mul_parameter.row_16_, mat_mul_parameter.row_align_,
+                 mat_mul_parameter.col_4_, mat_mul_parameter.col_8_, mat_mul_parameter.col_align_,
+                 mat_mul_parameter.deep_, mat_mul_parameter.deep_4_, mat_mul_parameter.deep_16_,
+                 mat_mul_parameter.batch, mat_mul_parameter.a_transpose_, mat_mul_parameter.b_transpose_,
+                 mat_mul_parameter.a_const_, mat_mul_parameter.b_const_, mat_mul_parameter.act_type_);
+}
+
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ScaleParameter &scale_parameter) {
   CodeBaseStruct("ScaleParameter", name, scale_parameter.op_parameter_, scale_parameter.outer_size_,
                  scale_parameter.axis_size_, scale_parameter.inner_size_, scale_parameter.axis_,
