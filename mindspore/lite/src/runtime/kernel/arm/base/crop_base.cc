@@ -36,6 +36,7 @@ int CropBaseCPUKernel::ReSize() {
   auto output_shape = out_tensor->shape();
   size_t input_dim = input_shape.size();
   size_t output_dim = output_shape.size();
+  FreeTmpBuffer();
 
   crop_para_->in_shape_ = reinterpret_cast<int *>(malloc(input_dim * sizeof(int)));
   if (crop_para_->in_shape_ == nullptr) {
@@ -74,6 +75,17 @@ void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) {
       }
     }
     crop_para->in_offset_[i] = crop_offset;
+  }
+}
+
+void CropBaseCPUKernel::FreeTmpBuffer() {
+  if (crop_para_->in_shape_ != nullptr) {
+    free(crop_para_->in_shape_);
+    crop_para_->in_shape_ = nullptr;
+  }
+  if (crop_para_->out_shape_ != nullptr) {
+    free(crop_para_->out_shape_);
+    crop_para_->out_shape_ = nullptr;
   }
 }
 }  // namespace mindspore::kernel

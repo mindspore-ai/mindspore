@@ -33,7 +33,6 @@ class CropCPUKernel : public CropBaseCPUKernel {
       : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~CropCPUKernel() = default;
   int Init() override;
-  int ReSize() override;
   int Run() override;
   int CropParallelRun(int thread_id);
 };

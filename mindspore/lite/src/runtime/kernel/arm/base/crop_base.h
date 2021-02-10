@@ -31,20 +31,12 @@ class CropBaseCPUKernel : public LiteKernel {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
     crop_para_->thread_count_ = op_parameter_->thread_num_;
   }
-  ~CropBaseCPUKernel() {
-    if (crop_para_->in_shape_ != nullptr) {
-      free(crop_para_->in_shape_);
-      crop_para_->in_shape_ = nullptr;
-    }
-    if (crop_para_->out_shape_ != nullptr) {
-      free(crop_para_->out_shape_);
-      crop_para_->out_shape_ = nullptr;
-    }
-  }
+  ~CropBaseCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override { return 0; }
+  void FreeTmpBuffer();
 
  protected:
   CropParameter *crop_para_;

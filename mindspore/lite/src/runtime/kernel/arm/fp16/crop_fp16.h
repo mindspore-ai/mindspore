@@ -36,7 +36,6 @@ class CropFp16CPUKernel : public CropBaseCPUKernel {
   ~CropFp16CPUKernel() override = default;
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
   int DoExecute(int task_id);
 
