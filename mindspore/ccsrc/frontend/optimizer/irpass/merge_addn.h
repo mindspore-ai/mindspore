@@ -71,16 +71,15 @@ class MergeAddN : public AnfVisitor {
       is_inner_ = true;
 
       // {prim::kPrimMakeTuple, {PrimAddN, {prim::kPrimMakeTuple, Xs}}, Ys}
-      AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(inputs[1]);
+      const auto &first_input = inputs.at(1);
+      AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(first_input);
       if (is_match_) {
-        if (!is_unique(inputs[1])) {
+        if (!is_unique(first_input)) {
           is_match_ = false;
           return;
         }
 
-        MonadState state_input = GetMonadState(inputs[1]);
-        MonadState state_cnode = GetMonadState(cnode, inputs[1]);
-        if (!IsStateEquivalent(state_cnode, state_input)) {
+        if (!IsStateEquivalent(cnode, first_input)) {
           is_match_ = false;
           return;
         }
@@ -92,16 +91,15 @@ class MergeAddN : public AnfVisitor {
       }
 
       // {prim::kPrimMakeTuple, Ys, {PrimAddN, {prim::kPrimMakeTuple, Xs}}}
-      AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(inputs.back());
+      const auto &last_input = inputs.back();
+      AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(last_input);
       if (is_match_) {
-        if (!is_unique(inputs.back())) {
+        if (!is_unique(last_input)) {
           is_match_ = false;
           return;
         }
 
-        MonadState state_input = GetMonadState(inputs.back());
-        MonadState state_cnode = GetMonadState(cnode, inputs.back());
-        if (!IsStateEquivalent(state_cnode, state_input)) {
+        if (!IsStateEquivalent(cnode, last_input)) {
           is_match_ = false;
           return;
         }

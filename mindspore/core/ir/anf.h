@@ -530,6 +530,12 @@ MonadState GetMonadState(const AnfNodePtr &node, const AnfNodePtr &skip_input = 
 // Check if two state is equivalent.
 bool IsStateEquivalent(const MonadState &state1, const MonadState &state2);
 
+// Check if monad state is strict equivalent for the connected two nodes.
+bool IsStateStrictEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner);
+
+// Check if monad state is equivalent for the connected two nodes, not strict but more faster.
+bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner);
+
 // used to check whether a ValueNode has some kind of value
 template <typename T>
 static bool IsValueNode(const AnfNodePtr &node) {

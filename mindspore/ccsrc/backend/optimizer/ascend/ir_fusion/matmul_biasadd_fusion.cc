@@ -39,9 +39,7 @@ const AnfNodePtr MatmulBiasaddFusion::Process(const FuncGraphPtr &graph, const A
   }
 
   // If there is a side-effect operator in the fusion, do not merge
-  MonadState state_matmul = GetMonadState(matmul);
-  MonadState state_node = GetMonadState(node, matmul);
-  if (!IsStateEquivalent(state_matmul, state_node)) {
+  if (!IsStateEquivalent(node, matmul)) {
     return node;
   }
 
