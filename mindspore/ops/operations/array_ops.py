@@ -3181,11 +3181,9 @@ class ScatterUpdate(_ScatterOp_Dynamic):
 
     Using given values to update tensor value, along with the input indices.
 
+    for each `i, ..., j` in `indices.shape`:
     .. math::
-        \begin{array}{l}
-            \text {for each i, ..., j in indices.shape:} \\
-            input\_x[indices[i, ..., j], :] = updates[i, ..., j, :]
-        \end{array}
+        \text{input_x}[\text{indices}[i, ..., j], :] = \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3296,11 +3294,10 @@ class ScatterMax(_ScatterOp):
     Using given values to update tensor value through the max operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each `i, ..., j` in `indices.shape`:
     .. math::
-        \begin{array}{l}
-            \text {for each i, ..., j in indices.shape:} \\
-            input\_x[indices[i, ..., j], :] = max(input\_x[indices[i, ..., j], :], updates[i, ..., j, :])
-        \end{array}
+        \text{input_x}[\text{indices}[i, ..., j], :]
+        = max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3347,11 +3344,10 @@ class ScatterMin(_ScatterOp):
     Using given values to update tensor value through the min operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each `i, ..., j` in `indices.shape`:
     .. math::
-        \begin{array}{l}
-            \text {for each i, ..., j in indices.shape:} \\
-            input\_x[indices[i, ..., j], :] = min(input\_x[indices[i, ..., j], :], updates[i, ..., j, :])
-        \end{array}
+        \text{input_x}[\text{indices}[i, ..., j], :]
+        = min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3392,11 +3388,9 @@ class ScatterAdd(_ScatterOp_Dynamic):
     Using given values to update tensor value through the add operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each `i, ..., j` in `indices.shape`:
     .. math::
-        \begin{array}{l}
-            \text {for each i, ..., j in indices.shape:} \\
-            input\_x[indices[i, ..., j], :] \mathrel{+}= updates[i, ..., j, :]
-        \end{array}
+        \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{+}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3443,11 +3437,9 @@ class ScatterSub(_ScatterOp):
     Using given values to update tensor value through the subtraction operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each `i, ..., j` in `indices.shape`:
     .. math::
-        \begin{array}{l}
-            \text {for each i, ..., j in indices.shape:} \\
-            input\_x[indices[i, ..., j], :] \mathrel{-}= updates[i, ..., j, :]
-        \end{array}
+        \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{-}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3489,11 +3481,9 @@ class ScatterMul(_ScatterOp):
     Using given values to update tensor value through the mul operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each `i, ..., j` in `indices.shape`:
     .. math::
-        \begin{array}{l}
-            \text {for each i, ..., j in indices.shape:} \\
-            input\_x[indices[i, ..., j], :] \mathrel{*}= updates[i, ..., j, :]
-        \end{array}
+        \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{*}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
@@ -3534,11 +3524,9 @@ class ScatterDiv(_ScatterOp):
     Using given values to update tensor value through the div operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
+    for each `i, ..., j` in `indices.shape`:
     .. math::
-        \begin{array}{l}
-            \text {for each i, ..., j in indices.shape:} \\
-            input\_x[indices[i, ..., j], :] \mathrel{/}= updates[i, ..., j, :]
-        \end{array}
+        \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{/}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
     If they have different data types, lower priority data type will be converted to
