@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,41 +34,44 @@ using mindspore::MsLogLevel::INFO;
 
 class MindDataTestOptimizationPass : public UT::DatasetOpTesting {};
 
-// TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
-//  MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestAutoWorkerPass.";
-//
-//  std::shared_ptr<SchemaObj> schema = std::make_shared<SchemaObj>();
-//  ASSERT_TRUE(schema->add_column("label", "uint32", {}));
-//  std::shared_ptr<Dataset> map_leaf = ImageFolder("dir")->SetNumWorkers(0);
-//  std::shared_ptr<Dataset> nonmap_leaf = RandomData(44, schema)->SetNumWorkers(0);
-//  std::shared_ptr<Dataset> batch = Zip({map_leaf, nonmap_leaf})->Batch(1)->SetNumWorkers(0);
-//  std::shared_ptr<Dataset> map = batch->Map({})->SetNumWorkers(0);
-//  //  {ImageFolder, RandomData} -> zip -> batch
-//  EXPECT_EQ(map_leaf->IRNode()->num_workers(), 0);
-//  EXPECT_EQ(nonmap_leaf->IRNode()->num_workers(), 0);
-//  EXPECT_EQ(batch->IRNode()->num_workers(), 0);
-//  EXPECT_EQ(map->IRNode()->num_workers(), 0);
-//
-//  std::unique_ptr<IRPass> pass = std::make_unique<AutoWorkerPass>();
-//  bool m = false;
-//  ASSERT_OK(pass->Run(map->IRNode(), &m));
-//
-//  // checking that after this pass, num_workers are set correctly (aka a positive number)
-//  // It is hard to test a exact value because num_threads are different for different machine
-//  // however, this will for sure succeed bc regardless of the total threads on cpu, this would always be >= 1
-//  EXPECT_NE(map_leaf->IRNode()->num_workers(), 0);
-//  EXPECT_NE(nonmap_leaf->IRNode()->num_workers(), 0);
-//  EXPECT_NE(batch->IRNode()->num_workers(), 0);
-//  EXPECT_NE(map->IRNode()->num_workers(), 0);
-//  MS_LOG(DEBUG) << map_leaf->IRNode()->Name() << ": num_worker=" << map_leaf->IRNode()->num_workers();
-//  MS_LOG(DEBUG) << nonmap_leaf->IRNode()->Name() << ": num_worker=" << nonmap_leaf->IRNode()->num_workers();
-//  MS_LOG(DEBUG) << batch->IRNode()->Name() << ": num_worker=" << batch->IRNode()->num_workers();
-//  MS_LOG(DEBUG) << map->IRNode()->Name() << ": num_worker=" << map->IRNode()->num_workers();
-//}
+TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
+  MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestAutoWorkerPass.";
+
+  std::shared_ptr<SchemaObj> schema = std::make_shared<SchemaObj>();
+  ASSERT_TRUE(schema->add_column("label", "uint32", {}));
+  std::shared_ptr<Dataset> map_leaf = ImageFolder("dir")->SetNumWorkers(0);
+  std::shared_ptr<Dataset> nonmap_leaf = RandomData(44, schema)->SetNumWorkers(0);
+  std::shared_ptr<Dataset> batch = Zip({map_leaf, nonmap_leaf})->Batch(1)->SetNumWorkers(0);
+  /* FIXME - Will uncomment out when full external API support is provided
+  std::shared_ptr<Dataset> map = batch->Map({})->SetNumWorkers(0);
+  //  {ImageFolder, RandomData} -> zip -> batch
+  EXPECT_EQ(map_leaf->IRNode()->num_workers(), 0);
+  EXPECT_EQ(nonmap_leaf->IRNode()->num_workers(), 0);
+  EXPECT_EQ(batch->IRNode()->num_workers(), 0);
+  EXPECT_EQ(map->IRNode()->num_workers(), 0);
+
+  std::unique_ptr<IRPass> pass = std::make_unique<AutoWorkerPass>();
+  bool m = false;
+  ASSERT_OK(pass->Run(map->IRNode(), &m));
+
+  // checking that after this pass, num_workers are set correctly (aka a positive number)
+  // It is hard to test a exact value because num_threads are different for different machine
+  // however, this will for sure succeed bc regardless of the total threads on cpu, this would always be >= 1
+  EXPECT_NE(map_leaf->IRNode()->num_workers(), 0);
+  EXPECT_NE(nonmap_leaf->IRNode()->num_workers(), 0);
+  EXPECT_NE(batch->IRNode()->num_workers(), 0);
+  EXPECT_NE(map->IRNode()->num_workers(), 0);
+  MS_LOG(DEBUG) << map_leaf->IRNode()->Name() << ": num_worker=" << map_leaf->IRNode()->num_workers();
+  MS_LOG(DEBUG) << nonmap_leaf->IRNode()->Name() << ": num_worker=" << nonmap_leaf->IRNode()->num_workers();
+  MS_LOG(DEBUG) << batch->IRNode()->Name() << ": num_worker=" << batch->IRNode()->num_workers();
+  MS_LOG(DEBUG) << map->IRNode()->Name() << ": num_worker=" << map->IRNode()->num_workers();
+  */
+}
 
 TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPass) {
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestTensorFusionPass.";
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  /* FIXME - Will uncomment out when full external API support is provided
   std::shared_ptr<Dataset> root =
     ImageFolder(folder_path, false)->Map({vision::Decode(), vision::RandomResizedCrop({100})}, {"image"});
 
@@ -82,11 +85,13 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPass) {
   auto fused_ops = map_node->operations();
   ASSERT_EQ(fused_ops.size(), 1);
   ASSERT_EQ(fused_ops[0]->Name(), vision::kRandomCropDecodeResizeOperation);
+  */
 }
 
 TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPassPreBuiltTensorOperation) {
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestTensorFusionPassPreBuiltTensorOperation.";
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  /* FIXME - Will uncomment out when full external API support is provided
   // make prebuilt tensor operation
   auto decode = std::make_shared<transforms::PreBuiltOperation>(vision::Decode()->Build());
   auto resize = std::make_shared<transforms::PreBuiltOperation>(vision::RandomResizedCrop({100})->Build());
@@ -102,4 +107,5 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPassPreBuiltTensorO
   auto fused_ops = map_node->operations();
   ASSERT_EQ(fused_ops.size(), 1);
   ASSERT_EQ(fused_ops[0]->Name(), kRandomCropDecodeResizeOp);
+  */
 }

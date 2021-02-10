@@ -31,6 +31,8 @@
 namespace mindspore {
 namespace dataset {
 // Abstract class to represent a tensor transform operation in the data pipeline.
+/// \class TensorTransform transforms.h
+/// \brief A base class to represent a tensor transform operation in the data pipeline.
 class TensorTransform : public std::enable_shared_from_this<TensorTransform> {
  public:
   /// \brief Constructor

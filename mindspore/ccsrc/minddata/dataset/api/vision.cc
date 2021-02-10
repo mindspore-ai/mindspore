@@ -15,6 +15,9 @@
  */
 
 #include "minddata/dataset/include/vision.h"
+#ifdef ENABLE_ACL
+#include "minddata/dataset/include/vision_ascend.h"
+#endif
 
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/kernels/ir/vision/vision_ir.h"
@@ -25,19 +28,8 @@
 #include "minddata/dataset/kernels/ir/validators.h"
 
 // Kernel image headers (in alphabetical order)
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/auto_contrast_op.h"
-#include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
-#endif
-#include "minddata/dataset/kernels/image/center_crop_op.h"
-#include "minddata/dataset/kernels/image/crop_op.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/cutmix_batch_op.h"
-#include "minddata/dataset/kernels/image/cut_out_op.h"
-#endif
-#include "minddata/dataset/kernels/image/decode_op.h"
+// FIXME - Delete these dvpp include header when dvpp TensorOperation moved to IR level
 #ifdef ENABLE_ACL
-#include "minddata/dataset/include/vision_ascend.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
@@ -45,48 +37,6 @@
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
 #endif
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/equalize_op.h"
-#include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
-#include "minddata/dataset/kernels/image/invert_op.h"
-#include "minddata/dataset/kernels/image/mixup_batch_op.h"
-#endif
-#include "minddata/dataset/kernels/image/normalize_op.h"
-#include "minddata/dataset/kernels/image/normalize_pad_op.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/pad_op.h"
-#include "minddata/dataset/kernels/image/random_affine_op.h"
-#include "minddata/dataset/kernels/image/random_color_op.h"
-#include "minddata/dataset/kernels/image/random_color_adjust_op.h"
-#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
-#include "minddata/dataset/kernels/image/random_crop_op.h"
-#include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
-#include "minddata/dataset/kernels/image/random_crop_with_bbox_op.h"
-#include "minddata/dataset/kernels/image/random_crop_and_resize_with_bbox_op.h"
-#include "minddata/dataset/kernels/image/random_horizontal_flip_op.h"
-#include "minddata/dataset/kernels/image/random_horizontal_flip_with_bbox_op.h"
-#include "minddata/dataset/kernels/image/random_posterize_op.h"
-#include "minddata/dataset/kernels/image/random_resize_op.h"
-#include "minddata/dataset/kernels/image/random_resize_with_bbox_op.h"
-#include "minddata/dataset/kernels/image/random_rotation_op.h"
-#include "minddata/dataset/kernels/image/random_select_subpolicy_op.h"
-#include "minddata/dataset/kernels/image/random_sharpness_op.h"
-#include "minddata/dataset/kernels/image/random_solarize_op.h"
-#include "minddata/dataset/kernels/image/random_vertical_flip_op.h"
-#include "minddata/dataset/kernels/image/random_vertical_flip_with_bbox_op.h"
-#include "minddata/dataset/kernels/image/rescale_op.h"
-#endif
-#include "minddata/dataset/kernels/image/resize_op.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/kernels/image/resize_with_bbox_op.h"
-#include "minddata/dataset/kernels/image/rgba_to_bgr_op.h"
-#include "minddata/dataset/kernels/image/rgba_to_rgb_op.h"
-#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_random_crop_resize_jpeg_op.h"
-#include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_resize_jpeg_op.h"
-#include "minddata/dataset/kernels/image/swap_red_blue_op.h"
-#include "minddata/dataset/kernels/image/uniform_aug_op.h"
-#endif
-#include "minddata/dataset/kernels/image/rotate_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -97,57 +47,54 @@ namespace vision {
 // FUNCTIONS TO CREATE VISION TRANSFORM OPERATIONS
 // (In alphabetical order)
 
-// Function to create AutoContrastOperation.
-std::shared_ptr<AutoContrastOperation> AutoContrast(float cutoff, std::vector<uint32_t> ignore) {
-  auto op = std::make_shared<AutoContrastOperation>(cutoff, ignore);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// AutoContrast Transform Operation.
+AutoContrast::AutoContrast(float cutoff, std::vector<uint32_t> ignore) : cutoff_(cutoff), ignore_(ignore) {}
+
+std::shared_ptr<TensorOperation> AutoContrast::Parse() {
+  return std::make_shared<AutoContrastOperation>(cutoff_, ignore_);
 }
 
-// Function to create BoundingBoxAugmentOperation.
-std::shared_ptr<BoundingBoxAugmentOperation> BoundingBoxAugment(std::shared_ptr<TensorOperation> transform,
-                                                                float ratio) {
-  auto op = std::make_shared<BoundingBoxAugmentOperation>(transform, ratio);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// BoundingBoxAugment Transform Operation.
+BoundingBoxAugment::BoundingBoxAugment(std::shared_ptr<TensorTransform> transform, float ratio) {
+  // Convert transform from TensorTransform to TensorOperation
+  transform_ = transform->Parse();
+  ratio_ = ratio;
+}
+
+std::shared_ptr<TensorOperation> BoundingBoxAugment::Parse() {
+  return std::make_shared<BoundingBoxAugmentOperation>(transform_, ratio_);
 }
 #endif
 
-// Function to create CenterCropOperation.
-std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size) {
-  auto op = std::make_shared<CenterCropOperation>(size);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// CenterCrop Transform Operation.
+CenterCrop::CenterCrop(std::vector<int32_t> size) : size_(size) {}
 
-// Function to create CropOperation.
-std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size) {
-  auto op = std::make_shared<CropOperation>(coordinates, size);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+std::shared_ptr<TensorOperation> CenterCrop::Parse() { return std::make_shared<CenterCropOperation>(size_); }
+
+// Crop Transform Operation.
+Crop::Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size) : coordinates_(coordinates), size_(size) {}
+
+std::shared_ptr<TensorOperation> Crop::Parse() { return std::make_shared<CropOperation>(coordinates_, size_); }
+
 #ifndef ENABLE_ANDROID
-// Function to create CutMixBatchOperation.
-std::shared_ptr<CutMixBatchOperation> CutMixBatch(ImageBatchFormat image_batch_format, float alpha, float prob) {
-  auto op = std::make_shared<CutMixBatchOperation>(image_batch_format, alpha, prob);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// CutMixBatch Transform Operation.
+CutMixBatch::CutMixBatch(ImageBatchFormat image_batch_format, float alpha, float prob)
+    : image_batch_format_(image_batch_format), alpha_(alpha), prob_(prob) {}
+
+std::shared_ptr<TensorOperation> CutMixBatch::Parse() {
+  return std::make_shared<CutMixBatchOperation>(image_batch_format_, alpha_, prob_);
 }
 
-// Function to create CutOutOp.
-std::shared_ptr<CutOutOperation> CutOut(int32_t length, int32_t num_patches) {
-  auto op = std::make_shared<CutOutOperation>(length, num_patches);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// CutOutOp.
+CutOut::CutOut(int32_t length, int32_t num_patches) : length_(length), num_patches_(num_patches) {}
 
-// Function to create DecodeOperation.
-std::shared_ptr<DecodeOperation> Decode(bool rgb) {
-  auto op = std::make_shared<DecodeOperation>(rgb);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+std::shared_ptr<TensorOperation> CutOut::Parse() { return std::make_shared<CutOutOperation>(length_, num_patches_); }
 
+// Decode Transform Operation.
+Decode::Decode(bool rgb) {}
+std::shared_ptr<TensorOperation> Decode::Parse() { return std::make_shared<DecodeOperation>(rgb_); }
+
+#endif
 #ifdef ENABLE_ACL
 // Function to create DvppResizeOperation.
 std::shared_ptr<DvppCropJpegOperation> DvppCropJpeg(std::vector<uint32_t> crop) {
@@ -193,298 +140,354 @@ std::shared_ptr<DvppResizeJpegOperation> DvppResizeJpeg(std::vector<uint32_t> re
 }
 #endif
 
-// Function to create EqualizeOperation.
-std::shared_ptr<EqualizeOperation> Equalize() {
-  auto op = std::make_shared<EqualizeOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+/*
+// DvppResize Transform Operation.
+DvppCropJpeg::DvppCropJpeg(std::vector<uint32_t> crop) : crop_(crop) {}
+
+std::shared_ptr<TensorOperation> DvppCropJpeg::Parse() { return std::make_shared<DvppCropJpegOperation>(crop); }
+
+// DvppDecodeResize Transform Operation.
+DvppDecodeResize::DvppDecodeResizeJpeg(std::vector<uint32_t> resize) : resize_(resize) {}
+
+std::shared_ptr<TensorOperation> DvppDecodeResizeJpeg::Parse() {
+  return std::make_shared<DvppDecodeResizeOperation>(resize);
 }
 
-// Function to create HwcToChwOperation.
-std::shared_ptr<HwcToChwOperation> HWC2CHW() {
-  auto op = std::make_shared<HwcToChwOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// DvppDecodeResizeCrop Transform Operation.
+DvppDecodeResizeCrop::DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize)
+    : crop_(crop), resize_(resize) {}
+
+std::shared_ptr<TensorOperation> DvppDecodeResizeCropJpeg::Parse() {
+  return std::make_shared<DvppDecodeResizeCropOperation>(crop, resize);
 }
 
-// Function to create InvertOperation.
-std::shared_ptr<InvertOperation> Invert() {
-  auto op = std::make_shared<InvertOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// DvppCropOperation
+DvppCropJpeg::DvppCropJpeg(const std::vector<uint32_t> &crop) : crop_(crop) {}
+
+std::shared_ptr<TensorOperation> DvppCropJpeg::Parse() { return std::make_shared<DvppCropJpegOperation>(); }
+
+// DvppDecodeResizeOperation
+DvppDecodeResize::DvppDecodeResize(const std::vector<uint32_t> &resize) : resize_(resize) {}
+
+std::shared_ptr<TensorOperation> DvppDecodeResize::Parse() { return std::make_shared<DvppDecodeResizeOperation>(); }
+
+// DvppDecodeJpeg Transform Operation.
+DvppDecodeJpeg::DvppDecodeJpeg() {}
+
+std::shared_ptr<TensorOperation> DvppDecodeJpeg::Parse() { return std::make_shared<DvppDecodeJpegOperation>(); }
+
+// DvppDecodePng Transform Operation.
+DvppDecodePng::DvppDecodePng() {}
+
+std::shared_ptr<TensorOperation> DvppDecodePng::Parse() { return std::make_shared<DvppDecodePngOperation>(); }
+
+// DvppResizeOperation
+DvppDecodeResize::DvppResizeJpeg(const std::vector<uint32_t> &resize) : resize_(resize) {}
+
+std::shared_ptr<TensorOperation> DvppDecodeResize::Parse() { return std::make_shared<DvppDecodeResizeOperation>(); }
+
+// DvppDecodeResizeCropOperation
+DvppDecodeResizeCrop::DvppDecodeResizeCrop(const std::vector<uint32_t> &crop, const std::vector<uint32_t> &resize)
+    : crop_(crop), resize_(resize) {}
+
+std::shared_ptr<TensorOperation> DvppDecodeResizeCrop::Parse() {
+  return std::make_shared<DvppDecodeResizeCropOperation>();
 }
 
-// Function to create MixUpBatchOperation.
-std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha) {
-  auto op = std::make_shared<MixUpBatchOperation>(alpha);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// DvppResize Transform Operation.
+DvppResizeJpeg::DvppResizeJpeg(std::vector<uint32_t> resize) {}
+
+std::shared_ptr<TensorOperation> DvppResizeJpeg::Parse() { return std::make_shared<DvppResizeJpegOperation>(resize); }
 #endif
 
-// Function to create NormalizeOperation.
-std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std) {
-  auto op = std::make_shared<NormalizeOperation>(mean, std);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+*/
 
 #ifndef ENABLE_ANDROID
-// Function to create NormalizePadOperation.
-std::shared_ptr<NormalizePadOperation> NormalizePad(const std::vector<float> &mean, const std::vector<float> &std,
-                                                    const std::string &dtype) {
-  auto op = std::make_shared<NormalizePadOperation>(mean, std, dtype);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// Equalize Transform Operation.
+Equalize::Equalize() {}
+
+std::shared_ptr<TensorOperation> Equalize::Parse() { return std::make_shared<EqualizeOperation>(); }
+// HwcToChw Transform Operation.
+HWC2CHW::HWC2CHW() {}
+
+std::shared_ptr<TensorOperation> HWC2CHW::Parse() { return std::make_shared<HwcToChwOperation>(); }
+
+// Invert Transform Operation.
+Invert::Invert() {}
+
+std::shared_ptr<TensorOperation> Invert::Parse() { return std::make_shared<InvertOperation>(); }
+
+// MixUpBatch Transform Operation.
+MixUpBatch::MixUpBatch(float alpha) : alpha_(alpha) {}
+
+std::shared_ptr<TensorOperation> MixUpBatch::Parse() { return std::make_shared<MixUpBatchOperation>(alpha_); }
+#endif
+
+// Normalize Transform Operation.
+Normalize::Normalize(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
+
+std::shared_ptr<TensorOperation> Normalize::Parse() { return std::make_shared<NormalizeOperation>(mean_, std_); }
+
+#ifndef ENABLE_ANDROID
+// NormalizePad Transform Operation.
+NormalizePad::NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype)
+    : mean_(mean), std_(std), dtype_(dtype) {}
+
+std::shared_ptr<TensorOperation> NormalizePad::Parse() {
+  return std::make_shared<NormalizePadOperation>(mean_, std_, dtype_);
 }
 
-// Function to create PadOperation.
-std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value,
-                                  BorderType padding_mode) {
-  auto op = std::make_shared<PadOperation>(padding, fill_value, padding_mode);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// Pad Transform Operation.
+Pad::Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)
+    : padding_(padding), fill_value_(fill_value), padding_mode_(padding_mode) {}
+
+std::shared_ptr<TensorOperation> Pad::Parse() {
+  return std::make_shared<PadOperation>(padding_, fill_value_, padding_mode_);
 }
 
-// Function to create RandomAffineOperation.
-std::shared_ptr<RandomAffineOperation> RandomAffine(const std::vector<float_t> &degrees,
-                                                    const std::vector<float_t> &translate_range,
-                                                    const std::vector<float_t> &scale_range,
-                                                    const std::vector<float_t> &shear_ranges,
-                                                    InterpolationMode interpolation,
-                                                    const std::vector<uint8_t> &fill_value) {
-  auto op = std::make_shared<RandomAffineOperation>(degrees, translate_range, scale_range, shear_ranges, interpolation,
-                                                    fill_value);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomAffine Transform Operation.
+RandomAffine::RandomAffine(const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range,
+                           const std::vector<float_t> &scale_range, const std::vector<float_t> &shear_ranges,
+                           InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
+    : degrees_(degrees),
+      translate_range_(translate_range),
+      scale_range_(scale_range),
+      shear_ranges_(shear_ranges),
+      interpolation_(interpolation),
+      fill_value_(fill_value) {}
+
+std::shared_ptr<TensorOperation> RandomAffine::Parse() {
+  return std::make_shared<RandomAffineOperation>(degrees_, translate_range_, scale_range_, shear_ranges_,
+                                                 interpolation_, fill_value_);
 }
 
-// Function to create RandomColorOperation.
-std::shared_ptr<RandomColorOperation> RandomColor(float t_lb, float t_ub) {
-  auto op = std::make_shared<RandomColorOperation>(t_lb, t_ub);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomColor Transform Operation.
+RandomColor::RandomColor(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
+
+std::shared_ptr<TensorOperation> RandomColor::Parse() { return std::make_shared<RandomColorOperation>(t_lb_, t_ub_); }
+
+// RandomColorAdjust Transform Operation.
+RandomColorAdjust::RandomColorAdjust(std::vector<float> brightness, std::vector<float> contrast,
+                                     std::vector<float> saturation, std::vector<float> hue)
+    : brightness_(brightness), contrast_(contrast), saturation_(saturation), hue_(hue) {}
+std::shared_ptr<TensorOperation> RandomColorAdjust::Parse() {
+  return std::make_shared<RandomColorAdjustOperation>(brightness_, contrast_, saturation_, hue_);
 }
 
-std::shared_ptr<TensorOp> RandomColorOperation::Build() {
-  std::shared_ptr<RandomColorOp> tensor_op = std::make_shared<RandomColorOp>(t_lb_, t_ub_);
-  return tensor_op;
+// RandomCrop Transform Operation.
+RandomCrop::RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
+                       std::vector<uint8_t> fill_value, BorderType padding_mode)
+    : size_(size),
+      padding_(padding),
+      pad_if_needed_(pad_if_needed),
+      fill_value_(fill_value),
+      padding_mode_(padding_mode) {}
+
+std::shared_ptr<TensorOperation> RandomCrop::Parse() {
+  return std::make_shared<RandomCropOperation>(size_, padding_, pad_if_needed_, fill_value_, padding_mode_);
 }
 
-// Function to create RandomColorAdjustOperation.
-std::shared_ptr<RandomColorAdjustOperation> RandomColorAdjust(std::vector<float> brightness,
-                                                              std::vector<float> contrast,
-                                                              std::vector<float> saturation, std::vector<float> hue) {
-  auto op = std::make_shared<RandomColorAdjustOperation>(brightness, contrast, saturation, hue);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomCropDecodeResize Transform Operation.
+RandomCropDecodeResize::RandomCropDecodeResize(std::vector<int32_t> size, std::vector<float> scale,
+                                               std::vector<float> ratio, InterpolationMode interpolation,
+                                               int32_t max_attempts)
+    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+
+std::shared_ptr<TensorOperation> RandomCropDecodeResize::Parse() {
+  return std::make_shared<RandomCropDecodeResizeOperation>(size_, scale_, ratio_, interpolation_, max_attempts_);
 }
 
-// Function to create RandomCropOperation.
-std::shared_ptr<RandomCropOperation> RandomCrop(std::vector<int32_t> size, std::vector<int32_t> padding,
-                                                bool pad_if_needed, std::vector<uint8_t> fill_value,
-                                                BorderType padding_mode) {
-  auto op = std::make_shared<RandomCropOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomCropWithBBox Transform Operation.
+RandomCropWithBBox::RandomCropWithBBox(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
+                                       std::vector<uint8_t> fill_value, BorderType padding_mode)
+    : size_(size),
+      padding_(padding),
+      pad_if_needed_(pad_if_needed),
+      fill_value_(fill_value),
+      padding_mode_(padding_mode) {}
+
+std::shared_ptr<TensorOperation> RandomCropWithBBox::Parse() {
+  return std::make_shared<RandomCropWithBBoxOperation>(size_, padding_, pad_if_needed_, fill_value_, padding_mode_);
 }
 
-// Function to create RandomCropDecodeResizeOperation.
-std::shared_ptr<RandomCropDecodeResizeOperation> RandomCropDecodeResize(std::vector<int32_t> size,
-                                                                        std::vector<float> scale,
-                                                                        std::vector<float> ratio,
-                                                                        InterpolationMode interpolation,
-                                                                        int32_t max_attempts) {
-  auto op = std::make_shared<RandomCropDecodeResizeOperation>(size, scale, ratio, interpolation, max_attempts);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomHorizontalFlip.
+RandomHorizontalFlip::RandomHorizontalFlip(float prob) : probability_(prob) {}
+
+std::shared_ptr<TensorOperation> RandomHorizontalFlip::Parse() {
+  return std::make_shared<RandomHorizontalFlipOperation>(probability_);
 }
 
-// Function to create RandomCropWithBBoxOperation.
-std::shared_ptr<RandomCropWithBBoxOperation> RandomCropWithBBox(std::vector<int32_t> size, std::vector<int32_t> padding,
-                                                                bool pad_if_needed, std::vector<uint8_t> fill_value,
-                                                                BorderType padding_mode) {
-  auto op = std::make_shared<RandomCropWithBBoxOperation>(size, padding, pad_if_needed, fill_value, padding_mode);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomHorizontalFlipWithBBox
+RandomHorizontalFlipWithBBox::RandomHorizontalFlipWithBBox(float prob) : probability_(prob) {}
+
+std::shared_ptr<TensorOperation> RandomHorizontalFlipWithBBox::Parse() {
+  return std::make_shared<RandomHorizontalFlipWithBBoxOperation>(probability_);
 }
 
-// Function to create RandomHorizontalFlipOperation.
-std::shared_ptr<RandomHorizontalFlipOperation> RandomHorizontalFlip(float prob) {
-  auto op = std::make_shared<RandomHorizontalFlipOperation>(prob);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomPosterize Transform Operation.
+RandomPosterize::RandomPosterize(const std::vector<uint8_t> &bit_range) : bit_range_(bit_range) {}
+
+std::shared_ptr<TensorOperation> RandomPosterize::Parse() {
+  return std::make_shared<RandomPosterizeOperation>(bit_range_);
 }
 
-// Function to create RandomHorizontalFlipOperation.
-std::shared_ptr<RandomHorizontalFlipWithBBoxOperation> RandomHorizontalFlipWithBBox(float prob) {
-  auto op = std::make_shared<RandomHorizontalFlipWithBBoxOperation>(prob);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomResize Transform Operation.
+RandomResize::RandomResize(std::vector<int32_t> size) : size_(size) {}
+
+std::shared_ptr<TensorOperation> RandomResize::Parse() { return std::make_shared<RandomResizeOperation>(size_); }
+
+// RandomResizeWithBBox Transform Operation.
+RandomResizeWithBBox::RandomResizeWithBBox(std::vector<int32_t> size) : size_(size) {}
+
+std::shared_ptr<TensorOperation> RandomResizeWithBBox::Parse() {
+  return std::make_shared<RandomResizeWithBBoxOperation>(size_);
 }
 
-// Function to create RandomPosterizeOperation.
-std::shared_ptr<RandomPosterizeOperation> RandomPosterize(const std::vector<uint8_t> &bit_range) {
-  auto op = std::make_shared<RandomPosterizeOperation>(bit_range);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomResizedCrop Transform Operation.
+RandomResizedCrop::RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
+                                     InterpolationMode interpolation, int32_t max_attempts)
+    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+
+std::shared_ptr<TensorOperation> RandomResizedCrop::Parse() {
+  return std::make_shared<RandomResizedCropOperation>(size_, scale_, ratio_, interpolation_, max_attempts_);
 }
 
-// Function to create RandomResizeOperation.
-std::shared_ptr<RandomResizeOperation> RandomResize(std::vector<int32_t> size) {
-  auto op = std::make_shared<RandomResizeOperation>(size);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomResizedCrop Transform Operation.
+RandomResizedCropWithBBox::RandomResizedCropWithBBox(std::vector<int32_t> size, std::vector<float> scale,
+                                                     std::vector<float> ratio, InterpolationMode interpolation,
+                                                     int32_t max_attempts)
+    : size_(size), scale_(scale), ratio_(ratio), interpolation_(interpolation), max_attempts_(max_attempts) {}
+
+std::shared_ptr<TensorOperation> RandomResizedCropWithBBox::Parse() {
+  return std::make_shared<RandomResizedCropWithBBoxOperation>(size_, scale_, ratio_, interpolation_, max_attempts_);
 }
 
-// Function to create RandomResizeWithBBoxOperation.
-std::shared_ptr<RandomResizeWithBBoxOperation> RandomResizeWithBBox(std::vector<int32_t> size) {
-  auto op = std::make_shared<RandomResizeWithBBoxOperation>(size);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomRotation Transform Operation.
+RandomRotation::RandomRotation(std::vector<float> degrees, InterpolationMode interpolation_mode, bool expand,
+                               std::vector<float> center, std::vector<uint8_t> fill_value)
+    : degrees_(degrees),
+      interpolation_mode_(interpolation_mode),
+      expand_(expand),
+      center_(center),
+      fill_value_(fill_value) {}
+
+std::shared_ptr<TensorOperation> RandomRotation::Parse() {
+  return std::make_shared<RandomRotationOperation>(degrees_, interpolation_mode_, expand_, center_, fill_value_);
 }
 
-// Function to create RandomResizedCropOperation.
-std::shared_ptr<RandomResizedCropOperation> RandomResizedCrop(std::vector<int32_t> size, std::vector<float> scale,
-                                                              std::vector<float> ratio, InterpolationMode interpolation,
-                                                              int32_t max_attempts) {
-  auto op = std::make_shared<RandomResizedCropOperation>(size, scale, ratio, interpolation, max_attempts);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomSelectSubpolicy Transform Operation.
+// FIXME - Provide TensorTransform support for policy
+RandomSelectSubpolicy::RandomSelectSubpolicy(
+  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy)
+    : policy_(policy) {}
+
+std::shared_ptr<TensorOperation> RandomSelectSubpolicy::Parse() {
+  return std::make_shared<RandomSelectSubpolicyOperation>(policy_);
 }
 
-// Function to create RandomResizedCropOperation.
-std::shared_ptr<RandomResizedCropWithBBoxOperation> RandomResizedCropWithBBox(std::vector<int32_t> size,
-                                                                              std::vector<float> scale,
-                                                                              std::vector<float> ratio,
-                                                                              InterpolationMode interpolation,
-                                                                              int32_t max_attempts) {
-  auto op = std::make_shared<RandomResizedCropWithBBoxOperation>(size, scale, ratio, interpolation, max_attempts);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomSharpness Transform Operation.
+RandomSharpness::RandomSharpness(std::vector<float> degrees) : degrees_(degrees) {}
+
+std::shared_ptr<TensorOperation> RandomSharpness::Parse() {
+  return std::make_shared<RandomSharpnessOperation>(degrees_);
 }
 
-// Function to create RandomRotationOperation.
-std::shared_ptr<RandomRotationOperation> RandomRotation(std::vector<float> degrees, InterpolationMode resample,
-                                                        bool expand, std::vector<float> center,
-                                                        std::vector<uint8_t> fill_value) {
-  auto op = std::make_shared<RandomRotationOperation>(degrees, resample, expand, center, fill_value);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomSolarize Transform Operation.
+RandomSolarize::RandomSolarize(std::vector<uint8_t> threshold) : threshold_(threshold) {}
+
+std::shared_ptr<TensorOperation> RandomSolarize::Parse() {
+  return std::make_shared<RandomSolarizeOperation>(threshold_);
 }
 
-// Function to create RandomSharpnessOperation.
-std::shared_ptr<RandomSharpnessOperation> RandomSharpness(std::vector<float> degrees) {
-  auto op = std::make_shared<RandomSharpnessOperation>(degrees);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomVerticalFlip Transform Operation.
+RandomVerticalFlip::RandomVerticalFlip(float prob) : probability_(prob) {}
+
+std::shared_ptr<TensorOperation> RandomVerticalFlip::Parse() {
+  return std::make_shared<RandomVerticalFlipOperation>(probability_);
 }
 
-// Function to create RandomSolarizeOperation.
-std::shared_ptr<RandomSolarizeOperation> RandomSolarize(std::vector<uint8_t> threshold) {
-  auto op = std::make_shared<RandomSolarizeOperation>(threshold);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RandomVerticalFlipWithBBox Transform Operation.
+RandomVerticalFlipWithBBox::RandomVerticalFlipWithBBox(float prob) : probability_(prob) {}
+
+std::shared_ptr<TensorOperation> RandomVerticalFlipWithBBox::Parse() {
+  return std::make_shared<RandomVerticalFlipWithBBoxOperation>(probability_);
 }
 
-// Function to create RandomSelectSubpolicyOperation.
-std::shared_ptr<RandomSelectSubpolicyOperation> RandomSelectSubpolicy(
-  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy) {
-  auto op = std::make_shared<RandomSelectSubpolicyOperation>(policy);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// Rescale Transform Operation.
+Rescale::Rescale(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
 
-// Function to create RandomVerticalFlipOperation.
-std::shared_ptr<RandomVerticalFlipOperation> RandomVerticalFlip(float prob) {
-  auto op = std::make_shared<RandomVerticalFlipOperation>(prob);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
-
-// Function to create RandomVerticalFlipWithBBoxOperation.
-std::shared_ptr<RandomVerticalFlipWithBBoxOperation> RandomVerticalFlipWithBBox(float prob) {
-  auto op = std::make_shared<RandomVerticalFlipWithBBoxOperation>(prob);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
-
-// Function to create RescaleOperation.
-std::shared_ptr<RescaleOperation> Rescale(float rescale, float shift) {
-  auto op = std::make_shared<RescaleOperation>(rescale, shift);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+std::shared_ptr<TensorOperation> Rescale::Parse() { return std::make_shared<RescaleOperation>(rescale_, shift_); }
 
 #endif
-// Function to create ResizeOperation.
-std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size, InterpolationMode interpolation) {
-  auto op = std::make_shared<ResizeOperation>(size, interpolation);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// Resize Transform Operation.
+Resize::Resize(std::vector<int32_t> size, InterpolationMode interpolation)
+    : size_(size), interpolation_(interpolation) {}
+
+std::shared_ptr<TensorOperation> Resize::Parse() { return std::make_shared<ResizeOperation>(size_, interpolation_); }
 
 #ifdef ENABLE_ANDROID
-// Function to create RotateOperation.
-std::shared_ptr<RotateOperation> Rotate() {
-  auto op = std::make_shared<RotateOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// Rotate Transform Operation.
+Rotate::Rotate() {}
+
+std::shared_ptr<TensorOperation> Rotate::Parse() { return std::make_shared<RotateOperation>(); }
 #endif
 
 #ifndef ENABLE_ANDROID
-// Function to create ResizeWithBBoxOperation.
-std::shared_ptr<ResizeWithBBoxOperation> ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation) {
-  auto op = std::make_shared<ResizeWithBBoxOperation>(size, interpolation);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// ResizeWithBBox Transform Operation.
+ResizeWithBBox::ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation)
+    : size_(size), interpolation_(interpolation) {}
+
+std::shared_ptr<TensorOperation> ResizeWithBBox::Parse() {
+  return std::make_shared<ResizeWithBBoxOperation>(size_, interpolation_);
 }
 
-// Function to create RgbaToBgrOperation.
-std::shared_ptr<RgbaToBgrOperation> RGBA2BGR() {
-  auto op = std::make_shared<RgbaToBgrOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// RgbaToBgr Transform Operation.
+RGBA2BGR::RGBA2BGR() {}
+
+std::shared_ptr<TensorOperation> RGBA2BGR::Parse() { return std::make_shared<RgbaToBgrOperation>(); }
+
+// RgbaToRgb Transform Operation.
+RGBA2RGB::RGBA2RGB() {}
+
+std::shared_ptr<TensorOperation> RGBA2RGB::Parse() { return std::make_shared<RgbaToRgbOperation>(); }
+
+// SoftDvppDecodeRandomCropResizeJpeg Transform Operation.
+SoftDvppDecodeRandomCropResizeJpeg::SoftDvppDecodeRandomCropResizeJpeg(std::vector<int32_t> size,
+                                                                       std::vector<float> scale,
+                                                                       std::vector<float> ratio, int32_t max_attempts)
+    : size_(size), scale_(scale), ratio_(ratio), max_attempts_(max_attempts) {}
+std::shared_ptr<TensorOperation> SoftDvppDecodeRandomCropResizeJpeg::Parse() {
+  return std::make_shared<SoftDvppDecodeRandomCropResizeJpegOperation>(size_, scale_, ratio_, max_attempts_);
 }
 
-// Function to create RgbaToRgbOperation.
-std::shared_ptr<RgbaToRgbOperation> RGBA2RGB() {
-  auto op = std::make_shared<RgbaToRgbOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// SoftDvppDecodeResizeJpeg Transform Operation.
+SoftDvppDecodeResizeJpeg::SoftDvppDecodeResizeJpeg(std::vector<int32_t> size) : size_(size) {}
+
+std::shared_ptr<TensorOperation> SoftDvppDecodeResizeJpeg::Parse() {
+  return std::make_shared<SoftDvppDecodeResizeJpegOperation>(size_);
 }
 
-// Function to create SoftDvppDecodeRandomCropResizeJpegOperation.
-std::shared_ptr<SoftDvppDecodeRandomCropResizeJpegOperation> SoftDvppDecodeRandomCropResizeJpeg(
-  std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio, int32_t max_attempts) {
-  auto op = std::make_shared<SoftDvppDecodeRandomCropResizeJpegOperation>(size, scale, ratio, max_attempts);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// SwapRedBlue Transform Operation.
+SwapRedBlue::SwapRedBlue() {}
+
+std::shared_ptr<TensorOperation> SwapRedBlue::Parse() { return std::make_shared<SwapRedBlueOperation>(); }
+
+// UniformAug Transform Operation.
+UniformAugment::UniformAugment(std::vector<std::shared_ptr<TensorTransform>> transforms, int32_t num_ops) {
+  // Convert ops from TensorTransform to TensorOperation
+  (void)std::transform(
+    transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+    [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
+  num_ops_ = num_ops;
 }
 
-// Function to create SoftDvppDecodeResizeJpegOperation.
-std::shared_ptr<SoftDvppDecodeResizeJpegOperation> SoftDvppDecodeResizeJpeg(std::vector<int32_t> size) {
-  auto op = std::make_shared<SoftDvppDecodeResizeJpegOperation>(size);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
-
-// Function to create SwapRedBlueOperation.
-std::shared_ptr<SwapRedBlueOperation> SwapRedBlue() {
-  auto op = std::make_shared<SwapRedBlueOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
-
-// Function to create UniformAugOperation.
-std::shared_ptr<UniformAugOperation> UniformAugment(std::vector<std::shared_ptr<TensorOperation>> transforms,
-                                                    int32_t num_ops) {
-  auto op = std::make_shared<UniformAugOperation>(transforms, num_ops);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+std::shared_ptr<TensorOperation> UniformAugment::Parse() {
+  return std::make_shared<UniformAugOperation>(transforms_, num_ops_);
 }
 #endif
+
+// FIXME - Move these DVPP Derived TensorOperation classes to IR level
+/* ####################################### Derived TensorOperation classes ################################# */
 
 #ifdef ENABLE_ACL
 // DvppCropOperation

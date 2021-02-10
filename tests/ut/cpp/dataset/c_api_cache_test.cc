@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiNestedCache) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> decode_op = vision::Decode();
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
   EXPECT_NE(decode_op, nullptr);
 
   // Create a Map operation on ds

@@ -79,51 +79,6 @@ constexpr char kSoftDvppDecodeResizeJpegOperation[] = "SoftDvppDecodeResizeJpeg"
 constexpr char kSwapRedBlueOperation[] = "SwapRedBlue";
 constexpr char kUniformAugOperation[] = "UniformAug";
 
-// Transform Op classes (in alphabetical order)
-class AutoContrastOperation;
-class BoundingBoxAugmentOperation;
-class CenterCropOperation;
-class CropOperation;
-class CutMixBatchOperation;
-class CutOutOperation;
-class DecodeOperation;
-class EqualizeOperation;
-class HwcToChwOperation;
-class InvertOperation;
-class MixUpBatchOperation;
-class NormalizeOperation;
-class NormalizePadOperation;
-class PadOperation;
-class RandomAffineOperation;
-class RandomColorAdjustOperation;
-class RandomColorOperation;
-class RandomCropDecodeResizeOperation;
-class RandomCropOperation;
-class RandomCropWithBBoxOperation;
-class RandomHorizontalFlipOperation;
-class RandomHorizontalFlipWithBBoxOperation;
-class RandomPosterizeOperation;
-class RandomResizedCropOperation;
-class RandomResizedCropWithBBoxOperation;
-class RandomResizeOperation;
-class RandomResizeWithBBoxOperation;
-class RandomRotationOperation;
-class RandomSelectSubpolicyOperation;
-class RandomSharpnessOperation;
-class RandomSolarizeOperation;
-class RandomVerticalFlipOperation;
-class RandomVerticalFlipWithBBoxOperation;
-class RescaleOperation;
-class ResizeOperation;
-class ResizeWithBBoxOperation;
-class RgbaToBgrOperation;
-class RgbaToRgbOperation;
-class RotateOperation;
-class SoftDvppDecodeRandomCropResizeJpegOperation;
-class SoftDvppDecodeResizeJpegOperation;
-class SwapRedBlueOperation;
-class UniformAugOperation;
-
 /* ####################################### Derived TensorOperation classes ################################# */
 
 class AutoContrastOperation : public TensorOperation {

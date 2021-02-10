@@ -542,6 +542,11 @@ Status RandomColorOperation::ValidateParams() {
   return Status::OK();
 }
 
+std::shared_ptr<TensorOp> RandomColorOperation::Build() {
+  std::shared_ptr<RandomColorOp> tensor_op = std::make_shared<RandomColorOp>(t_lb_, t_ub_);
+  return tensor_op;
+}
+
 Status RandomColorOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["degrees"] = std::vector<float>{t_lb_, t_ub_};
   return Status::OK();

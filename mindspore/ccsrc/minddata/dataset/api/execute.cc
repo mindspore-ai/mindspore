@@ -33,6 +33,7 @@
 namespace mindspore {
 namespace dataset {
 
+// FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
 Execute::Execute(std::shared_ptr<TensorOperation> op, std::string deviceType) {
   ops_.emplace_back(std::move(op));
   device_type_ = deviceType;
@@ -49,8 +50,123 @@ Execute::Execute(std::shared_ptr<TensorOperation> op, std::string deviceType) {
 #endif
 }
 
+Execute::Execute(std::shared_ptr<TensorTransform> op, std::string deviceType) {
+  // Convert op from TensorTransform to TensorOperation
+  std::shared_ptr<TensorOperation> operation = op->Parse();
+  ops_.emplace_back(std::move(operation));
+  device_type_ = deviceType;
+  MS_LOG(INFO) << "Running Device: " << device_type_;
+#ifdef ENABLE_ACL
+  if (device_type_ == "Ascend310") {
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
+  }
+#endif
+}
+
+/*
+Execute::Execute(TensorTransform op, std::string deviceType) {
+  // Convert op from TensorTransform to TensorOperation
+  std::shared_ptr<TensorOperation> operation = op.Parse();
+  ops_.emplace_back(std::move(operation));
+  device_type_ = deviceType;
+  MS_LOG(INFO) << "Running Device: " << device_type_;
+#ifdef ENABLE_ACL
+  if (device_type_ == "Ascend310") {
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
+  }
+#endif
+}
+*/
+
+// Execute function for the example case: auto decode(new vision::Decode());
+Execute::Execute(TensorTransform *op, std::string deviceType) {
+  // Convert op from TensorTransform to TensorOperation
+  std::shared_ptr<TensorOperation> operation = op->Parse();
+  ops_.emplace_back(std::move(operation));
+  device_type_ = deviceType;
+  MS_LOG(INFO) << "Running Device: " << device_type_;
+#ifdef ENABLE_ACL
+  if (device_type_ == "Ascend310") {
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
+  }
+#endif
+}
+
 Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string deviceType)
     : ops_(std::move(ops)), device_type_(deviceType) {
+  MS_LOG(INFO) << "Running Device: " << device_type_;
+#ifdef ENABLE_ACL
+  if (device_type_ == "Ascend310") {
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
+  }
+#endif
+}
+
+Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, std::string deviceType) {
+  // Convert ops from TensorTransform to TensorOperation
+  (void)std::transform(
+    ops.begin(), ops.end(), std::back_inserter(ops_),
+    [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
+  device_type_ = deviceType;
+  MS_LOG(INFO) << "Running Device: " << device_type_;
+#ifdef ENABLE_ACL
+  if (device_type_ == "Ascend310") {
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
+  }
+#endif
+}
+
+Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, std::string deviceType) {
+  // Convert ops from TensorTransform to TensorOperation
+  (void)std::transform(
+    ops.begin(), ops.end(), std::back_inserter(ops_),
+    [](TensorTransform &operation) -> std::shared_ptr<TensorOperation> { return operation.Parse(); });
+  device_type_ = deviceType;
+  MS_LOG(INFO) << "Running Device: " << device_type_;
+#ifdef ENABLE_ACL
+  if (device_type_ == "Ascend310") {
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
+  }
+#endif
+}
+
+// Execute function for the example vector case: auto decode(new vision::Decode());
+Execute::Execute(std::vector<TensorTransform *> ops, std::string deviceType) {
+  // Convert ops from TensorTransform to TensorOperation
+  (void)std::transform(
+    ops.begin(), ops.end(), std::back_inserter(ops_),
+    [](TensorTransform *operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
+  device_type_ = deviceType;
   MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
   if (device_type_ == "Ascend310") {

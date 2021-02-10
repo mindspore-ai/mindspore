@@ -33,9 +33,16 @@ namespace dataset {
 class Execute {
  public:
   /// \brief Constructor
+  // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
   explicit Execute(std::shared_ptr<TensorOperation> op, std::string deviceType = "CPU");
+  explicit Execute(std::shared_ptr<TensorTransform> op, std::string deviceType = "CPU");
+  // explicit Execute(TensorTransform op, std::string deviceType = "CPU");
+  explicit Execute(TensorTransform *op, std::string deviceType = "CPU");
 
   explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string deviceType = "CPU");
+  explicit Execute(std::vector<std::shared_ptr<TensorTransform>> ops, std::string deviceType = "CPU");
+  explicit Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, std::string deviceType = "CPU");
+  explicit Execute(std::vector<TensorTransform *> ops, std::string deviceType = "CPU");
 
   /// \brief Destructor
   ~Execute();
