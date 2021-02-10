@@ -328,21 +328,32 @@ class DistributedSampler(BuiltinSampler):
         ...                                 sampler=sampler)
 
     Raises:
-        ValueError: If num_shards is not positive.
-        ValueError: If shard_id is smaller than 0 or equal to num_shards or larger than num_shards.
-        ValueError: If shuffle is not a boolean value.
-        ValueError: If offset is greater than num_shards.
+        TypeError: If num_shards is not an integer value.
+        TypeError: If shard_id is not an integer value.
+        TypeError: If shuffle is not a boolean value.
+        TypeError: If num_samples is not an integer value.
+        TypeError: If offset is not an integer value.
+        RuntimeError: If num_shards is not a positive value.
+        RuntimeError: If shard_id is smaller than 0 or equal to num_shards or larger than num_shards.
+        RuntimeError: If num_samples is a negative value.
+        RuntimeError: If offset is greater than num_shards.
     """
 
     def __init__(self, num_shards, shard_id, shuffle=True, num_samples=None, offset=-1):
         if not isinstance(num_shards, int):
-            raise ValueError("num_shards must be integer but was: {}.".format(num_shards))
+            raise TypeError("num_shards must be integer but was: {}.".format(num_shards))
 
         if not isinstance(shard_id, int):
-            raise ValueError("shard_id must be integer but was: {}.".format(shard_id))
+            raise TypeError("shard_id must be integer but was: {}.".format(shard_id))
 
         if not isinstance(shuffle, bool):
-            raise ValueError("shuffle should be a boolean value, but got shuffle: {}.".format(shuffle))
+            raise TypeError("shuffle must be a boolean value but was: {}.".format(shuffle))
+
+        if num_samples is not None and not isinstance(num_samples, int):
+            raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
+
+        if not isinstance(offset, int):
+            raise TypeError("offset must be integer but was: {}.".format(offset))
 
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -408,20 +419,30 @@ class PKSampler(BuiltinSampler):
         ...                                 sampler=sampler)
 
     Raises:
-        ValueError: If num_val is not positive.
+        TypeError: If num_val is not a positive value.
+        TypeError: If shuffle is not a boolean value.
+        TypeError: If class_column is not a str value.
+        TypeError: If num_samples is not an integer value.
         NotImplementedError: If num_class is not None.
-        ValueError: If shuffle is not boolean.
+        RuntimeError: If num_val is not a positive value.
+        RuntimeError: If num_samples is a negative value.
     """
 
     def __init__(self, num_val, num_class=None, shuffle=False, class_column='label', num_samples=None):
         if not isinstance(num_val, int):
-            raise ValueError("num_val must be integer but was: {}.".format(num_val))
+            raise TypeError("num_val must be integer but was: {}.".format(num_val))
 
         if num_class is not None:
             raise NotImplementedError("Not supported to specify num_class for PKSampler.")
 
         if not isinstance(shuffle, bool):
-            raise ValueError("shuffle should be a boolean value, but got shuffle: {}.".format(shuffle))
+            raise TypeError("shuffle must be a boolean value but was: {}.".format(shuffle))
+
+        if not isinstance(class_column, str):
+            raise TypeError("class_column must be a str value but was: {}.".format(class_column))
+
+        if num_samples is not None and not isinstance(num_samples, int):
+            raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
 
         self.num_val = num_val
         self.shuffle = shuffle
@@ -475,13 +496,17 @@ class RandomSampler(BuiltinSampler):
         ...                                 sampler=sampler)
 
     Raises:
-        ValueError: If replacement is not boolean.
-        ValueError: If num_samples is not positive.
+        TypeError: If replacement is not a boolean value.
+        TypeError: If num_samples is not an integer value.
+        RuntimeError: If num_samples is a negative value.
      """
 
     def __init__(self, replacement=False, num_samples=None):
         if not isinstance(replacement, bool):
-            raise ValueError("replacement should be a boolean value, but got replacement: {}.".format(replacement))
+            raise TypeError("replacement must be a boolean value but was: {}.".format(replacement))
+
+        if num_samples is not None and not isinstance(num_samples, int):
+            raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
 
         self.deterministic = False
         self.replacement = replacement
@@ -527,9 +552,21 @@ class SequentialSampler(BuiltinSampler):
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
+
+    Raises:
+        TypeError: If start_index is not an integer value.
+        TypeError: If num_samples is not an integer value.
+        RuntimeError: If start_index is a negative value.
+        RuntimeError: If num_samples is a negative value.
     """
 
     def __init__(self, start_index=None, num_samples=None):
+        if start_index is not None and not isinstance(start_index, int):
+            raise TypeError("start_index must be integer but was: {}.".format(start_index))
+
+        if num_samples is not None and not isinstance(num_samples, int):
+            raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
+
         self.start_index = start_index
         super().__init__(num_samples)
 
@@ -578,6 +615,11 @@ class SubsetSampler(BuiltinSampler):
         >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
         ...                                 num_parallel_workers=8,
         ...                                 sampler=sampler)
+
+    Raises:
+        TypeError: If type of indices element is not a number.
+        TypeError: If num_samples is not an integer value.
+        RuntimeError: If num_samples is a negative value.
     """
 
     def __init__(self, indices, num_samples=None):
@@ -586,8 +628,11 @@ class SubsetSampler(BuiltinSampler):
 
         for i, item in enumerate(indices):
             if not isinstance(item, numbers.Number):
-                raise TypeError("type of indices element should be number, "
+                raise TypeError("type of indices element must be number, "
                                 "but got w[{}]: {}, type: {}.".format(i, item, type(item)))
+
+        if num_samples is not None and not isinstance(num_samples, int):
+            raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
 
         self.indices = indices
         super().__init__(num_samples)
@@ -640,6 +685,11 @@ class SubsetRandomSampler(SubsetSampler):
         >>> # creates a SubsetRandomSampler, will sample from the provided indices
         >>> sampler = ds.SubsetRandomSampler(indices)
         >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+
+    Raises:
+        TypeError: If type of indices element is not a number.
+        TypeError: If num_samples is not an integer value.
+        RuntimeError: If num_samples is a negative value.
     """
 
     def parse(self):
@@ -678,8 +728,11 @@ class WeightedRandomSampler(BuiltinSampler):
         ...                                 sampler=sampler)
 
     Raises:
-        ValueError: If num_samples is not positive.
-        ValueError: If replacement is not boolean.
+        TypeError: If type of weights element is not a number.
+        TypeError: If num_samples is not an integer value.
+        TypeError: If replacement is not a boolean value.
+        RuntimeError: If weights is empty or all zero.
+        RuntimeError: If num_samples is a negative value.
     """
 
     def __init__(self, weights, num_samples=None, replacement=True):
@@ -688,11 +741,14 @@ class WeightedRandomSampler(BuiltinSampler):
 
         for ind, w in enumerate(weights):
             if not isinstance(w, numbers.Number):
-                raise TypeError("type of weights element should be number, "
+                raise TypeError("type of weights element must be number, "
                                 "but got w[{}]: {}, type: {}.".format(ind, w, type(w)))
 
+        if num_samples is not None and not isinstance(num_samples, int):
+            raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
+
         if not isinstance(replacement, bool):
-            raise ValueError("replacement should be a boolean value, but got replacement: {}.".format(replacement))
+            raise TypeError("replacement must be a boolean value but was: {}.".format(replacement))
 
         self.weights = weights
         self.replacement = replacement

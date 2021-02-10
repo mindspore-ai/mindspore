@@ -187,8 +187,8 @@ def test_subset_sampler():
         else:
             with pytest.raises(Exception) as error_info:
                 pipeline()
-            print(str(error_info))
-            assert exception_msg in str(error_info)
+            print(str(error_info.value))
+            assert exception_msg in str(error_info.value)
 
     test_config([1, 2, 3])
     test_config(list(range(10)))
@@ -211,7 +211,7 @@ def test_subset_sampler():
     test_config([0, 9, -6, 2], exception_msg="Sample ID (-6) is out of bound, expected range [0, 9]")
     # test_config([], exception_msg="Indices list is empty") # temporary until we check with MindDataset
     test_config([0, 9, 3, 2], num_samples=-1,
-                exception_msg="SubsetRandomSampler: invalid num_samples: -1")
+                exception_msg="SubsetRandomSampler: num_samples must be greater than or equal to 0")
 
 
 def test_sampler_chain():
@@ -263,7 +263,7 @@ def test_add_sampler_invalid_input():
 def test_distributed_sampler_invalid_offset():
     with pytest.raises(RuntimeError) as info:
         sampler = ds.DistributedSampler(num_shards=4, shard_id=0, shuffle=False, num_samples=None, offset=5).parse()
-    assert "DistributedSampler: invalid offset: 5, which should be no more than num_shards: 4" in str(info.value)
+    assert "DistributedSampler: offset must be no more than num_shards(4)" in str(info.value)
 
 
 def test_sampler_list():

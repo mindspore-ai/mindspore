@@ -141,10 +141,13 @@ def check_random_color_adjust_param(value, input_name, center=1, bound=(0, FLOAT
     if isinstance(value, numbers.Number):
         if value < 0:
             raise ValueError("The input value of {} cannot be negative.".format(input_name))
-    elif isinstance(value, (list, tuple)) and len(value) == 2:
-        check_range(value, bound)
+    elif isinstance(value, (list, tuple)):
+        if len(value) != 2:
+            raise TypeError("If {0} is a sequence, the length must be 2.".format(input_name))
         if value[0] > value[1]:
-            raise ValueError("value should be in (min,max) format. Got (max,min).")
+            raise ValueError("{0} value should be in (min,max) format. Got ({1}, {2}).".format(input_name,
+                                                                                               value[0], value[1]))
+        check_range(value, bound)
 
 
 def check_erasing_value(value):
