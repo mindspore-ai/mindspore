@@ -48,6 +48,8 @@
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/topk_fusion.h"
+#include "ops/grad/activation_grad.h"
+#include "ops/grad/batch_norm_grad.h"
 #include "ops/gelu.h"
 #include "ops/leaky_relu.h"
 #include "ops/mat_mul.h"
@@ -116,13 +118,30 @@ namespace {
 constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
-constexpr auto kNameSlice = "Slice";
+constexpr auto kNameFusedBatchNormEx = "FusedBatchNormEx";
+constexpr auto kNameFusedBatchNormGradEx = "FusedBatchNormGradEx";
+constexpr auto kNameHSigmoid = "HSigmoid";
+constexpr auto kNameHSigmoidGrad = "HSigmoidGrad";
+constexpr auto kNameHSwish = "HSwish";
+constexpr auto kNameHSwishGrad = "HSwishGrad";
 constexpr auto kNameReluGrad = "ReluGrad";
-
-std::map<std::string, mindspore::ActivationType> activation_map = {
-  {ops::kNameElu, mindspore::ELU},   {ops::kNameGeLU, mindspore::GELU},   {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
-  {ops::kNameReLU, mindspore::RELU}, {ops::kNameReLU6, mindspore::RELU6}, {ops::kNameSigmoid, mindspore::SIGMOID},
-  {ops::kNameTanh, mindspore::TANH}, {kNameReluGrad, mindspore::RELU}};
+constexpr auto kNameReLU6Grad = "ReLU6Grad";
+constexpr auto kNameSigmoidGrad = "SigmoidGrad";
+constexpr auto kNameSlice = "Slice";
+std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameElu, mindspore::ELU},
+                                                                   {ops::kNameGeLU, mindspore::GELU},
+                                                                   {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
+                                                                   {ops::kNameReLU, mindspore::RELU},
+                                                                   {ops::kNameReLU6, mindspore::RELU6},
+                                                                   {ops::kNameSigmoid, mindspore::SIGMOID},
+                                                                   {ops::kNameTanh, mindspore::TANH},
+                                                                   {kNameHSigmoid, mindspore::HSIGMOID},
+                                                                   {kNameHSigmoidGrad, mindspore::HSIGMOID},
+                                                                   {kNameHSwish, mindspore::HSWISH},
+                                                                   {kNameHSwishGrad, mindspore::HSWISH},
+                                                                   {kNameReluGrad, mindspore::RELU},
+                                                                   {kNameReLU6Grad, mindspore::RELU6},
+                                                                   {kNameSigmoidGrad, mindspore::SIGMOID}};
 
 std::map<std::string, mindspore::ReduceMode> reduce_map = {
   {ops::kNameReduceAll, mindspore::Reduce_All}, {ops::kNameReduceASum, mindspore::Reduce_ASum},
@@ -189,6 +208,28 @@ int MoveAttrMapActivation(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto dst_prim = std::make_shared<ops::Activation>();
+  MS_ASSERT(dst_prim != nullptr);
+  dst_prim->SetAttrs(src_prim->attrs());
+  auto iter = activation_map.find(src_prim->name());
+  if (iter == activation_map.end()) {
+    MS_LOG(ERROR) << "activation mode is unsupport.";
+    return lite::RET_ERROR;
+  }
+  dst_prim->set_activation_type(iter->second);
+  value_node->set_value(dst_prim);
+  return lite::RET_OK;
+}
+
+int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  MS_ASSERT(value_node != nullptr);
+  auto src_prim = GetValueNode<PrimitivePtr>(value_node);
+  if (src_prim == nullptr) {
+    MS_LOG(ERROR) << "value node is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto dst_prim = std::make_shared<ops::ActivationGrad>();
   MS_ASSERT(dst_prim != nullptr);
   dst_prim->SetAttrs(src_prim->attrs());
   auto iter = activation_map.find(src_prim->name());
@@ -455,7 +496,13 @@ REGIST_PRIMITIVE_ADJUST(kNameConv2dTranspose, MoveAttrMapCommon<ops::Conv2dTrans
 REGIST_PRIMITIVE_ADJUST(kNameDiv, MoveAttrMapCommon<ops::DivFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameExp, MoveAttrMapCommon<ops::ExpFusion>)
+REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormEx, MoveAttrMapCommon<ops::FusedBatchNorm>)
+REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradEx, MoveAttrMapCommon<ops::BatchNormGrad>)
 REGIST_PRIMITIVE_ADJUST(kNameGeLU, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameHSigmoid, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameHSigmoidGrad, MoveAttrMapActivationGrad)
+REGIST_PRIMITIVE_ADJUST(kNameHSwish, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameHSwishGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameL2Normalize, MoveAttrMapCommon<ops::L2NormalizeFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameLayerNorm, MoveAttrMapLayerNorm)
 REGIST_PRIMITIVE_ADJUST(kNameLeakyRelu, MoveAttrMapActivation)
@@ -473,12 +520,14 @@ REGIST_PRIMITIVE_ADJUST(kNameReduceProd, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReduceSum, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReduceSumSquare, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReLU, MoveAttrMapActivation)
-REGIST_PRIMITIVE_ADJUST(kNameReluGrad, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameReluGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameReLU6, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameReLU6Grad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameResizeBilinear, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighbor, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameScale, MoveAttrMapCommon<ops::ScaleFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameSigmoid, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameSigmoidGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameSlice, MoveAttrSlice)
 REGIST_PRIMITIVE_ADJUST(kNameSub, MoveAttrMapCommon<ops::SubFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTanh, MoveAttrMapActivation)

@@ -719,7 +719,7 @@ RegistryMSOps g_batchToSpaceNDPrimitiveCreatorRegistry("BatchToSpaceND", BatchTo
 RegistryMSOps g_biasAddPrimitiveCreatorRegistry("BiasAdd", BiasAddPrimitiveCreator);
 RegistryMSOps g_biasGradAddPrimitiveCreatorRegistry("BiasGrad", BiasAddGradPrimitiveCreator);
 RegistryMSOps g_biasAddGradAddPrimitiveCreatorRegistry("BiasAddGrad", BiasAddGradPrimitiveCreator);
-RegistryMSOps g_bNGradPrimitiveCreatorRegistry("BNGrad", BNGradPrimitiveCreator);
+RegistryMSOps g_bNGradPrimitiveCreatorRegistry("BatchNormGrad", BNGradPrimitiveCreator);
 RegistryMSOps g_broadcastToPrimitiveCreatorRegistry("BroadcastTo", BroadcastToPrimitiveCreator);
 RegistryMSOps g_castPrimitiveCreatorRegistry("Cast", CastPrimitiveCreator);
 RegistryMSOps g_ceilPrimitiveCreatorRegistry("Ceil", CeilPrimitiveCreator);

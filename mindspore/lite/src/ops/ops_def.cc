@@ -199,7 +199,7 @@ OP_ATTR(max_val, float)
 OP_SCHEMA_DEF_END(Activation)
 
 OP_SCHEMA_DEF(ActivationGrad)
-OP_ATTR_ENUM(type, ActivationType)
+OP_ATTR_ENUM(activation_type, ActivationType)
 OP_ATTR(alpha, float)
 OP_SCHEMA_DEF_END(ActivationGrad)
 
