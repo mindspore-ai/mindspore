@@ -113,13 +113,11 @@ int64_t SequentialSamplerRT::CalculateNumSamples(int64_t num_rows) {
   int64_t num_samples = (num_samples_ > 0) ? std::min(child_num_rows, num_samples_) : child_num_rows;
   // For this sampler we need to take start_index into account. Because for example in the case we are given n rows
   // and start_index != 0 and num_samples >= n then we can't return all the n rows.
-  if (child_num_rows - (start_index_ - current_id_) <= 0) {
+  if (child_num_rows - start_index_ <= 0) {
     return 0;
   }
-  if (child_num_rows - (start_index_ - current_id_) < num_samples)
-    num_samples = child_num_rows - (start_index_ - current_id_) > num_samples
-                    ? num_samples
-                    : num_samples - (start_index_ - current_id_);
+  if (child_num_rows - start_index_ < num_samples)
+    num_samples = child_num_rows - start_index_ > num_samples ? num_samples : num_samples - start_index_;
   return num_samples;
 }
 
