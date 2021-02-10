@@ -1208,14 +1208,15 @@ def cumsum(a, axis=None, dtype=None):
     if _check_same_type(original_dtype, mstype.bool_) or \
        _check_same_type(original_dtype, mstype.int8) or \
        _check_same_type(original_dtype, mstype.int16):
-        a = a.astype(mstype.int32)
+        original_dtype = mstype.int32
+    a = a.astype(mstype.float32)
     if axis is None:
         a = a.ravel()
         axis = 0
     _check_axis_in_range(axis, a.ndim)
     if dtype is not None and not _check_same_type(original_dtype, dtype):
         return _cumsum_default(a, axis).astype(dtype, copy=False)
-    return _cumsum_default(a, axis)
+    return _cumsum_default(a, axis).astype(original_dtype, copy=False)
 
 
 def _index(i, size, Cartesian=True):

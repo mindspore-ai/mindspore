@@ -235,7 +235,7 @@ def test_true_divide():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_power():
-    run_binop_test(mnp_power, onp_power, test_case)
+    run_binop_test(mnp_power, onp_power, test_case, error=1e-5)
 
 
 @pytest.mark.level1
@@ -245,7 +245,7 @@ def test_power():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_float_power():
-    run_binop_test(mnp_float_power, onp_float_power, test_case)
+    run_binop_test(mnp_float_power, onp_float_power, test_case, error=1e-5)
 
 
 @pytest.mark.level1
@@ -422,8 +422,8 @@ def onp_average(x):
 def test_average():
     arr1 = rand_int(2, 3, 4, 5)
     arr2 = rand_int(4, 5, 1, 3, 1)
-    run_single_test(mnp_average, onp_average, arr1)
-    run_single_test(mnp_average, onp_average, arr2)
+    run_single_test(mnp_average, onp_average, arr1, error=1e-5)
+    run_single_test(mnp_average, onp_average, arr2, error=1e-5)
 
 
 def mnp_count_nonzero(x):
@@ -784,14 +784,14 @@ def test_maximum():
 def mnp_clip(x):
     a = mnp.clip(x, mnp.asarray(10.0), mnp.asarray([2,]))
     b = mnp.clip(x, 0, 1)
-    c = mnp.clip(x, mnp.asarray(0), mnp.asarray(10), dtype=mnp.float64)
+    c = mnp.clip(x, mnp.asarray(0), mnp.asarray(10), dtype=mnp.float32)
     return a, b, c
 
 
 def onp_clip(x):
     a = onp.clip(x, onp.asarray(10.0), onp.asarray([2,]))
     b = onp.clip(x, 0, 1)
-    c = onp.clip(x, onp.asarray(0), onp.asarray(10), dtype=onp.float64)
+    c = onp.clip(x, onp.asarray(0), onp.asarray(10), dtype=onp.float32)
     return a, b, c
 
 
@@ -1029,8 +1029,8 @@ def test_fix():
     x = rand_int(2, 3)
     y = rand_int(2, 3)
     floats = onp.divide(onp.subtract(x, y), y)
-    match_res(mnp_fix, onp_fix, floats)
-    run_binop_test(mnp_fmod, onp_fmod, test_case)
+    match_res(mnp_fix, onp_fix, floats, error=1e-5)
+    run_binop_test(mnp_fmod, onp_fmod, test_case, error=1e-5)
 
 
 def mnp_trunc(x):
@@ -1051,7 +1051,7 @@ def test_trunc():
     x = rand_int(2, 3)
     y = rand_int(2, 3)
     floats = onp.divide(onp.subtract(x, y), y)
-    match_res(mnp_trunc, onp_trunc, floats)
+    match_res(mnp_trunc, onp_trunc, floats, error=1e-5)
 
 
 def mnp_exp(x):
@@ -1137,7 +1137,7 @@ def test_negative():
         for where in where_lst:
             onp_neg = onp_negative(arr, out=out, where=where)
             mnp_neg = mnp_negative(mnp.asarray(arr), mnp.asarray(out), mnp.asarray(where))
-            match_array(mnp_neg.asnumpy(), onp_neg)
+            match_array(mnp_neg.asnumpy(), onp_neg, 1e-5)
 
 
 @pytest.mark.level1

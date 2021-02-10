@@ -1047,8 +1047,7 @@ def onp_split(input_array):
 @pytest.mark.env_onecard
 def test_split():
     onp_arrs = [
-        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32'),
-        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float64')
+        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32')
     ]
     mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
@@ -1081,8 +1080,7 @@ def onp_vsplit(input_array):
 @pytest.mark.env_onecard
 def test_vsplit():
     onp_arrs = [
-        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32'),
-        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float64')
+        onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32')
     ]
     mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
@@ -1115,8 +1113,7 @@ def onp_hsplit(input_array):
 @pytest.mark.env_onecard
 def test_hsplit():
     onp_arrs = [
-        onp.random.randint(1, 5, size=(4, 9, 5)).astype('float32'),
-        onp.random.randint(1, 5, size=(4, 9, 5)).astype('float64')
+        onp.random.randint(1, 5, size=(4, 9, 5)).astype('float32')
     ]
     mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
@@ -1149,8 +1146,7 @@ def onp_dsplit(input_array):
 @pytest.mark.env_onecard
 def test_dsplit():
     onp_arrs = [
-        onp.random.randint(1, 5, size=(5, 4, 9)).astype('float32'),
-        onp.random.randint(1, 5, size=(5, 4, 9)).astype('float64')
+        onp.random.randint(1, 5, size=(5, 4, 9)).astype('float32')
     ]
     mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
