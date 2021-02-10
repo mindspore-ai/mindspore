@@ -22,6 +22,7 @@ from enum import Enum
 
 from mindspore import log as logger, context
 from mindspore.communication.management import release, get_rank
+import mindspore._c_expression as c_expression
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
 from mindspore.profiler.common.util import get_file_names, fwrite_format
@@ -86,18 +87,18 @@ class Profiler:
         os.environ['MINDDATA_PROFILING_DIR'] = self._output_path
 
         if self._device_target:
-            from mindspore._c_expression import CPUProfiler
+            CPUProfiler = c_expression.CPUProfiler
             self._cpu_profiler = CPUProfiler.get_instance()
             self._cpu_profiler.init(self._output_path)
             self._cpu_profiler.step_profiling_enable(True)
         if self._device_target and self._device_target == "GPU":
-            from mindspore._c_expression import GPUProfiler
+            GPUProfiler = c_expression.GPUProfiler
             self._gpu_profiler = GPUProfiler.get_instance()
             self._gpu_profiler.init(self._output_path)
             self._gpu_profiler.step_profiling_enable(True)
             if context.get_auto_parallel_context('device_num') > 1:
-                self._dev_id = get_rank()
-            os.environ['DEVICE_ID'] = str(self._dev_id)
+                self._dev_id = str(get_rank())
+            os.environ['DEVICE_ID'] = self._dev_id
 
             if kwargs:
                 logger.warning("Params not be supported yet on GPU.")
@@ -253,8 +254,8 @@ class Profiler:
 
     def _gpu_analyse(self):
         """Collect and analyse gpu performance data"""
-        if context.get_auto_parallel_context('device_num') > 1 and self._dev_id != get_rank():
-            self._dev_id = get_rank()
+        if context.get_auto_parallel_context('device_num') > 1 and self._dev_id != str(get_rank()):
+            self._dev_id = str(get_rank())
             logger.error('Please check the Profiler object initialized after set_auto_parallel_context() '
                          'and init(). Profiler should be initialized after these code. ')
         self._gpu_profiler.stop()
@@ -403,6 +404,7 @@ class Profiler:
         """
 
         job_id = ""
+
         for item in os.listdir(self._output_path):
             if item.startswith('JOB'):
                 path = os.path.join(self._output_path, item)
@@ -410,25 +412,23 @@ class Profiler:
                 log_file = get_file_names(path, "host_start.log")
                 if not log_file:
                     logger.error("Profiling: job path %s, host_start.log not exist.", path)
+                    continue
+
+                training_device_id = log_file[0].split('.')[-1]
+                if self._dev_id == training_device_id:
+                    log_file = os.path.join(path, log_file[0])
+                    job_start_time = self._parse_host_start_log(log_file)
+                    if not job_start_time:
+                        logger.error("Profiling: job path %s, fail to get job start info.", path)
+                        break
+                    job_id = item
+                    if self._start_time > int(job_start_time):
+                        logger.info("Profiling: job path %s, start_time %s, training start_time %d.",
+                                    path, job_start_time, self._start_time)
                     break
-
-                log_file = os.path.join(path, log_file[0])
-                item_dict = self._parse_host_start_log(log_file)
-
-                if not item_dict:
-                    logger.error("Profiling: job path %s, fail to get job start info.", path)
-                    break
-
-                job_id = item
-
-                if self._dev_id != item_dict["device_id"]:
+                else:
                     logger.info("Profiling: job path %s, dev id %s, training device id %s.",
-                                path, item_dict["device_id"], self._dev_id)
-
-                if self._start_time > int(item_dict["start_time"]):
-                    logger.info("Profiling: job path %s, start_time %s, training start_time %d.",
-                                path, item_dict["start_time"], self._start_time)
-                break
+                                path, training_device_id, self._dev_id)
 
         if not job_id:
             msg = "Fail to get profiling job, please check whether job dir was generated"
@@ -438,23 +438,23 @@ class Profiler:
 
     def _parse_host_start_log(self, input_file):
         """
-        Parse host start log file, get the device id and start time of the job.
+        Parse host start log file, get the start time of the job.
 
         Args:
              input_file (str): The file path of the host start log file.
 
         Returns:
-            dict, job start time and device id.
+            str, job start time.
         """
 
-        item_dict = {}
-        for line in open(input_file):
-            if "Device" in line:
-                item_dict["device_id"] = line[7:len(line)-2]
-            elif "clock_realtime" in line:
-                item_dict["start_time"] = line[16:len(line)-3]
+        job_start_time = ""
+        with open(input_file) as f:
+            for line in f.readlines():
+                if "clock_realtime" in line:
+                    # 16 means the first digit of the timestamp, len(line)-3 means the last.
+                    job_start_time = line[16:len(line)-3]
 
-        return item_dict
+        return job_start_time
 
     def _analyser_op_info(self):
         """Analyse the operator information."""
