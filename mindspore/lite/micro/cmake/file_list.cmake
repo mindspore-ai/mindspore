@@ -57,7 +57,10 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/expand_dims_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/full_connection_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/gather_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/matmul_fp32_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/matmul_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/nchw2nhwc_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/nhwc2nchw_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/pad_fp32_coder.cc
@@ -73,6 +76,8 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/transpose_fp32_coder.cc
         #### nnacl int8 coder
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/concat_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/fullconnection_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/matmul_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/pooling_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/reduce_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/reshape_int8_coder.cc
@@ -102,6 +107,10 @@ set(LITE_SRC
         ${LITE_DIR}/src/ops/while.cc
         ### populate operator parameter
         ${LITE_DIR}/src/ops/populate/conv2d_populate.cc
+        ### tools
+        ${LITE_DIR}/tools/common/flag_parser.cc
+        )
+set(LITE_KERNEL_SRC
         ### nnacl
         ${LITE_DIR}/nnacl/base/minimal_filtering_generator.c
         ${LITE_DIR}/nnacl/fp32/winograd_utils.c
@@ -110,9 +119,13 @@ set(LITE_SRC
         ${LITE_DIR}/nnacl/int8/pack_int8.c
         ${LITE_DIR}/nnacl/int8/matmul_int8.c
         ${LITE_DIR}/nnacl/int8/fixed_point.c
-        ### tools
-        ${LITE_DIR}/tools/common/flag_parser.cc
+        ${LITE_DIR}/nnacl/fp32/matmul_fp32.c
+        )
+set(MICRO_ADAPTER_SRC
+        ${MICRO_DIR}/wrapper/fp32/matmul_fp32_wrapper.c
+        ${MICRO_DIR}/wrapper/int8/matmul_int8_wrapper.c
         )
 
 list(APPEND FILE_SET ${CODER_SRC} ${CODER_UTILS_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
-        ${CODER_ALLOCATOR_SRC} ${LITE_SRC})
+        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${LITE_KERNEL_SRC} ${MICRO_ADAPTER_SRC})
+

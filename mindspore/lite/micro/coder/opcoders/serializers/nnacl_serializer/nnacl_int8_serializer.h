@@ -45,6 +45,7 @@ class NNaclInt8Serializer : public Serializer {
                   int out_shape);
   void CodeStruct(const std::string &name, const ReduceQuantArg &reduce_quant_arg);
   void CodeStruct(const std::string &name, const ReshapeQuantArg &reshape_quant_arg);
+  void CodeStruct(const std::string &name, const MatmulQuantArg &matmul_quant_arg);
 };
 
 }  // namespace mindspore::lite::micro::nnacl

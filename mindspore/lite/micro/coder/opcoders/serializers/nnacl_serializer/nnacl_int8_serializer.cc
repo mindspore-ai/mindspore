@@ -116,4 +116,10 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReshapeQuant
                  reshape_quant_arg.output_activation_min_, reshape_quant_arg.output_activation_max_);
 }
 
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatmulQuantArg &matmul_quant_arg) {
+  CodeBaseStruct("MatmulQuantArg", name, matmul_quant_arg.input, matmul_quant_arg.weight, matmul_quant_arg.output,
+                 matmul_quant_arg.out_act_min, matmul_quant_arg.out_act_max, matmul_quant_arg.left_shift,
+                 matmul_quant_arg.right_shift, matmul_quant_arg.quant_multiplier);
+}
+
 }  // namespace mindspore::lite::micro::nnacl
