@@ -44,7 +44,7 @@ __kernel void SoftMaxAxis3_NHWC4(__read_only image2d_t input, __write_only image
   float4 result = convert_float4(READ_IMAGE(input, smp_zero, (int2)(Y * C4 + C4 - 1, X)));
   result = exp(min(result - input_max_f4, 0)) / sum;
   result = result * mask;
-  WRITE_IMAGE(output, (int2)(Y * C4 + C4 - 1, X), TO_FLT4(result));
+  WRITE_IMAGEOUT(output, (int2)(Y * C4 + C4 - 1, X), OUT_FLT4(result));
 }
 
 __kernel void SoftMaxAxis1_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
@@ -65,7 +65,7 @@ __kernel void SoftMaxAxis1_NHWC4(__read_only image2d_t input, __write_only image
   for (int d = 0; d < H; ++d) {
     float4 result = convert_float4(READ_IMAGE(input, smp_zero, (int2)(X * C4 + Y, d)));
     result = exp(result) / sum;
-    WRITE_IMAGE(output, (int2)(X * C4 + Y, d), TO_FLT4(result));
+    WRITE_IMAGEOUT(output, (int2)(X * C4 + Y, d), OUT_FLT4(result));
   }
 }
 
@@ -87,7 +87,7 @@ __kernel void SoftMaxAxis2_NHWC4(__read_only image2d_t input, __write_only image
   for (int d = 0; d < W; ++d) {
     float4 result = convert_float4(READ_IMAGE(input, smp_zero, (int2)(d * C4 + Y, X)));
     result = exp(result) / sum;
-    WRITE_IMAGE(output, (int2)(d * C4 + Y, X), TO_FLT4(result));
+    WRITE_IMAGEOUT(output, (int2)(d * C4 + Y, X), OUT_FLT4(result));
   }
 }
 
@@ -125,6 +125,6 @@ __kernel void SoftMax1x1_NHWC4(__read_only image2d_t input, __write_only image2d
   for (size_t i = tid; i < C4; i += 32) {
     float4 result = convert_float4(READ_IMAGE(input, smp_zero, (int2)(i, 0)));
     result = exp(result) * sum;
-    WRITE_IMAGE(output, (int2)(i, 0), TO_FLT4(result));
+    WRITE_IMAGEOUT(output, (int2)(i, 0), OUT_FLT4(result));
   }
 }

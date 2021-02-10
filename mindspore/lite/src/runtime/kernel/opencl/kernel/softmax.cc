@@ -87,7 +87,13 @@ int SoftmaxOpenCLKernel::Prepare() {
 #else
   std::string program_name = "SoftMax";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  std::vector<std::string> ext_build_opt;
+  if (out_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    ext_build_opt.push_back("-DOUT_FLT4=convert_float4 -DWRITE_IMAGEOUT=write_imagef");
+  } else {
+    ext_build_opt.push_back("-DOUT_FLT4=convert_half4 -DWRITE_IMAGEOUT=write_imageh");
+  }
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, ext_build_opt);
 #endif
   SetConstArgs();
   SetGlobalLocal();

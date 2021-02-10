@@ -236,7 +236,7 @@ __kernel void to_format_NHWC4_to_NHWC_BUF_float(__read_only image2d_t src_data, 
   if (X >= size.x || Y >= size.y || Z >= size.z) {
     return;
   }
-  float4 data = convert_float4(READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+  float4 data = convert_float4(READ_IMAGEIN(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
   int offset = (X * shape.z + Y) * shape.w + Z * 4;
   __global float *dst_addr = (__global float *)dst_data;
   dst_addr += offset;
@@ -320,7 +320,7 @@ __kernel void to_format_NHWC4_to_NHWC_BUF_half(__read_only image2d_t src_data, _
   if (X >= size.x || Y >= size.y || Z >= size.z) {
     return;
   }
-  half4 data = convert_half4(READ_IMAGE(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+  half4 data = convert_half4(READ_IMAGEIN(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
   int offset = (X * shape.z + Y) * shape.w + Z * 4;
   __global half *dst_addr = (__global half *)dst_data;
   dst_addr += offset;

@@ -81,7 +81,13 @@ int ToFormatOpenCLKernel::Prepare() {
   std::string program_name = "to_format";
   std::string source = to_format_source;
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  std::vector<std::string> ext_build_opt;
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    ext_build_opt.push_back("-DREAD_IMAGEIN=read_imagef");
+  } else {
+    ext_build_opt.push_back("-DREAD_IMAGEIN=read_imageh");
+  }
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, ext_build_opt);
 #endif
 
   auto output = GpuTensorInfo(out_tensors_.front());
