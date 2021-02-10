@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,6 +55,9 @@ class SliceNet(nn.Cell):
         return self.slice(x, (0, 11, 0, 0), (32, 7, 224, 224))
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_slice_4d():
     x_np = np.random.randn(32, 24, 224, 224).astype(np.float32)
     output_np = x_np[:, 11:18, :, :]
@@ -64,3 +67,18 @@ def test_slice_4d():
     output_ms = net(x_ms)
 
     assert (output_ms.asnumpy() == output_np).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_slice_float64():
+    x = Tensor(
+        np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]).astype(np.float64))
+    expect = np.array([[[2., -2., 2.]],
+                       [[4., -4., 4.]]]).astype(np.float64)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    slice_op = Slice()
+    output = slice_op(x)
+    assert (output.asnumpy() == expect).all()

@@ -105,6 +105,12 @@ def strided_slice(nptype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_strided_slice_float64():
+    strided_slice(np.float64)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_strided_slice_float32():
     strided_slice(np.float32)
 

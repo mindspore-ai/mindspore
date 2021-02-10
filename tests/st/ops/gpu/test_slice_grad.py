@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -50,5 +50,21 @@ def test_slice():
                [4., 1., 4.]],
               [[0., 0., 0.],
                [0., 0., 0.]]]
-    print(output)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_slice_float64():
+    x = Tensor(np.array([[[1, 1, 1], [2, 2, 2]], [[3, 3, 3], [4, 4, 4]], [[5, 5, 5], [6, 6, 6]]]).astype(np.float64))
+    dy = Tensor(np.array([[[3., 1., 2.]], [[4., 1., 4.]]]).astype(np.float64))
+    slicegrad = SliceGrad()
+    output = slicegrad(dy, x)
+    expect = np.array([[[0., 0., 0.],
+                        [3., 1., 2.]],
+                       [[0., 0., 0.],
+                        [4., 1., 4.]],
+                       [[0., 0., 0.],
+                        [0., 0., 0.]]]).astype(np.float64)
     assert (output.asnumpy() == expect).all()
