@@ -92,6 +92,15 @@ cv::Mat cv3CImageProcess(cv::Mat &image) {
   return imgR2;
 }
 
+void AccuracyComparison(const std::vector<std::vector<double>> &expect, LiteMat &value) {
+  for (int i = 0; i < expect.size(); i++) {
+    for (int j = 0; j < expect[0].size(); j++) {
+      double middle = std::fabs(expect[i][j] - value.ptr<double>(i)[j]);
+      ASSERT_TRUE(middle <= 0.005);
+    }
+  }
+}
+
 TEST_F(MindDataImageProcess, testRGB) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1229,4 +1238,33 @@ TEST_F(MindDataImageProcess, testWarpPerspectiveGrayResize) {
 
   cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC1, lite_warp.data_ptr_);
   cv::imwrite("./warpPerspective_lite_gray.png", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testGetRotationMatrix2D) {
+  std::vector<std::vector<double>> expect_matrix = {{0.250000, 0.433013, -0.116025},
+                                                    {-0.433013, 0.250000, 1.933013}};
+  
+  double angle = 60.0;
+  double scale = 0.5;
+
+  LiteMat M;
+  bool ret = false;
+  ret = GetRotationMatrix2D(1.0f, 2.0f, angle, scale, M);
+  EXPECT_TRUE(ret);
+  AccuracyComparison(expect_matrix, M);
+}
+
+TEST_F(MindDataImageProcess, testGetPerspectiveTransform) {
+  std::vector<std::vector<double>> expect_matrix = {{1.272113, 3.665216, -788.484287},
+                                                    {-0.394146, 3.228247, -134.009780},
+                                                    {-0.001460, 0.006414, 1}};
+  
+  std::vector<Point> src = {Point(165, 270), Point(835, 270), Point(360, 125), Point(615, 125)};
+  std::vector<Point> dst = {Point(165, 270), Point(835, 270), Point(100, 100), Point(500, 30)};
+
+  LiteMat M;
+  bool ret = false;
+  ret = GetPerspectiveTransform(src, dst, M);
+  EXPECT_TRUE(ret);
+  AccuracyComparison(expect_matrix, M);
 }
