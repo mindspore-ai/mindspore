@@ -4887,9 +4887,9 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         Otherwise, the output is a scalar.
 
     Raises:
-        TypeError: If dtype of `input_x`, `input_y` or `weight`(if given) is neither float16 not float32.
+        TypeError: If dtype of `input_x`, `input_y` or `weight` (if given) is neither float16 not float32.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-        ValueError: If shape of `input_y` is not the same as `input_x` or `weight`(if given).
+        ValueError: If shape of `input_y` is not the same as `input_x` or `weight` (if given).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

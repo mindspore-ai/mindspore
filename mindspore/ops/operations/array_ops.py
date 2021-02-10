@@ -767,7 +767,6 @@ class Unique(Primitive):
         ...         return output, indices
         ...
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> net = UniqueNet()
         >>> output = net(x)
         >>> print(output)
@@ -4613,11 +4612,10 @@ class EditDistance(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as ops
-        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> class EditDistance(nn.Cell):
         ...     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
         ...         super(EditDistance, self).__init__()
-        ...         self.edit_distance = P.EditDistance(normalize)
+        ...         self.edit_distance = ops.EditDistance(normalize)
         ...         self.hypothesis_shape = hypothesis_shape
         ...         self.truth_shape = truth_shape
         ...
