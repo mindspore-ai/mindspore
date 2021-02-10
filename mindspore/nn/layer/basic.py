@@ -579,11 +579,7 @@ class Pad(Cell):
             paddings are int type. For `D` th dimension of input, paddings[D, 0] indicates how many sizes to be
             extended ahead of the `D` th dimension of the input tensor, and paddings[D, 1] indicates how many sizes to
             be extended behind of the `D` th dimension of the input tensor. The padded size of each dimension D of the
-            output is:
-
-            .. code-block::
-
-                paddings[D, 0] + input_x.dim_size(D) + paddings[D, 1]
+            output is: :math:`paddings[D, 0] + input_x.dim_size(D) + paddings[D, 1]`
 
         mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
@@ -759,13 +755,11 @@ class Unfold(Cell):
         Tensor, a 4-D tensor whose data type is same as `input_x`,
         and the shape is [out_batch, out_depth, out_row, out_col] where `out_batch` is the same as the `in_batch`.
 
-        .. code-block::
+        :math:`out_depth = ksize_row * ksize_col * in_depth`
 
-            out_depth = ksize_row * ksize_col * in_depth
+        :math:`out_row = (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1`
 
-            out_row = (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1
-
-            out_col = (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1
+        :math:`out_col = (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1`
 
     Raises:
         TypeError: If `ksizes`, `strides` or `rates` is neither a tuple nor list.
@@ -925,10 +919,7 @@ class MatrixDiag(Cell):
 
     Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., N]`, then the output is a tensor of rank
     :math:`k+1` with dimensions :math:`[I, J, K, ..., N, N]` where:
-
-    .. code-block::
-
-        output[i, j, k, ..., m, n] = 1{m=n} * x[i, j, k, ..., n]
+    :math:`output[i, j, k, ..., m, n] = 1{m=n} * x[i, j, k, ..., n]`
 
     Inputs:
         - **x** (Tensor) - The diagonal values. It can be one of the following data types:
@@ -971,10 +962,7 @@ class MatrixDiagPart(Cell):
 
     Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., M, N]`, then the output is a tensor of rank
     :math:`k-1` with dimensions :math:`[I, J, K, ..., min(M, N)]` where:
-
-    .. code-block::
-
-        output[i, j, k, ..., n] = x[i, j, k, ..., n, n]
+    :math:`output[i, j, k, ..., n] = x[i, j, k, ..., n, n]`
 
     Inputs:
         - **x** (Tensor) - The batched tensor. It can be one of the following data types:
@@ -1019,12 +1007,9 @@ class MatrixSetDiag(Cell):
     Assume `x` has :math:`k+1` dimensions :math:`[I, J, K, ..., M, N]` and `diagonal` has :math:`k`
     dimensions :math:`[I, J, K, ..., min(M, N)]`. Then the output is a tensor of rank :math:`k+1` with dimensions
     :math:`[I, J, K, ..., M, N]` where:
+    :math:`output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n] for m == n`
 
-    .. code-block::
-
-        output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n] for m == n
-
-        output[i, j, k, ..., m, n] = x[i, j, k, ..., m, n] for m != n
+    :math:`output[i, j, k, ..., m, n] = x[i, j, k, ..., m, n] for m != n`
 
     Inputs:
         - **x** (Tensor) - The batched tensor. Rank k+1, where k >= 1. It can be one of the following data types:
