@@ -59,6 +59,8 @@ SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std:
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
                                  const PredicateFuncType &predicate, const RenormAction &action_renorm = CHECK_RENORM);
 
+enum OptTraverseSubstitutionsMode { kOptTraverseFromIRToSubstitutions = 0, kOptTraverseFromSubstitutionsToIR };
+
 class SubstitutionList {
  public:
   explicit SubstitutionList(const std::vector<SubstitutionPtr> &patterns, bool is_once = false)
@@ -68,7 +70,10 @@ class SubstitutionList {
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) const;
 
  private:
-  bool ApplyTransform(const OptimizerPtr &optimizer, const AnfNodePtr &node, const SubstitutionPtr &transform) const;
+  bool ApplyIRToSubstitutions(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const;
+  bool ApplySubstitutionToIR(const OptimizerPtr &optimizer, const AnfNodePtr &node, const SubstitutionPtr &sub) const;
+  bool ApplySubstitutionsToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const;
+  bool ApplySubstitutionsToIRForIsolate(const OptimizerPtr &optimizer) const;
   std::vector<SubstitutionPtr> list_;
   // a flag to mark this list of Substitution can only be executed only once
   bool is_once_;

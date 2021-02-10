@@ -246,7 +246,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
   bool IsApply(const PrimitivePtr &) const;
 
   const size_t size() const { return inputs_.size(); }
-  const AnfNodePtr input(size_t i) const { return inputs_[i]; }
+  const AnfNodePtr &input(size_t i) const { return inputs_.at(i); }
   const std::vector<AnfNodePtr> &inputs() const { return inputs_; }
   void add_input(const AnfNodePtr &input);
   void set_input(size_t i, const AnfNodePtr &input);

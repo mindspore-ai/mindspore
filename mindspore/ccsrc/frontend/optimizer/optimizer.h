@@ -88,13 +88,14 @@ using OptPassGroupMap = std::vector<std::pair<std::string, OptPassConfig>>;
 
 class Optimizer : public std::enable_shared_from_this<Optimizer> {
  public:
-  Optimizer(const std::string &name, const pipeline::ResourceBasePtr &resource_ptr)
+  Optimizer(const std::string &name, const pipeline::ResourceBasePtr &resource_ptr, bool traverse_nodes_first = true)
       : name_(name),
         resource_(resource_ptr),
         run_only_once_(false),
         is_watch_renormalize_(false),
         is_enable_(true),
-        is_untyped_generated_(false) {}
+        is_untyped_generated_(false),
+        traverse_nodes_first_(traverse_nodes_first) {}
   virtual ~Optimizer() = default;
 
   void Init(const OptPassGroupMap &passes, bool run_only_once) {
@@ -129,8 +130,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
 
   static std::shared_ptr<Optimizer> MakeOptimizer(const std::string &name, const pipeline::ResourceBasePtr resource_ptr,
                                                   const OptPassGroupMap &passes, bool run_only_once = false,
-                                                  bool watch_renormalize = false) {
-    OptimizerPtr optimizer = std::make_shared<Optimizer>(name, resource_ptr);
+                                                  bool watch_renormalize = false, bool traverse_nodes_first = true) {
+    OptimizerPtr optimizer = std::make_shared<Optimizer>(name, resource_ptr, traverse_nodes_first);
     optimizer->Init(passes, run_only_once);
     if (watch_renormalize) {
       optimizer->enable_watch_renormalize();
@@ -223,6 +224,8 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   bool is_watch_renormalize() { return is_watch_renormalize_; }
   void set_enable(bool enable) { is_enable_ = enable; }
 
+  bool traverse_nodes_first() { return traverse_nodes_first_; }
+
   struct {
     int64_t counter;
     std::string name;
@@ -239,6 +242,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
   bool is_watch_renormalize_;
   bool is_enable_;
   bool is_untyped_generated_;
+  bool traverse_nodes_first_;
 };
 }  // namespace opt
 }  // namespace mindspore

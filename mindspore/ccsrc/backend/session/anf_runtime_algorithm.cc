@@ -31,7 +31,6 @@
 #include "backend/kernel_compiler/kernel_build_info.h"
 #include "common/trans.h"
 #include "abstract/param_validator.h"
-#include "abstract/primitive_infer_map.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/trace_base.h"
 
@@ -1806,14 +1805,7 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
       args_spec_list.emplace_back(real_input->abstract());
     }
   }
-
-  auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
-  auto ret = prim_eval_implement_map.find(primitive);
-  if (ret == prim_eval_implement_map.end()) {
-    MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << primitive->name()
-                      << " primitive type:" << primitive->type_name();
-  }
-  auto eval_result = ret->second.impl_(nullptr, primitive, args_spec_list);
+  auto eval_result = abstract::CppInferShape(primitive, args_spec_list);
   node->set_abstract(eval_result);
 }
 }  // namespace session
