@@ -139,7 +139,7 @@ enum {
   APP_ERROR_FACE_WEB_USE_PART_SUCCESS = APP_ERROR_FACE_WEB_USE_BASE + 4,  // Web: partial search succeeded
   APP_ERROR_FACE_WEB_USE_NO_FACE = APP_ERROR_FACE_WEB_USE_BASE + 5,       // Web: no face detected
   APP_ERR_QUEUE_END,  // Not an error code, define the range of blocking queue
-                      // error code
+  // error code
 };
 const std::string APP_ERR_ACL_LOG_STRING[] = {
   [APP_ERR_OK] = "Success",
@@ -249,8 +249,8 @@ const std::string APP_ERR_FACE_LOG_STRING[] = {
 };
 
 std::string GetAppErrCodeInfo(APP_ERROR err);
-void AssertErrorCode(const int code, const std::string &file, const std::string &function, const int line);
-void CheckErrorCode(const int code, const std::string &file, const std::string &function, const int line);
+void AssertErrorCode(const int code, const std::string file, const std::string function, const int line);
+void CheckErrorCode(const int code, const std::string file, const std::string function, const int line);
 
 #define RtAssert(code) AssertErrorCode(code, __FILE__, __FUNCTION__, __LINE__);
 #define RtCheckError(code) CheckErrorCode(code, __FILE__, __FUNCTION__, __LINE__);

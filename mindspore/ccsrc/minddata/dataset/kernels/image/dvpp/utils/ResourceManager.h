@@ -16,20 +16,18 @@
 #ifndef RESOURCEMANAGER_H
 #define RESOURCEMANAGER_H
 
-#include <sys/stat.h>
 #include <vector>
 #include <set>
 #include <cstring>
-#include <string>
 #include <unordered_map>
-#include <memory>
 #include <mutex>
 #include "CommonDataType.h"
 #include "ErrorCode.h"
+#include <sys/stat.h>
 #include "mindspore/core/utils/log_adapter.h"
 #include "mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.h"
 
-#define PATH_MAX_ASCEND 4096
+#define PATH_MAX 4096
 
 enum ModelLoadMethod {
   LOAD_FROM_FILE = 0,       // Loading from file, memory of model and weights are managed by ACL
@@ -63,10 +61,12 @@ struct ResourceInfo {
 APP_ERROR ExistFile(const std::string &filePath);
 
 class ResourceManager {
- public:
-  ResourceManager() {}
+  friend APP_ERROR ExistFile(const std::string &filePath);
 
-  ~ResourceManager() {}
+ public:
+  ResourceManager(){};
+
+  ~ResourceManager(){};
 
   // Get the Instance of resource manager
   static std::shared_ptr<ResourceManager> GetInstance();

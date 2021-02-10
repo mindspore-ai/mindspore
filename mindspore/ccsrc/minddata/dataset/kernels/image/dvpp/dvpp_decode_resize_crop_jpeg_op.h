@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_DVPP_DECODE_RESIZE_CROP_JPEG_OP_H
-#define MINDSPORE_DVPP_DECODE_RESIZE_CROP_JPEG_OP_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_RESIZE_CROP_JPEG_OP_H
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_RESIZE_CROP_JPEG_OP_H
 
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/core/tensor.h"
-#include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/status.h"
-#include "minddata/dataset/core/data_type.h"
+#include "acl/acl.h"
 #include "mindspore/core/utils/log_adapter.h"
+#include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ResourceManager.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
-#include "acl/acl.h"
+#include "minddata/dataset/kernels/tensor_op.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -44,17 +44,23 @@ class DvppDecodeResizeCropJpegOp : public TensorOp {
   ~DvppDecodeResizeCropJpegOp() = default;
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
+
+  Status Compute(const std::shared_ptr<DeviceTensor> &input, std::shared_ptr<DeviceTensor> *output) override;
+
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
   std::string Name() const override { return kDvppDecodeResizeCropJpegOp; }
+
+  Status SetAscendResource(const std::shared_ptr<MDAclProcess> &processor) override;
 
  private:
   int32_t crop_height_;
   int32_t crop_width_;
   int32_t resized_height_;
   int32_t resized_width_;
+  std::shared_ptr<MDAclProcess> processor_;
 };
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_DVPP_DECODE_RESIZE_CROP_JPEG_OP_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_DVPP_DVPP_DECODE_RESIZE_CROP_JPEG_OP_H

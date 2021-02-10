@@ -16,8 +16,6 @@
 #ifndef DVPP_COMMON_H
 #define DVPP_COMMON_H
 
-#include <vector>
-#include <memory>
 #include "CommonDataType.h"
 #include "ErrorCode.h"
 #include "acl/ops/acl_dvpp.h"
@@ -61,6 +59,8 @@ struct DeviceStreamData {
 
 const uint32_t JPEGD_STRIDE_WIDTH = 128;  // Jpegd module output width need to align up to 128
 const uint32_t JPEGD_STRIDE_HEIGHT = 16;  // Jpegd module output height need to align up to 16
+const uint32_t PNGD_STRIDE_WIDTH = 128;   // Pngd module output width need to align up to 128
+const uint32_t PNGD_STRIDE_HEIGHT = 16;   // Pngd module output height need to align up to 16
 const uint32_t JPEGE_STRIDE_WIDTH = 16;   // Jpege module input width need to align up to 16
 const uint32_t JPEGE_STRIDE_HEIGHT = 1;   // Jpege module input height remains unchanged
 const uint32_t VPC_STRIDE_WIDTH = 16;     // Vpc module output width need to align up to 16
@@ -77,6 +77,10 @@ const uint32_t MAX_JPEGD_WIDTH = 8192;    // Max width of jpegd module
 const uint32_t MAX_JPEGD_HEIGHT = 8192;   // Max height of jpegd module
 const uint32_t MIN_JPEGD_WIDTH = 32;      // Min width of jpegd module
 const uint32_t MIN_JPEGD_HEIGHT = 32;     // Min height of jpegd module
+const uint32_t MAX_PNGD_WIDTH = 4096;     // Max width of pngd module
+const uint32_t MAX_PNGD_HEIGHT = 4096;    // Max height of pngd module
+const uint32_t MIN_PNGD_WIDTH = 32;       // Min width of pngd module
+const uint32_t MIN_PNGD_HEIGHT = 32;      // Min height of pngd module
 const uint32_t MAX_JPEGE_WIDTH = 8192;    // Max width of jpege module
 const uint32_t MAX_JPEGE_HEIGHT = 8192;   // Max height of jpege module
 const uint32_t MIN_JPEGE_WIDTH = 32;      // Min width of jpege module
@@ -126,10 +130,16 @@ class DvppCommon {
   static APP_ERROR GetVpcOutputStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
                                           uint32_t &widthStride, uint32_t &heightStride);
   static void GetJpegDecodeStrideSize(uint32_t width, uint32_t height, uint32_t &widthStride, uint32_t &heightStride);
+  static void GetPngDecodeStrideSize(uint32_t width, uint32_t height, uint32_t &widthStride, uint32_t &heightStride,
+                                     acldvppPixelFormat format);
   static APP_ERROR GetJpegImageInfo(const void *data, uint32_t dataSize, uint32_t &width, uint32_t &height,
                                     int32_t &components);
+  static APP_ERROR GetPngImageInfo(const void *data, uint32_t dataSize, uint32_t &width, uint32_t &height,
+                                   int32_t &components);
   static APP_ERROR GetJpegDecodeDataSize(const void *data, uint32_t dataSize, acldvppPixelFormat format,
                                          uint32_t &decSize);
+  static APP_ERROR GetPngDecodeDataSize(const void *data, uint32_t dataSize, acldvppPixelFormat format,
+                                        uint32_t &decSize);
   static APP_ERROR GetJpegEncodeStrideSize(std::shared_ptr<DvppDataInfo> &input);
   static APP_ERROR SetEncodeLevel(uint32_t level, acldvppJpegeConfig &jpegeConfig);
   static APP_ERROR GetVideoDecodeStrideSize(uint32_t width, uint32_t height, acldvppPixelFormat format,
@@ -142,6 +152,8 @@ class DvppCommon {
                       VpcProcessType processType = VPC_PT_DEFAULT);
   APP_ERROR VpcCrop(const DvppCropInputInfo &input, const DvppDataInfo &output, bool withSynchronize);
   APP_ERROR JpegDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize);
+
+  APP_ERROR PngDecode(DvppDataInfo &input, DvppDataInfo &output, bool withSynchronize);
 
   APP_ERROR JpegEncode(DvppDataInfo &input, DvppDataInfo &output, acldvppJpegeConfig *jpegeConfig,
                        bool withSynchronize);
@@ -156,8 +168,17 @@ class DvppCommon {
                                  VpcProcessType processType = VPC_PT_DEFAULT);
   APP_ERROR CombineCropProcess(DvppCropInputInfo &input, DvppDataInfo &output, bool withSynchronize);
   APP_ERROR CombineJpegdProcess(const RawData &imageInfo, acldvppPixelFormat format, bool withSynchronize);
+
+  APP_ERROR SinkCombineJpegdProcess(std::shared_ptr<DvppDataInfo> &input, std::shared_ptr<DvppDataInfo> &output,
+                                    bool withSynchronize);
+  APP_ERROR SinkCombinePngdProcess(std::shared_ptr<DvppDataInfo> &input, std::shared_ptr<DvppDataInfo> &output,
+                                   bool withSynchronize);
+
   APP_ERROR CombineJpegeProcess(const RawData &imageInfo, uint32_t width, uint32_t height, acldvppPixelFormat format,
                                 bool withSynchronize);
+  // New feature for PNG format image decode
+  APP_ERROR CombinePngdProcess(const RawData &imageInfo, acldvppPixelFormat format, bool withSynchronize);
+
   // The following interface can be called only when the DvppCommon object is initialized with InitVdec
   APP_ERROR CombineVdecProcess(std::shared_ptr<DvppDataInfo> data, void *userData);
 
@@ -167,6 +188,15 @@ class DvppCommon {
   std::shared_ptr<DvppDataInfo> GetResizedImage();
   std::shared_ptr<DvppDataInfo> GetEncodedImage();
   std::shared_ptr<DvppDataInfo> GetCropedImage();
+
+  // Transfer DvppDataInfo from host to device, aim at resize and crop
+  APP_ERROR TransferYuvDataH2D(const DvppDataInfo &imageinfo);
+  // Transfer RawData(image) from host to device, aim at decode
+  APP_ERROR TransferImageH2D(const RawData &imageInfo, const std::shared_ptr<DvppDataInfo> &jpegInput);
+  // Transfer RawData(image on host) to inputImage_(data on device), this is for data sink mode
+  APP_ERROR SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat format);
+  // This overload function is for PNG image sink, hence we ignore the pixel format
+  APP_ERROR SinkImageH2D(const RawData &imageInfo);
 
   // Release the memory that is allocated in the interfaces which are started with "Combine"
   void ReleaseDvppBuffer();
@@ -185,7 +215,6 @@ class DvppCommon {
                         bool withSynchronize);
   APP_ERROR CheckResizeParams(const DvppDataInfo &input, const DvppDataInfo &output);
   APP_ERROR CheckCropParams(const DvppCropInputInfo &input);
-  APP_ERROR TransferImageH2D(const RawData &imageInfo, const std::shared_ptr<DvppDataInfo> &jpegInput);
   APP_ERROR CreateStreamDesc(std::shared_ptr<DvppDataInfo> data);
   APP_ERROR DestroyResource();
 

@@ -17,25 +17,28 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_EXECUTE_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_EXECUTE_H_
 
+#include <string>
 #include <vector>
 #include <memory>
+#include "include/api/context.h"
 #include "include/api/types.h"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
 
 namespace mindspore {
 namespace dataset {
+class AscendResource;  // Class to manage the resource of Ascend310
 
 // class to run tensor operations in eager mode
 class Execute {
  public:
   /// \brief Constructor
-  explicit Execute(std::shared_ptr<TensorOperation> op);
+  explicit Execute(std::shared_ptr<TensorOperation> op, std::string deviceType = "CPU");
 
-  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops);
+  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string deviceType = "CPU");
 
   /// \brief Destructor
-  ~Execute() = default;
+  ~Execute();
 
   /// \brief callable function to execute the TensorOperation in eager mode
   /// \param[in] input Tensor to be transformed
@@ -48,9 +51,19 @@ class Execute {
   /// \param[out] out Result tensor after transform
   /// \return - Status
   Status operator()(const std::vector<mindspore::MSTensor> &input_tensor_list, std::vector<mindspore::MSTensor> *out);
+#ifdef ENABLE_ACL
+  Status DeviceMemoryRelease();
+#endif
 
  private:
+  Status validate_device_();
+
   std::vector<std::shared_ptr<TensorOperation>> ops_;
+
+  std::string device_type_;
+#ifdef ENABLE_ACL
+  std::shared_ptr<AscendResource> D_resource_;
+#endif
 };
 
 }  // namespace dataset

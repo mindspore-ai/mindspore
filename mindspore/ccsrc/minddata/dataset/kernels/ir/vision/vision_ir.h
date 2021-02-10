@@ -42,7 +42,6 @@ constexpr char kCropOperation[] = "Crop";
 constexpr char kCutMixBatchOperation[] = "CutMixBatch";
 constexpr char kCutOutOperation[] = "CutOut";
 constexpr char kDecodeOperation[] = "Decode";
-constexpr char kDvppDecodeResizeCropOperation[] = "DvppDecodeResizeCrop";
 constexpr char kEqualizeOperation[] = "Equalize";
 constexpr char kHwcToChwOperation[] = "HwcToChw";
 constexpr char kInvertOperation[] = "Invert";
@@ -88,7 +87,6 @@ class CropOperation;
 class CutMixBatchOperation;
 class CutOutOperation;
 class DecodeOperation;
-class DvppDecodeResizeCropOperation;
 class EqualizeOperation;
 class HwcToChwOperation;
 class InvertOperation;
@@ -256,23 +254,6 @@ class DecodeOperation : public TensorOperation {
 
  private:
   bool rgb_;
-};
-
-class DvppDecodeResizeCropOperation : public TensorOperation {
- public:
-  explicit DvppDecodeResizeCropOperation(const std::vector<uint32_t> &crop, const std::vector<uint32_t> &resize);
-
-  ~DvppDecodeResizeCropOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDvppDecodeResizeCropOperation; }
-
- private:
-  std::vector<uint32_t> crop_;
-  std::vector<uint32_t> resize_;
 };
 
 class EqualizeOperation : public TensorOperation {

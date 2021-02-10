@@ -48,6 +48,13 @@ Status TensorOp::Compute(const TensorRow &input, TensorRow *output) {
                 "Is this TensorOp oneToOne? If no, please implement this Compute() in the derived class.");
 }
 
+Status TensorOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::shared_ptr<DeviceTensor> *output) {
+  IO_CHECK(input, output);
+  return Status(StatusCode::kMDUnexpectedError,
+                "Wrong Compute() function is called. This is a function for operators which can be executed by"
+                "different device. If so, please implement it in the derived class.");
+}
+
 Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   if (inputs.size() != NumInput())
     return Status(StatusCode::kMDUnexpectedError,
@@ -63,5 +70,11 @@ Status TensorOp::OutputType(const std::vector<DataType> &inputs, std::vector<Dat
   outputs = inputs;
   return Status::OK();
 }
+#ifdef ENABLE_ACL
+Status TensorOp::SetAscendResource(const std::shared_ptr<MDAclProcess> &processor) {
+  return Status(StatusCode::kMDUnexpectedError,
+                "This is a CPU operator which doesn't have Ascend Resource. Please verify your context");
+}
+#endif
 }  // namespace dataset
 }  // namespace mindspore

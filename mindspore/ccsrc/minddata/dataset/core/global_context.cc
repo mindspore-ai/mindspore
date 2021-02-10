@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"
 #endif
+#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/circular_pool.h"
@@ -61,6 +62,7 @@ Status GlobalContext::Init() {
 #ifndef ENABLE_ANDROID
   cv_tensor_allocator_ = std::make_unique<Allocator<CVTensor>>(mem_pool_);
 #endif
+  device_tensor_allocator_ = std::make_unique<Allocator<DeviceTensor>>(mem_pool_);
   int_allocator_ = std::make_unique<IntAlloc>(mem_pool_);
   return Status::OK();
 }

@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <iostream>
 #include <memory>
-#include <string>
 #include <vector>
 #include "acl/acl.h"
 #include "acl/ops/acl_dvpp.h"
@@ -41,15 +40,6 @@ const int VPC_HEIGHT_ALIGN = 2;
 const int JPEG_WIDTH_ALIGN = 128;
 const int JPEG_HEIGHT_ALIGN = 16;
 const int VPC_OFFSET_ALIGN = 2;
-
-// Tensor Descriptor
-struct Tensor {
-  aclDataType dataType;       // Tensor data type
-  int numDim;                 // Number of dimensions of Tensor
-  std::vector<int64_t> dims;  // Dimension vector
-  aclFormat format;           // Format of tensor, e.g. ND, NCHW, NC1HWC0
-  std::string name;           // Name of tensor
-};
 
 // Data type of tensor
 enum OpAttrType {
@@ -92,8 +82,8 @@ struct ImageInfo {
 
 // Description of data in device
 struct RawData {
-  size_t lenOfByte;            // Size of memory, bytes
-  std::shared_ptr<void> data;  // Smart pointer of data
+  size_t lenOfByte;  // Size of memory, bytes
+  void *data;        // Pointer of data
 };
 
 // Description of data in device

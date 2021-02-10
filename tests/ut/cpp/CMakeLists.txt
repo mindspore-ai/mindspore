@@ -70,6 +70,13 @@ if(ENABLE_MINDDATA)
                 )
         list(REMOVE_ITEM UT_SRCS ${PYTHON_RELATED_SRCS})
     endif()
+
+    if(NOT ENABLE_ACL)
+        set(ASCEND310_RELATED_SRCS
+                dataset/dvpp_decode_jpeg_test.cc
+                )
+        list(REMOVE_ITEM UT_SRCS ${ASCEND310_RELATED_SRCS})
+    endif()
 else()
     file(GLOB_RECURSE TEMP_UT_SRCS ./*.cc)
     foreach(OBJ ${TEMP_UT_SRCS})

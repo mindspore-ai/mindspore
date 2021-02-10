@@ -15,6 +15,7 @@
  */
 
 #include "minddata/dataset/core/de_tensor.h"
+#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/include/type_id.h"
@@ -35,7 +36,27 @@ DETensor::DETensor(std::shared_ptr<dataset::Tensor> tensor_impl)
     : tensor_impl_(tensor_impl),
       name_("MindDataTensor"),
       type_(static_cast<mindspore::DataType>(DETypeToMSType(tensor_impl_->type()))),
-      shape_(tensor_impl_->shape().AsVector()) {}
+      shape_(tensor_impl_->shape().AsVector()),
+      is_device_(false) {}
+
+#ifndef ENABLE_ANDROID
+DETensor::DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bool is_device)
+    : device_tensor_impl_(device_tensor_impl), name_("MindDataDeviceTensor"), is_device_(is_device) {
+  // The sequence of shape_ is (width, widthStride, height, heightStride) in Dvpp module
+  // We need to add [1]widthStride and [3]heightStride, which are actual YUV image shape, into shape_ attribute
+  uint8_t flag = 0;
+  for (auto &i : device_tensor_impl->GetYuvStrideShape()) {
+    if (flag % 2 == 1) {
+      int64_t j = static_cast<int64_t>(i);
+      shape_.emplace_back(j);
+    }
+    ++flag;
+  }
+  std::reverse(shape_.begin(), shape_.end());
+  MS_LOG(INFO) << "This is a YUV420 format image, one pixel takes 1.5 bytes. Therefore, the shape of"
+               << " image is in (H, W) format. You can search for more information about YUV420 format";
+}
+#endif
 
 const std::string &DETensor::Name() const { return name_; }
 
@@ -45,6 +66,12 @@ enum mindspore::DataType DETensor::DataType() const {
 }
 
 size_t DETensor::DataSize() const {
+#ifndef ENABLE_ANDROID
+  if (is_device_) {
+    ASSERT_NULL(device_tensor_impl_);
+    return device_tensor_impl_->DeviceDataSize();
+  }
+#endif
   ASSERT_NULL(tensor_impl_);
   return tensor_impl_->SizeInBytes();
 }
@@ -52,6 +79,11 @@ size_t DETensor::DataSize() const {
 const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
 
 std::shared_ptr<const void> DETensor::Data() const {
+#ifndef ENABLE_ANDROID
+  if (is_device_) {
+    return std::shared_ptr<const void>(device_tensor_impl_->GetDeviceBuffer(), [](const void *) {});
+  }
+#endif
   return std::shared_ptr<const void>(tensor_impl_->GetBuffer(), [](const void *) {});
 }
 
@@ -60,7 +92,7 @@ void *DETensor::MutableData() {
   return tensor_impl_->GetMutableBuffer();
 }
 
-bool DETensor::IsDevice() const { return false; }
+bool DETensor::IsDevice() const { return is_device_; }
 
 std::shared_ptr<mindspore::MSTensor::Impl> DETensor::Clone() const { return std::make_shared<DETensor>(tensor_impl_); }
 }  // namespace dataset
