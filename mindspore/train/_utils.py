@@ -88,7 +88,10 @@ def _make_directory(path: str):
     else:
         logger.debug("The directory(%s) doesn't exist, will create it", path)
         try:
-            os.makedirs(path, exist_ok=True, mode=0o700)
+            permissions = os.R_OK | os.W_OK | os.X_OK
+            os.umask(permissions << 3 | permissions)
+            mode = permissions << 6
+            os.makedirs(path, mode=mode, exist_ok=True)
             real_path = path
         except PermissionError as e:
             logger.error("No write permission on the directory(%r), error = %r", path, e)
