@@ -179,7 +179,7 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
       MS_LOG(ERROR) << "element_shape_ is not fullyDefined!";
       return RET_ERROR;
     }
-    output->set_data_type(input0->data_type());
+    output->set_data_type(input0->tensors_data_type());
     output->set_shape(element_shape_);
   }
   output->set_format(input0->GetTensor(index_)->format());

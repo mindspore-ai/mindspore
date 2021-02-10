@@ -38,26 +38,49 @@ extern "C" {
 int Exp(const float *input_data, float *output_data, const ExpParameter *parameter, int task_id);
 void ExpFp32(const float *src, float *dst, int num);
 
-#ifdef ENABLE_ARM64
-static inline void simd_exp(float32x4_t input4, float *dst) {
-  static float32x4_t maxv = {88.0f, 88.0f, 88.0f, 88.0f};
-  static float32x4_t minv = {-88.0f, -88.0f, -88.0f, -88.0f};
-  static float32x4_t paramv[] = {{0.693147f, 0.693147f, 0.693147f, 0.693147f},
+#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
+  static MS_FLOAT32X4 maxv = {88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
+  static MS_FLOAT32X4 param[] = {{0.693147f, 0.693147f, 0.693147f, 0.693147f},
                                  {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
                                  {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
                                  {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
                                  {0.5f, 0.5f, 0.5f, 0.5f},
                                  {1.0f, 1.0f, 1.0f, 1.0f}};
-  input4 = vmaxq_f32(minv, vminq_f32(maxv, input4));
-  int32x4_t integer4 = vcvtq_s32_f32(vdivq_f32(input4, paramv[0]));
-  float32x4_t decimal4 = vsubq_f32(input4, vmulq_f32(vcvtq_f32_s32(integer4), paramv[0]));
-  int32x4_t int_exp4 = vshlq_s32(vaddq_s32(integer4, vdupq_n_s32(127)), vdupq_n_s32(23));
-  vst1q_f32(dst, vld1q_f32((float32_t *)(&int_exp4)));
-  float32x4_t decimal_exp4 = vaddq_f32(paramv[2], vmulq_f32(decimal4, paramv[1]));
-  decimal_exp4 = vmulq_f32(decimal4, vaddq_f32(paramv[3], vmulq_f32(decimal4, decimal_exp4)));
-  decimal_exp4 = vaddq_f32(paramv[5], vmulq_f32(decimal4, vaddq_f32(paramv[4], decimal_exp4)));
-  decimal_exp4 = vaddq_f32(paramv[5], vmulq_f32(decimal4, decimal_exp4));
-  vst1q_f32(dst, vmulq_f32(vld1q_f32(dst), decimal_exp4));
+
+  input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
+  MS_INT32X4 integer = MS_CVTQPS_EPI32(input / param[0]);
+  MS_FLOAT32X4 decimal = input - MS_CVTQEPI32_PS(integer) * param[0];
+  MS_INT32X4 int_exp = MS_SLLIQ_EPI32(MS_ADDQ_EPI32(integer, MS_MOVQ_EPI32(127)), 23);
+  memcpy(dst, &int_exp, sizeof(int32_t) * 4);
+  MS_FLOAT32X4 decimal_exp =
+    param[5] +
+    decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
+  MS_STQ_F32(dst, decimal_exp * MS_LDQ_F32(dst));
+}
+#endif
+
+#if defined(ENABLE_AVX)
+static inline void simd_exp_avx(MS_FLOAT32X8 input, float *dst) {
+  static MS_FLOAT32X8 maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X8 minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
+  static MS_FLOAT32X8 param[] = {
+    {0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f},
+    {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
+    {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
+    {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
+    {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f},
+    {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}};
+  input = MS_MAX256_F32(minv, MS_MIN256_F32(input, maxv));
+  MS_INT32X8 integer = MS_CVT256PS_EPI32(input / param[0]);
+  MS_FLOAT32X8 decimal = input - MS_CVT256EPI32_PS(integer) * param[0];
+  MS_INT32X8 int_exp = MS_SLLI256_EPI32(MS_ADD256_EPI32(integer, MS_MOV256_EPI32(127)), 23);
+  memcpy(dst, &int_exp, sizeof(int32_t) * 8);
+  MS_FLOAT32X8 decimal_exp =
+    param[5] +
+    decimal * (param[5] + decimal * (param[4] + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
+  MS_ST256_F32(dst, decimal_exp * MS_LD256_F32(dst));
 }
 #endif
 
