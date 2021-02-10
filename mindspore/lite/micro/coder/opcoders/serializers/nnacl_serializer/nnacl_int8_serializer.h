@@ -33,7 +33,7 @@ namespace mindspore::lite::micro::nnacl {
 class NNaclInt8Serializer : public Serializer {
  public:
   NNaclInt8Serializer() = default;
-  ~NNaclInt8Serializer() = default;
+  ~NNaclInt8Serializer() override = default;
   void CodeStruct(const std::string &name, const ConvParameter &conv_parameter);
   void CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter);
   void CodeStruct(const std::string &name, const AddQuantParameter &add_quant_parameter);
