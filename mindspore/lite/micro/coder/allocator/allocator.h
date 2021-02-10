@@ -23,7 +23,7 @@
 #include <string>
 #include "coder/allocator/memory_manager.h"
 #include "coder/log.h"
-#include "coder/utils/print_utils.h"
+#include "coder/utils/type_cast.h"
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 

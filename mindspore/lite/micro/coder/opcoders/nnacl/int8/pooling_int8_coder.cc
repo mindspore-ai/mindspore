@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/nnacl/int8/pooling_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/pooling_int8_coder.h"
 #include <memory>
 #include <string>
 #include <vector>
 #include "nnacl/int8/pooling_int8.h"
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/log.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/file_collector.h"
 
 using std::string;
 

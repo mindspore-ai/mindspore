@@ -13,34 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_TYPE_CAST_H_
+#define MINDSPORE_LITE_MICRO_CODER_UTILS_TYPE_CAST_H_
 
-#ifndef MINDSPORE_MICRO_PRINT_UTILS_H_
-#define MINDSPORE_MICRO_PRINT_UTILS_H_
-
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <map>
-#include <typeindex>
+#include <limits>
+#include <vector>
+#include <string>
 #include <typeinfo>
+#include <typeindex>
+#include "include/errorcode.h"
+#include "securec/include/securec.h"
 #include "src/tensor.h"
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::lite::micro {
+std::string EnumNameDataType(TypeId type);
 
-constexpr int kWeightPrecision = 9;
+std::string GetTensorDataType(TypeId type);
 
-std::string GetPrintFormat(const lite::Tensor *tensor);
+std::string EnumMicroTensorFormat(schema::Format format);
 
-void PrintTensor(const lite::Tensor *tensor, std::ofstream &weightOf, std::ofstream &hOf,
-                 const std::string &tensorName);
-
-void PrintTensorForNet(const lite::Tensor *tensor, std::ofstream &weightOf, std::ofstream &hOf,
-                       const std::string &tensorName);
-
-std::string GetTensorDataType(const TypeId typeId);
-
-std::string GetMicroTensorDataType(TypeId type);
+std::string EnumMicroTensorDataType(TypeId type);
 
 /**
  * @tparam T
@@ -61,7 +55,6 @@ std::string GetVariableTypeName() {
                                                        {std::type_index(typeid(int16_t *)), "int16_t *"},
                                                        {std::type_index(typeid(int8_t *)), "int8_t *"},
                                                        {std::type_index(typeid(float *)), "float *"}};
-
   auto item = types_name.find(std::type_index(typeid(T)));
   if (item != types_name.end()) {
     return item->second;
@@ -71,4 +64,4 @@ std::string GetVariableTypeName() {
 }
 }  // namespace mindspore::lite::micro
 
-#endif  // MINDSPORE_MICRO_PRINT_UTILS_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_TYPE_CAST_H_

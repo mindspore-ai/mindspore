@@ -19,25 +19,20 @@
 #include <map>
 #include "coder/allocator/memory_manager.h"
 #include "coder/opcoders/op_coder.h"
-#include "coder/coder_config.h"
 
 namespace mindspore::lite::micro {
-const std::map<std::type_index, std::pair<TypeId, size_t>> types_map = {
-  {std::type_index(typeid(float *)), {kNumberTypeFloat32, sizeof(float)}},
-  {std::type_index(typeid(int *)), {kNumberTypeInt32, sizeof(int)}},
-  {std::type_index(typeid(int32_t *)), {kNumberTypeInt32, sizeof(int32_t)}},
-  {std::type_index(typeid(int16_t *)), {kNumberTypeInt16, sizeof(int16_t)}},
-  {std::type_index(typeid(int8_t *)), {kNumberTypeInt8, sizeof(int8_t)}},
-};
-
 void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocType type) {
-  auto item = types_map.find(std::type_index(typeid(type_id)));
-  MS_CHECK_TRUE_RET_NULL(item != types_map.end(), "unsupported type idnex");
-  TypeId typei = item->second.first;
-  size_t type_size = item->second.second;
+  static const std::map<TypeId, size_t> size_map = {{kNumberTypeFloat32, sizeof(float)},
+                                                    {kNumberTypeInt32, sizeof(int)},
+                                                    {kNumberTypeInt32, sizeof(int32_t)},
+                                                    {kNumberTypeInt16, sizeof(int16_t)},
+                                                    {kNumberTypeInt8, sizeof(int8_t)}};
+  auto item = size_map.find(type_id);
+  MS_CHECK_TRUE_RET_NULL(item != size_map.end(), "unsupported type idnex");
+  size_t type_size = item->second;
   std::vector<int> shape = {1, static_cast<int>(size / type_size)};
   auto cate = type == kOfflinePackWeight ? Tensor::Category::CONST_TENSOR : Tensor::Category::VAR;
-  Tensor *weight = new (std::nothrow) lite::Tensor(typei, shape, schema::Format_NHWC, cate);
+  Tensor *weight = new (std::nothrow) lite::Tensor(type_id, shape, schema::Format_NHWC, cate);
   MS_CHECK_PTR_RET_NULL(weight);
   std::string runtime_addr = net_weight_addr_ + std::to_string(weight_index_++);
   malloc_weights_addr_.insert(std::make_pair(weight, runtime_addr));

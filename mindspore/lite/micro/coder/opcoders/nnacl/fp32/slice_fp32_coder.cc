@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/fp32/slice_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/slice_fp32_coder.h"
 #include <string>
 #include "nnacl/slice_parameter.h"
 #include "src/ops/slice.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Slice;
 namespace mindspore::lite::micro::nnacl {

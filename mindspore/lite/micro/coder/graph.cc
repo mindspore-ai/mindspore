@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "micro/coder/coder_graph.h"
+#include "micro/coder/graph.h"
 #include <queue>
 #include <deque>
 #include <string>

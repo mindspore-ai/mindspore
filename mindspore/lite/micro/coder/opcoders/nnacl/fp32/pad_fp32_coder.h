@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_PAD_FP32_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/fp32/pad_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {

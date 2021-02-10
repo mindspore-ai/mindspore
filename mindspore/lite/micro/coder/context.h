@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_CODER_CODER_CONTEXT_H_
-#define MICRO_CODER_CODER_CONTEXT_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_CODER_CONTEXT_H_
+#define MINDSPORE_LITE_MICRO_CODER_CODER_CONTEXT_H_
 #include <map>
 #include <memory>
 #include <set>
@@ -24,8 +24,6 @@
 #include <utility>
 #include <vector>
 #include "src/tensor.h"
-#include "coder/utils/coder_utils.h"
-#include "coder/utils/print_utils.h"
 namespace mindspore::lite::micro {
 class CoderContext {
  public:
@@ -36,7 +34,13 @@ class CoderContext {
   std::vector<std::string> init_contents() const { return initialContent_; }
 
   void set_code_blocks(const std::vector<std::string> &code_block) { code_blocks_ = code_block; }
-  std::vector<std::string> code_blocks() { return code_blocks_; }
+  std::vector<std::string> code_blocks() const { return code_blocks_; }
+
+  void set_inference_blocks(const std::vector<std::string> &inference_blocks) { inference_blocks_ = inference_blocks; }
+  std::vector<std::string> inference_blocks() const { return inference_blocks_; }
+
+  void set_train_blocks(const std::vector<std::string> &train_blocks) { train_blocks_ = train_blocks; }
+  std::vector<std::string> train_blocks() const { return train_blocks_; }
 
   void set_tensor_map(const std::map<Tensor *, std::string> &tensor_map) {
     tensors_map_.insert(tensor_map.begin(), tensor_map.end());
@@ -64,16 +68,13 @@ class CoderContext {
   void AppendInitCode(const std::string &codeBlock);
 
   std::set<std::string> c_files() const { return c_files_; }
-
-  void set_c_files(const std::set<std::string> files) { c_files_.insert(files.begin(), files.end()); }
+  void set_c_files(const std::set<std::string> &files) { c_files_.insert(files.begin(), files.end()); }
 
   std::set<std::string> h_files() const { return h_files_; }
-
-  void set_h_files(const std::set<std::string> files) { h_files_.insert(files.begin(), files.end()); }
+  void set_h_files(const std::set<std::string> &files) { h_files_.insert(files.begin(), files.end()); }
 
   std::set<std::string> asm_files() const { return asm_files_; }
-
-  void set_asm_files(const std::set<std::string> files) { asm_files_.insert(files.begin(), files.end()); }
+  void set_asm_files(const std::set<std::string> &files) { asm_files_.insert(files.begin(), files.end()); }
 
  private:
   std::vector<Tensor *> graph_inputs_;
@@ -101,9 +102,11 @@ class CoderContext {
   std::set<std::string> asm_files_;
   // operator header files
   std::set<std::string> h_files_;
-  // net.c's content, include the inference and prediction implementation
+  // net.c's content, include the Inference and Training implementation
   std::vector<std::string> code_blocks_;
+  std::vector<std::string> train_blocks_;
+  std::vector<std::string> inference_blocks_;
 };
 
 }  // namespace mindspore::lite::micro
-#endif  // MICRO_CODER_CODER_CONTEXT_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_CONTEXT_H_

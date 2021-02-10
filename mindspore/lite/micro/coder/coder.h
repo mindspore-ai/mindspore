@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_CODER_CODER_H_
-#define MICRO_CODER_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_CODER_H_
 #include <string>
 #include <memory>
-#include "coder/session_coder.h"
+#include "coder/session.h"
 
 namespace mindspore::lite::micro {
 
@@ -41,4 +41,4 @@ class Coder final {
 int RunCoder(int argc, const char **argv);
 
 }  // namespace mindspore::lite::micro
-#endif  // MICRO_CODER_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_CODER_H_

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "micro/coder/coder_context.h"
+#include "micro/coder/context.h"
 #include "micro/coder/coder_config.h"
 #include "micro/coder/allocator/allocator.h"
 

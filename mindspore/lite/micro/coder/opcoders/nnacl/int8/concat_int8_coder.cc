@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/int8/concat_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/concat_int8_coder.h"
 #include <limits>
 #include "nnacl/int8/concat_int8.h"
 #include "nnacl/int8/arithmetic_int8.h"
 #include "nnacl/int8/quantize.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/log.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 int MallocQuantArgForConcat(ConcatQuantArg *quant_arg, size_t input_num) {
   quant_arg->in_args_ = static_cast<QuantArg *>(malloc(sizeof(QuantArg) * input_num));

@@ -20,8 +20,8 @@
 #include <set>
 #include <string>
 #include <memory>
-#include "coder/coder_context.h"
-#include "coder/coder_graph.h"
+#include "coder/context.h"
+#include "coder/graph.h"
 #include "coder/allocator/allocator.h"
 #include "include/errorcode.h"
 #include "src/lite_kernel.h"
@@ -50,25 +50,23 @@ class OperatorCoder {
   }
   std::string ID() const { return node_->name_; }
 
-  void set_input_tensor_indices(const std::vector<uint32_t> *input_indices);
-  void set_output_tensor_indices(const std::vector<uint32_t> *output_indices);
+  void set_input_tensor_indices(const std::vector<uint32_t> &input_indices);
+  void set_output_tensor_indices(const std::vector<uint32_t> &output_indices);
 
   const std::vector<uint32_t> input_tensor_indices() const;
   const std::vector<uint32_t> output_tensor_indices() const;
 
-  void AddInputNodeIndex(size_t input_node_index);
-  void AddOutputNodeIndex(size_t output_node_index);
+  const std::vector<Tensor *> input_tensors() const;
+  const std::vector<Tensor *> output_tensors() const;
 
-  const std::vector<size_t> input_node_indices() const;
-  const std::vector<size_t> output_node_indices() const;
+  void AddInputOp(OperatorCoder *op) { input_ops_.push_back(op); }
+  void AddOutputOp(OperatorCoder *op) { output_ops_.push_back(op); }
+  const std::vector<OperatorCoder *> input_ops() const { return input_ops_; }
+  const std::vector<OperatorCoder *> output_ops() const { return output_ops_; }
 
   size_t node_index() const;
 
   void set_parameter(OpParameter *parameter);
-
-  const std::vector<Tensor *> input_tensors() const;
-  const std::vector<Tensor *> output_tensors() const;
-
   const PrimitiveC *primitive() const { return node_->primitive_; }
 
   const Model::Node *node() const { return this->node_; }
@@ -99,20 +97,15 @@ class OperatorCoder {
   MemoryAllocator *allocator_{nullptr};
 
   std::string thread_num_s_{"1"};
-
   int thread_num_{1};
 
  private:
   size_t node_index_{0};
   std::vector<uint32_t> input_tensor_indices_;
   std::vector<uint32_t> output_tensor_indices_;
-  std::vector<size_t> input_node_indices_;
-  std::vector<size_t> output_node_indices_;
-  std::set<size_t> input_node_set_indices_;
-  std::set<size_t> output_node_set_indices_;
 
-  std::vector<std::unique_ptr<OperatorCoder>> input_nodes_;
-  std::vector<std::unique_ptr<OperatorCoder>> output_nodes_;
+  std::vector<OperatorCoder *> input_ops_;
+  std::vector<OperatorCoder *> output_ops_;
   std::vector<Tensor *> initial_parameters_;
 };
 

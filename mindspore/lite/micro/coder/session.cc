@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "coder/session_coder.h"
+#include "coder/session.h"
+#include <set>
 #include <queue>
+#include <vector>
 #include <utility>
 #include "coder/allocator/allocator.h"
-#include "coder/coder_context.h"
-#include "coder/debug.h"
+#include "coder/context.h"
 #include "coder/generator/generator.h"
 #include "coder/generator/inference/inference_generator.h"
 #include "coder/opcoders/op_coder_builder.h"
@@ -77,19 +78,17 @@ int CoderSession::InferShape() {
 }
 
 void CoderSession::EndCode() {
-  coder_context_->set_tensor_map(allocator_->tensors_map());
-  coder_context_->set_saved_weights(allocator_->saved_weights());
-  coder_context_->set_total_buffer_size(allocator_->total_buffer_size());
-  std::vector<std::string> blocks;
-  for (size_t index = 0; index < coder_context_->code_blocks().size(); ++index) {
-    auto &curr_node = op_coders_.at(index);
-    std::string coder_block = coder_context_->code_blocks().at(index);
-    MicroDebug::DumpNodeData(curr_node, coder_context_->tensors_map(), &coder_block);
-    blocks.emplace_back(coder_block);
+  context_->set_tensor_map(allocator_->tensors_map());
+  context_->set_saved_weights(allocator_->saved_weights());
+  context_->set_total_buffer_size(allocator_->total_buffer_size());
+  context_->set_graph_inputs(coder_graph_->input_tensors());
+  context_->set_graph_outputs(coder_graph_->output_tensors());
+  Configurator *config = Configurator::GetInstance();
+  if (config->debug_mode()) {
+    std::vector<std::string> blocks;
+    blocks = AddDumpDataInfo(context_->code_blocks(), op_coders_);
+    context_->set_code_blocks(blocks);
   }
-  coder_context_->set_code_blocks(blocks);
-  coder_context_->set_graph_inputs(coder_graph_->input_tensors());
-  coder_context_->set_graph_outputs(coder_graph_->output_tensors());
 }
 
 int CoderSession::Run() {
@@ -97,36 +96,19 @@ int CoderSession::Run() {
   // 1. assign memory
   std::vector<lite::Tensor *> inputs = coder_graph_->input_tensors();
   int ret = allocator_->Assign(inputs, op_coders_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "assign memory failed";
-    return RET_ERROR;
-  }
-
+  MS_CHECK_RET_CODE(ret, "assign memory failed");
   // 2. prepare, init model parameters
   for (const auto &op_coder : op_coders_) {
-    if (op_coder == nullptr) {
-      MS_LOG(ERROR) << "opcoder is nullptr";
-      return RET_ERROR;
-    }
-    ret = op_coder->Prepare(coder_context_.get());
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "prepare coder " << op_coder->ID() << " failed";
-      return RET_ERROR;
-    }
+    MS_CHECK_PTR(op_coder);
+    ret = op_coder->Prepare(context_.get());
+    MS_CHECK_RET_CODE(ret, "prepare coder " << op_coder->ID() << " failed");
     allocator_->enable_is_next();
   }
-
   // 3. docode, write operator code
   for (const auto &op_coder : op_coders_) {
-    if (op_coder == nullptr) {
-      MS_LOG(ERROR) << "opcoder is nullptr";
-      return RET_ERROR;
-    }
-    ret = op_coder->DoCode(this->coder_context_.get());
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "do coder " << op_coder->ID() << " failed";
-      return RET_ERROR;
-    }
+    MS_CHECK_PTR(op_coder);
+    ret = op_coder->DoCode(this->context_.get());
+    MS_CHECK_RET_CODE(ret, "do coder " << op_coder->ID() << " failed");
   }
 
   this->EndCode();
@@ -143,7 +125,7 @@ int CoderSession::GenerateCode() {
     case Code_Normal:
     case Code_Android:
       MS_LOG(INFO) << "generate code for Android";
-      generator = std::make_shared<InferenceGenerator>(std::move(coder_context_));
+      generator = std::make_shared<InferenceGenerator>(std::move(context_));
       break;
     default:
       MS_LOG(ERROR) << "unsupported generator code mode, " << code_mode;
@@ -165,11 +147,8 @@ int CoderSession::Init(const std::string &model_path) {
   MS_LOG(DEBUG) << "start reading model file";
   size_t size = 0;
   char *graph_buf = ReadFile(model_path.c_str(), &size);
-  if (graph_buf == nullptr) {
-    MS_LOG(ERROR) << "the graphBuf is nullptr";
-    return RET_ERROR;
-  }
-  // new a coder_context for session
+  MS_CHECK_PTR(graph_buf);
+  // new a context for session
   if (size >= UINT_MAX) {
     MS_LOG(ERROR) << "the size is invalid";
     delete[] graph_buf;
@@ -179,9 +158,8 @@ int CoderSession::Init(const std::string &model_path) {
   delete[] graph_buf;
   MS_CHECK_PTR(model);
   coder_graph_ = std::make_unique<CoderGraph>(model);
-  coder_context_ = std::make_unique<CoderContext>();
-  allocator_->RecordRuntimeAddrs(coder_context_->input_name(), coder_context_->buffer_name(),
-                                 coder_context_->weight_name());
+  context_ = std::make_unique<CoderContext>();
+  allocator_->RecordRuntimeAddrs(context_->input_name(), context_->buffer_name(), context_->weight_name());
   MS_LOG(INFO) << "CoderSession::Init done";
   return RET_OK;
 }
@@ -198,26 +176,30 @@ int CoderSession::Build() {
   return RET_OK;
 }
 
-int CoderSession::InitNodesInputsAndOutputs() {
-  auto &op_coders = this->op_coders_;
-  for (const auto &op_coder : op_coders) {
-    for (const auto &search : op_coders) {
-      if (search.get() == op_coder.get()) {
-        continue;
+int CoderSession::InitOpcodersInputsAndOutputs() {
+  std::map<Tensor *, OperatorCoder *> input_node_map;
+  std::map<Tensor *, OperatorCoder *> output_node_map;
+  for (const auto &op_coder : op_coders_) {
+    std::vector<Tensor *> inputs = op_coder->input_tensors();
+    std::for_each(inputs.begin(), inputs.end(),
+                  [&](Tensor *t) { input_node_map.insert(std::make_pair(t, op_coder.get())); });
+    std::vector<Tensor *> outputs = op_coder->input_tensors();
+    std::for_each(outputs.begin(), outputs.end(),
+                  [&](Tensor *t) { output_node_map.insert(std::make_pair(t, op_coder.get())); });
+  }
+  for (const auto &op_coder : op_coders_) {
+    std::vector<Tensor *> inputs = op_coder->input_tensors();
+    for (const auto &tensor : inputs) {
+      auto item = output_node_map.find(tensor);
+      if (item != output_node_map.end()) {
+        op_coder->AddInputOp(item->second);
       }
-      for (const auto &tensor : op_coder->input_tensors()) {
-        std::vector<Tensor *> outputs = search->output_tensors();
-        auto iter = std::find(outputs.begin(), outputs.end(), tensor);
-        if (iter != outputs.end()) {
-          op_coder->AddInputNodeIndex(search->node_index());
-        }
-      }
-      for (const auto &tensor : op_coder->output_tensors()) {
-        auto inputs = search->input_tensors();
-        auto iter = std::find(inputs.begin(), inputs.end(), tensor);
-        if (iter != inputs.end()) {
-          op_coder->AddOutputNodeIndex(search->node_index());
-        }
+    }
+    std::vector<Tensor *> outputs = op_coder->output_tensors();
+    for (const auto &tensor : outputs) {
+      auto item = input_node_map.find(tensor);
+      if (item != input_node_map.end()) {
+        op_coder->AddOutputOp(item->second);
       }
     }
   }
@@ -262,39 +244,39 @@ int CoderSession::ConvertTensors() {
   // deal with allTensors
   uint32_t tensorCount = model->all_tensors_.size();
   for (uint32_t i = 0; i < tensorCount; ++i) {
-    auto *meta_tensor = model->all_tensors_.at(i);
-    MS_CHECK_PTR_WITH_EXE(meta_tensor, clear_tensors());
+    schema::Tensor *origin_tensor = model->all_tensors_.at(i);
+    MS_CHECK_PTR_WITH_EXE(origin_tensor, clear_tensors());
     // tensor dims
     std::vector<int> shape;
-    if (meta_tensor->nodeType() == schema::NodeType_ValueNode) {
-      MS_CHECK_PTR_WITH_EXE(meta_tensor->dims(), clear_tensors());
-      for (uint32_t j = 0; j < meta_tensor->dims()->size(); j++) {
-        MS_CHECK_PTR(meta_tensor->dims()->data());
-        int dim = static_cast<int>(meta_tensor->dims()->data()[j]);
+    if (origin_tensor->nodeType() == schema::NodeType_ValueNode) {
+      MS_CHECK_PTR_WITH_EXE(origin_tensor->dims(), clear_tensors());
+      for (uint32_t j = 0; j < origin_tensor->dims()->size(); j++) {
+        MS_CHECK_PTR(origin_tensor->dims()->data());
+        int dim = static_cast<int>(origin_tensor->dims()->data()[j]);
         MS_CHECK_RET_CODE_WITH_EXE(check_dim(dim), "parse shape failed!", clear_tensors());
         shape.push_back(dim);
       }
     }
     // tensor Datatype
-    int meta_data_type = static_cast<int>(meta_tensor->dataType());
-    auto dstTensor = new (std::nothrow)
-      lite::Tensor(TypeId(meta_data_type), shape, meta_tensor->format(), TensorCategory(meta_tensor));
+    int origin_data_type = static_cast<int>(origin_tensor->dataType());
+    Tensor *dstTensor = new (std::nothrow)
+      lite::Tensor(TypeId(origin_data_type), shape, origin_tensor->format(), TensorCategory(origin_tensor));
     MS_CHECK_PTR(dstTensor);
-    if (meta_tensor->nodeType() == schema::NodeType_ValueNode && meta_tensor->data() != nullptr &&
-        meta_tensor->data()->size() > 0) {
+    if (origin_tensor->nodeType() == schema::NodeType_ValueNode && origin_tensor->data() != nullptr &&
+        origin_tensor->data()->size() > 0) {
       if (shape.empty()) {
         shape.push_back(1);
       }
       // copy data, this is weight && bias
-      MS_CHECK_TRUE(meta_tensor->data()->size() > 0, "invalid meta_tensor data size");
-      auto data_size = static_cast<size_t>(meta_tensor->data()->size());
-      MS_CHECK_RET_CODE(dstTensor->MallocData(), "dst tensor malloc data failed!");
+      MS_CHECK_TRUE_WITH_EXE(origin_tensor->data()->size() > 0, "invalid meta_tensor data size.", delete dstTensor);
+      auto data_size = static_cast<size_t>(origin_tensor->data()->size());
+      MS_CHECK_RET_CODE_WITH_EXE(dstTensor->MallocData(), "dst tensor malloc data failed!", delete dstTensor);
       void *dst_data = dstTensor->data_c();
-      MS_CHECK_RET_CODE(memcpy_s(dst_data, data_size, meta_tensor->data()->data(), data_size),
-                        "memcpy_s copy data failed!");
+      MS_CHECK_RET_CODE_WITH_EXE(memcpy_s(dst_data, data_size, origin_tensor->data()->data(), data_size),
+                                 "memcpy_s copy data failed!", delete dstTensor);
       dstTensor->set_data(dst_data);
     }
-    auto quant_params = meta_tensor->quantParams();
+    auto quant_params = origin_tensor->quantParams();
     if (quant_params != nullptr) {
       for (int j = 0; j < static_cast<int>(quant_params->size()); j++) {
         QuantArg quant_arg{};
@@ -380,7 +362,7 @@ int CoderSession::CreateOpCoders() {
     op_coders_.push_back(std::move(op_coder));
     builder.Reset();
   }
-  InitNodesInputsAndOutputs();
+  InitOpcodersInputsAndOutputs();
   return RET_OK;
 }
 
@@ -452,12 +434,10 @@ int CoderSession::InitGraphInOutTensors() {
 }
 
 int CoderSession::CompileGraph() {
+  MS_LOG(INFO) << "CompileGraph";
   MS_CHECK_RET_CODE(ConvertTensors(), "ConvertTensors failed");
   MS_CHECK_RET_CODE(InitGraphInOutTensors(), "InitGraphInOutTensors failed");
-  // InferShape
   MS_CHECK_RET_CODE(InferShape(), "do infershape failed!");
-
-  // create all op_coders
   MS_CHECK_RET_CODE(CreateOpCoders(), "CreateOpCoders failed!");
   MS_CHECK_RET_CODE(InitTensorsRef(), "InitTensorsRefcount failed!");
   return RET_OK;

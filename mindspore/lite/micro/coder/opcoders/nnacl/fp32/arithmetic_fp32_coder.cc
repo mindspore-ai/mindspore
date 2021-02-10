@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/nnacl/fp32/arithmetic_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/arithmetic_fp32_coder.h"
 #include <string>
 #include <map>
 #include <type_traits>
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/file_collector.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "micro/coder/log.h"
+#include "coder/log.h"
 
 namespace mindspore::lite::micro::nnacl {
 

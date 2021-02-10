@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_CODER_OPCODERS_FP32_ARITHMETIC_SELF_FP32_CODER_H_
-#define MICRO_CODER_OPCODERS_FP32_ARITHMETIC_SELF_FP32_CODER_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ARITHMETIC_SELF_FP32_CODER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ARITHMETIC_SELF_FP32_CODER_H_
 
 #include <string>
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/arithmetic_self_parameter.h"
 
@@ -106,4 +106,4 @@ class ArithmeticSelfFP32Coder final : public OperatorCoder {
   std::string arithmetic_self_run_;
 };
 }  // namespace mindspore::lite::micro::nnacl
-#endif  // MICRO_CODER_OPCODERS_FP32_ARITHMETIC_SELF_FP32_CODER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_ARITHMETIC_SELF_FP32_CODER_H_

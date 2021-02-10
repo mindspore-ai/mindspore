@@ -29,34 +29,17 @@ const std::vector<Tensor *> OperatorCoder::input_tensors() const { return input_
 
 const std::vector<Tensor *> OperatorCoder::output_tensors() const { return output_tensors_; }
 
-void OperatorCoder::set_input_tensor_indices(const std::vector<uint32_t> *input_indices) {
-  input_tensor_indices_ = *input_indices;
+void OperatorCoder::set_input_tensor_indices(const std::vector<uint32_t> &input_indices) {
+  input_tensor_indices_ = input_indices;
 }
 
-void OperatorCoder::set_output_tensor_indices(const std::vector<uint32_t> *output_indices) {
-  output_tensor_indices_ = *output_indices;
+void OperatorCoder::set_output_tensor_indices(const std::vector<uint32_t> &output_indices) {
+  output_tensor_indices_ = output_indices;
 }
 
 const std::vector<uint32_t> OperatorCoder::input_tensor_indices() const { return input_tensor_indices_; }
 
 const std::vector<uint32_t> OperatorCoder::output_tensor_indices() const { return output_tensor_indices_; }
-
-void OperatorCoder::AddInputNodeIndex(size_t input_node_index) {
-  if (!input_node_set_indices_.count(input_node_index)) {
-    input_node_set_indices_.insert(input_node_index);
-    input_node_indices_.push_back(input_node_index);
-  }
-}
-
-void OperatorCoder::AddOutputNodeIndex(size_t output_node_index) {
-  if (!output_node_set_indices_.count(output_node_index)) {
-    output_node_set_indices_.insert(output_node_index);
-    output_node_indices_.push_back(output_node_index);
-  }
-}
-
-const std::vector<size_t> OperatorCoder::input_node_indices() const { return this->input_node_indices_; }
-const std::vector<size_t> OperatorCoder::output_node_indices() const { return this->output_node_indices_; }
 
 void OperatorCoder::set_parameter(OpParameter *parameter) { this->parameter_ = parameter; }
 

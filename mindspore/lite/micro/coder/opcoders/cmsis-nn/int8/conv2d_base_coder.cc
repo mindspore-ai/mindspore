@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/cmsis-nn/int8/conv2d_base_coder.h"
+#include "coder/opcoders/cmsis-nn/int8/conv2d_base_coder.h"
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::lite::micro::cmsis {

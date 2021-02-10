@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MICRO_CODER_GENERATOR_H_
-#define MINDSPORE_MICRO_CODER_GENERATOR_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_H_
+#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_H_
 
 #include <sys/stat.h>
 #include <fstream>
@@ -28,13 +28,12 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "src/tensor.h"
+#include "coder/log.h"
 #include "coder/coder_config.h"
-#include "coder/coder_context.h"
-#include "coder/utils/print_utils.h"
+#include "coder/context.h"
+#include "coder/utils/type_cast.h"
 
 namespace mindspore::lite::micro {
-constexpr int kWarmUp = 3;
-
 class Generator {
  public:
   explicit Generator(std::unique_ptr<CoderContext> ctx);
@@ -43,18 +42,12 @@ class Generator {
   int GenerateCode();
 
  protected:
-  virtual int CodeTestFile() = 0;
+  virtual int CodeBenchmarkFile() = 0;
   virtual int CodeNetHFile() = 0;
   virtual int CodeNetCFile() = 0;
-  virtual int CodeCMakeFile();
   virtual int CodeWeightFile();
 
-  void CodeNetFileInclude(std::ofstream &ofs);
-  int CodeNetFileInputOutput(std::ofstream &ofs);
-  void CodeNetFileMembuffer(std::ofstream &ofs);
   void CodeNetRunFunc(std::ofstream &ofs);
-  int CodeGraphInOutQuanArgs(std::ofstream &ofs);
-  void CodeFreeResource(const std::map<std::string, Tensor *> &address_map, std::ofstream &ofs) const;
 
   Configurator *config_{nullptr};
   std::unique_ptr<CoderContext> ctx_{nullptr};
@@ -70,10 +63,9 @@ class Generator {
   std::string net_main_file_path_;
 
  private:
-  int CodeTestCMakeFile();
+  int CodeBenchmarkCMakeFile();
+  int CodeSourceCMakeFile();
   int CodeStaticContent();
-  int CodeCMakeExecutableFile(std::ofstream &ofs) const;
-  void CodeWeightInitFunc(const std::map<std::string, Tensor *> &address_map, std::ofstream &ofs);
 
   std::string cmake_file_name_{"net.cmake"};
   // the user's generated file's permission
@@ -84,4 +76,4 @@ class Generator {
 
 }  // namespace mindspore::lite::micro
 
-#endif  // MINDSPORE_MICRO_CODER_GENERATOR_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_H_

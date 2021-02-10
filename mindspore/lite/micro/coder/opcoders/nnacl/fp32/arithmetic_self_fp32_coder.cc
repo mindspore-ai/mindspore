@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/fp32/arithmetic_self_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/arithmetic_self_fp32_coder.h"
 #include <string>
 #include <map>
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/file_collector.h"
 
 namespace mindspore::lite::micro::nnacl {
 

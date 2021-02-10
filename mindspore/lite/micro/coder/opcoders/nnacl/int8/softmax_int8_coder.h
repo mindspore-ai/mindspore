@@ -19,7 +19,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "micro/coder/opcoders/base/softmax_base_coder.h"
+#include "coder/opcoders/base/softmax_base_coder.h"
 
 namespace mindspore::lite::micro::nnacl {
 

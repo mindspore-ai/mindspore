@@ -19,7 +19,7 @@
 
 #include <string>
 #include <vector>
-#include "micro/coder/coder_context.h"
+#include "coder/context.h"
 
 namespace mindspore::lite::micro {
 void Collect(CoderContext *const ctx, const std::vector<std::string> &headers,

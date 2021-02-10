@@ -14,30 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MICRO_LITE_CODER_DEBUG_H_
-#define MINDSPORE_MICRO_LITE_CODER_DEBUG_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_CMAKE_COMPONENT_H_
+#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_CMAKE_COMPONENT_H_
 
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 #include <memory>
+#include <fstream>
 #include "src/tensor.h"
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/coder_config.h"
+#include "coder/context.h"
 
 namespace mindspore::lite::micro {
+void CodeCMakeNetLibrary(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx,
+                         Target target);
 
-class MicroDebug {
- public:
-  MicroDebug() = default;
-  ~MicroDebug() = default;
-
-  static void DumpTensorData(Tensor *tensor, const std::string &tensor_addr, std::string *code_block_str,
-                             bool is_input);
-
-  static int DumpNodeData(const std::unique_ptr<OperatorCoder> &op_coder,
-                          const std::map<Tensor *, std::string> &tensor_addrs, std::string *code_block_str);
-};
 }  // namespace mindspore::lite::micro
 
-#endif  // MINDSPORE_LITE_MICRO_CODER_DEBUG_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CMAKE_COMPONENT_H_

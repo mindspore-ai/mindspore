@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_CMSIS_NN_DWCONV_INT8_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/cmsis-nn/int8/conv2d_base_coder.h"
+#include "coder/opcoders/cmsis-nn/int8/conv2d_base_coder.h"
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
 
 namespace mindspore::lite::micro::cmsis {

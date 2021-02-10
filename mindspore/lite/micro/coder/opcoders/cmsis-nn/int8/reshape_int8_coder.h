@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_CMSIS_NN_RESHAPE_INT8_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro::cmsis {
 class ReshapeInt8Coder final : public OperatorCoder {

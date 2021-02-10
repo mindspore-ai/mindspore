@@ -19,7 +19,7 @@
 
 #include <string>
 #include <vector>
-#include "micro/coder/opcoders/base/conv2d_base_coder.h"
+#include "coder/opcoders/base/conv2d_base_coder.h"
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore::lite::micro::cmsis {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MICRO_CODER_ANDROID_GENERATOR_H_
-#define MINDSPORE_MICRO_CODER_ANDROID_GENERATOR_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_INFERENCE_GENERATOR_H_
+#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_INFERENCE_GENERATOR_H_
 
 #include <utility>
 #include <memory>
@@ -27,15 +27,11 @@ class InferenceGenerator : public Generator {
   explicit InferenceGenerator(std::unique_ptr<CoderContext> ctx) : Generator(std::move(ctx)) {}
   ~InferenceGenerator() override = default;
 
- protected:
+ private:
   int CodeNetHFile() override;
   int CodeNetCFile() override;
 
-  int CodeTestFile() override;
-
- private:
-  void CodeTestRelevantHeader(std::ofstream &code_test_ofs);
-  void CodeTestRelevantTile(std::ofstream &code_test_ofs);
+  int CodeBenchmarkFile() override;
 };
 }  // namespace mindspore::lite::micro
-#endif  // MINDSPORE_MICRO_CODER_ANDROID_GENERATOR_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_INFERENCE_GENERATOR_H_

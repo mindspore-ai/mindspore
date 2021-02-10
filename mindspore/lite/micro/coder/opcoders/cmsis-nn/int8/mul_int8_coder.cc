@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/cmsis-nn/int8/mul_int8_coder.h"
+#include "coder/opcoders/cmsis-nn/int8/mul_int8_coder.h"
 #include <string>
-#include "micro/coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/serializers/serializer.h"
 #include "nnacl/int8/quantize.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Mul;
 

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/nnacl/fp32/batchnorm_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/batchnorm_fp32_coder.h"
 #include <string>
 #include <vector>
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "src/ops/batch_norm.h"
 #include "nnacl/op_base.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 using mindspore::schema::PrimitiveType_BatchNorm;
 
