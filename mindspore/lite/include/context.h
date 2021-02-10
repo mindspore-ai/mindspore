@@ -19,18 +19,11 @@
 
 #include <string>
 #include <memory>
-#include "include/api/lite_context.h"
 #include "include/ms_tensor.h"
 #include "include/lite_utils.h"
+#include "include/lite_types.h"
 
 namespace mindspore::lite {
-/// \brief DeviceType defined for holding user's preferred backend.
-typedef enum {
-  DT_CPU, /**< CPU device type */
-  DT_GPU, /**< GPU device type */
-  DT_NPU  /**< NPU device type */
-} DeviceType;
-
 /// \brief CpuDeviceInfo defined for CPU's configuration information.
 typedef struct {
   bool enable_float16_ = false; /**< prior enable float16 inference */

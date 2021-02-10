@@ -21,54 +21,48 @@
 #include <map>
 #include <any>
 #include "include/api/types.h"
+#include "include/lite_types.h"
 
 namespace mindspore {
 namespace lite {
-/// \brief CpuBindMode defined for holding bind cpu strategy argument.
-typedef enum : uint32_t {
-  NO_BIND = 0,    /**< no bind */
-  HIGHER_CPU = 1, /**< bind higher cpu first */
-  MID_CPU = 2     /**< bind middle cpu first */
-} CpuBindMode;
-
 class Allocator;
 }  // namespace lite
 
 struct MS_API Context {
  public:
-  static void Clear(const std::shared_ptr<Context> &contxet);
+  static void Clear(const std::shared_ptr<Context> &context);
 
-  static void SetAsDefault(const std::shared_ptr<Context> &contxet);
+  static void SetAsDefault(const std::shared_ptr<Context> &context);
 
-  static void SetVendorName(const std::shared_ptr<Context> &contxet, const std::string &name);
-  static std::string GetVendorName(const std::shared_ptr<Context> &contxet);
+  static void SetVendorName(const std::shared_ptr<Context> &context, const std::string &name);
+  static std::string GetVendorName(const std::shared_ptr<Context> &context);
 
-  static void SetThreadNum(const std::shared_ptr<Context> &contxet, int num);
-  static int GetThreadNum(const std::shared_ptr<Context> &contxet);
+  static void SetThreadNum(const std::shared_ptr<Context> &context, int num);
+  static int GetThreadNum(const std::shared_ptr<Context> &context);
 
-  static void SetAllocator(const std::shared_ptr<Context> &contxet, std::shared_ptr<lite::Allocator> alloc);
-  static std::shared_ptr<lite::Allocator> GetAllocator(const std::shared_ptr<Context> &contxet);
+  static void SetAllocator(const std::shared_ptr<Context> &context, std::shared_ptr<lite::Allocator> alloc);
+  static std::shared_ptr<lite::Allocator> GetAllocator(const std::shared_ptr<Context> &context);
 
-  static void ConfigCPU(const std::shared_ptr<Context> &contxet, bool config);
-  static bool IfCPUEnabled(const std::shared_ptr<Context> &contxet);
+  static void ConfigCPU(const std::shared_ptr<Context> &context, bool config);
+  static bool IfCPUEnabled(const std::shared_ptr<Context> &context);
 
-  static void ConfigCPUFp16(const std::shared_ptr<Context> &contxet, bool config);
-  static bool IfCPUFp16Enabled(const std::shared_ptr<Context> &contxet);
+  static void ConfigCPUFp16(const std::shared_ptr<Context> &context, bool config);
+  static bool IfCPUFp16Enabled(const std::shared_ptr<Context> &context);
 
-  static void SetCPUBindMode(const std::shared_ptr<Context> &contxet, lite::CpuBindMode mode);
-  static lite::CpuBindMode GetCPUBindMode(const std::shared_ptr<Context> &contxet);
+  static void SetCPUBindMode(const std::shared_ptr<Context> &context, lite::CpuBindMode mode);
+  static lite::CpuBindMode GetCPUBindMode(const std::shared_ptr<Context> &context);
 
-  static void ConfigGPU(const std::shared_ptr<Context> &contxet, bool config);
-  static bool IfGPUEnabled(const std::shared_ptr<Context> &contxet);
+  static void ConfigGPU(const std::shared_ptr<Context> &context, bool config);
+  static bool IfGPUEnabled(const std::shared_ptr<Context> &context);
 
-  static void ConfigGPUFp16(const std::shared_ptr<Context> &contxet, bool config);
-  static bool IfGPUFp16Enabled(const std::shared_ptr<Context> &contxet);
+  static void ConfigGPUFp16(const std::shared_ptr<Context> &context, bool config);
+  static bool IfGPUFp16Enabled(const std::shared_ptr<Context> &context);
 
-  static void ConfigNPU(const std::shared_ptr<Context> &contxet, bool config);
-  static bool IfNPUEnabled(const std::shared_ptr<Context> &contxet);
+  static void ConfigNPU(const std::shared_ptr<Context> &context, bool config);
+  static bool IfNPUEnabled(const std::shared_ptr<Context> &context);
 
-  static void SetNPUFrequency(const std::shared_ptr<Context> &contxet, int freq);
-  static int GetNPUFrequency(const std::shared_ptr<Context> &contxet);
+  static void SetNPUFrequency(const std::shared_ptr<Context> &context, int freq);
+  static int GetNPUFrequency(const std::shared_ptr<Context> &context);
 
  private:
   std::map<std::string, std::any> context_;

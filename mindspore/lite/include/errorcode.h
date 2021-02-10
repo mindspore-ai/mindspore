@@ -19,7 +19,6 @@
 
 #include <string>
 #include <map>
-#include "include/api/status.h"
 
 namespace mindspore {
 namespace lite {
