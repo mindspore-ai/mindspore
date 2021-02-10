@@ -147,7 +147,8 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(mng);
   for (const auto &n : todos) {
     auto node = n->cast<CNodePtr>();
-    if (node == nullptr || !AnfAlgo::IsRealKernel(node) || AnfAlgo::IsGraphKernel(node) || !CanExpand(node)) {
+    if (node == nullptr || IsKeepBasicNode(node) || !AnfAlgo::IsRealKernel(node) || AnfAlgo::IsGraphKernel(node) ||
+        !CanExpand(node)) {
       continue;
     }
 
