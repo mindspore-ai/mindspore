@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,17 +39,22 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     S *output_index = GetDeviceAddress<S>(outputs, 0);
     T *output_mask = GetDeviceAddress<T>(outputs, 1);
-    S *index_buff = GetDeviceAddress<S>(workspaces, 0);
-    S *mask_buff = GetDeviceAddress<S>(workspaces, 1);
-    S *rank_buff = GetDeviceAddress<S>(workspaces, 2);
-    S *Tnum_buff = GetDeviceAddress<S>(workspaces, 3);
-    S *tmp_buff = GetDeviceAddress<S>(workspaces, 4);
-    void *States = GetDeviceAddress<void *>(workspaces, 5);
-    curandState *devStates = reinterpret_cast<curandState *>(States);
-    CalRandomChoiceWithMask(input_size_, input_shape_size_, input_shape_5D_[0], input_shape_5D_[1], input_shape_5D_[2],
-                            input_shape_5D_[3], input_shape_5D_[4], seedc_, count_, input, output_index, output_mask,
-                            index_buff, mask_buff, rank_buff, Tnum_buff, tmp_buff, devStates,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (count_ > kSmallK || input_shape_size_ > 1) {
+      S *index_buff = GetDeviceAddress<S>(workspaces, 0);
+      S *mask_buff = GetDeviceAddress<S>(workspaces, 1);
+      S *rank_buff = GetDeviceAddress<S>(workspaces, 2);
+      S *Tnum_buff = GetDeviceAddress<S>(workspaces, 3);
+      S *tmp_buff = GetDeviceAddress<S>(workspaces, 4);
+      void *States = GetDeviceAddress<void *>(workspaces, 5);
+      curandState *devStates = reinterpret_cast<curandState *>(States);
+      CalRandomChoiceWithMask(input_size_, input_shape_size_, input_shape_5D_[0], input_shape_5D_[1],
+                              input_shape_5D_[2], input_shape_5D_[3], input_shape_5D_[4], seedc_, count_, input,
+                              output_index, output_mask, index_buff, mask_buff, rank_buff, Tnum_buff, tmp_buff,
+                              devStates, reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      CalRandomChoiceWithMaskSmall<float, S, T>(input_size_, seedc_, count_, input, output_index, output_mask,
+                                                reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     return true;
   }
 
@@ -94,7 +99,9 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
     }
     count_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "count"));
     // upper ceiling for input for ceil_power2
-    ceil_power2_ = RcwmRoundUpPower2(input_size_);
+    if (count_ > kSmallK || input_shape_size_ > 1) {
+      ceil_power2_ = RcwmRoundUpPower2(input_size_);
+    }
     InitSizeLists();
     return true;
   }
@@ -104,16 +111,19 @@ class RandomChoiceWithMaskGpuKernel : public GpuKernel {
     input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(count_ * input_shape_size_ * sizeof(S));
     output_size_list_.push_back(count_ * sizeof(T));
-    workspace_size_list_.push_back(input_size_ * input_shape_size_ * sizeof(S));
-    workspace_size_list_.push_back(ceil_power2_ * sizeof(S));
-    workspace_size_list_.push_back(ceil_power2_ * sizeof(S));
-    int blocknum = std::ceil(static_cast<float>(ceil_power2_) / BLOCKSIZE);
-    workspace_size_list_.push_back(blocknum * sizeof(S));
-    workspace_size_list_.push_back(ceil_power2_ * sizeof(S));
-    workspace_size_list_.push_back(ceil_power2_ * sizeof(curandState));
+    if (count_ > kSmallK || input_shape_size_ > 1) {
+      workspace_size_list_.push_back(input_size_ * input_shape_size_ * sizeof(S));
+      workspace_size_list_.push_back(ceil_power2_ * sizeof(S));
+      workspace_size_list_.push_back(ceil_power2_ * sizeof(S));
+      int blocknum = std::ceil(static_cast<float>(ceil_power2_) / BLOCKSIZE);
+      workspace_size_list_.push_back(blocknum * sizeof(S));
+      workspace_size_list_.push_back(ceil_power2_ * sizeof(S));
+      workspace_size_list_.push_back(ceil_power2_ * sizeof(curandState));
+    }
   }
 
  private:
+  const int kSmallK = 2048;
   int input_shape_size_;
   int seedc_;
   int input_size_;

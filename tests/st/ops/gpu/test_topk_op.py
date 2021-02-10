@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-21 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_topk():
+def test_topk_small_2d():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     x_np = np.random.rand(3, 4).astype(np.float32)
@@ -36,7 +36,20 @@ def test_topk():
     x_np = np.random.rand(3, 4).astype(np.float32)
     k = 4
     ms_output = P.TopK(False)(Tensor(x_np), k)
-    assert np.allclose(ms_output[0].asnumpy(), x_np)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_topk_3d():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_np = np.random.rand(2, 256, 128).astype(np.float32)
+    k = 4
+    ms_output = P.TopK(True)(Tensor(x_np), k)
+    np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
 
     x_np = np.random.rand(2, 3, 4).astype(np.float32)
     k = 2
@@ -44,6 +57,12 @@ def test_topk():
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_topk_big_2d():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_np = np.random.rand(512, 1024).astype(np.float32)
     k = 512
     ms_output = P.TopK(True)(Tensor(x_np), k)
@@ -51,32 +70,69 @@ def test_topk():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
     # sorted elements num greater than max thread per block
-    x_np = np.random.rand(512, 2048).astype(np.float32)
+    x_np = np.random.rand(128, 2048).astype(np.float32)
     k = 1
     ms_output = P.TopK(True)(Tensor(x_np), k)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
-    x_np = np.random.rand(512, 2048).astype(np.float32)
+    x_np = np.random.rand(32, 2048).astype(np.float32)
     k = 2048
     ms_output = P.TopK(True)(Tensor(x_np), k)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
     # sorted elements num greater than max share memory per block
-    x_np = np.random.rand(512, 40960).astype(np.float32)
+    x_np = np.random.rand(16, 40960).astype(np.float32)
     k = 1
     ms_output = P.TopK(True)(Tensor(x_np), k)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
-    x_np = np.random.rand(512, 40960).astype(np.float32)
-    k = 40960
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_topk_big_k():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_np = np.random.rand(8, 40960).astype(np.float32)
+    k = 4096
     ms_output = P.TopK(True)(Tensor(x_np), k)
     np_output = np.sort(x_np, axis=-1)[..., ::-1][..., 0:k]
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
-    x_np = np.random.rand(512, 40960).astype(np.float32)
-    k = 40960
-    ms_output = P.TopK(False)(Tensor(x_np), k)
-    assert np.allclose(ms_output[0].asnumpy(), x_np)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_topk_1d():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_np = np.random.rand(12).astype(np.float32)
+    k = 4
+    ms_output = P.TopK(True)(Tensor(x_np), k)
+    np_output = np.sort(x_np)[::-1][0:k]
+
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+    x_np = np.random.rand(1200).astype(np.float32)
+    k = 256
+    ms_output = P.TopK(True)(Tensor(x_np), k)
+    np_output = np.sort(x_np)[::-1][0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+    x_np = np.random.rand(250000).astype(np.float32)
+    k = 2000
+    ms_output = P.TopK(True)(Tensor(x_np), k)
+    np_output = np.sort(x_np)[::-1][0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+    x_np = np.random.rand(10240).astype(np.float32)
+    k = 4096
+    ms_output = P.TopK(True)(Tensor(x_np), k)
+    np_output = np.sort(x_np)[::-1][0:k]
+    assert np.allclose(ms_output[0].asnumpy(), np_output)
+
+    x_np = np.random.rand(720).astype(np.float32)
+    k = 720
+    ms_output = P.TopK(True)(Tensor(x_np), k)
+    np_output = np.sort(x_np)[::-1][0:k]
+    assert np.allclose(ms_output[0].asnumpy()[:k], np_output)

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,10 @@
 #include "runtime/device/gpu/cuda_common.h"
 #define BLOCKSIZE 256
 #define MAX_DIMENSION 5
+
+template <typename T, typename S, typename K>
+void CalRandomChoiceWithMaskSmall(int input_size, int seedc, int count, K *input, S *output_index, K *output_mask,
+                               cudaStream_t stream);
 
 template <typename T, typename S>
 void CalRandomChoiceWithMask(const int &input_size, const int &input_shape_size, const int &d1, const int &d2,
