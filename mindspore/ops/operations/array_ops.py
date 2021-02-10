@@ -2792,7 +2792,7 @@ class StridedSlice(PrimitiveWithInfer):
                  ellipsis_mask=0,
                  new_axis_mask=0,
                  shrink_axis_mask=0):
-        """Initialize StrideSlice"""
+        """Initialize StridedSlice"""
         self.init_prim_io_names(inputs=['x', 'begin', 'end', 'strides'], outputs=['output'])
         validator.check_non_negative_int(begin_mask, 'begin_mask', self.name)
         validator.check_non_negative_int(end_mask, 'end_mask', self.name)

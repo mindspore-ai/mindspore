@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1859,7 +1859,7 @@ class StridedSliceGrad(PrimitiveWithInfer):
                  ellipsis_mask=0,
                  new_axis_mask=0,
                  shrink_axis_mask=0):
-        """Initialize StrideSliceGrad"""
+        """Initialize StridedSliceGrad"""
         validator.check_value_type('begin_mask', begin_mask, [int], self.name)
         validator.check_value_type('end_mask', end_mask, [int], self.name)
         validator.check_value_type('ellipsis_mask', ellipsis_mask, [int], self.name)
