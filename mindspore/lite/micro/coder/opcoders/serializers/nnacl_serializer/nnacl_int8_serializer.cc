@@ -60,6 +60,16 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParamete
     conv_parameter.input_unit_, conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_);
 }
 
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter) {
+  CodeBaseStruct("MatMulParameter", name, matmul_parameter.op_parameter_, matmul_parameter.has_bias_,
+                 matmul_parameter.row_, matmul_parameter.col_, matmul_parameter.row_4_, matmul_parameter.row_6_,
+                 matmul_parameter.row_12_, matmul_parameter.row_16_, matmul_parameter.row_align_,
+                 matmul_parameter.col_4_, matmul_parameter.col_8_, matmul_parameter.col_align_, matmul_parameter.deep_,
+                 matmul_parameter.deep_4_, matmul_parameter.deep_16_, matmul_parameter.batch,
+                 matmul_parameter.a_transpose_, matmul_parameter.b_transpose_, matmul_parameter.a_const_,
+                 matmul_parameter.b_const_, matmul_parameter.act_type_);
+}
+
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter) {
   CodeBaseStruct("ArithmeticParameter", name, arithmetic_parameter.op_parameter_, arithmetic_parameter.broadcasting_,
                  arithmetic_parameter.ndim_, arithmetic_parameter.activation_type_,

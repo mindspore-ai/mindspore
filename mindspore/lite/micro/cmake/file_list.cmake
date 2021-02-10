@@ -81,6 +81,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/concat_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/fullconnection_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/matmul_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/pooling_int8_coder.cc
@@ -126,13 +127,10 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/int8/fixed_point.c
         ${LITE_DIR}/nnacl/fp32/matmul_fp32.c
         ${LITE_DIR}/nnacl/int8/conv3x3_int8.c
-        )
-set(MICRO_ADAPTER_SRC
-        ${MICRO_DIR}/wrapper/fp32/matmul_fp32_wrapper.c
-        ${MICRO_DIR}/wrapper/int8/matmul_int8_wrapper.c
-        ${MICRO_DIR}/wrapper/int8/conv_init_int8.c
+        ${LITE_DIR}/nnacl/int8/conv1x1_int8.c
+        ${LITE_DIR}/nnacl/base/conv1x1_base.c
         )
 
 list(APPEND FILE_SET ${CODER_SRC} ${CODER_UTILS_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
-        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${LITE_KERNEL_SRC} ${MICRO_ADAPTER_SRC})
+        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${LITE_KERNEL_SRC})
 
