@@ -8,6 +8,7 @@ if(ENABLE_CACHE)
   target_link_libraries(cache_perf
       _c_dataengine
       _c_mindrecord
+      mindspore
       mindspore::protobuf
       mindspore_gvar
       ${PYTHON_LIBRARIES}
@@ -21,6 +22,7 @@ if(ENABLE_CACHE)
   target_link_libraries(cache_pipeline
       _c_dataengine
       _c_mindrecord
+      mindspore
       mindspore::protobuf
       mindspore_gvar
       ${PYTHON_LIBRARIES}

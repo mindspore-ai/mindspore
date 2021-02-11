@@ -14,22 +14,22 @@
  * limitations under the License.
 */
 
-#ifdef USE_GLOG
-#include <glog/logging.h>
-#endif
-#include <string.h>
 #include "minddata/dataset/engine/cache/perf/cache_pipeline_run.h"
+#include <string.h>
+#include "mindspore/core/utils/log_adapter.h"
+
+namespace ms = mindspore;
 namespace ds = mindspore::dataset;
 
 int main(int argc, char **argv) {
 #ifdef USE_GLOG
+  FLAGS_logtostderr = false;
   FLAGS_log_dir = "/tmp";
-  FLAGS_minloglevel = google::WARNING;
   google::InitGoogleLogging(argv[0]);
 #endif
   ds::CachePipelineRun cachePipelineRun;
   if (cachePipelineRun.ProcessArgs(argc, argv) == 0) {
-    ds::Status rc = cachePipelineRun.Run();
+    ms::Status rc = cachePipelineRun.Run();
     // If we hit any error, send the rc back to the parent.
     if (rc.IsError()) {
       ds::ErrorMsg proto;

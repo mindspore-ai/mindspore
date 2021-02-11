@@ -63,6 +63,15 @@ CacheAdminArgHandler::CacheAdminArgHandler()
       port_ = 0;  // cause the port range validation to generate an error during the validation checks
     }
   }
+  const char *env_log_level = std::getenv("GLOG_v");
+  if (env_log_level != nullptr) {
+    char *end = nullptr;
+    log_level_ = strtol(env_log_level, &end, 10);
+    if (*end != '\0') {
+      std::cerr << "Log level from env variable GLOG_v is invalid\n";
+      log_level_ = -1;  // cause the log level range validation to generate an error during the validation checks
+    }
+  }
   // Initialize the command mappings
   arg_map_["-h"] = ArgValue::kArgHost;
   arg_map_["--hostname"] = ArgValue::kArgHost;
@@ -333,7 +342,7 @@ Status CacheAdminArgHandler::Validate() {
   if (num_workers_ < 1 || num_workers_ > max_num_workers)
     return Status(StatusCode::kMDSyntaxError,
                   "Number of workers must be in range of 1 and " + std::to_string(max_num_workers) + ".");
-  if (log_level_ < 0 || log_level_ > 3) return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..3).");
+  if (log_level_ < 0 || log_level_ > 4) return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..4).");
   if (memory_cap_ratio_ <= 0 || memory_cap_ratio_ > 1)
     return Status(StatusCode::kMDSyntaxError, "Memory cap ratio should be positive and no greater than 1");
   if (port_ < 1025 || port_ > 65535) return Status(StatusCode::kMDSyntaxError, "Port must be in range (1025..65535).");
@@ -608,7 +617,7 @@ void CacheAdminArgHandler::Help() {
   std::cerr << "                [[-p | --port] <port number>]             Default is " << kCfgDefaultCachePort << ".\n";
   std::cerr << "                [[-w | --workers] <number of workers>]    Default is " << kDefaultNumWorkers << ".\n";
   std::cerr << "                [[-s | --spilldir] <spilling directory>]  Default is no spilling.\n";
-  std::cerr << "                [[-l | --loglevel] <log level>]           Default is 1 (warning level).\n";
+  std::cerr << "                [[-l | --loglevel] <log level>]           Default is 1 (INFO level).\n";
   std::cerr << "            [--destroy_session  | -d] <session id>\n";
   std::cerr << "                [[-p | --port] <port number>]\n";
   std::cerr << "            [--generate_session | -g]\n";

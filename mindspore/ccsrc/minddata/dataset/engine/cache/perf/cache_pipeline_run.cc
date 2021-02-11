@@ -177,7 +177,7 @@ Status CachePipelineRun::Run() {
 
   Status rc = cc_->CreateCache(crc_, false);
   // Duplicate key is fine.
-  if (rc.IsError() && rc.get_code() != StatusCode::kDuplicateKey) {
+  if (rc.IsError() && rc != StatusCode::kMDDuplicateKey) {
     return rc;
   }
 
@@ -313,7 +313,7 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
       rc = cc_->AsyncWriteBuffer(std::move(buffer));
       auto end_tick = std::chrono::steady_clock::now();
       if (rc.IsError()) {
-        if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+        if (rc == StatusCode::kMDOutOfMemory || rc == StatusCode::kMDNoSpace) {
           MS_LOG(WARNING) << "Pipeline number " << my_pipeline_ + 1 << " worker id " << worker_id << ": "
                           << rc.ToString();
           resource_err = true;

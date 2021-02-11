@@ -669,7 +669,7 @@ Status CacheServer::GetCacheMissKeys(CacheRequest *rq, CacheReply *reply) {
 
 inline Status GenerateClientSessionID(session_id_type session_id, CacheReply *reply) {
   reply->set_result(std::to_string(session_id));
-  MS_LOG(WARNING) << "Server generated new session id " << session_id;
+  MS_LOG(INFO) << "Server generated new session id " << session_id;
   return Status::OK();
 }
 
@@ -1081,7 +1081,7 @@ Status CacheServer::DestroySession(CacheRequest *rq) {
   // Finally remove the session itself
   auto n = active_sessions_.erase(drop_session_id);
   if (n > 0) {
-    MS_LOG(WARNING) << "Session destroyed with id " << drop_session_id;
+    MS_LOG(INFO) << "Session destroyed with id " << drop_session_id;
     return Status::OK();
   } else {
     if (found) {

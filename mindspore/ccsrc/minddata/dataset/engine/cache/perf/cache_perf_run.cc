@@ -548,7 +548,7 @@ Status CachePerfRun::Run() {
   RETURN_IF_NOT_OK(cache_builder_.Build(&cc_));
   Status rc = cc_->CreateCache(crc_, false);
   // Duplicate key is fine.
-  if (rc.IsError() && rc.get_code() != StatusCode::kDuplicateKey) {
+  if (rc.IsError() && rc != StatusCode::kMDDuplicateKey) {
     return rc;
   }
 
