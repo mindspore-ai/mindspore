@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,7 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> duplicate = transforms::Duplicate();
-  EXPECT_NE(duplicate, nullptr);
+  transforms::Duplicate duplicate = transforms::Duplicate();
 
   // Create a Map operation on ds
   ds = ds->Map({duplicate}, {"image"}, {"image", "image_copy"});
@@ -151,7 +150,7 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> one_hot_op = transforms::OneHot(number_of_classes);
+  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(number_of_classes);
   EXPECT_NE(one_hot_op, nullptr);
 
   // Create a Map operation on ds
@@ -209,7 +208,7 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> one_hot_op = transforms::OneHot(10);
+  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
   EXPECT_NE(one_hot_op, nullptr);
 
   // Create a Map operation on ds
@@ -246,16 +245,46 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestOneHotFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotFail with invalid params.";
+TEST_F(MindDataTestPipeline, TestOneHotFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotFail1 with invalid params.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // incorrect num_class
-  std::shared_ptr<TensorOperation> one_hot_op1 = transforms::OneHot(0);
-  EXPECT_EQ(one_hot_op1, nullptr);
+  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(0);
+  EXPECT_NE(one_hot_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op}, {"label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid OneHot input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestOneHotFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotFail2 with invalid params.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // incorrect num_class
-  std::shared_ptr<TensorOperation> one_hot_op2 = transforms::OneHot(-5);
-  EXPECT_EQ(one_hot_op2, nullptr);
+  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(-5);
+  EXPECT_NE(one_hot_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op}, {"label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid OneHot input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
@@ -379,15 +408,6 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail) {
   EXPECT_EQ(random_choice3, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestTransformOperationName) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTransformOperationName.";
-
-  // Create object for the tensor op, and check the name
-  std::shared_ptr<TensorOperation> duplicate_op = transforms::Duplicate();
-  std::string correct_name = "Duplicate";
-  EXPECT_EQ(correct_name, duplicate_op->Name());
-}
-
 TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastSuccess.";
 
@@ -415,7 +435,7 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   iter->Stop();
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> type_cast = transforms::TypeCast("uint16");
+  std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>("uint16");
   EXPECT_NE(type_cast, nullptr);
 
   // Create a Map operation on ds
@@ -441,7 +461,20 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
 TEST_F(MindDataTestPipeline, TestTypeCastFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTypeCastFail with invalid params.";
 
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
   // incorrect data type
-  std::shared_ptr<TensorOperation> type_cast = transforms::TypeCast("char");
-  EXPECT_EQ(type_cast, nullptr);
+  std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>("char");
+  EXPECT_NE(type_cast, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({type_cast}, {"image", "label"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid TypeCast input
+  EXPECT_EQ(iter, nullptr);
 }

@@ -49,7 +49,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create BasicTokenizer operation on ds
-  std::shared_ptr<TensorOperation> basic_tokenizer = text::BasicTokenizer();
+  std::shared_ptr<TensorTransform> basic_tokenizer = std::make_shared<text::BasicTokenizer>();
   EXPECT_NE(basic_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -107,7 +107,7 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create BasicTokenizer operation on ds
-  std::shared_ptr<TensorOperation> basic_tokenizer = text::BasicTokenizer(true);
+  std::shared_ptr<TensorTransform> basic_tokenizer = std::make_shared<text::BasicTokenizer>(true);
   EXPECT_NE(basic_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -155,8 +155,8 @@ TEST_F(MindDataTestPipeline, TestBasicTokenizerSuccess3) {
   EXPECT_NE(ds, nullptr);
 
   // Create BasicTokenizer operation on ds
-  std::shared_ptr<TensorOperation> basic_tokenizer =
-    text::BasicTokenizer(true, false, NormalizeForm::kNone, true, true);
+  std::shared_ptr<TensorTransform> basic_tokenizer =
+    std::make_shared<text::BasicTokenizer>(true, false, NormalizeForm::kNone, true, true);
   EXPECT_NE(basic_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -226,7 +226,7 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess1) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab);
+  std::shared_ptr<TensorTransform> bert_tokenizer = std::make_shared<text::BertTokenizer>(vocab);
   EXPECT_NE(bert_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -286,7 +286,8 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess2) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", 100, "[UNK]", true);
+  std::shared_ptr<TensorTransform> bert_tokenizer =
+    std::make_shared<text::BertTokenizer>(vocab, "##", 100, "[UNK]", true);
   EXPECT_NE(bert_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -344,8 +345,8 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess3) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer =
-    text::BertTokenizer(vocab, "##", 100, "[UNK]", false, false, NormalizeForm::kNfc);
+  std::shared_ptr<TensorTransform> bert_tokenizer =
+    std::make_shared<text::BertTokenizer>(vocab, "##", 100, "[UNK]", false, false, NormalizeForm::kNfc);
   EXPECT_NE(bert_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -403,7 +404,8 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess4) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", 100, "[UNK]", false, true);
+  std::shared_ptr<TensorTransform> bert_tokenizer =
+    std::make_shared<text::BertTokenizer>(vocab, "##", 100, "[UNK]", false, true);
   EXPECT_NE(bert_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -460,7 +462,8 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess5) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", 100, "", false, true);
+  std::shared_ptr<TensorTransform> bert_tokenizer =
+    std::make_shared<text::BertTokenizer>(vocab, "##", 100, "", false, true);
   EXPECT_NE(bert_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -517,8 +520,8 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess6) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer =
-    text::BertTokenizer(vocab, "##", 100, "", false, true, NormalizeForm::kNone, false);
+  std::shared_ptr<TensorTransform> bert_tokenizer =
+    std::make_shared<text::BertTokenizer>(vocab, "##", 100, "", false, true, NormalizeForm::kNone, false);
   EXPECT_NE(bert_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -575,8 +578,8 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerSuccess7) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer =
-    text::BertTokenizer(vocab, "##", 100, "[UNK]", true, false, NormalizeForm::kNone, true, true);
+  std::shared_ptr<TensorTransform> bert_tokenizer =
+    std::make_shared<text::BertTokenizer>(vocab, "##", 100, "[UNK]", true, false, NormalizeForm::kNone, true, true);
   EXPECT_NE(bert_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -631,9 +634,16 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(nullptr);
+  std::shared_ptr<TensorTransform> bert_tokenizer = std::make_shared<text::BertTokenizer>(nullptr);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({bert_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: invalid BertTokenizer input with nullptr vocab
-  EXPECT_EQ(bert_tokenizer, nullptr);
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestBertTokenizerFail2) {
@@ -651,9 +661,16 @@ TEST_F(MindDataTestPipeline, TestBertTokenizerFail2) {
   EXPECT_EQ(s, Status::OK());
 
   // Create BertTokenizer operation on ds
-  std::shared_ptr<TensorOperation> bert_tokenizer = text::BertTokenizer(vocab, "##", -1);
+  std::shared_ptr<TensorTransform> bert_tokenizer = std::make_shared<text::BertTokenizer>(vocab, "##", -1);
+  EXPECT_NE(bert_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({bert_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: invalid BertTokenizer input with nullptr vocab
-  EXPECT_EQ(bert_tokenizer, nullptr);
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
@@ -665,7 +682,7 @@ TEST_F(MindDataTestPipeline, TestCaseFoldSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create casefold operation on ds
-  std::shared_ptr<TensorOperation> casefold = text::CaseFold();
+  std::shared_ptr<TensorTransform> casefold = std::make_shared<text::CaseFold>();
   EXPECT_NE(casefold, nullptr);
 
   // Create Map operation on ds
@@ -711,7 +728,8 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> jieba_tokenizer = text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  std::shared_ptr<TensorTransform> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -757,7 +775,8 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> jieba_tokenizer = text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kHmm);
+  std::shared_ptr<TensorTransform> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kHmm);
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -803,7 +822,8 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> jieba_tokenizer = text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp, true);
+  std::shared_ptr<TensorTransform> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp, true);
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -849,32 +869,106 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerSuccess2) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail) {
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail1) {
   // Testing the incorrect parameter of JiebaTokenizer interface.
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail1.";
 
   // Create a TextFile dataset
   std::string data_file = datasets_root_path_ + "/testJiebaDataset/3.txt";
-  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
   std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
   std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
   // Testing the parameter hmm_path is empty
-  std::shared_ptr<TensorOperation> jieba_tokenizer = text::JiebaTokenizer("", mp_path, JiebaMode::kMp);
-  EXPECT_EQ(jieba_tokenizer, nullptr);
+  std::shared_ptr<TensorTransform> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>("", mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({jieba_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid JiebaTokenizer input (parameter hmm_path is empty)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail2) {
+  // Testing the incorrect parameter of JiebaTokenizer interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail2.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/3.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
   // Testing the parameter mp_path is empty
-  std::shared_ptr<TensorOperation> jieba_tokenizer1 = text::JiebaTokenizer(hmm_path, "", JiebaMode::kMp);
-  EXPECT_EQ(jieba_tokenizer1, nullptr);
-  // Testing the parameter hmm_path is invalid path
+  std::shared_ptr<TensorTransform> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, "", JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({jieba_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid JiebaTokenizer input (parameter mp_path is empty)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail3) {
+  // Testing the incorrect parameter of JiebaTokenizer interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail3.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/3.txt";
   std::string hmm_path_invalid = datasets_root_path_ + "/jiebadict/1.txt";
-  std::shared_ptr<TensorOperation> jieba_tokenizer2 = text::JiebaTokenizer(hmm_path_invalid, mp_path, JiebaMode::kMp);
-  EXPECT_EQ(jieba_tokenizer2, nullptr);
-  // Testing the parameter mp_path is invalid path
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  // Testing the parameter hmm_path is invalid path
+  std::shared_ptr<TensorTransform> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path_invalid, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({jieba_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid JiebaTokenizer input (parameter hmm_path is invalid path)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail4) {
+  // Testing the incorrect parameter of JiebaTokenizer interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerFail4.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/3.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
   std::string mp_path_invalid = datasets_root_path_ + "/jiebadict/1.txt";
-  std::shared_ptr<TensorOperation> jieba_tokenizer3 = text::JiebaTokenizer(hmm_path, mp_path_invalid, JiebaMode::kMp);
-  EXPECT_EQ(jieba_tokenizer3, nullptr);
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  // Testing the parameter mp_path is invalid path
+  std::shared_ptr<TensorTransform> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path_invalid, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({jieba_tokenizer});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid JiebaTokenizer input (parameter mp_path is invalid path)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
@@ -889,8 +983,8 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
-  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
-    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq not provided (default 0)
@@ -939,8 +1033,8 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord1) {
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
-  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
-    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq is set explicitly to 0
@@ -989,8 +1083,8 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord2) {
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
-  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
-    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq 10
@@ -1039,8 +1133,8 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord3) {
   EXPECT_NE(ds, nullptr);
 
   // Create jieba_tokenizer operation on ds
-  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
-    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer, nullptr);
 
   // Add word with freq 20000
@@ -1089,13 +1183,13 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWordFail) {
   EXPECT_NE(ds, nullptr);
 
   // Testing the parameter word of AddWord is empty
-  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
-    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer, nullptr);
   EXPECT_NE(jieba_tokenizer->AddWord("", 10), Status::OK());
   // Testing the parameter freq of AddWord is negative
-  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer1 =
-    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  std::shared_ptr<text::JiebaTokenizer> jieba_tokenizer1 =
+    std::make_shared<text::JiebaTokenizer>(hmm_path, mp_path, JiebaMode::kMp);
   EXPECT_NE(jieba_tokenizer1, nullptr);
   EXPECT_NE(jieba_tokenizer1->AddWord("我们", -1), Status::OK());
 }
@@ -1110,10 +1204,10 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create white_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> white_tokenizer = text::WhitespaceTokenizer();
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
   EXPECT_NE(white_tokenizer, nullptr);
   // Create sliding_window operation on ds
-  std::shared_ptr<TensorOperation> sliding_window = text::SlidingWindow(3, 0);
+  std::shared_ptr<TensorTransform> sliding_window = std::make_shared<text::SlidingWindow>(3, 0);
   EXPECT_NE(sliding_window, nullptr);
 
   // Create Map operation on ds
@@ -1160,10 +1254,10 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create white_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> white_tokenizer = text::WhitespaceTokenizer();
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
   EXPECT_NE(white_tokenizer, nullptr);
   // Create sliding_window operation on ds
-  std::shared_ptr<TensorOperation> sliding_window = text::SlidingWindow(2, -1);
+  std::shared_ptr<TensorTransform> sliding_window = std::make_shared<text::SlidingWindow>(2, -1);
   EXPECT_NE(sliding_window, nullptr);
 
   // Create Map operation on ds
@@ -1199,9 +1293,9 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess1) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestSlidingWindowFail) {
+TEST_F(MindDataTestPipeline, TestSlidingWindowFail1) {
   // Testing the incorrect parameter of SlidingWindow interface.
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowFail.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowFail1.";
 
   // Create a TextFile dataset
   std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
@@ -1211,12 +1305,40 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowFail) {
   // Create sliding_window operation on ds
   // Testing the parameter width less than or equal to 0
   // The parameter axis support 0 or -1 only for now
-  std::shared_ptr<TensorOperation> sliding_window = text::SlidingWindow(0, 0);
-  EXPECT_EQ(sliding_window, nullptr);
+  std::shared_ptr<TensorTransform> sliding_window = std::make_shared<text::SlidingWindow>(0, 0);
+  EXPECT_NE(sliding_window, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({sliding_window});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid SlidingWindow input (width less than or equal to 0)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestSlidingWindowFail2) {
+  // Testing the incorrect parameter of SlidingWindow interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowFail2.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create sliding_window operation on ds
   // Testing the parameter width less than or equal to 0
   // The parameter axis support 0 or -1 only for now
-  std::shared_ptr<TensorOperation> sliding_window1 = text::SlidingWindow(-2, 0);
-  EXPECT_EQ(sliding_window1, nullptr);
+  std::shared_ptr<TensorTransform> sliding_window = std::make_shared<text::SlidingWindow>(-2, 0);
+  EXPECT_NE(sliding_window, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({sliding_window});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid SlidingWindow input (width less than or equal to 0)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
@@ -1234,7 +1356,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber("int64");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("int64");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1287,7 +1409,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber("float64");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("float64");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1340,7 +1462,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber("int8");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("int8");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1390,7 +1512,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber("float16");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("float16");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1436,7 +1558,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail3) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber("int64");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("int64");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1478,16 +1600,39 @@ TEST_F(MindDataTestPipeline, TestToNumberFail4) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number1 = text::ToNumber("string");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("string");
+  EXPECT_NE(to_number, nullptr);
 
+  // Create a Map operation on ds
+  ds = ds->Map({to_number}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: invalid parameter with non numerical data type
-  EXPECT_EQ(to_number1, nullptr);
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestToNumberFail5) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail5.";
+  // Test ToNumber with non numerical data type
+
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
+
+  // Create a TextFile dataset
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number2 = text::ToNumber("bool");
+  std::shared_ptr<TensorTransform> to_number = std::make_shared<text::ToNumber>("bool");
+  EXPECT_NE(to_number, nullptr);
 
+  // Create a Map operation on ds
+  ds = ds->Map({to_number}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: invalid parameter with non numerical data type
-  EXPECT_EQ(to_number2, nullptr);
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
@@ -1512,7 +1657,7 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create a truncate_sequence_pair operation on ds
-  std::shared_ptr<TensorOperation> truncate_sequence_pair = text::TruncateSequencePair(4);
+  std::shared_ptr<TensorTransform> truncate_sequence_pair = std::make_shared<text::TruncateSequencePair>(4);
   EXPECT_NE(truncate_sequence_pair, nullptr);
 
   // Create Map operation on ds
@@ -1580,7 +1725,7 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create a truncate_sequence_pair operation on ds
-  std::shared_ptr<TensorOperation> truncate_sequence_pair = text::TruncateSequencePair(5);
+  std::shared_ptr<TensorTransform> truncate_sequence_pair = std::make_shared<text::TruncateSequencePair>(5);
   EXPECT_NE(truncate_sequence_pair, nullptr);
 
   // Create Map operation on ds
@@ -1641,10 +1786,16 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairFail) {
   EXPECT_NE(ds, nullptr);
 
   // Create a truncate_sequence_pair operation on ds
-  std::shared_ptr<TensorOperation> truncate_sequence_pair = text::TruncateSequencePair(-1);
+  std::shared_ptr<TensorTransform> truncate_sequence_pair = std::make_shared<text::TruncateSequencePair>(-1);
+  EXPECT_NE(truncate_sequence_pair, nullptr);
 
-  // Expect failure: invalid parameter with negative max_length
-  EXPECT_EQ(truncate_sequence_pair, nullptr);
+  // Create a Map operation on ds
+  ds = ds->Map({truncate_sequence_pair});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid TruncateSequencePair input (invalid parameter with negative max_length)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestNgramSuccess) {
@@ -1657,10 +1808,10 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create white_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> white_tokenizer = text::WhitespaceTokenizer();
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
   EXPECT_NE(white_tokenizer, nullptr);
   // Create sliding_window operation on ds
-  std::shared_ptr<TensorOperation> ngram_op = text::Ngram({2}, {"_", 1}, {"_", 1}, " ");
+  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2}, {"_", 1}, {"_", 1}, " "));
   EXPECT_NE(ngram_op, nullptr);
 
   // Create Map operation on ds
@@ -1707,10 +1858,10 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create white_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> white_tokenizer = text::WhitespaceTokenizer();
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
   EXPECT_NE(white_tokenizer, nullptr);
   // Create sliding_window operation on ds
-  std::shared_ptr<TensorOperation> ngram_op = text::Ngram({2, 3}, {"&", 2}, {"&", 2}, "-");
+  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2, 3}, {"&", 2}, {"&", 2}, "-"));
   EXPECT_NE(ngram_op, nullptr);
 
   // Create Map operation on ds
@@ -1752,9 +1903,9 @@ TEST_F(MindDataTestPipeline, TestNgramSuccess1) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestNgramFail) {
+TEST_F(MindDataTestPipeline, TestNgramFail1) {
   // Testing the incorrect parameter of Ngram interface.
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail1.";
 
   // Create a TextFile dataset
   std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
@@ -1763,31 +1914,108 @@ TEST_F(MindDataTestPipeline, TestNgramFail) {
 
   // Create sliding_window operation on ds
   // Testing the vector of ngram is empty
-  std::shared_ptr<TensorOperation> ngram_op = text::Ngram({});
-  EXPECT_EQ(ngram_op, nullptr);
-  // Testing the value of ngrams vector less than and equal to 0
-  std::shared_ptr<TensorOperation> ngram_op1 = text::Ngram({0});
-  EXPECT_EQ(ngram_op1, nullptr);
-  // Testing the value of ngrams vector less than and equal to 0
-  std::shared_ptr<TensorOperation> ngram_op2 = text::Ngram({-2});
-  EXPECT_EQ(ngram_op2, nullptr);
-  // Testing the second parameter pad_width in left_pad vector less than 0
-  std::shared_ptr<TensorOperation> ngram_op3 = text::Ngram({2}, {"", -1});
-  EXPECT_EQ(ngram_op3, nullptr);
-  // Testing the second parameter pad_width in right_pad vector less than 0
-  std::shared_ptr<TensorOperation> ngram_op4 = text::Ngram({2}, {"", 1}, {"", -1});
-  EXPECT_EQ(ngram_op4, nullptr);
+  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({}));
+  EXPECT_NE(ngram_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({ngram_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Ngram input (the vector of ngram is empty)
+  EXPECT_EQ(iter, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, TestTextOperationName) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTextOperationName.";
+TEST_F(MindDataTestPipeline, TestNgramFail2) {
+  // Testing the incorrect parameter of Ngram interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail2.";
 
-  // Create object for the tensor op, and check the name
-  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
-  std::shared_ptr<TensorOperation> sentence_piece_tokenizer_op =
-    text::SentencePieceTokenizer(data_file, SPieceTokenizerOutType::kString);
-  std::string correct_name = "SentencepieceTokenizer";
-  EXPECT_EQ(correct_name, sentence_piece_tokenizer_op->Name());
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create sliding_window operation on ds
+  // Testing the value of ngrams vector less than and equal to 0
+  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({0}));
+  EXPECT_NE(ngram_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({ngram_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Ngram input (the value of ngrams vector less than and equal to 0)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestNgramFail3) {
+  // Testing the incorrect parameter of Ngram interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail3.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create sliding_window operation on ds
+  // Testing the value of ngrams vector less than and equal to 0
+  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({-2}));
+  EXPECT_NE(ngram_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({ngram_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Ngram input (the value of ngrams vector less than and equal to 0)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestNgramFail4) {
+  // Testing the incorrect parameter of Ngram interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail4.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create sliding_window operation on ds
+  // Testing the second parameter pad_width in left_pad vector less than 0
+  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2}, {"", -1}));
+  EXPECT_NE(ngram_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({ngram_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Ngram input (the second parameter pad_width in left_pad vector less than 0)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestNgramFail5) {
+  // Testing the incorrect parameter of Ngram interface.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNgramFail5.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create sliding_window operation on ds
+  // Testing the second parameter pad_width in right_pad vector less than 0
+  std::shared_ptr<TensorTransform> ngram_op(new text::Ngram({2}, {"", 1}, {"", -1}));
+  EXPECT_NE(ngram_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({ngram_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Ngram input (the second parameter pad_width in left_pad vector less than 0)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success) {
@@ -1800,7 +2028,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success) {
   EXPECT_NE(ds, nullptr);
 
   // Create normalizeutf8 operation on ds
-  std::shared_ptr<TensorOperation> normalizeutf8 = text::NormalizeUTF8(NormalizeForm::kNfkc);
+  std::shared_ptr<TensorTransform> normalizeutf8 = std::make_shared<text::NormalizeUTF8>(NormalizeForm::kNfkc);
   EXPECT_NE(normalizeutf8, nullptr);
 
   // Create Map operation on ds
@@ -1844,7 +2072,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success1) {
   EXPECT_NE(ds, nullptr);
 
   // Create normalizeutf8 operation on ds
-  std::shared_ptr<TensorOperation> normalizeutf8 = text::NormalizeUTF8(NormalizeForm::kNfc);
+  std::shared_ptr<TensorTransform> normalizeutf8 = std::make_shared<text::NormalizeUTF8>(NormalizeForm::kNfc);
   EXPECT_NE(normalizeutf8, nullptr);
 
   // Create Map operation on ds
@@ -1888,7 +2116,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success2) {
   EXPECT_NE(ds, nullptr);
 
   // Create normalizeutf8 operation on ds
-  std::shared_ptr<TensorOperation> normalizeutf8 = text::NormalizeUTF8(NormalizeForm::kNfd);
+  std::shared_ptr<TensorTransform> normalizeutf8 = std::make_shared<text::NormalizeUTF8>(NormalizeForm::kNfd);
   EXPECT_NE(normalizeutf8, nullptr);
 
   // Create Map operation on ds
@@ -1932,7 +2160,7 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success3) {
   EXPECT_NE(ds, nullptr);
 
   // Create normalizeutf8 operation on ds
-  std::shared_ptr<TensorOperation> normalizeutf8 = text::NormalizeUTF8(NormalizeForm::kNfkd);
+  std::shared_ptr<TensorTransform> normalizeutf8 = std::make_shared<text::NormalizeUTF8>(NormalizeForm::kNfkd);
   EXPECT_NE(normalizeutf8, nullptr);
 
   // Create Map operation on ds
@@ -1976,7 +2204,7 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create regex_replace operation on ds
-  std::shared_ptr<TensorOperation> regex_replace = text::RegexReplace("\\s+", "_", true);
+  std::shared_ptr<TensorTransform> regex_replace = std::make_shared<text::RegexReplace>("\\s+", "_", true);
   EXPECT_NE(regex_replace, nullptr);
 
   // Create Map operation on ds
@@ -2021,7 +2249,7 @@ TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create regex_replace operation on ds
-  std::shared_ptr<TensorOperation> regex_replace = text::RegexReplace("\\s+", "_", false);
+  std::shared_ptr<TensorTransform> regex_replace = std::make_shared<text::RegexReplace>("\\s+", "_", false);
   EXPECT_NE(regex_replace, nullptr);
 
   // Create Map operation on ds
@@ -2067,7 +2295,7 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create regex_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> regex_tokenizer = text::RegexTokenizer("\\s+", "\\s+", false);
+  std::shared_ptr<TensorTransform> regex_tokenizer = std::make_shared<text::RegexTokenizer>("\\s+", "\\s+", false);
   EXPECT_NE(regex_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2119,7 +2347,7 @@ TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create regex_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> regex_tokenizer = text::RegexTokenizer("\\s+", "\\s+", true);
+  std::shared_ptr<TensorTransform> regex_tokenizer = std::make_shared<text::RegexTokenizer>("\\s+", "\\s+", true);
   EXPECT_NE(regex_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2186,7 +2414,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create unicodechar_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> unicodechar_tokenizer = text::UnicodeCharTokenizer();
+  std::shared_ptr<TensorTransform> unicodechar_tokenizer = std::make_shared<text::UnicodeCharTokenizer>();
   EXPECT_NE(unicodechar_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2235,7 +2463,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create unicodechar_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> unicodechar_tokenizer = text::UnicodeCharTokenizer(true);
+  std::shared_ptr<TensorTransform> unicodechar_tokenizer = std::make_shared<text::UnicodeCharTokenizer>(true);
   EXPECT_NE(unicodechar_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2305,7 +2533,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create unicodescript_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> unicodescript_tokenizer = text::UnicodeScriptTokenizer();
+  std::shared_ptr<TensorTransform> unicodescript_tokenizer = std::make_shared<text::UnicodeScriptTokenizer>();
   EXPECT_NE(unicodescript_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2352,7 +2580,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create unicodescript_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> unicodescript_tokenizer = text::UnicodeScriptTokenizer(true);
+  std::shared_ptr<TensorTransform> unicodescript_tokenizer = std::make_shared<text::UnicodeScriptTokenizer>(true);
   EXPECT_NE(unicodescript_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2399,7 +2627,8 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create unicodescript_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> unicodescript_tokenizer = text::UnicodeScriptTokenizer(false, true);
+  std::shared_ptr<TensorTransform> unicodescript_tokenizer =
+    std::make_shared<text::UnicodeScriptTokenizer>(false, true);
   EXPECT_NE(unicodescript_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2459,7 +2688,7 @@ TEST_F(MindDataTestPipeline, TestUnicodeScriptTokenizerSuccess3) {
   EXPECT_NE(ds, nullptr);
 
   // Create unicodescript_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> unicodescript_tokenizer = text::UnicodeScriptTokenizer(true, true);
+  std::shared_ptr<TensorTransform> unicodescript_tokenizer = std::make_shared<text::UnicodeScriptTokenizer>(true, true);
   EXPECT_NE(unicodescript_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2518,7 +2747,7 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create white_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> white_tokenizer = text::WhitespaceTokenizer();
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>();
   EXPECT_NE(white_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -2564,7 +2793,7 @@ TEST_F(MindDataTestPipeline, TestWhitespaceTokenizerSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create white_tokenizer operation on ds
-  std::shared_ptr<TensorOperation> white_tokenizer = text::WhitespaceTokenizer(true);
+  std::shared_ptr<TensorTransform> white_tokenizer = std::make_shared<text::WhitespaceTokenizer>(true);
   EXPECT_NE(white_tokenizer, nullptr);
 
   // Create Map operation on ds

@@ -119,7 +119,7 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> one_hot = transforms::OneHot(10);
+  std::shared_ptr<TensorTransform> one_hot = std::make_shared<transforms::OneHot>(10);
   EXPECT_NE(one_hot, nullptr);
 
   // Create a Map operation, this will automatically add a project after map

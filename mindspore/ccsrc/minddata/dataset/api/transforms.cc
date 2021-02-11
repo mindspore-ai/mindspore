@@ -32,19 +32,15 @@ std::shared_ptr<ComposeOperation> Compose(const std::vector<std::shared_ptr<Tens
   return op->ValidateParams() ? op : nullptr;
 }
 
-// Function to create DuplicateOperation.
-std::shared_ptr<DuplicateOperation> Duplicate() {
-  auto op = std::make_shared<DuplicateOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// Constructor to Duplicate
+Duplicate::Duplicate() {}
 
-// Function to create OneHotOperation.
-std::shared_ptr<OneHotOperation> OneHot(int32_t num_classes) {
-  auto op = std::make_shared<OneHotOperation>(num_classes);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+std::shared_ptr<TensorOperation> Duplicate::Parse() { return std::make_shared<DuplicateOperation>(); }
+
+// Constructor to OneHot
+OneHot::OneHot(int32_t num_classes) : num_classes_(num_classes) {}
+
+std::shared_ptr<TensorOperation> OneHot::Parse() { return std::make_shared<OneHotOperation>(num_classes_); }
 
 // Function to create RandomApplyOperation.
 std::shared_ptr<RandomApplyOperation> RandomApply(const std::vector<std::shared_ptr<TensorOperation>> &transforms,
@@ -61,20 +57,16 @@ std::shared_ptr<RandomChoiceOperation> RandomChoice(const std::vector<std::share
   return op->ValidateParams() ? op : nullptr;
 }
 
-// Function to create TypeCastOperation.
-std::shared_ptr<TypeCastOperation> TypeCast(std::string data_type) {
-  auto op = std::make_shared<TypeCastOperation>(data_type);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// Constructor to TypeCast
+TypeCast::TypeCast(std::string data_type) : data_type_(data_type) {}
+
+std::shared_ptr<TensorOperation> TypeCast::Parse() { return std::make_shared<TypeCastOperation>(data_type_); }
 
 #ifndef ENABLE_ANDROID
-// Function to create UniqueOperation.
-std::shared_ptr<UniqueOperation> Unique() {
-  auto op = std::make_shared<UniqueOperation>();
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
-}
+// Constructor to Unique
+Unique::Unique() {}
+
+std::shared_ptr<TensorOperation> Unique::Parse() { return std::make_shared<UniqueOperation>(); }
 #endif
 }  // namespace transforms
 }  // namespace dataset
