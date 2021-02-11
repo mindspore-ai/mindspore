@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_SERDES_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_SERDES_H_
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>

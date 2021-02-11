@@ -136,6 +136,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/engine/ir/datasetops/shuffle_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/album_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/source/mnist_node.cc
+        ${MINDDATA_DIR}/engine/ir/datasetops/source/samplers/samplers_ir.cc
         ${MINDDATA_DIR}/engine/datasetops/dataset_op.cc
         ${MINDDATA_DIR}/engine/datasetops/repeat_op.cc
         ${MINDDATA_DIR}/engine/datasetops/epoch_ctrl_op.cc

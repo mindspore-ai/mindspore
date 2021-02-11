@@ -95,6 +95,7 @@ add_dependencies(text-kernels core)
 add_dependencies(cpp-API core)
 add_dependencies(engine-ir-datasetops core)
 add_dependencies(engine-ir-datasetops-source core)
+add_dependencies(engine-ir-datasetops-source-samplers core)
 add_dependencies(engine-ir-cache core)
 add_dependencies(kernels-ir core)
 add_dependencies(kernels-ir-vision core)
@@ -132,6 +133,7 @@ set(submodules
         $<TARGET_OBJECTS:cpp-API>
         $<TARGET_OBJECTS:engine-ir-datasetops>
         $<TARGET_OBJECTS:engine-ir-datasetops-source>
+        $<TARGET_OBJECTS:engine-ir-datasetops-source-samplers>
         $<TARGET_OBJECTS:engine-ir-cache>
         $<TARGET_OBJECTS:kernels-soft-dvpp-image>
         $<TARGET_OBJECTS:soft-dvpp-utils>

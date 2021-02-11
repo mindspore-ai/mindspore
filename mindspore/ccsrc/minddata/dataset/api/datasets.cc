@@ -42,7 +42,7 @@
 #endif
 
 // Sampler headers (in alphabetical order)
-#include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
