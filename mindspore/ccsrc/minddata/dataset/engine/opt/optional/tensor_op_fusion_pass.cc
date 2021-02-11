@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
-#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
+#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vision_ir.h"
 
 namespace mindspore {

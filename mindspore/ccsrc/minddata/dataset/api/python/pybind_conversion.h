@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,10 @@
 #include "pybind11/stl_bind.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/samplers.h"
-#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/engine/ir/cache/pre_built_dataset_cache.h"
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
+#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
 #include "minddata/dataset/kernels/py_func_op.h"
 namespace py = pybind11;
 

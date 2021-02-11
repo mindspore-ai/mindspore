@@ -202,6 +202,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/data/type_cast_op.cc
         ${MINDDATA_DIR}/kernels/image/exif_utils.cc
         ${MINDDATA_DIR}/kernels/ir/validators.cc
+        ${MINDDATA_DIR}/kernels/ir/data/transforms_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/vision_ir.cc
         ${MINDDATA_DIR}/callback/callback_manager.cc
         ${MINDDATA_DIR}/util/task_manager.cc
@@ -281,6 +282,7 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
             ${MINDDATA_DIR}/kernels/data/data_utils.cc
             ${MINDDATA_DIR}/kernels/image/exif_utils.cc
             ${MINDDATA_DIR}/kernels/ir/validators.cc
+            ${MINDDATA_DIR}/kernels/ir/data/transforms_ir.cc
             ${MINDDATA_DIR}/kernels/ir/vision/vision_ir.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/MDToDApi.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/wrapper/album_op_android.cc
@@ -393,6 +395,7 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/log_adapter.cc
         ${CORE_DIR}/utils/ms_utils.cc
         ${MINDDATA_DIR}/kernels/ir/validators.cc
+        ${MINDDATA_DIR}/kernels/ir/data/transforms_ir.cc
         ${MINDDATA_DIR}/kernels/ir/vision/vision_ir.cc
         )
 
