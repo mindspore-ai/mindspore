@@ -2162,7 +2162,7 @@ class Concat(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, axis=0):
-        """Initialize Tile"""
+        """Initialize Concat"""
         validator.check_value_type("axis", axis, [int], self.name)
 
     def __infer__(self, input_x):

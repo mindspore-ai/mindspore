@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@
 #include <cuda_runtime.h>
 #include "backend/kernel_compiler/gpu/cuda_impl/concatv2_impl.cuh"
 template <typename T>
-__global__ void Concat(const size_t size, const int input_num,
-                       const int all_size_before_axis, const int all_size_axis,
-                       int* len_axis, T** inputs, T* output) {
+__global__ void Concat(const size_t size, const int input_num, const int all_size_before_axis, const int all_size_axis,
+                       int *len_axis, T **inputs, T *output) {
   for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     int num = pos % all_size_before_axis / all_size_axis;
     int block = -1;
@@ -37,45 +36,38 @@ __global__ void Concat(const size_t size, const int input_num,
     }
     block_len = len_axis[block];
     axis_inc -= len_axis[block];
-    int block_pos = pos / all_size_before_axis * block_len * all_size_axis +
-                    (num - axis_inc) * all_size_axis + pos % all_size_axis;;
+    int block_pos =
+      pos / all_size_before_axis * block_len * all_size_axis + (num - axis_inc) * all_size_axis + pos % all_size_axis;
     output[pos] = inputs[block][block_pos];
   }
   return;
 }
 
 template <typename T>
-void ConcatKernel(const size_t size, const int input_num,
-                  const int all_size_before_axis, const int all_size_axis,
-                  int* len_axis, T** inputs, T* output,
-                  cudaStream_t cuda_stream) {
-  Concat<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_num,
-                                                            all_size_before_axis, all_size_axis,
+void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis, const int all_size_axis,
+                  int *len_axis, T **inputs, T *output, cudaStream_t cuda_stream) {
+  Concat<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_num, all_size_before_axis, all_size_axis,
                                                             len_axis, inputs, output);
   return;
 }
 
-template void ConcatKernel(const size_t size, const int input_num,
-                           const int all_size_before_axis, const int all_size_axis,
-                           int* len_axis, float** inputs, float* output,
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, double **inputs, double *output,
                            cudaStream_t cuda_stream);
-template void ConcatKernel(const size_t size, const int input_num,
-                           const int all_size_before_axis, const int all_size_axis,
-                           int* len_axis, int** inputs, int* output,
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, float **inputs, float *output,
                            cudaStream_t cuda_stream);
-template void ConcatKernel(const size_t size, const int input_num,
-                           const int all_size_before_axis, const int all_size_axis,
-                           int* len_axis, half** inputs, half* output,
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, int **inputs, int *output, cudaStream_t cuda_stream);
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, half **inputs, half *output,
                            cudaStream_t cuda_stream);
-template void ConcatKernel(const size_t size, const int input_num,
-                           const int all_size_before_axis, const int all_size_axis,
-                           int* len_axis, short** inputs, short* output,  // NOLINT
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, short **inputs, short *output,  // NOLINT
                            cudaStream_t cuda_stream);
-template void ConcatKernel(const size_t size, const int input_num,
-                           const int all_size_before_axis, const int all_size_axis,
-                           int* len_axis, unsigned char** inputs, unsigned char* output,
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, unsigned char **inputs, unsigned char *output,
                            cudaStream_t cuda_stream);
-template void ConcatKernel(const size_t size, const int input_num,
-                           const int all_size_before_axis, const int all_size_axis,
-                           int* len_axis, bool** inputs, bool* output,
+template void ConcatKernel(const size_t size, const int input_num, const int all_size_before_axis,
+                           const int all_size_axis, int *len_axis, bool **inputs, bool *output,
                            cudaStream_t cuda_stream);

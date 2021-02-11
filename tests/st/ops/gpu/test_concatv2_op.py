@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,8 +49,13 @@ def axis32(nptype):
                         [1., 2., 3.]],
                        [[2., 4., 5.],
                         [3., 6., 7.]]]).astype(nptype)
-    print(output)
     assert (output.asnumpy() == expect).all()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_axis32_float64():
+    axis32(np.float64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -106,8 +111,12 @@ def axis43(nptype):
                         [[12., 13., 18., 19., 20.],
                          [14., 15., 21., 22., 23.]]]]).astype(nptype)
     assert (output.asnumpy() == expect).all()
-    print(output)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_axis43_float64():
+    axis43(np.float64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -155,7 +164,12 @@ def axis21(nptype):
     expect = np.array([[0., 1., 0., 1., 2.],
                        [2., 3., 3., 4., 5.]]).astype(nptype)
     assert (output.asnumpy() == expect).all()
-    print(output)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_axis21_float64():
+    axis21(np.float64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -207,6 +221,12 @@ def concat_3i(nptype):
     error = np.ones(shape=output_np.shape) * 10e-6
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_concat_3i_float64():
+    concat_3i(np.float64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -272,6 +292,12 @@ def concat_4i(nptype):
     error = np.ones(shape=output_np.shape) * 10e-6
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_concat_4i_float64():
+    concat_4i(np.float64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
