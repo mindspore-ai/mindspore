@@ -23,7 +23,7 @@
 #include "minddata/dataset/callback/py_ds_callback.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 
 namespace mindspore {
 namespace dataset {
