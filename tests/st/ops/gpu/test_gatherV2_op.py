@@ -1,4 +1,4 @@
-# Copyright 2019-2020 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1129,6 +1129,50 @@ def test_gatherV2_dyn_b():
                          [106., 108., 109.],
                          [111., 113., 114.],
                          [116., 118., 119.]]]])
+    output = gather(x, indices)
+    error = np.ones(shape=output.asnumpy().shape) * 1.0e-6
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+    assert np.all(-diff < error)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gather1_float64():
+    x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.float64).reshape(2, 3, 4, 5))
+    indices = Tensor(np.array([1, 3, 4], dtype='i4'))
+    expect = np.array([[[[1., 3., 4.],
+                         [6., 8., 9.],
+                         [11., 13., 14.],
+                         [16., 18., 19.]],
+
+                        [[21., 23., 24.],
+                         [26., 28., 29.],
+                         [31., 33., 34.],
+                         [36., 38., 39.]],
+
+                        [[41., 43., 44.],
+                         [46., 48., 49.],
+                         [51., 53., 54.],
+                         [56., 58., 59.]]],
+
+                       [[[61., 63., 64.],
+                         [66., 68., 69.],
+                         [71., 73., 74.],
+                         [76., 78., 79.]],
+
+                        [[81., 83., 84.],
+                         [86., 88., 89.],
+                         [91., 93., 94.],
+                         [96., 98., 99.]],
+
+                        [[101., 103., 104.],
+                         [106., 108., 109.],
+                         [111., 113., 114.],
+                         [116., 118., 119.]]]]).astype(np.float64)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    gather = GatherNet1()
     output = gather(x, indices)
     error = np.ones(shape=output.asnumpy().shape) * 1.0e-6
     diff = output.asnumpy() - expect
