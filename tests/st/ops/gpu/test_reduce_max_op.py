@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -209,3 +209,26 @@ def test_reduce_max_dynamic():
 
     np.testing.assert_almost_equal(output_1.asnumpy(), expect_1)
     np.testing.assert_almost_equal(output_2.asnumpy(), expect_2)
+
+class ReduceMaxTypeNet(nn.Cell):
+    def __init__(self, nptype):
+        super(ReduceMaxTypeNet, self).__init__()
+        self.x0 = Tensor(x0.astype(nptype))
+        self.axis0 = axis0
+        self.keep_dims0 = keep_dims0
+
+    def construct(self):
+        return P.ReduceMax(self.keep_dims0)(self.x0, self.axis0)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reduce_max_float64():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = ReduceMaxTypeNet(np.float64)
+    output = net()
+    expect = np.max(x0, axis=axis0, keepdims=keep_dims0).astype(np.float64)
+    diff = abs(output.asnumpy() - expect)
+    error = np.ones(shape=expect.shape) * 1.0e-5
+    assert np.all(diff < error)
+    assert output.shape == expect.shape
