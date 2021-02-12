@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,6 +63,12 @@ def gpu_convert_to_dynamic_shape_float(dtype):
 
     np.random.seed(0)
     finfo = np.finfo(dtype)
+
+    # np.random.uniform will overflow if we use min/max for float64, so we use
+    # the finfo for float32, but still test the operator with float64 input.
+    if dtype == np.float64:
+        finfo = np.finfo(np.float32)
+
     float_min = finfo.min
     float_max = finfo.max
     x = np.random.uniform(low=float_min, high=float_max, size=12).astype(dtype)
@@ -102,6 +108,12 @@ def test_gpu_convert_to_dynamic_shape_float16():
 @pytest.mark.env_onecard
 def test_gpu_convert_to_dynamic_shape_float32():
     gpu_convert_to_dynamic_shape_float(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gpu_convert_to_dynamic_shape_float64():
+    gpu_convert_to_dynamic_shape_float(np.float64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

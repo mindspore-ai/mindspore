@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,6 +222,8 @@ void ElewiseCmp(const int &nums, enum BroadcastOpType op, const T *x0, const T *
   }
 }
 
+template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const double *x0, const double *x1, bool *y,
+                         cudaStream_t stream);
 template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const float *x0, const float *x1, bool *y,
                          cudaStream_t stream);
 template void ElewiseCmp(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1, bool *y,
@@ -292,6 +294,8 @@ void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, cons
   }
 }
 
+template void ElewiseArith(const int &nums, enum BroadcastOpType op, const double *x0, const double *x1, double *y,
+                           cudaStream_t stream);
 template void ElewiseArith(const int &nums, enum BroadcastOpType op, const float *x0, const float *x1, float *y,
                            cudaStream_t stream);
 template void ElewiseArith(const int &nums, enum BroadcastOpType op, const half *x0, const half *x1, half *y,
@@ -372,6 +376,9 @@ void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> 
   }
 }
 
+template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                           const std::vector<size_t> &y_dims, enum BroadcastOpType op, const double *x0,
+                           const double *x1, bool *y, cudaStream_t stream);
 template void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                            const std::vector<size_t> &y_dims, enum BroadcastOpType op, const float *x0, const float *x1,
                            bool *y, cudaStream_t stream);
@@ -501,6 +508,9 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
   }
 }
 
+template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
+                             const std::vector<size_t> &y_dims, enum BroadcastOpType op, const double *x0,
+                             const double *x1, double *y, cudaStream_t stream);
 template void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t> &x1_dims,
                              const std::vector<size_t> &y_dims, enum BroadcastOpType op, const float *x0,
                              const float *x1, float *y, cudaStream_t stream);
