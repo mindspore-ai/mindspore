@@ -39,7 +39,7 @@ int AddnInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   for (size_t i = 1; i < inputs_size; ++i) {
     if (inputs[i]->shape_size_ > max_dims) {
       max_dims = inputs[i]->shape_size_;
-      max_dims_idx = 0;
+      max_dims_idx = i;
     }
   }
   ShapeSet(output->shape_, &output->shape_size_, inputs[max_dims_idx]->shape_, inputs[max_dims_idx]->shape_size_);
