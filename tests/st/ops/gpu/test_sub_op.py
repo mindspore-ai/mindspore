@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,20 +31,17 @@ class Net(nn.Cell):
         return self.sub(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_Sub():
-    np_x0 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-    np_y0 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-    np_x1 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-    np_y1 = np.random.uniform(-2, 2, (2, 1, 4, 4)).astype(np.float32)
-    np_x2 = np.random.uniform(-2, 2, (2, 1, 1, 4)).astype(np.float32)
-    np_y2 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
-    np_x3 = np.random.uniform(-2, 2, 1).astype(np.float32)
-    np_y3 = np.random.uniform(-2, 2, 1).astype(np.float32)
-    np_x4 = np.array(768).astype(np.float32)
-    np_y4 = np.array(3072.5).astype(np.float32)
+def sub(nptype):
+    np_x0 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(nptype)
+    np_y0 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(nptype)
+    np_x1 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(nptype)
+    np_y1 = np.random.uniform(-2, 2, (2, 1, 4, 4)).astype(nptype)
+    np_x2 = np.random.uniform(-2, 2, (2, 1, 1, 4)).astype(nptype)
+    np_y2 = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(nptype)
+    np_x3 = np.random.uniform(-2, 2, 1).astype(nptype)
+    np_y3 = np.random.uniform(-2, 2, 1).astype(nptype)
+    np_x4 = np.array(768).astype(nptype)
+    np_y4 = np.array(3072.5).astype(nptype)
     x0 = Tensor(np_x0)
     y0 = Tensor(np_y0)
     x1 = Tensor(np_x1)
@@ -68,12 +65,12 @@ def test_Sub():
     error4 = np.ones(shape=expect4.shape) * 1.0e-5
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    sub = Net()
-    output0 = sub(x0, y0)
-    output1 = sub(x1, y1)
-    output2 = sub(x2, y2)
-    output3 = sub(x3, y3)
-    output4 = sub(x4, y4)
+    sub_net = Net()
+    output0 = sub_net(x0, y0)
+    output1 = sub_net(x1, y1)
+    output2 = sub_net(x2, y2)
+    output3 = sub_net(x3, y3)
+    output4 = sub_net(x4, y4)
     diff0 = output0.asnumpy() - expect0
     assert np.all(diff0 < error0)
     assert output0.shape == expect0.shape
@@ -91,12 +88,12 @@ def test_Sub():
     assert output4.shape == expect4.shape
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    sub = Net()
-    output0 = sub(x0, y0)
-    output1 = sub(x1, y1)
-    output2 = sub(x2, y2)
-    output3 = sub(x3, y3)
-    output4 = sub(x4, y4)
+    sub_net = Net()
+    output0 = sub_net(x0, y0)
+    output1 = sub_net(x1, y1)
+    output2 = sub_net(x2, y2)
+    output3 = sub_net(x3, y3)
+    output4 = sub_net(x4, y4)
     diff0 = output0.asnumpy() - expect0
     assert np.all(diff0 < error0)
     assert output0.shape == expect0.shape
@@ -112,3 +109,33 @@ def test_Sub():
     diff4 = output4.asnumpy() - expect4
     assert np.all(diff4 < error4)
     assert output4.shape == expect4.shape
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sub_float64():
+    sub(np.float64)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sub_float32():
+    sub(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sub_float16():
+    sub(np.float16)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sub_int64():
+    sub(np.int64)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sub_int32():
+    sub(np.int32)
