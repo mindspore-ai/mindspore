@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,6 +38,28 @@ class BatchMatMulNet(nn.Cell):
 def test_4d():
     input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float32)
     input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float32)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = BatchMatMulNet()
+    output = net(input_x, input_y)
+    expect = [[[[20, 23, 26, 29]],
+               [[200, 212, 224, 236]],
+               [[596, 617, 638, 659]],
+               [[1208, 1238, 1268, 1298]]],
+
+              [[[2036, 2075, 2114, 2153]],
+               [[3080, 3128, 3176, 3224]],
+               [[4340, 4397, 4454, 4511]],
+               [[5816, 5882, 5948, 6014]]]]
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_4d_float64():
+    input_x = Tensor(np.arange(2 * 4 * 1 * 3).reshape(2, 4, 1, 3), mstype.float64)
+    input_y = Tensor(np.arange(2 * 4 * 3 * 4).reshape(2, 4, 3, 4), mstype.float64)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = BatchMatMulNet()
