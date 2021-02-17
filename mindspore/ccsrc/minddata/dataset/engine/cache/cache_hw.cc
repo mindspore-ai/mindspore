@@ -32,7 +32,7 @@ CacheServerHW::CacheServerHW() {
   MS_LOG(DEBUG) << "Number of cpu(s) : " << num_cpus_;
 #ifdef NUMA_ENABLED
   if (numa_enabled()) {
-    MS_LOG(WARNING) << "Numa support enabled";
+    MS_LOG(INFO) << "Numa support enabled";
     for (auto i = 0; i <= numa_max_node(); ++i) {
       int64_t free_avail;
       int64_t mem_avail = numa_node_size(i, &free_avail);

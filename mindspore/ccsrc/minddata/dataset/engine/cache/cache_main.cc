@@ -17,14 +17,12 @@
 #include "minddata/dataset/engine/cache/cache_server.h"
 #include <sys/types.h>
 #include <unistd.h>
-#ifdef USE_GLOG
-#include <glog/logging.h>
-#endif
 #include <cstdlib>
 #include <thread>
 #include <chrono>
 #include "minddata/dataset/engine/cache/cache_common.h"
 #include "minddata/dataset/engine/cache/cache_ipc.h"
+#include "mindspore/core/utils/log_adapter.h"
 namespace ms = mindspore;
 namespace ds = mindspore::dataset;
 
@@ -61,8 +59,7 @@ ms::Status StartServer(int argc, char **argv) {
   ds::SharedMessage msg;
   if (daemonize) {
 #ifdef USE_GLOG
-    // temporary setting log level to WARNING to avoid logging when creating dir
-    FLAGS_minloglevel = google::WARNING;
+    FLAGS_logtostderr = false;
     FLAGS_log_dir = ds::DefaultLogDir();
     // Create cache server default log dir
     ds::Path log_dir = ds::Path(FLAGS_log_dir);
@@ -70,7 +67,7 @@ ms::Status StartServer(int argc, char **argv) {
     if (rc.IsError()) {
       return rc;
     }
-    FLAGS_minloglevel = strtol(argv[5], nullptr, 10);
+    ms::g_ms_submodule_log_levels[SUBMODULE_ID] = strtol(argv[5], nullptr, 10);
     google::InitGoogleLogging(argv[0]);
 #endif
     rc = msg.Create();
@@ -120,8 +117,8 @@ ms::Status StartServer(int argc, char **argv) {
   }
 
   // Dump the summary
-  MS_LOG(WARNING) << "Cache server has started successfully and is listening on port " << port << std::endl;
-  MS_LOG(WARNING) << builder << std::endl;
+  MS_LOG(INFO) << "Cache server has started successfully and is listening on port " << port << std::endl;
+  MS_LOG(INFO) << builder << std::endl;
   // Create the instance with some sanity checks built in
   rc = builder.Build();
   if (rc.IsOk()) {

@@ -27,7 +27,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   endif()
 endif()
 
-if(NUMA_FOUND)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   ADD_DEFINITIONS(-DCACHE_LOCAL_CLIENT)
 endif()
 
