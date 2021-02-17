@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ tile_op_info = AkgGpuRegOp("Tile") \
     .attr("multiples", "required", "listInt") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.F64_Default, DataType.F64_Default) \
     .dtype_format(DataType.I16_Default, DataType.I16_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I64_Default, DataType.I64_Default) \
