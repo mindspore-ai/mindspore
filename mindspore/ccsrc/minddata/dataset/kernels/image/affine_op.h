@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
@@ -48,10 +47,6 @@ class AffineOp : public TensorOp {
   std::string Name() const override { return kAffineOp; }
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
-
-  /// Member variables
- private:
-  std::string kAffineOp = "AffineOp";
 
  protected:
   float_t degrees_;

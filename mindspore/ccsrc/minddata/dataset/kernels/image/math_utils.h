@@ -21,6 +21,8 @@
 #include <vector>
 #include "minddata/dataset/util/status.h"
 
+#define CV_PI 3.1415926535897932384626433832795
+
 namespace mindspore {
 namespace dataset {
 

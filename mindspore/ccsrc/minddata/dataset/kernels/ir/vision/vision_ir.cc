@@ -21,6 +21,7 @@
 #include "minddata/dataset/kernels/image/image_utils.h"
 #endif
 // Kernel image headers (in alphabetical order)
+#include "minddata/dataset/kernels/image/affine_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/auto_contrast_op.h"
 #include "minddata/dataset/kernels/image/bounding_box_augment_op.h"
@@ -42,7 +43,9 @@
 #include "minddata/dataset/kernels/image/normalize_pad_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/pad_op.h"
+#endif
 #include "minddata/dataset/kernels/image/random_affine_op.h"
+#ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/random_color_op.h"
 #include "minddata/dataset/kernels/image/random_color_adjust_op.h"
 #include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
@@ -88,6 +91,59 @@ namespace vision {
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
+
+// AffineOperation
+AffineOperation::AffineOperation(float_t degrees, const std::vector<float> &translation, float scale,
+                                 const std::vector<float> &shear, InterpolationMode interpolation,
+                                 const std::vector<uint8_t> &fill_value)
+    : degrees_(degrees),
+      translation_(translation),
+      scale_(scale),
+      shear_(shear),
+      interpolation_(interpolation),
+      fill_value_(fill_value) {}
+
+Status AffineOperation::ValidateParams() {
+  // Translate
+  if (translation_.size() != 2) {
+    std::string err_msg =
+      "Affine: translate expecting size 2, got: translation.size() = " + std::to_string(translation_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  RETURN_IF_NOT_OK(ValidateScalar("Affine", "translate", translation_[0], {-1, 1}, false, false));
+  RETURN_IF_NOT_OK(ValidateScalar("Affine", "translate", translation_[1], {-1, 1}, false, false));
+
+  // Shear
+  if (shear_.size() != 2) {
+    std::string err_msg = "Affine: shear_ranges expecting size 2, got: shear.size() = " + std::to_string(shear_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  // Fill Value
+  RETURN_IF_NOT_OK(ValidateVectorFillvalue("Affine", fill_value_));
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> AffineOperation::Build() {
+  std::shared_ptr<AffineOp> tensor_op =
+    std::make_shared<AffineOp>(degrees_, translation_, scale_, shear_, interpolation_, fill_value_);
+  return tensor_op;
+}
+
+Status AffineOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["degrees"] = degrees_;
+  args["translate"] = translation_;
+  args["scale"] = scale_;
+  args["shear"] = shear_;
+  args["resample"] = interpolation_;
+  args["fill_value"] = fill_value_;
+  *out_json = args;
+  return Status::OK();
+}
+
 #ifndef ENABLE_ANDROID
 
 // AutoContrastOperation
@@ -257,6 +313,7 @@ Status CutOutOperation::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+#endif
 
 // DecodeOperation
 DecodeOperation::DecodeOperation(bool rgb) : rgb_(rgb) {}
@@ -269,6 +326,7 @@ Status DecodeOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["rgb"] = rgb_;
   return Status::OK();
 }
+#ifndef ENABLE_ANDROID
 
 // EqualizeOperation
 Status EqualizeOperation::ValidateParams() { return Status::OK(); }

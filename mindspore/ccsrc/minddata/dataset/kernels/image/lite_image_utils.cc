@@ -621,5 +621,46 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     return RotateAngleWithMirror(input, output, orientation);
   }
 }
+
+Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
+              InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
+  try {
+    if (interpolation != InterpolationMode::kLinear) {
+      MS_LOG(WARNING) << "Only Bilinear interpolation supported for now";
+    }
+    int height = 0;
+    int width = 0;
+    double M[6] = {};
+    for (int i = 0; i < mat.size(); i++) {
+      M[i] = static_cast<double>(mat[i]);
+    }
+
+    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                         GetLiteCVDataType(input->type()));
+
+    height = lite_mat_rgb.height_;
+    width = lite_mat_rgb.width_;
+    std::vector<size_t> dsize;
+    dsize.push_back(width);
+    dsize.push_back(height);
+    LiteMat lite_mat_affine;
+    std::shared_ptr<Tensor> output_tensor;
+    TensorShape new_shape = TensorShape({height, width, input->shape()[2]});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    lite_mat_affine.Init(width, height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
+                         GetLiteCVDataType(input->type()));
+
+    bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(fill_r, fill_g, fill_b));
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Affine: affine failed.");
+
+    *output = output_tensor;
+    return Status::OK();
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("Affine: " + std::string(e.what()));
+  }
+}
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -47,6 +47,19 @@ namespace vision {
 // FUNCTIONS TO CREATE VISION TRANSFORM OPERATIONS
 // (In alphabetical order)
 
+Affine::Affine(float_t degrees, const std::vector<float> &translation, float scale, const std::vector<float> &shear,
+               InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
+    : degrees_(degrees),
+      translation_(translation),
+      scale_(scale),
+      shear_(shear),
+      interpolation_(interpolation),
+      fill_value_(fill_value) {}
+
+std::shared_ptr<TensorOperation> Affine::Parse() {
+  return std::make_shared<AffineOperation>(degrees_, translation_, scale_, shear_, interpolation_, fill_value_);
+}
+
 // AutoContrast Transform Operation.
 AutoContrast::AutoContrast(float cutoff, std::vector<uint32_t> ignore) : cutoff_(cutoff), ignore_(ignore) {}
 
