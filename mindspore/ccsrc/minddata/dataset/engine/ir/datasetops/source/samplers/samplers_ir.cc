@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,13 @@ namespace dataset {
 // Constructor
 SamplerObj::SamplerObj() {}
 
-void SamplerObj::BuildChildren(std::shared_ptr<SamplerRT> sampler) {
+Status SamplerObj::BuildChildren(std::shared_ptr<SamplerRT> *sampler) {
   for (auto child : children_) {
-    auto sampler_rt = child->SamplerBuild();
-    sampler->AddChild(sampler_rt);
+    std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+    RETURN_IF_NOT_OK(child->SamplerBuild(&sampler_rt));
+    RETURN_IF_NOT_OK((*sampler)->AddChild(sampler_rt));
   }
+  return Status::OK();
 }
 
 Status SamplerObj::AddChildSampler(std::shared_ptr<SamplerObj> child) {
@@ -113,12 +115,13 @@ Status DistributedSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> DistributedSamplerObj::SamplerBuild() {
+Status DistributedSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::DistributedSamplerRT>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
-                                                                 offset_, even_dist_);
-  BuildChildren(sampler);
-  return sampler;
+  *sampler = std::make_shared<dataset::DistributedSamplerRT>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
+                                                             offset_, even_dist_);
+  Status s = BuildChildren(sampler);
+  sampler = s.IsOk() ? sampler : nullptr;
+  return s;
 }
 
 #ifndef ENABLE_ANDROID
@@ -186,11 +189,12 @@ Status PKSamplerObj::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> PKSamplerObj::SamplerBuild() {
+Status PKSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::PKSamplerRT>(num_samples_, num_val_, shuffle_);
-  BuildChildren(sampler);
-  return sampler;
+  *sampler = std::make_shared<dataset::PKSamplerRT>(num_samples_, num_val_, shuffle_);
+  Status s = BuildChildren(sampler);
+  sampler = s.IsOk() ? sampler : nullptr;
+  return s;
 }
 
 #ifndef ENABLE_ANDROID
@@ -218,9 +222,14 @@ PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator
 
 Status PreBuiltSamplerObj::ValidateParams() { return Status::OK(); }
 
-std::shared_ptr<SamplerRT> PreBuiltSamplerObj::SamplerBuild() {
-  BuildChildren(sp_);
-  return sp_;
+Status PreBuiltSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
+  Status s = BuildChildren(&sp_);
+  if (s.IsOk())
+    *sampler = sp_;
+  else
+    *sampler = nullptr;
+  // FIXME: what to do with sp_ if status is not OK?
+  return s;
 }
 
 #ifndef ENABLE_ANDROID
@@ -280,11 +289,12 @@ Status RandomSamplerObj::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> RandomSamplerObj::SamplerBuild() {
+Status RandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::RandomSamplerRT>(num_samples_, replacement_, reshuffle_each_epoch_);
-  BuildChildren(sampler);
-  return sampler;
+  *sampler = std::make_shared<dataset::RandomSamplerRT>(num_samples_, replacement_, reshuffle_each_epoch_);
+  Status s = BuildChildren(sampler);
+  sampler = s.IsOk() ? sampler : nullptr;
+  return s;
 }
 
 #ifndef ENABLE_ANDROID
@@ -333,11 +343,12 @@ Status SequentialSamplerObj::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> SequentialSamplerObj::SamplerBuild() {
+Status SequentialSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::SequentialSamplerRT>(num_samples_, start_index_);
-  BuildChildren(sampler);
-  return sampler;
+  *sampler = std::make_shared<dataset::SequentialSamplerRT>(num_samples_, start_index_);
+  Status s = BuildChildren(sampler);
+  sampler = s.IsOk() ? sampler : nullptr;
+  return s;
 }
 
 #ifndef ENABLE_ANDROID
@@ -362,11 +373,12 @@ Status SubsetSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> SubsetSamplerObj::SamplerBuild() {
+Status SubsetSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::SubsetSamplerRT>(num_samples_, indices_);
-  BuildChildren(sampler);
-  return sampler;
+  *sampler = std::make_shared<dataset::SubsetSamplerRT>(num_samples_, indices_);
+  Status s = BuildChildren(sampler);
+  sampler = s.IsOk() ? sampler : nullptr;
+  return s;
 }
 
 #ifndef ENABLE_ANDROID
@@ -399,11 +411,12 @@ Status SubsetSamplerObj::to_json(nlohmann::json *out_json) {
 SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
     : SubsetSamplerObj(std::move(indices), num_samples) {}
 
-std::shared_ptr<SamplerRT> SubsetRandomSamplerObj::SamplerBuild() {
+Status SubsetRandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
   // runtime sampler object
-  auto sampler = std::make_shared<dataset::SubsetRandomSamplerRT>(num_samples_, indices_);
-  BuildChildren(sampler);
-  return sampler;
+  *sampler = std::make_shared<dataset::SubsetRandomSamplerRT>(num_samples_, indices_);
+  Status s = BuildChildren(sampler);
+  sampler = s.IsOk() ? sampler : nullptr;
+  return s;
 }
 
 #ifndef ENABLE_ANDROID
@@ -480,10 +493,11 @@ Status WeightedRandomSamplerObj::to_json(nlohmann::json *out_json) {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> WeightedRandomSamplerObj::SamplerBuild() {
-  auto sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(num_samples_, weights_, replacement_);
-  BuildChildren(sampler);
-  return sampler;
+Status WeightedRandomSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
+  *sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(num_samples_, weights_, replacement_);
+  Status s = BuildChildren(sampler);
+  sampler = s.IsOk() ? sampler : nullptr;
+  return s;
 }
 
 }  // namespace dataset

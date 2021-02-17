@@ -108,11 +108,12 @@ Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
     RETURN_IF_NOT_OK(schema->AddColumn(
       ColDescriptor(std::string(kColumnTruncate), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
   }
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
   std::shared_ptr<VOCOp> voc_op;
-  voc_op =
-    std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
-                            connector_que_size_, decode_, std::move(schema), std::move(sampler_->SamplerBuild()));
+  voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
+                                   connector_que_size_, decode_, std::move(schema), std::move(sampler_rt));
   voc_op->set_total_repeats(GetTotalRepeats());
   voc_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(voc_op);
@@ -135,7 +136,9 @@ Status VOCNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_ge
   }
   int64_t num_rows = 0, sample_size;
   RETURN_IF_NOT_OK(VOCOp::CountTotalRows(dataset_dir_, task_, usage_, class_index_, &num_rows));
-  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+  sample_size = sampler_rt->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

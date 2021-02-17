@@ -71,9 +71,11 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
 
   // Argument that is not exposed to user in the API.
   std::set<std::string> extensions = {};
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
   auto album_op = std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_, decode_,
-                                            extensions, std::move(schema), std::move(sampler_->SamplerBuild()));
+                                            extensions, std::move(schema), std::move(sampler_rt));
   album_op->set_total_repeats(GetTotalRepeats());
   album_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(album_op);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,10 +53,13 @@ Status PreBuiltDatasetCache::CreateCacheLookupOp(int32_t num_workers, std::share
                                                  std::shared_ptr<SamplerObj> sampler) {
   CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "Cache client has not been created yet.");
   std::shared_ptr<CacheLookupOp> lookup_op = nullptr;
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler->SamplerBuild(&sampler_rt));
+
   RETURN_IF_NOT_OK(CacheLookupOp::Builder()
                      .SetNumWorkers(num_workers)
                      .SetClient(cache_client_)
-                     .SetSampler(sampler->SamplerBuild())
+                     .SetSampler(sampler_rt)
                      .Build(&lookup_op));
   *ds = lookup_op;
 

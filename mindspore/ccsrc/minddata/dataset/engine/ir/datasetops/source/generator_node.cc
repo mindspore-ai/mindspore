@@ -78,7 +78,8 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
       column_types_.push_back((col.type()));
     }
   }
-  std::shared_ptr<SamplerRT> sampler_rt = sampler_ ? sampler_->SamplerBuild() : nullptr;
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  if (sampler_) RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
   // GeneratorOp's constructor takes in a prefetch_size, which isn't being set by user nor is it being used by
   // GeneratorOp internally. Here it is given a zero which is the default in generator builder
@@ -140,7 +141,9 @@ Status GeneratorNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &s
     int64_t sample_size;
     int64_t num_rows;
     num_rows = source_len_;
-    sample_size = sampler_ ? sampler_->SamplerBuild()->CalculateNumSamples(num_rows) : num_rows;
+    std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+    if (sampler_) RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+    sample_size = sampler_ ? sampler_rt->CalculateNumSamples(num_rows) : num_rows;
     *dataset_size = sample_size;
     dataset_size_ = *dataset_size;
     return Status::OK();
