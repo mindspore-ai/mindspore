@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,6 +137,18 @@ void CumSum(const T *input, T *output, T *workspace, size_t dim0, size_t dim1, s
   return;
 }
 
+template void CumSum<uint8_t>(const uint8_t *input, uint8_t *output, uint8_t *workspace, size_t dim0, size_t dim1,
+                              size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+                              cudaStream_t stream);
+template void CumSum<int8_t>(const int8_t *input, int8_t *output, int8_t *workspace, size_t dim0, size_t dim1,
+                             size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+                             cudaStream_t stream);
+template void CumSum<int32_t>(const int32_t *input, int32_t *output, int32_t *workspace, size_t dim0, size_t dim1,
+                              size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+                              cudaStream_t stream);
+template void CumSum<double>(const double *input, double *output, double *workspace, size_t dim0, size_t dim1,
+                             size_t dim2, size_t stride, size_t stride2, bool exclusive_, bool reverse_,
+                             cudaStream_t stream);
 template void CumSum<float>(const float *input, float *output, float *workspace, size_t dim0, size_t dim1, size_t dim2,
                             size_t stride, size_t stride2, bool exclusive_, bool reverse_, cudaStream_t stream);
 template void CumSum<half>(const half *input, half *output, half *workspace, size_t dim0, size_t dim1, size_t dim2,
