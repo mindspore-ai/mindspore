@@ -129,5 +129,12 @@ Status PyFuncOp::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+bool PyFuncOp::IsRandom() {
+  bool random = true;
+  if (py::hasattr(py_func_ptr_, "random") && py::reinterpret_borrow<py::bool_>(py_func_ptr_.attr("random")) == false)
+    random = false;
+  return random;
+}
 }  // namespace dataset
 }  // namespace mindspore

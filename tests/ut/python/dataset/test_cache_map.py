@@ -20,6 +20,7 @@ import pytest
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -481,7 +482,7 @@ def test_cache_map_failure7():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     data = ds.GeneratorDataset(generator_1d, ["data"])
-    data = data.map((lambda x: x), ["data"], cache=some_cache)
+    data = data.map(py_vision.not_random(lambda x: x), ["data"], cache=some_cache)
     data = data.repeat(4)
 
     with pytest.raises(RuntimeError) as e:

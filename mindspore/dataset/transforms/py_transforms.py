@@ -21,6 +21,11 @@ from .validators import check_one_hot_op, check_compose_list, check_random_apply
 from . import py_transforms_util as util
 
 
+def not_random(function):
+    function.random = False
+    return function
+
+
 class OneHotOp:
     """
     Apply one hot encoding transformation to the input label, make label be more smoothing and continuous.
@@ -42,6 +47,7 @@ class OneHotOp:
     def __init__(self, num_classes, smoothing_rate=0.0):
         self.num_classes = num_classes
         self.smoothing_rate = smoothing_rate
+        self.random = False
 
     def __call__(self, label):
         """
@@ -114,6 +120,8 @@ class Compose:
     @check_compose_list
     def __init__(self, transforms):
         self.transforms = transforms
+        if all(hasattr(transform, "random") and not transform.random for transform in self.transforms):
+            self.random = False
 
     @check_compose_call
     def __call__(self, *args):

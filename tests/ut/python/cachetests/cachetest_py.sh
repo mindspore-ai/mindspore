@@ -318,6 +318,9 @@ HandleRcExit $? 0 0
 PytestCmd "test_cache_nomap.py" "test_cache_nomap_failure" 1
 HandleRcExit $? 0 0
 
+PytestCmd "test_cache_nomap.py" "test_cache_nomap_pyfunc" 1
+HandleRcExit $? 0 0
+
 for i in $(seq 1 3)
 do
    test_name="test_cache_nomap_multiple_cache${i}"
