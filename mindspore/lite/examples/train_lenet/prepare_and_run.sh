@@ -79,9 +79,15 @@ cp model/*.ms ${PACKAGE}/model || exit 1
 cp scripts/*.sh ${PACKAGE}/
 
 # Copy the shared MindSpore ToD library
-tar -xzf ${TARBALL} --wildcards --no-anchored libmindspore-lite.so
-tar -xzf ${TARBALL} --wildcards --no-anchored include
+tar -xzf ${TARBALL} 
 mv mindspore-*/lib ${PACKAGE}/
+mv mindspore-*/minddata/lib/* ${PACKAGE}/lib/
+mv mindspore-*/minddata/third_party/libjpeg-turbo/lib/* ${PACKAGE}/lib/
+if [ "${TARGET}" == "arm64" ]; then
+  tar -xzf ${TARBALL} --wildcards --no-anchored hiai_ddk
+  mv mindspore-*/third_party/hiai_ddk/lib/* ${PACKAGE}/lib/
+fi
+
 rm -rf msl
 mkdir msl
 mv mindspore-*/* msl/

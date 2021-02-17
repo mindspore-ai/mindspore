@@ -19,6 +19,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <memory>
 #include "src/ops/primitive_c.h"
 #include "include/train_session.h"
 #include "src/train/train_model.h"
@@ -42,6 +43,7 @@
 
 namespace mindspore {
 namespace lite {
+std::unique_ptr<char[]> ReadFileToBuf(const std::string &filename, size_t *size);
 using CreatorOp = std::tuple<mindspore::kernel::KernelKey, mindspore::kernel::KernelCreator>;
 class TrainSession : virtual public session::TrainSession, virtual public lite::LiteSession {
  public:
@@ -60,6 +62,7 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   int Eval() override;
   int SetLearningRate(float learning_rate) override;
   float GetLearningRate() override;
+  int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) override;
 
   void BindThread(bool if_bind) override { return lite::LiteSession::BindThread(if_bind); }
   std::vector<tensor::MSTensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
@@ -81,15 +84,22 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
     return lite::RET_ERROR;
   }
 
-  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetPredictions() const override {
-    return eval_output_tensor_map_;
+  std::vector<tensor::MSTensor *> GetPredictions() const override {
+    std::vector<tensor::MSTensor *> outputs;
+    for (auto it = eval_output_tensor_map_.begin(); it != eval_output_tensor_map_.end(); ++it) {
+      outputs.push_back(it->second);
+    }
+    return outputs;
   }
 
  protected:
   void AllocWorkSpace();
   bool IsLossKernel(const kernel::LiteKernel *kernel) const;
+  bool IsGradKernel(const kernel::LiteKernel *kernel) const;
   bool IsOptimizer(kernel::LiteKernel *kernel) const;
   bool IsMaskOutput(kernel::LiteKernel *kernel) const;
+  bool IsBN(kernel::LiteKernel *kernel) const;
+
   virtual std::vector<CreatorOp> ReplaceOps();
   virtual void RestoreOps(const std::vector<CreatorOp> &restore);
   virtual void CompileTrainKernels();
@@ -113,7 +123,11 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
 
  private:
   void BuildInferenceKernelsRecursive(kernel::LiteKernel *ker, std::vector<kernel::LiteKernel *> *req_kernels);
+  int OptimizerStep();
+  int virtual_batch_idx_ = 0;
+  int virtual_batch_multiplier_ = 0;
 };
+
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_TRAIN_TRAIN_SESSION_H_

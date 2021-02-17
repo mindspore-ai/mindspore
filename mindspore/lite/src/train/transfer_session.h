@@ -19,6 +19,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include "src/ops/primitive_c.h"
 #include "include/train_session.h"
 #include "src/train/train_model.h"
@@ -50,20 +51,26 @@ namespace lite {
 
 class TransferSession : public lite::TrainSession {
  public:
-  TransferSession();
-  explicit TransferSession(lite::LiteSession *backend_session);
+  explicit TransferSession(const char *model_buf_backbone, size_t size_backbone, lite::Context *context);
+
   ~TransferSession();
+
+  bool is_valid() const { return is_valid_; }
 
   int RunGraph(const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
 
   void BindThread(bool if_bind) override;
-  std::vector<tensor::MSTensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
-  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override {
-    return lite::LiteSession::GetInputsByTensorName(tensor_name);
-  }
+  std::vector<tensor::MSTensor *> GetInputs() const override;
+  mindspore::tensor::MSTensor *GetInputsByTensorName(const std::string &tensor_name) const override;
+
+  int CompileTransferGraph();
 
  protected:
-  lite::LiteSession *backend_session_;
+  lite::LiteSession *backbone_session_;
+  char *lite_model_;
+  std::vector<mindspore::tensor::MSTensor *> combined_inputs_;
+  std::vector<std::pair<mindspore::tensor::MSTensor *, mindspore::tensor::MSTensor *>> backbone_head_map_;
+  bool is_valid_;
 
  private:
 };

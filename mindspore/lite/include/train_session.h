@@ -18,7 +18,6 @@
 #include <vector>
 #include <string>
 #include <tuple>
-#include <unordered_map>
 #include "include/lite_session.h"
 
 namespace mindspore {
@@ -49,6 +48,31 @@ class TrainSession : public session::LiteSession {
   ///
   /// \return Pointer of MindSpore Lite TrainSession
   static TrainSession *CreateSession(const std::string &filename, lite::Context *context, bool train_mode = false);
+
+  /// \brief Static method to create a transfer lernning support TrainSession object
+  ///
+  /// \param[in] model_buf_backbone A buffer that was read from a backbone MS model file
+  /// \param[in] size_backbone Length of the backbone net buffer
+  /// \param[in] model_buf_head A buffer that was read from a head MS model file
+  /// \param[in] size_head Length of the head net buffer
+  /// \param[in] context Defines the context of the session to be created
+  /// \param[in] train_mode training mode to initialize Session with
+  ///
+  /// \return Pointer of MindSpore Lite TrainSession
+  static TrainSession *CreateTransferSession(const char *model_buf_backbone, size_t size_backbone,
+                                             const char *model_buf_head, size_t size_head, lite::Context *context,
+                                             bool train_mode = false);
+
+  /// \brief Static method to create a TrainSession object
+  ///
+  /// \param[in] filename_backbone Filename to read backbone net flatbuffer from
+  /// \param[in] filename_head Filename to read head net flatbuffer from
+  /// \param[in] context Defines the context of the session to be created
+  /// \param[in] train_mode training mode to initialize Session with
+  ///
+  /// \return Pointer of MindSpore Lite TrainSession
+  static TrainSession *CreateTransferSession(const std::string &filename_backbone, const std::string &filename_head,
+                                             lite::Context *context, bool train_mode = false);
 
   /// \brief Export the trained model into a buffer
   ///
@@ -95,13 +119,30 @@ class TrainSession : public session::LiteSession {
   /// \return learning rate. 0.0 if no optimizer was found
   virtual float GetLearningRate() = 0;
 
+  /// \brief Setup training with virtual batches
+  ///
+  /// \param[in] virtual_batch_multiplier - virtual batch multiplier, use any number < 1 to disable
+  /// \param[in] lr - learning rate to use for virtual batch, -1 for internal configuration
+  /// \param[in] momentum - batch norm momentum to use for virtual batch, -1 for internal configuration
+
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int SetupVirtualBatch(int virtual_batch_multiplier, float lr = -1.0f, float momentum = -1.0f) = 0;
+
   /// \brief Get output MindSpore Lite MSTensors of Training model prediction
   ///
-  /// \return The map of output tensor name and MindSpore Lite MSTensor.
-  virtual std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetPredictions() const = 0;
+  /// \return a vector of output tensors (MindSpore Lite MSTensor).
+  virtual std::vector<tensor::MSTensor *> GetPredictions() const = 0;
+
+  /// \brief Set part of the name that identify a loss kernel
+  /// \param[in] loss_name Identifucation name for loss kernels
+  void SetLossName(std::string loss_name) { loss_name_ = loss_name; }
 
  protected:
   bool train_mode_ = false;
+  std::string get_loss_name() const { return loss_name_; }
+
+ private:
+  std::string loss_name_ = "_loss_fn";
 };
 }  // namespace session
 }  // namespace mindspore

@@ -136,9 +136,13 @@ int StridedSliceGradCPUKernel::Execute(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   MS_ASSERT(output);
+
   int *po = output_shape_.data();
-  auto ret = DoStridedSliceGrad(reinterpret_cast<float *>(input->MutableData()),
-                                reinterpret_cast<float *>(output->MutableData()), po, param_);
+  auto dx = reinterpret_cast<float *>(output->MutableData());
+  auto dy = reinterpret_cast<float *>(input->MutableData());
+
+  std::fill(dx, dx + output->ElementsNum(), 0.f);
+  auto ret = DoStridedSliceGrad(dy, dx, po, param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSliceGrad error error_code[" << ret << "]";
     return RET_ERROR;

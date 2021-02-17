@@ -190,7 +190,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
     packed_input_ = input_ptr;
   }
 
-  if (IsTrain()) {
+  if (IsTrain() && is_trainable()) {
     PackWeight();
   }
 
@@ -224,7 +224,9 @@ void ConvolutionDepthwiseIndirectCPUKernel::PackWeight() {
 
 int ConvolutionDepthwiseIndirectCPUKernel::Eval() {
   LiteKernel::Eval();
-  PackWeight();
+  if (is_trainable()) {
+    PackWeight();
+  }
   return RET_OK;
 }
 

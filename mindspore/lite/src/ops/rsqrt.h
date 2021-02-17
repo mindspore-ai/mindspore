@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_RSQRT_H_
-#define LITE_MINDSPORE_LITE_C_OPS_RSQRT_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_RSQRT_H_
+#define MINDSPORE_LITE_SRC_OPS_RSQRT_H_
 
 #include <vector>
 #include <set>
@@ -32,6 +32,7 @@ class Rsqrt : public ArithmeticSelf {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Rsqrt, ArithmeticSelf);
   explicit Rsqrt(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
@@ -39,4 +40,4 @@ class Rsqrt : public ArithmeticSelf {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_RSQRT_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_RSQRT_H_

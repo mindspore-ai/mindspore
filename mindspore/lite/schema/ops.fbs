@@ -1281,9 +1281,10 @@ table IsFinite {
 }
 
 table BatchMatMul {
-    transpose_a :bool;
-    transpose_b :bool;
+   transpose_a :bool;
+   transpose_b :bool;
 }
+
 
 table LinSpace {
 }
@@ -1291,4 +1292,7 @@ table LinSpace {
 table UniformReal {
     seed : int;
     seed2 : int;
+}
+table AbsGrad {
+    transpose_a :bool;
 }

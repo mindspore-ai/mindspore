@@ -56,6 +56,9 @@ void BatchnormCPUKernel::FillParam() {
   for (size_t i = 0; i < n_dim - 1; i++) {
     param->unit_ *= input_shapes[i];
   }
+  if (default_momentum_ < 0.0f) {
+    default_momentum_ = param->momentum_;
+  }
 }
 
 int BatchnormCPUKernel::InitConstTensor() {
@@ -92,6 +95,23 @@ int BatchNormRun(void *cdata, int task_id) {
     MS_LOG(ERROR) << "BatchnormRun error task_id[" << task_id << "] error_code[" << ret << "]";
   }
   return ret;
+}
+
+int BatchnormCPUKernel::set_momentum(float momentum) {
+  auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  param->momentum_ = momentum;
+
+  return RET_OK;
+}
+
+float BatchnormCPUKernel::get_momentum() {
+  auto param = reinterpret_cast<BatchNormParameter *>(op_parameter_);
+  return param->momentum_;
+}
+
+int BatchnormCPUKernel::RestoreDefaultMomentum() {
+  set_momentum(default_momentum_);
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchNorm, LiteKernelCreator<BatchnormCPUKernel>)

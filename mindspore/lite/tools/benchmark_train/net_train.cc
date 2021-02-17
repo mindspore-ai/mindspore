@@ -124,7 +124,11 @@ int NetTrain::ReadInputFile() {
     MS_LOG(ERROR) << "Not supported image input";
     return RET_ERROR;
   } else {
-    for (size_t i = 0; i < flags_->input_data_list_.size(); i++) {
+    if (ms_inputs_.size() > flags_->input_data_list_.size()) {
+      MS_LOG(ERROR) << "missing input files";
+      return RET_ERROR;
+    }
+    for (size_t i = 0; i < ms_inputs_.size(); i++) {
       auto cur_tensor = ms_inputs_.at(i);
       MS_ASSERT(cur_tensor != nullptr);
       size_t size;
@@ -163,6 +167,7 @@ int NetTrain::CompareOutput() {
   int i = 1;
   for (auto it = tensors_list.begin(); it != tensors_list.end(); ++it) {
     tensor = session_->GetOutputByTensorName(it->first);
+    std::cout << "output is tensor " << it->first << "\n";
     auto outputs = tensor->MutableData();
     size_t size;
     std::string output_file = flags_->data_file_ + std::to_string(i) + ".bin";
@@ -185,7 +190,7 @@ int NetTrain::CompareOutput() {
       break;
     }
     i++;
-    delete bin_buf;
+    delete[] bin_buf;
   }
 
   if (!has_error) {
@@ -326,7 +331,6 @@ int NetTrain::RunExportedNet() {
     std::cout << "CreateSession failed while running ", model_name.c_str();
     return RET_ERROR;
   }
-
   ms_inputs_ = session_->GetInputs();
   auto end_prepare_time = GetTimeUs();
   MS_LOG(INFO) << "Exported model PrepareTime = " << (end_prepare_time - start_prepare_time) / 1000 << " ms";
@@ -438,7 +442,7 @@ int NetTrain::RunNetTrain() {
       std::cout << "Run SaveToFile error";
       return RET_ERROR;
     }
-    // delete session_;
+    delete session_;
     status = RunExportedNet();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run Exported model error: " << status;

@@ -55,6 +55,10 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
     LiteKernel::Train();
     return conv_kernel_->Train();
   }
+  void set_trainable(bool trainable) override {
+    LiteKernel::set_trainable(trainable);
+    return conv_kernel_->set_trainable(trainable);
+  }
 
  protected:
   bool need_free_weight_ = false;

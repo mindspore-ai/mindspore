@@ -21,6 +21,7 @@
 #include <climits>
 #include <unordered_map>
 #include "include/train/train_loop.h"
+#include "include/train/accuracy_metrics.h"
 
 using GraphPoint = std::pair<int, float>;
 
@@ -29,9 +30,12 @@ namespace lite {
 
 class ClassificationTrainAccuracyMonitor : public session::TrainLoopCallBack {
  public:
-  explicit ClassificationTrainAccuracyMonitor(int print_every_n = INT_MAX) : print_every_n_(print_every_n) {}
-
+  explicit ClassificationTrainAccuracyMonitor(int print_every_n = INT_MAX,
+                                              int accuracy_metrics = METRICS_CLASSIFICATION,
+                                              const std::vector<int> &input_indexes = {1},
+                                              const std::vector<int> &output_indexes = {0});
   virtual ~ClassificationTrainAccuracyMonitor() = default;
+
   void Begin(const session::TrainLoopCallBackData &cb_data) override;
   void EpochBegin(const session::TrainLoopCallBackData &cb_data) override;
   int EpochEnd(const session::TrainLoopCallBackData &cb_data) override;
@@ -40,6 +44,9 @@ class ClassificationTrainAccuracyMonitor : public session::TrainLoopCallBack {
 
  private:
   std::vector<GraphPoint> accuracies_;
+  int accuracy_metrics_ = METRICS_CLASSIFICATION;
+  std::vector<int> input_indexes_ = {1};
+  std::vector<int> output_indexes_ = {0};
   int print_every_n_ = 0;
 };
 

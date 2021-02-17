@@ -16,13 +16,19 @@ function Print_Result() {
 
 basepath=$(pwd)
 echo ${basepath}
+# Set models default config filepath
+models_mindspore_train_config=${basepath}/models_ms_train.cfg
+
 
 # Example:run_net_export.sh -m /home/emir/Work/TestingEnv/train_models 
 epoch_num=1
-while getopts "m:t:" opt; do
+while getopts "c:m:t:" opt; do
     case ${opt} in
+        c)
+            models_mindspore_train_config=${OPTARG}
+            echo "models_mindspore_train_config is ${models_mindspore_train_config}"
+            ;;
         m)
-
             models_path=${OPTARG}"/models_train"
             echo "models_path is ${OPTARG}"
             ;;        
@@ -36,9 +42,6 @@ while getopts "m:t:" opt; do
     esac
 done
 
-
-# Set models config filepath
-models_mindspore_train_config=${basepath}/models_ms_train.cfg
 
 logs_path=${basepath}/logs_train
 rm -rf ${logs_path}

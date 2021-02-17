@@ -127,7 +127,7 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
     return ret;
   }
 
-  if (IsTrain()) {
+  if (IsTrain() && is_trainable()) {
     PackWeight();
   }
 
@@ -160,7 +160,9 @@ void ConvolutionDepthwise3x3CPUKernel::PackWeight() {
 
 int ConvolutionDepthwise3x3CPUKernel::Eval() {
   LiteKernel::Eval();
-  PackWeight();
+  if (is_trainable()) {
+    PackWeight();
+  }
   return RET_OK;
 }
 

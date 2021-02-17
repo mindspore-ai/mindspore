@@ -1,0 +1,7 @@
+*.mindir
+*.ms
+*.bin
+*.ckpt
+export_result.txt
+mindir
+train_io

@@ -18,11 +18,22 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <climits>
 #include <unordered_map>
 #include "include/train/train_loop_callback.h"
+#include "include/train/metrics.h"
 #include "include/train_session.h"
 
 namespace mindspore {
+class MSTensor;
+
+namespace dataset {
+class Dataset;
+using MSTensorVec = std::vector<mindspore::MSTensor>;
+}  // namespace dataset
+
+using LoadDataFunc = std::function<int(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec)>;
+
 namespace session {
 
 class TrainLoop {
@@ -48,6 +59,18 @@ class TrainLoop {
   /// \return pointer of the train_session
   virtual session::TrainSession *train_session() = 0;
 
+  /// \brief Initialize object with metrics
+  ///
+  /// \param[in] verctor of metrics
+  ///
+  /// \return 0 on success or -1 in case of error
+  virtual int Init(std::vector<mindspore::session::Metrics *> metrics) = 0;
+
+  /// \brief Accessor to TrainLoop metric objects
+  ///
+  /// \return vector of metrics
+  virtual std::vector<mindspore::session::Metrics *> GetMetrics() = 0;
+
   /// \brief Accessor to the Session KernelCallbacks
   ///
   /// \param[in] before Define a call_back_function to be called before running each node.
@@ -59,10 +82,24 @@ class TrainLoop {
   /// \brief Performs the training Loop
   ///
   /// \param[in] epoch The number of epochs to run
+  /// \param[in] dataset Pointer to MindData Dataset object
   /// \param[in] cbs A vector of TrainLoopCallBack objects
+  /// \param[in] load_func a function that load (and can manipulate) data from Minddata Dataset array into model
   ///
   /// \return 0 on success or -1 in case of error
-  virtual int Train(int epochs, std::vector<TrainLoopCallBack *> cbs) = 0;
+  virtual int Train(int epochs, mindspore::dataset::Dataset *dataset, std::vector<TrainLoopCallBack *> cbs,
+                    LoadDataFunc load_func = nullptr) = 0;
+
+  /// \brief Performs loop over all data in Eval Mode
+  ///
+  /// \param[in] dataset Pointer to MindData Dataset object
+  /// \param[in] cbs A vector of TrainLoopCallBack objects
+  /// \param[in] load_func a function that load (and can manipulate) data from Minddata Dataset array into model
+  /// \param[in] max_steps (with default = INT_MAX the method iterates all dataset)
+  ///
+  /// \return 0 on success or -1 in case of error
+  virtual int Eval(mindspore::dataset::Dataset *dataset, std::vector<TrainLoopCallBack *> cbs,
+                   LoadDataFunc load_func = nullptr, int max_steps = INT_MAX) = 0;
 };
 }  // namespace session
 }  // namespace mindspore
