@@ -38,9 +38,9 @@ class Common {
                           const bool &print_str = true);
   static bool IsFilenameValid(const std::string &filename, const int &length_limit,
                               const std::string &error_message = "");
+  static bool CreateNotExistDirs(const std::string &path);
 
  private:
-  static bool CreateNotExistDirs(const std::string &path);
   static bool IsEveryFilenameValid(const std::string &path, const int &length_limit, const std::string &error_message);
 };
 }  // namespace mindspore

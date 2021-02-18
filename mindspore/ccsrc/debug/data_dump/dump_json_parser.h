@@ -34,6 +34,7 @@ class DumpJsonParser {
 
   void Parse();
   static bool DumpToFile(const std::string &filename, const void *data, size_t len);
+  void CopyJsonToDir();
   bool NeedDump(const std::string &op_full_name) const;
   void MatchKernel(const std::string &kernel_name);
   void PrintUnusedKernel();
