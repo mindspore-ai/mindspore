@@ -28,8 +28,8 @@
 #include "securec/include/securec.h"
 #include "coder/opcoders/op_coder_register.h"
 #include "coder/log.h"
+
 namespace mindspore::lite::micro {
-class CoderContext;
 constexpr int kPrecision = 19;
 
 #define CODE_PARALLEL_FUNC(func) code << "ParallelLaunch(THREAD_POOL_DEFAULT, " << func << ", &args, thread_num);\n"

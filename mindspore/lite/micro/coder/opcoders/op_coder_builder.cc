@@ -61,7 +61,7 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
   }
   op_coder->set_input_tensor_indices(input_indices_);
   op_coder->set_output_tensor_indices(output_indices_);
-  int thread_num = this->mode_ == CodeMode::Code_Android ? kMAX_THREAD_NUM_SUPPORT : 1;
+  int thread_num = this->mode_ == CodeMode::Code_Inference ? kMAX_THREAD_NUM_SUPPORT : 1;
   op_coder->set_thread_num(thread_num);
   parameter->thread_num_ = thread_num;
   op_coder->set_parameter(parameter);

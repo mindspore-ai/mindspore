@@ -13,28 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
-#define MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
 
-#include <set>
-#include <limits>
-#include <vector>
+#ifndef MINDSPORE_LITE_MICRO_CODER_CODER_TRAIN_H_
+#define MINDSPORE_LITE_MICRO_CODER_CODER_TRAIN_H_
+
 #include <memory>
-#include <string>
-#include "include/errorcode.h"
-#include "securec/include/securec.h"
-#include "src/tensor.h"
+#include <vector>
+#include "coder/context.h"
 #include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro {
-
-constexpr int kWeightPrecision = 9;
-
-std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
-                                         const std::vector<std::unique_ptr<OperatorCoder>> &opcoders);
-
-void PrintTensorData(const lite::Tensor *tensor, std::ofstream &ofs);
+class Train {
+ public:
+  static int TransformGraphForTrain(CoderContext *context,
+                                    const std::vector<std::unique_ptr<OperatorCoder>> &op_coders);
+};
 
 }  // namespace mindspore::lite::micro
-
-#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_CODER_TRAIN_H_

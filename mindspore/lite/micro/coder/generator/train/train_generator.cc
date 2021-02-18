@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
-#include "coder/generator/inference/inference_generator.h"
+#include "coder/generator/train/train_generator.h"
 #include <vector>
 #include <string>
 #include "coder/generator/component/common_component.h"
 #include "coder/generator/component/benchmark_component.h"
+#include "coder/generator/component/train_component.h"
 #include "coder/generator/component/const_blocks/license.h"
 
 namespace mindspore::lite::micro {
-int InferenceGenerator::CodeNetHFile() {
+void TrainGenerator::CodeGradientFunc(std::ofstream &ofs) const {
+  ofs << "float " << config_->module_name() << "_ComputeLossAndGradient() {\n";
+  ofs << "  float loss = 0;\n";
+  for (const auto &block : ctx_->train_blocks()) {
+    ofs << "  {\n" << block << "  }\n";
+  }
+  ofs << "  return loss;\n";
+  ofs << "}\n";
+}
+
+int TrainGenerator::CodeNetHFile() {
   std::string net_include_file = net_inc_file_path_ + net_inc_hfile_;
   std::ofstream ofs(net_include_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
@@ -32,6 +43,7 @@ int InferenceGenerator::CodeNetHFile() {
     ofs << "#include \"src/runtime/thread_pool.h\"\n";
   }
   ofs << "#include \"microtensor.h\"\n\n";
+  CodeTrainParams(ofs);
   CodeInputAndOutputState(ofs, config_->module_name());
   if (is_get_quant_args_) {
     CodeGraphQuantArgsState(ofs, config_->module_name());
@@ -41,10 +53,12 @@ int InferenceGenerator::CodeNetHFile() {
   }
   CodeManageResourceState(ofs, config_->module_name());
   CodeInferenceState(ofs, config_->module_name());
+  CodeFeaturesState(ofs, config_->module_name());
+  CodeTrainState(ofs, config_->module_name());
   return RET_OK;
 }
 
-int InferenceGenerator::CodeNetCFile() {
+int TrainGenerator::CodeNetCFile() {
   std::string net_impl_file = net_src_file_path_ + net_src_cfile_;
   std::ofstream ofs(net_impl_file);
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
@@ -53,15 +67,18 @@ int InferenceGenerator::CodeNetCFile() {
   CodeInputAndOutputImplement(ofs, config_->module_name(), ctx_);
   CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
+  CodeFeaturesImplement(ofs, config_->module_name(), ctx_);
   if (is_get_quant_args_) {
     CodeGraphQuantArgsImplement(ofs, config_->module_name(), ctx_);
   }
   CodeNetRunFunc(ofs);
+  CodeGradientFunc(ofs);
+  CodeTrainImplement(ofs, config_->module_name(), ctx_);
   ofs.close();
   return RET_OK;
 }
 
-int InferenceGenerator::CodeBenchmarkFile() {
+int TrainGenerator::CodeBenchmarkFile() {
   std::string net_main_impl_file = net_main_file_path_ + net_main_cfile_;
   std::ofstream ofs(net_main_impl_file);
   MS_LOG(INFO) << "write " << net_main_impl_file;

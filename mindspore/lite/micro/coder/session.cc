@@ -16,13 +16,14 @@
 
 #include "coder/session.h"
 #include <set>
-#include <queue>
 #include <vector>
 #include <utility>
-#include "coder/allocator/allocator.h"
 #include "coder/context.h"
+#include "coder/train.h"
+#include "coder/allocator/allocator.h"
 #include "coder/generator/generator.h"
 #include "coder/generator/inference/inference_generator.h"
+#include "coder/generator/train/train_generator.h"
 #include "coder/opcoders/op_coder_builder.h"
 #include "coder/utils/coder_utils.h"
 #include "coder/log.h"
@@ -89,6 +90,9 @@ void CoderSession::EndCode() {
     blocks = AddDumpDataInfo(context_->code_blocks(), op_coders_);
     context_->set_code_blocks(blocks);
   }
+  if (config->code_mode() == Code_Train) {
+    Train::TransformGraphForTrain(context_.get(), op_coders_);
+  }
 }
 
 int CoderSession::Run() {
@@ -123,9 +127,13 @@ int CoderSession::GenerateCode() {
   CodeMode code_mode = config->code_mode();
   switch (code_mode) {
     case Code_Normal:
-    case Code_Android:
-      MS_LOG(INFO) << "generate code for Android";
+    case Code_Inference:
+      MS_LOG(INFO) << "generate code for Inference";
       generator = std::make_shared<InferenceGenerator>(std::move(context_));
+      break;
+    case Code_Train:
+      MS_LOG(INFO) << "generate code for Inference";
+      generator = std::make_shared<TrainGenerator>(std::move(context_));
       break;
     default:
       MS_LOG(ERROR) << "unsupported generator code mode, " << code_mode;
