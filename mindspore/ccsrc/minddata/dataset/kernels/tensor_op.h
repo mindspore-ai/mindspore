@@ -25,9 +25,7 @@
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/core/device_tensor.h"
-#ifdef ENABLE_ACL
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
-#endif
+#include "minddata/dataset/core/device_resource.h"
 
 #define IO_CHECK(input, output)                             \
   do {                                                      \
@@ -216,9 +214,8 @@ class TensorOp {
   virtual std::string Name() const = 0;
 
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
-#ifdef ENABLE_ACL
-  virtual Status SetAscendResource(const std::shared_ptr<MDAclProcess> &processor);
-#endif
+
+  virtual Status SetAscendResource(const std::shared_ptr<DeviceResource> &resource);
 
  protected:
   bool is_deterministic_{true};

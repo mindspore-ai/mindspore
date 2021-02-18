@@ -15,8 +15,8 @@
  */
 
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/device_tensor.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
@@ -28,15 +28,14 @@ Status DeviceTensor::SetYuvStrideShape_(const uint32_t &width, const uint32_t &w
 
 std::vector<uint32_t> DeviceTensor::GetYuvStrideShape() { return YUV_shape_; }
 
-#ifdef ENABLE_ACL
-Status DeviceTensor::SetAttributes(const std::shared_ptr<DvppDataInfo> &data_ptr) {
-  device_data_ = data_ptr->data;
+Status DeviceTensor::SetAttributes(uint8_t *data_ptr, const uint32_t &dataSize, const uint32_t &width,
+                                   const uint32_t &widthStride, const uint32_t &height, const uint32_t &heightStride) {
+  device_data_ = data_ptr;
   CHECK_FAIL_RETURN_UNEXPECTED(device_data_ != nullptr, "Fail to get the device data.");
-  SetSize_(data_ptr->dataSize);
-  SetYuvStrideShape_(data_ptr->width, data_ptr->widthStride, data_ptr->height, data_ptr->heightStride);
+  SetSize_(dataSize);
+  SetYuvStrideShape_(width, widthStride, height, heightStride);
   return Status::OK();
 }
-#endif
 
 DeviceTensor::DeviceTensor(const TensorShape &shape, const DataType &type) : Tensor(shape, type) {
   // grab the mem pool from global context and create the allocator for char data area

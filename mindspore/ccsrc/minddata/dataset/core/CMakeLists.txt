@@ -5,6 +5,7 @@ set(DATASET_CORE_SRC_FILES
         config_manager.cc
         cv_tensor.cc
         data_type.cc
+        device_resource.cc
         device_tensor.cc
         de_tensor.cc
         global_context.cc
@@ -13,6 +14,12 @@ set(DATASET_CORE_SRC_FILES
         tensor_row.cc
         tensor_shape.cc
         )
+
+if(ENABLE_ACL)
+  set(DATASET_CORE_SRC_FILES
+          ${DATASET_CORE_SRC_FILES}
+          ascend_resource.cc)
+endif()
 
 ms_protobuf_generate(EXAMPLE_SRCS EXAMPLE_HDRS example.proto)
 ms_protobuf_generate(FEATURE_SRCS FEATURE_HDRS feature.proto)

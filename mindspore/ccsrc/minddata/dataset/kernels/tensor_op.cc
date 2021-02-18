@@ -70,11 +70,10 @@ Status TensorOp::OutputType(const std::vector<DataType> &inputs, std::vector<Dat
   outputs = inputs;
   return Status::OK();
 }
-#ifdef ENABLE_ACL
-Status TensorOp::SetAscendResource(const std::shared_ptr<MDAclProcess> &processor) {
+
+Status TensorOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
   return Status(StatusCode::kMDUnexpectedError,
                 "This is a CPU operator which doesn't have Ascend Resource. Please verify your context");
 }
-#endif
 }  // namespace dataset
 }  // namespace mindspore

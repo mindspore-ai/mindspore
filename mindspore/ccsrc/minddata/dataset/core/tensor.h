@@ -423,7 +423,6 @@ class Tensor {
   static Status GetBufferInfo(Tensor *t, py::buffer_info *out);
 #endif
 
-#ifdef ENABLE_ACL
   Status SetYuvShape(const uint32_t &width, const uint32_t &widthStride, const uint32_t &height,
                      const uint32_t &heightStride) {
     std::vector<uint32_t> tmp{width, widthStride, height, heightStride};
@@ -432,7 +431,6 @@ class Tensor {
   }
 
   std::vector<uint32_t> GetYuvShape() { return yuv_shape_; }
-#endif
 
   /// TensorIterator is a linear iterator that can be used to iterate over the elements of the Tensor
   /// The order  elements  is as the memory layout (i.e., row-major) [[1,2,3],[4,5,6] --> 1,2,3,4,5,6
@@ -697,10 +695,8 @@ class Tensor {
   /// pointer to the end of the physical data
   unsigned char *data_end_ = nullptr;
 
-#ifdef ENABLE_ACL
   /// shape for interpretation of YUV image
   std::vector<uint32_t> yuv_shape_;
-#endif
 
  private:
   friend class DETensor;

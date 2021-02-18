@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_DEVICE_TENSOR_H
-#define MINDSPORE_DEVICE_TENSOR_H
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_TENSOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_TENSOR_H_
 #include <memory>
 #include <utility>
 #include <vector>
 #include "include/api/status.h"
-#include "minddata/dataset/core/tensor.h"
-#ifdef ENABLE_ACL
-#include "minddata/dataset/kernels/image/dvpp/utils/DvppCommon.h"
-#endif
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -36,9 +33,10 @@ class DeviceTensor : public Tensor {
   DeviceTensor(const TensorShape &shape, const DataType &type);
 
   ~DeviceTensor() {}
-#ifdef ENABLE_ACL
-  Status SetAttributes(const std::shared_ptr<DvppDataInfo> &data);
-#endif
+
+  Status SetAttributes(uint8_t *data_ptr, const uint32_t &dataSize, const uint32_t &width, const uint32_t &widthStride,
+                       const uint32_t &height, const uint32_t &heightStride);
+
   static Status CreateEmpty(const TensorShape &shape, const DataType &type, std::shared_ptr<DeviceTensor> *out);
 
   uint8_t *GetDeviceBuffer();
@@ -62,4 +60,4 @@ class DeviceTensor : public Tensor {
 
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_DEVICE_TENSOR_H
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_TENSOR_H_
