@@ -1776,9 +1776,6 @@ void SessionBasic::RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<
         MS_EXCEPTION_IF_NULL(prim_c);
         auto abstract = prim_c->Infer(input_abstracts);
         node->set_abstract(abstract);
-      } else {
-        node->set_abstract(
-          std::make_shared<tensor::Tensor>(kNumberTypeFloat32, std::vector<int64_t>{32, 64, 218, 218})->ToAbstract());
       }
     } else if (node->isa<Parameter>()) {
       if (tensor_index > inputs.size()) {
