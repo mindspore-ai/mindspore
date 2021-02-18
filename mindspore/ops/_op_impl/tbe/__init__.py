@@ -360,3 +360,4 @@ from .nll_loss_grad import _nll_loss_grad_tbe
 from .mish import _mish_tbe
 from .mul_no_nan import _mul_no_nan_tbe
 from .selu import _selu_tbe
+from .centralization import _centralization_tbe

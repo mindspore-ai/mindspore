@@ -350,6 +350,7 @@ inline const PrimitivePtr kPrimReduceAll = std::make_shared<Primitive>("ReduceAl
 inline const PrimitivePtr kPrimReduceAny = std::make_shared<Primitive>("ReduceAny");
 inline const PrimitivePtr kPrimReduceMax = std::make_shared<Primitive>("ReduceMax");
 inline const PrimitivePtr kPrimReduceMin = std::make_shared<Primitive>("ReduceMin");
+inline const PrimitivePtr kPrimCentralization = std::make_shared<Primitive>("Centralization");
 inline const PrimitivePtr kPrimNeg = std::make_shared<Primitive>("Neg");
 inline const PrimitivePtr kPrimSin = std::make_shared<Primitive>("Sin");
 inline const PrimitivePtr kPrimCos = std::make_shared<Primitive>("Cos");
