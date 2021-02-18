@@ -551,8 +551,8 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
       // copy origin data in case to recover
       auto *raw_data = static_cast<float *>(param_value->tensor_addr());
       auto elem_count = param_value->tensor_shape_size();
-      auto origin_data = malloc(sizeof(float) * elem_count);
-      auto ret = memcpy_s(origin_data, sizeof(float) * elem_count, raw_data, param_value->tensor_size());
+      std::unique_ptr<float[]> origin_data(new (std::nothrow) float[elem_count]);
+      auto ret = memcpy_s(origin_data.get(), sizeof(float) * elem_count, raw_data, param_value->tensor_size());
       if (ret != EOK) {
         MS_LOG(ERROR) << "memcpy fail: "
                       << " dst size: " << sizeof(float) * elem_count << " src size: " << param_value->tensor_size();
@@ -617,7 +617,7 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
           MS_LOG(DEBUG) << "op: " << op_name << " intermediate bit: " << bit_num_t << " mean_error: " << mean_error
                         << " [recover]";
           // recover
-          status = UpdateTensorDataAndSize(param_value, origin_data, sizeof(float) * elem_count);
+          status = UpdateTensorDataAndSize(param_value, origin_data.get(), sizeof(float) * elem_count);
           if (status != RET_OK) {
             MS_LOG(ERROR) << "UpdateTensorDataAndSize fail";
             return RET_ERROR;
@@ -627,9 +627,8 @@ STATUS WeightQuantizer::DoQuantSearch(const FuncGraphPtr &func_graph) {
           opname_bit_[op_name] = bit_num_t;
         }
       }  // end bit loop
-      free(origin_data);
-    }  //  if: conv and matmul
-  }    // end loop: all cnode
+    }    //  if: conv and matmul
+  }      // end loop: all cnode
   return status;
 }
 
