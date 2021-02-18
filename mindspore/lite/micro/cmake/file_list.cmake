@@ -4,6 +4,7 @@ set(CODER_SRC
         ${MICRO_DIR}/coder/context.cc
         ${MICRO_DIR}/coder/graph.cc
         ${MICRO_DIR}/coder/session.cc
+        ${MICRO_DIR}/coder/train.cc
         )
 
 set(CODER_ALLOCATOR_SRC
@@ -14,10 +15,12 @@ set(CODER_ALLOCATOR_SRC
 set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/generator.cc
         ${MICRO_DIR}/coder/generator/inference/inference_generator.cc
+        ${MICRO_DIR}/coder/generator/train/train_generator.cc
         ${MICRO_DIR}/coder/generator/component/benchmark_component.cc
         ${MICRO_DIR}/coder/generator/component/common_component.cc
         ${MICRO_DIR}/coder/generator/component/weight_component.cc
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
+        ${MICRO_DIR}/coder/generator/component/train_component.cc
         )
 
 set(CODER_OPCODERS_SRC

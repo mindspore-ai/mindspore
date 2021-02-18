@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
-#define MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
 
-#include <set>
-#include <limits>
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_COMPONENT_H_
+#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_COMPONENT_H_
+
+#include <map>
+#include <string>
 #include <vector>
 #include <memory>
-#include <string>
-#include "include/errorcode.h"
-#include "securec/include/securec.h"
+#include <fstream>
 #include "src/tensor.h"
-#include "coder/opcoders/op_coder.h"
+#include "coder/context.h"
 
 namespace mindspore::lite::micro {
+void CodeTrainParams(std::ofstream &ofs);
 
-constexpr int kWeightPrecision = 9;
+void CodeFeaturesState(std::ofstream &ofs, const std::string &module_name);
+void CodeFeaturesImplement(std::ofstream &ofs, const std::string &module_name,
+                           const std::unique_ptr<CoderContext> &ctx);
 
-std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
-                                         const std::vector<std::unique_ptr<OperatorCoder>> &opcoders);
-
-void PrintTensorData(const lite::Tensor *tensor, std::ofstream &ofs);
-
+void CodeTrainState(std::ofstream &ofs, const std::string &module_name);
+void CodeTrainImplement(std::ofstream &ofs, const std::string &module_name, const std::unique_ptr<CoderContext> &ctx);
 }  // namespace mindspore::lite::micro
 
-#endif  // MINDSPORE_LITE_MICRO_CODER_UTILS_CODER_UTILS_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_TRAIN_COMPONENT_H_

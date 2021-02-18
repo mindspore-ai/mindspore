@@ -21,7 +21,7 @@
 
 namespace mindspore::lite::micro {
 enum Target { kX86 = 0, kARM32M = 1, kARM32A = 2, kARM64 = 3, kAllTargets = 4, kTargetUnknown = 99 };
-enum CodeMode { Code_Normal = 0, Code_Android = 1, Code_Unknown = 99 };
+enum CodeMode { Code_Normal = 0, Code_Inference = 1, Code_Train = 2, Code_Unknown = 99 };
 
 class Configurator {
  public:

@@ -59,15 +59,13 @@ Generator::Generator(std::unique_ptr<CoderContext> ctx) {
 Generator::~Generator() { (void)umask(origin_umask_); }
 
 void Generator::CodeNetRunFunc(std::ofstream &ofs) {
-  // generate net predict code
+  // generate net inference code
   ofs << "void " << config_->module_name() << "_Inference() {\n";
-  if (config_->code_mode() == CodeMode::Code_Android) {
+  if (config_->code_mode() == CodeMode::Code_Inference) {
     ofs << "int thread_num = GetCurrentThreadNum(THREAD_POOL_DEFAULT);\n";
   }
-  for (const auto &codeBlock : ctx_->code_blocks()) {
-    ofs << "\t{\n";
-    ofs << codeBlock;
-    ofs << "\t}\n";
+  for (const auto &block : ctx_->code_blocks()) {
+    ofs << "\t{\n" << block << "\t}\n";
   }
   ofs << "}\n";
 }

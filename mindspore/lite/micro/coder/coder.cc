@@ -39,7 +39,7 @@ class CoderFlags : public virtual FlagParser {
     AddFlag(&CoderFlags::code_path_, "codePath", "Input code path", ".");
     AddFlag(&CoderFlags::code_module_name_, "moduleName", "Input code module name", "");
     AddFlag(&CoderFlags::target_, "target", "generateed code target, x86| ARM32M| ARM32A| ARM64", "x86");
-    AddFlag(&CoderFlags::code_mode_, "codeMode", "generated code mode, Normal | Android ", "Normal");
+    AddFlag(&CoderFlags::code_mode_, "codeMode", "generated code mode, Normal | Inference | Train", "Normal");
     AddFlag(&CoderFlags::debug_mode_, "debugMode", "dump perlayer's time cost and tensor, true | false", false);
   }
 
@@ -87,7 +87,8 @@ int Coder::Run(const std::string &model_path) {
 int Coder::Init(const CoderFlags &flags) const {
   static const std::map<std::string, Target> kTargetMap = {
     {"x86", kX86}, {"ARM32M", kARM32M}, {"ARM32A", kARM32A}, {"ARM64", kARM64}, {"All", kAllTargets}};
-  static const std::map<std::string, CodeMode> kCodeModeMap = {{"Normal", Code_Normal}, {"Android", Code_Android}};
+  static const std::map<std::string, CodeMode> kCodeModeMap = {
+    {"Normal", Code_Normal}, {"Inference", Code_Inference}, {"Train", Code_Train}};
 
   Configurator *config = Configurator::GetInstance();
 

@@ -142,32 +142,4 @@ std::vector<std::string> SplitString(std::string str, const std::string &pattern
   }
   return results;
 }
-
-std::set<OperatorCoder *> FindInferenceOpcoders(OperatorCoder *edge) {
-  std::set<OperatorCoder *> subgraph;
-  std::queue<OperatorCoder *> to_visit;
-  to_visit.push(edge);
-  while (!to_visit.empty()) {
-    size_t size = to_visit.size();
-    for (size_t i = 0; i < size; ++i) {
-      OperatorCoder *curr = to_visit.front();
-      to_visit.pop();
-      if (subgraph.find(curr) != subgraph.end()) {
-        continue;
-      }
-      subgraph.insert(curr);
-      for (const auto &op : curr->input_ops()) {
-        to_visit.push(op);
-      }
-    }
-  }
-  auto item = subgraph.find(edge);
-  if (item == subgraph.end()) {
-    MS_LOG(ERROR) << "failed to find the edge in the subgraph";
-    return subgraph;
-  }
-  // erase edge operator coder from subgraph
-  subgraph.erase(item);
-  return subgraph;
-}
 }  // namespace mindspore::lite::micro
