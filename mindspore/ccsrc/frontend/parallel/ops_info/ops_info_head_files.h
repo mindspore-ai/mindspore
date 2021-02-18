@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@
 #include "frontend/parallel/ops_info/unique_info.h"
 #include "frontend/parallel/ops_info/uniform_candidate_sampler_info.h"
 #include "frontend/parallel/ops_info/reluv2_info.h"
+#include "frontend/parallel/ops_info/select_info.h"
 #include "frontend/parallel/ops_info/gathernd_info.h"
 #include "frontend/parallel/ops_info/topk_info.h"
 #include "frontend/parallel/ops_info/scatter_update_info.h"
