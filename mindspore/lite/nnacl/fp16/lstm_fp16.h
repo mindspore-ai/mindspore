@@ -21,6 +21,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void PackLstmWeightFp32ToFp16(float16_t *dst, const float *src, int batch, int deep, int col, int col_align);
+
+void PackLstmWeightFp16(float16_t *dst, const float16_t *src, int batch, int deep, int col, int col_align);
+
+void LstmMatMulFp16(float16_t *c, const float16_t *a, const float16_t *b, const float16_t *bias, int row, int deep,
+                    int col, bool is_vec);
+
 void MatMulAccFp16(float16_t *output, const float16_t *input, const float16_t *weight, int rows, int cols,
                    int inner_size);
 
@@ -30,7 +37,7 @@ int ElementOptMulAccFp16(const float16_t *input0, const float16_t input1, float1
 
 void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight_i, const float16_t *weight_h,
               const float16_t *bias, float16_t *hidden_state, float16_t *cell_state, float16_t *gate_buffer,
-              float16_t *state_buffer, const LstmParameter *lstm_parm);
+              float16_t *state_buffer, float16_t *matmul_buffer[2], const LstmParameter *lstm_param);
 #ifdef __cplusplus
 }
 #endif

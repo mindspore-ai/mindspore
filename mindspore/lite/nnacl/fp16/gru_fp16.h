@@ -21,8 +21,8 @@
 extern "C" {
 #endif
 void GruFp16(float16_t *output, const float16_t *input, const float16_t *weight_g, const float16_t *weight_r,
-             const float16_t *bias, float16_t *hidden_state, float16_t *gate_buffer, int check_seq_len,
-             const GruParameter *gru_parm);
+             const float16_t *bias, float16_t *hidden_state, float16_t *gate_buffer, float16_t *matmul_buffer[2],
+             int check_seq_len, const GruParameter *gru_param);
 #ifdef __cplusplus
 }
 #endif

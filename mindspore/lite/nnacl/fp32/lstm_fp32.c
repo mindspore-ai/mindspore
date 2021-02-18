@@ -35,7 +35,7 @@ void PackLstmWeight(float *dst, const float *src, int batch, int deep, int col, 
   }
 }
 
-void PackLstmInput(float *dst, const float *src, int row, int deep) {
+void PackLstmInput(const float *src, float *dst, int row, int deep) {
 #ifdef ENABLE_AVX
   RowMajor2Col6Major(src, dst, row, deep);
 #elif defined(ENABLE_SSE)
@@ -174,7 +174,7 @@ void LstmStepUnit(float *output, const float *input, const float *input_weight, 
                    lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   } else {
     // pack input for matmul
-    PackLstmInput(matmul_buffer[0], input, lstm_param->batch_, lstm_param->input_size_);
+    PackLstmInput(input, matmul_buffer[0], lstm_param->batch_, lstm_param->input_size_);
     UpdateLstmGate(gate_buffer, matmul_buffer[0], input_weight, bias, lstm_param->batch_, lstm_param->input_size_,
                    lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   }
@@ -187,7 +187,7 @@ void LstmStepUnit(float *output, const float *input, const float *input_weight, 
                    lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   } else {
     // pack state for matmul
-    PackLstmInput(matmul_buffer[1], hidden_state, lstm_param->batch_, lstm_param->hidden_size_);
+    PackLstmInput(hidden_state, matmul_buffer[1], lstm_param->batch_, lstm_param->hidden_size_);
     UpdateLstmGate(state_gate, matmul_buffer[1], state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
                    lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
   }
@@ -238,7 +238,7 @@ void Lstm(float *output, const float *input, const float *weight_i, const float 
   if (lstm_param->bidirectional_) {
     const float *backward_weight_i = weight_i + 4 * lstm_param->col_align_ * lstm_param->input_size_;
     const float *backward_weight_h = weight_h + 4 * lstm_param->col_align_ * lstm_param->hidden_size_;
-    const float *backward_bias = bias + 8 * lstm_param->hidden_size_;
+    const float *backward_bias = bias + 8 * lstm_param->col_align_;
     float *backward_output = output + lstm_param->batch_ * lstm_param->hidden_size_;
     float *backward_cell_state = cell_state + lstm_param->batch_ * lstm_param->hidden_size_;
     float *backward_hidden_state = hidden_state + lstm_param->batch_ * lstm_param->hidden_size_;

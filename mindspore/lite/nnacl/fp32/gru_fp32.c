@@ -40,7 +40,7 @@ void GruStepUnit(float *output, const float *input, const float *input_weight, c
                        gru_param->hidden_size_, gru_param->col_align_, is_vec);
   } else {
     // pack input for matmul
-    PackLstmInput(matmul_buffer[0], input, gru_param->batch_, gru_param->input_size_);
+    PackLstmInput(input, matmul_buffer[0], gru_param->batch_, gru_param->input_size_);
     UpdateGruInputGate(gate_buffer, matmul_buffer[0], input_weight, bias, gru_param->batch_, gru_param->input_size_,
                        gru_param->hidden_size_, gru_param->col_align_, is_vec);
   }
@@ -62,7 +62,7 @@ void GruStepUnit(float *output, const float *input, const float *input_weight, c
     LstmMatMul(state_update_gate, hidden_state, state_update_weight, state_update_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   } else {
-    PackLstmInput(matmul_buffer[1], hidden_state, gru_param->batch_, gru_param->hidden_size_);
+    PackLstmInput(hidden_state, matmul_buffer[1], gru_param->batch_, gru_param->hidden_size_);
     LstmMatMul(state_reset_gate, matmul_buffer[1], state_reset_weight, state_reset_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
     LstmMatMul(state_update_gate, matmul_buffer[1], state_update_weight, state_update_bias, gru_param->batch_,
@@ -83,7 +83,7 @@ void GruStepUnit(float *output, const float *input, const float *input_weight, c
     LstmMatMul(state_hidden_buffer, reset_gate, state_hidden_weight, state_hidden_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   } else {
-    PackLstmInput(matmul_buffer[1], reset_gate, gru_param->batch_, gru_param->hidden_size_);
+    PackLstmInput(reset_gate, matmul_buffer[1], gru_param->batch_, gru_param->hidden_size_);
     LstmMatMul(state_hidden_buffer, matmul_buffer[1], state_hidden_weight, state_hidden_bias, gru_param->batch_,
                gru_param->hidden_size_, gru_param->hidden_size_, is_vec);
   }

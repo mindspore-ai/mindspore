@@ -18,17 +18,21 @@
 #include <string.h>
 #include "nnacl/fp16/activation_fp16.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
+#include "nnacl/fp16/matmul_fp16.h"
 
-void InitGateFp16(float16_t *gate_buffer, const float16_t *bias, const LstmParameter *lstm_parm) {
-  int gate_offest = 0;
-  for (int l = 0; l < 4; l++) {
-    int batch_offest = gate_offest;
-    int bias_offest = l * lstm_parm->hidden_size_;
-    for (int b = 0; b < lstm_parm->batch_; b++) {
-      memcpy(gate_buffer + batch_offest, bias + bias_offest, lstm_parm->hidden_size_ * sizeof(float16_t));
-      batch_offest += lstm_parm->hidden_size_;
-    }
-    gate_offest += lstm_parm->batch_ * lstm_parm->hidden_size_;
+void PackLstmWeightFp32ToFp16(float16_t *dst, const float *src, int batch, int deep, int col, int col_align) {
+  for (int i = 0; i < batch; i++) {
+    const float *src_batch = src + i * col * deep;
+    float16_t *dst_batch = dst + i * col_align * deep;
+    RowMajor2Col8MajorFp16(src_batch, dst_batch, col, deep, true);
+  }
+}
+
+void PackLstmWeightFp16(float16_t *dst, const float16_t *src, int batch, int deep, int col, int col_align) {
+  for (int i = 0; i < batch; i++) {
+    const float16_t *src_batch = src + i * col * deep;
+    float16_t *dst_batch = dst + i * col_align * deep;
+    RowMajor2Col8MajorFp16(src_batch, dst_batch, col, deep, false);
   }
 }
 
@@ -125,111 +129,111 @@ void UpdataOutputFp16(const float16_t *cell_state, float16_t *output_gate, float
   }
 }
 
-void LstmStepUnitFp16(float16_t *output, const float16_t *input, const float16_t *input_input_weight,
-                      const float16_t *input_forget_weight, const float16_t *input_cell_weight,
-                      const float16_t *input_output_weight, const float16_t *state_input_weight,
-                      const float16_t *state_forget_weight, const float16_t *state_cell_weight,
-                      const float16_t *state_output_weight, const float16_t *bias, float16_t *hidden_state,
+void LstmMatMulFp16(float16_t *c, const float16_t *a, const float16_t *b, const float16_t *bias, int row, int deep,
+                    int col, bool is_vec) {
+  if (is_vec) {
+    memcpy(c, bias, col * sizeof(float16_t));
+    MatMulAccFp16(c, a, b, row, col, deep);
+  } else {
+    MatMulFp16(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
+  }
+}
+
+void UpdateLstmGateFp16(float16_t *gate_buffer, const float16_t *input, const float16_t *weight, const float16_t *bias,
+                        int row, int deep, int col, int col_align, bool is_vec) {
+  for (int i = 0; i < 4; i++) {
+    const float16_t *weight_i = weight + deep * col * i;
+    const float16_t *bias_i = bias + col_align * i;
+    float16_t *gate = gate_buffer + row * col * i;
+    LstmMatMulFp16(gate, input, weight_i, bias_i, row, deep, col, is_vec);
+  }
+}
+
+void LstmStepUnitFp16(float16_t *output, const float16_t *input, const float16_t *input_weight,
+                      const float16_t *state_weight, const float16_t *bias, float16_t *hidden_state,
                       float16_t *cell_state, float16_t *gate_buffer, float16_t *state_buffer,
-                      const LstmParameter *lstm_parm) {
-  InitGateFp16(gate_buffer, bias, lstm_parm);
-
-  float16_t *input_gate = gate_buffer;
-  float16_t *forget_gate = gate_buffer + lstm_parm->batch_ * lstm_parm->hidden_size_ * 2;
-  float16_t *cell_gate = gate_buffer + lstm_parm->batch_ * lstm_parm->hidden_size_ * 3;
-  float16_t *output_gate = gate_buffer + lstm_parm->batch_ * lstm_parm->hidden_size_ * 1;
-
+                      float16_t *matmul_buffer[2], const LstmParameter *lstm_param) {
+  bool is_vec = lstm_param->batch_ == 1;
   // input * weight
-  MatMulAccFp16(input_gate, input, input_input_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->input_size_);
-  MatMulAccFp16(forget_gate, input, input_forget_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->input_size_);
-  MatMulAccFp16(cell_gate, input, input_cell_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->input_size_);
-  MatMulAccFp16(output_gate, input, input_output_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->input_size_);
+  if (is_vec) {
+    UpdateLstmGateFp16(gate_buffer, input, input_weight, bias, lstm_param->batch_, lstm_param->input_size_,
+                       lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+  } else {
+    // pack input for matmul
+    RowMajor2Col16MajorFp16(input, matmul_buffer[0], lstm_param->batch_, lstm_param->input_size_, false);
+    UpdateLstmGateFp16(gate_buffer, matmul_buffer[0], input_weight, bias, lstm_param->batch_, lstm_param->input_size_,
+                       lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+  }
 
   // state * weight
-  MatMulAccFp16(input_gate, hidden_state, state_input_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->hidden_size_);
-  MatMulAccFp16(forget_gate, hidden_state, state_forget_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->hidden_size_);
-  MatMulAccFp16(cell_gate, hidden_state, state_cell_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->hidden_size_);
-  MatMulAccFp16(output_gate, hidden_state, state_output_weight, lstm_parm->batch_, lstm_parm->hidden_size_,
-                lstm_parm->hidden_size_);
+  float16_t *state_gate = gate_buffer + lstm_param->batch_ * lstm_param->hidden_size_ * 4;
+  const float16_t *state_bias = bias + lstm_param->col_align_ * 4;
+  if (is_vec) {
+    UpdateLstmGateFp16(state_gate, hidden_state, state_weight, state_bias, lstm_param->batch_, lstm_param->hidden_size_,
+                       lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+  } else {
+    // pack state for matmul
+    RowMajor2Col16MajorFp16(hidden_state, matmul_buffer[1], lstm_param->batch_, lstm_param->hidden_size_, false);
+    UpdateLstmGateFp16(state_gate, matmul_buffer[1], state_weight, state_bias, lstm_param->batch_,
+                       lstm_param->hidden_size_, lstm_param->hidden_size_, lstm_param->col_align_, is_vec);
+  }
+  ElementAddFp16(gate_buffer, state_gate, gate_buffer, 4 * lstm_param->batch_ * lstm_param->hidden_size_);
 
+  float16_t *input_gate = gate_buffer;
+  float16_t *forget_gate = gate_buffer + lstm_param->batch_ * lstm_param->hidden_size_ * 2;
+  float16_t *cell_gate = gate_buffer + lstm_param->batch_ * lstm_param->hidden_size_ * 3;
+  float16_t *output_gate = gate_buffer + lstm_param->batch_ * lstm_param->hidden_size_;
   // update input_gate
-  SigmoidFp16(input_gate, input_gate, lstm_parm->batch_ * lstm_parm->hidden_size_);
+  SigmoidFp16(input_gate, input_gate, lstm_param->batch_ * lstm_param->hidden_size_);
 
   // update forget_gate
-  SigmoidFp16(forget_gate, forget_gate, lstm_parm->batch_ * lstm_parm->hidden_size_);
+  SigmoidFp16(forget_gate, forget_gate, lstm_param->batch_ * lstm_param->hidden_size_);
 
   // update cell_gate
-  TanhFp16(cell_gate, cell_gate, lstm_parm->batch_ * lstm_parm->hidden_size_);
+  TanhFp16(cell_gate, cell_gate, lstm_param->batch_ * lstm_param->hidden_size_);
   // update cell state
-  UpdataStateFp16(cell_state, forget_gate, input_gate, cell_gate, state_buffer, lstm_parm->batch_,
-                  lstm_parm->hidden_size_, lstm_parm->smooth_);
+  UpdataStateFp16(cell_state, forget_gate, input_gate, cell_gate, state_buffer, lstm_param->batch_,
+                  lstm_param->hidden_size_, lstm_param->smooth_);
 
   // update output_gate
-  SigmoidFp16(output_gate, output_gate, lstm_parm->batch_ * lstm_parm->hidden_size_);
+  SigmoidFp16(output_gate, output_gate, lstm_param->batch_ * lstm_param->hidden_size_);
   // update output
-  UpdataOutputFp16(cell_state, output_gate, hidden_state, state_buffer, lstm_parm->batch_, lstm_parm->hidden_size_,
-                   lstm_parm->smooth_);
-  memcpy(output, hidden_state, lstm_parm->batch_ * lstm_parm->hidden_size_ * sizeof(float16_t));
+  UpdataOutputFp16(cell_state, output_gate, hidden_state, state_buffer, lstm_param->batch_, lstm_param->hidden_size_,
+                   lstm_param->smooth_);
+  memcpy(output, hidden_state, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
 
-  if (!(lstm_parm->smooth_ >= -FLT_EPSILON && lstm_parm->smooth_ <= FLT_EPSILON)) {
-    memcpy(cell_state, state_buffer, lstm_parm->batch_ * lstm_parm->hidden_size_ * sizeof(float16_t));
-    memcpy(hidden_state, state_buffer + lstm_parm->batch_ * lstm_parm->hidden_size_,
-           lstm_parm->batch_ * lstm_parm->hidden_size_ * sizeof(float16_t));
+  if (!(lstm_param->smooth_ >= -FLT_EPSILON && lstm_param->smooth_ <= FLT_EPSILON)) {
+    memcpy(cell_state, state_buffer, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
+    memcpy(hidden_state, state_buffer + lstm_param->batch_ * lstm_param->hidden_size_,
+           lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
   }
 }
 
 void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight_i, const float16_t *weight_h,
               const float16_t *bias, float16_t *hidden_state, float16_t *cell_state, float16_t *gate_buffer,
-              float16_t *state_buffer, const LstmParameter *lstm_parm) {
+              float16_t *state_buffer, float16_t *matmul_buffer[2], const LstmParameter *lstm_param) {
   // forward
-  const float16_t *input_input_weight = weight_i;
-  const float16_t *input_forget_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 2;
-  const float16_t *input_cell_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 3;
-  const float16_t *input_output_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 1;
-
-  const float16_t *state_input_weight = weight_h;
-  const float16_t *state_forget_weight = weight_h + lstm_parm->hidden_size_ * lstm_parm->hidden_size_ * 2;
-  const float16_t *state_cell_weight = weight_h + lstm_parm->hidden_size_ * lstm_parm->hidden_size_ * 3;
-  const float16_t *state_output_weight = weight_h + lstm_parm->hidden_size_ * lstm_parm->hidden_size_ * 1;
-
-  for (int t = 0; t < lstm_parm->seq_len_; t++) {
-    const float16_t *input_ptr = input + t * lstm_parm->input_step_;
-    float16_t *output_ptr = output + t * lstm_parm->output_step_;
-    LstmStepUnitFp16(output_ptr, input_ptr, input_input_weight, input_forget_weight, input_cell_weight,
-                     input_output_weight, state_input_weight, state_forget_weight, state_cell_weight,
-                     state_output_weight, bias, hidden_state, cell_state, gate_buffer, state_buffer, lstm_parm);
+  for (int t = 0; t < lstm_param->seq_len_; t++) {
+    const float16_t *input_ptr = input + t * lstm_param->input_step_;
+    float16_t *output_ptr = output + t * lstm_param->output_step_;
+    LstmStepUnitFp16(output_ptr, input_ptr, weight_i, weight_h, bias, hidden_state, cell_state, gate_buffer,
+                     state_buffer, matmul_buffer, lstm_param);
   }
 
   // backward
-  if (lstm_parm->bidirectional_) {
-    input_input_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 4;
-    input_forget_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 6;
-    input_cell_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 7;
-    input_output_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 5;
-
-    state_input_weight = weight_h + lstm_parm->hidden_size_ * lstm_parm->hidden_size_ * 4;
-    state_forget_weight = weight_h + lstm_parm->hidden_size_ * lstm_parm->hidden_size_ * 6;
-    state_cell_weight = weight_h + lstm_parm->hidden_size_ * lstm_parm->hidden_size_ * 7;
-    state_output_weight = weight_h + lstm_parm->hidden_size_ * lstm_parm->hidden_size_ * 5;
-
-    float16_t *backward_output = output + lstm_parm->batch_ * lstm_parm->hidden_size_;
-    const float16_t *backward_bias = bias + 4 * lstm_parm->hidden_size_;
-    float16_t *backward_cell_state = cell_state + lstm_parm->batch_ * lstm_parm->hidden_size_;
-    float16_t *backward_hidden_state = hidden_state + lstm_parm->batch_ * lstm_parm->hidden_size_;
-    for (int t = lstm_parm->seq_len_ - 1; t >= 0; t--) {
-      const float16_t *input_ptr = input + t * lstm_parm->input_step_;
-      float16_t *output_ptr = backward_output + t * lstm_parm->output_step_;
-      LstmStepUnitFp16(output_ptr, input_ptr, input_input_weight, input_forget_weight, input_cell_weight,
-                       input_output_weight, state_input_weight, state_forget_weight, state_cell_weight,
-                       state_output_weight, backward_bias, backward_hidden_state, backward_cell_state, gate_buffer,
-                       state_buffer, lstm_parm);
+  if (lstm_param->bidirectional_) {
+    const float16_t *backward_weight_i = weight_i + 4 * lstm_param->col_align_ * lstm_param->input_size_;
+    const float16_t *backward_weight_h = weight_h + 4 * lstm_param->col_align_ * lstm_param->hidden_size_;
+    const float16_t *backward_bias = bias + 8 * lstm_param->col_align_;
+    float16_t *backward_output = output + lstm_param->batch_ * lstm_param->hidden_size_;
+    float16_t *backward_cell_state = cell_state + lstm_param->batch_ * lstm_param->hidden_size_;
+    float16_t *backward_hidden_state = hidden_state + lstm_param->batch_ * lstm_param->hidden_size_;
+    for (int t = lstm_param->seq_len_ - 1; t >= 0; t--) {
+      const float16_t *input_ptr = input + t * lstm_param->input_step_;
+      float16_t *output_ptr = backward_output + t * lstm_param->output_step_;
+      LstmStepUnitFp16(output_ptr, input_ptr, backward_weight_i, backward_weight_h, backward_bias,
+                       backward_hidden_state, backward_cell_state, gate_buffer, state_buffer, matmul_buffer,
+                       lstm_param);
     }
   }
 }
