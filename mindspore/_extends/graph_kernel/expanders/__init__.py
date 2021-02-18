@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
 # ============================================================================
 """expanders init"""
 
-from .gelu import expand_gelu
-from .gelu_grad import expand_gelugrad
-from .layernorm import expand_layernorm
-from .softmax import expand_softmax
-from .square import expand_square
-from .bias_add import expand_biasadd
-from .bias_add_grad import expand_biasaddgrad
-from .fused_adam import expand_fusedadam
-from .fused_adam_weight_decay import expand_fusedadamweightdecay
-from .reduce_mean import expand_reducemean
-from .tanh_grad import expand_tanhgrad
-from .maximum_grad import expand_maximumgrad
-from .minimum_grad import expand_minimumgrad
-from .dropout_grad import expand_dropoutgrad
-from .layernorm_grad import expand_layernormgrad
-from .logsoftmax import expand_logsoftmax
-from .logsoftmax_grad import expand_logsoftmaxgrad
-from .gkdropout import expand_gkdropout
-from .tile import expand_tile
-from .sqrt_grad import expand_sqrtgrad
-from .clip_by_norm_no_div_sum import expand_clipbynormnodivsum
+from .bias_add import BiasAdd
+from .bias_add_grad import BiasAddGrad
+from .clip_by_norm_no_div_sum import ClipByNormNoDivSum
+from .dropout_grad import DropoutGrad
+from .fused_adam import FusedAdam
+from .fused_adam_weight_decay import FusedAdamWeightDecay
+from .gelu import GeLU
+from .gelu_grad import GeLUGrad
+from .gkdropout import GkDropout
+from .layernorm import LayerNorm
+from .layernorm_grad import LayerNormGrad
+from .logsoftmax import LogSoftmax
+from .logsoftmax_grad import LogSoftmaxGrad
+from .maximum_grad import MaximumGrad
+from .minimum_grad import MinimumGrad
+from .reduce_mean import ReduceMean
+from .softmax import Softmax
+from .sqrt_grad import SqrtGrad
+from .square import Square
+from .tanh_grad import TanhGrad
+from .tile import Tile

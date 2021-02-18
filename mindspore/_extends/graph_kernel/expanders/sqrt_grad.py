@@ -13,33 +13,17 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for sqrtgrad"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_sqrtgrad(expand_info):
+@VLD.check_all_formats_same
+class SqrtGrad(Expander):
     """SqrtGrad expander"""
-    # cal formula are:
-    # sqrt_grad(x, dout) is dout / (2 * x)
 
-    # get op info.
-    input_desc_0 = expand_info['input_desc'][0]
-    input_desc_1 = expand_info['input_desc'][1]
-    graph_builder = builder.GraphBuilder()
-
-    # generate a graph.
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
-        input_dout = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        graph_scope.set_input(input_x, input_dout)
-
-        # cal result
-        const_two = graph_builder.value(input_x.dtype, 2)
-        dividend = graph_builder.emit('Mul', [input_x, const_two])
-        result = graph_builder.emit('RealDiv', [input_dout, dividend])
-
-        # set graph output.
-        graph_scope.set_output(result)
-
-    graph = graph_builder.get()[0]
-    return graph
+    def _expand(self, graph_builder):
+        # sqrt_grad(x, dout) = dout / (2 * x)
+        x, dout = self.inputs
+        const_two = graph_builder.value(x.dtype, 2)
+        dividend = graph_builder.emit('Mul', [x, const_two])
+        result = graph_builder.emit('RealDiv', [dout, dividend])
+        return result

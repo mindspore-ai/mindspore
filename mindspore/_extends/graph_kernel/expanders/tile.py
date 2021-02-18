@@ -14,25 +14,22 @@
 # ===========================================================================
 """generate json desc for Tile"""
 from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.model import DataFormat as DF
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_tile(expand_info):
+@VLD.add_format(DF.DEFAULT)
+@VLD.check_attrs('multiples')
+class Tile(Expander):
     """Tile expander"""
-    input_desc = expand_info['input_desc'][0]
-    multiples = expand_info['attr']['multiples']
-    output_shape, _, _, shape_compatible = builder.get_tile_output_shape(input_desc['shape'], multiples)
 
-    graph_builder = builder.GraphBuilder()
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
-        # create op.
+    def _expand(self, graph_builder):
+        input_x = self.inputs[0]
+        multiples = self.attrs['multiples']
+
+        output_shape, _, _, shape_compatible = builder.get_tile_output_shape(self.inputs[0].shape, multiples)
         if shape_compatible:
             result = graph_builder.emit('BroadcastTo', [input_x], attrs={'shape': output_shape})
         else:
             result = graph_builder.emit('Tile', [input_x], attrs={'multiples': multiples})
-        # set graph output.
-        graph_scope.set_output(result)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return result

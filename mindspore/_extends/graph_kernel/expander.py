@@ -18,6 +18,16 @@ import json.decoder as jd
 import traceback
 from mindspore import log as logger
 import mindspore._extends.graph_kernel.expanders as expanders
+from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException
+
+
+def create_expander(expand_info):
+    """Create an expander according to op name"""
+    op_name = str(expand_info['name'])
+    if not hasattr(expanders, op_name):
+        raise GraphKernelUnsupportedException("Generator do not support op: {}".format(op_name))
+    expander = getattr(expanders, op_name)
+    return expander(expand_info)
 
 
 def extract_expand_info(kernel_info):
@@ -46,20 +56,8 @@ def get_op_expander(json_str: str):
         kernel_info = json.loads(json_str)
         expand_info = extract_expand_info(kernel_info)
 
-        processor = expand_info['process']
-        op_name = str(expand_info['name']).lower()
-        expand_op_func_name = 'expand_' + op_name
-        if not hasattr(expanders, expand_op_func_name):
-            logger.error("Generator do not support op: {}".format(op_name))
-            return None
-        expand_op_func = getattr(expanders, expand_op_func_name)
-        # generate graph desc.
-        graph = expand_op_func(expand_info)
-        if graph is None:
-            logger.error("Failed to generate graph of: {}".format(op_name))
-            return None
-
-        graph.set_processor(processor)
+        expander = create_expander(expand_info)
+        graph = expander.run()
 
         # dump graph to json desc.
         desc = graph.dump()
@@ -69,3 +67,6 @@ def get_op_expander(json_str: str):
         logger.error("Failed to generate graph kernel op")
         logger.error(traceback.format_exc())
         return None
+    except GraphKernelUnsupportedException as e:
+        logger.info(e.message)
+        return ""

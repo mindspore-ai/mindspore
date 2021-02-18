@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,50 +13,34 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for bias_add"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.model import DataFormat as DF
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_biasadd(expand_info):
+@VLD.add_format(DF.DEFAULT, DF.DEFAULT)
+@VLD.add_format(DF.NCHW, DF.DEFAULT)
+@VLD.add_format(DF.NHWC, DF.DEFAULT)
+class BiasAdd(Expander):
     """BiasAdd expander"""
 
-    # get op info.
-    input_desc_0 = expand_info['input_desc'][0]
-    input_desc_1 = expand_info['input_desc'][1]
-    graph_builder = builder.GraphBuilder()
-    # generate a graph.
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(
-            input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
-        input_y = graph_builder.tensor(
-            input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        graph_scope.set_input(input_x, input_y)
-        if input_x.data_format == "NCHW":
-            input_y_expand = graph_builder.emit(
-                'ExpandDims', [input_y], attrs={'axis': 1})
-            input_y_expand = graph_builder.emit(
-                'ExpandDims', [input_y_expand], attrs={'axis': 2})
+    def _expand(self, graph_builder):
+        input_x, input_y = self.inputs
+
+        if input_x.data_format == DF.NCHW:
+            input_y_expand = graph_builder.emit('ExpandDims', [input_y], attrs={'axis': 1})
+            input_y_expand = graph_builder.emit('ExpandDims', [input_y_expand], attrs={'axis': 2})
             result = graph_builder.emit('Add', [input_x, input_y_expand])
-        elif input_x.data_format == "DefaultFormat":
+        elif input_x.data_format == DF.DEFAULT:
             if len(input_x.shape) == 2:
                 result = graph_builder.emit('Add', [input_x, input_y])
             elif len(input_x.shape) == 3:
-                input_y_expand = graph_builder.emit(
-                    'ExpandDims', [input_y], attrs={'axis': 1})
-                result = graph_builder.emit(
-                    'Add', [input_x, input_y_expand])
-            else:
-                input_y_expand = graph_builder.emit(
-                    'ExpandDims', [input_y], attrs={'axis': 1})
-                input_y_expand = graph_builder.emit(
-                    'ExpandDims', [input_y_expand], attrs={'axis': 2})
-                result = graph_builder.emit(
-                    'Add', [input_x, input_y_expand])
-        else:
+                input_y_expand = graph_builder.emit('ExpandDims', [input_y], attrs={'axis': 1})
+                result = graph_builder.emit('Add', [input_x, input_y_expand])
+            else:  # len == 4
+                input_y_expand = graph_builder.emit('ExpandDims', [input_y], attrs={'axis': 1})
+                input_y_expand = graph_builder.emit('ExpandDims', [input_y_expand], attrs={'axis': 2})
+                result = graph_builder.emit('Add', [input_x, input_y_expand])
+        else:  # NHWC
             result = graph_builder.emit('Add', [input_x, input_y])
 
-        # set graph output.
-        graph_scope.set_output(result)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return result

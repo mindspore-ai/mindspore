@@ -90,7 +90,7 @@ FuncGraphPtr GraphKernelExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   }
   std::string kernel_desc_str = py::cast<std::string>(ret);
   if (kernel_desc_str.empty()) {
-    MS_LOG(ERROR) << "Jump expand node: " << node->fullname_with_scope();
+    MS_LOG(INFO) << "Jump expand node: " << node->fullname_with_scope();
     return nullptr;
   }
   // decode json to func_graph.
@@ -131,11 +131,8 @@ AnfNodePtr GraphKernelExpander::CreateExpandGraphKernel(const FuncGraphPtr &func
   kernel::GetFuncGraphOutputNodes(new_func_graph, &outputs);
   auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_func_graph, inputs, outputs);
   SetNewKernelInfo(graph_kernel_node, new_func_graph, inputs, outputs, AnfAlgo::GetProcessor(node));
-  std::string graph_kernel_flag;
-  std::for_each(kernel_nodes.begin(), kernel_nodes.end(), [&graph_kernel_flag](const AnfNodePtr &node) {
-    static_cast<void>(graph_kernel_flag.append(AnfAlgo::GetCNodeName(node)).append("_"));
-  });
-  MS_LOG(DEBUG) << "Expand node: " << node->fullname_with_scope() << " with: " << graph_kernel_flag;
+  MS_LOG(DEBUG) << "Expand node: " << node->fullname_with_scope()
+                << " with: " << graph_kernel_node->fullname_with_scope();
   return graph_kernel_node;
 }
 
@@ -152,14 +149,12 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
       continue;
     }
 
-    MS_LOG(INFO) << "Expand process node: " << node->fullname_with_scope();
+    MS_LOG(INFO) << "Expanding node: " << node->fullname_with_scope();
     auto new_func_graph = CreateExpandFuncGraph(node);
     if (new_func_graph == nullptr) {
-      MS_LOG(ERROR) << "Decode fused nodes failed, " << node->fullname_with_scope();
       continue;
     }
     mng->AddFuncGraph(new_func_graph);
-    MS_LOG(DEBUG) << "decode fused nodes success.";
 
     auto graph_kernel_node = CreateExpandGraphKernel(func_graph, new_func_graph, node);
     new_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(AnfAlgo::GetCNodeName(node)));

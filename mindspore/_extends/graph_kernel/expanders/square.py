@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,24 +13,13 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for square"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from ._utils import Expander
 
 
-def expand_square(expand_info):
+class Square(Expander):
     """Square expander"""
 
-    # get op info.
-    input_desc = expand_info['input_desc'][0]
-    graph_builder = builder.GraphBuilder()
-
-    # generate a graph.
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
-        # create op.
-        result = graph_builder.emit('Mul', [input_x, input_x])
-        # set graph output.
-        graph_scope.set_output(result)
-
-    graph = graph_builder.get()[0]
-    return graph
+    def _expand(self, graph_builder):
+        x = self.inputs[0]
+        result = graph_builder.emit('Mul', [x, x])
+        return result

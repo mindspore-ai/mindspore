@@ -13,41 +13,26 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for minimum_grad"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_minimumgrad(expand_info):
+@VLD.check_all_formats_same
+class MinimumGrad(Expander):
     """MinimumGrad expander"""
-    # get op info.
-    input_desc_0 = expand_info['input_desc'][0]
-    input_desc_1 = expand_info['input_desc'][1]
-    input_desc_2 = expand_info['input_desc'][2]
-    attrs = expand_info['attr']
-    grad_x = attrs['grad_x'] if 'grad_x' in attrs else True
-    grad_y = attrs['grad_y'] if 'grad_y' in attrs else True
 
-    graph_builder = builder.GraphBuilder()
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
-        input_y = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        input_dout = graph_builder.tensor(input_desc_2['shape'], input_desc_2['data_type'], input_desc_2['format'])
-        graph_scope.set_input(input_x, input_y, input_dout)
-        x_dtype = input_x.dtype
+    def _check(self):
+        if not self.attrs.get('grad_x', True) and not self.attrs.get('grad_y', True):
+            raise GKException("both grad_x and grad_y are False.")
+        return super()._check()
 
-        # cal result
+    def _expand(self, graph_builder):
+        input_x, input_y, input_dout = self.inputs
+
         le_result = graph_builder.emit('LessEqual', [input_x, input_y])
-        le_result = graph_builder.emit('Cast', [le_result], attrs={'dst_type': x_dtype})
+        le_result = graph_builder.emit('Cast', [le_result], attrs={'dst_type': input_x.dtype})
         dx = graph_builder.emit('Mul', [le_result, input_dout])
         dy = graph_builder.emit('Sub', [input_dout, dx])
 
-        # set graph output according to grad_x and grad_y
-        if grad_x and grad_y:
-            graph_scope.set_output(dx, dy)
-        if grad_x and not grad_y:
-            graph_scope.set_output(dx)
-        if grad_y and not grad_x:
-            graph_scope.set_output(dy)
-
-    graph = graph_builder.get()[0]
-    return graph
+        # output two results, regardless of grad_x and grad_y
+        return dx, dy
