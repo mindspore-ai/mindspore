@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,67 +13,93 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
-
-class Net(nn.Cell):
+class SqueezeNet(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super(SqueezeNet, self).__init__()
         self.squeeze = P.Squeeze()
 
     def construct(self, tensor):
         return self.squeeze(tensor)
 
 
-def test_net_bool():
-    x = np.random.randn(1, 16, 1, 1).astype(np.bool)
-    net = Net()
+def squeeze(nptype):
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    np.random.seed(0)
+    x = np.random.randn(1, 16, 1, 1).astype(nptype)
+    net = SqueezeNet()
     output = net(Tensor(x))
-    print(output.asnumpy())
     assert np.all(output.asnumpy() == x.squeeze())
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_bool():
+    squeeze(np.bool)
 
-def test_net_uint8():
-    x = np.random.randn(1, 16, 1, 1).astype(np.uint8)
-    net = Net()
-    output = net(Tensor(x))
-    print(output.asnumpy())
-    assert np.all(output.asnumpy() == x.squeeze())
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_uint8():
+    squeeze(np.uint8)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_uint16():
+    squeeze(np.uint16)
 
-def test_net_int16():
-    x = np.random.randn(1, 16, 1, 1).astype(np.int16)
-    net = Net()
-    output = net(Tensor(x))
-    print(output.asnumpy())
-    assert np.all(output.asnumpy() == x.squeeze())
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_uint32():
+    squeeze(np.uint32)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_int8():
+    squeeze(np.int8)
 
-def test_net_int32():
-    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
-    net = Net()
-    output = net(Tensor(x))
-    print(output.asnumpy())
-    assert np.all(output.asnumpy() == x.squeeze())
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_int16():
+    squeeze(np.int16)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_int32():
+    squeeze(np.int32)
 
-def test_net_float16():
-    x = np.random.randn(1, 16, 1, 1).astype(np.float16)
-    net = Net()
-    output = net(Tensor(x))
-    print(output.asnumpy())
-    assert np.all(output.asnumpy() == x.squeeze())
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_int64():
+    squeeze(np.int64)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_float16():
+    squeeze(np.float16)
 
-def test_net_float32():
-    x = np.random.randn(1, 16, 1, 1).astype(np.float32)
-    net = Net()
-    output = net(Tensor(x))
-    print(output.asnumpy())
-    assert np.all(output.asnumpy() == x.squeeze())
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_float32():
+    squeeze(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_squeeze_float64():
+    squeeze(np.float64)
