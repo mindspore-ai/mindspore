@@ -142,7 +142,7 @@ std::optional<std::string> Common::GetConfigFile(const std::string &env) {
   }
   auto suffix = dump_config_file.substr(point_pos + 1);
   if (suffix != "json") {
-    MS_LOG(EXCEPTION) << "[DataDump] dump config file suffix only support json! But got:." << suffix;
+    MS_LOG(EXCEPTION) << "[DataDump] dump config file suffix only supports json! But got:." << suffix;
   }
   return dump_config_file;
 }
@@ -233,12 +233,12 @@ bool Common::IsPathValid(const std::string &path, const int &length_limit, const
 
   if (!std::all_of(path.begin(), path.end(),
                    [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '/'; })) {
-    MS_LOG(WARNING) << err_msg << "The path only support alphabets, digit or {'-', '_', '/'}, but got:" << path << ".";
+    MS_LOG(WARNING) << err_msg << "The path only supports alphabets, digit or {'-', '_', '/'}, but got:" << path << ".";
     return false;
   }
 
   if (path[0] != '/') {
-    MS_LOG(WARNING) << err_msg << "The path only support absolute path and should start with '/'.";
+    MS_LOG(WARNING) << err_msg << "The path only supports absolute path and should start with '/'.";
     return false;
   }
 
@@ -265,7 +265,7 @@ bool Common::IsFilenameValid(const std::string &filename, const int &length_limi
 
   if (!std::all_of(filename.begin(), filename.end(),
                    [](char c) { return ::isalpha(c) || ::isdigit(c) || c == '-' || c == '_' || c == '.'; })) {
-    MS_LOG(WARNING) << err_msg << "The filename only support alphabets, digit or {'-', '_', '.'}, but got:" << filename
+    MS_LOG(WARNING) << err_msg << "The filename only supports alphabets, digit or {'-', '_', '.'}, but got:" << filename
                     << ".";
     return false;
   }

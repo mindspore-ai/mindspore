@@ -107,4 +107,12 @@ std::string MsContext::backend_policy() const {
   }
   return "unknown";
 }
+
+bool MsContext::enable_dump_ir() const {
+#ifdef ENABLE_DUMP_IR
+  return true;
+#else
+  return false;
+#endif
+}
 }  // namespace mindspore
