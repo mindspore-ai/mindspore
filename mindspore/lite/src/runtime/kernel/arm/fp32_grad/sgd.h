@@ -27,18 +27,23 @@ class SgdCPUKernel : public OptimizerKernel {
   explicit SgdCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
-      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive),
+      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive, 2, 1),
         thread_count_(ctx->thread_num_),
         sgd_param_(nullptr) {
     sgd_param_ = reinterpret_cast<SgdParameter *>(parameter);
   }
-  ~SgdCPUKernel() override {}
+  ~SgdCPUKernel() override {
+    if (grad_sum_ != nullptr) {
+      context_->allocator->Free(grad_sum_);
+      grad_sum_ = nullptr;
+    }
+  }
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int ExecuteInit(int task_id);
   int Execute(int task_id);
-  int SetLearningRate(float lr) override;
-  float GetLearningRate() override;
+  int OptimizerStep() override;
 
  private:
   int thread_count_;

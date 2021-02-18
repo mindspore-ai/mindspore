@@ -94,10 +94,14 @@ if(SUPPORT_TRAIN)
             ${ANF_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/transfer_session.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_model.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_loop.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_utils.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/loss_monitor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/lr_scheduler.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_metrics.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/accuracy_monitor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
             )
 endif()
@@ -141,6 +145,10 @@ if(BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(mindspore-lite minddata_eager_mid minddata-lite)
     target_link_libraries(mindspore-lite_static minddata_eager_mid)
 endif()
+if(SUPPORT_TRAIN)
+    target_link_libraries(mindspore-lite minddata-lite)
+endif()
+
 
 if(PLATFORM_ARM)
     set(NDK_STRIP

@@ -18,10 +18,15 @@
 #include <vector>
 #include <string>
 #include <tuple>
+#include <memory>
 #include <unordered_map>
 #include "src/ops/primitive_c.h"
 #include "include/train/train_loop.h"
+#include "include/train/metrics.h"
 #include "include/train_session.h"
+
+#include "include/datasets.h"
+#include "include/iterator.h"
 
 namespace mindspore {
 namespace lite {
@@ -39,20 +44,34 @@ class TrainLoop : virtual public session::TrainLoop {
 
   virtual ~TrainLoop();
 
+  int Init(std::vector<mindspore::session::Metrics *> metrics) override {
+    metrics_ = metrics;
+    return RET_OK;
+  }
+
   int SetKernelCallBack(const KernelCallBack &before, const KernelCallBack &after) override {
     before_cb_ = before;
     after_cb_ = after;
     return RET_OK;
   }
 
-  int Train(int epochs, std::vector<session::TrainLoopCallBack *> cbs) override;
+  int Train(int epochs, dataset::Dataset *dataset, std::vector<session::TrainLoopCallBack *> cbs,
+            LoadDataFunc load_func = nullptr) override;
+  int Eval(dataset::Dataset *dataset, std::vector<session::TrainLoopCallBack *> cbs, LoadDataFunc load_func = nullptr,
+           int max_steps = 0) override;
+
+  std::vector<mindspore::session::Metrics *> GetMetrics() override { return metrics_; }
 
  protected:
+  static int LoadData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
+  static int LoadPartialData(std::vector<tensor::MSTensor *> inputs, dataset::MSTensorVec *dataset_vec);
+
   session::TrainSession *train_session_ = nullptr;
   unsigned int epoch_ = 0;
   KernelCallBack before_cb_ = nullptr;
   KernelCallBack after_cb_ = nullptr;
   int batch_size;
+  std::vector<mindspore::session::Metrics *> metrics_;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -221,7 +221,7 @@ int ConvolutionWinogradCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-  if (IsTrain()) {
+  if (IsTrain() && is_trainable()) {
     InitWeightBias();
   }
 
@@ -236,7 +236,9 @@ int ConvolutionWinogradCPUKernel::Run() {
 
 int ConvolutionWinogradCPUKernel::Eval() {
   LiteKernel::Eval();
-  InitWeightBias();
+  if (is_trainable()) {
+    InitWeightBias();
+  }
   return RET_OK;
 }
 

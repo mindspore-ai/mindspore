@@ -236,11 +236,11 @@ int StridedSliceGrad::InferShape(std::vector<lite::Tensor *> inputs, std::vector
   shrink_axis_mask_.resize(ndim_);
 
   for (size_t i = 0; i < ndim_; i++) {
-    begins_mask_.at(i) = static_cast<uint32_t>(GetBeginMask()) & (1 << i);
-    ends_mask_.at(i) = static_cast<uint32_t>(GetEndMask()) & (1 << i);
-    ellipsis_mask_.at(i) = static_cast<uint32_t>(GetEllipsisMask()) & (1 << i);
-    new_axis_mask_.at(i) = static_cast<uint32_t>(GetNewAxisMask()) & (1 << i);
-    shrink_axis_mask_.at(i) = static_cast<uint32_t>(GetShrinkAxisMask()) & (1 << i);
+    begins_mask_.at(i) = static_cast<bool>(GetBeginMask()) & (1 << i);
+    ends_mask_.at(i) = static_cast<bool>(GetEndMask()) & (1 << i);
+    ellipsis_mask_.at(i) = static_cast<bool>(GetEllipsisMask()) & (1 << i);
+    new_axis_mask_.at(i) = static_cast<bool>(GetNewAxisMask()) & (1 << i);
+    shrink_axis_mask_.at(i) = static_cast<bool>(GetShrinkAxisMask()) & (1 << i);
   }
 
   ApplyNewAxisMask();

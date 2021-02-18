@@ -22,7 +22,7 @@ def TrainWrap(net, loss_fn=None, optimizer=None, weights=None):
     TrainWrap
     """
     if loss_fn is None:
-        loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
+        loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean', sparse=True)
     loss_net = nn.WithLossCell(net, loss_fn)
     loss_net.set_train()
     if weights is None:

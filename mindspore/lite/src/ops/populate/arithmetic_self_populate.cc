@@ -40,6 +40,7 @@ Registry LogParameterRegistry(schema::PrimitiveType_Log, PopulateArithmeticSelf)
 Registry NegParameterRegistry(schema::PrimitiveType_Neg, PopulateArithmeticSelf);
 Registry NegGradParameterRegistry(schema::PrimitiveType_NegGrad, PopulateArithmeticSelf);
 Registry LogGradParameterRegistry(schema::PrimitiveType_LogGrad, PopulateArithmeticSelf);
+Registry AbsGradParameterRegistry(schema::PrimitiveType_AbsGrad, PopulateArithmeticSelf);
 Registry SqrtParameterRegistry(schema::PrimitiveType_Sqrt, PopulateArithmeticSelf);
 Registry SquareParameterRegistry(schema::PrimitiveType_Square, PopulateArithmeticSelf);
 Registry RsqrtParameterRegistry(schema::PrimitiveType_Rsqrt, PopulateArithmeticSelf);

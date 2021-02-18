@@ -277,7 +277,8 @@ union PrimitiveType {
     IsFinite,
     BatchMatMul,
     LinSpace,
-    UniformReal
+    UniformReal,
+    AbsGrad
 }
 
 enum QuantType: int {

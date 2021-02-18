@@ -193,6 +193,7 @@
 #include "src/ops/depend.h"
 #include "src/ops/flatten_grad.h"
 #include "src/ops/log_grad.h"
+#include "src/ops/abs_grad.h"
 #include "src/ops/sgd.h"
 #include "src/ops/adam.h"
 #include "src/ops/assign.h"
@@ -552,9 +553,11 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Dequant>(prim, inputs, quantType);
   } else if (op_type == "Flatten") {
     return NewPrimitiveC<Flatten>(prim, inputs, quantType);
+  } else if (op_type == "FloorDiv") {
+    return NewPrimitiveC<FloorDiv>(prim, inputs, quantType);
   } else if ((op_type == "FusedBatchNorm") || (op_type == "FusedBatchNormEx")) {
     return NewPrimitiveC<FusedBatchNorm>(prim, inputs, quantType);
-  } else if (op_type == "make_tuple") {
+  } else if ((op_type == "make_tuple") || (op_type == "MakeTuple")) {
     return NewPrimitiveC<MakeTuple>(prim, inputs, quantType);
   } else if (op_type == "MatMul" || op_type == "BatchMatMul") {
     return NewPrimitiveC<MatMul>(prim, inputs, quantType);
@@ -582,6 +585,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Reduce>(prim, inputs, quantType);
   } else if (op_type == "Reshape") {
     return NewPrimitiveC<Reshape>(prim, inputs, quantType);
+  } else if (op_type == "Rsqrt") {
+    return NewPrimitiveC<Rsqrt>(prim, inputs, quantType);
   } else if (op_type == "Sin") {
     return NewPrimitiveC<Sin>(prim, inputs, quantType);
   } else if (op_type == "Slice") {
@@ -739,6 +744,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Pad>(prim, inputs, quantType);
   } else if (op_type == "StridedSliceGrad") {
     return NewPrimitiveC<StridedSliceGrad>(prim, inputs, quantType);
+  } else if (op_type == "AbsGrad") {
+    return NewPrimitiveC<AbsGrad>(prim, inputs, quantType);
 #else
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
@@ -1097,6 +1104,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) NegGrad(primitive);
     case schema::PrimitiveType_LogGrad:
       return new (std::nothrow) LogGrad(primitive);
+    case schema::PrimitiveType_AbsGrad:
+      return new (std::nothrow) AbsGrad(primitive);
     case schema::PrimitiveType_Sgd:
       return new (std::nothrow) Sgd(primitive);
     case schema::PrimitiveType_Adam:

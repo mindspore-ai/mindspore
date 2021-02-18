@@ -16,23 +16,15 @@ else()
 endif()
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    target_link_libraries(benchmark_train mindspore-lite)
+    target_link_libraries(benchmark_train mindspore-lite minddata-lite)
 else()
     if(WIN32)
-        target_link_libraries(benchmark_train mindspore-lite_static pthread cpu_kernel_mid nnacl_mid)
+        target_link_libraries(benchmark_train mindspore-lite_static pthread cpu_kernel_mid nnacl_mid minddata-lite)
     else()
-        target_link_libraries(benchmark_train mindspore-lite pthread)
+        target_link_libraries(benchmark_train mindspore-lite pthread minddata-lite)
     endif()
 endif()
-if(PLATFORM_ARM32 OR PLATFORM_ARM64)
-    install(TARGETS benchmark_train
-                RUNTIME DESTINATION ${MAIN_DIR}-${RUNTIME_COMPONENT_NAME}/benchmark_train COMPONENT ${RUNTIME_COMPONENT_NAME})
-else()
-    if(WIN32)
-        install(TARGETS benchmark_train
-            RUNTIME DESTINATION ${MAIN_DIR}-${RUNTIME_COMPONENT_NAME}/benchmark_train COMPONENT ${RUNTIME_COMPONENT_NAME})
-    else()
-        install(TARGETS benchmark_train
-            RUNTIME DESTINATION ${MAIN_DIR}-${RUNTIME_COMPONENT_NAME}/benchmark_train COMPONENT ${RUNTIME_COMPONENT_NAME})
-    endif()
-endif()
+
+install(TARGETS benchmark_train
+        RUNTIME DESTINATION ${MAIN_DIR}-${RUNTIME_COMPONENT_NAME}/benchmark_train
+        COMPONENT ${RUNTIME_COMPONENT_NAME})

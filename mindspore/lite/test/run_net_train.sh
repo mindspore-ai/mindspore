@@ -81,9 +81,9 @@ function Run_x86() {
         echo ${model_name}'_train' >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-train-linux-x64' >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
-        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
+        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib ./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
         echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
-        LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib \
+        LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib:./minddata/lib:./minddata/third_party/libjpeg-turbo/lib \
         ${run_valgrind}./benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}_train.ms \
         --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
@@ -131,13 +131,10 @@ function Run_arm() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_train_test_path} || exit 1
-    if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_train_test_path}/libjpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_train_test_path}/libturbojpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_core.so ${benchmark_train_test_path}/libopencv_core.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgcodecs.so ${benchmark_train_test_path}/libopencv_imgcodecs.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgproc.so ${benchmark_train_test_path}/libopencv_imgproc.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_train_test_path}/libjpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_train_test_path}/libturbojpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
     fi
     if [ "$1" == arm64 ]; then
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai.so ${benchmark_train_test_path}/libhiai.so || exit 1
@@ -230,12 +227,15 @@ function Print_Result() {
 basepath=$(pwd)
 echo ${basepath}
 
+# Set default models config filepath
+models_mindspore_train_config=${basepath}/models_ms_train.cfg
+
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
 threads=2
 train_io_path=""
-while getopts "r:m:d:i:e:vt:q:D" opt; do
+while getopts "r:M:c:m:d:i:e:vt:q:D" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
@@ -244,6 +244,14 @@ while getopts "r:m:d:i:e:vt:q:D" opt; do
         m)
             models_path=${OPTARG}"/models_train"
             echo "models_path is ${OPTARG}"
+            ;;
+        M)
+            models_path=${OPTARG}
+            echo "models_path is ${models_path}"
+            ;;
+        c)
+            models_mindspore_train_config=${OPTARG}
+            echo "models_mindspore_train_config is ${models_mindspore_train_config}"
             ;;
         i)
             train_io_path=${OPTARG}
@@ -278,8 +286,10 @@ done
 
 if [[ $train_io_path == "" ]]
 then
+  echo "train_io path is empty"
   train_io_path=${models_path}/input_output
 fi
+echo $train_io_path
 
 arm64_path=${release_path}/android_aarch64
 file=$(ls ${arm64_path}/*train-android-aarch64.tar.gz)
@@ -298,9 +308,6 @@ file=$(ls ${x86_path}/*train-linux-x64.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
-
-# Set models config filepath
-models_mindspore_train_config=${basepath}/models_ms_train.cfg
 
 ms_models_path=${basepath}/ms_models_train
 
@@ -387,22 +394,21 @@ Run_x86_PID=$!
 sleep 1
 
 
-# wait ${Run_x86_PID}
-cat ${run_benchmark_train_result_file}
-wait ${Run_x86_PID}
-Run_x86_status=$?
-
 # Run on arm64
 echo "start Run arm64 ..."
 Run_arm arm64 
 Run_arm64_status=$?
-sleep 3
+sleep 1
 
 # Run on arm32
 echo "start Run arm32 ..."
 Run_arm arm32
 Run_arm32_status=$?
 sleep 1
+
+wait ${Run_x86_PID}
+Run_x86_status=$?
+cat ${run_benchmark_train_result_file}
 
 END=$(date +%s.%N)
 DIFF=$(echo "$END - $START" | bc)
@@ -415,6 +421,8 @@ function Print_Benchmark_Result() {
     done < ${run_benchmark_train_result_file}
     MS_PRINT_TESTCASE_END_MSG
 }
+
+
 result=0
 # Check benchmark_train result and return value
 if [[ ${Run_x86_status} != 0 ]];then

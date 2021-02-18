@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_DATA_LOADER_H_
-#define MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_DATA_LOADER_H_
-#include <vector>
-#include <string>
-#include <utility>
-#include <unordered_map>
-#include "include/train/train_loop.h"
-#include "src/dataset.h"
+#ifndef MINDSPORE_LITE_SRC_TRAIN_TRAIN_UTILS_H_
+#define MINDSPORE_LITE_SRC_TRAIN_TRAIN_UTILS_H_
 
-class DataLoader : public mindspore::session::TrainLoopCallBack {
- public:
-  explicit DataLoader(DataSet *dataset) : ds_(dataset) {}
-  void StepBegin(const mindspore::session::TrainLoopCallBackData &cb_data) override;
+#include "include/ms_tensor.h"
 
- private:
-  DataSet *ds_;
-};
+namespace mindspore {
+namespace lite {
 
-#endif  // MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_DATA_LOADER_H_
+float CalculateSparseClassification(tensor::MSTensor *input, tensor::MSTensor *output);
+float CalculateOneHotClassification(tensor::MSTensor *input, tensor::MSTensor *output);
+
+}  // namespace lite
+}  // namespace mindspore
+#endif  // MINDSPORE_LITE_SRC_TRAIN_TRAIN_UTILS_H_

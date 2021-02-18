@@ -13,31 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_ACCURACY_MONITOR_H_
-#define MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_ACCURACY_MONITOR_H_
+#ifndef MINDSPORE_LITE_INCLUDE_TRAIN_ACCURACY_MONITOR_H_
+#define MINDSPORE_LITE_INCLUDE_TRAIN_ACCURACY_MONITOR_H_
 #include <vector>
 #include <string>
 #include <utility>
 #include <unordered_map>
 #include "include/train/train_loop.h"
-#include "src/dataset.h"
 
 using GraphPoint = std::pair<int, float>;
 
-class AccuracyMonitor : public mindspore::session::TrainLoopCallBack {
+namespace mindspore {
+namespace lite {
+
+class AccuracyMonitor : public session::TrainLoopCallBack {
  public:
-  explicit AccuracyMonitor(DataSet *dataset, int check_every_n, int max_steps = -1)
+  explicit AccuracyMonitor(mindspore::dataset::Dataset *dataset, int check_every_n, int max_steps = -1)
       : ds_(dataset), check_every_n_(check_every_n), max_steps_(max_steps) {}
 
+  void Begin(const session::TrainLoopCallBackData &cb_data) override;
   int EpochEnd(const mindspore::session::TrainLoopCallBackData &cb_data) override;
-
   const std::vector<GraphPoint> &GetAccuracyPoints() const { return accuracies_; }
 
  private:
-  DataSet *ds_;
+  mindspore::dataset::Dataset *ds_;
   std::vector<GraphPoint> accuracies_;
   int check_every_n_;
   int max_steps_;
 };
 
-#endif  // MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_ACCURACY_MONITOR_H_
+}  // namespace lite
+}  // namespace mindspore
+#endif  // MINDSPORE_LITE_INCLUDE_TRAIN_ACCURACY_MONITOR_H_

@@ -29,7 +29,16 @@ namespace lite {
 
 class LossMonitor : public session::TrainLoopCallBack {
  public:
-  explicit LossMonitor(int print_every_n = INT_MAX) : print_every_n_(print_every_n) {}
+  /// \brief constructor
+  ///
+  /// \param[in] print_every_n_steps prints loss into stdout every n_steps.
+  //             print_every_n_steps=0 means never print
+  //             print_every_n_steps=INT_MAX will print every epoch
+  /// \param[in] dataset Pointer to MindData Dataset object
+  /// \param[in] cbs A vector of TrainLoopCallBack objects
+  ///
+  /// \return 0 on success or -1 in case of error
+  explicit LossMonitor(int print_every_n_steps = INT_MAX) : print_every_n_(print_every_n_steps) {}
   virtual ~LossMonitor() = default;
   void Begin(const session::TrainLoopCallBackData &cb_data) override;
   void EpochBegin(const session::TrainLoopCallBackData &cb_data) override;

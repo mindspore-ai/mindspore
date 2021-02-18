@@ -244,6 +244,7 @@ if(SUPPORT_TRAIN)
             ${TEST_LITE_SRC}
             ${LITE_DIR}/src/train/train_populate_parameter.cc
             ${LITE_DIR}/src/train/train_session.cc
+            ${LITE_DIR}/src/train/transfer_session.cc
             ${LITE_DIR}/src/train/train_model.cc
             ${LITE_DIR}/src/lite_session.cc
             )
@@ -332,6 +333,10 @@ endif()
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
 target_link_libraries(lite-test dl mindspore::gtest)
+if(SUPPORT_TRAIN)
+    target_link_libraries(lite-test minddata-lite)
+endif()
+
 if(PLATFORM_ARM64 AND ENABLE_FP16)
     target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
 endif()

@@ -32,25 +32,8 @@ namespace mindspore::kernel {
 
 int AdamCPUKernel::ReSize() { return RET_OK; }
 
-int AdamCPUKernel::Execute(int task_id) {
-  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
-  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData())[0];
-  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
-  auto learning_rate = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData())[0];
-  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(6)->MutableData())[0];
-  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
-  auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
-  auto gradient = reinterpret_cast<float *>(in_tensors_.at(9)->MutableData());
-  size_t length = in_tensors_.at(0)->ElementsNum();
-
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
-
-  size_t start = stride * task_id;
-  size_t end = start + count;
-
+int DoAdam(float *m, float *v, float *gradient, float *weight, float beta1, float beta2, float beta1_power,
+           float beta2_power, float eps, float learning_rate, bool nesterov, size_t start, size_t end) {
   if ((1.f - beta1_power) <= 0.0f) {
     MS_LOG(ERROR) << "divisor cannot be 0 or below";
     return RET_ERROR;
@@ -63,8 +46,7 @@ int AdamCPUKernel::Execute(int task_id) {
   auto update_lr = learning_rate * std::sqrt(1.f - beta2_power) / (1.f - beta1_power);
   const float one_minus_beta1 = 1.f - beta1;
   const float one_minus_beta2 = 1.f - beta2;
-
-  if (adam_param_->use_nesterov_) {  // Nadam
+  if (nesterov) {  // Nadam
     for (size_t i = start; i < end; ++i) {
       m[i] += (gradient[i] - m[i]) * one_minus_beta1;
       v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
@@ -80,10 +62,39 @@ int AdamCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
+int AdamCPUKernel::Execute(int task_id) {
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData())[0];
+  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  auto learning_rate = lr_;
+  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(6)->MutableData())[0];
+  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
+  auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(9)->MutableData());
+  size_t length = in_tensors_.at(0)->ElementsNum();
+
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+  size_t end = start + count;
+
+  return DoAdam(m, v, gradient, weight, beta1, beta2, beta1_power, beta2_power, eps, learning_rate,
+                adam_param_->use_nesterov_, start, end);
+}
+
 int AdamRun(void *cdata, int task_id) {
   MS_ASSERT(cdata != nullptr);
-  auto Adam_kernel = reinterpret_cast<AdamCPUKernel *>(cdata);
-  auto error_code = Adam_kernel->Execute(task_id);
+  auto adam_kernel = reinterpret_cast<AdamCPUKernel *>(cdata);
+  auto error_code = RET_OK;
+  if (adam_kernel->get_optimizer_mode() == OptimizerKernel::WeightUpdateMode::VIRTUAL_BATCH) {
+    error_code = adam_kernel->ExecuteVirtualBatch(task_id);
+  } else {
+    error_code = adam_kernel->Execute(task_id);
+  }
+
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Adam run error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
@@ -100,18 +111,38 @@ int AdamCPUKernel::Run() {
   return RET_OK;
 }
 
-int AdamCPUKernel::SetLearningRate(float lr) {
-  auto learning_rate_tensor = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
-  learning_rate_tensor[0] = lr;
+int AdamCPUKernel::Init() {
+  auto ret = OptimizerKernel::Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Failed to initialize Adam Kernel";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
-float AdamCPUKernel::GetLearningRate() {
-  auto learning_rate_tensor = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
-  return learning_rate_tensor[0];
-}
+int AdamCPUKernel::OptimizerStep() {
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData())[0];
+  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  auto learning_rate = lr_;
+  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(6)->MutableData())[0];
+  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
+  auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
+  size_t length = in_tensors_.at(0)->ElementsNum();
 
-int AdamCPUKernel::Init() { return RET_OK; }
+  int ret = RET_OK;
+  if (grad_sum_ != nullptr && valid_grad_sum_) {
+    size_t start = 0;
+    size_t end = length;
+    ret = DoAdam(m, v, grad_sum_, weight, beta1, beta2, beta1_power, beta2_power, eps, learning_rate,
+                 adam_param_->use_nesterov_, start, end);
+    std::fill(grad_sum_, grad_sum_ + length, 0);
+    OptimizerKernel::OptimizerStep();
+  }
+  return ret;
+}
 
 kernel::LiteKernel *CpuAdamFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,

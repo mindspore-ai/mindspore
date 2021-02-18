@@ -75,4 +75,18 @@ char *TrainModel::ExportBuf(char *buffer, size_t *len) const {
   *len = buf_size_;
   return buffer;
 }
+
+char *TrainModel::GetBuffer(size_t *len) const {
+  if (len == nullptr) {
+    MS_LOG(ERROR) << "len is nullptr";
+    return nullptr;
+  }
+  if (buf_size_ == 0 || buf == nullptr) {
+    MS_LOG(ERROR) << "Model::Export is only available for Train Session";
+    return nullptr;
+  }
+
+  *len = buf_size_;
+  return buf;
+}
 }  // namespace mindspore::lite

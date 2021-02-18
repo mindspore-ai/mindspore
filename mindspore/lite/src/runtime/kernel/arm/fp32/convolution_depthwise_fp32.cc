@@ -105,7 +105,7 @@ int ConvDwRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
-  if (IsTrain()) {
+  if (IsTrain() && is_trainable()) {
     PackWeight();
   }
 
@@ -132,7 +132,9 @@ void ConvolutionDepthwiseCPUKernel::PackWeight() {
 
 int ConvolutionDepthwiseCPUKernel::Eval() {
   LiteKernel::Eval();
-  PackWeight();
+  if (is_trainable()) {
+    PackWeight();
+  }
   return RET_OK;
 }
 

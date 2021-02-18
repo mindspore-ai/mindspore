@@ -25,17 +25,37 @@
 #include "include/train/loss_monitor.h"
 #include "include/train/ckpt_saver.h"
 #include "include/train/lr_scheduler.h"
+#include "include/train/accuracy_metrics.h"
 #include "include/train/classification_train_accuracy_monitor.h"
 #include "src/utils.h"
-#include "src/data_loader.h"
-#include "src/accuracy_monitor.h"
+#include "include/datasets.h"
+#include "include/vision_lite.h"
+#include "include/transforms.h"
 
+using mindspore::dataset::Dataset;
+using mindspore::dataset::Mnist;
+using mindspore::dataset::TensorOperation;
+using mindspore::dataset::vision::Normalize;
+using mindspore::lite::AccuracyMetrics;
 using mindspore::session::TrainLoopCallBack;
 using mindspore::session::TrainLoopCallBackData;
 
-static unsigned int seed = time(NULL);
+class Rescaler : public mindspore::session::TrainLoopCallBack {
+ public:
+  explicit Rescaler(float scale) : scale_(scale) {
+    if (scale_ == 0) scale_ = 1.0;
+  }
+  void StepBegin(const mindspore::session::TrainLoopCallBackData &cb_data) override {
+    auto inputs = cb_data.session_->GetInputs();
+    auto *input_data = reinterpret_cast<float *>(inputs.at(0)->MutableData());
+    for (int k = 0; k < inputs.at(0)->ElementsNum(); k++) input_data[k] /= scale_;
+  }
 
-// Definition of callback function after forwarding operator.
+ private:
+  float scale_ = 1.0;
+};
+
+// Definition of verbose callback function after forwarding operator.
 bool after_callback(const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
                     const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
                     const mindspore::CallBackParam &call_param) {
@@ -79,46 +99,68 @@ void NetRunner::InitAndFigureInputs() {
   session_ = loop_->train_session();
   MS_ASSERT(nullptr != session_);
 
+  acc_metrics_ = std::shared_ptr<AccuracyMetrics>(new AccuracyMetrics);
+
+  loop_->Init({acc_metrics_.get()});
+
   auto inputs = session_->GetInputs();
   MS_ASSERT(inputs.size() > 1);
-  data_index_ = 0;
-  label_index_ = 1;
-  batch_size_ = inputs[data_index_]->shape()[0];
-  data_size_ = inputs[data_index_]->Size() / batch_size_;  // in bytes
-  if (verbose_) {
-    std::cout << "data size: " << data_size_ << std::endl << "batch size: " << batch_size_ << std::endl;
-  }
 }
 
 float NetRunner::CalculateAccuracy(int max_tests) {
-  AccuracyMonitor test_am(&ds_, 1, max_tests);
-  test_am.EpochEnd(TrainLoopCallBackData(true, 0, session_, loop_));
+  test_ds_ = Mnist(data_dir_ + "/test", "all");
+  std::shared_ptr<TensorOperation> typecast_f = mindspore::dataset::transforms::TypeCast("float32");
+  std::shared_ptr<TensorOperation> resize = mindspore::dataset::vision::Resize({32, 32});
+  test_ds_ = test_ds_->Map({resize, typecast_f}, {"image"});
+
+  std::shared_ptr<TensorOperation> typecast = mindspore::dataset::transforms::TypeCast("int32");
+  test_ds_ = test_ds_->Map({typecast}, {"label"});
+  test_ds_ = test_ds_->Batch(32, true);
+
+  Rescaler rescale(255.0);
+
+  loop_->Eval(test_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale});
+  std::cout << "Eval Accuracy is " << acc_metrics_->Eval() << std::endl;
+
   return 0.0;
 }
 
 int NetRunner::InitDB() {
-  if (data_size_ != 0) ds_.set_expected_data_size(data_size_);
-  int ret = ds_.Init(data_dir_, DS_MNIST_BINARY);
-  num_of_classes_ = ds_.num_of_classes();
-  if (ds_.test_data().size() == 0) {
+  train_ds_ = Mnist(data_dir_ + "/train", "all");
+
+  std::shared_ptr<TensorOperation> typecast_f = mindspore::dataset::transforms::TypeCast("float32");
+  std::shared_ptr<TensorOperation> resize = mindspore::dataset::vision::Resize({32, 32});
+  // std::shared_ptr<TensorOperation> rescale_op = Normalize({0.0, 0.0, 0.0}, {255.0, 255.0, 255.0});
+  // std::shared_ptr<TensorOperation> rescale_op = mindspore::dataset::vision::Rescale(255.0, 0.0);
+  train_ds_ = train_ds_->Map({resize, typecast_f}, {"image"});
+
+  std::shared_ptr<TensorOperation> typecast = mindspore::dataset::transforms::TypeCast("int32");
+  train_ds_ = train_ds_->Map({typecast}, {"label"});
+
+  train_ds_ = train_ds_->Shuffle(2);
+  train_ds_ = train_ds_->Batch(32, true);
+
+  if (verbose_) {
+    std::cout << "DatasetSize is " << train_ds_->GetDatasetSize() << std::endl;
+  }
+  if (train_ds_->GetDatasetSize() == 0) {
     std::cout << "No relevant data was found in " << data_dir_ << std::endl;
-    MS_ASSERT(ds_.test_data().size() != 0);
+    MS_ASSERT(train_ds_->GetDatasetSize() != 0);
   }
 
-  return ret;
+  return 0;
 }
 
 int NetRunner::TrainLoop() {
-  struct mindspore::lite::StepLRLambda step_lr_lambda(100, 0.9);
+  struct mindspore::lite::StepLRLambda step_lr_lambda(1, 0.9);
   mindspore::lite::LRScheduler step_lr_sched(mindspore::lite::StepLRLambda, static_cast<void *>(&step_lr_lambda), 100);
 
   mindspore::lite::LossMonitor lm(100);
-  // mindspore::lite::ClassificationTrainAccuracyMonitor am(10);
+  mindspore::lite::ClassificationTrainAccuracyMonitor am(1);
   mindspore::lite::CkptSaver cs(1000, std::string("lenet"));
-  AccuracyMonitor test_am(&ds_, 500, 10);
-  DataLoader dl(&ds_);
+  Rescaler rescale(255.0);
 
-  loop_->Train(cycles_, std::vector<TrainLoopCallBack *>{&dl, &lm, &test_am, &cs, &step_lr_sched});
+  loop_->Train(epochs_, train_ds_.get(), std::vector<TrainLoopCallBack *>{&rescale, &lm, &cs, &am, &step_lr_sched});
   return 0;
 }
 
@@ -131,15 +173,15 @@ int NetRunner::Main() {
 
   CalculateAccuracy();
 
-  if (cycles_ > 0) {
-    auto trained_fn = ms_file_.substr(0, ms_file_.find_last_of('.')) + "_trained_" + std::to_string(cycles_) + ".ms";
+  if (epochs_ > 0) {
+    auto trained_fn = ms_file_.substr(0, ms_file_.find_last_of('.')) + "_trained.ms";
     session_->SaveToFile(trained_fn);
   }
   return 0;
 }
 
 void NetRunner::Usage() {
-  std::cout << "Usage: net_runner -f <.ms model file> -d <data_dir> [-c <num of training cycles>] "
+  std::cout << "Usage: net_runner -f <.ms model file> -d <data_dir> [-e <num of training epochs>] "
             << "[-v (verbose mode)] [-s <save checkpoint every X iterations>]" << std::endl;
 }
 
@@ -151,7 +193,7 @@ bool NetRunner::ReadArgs(int argc, char *argv[]) {
         ms_file_ = std::string(optarg);
         break;
       case 'e':
-        cycles_ = atoi(optarg);
+        epochs_ = atoi(optarg);
         break;
       case 'd':
         data_dir_ = std::string(optarg);

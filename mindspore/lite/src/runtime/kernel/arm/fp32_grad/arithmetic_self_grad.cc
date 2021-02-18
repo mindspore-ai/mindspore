@@ -20,11 +20,13 @@
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
+#include "nnacl/fp32_grad/arithmetic_grad.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_AbsGrad;
 using mindspore::schema::PrimitiveType_LogGrad;
 
 namespace mindspore::kernel {
@@ -41,6 +43,9 @@ int ArithmeticSelfGradCPUKernel::Init() {
   switch (type) {
     case PrimitiveType_LogGrad:
       self_grad_operation_ = ElementDiv;
+      break;
+    case PrimitiveType_AbsGrad:
+      self_grad_operation_ = ElementAbsGrad;
       break;
     default:
       MS_LOG(ERROR) << "Unsupported type: " << type;
@@ -102,4 +107,5 @@ kernel::LiteKernel *CpuArithmeticSelfGradFp32KernelCreator(const std::vector<lit
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LogGrad, CpuArithmeticSelfGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AbsGrad, CpuArithmeticSelfGradFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -17,6 +17,10 @@
 #define MINDSPORE_LITE_SRC_TRAIN_OPTIMIZER_KERNEL_H_
 #include <vector>
 #include "src/lite_kernel.h"
+#include "include/errorcode.h"
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
+
 namespace mindspore::kernel {
 
 class OptimizerKernel : public LiteKernel {
@@ -24,11 +28,88 @@ class OptimizerKernel : public LiteKernel {
   OptimizerKernel() = default;
   OptimizerKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                  const lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                  const lite::PrimitiveC *primitive, int lr_idx, int grad_idx)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
   ~OptimizerKernel() = default;
-  virtual int SetLearningRate(float lr) = 0;
-  virtual float GetLearningRate() = 0;
+
+  enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH };
+  WeightUpdateMode get_optimizer_mode() { return weightUpdateMod_; }
+
+  int Init() override {
+    default_lr_ = reinterpret_cast<float *>(in_tensors_.at(lr_idx_)->MutableData())[0];
+    lr_ = default_lr_;
+    return RET_OK;
+  }
+
+  int SetLearningRate(float lr) {
+    lr_ = lr;
+    return RET_OK;
+  }
+
+  float GetLearningRate() { return lr_; }
+
+  int RestoreDefaultLearningRate() {
+    SetLearningRate(default_lr_);
+    return RET_OK;
+  }
+
+  int SetOptimizerMode(WeightUpdateMode mod) {
+    if (mod == WeightUpdateMode::VIRTUAL_BATCH) {
+      if (grad_sum_ != nullptr) {
+        context_->allocator->Free(grad_sum_);
+        grad_sum_ = nullptr;
+      }
+      size_t size = in_tensors_.at(grad_idx_)->Size();
+      size_t elem_num = in_tensors_.at(grad_idx_)->ElementsNum();
+      grad_sum_ = reinterpret_cast<float *>(context_->allocator->Malloc(size));
+      if (grad_sum_ == nullptr) {
+        MS_LOG(ERROR) << "failed to malloc grad sum tensor, size=" << size;
+        return RET_ERROR;
+      }
+      valid_grad_sum_ = false;
+      std::fill(grad_sum_, grad_sum_ + elem_num, 0);
+    } else {
+      if (grad_sum_ != nullptr) {
+        context_->allocator->Free(grad_sum_);
+        grad_sum_ = nullptr;
+      }
+    }
+    return RET_OK;
+  }
+
+  int ExecuteVirtualBatch(int task_id) {
+    auto gradient = reinterpret_cast<float *>(in_tensors_.at(grad_idx_)->MutableData());
+    size_t length = in_tensors_.at(grad_idx_)->ElementsNum();
+
+    size_t stride = UP_DIV(length, context_->thread_num_);
+    size_t count = MSMIN(stride, length - stride * task_id);
+    size_t start = stride * task_id;
+    size_t end = start + count;
+
+    for (size_t i = start; i < end; ++i) {
+      grad_sum_[i] += gradient[i];
+    }
+    valid_grad_sum_ = true;
+    return RET_OK;
+  }
+
+  virtual int OptimizerStep() {
+    valid_grad_sum_ = false;
+    return RET_OK;
+  }
+
+  int Eval() override { return OptimizerStep(); }
+
+ protected:
+  float default_lr_ = 0.0f;
+  float lr_ = 0.0f;
+  int lr_idx_ = 0;
+  int grad_idx_ = 0;
+  float *grad_sum_ = nullptr;
+  bool valid_grad_sum_ = false;
+
+ private:
+  WeightUpdateMode weightUpdateMod_ = WeightUpdateMode::NORMAL;
 };
 
 }  // namespace mindspore::kernel

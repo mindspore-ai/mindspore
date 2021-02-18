@@ -27,16 +27,20 @@ class AdamCPUKernel : public OptimizerKernel {
   explicit AdamCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
-      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
+      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive, 5, 9), thread_count_(ctx->thread_num_) {
     adam_param_ = reinterpret_cast<AdamParameter *>(parameter);
   }
-  ~AdamCPUKernel() override {}
+  ~AdamCPUKernel() override {
+    if (grad_sum_ != nullptr) {
+      context_->allocator->Free(grad_sum_);
+      grad_sum_ = nullptr;
+    }
+  }
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int SetLearningRate(float lr) override;
-  float GetLearningRate() override;
   int Execute(int task_id);
+  int OptimizerStep() override;
 
  private:
   int thread_count_;

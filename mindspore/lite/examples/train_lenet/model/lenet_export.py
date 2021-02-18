@@ -21,14 +21,13 @@ from mindspore.train.serialization import export
 from lenet import LeNet5
 from train_utils import TrainWrap
 
-
 n = LeNet5()
 n.set_train()
-context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU", save_graphs=False)
+context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
 
 BATCH_SIZE = 32
 x = Tensor(np.ones((BATCH_SIZE, 1, 32, 32)), mstype.float32)
-label = Tensor(np.zeros([BATCH_SIZE, 10]).astype(np.float32))
+label = Tensor(np.zeros([BATCH_SIZE]).astype(np.int32))
 net = TrainWrap(n)
 export(net, x, label, file_name="lenet_tod", file_format='MINDIR')
 

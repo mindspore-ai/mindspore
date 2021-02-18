@@ -233,7 +233,7 @@ int Convolution1x1CPUKernel::Run() {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;
   }
-  if (IsTrain()) {
+  if (IsTrain() && is_trainable()) {
     PackWeight();
   }
 
@@ -283,7 +283,9 @@ void Convolution1x1CPUKernel::PackWeight() {
 
 int Convolution1x1CPUKernel::Eval() {
   LiteKernel::Eval();
-  PackWeight();
+  if (is_trainable()) {
+    PackWeight();
+  }
   return RET_OK;
 }
 

@@ -27,23 +27,28 @@ class ApplyMomentumCPUKernel : public OptimizerKernel {
   explicit ApplyMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                   const mindspore::lite::PrimitiveC *primitive)
-      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive),
+      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive, 2, 3),
         thread_count_(ctx->thread_num_),
         apply_momentum_param_(nullptr) {
     apply_momentum_param_ = reinterpret_cast<ApplyMomentumParameter *>(parameter);
   }
-  ~ApplyMomentumCPUKernel() override {}
+  ~ApplyMomentumCPUKernel() override {
+    if (grad_sum_ != nullptr) {
+      context_->allocator->Free(grad_sum_);
+      grad_sum_ = nullptr;
+    }
+  }
   int Init() override;
   int ReSize() override;
-  int Run() override;
   int Execute(int task_id);
-  int SetLearningRate(float lr) override;
-  float GetLearningRate() override;
+  int Run() override;
+  int OptimizerStep() override;
 
  private:
   int thread_count_;
   ApplyMomentumParameter *apply_momentum_param_;
 };
+
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_APPLY_MOMENTUM_H_
