@@ -195,7 +195,7 @@ def test_textline_dataset_to_device():
 def test_textline_dataset_exceptions():
     with pytest.raises(ValueError) as error_info:
         _ = ds.TextFileDataset(DATA_FILE, num_samples=-1)
-    assert "Input num_samples is not within the required interval" in str(error_info.value)
+    assert "num_samples exceeds the boundary" in str(error_info.value)
 
     with pytest.raises(ValueError) as error_info:
         _ = ds.TextFileDataset("does/not/exist/no.txt")

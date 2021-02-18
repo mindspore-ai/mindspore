@@ -344,8 +344,9 @@ def check_num_parallel_workers(value):
 
 def check_num_samples(value):
     type_check(value, (int,), "num_samples")
-    check_value(value, [0, INT32_MAX], "num_samples")
-
+    if value < 0 or value > INT64_MAX:
+        raise ValueError(
+            "num_samples exceeds the boundary between {} and {}(INT64_MAX)!".format(0, INT64_MAX))
 
 def validate_dataset_param_value(param_list, param_dict, param_type):
     for param_name in param_list:

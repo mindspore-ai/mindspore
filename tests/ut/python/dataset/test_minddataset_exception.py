@@ -280,7 +280,7 @@ def test_cv_minddataset_partition_num_samples_equals_0():
     with pytest.raises(ValueError) as error_info:
         partitions(5)
     try:
-        assert 'Input num_samples is not within the required interval of (0 to 2147483647).' in str(error_info.value)
+        assert 'num_samples exceeds the boundary between 0 and 9223372036854775807(INT64_MAX)' in str(error_info.value)
     except Exception as error:
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))

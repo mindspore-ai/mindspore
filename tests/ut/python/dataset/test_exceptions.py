@@ -41,7 +41,7 @@ def test_exception_02():
     num_samples = -1
     with pytest.raises(ValueError) as info:
         ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)
-    assert 'Input num_samples is not within the required interval of (0 to 2147483647).' in str(info.value)
+    assert 'num_samples exceeds the boundary between 0 and 9223372036854775807(INT64_MAX)' in str(info.value)
 
     num_samples = 1
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], num_samples=num_samples)

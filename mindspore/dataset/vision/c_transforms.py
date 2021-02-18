@@ -444,10 +444,9 @@ class Pad(ImageTensorOperation):
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
         fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
-            padding_mode Border.CONSTANT (default=0).
+            padding_mode Border.CONSTANT. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
-            If it is a 3-tuple, it is used to fill R, G, B channels respectively.
-            The fill_value values must be in range [0, 255].
+            The fill_value values must be in range [0, 255] (default=0).
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
@@ -684,9 +683,10 @@ class RandomCrop(ImageTensorOperation):
             pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
-        fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
-            the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
-            fill R, G, B channels respectively.
+        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
+            padding_mode Border.CONSTANT. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            If it is an integer, it is used for all RGB channels.
+            The fill_value values must be in range [0, 255] (default=0).
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). It can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
@@ -799,9 +799,10 @@ class RandomCropWithBBox(ImageTensorOperation):
             If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
-        fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
-            the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
-            fill R, G, B channels respectively.
+        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
+            padding_mode Border.CONSTANT. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            If it is an integer, it is used for all RGB channels.
+            The fill_value values must be in range [0, 255] (default=0).
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). It can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 
@@ -1105,10 +1106,10 @@ class RandomRotation(ImageTensorOperation):
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple) (default=None).
             Origin is the top left corner. None sets to the center of the image.
-        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image
-            (default=0).
-            If it is a 3-tuple, it is used for R, G, B channels respectively.
+        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image.
+            If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
+            The fill_value values must be in range [0, 255] (default=0).
 
     Examples:
         >>> from mindspore.dataset.vision import Inter

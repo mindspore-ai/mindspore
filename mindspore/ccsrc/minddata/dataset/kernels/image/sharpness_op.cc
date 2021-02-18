@@ -38,12 +38,6 @@ Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
       RETURN_STATUS_UNEXPECTED("Sharpness: image shape is not <H,W,C> or <H,W>");
     }
 
-    /// Get number of channels and image matrix
-    std::size_t num_of_channels = input_cv->shape()[2];
-    if (num_of_channels != 1 && num_of_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("Sharpness: image channel is not 1 or 3.");
-    }
-
     /// creating a smoothing filter. 1, 1, 1,
     ///                              1, 5, 1,
     ///                              1, 1, 1
