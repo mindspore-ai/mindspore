@@ -18,28 +18,46 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 
 int ElementOptAdd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_NEON
-  float32x4_t vin0_opt = vdupq_n_f32(in0[0]);
-  float32x4_t vin1_opt = vdupq_n_f32(in1[0]);
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 vin0_opt_8 = MS_MOV256_F32(in0[0]);
+  MS_FLOAT32X8 vin1_opt_8 = MS_MOV256_F32(in1[0]);
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 vin0_opt = MS_MOVQ_F32(in0[0]);
+  MS_FLOAT32X4 vin1_opt = MS_MOVQ_F32(in1[0]);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      float32x4_t vin1 = vld1q_f32(in1 + index);
-      float32x4_t vout = vaddq_f32(vin0_opt, vin1);
-      vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+      MS_FLOAT32X8 vout = MS_ADD256_F32(vin0_opt_8, vin1);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
+      MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0_opt, vin1);
+      MS_STQ_F32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
       out[index] = in0[0] + in1[index];
     }
   } else {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      float32x4_t vin0 = vld1q_f32(in0 + index);
-      float32x4_t vout = vaddq_f32(vin0, vin1_opt);
-      vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+      MS_FLOAT32X8 vout = MS_ADD256_F32(vin0, vin1_opt_8);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
+      MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0, vin1_opt);
+      MS_STQ_F32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
@@ -50,28 +68,46 @@ int ElementOptAdd(const float *in0, const float *in1, float *out, int size, cons
 }
 
 int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_NEON
-  int32x4_t vin0_opt = vdupq_n_s32(in0[0]);
-  int32x4_t vin1_opt = vdupq_n_s32(in1[0]);
+#ifdef ENABLE_AVX
+  MS_INT32X8 vin0_opt_8 = MS_MOV256_EPI32(in0[0]);
+  MS_INT32X8 vin1_opt_8 = MS_MOV256_EPI32(in1[0]);
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  MS_INT32X4 vin0_opt = MS_MOVQ_EPI32(in0[0]);
+  MS_INT32X4 vin1_opt = MS_MOVQ_EPI32(in1[0]);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      int32x4_t vin1 = vld1q_s32(in1 + index);
-      int32x4_t vout = vaddq_s32(vin0_opt, vin1);
-      vst1q_s32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_INT32X8 vin1 = MS_LD256_EPI32(in1 + index);
+      MS_INT32X8 vout = MS_ADD256_EPI32(vin0_opt_8, vin1);
+      MS_ST256_EPI32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_INT32X4 vin1 = MS_LDQ_EPI32(in1 + index);
+      MS_INT32X4 vout = MS_ADDQ_EPI32(vin0_opt, vin1);
+      MS_STQ_EPI32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
       out[index] = in0[0] + in1[index];
     }
   } else {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      int32x4_t vin0 = vld1q_s32(in0 + index);
-      int32x4_t vout = vaddq_s32(vin0, vin1_opt);
-      vst1q_s32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_INT32X8 vin0 = MS_LD256_EPI32(in0 + index);
+      MS_INT32X8 vout = MS_ADD256_EPI32(vin0, vin1_opt_8);
+      MS_ST256_EPI32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_INT32X4 vin0 = MS_LDQ_EPI32(in0 + index);
+      MS_INT32X4 vout = MS_ADDQ_EPI32(vin0, vin1_opt);
+      MS_STQ_EPI32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
@@ -82,29 +118,48 @@ int ElementOptAddInt(const int *in0, const int *in1, int *out, int size, const A
 }
 
 int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_NEON
-  float32x4_t vin0_opt = vdupq_n_f32(in0[0]);
-  float32x4_t vin1_opt = vdupq_n_f32(in1[0]);
-  float32x4_t zeros = vdupq_n_f32(0.0f);
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 vin0_opt_8 = MS_MOV256_F32(in0[0]);
+  MS_FLOAT32X8 vin1_opt_8 = MS_MOV256_F32(in1[0]);
+  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 vin0_opt = MS_MOVQ_F32(in0[0]);
+  MS_FLOAT32X4 vin1_opt = MS_MOVQ_F32(in1[0]);
+  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      float32x4_t vin1 = vld1q_f32(in1 + index);
-      float32x4_t vout = vmaxq_f32(vaddq_f32(vin0_opt, vin1), zeros);
-      vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+      MS_FLOAT32X8 vout = MS_MAX256_F32(MS_ADD256_F32(vin0_opt_8, vin1), zeros_8);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
+      MS_FLOAT32X4 vout = MS_MAXQ_F32(MS_ADDQ_F32(vin0_opt, vin1), zeros);
+      MS_STQ_F32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
       out[index] = MSMAX(in0[0] + in1[index], 0);
     }
   } else {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      float32x4_t vin0 = vld1q_f32(in0 + index);
-      float32x4_t vout = vmaxq_f32(vaddq_f32(vin0, vin1_opt), zeros);
-      vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+      MS_FLOAT32X8 vout = MS_MAX256_F32(MS_ADD256_F32(vin0, vin1_opt_8), zeros_8);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
+      MS_FLOAT32X4 vout = MS_MAXQ_F32(MS_ADDQ_F32(vin0, vin1_opt), zeros);
+      MS_STQ_F32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
@@ -115,30 +170,50 @@ int ElementOptAddRelu(const float *in0, const float *in1, float *out, int size, 
 }
 
 int ElementOptAddRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
-#ifdef ENABLE_NEON
-  float32x4_t vin0_opt = vdupq_n_f32(in0[0]);
-  float32x4_t vin1_opt = vdupq_n_f32(in1[0]);
-  float32x4_t zeros = vdupq_n_f32(0.0f);
-  float32x4_t bounds = vdupq_n_f32(6.0f);
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 vin0_opt_8 = MS_MOV256_F32(in0[0]);
+  MS_FLOAT32X8 vin1_opt_8 = MS_MOV256_F32(in1[0]);
+  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
+  MS_FLOAT32X8 bounds_8 = MS_MOV256_F32(6.0f);
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 vin0_opt = MS_MOVQ_F32(in0[0]);
+  MS_FLOAT32X4 vin1_opt = MS_MOVQ_F32(in1[0]);
+  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
+  MS_FLOAT32X4 bounds = MS_MOVQ_F32(6.0f);
 #endif
   int index = 0;
   if (param->in_elements_num0_ == 1) {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      float32x4_t vin1 = vld1q_f32(in1 + index);
-      float32x4_t vout = vminq_f32(vmaxq_f32(vaddq_f32(vin0_opt, vin1), zeros), bounds);
-      vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+      MS_FLOAT32X8 vout = MS_MIN256_F32(MS_MAX256_F32(MS_ADD256_F32(vin0_opt_8, vin1), zeros_8), bounds_8);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
+      MS_FLOAT32X4 vout = MS_MINQ_F32(MS_MAXQ_F32(MS_ADDQ_F32(vin0_opt, vin1), zeros), bounds);
+      MS_STQ_F32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
       out[index] = MSMIN(MSMAX(in0[0] + in1[index], 0), 6);
     }
   } else {
-#ifdef ENABLE_NEON
-    for (; index <= size - 4; index += C4NUM) {
-      float32x4_t vin0 = vld1q_f32(in0 + index);
-      float32x4_t vout = vminq_f32(vmaxq_f32(vaddq_f32(vin0, vin1_opt), zeros), bounds);
-      vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+    for (; index <= size - C8NUM; index += C8NUM) {
+      MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+      MS_FLOAT32X8 vout = MS_MIN256_F32(MS_MAX256_F32(MS_ADD256_F32(vin0, vin1_opt_8), zeros_8), bounds_8);
+      MS_ST256_F32(out + index, vout);
+    }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+    for (; index <= size - C4NUM; index += C4NUM) {
+      MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
+      MS_FLOAT32X4 vout = MS_MINQ_F32(MS_MAXQ_F32(MS_ADDQ_F32(vin0, vin1_opt), zeros), bounds);
+      MS_STQ_F32(out + index, vout);
     }
 #endif
     for (; index < size; index++) {
@@ -157,12 +232,20 @@ int BroadcastAdd(const float *in0, const float *in1, float *tile_in0, float *til
 
 int ElementAdd(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
-#ifdef ENABLE_NEON
-  for (; index <= size - 4; index += C4NUM) {
-    float32x4_t vin0 = vld1q_f32(in0 + index);
-    float32x4_t vin1 = vld1q_f32(in1 + index);
-    float32x4_t vout = vaddq_f32(vin0, vin1);
-    vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+  for (; index <= size - C8NUM; index += C8NUM) {
+    MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+    MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+    MS_FLOAT32X8 vout = MS_ADD256_F32(vin0, vin1);
+    MS_ST256_F32(out + index, vout);
+  }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  for (; index <= size - C4NUM; index += C4NUM) {
+    MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
+    MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
+    MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0, vin1);
+    MS_STQ_F32(out + index, vout);
   }
 #endif
   for (; index < size; index++) {
@@ -173,14 +256,24 @@ int ElementAdd(const float *in0, const float *in1, float *out, int size) {
 
 int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
-#ifdef ENABLE_NEON
-  float32x4_t zeros = vdupq_n_f32(0.0f);
-  for (; index <= size - 4; index += C4NUM) {
-    float32x4_t vin0 = vld1q_f32(in0 + index);
-    float32x4_t vin1 = vld1q_f32(in1 + index);
-    float32x4_t vout = vaddq_f32(vin0, vin1);
-    vout = vbslq_f32(vcgtq_f32(vout, zeros), vout, zeros);
-    vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
+  for (; index <= size - C8NUM; index += C8NUM) {
+    MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+    MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+    MS_FLOAT32X8 vout = MS_ADD256_F32(vin0, vin1);
+    vout = MS_BLEND256_PS(zeros_8, vout, MS_CMP256_PS(vout, zeros_8, 30));
+    MS_ST256_F32(out + index, vout);
+  }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
+  for (; index <= size - C4NUM; index += C4NUM) {
+    MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
+    MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
+    MS_FLOAT32X4 vout = MS_ADDQ_F32(vin0, vin1);
+    vout = MS_BLENDQ_PS(zeros, vout, MS_CMPGTQ_PS(vout, zeros));
+    MS_STQ_F32(out + index, vout);
   }
 #endif
   for (; index < size; index++) {
@@ -192,14 +285,24 @@ int ElementAddRelu(const float *in0, const float *in1, float *out, int size) {
 
 int ElementAddRelu6(const float *in0, const float *in1, float *out, int size) {
   int index = 0;
-#ifdef ENABLE_NEON
-  float32x4_t zeros = vdupq_n_f32(0.0f);
-  float32x4_t bounds = vdupq_n_f32(6.0f);
-  for (; index <= size - 4; index += C4NUM) {
-    float32x4_t vin0 = vld1q_f32(in0 + index);
-    float32x4_t vin1 = vld1q_f32(in1 + index);
-    float32x4_t vout = vminq_f32(vmaxq_f32(vaddq_f32(vin0, vin1), zeros), bounds);
-    vst1q_f32(out + index, vout);
+#ifdef ENABLE_AVX
+  MS_FLOAT32X8 zeros_8 = MS_MOV256_F32(0.0f);
+  MS_FLOAT32X8 bounds_8 = MS_MOV256_F32(6.0f);
+  for (; index <= size - C8NUM; index += C8NUM) {
+    MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
+    MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
+    MS_FLOAT32X8 vout = MS_MIN256_F32(MS_MAX256_F32(MS_ADD256_F32(vin0, vin1), zeros_8), bounds_8);
+    MS_ST256_F32(out + index, vout);
+  }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 zeros = MS_MOVQ_F32(0.0f);
+  MS_FLOAT32X4 bounds = MS_MOVQ_F32(6.0f);
+  for (; index <= size - C4NUM; index += C4NUM) {
+    MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
+    MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
+    MS_FLOAT32X4 vout = MS_MINQ_F32(MS_MAXQ_F32(MS_ADDQ_F32(vin0, vin1), zeros), bounds);
+    MS_STQ_F32(out + index, vout);
   }
 #endif
   for (; index < size; index++) {
@@ -210,12 +313,20 @@ int ElementAddRelu6(const float *in0, const float *in1, float *out, int size) {
 
 int ElementAddInt(const int *in0, const int *in1, int *out, int size) {
   int index = 0;
-#ifdef ENABLE_NEON
-  for (; index <= size - 4; index += C4NUM) {
-    int32x4_t vin0 = vld1q_s32(in0 + index);
-    int32x4_t vin1 = vld1q_s32(in1 + index);
-    int32x4_t vout = vaddq_s32(vin0, vin1);
-    vst1q_s32(out + index, vout);
+#ifdef ENABLE_AVX
+  for (; index <= size - C8NUM; index += C8NUM) {
+    MS_INT32X8 vin0 = MS_LD256_EPI32(in0 + index);
+    MS_INT32X8 vin1 = MS_LD256_EPI32(in1 + index);
+    MS_INT32X8 vout = MS_ADD256_EPI32(vin0, vin1);
+    MS_ST256_EPI32(out + index, vout);
+  }
+#endif
+#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
+  for (; index <= size - C4NUM; index += C4NUM) {
+    MS_INT32X4 vin0 = MS_LDQ_EPI32(in0 + index);
+    MS_INT32X4 vin1 = MS_LDQ_EPI32(in1 + index);
+    MS_INT32X4 vout = MS_ADDQ_EPI32(vin0, vin1);
+    MS_STQ_EPI32(out + index, vout);
   }
 #endif
   for (; index < size; index++) {
