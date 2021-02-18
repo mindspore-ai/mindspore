@@ -323,7 +323,7 @@ class SideEffectFinder {
   }
 
   static void UpdateOrderList(const FuncGraphPtr &func_graph) {
-    std::list<CNodePtr> new_order_list;
+    OrderedSet<CNodePtr> new_order_list;
     const auto &order_list = func_graph->order_list();
     for (auto &cnode : order_list) {
       PushToOrderList(func_graph, cnode, &new_order_list);
@@ -331,10 +331,9 @@ class SideEffectFinder {
     func_graph->set_order_list(std::move(new_order_list));
   }
 
-  static void PushToOrderList(const FuncGraphPtr &fg, const CNodePtr &cnode, std::list<CNodePtr> *new_order_list) {
+  static void PushToOrderList(const FuncGraphPtr &fg, const CNodePtr &cnode, OrderedSet<CNodePtr> *new_order_list) {
     MS_EXCEPTION_IF_NULL(cnode);
-    auto iter = std::find(new_order_list->begin(), new_order_list->end(), cnode);
-    if (iter != new_order_list->end()) {
+    if (new_order_list->contains(cnode)) {
       return;
     }
     for (auto &input : cnode->inputs()) {

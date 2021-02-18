@@ -4,6 +4,9 @@ mindspore/lib
 output
 *.ir
 st_tests
+kernel_meta/
+somas_meta/
+trace_code_graph_*
 
 # mindspore lite java
 mindspore/lite/java/java/.gradle

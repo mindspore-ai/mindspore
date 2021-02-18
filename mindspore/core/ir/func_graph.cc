@@ -136,23 +136,21 @@ CNodePtr FuncGraph::NewCNodeInFront(const std::vector<AnfNodePtr> &inputs) {
 
 CNodePtr FuncGraph::NewCNodeBefore(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs) {
   CNodePtr cnode = NewCNode(inputs);
-  auto iter = std::find(order_.begin(), order_.end(), position);
+  CNodePtr pos_cnode = dyn_cast<CNode>(position);
+  auto iter = order_.find(pos_cnode);
   order_.insert(iter, cnode);
   return cnode;
 }
 
 CNodePtr FuncGraph::NewCNodeAfter(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs) {
   CNodePtr cnode = NewCNode(inputs);
-  if (!position->isa<CNode>()) {
-    order_.push_front(cnode);
-    return cnode;
-  }
-  auto iter = std::find(order_.begin(), order_.end(), position);
+  CNodePtr pos_cnode = dyn_cast<CNode>(position);
+  auto iter = order_.find(pos_cnode);
   if (iter == order_.end()) {
     order_.push_front(cnode);
-    return cnode;
+  } else {
+    order_.insert(std::next(iter), cnode);
   }
-  order_.insert(std::next(iter), cnode);
   return cnode;
 }
 
@@ -616,7 +614,7 @@ void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &node) {
   if (node) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode) {
-      order_.remove(cnode);
+      order_.erase(cnode);
       MS_LOG(DEBUG) << "Remove the node" << node->DebugString() << " from order list.";
     }
   }
@@ -636,7 +634,7 @@ void FuncGraph::ReplaceInOrder(const AnfNodePtr &old_node, const AnfNodePtr &new
     return;
   }
   // Search old node in order list.
-  auto iter = std::find(order_.begin(), order_.end(), old_cnode);
+  auto iter = order_.find(old_cnode);
   if (iter == order_.end()) {
     // Skip if old node not found in order list.
     return;

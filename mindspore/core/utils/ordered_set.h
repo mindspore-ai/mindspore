@@ -58,6 +58,8 @@ class OrderedSet {
     }
   }
 
+  OrderedSet(OrderedSet &&os) = default;
+
   explicit OrderedSet(const sequential_type &other) {
     for (auto &item : other) {
       add(item);
@@ -80,22 +82,26 @@ class OrderedSet {
     return *this;
   }
 
-  // Add an element to the OrderedSet, without judging return value
-  void add(const element_type &e) { (void)insert(e); }
+  OrderedSet &operator=(OrderedSet &&os) = default;
 
-  // insert an element to the OrderedSet
-  std::pair<iterator, bool> insert(const element_type &e) {
-    iterator empty_itr;
-    std::pair<element_type, typename map_type::mapped_type> map_pair = std::make_pair(e, empty_itr);
-    auto result = mapped_data_.insert(map_pair);
-    auto &seq_idx = result.first->second;
-    // if insert success;
+  // insert an element to the OrderedSet after the given position.
+  std::pair<iterator, bool> insert(iterator pos, const element_type &e) {
+    auto result = mapped_data_.emplace(e, ordered_data_.end());
     if (result.second) {
-      auto it = ordered_data_.insert(ordered_data_.end(), e);
-      seq_idx = it;
+      result.first->second = ordered_data_.emplace(pos, e);
     }
-    return std::pair<iterator, bool>(seq_idx, result.second);
+    return {result.first->second, result.second};
   }
+
+  // Add an element to the OrderedSet, without judging return value
+  void add(const element_type &e) { (void)insert(ordered_data_.end(), e); }
+
+  // insert an element to the end of OrderedSet.
+  std::pair<iterator, bool> insert(const element_type &e) { return insert(ordered_data_.end(), e); }
+
+  void push_back(const element_type &e) { (void)insert(ordered_data_.end(), e); }
+
+  void push_front(const element_type &e) { (void)insert(ordered_data_.begin(), e); }
 
   // Remove an element, if removed return true, otherwise return false
   bool erase(const element_type &e) {
@@ -107,6 +113,16 @@ class OrderedSet {
     (void)ordered_data_.erase(pos->second);
     (void)mapped_data_.erase(pos);
     return true;
+  }
+
+  iterator erase(iterator pos) {
+    (void)mapped_data_.erase(*pos);
+    return ordered_data_.erase(pos);
+  }
+
+  iterator erase(const_iterator pos) {
+    (void)mapped_data_.erase(*pos);
+    return ordered_data_.erase(pos);
   }
 
   // Return the container size
@@ -266,6 +282,22 @@ class OrderedSet {
   ordered_set_type operator-(const OrderedSet &other) { return difference(other); }
 
   bool contains(const element_type &e) const { return (mapped_data_.find(e) != mapped_data_.end()); }
+
+  const_iterator find(const element_type &e) const {
+    auto iter = mapped_data_.find(e);
+    if (iter == mapped_data_.end()) {
+      return ordered_data_.end();
+    }
+    return iter->second;
+  }
+
+  iterator find(const element_type &e) {
+    auto iter = mapped_data_.find(e);
+    if (iter == mapped_data_.end()) {
+      return ordered_data_.end();
+    }
+    return iter->second;
+  }
 
   // Return the count of an element in set
   std::size_t count(const element_type &e) const { return mapped_data_.count(e); }

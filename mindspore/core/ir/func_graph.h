@@ -359,15 +359,15 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void EraseUnusedNodeInOrder(const AnfNodePtr &n);
   void EraseUnusedNodeInOrder();
   void DumpCNodeList();
-  const std::list<CNodePtr> &order_list() const { return order_; }
+  const OrderedSet<CNodePtr> &order_list() const { return order_; }
 
-  void set_order_list(std::list<CNodePtr> &&order_list) { order_ = std::move(order_list); }
+  void set_order_list(OrderedSet<CNodePtr> &&order_list) { order_ = std::move(order_list); }
 
   // Add a cnode at the end of order list.
   void AppendOrderList(const CNodePtr &cnode) { order_.push_back(cnode); }
 
   // Prepend cnode at the front of order list.
-  void PrependOrderList(const CNodePtr &cnode) { order_.insert(order_.begin(), cnode); }
+  void PrependOrderList(const CNodePtr &cnode) { order_.push_front(cnode); }
 
   // Maintain cnode order list when a cnode is replaced by a new one.
   void ReplaceInOrder(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
@@ -461,7 +461,7 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
                              const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes);
 
   // CNode order which relates to origin code order
-  std::list<CNodePtr> order_;
+  OrderedSet<CNodePtr> order_;
   bool stub_;
   inline static Drawer drawer_ = nullptr;
   // Design switch_layer_input as a ptr to
