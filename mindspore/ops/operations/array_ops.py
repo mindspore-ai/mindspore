@@ -3255,7 +3255,9 @@ class ScatterUpdate(_ScatterOp_Dynamic):
     Using given values to update tensor value, along with the input indices.
 
     for each `i, ..., j` in `indices.shape`:
+
     .. math::
+
         \text{input_x}[\text{indices}[i, ..., j], :] = \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -3368,7 +3370,9 @@ class ScatterMax(_ScatterOp):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     for each `i, ..., j` in `indices.shape`:
+
     .. math::
+
         \text{input_x}[\text{indices}[i, ..., j], :]
         = max(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
@@ -3418,7 +3422,9 @@ class ScatterMin(_ScatterOp):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     for each `i, ..., j` in `indices.shape`:
+
     .. math::
+
         \text{input_x}[\text{indices}[i, ..., j], :]
         = min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
 
@@ -3462,7 +3468,9 @@ class ScatterAdd(_ScatterOp_Dynamic):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     for each `i, ..., j` in `indices.shape`:
+
     .. math::
+
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{+}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -3511,7 +3519,9 @@ class ScatterSub(_ScatterOp):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     for each `i, ..., j` in `indices.shape`:
+
     .. math::
+
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{-}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -3555,7 +3565,9 @@ class ScatterMul(_ScatterOp):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     for each `i, ..., j` in `indices.shape`:
+
     .. math::
+
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{*}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
@@ -3598,7 +3610,9 @@ class ScatterDiv(_ScatterOp):
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
     for each `i, ..., j` in `indices.shape`:
+
     .. math::
+
         \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{/}= \text{updates}[i, ..., j, :]
 
     Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
