@@ -3176,8 +3176,7 @@ class FloatStatus(PrimitiveWithInfer):
         - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
 
     Outputs:
-        Tensor, has the shape of `(1,)`, and has the same dtype of input `mindspore.dtype.float32` or
-        `mindspore.dtype.float16`.
+        Tensor, has the shape of `(1,)`, and the dtype is `mindspore.dtype.float32`.
 
     Supported Platforms:
         ``GPU``
@@ -3200,7 +3199,7 @@ class FloatStatus(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float32, mstype.float16], self.name)
-        return x_dtype
+        return mstype.float32
 
 
 class NPUAllocFloatStatus(PrimitiveWithInfer):
