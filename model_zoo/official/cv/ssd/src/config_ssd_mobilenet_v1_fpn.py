@@ -20,8 +20,7 @@ from easydict import EasyDict as ed
 config = ed({
     "model": "ssd_mobilenet_v1_fpn",
     "img_shape": [640, 640],
-    "num_ssd_boxes": 51150,
-    "neg_pre_positive": 3,
+    "num_ssd_boxes": -1,
     "match_threshold": 0.5,
     "nms_threshold": 0.6,
     "min_score": 0.1,
@@ -32,8 +31,8 @@ config = ed({
     "lr_init": 0.01333,
     "lr_end_rate": 0.0,
     "warmup_epochs": 2,
+    "weight_decay": 4e-5,
     "momentum": 0.9,
-    "weight_decay": 1.5e-4,
 
     # network
     "num_default": [6, 6, 6, 6, 6],
@@ -48,7 +47,7 @@ config = ed({
     "steps": (8, 16, 32, 64, 128),
     "prior_scaling": (0.1, 0.2),
     "gamma": 2.0,
-    "alpha": 0.75,
+    "alpha": 0.25,
     "num_addition_layers": 4,
     "use_anchor_generator": True,
     "use_global_norm": True,

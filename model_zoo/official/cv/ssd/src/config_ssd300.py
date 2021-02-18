@@ -21,7 +21,6 @@ config = ed({
     "model": "ssd300",
     "img_shape": [300, 300],
     "num_ssd_boxes": 1917,
-    "neg_pre_positive": 3,
     "match_threshold": 0.5,
     "nms_threshold": 0.6,
     "min_score": 0.1,
