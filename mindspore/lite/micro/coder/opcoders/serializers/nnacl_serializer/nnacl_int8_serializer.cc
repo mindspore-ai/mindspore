@@ -19,6 +19,47 @@
 #include "micro/coder/log.h"
 
 namespace mindspore::lite::micro::nnacl {
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParameter &conv_parameter) {
+  const ConvQuantArg &quant_arg = conv_parameter.conv_quant_arg_;
+  std::string quant_arg_in = name + "_quant_arg_in";
+  std::string quant_arg_w = name + "_quant_arg_w";
+  std::string quant_arg_out = name + "_quant_arg_out";
+  CodeArray(quant_arg_in, quant_arg.input_quant_args_, quant_arg.input_arg_num_, false);
+  CodeArray(quant_arg_w, quant_arg.filter_quant_args_, quant_arg.filter_arg_num_, false);
+  CodeArray(quant_arg_out, quant_arg.output_quant_args_, quant_arg.output_arg_num_, false);
+
+  std::string real_multiplier = name + "_real_multiplier";
+  std::string left_shift = name + "_left_shift";
+  std::string right_shift = name + "_right_shift";
+  std::string quant_multiplier = name + "_quant_multiplier";
+  CodeArray(real_multiplier, quant_arg.real_multiplier_, quant_arg.filter_arg_num_, false);
+  CodeArray(left_shift, quant_arg.left_shift_, quant_arg.filter_arg_num_, false);
+  CodeArray(right_shift, quant_arg.right_shift_, quant_arg.filter_arg_num_, false);
+  CodeArray(quant_multiplier, quant_arg.quant_multiplier_, quant_arg.filter_arg_num_, false);
+
+  std::string out_act_min = name + "_out_act_min";
+  std::string out_act_max = name + "_out_act_max";
+  CodeArray(out_act_min, quant_arg.out_act_min_, 1, false);
+  CodeArray(out_act_max, quant_arg.out_act_max_, 1, false);
+
+  std::string conv_quant_arg = name + "_conv_quant_arg";
+
+  CodeBaseStruct("ConvQuantArg", conv_quant_arg, quant_arg.round_mode_, quant_arg.quant_multiplier_mode_, quant_arg_in,
+                 quant_arg_w, quant_arg_out, real_multiplier, left_shift, right_shift, quant_multiplier, out_act_min,
+                 out_act_max, quant_arg.input_arg_num_, quant_arg.filter_arg_num_, quant_arg.output_arg_num_,
+                 quant_arg.per_channel_);
+
+  CodeBaseStruct(
+    "ConvParameter", name, conv_parameter.op_parameter_, conv_quant_arg, conv_parameter.kernel_h_,
+    conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_, conv_parameter.dilation_h_,
+    conv_parameter.dilation_w_, conv_parameter.pad_u_, conv_parameter.pad_d_, conv_parameter.pad_l_,
+    conv_parameter.pad_r_, conv_parameter.group_, conv_parameter.tile_num_, conv_parameter.input_batch_,
+    conv_parameter.input_h_, conv_parameter.input_w_, conv_parameter.input_channel_, conv_parameter.output_batch_,
+    conv_parameter.output_h_, conv_parameter.output_w_, conv_parameter.output_channel_, conv_parameter.thread_num_,
+    conv_parameter.input_unit_, conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_);
+}
+
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ArithmeticParameter &arithmetic_parameter) {
   CodeBaseStruct("ArithmeticParameter", name, arithmetic_parameter.op_parameter_, arithmetic_parameter.broadcasting_,
                  arithmetic_parameter.ndim_, arithmetic_parameter.activation_type_,

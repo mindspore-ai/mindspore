@@ -47,6 +47,18 @@ inline std::ostream &operator<<(std::ostream &code, RoundMode round_mode) {
   return code;
 }
 
+inline std::ostream &operator<<(std::ostream &code, RoundingMode rounding_mode) {
+  code << "(RoundingMode)"
+       << "(" << static_cast<int>(rounding_mode) << ")";
+  return code;
+}
+
+inline std::ostream &operator<<(std::ostream &code, PadMode pad_mode) {
+  code << "(PadMode)"
+       << "(" << static_cast<int>(pad_mode) << ")";
+  return code;
+}
+
 inline std::ostream &operator<<(std::ostream &code, ActType act_type) {
   code << "(ActType)"
        << "(" << static_cast<int>(act_type) << ")";
