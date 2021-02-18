@@ -348,22 +348,10 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
 
   // Create broadcast basic op.
   auto dst_shape_vec = GetShape(atomic_add_node_);
-  if (dst_shape_vec.empty()) {
-    dst_shape_vec.push_back(1);
-  }
-  AnfNodePtrList atomic_clean_inputs = {NewValueNode(std::make_shared<Primitive>(kBroadcastToOpName)),
-                                        broadcast_input_node};
+  AnfNodePtrList atomic_clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node};
   auto broadcast_to_node_inner = CreateCNode(
     atomic_clean_inputs, new_sub_graph, {.format = format, .shape = dst_shape_vec, .type = GetType(atomic_add_node_)});
-
-  auto device_shape = AnfAlgo::GetOutputDeviceShape(atomic_add_node_, 0);
-  dst_shape_vec.clear();
-  if (device_shape.empty()) {
-    dst_shape_vec.push_back(1);
-  } else {
-    std::transform(device_shape.begin(), device_shape.end(), std::back_inserter(dst_shape_vec), SizeToLong);
-  }
-  SetNodeAttrSafely("shape", MakeValue(dst_shape_vec), broadcast_to_node_inner);
+  SetNodeAttrSafely("shape", MakeValue(GetDeviceShape(atomic_add_node_)), broadcast_to_node_inner);
 
   // Makeup sub-graph.
   new_sub_graph->set_output(broadcast_to_node_inner);

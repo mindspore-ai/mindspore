@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ namespace mindspore {
 namespace opt {
 class TensorPromotion : public Pass {
  public:
-  TensorPromotion() : Pass("graph_kernel_tensor_promotion") {}
+  TensorPromotion() : Pass("tensor_promotion") {}
   ~TensorPromotion() override = default;
   bool Run(const FuncGraphPtr &func_graph);
 };

@@ -85,6 +85,7 @@ void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNo
 std::string GetFormat(const AnfNodePtr &node);
 TypePtr GetType(const AnfNodePtr &node);
 ShapeVector GetShape(const AnfNodePtr &node);
+ShapeVector GetDeviceShape(const AnfNodePtr &node);
 std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
 
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info);
