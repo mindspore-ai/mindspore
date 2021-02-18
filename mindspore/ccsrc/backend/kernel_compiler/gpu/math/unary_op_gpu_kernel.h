@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ enum UnaryOptype {
   UNARY_OP_ERFC,
   UNARY_OP_NEG,
   UNARY_OP_RECIPROCAL,
-  UNARY_OP_ZEROSLIKE,
   UNARY_OP_SQUARE,
   UNARY_OP_SQRT,
   UNARY_OP_RSQRT,
@@ -51,27 +50,19 @@ enum UnaryOptype {
   UNARY_OP_FLOOR,
   UNARY_OP_INVALID_TYPE = 255
 };
-static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY_OP_EXP},
-                                                                   {"Expm1", UNARY_OP_EXPM1},
-                                                                   {"Log", UNARY_OP_LOG},
-                                                                   {"Log1p", UNARY_OP_LOG1P},
-                                                                   {"Erf", UNARY_OP_ERF},
-                                                                   {"Erfc", UNARY_OP_ERFC},
-                                                                   {"Neg", UNARY_OP_NEG},
-                                                                   {"Reciprocal", UNARY_OP_RECIPROCAL},
-                                                                   {"ZerosLike", UNARY_OP_ZEROSLIKE},
-                                                                   {"Square", UNARY_OP_SQUARE},
-                                                                   {"Sqrt", UNARY_OP_SQRT},
-                                                                   {"Rsqrt", UNARY_OP_RSQRT},
-                                                                   {"Sin", UNARY_OP_SIN},
-                                                                   {"Cos", UNARY_OP_COS},
-                                                                   {"Asin", UNARY_OP_ASIN},
-                                                                   {"ACos", UNARY_OP_ACOS},
-                                                                   {"Atan", UNARY_OP_ATAN},
-                                                                   {"Asinh", UNARY_OP_ASINH},
-                                                                   {"Acosh", UNARY_OP_ACOSH},
-                                                                   {"Abs", UNARY_OP_ABS},
-                                                                   {"Floor", UNARY_OP_FLOOR}};
+
+static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
+  {"Exp", UNARY_OP_EXP},       {"Expm1", UNARY_OP_EXPM1},
+  {"Log", UNARY_OP_LOG},       {"Log1p", UNARY_OP_LOG1P},
+  {"Erf", UNARY_OP_ERF},       {"Erfc", UNARY_OP_ERFC},
+  {"Neg", UNARY_OP_NEG},       {"Reciprocal", UNARY_OP_RECIPROCAL},
+  {"Square", UNARY_OP_SQUARE}, {"Sqrt", UNARY_OP_SQRT},
+  {"Rsqrt", UNARY_OP_RSQRT},   {"Sin", UNARY_OP_SIN},
+  {"Cos", UNARY_OP_COS},       {"Asin", UNARY_OP_ASIN},
+  {"ACos", UNARY_OP_ACOS},     {"Atan", UNARY_OP_ATAN},
+  {"Asinh", UNARY_OP_ASINH},   {"Acosh", UNARY_OP_ACOSH},
+  {"Abs", UNARY_OP_ABS},       {"Floor", UNARY_OP_FLOOR}};
+
 template <typename T>
 class UnaryOpGpuKernel : public GpuKernel {
  public:
@@ -159,10 +150,6 @@ class UnaryOpGpuKernel : public GpuKernel {
       case UNARY_OP_ACOSH: {
         Acosh(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
-      }
-      case UNARY_OP_ZEROSLIKE: {
-        Zeroslike(output_addr, output_size_ / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
-        return true;
       }
       case UNARY_OP_ABS: {
         Abs(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));

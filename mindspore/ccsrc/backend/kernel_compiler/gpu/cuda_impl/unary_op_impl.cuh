@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,6 @@ template <typename T>
 void Asinh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Acosh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
-template <typename T>
-void Zeroslike(T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Abs(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
