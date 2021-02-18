@@ -415,7 +415,7 @@ bool IsParentOrChildrenType(TypePtr const &x, TypePtr const &base_type) {
 
 bool IsIdentidityOrSubclass(TypePtr const &x, TypePtr const &base_type) {
   if (x == nullptr || base_type == nullptr) {
-    MS_LOG(ERROR) << "Type is nullptr.";
+    MS_LOG(WARNING) << "Type is nullptr.";
     return false;
   }
   if (base_type->type_id() == kTypeUnknown || x->type_id() == kTypeUnknown) {
