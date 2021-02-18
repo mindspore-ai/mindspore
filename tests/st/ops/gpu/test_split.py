@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,18 +46,64 @@ class NetDynamic(nn.Cell):
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_split():
+def split_basic(nptype):
     x = np.array([[[1, -1, 1], [2, -2, 2]],
                   [[3, -3, 3], [4, -4, 4]],
-                  [[5, -5, 5], [6, -6, 6]]]).astype(np.float32)
+                  [[5, -5, 5], [6, -6, 6]]]).astype(nptype)
 
     split_op = Net(0, 3)
     outputs = split_op(Tensor(x))
     for i, out in enumerate(outputs):
         assert (out.asnumpy() == x[i]).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_basic_float16():
+    split_basic(np.float16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_basic_float32():
+    split_basic(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_basic_float64():
+    split_basic(np.float64)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_basic_int32():
+    split_basic(np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_basic_uint32():
+    split_basic(np.uint32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_basic_int64():
+    split_basic(np.int64)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_split_basic_bool():
+    split_basic(np.bool)
 
 
 @pytest.mark.level0
