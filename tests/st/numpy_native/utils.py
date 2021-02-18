@@ -118,25 +118,25 @@ def match_meta(actual, expected):
     assert actual.dtype == expected.dtype
 
 
-def run_binop_test(mnp_fn, onp_fn, test_case):
+def run_binop_test(mnp_fn, onp_fn, test_case, error=0):
     for arr in test_case.arrs:
-        match_res(mnp_fn, onp_fn, arr, arr)
+        match_res(mnp_fn, onp_fn, arr, arr, error=error)
 
         for scalar in test_case.scalars:
-            match_res(mnp_fn, onp_fn, arr, scalar)
-            match_res(mnp_fn, onp_fn, scalar, arr)
+            match_res(mnp_fn, onp_fn, arr, scalar, error=error)
+            match_res(mnp_fn, onp_fn, scalar, arr, error=error)
 
     for scalar1 in test_case.scalars:
         for scalar2 in test_case.scalars:
-            match_res(mnp_fn, onp_fn, scalar1, scalar2)
+            match_res(mnp_fn, onp_fn, scalar1, scalar2, error=error)
 
     for expanded_arr1 in test_case.expanded_arrs:
         for expanded_arr2 in test_case.expanded_arrs:
-            match_res(mnp_fn, onp_fn, expanded_arr1, expanded_arr2)
+            match_res(mnp_fn, onp_fn, expanded_arr1, expanded_arr2, error=error)
 
     for broadcastable1 in test_case.broadcastables:
         for broadcastable2 in test_case.broadcastables:
-            match_res(mnp_fn, onp_fn, broadcastable1, broadcastable2)
+            match_res(mnp_fn, onp_fn, broadcastable1, broadcastable2, error=error)
 
 
 def run_unary_test(mnp_fn, onp_fn, test_case, error=0):

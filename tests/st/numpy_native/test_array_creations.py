@@ -369,8 +369,8 @@ def test_linspace():
         2.0, [3, 4, 5], num=5, endpoint=False).asnumpy()
     match_array(actual, expected, error=6)
 
-    start = onp.random.random([2, 1, 4])
-    stop = onp.random.random([1, 5, 1])
+    start = onp.random.random([2, 1, 4]).astype("float32")
+    stop = onp.random.random([1, 5, 1]).astype("float32")
     actual = onp.linspace(start, stop, num=20, retstep=True,
                           endpoint=False, dtype=onp.float32)
     expected = mnp.linspace(mnp.asarray(start), mnp.asarray(stop), num=20,
