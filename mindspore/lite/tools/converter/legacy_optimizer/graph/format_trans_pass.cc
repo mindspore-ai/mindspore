@@ -18,6 +18,7 @@
 #include <string>
 #include <memory>
 #include <utility>
+#include <vector>
 #include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 #include "tools/common/node_util.h"
 #include "src/common/log_adapter.h"
@@ -30,7 +31,7 @@ namespace lite {
 #define kOutputNum 1
 
 STATUS FormatTransPass::Run(schema::MetaGraphT *graph) {
-  if (fmkType == converter::FmkType_TF) {
+  if (fmk_type_ == converter::FmkType_TF) {
     return RET_OK;
   }
   MS_ASSERT(graph != nullptr);
@@ -48,7 +49,7 @@ STATUS FormatTransPass::Run(schema::MetaGraphT *graph) {
 }
 
 STATUS FormatTransPass::DoModelInputFormatTrans(schema::MetaGraphT *graph) {
-  if (fmkType == converter::FmkType_TF || fmkType == converter::FmkType_TFLITE) {
+  if (fmk_type_ == converter::FmkType_TF || fmk_type_ == converter::FmkType_TFLITE) {
     return RET_OK;
   }
   MS_ASSERT(graph != nullptr);
@@ -104,28 +105,28 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
   // insert before and after the op cal by nchw/nc4hw4
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     FormatTransNodeType beforeNodeType, afterNodeType;
-    if (fmkType == converter::FmkType_TFLITE) {  // inference by nhwc
+    if (fmk_type_ == converter::FmkType_TFLITE) {  // inference by nhwc
       continue;
-    } else if (fmkType == converter::FmkType_CAFFE) {  // inference by nchw
+    } else if (fmk_type_ == converter::FmkType_CAFFE) {  // inference by nchw
       if (!IsContain(GetNhwcOpList(), GetCNodeTType(**iter))) {
         continue;
       }
       beforeNodeType = kNCHW2NHWC;
       afterNodeType = kNHWC2NCHW;
-    } else if (fmkType == converter::FmkType_MS) {
+    } else if (fmk_type_ == converter::FmkType_MS) {
       if (!IsContain(GetNhwcOpList(), GetCNodeTType(**iter))) {
         continue;
       }
       beforeNodeType = kNCHW2NHWC;
       afterNodeType = kNHWC2NCHW;
-    } else if (fmkType == converter::FmkType_ONNX) {
+    } else if (fmk_type_ == converter::FmkType_ONNX) {
       if (!IsContain(GetNhwcOpList(), GetCNodeTType(**iter))) {
         continue;
       }
       beforeNodeType = kNCHW2NHWC;
       afterNodeType = kNHWC2NCHW;
     } else {
-      MS_LOG(ERROR) << "Unsupported fmk: " << fmkType;
+      MS_LOG(ERROR) << "Unsupported fmk: " << fmk_type_;
       return RET_ERROR;
     }
     auto &node = *iter;
@@ -149,7 +150,9 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
 #ifdef SUPPORT_TRAIN
     if (IsContain(GetNhwcAllInputOpList(), GetCNodeTType(**iter))) {
       int idx_num = node->inputIndex.size();
-      if (GetCNodeTType(**iter) == schema::PrimitiveType_BatchNormGrad) idx_num = 2;
+      if (GetCNodeTType(**iter) == schema::PrimitiveType_BatchNormGrad ||
+          GetCNodeTType(**iter) == schema::PrimitiveType_Conv2DBackpropFilterFusion)
+        idx_num = 2;
       for (int i = 0; i < idx_num; i++) {
         iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
         if (status != RET_OK) {
@@ -203,10 +206,10 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
   perm_tensor->dims = {4};
   std::vector<int> perm;
   if (nodeType == kNCHW2NHWC) {
-    transNode->name = "nchw2nhwc_" + tileName + std::to_string(id++);
+    transNode->name = "nchw2nhwc_" + tileName + std::to_string(id_++);
     perm = {0, 2, 3, 1};
   } else {
-    transNode->name = "nhwc2nchw_" + tileName + std::to_string(id++);
+    transNode->name = "nhwc2nchw_" + tileName + std::to_string(id_++);
     perm = {0, 3, 1, 2};
   }
   size_t bytes = perm.size() * sizeof(int);
@@ -244,8 +247,188 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
   return iter;
 }
 
-void FormatTransPass::SetQuantType(QuantType quantType) { this->quantType = quantType; }
+STATUS FormatTransPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node) {
+  MS_ASSERT(node->primitive != nullptr);
+  auto type = node->primitive->value.type;
+  auto input1_ndim = graph->allTensors.at(node->inputIndex[0])->dims.size();
+  if (input1_ndim != 4) {
+    if (node->inputIndex.size() > 1) {
+      auto input2_ndim = graph->allTensors.at(node->inputIndex[1])->dims.size();
+      if (input2_ndim != 4 && input2_ndim != 0) {
+        MS_LOG(ERROR) << "change op axis only support 4 dims";
+        return RET_NOT_SUPPORT;
+      }
+    } else {
+      MS_LOG(ERROR) << "change op axis only support 4 dims";
+      return RET_NOT_SUPPORT;
+    }
+  }
+  if (type == schema::PrimitiveType_Concat) {
+    MS_ASSERT(node->primitive->value.AsConcat() != nullptr);
+    auto origin_axis = node->primitive->value.AsConcat()->axis;
+    auto axis_map = GetNc2NhAxisMap();
+    if (node->primitive->value.AsConcat() == nullptr) {
+      MS_LOG(ERROR) << "node->primitive->value.AsConcat() is nullptr";
+      return RET_NULL_PTR;
+    }
+    node->primitive->value.AsConcat()->axis = axis_map[origin_axis < 0 ? origin_axis + 4 : origin_axis];
+  }
+  if (type == schema::PrimitiveType_Split) {
+    MS_ASSERT(node->primitive->value.AsSplit() != nullptr);
+    auto origin_axis = node->primitive->value.AsSplit()->axis;
+    auto axis_map = GetNc2NhAxisMap();
+    if (node->primitive->value.AsSplit() == nullptr) {
+      MS_LOG(ERROR) << "node->primitive->value.AsSplit() is nullptr";
+      return RET_NULL_PTR;
+    }
+    node->primitive->value.AsSplit()->axis = axis_map[origin_axis];
+  }
+  if (type == schema::PrimitiveType_Crop) {
+    MS_ASSERT(node->primitive->value.AsCrop() != nullptr);
+    auto origin_axis = node->primitive->value.AsCrop()->axis;
+    auto offsets = node->primitive->value.AsCrop()->offsets;
+    auto axis_map = GetNc2NhAxisMap();
+    if (node->primitive->value.AsCrop() == nullptr) {
+      MS_LOG(ERROR) << "node->primitive->value.AsCrop() is nullptr";
+      return RET_NULL_PTR;
+    }
+    // nchw->nhwc,offsets need pad 0;
+    if (axis_map[origin_axis] == 0) {
+      offsets = {offsets[0], offsets[2], offsets[3], offsets[1]};
+    } else if (axis_map[origin_axis] == 1 || axis_map[origin_axis] == 2) {
+      // orgin_axis = 2 or orgin_axis = 3
+      offsets.push_back(0);
+    } else if (axis_map[origin_axis] == -1) {
+      // origin_axis = 1
+      offsets = {offsets[1], offsets[2], offsets[0]};
+    } else {
+      // axis error
+      MS_LOG(ERROR) << "Crop error";
+      return RET_ERROR;
+    }
+    node->primitive->value.AsCrop()->offsets = offsets;
+  }
+  if (type == schema::PrimitiveType_SliceFusion || type == schema::PrimitiveType_StridedSlice) {
+    return ChangeOpSliceAndStridedSlice(graph, node);
+  }
+  return RET_OK;
+}
 
-void FormatTransPass::SetFmk(converter::FmkType fmkType) { this->fmkType = fmkType; }
+void FormatTransPass::TransformAttrByAxes(int *origin_attr, int *axes, int element_size) {
+  if (origin_attr == nullptr || axes == nullptr || element_size == 0) {
+    MS_LOG(INFO) << "Attr data is from other nodes.";
+    return;
+  }
+  auto axis_map = GetNc2NhAxisMap();
+  std::vector<int> cur_attr;
+  for (int dim = 0; dim < 4; ++dim) {
+    for (int index = 0; index < element_size; ++index) {
+      int nhwc_dim = axis_map[axes[index] < 0 ? axes[index] + 4 : axes[index]];
+      if (nhwc_dim == dim || (nhwc_dim + 4) == dim) {
+        cur_attr.push_back(origin_attr[index]);
+      }
+    }
+  }
+  for (int index = 0; index < element_size; ++index) {
+    origin_attr[index] = cur_attr[index];
+  }
+}
+
+void FormatTransPass::TransformOpAxisAttr(int *origin_axis, int element_size) {
+  if (origin_axis == nullptr || element_size == 0) {
+    MS_LOG(INFO) << "Attr data is from other nodes.";
+    return;
+  }
+  auto axis_map = GetNc2NhAxisMap();
+  std::vector<int> new_axis;
+  for (int i = 0; i < element_size; ++i) {
+    int axis = axis_map[origin_axis[i]];
+    axis = axis < 0 ? axis + 4 : axis;
+    new_axis.push_back(axis);
+  }
+  std::sort(new_axis.begin(), new_axis.end());
+  for (int i = 0; i < element_size; ++i) {
+    origin_axis[i] = new_axis[i];
+  }
+}
+
+STATUS FormatTransPass::ChangeOpSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node) {
+  auto attr = node->primitive->value.AsSliceFusion();
+  if (attr == nullptr) {
+    MS_LOG(ERROR) << "node->primitive->value.AsSliceFusion() is nullptr.";
+    return RET_NULL_PTR;
+  }
+  // transform attr
+  if (node->inputIndex.size() < 2) {
+    MS_LOG(ERROR) << "slice input is error";
+    return RET_ERROR;
+  }
+  for (size_t index = 1; index < node->inputIndex.size(); ++index) {
+    if (graph->allTensors[node->inputIndex[index]]->data.data() == nullptr) {
+      MS_LOG(INFO) << "Here don't consider input is from other nodes.";
+      return RET_NOT_SUPPORT;
+    }
+  }
+  int element_num = graph->allTensors[node->inputIndex[1]]->dims[0];
+  std::vector<int> axes;
+  auto axes_attr = attr->axes;
+  if (axes_attr.empty()) {
+    for (int index = 0; index < element_num; ++index) {
+      axes.push_back(index);
+    }
+  } else {
+    std::transform(axes_attr.begin(), axes_attr.end(), std::back_inserter(axes),
+                   [](int64_t val) { return static_cast<int>(val); });
+  }
+  for (size_t index = 1; index < node->inputIndex.size(); ++index) {
+    TransformAttrByAxes(reinterpret_cast<int *>(graph->allTensors[node->inputIndex[index]]->data.data()),
+                        reinterpret_cast<int *>(axes.data()), element_num);
+  }
+  TransformOpAxisAttr(axes.data(), element_num);
+  attr->axes.clear();
+  for (int i = 0; i < element_num; ++i) {
+    attr->axes.push_back(static_cast<int64_t>(axes[i]));
+  }
+  return RET_OK;
+}
+
+STATUS FormatTransPass::ChangeOpStridedSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node) {
+  // onnx input size is equal to 5 always.
+  if (node->inputIndex.size() != 5) {
+    MS_LOG(DEBUG) << "only support onnx slice.";
+    return RET_NOT_SUPPORT;
+  }
+  if (node->inputIndex.size() == 5) {
+    for (int index = 1; index < 5; ++index) {
+      if (graph->allTensors[node->inputIndex[index]]->data.data() == nullptr) {
+        MS_LOG(INFO) << "Here don't consider input is from other nodes.";
+        return RET_NOT_SUPPORT;
+      }
+    }
+    int element_num = graph->allTensors[node->inputIndex[1]]->dims[0];
+    auto axes = graph->allTensors[node->inputIndex[3]]->data;
+    for (int index = 1; index < 5; ++index) {
+      if (index == 3) {
+        continue;
+      }
+      TransformAttrByAxes(reinterpret_cast<int *>(graph->allTensors[node->inputIndex[index]]->data.data()),
+                          reinterpret_cast<int *>(axes.data()), element_num);
+    }
+    TransformOpAxisAttr(reinterpret_cast<int *>(graph->allTensors[node->inputIndex[3]]->data.data()), element_num);
+  }
+  return RET_OK;
+}
+
+STATUS FormatTransPass::ChangeOpSliceAndStridedSlice(schema::MetaGraphT *graph,
+                                                     const std::unique_ptr<schema::CNodeT> &node) {
+  auto type = node->primitive->value.type;
+  if (type == schema::PrimitiveType_StridedSlice) {
+    return ChangeOpStridedSlice(graph, node);
+  }
+  if (type == schema::PrimitiveType_SliceFusion) {
+    return ChangeOpSlice(graph, node);
+  }
+  return RET_ERROR;
+}
 }  // namespace lite
 }  // namespace mindspore

@@ -31,18 +31,12 @@ class TransOpInsertPass : public FormatTransPass {
 
   ~TransOpInsertPass() override = default;
 
-  void SetFmk(converter::FmkType fmk_type) { fmk_type_ = fmk_type; }
-
   STATUS Run(schema::MetaGraphT *graph) override;
 
  private:
   bool CanFusion(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node);
 
   STATUS FindOutTransType();
-
-  void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
-
-  STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node);
 
  private:
   FormatTransNodeType pre_insert_trans_type_ = kNHWC2NCHW;
@@ -51,7 +45,6 @@ class TransOpInsertPass : public FormatTransPass {
   std::vector<int> pre_perm_;
   FormatTransNodeType post_type_ = kNONE;
   std::vector<int> post_perm_;
-  converter::FmkType fmk_type_ = converter::FmkType_CAFFE;
 };
 }  // namespace lite
 }  // namespace mindspore

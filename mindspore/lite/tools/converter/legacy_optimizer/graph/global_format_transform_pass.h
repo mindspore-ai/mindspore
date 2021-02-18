@@ -25,11 +25,12 @@
 #include <utility>
 #include "tools/common/graph_util.h"
 #include "tools/converter/optimizer.h"
+#include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 
 using mindspore::schema::TensorT;
 namespace mindspore {
 namespace lite {
-class GlobalFormatTransformPass : public GraphPass {
+class GlobalFormatTransformPass : public FormatTransPass {
  public:
   GlobalFormatTransformPass() = default;
 

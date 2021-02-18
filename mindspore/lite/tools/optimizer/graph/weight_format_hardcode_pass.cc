@@ -16,6 +16,7 @@
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include <memory>
 #include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_backprop_input_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
@@ -30,6 +31,7 @@ using mindspore::schema::QuantType_WeightQuant;
 namespace mindspore::opt {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
+const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>(ops::kNameConv2DBackpropInputFusion);
 }  // namespace
 void WeightFormatHardCodePass::SetQuantType(QuantType type) { this->quant_type = type; }
 void WeightFormatHardCodePass::SetFmkType(FmkType type) { this->fmk_type = type; }
@@ -134,7 +136,7 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const CNodePtr &conv_node,
           param_value->set_format(schema::Format::Format_KCHW);
         }
 #ifdef SUPPORT_TRAIN
-      } else if (CheckPrimitiveType(conv_node, prim::kPrimConv2DBackpropInput)) {
+      } else if (CheckPrimitiveType(conv_node, kPrimConv2DBackpropInputFusion)) {
         param_value->set_format(schema::Format::Format_KCHW);
 #endif
       } else {
@@ -210,8 +212,7 @@ bool WeightFormatHardCodePass::Run(const FuncGraphPtr &graph) {
     auto conv_cnode = node->cast<CNodePtr>();
     if (!CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
 #ifdef SUPPORT_TRAIN
-        (!CheckPrimitiveType(node, prim::kPrimConv2DBackpropInput) || (fmk_type != FmkType_MS)) &&
-        (!CheckPrimitiveType(node, prim::kPrimGroupConv2DGradInput) || (fmk_type != FmkType_MS)) &&
+        (!CheckPrimitiveType(node, kPrimConv2DBackpropInputFusion) || (fmk_type != FmkType_MS)) &&
 #endif
         !CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
       continue;

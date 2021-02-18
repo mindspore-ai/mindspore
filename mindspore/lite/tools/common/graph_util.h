@@ -88,12 +88,6 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
 
 STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType);
 
-void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
-
-STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
-
-STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
-
 STATUS SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT);
 
 std::string GetModelName(const std::string &modelFile);
