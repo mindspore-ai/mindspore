@@ -202,6 +202,23 @@ AbstractBasePtr InferImplFusedBatchNorm(const AnalysisEnginePtr &, const Primiti
   return std::make_shared<AbstractTuple>(elements);
 }
 
+AbstractBasePtr InferImplSparseSoftmaxCrossEntropyWithLogits(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                             const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto is_grad = GetValue<bool>(primitive->GetAttr("is_grad"));
+  CheckArgsSize(primitive->name(), args_spec_list, 2);
+  std::shared_ptr<BaseShape> shape = std::make_shared<abstract::Shape>(std::vector<int64_t>{});
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  if (is_grad) {
+    shape = args_spec_list[0]->BuildShape();
+  }
+  auto type = args_spec_list[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  auto type_tensor = type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(type_tensor);
+  return std::make_shared<abstract::AbstractTensor>(type_tensor->element(), shape);
+}
+
 AbstractBasePtr InferImplFusedBatchNormGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const AbstractBasePtrList &args_spec_list) {
   // Inputs: five tensors(y_backprop, x, scale, save_mean, save_inv_variance).

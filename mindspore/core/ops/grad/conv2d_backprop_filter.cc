@@ -27,10 +27,6 @@ namespace {
 abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto conv2d_backprop_filter_prim = primitive->cast<PrimConv2DBackpropFilterPtr>();
-  MS_EXCEPTION_IF_NULL(conv2d_backprop_filter_prim);
-  // auto prim_name = conv2d_backprop_filter_prim->name();
-
   auto out_put = input_args[2]->BuildValue();
   auto infer_shape = GetValue<std::vector<int64_t>>(out_put);
   return std::make_shared<abstract::Shape>(infer_shape);

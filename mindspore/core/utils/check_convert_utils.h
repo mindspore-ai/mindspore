@@ -277,7 +277,7 @@ class CheckAndConvertUtils {
   static void CheckSubClass(const std::string &type_name, const TypePtr type, const std::set<TypePtr> &template_types,
                             const std::string &prim_name);
   static void CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
-                                           const std::set<TypePtr> &valid_values, const std::string &prim_name,
+                                           const std::set<TypeId> &valid_values, const std::string &prim_name,
                                            bool allow_mix = false);
   static TypeId CheckTypeSame(const std::string &arg_name, const TypePtr arg_type, const std::set<TypeId> &valid_type,
                               const std::string &prim_name);
@@ -291,7 +291,7 @@ class CheckAndConvertUtils {
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);
   static std::map<std::string, TypePtr> _CheckArgumentType(const std::map<std::string, TypePtr> &arg,
-                                                           const std::set<TypePtr> &valid_values,
+                                                           const std::set<TypeId> &valid_values,
                                                            const std::string &prim_name);
   static std::map<std::string, TypePtr> _CheckTypeSame(const std::map<std::string, TypePtr> &arg1,
                                                        const std::map<std::string, TypePtr> &arg2,

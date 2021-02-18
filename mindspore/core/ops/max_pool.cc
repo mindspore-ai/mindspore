@@ -94,22 +94,22 @@ void MaxPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
 namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto pool_prim = primitive->cast<PrimMaxPoolPtr>();
-  MS_EXCEPTION_IF_NULL(pool_prim);
-  auto op_name = pool_prim->name();
+  auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->GetShapeTrack(), op_name);
-  if (pool_prim->get_format() == NHWC) {
+  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
+  if (format == NHWC) {
     in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
   }
   CheckAndConvertUtils::CheckInteger("x_rank", in_shape.size(), kEqual, 4, op_name);
-  auto kernel_size = pool_prim->get_kernel_size();
-  auto pad_mode = pool_prim->get_pad_mode();
+  auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
+  auto pad_mode_value = (primitive->GetAttr(kPadMode));
+  PadMode pad_mode = PAD;
+  pad_mode = PadMode(GetValue<int64_t>(pad_mode_value));
   auto batch = in_shape[0];
   auto channel = in_shape[1];
   auto in_h = in_shape[2];
   auto in_w = in_shape[3];
-
-  auto strides = pool_prim->get_strides();
+  auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
   auto kernel_h = kernel_size[2];
   auto kernel_w = kernel_size[3];
   auto stride_h = strides[2];
@@ -117,14 +117,14 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   int64_t out_h = -1;
   int64_t out_w = -1;
   if (pad_mode == VALID) {
-    out_h = ceil((in_h - (kernel_h - 1)) / stride_h);
-    out_w = ceil((in_w - (kernel_w - 1)) / stride_w);
+    out_h = ceil((in_h - (kernel_h - 1) + stride_h - 1) / stride_h);
+    out_w = ceil((in_w - (kernel_w - 1) + stride_w - 1) / stride_w);
   } else if (pad_mode == SAME) {
     out_h = ceil(in_h / stride_h);
     out_w = ceil(in_w / stride_w);
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
-  if (pool_prim->get_format() == NHWC) {
+  if (format == NHWC) {
     out_shape = {batch, out_h, out_w, channel};
   }
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
@@ -137,7 +137,13 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  return input_args[0]->BuildType();
+  auto input_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(input_type);
+  auto input_tensor_type = input_type->cast<TensorTypePtr>();
+  if (input_tensor_type == nullptr) {
+    MS_LOG_EXCEPTION << "The maxpool's input must be a tensor but got " << input_type->ToString();
+  }
+  return input_tensor_type->element();
 }
 }  // namespace
 

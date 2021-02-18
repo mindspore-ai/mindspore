@@ -17,21 +17,8 @@
 #include <vector>
 #include <memory>
 namespace mindspore {
-namespace {
-template <typename T>
-void SetTensorData(void *data, float num, size_t data_length) {
-  MS_EXCEPTION_IF_NULL(data);
-  auto tensor_data = reinterpret_cast<T *>(data);
-  MS_EXCEPTION_IF_NULL(tensor_data);
-  for (size_t index = 0; index < data_length; ++index) {
-    *tensor_data = num;
-    ++tensor_data;
-  }
-}
-}  // namespace
 tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(TypeId type, const std::vector<int64_t> &shape) {
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape);
-
   size_t mem_size = GetTypeByte(tensor->type()) * IntToSize(tensor->ElementsNum());
   auto tensor_data = tensor->data_c();
   char *data = reinterpret_cast<char *>(tensor_data);
@@ -43,11 +30,11 @@ tensor::TensorPtr TensorConstructUtils::CreateZerosTensor(TypeId type, const std
 
 tensor::TensorPtr TensorConstructUtils::CreateOnesTensor(TypeId type, const std::vector<int64_t> &shape) {
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, shape);
-  auto mem_size = IntToSize(tensor->ElementsNum());
+  size_t mem_size = GetTypeByte(tensor->type()) * IntToSize(tensor->ElementsNum());
   if (tensor->data_type() == kNumberTypeFloat32) {
-    SetTensorData<float>(tensor->data_c(), 1.0, mem_size);
+    SetTensorData(tensor->data_c(), 1.0, mem_size);
   } else if (tensor->data_type() == kNumberTypeInt) {
-    SetTensorData<int>(tensor->data_c(), 1, mem_size);
+    SetTensorData(tensor->data_c(), 1, mem_size);
   }
   return tensor;
 }

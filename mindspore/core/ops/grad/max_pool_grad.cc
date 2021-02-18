@@ -52,9 +52,7 @@ void MaxPoolGrad::set_strides(const std::vector<int64_t> &strides) {
 
 AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
-  auto MaxPoolGrad_prim = primitive->cast<PrimMaxPoolGradPtr>();
-  MS_EXCEPTION_IF_NULL(MaxPoolGrad_prim);
-  auto op_name = MaxPoolGrad_prim->name();
+  auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[0]->BuildValue());
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x1_shape", input_args[0]->BuildShape(), op_name);
   auto tensor_type = input_args[0]->BuildType()->cast<TensorTypePtr>();

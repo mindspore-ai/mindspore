@@ -38,9 +38,9 @@ AbstractBasePtr MergeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   for (int64_t i = 0; i != (int64_t)inputs_type.size(); i++) {
     args.insert({"input[" + std::to_string(i) + "]", inputs_type[i]});
   }
-  std::set<TypePtr> template_type = {TypeIdToType(kNumberTypeBool)};
+  std::set<TypeId> template_type = {kNumberTypeBool};
   for (auto item : common_valid_types) {
-    template_type.insert(TypeIdToType(item));
+    template_type.insert(item);
   }
   CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, template_type, op_name);
   std::vector<int64_t> in_shape0 = inputs_shape[0]->cast<abstract::ShapePtr>()->shape();

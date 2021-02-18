@@ -30,13 +30,17 @@ AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   // infer shape
   MS_EXCEPTION_IF_NULL(primitive);
-  auto shape_prim = primitive->cast<PrimShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_prim);
-  auto op_name = shape_prim->name();
+  auto op_name = primitive->name();
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), op_name);
   // infer type
-  auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  return std::make_shared<abstract::AbstractTensor>(x_type, in_shape);
+  AbstractBasePtrList abs_list;
+  std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(abs_list),
+                 [](int64_t item) -> std::shared_ptr<abstract::AbstractScalar> {
+                   return std::make_shared<abstract::AbstractScalar>(item);
+                 });
+  auto abs = std::make_shared<abstract::AbstractTuple>(abs_list);
+  abs->set_value(MakeValue(in_shape));
+  return abs;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Shape, prim::kPrimShape, ShapeInfer);
 REGISTER_PRIMITIVE_C(kNameShape, Shape);

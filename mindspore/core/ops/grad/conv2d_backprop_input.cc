@@ -23,6 +23,62 @@
 
 namespace mindspore {
 namespace ops {
+AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 3, prim_name);
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto doutput = input_args[0];
+  auto x_size = input_args[2];
+  auto x_size_value = x_size->GetValueTrack();
+  MS_EXCEPTION_IF_NULL(x_size);
+  auto x_size_v = GetValue<std::vector<int64_t>>(x_size_value);
+  // infer dtype
+  auto dtype = doutput->BuildType();
+  if (!dtype->isa<TensorType>()) {
+    MS_LOG(EXCEPTION) << "Conv2DBackpropInputInfer doutput must be tensor but got" << dtype->ToString();
+  }
+  auto input_tensor_type = dtype->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor_type);
+  auto element = input_tensor_type->element();
+  // infer shape
+  auto dout_shape = doutput->BuildShape();
+  MS_EXCEPTION_IF_NULL(doutput);
+  auto dout_shapeptr = dout_shape->cast<abstract::ShapePtr>();
+  auto dout_shape_norm = dout_shapeptr->shape();
+  auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
+  auto stride = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
+  auto dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
+  auto pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPadList));
+  auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
+  if (std::all_of(pad_list.begin(), pad_list.end(), [](int64_t elem) -> bool { return elem != 0; })) {
+    primitive->AddAttr(kPadList, MakeValue(pad_list));
+  } else if (pad_mode == SAME) {
+    auto stride_h = stride[0];
+    auto stride_w = stride[1];
+    auto kernel_h = kernel_size[0];
+    auto kernel_w = kernel_size[1];
+    auto dilation_h = dilation[2];
+    auto dilation_w = dilation[3];
+    auto pad_needed_h = (dout_shape_norm[2] - 1) * stride_h + dilation_h * (kernel_h - 1) + 1 - x_size_v[2];
+    pad_needed_h = 0 > pad_needed_h ? 0 : pad_needed_h;
+    auto pad_top = pad_needed_h / 2;
+    auto pad_bottom = pad_needed_h - pad_top;
+    auto pad_needed_w = (dout_shape_norm[3] - 1) * stride_w + dilation_w * (kernel_w - 1) + 1 - x_size_v[2];
+    pad_needed_w = pad_needed_w > 0L ? pad_needed_w : 0L;
+    auto pad_left = pad_needed_w / 2;
+    auto pad_right = pad_needed_w - pad_left;
+    pad_list = {pad_top, pad_bottom, pad_left, pad_right};
+  } else if (pad_mode == PAD) {
+    pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
+  }
+  primitive->AddAttr(kPadList, MakeValue(pad_list));
+  return std::make_shared<abstract::AbstractTensor>(element, std::make_shared<abstract::Shape>(x_size_v));
+}
+
 void Conv2DBackpropInput::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode,
                                const PadMode &pad_mode, const std::vector<int64_t> &pad,
                                const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t group,
@@ -140,6 +196,7 @@ std::vector<int64_t> Conv2DBackpropInput::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
+REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput, Conv2DBackpropInputInfer);
 REGISTER_PRIMITIVE_C(kNameConv2DBackpropInput, Conv2DBackpropInput);
 }  // namespace ops
 }  // namespace mindspore
