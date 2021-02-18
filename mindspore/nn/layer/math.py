@@ -193,7 +193,7 @@ class LGamma(Cell):
 
     Thus, the behaviour of LGamma follows:
     when x > 0.5, return log(Gamma(x))
-    when x < 0.5 and is not an interger, return the real part of Log(Gamma(x)) where Log is the complex logarithm
+    when x < 0.5 and is not an integer, return the real part of Log(Gamma(x)) where Log is the complex logarithm
     when x is an integer less or equal to 0, return +inf
     when x = +/- inf, return +inf
 
@@ -302,13 +302,12 @@ class DiGamma(Cell):
     The algorithm is:
 
     .. math::
-        digamma(z + 1) = log(t(z)) + A'(z) / A(z) - kLanczosGamma / t(z)
-
-        t(z) = z + kLanczosGamma + 1/2
-
-        A(z) = kBaseLanczosCoeff + \sum_{k=1}^n \frac{kLanczosCoefficients[i]}{z + k}
-
-        A'(z) = \sum_{k=1}^n \frac{kLanczosCoefficients[i]}{{z + k}^2}
+        \begin{array}{ll} \\
+            digamma(z + 1) = log(t(z)) + A'(z) / A(z) - kLanczosGamma / t(z) \\
+            t(z) = z + kLanczosGamma + 1/2 \\
+            A(z) = kBaseLanczosCoeff + \sum_{k=1}^n \frac{kLanczosCoefficients[i]}{z + k} \\
+            A'(z) = \sum_{k=1}^n \frac{kLanczosCoefficients[i]}{{z + k}^2}
+        \end{array}
 
     However, if the input is less than 0.5 use Euler's reflection formula:
 
@@ -659,7 +658,10 @@ class IGamma(Cell):
 
 class LBeta(Cell):
     r"""
-    This is semantically equal to lgamma(x) + lgamma(y) - lgamma(x + y).
+    This is semantically equal to
+
+    .. math::
+        P(x, y) = lgamma(x) + lgamma(y) - lgamma(x + y).
 
     The method is more accurate for arguments above 8. The reason for accuracy loss in the naive computation
     is catastrophic cancellation between the lgammas. This method avoids the numeric cancellation by explicitly
