@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_FLOATSTATUS_H_
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void CalFloatStatus(const size_t size, const T *input, T *output, cudaStream_t stream);
+void CalFloatStatus(const size_t size, const T *input, float *output, cudaStream_t stream);
 template <typename T>
 void CalIsNan(const size_t size, const T *input, bool *output, cudaStream_t stream);
 template <typename T>

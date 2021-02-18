@@ -87,7 +87,7 @@ __global__ void IsFinite(const size_t size, const half* input, bool* out) {
 }
 
 template <typename T>
-__global__ void FloatStatus(const size_t size, const T* input, T* out) {
+__global__ void FloatStatus(const size_t size, const T* input, float* out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (isinf(input[pos]) != 0 || isnan(input[pos])) {
       out[0] = 1;
@@ -96,7 +96,7 @@ __global__ void FloatStatus(const size_t size, const T* input, T* out) {
   return;
 }
 template <>
-__global__ void FloatStatus(const size_t size, const half* input, half* out) {
+__global__ void FloatStatus(const size_t size, const half* input, float* out) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (__hisinf(input[pos]) != 0 || __hisnan(input[pos])) {
       out[0] = 1;
@@ -106,7 +106,7 @@ __global__ void FloatStatus(const size_t size, const half* input, half* out) {
 }
 
 template <typename T>
-void CalFloatStatus(const size_t size, const T* input, T* output, cudaStream_t cuda_stream) {
+void CalFloatStatus(const size_t size, const T* input, float* output, cudaStream_t cuda_stream) {
   FloatStatus<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, output);
   return;
 }
@@ -127,7 +127,7 @@ void CalIsFinite(const size_t size, const T* input, bool* output, cudaStream_t c
 }
 
 template void CalFloatStatus<float>(const size_t size, const float* input, float* output, cudaStream_t cuda_stream);
-template void CalFloatStatus<half>(const size_t size, const half* input, half* output, cudaStream_t cuda_stream);
+template void CalFloatStatus<half>(const size_t size, const half* input, float* output, cudaStream_t cuda_stream);
 template void CalIsInf<float>(const size_t size, const float* input, bool* output, cudaStream_t cuda_stream);
 template void CalIsInf<half>(const size_t size, const half* input, bool* output, cudaStream_t cuda_stream);
 template void CalIsNan<float>(const size_t size, const float* input, bool* output, cudaStream_t cuda_stream);
