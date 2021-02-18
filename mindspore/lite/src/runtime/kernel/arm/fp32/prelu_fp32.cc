@@ -39,19 +39,39 @@ int PReluRun(void *cdata, int task_id) {
 }
 }  // namespace
 
-int PReluCPUKernel::Init() { return RET_OK; }
+int PReluCPUKernel::Init() {
+  if (in_tensors_[1]->ElementsNum() == 1) {
+    prelu_param_->channelShared = true;
+  } else {
+    prelu_param_->channelShared = false;
+  }
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
 
 int PReluCPUKernel::DoExcute(int task_id) {
   if (prelu_param_->channelShared) {
     PReluShareChannel(input_data_, output_data_, prelu_param_, task_id);
   } else {
-    PRelu(input_data_, output_data_, prelu_param_, task_id);
+    int res_plane = prelu_param_->input_num_ - task_id * prelu_param_->tile_block_;
+    int plane = MSMIN(prelu_param_->tile_block_, res_plane);
+    if (plane <= 0) {
+      return RET_OK;
+    }
+    float *in = input_data_ + task_id * prelu_param_->tile_block_ * prelu_param_->channel_num_;
+    float *out = output_data_ + task_id * prelu_param_->tile_block_ * prelu_param_->channel_num_;
+    PRelu(in, out, prelu_param_, plane);
   }
   return RET_OK;
 }
 
-int PReluCPUKernel::ProcessInput() {
-  // input tensor
+int PReluCPUKernel::ReSize() {
+  if (prelu_param_->channelShared) {
+    return RET_OK;
+  }
+
   auto input_tensor = in_tensors_.at(0);
   auto in_shape = input_tensor->shape();
   auto n_dim = in_shape.size();
@@ -60,57 +80,36 @@ int PReluCPUKernel::ProcessInput() {
   for (size_t i = 0; i < n_dim - 1; ++i) {
     input_plane *= in_shape.at(i);
   }
-  int tile_block = UP_DIV(input_plane, TILE_NUM);
-  prelu_param_->input_num_ = input_tensor->ElementsNum();
-  prelu_param_->tile_block_ = tile_block;
+
+  prelu_param_->input_num_ = input_plane;
+  prelu_param_->tile_block_ = UP_DIV(UP_DIV(input_plane, TILE_NUM), op_parameter_->thread_num_) * TILE_NUM;
   prelu_param_->channel_num_ = channel_num;
-  input_data_ =
-    reinterpret_cast<float *>(context_->allocator->Malloc(tile_block * TILE_NUM * channel_num * sizeof(float)));
-  if (input_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc input_data_ failed.";
-    return RET_ERROR;
-  }
-  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
   return RET_OK;
 }
 
 int PReluCPUKernel::ProcessShareChannelInput() {
-  // input tensor
   auto input_tensor = in_tensors_.at(0);
   prelu_param_->input_num_ = input_tensor->ElementsNum();
+  int tile = 32;
 #ifdef ENABLE_ARM64
-  prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, 64);
-  input_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(prelu_param_->tile_block_ * 64 * sizeof(float)));
-  if (input_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc input_data_ failed.";
-    return RET_ERROR;
-  }
-  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
-#elif ENABLE_ARM32
-  prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, 32);
-  input_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(prelu_param_->tile_block_ * 32 * sizeof(float)));
-  if (input_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc input_data_ failed.";
-    return RET_ERROR;
-  }
-  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
-#else
-  prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, 32);
-  input_data_ = reinterpret_cast<float *>(context_->allocator->Malloc(prelu_param_->tile_block_ * 32 * sizeof(float)));
-  if (input_data_ == nullptr) {
-    MS_LOG(ERROR) << "malloc input_data_ failed.";
-    return RET_ERROR;
-  }
-  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
+  tile = 64;
 #endif
+  prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, tile);
+  input_data_ =
+    reinterpret_cast<float *>(context_->allocator->Malloc(prelu_param_->tile_block_ * tile * sizeof(float)));
+  if (input_data_ == nullptr) {
+    MS_LOG(ERROR) << "malloc input_data_ failed.";
+    return RET_ERROR;
+  }
+  memcpy(input_data_, ori_input_, prelu_param_->input_num_ * sizeof(float));
   return RET_OK;
 }
 
 int PReluCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() >= 2);
   auto input_tensor = in_tensors_[0];
-  ori_input_ = reinterpret_cast<float *>(input_tensor->MutableData());
-  output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
+  ori_input_ = reinterpret_cast<float *>(input_tensor->data_c());
+  output_data_ = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c());
   MS_ASSERT(ori_input_);
   MS_ASSERT(output_data_);
   if (prelu_param_->channelShared) {
@@ -120,16 +119,12 @@ int PReluCPUKernel::Run() {
       return ret;
     }
   } else {
-    auto ret = ProcessInput();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Process failed.";
-      return ret;
-    }
+    input_data_ = ori_input_;
   }
 
   // negative slope tensor
   auto negative_slope_tensor = in_tensors_.at(1);
-  prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->MutableData());
+  prelu_param_->slope_ = reinterpret_cast<float *>(negative_slope_tensor->data_c());
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, PReluRun, this, prelu_param_->op_parameter_.thread_num_);
   if (ret != RET_OK) {
@@ -138,8 +133,10 @@ int PReluCPUKernel::Run() {
     return RET_ERROR;
   }
 
-  memcpy(output_data_, input_data_, prelu_param_->input_num_ * sizeof(float));
-  context_->allocator->Free(input_data_);
+  if (prelu_param_->channelShared) {
+    memcpy(output_data_, input_data_, prelu_param_->input_num_ * sizeof(float));
+    context_->allocator->Free(input_data_);
+  }
   return RET_OK;
 }
 
