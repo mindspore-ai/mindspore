@@ -24,7 +24,7 @@
 
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
-#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace dataset {

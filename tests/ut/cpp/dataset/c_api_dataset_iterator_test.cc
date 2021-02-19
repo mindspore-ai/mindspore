@@ -166,7 +166,7 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   //                                    TensorShape({211653}), TensorShape({1, 4})};
 
   uint64_t i = 0;
-  uint64_t j = 0;
+  // uint64_t j = 0;
   while (row.size() != 0) {
     // MS_LOG(INFO) << "row[0]:" << row[0]->shape() << ", row[1]:" << row[1]->shape();
     // EXPECT_EQ(2, row.size());

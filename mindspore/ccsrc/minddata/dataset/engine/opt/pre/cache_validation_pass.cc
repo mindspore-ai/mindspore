@@ -26,6 +26,7 @@
 #include "minddata/dataset/engine/ir/datasetops/source/tf_record_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 #include "minddata/dataset/engine/ir/datasetops/zip_node.h"
+#include "minddata/dataset/kernels/ir/tensor_operation.h"
 
 namespace mindspore {
 namespace dataset {

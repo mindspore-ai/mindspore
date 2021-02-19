@@ -483,7 +483,6 @@ FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<Tenso
 }
 #endif
 
-// FIXME - Should be removed once all Tensor op API class has been added
 MapDataset::MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
                        const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns,
                        const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache,

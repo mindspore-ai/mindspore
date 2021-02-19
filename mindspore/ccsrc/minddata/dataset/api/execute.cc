@@ -21,6 +21,7 @@
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/type_id.h"
+#include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
