@@ -35,7 +35,7 @@ def parse_args():
         >>> parse_args()
     """
     parser = ArgumentParser(description="mindspore distributed training launch "
-                                        "helper utilty that will spawn up "
+                                        "helper utility that will spawn up "
                                         "multiple distributed processes")
     parser.add_argument("--nproc_per_node", type=int, default=1,
                         help="The number of processes to launch on each node, "

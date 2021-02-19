@@ -20,7 +20,6 @@
 
 # [MobileNetV2 Description](#contents)
 
-
 MobileNetV2 is tuned to mobile phone CPUs through a combination of hardware- aware network architecture search (NAS) complemented by the NetAdapt algorithm and then subsequently improved through novel architecture advances.Nov 20, 2019.
 
 [Paper](https://arxiv.org/pdf/1905.02244) Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al. "Searching for MobileNetV2." In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324. 2019.
@@ -38,11 +37,10 @@ The overall network architecture of MobileNetV2 is show below:
 Dataset used: [imagenet](http://www.image-net.org/)
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
-	- Train: 120G, 1.2W images
-	- Test: 5G, 50000 images
+    - Train: 120G, 1.2W images
+    - Test: 5G, 50000 images
 - Data format: RGB images.
-	- Note: Data will be processed in src/dataset.py
-
+  - Note: Data will be processed in src/dataset.py
 
 # [Features](#contents)
 
@@ -54,13 +52,12 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 # [Environment Requirements](#contents)
 
 - Hardware:Ascend
-  - Prepare hardware environment with Ascend. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
   - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below
   - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
   - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
 
 # [Script description](#contents)
 
@@ -83,7 +80,6 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├── eval.py       # evaluation script
   ├── export.py     # export checkpoint files into air/onnx
 ```
-
 
 ## [Script Parameters](#contents)
 
@@ -113,12 +109,10 @@ Parameters for both training and evaluation can be set in config.py
 
 ### Usage
 
-
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
 - bash run_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
 - bash run_train.sh [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\(optional)
-
 
 ### Launch
 
@@ -133,7 +127,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 Training result will be stored in the example path. Checkpoints trained by `Ascend` will be stored at `./train/device$i/checkpoint` by default, and training log  will be redirected to `./train/device$i/train.log`. Checkpoints trained by `GPU` will be stored in `./train/checkpointckpt_$i` by default, and training log will be redirected to `./train/train.log`.  
 `train.log` is as follows:
 
-```
+``` bash
 epoch: [  0/200], step:[  624/  625], loss:[5.258/5.258], time:[140412.236], lr:[0.100]
 epoch time: 140522.500, per step time: 224.836, avg loss: 5.258
 epoch: [  1/200], step:[  624/  625], loss:[3.917/3.917], time:[138221.250], lr:[0.200]
@@ -150,7 +144,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ### Launch
 
-```
+``` bash
 # infer example
   shell:
       Ascend: sh run_infer_quant.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
@@ -160,9 +154,9 @@ You can start training using python or shell scripts. The usage of shell scripts
 
 ### Result
 
-Inference result will be stored in the example path, you can find result like the followings in `./val/infer.log`.
+Inference result will be stored in the example path, you can find result like the following in `./val/infer.log`.
 
-```
+``` bash
 result: {'acc': 0.71976314102564111}
 ```
 

@@ -59,7 +59,7 @@ cp ../*.py ./eval$3
 cp -r ../src ./eval$3
 cd ./eval$3 || exit
 env > env.log
-echo "start infering for device $DEVICE_ID"
+echo "start inferring for device $DEVICE_ID"
 python eval.py \
     --data_dir=$DATASET_PATH \
     --pretrained=$CHECKPOINT_PATH \

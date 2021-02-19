@@ -121,7 +121,7 @@ def parse_args():
         args.rank = get_rank()
         args.group_size = get_group_size()
 
-    # select for master rank save ckpt or all rank save, compatiable for model parallel
+    # select for master rank save ckpt or all rank save, compatible for model parallel
     args.rank_save_ckpt_flag = 0
     if args.is_save_on_master:
         if args.rank == 0:
@@ -139,6 +139,14 @@ def parse_args():
 def conver_training_shape(args):
     training_shape = [int(args.training_shape), int(args.training_shape)]
     return training_shape
+
+def build_quant_network(network):
+    quantizer = QuantizationAwareTraining(bn_fold=True,
+                                          per_channel=[True, False],
+                                          symmetric=[True, False],
+                                          one_conv_fold=False)
+    network = quantizer.quantize(network)
+    return network
 
 
 def train():
@@ -168,11 +176,7 @@ def train():
     config = ConfigYOLOV3DarkNet53()
     # convert fusion network to quantization aware network
     if config.quantization_aware:
-        quantizer = QuantizationAwareTraining(bn_fold=True,
-                                              per_channel=[True, False],
-                                              symmetric=[True, False],
-                                              one_conv_fold=False)
-        network = quantizer.quantize(network)
+        network = build_quant_network(network)
 
     network = YoloWithLossCell(network)
     args.logger.info('finish get network')
@@ -198,11 +202,8 @@ def train():
 
     lr = get_lr(args)
 
-    opt = Momentum(params=get_param_groups(network),
-                   learning_rate=Tensor(lr),
-                   momentum=args.momentum,
-                   weight_decay=args.weight_decay,
-                   loss_scale=args.loss_scale)
+    opt = Momentum(params=get_param_groups(network), learning_rate=Tensor(lr), momentum=args.momentum,
+                   weight_decay=args.weight_decay, loss_scale=args.loss_scale)
 
     network = TrainingWrapper(network, opt)
     network.set_train()
@@ -213,9 +214,7 @@ def train():
         ckpt_config = CheckpointConfig(save_checkpoint_steps=args.ckpt_interval,
                                        keep_checkpoint_max=ckpt_max_num)
         save_ckpt_path = os.path.join(args.outputs_dir, 'ckpt_' + str(args.rank) + '/')
-        ckpt_cb = ModelCheckpoint(config=ckpt_config,
-                                  directory=save_ckpt_path,
-                                  prefix='{}'.format(args.rank))
+        ckpt_cb = ModelCheckpoint(config=ckpt_config, directory=save_ckpt_path, prefix='{}'.format(args.rank))
         cb_params = _InternalCallbackParam()
         cb_params.train_network = network
         cb_params.epoch_num = ckpt_max_num

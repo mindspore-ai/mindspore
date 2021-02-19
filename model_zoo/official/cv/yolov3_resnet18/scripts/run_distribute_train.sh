@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "======================================================================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_distribute_train.sh DEVICE_NUM EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH RANK_TABLE_FILE PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
 echo "For example: sh run_distribute_train.sh 8 150 /data/Mindrecord_train /data /data/train.txt /data/hccl.json /opt/yolov3-150.ckpt(optional) 100(optional)"
 echo "It is better to use absolute path."
@@ -47,7 +47,7 @@ then
     exit 1
 fi
 
-echo "After running the scipt, the network runs in the background. The log will be generated in LOGx/log.txt"
+echo "After running the script, the network runs in the background. The log will be generated in LOGx/log.txt"
 
 export RANK_TABLE_FILE=$6
 export RANK_SIZE=$1

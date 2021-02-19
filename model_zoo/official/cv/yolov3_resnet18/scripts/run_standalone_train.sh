@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "========================================================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_standalone_train.sh DEVICE_ID EPOCH_SIZE MINDRECORD_DIR IMAGE_DIR ANNO_PATH PRE_TRAINED PRE_TRAINED_EPOCH_SIZE"
 echo "for example: sh run_standalone_train.sh 0 50 ./Mindrecord_train ./dataset ./dataset/train.txt /opt/yolov3-50.ckpt(optional) 30(optional)"
 echo "========================================================================================================================================="
