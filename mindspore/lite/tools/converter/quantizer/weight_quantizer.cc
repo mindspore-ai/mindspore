@@ -159,8 +159,8 @@ STATUS WeightQuantizer::DoMulQuantize(CNodePtr cnode) {
   }
 
   if (param_value == nullptr) {
-    MS_LOG(ERROR) << "No valid input param node !";
-    return RET_ERROR;
+    MS_LOG(WARNING) << cnode->fullname_with_scope() << " No valid input param node !";
+    return RET_OK;
   }
 
   auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
