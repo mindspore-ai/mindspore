@@ -52,6 +52,7 @@ class NPUPassUtils {
   static bool IsNhwc2Nchw(const kernel::LiteKernel *kernel);
 
   static bool IsNchw2Nhwc(const kernel::LiteKernel *kernel);
+  static kernel::LiteKernel *KernelInputFromKernel(const kernel::LiteKernel *kernel, size_t in_tensor_index);
 
  private:
   static PrimitiveC *CreateTransposePrimitive();
