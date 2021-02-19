@@ -133,6 +133,10 @@ class PrimitiveC : public mindspore::Primitive {
 
   void set_infer_flag(bool flag);
 
+  bool train_flag() const;
+
+  void set_train_flag(bool flag);
+
   static PrimitiveC *Create(mindspore::schema::Primitive *primitive) { return Create(primitive->UnPack()); }
 
   static PrimitiveC *Create(mindspore::schema::PrimitiveT *primitive);
@@ -140,7 +144,7 @@ class PrimitiveC : public mindspore::Primitive {
   static void GetAttrDataFromInput(const AnfNodePtr &inputNode, std::vector<int> *data);
 
   static std::shared_ptr<PrimitiveC> Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
-                                            const schema::QuantType &quantType);
+                                            const schema::QuantType &quantType, bool train_flag = false);
   void PopulaterQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
   void FillDefaultInputQuantParamIfNeed(const size_t &inputSize);
   void PopulaterInputQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
@@ -159,6 +163,7 @@ class PrimitiveC : public mindspore::Primitive {
   bool infer_flag_ = true;
   int op_type_ = OP_TYPE_NOT_SET;
   bool enable_huffman_code_ = false;
+  bool train_flag_ = false;
 };
 std::shared_ptr<PrimitiveC> GetReturnPrim();
 
@@ -178,6 +183,10 @@ class PrimitiveC {
   bool infer_flag() const;
 
   void set_infer_flag(bool flag);
+
+  bool train_flag() const;
+
+  void set_train_flag(bool flag);
 
   virtual int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
 
@@ -238,6 +247,7 @@ class PrimitiveC {
   bool infer_flag_ = true;
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
   int op_type_ = OP_TYPE_NOT_SET;
+  bool train_flag_ = false;
 };
 using PrimitiveCPtr = std::shared_ptr<PrimitiveC>;
 typedef PrimitiveC *(*PrimitiveCCreator)(const schema::Primitive *primitive);

@@ -149,13 +149,13 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
   attr->padRight = pad_list.at(3);
 
   auto dilation = CastToInt(prim.GetAttr("dilation"));
-#ifdef SUPPORT_TRAIN
-  attr->dilateH = dilation.at(2);
-  attr->dilateW = dilation.at(3);
-#else
-  attr->dilateH = dilation.at(0);
-  attr->dilateW = dilation.at(1);
-#endif
+  if (train_flag()) {
+    attr->dilateH = dilation.at(2);
+    attr->dilateW = dilation.at(3);
+  } else {
+    attr->dilateH = dilation.at(0);
+    attr->dilateW = dilation.at(1);
+  }
   auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
   attr->kernelH = kernel_size.at(0);
   attr->kernelW = (kernel_size.size() > 1) ? kernel_size.at(1) : kernel_size.at(0);

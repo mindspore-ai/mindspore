@@ -194,7 +194,6 @@ STATUS GlobalFormatTransformPass::FindPreNh2NcNodes(MetaGraphT *graph, size_t nc
         if (!IsContain(bfs_queue, input_node_index)) {
           bfs_queue.emplace_back(input_node_index);
         }
-        // todo multi output,other edge need insert nh2nc node
         auto pre_node_output_indexs = GetOutputNodeIdx(*graph, *pre_node);
         if (pre_node_output_indexs.size() != 1) {
           if (node_type == schema::PrimitiveType_Activation || node_type == schema::PrimitiveType_Concat) {

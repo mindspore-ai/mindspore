@@ -855,14 +855,14 @@ int AnfImporterFromMindir::ParseModelConfigureInfo(const onnx::ModelProto &model
 }
 
 int AnfImporterFromMindir::Import(const converter::Flags *flag) {
-#if SUPPORT_TRAIN
-  func_graph_ = LoadMindIR(flag->modelFile, true);
-  if (func_graph_ != nullptr) {
-    return RET_OK;
-  } else {
-    MS_LOG(ERROR) << "Parse new mind_ir proto failed, Trying old onnx format";
+  if (flag->trainModel) {
+    func_graph_ = LoadMindIR(flag->modelFile, true);
+    if (func_graph_ != nullptr) {
+      return RET_OK;
+    } else {
+      MS_LOG(ERROR) << "Parse new mind_ir proto failed, Trying old onnx format";
+    }
   }
-#endif
   onnx_model_ = ReadOnnxFromBinary(flag->modelFile);
   if (onnx_model_ == nullptr) {
     MS_LOG(DEBUG) << "Parse model failed, which is not an old mindir model";

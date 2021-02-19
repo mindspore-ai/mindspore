@@ -114,16 +114,6 @@ int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
         max_dim = dim;
       }
     }
-#ifndef SUPPORT_TRAIN
-    for (size_t i = 0; i < inputs.size(); ++i) {
-      size_t shift = max_dims - inputs.at(i)->shape().size();
-      size_t dim = (i < shift) ? 1 : inputs.at(i)->shape().at(d);
-      if ((dim != max_dim) && (dim != 1)) {
-        MS_LOG(ERROR) << "AddN inputs shape is not equal!";
-        return RET_INPUT_TENSOR_ERROR;
-      }
-    }
-#endif
     output->shape()[d] = max_dim;  // set the biggest dimension in the output tensor
   }
 

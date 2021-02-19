@@ -37,6 +37,15 @@ ParamValueLitePtr NewParamValueLitePtr(lite::Tensor *tensor) {
   return para_value_lite;
 }
 
+bool IsSpecialType(schema::PrimitiveType type) {
+  if ((type == schema::PrimitiveType_TupleGetItem) || (type == schema::PrimitiveType_Depend) ||
+      (type == schema::PrimitiveType_ControlDepend) ||
+      (type == schema::PrimitiveType_MakeTuple || type == schema::PrimitiveType_Return)) {
+    return true;
+  }
+  return false;
+}
+
 abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(lite::Tensor *tensor) {
   MS_ASSERT(nullptr != tensor);
   std::vector<int> shape(tensor->shape());
@@ -363,12 +372,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       return false;
     }
     auto type = GetCNodeType(cnode);
-
-    if ((type == schema::PrimitiveType_TupleGetItem) ||
-#ifdef SUPPORT_TRAIN
-        (type == schema::PrimitiveType_Depend) || (type == schema::PrimitiveType_ControlDepend) ||
-#endif
-        (type == schema::PrimitiveType_MakeTuple || type == schema::PrimitiveType_Return)) {
+    if (IsSpecialType(type)) {
       continue;
     }
     std::vector<lite::Tensor *> input_tensors;

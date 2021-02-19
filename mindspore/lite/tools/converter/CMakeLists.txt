@@ -103,12 +103,6 @@ set(LITE_SRC
         ${SRC_DIR}/dequant.cc
         ${SRC_DIR}/huffman_decode.cc
         )
-if(SUPPORT_TRAIN)
-    set(LITE_SRC
-            ${LITE_SRC}
-            )
-
-endif()
 set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
 file(GLOB KERNEL_SRC
         ${ARM_DIR}/base/*.cc

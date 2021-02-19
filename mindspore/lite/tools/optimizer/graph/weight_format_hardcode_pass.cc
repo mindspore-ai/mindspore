@@ -131,12 +131,10 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const AnfNodePtr &conv_node,
         param_value->set_format(schema::Format::Format_CKHW);
       } else if (op_type == schema::PrimitiveType_DeConv2D) {
         param_value->set_format(schema::Format::Format_KCHW);
-#ifdef SUPPORT_TRAIN
       } else if (op_type == schema::PrimitiveType_Conv2DGradInput) {
         param_value->set_format(schema::Format::Format_KCHW);
       } else if (op_type == schema::PrimitiveType_GroupConv2DGradInput) {
         param_value->set_format(schema::Format::Format_CKHW);
-#endif
       } else {
         MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(op_type)
                       << ", node: " << conv_node->fullname_with_scope();
@@ -213,10 +211,8 @@ bool WeightFormatHardCodePass::Run(const FuncGraphPtr &graph) {
     auto conv_cnode = node->cast<CNodePtr>();
     auto type = opt::GetCNodeType(node);
     if (type != schema::PrimitiveType_Conv2D && type != schema::PrimitiveType_DepthwiseConv2D &&
-#ifdef SUPPORT_TRAIN
         ((type != schema::PrimitiveType_Conv2DGradInput) || (fmk_type != FmkType_MS)) &&
         ((type != schema::PrimitiveType_GroupConv2DGradInput) || (fmk_type != FmkType_MS)) &&
-#endif
         type != schema::PrimitiveType_DeConv2D && type != schema::PrimitiveType_DeDepthwiseConv2D) {
       continue;
     }

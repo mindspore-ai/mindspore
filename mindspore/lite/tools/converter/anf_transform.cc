@@ -177,6 +177,7 @@ int AnfTransform::RunMindirAdjustPass(const FuncGraphPtr &old_graph, const conve
   auto mindir_adjust_pass = std::make_shared<opt::MindirAdjustPass>();
   mindir_adjust_pass->SetFmkType(config->fmk);
   mindir_adjust_pass->SetQuantType(config->quantType);
+  mindir_adjust_pass->SetTrainFlag(config->trainModel);
   if (!mindir_adjust_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "mindir adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);

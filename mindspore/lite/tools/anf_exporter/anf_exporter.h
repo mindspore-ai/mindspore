@@ -35,7 +35,8 @@ class AnfExporter {
  public:
   AnfExporter() = default;
   virtual ~AnfExporter() = default;
-  schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false);
+  schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false,
+                             bool train_flag = false);
   void SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                        schema::CNodeT *fb_node);
   int SetOpInputNode(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
@@ -91,11 +92,13 @@ class AnfExporter {
   std::vector<schema::CNodeT *> graph_input_nodes_;
   std::map<FuncGraphPtr, int> fg_subgraph_map;
   uint32_t node_idx = 0;
+  bool train_flag = false;
 };
 // by default, copy_primitive is false, which means that the MetaGraph and func_graph share the same schema::PrimitiveT.
 // but in PostQuantization, the func_graph need to transfer to MetaGraph first and do MetaGraph pass, which may modify
 // the schema::PrimitiveT and cause bug; If all the passes have been done in func_graph, every thing would be simple
 // and clear.
-schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false);
+schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph = false, bool copy_primitive = false,
+                           bool train_flag = false);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_ANF_EXPORTER_ANF_EXPORTER_H_
