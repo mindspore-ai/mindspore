@@ -65,7 +65,6 @@ int GatherNdCPUKernel::ReSize() {
     MS_LOG(ERROR) << "GatherNd Malloc in_offset_ error!";
     return RET_ERROR;
   }
-  (void)memset(in_offset_, 0, count_ * sizeof(int));
   thread_sz_count_ = MSMIN(thread_count_, count_);
   if (thread_sz_count_ != 0) {
     thread_sz_stride_ = UP_DIV(count_, thread_sz_count_);
@@ -93,6 +92,7 @@ void GatherNdCPUKernel::InitOffset() {
   }
 
   int idx_stride = idx_lastshape;
+  (void)memset(in_offset_, 0, count_ * sizeof(int));
   for (int j = 0; j < count_; ++j) {
     for (int k = 0; k < idx_lastshape; ++k) {
       in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);

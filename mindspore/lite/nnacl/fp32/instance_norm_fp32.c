@@ -33,21 +33,26 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
     for (int c = channel_begin; c < channel_end; c++) {
       const float *src = src_b + c * param->inner_size_;
       float *dst = dst_b + c * param->inner_size_;
-      float mean = 0.0f;
-      float square_mean = 0.0f;
+      double mean = 0.0f;
+      double square_mean = 0.0f;
 
       int index = 0;
 #ifdef ENABLE_NEON
-      float32x4_t sum = vdupq_n_f32(0);
-      float32x4_t square_sum = vdupq_n_f32(0);
       for (; index < param->inner_size_ - C4NUM; index += C4NUM) {
         float32x4_t srcv = vld1q_f32(src + index);
         float32x4_t squarev = vmulq_f32(srcv, srcv);
-        sum = vaddq_f32(sum, srcv);
-        square_sum = vaddq_f32(square_sum, squarev);
+#ifdef ENABLE_ARM64
+        mean += vaddvq_f32(srcv);
+        square_mean += vaddvq_f32(squarev);
+#else
+        float32x2_t src_add2 = vadd_f32(vget_low_f32(srcv), vget_high_f32(srcv));
+        float32x2_t src_add4 = vpadd_f32(src_add2, src_add2);
+        mean += vget_lane_f32(src_add4, 0);
+        float32x2_t square_add2 = vadd_f32(vget_low_f32(squarev), vget_high_f32(squarev));
+        float32x2_t square_add4 = vpadd_f32(square_add2, square_add2);
+        square_mean += vget_lane_f32(square_add4, 0);
+#endif
       }
-      mean = sum[0] + sum[1] + sum[2] + sum[3];
-      square_mean = square_sum[0] + square_sum[1] + square_sum[2] + square_sum[3];
 #endif
       for (; index < param->inner_size_; index++) {
         mean += src[index];
@@ -56,27 +61,11 @@ int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data
 
       mean /= (float)param->inner_size_;
       square_mean /= (float)param->inner_size_;
-      const float deno = 1 / sqrtf(square_mean - mean * mean + param->epsilon_);
+      const double deno = gamma_data[c] / sqrt(square_mean - mean * mean + param->epsilon_);
 
       index = 0;
-#ifdef ENABLE_NEON
-      float32x4_t meanv = vdupq_n_f32(mean);
-      float32x4_t denov = vdupq_n_f32(deno);
-      for (; index < param->inner_size_ - C4NUM; index += C4NUM) {
-        float32x4_t srcv = vld1q_f32(src + index);
-        float32x4_t outv = vsubq_f32(srcv, meanv);
-        outv = vmulq_f32(outv, denov);
-
-        float32x4_t gammav = vdupq_n_f32(gamma_data[c]);
-        float32x4_t betav = vdupq_n_f32(beta_data[c]);
-        outv = vmulq_f32(outv, gammav);
-        outv = vaddq_f32(outv, betav);
-        vst1q_f32(dst + index, outv);
-      }
-#endif
       for (; index < param->inner_size_; index++) {
-        dst[index] = (src[index] - mean) * deno;
-        dst[index] = dst[index] * gamma_data[c] + beta_data[c];
+        dst[index] = (src[index] - mean) * deno + beta_data[c];
       }
     }
   }

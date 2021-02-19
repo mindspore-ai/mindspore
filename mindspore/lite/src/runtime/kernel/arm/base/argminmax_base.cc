@@ -72,11 +72,11 @@ int ArgMinMaxCPUKernel::Run() {
     }
   }
   if (input->data_type() == kNumberTypeFloat32) {
-    ArgMinMaxFp32(reinterpret_cast<float *>(input_data), reinterpret_cast<float *>(output_data),
+    ArgMinMaxFp32(reinterpret_cast<float *>(input_data), reinterpret_cast<void *>(output_data),
                   reinterpret_cast<float *>(output_value), shape.data(), arg_param_);
 #ifdef ENABLE_ARM64
   } else if (input->data_type() == kNumberTypeFloat16) {
-    ArgMinMaxFp16(reinterpret_cast<float16_t *>(input_data), reinterpret_cast<float16_t *>(output_data),
+    ArgMinMaxFp16(reinterpret_cast<float16_t *>(input_data), reinterpret_cast<void *>(output_data),
                   reinterpret_cast<float16_t *>(output_value), shape.data(), arg_param_);
 
 #endif

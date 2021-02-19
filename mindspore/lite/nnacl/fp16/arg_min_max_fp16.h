@@ -23,7 +23,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ArgMinMaxFp16(const float16_t *input, float16_t *output, float16_t *output_value, const int *in_shape,
+void ArgMinMaxFp16(const float16_t *input, void *output, float16_t *output_value, const int *in_shape,
                    const ArgMinMaxParameter *param);
 #ifdef __cplusplus
 }

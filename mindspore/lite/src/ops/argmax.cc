@@ -95,13 +95,17 @@ int ArgMax::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
+  if (inputs_.size() != kSingleNum || outputs_.size() > kDoubleNum) {
     MS_LOG(ERROR) << "tensor number is error.";
     return RET_ERROR;
   }
 
   output->set_format(input->format());
-  output->set_data_type(input->data_type());
+  if (GetOutMaxValue() && outputs_.size() == kSingleNum) {
+    output->set_data_type(input->data_type());
+  } else {
+    output->set_data_type(kNumberTypeInt32);
+  }
   if (!infer_flag()) {
     return RET_INFER_INVALID;
   }
@@ -119,6 +123,11 @@ int ArgMax::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   }
 
   output->set_shape(output_shape);
+  if (outputs_.size() == kDoubleNum) {
+    outputs_.at(1)->set_format(input->format());
+    outputs_.at(1)->set_data_type(input->data_type());
+    outputs_.at(1)->set_shape(output_shape);
+  }
   return RET_OK;
 }
 }  // namespace lite

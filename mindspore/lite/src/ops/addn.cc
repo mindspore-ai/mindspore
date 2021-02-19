@@ -86,9 +86,10 @@ int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
   for (size_t i = 1; i < inputs.size(); ++i) {
     if (inputs.at(i)->shape().size() > max_dims) {
       max_dims = inputs.at(i)->shape().size();
-      max_dims_idx = 0;
+      max_dims_idx = i;
     }
   }
+
   output->set_shape(inputs.at(max_dims_idx)->shape());
 
   // make sure all elements have the same size or 1 (broadcasting) in all dimensions

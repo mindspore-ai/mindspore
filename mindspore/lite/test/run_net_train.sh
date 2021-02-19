@@ -81,14 +81,13 @@ function Run_x86() {
         echo ${model_name}'_train' >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-train-linux-x64' >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
-        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib ./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
+        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib ./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output'  >> "${run_x86_log_file}"
         echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
         LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib:./minddata/lib:./minddata/third_party/libjpeg-turbo/lib \
         ${run_valgrind}./benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}_train.ms \
         --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
-        --expectedDataFile=${train_io_path}/${model_name}_output \
-        --exportFile=${ms_models_path}/${model_name}_train_exported.ms >> "${run_x86_log_file}" \
+        --expectedDataFile=${train_io_path}/${model_name}_output >> "${run_x86_log_file}" \
         --epochs=${epoch_num} --numThreads=${threads}
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
@@ -183,7 +182,6 @@ function Run_arm() {
         --modelFile=${model_name}_train.ms \
         --inDataFile=${tmp_dir}/${model_name}_input1.bin,${tmp_dir}/${model_name}_input2.bin \
         --expectedDataFile=${tmp_dir}/${model_name}_output \
-        --exportFile=${tmp_dir}/${model_name}_train_exported.ms \
         --numThreads=${threads}
 ENDM
         )
