@@ -280,6 +280,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());

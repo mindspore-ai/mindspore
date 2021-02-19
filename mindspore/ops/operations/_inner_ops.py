@@ -630,6 +630,7 @@ class GpuConvertToDynamicShape(PrimitiveWithCheck):
     def check_dtype(self, input_dtype):
         validator.check_subclass("input_dtype", input_dtype, mstype.tensor, self.name)
 
+
 class ErrorOnDynamicShapeInput(PrimitiveWithInfer):
     """
     This op is used for dynamic shape testing. The only purpose of this operator is
@@ -724,3 +725,93 @@ class SequenceMask(PrimitiveWithCheck):
     def check_dtype(self, lengths_dtype, maxlen_dtype):
         validator.check_subclass("lengths_dtype", lengths_dtype, mstype.tensor, self.name)
         validator.check_subclass("maxlen", maxlen_dtype, mstype.number, self.name)
+
+
+class SyncBatchNorm(PrimitiveWithInfer):
+    r"""
+    Sync Batch Normalization for input data and updated parameters.
+
+    Sync Batch Normalization is cross device synchronized batch normalization. Batch Normalization is
+    widely used in convolutional neural networks. This operation applies Batch Normalization over input
+    to avoid internal covariate shift as described in the paper `Batch Normalization: Accelerating
+    Deep Network Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_.
+    It rescales and recenters the features using a mini-batch of data and the learned parameters which
+    can be described in the following formula,
+
+    .. math::
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
+
+    Args:
+        epsilon (float): A small value added for numerical stability. Default: 1e-5.
+        momentum (float): The hyper parameter to compute moving average for running_mean and running_var
+            (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
+            Momentum value must be [0, 1]. Default: 0.1.
+        group (str): The communication group to work on. Default: "sync_bn_group0".
+        device_num (int): The number of devices in each group. Default: 2.
+
+    Inputs:
+        - **input_x** (Tensor) - Tensor of shape :math:`(N, C)`, with float16 or float32 data type.
+        - **scale** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+        - **bias** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `scale`.
+        - **mean** (Tensor) - Tensor of shape :math:`(C,)`, with float16 or float32 data type.
+        - **variance** (Tensor) - Tensor of shape :math:`(C,)`, has the same data type with `mean`.
+
+    Outputs:
+        Tuple of 5 Tensor, the normalized inputs and the updated parameters.
+
+        - **output_x** (Tensor) - The same type and shape as the input_x. The shape is :math:`(N, C)`.
+        - **updated_scale** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **updated_moving_mean** (Tensor) - Tensor of shape :math:`(C,)`.
+        - **updated_moving_variance** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> # This example should be run with multiple processes.
+        >>> # Please refer to nn.SyncBatchNorm for direct use.
+        >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
+        >>> scale = Tensor(np.ones([2]), mindspore.float32)
+        >>> bias = Tensor(np.ones([2]), mindspore.float32)
+        >>> mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> variance = Tensor(np.ones([2]), mindspore.float32)
+        >>> sync_batch_norm = ops._inner_ops.SyncBatchNorm()
+        >>> output = sync_batch_norm(input_x, scale, bias, mean, variance)
+        >>> print(output)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00, 1.00000000e+00],
+         [ 1.00000000e+00, 1.00000000e+00]]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]))
+    """
+
+    @prim_attr_register
+    def __init__(self, epsilon=1e-5, momentum=0.1, group="sync_bn_group0", device_num=2):
+        validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
+        validator.check_isinstance("group", group, str)
+        validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
+        self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
+                                outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
+
+    def infer_shape(self, input_x, scale, bias, mean, variance):
+        validator.check_equal_int(len(scale), 1, "scale rank", self.name)
+        validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
+        validator.check("scale shape[0]", scale[0], "input_x channel", input_x[1], Rel.EQ, self.name)
+        validator.check_equal_int(len(mean), 1, "mean rank", self.name)
+        validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
+        validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
+        return (input_x, scale, scale, scale, scale)
+
+    def infer_dtype(self, input_x, scale, bias, mean, variance):
+        validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
+        args = {"scale": scale, "bias": bias}
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
+        args_moving = {"mean": mean, "variance": variance}
+        validator.check_tensors_dtypes_same_and_valid(args_moving, [mstype.float16, mstype.float32], self.name)
+        return (input_x, scale, bias, input_x, input_x)

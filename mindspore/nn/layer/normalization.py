@@ -13,12 +13,17 @@
 # limitations under the License.
 # ============================================================================
 """normalization"""
+import itertools
+
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
+from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import constexpr
 import mindspore.context as context
+from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
@@ -26,8 +31,9 @@ from mindspore.communication import management
 from mindspore.ops import _selected_ops
 from ..cell import Cell
 
-__all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm', 'InstanceNorm2d']
+__all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm2d']
 
+SYNC_BN_GROUP_NAME = ""
 
 class _BatchNorm(Cell):
     """Batch Normalization base class."""
@@ -44,6 +50,7 @@ class _BatchNorm(Cell):
                  moving_var_init='ones',
                  use_batch_statistics=None,
                  device_num_each_group=1,
+                 process_groups=0,
                  input_dims='2d',
                  data_format='NCHW'):
         super(_BatchNorm, self).__init__()
@@ -68,19 +75,47 @@ class _BatchNorm(Cell):
             gamma_init, num_features), name="gamma", requires_grad=affine)
         self.beta = Parameter(initializer(
             beta_init, num_features), name="beta", requires_grad=affine)
-        self.group = validator.check_positive_int(device_num_each_group)
+        self.group_device_num = validator.check_positive_int(device_num_each_group)
+        self.process_groups = process_groups
         self.is_global = False
-        if self.group != 1:
+        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        global SYNC_BN_GROUP_NAME
+        # for GlobalBatchNorm
+        if self.group_device_num != 1 and self.parallel_mode != context.ParallelMode.STAND_ALONE:
             self.rank_id = get_rank()
             self.rank_size = get_group_size()
             self.device_list = [i for i in range(0, self.rank_size)]
-            self.rank_list = self.list_group(self.device_list, self.group)
+            self.rank_list = self.list_group(self.device_list, self.group_device_num)
             self.rank_list_idx = len(self.rank_list)
             for i in range(self.rank_list_idx):
-                if self.rank_id in self.rank_list[i] and self.group != 1:
+                if self.rank_id in self.rank_list[i]:
                     self.is_global = True
-                    management.create_group('group' + str(i), self.rank_list[i])
-                    self.all_reduce = P.AllReduce(P.ReduceOp.SUM, 'group' + str(i)).add_prim_attr('fusion', 1)
+                    if SYNC_BN_GROUP_NAME == "":
+                        SYNC_BN_GROUP_NAME = "sync_bn_group"+ str(i)
+                        management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
+        # for SyncBatchNorm
+        if self.process_groups != 0 and self.parallel_mode != context.ParallelMode.STAND_ALONE:
+            self.rank_id = get_rank()
+            self.rank_size = get_group_size()
+            if self.process_groups is not None:
+                validator.check_isinstance("process_groups", self.process_groups, list)
+                self._check_rank_ids(self.process_groups, self.rank_size)
+                for i in range(len(self.process_groups)):
+                    validator.check_isinstance("process_groups[" + str(i) +"]", self.process_groups[i], list)
+                    self.group_device_num = len(self.process_groups[i])
+                    if self.rank_id in self.process_groups[i] and self.group_device_num > 1:
+                        self.is_global = True
+                        if SYNC_BN_GROUP_NAME == "":
+                            SYNC_BN_GROUP_NAME = "sync_bn_group" + str(i)
+                            management.create_group(SYNC_BN_GROUP_NAME, self.process_groups[i])
+            elif self.rank_size > 1:
+                self.is_global = True
+                self.group_device_num = self.rank_size
+                self.device_list = [i for i in range(0, self.rank_size)]
+                if SYNC_BN_GROUP_NAME == "":
+                    SYNC_BN_GROUP_NAME = "sync_bn_group0"
+                    management.create_group(SYNC_BN_GROUP_NAME, self.device_list)
+
         self.shape = P.Shape()
         self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.square = P.Square()
@@ -109,9 +144,12 @@ class _BatchNorm(Cell):
             self.bn_train = P.FusedBatchNorm(mode=1,
                                              epsilon=self.eps,
                                              momentum=self.momentum)
+        if self.is_global:
+            self.bn_train = inner.SyncBatchNorm(epsilon=self.eps,
+                                                momentum=self.momentum,
+                                                group=SYNC_BN_GROUP_NAME,
+                                                device_num=self.group_device_num)
         self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps, data_format=self.format)
-        self.enable_global_sync = self.is_global and (self.is_ge_backend or\
-            (self.is_graph_mode and self._target == "Ascend"))
 
         data_parallel_strategy = ((1,), (1,))
         data_parallel_strategy_one = ((1,), ())
@@ -135,26 +173,13 @@ class _BatchNorm(Cell):
         group_list = [list(i) for i in world_rank_list]
         return group_list
 
-    def _global_sync(self, x, axes, re_shape):
-        """calculate global batch normalization output"""
-        x_mean = self.reduce_mean(x, axes)
-        x_mean_square = self.reduce_mean(self.square(x), axes)
-        global_batch_mean = self.all_reduce(x_mean) / self.group
-        global_batch_mean_square = self.all_reduce(x_mean_square) / self.group
-        global_mean = global_batch_mean
-        global_var = global_batch_mean_square - self.square(global_mean)
-        var_sqrt = self.sqrt(global_var + self.eps)
-        mean_first = (x - global_mean) / var_sqrt
-        y = mean_first * self.reshape(self.gamma, re_shape) + self.reshape(self.beta, re_shape)
-
-        mean_sub = self.sub_mean(self.reshape(self.moving_mean, re_shape), global_mean)
-        tmp_mean = self.mul_mean(mean_sub, self.cast(self.momentum, self.dtype(mean_sub)))
-        mean_sub2 = self.sub_var(self.reshape(self.moving_mean, re_shape), global_var)
-        tmp_variance = self.mul_var(mean_sub2, self.cast(self.momentum, self.dtype(mean_sub2)))
-        y = F.depend(y, self.assign_sub_mean(self.moving_mean, self.reshape(tmp_mean, self.shape(self.moving_mean))))
-        y = F.depend(y, self.assign_sub_var(self.moving_variance,
-                                            self.reshape(tmp_variance, self.shape(self.moving_variance))))
-        return y
+    def _check_rank_ids(self, process_groups, rank_size):
+        seen = set()
+        for rid in itertools.chain(*process_groups):
+            validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups")
+            if rid in seen:
+                raise ValueError("rank id in process_groups should not be duplicated.")
+            seen.add(rid)
 
     def construct(self, x):
         _shape_check_bn(self.shape(x), self.input_dims)
@@ -164,10 +189,6 @@ class _BatchNorm(Cell):
             flag = self.use_batch_statistics
 
         if flag:
-            if self.enable_global_sync:
-                axes, re_shape = _shape_infer(F.shape(x), self.num_features)
-                return self._global_sync(x, axes, re_shape)
-
             return self.bn_train(x,
                                  self.gamma,
                                  self.beta,
@@ -597,6 +618,7 @@ class GlobalBatchNorm(_BatchNorm):
            [ 20.9999895 241.9988  ]]]]
     """
 
+    @deprecated("1.2", "SyncBatchNorm", True)
     def __init__(self,
                  num_features,
                  eps=1e-5,
@@ -619,9 +641,124 @@ class GlobalBatchNorm(_BatchNorm):
                                               use_batch_statistics,
                                               device_num_each_group,
                                               input_dims='both')
-        self.group = validator.check_positive_int(device_num_each_group)
-        if self.group <= 1:
+        self.group_device_num = validator.check_positive_int(device_num_each_group)
+        if self.group_device_num <= 1:
             raise ValueError("the number of group must be greater than 1.")
+
+    def _check_data_dim(self, x):
+        if x.dim == 0:
+            pass
+
+
+class SyncBatchNorm(_BatchNorm):
+    r"""
+    Sync Batch normalization layer over a N-dimension input.
+
+    Sync Batch Normalization is cross device synchronized batch normalization. The implementation of Batch
+    Normalization only normalizes the data within each device. Sync Batch normalization will normalize the input
+    within the group. It has been described in the paper `Batch Normalization: Accelerating Deep Network Training by
+    Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    feature using a mini-batch of data and the learned parameters which can be described in the following formula.
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    Note:
+        Currently, SyncBatchNorm only supports 2D and 4D inputs.
+
+    Args:
+        num_features (int): `C` from an expected input of size (N, C, H, W).
+        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        momentum (float): A floating hyperparameter of the momentum for the
+            running_mean and running_var computation. Default: 0.9.
+        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+        gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'ones'.
+        beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'zeros'.
+        moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'zeros'.
+        moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
+            'he_uniform', etc. Default: 'ones'.
+        use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
+            use the mean value and variance value of specified value. If None, training process will use the mean and
+            variance of current batch data and track the running mean and variance, eval process will use the running
+            mean and variance. Default: None.
+        process_groups (list): A list to divide devices into different sync groups, containing N subtraction lists.
+            Each subtraction list contains int numbers identifying rank ids which need to be synchronized in the same
+            group. All int values must be in [0, rank_size) and different from each other. Default: None, indicating
+            synchronization across all devices.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `num_features` is not an int.
+        TypeError: If `eps` is not a float.
+        TypeError: If `process_groups` is not a list.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+        ValueError: If `device_num_each_group` is less than 2.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> # This example should be run with multiple processes.
+        >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
+        >>> import numpy as np
+        >>> from mindspore.communication import init
+        >>> from mindspore import context
+        >>> from mindspore.context import ParallelMode
+        >>> from mindspore import nn, Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>>
+        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> init()
+        >>> context.reset_auto_parallel_context()
+        >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
+        >>> np.random.seed(0)
+        >>> sync_bn_op = nn.SyncBatchNorm(num_features=3, process_groups=[[0, 1], [2, 3]])
+        >>> input = Tensor(np.random.randint(0, 255, [1, 3, 2, 2]), mstype.float32)
+        >>> output = sync_bn_op(input)
+        >>> print(output)
+        [[[[171.99915    46.999763]
+           [116.99941   191.99904 ]]
+          [[ 66.999664  250.99875 ]
+           [194.99902   102.99948 ]]
+          [[  8.999955  210.99895 ]
+           [ 20.9999895 241.9988  ]]]]
+    """
+
+    def __init__(self,
+                 num_features,
+                 eps=1e-5,
+                 momentum=0.9,
+                 affine=True,
+                 gamma_init='ones',
+                 beta_init='zeros',
+                 moving_mean_init='zeros',
+                 moving_var_init='ones',
+                 use_batch_statistics=None,
+                 process_groups=None):
+        super(SyncBatchNorm, self).__init__(num_features,
+                                            eps,
+                                            momentum,
+                                            affine,
+                                            gamma_init,
+                                            beta_init,
+                                            moving_mean_init,
+                                            moving_var_init,
+                                            use_batch_statistics,
+                                            process_groups=process_groups,
+                                            input_dims='both')
 
     def _check_data_dim(self, x):
         if x.dim == 0:
