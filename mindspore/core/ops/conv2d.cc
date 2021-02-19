@@ -30,32 +30,31 @@ namespace ops {
 namespace {
 abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto conv_prim = primitive->cast<PrimConv2dPtr>();
-  MS_EXCEPTION_IF_NULL(conv_prim);
-  auto prim_name = conv_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInRange<size_t>("conv2d_infer", input_args.size(), kIncludeBoth, {2, 3}, prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShape("w_shape", input_args[1]->BuildShape(), prim_name);
-  if (conv_prim->get_format() == NHWC) {
+  auto format = Format(GetValue<int64_t>(primitive->GetAttr(kFormat)));
+  if (format == NHWC) {
     x_shape = {x_shape[0], x_shape[3], x_shape[1], x_shape[2]};
     w_shape = {w_shape[0], w_shape[3], w_shape[1], w_shape[2]};
   }
 
   CheckAndConvertUtils::CheckInteger("weight rank", w_shape.size(), kEqual, 4, prim_name);
   CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kEqual, 4, prim_name);
-  CheckAndConvertUtils::Check("x_shape[1] / group", x_shape[1] / conv_prim->get_group(), kEqual, "w_shape[1]",
-                              w_shape[1], conv_prim->name());
-  auto out_channel = conv_prim->get_out_channel();
-  CheckAndConvertUtils::Check("out_channel", out_channel, kEqual, "w_shape[0]", w_shape[0], conv_prim->name());
+  CheckAndConvertUtils::Check("x_shape[1] / group", x_shape[1] / GetValue<int64_t>(primitive->GetAttr(kGroup)), kEqual,
+                              "w_shape[1]", w_shape[1], prim_name);
+  auto out_channel = GetValue<int64_t>(primitive->GetAttr(kOutChannel));
+  CheckAndConvertUtils::Check("out_channel", out_channel, kEqual, "w_shape[0]", w_shape[0], prim_name);
   std::vector<int64_t> temp_w;
   std::copy(w_shape.begin() + 2, w_shape.end(), std::back_inserter(temp_w));
-  CheckAndConvertUtils::Check("kernel_size", conv_prim->get_kernel_size(), kEqual, "w_shape[2:4]", temp_w,
-                              conv_prim->name());
+  CheckAndConvertUtils::Check("kernel_size", GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize)), kEqual,
+                              "w_shape[2:4]", temp_w, prim_name);
 
   auto kernel_size_h = w_shape[2];
   auto kernel_size_w = w_shape[3];
-  auto stride = conv_prim->get_stride();
-  auto dilation = conv_prim->get_dilation();
+  auto stride = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStride));
+  auto dilation = GetValue<std::vector<int64_t>>(primitive->GetAttr(kDilation));
   auto stride_h = stride[2];
   auto stride_w = stride[3];
   auto dilation_h = dilation[2];
@@ -63,7 +62,7 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   int64_t h_out = -1;
   int64_t w_out = -1;
   std::vector<int64_t> pad_list(4, 0);
-  auto pad_mode = conv_prim->get_pad_mode();
+  auto pad_mode = PadMode(GetValue<int64_t>(primitive->GetAttr(kPadMode)));
   if (pad_mode == VALID) {
     h_out = ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h);
     w_out = ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w);
@@ -81,20 +80,23 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
     pad_list.emplace_back(pad_left);
     pad_list.emplace_back(pad_needed_h - pad_left);
   } else if (pad_mode == PAD) {
-    std::copy(conv_prim->get_pad().begin(), conv_prim->get_pad().end(), std::back_inserter(pad_list));
-    auto pad_top = conv_prim->get_pad()[0];
-    auto pad_bottom = conv_prim->get_pad()[1];
-    auto pad_right = conv_prim->get_pad()[2];
-    auto pad_left = conv_prim->get_pad()[3];
+    auto pad = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPad));
+    std::copy(pad.begin(), pad.end(), std::back_inserter(pad_list));
+    auto pad_top = pad[0];
+    auto pad_bottom = pad[1];
+    auto pad_right = pad[2];
+    auto pad_left = pad[3];
 
     h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) / stride_h;
     w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) / stride_w;
     h_out = floor(h_out);
     w_out = floor(w_out);
   }
-  conv_prim->set_pad(pad_list);
+  CheckAndConvertUtils::CheckInteger("pad_size", pad_list.size(), kEqual, 4, prim_name);
+  primitive->AddAttr(kPadList,
+                     MakeValue(CheckAndConvertUtils::CheckPositiveVector(kPad, pad_list, prim_name, true, true)));
   std::vector<int64_t> out_shape = {x_shape[0], out_channel, h_out, w_out};
-  if (conv_prim->get_format() == NHWC) {
+  if (format == NHWC) {
     out_shape = {x_shape[0], h_out, w_out, out_channel};
   }
 

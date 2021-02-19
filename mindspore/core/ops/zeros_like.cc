@@ -60,7 +60,6 @@ AbstractBasePtr ZerosLikeInfer(const abstract::AnalysisEnginePtr &, const Primit
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ZerosLike, prim::kPrimZerosLike, ZerosLikeInfer);
 REGISTER_PRIMITIVE_C(kNameZerosLike, ZerosLike);
 }  // namespace ops
 }  // namespace mindspore

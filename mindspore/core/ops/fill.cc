@@ -15,8 +15,10 @@
  */
 
 #include "ops/fill.h"
+#include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/tensor_construct_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -38,7 +40,23 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   valid_types.insert(kNumberTypeBool);
   CheckAndConvertUtils::CheckTypeSame("output datatype", dtype, valid_types, prim_name);
   auto out_shape = GetValue<std::vector<int64_t>>(input_args[1]->BuildValue());
-  return std::make_shared<abstract::AbstractTensor>(dtype, std::make_shared<abstract::Shape>(out_shape));
+  auto x_type = input_args[2]->BuildType();
+  auto x_type_id = x_type->type_id();
+  auto x_value = input_args[2]->BuildValue();
+  auto abs = std::make_shared<abstract::AbstractTensor>(dtype, std::make_shared<abstract::Shape>(out_shape));
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(x_type_id, out_shape);
+  auto mem_size = IntToSize(tensor->ElementsNum());
+  if (x_type_id == kNumberTypeInt) {
+    auto num = GetValue<int>(x_value);
+    SetTensorData(tensor->data_c(), num, mem_size);
+  } else if (x_type_id == kNumberTypeFloat || x_type_id == kNumberTypeFloat32) {
+    auto num = GetValue<float>(x_value);
+    SetTensorData(tensor->data_c(), num, mem_size);
+  } else {
+    MS_LOG(ERROR) << " Fill not supported to flod the constant type " << input_args[2]->ToString();
+  }
+  abs->set_value(tensor);
+  return abs;
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Fill, prim::kPrimFill, FillInfer);
 REGISTER_PRIMITIVE_C(kNameFill, Fill);

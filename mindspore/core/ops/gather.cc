@@ -23,15 +23,11 @@ namespace ops {
 AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto gather_prim = primitive->cast<PrimGatherPtr>();
-  MS_EXCEPTION_IF_NULL(gather_prim);
-  auto prim_name = gather_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("gather_infer", input_args.size(), kEqual, 3, prim_name);
 
   // Infer type
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  // auto dim_type = input_args[1]->BuildType();
-  // auto index_type = input_args[2]->BuildType()->cast<TensorTypePtr>()->element();
   std::set<TypePtr> valid_x_type = {TypeIdToType(kObjectTypeTensorType)};
   CheckAndConvertUtils::CheckSubClass("x_type", input_args[0]->BuildType(), valid_x_type, prim_name);
   const std::set<TypeId> valid_index_types = {kNumberTypeInt32, kNumberTypeInt64};

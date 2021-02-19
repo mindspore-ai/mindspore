@@ -61,7 +61,7 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
     condition = input_args[0]->BuildType();
   }
   std::vector<int64_t> output_shape = {1};
-  std::set<TypePtr> local_bool = {TypeIdToType(kNumberTypeBool)};
+  std::set<TypeId> local_bool = {kNumberTypeBool};
   std::map<std::string, TypePtr> args = {{"condition", condition}};
   CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, local_bool, op_name);
   auto inputs_type = input_args[1]->BuildType()->cast<TuplePtr>()->elements();

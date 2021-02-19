@@ -193,6 +193,8 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMemCpyAsync, {InferImplMemCpyAsync, true}},
     {prim::kPrimCast, {InferImplCast, true}},
     {prim::kPrimExpandDims, {InferImplExpandDims, true}},
+    {prim::kPrimSparseSoftmaxCrossEntropyWithLogits, {InferImplSparseSoftmaxCrossEntropyWithLogits, true}},
+    {prim::kPrimDType, {InferImplDType, true}},
   };
   return prim_eval_implement_map;
 }

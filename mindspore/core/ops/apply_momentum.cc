@@ -56,32 +56,29 @@ float ApplyMomentum::get_gradient_scale() const {
 AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto momentum_prim = primitive->cast<PrimApplyMomentumPtr>();
-  MS_EXCEPTION_IF_NULL(momentum_prim);
-  auto prim_name = momentum_prim->name();
+  auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("apply_momentum_infer", input_args.size(), kEqual, 5, prim_name);
 
   // Infer shape
   auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShape("v_shape", input_args[0]->BuildShape(), prim_name);
 
   // Infer type
-  auto v_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
-  auto a_type = input_args[1]->BuildType()->cast<TensorTypePtr>()->element();
-  auto l_type = input_args[2]->BuildType()->cast<TensorTypePtr>()->element();
-  auto g_type = input_args[3]->BuildType()->cast<TensorTypePtr>()->element();
-  auto m_type = input_args[4]->BuildType()->cast<TensorTypePtr>()->element();
+  auto v_tensor_type = input_args[0]->BuildType();
+  auto a_tensor_type = input_args[1]->BuildType();
+  auto l_type = input_args[2]->BuildType();
+  auto g_type = input_args[3]->BuildType();
+  auto m_type = input_args[4]->BuildType();
   const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
-  CheckAndConvertUtils::CheckTensorTypeValid("v_type", v_type, valid_types, prim_name);
-  CheckAndConvertUtils::CheckTensorTypeValid("a_type", a_type, valid_types, prim_name);
-  const std::set<TypePtr> valid_types_ptr = {TypeIdToType(kNumberTypeFloat16), TypeIdToType(kNumberTypeFloat32),
-                                             TypeIdToType(kNumberTypeFloat64)};
+  CheckAndConvertUtils::CheckTensorTypeValid("v_type", v_tensor_type, valid_types, prim_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("a_type", a_tensor_type, valid_types, prim_name);
   std::map<std::string, TypePtr> args;
   args.insert({"l_type", l_type});
   args.insert({"g_type", g_type});
   args.insert({"m_type", m_type});
-  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, valid_types_ptr, prim_name);
-
-  return std::make_shared<abstract::AbstractTensor>(g_type, v_shape);
+  CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, valid_types, prim_name);
+  auto g_type_tensor = g_type->cast<TensorTypePtr>();
+  auto element = g_type_tensor->element();
+  return std::make_shared<abstract::AbstractTensor>(element, v_shape);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(ApplyMomentum, prim::kPrimApplyMomentum, ApplyMomentumInfer);
 REGISTER_PRIMITIVE_C(kNameApplyMomentum, ApplyMomentum);

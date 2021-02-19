@@ -486,7 +486,7 @@ void CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const Typ
 }
 
 void CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::string, TypePtr> &args,
-                                                        const std::set<TypePtr> &valid_values,
+                                                        const std::set<TypeId> &valid_values,
                                                         const std::string &prim_name, const bool allow_mix) {
   std::vector<std::map<std::string, TypePtr>> check_results;
   for (auto &iter : args) {
@@ -502,7 +502,7 @@ void CheckAndConvertUtils::CheckScalarOrTensorTypesSame(const std::map<std::stri
 }
 
 std::map<std::string, TypePtr> CheckAndConvertUtils::_CheckArgumentType(const std::map<std::string, TypePtr> &arg,
-                                                                        const std::set<TypePtr> &valid_values,
+                                                                        const std::set<TypeId> &valid_values,
                                                                         const std::string &prim_name) {
   std::string arg_key = arg.begin()->first;
   TypePtr arg_val = arg.begin()->second;
@@ -512,15 +512,16 @@ std::map<std::string, TypePtr> CheckAndConvertUtils::_CheckArgumentType(const st
     arg_val = arg_val_->element();
   }
 
-  auto it = valid_values.find(arg_val);
+  auto it = valid_values.find(arg_val->type_id());
   if (it == valid_values.end()) {
     std::ostringstream buffer;
     buffer << "For '" << prim_name << "' , the `" << arg_key << "` should be in { ";
     for (auto valid_value : valid_values) {
-      buffer << valid_value->ToString() << " },";
-      buffer << "but `" << arg_key << "`"
-             << "is" << arg_val->ToString() << ".";
+      buffer << TypeIdToType(valid_value)->ToString() << ",";
     }
+    buffer << " },";
+    buffer << "but `" << arg_key << "`"
+           << "is" << arg_val->ToString() << ".";
     MS_EXCEPTION(TypeError) << buffer.str();
   }
   return arg;
@@ -546,7 +547,7 @@ std::map<std::string, TypePtr> CheckAndConvertUtils::_CheckTypeSame(const std::m
     except_flag = true;
   }
 
-  if (except_flag || arg1_type != arg2_type) {
+  if (except_flag || arg1_type->type_id() != arg2_type->type_id()) {
     std::ostringstream buffer;
     buffer << "For '" << prim_name << "'"
            << "type of "
