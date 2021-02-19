@@ -26,8 +26,14 @@ std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
   constexpr auto kUnsortedSegmentSum = "UnsortedSegmentSum";
   constexpr auto kUnsortedSegmentMin = "UnsortedSegmentMin";
   constexpr auto kUnsortedSegmentMax = "UnsortedSegmentMax";
+  constexpr auto kGather = "Gather";
+  constexpr auto kGatherV2 = "GatherV2";
+  constexpr auto kDynamicShape = "DynamicShape";
+  constexpr auto kRange = "Range";
   static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {
-    {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}};
+    {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}, {kGather, {2}},
+    {kGatherV2, {2}},           {kDynamicShape, {0}},       {kRange, {0, 1, 2}},
+  };
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
