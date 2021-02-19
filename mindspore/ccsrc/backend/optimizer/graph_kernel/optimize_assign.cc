@@ -88,11 +88,14 @@ std::map<size_t, AnfNodePtr> FindAssignAndOutputVal(const CNodePtr &fg_cnode) {
   return output_replace_map;
 }
 
-bool HasPathToParamUser(const AnfNodePtr &gk_node, const AnfNodePtr &param_user) {
+bool HasPathToParamUser(const AnfNodePtr &gk_node, const AnfNodePtr &param_user, const AnfNodePtr &getitem) {
   auto mng = AnfAlgo::GetCNodeFuncGraphPtr(gk_node)->manager();
   MS_EXCEPTION_IF_NULL(mng);
   bool result = false;
-  auto IncludeUser = [&result, &gk_node](const AnfNodePtr &node) {
+  auto IncludeUser = [&result, &gk_node, &getitem](const AnfNodePtr &node) {
+    if (node == getitem) {
+      return EXCLUDE;
+    }
     if (node == gk_node) {
       result = true;
       return EXCLUDE;
@@ -103,23 +106,23 @@ bool HasPathToParamUser(const AnfNodePtr &gk_node, const AnfNodePtr &param_user)
   return result;
 }
 
-void KeepExecOrder(const FuncGraphPtr &func_graph, const AnfNodePtr &gk_node, const AnfNodePtr &par_user_node,
+void KeepExecOrder(const FuncGraphPtr &func_graph, const AnfNodePtr &getitem, const AnfNodePtr &assign_to_node,
                    const FuncGraphManagerPtr &mng) {
   // Insert update_state_node, need mount a monad node.
   auto u = NewValueNode(kUMonad);
   u->set_abstract(kUMonad->ToAbstract());
-  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, gk_node};
+  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, getitem};
   auto update_state_node = func_graph->NewCNode(update_state_inputs);
-  update_state_node->set_abstract(gk_node->abstract());
+  update_state_node->set_abstract(getitem->abstract());
   func_graph->AddNode(update_state_node);
 
   // Insert load_node
-  AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), par_user_node, update_state_node};
+  AnfNodePtrList load_inputs = {NewValueNode(prim::kPrimLoad), assign_to_node, update_state_node};
   auto load_node = func_graph->NewCNode(load_inputs);
-  load_node->set_abstract(par_user_node->abstract());
+  load_node->set_abstract(assign_to_node->abstract());
   func_graph->AddNode(load_node);
 
-  mng->Replace(gk_node, par_user_node);
+  mng->Replace(getitem, load_node);
 }
 
 int64_t GetitemIndex(const AnfNodePtr &getitem) {
@@ -136,17 +139,18 @@ void UpdateUsersOfGraphKernel(const FuncGraphPtr &func_graph, const AnfNodePtr &
     auto getitem = getitem_iter.first;
     if (GetitemIndex(getitem) != removed_index) continue;
     auto getitem_users = mng->node_users()[getitem];  // get a copy of getitem's users before replacing
-    mng->Replace(getitem, assign_to);
 
     for (const auto &getitem_user_iter : getitem_users) {
       auto getitem_user = getitem_user_iter.first;
       // 1. A previous pass `DependFormater` has ensured that all data users are directly link to its
       //   input, without Depend node.
-      // 2. If the `cnode` has another path to the getitem_user, it's unnecessary to add a ControlDepend.
-      if (!AnfAlgo::IsRealKernel(getitem_user) || HasPathToParamUser(cnode, getitem_user)) {
+      // 2. If the `cnode` has another path to the getitem_user, it's unnecessary to add update_state and load node to
+      // keep exec_order.
+      if (!AnfAlgo::IsRealKernel(getitem_user) || HasPathToParamUser(cnode, getitem_user, getitem)) {
+        mng->Replace(getitem, assign_to);
         continue;
       }
-      KeepExecOrder(func_graph, cnode, getitem_user, mng);
+      KeepExecOrder(func_graph, getitem, assign_to, mng);
     }
     break;
   }
