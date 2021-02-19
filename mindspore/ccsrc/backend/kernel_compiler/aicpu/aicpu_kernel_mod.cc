@@ -79,7 +79,9 @@ void AicpuOpKernelMod::CreateCpuKernelInfo(const std::vector<AddressPtr> &inputs
     node_so_ = AICPU_OPS_SO_NAME;
     node_name_ = kCustRunApi;
   } else {
-    node_so_ = AICPU_OPS_SO_NAME;
+    if (node_so_ != CUST_AICPU_OPS_SO_NAME) {
+      node_so_ = AICPU_OPS_SO_NAME;
+    }
   }
   // InputOutputAddr
   vector<void *> io_addrs;
@@ -171,7 +173,9 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
     node_so_ = AICPU_OPS_SO_NAME;
     node_name_ = kCustRunApi;
   } else {
-    node_so_ = AICPU_OPS_SO_NAME;
+    if (node_so_ != CUST_AICPU_OPS_SO_NAME) {
+      node_so_ = AICPU_OPS_SO_NAME;
+    }
   }
   std::vector<void *> input_data_addrs;
   (void)std::transform(std::begin(inputs), std::end(inputs), std::back_inserter(input_data_addrs),
