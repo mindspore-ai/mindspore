@@ -326,6 +326,7 @@ install(
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/transforms.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision_lite.h
+          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision_ascend.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/execute.h
     DESTINATION ${INSTALL_BASE_DIR}/include/minddata/dataset/include
     COMPONENT mindspore

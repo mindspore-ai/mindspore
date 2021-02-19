@@ -211,7 +211,7 @@ def test_subset_sampler():
     test_config([0, 9, -6, 2], exception_msg="Sample ID (-6) is out of bound, expected range [0, 9]")
     # test_config([], exception_msg="Indices list is empty") # temporary until we check with MindDataset
     test_config([0, 9, 3, 2], num_samples=-1,
-                exception_msg="SubsetRandomSampler: num_samples must be greater than or equal to 0")
+                exception_msg="num_samples exceeds the boundary between 0 and 9223372036854775807(INT64_MAX)")
 
 
 def test_sampler_chain():
