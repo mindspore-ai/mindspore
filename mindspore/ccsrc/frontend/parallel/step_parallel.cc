@@ -1108,7 +1108,7 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
   FuncGraphManagerPtr manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   for (auto input : node->inputs()) {
-    if (input->isa<CNode>() && HasAbstractMonad(input)) {
+    if (HasAbstractMonad(input)) {
       node_size--;
     }
   }
@@ -1414,6 +1414,9 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   for (size_t i = 1; i < inputs_size; ++i) {
     Shapes input_shapes;
     AnfNodePtr input = all_inputs[i];
+    if (HasAbstractMonad(input)) {
+      continue;
+    }
     if (IsValueNode<RefKey>(input)) {
       auto func_graph = node->func_graph();
       MS_EXCEPTION_IF_NULL(func_graph);
@@ -1424,8 +1427,7 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
       std::pair<AnfNodePtr, int64_t> node_pair = std::make_pair(node, SizeToLong(i));
       g_RefMap[parameters[0]] = node_pair;
       input_shapes = GetRefKeyNodeShape(input, func_graph);
-    } else if ((input->isa<CNode>() && !HasAbstractMonad(input)) || IsValueNode<Tensor>(input) ||
-               input->isa<Parameter>() ||
+    } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
                ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == 2))) {
       input_shapes = GetNodeShape(input);
     } else {
