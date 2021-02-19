@@ -69,10 +69,12 @@ Status ImageFolderNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const nod
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   RETURN_IF_NOT_OK(
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_INT32), TensorImpl::kFlexible, 0, &scalar)));
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
-  auto op = std::make_shared<ImageFolderOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                            recursive_, decode_, exts_, class_indexing_, std::move(schema),
-                                            std::move(sampler_->SamplerBuild()));
+  auto op =
+    std::make_shared<ImageFolderOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_, recursive_,
+                                    decode_, exts_, class_indexing_, std::move(schema), std::move(sampler_rt));
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);
@@ -95,7 +97,9 @@ Status ImageFolderNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> 
   }
   int64_t sample_size, num_rows;
   RETURN_IF_NOT_OK(ImageFolderOp::CountRowsAndClasses(dataset_dir_, exts_, &num_rows, nullptr, {}));
-  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+  sample_size = sampler_rt->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

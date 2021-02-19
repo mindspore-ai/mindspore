@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,9 @@ class SamplerObj {
   virtual Status ValidateParams() = 0;
 
   /// \brief Pure virtual function to convert a SamplerObj class into a runtime sampler object
-  /// \return Shared pointers to the newly created Sampler
-  virtual std::shared_ptr<SamplerRT> SamplerBuild() = 0;
+  /// \param[out] sampler Shared pointers to the newly created Sampler
+  /// \return The Status code of the function. It returns OK status if sampler is created successfully.
+  virtual Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) = 0;
 
   /// \brief Pure virtual function to copy a SamplerObj class
   /// \return Shared pointers to the newly copied SamplerObj
@@ -78,7 +79,8 @@ class SamplerObj {
  protected:
   /// \brief A function that calls build on the children of this sampler
   /// \param[in] sampler The samplerRT object built from this sampler
-  void BuildChildren(std::shared_ptr<SamplerRT> sampler);
+  /// \return the Status code returned
+  Status BuildChildren(std::shared_ptr<SamplerRT> *sampler);
 
   std::vector<std::shared_ptr<SamplerObj>> children_;
 };
@@ -91,7 +93,7 @@ class DistributedSamplerObj : public SamplerObj {
 
   ~DistributedSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_,
@@ -133,7 +135,7 @@ class PKSamplerObj : public SamplerObj {
 
   ~PKSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
@@ -169,7 +171,7 @@ class PreBuiltSamplerObj : public SamplerObj {
 
   ~PreBuiltSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -194,7 +196,7 @@ class RandomSamplerObj : public SamplerObj {
 
   ~RandomSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
@@ -227,7 +229,7 @@ class SequentialSamplerObj : public SamplerObj {
 
   ~SequentialSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
@@ -259,7 +261,7 @@ class SubsetSamplerObj : public SamplerObj {
 
   ~SubsetSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
@@ -293,7 +295,7 @@ class SubsetRandomSamplerObj : public SubsetSamplerObj {
 
   Status to_json(nlohmann::json *out_json) override;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
@@ -316,7 +318,7 @@ class WeightedRandomSamplerObj : public SamplerObj {
 
   ~WeightedRandomSamplerObj() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
     auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);

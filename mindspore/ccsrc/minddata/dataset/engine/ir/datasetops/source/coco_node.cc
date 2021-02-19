@@ -119,9 +119,12 @@ Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_UNEXPECTED(err_msg);
   }
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+
   std::shared_ptr<CocoOp> op =
     std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, rows_per_buffer_,
-                             connector_que_size_, decode_, std::move(schema), std::move(sampler_->SamplerBuild()));
+                             connector_que_size_, decode_, std::move(schema), std::move(sampler_rt));
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);
@@ -145,7 +148,9 @@ Status CocoNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
   }
   int64_t num_rows = 0, sample_size;
   RETURN_IF_NOT_OK(CocoOp::CountTotalRows(dataset_dir_, annotation_file_, task_, &num_rows));
-  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+  sample_size = sampler_rt->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

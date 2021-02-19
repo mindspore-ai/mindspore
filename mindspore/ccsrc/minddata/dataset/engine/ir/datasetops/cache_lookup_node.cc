@@ -74,10 +74,11 @@ std::shared_ptr<SamplerObj> CacheLookupNode::SamplerCopy() {
   return std::static_pointer_cast<SamplerObj>(lookup_node_copy_);
 }
 
-std::shared_ptr<SamplerRT> CacheLookupNode::SamplerBuild() {
+Status CacheLookupNode::SamplerBuild(std::shared_ptr<SamplerRT> *out) {
   // Runtime cache lookup op should already been built, so we just return it here
   auto lookup_op = std::dynamic_pointer_cast<CacheLookupOp>(lookup_op_);
-  return std::shared_ptr<SamplerRT>(lookup_op);
+  *out = std::shared_ptr<SamplerRT>(lookup_op);
+  return Status::OK();
 }
 
 }  // namespace dataset

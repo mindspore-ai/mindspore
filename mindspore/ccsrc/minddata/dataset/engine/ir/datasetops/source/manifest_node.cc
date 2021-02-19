@@ -91,9 +91,11 @@ Status ManifestNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
 
   std::shared_ptr<ManifestOp> manifest_op;
-  manifest_op =
-    std::make_shared<ManifestOp>(num_workers_, rows_per_buffer_, dataset_file_, connector_que_size_, decode_,
-                                 class_index_, std::move(schema), std::move(sampler_->SamplerBuild()), usage_);
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+
+  manifest_op = std::make_shared<ManifestOp>(num_workers_, rows_per_buffer_, dataset_file_, connector_que_size_,
+                                             decode_, class_index_, std::move(schema), std::move(sampler_rt), usage_);
   manifest_op->set_total_repeats(GetTotalRepeats());
   manifest_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(manifest_op);
@@ -118,7 +120,9 @@ Status ManifestNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   int64_t num_rows, sample_size;
   int64_t num_classes;  // dummy variable
   RETURN_IF_NOT_OK(ManifestOp::CountTotalRows(dataset_file_, class_index_, usage_, &num_rows, &num_classes));
-  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+  sample_size = sampler_rt->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

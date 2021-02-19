@@ -66,10 +66,11 @@ Status CelebANode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
   // label is like this:0 1 0 0 1......
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
 
-  auto celeba_op =
-    std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_, decode_, usage_,
-                               extensions_, std::move(schema), std::move(sampler_->SamplerBuild()));
+  auto celeba_op = std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
+                                              decode_, usage_, extensions_, std::move(schema), std::move(sampler_rt));
   celeba_op->set_total_repeats(GetTotalRepeats());
   celeba_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(celeba_op);
@@ -140,7 +141,9 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     num_rows = std::min(num_rows, partition_num);
   }
 
-  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
+  std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+  RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+  sample_size = sampler_rt->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   return Status::OK();
 }

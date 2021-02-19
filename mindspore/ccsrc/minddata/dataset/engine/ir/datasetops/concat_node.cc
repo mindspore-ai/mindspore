@@ -95,8 +95,10 @@ Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
 
   // calculate the size of the shard
   int64_t shard_dataset_size = 0;
+  std::shared_ptr<SamplerRT> sampler_rt_base = nullptr;
+  if (sampler_) RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt_base));
   std::shared_ptr<DistributedSamplerRT> sampler_rt =
-    sampler_ ? std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_->SamplerBuild()) : nullptr;
+    sampler_ ? std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_rt_base) : nullptr;
   if (sampler_rt != nullptr) {
     sampler_rt->SetNumRowsInDataset(total_dataset_size);
     sampler_rt->InitSampler();
@@ -123,8 +125,10 @@ Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
     op = std::make_shared<ConcatOp>(connector_que_size_);
   } else {
-    op = std::make_shared<ConcatOp>(connector_que_size_, sampler_->SamplerBuild(), children_flag_and_nums_,
-                                    children_start_end_index_);
+    std::shared_ptr<SamplerRT> sampler_rt = nullptr;
+    RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
+    op =
+      std::make_shared<ConcatOp>(connector_que_size_, sampler_rt, children_flag_and_nums_, children_start_end_index_);
   }
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
