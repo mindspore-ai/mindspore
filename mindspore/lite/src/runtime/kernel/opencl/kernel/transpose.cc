@@ -91,7 +91,7 @@ int TransposeOpenCLKernel::Prepare() {
     kernel_name += "_general";
   }
   if (in_tensors_[0]->shape().size() == 4 &&
-      in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) > MAX_IMAGE2D_SIZE) {
+      in_tensors_[0]->shape()[2] * UP_DIV(in_tensors_[0]->shape()[3], C4NUM) > ocl_runtime_->GetMaxImage2DWidth()) {
     // just for input
     kernel_name += "_oversize";
   }
@@ -127,9 +127,9 @@ void TransposeOpenCLKernel::SetConstArgs() {
     cl_int4 de_perm_cl = {de_perm[0], de_perm[1], de_perm[2], de_perm[3]};
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, de_perm_cl);
     GpuTensorInfo in_shape = GpuTensorInfo(in_tensors_[0]);
-    cl_int4 out_shape = {static_cast<cl_int>(in_shape.N), static_cast<cl_int>(in_shape.H),
-                         static_cast<cl_int>(in_shape.W), static_cast<cl_int>(in_shape.C)};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_shape);
+    cl_int4 in_shape_int4 = {static_cast<cl_int>(in_shape.N), static_cast<cl_int>(in_shape.H),
+                             static_cast<cl_int>(in_shape.W), static_cast<cl_int>(in_shape.C)};
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_shape_int4);
   }
 }
 

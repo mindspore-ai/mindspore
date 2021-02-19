@@ -16,8 +16,6 @@ j* you may not use this file except in compliance with the License.
 
 #ifndef MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
 #define MINDSPORE_LITE_SRC_OPENCL_RUNTIME_H_
-// Get from Device?
-#define MAX_IMAGE2D_SIZE 65535
 #include <vector>
 #include <map>
 #include <memory>
@@ -66,6 +64,8 @@ class OpenCLRuntime {
   uint32_t GetSubGroupSize(const cl::Kernel &kernel, const cl::NDRange &range = cl::NullRange);
   uint64_t GetGlobalMemSize() { return global_memery_size_; }
   uint64_t GetMaxAllocSize() { return max_alloc_size_; }
+  uint64_t GetMaxImage2DWidth() { return max_image2d_width_; }
+  uint64_t GetMaxImage2DHeight() { return max_image2d_height_; }
   GpuInfo GetGpuInfo();
   bool GetFp16Enable() const;
   bool SetFp16Enable(bool enable);
@@ -177,6 +177,8 @@ class OpenCLRuntime {
   uint64_t global_memery_cachesize_{0};
   uint64_t global_memery_size_{0};
   uint64_t max_alloc_size_{0};
+  uint64_t max_image2d_width_{0};
+  uint64_t max_image2d_height_{0};
   int max_work_group_size_{1};
   uint32_t compute_units_{0};
   uint32_t max_freq_{0};
