@@ -27,7 +27,7 @@ void TrainGenerator::CodeGradientFunc(std::ofstream &ofs) const {
   ofs << "float " << config_->module_name() << "_ComputeLossAndGradient() {\n";
   ofs << "  float loss = 0;\n";
   for (const auto &block : ctx_->train_blocks()) {
-    ofs << "  {\n" << block << "  }\n";
+    ofs << "\t{\n" << block << "\t}\n";
   }
   ofs << "  return loss;\n";
   ofs << "}\n";
@@ -45,9 +45,6 @@ int TrainGenerator::CodeNetHFile() {
   ofs << "#include \"microtensor.h\"\n\n";
   CodeTrainParams(ofs);
   CodeInputAndOutputState(ofs, config_->module_name());
-  if (is_get_quant_args_) {
-    CodeGraphQuantArgsState(ofs, config_->module_name());
-  }
   if (config_->is_weight_file()) {
     CodeInitWeightState(ofs, config_->module_name());
   }
@@ -68,9 +65,6 @@ int TrainGenerator::CodeNetCFile() {
   CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFeaturesImplement(ofs, config_->module_name(), ctx_);
-  if (is_get_quant_args_) {
-    CodeGraphQuantArgsImplement(ofs, config_->module_name(), ctx_);
-  }
   CodeNetRunFunc(ofs);
   CodeGradientFunc(ofs);
   CodeTrainImplement(ofs, config_->module_name(), ctx_);
@@ -85,22 +79,16 @@ int TrainGenerator::CodeBenchmarkFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   std::vector<Tensor *> inputs = ctx_->graph_inputs();
   size_t inputs_num = inputs.size();
-
   CodeBenchmarkHeader(ofs, net_inc_hfile_);
   CodeBenchmarkUsage(ofs);
   CodeBenchmarkWarmup(ofs, config_->module_name());
-
   CodeBenchmarkSetInputs(ofs, config_->module_name(), ctx_);
   CodeBenchmarkSetBuffer(ofs, config_->module_name());
   if (config_->is_weight_file()) {
     CodeBenchmarkInitWeight(ofs, config_->module_name());
   }
-  if (config_->code_mode() == CodeMode::Code_Inference) {
-    CodeBenchmarkConfigThread(ofs);
-  }
   CodeBenchmarkInference(ofs, config_->module_name());
   CodeBenchmarkPrintOutputs(ofs, config_->module_name());
-
   CodeBenchmarkFreeResourse(ofs, config_->module_name(), inputs_num);
   ofs.close();
   return RET_OK;

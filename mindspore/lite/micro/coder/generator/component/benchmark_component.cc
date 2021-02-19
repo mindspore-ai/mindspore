@@ -184,7 +184,7 @@ void CodeBenchmarkFreeResourse(std::ofstream &ofs, const std::string &module_nam
   ofs << "  for (int i = 0; i < " << inputs_num << "; ++i) {\n";
   ofs << "    free(inputs_binbuf[i]);\n"
          "  }\n"
-         "  return RET_OK;"
+         "  return RET_OK;\n"
          "}\n\n";
 }
 

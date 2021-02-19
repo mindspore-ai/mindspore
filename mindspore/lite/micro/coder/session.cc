@@ -132,7 +132,7 @@ int CoderSession::GenerateCode() {
       generator = std::make_shared<InferenceGenerator>(std::move(context_));
       break;
     case Code_Train:
-      MS_LOG(INFO) << "generate code for Inference";
+      MS_LOG(INFO) << "generate code for Train";
       generator = std::make_shared<TrainGenerator>(std::move(context_));
       break;
     default:
@@ -141,6 +141,7 @@ int CoderSession::GenerateCode() {
   }
   // when use file, coder context need to remove initial parameters from tensors info
   // we use tmp_tensor_list to storage
+  MS_CHECK_PTR(generator);
   int ret = generator->GenerateCode();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "generate code failed";

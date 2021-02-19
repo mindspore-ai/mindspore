@@ -35,7 +35,7 @@ ms_build_flatbuffers_lite(FBS_FILES
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     MESSAGE("******Micro Debug********")
     set(CMAKE_C_FLAGS "-Wall -Werror -ftrapv -DDebug -g -fvisibility=default ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-Wall -Werror-ftrapv -DDebug -g -fvisibility=default ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-Wall -Werror -ftrapv -DDebug -g -fvisibility=default ${CMAKE_CXX_FLAGS}")
 else()
     MESSAGE(" ******Micro Release********")
     set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror \

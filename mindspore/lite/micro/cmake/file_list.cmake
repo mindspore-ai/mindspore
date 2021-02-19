@@ -84,6 +84,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/deconvolution_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/pooling_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/reduce_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/reshape_int8_coder.cc
@@ -129,6 +130,8 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/int8/conv3x3_int8.c
         ${LITE_DIR}/nnacl/int8/conv1x1_int8.c
         ${LITE_DIR}/nnacl/base/conv1x1_base.c
+        ${LITE_DIR}/nnacl/int8/deconv_int8.c
+        ${LITE_DIR}/nnacl/int8/common_func_int8.c
         )
 
 list(APPEND FILE_SET ${CODER_SRC} ${CODER_UTILS_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
