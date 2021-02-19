@@ -37,7 +37,7 @@ PrimitiveC *TfliteDepthToSpaceParser::ParseLitePrimitive(const std::unique_ptr<t
   attr->blockSize = tflite_attr->block_size;
   attr->format = schema::Format::Format_NHWC;
   auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Concat;
+  primitive->value.type = schema::PrimitiveType_DepthToSpace;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());
 }
