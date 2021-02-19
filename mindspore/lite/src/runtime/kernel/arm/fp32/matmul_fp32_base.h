@@ -69,6 +69,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int thread_stride_ = 0;
   int thread_count_ = 0;
   bool vec_matmul_ = false;
+  float *src_b_ = nullptr;
   float *bias_ptr_ = nullptr;
   float *batch_a_ptr_ = nullptr;
   float *batch_b_ptr_ = nullptr;
