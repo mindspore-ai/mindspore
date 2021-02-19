@@ -75,6 +75,7 @@ class KernelRuntime {
                                   const std::unordered_set<ValueNodePtr> &value_nodes,
                                   const std::vector<CNodePtr> &execution_order);
   virtual bool SyncStream() = 0;
+  virtual bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) = 0;
   virtual void ClearGlobalIdleMem() {}
   virtual void CreateContext() {}
   virtual void SetContext() {}
@@ -101,6 +102,8 @@ class KernelRuntime {
 
   virtual void PreInit() {}
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
+  void AddBufferPtr(std::shared_ptr<char[]> ptr) { buffer_ptrs_.push_back(ptr); }
+  void FreeAndClearBufferPtrs() { buffer_ptrs_.clear(); }
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -149,6 +152,7 @@ class KernelRuntime {
   void *stream_ = nullptr;
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;
+  std::vector<std::shared_ptr<char[]>> buffer_ptrs_ = {};
 };
 using KernelRuntimePtr = std::shared_ptr<KernelRuntime>;
 }  // namespace device

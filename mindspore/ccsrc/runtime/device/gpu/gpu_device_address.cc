@@ -18,7 +18,9 @@
 #include <vector>
 #include <memory>
 #include "runtime/device/gpu/gpu_device_manager.h"
+#include "runtime/device/kernel_runtime_manager.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 #include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "ir/tensor.h"
 #ifdef ENABLE_DEBUGGER
@@ -62,11 +64,22 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
     // nccl kernel input and output device address is aligned, may lead to host size is not equal to device size
     MS_LOG(INFO) << "Sync memory size is inconsistent, host size: " << size << ", device size " << size_;
   }
-  if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
-    MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
-    return false;
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  bool execution_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (execution_mode != kPynativeMode) {
+    if (!GPUDeviceManager::GetInstance().CopyHostMemToDeviceAsync(ptr_, host_ptr, size, stream)) {
+      MS_LOG(ERROR) << "CopyHostMemToDeviceAsync failed";
+      return false;
+    }
+    return GPUDeviceManager::GetInstance().SyncStream(stream);
+  } else {
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kGPUDevice, device_id);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    return runtime_instance->MemcpyAsync(ptr_, host_ptr, size, 0);
   }
-  return GPUDeviceManager::GetInstance().SyncStream(stream);
 }
 
 void GPUDeviceAddress::ClearDeviceMemory() {

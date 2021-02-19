@@ -718,6 +718,25 @@ bool AscendKernelRuntime::SyncStream() {
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
   }
+  FreeAndClearBufferPtrs();
+  return true;
+}
+
+bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) {
+  InnerSetContext();
+  if (stream_ == nullptr) {
+    MS_LOG(ERROR) << "MemcpyAsync failed. stream_ is nullptr";
+    return false;
+  }
+
+  std::shared_ptr<char[]> buffer(new char[size]());
+  MS_EXCEPTION_IF_NULL(buffer);
+  std::copy(reinterpret_cast<const char *>(src), reinterpret_cast<const char *>(src) + size, buffer.get());
+  AddBufferPtr(buffer);
+  if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, buffer.get(), size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
+    MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
+    return false;
+  }
   return true;
 }
 

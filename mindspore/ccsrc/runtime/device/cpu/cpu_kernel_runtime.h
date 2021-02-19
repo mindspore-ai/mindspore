@@ -49,6 +49,7 @@ class CPUKernelRuntime : public KernelRuntime {
 
  protected:
   bool SyncStream() override { return true; };
+  bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override { return true; };
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                        TypeId type_id) override;
 
