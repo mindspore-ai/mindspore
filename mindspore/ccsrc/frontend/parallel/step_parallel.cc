@@ -942,7 +942,8 @@ void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node
   for (size_t index = 1; index < node_size; ++index) {
     AnfNodePtr input = node->input(index);
     MS_EXCEPTION_IF_NULL(input);
-    if (!input->isa<CNode>() && !input->isa<Parameter>()) {  // if it is not a tensor, continue
+    // if it is not a tensor, continue
+    if ((!input->isa<CNode>() && !input->isa<Parameter>()) || HasAbstractMonad(input)) {
       MS_LOG(INFO) << "insert div op: the index  " << index << "  is not tensor, skip";
       continue;
     }
