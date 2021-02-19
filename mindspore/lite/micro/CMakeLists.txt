@@ -34,15 +34,13 @@ ms_build_flatbuffers_lite(FBS_FILES
         )
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     MESSAGE("******Micro Debug********")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDebug -g")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDebug -g")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=default")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
+    set(CMAKE_C_FLAGS "-Wall -Werror -ftrapv -DDebug -g -fvisibility=default ${CMAKE_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-Wall -Werror-ftrapv -DDebug -g -fvisibility=default ${CMAKE_CXX_FLAGS}")
 else()
     MESSAGE(" ******Micro Release********")
-    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -w -O2 -Werror \
+    set(CMAKE_C_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror \
     -fstack-protector-all -Wno-attributes -Wno-deprecated-declarations -Wno-missing-braces ${CMAKE_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -w -O2 -Werror \
+    set(CMAKE_CXX_FLAGS "-fPIC -fPIE -D_FORTIFY_SOURCE=2 -O2 -Wall -Werror \
     -fstack-protector-all -Wno-attributes -Wno-deprecated-declarations \
     -Wno-missing-braces -Wno-overloaded-virtual ${CMAKE_CXX_FLAGS}")
 endif()
