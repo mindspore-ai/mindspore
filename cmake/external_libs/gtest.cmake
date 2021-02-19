@@ -28,20 +28,29 @@ else()
 endif ()
 
 if (ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.8.0.tar.gz")
-    set(MD5 "89e13ca1aa48d370719d58010b83f62c")
+    set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.8.1.tar.gz")
+    set(MD5 "0ec077324f27c2685635ad4cc9bdc263")
 else()
-    set(REQ_URL "https://github.com/google/googletest/archive/release-1.8.0.tar.gz")
-    set(MD5 "16877098823401d1bf2ed7891d7dce36")
+    set(REQ_URL "https://github.com/google/googletest/archive/release-1.8.1.tar.gz")
+    set(MD5 "2e6fbeb6a91310a16efe181886c59596")
 endif ()
 
 mindspore_add_pkg(gtest
-        VER 1.8.0
+        VER 1.8.1
         LIBS gtest
         URL ${REQ_URL}
         MD5 ${MD5}
         CMAKE_OPTION ${CMAKE_OPTION})
 include_directories(${gtest_INC})
 add_library(mindspore::gtest ALIAS gtest::gtest)
-file(COPY ${gtest_LIBPATH}/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
-file(COPY ${gtest_LIBPATH}/libgtest_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    file(COPY ${gtest_DIRPATH}/bin/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+    file(COPY ${gtest_DIRPATH}/bin/libgtest_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+else ()
+    file(COPY ${gtest_LIBPATH}/libgtest${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+    file(COPY ${gtest_LIBPATH}/libgtest_main${CMAKE_SHARED_LIBRARY_SUFFIX} DESTINATION
+            ${CMAKE_BINARY_DIR}/googletest/googlemock/gtest)
+endif ()
