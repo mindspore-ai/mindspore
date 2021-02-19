@@ -1,9 +1,10 @@
-# 1. 内容
+# ![logo](https://www.mindspore.cn/static/img/logo_black.6a5c850d.png)
 
-- [1. 内容](#1-内容)
-- [2. Retinanet 描述](#2-Retinanet-描述)
-- [3. 模型架构](#3-模型架构)
-- [4. 数据集](#4-数据集)
+<!-- TOC -->
+
+- <span id="content">[Retinanet 描述](#Retinanet-描述)</span>
+- [模型架构](#模型架构)
+- [数据集](#数据集)
 - [环境要求](#环境要求)
 - [脚本说明](#脚本说明)
     - [脚本和示例代码](#脚本和示例代码)
@@ -13,9 +14,9 @@
         - [运行](#运行)
         - [结果](#结果)
     - [评估过程](#评估过程)
-        - [用法](#用法-1)
-        - [运行](#运行-1)
-        - [结果](#结果-1)
+        - [用法](#usage)
+        - [运行](#running)
+        - [结果](#outcome)
     - [模型说明](#模型说明)
         - [性能](#性能)
             - [训练性能](#训练性能)
@@ -23,20 +24,22 @@
 - [随机情况的描述](#随机情况的描述)
 - [ModelZoo 主页](#modelzoo-主页)
 
-# 2. [Retinanet 描述](#内容)
+<!-- /TOC -->
+
+## [Retinanet 描述](#content)
 
 RetinaNet算法源自2018年Facebook AI Research的论文 Focal Loss for Dense Object Detection。该论文最大的贡献在于提出了Focal Loss用于解决类别不均衡问题，从而创造了RetinaNet（One Stage目标检测算法）这个精度超越经典Two Stage的Faster-RCNN的目标检测网络。
 
 [论文](https://arxiv.org/pdf/1708.02002.pdf)
 Lin T Y , Goyal P , Girshick R , et al. Focal Loss for Dense Object Detection[C]// 2017 IEEE International Conference on Computer Vision (ICCV). IEEE, 2017:2999-3007.
 
-# 3. [模型架构](#内容)
+## [模型架构](#content)
 
 Retinanet的整体网络架构如下所示：
 
 [链接](https://arxiv.org/pdf/1708.02002.pdf)
 
-# 4. [数据集](#内容)
+## [数据集](#content)
 
 数据集可参考文献.
 
@@ -52,7 +55,7 @@ MSCOCO2017
 
     - 注意：数据将在src/dataset.py 中被处理
 
-# [环境要求](#内容)
+## [环境要求](#content)
 
 - 硬件（Ascend）
     - 使用Ascend处理器准备硬件环境。如果您想使用Ascend，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com。一旦获得批准，您就可以获取资源。
@@ -62,9 +65,9 @@ MSCOCO2017
     - [MindSpore 教程](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
-# [脚本说明](#内容)
+## [脚本说明](#content)
 
-## [脚本和示例代码](#内容)
+### [脚本和示例代码](#content)
 
 ```shell
 .
@@ -88,7 +91,7 @@ MSCOCO2017
 
 ```
 
-## [脚本参数](#内容)
+### [脚本参数](#content)
 
 ```python
 在train.py和config.py脚本中使用到的主要参数是:
@@ -150,9 +153,9 @@ MSCOCO2017
 "checkpoint_path":"/home/hitwh1/1.0/ckpt_0/retinanet-500_458_59.ckpt"                           # 用于验证的checkpoint路径
 ```
 
-## [训练过程](#内容)
+### [训练过程](#content)
 
-### 用法
+#### 用法
 
 您可以使用python或shell脚本进行训练。shell脚本的用法如下:
 
@@ -174,7 +177,7 @@ sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional)
 
   RANK_TABLE_FILE相关参考资料见[链接](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/distributed_training_ascend.html), 获取device_ip方法详见[链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
-### 运行
+#### 运行
 
 ```运行
 # 训练示例
@@ -198,7 +201,7 @@ sh run_distribute_train.sh DEVICE_ID EPOCH_SIZE LR DATASET PRE_TRAINED(optional)
       sh scripts/run_single_train.sh 0 500 0.1 coco /dataset/retinanet-322_458.ckpt 322
 ```
 
-### 结果
+#### 结果
 
 训练结果将存储在示例路径中。checkpoint将存储在 `./model` 路径下，训练日志将被记录到 `./log.txt` 中，训练日志部分示例如下：
 
@@ -217,9 +220,9 @@ lr:[0.000064]
 Epoch time: 164531.610, per step time: 359.239
 ```
 
-## [评估过程](#内容)
+### [评估过程](#content)
 
-### 用法
+#### <span id="usage">用法</span>
 
 您可以使用python或shell脚本进行训练。shell脚本的用法如下:
 
@@ -227,7 +230,7 @@ Epoch time: 164531.610, per step time: 359.239
 sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 ```
 
-### 运行
+#### <span id="running">运行</span>
 
 ```eval运行
 # 验证示例
@@ -241,7 +244,7 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 
 > checkpoint 可以在训练过程中产生.
 
-### 结果
+#### <span id="outcome">结果</span>
 
 计算结果将存储在示例路径中，您可以在 `eval.log` 查看.
 
@@ -264,11 +267,11 @@ sh scripts/run_eval.sh [DATASET] [DEVICE_ID]
 mAP: 0.34747137754625645
 ```
 
-# [模型说明](#内容)
+## [模型说明](#content)
 
-## [性能](#内容)
+### [性能](#content)
 
-### 训练性能
+#### 训练性能
 
 | 参数                        | Ascend                                |
 | -------------------------- | ------------------------------------- |
@@ -284,7 +287,7 @@ mAP: 0.34747137754625645
 | 最终损失                    | 0.582                                  |
 | 精确度 (8p)                 | mAP[0.3475]               |
 | 训练总时间 (8p)             | 23h16m54s                              |
-| 脚本                       | [Retianet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/Retinanet) |
+| 脚本                       | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/retinanet) |
 
 #### 推理性能
 
@@ -299,10 +302,10 @@ mAP: 0.34747137754625645
 | 精确度              | mAP[0.3475]                  |
 | 总时间              | 10 mins and 50 seconds       |
 
-# [随机情况的描述](#内容)
+## [随机情况的描述](#content)
 
 在 `dataset.py` 脚本中, 我们在 `create_dataset` 函数中设置了随机种子. 我们在 `train.py` 脚本中也设置了随机种子.
 
-# [ModelZoo 主页](#内容)
+## [ModelZoo 主页](#content)
 
 请核对官方 [主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
