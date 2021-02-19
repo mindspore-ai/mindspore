@@ -25,6 +25,7 @@
 #include "include/api/types.h"
 #include "include/api/graph.h"
 #include "include/api/cell.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 class ModelImpl;
@@ -46,10 +47,16 @@ class MS_API Model {
   std::vector<MSTensor> GetInputs();
   std::vector<MSTensor> GetOutputs();
 
-  static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
+  static inline bool CheckModelSupport(const std::string &device_type, ModelType model_type);
 
  private:
+  // api without std::string
+  static bool CheckModelSupport(const std::vector<char> &device_type, ModelType model_type);
   std::shared_ptr<ModelImpl> impl_;
 };
+
+bool Model::CheckModelSupport(const std::string &device_type, ModelType model_type) {
+  return CheckModelSupport(StringToChar(device_type), model_type);
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

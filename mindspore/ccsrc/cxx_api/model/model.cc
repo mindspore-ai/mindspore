@@ -68,12 +68,13 @@ Model::Model(const std::vector<Output> &network, const std::shared_ptr<Context> 
 
 Model::~Model() {}
 
-bool Model::CheckModelSupport(const std::string &device_type, ModelType model_type) {
-  if (!Factory<ModelImpl>::Instance().CheckModelSupport(device_type)) {
+bool Model::CheckModelSupport(const std::vector<char> &device_type, ModelType model_type) {
+  std::string device_type_str = CharToString(device_type);
+  if (!Factory<ModelImpl>::Instance().CheckModelSupport(device_type_str)) {
     return false;
   }
 
-  auto first_iter = kSupportedModelMap.find(device_type);
+  auto first_iter = kSupportedModelMap.find(device_type_str);
   if (first_iter == kSupportedModelMap.end()) {
     return false;
   }

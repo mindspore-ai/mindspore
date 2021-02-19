@@ -16,9 +16,13 @@
 #ifndef MINDSPORE_INCLUDE_API_STATUS_H
 #define MINDSPORE_INCLUDE_API_STATUS_H
 
+#include <memory>
 #include <string>
+#include <vector>
 #include <ostream>
 #include <climits>
+#include "include/api/dual_abi_helper.h"
+#include "include/api/types.h"
 
 namespace mindspore {
 enum CompCode : uint32_t {
@@ -100,46 +104,61 @@ enum StatusCode : uint32_t {
   kLiteInputParamInvalid = kLite | (0x0FFFFFFF & -600), /**< Invalid input param by user. */
 };
 
-class Status {
+class MS_API Status {
  public:
-  Status() : status_code_(kSuccess), line_of_code_(-1) {}
-  Status(enum StatusCode status_code, const std::string &status_msg = "")  // NOLINT(runtime/explicit)
-      : status_code_(status_code), status_msg_(status_msg), line_of_code_(-1) {}
-  Status(const StatusCode code, int line_of_code, const char *file_name, const std::string &extra = "");
+  Status();
+  inline Status(enum StatusCode status_code, const std::string &status_msg = "");  // NOLINT(runtime/explicit)
+  inline Status(const StatusCode code, int line_of_code, const char *file_name, const std::string &extra = "");
 
   ~Status() = default;
 
-  enum StatusCode StatusCode() const { return status_code_; }
-  const std::string &ToString() const { return status_msg_; }
+  enum StatusCode StatusCode() const;
+  inline std::string ToString() const;
 
-  int GetLineOfCode() const { return line_of_code_; }
-  const std::string &GetErrDescription() const { return status_msg_; }
-  const std::string &SetErrDescription(const std::string &err_description);
+  int GetLineOfCode() const;
+  inline std::string GetErrDescription() const;
+  inline std::string SetErrDescription(const std::string &err_description);
 
   friend std::ostream &operator<<(std::ostream &os, const Status &s);
 
-  bool operator==(const Status &other) const { return status_code_ == other.status_code_; }
-  bool operator==(enum StatusCode other_code) const { return status_code_ == other_code; }
-  bool operator!=(const Status &other) const { return status_code_ != other.status_code_; }
-  bool operator!=(enum StatusCode other_code) const { return status_code_ != other_code; }
+  bool operator==(const Status &other) const;
+  bool operator==(enum StatusCode other_code) const;
+  bool operator!=(const Status &other) const;
+  bool operator!=(enum StatusCode other_code) const;
 
-  explicit operator bool() const { return (status_code_ == kSuccess); }
-  explicit operator int() const { return static_cast<int>(status_code_); }
+  explicit operator bool() const;
+  explicit operator int() const;
 
-  static Status OK() { return Status(StatusCode::kSuccess); }
+  static Status OK();
 
-  bool IsOk() const { return (StatusCode() == StatusCode::kSuccess); }
+  bool IsOk() const;
 
-  bool IsError() const { return !IsOk(); }
+  bool IsError() const;
 
-  static std::string CodeAsString(enum StatusCode c);
+  static inline std::string CodeAsString(enum StatusCode c);
 
  private:
-  enum StatusCode status_code_;
-  std::string status_msg_;
-  int line_of_code_;
-  std::string file_name_;
-  std::string err_description_;
+  // api without std::string
+  explicit Status(enum StatusCode status_code, const std::vector<char> &status_msg);
+  Status(const enum StatusCode code, int line_of_code, const char *file_name, const std::vector<char> &extra);
+  std::vector<char> ToCString() const;
+  std::vector<char> GetErrDescriptionChar() const;
+  std::vector<char> SetErrDescription(const std::vector<char> &err_description);
+  static std::vector<char> CodeAsCString(enum StatusCode c);
+
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
+
+Status::Status(enum StatusCode status_code, const std::string &status_msg)
+    : Status(status_code, StringToChar(status_msg)) {}
+Status::Status(const enum StatusCode code, int line_of_code, const char *file_name, const std::string &extra)
+    : Status(code, line_of_code, file_name, StringToChar(extra)) {}
+std::string Status::ToString() const { return CharToString(ToCString()); }
+std::string Status::GetErrDescription() const { return CharToString(GetErrDescriptionChar()); }
+std::string Status::SetErrDescription(const std::string &err_description) {
+  return CharToString(SetErrDescription(StringToChar(err_description)));
+}
+std::string Status::CodeAsString(enum StatusCode c) { return CharToString(CodeAsCString(c)); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_STATUS_H

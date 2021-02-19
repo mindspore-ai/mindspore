@@ -296,8 +296,7 @@ else()
     endif()
 endif()
 
-add_dependencies(_c_dataengine mindspore_shared_lib)
-target_link_libraries(_c_dataengine PRIVATE mindspore_shared_lib)
+target_link_libraries(_c_dataengine PRIVATE mindspore_core mindspore_shared_lib)
 
 if(USE_GLOG)
     target_link_libraries(_c_dataengine PRIVATE mindspore::glog)

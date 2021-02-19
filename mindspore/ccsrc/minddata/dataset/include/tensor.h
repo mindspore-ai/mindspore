@@ -686,6 +686,9 @@ class Tensor {
   /// pointer to the end of the physical data
   unsigned char *data_end_ = nullptr;
 
+  /// shape for interpretation of YUV image
+  std::vector<uint32_t> yuv_shape_;
+
  private:
   friend class DETensor;
 

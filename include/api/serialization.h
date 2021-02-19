@@ -24,16 +24,24 @@
 #include "include/api/types.h"
 #include "include/api/model.h"
 #include "include/api/graph.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 class MS_API Serialization {
  public:
   static Graph LoadModel(const void *model_data, size_t data_size, ModelType model_type);
-  static Graph LoadModel(const std::string &file, ModelType model_type);
+  inline static Graph LoadModel(const std::string &file, ModelType model_type);
   static Status LoadCheckPoint(const std::string &ckpt_file, std::map<std::string, Buffer> *parameters);
   static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
   static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data);
   static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file);
+
+ private:
+  static Graph LoadModel(const std::vector<char> &file, ModelType model_type);
 };
+
+Graph Serialization::LoadModel(const std::string &file, ModelType model_type) {
+  return LoadModel(StringToChar(file), model_type);
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_SERIALIZATION_H

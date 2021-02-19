@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "include/api/data_type.h"
+#include "include/api/dual_abi_helper.h"
 
 #ifdef _WIN32
 #define MS_API __declspec(dllexport)
@@ -42,18 +43,18 @@ class MS_API MSTensor {
  public:
   class Impl;
 
-  static MSTensor CreateTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
-                               const void *data, size_t data_len) noexcept;
-  static MSTensor CreateRefTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
-                                  const void *data, size_t data_len) noexcept;
+  static inline MSTensor CreateTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
+                                      const void *data, size_t data_len) noexcept;
+  static inline MSTensor CreateRefTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape,
+                                         const void *data, size_t data_len) noexcept;
 
   MSTensor();
   explicit MSTensor(const std::shared_ptr<Impl> &impl);
-  MSTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape, const void *data,
-           size_t data_len);
+  inline MSTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape, const void *data,
+                  size_t data_len);
   ~MSTensor();
 
-  const std::string &Name() const;
+  inline std::string Name() const;
   enum DataType DataType() const;
   const std::vector<int64_t> &Shape() const;
   int64_t ElementNum() const;
@@ -68,6 +69,15 @@ class MS_API MSTensor {
   bool operator==(std::nullptr_t) const;
 
  private:
+  // api without std::string
+  static MSTensor CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                               const void *data, size_t data_len) noexcept;
+  static MSTensor CreateRefTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                                  const void *data, size_t data_len) noexcept;
+  MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
+           size_t data_len);
+  std::vector<char> CharName() const;
+
   friend class ModelImpl;
   explicit MSTensor(std::nullptr_t);
   std::shared_ptr<Impl> impl_;
@@ -92,5 +102,21 @@ class MS_API Buffer {
   class Impl;
   std::shared_ptr<Impl> impl_;
 };
+
+MSTensor MSTensor::CreateTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+                                const void *data, size_t data_len) noexcept {
+  return CreateTensor(StringToChar(name), type, shape, data, data_len);
+}
+
+MSTensor MSTensor::CreateRefTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+                                   const void *data, size_t data_len) noexcept {
+  return CreateRefTensor(StringToChar(name), type, shape, data, data_len);
+}
+
+MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
+                   size_t data_len)
+    : MSTensor(StringToChar(name), type, shape, data, data_len) {}
+
+std::string MSTensor::Name() const { return CharToString(CharName()); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_TYPES_H

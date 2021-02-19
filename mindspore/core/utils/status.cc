@@ -24,16 +24,42 @@
 #include <sstream>
 
 namespace mindspore {
-Status::Status(enum StatusCode code, int line_of_code, const char *file_name, const std::string &extra) {
-  status_code_ = code;
-  line_of_code_ = line_of_code;
-  file_name_ = std::string(file_name);
-  err_description_ = extra;
+struct Status::Data {
+  enum StatusCode status_code = kSuccess;
+  std::string status_msg;
+  int line_of_code = -1;
+  std::string file_name;
+  std::string err_description;
+};
+
+Status::Status() : data_(std::make_shared<Data>()) {}
+
+Status::Status(enum StatusCode status_code, const std::vector<char> &status_msg) : data_(std::make_shared<Data>()) {
+  if (data_ == nullptr) {
+    return;
+  }
+
+  data_->status_msg = CharToString(status_msg);
+  data_->status_code = status_code;
+}
+
+Status::Status(enum StatusCode code, int line_of_code, const char *file_name, const std::vector<char> &extra)
+    : data_(std::make_shared<Data>()) {
+  if (data_ == nullptr) {
+    return;
+  }
+  data_->status_code = code;
+  data_->line_of_code = line_of_code;
+  if (file_name != nullptr) {
+    data_->file_name = file_name;
+  }
+  data_->err_description = CharToString(extra);
+
   std::ostringstream ss;
 #ifndef ENABLE_ANDROID
   ss << "Thread ID " << std::this_thread::get_id() << " " << CodeAsString(code) << ". ";
-  if (!extra.empty()) {
-    ss << extra;
+  if (!data_->err_description.empty()) {
+    ss << data_->err_description;
   }
   ss << "\n";
 #endif
@@ -42,10 +68,38 @@ Status::Status(enum StatusCode code, int line_of_code, const char *file_name, co
   if (file_name != nullptr) {
     ss << "File         : " << file_name << "\n";
   }
-  status_msg_ = ss.str();
+  data_->status_msg = ss.str();
 }
 
-std::string Status::CodeAsString(enum StatusCode c) {
+enum StatusCode Status::StatusCode() const {
+  if (data_ == nullptr) {
+    return kSuccess;
+  }
+  return data_->status_code;
+}
+
+std::vector<char> Status::ToCString() const {
+  if (data_ == nullptr) {
+    return std::vector<char>();
+  }
+  return StringToChar(data_->status_msg);
+}
+
+int Status::GetLineOfCode() const {
+  if (data_ == nullptr) {
+    return -1;
+  }
+  return data_->line_of_code;
+}
+
+std::vector<char> Status::GetErrDescriptionChar() const {
+  if (data_ == nullptr) {
+    return std::vector<char>();
+  }
+  return StringToChar(data_->status_msg);
+}
+
+std::vector<char> Status::CodeAsCString(enum StatusCode c) {
   static std::map<enum StatusCode, std::string> info_map = {{kSuccess, "No error occurs."},
                                                             // Core
                                                             {kCoreFailed, "Common error code."},
@@ -98,7 +152,7 @@ std::string Status::CodeAsString(enum StatusCode c) {
                                                             {kLiteInferInvalid, "Invalid infer shape before runtime."},
                                                             {kLiteInputParamInvalid, "Invalid input param by user."}};
   auto iter = info_map.find(c);
-  return iter == info_map.end() ? "Unknown error" : iter->second;
+  return StringToChar(iter == info_map.end() ? "Unknown error" : iter->second);
 }
 
 std::ostream &operator<<(std::ostream &os, const Status &s) {
@@ -106,22 +160,48 @@ std::ostream &operator<<(std::ostream &os, const Status &s) {
   return os;
 }
 
-const std::string &Status::SetErrDescription(const std::string &err_description) {
-  err_description_ = err_description;
+std::vector<char> Status::SetErrDescription(const std::vector<char> &err_description) {
+  if (data_ == nullptr) {
+    return std::vector<char>();
+  }
+  data_->err_description = CharToString(err_description);
   std::ostringstream ss;
 #ifndef ENABLE_ANDROID
-  ss << "Thread ID " << std::this_thread::get_id() << " " << CodeAsString(status_code_) << ". ";
-  if (!err_description_.empty()) {
-    ss << err_description_;
+  ss << "Thread ID " << std::this_thread::get_id() << " " << CodeAsString(data_->status_code) << ". ";
+  if (!data_->err_description.empty()) {
+    ss << data_->err_description;
   }
   ss << "\n";
 #endif
 
-  if (line_of_code_ > 0 && !file_name_.empty()) {
-    ss << "Line of code : " << line_of_code_ << "\n";
-    ss << "File         : " << file_name_ << "\n";
+  if (data_->line_of_code > 0 && !data_->file_name.empty()) {
+    ss << "Line of code : " << data_->line_of_code << "\n";
+    ss << "File         : " << data_->file_name << "\n";
   }
-  status_msg_ = ss.str();
-  return status_msg_;
+  data_->status_msg = ss.str();
+  return StringToChar(data_->status_msg);
 }
+
+bool Status::operator==(const Status &other) const {
+  if (data_ == nullptr && other.data_ == nullptr) {
+    return true;
+  }
+
+  if (data_ == nullptr || other.data_ == nullptr) {
+    return false;
+  }
+
+  return data_->status_code == other.data_->status_code;
+}
+
+bool Status::operator==(enum StatusCode other_code) const { return StatusCode() == other_code; }
+bool Status::operator!=(const Status &other) const { return !operator==(other); }
+bool Status::operator!=(enum StatusCode other_code) const { return !operator==(other_code); }
+
+Status::operator bool() const { return (StatusCode() == kSuccess); }
+Status::operator int() const { return static_cast<int>(StatusCode()); }
+
+Status Status::OK() { return StatusCode::kSuccess; }
+bool Status::IsOk() const { return (StatusCode() == StatusCode::kSuccess); }
+bool Status::IsError() const { return !IsOk(); }
 }  // namespace mindspore
