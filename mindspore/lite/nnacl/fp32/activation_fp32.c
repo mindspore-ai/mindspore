@@ -106,7 +106,7 @@ int Sigmoid(const float *src, int length, float *dst) {
   }
 #endif
 
-#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   for (; i < length - 4; i += 4) {
     simd_exp(-(MS_LDQ_F32(src + i)), dst + i);
     MS_STQ_F32(dst + i, MS_DIVQ_F32(MS_MOVQ_F32(1.0f), MS_ADDQ_F32(MS_MOVQ_F32(1.0f), MS_LDQ_F32(dst + i))));

@@ -38,7 +38,7 @@ extern "C" {
 int Exp(const float *input_data, float *output_data, const ExpParameter *parameter, int task_id);
 void ExpFp32(const float *src, float *dst, int num);
 
-#if defined(ENABLE_ARM64) || defined(ENABLE_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 static inline void simd_exp(MS_FLOAT32X4 input, float *dst) {
   static MS_FLOAT32X4 maxv = {88.0f, 88.0f, 88.0f, 88.0f};
   static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
