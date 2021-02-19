@@ -23,11 +23,17 @@
 namespace mindspore {
 namespace abstract {
 std::vector<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
-  constexpr auto kUnsortedSegmentSum = "UnsortedSegmentSum";
-  constexpr auto kUnsortedSegmentMin = "UnsortedSegmentMin";
-  constexpr auto kUnsortedSegmentMax = "UnsortedSegmentMax";
+  const auto kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
+  const auto kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
+  const auto kUnsortedSegmentMax = prim::kPrimUnsortedSegmentMax->name();
+  const auto kGather = prim::kPrimGather->name();
+  const auto kGatherV2 = prim::kPrimGatherV2->name();
+  const auto kDynamicShape = prim::kPrimDynamicShape->name();
+  const auto kRange = prim::kPrimRange->name();
   static std::map<std::string, std::vector<int64_t>> dynamic_shape_depends = {
-    {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}};
+    {kUnsortedSegmentSum, {2}}, {kUnsortedSegmentMin, {2}}, {kUnsortedSegmentMax, {2}}, {kGather, {2}},
+    {kGatherV2, {2}},           {kDynamicShape, {0}},       {kRange, {0, 1, 2}},
+  };
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->inputs().empty()) {
     MS_LOG(EXCEPTION) << "Invalid inputs";
