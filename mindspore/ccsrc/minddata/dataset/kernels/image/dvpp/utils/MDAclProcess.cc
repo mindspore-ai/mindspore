@@ -157,7 +157,7 @@ std::shared_ptr<DvppCommon> MDAclProcess::GetDeviceModule() { return dvppCommon_
  * Sink data from Tensor(On host) to DeviceTensor(On device)
  * Two cases are different, jpeg and png
  */
-APP_ERROR MDAclProcess::H2D_Sink(std::shared_ptr<mindspore::dataset::Tensor> &input,
+APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tensor> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensor> &device_input) {
   RawData imageinfo;
   uint32_t filesize = input->SizeInBytes();
@@ -181,11 +181,12 @@ APP_ERROR MDAclProcess::H2D_Sink(std::shared_ptr<mindspore::dataset::Tensor> &in
   const mindspore::dataset::DataType dvpp_data_type(mindspore::dataset::DataType::DE_UINT8);
   const mindspore::dataset::TensorShape dvpp_shape({1, 1, 1});
   mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, &device_input);
-  device_input->SetAttributes(deviceInputData);
+  device_input->SetAttributes(deviceInputData->data, deviceInputData->dataSize, deviceInputData->width,
+                              deviceInputData->widthStride, deviceInputData->height, deviceInputData->heightStride);
   return APP_ERR_OK;
 }
 
-APP_ERROR MDAclProcess::D2H_Pop(std::shared_ptr<mindspore::dataset::DeviceTensor> &device_output,
+APP_ERROR MDAclProcess::D2H_Pop(const std::shared_ptr<mindspore::dataset::DeviceTensor> &device_output,
                                 std::shared_ptr<mindspore::dataset::Tensor> &output) {
   void *resHostBuf = nullptr;
   APP_ERROR ret = aclrtMallocHost(&resHostBuf, device_output->DeviceDataSize());

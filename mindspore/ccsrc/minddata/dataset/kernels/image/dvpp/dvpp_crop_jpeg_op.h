@@ -24,9 +24,11 @@
 #include "acl/acl.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "minddata/dataset/core/data_type.h"
+#include "minddata/dataset/core/device_resource.h"
 #include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
 #include "minddata/dataset/kernels/image/dvpp/utils/ResourceManager.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
@@ -48,7 +50,7 @@ class DvppCropJpegOp : public TensorOp {
 
   std::string Name() const override { return kDvppCropJpegOp; }
 
-  Status SetAscendResource(const std::shared_ptr<MDAclProcess> &processor) override;
+  Status SetAscendResource(const std::shared_ptr<DeviceResource> &resource) override;
 
  private:
   uint32_t crop_height_;

@@ -84,10 +84,10 @@ class MDAclProcess {
   // API for access device memory of decode data
   std::shared_ptr<DvppDataInfo> Get_Decode_DeviceData();
 
-  APP_ERROR H2D_Sink(std::shared_ptr<mindspore::dataset::Tensor> &input,
+  APP_ERROR H2D_Sink(const std::shared_ptr<mindspore::dataset::Tensor> &input,
                      std::shared_ptr<mindspore::dataset::DeviceTensor> &device_input);
 
-  APP_ERROR D2H_Pop(std::shared_ptr<mindspore::dataset::DeviceTensor> &device_output,
+  APP_ERROR D2H_Pop(const std::shared_ptr<mindspore::dataset::DeviceTensor> &device_output,
                     std::shared_ptr<mindspore::dataset::Tensor> &output);
 
   // D-chip memory release

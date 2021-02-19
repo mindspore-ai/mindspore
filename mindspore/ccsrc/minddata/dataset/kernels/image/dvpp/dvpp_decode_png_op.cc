@@ -42,7 +42,8 @@ Status DvppDecodePngOp::Compute(const std::shared_ptr<DeviceTensor> &input, std:
     const TensorShape dvpp_shape({1, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
     mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output);
-    (*output)->SetAttributes(DecodeOut);
+    (*output)->SetAttributes(DecodeOut->data, DecodeOut->dataSize, DecodeOut->width, DecodeOut->widthStride,
+                             DecodeOut->height, DecodeOut->heightStride);
     if (!((*output)->HasDeviceData())) {
       std::string error = "[ERROR] Fail to get the Output result from memory!";
       RETURN_STATUS_UNEXPECTED(error);
@@ -129,8 +130,11 @@ Status DvppDecodePngOp::OutputShape(const std::vector<TensorShape> &inputs, std:
   return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
 }
 
-Status DvppDecodePngOp::SetAscendResource(const std::shared_ptr<MDAclProcess> &processor) {
-  processor_ = processor;
+Status DvppDecodePngOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resource) {
+  processor_ = std::static_pointer_cast<MDAclProcess>(resource->GetInstance());
+  if (!processor_) {
+    RETURN_STATUS_UNEXPECTED("Resource initialize fail, please check your env");
+  }
   return Status::OK();
 }
 

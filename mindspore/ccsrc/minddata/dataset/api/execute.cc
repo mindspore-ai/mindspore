@@ -27,108 +27,11 @@
 #include "mindspore/lite/src/common/log_adapter.h"
 #endif
 #ifdef ENABLE_ACL
-#include "acl/acl.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/ResourceManager.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/ErrorCode.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
-#include "minddata/dataset/kernels/image/dvpp/utils/DvppCommon.h"
+#include "minddata/dataset/core/ascend_resource.h"
 #endif
 
 namespace mindspore {
 namespace dataset {
-#ifdef ENABLE_ACL
-class AscendResource {
- public:
-  AscendResource();
-  ~AscendResource() = default;
-
-  Status InitChipResource();
-
-  Status FinalizeChipResource();
-
-  Status Sink(const mindspore::MSTensor &host_input, std::shared_ptr<DeviceTensor> *device_input);
-
-  Status Pop(std::shared_ptr<DeviceTensor> device_output, std::shared_ptr<Tensor> *host_output);
-
-  Status DeviceDataRelease();
-
-  std::shared_ptr<MDAclProcess> processor_;
-  std::shared_ptr<ResourceManager> ascend_resource_;
-};
-
-AscendResource::AscendResource() { InitChipResource(); }
-
-Status AscendResource::InitChipResource() {
-  ResourceInfo resource;
-  resource.aclConfigPath = "";
-  resource.deviceIds.insert(mindspore::GlobalContext::GetGlobalDeviceID());
-  ascend_resource_ = ResourceManager::GetInstance();
-  APP_ERROR ret = ascend_resource_->InitResource(resource);
-  if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
-    std::string err_msg = "Error in Init D-chip:" + std::to_string(ret);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  int device_id = *(resource.deviceIds.begin());
-  aclrtContext context = ascend_resource_->GetContext(device_id);
-  processor_ = std::make_shared<MDAclProcess>(context, false);
-  ret = processor_->InitResource();
-  if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
-    std::string err_msg = "Error in Init resource:" + std::to_string(ret);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  MS_LOG(INFO) << "Ascend resource all initialized!";
-  return Status::OK();
-}
-
-Status AscendResource::FinalizeChipResource() {
-  processor_->Release();
-  return Status::OK();
-}
-
-Status AscendResource::Sink(const mindspore::MSTensor &host_input, std::shared_ptr<DeviceTensor> *device_input) {
-  std::shared_ptr<mindspore::dataset::Tensor> de_input;
-  Status rc = dataset::Tensor::CreateFromMemory(dataset::TensorShape(host_input.Shape()),
-                                                MSTypeToDEType(static_cast<TypeId>(host_input.DataType())),
-                                                (const uchar *)(host_input.Data().get()), &de_input);
-  RETURN_IF_NOT_OK(rc);
-  APP_ERROR ret = processor_->H2D_Sink(de_input, *device_input);
-  if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
-    std::string err_msg = "Error in data sink process:" + std::to_string(ret);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  MS_LOG(INFO) << "Process data sink successfully";
-  return Status::OK();
-}
-
-Status AscendResource::Pop(std::shared_ptr<DeviceTensor> device_output, std::shared_ptr<Tensor> *host_output) {
-  APP_ERROR ret = processor_->D2H_Pop(device_output, *host_output);
-  if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
-    std::string err_msg = "Error in data pop processing:" + std::to_string(ret);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
-}
-
-Status AscendResource::DeviceDataRelease() {
-  APP_ERROR ret = processor_->device_memory_release();
-  if (ret != APP_ERR_OK) {
-    ascend_resource_->Release();
-    std::string err_msg = "Error in device data release:" + std::to_string(ret);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
-}
-#endif
 
 Execute::Execute(std::shared_ptr<TensorOperation> op, std::string deviceType) {
   ops_.emplace_back(std::move(op));
@@ -136,7 +39,12 @@ Execute::Execute(std::shared_ptr<TensorOperation> op, std::string deviceType) {
   MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
   if (device_type_ == "Ascend310") {
-    D_resource_ = std::make_shared<AscendResource>();
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
   }
 #endif
 }
@@ -146,7 +54,12 @@ Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string 
   MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
   if (device_type_ == "Ascend310") {
-    D_resource_ = std::make_shared<AscendResource>();
+    device_resource_ = std::make_shared<AscendResource>();
+    Status rc = device_resource_->InitResource();
+    if (!rc.IsOk()) {
+      device_resource_ = nullptr;
+      MS_LOG(ERROR) << "Initialize Ascend310 resource fail";
+    }
   }
 #endif
 }
@@ -154,7 +67,11 @@ Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string 
 Execute::~Execute() {
 #ifdef ENABLE_ACL
   if (device_type_ == "Ascend310") {
-    D_resource_->FinalizeChipResource();
+    if (device_resource_) {
+      device_resource_->FinalizeResource();
+    } else {
+      MS_LOG(ERROR) << "Device resource is nullptr which is illegal under case Ascend310";
+    }
   }
 #endif
 }
@@ -200,11 +117,12 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
   } else {  // Ascend310 case, where we must set Ascend resource on each operators
 #ifdef ENABLE_ACL
+    CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310");
     std::shared_ptr<mindspore::dataset::DeviceTensor> device_input;
-    RETURN_IF_NOT_OK(D_resource_->Sink(input, &device_input));
+    RETURN_IF_NOT_OK(device_resource_->Sink(input, &device_input));
     for (auto &t : transforms) {
       std::shared_ptr<DeviceTensor> device_output;
-      RETURN_IF_NOT_OK(t->SetAscendResource(D_resource_->processor_));
+      RETURN_IF_NOT_OK(t->SetAscendResource(device_resource_));
       RETURN_IF_NOT_OK(t->Compute(device_input, &device_output));
 
       // For next transform
@@ -262,12 +180,13 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor is not valid");
   } else {  // Case Ascend310
 #ifdef ENABLE_ACL
+    CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310");
     for (auto &input_tensor : input_tensor_list) {
       std::shared_ptr<dataset::DeviceTensor> device_input;
-      RETURN_IF_NOT_OK(D_resource_->Sink(input_tensor, &device_input));
+      RETURN_IF_NOT_OK(device_resource_->Sink(input_tensor, &device_input));
       for (auto &t : transforms) {
         std::shared_ptr<DeviceTensor> device_output;
-        RETURN_IF_NOT_OK(t->SetAscendResource(D_resource_->processor_));
+        RETURN_IF_NOT_OK(t->SetAscendResource(device_resource_));
         RETURN_IF_NOT_OK(t->Compute(device_input, &device_output));
 
         // For next transform
@@ -275,12 +194,12 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       }
       CHECK_FAIL_RETURN_UNEXPECTED(device_input->HasDeviceData(), "Apply transform failed, output tensor has no data");
       // Due to the limitation of Ascend310 memory, we have to pop every data onto host memory
-      // So the speed of this method is slower than solo mode
+      // So the speed of this batch method is slower than solo mode
       std::shared_ptr<mindspore::dataset::Tensor> host_output;
-      RETURN_IF_NOT_OK(D_resource_->Pop(device_input, &host_output));
+      RETURN_IF_NOT_OK(device_resource_->Pop(device_input, &host_output));
       auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(host_output));
       output_tensor_list->emplace_back(ms_tensor);
-      RETURN_IF_NOT_OK(D_resource_->DeviceDataRelease());
+      RETURN_IF_NOT_OK(device_resource_->DeviceDataRelease());
     }
     CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor vector is empty");
 #endif
@@ -297,17 +216,16 @@ Status Execute::validate_device_() {
   return Status::OK();
 }
 
-#ifdef ENABLE_ACL
 Status Execute::DeviceMemoryRelease() {
-  Status rc = D_resource_->DeviceDataRelease();
+  CHECK_FAIL_RETURN_UNEXPECTED(device_resource_, "Device resource is nullptr which is illegal under case Ascend310");
+  Status rc = device_resource_->DeviceDataRelease();
   if (rc.IsError()) {
-    D_resource_->ascend_resource_->Release();
     std::string err_msg = "Error in device data release";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
   return Status::OK();
 }
-#endif
+
 }  // namespace dataset
 }  // namespace mindspore
