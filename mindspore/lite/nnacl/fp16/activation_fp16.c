@@ -146,3 +146,24 @@ int SwishFp16(const float16_t *src, float16_t *dst, int ele_num) {
   }
   return NNACL_OK;
 }
+
+int HardTanhFp16(const float16_t *src, int length, float16_t *dst, float min_val, float max_val) {
+  if (max_val <= min_val) {
+    return NNACL_ERR;
+  }
+  int i = 0;
+  if (min_val == FLT_MIN) {
+    for (i = 0; i < length; ++i) {
+      dst[i] = src[i] > max_val ? max_val : src[i];
+    }
+  } else if (max_val == FLT_MAX) {
+    for (i = 0; i < length; ++i) {
+      dst[i] = src[i] < min_val ? min_val : src[i];
+    }
+  } else {
+    for (i = 0; i < length; ++i) {
+      dst[i] = src[i] < min_val ? min_val : (src[i] > max_val ? max_val : src[i]);
+    }
+  }
+  return NNACL_OK;
+}
