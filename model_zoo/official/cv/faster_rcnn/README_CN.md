@@ -48,7 +48,7 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 
 # 环境要求
 
-- 硬件（Ascend）
+- 硬件（Ascend/GPU）
     - 使用Ascend处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 
 - 获取基础镜像
@@ -103,6 +103,8 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 2. 预训练模型是在ImageNet2012上训练的ResNet-50检查点。你可以使用ModelZoo中 [resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet) 脚本来训练, 然后使用src/convert_checkpoint.py把训练好的resnet50的权重文件转换为可加载的权重文件。
 3. BACKBONE_MODEL是通过modelzoo中的[resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet)脚本训练的。PRETRAINED_MODEL是经过转换后的权重文件。VALIDATION_JSON_FILE为标签文件。CHECKPOINT_PATH是训练后的检查点文件。
 
+## 在Ascend上运行
+
 ```shell
 
 # 权重文件转换
@@ -121,7 +123,25 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 ```
 
-# 在docker上运行
+## 在GPU上运行
+
+```shell
+
+# 权重文件转换
+python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
+
+# 单机训练
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+
+# 分布式训练
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
+
+# 评估
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+
+```
+
+## 在docker上运行
 
 1. 编译镜像
 
@@ -172,9 +192,12 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
   ├─ascend310_infer  //实现310推理源代码
   ├─scripts
     ├─run_standalone_train_ascend.sh    // Ascend单机shell脚本
+    ├─run_standalone_train_gpu.sh    // GPU单机shell脚本
     ├─run_distribute_train_ascend.sh    // Ascend分布式shell脚本
+    ├─run_distribute_train_gpu.sh    // GPU分布式shell脚本
     ├─run_infer_310.sh    // Ascend推理shell脚本
     └─run_eval_ascend.sh    // Ascend评估shell脚本
+    └─run_eval_gpu.sh    // GPU评估shell脚本
   ├─src
     ├─FasterRcnn
       ├─__init__.py    // init文件
@@ -204,12 +227,24 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 
 ### 用法
 
+#### 在Ascend上运行
+
 ```shell
 # Ascend单机训练
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
 # Ascend分布式训练
 sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+```
+
+#### 在GPU上运行
+
+```shell
+# GPU单机训练
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+
+# GPU分布式训练
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
 ```
 
 Notes:
@@ -262,9 +297,18 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 
 ### 用法
 
+#### 在Ascend上运行
+
 ```shell
 # Ascend评估
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+```
+
+#### 在GPU上运行
+
+```shell
+# GPU评估
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
 > 在训练过程中生成检查点。
@@ -334,34 +378,34 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 
 ### 训练性能
 
-| 参数 |Ascend |
-| -------------------------- | ----------------------------------------------------------- |
-| 模型版本 | V1 |
-| 资源 | Ascend 910；CPU 2.60GHz，192核；内存：755G |
-| 上传日期 | 2020/8/31 |
-| MindSpore版本 | 1.0.0 |
-| 数据集 | COCO 2017 |
-| 训练参数 | epoch=12, batch_size=2 |
-| 优化器 | SGD |
-| 损失函数 | Softmax交叉熵，Sigmoid交叉熵，SmoothL1Loss |
-| 速度 | 1卡：190毫秒/步；8卡：200毫秒/步 |
-| 总时间 | 1卡：37.17小时；8卡：4.89小时 |
-| 参数(M) | 250 |
-| 脚本 | [Faster R-CNN脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) |
+| 参数 |Ascend |GPU |
+| -------------------------- | ----------------------------------------------------------- |----------------------------------------------------------- |
+| 模型版本 | V1 |V1 |
+| 资源 | Ascend 910；CPU 2.60GHz，192核；内存：755G |V100-PCIE 32G            |
+| 上传日期 | 2020/8/31 | 2021/2/10 |
+| MindSpore版本 | 1.0.0 |1.2.0 |
+| 数据集 | COCO 2017 |COCO 2017 |
+| 训练参数 | epoch=12, batch_size=2 |epoch=12, batch_size=2 |
+| 优化器 | SGD |SGD |
+| 损失函数 | Softmax交叉熵，Sigmoid交叉熵，SmoothL1Loss |Softmax交叉熵，Sigmoid交叉熵，SmoothL1Loss |
+| 速度 | 1卡：190毫秒/步；8卡：200毫秒/步 | 1卡：320毫秒/步；8卡：335毫秒/步 |
+| 总时间 | 1卡：37.17小时；8卡：4.89小时 |1卡：63.09小时；8卡：8.25小时 |
+| 参数(M) | 250 |250 |
+| 脚本 | [Faster R-CNN脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) | [Faster R-CNN脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) |
 
 ### 评估性能
 
-| 参数 | Ascend |
-| ------------------- | --------------------------- |
-| 模型版本 | V1 |
-| 资源 | Ascend 910 |
-| 上传日期 | 2020/8/31 |
-| MindSpore版本 | 1.0.0 |
-| 数据集 | COCO2017 |
-| batch_size | 2 |
-| 输出 | mAP |
-| 准确率 | IoU=0.50：57.6%  |
-| 推理模型 | 250M（.ckpt文件） |
+| 参数 | Ascend |GPU |
+| ------------------- | --------------------------- | --------------------------- |
+| 模型版本 | V1 |V1 |
+| 资源 | Ascend 910 |V100-PCIE 32G  |
+| 上传日期 | 2020/8/31 |2021/2/10 |
+| MindSpore版本 | 1.0.0 |1.2.0 |
+| 数据集 | COCO2017 |COCO2017 |
+| batch_size | 2 | 2 |
+| 输出 | mAP |mAP |
+| 准确率 | IoU=0.50：58.6%  |IoU=0.50：59.1%  |
+| 推理模型 | 250M（.ckpt文件） |250M（.ckpt文件） |
 
 # ModelZoo主页
 

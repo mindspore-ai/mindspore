@@ -47,7 +47,7 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
 
 # Environment Requirements
 
-- Hardware（Ascend）
+- Hardware（Ascend/GPU）
     - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 
 - Docker base image
@@ -96,9 +96,13 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-Note: 1.the first run will generate the mindeocrd file, which will take a long time.
-      2.pretrained model is a resnet50 checkpoint that trained over ImageNet2012.you can train it with [resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet) scripts in modelzoo, and use src/convert_checkpoint.py to get the pretrain model.
-      3.BACKBONE_MODEL is a checkpoint file trained with [resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet) scripts in modelzoo.PRETRAINED_MODEL is a checkpoint file after convert.VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained.
+Note:
+
+1. the first run will generate the mindeocrd file, which will take a long time.
+2. pretrained model is a resnet50 checkpoint that trained over ImageNet2012.you can train it with [resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet) scripts in modelzoo, and use src/convert_checkpoint.py to get the pretrain model.
+3. BACKBONE_MODEL is a checkpoint file trained with [resnet50](https://gitee.com/qujianwei/mindspore/tree/master/model_zoo/official/cv/resnet) scripts in modelzoo.PRETRAINED_MODEL is a checkpoint file after convert.VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained.
+
+## Run on Ascend
 
 ```shell
 
@@ -118,7 +122,25 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 ```
 
-# Run in docker
+## Run on GPU
+
+```shell
+
+# convert checkpoint
+python convert_checkpoint.py --ckpt_file=[BACKBONE_MODEL]
+
+# standalone training
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+
+# distributed training
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
+
+# eval
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+
+```
+
+## Run in docker
 
 1. Build docker images
 
@@ -169,9 +191,12 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
   ├─ascend310_infer //application for 310 inference
   ├─scripts
     ├─run_standalone_train_ascend.sh    // shell script for standalone on ascend
+    ├─run_standalone_train_gpu.sh    // shell script for standalone on GPU
     ├─run_distribute_train_ascend.sh    // shell script for distributed on ascend
+    ├─run_distribute_train_gpu.sh    // shell script for distributed on GPU
     ├─run_infer_310.sh    // shell script for 310 inference
     └─run_eval_ascend.sh    // shell script for eval on ascend
+    └─run_eval_gpu.sh    // shell script for eval on GPU
   ├─src
     ├─FasterRcnn
       ├─__init__.py    // init file
@@ -201,12 +226,24 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 
 ### Usage
 
+#### on Ascend
+
 ```shell
 # standalone training on ascend
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
 # distributed training on ascend
 sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+```
+
+#### on GPU
+
+```shell
+# standalone training on gpu
+sh run_standalone_train_gpu.sh [PRETRAINED_MODEL]
+
+# distributed training on gpu
+sh run_distribute_train_gpu.sh [DEVICE_NUM] [PRETRAINED_MODEL]
 ```
 
 Notes:
@@ -259,9 +296,18 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 
 ### Usage
 
+#### on Ascend
+
 ```shell
 # eval on ascend
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+```
+
+#### on GPU
+
+```shell
+# eval on GPU
+sh run_eval_gpu.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
 > checkpoint can be produced in training process.
@@ -331,34 +377,34 @@ Inference result is saved in current path, you can find result like this in acc.
 
 ### Evaluation Performance
 
-| Parameters                 | Ascend                                                   |
-| -------------------------- | ----------------------------------------------------------- |
-| Model Version              | V1                                                |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
-| uploaded Date              | 08/31/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
-| Dataset                    | COCO2017                                                   |
-| Training Parameters        | epoch=12,  batch_size=2          |
-| Optimizer                  | SGD                                                         |
-| Loss Function              | Softmax Cross Entropy ,Sigmoid Cross Entropy,SmoothL1Loss                                      |
-| Speed                      | 1pc: 190 ms/step;  8pcs: 200 ms/step                          |
-| Total time                 | 1pc: 37.17 hours;  8pcs: 4.89 hours                          |
-| Parameters (M)             | 250                                                         |
-| Scripts                    | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) |
+| Parameters                 | Ascend                                                   | GPU                                                 |
+| -------------------------- | ----------------------------------------------------------- |----------------------------------------------------------- |
+| Model Version              | V1                                                | V1                                                |
+| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |V100-PCIE 32G            |
+| uploaded Date              | 08/31/2020 (month/day/year)                                 |02/10/2021 (month/day/year)                                 |
+| MindSpore Version          | 1.0.0                                                       |1.2.0                                                       |
+| Dataset                    | COCO2017                                                   |COCO2017                                                   |
+| Training Parameters        | epoch=12,  batch_size=2          |epoch=12,  batch_size=2          |
+| Optimizer                  | SGD                                                         |SGD                                                         |
+| Loss Function              | Softmax Cross Entropy ,Sigmoid Cross Entropy,SmoothL1Loss|Softmax Cross Entropy ,Sigmoid Cross Entropy,SmoothL1Loss|
+| Speed                      | 1pc: 190 ms/step;  8pcs: 200 ms/step                          | 1pc: 320 ms/step;  8pcs: 335 ms/step                          |
+| Total time                 | 1pc: 37.17 hours;  8pcs: 4.89 hours                          |1pc: 63.09 hours;  8pcs: 8.25 hours                          |
+| Parameters (M)             | 250                                                         |250                                                         |
+| Scripts                    | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) |
 
 ### Inference Performance
 
-| Parameters          | Ascend                |
-| ------------------- | --------------------------- |
-| Model Version       | V1                |
-| Resource            | Ascend 910                  |
-| Uploaded Date       | 08/31/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
-| Dataset             | COCO2017    |
-| batch_size          | 2                         |
-| outputs             | mAP                 |
-| Accuracy            |  IoU=0.50: 57.6%  |
-| Model for inference | 250M (.ckpt file)         |
+| Parameters          | Ascend                |GPU                |
+| ------------------- | --------------------------- |--------------------------- |
+| Model Version       | V1                | V1                |
+| Resource            | Ascend 910                  |GPU                   |
+| Uploaded Date       | 08/31/2020 (month/day/year) |02/10/2021 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.2.0                       |
+| Dataset             | COCO2017    |COCO2017    |
+| batch_size          | 2                         |2                         |
+| outputs             | mAP                 |mAP                 |
+| Accuracy            |  IoU=0.50: 58.6%  | IoU=0.50: 59.1%  |
+| Model for inference | 250M (.ckpt file)         |250M (.ckpt file)         |
 
 # [ModelZoo Homepage](#contents)  
 
