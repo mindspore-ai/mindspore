@@ -140,7 +140,7 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
 
   for (auto iter = todos.cbegin(); iter != todos.cend(); ++iter) {
     auto node = (*iter)->cast<CNodePtr>();
-    if (node == nullptr || fused_ops->count(node)) {
+    if (node == nullptr || IsKeepBasicNode(node) || fused_ops->count(node)) {
       continue;
     }
     bool is_fusible_op = IsFusibleOp(node);
