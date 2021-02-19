@@ -87,18 +87,18 @@ __kernel void transpose_0312_oversize_NHWC4(__read_only image2d_t src_data, __wr
   }
   int H4 = UP_DIV(shape.y, 4);
   int C4 = UP_DIV(shape.w, 4);
-  FLT4 src0 = READ_IMAGE(src_data, smp_zero, (int2)(Y * H4 + X, 4 * Z));
+  FLT4 src0 = READ_IMAGE(src_data, smp_zero, (int2)(X, Y * shape.w + 4 * Z));
   FLT4 src1 = (FLT4)0.f;
   if (4 * Z + 1 < shape.w) {
-    src1 = READ_IMAGE(src_data, smp_zero, (int2)(Y * H4 + X, 4 * Z + 1));
+    src1 = READ_IMAGE(src_data, smp_zero, (int2)(X, Y * shape.w + 4 * Z + 1));
   }
   FLT4 src2 = (FLT4)0.f;
   if (4 * Z + 2 < shape.w) {
-    src2 = READ_IMAGE(src_data, smp_zero, (int2)(Y * H4 + X, 4 * Z + 2));
+    src2 = READ_IMAGE(src_data, smp_zero, (int2)(X, Y * shape.w + 4 * Z + 2));
   }
   FLT4 src3 = (FLT4)0.f;
   if (4 * Z + 3 < shape.w) {
-    src3 = READ_IMAGE(src_data, smp_zero, (int2)(Y * H4 + X, 4 * Z + 3));
+    src3 = READ_IMAGE(src_data, smp_zero, (int2)(X, Y * shape.w + 4 * Z + 3));
   }
   FLT4 dst0 = (FLT4)(src0.x, src1.x, src2.x, src3.x);
   FLT4 dst1 = (FLT4)(src0.y, src1.y, src2.y, src3.y);
@@ -137,6 +137,45 @@ __kernel void transpose_0231_NHWC4(__read_only image2d_t src_data, __write_only 
   FLT4 src3 = (FLT4)0.f;
   if (4 * Z + 3 < shape.w) {
     src3 = READ_IMAGE(src_data, smp_zero, (int2)(X * W4 + Y, 4 * Z + 3));
+  }
+  FLT4 dst0 = (FLT4)(src0.x, src1.x, src2.x, src3.x);
+  FLT4 dst1 = (FLT4)(src0.y, src1.y, src2.y, src3.y);
+  FLT4 dst2 = (FLT4)(src0.z, src1.z, src2.z, src3.z);
+  FLT4 dst3 = (FLT4)(src0.w, src1.w, src2.w, src3.w);
+  WRITE_IMAGE(dst_data, (int2)(4 * Y * C4 + Z, X), dst0);
+  if (4 * Y + 1 < shape.z) {
+    WRITE_IMAGE(dst_data, (int2)((4 * Y + 1) * C4 + Z, X), dst1);
+  }
+  if (4 * Y + 2 < shape.z) {
+    WRITE_IMAGE(dst_data, (int2)((4 * Y + 2) * C4 + Z, X), dst2);
+  }
+  if (4 * Y + 3 < shape.z) {
+    WRITE_IMAGE(dst_data, (int2)((4 * Y + 3) * C4 + Z, X), dst3);
+  }
+}
+
+__kernel void transpose_0231_oversize_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data,
+                                            int4 shape) {
+  int X = get_global_id(0);  // H, W for src
+  int Y = get_global_id(1);  // W4, C4 for src
+  int Z = get_global_id(2);  // C4, H4 for src
+  if (X >= shape.y || 4 * Y >= shape.z || 4 * Z >= shape.w) {
+    return;
+  }
+  int W4 = UP_DIV(shape.z, 4);
+  int C4 = UP_DIV(shape.w, 4);
+  FLT4 src0 = READ_IMAGE(src_data, smp_zero, (int2)(Y, 4 * Z * shape.y + X));
+  FLT4 src1 = (FLT4)0.f;
+  if (4 * Z + 1 < shape.w) {
+    src1 = READ_IMAGE(src_data, smp_zero, (int2)(Y, (4 * Z + 1) * shape.y + X));
+  }
+  FLT4 src2 = (FLT4)0.f;
+  if (4 * Z + 2 < shape.w) {
+    src2 = READ_IMAGE(src_data, smp_zero, (int2)(Y, (4 * Z + 2) * shape.y + X));
+  }
+  FLT4 src3 = (FLT4)0.f;
+  if (4 * Z + 3 < shape.w) {
+    src3 = READ_IMAGE(src_data, smp_zero, (int2)(Y, (4 * Z + 3) * shape.y + X));
   }
   FLT4 dst0 = (FLT4)(src0.x, src1.x, src2.x, src3.x);
   FLT4 dst1 = (FLT4)(src0.y, src1.y, src2.y, src3.y);

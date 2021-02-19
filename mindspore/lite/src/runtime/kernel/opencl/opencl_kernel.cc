@@ -400,4 +400,13 @@ void OpenCLKernel::FreeDequantedWeight() {
     weight_tensor->set_data(restore_quant_data_);
   }
 }
+
+int OpenCLKernel::CheckSpecs() {
+  if (out_mem_type_ == lite::opencl::MemType::IMG) {
+    if (!GpuTensorInfo(out_tensors_[0]).IsImageSizeValid()) {
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::kernel

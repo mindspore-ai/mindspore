@@ -80,6 +80,7 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_va
 struct GpuTensorInfo {
   GpuTensorInfo() = default;
   explicit GpuTensorInfo(const lite::Tensor *tensor) {
+    auto ocl_runtime_wrap_ = lite::opencl::OpenCLRuntimeWrapper();
     if (tensor == nullptr) {
       return;
     }
@@ -95,12 +96,16 @@ struct GpuTensorInfo {
 
     FLT_size = tensor->data_type() == kNumberTypeFloat16 ? sizeof(cl_half) : sizeof(cl_float);
     FLT4_size = FLT_size * 4;
-    if (W * Slice <= MAX_IMAGE2D_SIZE) {
+    if (W * Slice <= ocl_runtime_wrap_.GetInstance()->GetMaxImage2DWidth()) {
       height = N * H;
       width = W * Slice;
     } else {
-      height = W;
-      width = N * H * Slice;
+      height = N * H * W;
+      width = Slice;
+      if (height > ocl_runtime_wrap_.GetInstance()->GetMaxImage2DHeight()) {
+        height = -1;
+        width = -1;
+      }
     }
 
     ElementsNum = N * H * W * C;
@@ -127,6 +132,8 @@ struct GpuTensorInfo {
     }
     return static_cast<int>(no_neg_axis + 4 - NDim);
   }
+
+  bool IsImageSizeValid() { return width > 0 && height > 0; }
 
   size_t N{1};
   size_t H{1};
@@ -183,7 +190,7 @@ class OpenCLKernel : public LiteKernel {
   int ReSize() override;
   int Run() override { return RET_ERROR; }
 
-  virtual int CheckSpecs() { return RET_ERROR; }
+  virtual int CheckSpecs();
   virtual int InitWeights() { return RET_OK; }
   virtual void SetConstArgs() {}
   virtual void SetGlobalLocal() {}
@@ -252,6 +259,12 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
     return kernel;
   }
   auto ret = kernel->CheckSpecs();
+  if (ret != mindspore::lite::RET_OK) {
+    MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
+    delete kernel;
+    return nullptr;
+  }
+  ret = kernel->OpenCLKernel::CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
     delete kernel;

@@ -165,6 +165,8 @@ int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> *platforms) {
   }
   global_memery_size_ = device_->getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>();
   max_alloc_size_ = device_->getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
+  max_image2d_width_ = device_->getInfo<CL_DEVICE_IMAGE2D_MAX_WIDTH>();
+  max_image2d_height_ = device_->getInfo<CL_DEVICE_IMAGE2D_MAX_HEIGHT>();
   MS_LOG(INFO) << "Address space bits: " << device_->getInfo<CL_DEVICE_ADDRESS_BITS>();
   MS_LOG(INFO) << "Global Mem Size: " << global_memery_size_;
   MS_LOG(INFO) << "Global Mem Cache Size: " << global_memery_cachesize_;
@@ -377,6 +379,7 @@ int OpenCLRuntime::BuildKernel(const cl::Kernel &kernel, const std::string &prog
       " -DFP16_ENABLE=0 -DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4 -DAS_UINT4=as_uint4 -DUINT4=uint4"
       " -DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT=convert_float -DTO_FLT4=convert_float4";
   }
+  build_option += " -DMAX_IMAGE2D_WIDTH=" + std::to_string(max_image2d_width_);
   build_option =
     std::accumulate(build_options_ext.begin(), build_options_ext.end(), build_option,
                     [](const std::string &options, const std::string &option) { return options + " " + option; });

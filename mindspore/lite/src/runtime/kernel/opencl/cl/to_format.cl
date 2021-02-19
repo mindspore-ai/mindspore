@@ -25,7 +25,10 @@ __kernel void to_format_NHWC_to_NHWC4_IMG_float(__global float4 *src_data, __wri
       data.z = (FLT)src_addr[2];
     }
   }
-  WRITE_IMAGE(dst_data, (int2)(Y * size.z + Z, X), data);
+  if (size.y * size.z <= MAX_IMAGE2D_WIDTH)
+    WRITE_IMAGE(dst_data, (int2)(Y * size.z + Z, X), data);
+  else
+    WRITE_IMAGE(dst_data, (int2)(Z, X * size.y + Y), data);
 }
 __kernel void to_format_NHWC_to_NHWC4_IMG_half(__global half4 *src_data, __write_only image2d_t dst_data, int4 size,
                                                int4 shape) {
@@ -52,7 +55,10 @@ __kernel void to_format_NHWC_to_NHWC4_IMG_half(__global half4 *src_data, __write
       data.z = (FLT)src_addr[2];
     }
   }
-  WRITE_IMAGE(dst_data, (int2)(Y * size.z + Z, X), data);
+  if (size.y * size.z <= MAX_IMAGE2D_WIDTH)
+    WRITE_IMAGE(dst_data, (int2)(Y * size.z + Z, X), data);
+  else
+    WRITE_IMAGE(dst_data, (int2)(Z, X * size.y + Y), data);
 }
 __kernel void to_format_NCHW_to_NHWC4_IMG_float(__global float4 *src_data, __write_only image2d_t dst_data, int4 size,
                                                 int4 shape) {
@@ -236,7 +242,11 @@ __kernel void to_format_NHWC4_to_NHWC_BUF_float(__read_only image2d_t src_data, 
   if (X >= size.x || Y >= size.y || Z >= size.z) {
     return;
   }
-  float4 data = convert_float4(READ_IMAGEIN(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+  float4 data;
+  if (size.y * size.z <= MAX_IMAGE2D_WIDTH)
+    data = convert_float4(READ_IMAGEIN(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+  else
+    data = convert_float4(READ_IMAGEIN(src_data, smp_zero, (int2)(Z, X * size.y + Y)));
   int offset = (X * shape.z + Y) * shape.w + Z * 4;
   __global float *dst_addr = (__global float *)dst_data;
   dst_addr += offset;
@@ -320,7 +330,11 @@ __kernel void to_format_NHWC4_to_NHWC_BUF_half(__read_only image2d_t src_data, _
   if (X >= size.x || Y >= size.y || Z >= size.z) {
     return;
   }
-  half4 data = convert_half4(READ_IMAGEIN(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+  half4 data;
+  if (size.y * size.z <= MAX_IMAGE2D_WIDTH)
+    data = convert_half4(READ_IMAGEIN(src_data, smp_zero, (int2)(Y * size.z + Z, X)));
+  else
+    data = convert_half4(READ_IMAGEIN(src_data, smp_zero, (int2)(Z, X * size.y + Y)));
   int offset = (X * shape.z + Y) * shape.w + Z * 4;
   __global half *dst_addr = (__global half *)dst_data;
   dst_addr += offset;

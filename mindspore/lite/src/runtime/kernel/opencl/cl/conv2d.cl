@@ -3,7 +3,6 @@
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 
 #define CI_TILE 4
-#define MAX_IMAGE2D_SIZE 65535
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 
 #define DEFINE_ARGS                                                         \
@@ -92,10 +91,10 @@ __kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t 
     out_h0_w0_c0 = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-out_h0_w0_c0));
   }
 
-  if (OW * CO_SLICES <= MAX_IMAGE2D_SIZE) {
+  if (OW * CO_SLICES <= MAX_IMAGE2D_WIDTH) {
     WRITE_IMAGE(output, (int2)(ow0 * CO_SLICES + co_slice0, n_oh0), out_h0_w0_c0);
   } else {
-    WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice0, ow0), out_h0_w0_c0);
+    WRITE_IMAGE(output, (int2)(co_slice0, n_oh0 * OW + ow0), out_h0_w0_c0);
   }
 }
 
@@ -173,15 +172,15 @@ __kernel void Conv2D_H2W1C1(__read_only image2d_t input, __write_only image2d_t 
     out_h1_w0_c0 = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-out_h1_w0_c0));
   }
 
-  if (OW * CO_SLICES <= MAX_IMAGE2D_SIZE) {
+  if (OW * CO_SLICES <= MAX_IMAGE2D_WIDTH) {
     WRITE_IMAGE(output, (int2)(ow0 * CO_SLICES + co_slice0, n_oh0), out_h0_w0_c0);
     if (oh1 < OH) {
       WRITE_IMAGE(output, (int2)(ow0 * CO_SLICES + co_slice0, n_oh1), out_h1_w0_c0);
     }  // end if (oh1 < OH)
   } else {
-    WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice0, ow0), out_h0_w0_c0);
+    WRITE_IMAGE(output, (int2)(co_slice0, n_oh0 * OW + ow0), out_h0_w0_c0);
     if (oh1 < OH) {
-      WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice0, ow0), out_h1_w0_c0);
+      WRITE_IMAGE(output, (int2)(co_slice0, n_oh1 * OW + ow0), out_h1_w0_c0);
     }  // end (oh1 < OH)
   }
 }
@@ -284,7 +283,7 @@ __kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t 
     out_h1_w0_c1 = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-out_h1_w0_c1));
   }
 
-  if (OW * CO_SLICES <= MAX_IMAGE2D_SIZE) {
+  if (OW * CO_SLICES <= MAX_IMAGE2D_WIDTH) {
     WRITE_IMAGE(output, (int2)(ow0 * CO_SLICES + co_slice0, n_oh0), out_h0_w0_c0);
     if (oh1 < OH) {
       WRITE_IMAGE(output, (int2)(ow0 * CO_SLICES + co_slice0, n_oh1), out_h1_w0_c0);
@@ -296,14 +295,14 @@ __kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t 
       }  // end if (oh1 < OH)
     }    // end if (co_slice1 < CO_SLICES)
   } else {
-    WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice0, ow0), out_h0_w0_c0);
+    WRITE_IMAGE(output, (int2)(co_slice0, n_oh0 * OW + ow0), out_h0_w0_c0);
     if (oh1 < OH) {
-      WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice0, ow0), out_h1_w0_c0);
+      WRITE_IMAGE(output, (int2)(co_slice0, n_oh1 * OW + ow0), out_h1_w0_c0);
     }  // end (oh1 < OH)
     if (co_slice1 < CO_SLICES) {
-      WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice1, ow0), out_h0_w0_c1);
+      WRITE_IMAGE(output, (int2)(co_slice1, n_oh0 * OW + ow0), out_h0_w0_c1);
       if (oh1 < OH) {
-        WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice1, ow0), out_h1_w0_c1);
+        WRITE_IMAGE(output, (int2)(co_slice1, n_oh1 * OW + ow0), out_h1_w0_c1);
       }  // end if (oh1 < OH)
     }    // end if (co_slice1 < CO_SLICES)
   }
@@ -457,7 +456,7 @@ __kernel void Conv2D_H2W2C2(__read_only image2d_t input, __write_only image2d_t 
     out_h1_w1_c1 = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-out_h1_w1_c1));
   }
 
-  if (OW * CO_SLICES <= MAX_IMAGE2D_SIZE) {
+  if (OW * CO_SLICES <= MAX_IMAGE2D_WIDTH) {
     WRITE_IMAGE(output, (int2)(ow0 * CO_SLICES + co_slice0, n_oh0), out_h0_w0_c0);
     WRITE_IMAGE(output, (int2)(ow1 * CO_SLICES + co_slice0, n_oh0), out_h0_w1_c0);
     if (oh1 < OH) {
@@ -473,18 +472,18 @@ __kernel void Conv2D_H2W2C2(__read_only image2d_t input, __write_only image2d_t 
       }  // end if (oh1 < OH)
     }    // end if (co_slice1 < CO_SLICES)
   } else {
-    WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice0, ow0), out_h0_w0_c0);
-    WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice0, ow1), out_h0_w1_c0);
+    WRITE_IMAGE(output, (int2)(co_slice0, n_oh0 * OW + ow0), out_h0_w0_c0);
+    WRITE_IMAGE(output, (int2)(co_slice0, n_oh0 * OW + ow1), out_h0_w1_c0);
     if (oh1 < OH) {
-      WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice0, ow0), out_h1_w0_c0);
-      WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice0, ow1), out_h1_w1_c0);
+      WRITE_IMAGE(output, (int2)(co_slice0, n_oh1 * OW + ow0), out_h1_w0_c0);
+      WRITE_IMAGE(output, (int2)(co_slice0, n_oh1 * OW + ow1), out_h1_w1_c0);
     }  // end (oh1 < OH)
     if (co_slice1 < CO_SLICES) {
-      WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice1, ow0), out_h0_w0_c1);
-      WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice1, ow1), out_h0_w1_c1);
+      WRITE_IMAGE(output, (int2)(co_slice1, n_oh0 * OW + ow0), out_h0_w0_c1);
+      WRITE_IMAGE(output, (int2)(co_slice1, n_oh0 * OW + ow1), out_h0_w1_c1);
       if (oh1 < OH) {
-        WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice1, ow0), out_h1_w0_c1);
-        WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice1, ow1), out_h1_w1_c1);
+        WRITE_IMAGE(output, (int2)(co_slice1, n_oh1 * OW + ow0), out_h1_w0_c1);
+        WRITE_IMAGE(output, (int2)(co_slice1, n_oh1 * OW + ow1), out_h1_w1_c1);
       }  // end if (oh1 < OH)
     }    // end if (co_slice1 < CO_SLICES)
   }
@@ -645,7 +644,7 @@ __kernel void Conv2D_H2W2C2_Img(__read_only image2d_t input, __write_only image2
     out_h1_w1_c1 = (FLT4)(1.f) / ((FLT4)(1.f) + exp(-out_h1_w1_c1));
   }
 
-  if (OW * CO_SLICES <= MAX_IMAGE2D_SIZE) {
+  if (OW * CO_SLICES <= MAX_IMAGE2D_WIDTH) {
     WRITE_IMAGE(output, (int2)(ow0 * CO_SLICES + co_slice0, n_oh0), out_h0_w0_c0);
     WRITE_IMAGE(output, (int2)(ow1 * CO_SLICES + co_slice0, n_oh0), out_h0_w1_c0);
     if (oh1 < OH) {
@@ -661,18 +660,18 @@ __kernel void Conv2D_H2W2C2_Img(__read_only image2d_t input, __write_only image2
       }  // end if (oh1 < OH)
     }    // end if (co_slice1 < CO_SLICES)
   } else {
-    WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice0, ow0), out_h0_w0_c0);
-    WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice0, ow1), out_h0_w1_c0);
+    WRITE_IMAGE(output, (int2)(co_slice0, n_oh0 * OW + ow0), out_h0_w0_c0);
+    WRITE_IMAGE(output, (int2)(co_slice0, n_oh0 * OW + ow1), out_h0_w1_c0);
     if (oh1 < OH) {
-      WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice0, ow0), out_h1_w0_c0);
-      WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice0, ow1), out_h1_w1_c0);
+      WRITE_IMAGE(output, (int2)(co_slice0, n_oh1 * OW + ow0), out_h1_w0_c0);
+      WRITE_IMAGE(output, (int2)(co_slice0, n_oh1 * OW + ow1), out_h1_w1_c0);
     }  // end (oh1 < OH)
     if (co_slice1 < CO_SLICES) {
-      WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice1, ow0), out_h0_w0_c1);
-      WRITE_IMAGE(output, (int2)(n_oh0 * CO_SLICES + co_slice1, ow1), out_h0_w1_c1);
+      WRITE_IMAGE(output, (int2)(co_slice1, n_oh0 * OW + ow0), out_h0_w0_c1);
+      WRITE_IMAGE(output, (int2)(co_slice1, n_oh0 * OW + ow1), out_h0_w1_c1);
       if (oh1 < OH) {
-        WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice1, ow0), out_h1_w0_c1);
-        WRITE_IMAGE(output, (int2)(n_oh1 * CO_SLICES + co_slice1, ow1), out_h1_w1_c1);
+        WRITE_IMAGE(output, (int2)(co_slice1, n_oh1 * OW + ow0), out_h1_w0_c1);
+        WRITE_IMAGE(output, (int2)(co_slice1, n_oh1 * OW + ow1), out_h1_w1_c1);
       }  // end if (oh1 < OH)
     }    // end if (co_slice1 < CO_SLICES)
   }
