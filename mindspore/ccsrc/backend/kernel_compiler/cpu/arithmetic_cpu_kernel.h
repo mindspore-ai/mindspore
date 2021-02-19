@@ -40,43 +40,43 @@ class ArithmeticCPUKernel : public CPUKernel {
  private:
   void GenIndex(size_t num, std::vector<size_t> *tmp);
   template <typename T>
-  void Sub(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void Sub(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Add(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void Add(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Mul(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void Mul(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void RealDiv(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void RealDiv(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Div(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void Div(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void FloorDiv(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void FloorDiv(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Mod(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void Mod(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Pow(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void Pow(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void AssignAdd(T *input1, const T *input2, T *out, size_t start, size_t end);
+  void AssignAdd(T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Atan2(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void Atan2(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Less(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void Less(const T *input1, const T *input2, bool *out, size_t size);
   template <typename T>
-  void Equal(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void Equal(const T *input1, const T *input2, bool *out, size_t size);
   template <typename T>
-  void NotEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void NotEqual(const T *input1, const T *input2, bool *out, size_t size);
   template <typename T>
-  void SquaredDifference(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  void SquaredDifference(const T *input1, const T *input2, T *out, size_t size);
   template <typename T>
-  void Greater(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void Greater(const T *input1, const T *input2, bool *out, size_t size);
   template <typename T>
-  void GreaterEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void GreaterEqual(const T *input1, const T *input2, bool *out, size_t size);
   template <typename T>
-  void LessEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void LessEqual(const T *input1, const T *input2, bool *out, size_t size);
   template <typename T>
-  void LogicalAnd(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void LogicalAnd(const T *input1, const T *input2, bool *out, size_t size);
   template <typename T>
-  void LogicalOr(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  void LogicalOr(const T *input1, const T *input2, bool *out, size_t size);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;

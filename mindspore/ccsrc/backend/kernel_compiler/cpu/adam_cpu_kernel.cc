@@ -16,7 +16,6 @@
 #include "backend/kernel_compiler/cpu/adam_cpu_kernel.h"
 
 #include <cmath>
-#include <thread>
 #include "backend/kernel_compiler/cpu/mkldnn/mkl_kernel_engine.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_utils.h"
@@ -25,16 +24,19 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void AdamCPUKernel::LaunchAdam(T *var, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
-                               size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    m[i] += (gradient[i] - m[i]) * (1 - beta1);
-    v[i] += (gradient[i] * gradient[i] - v[i]) * (1 - beta2);
-    if (use_nesterov) {
-      var[i] -= lr * (m[i] * beta1 + (1 - beta1) * gradient[i]) / (std::sqrt(v[i]) + epsilon);
-    } else {
-      var[i] -= lr * m[i] / (std::sqrt(v[i]) + epsilon);
+                               size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      m[i] += (gradient[i] - m[i]) * (1 - beta1);
+      v[i] += (gradient[i] * gradient[i] - v[i]) * (1 - beta2);
+      if (use_nesterov) {
+        var[i] -= lr * (m[i] * beta1 + (1 - beta1) * gradient[i]) / (std::sqrt(v[i]) + epsilon);
+      } else {
+        var[i] -= lr * m[i] / (std::sqrt(v[i]) + epsilon);
+      }
     }
-  }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 void AdamCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -84,31 +86,7 @@ bool AdamCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
   // multithreading
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(float)) : 1;
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
-  std::vector<std::thread> threads;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return false;
-  }
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return false;
-  }
-  while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    threads.emplace_back(std::thread(&AdamCPUKernel::LaunchAdam<float>, this, var, m, v, new_lr, beta1, beta2, epsilon,
-                                     gradient, start, end));
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-  }
-
+  LaunchAdam<float>(var, m, v, new_lr, beta1, beta2, epsilon, gradient, lens);
   return true;
 }
 }  // namespace kernel

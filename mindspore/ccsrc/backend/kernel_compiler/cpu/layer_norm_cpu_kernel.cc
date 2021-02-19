@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+#include <cmath>
 #include "backend/kernel_compiler/cpu/layer_norm_cpu_kernel.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -72,23 +75,43 @@ void LayerNormCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   auto y = reinterpret_cast<T *>(outputs[0]->addr);
   auto mean = reinterpret_cast<T *>(outputs[1]->addr);
   auto var = reinterpret_cast<T *>(outputs[2]->addr);
-  for (size_t i = 0; i < block_num_; ++i) {
-    T sum = (T)0.0;
-    T square_sum = (T)0.0;
-    for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
-      sum += x[j];
-      square_sum += x[j] * x[j];
-    }
-    T block_mean = sum / block_size_;
-    T block_var = square_sum / block_size_ - block_mean * block_mean;
-    for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
-      auto param_shift = j % param_num_;
-      y[j] = (x[j] - block_mean) / (T)std::sqrt(static_cast<double>(block_var) + eps_) * gamma[param_shift] +
-             beta[param_shift];
-    }
-    mean[i] = block_mean;
-    var[i] = block_var;
+  size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  if (block_num_ < thread_num) {
+    thread_num = block_num_;
   }
+  std::vector<common::Task> tasks;
+  tasks.reserve(thread_num);
+  auto task = [&](size_t start, size_t end) {
+    for (size_t c = 0; c < ceil(static_cast<double>(block_num_) / thread_num); ++c) {
+      if (c * thread_num + start >= block_num_) {
+        continue;
+      }
+      size_t i = c * thread_num + start;
+      T sum = (T)0.0;
+      T square_sum = (T)0.0;
+      for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
+        sum += x[j];
+        square_sum += x[j] * x[j];
+      }
+      T block_mean = sum / block_size_;
+      T block_var = square_sum / block_size_ - block_mean * block_mean;
+      for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
+        auto param_shift = j % param_num_;
+        y[j] = (x[j] - block_mean) / (T)std::sqrt(static_cast<double>(block_var) + eps_) * gamma[param_shift] +
+               beta[param_shift];
+      }
+      mean[i] = block_mean;
+      var[i] = block_var;
+    }
+  };
+  for (size_t i = 0; i < thread_num; ++i) {
+    auto block = [&, i]() {
+      task(i, i + 1);
+      return common::SUCCESS;
+    };
+    tasks.emplace_back(block);
+  }
+  common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 void LayerNormCPUKernel::CheckParam(const CNodePtr &kernel_node) {

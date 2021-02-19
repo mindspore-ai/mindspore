@@ -15,7 +15,9 @@
  */
 
 #include "backend/kernel_compiler/cpu/layer_norm_grad_cpu_kernel.h"
+#include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -73,41 +75,75 @@ void LayerNormGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto dx = reinterpret_cast<T *>(outputs[0]->addr);
   auto dg = reinterpret_cast<T *>(outputs[1]->addr);
   auto db = reinterpret_cast<T *>(outputs[2]->addr);
-
-  for (size_t i = 0; i < param_num_; ++i) {
-    T dgamma = (T)0.0;
-    T dbeta = (T)0.0;
-    for (size_t j = i; j < param_size_ * param_num_; j += param_num_) {
-      auto norm_shift = static_cast<int>(j / block_size_);
-      dgamma += dy[j] * (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5) * (x[j] - mean[norm_shift]);
-      dbeta += dy[j];
+  size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  auto thread_num1 = param_num_ < thread_num ? param_num_ : thread_num;
+  std::vector<common::Task> tasks1;
+  tasks1.reserve(thread_num1);
+  auto thread_num2 = block_num_ < thread_num ? block_num_ : thread_num;
+  std::vector<common::Task> tasks2;
+  tasks2.reserve(thread_num2);
+  auto task1 = [&](size_t start, size_t end) {
+    for (size_t c = 0; c < ceil(static_cast<double>(param_num_) / thread_num1); ++c) {
+      if (c * thread_num1 + start >= param_num_) {
+        continue;
+      }
+      size_t param_index = c * thread_num1 + start;
+      T dgamma = (T)0.0;
+      T dbeta = (T)0.0;
+      for (size_t j = param_index; j < param_size_ * param_num_; j += param_num_) {
+        auto norm_shift = static_cast<int>(j / block_size_);
+        dgamma += dy[j] * (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5) * (x[j] - mean[norm_shift]);
+        dbeta += dy[j];
+      }
+      dg[param_index] = dgamma;
+      db[param_index] = dbeta;
     }
-    dg[i] = dgamma;
-    db[i] = dbeta;
+  };
+  auto task2 = [&](size_t start, size_t end) {
+    for (size_t c = 0; c < ceil(static_cast<double>(block_num_) / thread_num2); ++c) {
+      if (c * thread_num2 + start >= block_num_) {
+        continue;
+      }
+      size_t block_index = c * thread_num2 + start;
+      T sum1 = (T)0.0;
+      T sum2 = (T)0.0;
+      T sum3 = (T)0.0;
+      for (size_t j = block_index * block_size_; j < (block_index + 1) * block_size_; ++j) {
+        auto param_shift = j % param_num_;
+        auto norm_shift = static_cast<int>(j / block_size_);
+        auto dxm = x[j] - mean[norm_shift];
+        auto dyg = dy[j] * gamma[param_shift];
+        sum1 += (T)(-0.5) * dyg * dxm * (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -1.5);
+        sum2 += dyg;
+        sum3 += (T)(-2.0) * dxm;
+      }
+      for (size_t j = block_index * block_size_; j < (block_index + 1) * block_size_; ++j) {
+        auto param_shift = j % param_num_;
+        auto norm_shift = static_cast<int>(j / block_size_);
+        auto var_sqrt = (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5);
+        auto dx1 = dy[j] * gamma[param_shift] * var_sqrt;
+        auto dx2 = sum1 * (T)2.0 / block_size_ * (x[j] - mean[norm_shift]);
+        auto dx3 = ((T)(-1.0) * var_sqrt * sum2 + ((T)1.0 / block_size_) * sum1 * sum3) * ((T)1.0 / block_size_);
+        dx[j] = dx1 + dx2 + dx3;
+      }
+    }
+  };
+  for (size_t i = 0; i < thread_num1; ++i) {
+    auto block = [&, i]() {
+      task1(i, i + 1);
+      return common::SUCCESS;
+    };
+    tasks1.emplace_back(block);
   }
-  for (size_t i = 0; i < block_num_; ++i) {
-    T sum1 = (T)0.0;
-    T sum2 = (T)0.0;
-    T sum3 = (T)0.0;
-    for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
-      auto param_shift = j % param_num_;
-      auto norm_shift = static_cast<int>(j / block_size_);
-      auto dxm = x[j] - mean[norm_shift];
-      auto dyg = dy[j] * gamma[param_shift];
-      sum1 += (T)(-0.5) * dyg * dxm * (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -1.5);
-      sum2 += dyg;
-      sum3 += (T)(-2.0) * dxm;
-    }
-    for (size_t j = i * block_size_; j < (i + 1) * block_size_; ++j) {
-      auto param_shift = j % param_num_;
-      auto norm_shift = static_cast<int>(j / block_size_);
-      auto var_sqrt = (T)std::pow(static_cast<double>(var[norm_shift]) + eps_, -0.5);
-      auto dx1 = dy[j] * gamma[param_shift] * var_sqrt;
-      auto dx2 = sum1 * (T)2.0 / block_size_ * (x[j] - mean[norm_shift]);
-      auto dx3 = ((T)(-1.0) * var_sqrt * sum2 + ((T)1.0 / block_size_) * sum1 * sum3) * ((T)1.0 / block_size_);
-      dx[j] = dx1 + dx2 + dx3;
-    }
+  common::ThreadPool::GetInstance().SyncRun(tasks1);
+  for (size_t i = 0; i < thread_num2; ++i) {
+    auto block = [&, i]() {
+      task2(i, i + 1);
+      return common::SUCCESS;
+    };
+    tasks2.emplace_back(block);
   }
+  common::ThreadPool::GetInstance().SyncRun(tasks2);
 }
 
 void LayerNormGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {

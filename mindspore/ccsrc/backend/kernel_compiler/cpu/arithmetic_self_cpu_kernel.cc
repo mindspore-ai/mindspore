@@ -24,152 +24,212 @@ namespace mindspore {
 namespace kernel {
 namespace {
 template <typename T>
-void Square(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = in[i] * in[i];
-  }
-}
-
-template <typename T>
-void Sign(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    if (in[i] < 0) {
-      out[i] = -1;
-    } else if (in[i] > 0) {
-      out[i] = 1;
-    } else {
-      out[i] = 0;
+void Square(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = in[i] * in[i];
     }
-  }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Neg(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = -in[i];
-  }
+void Sign(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      if (in[i] < 0) {
+        out[i] = -1;
+      } else if (in[i] > 0) {
+        out[i] = 1;
+      } else {
+        out[i] = 0;
+      }
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void LogicalNot(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = !in[i];
-  }
+void Neg(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = -in[i];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void OnesLike(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = static_cast<T>(1);
-  }
+void LogicalNot(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = !in[i];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ZerosLike(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = static_cast<T>(0);
-  }
+void OnesLike(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(1);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Floor(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = static_cast<T>(floor(in[i]));
-  }
+void ZerosLike(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(0);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Reciprocal(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = static_cast<T>(1.0 / in[i]);
-  }
+void Floor(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(floor(in[i]));
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Gelu(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    T x = in[i];
-    auto double_x = static_cast<T>(x);
-    T tanh_res = (T)std::tanh(0.7978845608 * (double_x + 0.044715 * double_x * double_x * double_x));
-    out[i] = x * ((T)1.0 + tanh_res) / (T)2.0;
-  }
+void Reciprocal(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(1.0 / in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Asin(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = asin(in[i]);
-  }
+void Gelu(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      T x = in[i];
+      auto double_x = static_cast<T>(x);
+      T tanh_res = (T)std::tanh(0.7978845608 * (double_x + 0.044715 * double_x * double_x * double_x));
+      out[i] = x * ((T)1.0 + tanh_res) / (T)2.0;
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ACos(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = acos(in[i]);
-  }
+void Asin(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = asin(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Atan(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = atan(in[i]);
-  }
+void ACos(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = acos(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Sin(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = sin(in[i]);
-  }
+void Atan(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = atan(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Cos(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = cos(in[i]);
-  }
+void Sin(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = sin(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Tan(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = tan(in[i]);
-  }
+void Cos(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = cos(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Sinh(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = sinh(in[i]);
-  }
+void Tan(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = tan(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Cosh(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = cosh(in[i]);
-  }
+void Sinh(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = sinh(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Asinh(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = asinh(in[i]);
-  }
+void Cosh(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = cosh(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Acosh(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = acosh(in[i]);
-  }
+void Asinh(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = asinh(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void Atanh(const T *in, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = atanh(in[i]);
-  }
+void Acosh(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = acosh(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
+}
+
+template <typename T>
+void Atanh(const T *in, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = atanh(in[i]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 }  // namespace
 
@@ -223,79 +283,31 @@ void ArithmeticSelfCPUKernel::LaunchKernelLogic(const std::vector<AddressPtr> &i
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
-  std::vector<std::thread> threads;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return;
-  }
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return;
-  }
-  while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    if (operate_type_ == LOGICALNOT) {
-      threads.emplace_back(std::thread(LogicalNot<T>, input, output, start, end));
-    }
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-  }
+  LogicalNot<T>(input, output, lens);
+  return;
 }
 
 template <typename T>
 void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &outputs) {
-  if (target_dtype_ == kNumberTypeBool) {
-    LaunchKernelLogic<T>(inputs, outputs);
-    return;
-  }
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
-  std::vector<std::thread> threads;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return;
-  }
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return;
-  }
-  static const std::map<OperateType, std::function<void(const T *in, T *out, size_t start, size_t end)>>
-    kArithmeticOpFuncMap = {{SQUARE, Square<T>},     {SIGN, Sign<T>},
-                            {NEG, Neg<T>},           {LOGICALNOT, LogicalNot<T>},
-                            {ONESLIKE, OnesLike<T>}, {ZEROSLIKE, ZerosLike<T>},
-                            {FLOOR, Floor<T>},       {RECIPROCAL, Reciprocal<T>},
-                            {GELU, Gelu<T>},         {SIN, Sin<T>},
-                            {COS, Cos<T>},           {TAN, Tan<T>},
-                            {ASIN, Asin<T>},         {ACOS, ACos<T>},
-                            {ATAN, Atan<T>},         {SINH, Sinh<T>},
-                            {COSH, Cosh<T>},         {ASINH, Asinh<T>},
-                            {ACOSH, Acosh<T>},       {ATANH, Atanh<T>}};
-
-  while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    threads.emplace_back(std::thread(kArithmeticOpFuncMap.at(operate_type_), input, output, start, end));
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
+  static const std::map<OperateType, std::function<void(const T *in, T *out, size_t size)>> kArithmeticOpFuncMap = {
+    {SQUARE, Square<T>},     {SIGN, Sign<T>},
+    {NEG, Neg<T>},           {LOGICALNOT, LogicalNot<T>},
+    {ONESLIKE, OnesLike<T>}, {ZEROSLIKE, ZerosLike<T>},
+    {FLOOR, Floor<T>},       {RECIPROCAL, Reciprocal<T>},
+    {GELU, Gelu<T>},         {SIN, Sin<T>},
+    {COS, Cos<T>},           {TAN, Tan<T>},
+    {ASIN, Asin<T>},         {ACOS, ACos<T>},
+    {ATAN, Atan<T>},         {SINH, Sinh<T>},
+    {COSH, Cosh<T>},         {ASINH, Asinh<T>},
+    {ACOSH, Acosh<T>},       {ATANH, Atanh<T>}};
+  if (kArithmeticOpFuncMap.find(operate_type_) != kArithmeticOpFuncMap.end()) {
+    kArithmeticOpFuncMap.at(operate_type_)(input, output, lens);
+  } else {
+    MS_LOG(EXCEPTION) << "Not support " << operate_type_;
   }
 }
 }  // namespace kernel
