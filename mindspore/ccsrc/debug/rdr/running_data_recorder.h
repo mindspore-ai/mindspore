@@ -33,6 +33,8 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
                           const std::vector<CNodePtr> &&final_exec_order);
 bool RecordString(SubModuleId module, const std::string &tag, const std::string &data,
                   const std::string &filename = "");
+bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
+                           const std::vector<CNodePtr> &exec_order);
 void TriggerAll();
 }  // namespace RDR
 }  // namespace mindspore

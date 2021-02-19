@@ -19,6 +19,7 @@
 #include "debug/rdr/graph_exec_order_recorder.h"
 #include "debug/rdr/recorder_manager.h"
 #include "debug/rdr/string_recorder.h"
+#include "debug/rdr/stream_exec_order_recorder.h"
 #include "mindspore/core/ir/func_graph.h"
 #include "mindspore/core/ir/anf.h"
 
@@ -84,6 +85,15 @@ bool RecordString(SubModuleId module, const std::string &tag, const std::string 
   return ans;
 }
 
+bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
+                           const std::vector<CNodePtr> &exec_order) {
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  StreamExecOrderRecorderPtr stream_exec_order_recorder =
+    std::make_shared<StreamExecOrderRecorder>(submodule_name, tag, graph_id, exec_order);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(stream_exec_order_recorder));
+  return ans;
+}
+
 void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 
 #else
@@ -110,6 +120,17 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag, std:
 }
 
 bool RecordString(SubModuleId module, const std::string &tag, const std::string &data, const std::string &filename) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return false;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The RDR presently only support linux os.";
+  return false;
+}
+
+bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
+                           const std::vector<CNodePtr> &exec_order) {
   static bool already_printed = false;
   if (already_printed) {
     return false;

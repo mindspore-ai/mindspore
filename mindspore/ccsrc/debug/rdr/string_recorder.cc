@@ -30,7 +30,7 @@ void StringRecorder::Export() {
   ChangeFileMode(file_path, S_IRWXU);
   std::ofstream fout(file_path, std::ofstream::app);
   if (!fout.is_open()) {
-    MS_LOG(WARNING) << "Open file for saving string failed.";
+    MS_LOG(WARNING) << "Open file for saving string failed. File path: '" << file_path << "'.";
     return;
   }
   fout << data_;

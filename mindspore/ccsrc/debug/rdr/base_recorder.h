@@ -62,7 +62,7 @@ class BaseRecorder {
   std::string GetModule() const { return module_; }
   std::string GetTag() const { return tag_; }
   std::string GetTimeStamp() const { return timestamp_; }
-  std::optional<std::string> GetFileRealPath();
+  std::optional<std::string> GetFileRealPath(const std::string &suffix = "");
 
   void SetDirectory(const std::string &directory);
   void SetFilename(const std::string &filename);
