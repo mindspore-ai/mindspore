@@ -50,7 +50,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   EXPECT_EQ(s, Status::OK());
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", "int32");
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "<unk>", "int32");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -94,7 +94,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
   EXPECT_EQ(s, Status::OK());
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", "int32");
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "", "int32");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -137,20 +137,39 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
   EXPECT_EQ(s, Status::OK());
 
   // Create lookup op for ds
-  // Expected failure: "<unk>" is not a word of vocab
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", "int32");
-  EXPECT_EQ(lookup, nullptr);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "<unk>", "int32");
+  EXPECT_NE(lookup, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({lookup});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Lookup input ("<unk>" is not a word of vocab)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOpFail2.";
+  // Create a TextFile Dataset
+  std::string data_file = datasets_root_path_ + "/testVocab/words.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
   // Vocab has nothing
   std::shared_ptr<Vocab> vocab;
 
   // Create lookup op
-  // Expected failure: vocab is null
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", "int32");
-  EXPECT_EQ(lookup, nullptr);
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "", "int32");
+  EXPECT_NE(lookup, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({lookup});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Lookup input (vocab is null)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
@@ -171,7 +190,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   EXPECT_EQ(home_index, 4);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", "int32");
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "<unk>", "int32");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -217,7 +236,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
   EXPECT_EQ(home_index, 2);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "home");
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "home");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -325,7 +344,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
   EXPECT_EQ(home_index, 2);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "home", "int64");
+  std::shared_ptr<TensorTransform> lookup = std::make_shared<text::Lookup>(vocab, "home", "int64");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds

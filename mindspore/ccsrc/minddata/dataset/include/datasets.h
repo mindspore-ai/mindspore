@@ -19,6 +19,8 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
@@ -301,6 +303,33 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                   std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
     return std::make_shared<MapDataset>(shared_from_this(), operations, input_columns, output_columns, project_columns,
                                         cache, callbacks);
+  }
+
+  std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorTransform>> operations,
+                                  const std::vector<std::string> &input_columns = {},
+                                  const std::vector<std::string> &output_columns = {},
+                                  const std::vector<std::string> &project_columns = {},
+                                  const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+    std::vector<std::shared_ptr<TensorOperation>> transform_ops;
+    (void)std::transform(
+      operations.begin(), operations.end(), std::back_inserter(transform_ops),
+      [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> { return op->Parse(); });
+    return std::make_shared<MapDataset>(shared_from_this(), transform_ops, input_columns, output_columns,
+                                        project_columns, cache, callbacks);
+  }
+
+  std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> operations,
+                                  const std::vector<std::string> &input_columns = {},
+                                  const std::vector<std::string> &output_columns = {},
+                                  const std::vector<std::string> &project_columns = {},
+                                  const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+    std::vector<std::shared_ptr<TensorOperation>> transform_ops;
+    (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
+                         [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
+    return std::make_shared<MapDataset>(shared_from_this(), transform_ops, input_columns, output_columns,
+                                        project_columns, cache, callbacks);
   }
 
   /// \brief Function to create a Project Dataset

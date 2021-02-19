@@ -72,7 +72,7 @@ class DuplicateOperation : public TensorOperation {
 
 class OneHotOperation : public TensorOperation {
  public:
-  explicit OneHotOperation(int32_t num_classes_);
+  explicit OneHotOperation(int32_t num_classes);
 
   ~OneHotOperation() = default;
 

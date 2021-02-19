@@ -53,8 +53,8 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
   std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
 
   // Create SentencePieceTokenizer operation from vocab object
-  std::shared_ptr<TensorOperation> sentencepiece_tokenizer =
-    text::SentencePieceTokenizer(vocab, mindspore::dataset::SPieceTokenizerOutType::kString);
+  std::shared_ptr<TensorTransform> sentencepiece_tokenizer =
+    std::make_shared<text::SentencePieceTokenizer>(vocab, mindspore::dataset::SPieceTokenizerOutType::kString);
   EXPECT_NE(sentencepiece_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -109,8 +109,8 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
 
   // Create SentencePieceTokenizer operation from local vocab model
   std::string vocab_model = datasets_root_path_ + "/test_sentencepiece/m.model";
-  std::shared_ptr<TensorOperation> sentencepiece_tokenizer =
-    text::SentencePieceTokenizer(vocab_model, mindspore::dataset::SPieceTokenizerOutType::kString);
+  std::shared_ptr<TensorTransform> sentencepiece_tokenizer =
+    std::make_shared<text::SentencePieceTokenizer>(vocab_model, mindspore::dataset::SPieceTokenizerOutType::kString);
   EXPECT_NE(sentencepiece_tokenizer, nullptr);
 
   // Create Map operation on ds
@@ -175,26 +175,76 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabFail) {
 TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail with incorrect parameter.";
 
-  // Create SentencePieceTokenizer operation from local vocab model
-  std::string vocab_model1 = "";
-  std::shared_ptr<TensorOperation> sentencepiece_tokenizer1 =
-    text::SentencePieceTokenizer(vocab_model1, mindspore::dataset::SPieceTokenizerOutType::kString);
-  EXPECT_EQ(sentencepiece_tokenizer1, nullptr);
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/sentencepiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
 
   // Create SentencePieceTokenizer operation from local vocab model
-  std::string vocab_model2 = "m.model";
-  std::shared_ptr<TensorOperation> sentencepiece_tokenizer2 =
-    text::SentencePieceTokenizer(vocab_model2, mindspore::dataset::SPieceTokenizerOutType::kString);
-  EXPECT_EQ(sentencepiece_tokenizer2, nullptr);
+  std::string vocab_model = "";
+  std::shared_ptr<TensorTransform> sentencepiece_tokenizer =
+    std::make_shared<text::SentencePieceTokenizer>(vocab_model, mindspore::dataset::SPieceTokenizerOutType::kString);
+  EXPECT_NE(sentencepiece_tokenizer, nullptr);
 
-  // Create SentencePieceTokenizer operation from vocab object
-  std::shared_ptr<SentencePieceVocab> vocab_model3 = nullptr;
-  std::shared_ptr<TensorOperation> sentencepiece_tokenizer3 =
-    text::SentencePieceTokenizer(vocab_model3, mindspore::dataset::SPieceTokenizerOutType::kString);
-  EXPECT_EQ(sentencepiece_tokenizer3, nullptr);
+  // Create Map operation on ds
+  ds = ds->Map({sentencepiece_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid SentencePieceTokenizer input
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail2 with incorrect parameter.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/sentencepiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+
+  // Create SentencePieceTokenizer operation from local vocab model
+  std::string vocab_model = "m.model";
+  std::shared_ptr<TensorTransform> sentencepiece_tokenizer =
+    std::make_shared<text::SentencePieceTokenizer>(vocab_model, mindspore::dataset::SPieceTokenizerOutType::kString);
+  EXPECT_NE(sentencepiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({sentencepiece_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid SentencePieceTokenizer input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail3 with incorrect parameter.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/sentencepiece_tokenizer.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+
+  // Create SentencePieceTokenizer operation from vocab object
+  std::shared_ptr<SentencePieceVocab> vocab_model = nullptr;
+  std::shared_ptr<TensorTransform> sentencepiece_tokenizer =
+    std::make_shared<text::SentencePieceTokenizer>(vocab_model, mindspore::dataset::SPieceTokenizerOutType::kString);
+  EXPECT_NE(sentencepiece_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({sentencepiece_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid SentencePieceTokenizer input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceTokenizerFail with invalid SentencePieceVocab object.";
 
   // Create a TextFile dataset
@@ -203,8 +253,8 @@ TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail2) {
 
   // Create SentencePieceTokenizer operation from vocab object
   std::shared_ptr<SentencePieceVocab> vocab_model4 = std::make_shared<SentencePieceVocab>();
-  std::shared_ptr<TensorOperation> sentencepiece_tokenizer4 =
-    text::SentencePieceTokenizer(vocab_model4, mindspore::dataset::SPieceTokenizerOutType::kString);
+  std::shared_ptr<TensorTransform> sentencepiece_tokenizer4 =
+    std::make_shared<text::SentencePieceTokenizer>(vocab_model4, mindspore::dataset::SPieceTokenizerOutType::kString);
   EXPECT_NE(sentencepiece_tokenizer4, nullptr);
 
   // Create Map operation on ds
@@ -215,8 +265,4 @@ TEST_F(MindDataTestPipeline, TestSentencePieceTokenizerFail2) {
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  // std::unordered_map<std::string, mindspore::MSTensor> row;
-  // EXPECT_EQ(iter->GetNextRow(&row), false);
 }

@@ -42,7 +42,7 @@ class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
   /// \return shared pointer to the newly created TensorOp.
   virtual std::shared_ptr<TensorOp> Build() = 0;
 
-  virtual Status ValidateParams() = 0;
+  virtual Status ValidateParams() { return Status::OK(); }
 
   virtual std::string Name() const = 0;
 

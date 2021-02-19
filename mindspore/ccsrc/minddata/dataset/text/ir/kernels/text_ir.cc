@@ -162,16 +162,6 @@ std::shared_ptr<TensorOp> JiebaTokenizerOperation::Build() {
 }
 
 Status JiebaTokenizerOperation::AddWord(const std::string &word, int64_t freq) {
-  if (word.empty()) {
-    std::string err_msg = "JiebaTokenizer : The parameter word is empty or not provided.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (freq < 0) {
-    std::string err_msg = "JiebaTokenizer : The parameter freq must be greater than or equal to 0.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
   words_list_.emplace_back(word, freq);
   return Status::OK();
 }
@@ -379,6 +369,7 @@ std::shared_ptr<TensorOp> ToNumberOperation::Build() {
   return tensor_op;
 }
 
+// TruncateSequencePairOperation
 TruncateSequencePairOperation::TruncateSequencePairOperation(int32_t max_length) : max_length_(max_length) {}
 
 Status TruncateSequencePairOperation::ValidateParams() {
