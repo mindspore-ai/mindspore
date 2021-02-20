@@ -4199,3 +4199,68 @@ class MatrixInverse(PrimitiveWithInfer):
         validator.check_int(len(x_shape), 2, Rel.GE, self.name, None)
         validator.check_equal_int(x_shape[-1], x_shape[-2], self.name, None)
         return x_shape
+
+
+class IndexAdd(PrimitiveWithInfer):
+    """
+    Adds tenosr y to specified axis and indices of tensor x.
+
+    Args:
+        axis (int): The dimension along wich to index.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor to add to, with data type float64, float32, float16, int32, int16,
+          int8, uint8.
+        - **indices** (Tensor) - The index of `input_x` on the `axis`th dimension to add to, with data type int32.
+          The `indices` must be 1D with the size same as the size of the `axis`th dimension of `input_y`. The values
+          of `indices` should be in the range of 0 to the size of the `axis`th dimension of `input_x`.
+        - **input_y** (Tensor) - The input tensor with the value to add. Must have same data type as `input_x`.
+          The shape must be the same as `input_x` except the `axis`th dimension.
+
+    Outputs:
+        Tensor, has the same shape and dtype as input_x.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [6, 7, 8]]), mindspore.float32)
+        >>> input_y = Tensor(np.array([[0.5, 1.0], [1.0, 1.5], [2.0, 2.5]]), mindspore.float32)
+        >>> indices = Tensor(np.array([0, 2]), mindspore.int32)
+        >>> index_add = ops.IndexAdd(axis=1)
+        >>> output = index_add(input_x, indices, input_y)
+        >>> print(output)
+        [[ 1.5  2.   4. ]
+         [ 5.   5.   7.5]
+         [ 8.   7.  10.5]]
+    """
+
+    @prim_attr_register
+    def __init__(self, axis, use_lock=True, check_index_bound=True):
+        """Initialize InplaceAdd"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+        self.axis = axis
+        validator.check_value_type('axis', axis, [int], self.name)
+
+    def infer_dtype(self, x_dtype, idx_type, y_dtype):
+        args = {'x': x_dtype, 'y': y_dtype}
+        valid_type = [mstype.float64, mstype.float32, mstype.float16, mstype.int32, mstype.int16, mstype.int8,
+                      mstype.uint8]
+        validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
+        valid_idx_type = [mstype.int32]
+        validator.check_tensor_dtype_valid("idx_type", idx_type, valid_idx_type, self.name)
+        return x_dtype
+
+    def infer_shape(self, x_shape, idx_shape, y_shape):
+        validator.check("x rank", len(x_shape), "y rank", len(y_shape), Rel.EQ, self.name)
+        validator.check("size of indices", idx_shape[0], "dimension of y[axis]", y_shape[self.axis],
+                        Rel.EQ, self.name)
+        x_rank = len(x_shape)
+        validator.check_int_range(self.axis, -x_rank - 1, x_rank, Rel.INC_BOTH, 'axis', self.name)
+        axis = self.axis if self.axis >= 0 else x_rank + self.axis
+        for dim in range(x_rank):
+            if dim == axis:
+                validator.check('x dim %d' % dim, x_shape[dim], "y dim %d" % dim, y_shape[dim], Rel.GE, self.name)
+            else:
+                validator.check('x dim %d' % dim, x_shape[dim], "y dim %d" % dim, y_shape[dim], Rel.EQ, self.name)
+        return x_shape
