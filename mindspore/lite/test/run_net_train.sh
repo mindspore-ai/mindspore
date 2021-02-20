@@ -21,7 +21,7 @@ function Run_Export(){
         if [ $? = 0 ]; then
             export_result='export mindspore '${model_name}'_train_export pass';echo ${export_result} >> ${export_result_file}
         else
-            export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}
+            export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}; return 1
         fi
     done < ${models_mindspore_train_config}
 }
@@ -58,7 +58,7 @@ function Run_Converter() {
         if [ $? = 0 ]; then
             converter_result='converter mindspore '${model_name}'_train pass';echo ${converter_result} >> ${run_converter_result_file}
         else
-            converter_result='converter mindspore '${model_name}'_train failed';echo ${converter_result} >> ${run_converter_result_file}
+            converter_result='converter mindspore '${model_name}'_train failed';echo ${converter_result} >> ${run_converter_result_file}; return 1
         fi
     done < ${models_mindspore_train_config}
 }
@@ -87,7 +87,7 @@ function Run_x86() {
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
+            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file}; return 1
         fi
     done < ${models_mindspore_train_config}
 }
