@@ -57,7 +57,13 @@ def restricted_loads(s):
     if isinstance(s, str):
         raise TypeError("can not load pickle from unicode string")
     f = io.BytesIO(s)
-    return RestrictedUnpickler(f, encoding='bytes').load()
+    try:
+        return RestrictedUnpickler(f, encoding='bytes').load()
+    except pickle.UnpicklingError:
+        raise RuntimeError("Not a valid Cifar10 Dataset.")
+    else:
+        raise RuntimeError("Unexpected error while Unpickling Cifar10 Dataset.")
+
 
 class Cifar10:
     """
