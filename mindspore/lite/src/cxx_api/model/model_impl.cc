@@ -35,6 +35,10 @@ using mindspore::lite::RET_OK;
 
 Status ModelImpl::Build() {
   MS_LOG(DEBUG) << "Start build model.";
+  if (session_ != nullptr) {
+    MS_LOG(DEBUG) << "Model has been already built.";
+    return kSuccess;
+  }
   if (graph_cell_ == nullptr || graph_cell_->GetGraph() == nullptr || graph_cell_->GetGraph()->graph_data_ == nullptr) {
     MS_LOG(ERROR) << "Graph cell is invalid.";
     return kLiteNullptr;
@@ -47,10 +51,6 @@ Status ModelImpl::Build() {
   if (model->buf == nullptr) {
     MS_LOG(ERROR) << "Lite model has been freed.";
     return kLiteError;
-  }
-  if (session_ != nullptr) {
-    MS_LOG(DEBUG) << "Model has been already built.";
-    return kSuccess;
   }
   if (context_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
