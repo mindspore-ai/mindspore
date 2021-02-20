@@ -30,7 +30,7 @@
 #define LOG_HEAR_FILE_REL_PATH "mindspore/lite/src/common/log_adapter.h"
 
 // Get start index of file relative path in __FILE__
-static constexpr int GetRealPathPos() noexcept {
+static constexpr size_t GetRealPathPos() noexcept {
   return sizeof(__FILE__) > sizeof(LOG_HEAR_FILE_REL_PATH) ? sizeof(__FILE__) - sizeof(LOG_HEAR_FILE_REL_PATH) : 0;
 }
 

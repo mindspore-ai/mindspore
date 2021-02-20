@@ -231,75 +231,6 @@ int CoderSession::InitTensorsRef() {
   return RET_OK;
 }
 
-int CoderSession::ConvertTensors() {
-  auto model = coder_graph_->model();
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Graph model is nullptr";
-    return RET_ERROR;
-  }
-  std::vector<Tensor *> all_tensors;
-  auto clear_tensors = [&all_tensors]() {
-    std::for_each(all_tensors.begin(), all_tensors.end(), [](Tensor *&t) {
-      delete t;
-      t = nullptr;
-    });
-    all_tensors.clear();
-  };
-  auto check_dim = [](int dim) -> int {
-    MS_CHECK_TRUE(dim > 0, "invalid dim value!");
-    return RET_OK;
-  };
-
-  // deal with allTensors
-  uint32_t tensorCount = model->all_tensors_.size();
-  for (uint32_t i = 0; i < tensorCount; ++i) {
-    schema::Tensor *origin_tensor = model->all_tensors_.at(i);
-    MS_CHECK_PTR_WITH_EXE(origin_tensor, clear_tensors());
-    // tensor dims
-    std::vector<int> shape;
-    if (origin_tensor->nodeType() == schema::NodeType_ValueNode) {
-      MS_CHECK_PTR_WITH_EXE(origin_tensor->dims(), clear_tensors());
-      for (uint32_t j = 0; j < origin_tensor->dims()->size(); j++) {
-        MS_CHECK_PTR(origin_tensor->dims()->data());
-        int dim = static_cast<int>(origin_tensor->dims()->data()[j]);
-        MS_CHECK_RET_CODE_WITH_EXE(check_dim(dim), "parse shape failed!", clear_tensors());
-        shape.push_back(dim);
-      }
-    }
-    // tensor Datatype
-    int origin_data_type = static_cast<int>(origin_tensor->dataType());
-    Tensor *dstTensor = new (std::nothrow)
-      lite::Tensor(TypeId(origin_data_type), shape, origin_tensor->format(), TensorCategory(origin_tensor));
-    MS_CHECK_PTR(dstTensor);
-    if (origin_tensor->nodeType() == schema::NodeType_ValueNode && origin_tensor->data() != nullptr &&
-        origin_tensor->data()->size() > 0) {
-      if (shape.empty()) {
-        shape.push_back(1);
-      }
-      // copy data, this is weight && bias
-      MS_CHECK_TRUE_WITH_EXE(origin_tensor->data()->size() > 0, "invalid meta_tensor data size.", delete dstTensor);
-      auto data_size = static_cast<size_t>(origin_tensor->data()->size());
-      MS_CHECK_RET_CODE_WITH_EXE(dstTensor->MallocData(), "dst tensor malloc data failed!", delete dstTensor);
-      void *dst_data = dstTensor->data_c();
-      MS_CHECK_RET_CODE_WITH_EXE(memcpy_s(dst_data, data_size, origin_tensor->data()->data(), data_size),
-                                 "memcpy_s copy data failed!", delete dstTensor);
-      dstTensor->set_data(dst_data);
-    }
-    auto quant_params = origin_tensor->quantParams();
-    if (quant_params != nullptr) {
-      for (int j = 0; j < static_cast<int>(quant_params->size()); j++) {
-        QuantArg quant_arg{};
-        quant_arg.scale = quant_params->Get(j)->scale();
-        quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
-        dstTensor->AddQuantParam(quant_arg);
-      }
-    }
-    all_tensors.emplace_back(dstTensor);
-  }
-  coder_graph_->SetAllTensors(all_tensors);
-  return RET_OK;
-}
-
 int CoderSession::CreateOpCoders() {
   const Model *model = coder_graph_->model();
   if (model == nullptr) {
@@ -375,77 +306,15 @@ int CoderSession::CreateOpCoders() {
   return RET_OK;
 }
 
-int CoderSession::InitGraphInOutTensors() {
-  const Model *model = coder_graph_->model();
-  if (model == nullptr) {
-    return RET_ERROR;
-  }
-  std::vector<size_t> graph_input_node_indexes = lite::GetGraphInputNodes(model);
-  std::vector<uint32_t> input_indices;
-  for (auto in_node_index : graph_input_node_indexes) {
-    in_node_index = static_cast<uint32_t>(in_node_index);
-    auto *in_node = model->all_nodes_.at(in_node_index);
-    if (in_node == nullptr) {
-      return RET_ERROR;
-    }
-    for (uint32_t i = 0; i < in_node->input_indices_.size(); i++) {
-      auto in_tensor_index = size_t(in_node->input_indices_.at(i));
-      bool is_graph_input = false;
-      for (uint32_t j = 0; j < model->sub_graphs_.at(0)->input_indices_.size(); j++) {
-        if (in_tensor_index == size_t(model->sub_graphs_.at(0)->input_indices_.at(j))) {
-          input_indices.push_back(static_cast<uint32_t>(in_tensor_index));
-          is_graph_input = true;
-          break;
-        }
-      }
-      if (!is_graph_input) {
-        continue;
-      }
-      if (in_tensor_index < coder_graph_->all_tensors().size()) {
-        lite::Tensor *in_tensor = this->coder_graph_->all_tensors().at(in_tensor_index);
-        coder_graph_->AddInputMap(in_node->name_, in_tensor);
-      }
-    }
-  }
-  coder_graph_->SetInputIndices(input_indices);
-  std::vector<uint32_t> output_indices;
-  auto graph_output_node_indexes = lite::GetGraphOutputNodes(model);
-  for (auto out_node_index : graph_output_node_indexes) {
-    out_node_index = static_cast<uint32_t>(out_node_index);
-    auto *out_node = model->all_nodes_.at(out_node_index);
-    for (uint32_t i = 0; i < out_node->output_indices_.size(); i++) {
-      auto out_tensor_index = size_t(out_node->output_indices_.at(i));
-      bool is_graph_output = false;
-      for (uint32_t j = 0; j < model->sub_graphs_.at(0)->output_indices_.size(); j++) {
-        if (out_tensor_index == size_t(model->sub_graphs_.at(0)->output_indices_.at(j))) {
-          output_indices.push_back(static_cast<uint32_t>(out_tensor_index));
-          is_graph_output = true;
-          break;
-        }
-      }
-      if (!is_graph_output) {
-        continue;
-      }
-      if (out_tensor_index < coder_graph_->all_tensors().size()) {
-        lite::Tensor *out_tensor = this->coder_graph_->all_tensors().at(out_tensor_index);
-        if (out_tensor == nullptr) {
-          MS_LOG(ERROR) << "can not find any output tensor in all_tensors";
-          return RET_ERROR;
-        }
-        coder_graph_->AddOutputMap(out_node->name_, out_tensor);
-      }
-    }
-  }
-  coder_graph_->SetOutputIndices(output_indices);
-  coder_graph_->InitInputs();
-  coder_graph_->InitOutputs();
+int CoderSession::InitCodeGraph() {
+  MS_CHECK_RET_CODE(coder_graph_->ConvertTensors(), "convert tensors failed");
+  MS_CHECK_RET_CODE(coder_graph_->InitGraphInOutTensors(), "init graph inputs and outputs failed");
   return RET_OK;
 }
 
 int CoderSession::CompileGraph() {
   MS_LOG(INFO) << "CompileGraph";
-  MS_CHECK_RET_CODE(ConvertTensors(), "ConvertTensors failed");
-  MS_CHECK_RET_CODE(InitGraphInOutTensors(), "InitGraphInOutTensors failed");
+  MS_CHECK_RET_CODE(InitCodeGraph(), "InitGraphInOutTensors failed");
   MS_CHECK_RET_CODE(InferShape(), "do infershape failed!");
   MS_CHECK_RET_CODE(CreateOpCoders(), "CreateOpCoders failed!");
   MS_CHECK_RET_CODE(InitTensorsRef(), "InitTensorsRefcount failed!");

@@ -4,7 +4,7 @@ set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(3RD_DIR ${TOP_DIR}/third_party)
 if(ENABLE_CONVERTER)
     set(CODEGEN_PATH ${CMAKE_BINARY_DIR}/micro/coder/codegen)
-  elseif()
+else()
     set(CODEGEN_PATH ${CMAKE_BINARY_DIR}/coder/codegen)
 endif()
 
