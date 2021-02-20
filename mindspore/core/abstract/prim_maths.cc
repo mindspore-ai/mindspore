@@ -86,6 +86,10 @@ AbstractBasePtr InferImplSquare(const AnalysisEnginePtr &, const PrimitivePtr &p
   // Inputs: one tensor.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
+  auto ref = dyn_cast<abstract::AbstractRef>(args_spec_list[0]);
+  if (ref != nullptr) {
+    return ref->CloneAsTensor();
+  }
   return args_spec_list[0]->Broaden();
 }
 
