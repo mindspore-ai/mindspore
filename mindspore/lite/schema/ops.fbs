@@ -1280,12 +1280,6 @@ table Erf {
 table IsFinite {
 }
 
-table BatchMatMul {
-   transpose_a :bool;
-   transpose_b :bool;
-}
-
-
 table LinSpace {
 }
 

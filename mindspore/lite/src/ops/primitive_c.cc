@@ -169,7 +169,6 @@
 #include "src/ops/crop_and_resize.h"
 #include "src/ops/nonzero.h"
 #include "src/ops/erf.h"
-#include "src/ops/batch_matmul.h"
 #include "src/ops/lin_space.h"
 #include "src/ops/uniform_real.h"
 #include "src/ops/rank.h"
@@ -1051,8 +1050,6 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Erf(primitive);
     case schema::PrimitiveType_IsFinite:
       return new (std::nothrow) IsFinite(primitive);
-    case schema::PrimitiveType_BatchMatMul:
-      return new (std::nothrow) BatchMatMul(primitive);
     case schema::PrimitiveType_LinSpace:
       return new (std::nothrow) LinSpace(primitive);
     case schema::PrimitiveType_UniformReal:

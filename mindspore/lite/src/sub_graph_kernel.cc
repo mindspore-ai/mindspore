@@ -16,6 +16,7 @@
 
 #include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
+#include "src/tensorlist.h"
 #if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
@@ -176,7 +177,8 @@ int CpuSubGraph::Prepare() {
 
 #ifdef ENABLE_FP16
 void CpuFp16SubGraph::FreeOriginInputData() {
-  for (auto *data_store : this->origin_input_data_) {
+  for (auto &iter : this->origin_input_data_) {
+    auto *data_store = iter.second;
     if (data_store == nullptr) {
       continue;
     }
@@ -199,37 +201,99 @@ void CpuFp16SubGraph::FreeOriginInputData() {
   this->origin_input_data_.clear();
 }
 
+int CpuFp16SubGraph::Float32TensorToFloat16Tensor(lite::Tensor *tensor) {
+  auto float32_data = tensor->data_c();
+  if (float32_data == nullptr) {
+    MS_LOG(ERROR) << "tensor data is null.";
+    return lite::RET_NULL_PTR;
+  }
+  tensor->set_data(nullptr);
+  tensor->set_data_type(TypeId::kNumberTypeFloat16);
+  auto ret = tensor->MallocData();
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "malloc data failed";
+    this->FreeOriginInputData();
+    return RET_ERROR;
+  }
+  MS_ASSERT(tensor->data_c() != nullptr);
+  Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum());
+  auto *data_store = DataStore::CreateDataStore(float32_data, tensor->allocator(), this->context_->allocator.get());
+  if (data_store == nullptr) {
+    MS_LOG(ERROR) << "Create DataStore failed";
+    this->FreeOriginInputData();
+    return RET_ERROR;
+  }
+  origin_input_data_[tensor] = data_store;
+  return RET_OK;
+}
+
+int CpuFp16SubGraph::Float16TensorToFloat32Tensor(lite::Tensor *tensor) {
+  auto float16_data = tensor->data_c();
+  if (float16_data == nullptr) {
+    MS_LOG(ERROR) << "tensor data is null.";
+    return lite::RET_NULL_PTR;
+  }
+  tensor->set_data(nullptr);
+  tensor->set_data_type(TypeId::kNumberTypeFloat32);
+  auto ret = tensor->MallocData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "malloc data failed";
+    if (this->context_ != nullptr && this->context_->allocator != nullptr) {
+      this->context_->allocator->Free(float16_data);
+    } else {
+      free(float16_data);
+    }
+    return RET_ERROR;
+  }
+  MS_ASSERT(tensor->data_c() != nullptr);
+  Float16ToFloat32_fp16_handler(float16_data, tensor->data_c(), tensor->ElementsNum());
+  if (tensor->allocator() != nullptr) {
+    tensor->allocator()->Free(float16_data);
+  } else {
+    free(float16_data);
+  }
+  return RET_OK;
+}
+
 int CpuFp16SubGraph::PreProcess() {
 #ifdef ENABLE_ARM64
   if (!mindspore::lite::IsSupportFloat16()) {
-    MS_LOG(ERROR) << "Unsupport fp16 in this devices";
+    MS_LOG(ERROR) << "Unsupported fp16 in this devices";
     return RET_ERROR;
   }
-  MS_ASSERT(origin_input_data_.empty());
+  int ret;
   for (auto tensor : this->in_tensors_) {
     MS_ASSERT(tensor != nullptr);
-    if (tensor->data_type() == kNumberTypeFloat32) {
-      auto float32_data = tensor->data_c();
-      MS_ASSERT(float32_data != nullptr);
-      tensor->set_data(nullptr);
-      tensor->set_data_type(TypeId::kNumberTypeFloat16);
-      auto ret = tensor->MallocData();
+    auto real_tensor = tensor;
+    if (tensor->root_tensor() != nullptr) {
+      real_tensor = tensor->root_tensor();
+      if (tensor->data_type() == kNumberTypeFloat32) {
+        tensor->set_data_type(kNumberTypeFloat16);
+      } else if (tensor->data_type() == kObjectTypeTensorType) {
+        auto tensorlist = reinterpret_cast<lite::TensorList *>(tensor);
+        if (tensorlist->tensors_data_type() == kNumberTypeFloat32) {
+          tensorlist->set_tensors_data_type(kNumberTypeFloat16);
+        }
+      }
+    }
+    if (real_tensor->data_type() == kNumberTypeFloat32) {
+      ret = Float32TensorToFloat16Tensor(real_tensor);
       if (RET_OK != ret) {
-        MS_LOG(ERROR) << "malloc data failed";
-        this->FreeOriginInputData();
-        return RET_ERROR;
+        MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
+        return ret;
       }
-      MS_ASSERT(tensor->data_c() != nullptr);
-      Float32ToFloat16_fp16_handler(float32_data, tensor->data_c(), tensor->ElementsNum());
-      auto *data_store = DataStore::CreateDataStore(float32_data, tensor->allocator(), this->context_->allocator.get());
-      if (data_store == nullptr) {
-        MS_LOG(ERROR) << "Create DataStore failed";
-        this->FreeOriginInputData();
-        return RET_ERROR;
+    } else if (real_tensor->data_type() == kObjectTypeTensorType) {
+      auto tensorlist = reinterpret_cast<lite::TensorList *>(real_tensor);
+      if (tensorlist->tensors_data_type() == kNumberTypeFloat32) {
+        tensorlist->set_tensors_data_type(kNumberTypeFloat16);
+        for (auto inner_tensor : tensorlist->tensors()) {
+          ret = Float32TensorToFloat16Tensor(inner_tensor);
+          if (RET_OK != ret) {
+            MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
+            return ret;
+          }
+        }
       }
-      origin_input_data_.emplace_back(data_store);
-    } else {
-      origin_input_data_.emplace_back(nullptr);
     }
   }
   for (auto kernel : this->nodes_) {
@@ -239,6 +303,11 @@ int CpuFp16SubGraph::PreProcess() {
       }
       if (tensor->data_type() == kNumberTypeFloat32) {
         tensor->set_data_type(kNumberTypeFloat16);
+      } else if (tensor->data_type() == kObjectTypeTensorType) {
+        auto tensorlist = reinterpret_cast<lite::TensorList *>(tensor);
+        if (tensorlist->tensors_data_type() == kNumberTypeFloat32) {
+          tensorlist->set_tensors_data_type(kNumberTypeFloat16);
+        }
       }
     }
   }
@@ -251,47 +320,72 @@ int CpuFp16SubGraph::PreProcess() {
 int CpuFp16SubGraph::PostProcess() {
 #ifdef ENABLE_ARM64
   if (!mindspore::lite::IsSupportFloat16()) {
-    MS_LOG(ERROR) << "Unsupport fp16 in this devices";
+    MS_LOG(ERROR) << "Unsupported fp16 in this devices";
     return RET_ERROR;
   }
+  int ret;
   for (auto tensor : this->out_tensors_) {
     MS_ASSERT(tensor != nullptr);
     if (tensor->data_type() == kNumberTypeFloat16) {
-      auto float16_data = tensor->data_c();
-      MS_ASSERT(float16_data != nullptr);
-      tensor->set_data(nullptr);
-      tensor->set_data_type(TypeId::kNumberTypeFloat32);
-      auto ret = tensor->MallocData();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "malloc data failed";
-        if (this->context_ != nullptr && this->context_->allocator != nullptr) {
-          this->context_->allocator->Free(float16_data);
-        } else {
-          free(float16_data);
-        }
-        return RET_ERROR;
+      ret = Float16TensorToFloat32Tensor(tensor);
+      if (RET_OK != ret) {
+        MS_LOG(ERROR) << "Float16TensorToFloat32Tensor failed.";
+        return ret;
       }
-      MS_ASSERT(tensor->data_c() != nullptr);
-      Float16ToFloat32_fp16_handler(float16_data, tensor->data_c(), tensor->ElementsNum());
-      if (tensor->allocator() != nullptr) {
-        tensor->allocator()->Free(float16_data);
-      } else {
-        free(float16_data);
+    } else if (tensor->data_type() == kObjectTypeTensorType) {
+      auto tensorlist = reinterpret_cast<lite::TensorList *>(tensor);
+      if (tensorlist->tensors_data_type() == kNumberTypeFloat16) {
+        tensorlist->set_tensors_data_type(kNumberTypeFloat32);
+        for (auto inner_tensor : tensorlist->tensors()) {
+          ret = Float16TensorToFloat32Tensor(inner_tensor);
+          if (RET_OK != ret) {
+            MS_LOG(ERROR) << "Float32TensorToFloat16Tensor failed.";
+            return ret;
+          }
+        }
       }
     }
   }
-  MS_ASSERT(this->origin_input_data_.size() == this->in_tensors_.size());
+
+  int tensor_count = 0;
   for (size_t i = 0; i < this->in_tensors_.size(); i++) {
     auto tensor = in_tensors_.at(i);
     MS_ASSERT(tensor != nullptr);
-    auto origin_tensor_data = origin_input_data_.at(i);
-    if (tensor->data_type() == kNumberTypeFloat16 && origin_tensor_data != nullptr) {
-      MS_ASSERT(tensor != nullptr);
-      tensor->FreeData();
+    auto real_tensor = tensor;
+    if (tensor->root_tensor() != nullptr) {
+      real_tensor = tensor->root_tensor();
+      if (tensor->data_type() == kNumberTypeFloat16) {
+        tensor->set_data_type(kNumberTypeFloat32);
+      } else if (tensor->data_type() == kObjectTypeTensorType) {
+        auto tensorlist = reinterpret_cast<lite::TensorList *>(tensor);
+        if (tensorlist->tensors_data_type() == kNumberTypeFloat16) {
+          tensorlist->set_tensors_data_type(kNumberTypeFloat32);
+        }
+      }
+    }
+    if (real_tensor->data_type() == kNumberTypeFloat16 && origin_input_data_.at(real_tensor) != nullptr) {
+      auto origin_tensor_data = origin_input_data_.at(real_tensor);
+      real_tensor->FreeData();
       MS_ASSERT(origin_tensor_data->data_ != nullptr);
-      tensor->set_data(origin_tensor_data->data_);
-      tensor->set_data_type(kNumberTypeFloat32);
+      real_tensor->set_data(origin_tensor_data->data_);
+      real_tensor->set_data_type(kNumberTypeFloat32);
       origin_tensor_data->data_ = nullptr;
+      tensor_count++;
+    } else if (real_tensor->data_type() == kObjectTypeTensorType) {
+      auto tensorlist = reinterpret_cast<lite::TensorList *>(real_tensor);
+      if (tensorlist->tensors_data_type() == kNumberTypeFloat16) {
+        tensorlist->set_tensors_data_type(kNumberTypeFloat32);
+        for (auto inner_tensor : tensorlist->tensors()) {
+          MS_ASSERT(inner_tensor != nullptr);
+          auto origin_tensor_data = origin_input_data_.at(inner_tensor);
+          inner_tensor->FreeData();
+          MS_ASSERT(origin_tensor_data->data_ != nullptr);
+          inner_tensor->set_data(origin_tensor_data->data_);
+          inner_tensor->set_data_type(kNumberTypeFloat32);
+          origin_tensor_data->data_ = nullptr;
+          tensor_count++;
+        }
+      }
     }
   }
   this->FreeOriginInputData();
