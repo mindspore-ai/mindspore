@@ -93,8 +93,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
       return RET_ERROR;
     }
-    auto bias_tensor = in_tensors_.at(kBiasIndex);
-    if (bias_tensor->data_type() == kNumberTypeFloat16) {
+    if (origin_bias_data_type_ == kNumberTypeFloat16) {
       memcpy(bias_data_, origin_bias_, output_channel * sizeof(float16_t));
     } else {
       Float32ToFloat16(reinterpret_cast<float *>(origin_bias_), reinterpret_cast<float16_t *>(bias_data_),
@@ -112,7 +111,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
   }
   memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
   ColMajor2Row8MajorFp16(origin_weight_, weight_ptr_, input_channel, output_channel,
-                         weight_tensor->data_type() == kNumberTypeFloat16);
+                         origin_weight_data_type_ == kNumberTypeFloat16);
   return RET_OK;
 }
 
