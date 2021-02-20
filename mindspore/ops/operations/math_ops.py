@@ -3437,8 +3437,8 @@ class NMSWithMask(PrimitiveWithInfer):
     Inputs:
         - **bboxes** (Tensor) - The shape of tensor is :math:`(N, 5)`. Input bounding boxes.
           `N` is the number of input bounding boxes. Every bounding box
-          contains 5 values, the first 4 values are the coordinates of bounding
-          box, and the last value is the score of this bounding box.
+          contains 5 values, the first 4 values are the coordinates(x0, y0, x1, y1) of bounding box which
+          represents the point of top-left and bottom-right, and the last value is the score of this bounding box.
           The data type must be float16 or float32.
 
     Outputs:
