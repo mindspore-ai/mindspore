@@ -121,8 +121,7 @@ endif()
 add_definitions(-DENABLE_V0)
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 if(ENABLE_CONVERTER)
-    file(GLOB_RECURSE CONVERTER_OPS_SRC ${CONVERTER_DIR}/ops/*.cc)
-    set(OPS_SRC ${OPS_SRC} ${CONVERTER_OPS_SRC})
+    set(OPS_SRC ${OPS_SRC})
 endif()
 set(TEST_LITE_SRC
         ${TEST_LITE_SRC}

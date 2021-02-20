@@ -31,7 +31,6 @@ class NextIteration : public PrimitiveC {
   ~NextIteration() = default;
   MS_DECLARE_PARENT(NextIteration, PrimitiveC);
   explicit NextIteration(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -31,7 +31,6 @@ class LoopCond : public PrimitiveC {
   ~LoopCond() = default;
   MS_DECLARE_PARENT(LoopCond, PrimitiveC);
   explicit LoopCond(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore

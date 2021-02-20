@@ -31,7 +31,6 @@ class Enter : public PrimitiveC {
   ~Enter() = default;
   MS_DECLARE_PARENT(Enter, PrimitiveC);
   explicit Enter(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore
