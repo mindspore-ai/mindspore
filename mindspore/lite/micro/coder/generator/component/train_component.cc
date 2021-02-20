@@ -133,7 +133,7 @@ void CodeTrainImplement(std::ofstream &ofs, const std::string &module_name, cons
     result += "}";
     return result;
   };
-  auto wrap = [](int i) { return "[" + std::to_string(i) + "]"; };
+  auto wrap = [](size_t i) { return "[" + std::to_string(i) + "]"; };
   auto offset_inputs = [&]() {
     std::string src = "origin_inputs";
     std::string dst = "input_ptr";
