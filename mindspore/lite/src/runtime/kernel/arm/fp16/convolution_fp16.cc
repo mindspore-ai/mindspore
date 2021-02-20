@@ -62,8 +62,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, oc8 * sizeof(float16_t));
   if (in_tensors_.size() == kInputSize2) {
-    auto bias_tensor = in_tensors_.at(kBiasIndex);
-    if (bias_tensor->data_type() == kNumberTypeFloat16) {
+    if (origin_bias_data_type_ == kNumberTypeFloat16) {
       memcpy(bias_data_, origin_bias_, out_channel * sizeof(float16_t));
     } else {
       Float32ToFloat16(reinterpret_cast<float *>(origin_bias_), reinterpret_cast<float16_t *>(bias_data_), out_channel);
