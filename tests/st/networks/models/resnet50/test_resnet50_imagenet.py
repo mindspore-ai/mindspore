@@ -369,4 +369,4 @@ def test_resnet_and_resnet_thor_imagenet_4p():
         os.system("rm -rf " + str(i))
     print("End training...")
     assert thor_acc > 0.25
-    assert thor_cost < 25
+    assert thor_cost < 21
