@@ -45,9 +45,8 @@ class CoderSession {
  private:
   int InitOpcodersInputsAndOutputs();
   int InitTensorsRef();
-  int ConvertTensors();
   int CreateOpCoders();
-  int InitGraphInOutTensors();
+  int InitCodeGraph();
   int CompileGraph();
   int InferShape();
   void EndCode();

@@ -8,6 +8,7 @@ set(3RD_DIR ${TOP_DIR}/third_party)
 set(BUILD_LITE "on")
 include(${MICRO_DIR}/../../../cmake/external_libs/gtest.cmake)
 include(${MICRO_DIR}/cmake/file_list.cmake)
+include(${MICRO_DIR}/cmake/wrapper.cmake)
 
 include_directories(${TOP_DIR})
 include_directories(${TOP_DIR}/mindspore/core/)
