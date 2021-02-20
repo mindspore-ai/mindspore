@@ -20,6 +20,7 @@
 #include <string>
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/softmax_parameter.h"
+#include "nnacl/int8/add_int8.h"
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::lite::micro {
@@ -32,6 +33,11 @@ inline std::ostream &operator<<(std::ostream &code, const ::QuantArg &quant_arg)
 inline std::ostream &operator<<(std::ostream &code, const OpParameter &tile) {
   code << "{ \"\""
        << ", " << tile.type_ << ", " << tile.thread_num_ << "}";
+  return code;
+}
+
+inline std::ostream &operator<<(std::ostream &code, const AddQuantQrgs &args) {
+  code << "{" << args.zp_ << ", " << args.left_shift_ << ", " << args.right_shift_ << ", " << args.multiplier_ << "}";
   return code;
 }
 

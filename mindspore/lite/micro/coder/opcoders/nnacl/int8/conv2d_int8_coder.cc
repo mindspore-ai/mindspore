@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ int Conv2DINT8Coder::Resize() {
 int Conv2DINT8Coder::DoCode(CoderContext *const context) {
   Collect(context, {"nnacl/int8/conv_int8.h", "nnacl/common_func.h", "nnacl/kernel/int8/conv_init_int8.h"},
           {"common_func.c", "pack.c", "conv_int8.c", "winograd_transform.c", "matmul_int8.c", "fixed_point.c",
-           "conv_init_int8.c"});
+           "conv_init_int8_wrapper.c", "thread_pool.c"});
   // call the op function
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);

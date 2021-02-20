@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "wrapper/int8/conv1x1_run_int8.h"
+#include "wrapper/int8/conv1x1_run_int8_wrapper.h"
 #include "nnacl/base/conv1x1_base.h"
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/int8/pack_int8.h"
