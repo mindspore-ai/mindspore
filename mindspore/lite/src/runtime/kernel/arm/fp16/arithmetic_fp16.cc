@@ -118,7 +118,24 @@ void ArithmeticFP16CPUKernel::InitParam() {
   return;
 }
 
+int ArithmeticFP16CPUKernel::CheckDataType() {
+  auto in0_dataType = in_tensors_.at(0)->data_type();
+  auto in1_dataType = in_tensors_.at(1)->data_type();
+  if ((in0_dataType != kNumberTypeFloat16 && in0_dataType != kNumberTypeFloat32) ||
+      (in1_dataType != kNumberTypeFloat16 && in1_dataType != kNumberTypeFloat32)) {
+    MS_LOG(ERROR)
+      << "The dataTypes of input tensor0 and input tensor1 should be any of float16 and float32, otherwise got error.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int ArithmeticFP16CPUKernel::ReSize() {
+  if (CheckDataType() != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticFP16CPUKernel resize failed.";
+    return RET_ERROR;
+  }
+
   InitParam();
 
   if (param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) {
@@ -131,6 +148,7 @@ int ArithmeticFP16CPUKernel::ReSize() {
     MS_LOG(ERROR) << "arithmetic_opt_func_ and arithmetic_func_ function is nullptr!";
     return RET_ERROR;
   }
+
   if (param_->broadcasting_) {
     outside_ = 1;
     for (int i = param_->ndim_ - 1; i >= 0; --i) {

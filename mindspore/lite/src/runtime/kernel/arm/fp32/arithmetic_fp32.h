@@ -80,9 +80,9 @@ class ArithmeticCPUKernel : public LiteKernel {
 
  private:
   void InitRunFunction();
-  void InitOptRunFunction();
   void InitParam();
   void FreeTmpPtr();
+  int CheckDataType();
   int InitBroadCastCase();
   void InitParamInRunTime();
   bool CanBatchScalar();

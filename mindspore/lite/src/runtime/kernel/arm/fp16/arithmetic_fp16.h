@@ -46,6 +46,7 @@ class ArithmeticFP16CPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int CheckDataType();
   int DoArithmetic(int task_id);
   int BroadcastRun(float16_t *input0, float16_t *input1, float16_t *output, int dim, int out_count,
                    int out_thread_stride);
