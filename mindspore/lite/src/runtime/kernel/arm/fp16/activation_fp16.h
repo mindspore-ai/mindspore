@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp16/activation_fp16.h"
 
 namespace mindspore::kernel {
@@ -30,6 +31,8 @@ class ActivationFp16CPUKernel : public LiteKernel {
       : LiteKernel(param, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     type_ = (reinterpret_cast<ActivationParameter *>(param))->type_;
     alpha_ = (float16_t)((reinterpret_cast<ActivationParameter *>(param))->alpha_);
+    min_val_ = (reinterpret_cast<ActivationParameter *>(param))->min_val_;
+    max_val_ = (reinterpret_cast<ActivationParameter *>(param))->max_val_;
   }
   ~ActivationFp16CPUKernel() override = default;
 
@@ -42,6 +45,8 @@ class ActivationFp16CPUKernel : public LiteKernel {
   int thread_count_;
   int type_;
   float16_t alpha_;
+  float min_val_;
+  float max_val_;
   float16_t *fp16_input_ = nullptr;
   float16_t *fp16_output_ = nullptr;
 };

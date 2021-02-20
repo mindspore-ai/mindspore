@@ -44,12 +44,17 @@ int ReduceFp16CPUKernel::Init() {
   if (ret != RET_OK) {
     return ret;
   }
-  if (mode_ != static_cast<int>(ReduceMode_ReduceMean)) {
-    MS_LOG(ERROR) << "Reduce fp16 only support ReduceMode_ReduceMean";
-    return RET_ERROR;
+  switch (mode_) {
+    case static_cast<int>(ReduceMode_ReduceMean):
+      reducer_ = ReduceMeanFp16;
+      break;
+    case static_cast<int>(ReduceMode_ReduceMax):
+      reducer_ = ReduceMaxFp16;
+      break;
+    default:
+      MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
+      return RET_ERROR;
   }
-  reducer_ = ReduceMeanFp16;
-
   if (!InferShapeDone()) {
     return RET_OK;
   }

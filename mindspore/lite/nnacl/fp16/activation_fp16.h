@@ -23,12 +23,6 @@
 #include "nnacl/op_base.h"
 #include "mindspore/lite/nnacl/int8/fixed_point.h"
 
-typedef struct ActivationParameter {
-  OpParameter op_parameter_;
-  int type_;
-  float alpha_;
-} ActivationParameter;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,6 +33,7 @@ int SigmoidFp16(const float16_t *src, float16_t *dst, int ele_num);
 int TanhFp16(const float16_t *src, float16_t *dst, int ele_num);
 int HSwishFp16(const float16_t *src, float16_t *dst, int ele_num);
 int SwishFp16(const float16_t *src, float16_t *dst, int ele_num);
+int HardTanhFp16(const float16_t *src, int length, float16_t *dst, float min_val, float max_val);
 #ifdef __cplusplus
 }
 #endif
