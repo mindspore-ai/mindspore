@@ -212,6 +212,11 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     if (desc.data_type == kNumberTypeFloat16) {
       desc.data_type = kNumberTypeFloat32;
     }
+    for (auto tensor : in_tensors) {
+      if (tensor->data_type() == kNumberTypeFloat16) {
+        tensor->set_data_type(kNumberTypeFloat32);
+      }
+    }
     kernel::KernelKey npu_desc{kNPU, desc.data_type, desc.type};
     auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, npu_desc);
     if (kernel != nullptr) {

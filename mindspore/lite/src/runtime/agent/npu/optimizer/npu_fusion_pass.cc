@@ -204,6 +204,11 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
     if (trans_kernel->out_kernels().empty()) {
       // kernel is a trans kernel, it's input kernel num and input tensor num must be 1
       kernel->in_kernels()[0]->set_out_tensors({trans_kernel->out_tensors()[0]});
+      // in fp16 mode, tensor data type fp16 need to be changed back.
+      auto tensor = kernel->in_kernels()[0]->out_tensors()[0];
+      if (tensor->data_type() == kNumberTypeFloat16) {
+        tensor->set_data_type(kNumberTypeFloat32);
+      }
     }
     for (const auto &post_kernel : trans_kernel->out_kernels()) {
       // update tensor
