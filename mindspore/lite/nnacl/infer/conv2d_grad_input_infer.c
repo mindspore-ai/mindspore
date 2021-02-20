@@ -31,8 +31,9 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
 
   size_t shape_size_ = in0->shape_size_;
   int shape_[MAX_SHAPE_SIZE];
+  const int nchw2nhwc[4] = {0, 2, 3, 1};
   for (int i = 0; i < shape_size_; i++) {
-    shape_[i] = in0->shape_[i];
+    shape_[i] = *((int *)(inputs[2]->data_) + nchw2nhwc[i]);
   }
   SetShapeArray(out, shape_, shape_size_);
 

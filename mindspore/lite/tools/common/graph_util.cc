@@ -15,6 +15,7 @@
  */
 
 #include "tools/common/graph_util.h"
+#include <algorithm>
 #include <ctime>
 #include <utility>
 #include <set>
@@ -443,8 +444,8 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
       return graphT->nodes.end();
     }
     toAddTensor->nodeType = schema::NodeType_CNode;
-    preTensor->refCount = 0;
-    preTensor->data.clear();
+    toAddTensor->refCount = 0;
+    toAddTensor->data.clear();
     MS_ASSERT(toAddNodeIn->primitive != nullptr);
     if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
       auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();
@@ -680,137 +681,6 @@ STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType
   } else {
     return RET_ERROR;
   }
-}
-
-void TransformAttrByAxes(int *origin_attr, int *axes, int element_size) {
-  if (origin_attr == nullptr || axes == nullptr || element_size == 0) {
-    MS_LOG(INFO) << "Attr data is from other nodes.";
-    return;
-  }
-  auto axis_map = GetNc2NhAxisMap();
-  std::vector<int> cur_attr;
-  for (int dim = 0; dim < 4; ++dim) {
-    for (int index = 0; index < element_size; ++index) {
-      int nhwc_dim = axis_map[axes[index] < 0 ? axes[index] + 4 : axes[index]];
-      if (nhwc_dim == dim || (nhwc_dim + 4) == dim) {
-        cur_attr.push_back(origin_attr[index]);
-      }
-    }
-  }
-  for (int index = 0; index < element_size; ++index) {
-    origin_attr[index] = cur_attr[index];
-  }
-}
-
-STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node) {
-  auto type = node->primitive->value.type;
-  if (type == schema::PrimitiveType_StridedSlice) {
-    // onnx input size is equal to 5 always.
-    if (node->inputIndex.size() == 5) {
-      for (int index = 1; index < 5; ++index) {
-        if (graph->allTensors[node->inputIndex[index]]->data.data() == nullptr) {
-          MS_LOG(INFO) << "Here don't consider input is from other nodes.";
-          return RET_NOT_SUPPORT;
-        }
-      }
-      int element_num = graph->allTensors[node->inputIndex[1]]->dims[0];
-      auto axes = graph->allTensors[node->inputIndex[3]]->data;
-      for (int index = 1; index < 5; ++index) {
-        TransformAttrByAxes(reinterpret_cast<int *>(graph->allTensors[node->inputIndex[index]]->data.data()),
-                            reinterpret_cast<int *>(axes.data()), element_num);
-      }
-    }
-  }
-  if (type == schema::PrimitiveType_SliceFusion) {
-    auto attr = node->primitive->value.AsSliceFusion();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "node->primitive->value.AsSliceFusion() is nullptr.";
-      return RET_NULL_PTR;
-    }
-    // // transform attr
-    // attr->format = schema::Format_NHWC;
-    // if (attr->begin.empty() || attr->size.empty()) {
-    //   MS_LOG(INFO) << "Here don't consider these attr are from other nodes.";
-    //   return RET_NOT_SUPPORT;
-    // }
-    // int element_num = attr->begin.size();
-    // if (attr->axes.empty()) {
-    //   for (int index = 0; index < element_num; ++index) {
-    //     attr->axes.push_back(index);
-    //   }
-    // }
-    // TransformAttrByAxes(attr->begin.data(), attr->axes.data(), element_num);
-    // TransformAttrByAxes(attr->size.data(), attr->axes.data(), element_num);
-    // TransformAttrByAxes(attr->axes.data(), attr->axes.data(), element_num);
-  }
-  return RET_OK;
-}
-
-STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node) {
-  MS_ASSERT(node->primitive != nullptr);
-  auto type = node->primitive->value.type;
-  auto input1_ndim = graph->allTensors.at(node->inputIndex[0])->dims.size();
-  if (input1_ndim != 4) {
-    if (node->inputIndex.size() > 1) {
-      auto input2_ndim = graph->allTensors.at(node->inputIndex[1])->dims.size();
-      if (input2_ndim != 4 && input2_ndim != 0) {
-        MS_LOG(ERROR) << "change op axis only support 4 dims";
-        return RET_NOT_SUPPORT;
-      }
-    } else {
-      MS_LOG(ERROR) << "change op axis only support 4 dims";
-      return RET_NOT_SUPPORT;
-    }
-  }
-  if (type == schema::PrimitiveType_Concat) {
-    MS_ASSERT(node->primitive->value.AsConcat() != nullptr);
-    auto origin_axis = node->primitive->value.AsConcat()->axis;
-    auto axis_map = GetNc2NhAxisMap();
-    if (node->primitive->value.AsConcat() == nullptr) {
-      MS_LOG(ERROR) << "node->primitive->value.AsConcat() is nullptr";
-      return RET_NULL_PTR;
-    }
-    node->primitive->value.AsConcat()->axis = axis_map[origin_axis < 0 ? origin_axis + 4 : origin_axis];
-  }
-  if (type == schema::PrimitiveType_Split) {
-    MS_ASSERT(node->primitive->value.AsSplit() != nullptr);
-    auto origin_axis = node->primitive->value.AsSplit()->axis;
-    auto axis_map = GetNc2NhAxisMap();
-    if (node->primitive->value.AsSplit() == nullptr) {
-      MS_LOG(ERROR) << "node->primitive->value.AsSplit() is nullptr";
-      return RET_NULL_PTR;
-    }
-    node->primitive->value.AsSplit()->axis = axis_map[origin_axis];
-  }
-  if (type == schema::PrimitiveType_Crop) {
-    MS_ASSERT(node->primitive->value.AsCrop() != nullptr);
-    auto origin_axis = node->primitive->value.AsCrop()->axis;
-    auto offsets = node->primitive->value.AsCrop()->offsets;
-    auto axis_map = GetNc2NhAxisMap();
-    if (node->primitive->value.AsCrop() == nullptr) {
-      MS_LOG(ERROR) << "node->primitive->value.AsCrop() is nullptr";
-      return RET_NULL_PTR;
-    }
-    // nchw->nhwc,offsets need pad 0;
-    if (axis_map[origin_axis] == 0) {
-      offsets = {offsets[0], offsets[2], offsets[3], offsets[1]};
-    } else if (axis_map[origin_axis] == 1 || axis_map[origin_axis] == 2) {
-      // orgin_axis = 2 or orgin_axis = 3
-      offsets.push_back(0);
-    } else if (axis_map[origin_axis] == -1) {
-      // origin_axis = 1
-      offsets = {offsets[1], offsets[2], offsets[0]};
-    } else {
-      // axis error
-      MS_LOG(ERROR) << "Crop error";
-      return RET_ERROR;
-    }
-    node->primitive->value.AsCrop()->offsets = offsets;
-  }
-  if (type == schema::PrimitiveType_SliceFusion || type == schema::PrimitiveType_StridedSlice) {
-    return ChangeOpAttrForSlice(graph, node);
-  }
-  return RET_OK;
 }
 
 std::string GetModelName(const std::string &modelFile) {

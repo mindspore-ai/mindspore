@@ -417,7 +417,6 @@ int MoveAttrMapResize(const CNodePtr &cnode) {
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
-}  // namespace
 
 int MoveAttrSlice(const CNodePtr &cnode) {
   MS_ASSERT(value_node != nullptr);
@@ -442,6 +441,7 @@ int MoveAttrSlice(const CNodePtr &cnode) {
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
+}  // namespace
 
 bool PrimitiveAdjustPass::Run(const FuncGraphPtr &func_graph) {
   if (this->fmk_type_ != lite::converter::FmkType_MS) {

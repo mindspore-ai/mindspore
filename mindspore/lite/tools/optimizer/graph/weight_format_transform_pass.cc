@@ -17,6 +17,8 @@
 #include <memory>
 #include <algorithm>
 #include <vector>
+#include "ops/fusion/conv2d_backprop_input_fusion.h"
+#include "ops/transpose.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType_CAFFE;
@@ -30,11 +32,99 @@ using mindspore::schema::QuantType_WeightQuant;
 
 namespace mindspore::opt {
 namespace {
+constexpr size_t kFirstInputIndex = 1;
 constexpr size_t kConvWeightIndex = 2;
+const PrimitivePtr kPrimConv2DBackpropInputFusion = std::make_shared<Primitive>(ops::kNameConv2DBackpropInputFusion);
+lite::STATUS GetTransposePerm(schema::Format src_format, schema::Format dst_format, std::vector<int> *perm) {
+  MS_ASSERT(perm != nullptr);
+  auto src_format_str = std::string(schema::EnumNameFormat(src_format));
+  auto dst_format_str = std::string(schema::EnumNameFormat(dst_format));
+  if (src_format_str.empty() || dst_format_str.empty() || src_format_str.size() != dst_format_str.size()) {
+    MS_LOG(ERROR) << "src_format or dst_format is error.";
+    return lite::RET_ERROR;
+  }
+  for (size_t i = 0; i < src_format_str.size(); ++i) {
+    auto pos = dst_format_str.find(src_format_str[i]);
+    if (pos == std::string::npos) {
+      MS_LOG(ERROR) << "src_format and dst_format don't match.";
+      return lite::RET_ERROR;
+    }
+    perm->push_back(static_cast<int>(pos));
+  }
+  return lite::RET_OK;
+}
 }  // namespace
+
 void WeightFormatTransformPass::SetQuantType(QuantType type) { this->quant_type = type; }
 void WeightFormatTransformPass::SetFmkType(FmkType type) { this->fmk_type = type; }
 void WeightFormatTransformPass::SetDstFormat(schema::Format format) { this->dst_format = format; }
+lite::STATUS WeightFormatTransformPass::TransposeInsertForWeightSharing(const FuncGraphPtr &graph,
+                                                                        const ParameterPtr &weight_node,
+                                                                        std::vector<int> perm) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(weight_node != nullptr);
+  auto node_list = TopoSort(graph->get_return());
+  std::vector<CNodePtr> adjust_nodes;
+  for (auto &node : node_list) {
+    if (!utils::isa<CNode>(node)) {
+      continue;
+    }
+    if (CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
+#ifdef SUPPORT_TRAIN
+        CheckPrimitiveType(node, kPrimConv2DBackpropInputFusion) ||
+#endif
+        CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto inputs = cnode->inputs();
+    if (std::any_of(inputs.begin(), inputs.end(),
+                    [&weight_node](const AnfNodePtr &anf_node) { return weight_node == anf_node; })) {
+      adjust_nodes.push_back(cnode);
+    }
+  }
+  if (adjust_nodes.empty()) {
+    MS_LOG(DEBUG) << "do not need to adjust nodes.";
+    return lite::RET_OK;
+  }
+  auto perm_node = BuildIntVecParameterNode(graph, perm, weight_node->fullname_with_scope() + "_perm");
+  auto prim = std::make_shared<ops::Transpose>();
+  auto transpose_node = graph->NewCNode(prim, {weight_node, perm_node});
+  auto type_ptr = TypeIdToType(kTypeUnknown);
+  std::vector<int64_t> shape_vector;
+  auto abstract = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  transpose_node->set_abstract(abstract);
+  transpose_node->set_fullname_with_scope(weight_node->fullname_with_scope() + "_post");
+  for (auto &adjust_node : adjust_nodes) {
+    auto inputs = adjust_node->inputs();
+    std::replace_if(
+      inputs.begin(), inputs.end(), [&weight_node](const AnfNodePtr &anf_node) { return weight_node == anf_node; },
+      transpose_node);
+    adjust_node->set_inputs(inputs);
+  }
+  return lite::RET_OK;
+}
+
+lite::STATUS WeightFormatTransformPass::HandleWeightSharing(const FuncGraphPtr &graph, const ParameterPtr &weight_node,
+                                                            schema::Format src_format, schema::Format dst_format) {
+  MS_ASSERT(graph != nullptr);
+  MS_ASSERT(weight_node != nullptr);
+  if (src_format == dst_format) {
+    return lite::RET_OK;
+  }
+  std::vector<int> perm;
+  auto status = GetTransposePerm(src_format, dst_format, &perm);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "get perm failed.";
+    return status;
+  }
+  status = TransposeInsertForWeightSharing(graph, weight_node, perm);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "transpose insert failed.";
+  }
+  return status;
+}
+
 lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto node_list = TopoSort(graph->get_return());
@@ -44,8 +134,7 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
     }
     if (!CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
 #ifdef SUPPORT_TRAIN
-        !CheckPrimitiveType(node, prim::kPrimConv2DBackpropInput) &&
-        !CheckPrimitiveType(node, prim::kPrimGroupConv2DGradInput) &&
+        !CheckPrimitiveType(node, kPrimConv2DBackpropInputFusion) &&
 #endif
         !CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
       continue;
@@ -62,6 +151,7 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
     MS_ASSERT(weight_value->tensor_type() == TypeId::kNumberTypeFloat32 ||
               weight_value->tensor_type() == TypeId::kNumberTypeUInt8);
     lite::STATUS status;
+    schema::Format src_format = static_cast<schema::Format>(weight_value->format());
     schema::Format weight_dst_format = schema::Format::Format_KHWC;
     if (dst_format != schema::Format::Format_NUM_OF_FORMAT) {
       weight_dst_format = dst_format;
@@ -74,6 +164,11 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
                     << EnumNameFormat(weight_dst_format) << " failed, node : " << node->fullname_with_scope()
                     << "quant type:" << quant_type;
       return ERROR;
+    }
+    status = HandleWeightSharing(graph, weight_node->cast<ParameterPtr>(), src_format, weight_dst_format);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "handle weight-sharing failed.";
+      return false;
     }
     auto type_id = static_cast<TypeId>(weight_value->tensor_type());
     auto type_ptr = TypeIdToType(type_id);

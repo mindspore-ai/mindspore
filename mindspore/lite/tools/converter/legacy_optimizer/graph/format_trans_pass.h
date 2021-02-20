@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_PREDICT_FORMAT_TRANS_PASS_H
 #define MINDSPORE_PREDICT_FORMAT_TRANS_PASS_H
 
+#include <memory>
 #include "tools/converter/optimizer.h"
 #include "tools/common/graph_util.h"
 #include "tools/converter/converter_flags.h"
@@ -27,31 +28,43 @@ enum FormatTransNodeType { kNCHW2NHWC, kNHWC2NCHW, kNONE };
 
 class FormatTransPass : public GraphPass {
  public:
-  FormatTransPass() : id(0) {}
+  FormatTransPass() : id_(0) {}
 
   ~FormatTransPass() override = default;
 
   STATUS Run(schema::MetaGraphT *graph) override;
 
-  void SetQuantType(QuantType quantType);
+  void SetQuantType(QuantType quantType) { this->quant_type_ = quantType; }
 
-  void SetFmk(converter::FmkType fmkType);
+  void SetFmk(converter::FmkType fmkType) { this->fmk_type_ = fmkType; }
 
  protected:
   NodeIter InsertFormatTransNode(schema::MetaGraphT *graph, NodeIter existNodeIter, InsertPlace place, size_t inoutIdx,
                                  FormatTransNodeType nodeType, STATUS *errorCode);
+
+  STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
 
  private:
   STATUS DoModelInputFormatTrans(schema::MetaGraphT *graph);
 
   STATUS DoNodeInoutFormatTrans(schema::MetaGraphT *graph);
 
+  void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
+
+  void TransformOpAxisAttr(int *origin_axis, int element_size);
+
+  STATUS ChangeOpSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
+
+  STATUS ChangeOpStridedSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
+
+  STATUS ChangeOpSliceAndStridedSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
+
  protected:
-  size_t id = 0;
+  size_t id_ = 0;
+  converter::FmkType fmk_type_ = converter::FmkType_TF;
 
  private:
-  QuantType quantType = QuantType_QUANT_NONE;
-  converter::FmkType fmkType = converter::FmkType_TF;
+  QuantType quant_type_ = QuantType_QUANT_NONE;
 };
 }  // namespace lite
 }  // namespace mindspore
