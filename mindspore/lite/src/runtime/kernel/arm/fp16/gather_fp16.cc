@@ -88,6 +88,9 @@ int GatherFp16CPUKernel::DoGather(int task_id) {
   }
   int stride = UP_DIV(outer_size, op_parameter_->thread_num_);
   int count = MSMIN(stride, outer_size - stride * task_id);
+  if (count <= 0) {
+    return RET_OK;
+  }
   auto thread_stride = stride * task_id;
   int8_t *int8_in = nullptr;
   if (input_tensor->data_type() == kNumberTypeFloat32) {

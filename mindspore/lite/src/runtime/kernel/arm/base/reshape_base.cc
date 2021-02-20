@@ -41,11 +41,12 @@ int ReshapeBaseCPUKernel::ReSize() {
 
 int ReshapeBaseCPUKernel::RunImpl(int task_id) {
   size_t start_index = task_id * cal_max_num_per_thread_;
-  auto cur_in_ptr = input_ptr_ + start_index;
-  auto cur_out_ptr = output_ptr_ + start_index;
-  if (start_index > in_tensors_.front()->Size()) {
+  if (start_index >= in_tensors_.front()->Size()) {
     return RET_OK;
   }
+  auto cur_in_ptr = input_ptr_ + start_index;
+  auto cur_out_ptr = output_ptr_ + start_index;
+
   size_t data_size = in_tensors_.front()->Size() - start_index;
   data_size = data_size > cal_max_num_per_thread_ ? cal_max_num_per_thread_ : data_size;
   memcpy(cur_out_ptr, cur_in_ptr, data_size);

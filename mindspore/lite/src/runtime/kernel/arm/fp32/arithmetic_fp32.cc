@@ -302,6 +302,9 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   MS_ASSERT(thread_count_ != 0);
   int stride = UP_DIV(element_num, thread_count_);
   int count = MSMIN(stride, element_num - stride * task_id);
+  if (count <= 0) {
+    return RET_OK;
+  }
 
   if (arithmetic_run_ == nullptr) {
     MS_LOG(ERROR) << "arithmetic_run function is nullptr!";

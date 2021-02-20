@@ -54,6 +54,9 @@ int ActivationCPUKernel::DoActivation(int task_id) {
 
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
+  if (count <= 0) {
+    return RET_OK;
+  }
 
   auto ret = RET_OK;
 
