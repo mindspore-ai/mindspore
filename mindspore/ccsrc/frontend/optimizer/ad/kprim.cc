@@ -38,7 +38,6 @@
 
 namespace mindspore {
 namespace ad {
-using PatternListType = std::initializer_list<BaseRef>;
 KPrim g_k_prims;
 
 FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {

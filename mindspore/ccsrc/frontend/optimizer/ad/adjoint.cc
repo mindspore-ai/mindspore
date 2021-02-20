@@ -64,6 +64,8 @@ AnfNodePtr Adjoint::primal() { return primal_; }
 
 AnfNodePtr Adjoint::dout() { return dout_hole_; }
 
+AnfNodePtr Adjoint::RealDout() { return dout_; }
+
 void Adjoint::RegisterDoutUser(const CNodePtr &user, size_t index) {
   dout_user_.emplace_back(std::make_pair(user, index));
 }
