@@ -73,8 +73,7 @@ if cfg.bert_network == 'base':
         initializer_range=0.02,
         use_relative_positions=False,
         dtype=mstype.float32,
-        compute_type=mstype.float16,
-        enable_fused_layernorm=True
+        compute_type=mstype.float16
     )
 if cfg.bert_network == 'nezha':
     cfg.batch_size = 96
