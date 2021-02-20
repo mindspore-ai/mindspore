@@ -316,7 +316,6 @@ STATUS FormatTransPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uniqu
 
 void FormatTransPass::TransformAttrByAxes(int *origin_attr, int *axes, int element_size) {
   if (origin_attr == nullptr || axes == nullptr || element_size == 0) {
-    MS_LOG(INFO) << "Attr data is from other nodes.";
     return;
   }
   auto axis_map = GetNc2NhAxisMap();
@@ -336,7 +335,6 @@ void FormatTransPass::TransformAttrByAxes(int *origin_attr, int *axes, int eleme
 
 void FormatTransPass::TransformOpAxisAttr(int *origin_axis, int element_size) {
   if (origin_axis == nullptr || element_size == 0) {
-    MS_LOG(INFO) << "Attr data is from other nodes.";
     return;
   }
   auto axis_map = GetNc2NhAxisMap();
@@ -365,7 +363,6 @@ STATUS FormatTransPass::ChangeOpSlice(schema::MetaGraphT *graph, const std::uniq
   }
   for (size_t index = 1; index < node->inputIndex.size(); ++index) {
     if (graph->allTensors[node->inputIndex[index]]->data.data() == nullptr) {
-      MS_LOG(INFO) << "Here don't consider input is from other nodes.";
       return RET_NOT_SUPPORT;
     }
   }
@@ -395,13 +392,11 @@ STATUS FormatTransPass::ChangeOpSlice(schema::MetaGraphT *graph, const std::uniq
 STATUS FormatTransPass::ChangeOpStridedSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node) {
   // onnx input size is equal to 5 always.
   if (node->inputIndex.size() != 5) {
-    MS_LOG(DEBUG) << "only support onnx slice.";
     return RET_NOT_SUPPORT;
   }
   if (node->inputIndex.size() == 5) {
     for (int index = 1; index < 5; ++index) {
       if (graph->allTensors[node->inputIndex[index]]->data.data() == nullptr) {
-        MS_LOG(INFO) << "Here don't consider input is from other nodes.";
         return RET_NOT_SUPPORT;
       }
     }
