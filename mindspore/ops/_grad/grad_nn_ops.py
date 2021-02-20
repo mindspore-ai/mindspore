@@ -98,12 +98,11 @@ def get_bprop_conv3d_transpose(self):
         out_channel=self.in_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode="pad",
         pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
     )
-    input_size = self.input_size
 
     def bprop(x, w, out, dout):
         dx = input_grad(dout, w)
         dw = filter_grad(dout, x, F.shape(w))
-        return dx, dw, zeros_like(input_size)
+        return dx, dw, zeros_like(out)
 
     return bprop
 

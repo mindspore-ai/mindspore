@@ -112,7 +112,7 @@ def create_voc_train_aug_lst_txt():
             if id_ in voc_train_data_lst + voc_val_data_lst:
                 continue
             id_ = id_.strip()
-            img_ = os.path.join(SBD_ANNO_DIR, id_ + '.jpg')
+            img_ = os.path.join(SBD_IMG_DIR, id_ + '.jpg')
             anno_ = os.path.join(SBD_ANNO_GRAY_DIR, id_ + '.png')
             f.write(img_ + ' ' + anno_ + '\n')
 

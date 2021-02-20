@@ -418,6 +418,12 @@ class BatchNorm2d(_BatchNorm):
             pass
 
 
+@constexpr
+def _check_3d_shape(input_shape):
+    if len(input_shape) != 5:
+        raise ValueError("For BatchNorm3d, input data must be 5-dimensional.")
+
+
 class BatchNorm3d(Cell):
     r"""
     Batch normalization layer over a 5D input.
@@ -443,17 +449,13 @@ class BatchNorm3d(Cell):
             running_mean and running_var computation. Default: 0.9.
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
             use the mean value and variance value of specified value. If None, the training process will use the mean
             and variance of current batch data and track the running mean and variance, the evaluation process will use
@@ -491,6 +493,7 @@ class BatchNorm3d(Cell):
                  data_format='NCDHW'):
         super(BatchNorm3d, self).__init__()
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.cls_name)
+        self.reshape = P.Reshape()
         self.bn2d = BatchNorm2d(num_features=num_features,
                                 eps=eps,
                                 momentum=momentum,
@@ -501,11 +504,10 @@ class BatchNorm3d(Cell):
                                 moving_var_init=moving_var_init,
                                 use_batch_statistics=use_batch_statistics,
                                 data_format="NCHW")
-        self.shape = P.Shape()
-        self.reshape = P.Reshape()
 
     def construct(self, input_x):
-        x_shape = self.shape(input_x)
+        x_shape = F.shape(input_x)
+        _check_3d_shape(x_shape)
         input_x = self.reshape(input_x, (x_shape[0], x_shape[1], x_shape[2]*x_shape[3], x_shape[4]))
         bn2d_out = self.bn2d(input_x)
         bn3d_out = self.reshape(bn2d_out, x_shape)
