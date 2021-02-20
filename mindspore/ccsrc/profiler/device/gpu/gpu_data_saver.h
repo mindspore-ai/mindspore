@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_DATA_SAVER_H
-#define MINDSPORE_DATA_SAVER_H
+#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_DATA_SAVER_H
+#define MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_DATA_SAVER_H
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
@@ -23,57 +23,10 @@
 #include <string>
 #include <memory>
 #include "profiler/device/gpu/gpu_profiling.h"
+#include "profiler/device/data_saver.h"
 namespace mindspore {
 namespace profiler {
 namespace gpu {
-struct OpDetailInfo {
-  std::string op_type_;
-  std::string op_name_;
-  std::string op_full_name_;
-  std::shared_ptr<OpInfo> op_info_{nullptr};
-  float op_avg_time_{0};
-  float proportion_{0};
-
-  OpDetailInfo() = default;
-
-  OpDetailInfo(std::shared_ptr<OpInfo> op_info, float proportion);
-
-  std::string GetHeader() const {
-    return "op_side,op_type,op_name,op_full_name,op_occurrences,op_total_time(us),op_avg_time(us),total_proportion,"
-           "cuda_activity_cost_time(us),cuda_activity_call_count";
-  }
-
-  friend std::ostream &operator<<(std::ostream &os, const OpDetailInfo &event) {
-    os << "Device," << event.op_type_ << ',' << event.op_name_ << ',' << event.op_full_name_ << ','
-       << event.op_info_->op_count << ',' << event.op_info_->op_host_cost_time << ',' << event.op_avg_time_ << ','
-       << event.proportion_ << ',' << event.op_info_->cupti_activity_time << ',' << event.op_info_->op_kernel_count;
-    return os;
-  }
-};
-
-struct OpType {
-  std::string op_type_;
-  int count_{0};
-  float total_time_{0};
-  float avg_time_{0};
-  float proportion_{0};
-
-  std::string GetHeader() const { return "op_type,type_occurrences,total_time(us),total_proportion,avg_time(us)"; }
-
-  friend std::ostream &operator<<(std::ostream &os, const OpType &event) {
-    os << event.op_type_ << ',' << event.count_ << ',' << event.total_time_ << ',' << event.proportion_ << ','
-       << event.avg_time_;
-    return os;
-  }
-
-  OpType &operator+=(const OpType &other) {
-    this->count_ += other.count_;
-    this->total_time_ += other.total_time_;
-    this->proportion_ += other.proportion_;
-    return *this;
-  }
-};
-
 struct ActivityData {
   std::shared_ptr<Event> basic_info_{nullptr};
   std::string block_dim_;
@@ -105,25 +58,18 @@ struct ActivityData {
   ActivityData &operator+=(const ActivityData &other);
 };
 
-using OpInfoMap = std::unordered_map<std::string, OpInfo>;
 using DeviceActivityInfos = std::unordered_map<std::string, ActivityData>;   // <device_id, ActivityData>
 using AllActivityInfos = std::unordered_map<uint32_t, DeviceActivityInfos>;  // <device_id, ActivityData>
-using OpTypeInfos = std::unordered_map<std::string, OpType>;                 // <op_full_name, Optype>
-using OpDetailInfos = std::vector<OpDetailInfo>;
-// <op_full_name, StartDuration>
-using OpTimestampInfo = std::unordered_map<std::string, std::vector<StartDuration>>;
 
-class DataSaver {
+class GpuDataSaver : public DataSaver {
  public:
-  DataSaver() = default;
+  GpuDataSaver() = default;
 
-  ~DataSaver() = default;
+  ~GpuDataSaver() = default;
 
-  DataSaver(const DataSaver &) = delete;
+  GpuDataSaver(const GpuDataSaver &) = delete;
 
-  DataSaver &operator=(const DataSaver &) = delete;
-
-  void ParseOpInfo(const OpInfoMap &op_info_maps);
+  GpuDataSaver &operator=(const GpuDataSaver &) = delete;
 
   void SetStepTraceOpName(ProfilingTraceInfo trace_op_name);
 
@@ -132,37 +78,21 @@ class DataSaver {
   void WriteFile(std::string out_path, const BaseTime &start_time);
 
  private:
-  void AddOpDetailInfoForType(const OpDetailInfo &op_detail_info);
-
-  float GetTotalOpTime(const OpInfoMap &op_info_maps);
-
   void AddKernelEvent(const Event &event);
 
   void AddKernelEventToDevice(const Event &event, DeviceActivityInfos *device_activity_infos);
 
-  void WriteOpType(const std::string &saver_base_dir);
-
-  void WriteOpDetail(const std::string &saver_base_dir);
-
   void WriteActivity(const std::string &saver_base_dir);
-
-  void WriteOpTimestamp(const std::string &saver_base_dir);
 
   void WriteStepTrace(const std::string &saver_base_dir);
 
   void WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time);
 
-  void ChangeFileMode(const std::string &file_path);
-
-  std::string device_id_;
   AllActivityInfos activity_infos_;
-  OpTypeInfos op_type_infos_;
-  OpDetailInfos op_detail_infos_;
-  OpTimestampInfo op_timestamps_map_;
   ProfilingTraceInfo step_trace_op_name;
 };
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore
 
-#endif  // MINDSPORE_DATA_SAVER_H
+#endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_DATA_SAVER_H

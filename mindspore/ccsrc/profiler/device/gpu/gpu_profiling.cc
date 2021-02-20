@@ -21,7 +21,7 @@
 #include <chrono>
 #include <cmath>
 #include "profiler/device/gpu/cupti_interface.h"
-#include "profiler/device/gpu/data_saver.h"
+#include "profiler/device/gpu/gpu_data_saver.h"
 #include "pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "utils/utils.h"
@@ -89,14 +89,6 @@ uint64_t GetHostTimeStamp() {
   auto cur_sys_clock = std::chrono::system_clock::now();
   uint64_t cur_time_stamp =
     std::chrono::duration_cast<std::chrono::nanoseconds>(cur_sys_clock.time_since_epoch()).count();
-  return cur_time_stamp;
-}
-
-uint64_t GetHostMonoTimeStamp() {
-  struct timespec ts;
-  clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-  constexpr uint64_t kNSecondInSecond = 1000000000;
-  uint64_t cur_time_stamp = ts.tv_sec * kNSecondInSecond + ts.tv_nsec;
   return cur_time_stamp;
 }
 
@@ -415,21 +407,6 @@ void GPUProfiler::SetRunTimeData(const std::string &op_name, void *stream) {
   stream_ = stream;
 }
 
-void GPUProfiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
-  auto iter = op_info_map_.find(op_name);
-  if (iter != op_info_map_.end()) {
-    // The time unit is ms ,convert to us
-    iter->second.op_host_cost_time += time_elapsed;
-  }
-}
-
-void GPUProfiler::SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration) {
-  auto iter = op_info_map_.find(op_name);
-  if (iter != op_info_map_.end()) {
-    iter->second.start_duration.emplace_back(StartDuration({start, duration}));
-  }
-}
-
 void GPUProfiler::OpDataProducerBegin(const std::string op_name, void *stream) {
   if (sync_enable_flag_) {
     CHECK_CUDA_RET_WITH_ERROR(cudaEventCreate(&op_event_start_), "cudaEventCreate  op event start failed");
@@ -463,8 +440,8 @@ void GPUProfiler::OpDataProducerEnd() {
     op_time_elapsed = (op_host_time_stop_ - op_host_time_start_) / kTimeUnit;
   }
   MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
-  SetRunTimeData(op_name_, op_time_elapsed);
-  SetRunTimeData(op_name_, op_cupti_time_start_, op_time_elapsed);
+  Profiler::SetRunTimeData(op_name_, op_time_elapsed);
+  Profiler::SetRunTimeData(op_name_, op_cupti_time_start_, op_time_elapsed);
 }
 
 void GPUProfiler::StopCUPTI() {
@@ -498,7 +475,7 @@ void GPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
     MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
   } else {
-    DataSaver dataSaver;
+    GpuDataSaver dataSaver;
     dataSaver.SetStepTraceOpName(step_trace_op_name);
     dataSaver.ParseOpInfo(op_info_map_);
     dataSaver.ParseEvent(events_);
