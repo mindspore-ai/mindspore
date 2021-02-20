@@ -54,7 +54,7 @@ int ElementMulRelu(const float *in0, const float *in1, float *out, int size) {
     MS_FLOAT32X8 vin0 = MS_LD256_F32(in0 + index);
     MS_FLOAT32X8 vin1 = MS_LD256_F32(in1 + index);
     MS_FLOAT32X8 vout = MS_MUL256_F32(vin0, vin1);
-    vout = MS_BLEND256_PS(zeros_8, vout, MS_CMP256_PS(vout, zeros_8, 30));
+    vout = MS_BLEND256_F32(zeros_8, vout, MS_CMP256_F32(vout, zeros_8, 30));
     MS_ST256_F32(out + index, vout);
   }
 #endif
@@ -64,7 +64,7 @@ int ElementMulRelu(const float *in0, const float *in1, float *out, int size) {
     MS_FLOAT32X4 vin0 = MS_LDQ_F32(in0 + index);
     MS_FLOAT32X4 vin1 = MS_LDQ_F32(in1 + index);
     MS_FLOAT32X4 vout = MS_MULQ_F32(vin0, vin1);
-    vout = MS_BLENDQ_PS(zeros, vout, MS_CMPGTQ_PS(vout, zeros));
+    vout = MS_BLENDQ_F32(zeros, vout, MS_CMPGTQ_F32(vout, zeros));
     MS_STQ_F32(out + index, vout);
   }
 #endif

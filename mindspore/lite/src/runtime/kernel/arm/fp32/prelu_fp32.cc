@@ -91,7 +91,7 @@ int PReluCPUKernel::ProcessShareChannelInput() {
   auto input_tensor = in_tensors_.at(0);
   prelu_param_->input_num_ = input_tensor->ElementsNum();
   int tile = 32;
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
   tile = 64;
 #endif
   prelu_param_->tile_block_ = UP_DIV(prelu_param_->input_num_, tile);

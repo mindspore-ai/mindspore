@@ -77,8 +77,8 @@ int LRelu(const float *src, int length, float *dst, float alpha) {
   for (; i < length - 8; i += 8) {
     MS_FLOAT32X8 src_tmp = MS_LD256_F32(src + i);
     MS_FLOAT32X8 mul_tmp = MS_MUL256_N_F32(src_tmp, alpha);
-    MS_FLOAT32X8 mask = MS_CMP256_PS(src_tmp, MS_MOV256_F32(0.0f), 30);
-    MS_ST256_F32(dst + i, MS_BLEND256_PS(mul_tmp, src_tmp, mask));
+    MS_FLOAT32X8 mask = MS_CMP256_F32(src_tmp, MS_MOV256_F32(0.0f), 30);
+    MS_ST256_F32(dst + i, MS_BLEND256_F32(mul_tmp, src_tmp, mask));
   }
 #endif
 
@@ -86,8 +86,8 @@ int LRelu(const float *src, int length, float *dst, float alpha) {
   for (; i < length - 4; i += 4) {
     MS_FLOAT32X4 src_tmp = MS_LDQ_F32(src + i);
     MS_FLOAT32X4 mul_tmp = MS_MULQ_N_F32(src_tmp, alpha);
-    MS_FLOAT32X4 mask = MS_CMPGTQ_PS(src_tmp, MS_MOVQ_F32(0.0f));
-    MS_STQ_F32(dst + i, MS_BLENDQ_PS(mul_tmp, src_tmp, mask));
+    MS_FLOAT32X4 mask = MS_CMPGTQ_F32(src_tmp, MS_MOVQ_F32(0.0f));
+    MS_STQ_F32(dst + i, MS_BLENDQ_F32(mul_tmp, src_tmp, mask));
   }
 #endif
   for (; i < length; ++i) {

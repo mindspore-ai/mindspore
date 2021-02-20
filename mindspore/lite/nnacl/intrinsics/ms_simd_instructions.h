@@ -60,10 +60,10 @@ inline static float32x4_t vrecp(float32x4_t v) {
 #define MS_SLLIQ_EPI32(src1, src2) vshlq_s32(src1, vmovq_n_s32(src2))
 #define MS_CVTQPS_EPI32(src) vcvtq_s32_f32(src)
 #define MS_CVTQEPI32_PS(src) vcvtq_f32_s32(src)
-#define MS_CMPGTQ_PS(src1, src2) vcgtq_f32(src1, src2)
+#define MS_CMPGTQ_F32(src1, src2) vcgtq_f32(src1, src2)
 #define MS_CMPGTQ_EPI32(src1, src2) vcgtq_s32(src1, src2)
-// Note: Compared with X86, the vbslq_f32 parameters are the opposite with _mm_blendv_ps
-#define MS_BLENDQ_PS(src1, src2, src3) vbslq_f32(src3, src2, src1)
+// Note: Compared with X86, the vbslq_f32 parameters are the opposite with _mm_blendv_f32
+#define MS_BLENDQ_F32(src1, src2, src3) vbslq_f32(src3, src2, src1)
 #define MS_BLENDQ_EPI32(src1, src2, src3) vbslq_s32(src3, src2, src1)
 #endif
 
@@ -94,9 +94,9 @@ inline static float32x4_t vrecp(float32x4_t v) {
 #define MS_SLLI256_EPI32(src1, src2) _mm256_slli_epi32(src1, src2)
 #define MS_CVT256PS_EPI32(src) _mm256_cvttps_epi32(src)
 #define MS_CVT256EPI32_PS(src) _mm256_cvtepi32_ps(src)  // truncate float to int
-#define MS_CMP256_PS(src1, src2, src3) _mm256_cmp_ps(src1, src2, src3)
+#define MS_CMP256_F32(src1, src2, src3) _mm256_cmp_ps(src1, src2, src3)
 #define MS_CMPGT256_EPI32(src1, src2) _mm256_cmpgt_epi32(src1, src2)
-#define MS_BLEND256_PS(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
+#define MS_BLEND256_F32(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)
 #endif
 
@@ -127,10 +127,50 @@ inline static float32x4_t vrecp(float32x4_t v) {
 #define MS_SLLIQ_EPI32(src1, src2) _mm_slli_epi32(src1, src2)
 #define MS_CVTQPS_EPI32(src) _mm_cvttps_epi32(src)  // truncate float to int
 #define MS_CVTQEPI32_PS(src) _mm_cvtepi32_ps(src)
-#define MS_CMPGTQ_PS(src1, src2) _mm_cmpgt_ps(src1, src2)
+#define MS_CMPGTQ_F32(src1, src2) _mm_cmpgt_ps(src1, src2)
 #define MS_CMPGTQ_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
-#define MS_BLENDQ_PS(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
+#define MS_BLENDQ_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
 #define MS_BLENDQ_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
 #endif
+
+#define LOAD256X8_F32(src, input_ptr, num)                 \
+  MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num); \
+  MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X8 src##3 = MS_LD256_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X8 src##4 = MS_LD256_F32(input_ptr + 3 * num); \
+  MS_FLOAT32X8 src##5 = MS_LD256_F32(input_ptr + 4 * num); \
+  MS_FLOAT32X8 src##6 = MS_LD256_F32(input_ptr + 5 * num); \
+  MS_FLOAT32X8 src##7 = MS_LD256_F32(input_ptr + 6 * num); \
+  MS_FLOAT32X8 src##8 = MS_LD256_F32(input_ptr + 7 * num);
+
+#define STORE256X8_F32(output_ptr, num, dst)  \
+  MS_ST256_F32(output_ptr + 0 * num, dst##1); \
+  MS_ST256_F32(output_ptr + 1 * num, dst##2); \
+  MS_ST256_F32(output_ptr + 2 * num, dst##3); \
+  MS_ST256_F32(output_ptr + 3 * num, dst##4); \
+  MS_ST256_F32(output_ptr + 4 * num, dst##5); \
+  MS_ST256_F32(output_ptr + 5 * num, dst##6); \
+  MS_ST256_F32(output_ptr + 6 * num, dst##7); \
+  MS_ST256_F32(output_ptr + 7 * num, dst##8);
+
+#define LOAD128X8_F32(src, input_ptr, num)               \
+  MS_FLOAT32X4 src##1 = MS_LDQ_F32(input_ptr + 0 * num); \
+  MS_FLOAT32X4 src##2 = MS_LDQ_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X4 src##3 = MS_LDQ_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X4 src##4 = MS_LDQ_F32(input_ptr + 3 * num); \
+  MS_FLOAT32X4 src##5 = MS_LDQ_F32(input_ptr + 4 * num); \
+  MS_FLOAT32X4 src##6 = MS_LDQ_F32(input_ptr + 5 * num); \
+  MS_FLOAT32X4 src##7 = MS_LDQ_F32(input_ptr + 6 * num); \
+  MS_FLOAT32X4 src##8 = MS_LDQ_F32(input_ptr + 7 * num);
+
+#define STORE128X8_F32(output_ptr, num, dst) \
+  MS_STQ_F32(output_ptr + 0 * num, dst##1);  \
+  MS_STQ_F32(output_ptr + 1 * num, dst##2);  \
+  MS_STQ_F32(output_ptr + 2 * num, dst##3);  \
+  MS_STQ_F32(output_ptr + 3 * num, dst##4);  \
+  MS_STQ_F32(output_ptr + 4 * num, dst##5);  \
+  MS_STQ_F32(output_ptr + 5 * num, dst##6);  \
+  MS_STQ_F32(output_ptr + 6 * num, dst##7);  \
+  MS_STQ_F32(output_ptr + 7 * num, dst##8);
 
 #endif  // MINDSPORE_LITE_NNACL_INTRINSICS_MS_SIMD_INSTRUCTIONS_H_
