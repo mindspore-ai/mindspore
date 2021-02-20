@@ -42,11 +42,17 @@ def _init_device_info():
     from mindspore import context
     from mindspore.parallel._auto_parallel_context import auto_parallel_context
     from mindspore.parallel._utils import _get_global_rank
+    numa_enable = False
+    numa_enable_env = os.getenv("DATASET_ENABLE_NUMA", None)
+    if numa_enable_env and numa_enable_env.strip() == 'True':
+        numa_enable = True
     if context.get_context("device_target") == "GPU":
         rank_id = _get_global_rank()
         parallel_mode = auto_parallel_context().get_parallel_mode()
         if parallel_mode == "stand_alone":
             rank_id = context.get_context("device_id")
+        if numa_enable:
+            _config.set_numa_enable(True)
         _config.set_rank_id(rank_id)
     elif context.get_context("device_target") == "Ascend":
         # Ascend is a special scenario, we'd better get rank info from env
@@ -57,11 +63,9 @@ def _init_device_info():
             rank_size = int(env_rank_size.strip())
             rank_id = int(env_rank_id.strip())
             if rank_size > 1:
+                if numa_enable:
+                    _config.set_numa_enable(True)
                 _config.set_rank_id(rank_id)
-            # Now single process under ascend mode doesn't support numa bind for performance consideration.
-            if _config.get_numa_enable() is True and rank_size == 1:
-                raise ValueError("single process under Ascend mode doesn't support numa bind for "
-                                 "performance consideration.")
 
 
 def set_seed(seed):
