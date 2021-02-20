@@ -16,6 +16,7 @@
 
 #include "src/train/train_session.h"
 #include <sys/stat.h>
+#include <unistd.h>
 #include <algorithm>
 #include <utility>
 #include <vector>
@@ -149,6 +150,10 @@ int TrainSession::SaveToFile(const std::string &filename) const {
   if (buf == nullptr) {
     MS_LOG(ERROR) << "Could not Export Trained model";
     return lite::RET_NULL_PTR;
+  }
+  // authorize
+  if (access(filename.c_str(), F_OK) == 0) {
+    chmod(filename.c_str(), S_IWUSR);
   }
   std::ofstream ofs(filename);
   if ((true != ofs.good()) || (true != ofs.is_open())) {

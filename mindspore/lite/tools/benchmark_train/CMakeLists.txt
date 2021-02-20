@@ -3,6 +3,8 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/train/train_populate_parameter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/train/train_populate_parameter_v0.cc
         )
 
 add_executable(benchmark_train
