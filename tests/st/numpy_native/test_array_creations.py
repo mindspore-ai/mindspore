@@ -748,14 +748,6 @@ def test_diag_indices():
     onp_res = onp.diag_indices(0)
     match_all_arrays(mnp_res, onp_res)
 
-    mnp_res = mnp.diag_indices(3, 0)
-    onp_res = onp.diag_indices(3, 0)
-    match_all_arrays(mnp_res, onp_res)
-
-    mnp_res = mnp.diag_indices(5, 7)
-    onp_res = onp.diag_indices(5, 7)
-    match_all_arrays(mnp_res, onp_res)
-
 
 def mnp_ix_(*args):
     return mnp.ix_(*args)

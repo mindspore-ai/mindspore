@@ -347,15 +347,8 @@ def isfinite(x, out=None, where=True, dtype=None):
 
 
 def _isnan(x):
-    """Compures isnan without applying keyword arguments."""
-    shape = F.shape(x)
-    zeros_tensor = zeros(shape, mstype.float32)
-    ones_tensor = ones(shape, mstype.float32)
-    non_neg = F.tensor_ge(x, zeros_tensor)
-    non_pos = F.tensor_le(x, zeros_tensor)
-    res = F.select(non_neg, zeros_tensor, ones_tensor)
-    res = F.select(non_pos, zeros_tensor, res)
-    return F.cast(res, mstype.bool_)
+    """Computes isnan without applying keyword arguments."""
+    return F.not_equal(x, x)
 
 
 def isnan(x, out=None, where=True, dtype=None):
@@ -392,7 +385,7 @@ def isnan(x, out=None, where=True, dtype=None):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> output = np.isnan(np.array(np.nan, np.float32))
@@ -453,7 +446,7 @@ def isinf(x, out=None, where=True, dtype=None):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> output = np.isinf(np.array(np.inf, np.float32))
@@ -497,7 +490,7 @@ def isposinf(x):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> output = np.isposinf(np.array([-np.inf, 0., np.inf], np.float32))
@@ -527,7 +520,7 @@ def isneginf(x):
         TypeError: if the input is not a tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> output = np.isneginf(np.array([-np.inf, 0., np.inf], np.float32))
