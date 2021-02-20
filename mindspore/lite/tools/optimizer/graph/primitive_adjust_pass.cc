@@ -199,7 +199,7 @@ int MoveAttrMapCommon(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapActivation(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -221,7 +221,7 @@ int MoveAttrMapActivation(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -243,7 +243,7 @@ int MoveAttrMapActivationGrad(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapReduce(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -266,7 +266,7 @@ int MoveAttrMapReduce(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapConv2D(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -305,7 +305,7 @@ int MoveAttrMapConv2D(const CNodePtr &cnode) {
 }
 
 int MoveAttrPool(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -342,7 +342,7 @@ int MoveAttrPool(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapAdder(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -373,7 +373,7 @@ int MoveAttrMapAdder(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapLayerNorm(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -393,7 +393,7 @@ int MoveAttrMapLayerNorm(const CNodePtr &cnode) {
 }
 
 int MoveAttrMapResize(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
@@ -419,7 +419,7 @@ int MoveAttrMapResize(const CNodePtr &cnode) {
 }
 
 int MoveAttrSlice(const CNodePtr &cnode) {
-  MS_ASSERT(value_node != nullptr);
+  MS_ASSERT(cnode != nullptr);
   auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
