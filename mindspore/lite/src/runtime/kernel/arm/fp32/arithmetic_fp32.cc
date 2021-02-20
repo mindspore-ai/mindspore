@@ -46,7 +46,7 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
    * and all need-broadcast-node are const
    * broadcast in resize */
 
-  if (arithmeticParameter_->broadcasting_ == false) {
+  if (!arithmeticParameter_->broadcasting_) {
     return RET_OK;
   }
 
@@ -183,7 +183,21 @@ void ArithmeticCPUKernel::InitParam() {
   return;
 }
 
+int ArithmeticCPUKernel::CheckDataType() {
+  auto in0_dataType = in_tensors_.at(0)->data_type();
+  auto in1_dataType = in_tensors_.at(1)->data_type();
+  if (in0_dataType != in1_dataType) {
+    MS_LOG(ERROR) << "The dataTypes of input tensor0 and input tensor1 should be the same.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int ArithmeticCPUKernel::ReSize() {
+  if (CheckDataType() != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticCPUKernel resize failed.";
+    return RET_ERROR;
+  }
   InitParam();
   return InitBroadCastCase();
 }
