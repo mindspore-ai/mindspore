@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {"nnacl/int8/conv1x1_int8.h", "nnacl/common_func.h", "wrapper/int8/conv1x1_init_int8.h",
            "wrapper/int8/conv1x1_run_int8.h"},
-          {"common_func.c", "pack.c", "conv1x1_int8.c", "matmul_int8.c", "fixed_point.c", "conv1x1_init_int8.c",
-           "conv1x1_run_int8.c"});
+          {"common_func.c", "pack.c", "conv1x1_int8.c", "matmul_int8.c", "fixed_point.c", "conv1x1_init_int8_wrapper.c",
+           "conv1x1_run_int8_wrapper.c", "thread_pool.c"});
 
   nnacl::NNaclInt8Serializer code;
 
