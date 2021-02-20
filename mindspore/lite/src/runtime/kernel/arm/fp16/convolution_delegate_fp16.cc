@@ -68,12 +68,14 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
       need_free_ = need_free_ | BIAS_NEED_FREE;
     }
+    origin_weight_data_type_ = in_tensors_[1]->data_type();
     return RET_OK;
   }
   origin_weight_ = in_tensors_.at(kWeightIndex)->data_c();
   if (in_tensors_.size() == 3) {
     origin_bias_ = in_tensors_.at(kBiasIndex)->data_c();
   }
+  origin_weight_data_type_ = in_tensors_[1]->data_type();
   return ReSize();
 }
 
@@ -83,7 +85,7 @@ int ConvolutionDelegateFP16CPUKernel::ReSize() {
                           context_);
   if (fp16_conv_kernel_ == nullptr) {
     fp16_conv_kernel_ = CpuConvFp16KernelSelect(in_tensors_, out_tensors_, op_parameter_, context_, primitive_,
-                                                origin_weight_, origin_bias_);
+                                                origin_weight_, origin_bias_, origin_weight_data_type_);
     if (fp16_conv_kernel_ == nullptr) {
       MS_LOG(ERROR) << "Selecting execute kernel failed for conv_kernel, got a nullptr.";
       return RET_ERROR;
@@ -107,7 +109,7 @@ ConvParameter *CreateNewConvParameterFp16(ConvParameter *parameter) {
 kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                             const lite::InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                            void *origin_weight, void *origin_bias) {
+                                            void *origin_weight, void *origin_bias, TypeId origin_weight_data_type) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   bool use_winograd = false;
   int out_unit;
@@ -120,8 +122,8 @@ kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &i
     kernel = new (std::nothrow) kernel::ConvolutionWinogradFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive,
                                                                          out_unit, origin_weight, origin_bias);
   } else {
-    kernel = new (std::nothrow)
-      kernel::ConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, origin_weight, origin_bias);
+    kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive,
+                                                                 origin_weight, origin_bias, origin_weight_data_type);
   }
   // Once kernel is selected, init func will invoke InitWeightAndBias
   auto ret = kernel->Init();
