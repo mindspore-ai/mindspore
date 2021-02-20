@@ -147,7 +147,7 @@ int MindirAdjustPass::PrimitiveConvert(std::shared_ptr<AnfNode> anf_node) {
   auto inputs = cnode->inputs();
   inputs.erase(inputs.begin());
   if (!CheckPrimitiveType(anf_node, prim::kPrimReturn) && !CheckPrimitiveType(anf_node, prim::kPrimMakeTuple)) {
-    auto primitive_c = PrimitiveC::Create(*primitive, inputs, quant_type_);
+    auto primitive_c = PrimitiveC::Create(*primitive, inputs, quant_type_, train_flag_);
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "fail to create a primitive_c: " << cnode->fullname_with_scope();
       lite::NoSupportOp::GetInstance()->InsertOp(primitive->name());

@@ -18,7 +18,6 @@
 #ifdef PRIMITIVE_WRITEABLE
 #include <memory>
 #include <map>
-
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/ops/assert_op.h"
 #include "src/ops/space_to_batch.h"
@@ -175,8 +174,6 @@
 #include "src/ops/uniform_real.h"
 #include "src/ops/rank.h"
 #include "src/ops/is_finite.h"
-
-#ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
 #include "src/ops/activation_grad.h"
 #include "src/ops/apply_momentum.h"
@@ -209,7 +206,6 @@
 #include "src/ops/sigmoid_cross_entropy_with_logits.h"
 #include "src/ops/sigmoid_cross_entropy_with_logits_grad.h"
 #include "src/ops/strided_slice_grad.h"
-#endif
 #endif
 namespace mindspore {
 namespace lite {
@@ -513,13 +509,14 @@ std::shared_ptr<PrimitiveC> GetTupleGetItemPrim() {
 
 template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
 std::shared_ptr<PrimitiveC> NewPrimitiveC(const mindspore::Primitive &prim, const std::vector<AnfNodePtr> &inputs,
-                                          const schema::QuantType &quantType) {
+                                          const schema::QuantType &quantType, bool train_flag = false) {
   auto primc = std::make_shared<T>();
   if (primc == nullptr) {
     MS_LOG(ERROR) << "make_shared PrimitiveC failed";
     return nullptr;
   }
   primc->set_quant_type(quantType);
+  primc->set_train_flag(train_flag);
   auto ret = primc->UnPackAttr(prim, inputs);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "UnPackAttr failed";
@@ -529,7 +526,7 @@ std::shared_ptr<PrimitiveC> NewPrimitiveC(const mindspore::Primitive &prim, cons
 }
 
 std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
-                                               const schema::QuantType &quantType) {
+                                               const schema::QuantType &quantType, bool train_flag) {
   const auto &op_type = prim.name();
   if (op_type == "ReLU" || op_type == "ReLU6" || op_type == "Sigmoid" || op_type == "HSwish" || op_type == "HSigmoid") {
     return NewPrimitiveC<Activation>(prim, inputs, quantType);
@@ -544,7 +541,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   } else if (op_type == "Concat") {
     return NewPrimitiveC<Concat>(prim, inputs, quantType);
   } else if (op_type == "Conv2D") {
-    return NewPrimitiveC<Conv2D>(prim, inputs, quantType);
+    return NewPrimitiveC<Conv2D>(prim, inputs, quantType, train_flag);
   } else if (op_type == "Cos") {
     return NewPrimitiveC<Cos>(prim, inputs, quantType);
   } else if (op_type == "DepthwiseConv2dNative" || op_type == "DepthwiseConv2D") {
@@ -664,7 +661,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   } else if (op_type == "Range") {
     return NewPrimitiveC<Range>(prim, inputs, quantType);
   } else if (op_type == "Tile") {
-    return NewPrimitiveC<Tile>(prim, inputs, quantType);
+    return NewPrimitiveC<Tile>(prim, inputs, quantType, train_flag);
   } else if (op_type == "GatherNd") {
     return NewPrimitiveC<GatherNd>(prim, inputs, quantType);
   } else if (op_type == "Square") {
@@ -685,7 +682,6 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<ArgMax>(prim, inputs, quantType);
   } else if (op_type == "Gelu") {
     return NewPrimitiveC<GeLU>(prim, inputs, quantType);
-#ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
     return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
   } else if (op_type == "SparseSoftmaxCrossEntropyWithLogits") {
@@ -706,7 +702,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
   } else if (op_type == "Conv2DBackpropFilter") {
     return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
-  } else if (op_type == "Conv2DBackpropInput") {
+  } else if (op_type == "Conv2DBackpropInput" && train_flag) {
     return NewPrimitiveC<Conv2DGradInput>(prim, inputs, quantType);
   } else if ((op_type == "BatchNormGrad") || (op_type == "FusedBatchNormGradEx")) {
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
@@ -748,10 +744,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<StridedSliceGrad>(prim, inputs, quantType);
   } else if (op_type == "AbsGrad") {
     return NewPrimitiveC<AbsGrad>(prim, inputs, quantType);
-#else
-  } else if (op_type == "Conv2DBackpropInput") {
+  } else if (op_type == "Conv2DBackpropInput" && !train_flag) {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
-#endif
   } else {
     MS_LOG(ERROR) << "Unsupported primitive type in Create : " << op_type;
     return nullptr;
@@ -1065,7 +1059,6 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) UniformReal(primitive);
     case schema::PrimitiveType_Rank:
       return new (std::nothrow) Rank(primitive);
-#ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);
     case schema::PrimitiveType_PoolingGrad:
@@ -1140,7 +1133,6 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) SigmoidCrossEntropyWithLogitsGrad(primitive);
     case schema::PrimitiveType_StridedSliceGrad:
       return new (std::nothrow) StridedSliceGrad(primitive);
-#endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);
       break;
@@ -1169,6 +1161,10 @@ int PrimitiveC::Type() const {
 bool PrimitiveC::infer_flag() const { return this->infer_flag_; }
 
 void PrimitiveC::set_infer_flag(bool flag) { this->infer_flag_ = flag; }
+
+bool PrimitiveC::train_flag() const { return this->train_flag_; }
+
+void PrimitiveC::set_train_flag(bool flag) { this->train_flag_ = flag; }
 
 int PrimitiveC::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) {
   auto input = inputs.front();

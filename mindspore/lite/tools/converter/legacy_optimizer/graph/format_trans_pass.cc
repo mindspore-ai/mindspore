@@ -48,21 +48,8 @@ STATUS FormatTransPass::GetInsertFormatTrans(const schema::CNodeT &node, FormatT
                                              FormatTransNodeType *afterNodeType) {
   if (fmkType == converter::FmkType_TFLITE) {  // inference by nhwc
     return RET_NO_CHANGE;
-  } else if (fmkType == converter::FmkType_CAFFE) {  // inference by nchw
-    if (!IsContain(GetNhwcOpList(), GetCNodeTType(node))) {
-      return RET_NO_CHANGE;
-    }
-    *beforeNodeType = kNCHW2NHWC;
-    *afterNodeType = kNHWC2NCHW;
-    return RET_OK;
-  } else if (fmkType == converter::FmkType_MS) {
-    if (!IsContain(GetNhwcOpList(), GetCNodeTType(node))) {
-      return RET_NO_CHANGE;
-    }
-    *beforeNodeType = kNCHW2NHWC;
-    *afterNodeType = kNHWC2NCHW;
-    return RET_OK;
-  } else if (fmkType == converter::FmkType_ONNX) {
+  } else if (fmkType == converter::FmkType_CAFFE || fmkType == converter::FmkType_MS ||
+             fmkType == converter::FmkType_ONNX) {
     if (!IsContain(GetNhwcOpList(), GetCNodeTType(node))) {
       return RET_NO_CHANGE;
     }
@@ -173,11 +160,19 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
     if (node->primitive->value.type == schema::PrimitiveType_DepthToSpace) {
       reinterpret_cast<schema::DepthToSpaceT *>(attr)->format = schema::Format_NHWC;
     }
-#ifdef SUPPORT_TRAIN
-    if (IsContain(GetNhwcAllInputOpList(), GetCNodeTType(**iter))) {
-      int idx_num = node->inputIndex.size();
-      if (GetCNodeTType(**iter) == schema::PrimitiveType_BNGrad) idx_num = 2;
-      for (int i = 0; i < idx_num; i++) {
+    auto specInsertIndexes = GetExtNhwcIndexes();
+    auto opType = GetCNodeTType(**iter);
+    if (specInsertIndexes.find(opType) != specInsertIndexes.end()) {
+      for (auto insert_index : specInsertIndexes[opType]) {
+        iter = InsertFormatTransNode(graph, iter, kBefore, insert_index, beforeNodeType, &status);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";
+          return RET_ERROR;
+        }
+      }
+    } else if (IsContain(GetNhwcAllInputOpList(), opType)) {
+      auto input_size = node->inputIndex.size();
+      for (size_t i = 0; i < input_size; i++) {
         iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
         if (status != RET_OK) {
           MS_LOG(ERROR) << "InsertNchw2NhwcNode before " << nodeName << "failed";
@@ -185,23 +180,8 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
         }
       }
     } else {
-      int idx = 0;
-      if (GetCNodeTType(**iter) == schema::PrimitiveType_ApplyMomentum) idx = 3;
-      if (GetCNodeTType(**iter) == schema::PrimitiveType_Sgd) idx = 1;
-      if (GetCNodeTType(**iter) == schema::PrimitiveType_Adam) idx = 9;
-      iter = InsertFormatTransNode(graph, iter, kBefore, idx, beforeNodeType, &status);
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";
-        return RET_ERROR;
-      }
+      iter = InsertFormatTransNode(graph, iter, kBefore, 0, beforeNodeType, &status);
     }
-#else
-    iter = InsertFormatTransNode(graph, iter, kBefore, 0, beforeNodeType, &status);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";
-      return RET_ERROR;
-    }
-#endif
     iter = InsertFormatTransNode(graph, iter, kAfter, 0, afterNodeType, &status);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "InsertNhwc2NchwNode after " << nodeName << "failed";

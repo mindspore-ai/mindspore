@@ -88,7 +88,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
   }
 
   // anf -- fb
-  auto meta_graph = Export(graph);
+  auto meta_graph = Export(graph, false, false, flag->trainModel);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;

@@ -159,41 +159,41 @@ int Tile::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   } else {
     multiples = GetMultiples();
   }
-#ifdef SUPPORT_TRAIN
-  const size_t in_dims = input->shape().size();
-  const size_t delta_dims = in_dims - multiples.size();
+  if (train_flag()) {
+    const size_t in_dims = input->shape().size();
+    const size_t delta_dims = in_dims - multiples.size();
 
-  size_t i = 0;
-  for (; i < delta_dims; ++i) {
-    int tmp = input->shape().at(i);
-    out_shape.push_back(tmp);
-  }
-  for (; i < in_dims; ++i) {
-    int tmp = input->shape().at(i) * (multiples[i - delta_dims]);
-    out_shape.push_back(tmp);
-  }
-#else
-  std::vector<int> dims = GetDims();
-  if (inputs_.size() == 2 && dims.empty()) {
-    for (int dim = 0; dim < inputs_[1]->ElementsNum(); ++dim) {
-      dims.push_back(dim);
+    size_t i = 0;
+    for (; i < delta_dims; ++i) {
+      int tmp = input->shape().at(i);
+      out_shape.push_back(tmp);
+    }
+    for (; i < in_dims; ++i) {
+      int tmp = input->shape().at(i) * (multiples[i - delta_dims]);
+      out_shape.push_back(tmp);
+    }
+  } else {
+    std::vector<int> dims = GetDims();
+    if (inputs_.size() == 2 && dims.empty()) {
+      for (int dim = 0; dim < inputs_[1]->ElementsNum(); ++dim) {
+        dims.push_back(dim);
+      }
+    }
+    const size_t in_dims = input->shape().size();
+
+    MS_ASSERT(multiples.size() == dims.size());
+    for (size_t i = 0; i < in_dims; ++i) {
+      out_shape.push_back(input->shape().at(i));
+    }
+    for (size_t i = 0; i < dims.size(); ++i) {
+      if (input->shape().at(dims.at(i)) != 0 &&
+          multiples.at(i) > std::numeric_limits<int>::max() / input->shape().at(dims.at(i))) {
+        MS_LOG(ERROR) << "The value of multiples[" << i << "] is too big";
+        return RET_ERROR;
+      }
+      out_shape.at(dims.at(i)) = input->shape().at(dims.at(i)) * (multiples.at(i));
     }
   }
-  const size_t in_dims = input->shape().size();
-
-  MS_ASSERT(multiples.size() == dims.size());
-  for (size_t i = 0; i < in_dims; ++i) {
-    out_shape.push_back(input->shape().at(i));
-  }
-  for (size_t i = 0; i < dims.size(); ++i) {
-    if (input->shape().at(dims.at(i)) != 0 &&
-        multiples.at(i) > std::numeric_limits<int>::max() / input->shape().at(dims.at(i))) {
-      MS_LOG(ERROR) << "The value of multiples[" << i << "] is too big";
-      return RET_ERROR;
-    }
-    out_shape.at(dims.at(i)) = input->shape().at(dims.at(i)) * (multiples.at(i));
-  }
-#endif
   output->set_shape(out_shape);
   return RET_OK;
 }

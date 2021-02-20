@@ -24,39 +24,40 @@
 
 namespace mindspore {
 namespace lite {
-static const std::vector<schema::PrimitiveType> nhwcOpList = {
-#ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_Conv2DGradFilter,
-  schema::PrimitiveType_Conv2DGradInput,
-  schema::PrimitiveType_GroupConv2DGradInput,
-  schema::PrimitiveType_PoolingGrad,
-  schema::PrimitiveType_BiasGrad,
-  schema::PrimitiveType_BNGrad,
-  schema::PrimitiveType_ApplyMomentum,
-  schema::PrimitiveType_Sgd,
-  schema::PrimitiveType_Adam,
-#endif
-  schema::PrimitiveType_Conv2D,
-  schema::PrimitiveType_DeConv2D,
-  schema::PrimitiveType_DepthwiseConv2D,
-  schema::PrimitiveType_DeDepthwiseConv2D,
-  schema::PrimitiveType_Pooling,
-  schema::PrimitiveType_LocalResponseNormalization,
-  schema::PrimitiveType_Resize,
-  schema::PrimitiveType_BatchNorm,
-  schema::PrimitiveType_FusedBatchNorm,
-  schema::PrimitiveType_PReLU,
-  schema::PrimitiveType_BiasAdd,
-  schema::PrimitiveType_SpaceToDepth,
-  schema::PrimitiveType_DepthToSpace,
-  schema::PrimitiveType_TopK};
+static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveType_Conv2DGradFilter,
+                                                              schema::PrimitiveType_Conv2DGradInput,
+                                                              schema::PrimitiveType_GroupConv2DGradInput,
+                                                              schema::PrimitiveType_PoolingGrad,
+                                                              schema::PrimitiveType_BiasGrad,
+                                                              schema::PrimitiveType_BNGrad,
+                                                              schema::PrimitiveType_ApplyMomentum,
+                                                              schema::PrimitiveType_Sgd,
+                                                              schema::PrimitiveType_Adam,
+                                                              schema::PrimitiveType_Conv2D,
+                                                              schema::PrimitiveType_DeConv2D,
+                                                              schema::PrimitiveType_DepthwiseConv2D,
+                                                              schema::PrimitiveType_DeDepthwiseConv2D,
+                                                              schema::PrimitiveType_Pooling,
+                                                              schema::PrimitiveType_LocalResponseNormalization,
+                                                              schema::PrimitiveType_Resize,
+                                                              schema::PrimitiveType_BatchNorm,
+                                                              schema::PrimitiveType_FusedBatchNorm,
+                                                              schema::PrimitiveType_PReLU,
+                                                              schema::PrimitiveType_BiasAdd,
+                                                              schema::PrimitiveType_SpaceToDepth,
+                                                              schema::PrimitiveType_DepthToSpace,
+                                                              schema::PrimitiveType_TopK};
 
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
-#ifdef SUPPORT_TRAIN
   schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_ActivationGrad, schema::PrimitiveType_Conv2DGradFilter,
-  schema::PrimitiveType_BNGrad
-#endif
-};
+  schema::PrimitiveType_BNGrad};
+
+// index {} mean all inputs need insert
+static std::unordered_map<schema::PrimitiveType, std::vector<int>> extNhwcInsertIndex = {
+  {schema::PrimitiveType_BNGrad, {0, 1}},
+  {schema::PrimitiveType_ApplyMomentum, {3}},
+  {schema::PrimitiveType_Sgd, {1}},
+  {schema::PrimitiveType_Adam, {9}}};
 
 static const std::vector<schema::PrimitiveType> fp32FullOpList = {
   schema::PrimitiveType_Concat, schema::PrimitiveType_Add,
@@ -133,18 +134,10 @@ static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_L2Norm};
 
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
-#ifdef SUPPORT_TRAIN
-  schema::PrimitiveType_Eltwise,       schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
-  schema::PrimitiveType_Power,         schema::PrimitiveType_StridedSlice, schema::PrimitiveType_Split,
-  schema::PrimitiveType_Crop,          schema::PrimitiveType_Mul,          schema::PrimitiveType_Add,
-  schema::PrimitiveType_ActivationGrad
-#else
   schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
   schema::PrimitiveType_Power,   schema::PrimitiveType_StridedSlice, schema::PrimitiveType_Add,
   schema::PrimitiveType_Split,   schema::PrimitiveType_Slice,        schema::PrimitiveType_Crop,
-  schema::PrimitiveType_Mul,     schema::PrimitiveType_Maximum
-#endif
-};
+  schema::PrimitiveType_Mul,     schema::PrimitiveType_Maximum,      schema::PrimitiveType_ActivationGrad};
 
 static const std::unordered_map<int, int> nc2NhAxisMap = {{0, 0}, {1, -1}, {2, 1}, {3, 2}};
 
@@ -155,6 +148,8 @@ std::vector<schema::PrimitiveType> GetInsertOpList() { return needInsertOpList; 
 std::vector<schema::PrimitiveType> Getfp32FullOpList() { return fp32FullOpList; }
 
 std::vector<schema::PrimitiveType> GetNhwcOpList() { return nhwcOpList; }
+
+std::unordered_map<schema::PrimitiveType, std::vector<int>> GetExtNhwcIndexes() { return extNhwcInsertIndex; }
 
 std::vector<schema::PrimitiveType> GetNhwcAllInputOpList() { return nhwcOpAllInputList; }
 
