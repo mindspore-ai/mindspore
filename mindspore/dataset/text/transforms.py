@@ -316,8 +316,8 @@ class Ngram(TextTensorOperation):
             `pad_width` will be capped at n-1. For example, specifying left_pad=("_", 2) would pad left side of the
             sequence with "__" (default=None).
         right_pad (tuple, optional): Padding performed on right side of the sequence shaped like
-            ("pad_token", pad_width). `pad_width` will be capped at n-1. For example, specifying right_pad=("-", 2)
-            would pad right side of the sequence with "--" (default=None).
+            ("pad_token", pad_width). `pad_width` will be capped at n-1. For example, specifying right_pad=("_", 2)
+            would pad right side of the sequence with "__" (default=None).
         separator (str, optional): Symbol used to join strings together. For example. if 2-gram is
             ["mindspore", "amazing"] with separator="-", the result would be ["mindspore-amazing"]
             (default=None, which will use whitespace as separator).
