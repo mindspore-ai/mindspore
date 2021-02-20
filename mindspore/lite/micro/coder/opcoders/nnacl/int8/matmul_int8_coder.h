@@ -39,7 +39,7 @@ class MatMulInt8Coder final : public OperatorCoder {
   Tensor *filter_tensor_{nullptr};
   Tensor *bias_tensor_{nullptr};
   MatMulParameter *params_{nullptr};
-  MatmulQuantArg quant_params_{0};
+  MatmulQuantParameter quant_params_{0};
   size_t a_pack_ptr_size_{0};
   int8_t *a_pack_ptr_{nullptr};
   size_t b_pack_batch_ptr_size_{0};

@@ -33,7 +33,6 @@
 #include "nnacl/int8/relux_int8.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 class NNaclInt8Serializer : public Serializer {
  public:
   NNaclInt8Serializer() = default;
@@ -53,11 +52,10 @@ class NNaclInt8Serializer : public Serializer {
   void CodeStruct(const std::string &name, const ::QuantMulArg &quant_mul_arg);
   void CodeStruct(const std::string &name, const ReduceQuantArg &reduce_quant_arg);
   void CodeStruct(const std::string &name, const ReshapeQuantArg &reshape_quant_arg);
-  void CodeStruct(const std::string &name, const MatmulQuantArg &matmul_quant_arg);
+  void CodeStruct(const std::string &name, const MatmulQuantParameter &matmul_quant_arg);
   void CodeStruct(const std::string &name, const SubQuantArg &sub_quant_arg);
   void CodeStruct(const std::string &name, const DivQuantArg &div_quant_arg);
   void CodeStruct(const std::string &name, const ReluXQuantArg &relu_quant_arg);
 };
-
 }  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_INT8_SERIALIZER_H_
