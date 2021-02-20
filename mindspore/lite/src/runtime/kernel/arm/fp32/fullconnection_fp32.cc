@@ -67,10 +67,5 @@ int FullconnectionCPUKernel::ReSize() {
   return MatmulFp32BaseCPUKernel::ReSize();
 }
 
-int FullconnectionCPUKernel::Run() {
-  MatmulFp32BaseCPUKernel::Run();
-  return RET_OK;
-}
-
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FullConnection, LiteKernelCreator<FullconnectionCPUKernel>)
 }  // namespace mindspore::kernel

@@ -33,7 +33,6 @@ class FullconnectionCPUKernel : public MatmulFp32BaseCPUKernel {
   ~FullconnectionCPUKernel() = default;
   int Init() override;
   int ReSize() override;
-  int Run() override;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FULLCONNECTION_H_

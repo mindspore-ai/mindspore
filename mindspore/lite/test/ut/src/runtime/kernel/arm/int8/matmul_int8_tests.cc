@@ -79,58 +79,6 @@ void MMInt8TestInit(std::vector<lite::Tensor *> *inputs, std::vector<lite::Tenso
   delete[] weight_data;
 }
 
-TEST_F(TestMatmulInt8, simple) {
-#define ROW 10
-#define COL 15
-#define DEPTH 10
-#define ROW4 UP_ROUND(ROW, 4)
-#define COL4 UP_ROUND(COL, 4)
-#define DEPTH16 UP_ROUND(DEPTH, 16)
-  int8_t a[ROW * DEPTH] = {-3, -3, 0, -2, -4, -2, 1,  0,  -1, 0,  5,  1,  3,  4,  4,  -3, -5, 2,  -2, 4,
-                           4,  5,  1, -1, 5,  5,  2,  -1, 0,  4,  -4, 2,  5,  -2, 5,  3,  -1, 2,  -4, 5,
-                           -5, 4,  5, 3,  5,  4,  -2, 5,  5,  -5, -5, -5, 2,  -4, -3, 3,  -3, -5, 5,  0,
-                           2,  -4, 4, 2,  -5, 3,  -1, 3,  -3, 2,  -5, -4, 0,  -5, 2,  4,  0,  -5, -1, 4,
-                           3,  5,  5, 2,  -5, -5, -4, -5, 3,  3,  3,  0,  -2, 0,  -2, -3, -2, 3,  5,  -5};
-  int8_t b[DEPTH * COL] = {1,  2,  -2, -5, -4, 2,  3,  2,  -5, 4,  -5, 4,  1, -2, 1,  5,  5,  5,  2,  5,  -3, -3,
-                           -1, -3, -1, 0,  -4, 0,  1,  -2, -2, -3, -5, 1,  1, 0,  4,  5,  -3, -1, 4,  3,  5,  4,
-                           2,  4,  -3, -4, 1,  4,  -4, 5,  -1, -2, 3,  5,  5, 2,  1,  -4, 1,  2,  -3, 0,  -2, 4,
-                           -3, -3, 1,  3,  4,  -1, 3,  1,  -5, -1, 2,  0,  0, 5,  -1, -5, 5,  -5, 0,  3,  -3, 4,
-                           3,  1,  -3, -3, 2,  -2, -3, -3, 3,  4,  2,  -1, 2, 0,  -2, 4,  5,  3,  -1, -3, -2, -1,
-                           4,  3,  -5, 1,  0,  0,  -1, -4, -3, -2, 5,  3,  2, 1,  -4, 1,  4,  5,  -1, 2,  -2, 2,
-                           1,  -2, 5,  2,  -4, -4, 1,  1,  2,  -1, -5, -4, 4, 1,  -3, 4,  -1, -4};
-
-  int8_t correct[ROW * COL] = {
-    -36, -33, 11,  4,   -12, -7,  11,  0,   37,  -30, -13, -2, -30, -3,  29,  46,  -13, -84, -8,  6,   39,  26,
-    -67, -48, 57,  12,  32,  44,  -24, -85, 22,  32,  -8,  -8, 20,  10,  -45, 12,  -69, 36,  22,  -37, 58,  27,
-    -24, -11, -22, -50, 26,  50,  28,  -56, -42, -23, -1,  70, -58, 54,  35,  -61, 54,  40,  -11, 35,  43,  3,
-    7,   30,  -7,  -13, 73,  -3,  26,  26,  -11, -37, 0,   19, 34,  -4,  0,   -22, 71,  8,   -25, -6,  -5,  31,
-    8,   63,  -25, -55, -62, -17, 23,  1,   36,  12,  -38, 2,  11,  27,  18,  5,   4,   -59, -17, 1,   25,  9,
-    13,  -77, 13,  9,   -11, 26,  -52, 42,  28,  6,   44,  4,  2,   26,  19,  -31, 46,  23,  -57, 15,  -31, 39,
-    40,  -9,  8,   38,  40,  27,  -19, -47, 14,  50,  14,  18, 0,   -59, 39,  -48, -47, 35};
-
-  int8_t output[ROW * COL] = {0};
-  int8_t *a_r4x16 = new int8_t[ROW4 * DEPTH16];
-  memset(a_r4x16, 0, ROW4 * DEPTH16);
-  int8_t *b_c16x4 = new int8_t[COL4 * DEPTH16];
-  memset(b_c16x4, 0, COL4 * DEPTH16);
-  RowMajor2Row16x4MajorInt8(a, a_r4x16, ROW, DEPTH);
-  RowMajor2Col16x4MajorInt8(b, DEPTH, COL, b_c16x4);
-  int a_sums[ROW4] = {0};
-  int bias[COL4] = {0};
-  int multiplier, ls, rs;
-  QuantizeRoundParameterWithDoublePrecision(1.0f, &multiplier, &ls, &rs);
-#ifdef ENABLE_ARM64
-  MatmulInt8Neon64(a_r4x16, b_c16x4, output, ROW4, COL4, DEPTH16, a_sums, bias, INT8_MIN, INT8_MAX, 0, &multiplier, &ls,
-                   &rs, ROW, COL, COL, false);
-#else
-  MatMulInt8_16x4_r(a_r4x16, b_c16x4, output, ROW, COL, DEPTH16, COL, a_sums, bias, &ls, &rs, &multiplier, 0, INT8_MIN,
-                    INT8_MAX, false);
-#endif
-  ASSERT_EQ(0, CompareOutputData(output, correct, ROW * COL, 0.1));
-  delete[] a_r4x16;
-  delete[] b_c16x4;
-}
-
 TEST_F(TestMatmulInt8, mmtest1) {
   float in[] = {6.583835634764597,   11.337275140963907,  -4.125256949459629, 10.994337291530833,
                 19.086065139532636,  3.620842999158455,   13.167624585590346, -18.326739299407755,

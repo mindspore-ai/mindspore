@@ -25,12 +25,9 @@
 extern "C" {
 #endif
 /* 4x16 16x4 -> 4x4 */
+/* matmul */
 void MatMulInt8_16x4(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
                      const int *input_sum, const int *bias);
-void MatMulInt8_16x4_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
-                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
-                       int32_t *right_shift, int32_t *multiplier, int32_t output_zp, int32_t mini, int32_t maxi,
-                       bool per_channel);
 void RowMajor2Row16x4MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void RowMajor2Col16x4MajorInt8(int8_t *src, int row, int col, int8_t *dst);
 void CalcInputSums(int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order);
@@ -41,6 +38,7 @@ void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int c
                    int32_t *right_shift, size_t stride, size_t filter_peroc, int32_t *filter_zp);
 
 /* 8x4 4x8 -> 8x8 */
+/* optimize conv */
 void RowMajor2Row8x4MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_4,
                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
@@ -48,6 +46,7 @@ void MatMulInt8_8x8_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
                       size_t per_channel);
 
 /* 4x16 16x2 -> 4x2 */
+/* arm32 conv1x1 */
 void RowMajor2Row2x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row, size_t col, size_t deep_16,
                       size_t stride, const int32_t *input_sum, const int32_t *bias, int32_t *left_shift,
@@ -55,6 +54,7 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
                       bool peroc);
 
 /* 4x4 4x16 -> 4x16 */
+/* optimize conv1x1 */
 void RowMajor2Row4x16MajorInt8(const int8_t *src_ptr, int8_t *dst_ptr, int row, int col);
 void PackInput4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum,
                                  size_t input_channel, size_t plane_size, int32_t filter_zp);

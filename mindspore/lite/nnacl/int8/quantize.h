@@ -66,17 +66,6 @@ typedef struct PreluQuantArg {
   QuantArg out_quant_args_;
 } PreluQuantArg;
 
-typedef struct MatmulQuantArg {
-  QuantArg input;
-  QuantArg weight;
-  QuantArg output;
-  int32_t out_act_min;
-  int32_t out_act_max;
-  int32_t left_shift;
-  int32_t right_shift;
-  int32_t quant_multiplier;
-} MatmulQuantArg;
-
 typedef struct CropQuantArg {
   QuantArg in_args_;
   QuantArg out_args_;
