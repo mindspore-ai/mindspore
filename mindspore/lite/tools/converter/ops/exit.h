@@ -31,7 +31,6 @@ class Exit : public PrimitiveC {
   ~Exit() = default;
   MS_DECLARE_PARENT(Exit, PrimitiveC);
   explicit Exit(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore

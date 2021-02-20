@@ -12,8 +12,6 @@ include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 file(GLOB OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc)
 
-file(GLOB CONVERTER_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc)
-
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../flag/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
@@ -145,7 +143,6 @@ ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tf
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${OPS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
-set_property(SOURCE ${CONVERTER_OPS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${KERNEL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_executable(converter_lite
@@ -153,7 +150,6 @@ add_executable(converter_lite
         ${CCSRC_SRC}
         ${CONVERTER_SRC}
         ${OPS_SRC}
-        ${CONVERTER_OPS_SRC}
         ${KERNEL_SRC}
         ${LITE_SRC}
         )
