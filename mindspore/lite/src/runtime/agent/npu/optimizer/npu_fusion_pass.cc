@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,11 @@ int NPUFusionPass::ConcatFusion(kernel::LiteKernel *kernel) {
 }
 
 int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
-  auto pre_kernel = kernel->in_kernels()[0];
+  auto is_input_kernel = kernel->in_kernels().empty();
+  kernel::LiteKernel *pre_kernel = nullptr;
+  if (!is_input_kernel) {
+    pre_kernel = kernel->in_kernels()[0];
+  }
   auto in_tensor = kernel->in_tensors()[0];
   std::vector<kernel::LiteKernel *> pre_insert_kernels;
   for (const auto &trans_kernel : kernel->out_kernels()) {
@@ -225,7 +229,11 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
       auto post_in_kernels = post_kernel->in_kernels();
       for (size_t i = 0; i < post_in_kernels.size(); i++) {
         if (post_in_kernels[i] == trans_kernel) {
-          post_in_kernels[i] = pre_kernel;
+          if (is_input_kernel) {
+            post_in_kernels.erase(post_in_kernels.begin() + i);
+          } else {
+            post_in_kernels[i] = pre_kernel;
+          }
           break;
         }
       }
@@ -234,16 +242,18 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
     }
     RemoveAndFreeKernel(trans_kernel);
   }
-  auto pre_out_kernels = pre_kernel->out_kernels();
-  size_t index = 0;
-  for (; index < pre_out_kernels.size(); index++) {
-    if (pre_out_kernels[index] == kernel) {
-      pre_out_kernels.erase(pre_out_kernels.begin() + index);
-      break;
+  if (!is_input_kernel) {
+    auto pre_out_kernels = pre_kernel->out_kernels();
+    size_t index = 0;
+    for (; index < pre_out_kernels.size(); index++) {
+      if (pre_out_kernels[index] == kernel) {
+        pre_out_kernels.erase(pre_out_kernels.begin() + index);
+        break;
+      }
     }
+    pre_out_kernels.insert(pre_out_kernels.begin() + index, pre_insert_kernels.begin(), pre_insert_kernels.end());
+    pre_kernel->set_out_kernels(pre_out_kernels);
   }
-  pre_out_kernels.insert(pre_out_kernels.begin() + index, pre_insert_kernels.begin(), pre_insert_kernels.end());
-  pre_kernel->set_out_kernels(pre_out_kernels);
   RemoveAndFreeKernel(kernel);
   return RET_OK;
 }

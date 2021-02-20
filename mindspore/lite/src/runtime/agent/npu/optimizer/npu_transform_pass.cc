@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,12 @@ int NPUTransformPass::InsertPreNodes(kernel::LiteKernel *kernel, std::vector<ker
       MS_LOG(ERROR) << "New nchw tensor failed when inserting pre nhwc2nchw kernel.";
       return RET_ERROR;
     }
+    auto name = kernel->name() + "_pre_trans" + "_Nhwc2Nchw_" + std::to_string(total++);
+    tensor->set_tensor_name(name + "/output0");
     std::vector<Tensor *> pre_trans_out_tensors = {tensor};
     all_tensors_->push_back(pre_trans_out_tensors[0]);
 
     // Create pre transform kernel: Nhwc2Nchw
-    auto name = kernel->name() + "_pre_trans" + "_Nhwc2Nchw_" + std::to_string(total++);
     auto *trans_kernel =
       NPUPassUtils::CreateNhwc2NchwKernel({kernel->in_tensors()[0]}, pre_trans_out_tensors, context_, name);
 
@@ -121,6 +122,11 @@ int NPUTransformPass::Run() {
   for (size_t i = 0; i < all_kernels_->size();) {
     auto kernel = (*all_kernels_)[i];
     if (kernel->desc().arch != kNPU || npu_trans_nodes.find(kernel->Type()) == npu_trans_nodes.end()) {
+      i++;
+      continue;
+    }
+    if (kernel->Type() == schema::PrimitiveType_Resize &&
+        kernel->in_tensors()[0]->Height() > kernel->out_tensors()[0]->Height()) {
       i++;
       continue;
     }
