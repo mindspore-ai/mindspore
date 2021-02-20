@@ -36,27 +36,20 @@ STATUS TFCropAndResizeParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "New PrimitiveT failed";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::ResizeT>();
+  auto attr = std::make_unique<schema::CropAndResizeT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new attr failed";
     return RET_NULL_PTR;
   }
   tensorflow::AttrValue attr_value;
-  attr->format = schema::Format_NHWC;
-
-  attr->coordinateTransformMode = schema::CoordinateTransformMode_TF_CROP_AND_RESIZE;
-
-  // align_corners
-  if (TensorFlowUtils::FindAttrValue(tf_op, "align_corners", &attr_value)) {
-    attr->alignCorners = true;
-  }
 
   // extrapolation_value
   if (!TensorFlowUtils::FindAttrValue(tf_op, "extrapolation_value", &attr_value)) {
     MS_LOG(ERROR) << "The align_corners attr should be specified";
     return RET_ERROR;
   }
-  attr->extrapolationValue = attr_value.f();
+
+  attr->extrapolation_value = attr_value.f();
 
   // method
   if (!TensorFlowUtils::FindAttrValue(tf_op, "method", &attr_value)) {
