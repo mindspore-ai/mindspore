@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -587,10 +587,10 @@ TEST_F(MindDataTestPipeline, TestFilterSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> decode_op = vision::Decode(true);
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>(true);
   EXPECT_NE(decode_op, nullptr);
 
-  std::shared_ptr<TensorOperation> resize_op = vision::Resize({64, 64});
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({64, 64}));
   EXPECT_NE(resize_op, nullptr);
 
   // Create a Map operation on ds
@@ -888,7 +888,7 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0.5);
+  std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlip>(0.5);
   EXPECT_NE(random_vertical_flip_op, nullptr);
 
   // Create a Map operation on ds
@@ -937,7 +937,7 @@ TEST_F(MindDataTestPipeline, TestProjectDuplicateColumnFail) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0.5);
+  std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlip>(0.5);
   EXPECT_NE(random_vertical_flip_op, nullptr);
 
   // Create a Map operation on ds
@@ -966,7 +966,7 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0.5);
+  std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlip>(0.5);
   EXPECT_NE(random_vertical_flip_op, nullptr);
 
   // Create a Map operation on ds
@@ -1011,7 +1011,7 @@ TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> resize_op = vision::Resize({30, 30});
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
   EXPECT_NE(resize_op, nullptr);
 
   // Create a Map operation on ds
@@ -1586,10 +1586,10 @@ TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> resize_op = vision::Resize({30, 30});
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
   EXPECT_NE(resize_op, nullptr);
 
-  std::shared_ptr<TensorOperation> center_crop_op = vision::CenterCrop({16, 16});
+  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
   EXPECT_NE(center_crop_op, nullptr);
 
   // Create a Map operation on ds

@@ -39,8 +39,8 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeDisabled) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, SequentialSampler(0, 11));
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> decode = vision::Decode();
-  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCrop({5});
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5}));
   ds = ds->Map({decode, random_resized_crop}, {"image"});
 
   std::shared_ptr<DatasetNode> node = ds->IRNode();
@@ -70,8 +70,8 @@ TEST_F(MindDataTestTensorOpFusionPass, RandomCropDecodeResizeEnabled) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, SequentialSampler(0, 11));
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> decode = vision::Decode();
-  std::shared_ptr<TensorOperation> random_resized_crop = vision::RandomResizedCrop({5});
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5}));
   ds = ds->Map({decode, random_resized_crop}, {"image"});
 
   std::shared_ptr<DatasetNode> node = ds->IRNode();

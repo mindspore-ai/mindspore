@@ -18,6 +18,7 @@
 #include "common/common_test.h"
 #include "include/api/types.h"
 #include "minddata/dataset/include/execute.h"
+#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision.h"
 #ifdef ENABLE_ACL
 #include "minddata/dataset/include/vision_ascend.h"
@@ -28,6 +29,7 @@
 #include "include/api/context.h"
 
 using namespace mindspore;
+using namespace mindspore::dataset;
 using namespace mindspore::dataset::vision;
 
 class TestDE : public ST::Common {
@@ -42,9 +44,13 @@ TEST_F(TestDE, TestResNetPreprocess) {
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define transform operations
-  mindspore::dataset::Execute Transform(
-    {Decode(), Resize({224, 224}),
-     Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}), HWC2CHW()});
+  auto decode(new vision::Decode());
+  auto resize(new vision::Resize({224, 224}));
+  auto normalize(
+    new vision::Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}));
+  auto hwc2chw(new vision::HWC2CHW());
+
+  mindspore::dataset::Execute Transform({decode, resize, normalize, hwc2chw});
 
   // Apply transform on images
   Status rc = Transform(image, &image);
