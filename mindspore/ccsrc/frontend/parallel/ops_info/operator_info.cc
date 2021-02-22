@@ -442,6 +442,76 @@ Status OperatorInfo::CreateGroupByTensorMap(const Shape &tensor_map, std::vector
   return SUCCESS;
 }
 
+Status OperatorInfo::CreateGroupForOptShard(TensorLayout *const tensor_layout, std::vector<Group> *groups) {
+  if (groups == nullptr) {
+    MS_LOG(ERROR) << "The group is null. Operator is " << name_;
+    return FAILED;
+  }
+  CheckGlobalDeviceManager();
+  int64_t rank = g_device_manager->global_rank();
+  DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
+  RankList group_devices;
+  Shape tensor_map = tensor_layout->origin_tensor_map().array();
+  if (dev_matrix.GetDevicesByTensorMap(tensor_map, &group_devices) != SUCCESS) {
+    return FAILED;
+  }
+
+  if (group_devices.size() == 1) {
+    MS_LOG(INFO) << "The dev size is 1, no need to create group.";
+    return SUCCESS;
+  }
+  int64_t optimizer_weight_shard_size = ParallelContext::GetInstance()->optimizer_weight_shard_size();
+  if (optimizer_weight_shard_size != -1) {
+    // not fully use opt shard
+    int64_t index = std::find(group_devices.begin(), group_devices.end(), rank) - group_devices.begin();
+    int64_t repeated_size = group_devices.size();
+    if (repeated_size % optimizer_weight_shard_size != 0) {
+      MS_LOG(WARNING) << "Parallel optimizer: optimizer_weight_shard_size " << optimizer_weight_shard_size
+                      << " can not be applied. The repeated size of Operator " << name_ << " is " << repeated_size;
+      return FAILED;
+    }
+    repeated_size = repeated_size / optimizer_weight_shard_size;
+    // create allgather group
+    // eg: optimizer_weight_shard_size = 2, [0, 8, 16, 24] -> [0, 8], [16, 24]
+    RankList new_group_devices(
+      group_devices.begin() + index / optimizer_weight_shard_size * optimizer_weight_shard_size,
+      group_devices.begin() + (index / optimizer_weight_shard_size + 1) * optimizer_weight_shard_size);
+    Group allgather_group = g_device_manager->CreateGroup(new_group_devices);
+    groups->push_back(allgather_group);
+    tensor_layout->set_opt_shard_group(allgather_group.name());
+    MS_LOG(INFO) << "Parallel optimizer: create allgather group " << allgather_group.name();
+    // create mirror group
+    // eg: optimizer_weight_shard_size = 2, [0, 8, 16, 24] -> [0, 16], [8, 24]
+    int64_t device_num = g_device_manager->stage_device_num();
+    Shape dev_mat = {repeated_size, device_num / repeated_size};
+    DeviceMatrix temp_dev_matrix(rank, stage_device_list_, dev_mat);
+    RankList mirror_group_devices;
+    if (temp_dev_matrix.GetDevicesAlongDim(0, &mirror_group_devices) != SUCCESS) {
+      return FAILED;
+    }
+    Group mirror_group = g_device_manager->CreateGroup(mirror_group_devices);
+    groups->push_back(mirror_group);
+    tensor_layout->set_opt_shard_mirror_group(mirror_group.name());
+    MS_LOG(INFO) << "Parallel optimizer: create mirror group " << mirror_group.name();
+  } else {
+    // fully use opt shard
+    // create allgather group
+    Group allgather_group = g_device_manager->CreateGroup(group_devices);
+    groups->push_back(allgather_group);
+    tensor_layout->set_opt_shard_group(allgather_group.name());
+    MS_LOG(INFO) << "Parallel optimizer: create allgather group " << allgather_group.name();
+  }
+  // save in tensor_layout for strategy ckpt
+  auto integrated_save = ParallelContext::GetInstance()->optimizer_weight_shard_aggregated_save();
+  if (!integrated_save) {
+    tensor_layout->set_opt_weight_shard_size(optimizer_weight_shard_size);
+    int32_t opt_weight_shard_step = (group_devices.back() - group_devices.front()) / (group_devices.size() - 1);
+    tensor_layout->set_opt_weight_shard_step(opt_weight_shard_step);
+    MS_LOG(INFO) << "Parallel optimizer: save opt_weight_shard_step " << opt_weight_shard_step << " in strategy ckpt";
+  }
+  return SUCCESS;
+}
+
 Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   if (group == nullptr) {
     MS_LOG(ERROR) << "The group is null.";

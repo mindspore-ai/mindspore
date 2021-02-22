@@ -32,6 +32,7 @@
 #include "pipeline/jit/pipeline.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/auto_parallel/operator_costmodel.h"
+#include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 
 using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
 
@@ -134,7 +135,7 @@ bool IsLastStage();
 void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes,
                            const FuncGraphManagerPtr &manager);
 
-std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth);
+ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth);
 
 void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes);
 

@@ -21,6 +21,7 @@
 
 namespace mindspore {
 bool IsInParallelBlackList(const PrimitivePtr &);
+bool IsInAllGatherNodeList(const CNodePtr &);
 bool IsParallelConsiderCNode(const CNodePtr &);
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_PARALLEL_NODE_CHECK_H_

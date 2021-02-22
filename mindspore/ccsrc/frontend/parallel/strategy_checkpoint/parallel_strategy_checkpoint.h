@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <memory>
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/context.h"
@@ -30,7 +31,9 @@
 namespace mindspore {
 namespace parallel {
 using StrategyMap = std::unordered_map<std::string, StrategyPtr>;
-using TensorInfoMap = std::unordered_map<std::string, TensorInfo>;
+using TensorLayoutPtr = std::shared_ptr<TensorLayout>;
+using TensorInfoMap = std::unordered_map<std::string, TensorLayoutPtr>;
+using ParameterMap = std::vector<std::pair<std::string, ParameterPtr>>;
 using ManualShapeMap = std::unordered_map<std::string, std::vector<std::pair<int64_t, int64_t>>>;
 using GroupInfoMap = std::vector<std::pair<std::string, std::vector<uint32_t>>>;
 class StrategyCheckpoint {

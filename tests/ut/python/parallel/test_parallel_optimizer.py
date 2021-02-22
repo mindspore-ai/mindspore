@@ -131,6 +131,17 @@ def test_auto_parallel_momentum_5():
     assert not param_dict["weight2"][5]
 
 
+def test_auto_parallel_momentum_6():
+    # test not fully use parallel optimizer with optimizer_weight_shard_size
+    # weight1 could not be shard and weight2 is repeated
+    context.set_auto_parallel_context(optimizer_weight_shard_size=2)
+    train_network = auto_parallel_compile_net("semi_auto_parallel", 32, Net2, ((4, 8), (8, 1)), ((4, 4), (4, 2)))
+    param_dict = train_network.parameter_layout_dict
+    # validate opt_shard_group
+    assert param_dict["weight1"][5].startswith("2")
+    assert param_dict["weight2"][5].startswith("2")
+
+
 def test_AdamWeightDecay():
     """ test_AdamWeightDecay """
     context.set_auto_parallel_context(parallel_mode="data_parallel", device_num=2, enable_parallel_optimizer=True)

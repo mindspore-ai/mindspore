@@ -538,7 +538,7 @@ def _get_merged_param_data(net, param_name, param_data, integrated_save):
                 allgather_net = get_allgather_cell(opt_shard_group, False)
                 net.parallel_parameter_merge_net_dict[param_name] = allgather_net
             param_data = allgather_net(param_data)
-    elif opt_shard_group:
+    elif opt_shard_group and context.get_auto_parallel_context("optimizer_weight_shard_aggregated_save"):
         if allgather_net is None:
             allgather_net = get_allgather_cell(opt_shard_group, False)
             net.parallel_parameter_merge_net_dict[param_name] = allgather_net
@@ -1164,7 +1164,9 @@ def _convert_to_list(strategy):
             tensor_map = list(layout.tensor_map[0].dim)
             param_split_shape = list(layout.param_split_shape[0].dim)
             field_size = int(layout.field)
-            train_map[param_name] = [dev_mat, tensor_map, param_split_shape, field_size]
+            shard_stride = int(layout.opt_weight_shard_step)
+            shard_size = int(layout.opt_weight_shard_size)
+            train_map[param_name] = [dev_mat, tensor_map, param_split_shape, field_size, shard_stride, shard_size]
         except BaseException as e:
             raise ValueError(f"{e.__str__()}. Please make sure that strategy matches the node_strategy.proto.")
     return train_map

@@ -246,6 +246,10 @@ def _remove_repeated_slices(tensor_layout):
 def _infer_rank_list(train_map, predict_map=None):
     """infer checkpoint slices to be loaded"""
     ret = {}
+    if _get_pipeline_stages() > 1:
+        local_rank = int(_get_global_rank() % (_get_device_num() / _get_pipeline_stages()))
+    else:
+        local_rank = _get_global_rank()
     for param_name in train_map:
         train_layout = train_map[param_name]
         train_dev_mat = train_layout[0]
@@ -269,15 +273,13 @@ def _infer_rank_list(train_map, predict_map=None):
         dev_num = np.array(predict_layout[0]).prod()
         # optimization pass
         if _check_same_layout(train_layout, predict_layout):
-            dev_rank = _get_global_rank()
-            ret[param_name] = ([dev_rank], True)
+            ret[param_name] = ([local_rank], True)
             continue
         if _check_similar_layout(train_layout, predict_layout):
             if len(rank_list) == 1:
                 ret[param_name] = (rank_list, True)
             elif len(rank_list) == dev_num:
-                dev_rank = _get_global_rank()
-                ret[param_name] = ([rank_list[dev_rank]], True)
+                ret[param_name] = ([rank_list[local_rank]], True)
             else:
                 ret[param_name] = (rank_list, False)
         else:

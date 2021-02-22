@@ -39,7 +39,6 @@
 #include "frontend/parallel/graph_util/node_info.h"
 #include "frontend/parallel/node_check.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
-#include "frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "utils/comm_manager.h"
@@ -1012,12 +1011,20 @@ static std::pair<AnfNodePtr, bool> FindParameterByValueNode(const AnfNodePtr &no
                         << param_v.size();
     }
     auto param_ptr = param_v[0]->user_data<parallel::TensorLayout>();
-    if (param_ptr != nullptr && !param_ptr->opt_shard_group().empty()) {
+    if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty()) {
       return std::make_pair(nullptr, true);
     }
     return std::make_pair(node, true);
   }
   return std::make_pair(nullptr, false);
+}
+
+static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
+  auto param_ptr = node->user_data<parallel::TensorLayout>();
+  if (param_ptr && !param_ptr->opt_shard_group().empty() && param_ptr->opt_shard_mirror_group().empty()) {
+    return std::make_pair(nullptr, false);
+  }
+  return std::make_pair(node, false);
 }
 
 // Only used for InsertMirrorOps
@@ -1027,11 +1034,7 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   }
 
   if (node->isa<Parameter>()) {
-    auto param_ptr = node->user_data<parallel::TensorLayout>();
-    if (param_ptr != nullptr && !param_ptr->opt_shard_group().empty()) {
-      return std::make_pair(nullptr, false);
-    }
-    return std::make_pair(node, false);
+    return FindParameterByParameter(node, func_graph);
   }
 
   if (node->isa<ValueNode>()) {
@@ -1052,8 +1055,9 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   if (IsSomePrimitive(cnode, RECEIVE) && !cnode->has_user_data<OperatorInfo>()) {
     return std::make_pair(node, false);
   }
-
-  if (IsParallelCareNode(cnode)) {
+  // When not fully use opt shard, allgather and mirror would be both inserted.
+  // Skip allgather here and find parameter recursively.
+  if (IsParallelCareNode(cnode) && !IsInAllGatherNodeList(cnode)) {
     return std::make_pair(nullptr, false);
   }
 
@@ -1181,10 +1185,17 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
 
     auto param_ptr = param_node_pair.first->cast<ParameterPtr>();
     std::string param_name;
-    if (param_ptr != nullptr) {
+    if (param_ptr) {
       param_name = param_ptr->name();
+      std::string opt_shard_mirror_group;
+      if (param_ptr->user_data<TensorLayout>()) {
+        opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+      }
+      if (!opt_shard_mirror_group.empty()) {
+        // mirror ops is covered in not fully use opt shard case
+        backward_op = CreateMirrorOps(opt_shard_mirror_group, static_cast<size_t>(opt_shard_mirror_group[0]));
+      }
     }
-
     // not a RefKey
     if (!param_node_pair.second) {
       int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
@@ -1218,26 +1229,23 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
     }
     std::string instance_name = MIRROR_OP;
     CNodePtr cnode = node->input(index)->cast<CNodePtr>();
+    auto op = backward_op[0];
     if (IsCastBeforMirror(node, index) || (cnode != nullptr && IsSomePrimitive(cnode, LOAD))) {
-      for (auto &op : backward_op) {
-        // insert new node before the node
-        MS_EXCEPTION_IF_NULL(cnode);
-        AnfNodePtr pre_node = cnode->input(1);
-        InsertMirrorNode(root, op, cnode, size_t(1), pre_node, func_graph, instance_name, param_name);
-        auto comm_op = cnode->input(size_t(1))->cast<CNodePtr>();
-        // add fusion flag
-        AddCommOpFusionType(comm_op, param_node_pair.first);
-      }
+      // insert new node before the node
+      MS_EXCEPTION_IF_NULL(cnode);
+      AnfNodePtr pre_node = cnode->input(1);
+      InsertMirrorNode(root, op, cnode, size_t(1), pre_node, func_graph, instance_name, param_name);
+      auto comm_op = cnode->input(size_t(1))->cast<CNodePtr>();
+      // add fusion flag
+      AddCommOpFusionType(comm_op, param_node_pair.first);
       continue;
     }
-    for (auto &op : backward_op) {
-      AnfNodePtr pre_node = node->input(index);
-      InsertMirrorNode(root, op, node, index, pre_node, func_graph, instance_name, param_name);
-      auto comm_op = node->input(index)->cast<CNodePtr>();
-      // add fusion flag
-      // pipeline mirror would not be set, which should be supported later
-      AddCommOpFusionType(comm_op, param_node_pair.first);
-    }
+    AnfNodePtr pre_node = node->input(index);
+    InsertMirrorNode(root, op, node, index, pre_node, func_graph, instance_name, param_name);
+    auto comm_op = node->input(index)->cast<CNodePtr>();
+    // add fusion flag
+    // pipeline mirror would not be set, which should be supported later
+    AddCommOpFusionType(comm_op, param_node_pair.first);
   }
 }
 
@@ -1638,7 +1646,11 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
           manager->SetEdge(cnode, SizeToLong(param_pair.second), next_cnode.second);
           MS_LOG(INFO) << "Parallel optimizer is applied between " << parameter->ToString() << " and "
                        << GetPrimName(cnode);
-          continue;
+        } else {
+          // insert allgather operator between shard parameter and cnode
+          InsertAllGatherOp(root, opt_shard_group, param_pair, parameter, op_name);
+          MS_LOG(INFO) << "Parallel optimizer is applied between " << parameter->ToString() << " and "
+                       << GetPrimName(cnode);
         }
       } else {
         // insert allgather operator between shard parameter and cnode
@@ -1649,6 +1661,35 @@ static void ApplyParallelOptOnParam(const FuncGraphPtr &root, const AnfNodePtr &
       }
     }
   }
+}
+
+static std::string GetOptShardGroup(const AnfNodePtr &parameter, TensorLayout *const tensor_layout,
+                                    const OperatorInfoPtr &distribute_operator) {
+  std::string opt_shard_group;
+  if (!ParameterRequireGrad(parameter)) {
+    // only trainable parameters need parallel optimizer
+    MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " is not trainable parameter.";
+  } else if (parameter->cast<ParameterPtr>()->param_info() &&
+             !parameter->cast<ParameterPtr>()->param_info()->parallel_optimizer()) {
+    MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " does not need weight shard.";
+  } else if (tensor_layout->GenerateOptShardSliceShape() == Status::SUCCESS) {
+    // get the shard tensor slice shape if the weight is repeated on devices
+    // and the shape of the first dimension could be divided
+    // apply parallel optimizer on parameters
+    // create communication group for allgather operator
+    std::vector<Group> dev_group;
+    if (distribute_operator->CreateGroupForOptShard(tensor_layout, &dev_group) == Status::SUCCESS &&
+        !dev_group.empty()) {
+      opt_shard_group = dev_group[0].name();
+      MS_LOG(INFO) << "Parallel optimizer: create group for " << parameter->ToString() << " success.";
+    } else {
+      MS_LOG(ERROR) << "Parallel optimizer: create group for " << parameter->ToString() << " failed.";
+    }
+  } else {
+    MS_LOG(WARNING) << "Parallel optimizer: " << parameter->ToString() << "'s distributed shape "
+                    << tensor_layout->slice_shape().ToString() << " does not satisfy the conditions.";
+  }
+  return opt_shard_group;
 }
 
 // When this function returns non-empty string, that means parallel optimizer is applied on this parameter.
@@ -1674,33 +1715,10 @@ std::string SetParallelShape(const AnfNodePtr &parameter, const std::pair<AnfNod
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool enable_parallel_optimizer = ParallelContext::GetInstance()->enable_parallel_optimizer();
   if (enable_parallel_optimizer) {
-    if (!ParameterRequireGrad(parameter)) {
-      // only trainable parameters need parallel optimizer
-      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " is not trainable parameter.";
-    } else if (parameter->cast<ParameterPtr>()->param_info() &&
-               !parameter->cast<ParameterPtr>()->param_info()->parallel_optimizer()) {
-      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << " does not need weight shard.";
-    } else if (tensor_layout.GenerateOptShardSliceShape() == Status::SUCCESS) {
-      // get a totally shard tensor slice shape if the weight is repeated on devices
-      // and the shape of the first dimension could be divided
-      // apply parallel optimizer on parameters
-      // create communication group for allgather operator
-      slice_shape = tensor_layout.opt_shard_slice_shape();
-      std::vector<Group> dev_group;
-      if (distribute_operator->CreateGroupByTensorMap(tensor_layout.origin_tensor_map().array(), &dev_group) ==
-            Status::SUCCESS &&
-          !dev_group.empty()) {
-        opt_shard_group = dev_group[0].name();
-        // set communication group in tensor layout for checkpoint saving
-        tensor_layout.set_opt_shard_group(opt_shard_group);
-        MS_LOG(INFO) << "Parallel optimizer: create group " << opt_shard_group << " for " << parameter->ToString()
-                     << " success.";
-      } else {
-        MS_LOG(WARNING) << "Parallel optimizer: create group for " << parameter->ToString() << " failed.";
-      }
-    } else {
-      MS_LOG(INFO) << "Parallel optimizer: " << parameter->ToString() << "'s shape does not satisfy the conditions.";
-    }
+    opt_shard_group = GetOptShardGroup(parameter, &tensor_layout, distribute_operator);
+  }
+  if (!opt_shard_group.empty()) {
+    slice_shape = tensor_layout.opt_shard_slice_shape();
   }
   MS_LOG(INFO) << "SetParallelShape slice_shape  " << parameter->ToString() << "  shape "
                << MakeValue(slice_shape)->ToString() << ", op name is " << distribute_operator->name();
@@ -2769,21 +2787,21 @@ bool IsCohesiveNode(const CNodePtr &cnode) {
          IsPrimitiveCNode(cnode, prim::kPrimAllGather) || IsPrimitiveCNode(cnode, prim::kPrimMiniStepAllGather);
 }
 
-std::vector<std::pair<std::string, int64_t>> NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
+ParameterMap NodeParameterName(const CNodePtr &node, int64_t index, size_t curr_depth) {
   if (curr_depth > MAX_RECURSIVE_DEPTH) {
     MS_LOG(WARNING) << "When finding the parameters' name of a operator, exceeded the maximum depth: "
                     << MAX_RECURSIVE_DEPTH;
     return {};
   }
   std::vector<AnfNodePtr> node_inputs{node->inputs()};
-  std::vector<std::pair<std::string, int64_t>> param_names;
+  ParameterMap param_names;
   for (int64_t i = 0; i < UlongToLong(node_inputs.size()); ++i) {
     int64_t idx = index > i ? index : i;
     auto input = node_inputs[i];
     if (input->isa<Parameter>()) {
       auto input_parameter = input->cast<ParameterPtr>();
       if (input_parameter->has_default() && ParameterRequireGrad(input_parameter)) {
-        param_names.push_back({input_parameter->name(), idx});
+        param_names.push_back({input_parameter->name(), input_parameter});
       }
     } else if (input->isa<CNode>()) {
       CNodePtr cnode = input->cast<CNodePtr>();
@@ -2825,10 +2843,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
       std::string stratey_key_name = prim->name() + "_" + param_name;
       stra_map[stratey_key_name] = operator_info->strategy();
       for (auto param_name_pair : param_names) {
-        if (param_name_pair.second - 1 >= UlongToLong(input_tensor_info.size())) {
-          continue;
-        }
-        tensor_info_map[param_name_pair.first] = input_tensor_info[param_name_pair.second - 1];
+        tensor_info_map[param_name_pair.first] = param_name_pair.second->user_data<TensorLayout>();
       }
       if (operator_info->name().find(EMBEDDING_LOOKUP) != std::string::npos ||
           operator_info->name().find(GATHERV2) != std::string::npos) {
