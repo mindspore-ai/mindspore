@@ -15,8 +15,10 @@
 """ test_dictionary """
 import numpy as np
 
-from mindspore import Tensor
+from mindspore import Tensor, context
 from mindspore.nn import Cell
+
+context.set_context(mode=context.GRAPH_MODE)
 
 
 class Net1(Cell):
@@ -32,6 +34,7 @@ class Net1(Cell):
             output.append(j)
         return output
 
+
 class Net2(Cell):
     def __init__(self):
         super().__init__()
@@ -44,6 +47,7 @@ class Net2(Cell):
         for j in dic.values():
             output.append(j)
         return output
+
 
 class Net3(Cell):
     def __init__(self):
@@ -59,6 +63,7 @@ class Net3(Cell):
             output.append(j)
         return output
 
+
 def test_dict1():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
@@ -73,9 +78,25 @@ def test_dict2():
     net = Net2()
     net(input_me)
 
+
 def test_dict3():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net = Net3()
     out_me = net(input_me)
     assert out_me == ('x', 'y', 0, (0, 1))
+
+
+def test_dict4():
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+
+        def construct(self, tuple_x):
+            output = tuple_x + tuple_x
+            return output
+
+    x = (1, Tensor([1, 2, 3]), {"a": Tensor([1, 2, 3]), "b": 1})
+    net = Net()
+    out_me = net(x)
+    assert out_me == x + x

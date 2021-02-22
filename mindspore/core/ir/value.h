@@ -184,7 +184,7 @@ class ValueDictionary : public Value {
     buffer << ") values:(";
     for (const auto &value : values) {
       MS_EXCEPTION_IF_NULL(value);
-      buffer << value->DumpText() << ", ";
+      buffer << value->ToString() << ", ";
     }
     buffer << ")";
     return buffer.str();
