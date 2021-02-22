@@ -29,21 +29,21 @@ class GraphRecorder : public BaseRecorder {
  public:
   GraphRecorder() : BaseRecorder(), func_graph_(nullptr), graph_type_("") {}
   GraphRecorder(const std::string &module, const std::string &tag, const FuncGraphPtr &graph,
-                const std::string &file_type, const int graph_id)
-      : BaseRecorder(module, tag), func_graph_(graph), graph_type_(file_type), id_(graph_id) {}
+                const std::string &file_type, int graph_id)
+      : BaseRecorder(module, tag), func_graph_(graph), graph_type_(file_type), graph_id_(graph_id) {}
   ~GraphRecorder() {}
   void SetModule(const std::string &module) { module_ = module; }
   void SetGraphType(const std::string &file_type) { graph_type_ = file_type; }
   void SetFuncGraph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
   void SetDumpFlag(bool full_name) { full_name_ = full_name; }
-  void SetNodeId(int id) { id_ = id; }
+
   virtual void Export();
 
  private:
   FuncGraphPtr func_graph_;
   std::string graph_type_;
+  int graph_id_;
   bool full_name_{false};
-  int id_{0};
 };
 using GraphRecorderPtr = std::shared_ptr<GraphRecorder>;
 }  // namespace mindspore

@@ -50,7 +50,7 @@ void GraphExecOrderRecorder::Export() {
   if (!realpath.has_value()) {
     return;
   }
-  std::string real_file_path = realpath.value() + ".txt";
+  std::string real_file_path = realpath.value() + std::to_string(graph_id_);
   DumpGraphExeOrder(real_file_path, exec_order_);
 }
 }  // namespace mindspore

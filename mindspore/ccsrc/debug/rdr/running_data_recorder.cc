@@ -68,10 +68,10 @@ bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const Func
 }
 
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
-                          const std::vector<CNodePtr> &&final_exec_order) {
+                          const std::vector<CNodePtr> &final_exec_order, int graph_id) {
   std::string submodule_name = std::string(GetSubModuleName(module));
   GraphExecOrderRecorderPtr graph_exec_order_recorder =
-    std::make_shared<GraphExecOrderRecorder>(submodule_name, tag, final_exec_order);
+    std::make_shared<GraphExecOrderRecorder>(submodule_name, tag, final_exec_order, graph_id);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_exec_order_recorder));
   return ans;
 }
@@ -99,7 +99,8 @@ bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const Func
   return false;
 }
 
-bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag, std::vector<CNodePtr> &&final_exec_order) {
+bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
+                          const std::vector<CNodePtr> &final_exec_order, int graph_id) {
   static bool already_printed = false;
   if (already_printed) {
     return false;

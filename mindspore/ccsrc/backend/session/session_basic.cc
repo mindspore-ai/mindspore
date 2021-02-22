@@ -39,9 +39,6 @@
 #include "utils/utils.h"
 #include "debug/anf_ir_dump.h"
 #include "utils/trace_base.h"
-#ifdef ENABLE_DUMP_IR
-#include "debug/rdr/running_data_recorder.h"
-#endif
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/common.h"
@@ -1449,11 +1446,6 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
   auto node_list = TopoSort(func_graph->get_return());
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
-#ifdef ENABLE_DUMP_IR
-  std::string tag = "constructed_kernel_graph";
-  std::string file_type = ".ir;.pb";
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, false, file_type);
-#endif
   front_backend_graph_map_[func_graph] = graph;
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();
   for (const auto &node : node_list) {
