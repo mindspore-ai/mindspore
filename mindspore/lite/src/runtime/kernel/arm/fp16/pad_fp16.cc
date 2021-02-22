@@ -26,6 +26,9 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Pad;
 
 namespace mindspore::kernel {
+namespace {
+constexpr size_t kPadMaxInputSize = 2;
+}  // namespace
 int PadFp16CPUKernel::RunImpl(int task_id) {
   PadFp16(input_, output_, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
   return RET_OK;
@@ -48,6 +51,9 @@ int PadFp16CPUKernel::Run() {
 
   int ret = 0;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
+    if (in_tensors_.size() == kPadMaxInputSize) {
+      CopyPaddingFromInput();
+    }
     if (pad_param_->constant_value_ - 0.0f < 1e-5) {
       memset(output_, 0, output_tensor->ElementsNum() * sizeof(float16_t));
     } else {
