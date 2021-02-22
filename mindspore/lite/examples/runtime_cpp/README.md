@@ -1,4 +1,4 @@
-## 构建与运行
+# 构建与运行
 
 - 环境要求
     - 系统环境：Linux x86_64，推荐使用Ubuntu 18.04.02LTS
@@ -7,7 +7,7 @@
         - [GCC](https://gcc.gnu.org/releases.html) >= 7.3.0
         - [Android_NDK](https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip) >= r20
     - [Git](https://git-scm.com/downloads) >= 2.28.0
-    
+
 - 编译构建
 
   在`mindspore/lite/examples/runtime_cpp`目录下执行build脚本，将能够自动下载相关文件并编译Demo。
@@ -48,8 +48,19 @@
   export LD_LIBRARY_PATH = /data/local/tmp/runtime_cpp_demo/lib:{LD_LIBRARY_PATH}
   ```
 
-  编译构建后，进入`mindspore/lite/examples/runtime_cpp/build`目录，并执行以下命令，体验MindSpore Lite推理mobilenetv2模型。
+  运行示例需要传递两个参数，第一个参数是模型路径，第二个参数是Option，不同的Option将会运行不同的推理流程。
+
+  | option | 流程                        |
+  | ------ | --------------------------- |
+  | 0      | 基本推理流程                |
+  | 1      | 输入维度Resize流程          |
+  | 2      | CreateSession简化版接口流程 |
+  | 3      | Session并行流程             |
+  | 4      | 共享内存池流程              |
+  | 5      | 回调运行流程                |
+
+  例如：可以执行以下命令，体验MindSpore Lite推理MobileNetV2模型。
 
   ```bash
-  ./runtime_cpp ../model/mobilenetv2.ms 0
+  cd ./runtime_cpp_demo/bin && ./runtime_cpp ../model/mobilenetv2.ms 0
   ```

@@ -24,7 +24,7 @@ target_link_libraries(
 SET(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/build/tmp)
 
 INSTALL(TARGETS runtime_cpp
-        DESTINATION exe)
+        DESTINATION bin)
 
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lib/libhiai.so
         DESTINATION lib)

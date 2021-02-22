@@ -26,6 +26,34 @@
 #include "include/lite_session.h"
 #include "include/version.h"
 
+std::string RealPath(const char *path) {
+  size_t PATH_MAX = 4096;
+  if (path == nullptr) {
+    std::cerr << "path is nullptr" << std::endl;
+    return "";
+  }
+  if ((strlen(path)) >= PATH_MAX) {
+    std::cerr << "path is too long" << std::endl;
+    return "";
+  }
+  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
+  if (resolved_path == nullptr) {
+    std::cerr << "new resolved_path failed" << std::endl;
+    return "";
+  }
+#ifdef _WIN32
+  char *real_path = _fullpath(resolved_path.get(), path, 1024);
+#else
+  char *real_path = realpath(path, resolved_path.get());
+#endif
+  if (real_path == nullptr || strlen(real_path) == 0) {
+    std::cerr << "file path is not valid : " << path << std::endl;
+    return "";
+  }
+  std::string res = resolved_path.get();
+  return res;
+}
+
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     std::cerr << "file is nullptr." << std::endl;
@@ -77,6 +105,8 @@ std::shared_ptr<mindspore::lite::Context> CreateCPUContext() {
     std::cerr << "New context failed while running." << std::endl;
     return nullptr;
   }
+  // Configure the number of worker threads in the thread pool to 2, including the main thread.
+  context->thread_num_ = 2;
   // CPU device context has default values.
   auto &cpu_device_info = context->device_list_[0].device_info_.cpu_device_info_;
   // The large core takes priority in thread and core binding methods. This parameter will work in the BindThread
@@ -317,6 +347,7 @@ int Run(const char *model_path) {
   auto ret = session->RunGraph();
   if (ret != mindspore::lite::RET_OK) {
     delete model;
+    delete session;
     std::cerr << "Inference error " << ret << std::endl;
     return ret;
   }
@@ -360,6 +391,7 @@ int RunResize(const char *model_path) {
   auto ret = ResizeInputsTensorShape(session);
   if (ret != mindspore::lite::RET_OK) {
     delete model;
+    delete session;
     std::cerr << "Resize input tensor shape error." << ret << std::endl;
     return ret;
   }
@@ -372,6 +404,7 @@ int RunResize(const char *model_path) {
   ret = session->RunGraph();
   if (ret != mindspore::lite::RET_OK) {
     delete model;
+    delete session;
     std::cerr << "Inference error " << ret << std::endl;
     return ret;
   }
@@ -411,6 +444,7 @@ int RunCreateSessionSimplified(const char *model_path) {
   session->BindThread(true);
   auto ret = session->RunGraph();
   if (ret != mindspore::lite::RET_OK) {
+    delete session;
     std::cerr << "Inference error " << ret << std::endl;
     return ret;
   }
@@ -462,10 +496,6 @@ int RunSessionParallel(const char *model_path) {
     GetInputsByTensorNameAndSetData(session1);
     auto status = session1->RunGraph();
     if (status != 0) {
-      if (model != nullptr) {
-        delete model;
-        model = nullptr;
-      }
       std::cerr << "Inference error " << status << std::endl;
       return;
     }
@@ -476,10 +506,6 @@ int RunSessionParallel(const char *model_path) {
     GetInputsByTensorNameAndSetData(session2);
     auto status = session2->RunGraph();
     if (status != 0) {
-      if (model != nullptr) {
-        delete model;
-        model = nullptr;
-      }
       std::cerr << "Inference error " << status << std::endl;
       return;
     }
@@ -536,6 +562,7 @@ int RunWithSharedMemoryPool(const char *model_path) {
   auto ret = session1->CompileGraph(model);
   if (ret != mindspore::lite::RET_OK) {
     delete model;
+    delete session1;
     std::cerr << "Compile failed while running." << std::endl;
     return -1;
   }
@@ -552,6 +579,7 @@ int RunWithSharedMemoryPool(const char *model_path) {
   auto session2 = mindspore::session::LiteSession::CreateSession(context2.get());
   if (session2 == nullptr) {
     delete model;
+    delete session1;
     std::cerr << "CreateSession failed while running " << std::endl;
     return -1;
   }
@@ -559,6 +587,8 @@ int RunWithSharedMemoryPool(const char *model_path) {
   ret = session2->CompileGraph(model);
   if (ret != mindspore::lite::RET_OK) {
     delete model;
+    delete session1;
+    delete session2;
     std::cerr << "Compile failed while running " << std::endl;
     return -1;
   }
@@ -580,6 +610,8 @@ int RunWithSharedMemoryPool(const char *model_path) {
   ret = session2->RunGraph();
   if (ret != mindspore::lite::RET_OK) {
     delete model;
+    delete session1;
+    delete session2;
     std::cerr << "Inference error " << ret << std::endl;
     return ret;
   }
@@ -646,6 +678,7 @@ int RunCallback(const char *model_path) {
   auto ret = session->RunGraph(before_call_back, after_call_back);
   if (ret != mindspore::lite::RET_OK) {
     delete model;
+    delete session;
     std::cerr << "Inference error " << ret << std::endl;
     return ret;
   }
@@ -665,33 +698,37 @@ int RunCallback(const char *model_path) {
 
 int main(int argc, const char **argv) {
   if (argc < 3) {
-    std::cerr << "Usage: ./runtime_cpp model_path flag" << std::endl;
+    std::cerr << "Usage: ./runtime_cpp model_path Option" << std::endl;
     std::cerr << "Example: ./runtime_cpp ../model/mobilenetv2.ms 0" << std::endl;
-    std::cerr << "When your Flag is 0, you will run MindSpore Lite inference." << std::endl;
-    std::cerr << "When your Flag is 1, you will run MindSpore Lite inference with resize." << std::endl;
-    std::cerr << "When your Flag is 2, you will run MindSpore Lite inference with CreateSession simplified API."
+    std::cerr << "When your Option is 0, you will run MindSpore Lite inference." << std::endl;
+    std::cerr << "When your Option is 1, you will run MindSpore Lite inference with resize." << std::endl;
+    std::cerr << "When your Option is 2, you will run MindSpore Lite inference with CreateSession simplified API."
               << std::endl;
-    std::cerr << "When your Flag is 3, you will run MindSpore Lite inference with session parallel." << std::endl;
-    std::cerr << "When your Flag is 4, you will run MindSpore Lite inference with shared memory pool." << std::endl;
-    std::cerr << "When your Flag is 5, you will run MindSpore Lite inference with callback." << std::endl;
+    std::cerr << "When your Option is 3, you will run MindSpore Lite inference with session parallel." << std::endl;
+    std::cerr << "When your Option is 4, you will run MindSpore Lite inference with shared memory pool." << std::endl;
+    std::cerr << "When your Option is 5, you will run MindSpore Lite inference with callback." << std::endl;
     return -1;
   }
   std::string version = mindspore::lite::Version();
   std::cout << "MindSpore Lite Version is " << version << std::endl;
-  auto model_path = argv[1];
+  auto model_path = RealPath(argv[1]);
+  if (model_path.empty()) {
+    std::cerr << "model path " << argv[1] << " is invalid.";
+    return -1;
+  }
   auto flag = argv[2];
   if (strcmp(flag, "0") == 0) {
-    return Run(model_path);
+    return Run(model_path.c_str());
   } else if (strcmp(flag, "1") == 0) {
-    return RunResize(model_path);
+    return RunResize(model_path.c_str());
   } else if (strcmp(flag, "2") == 0) {
-    return RunCreateSessionSimplified(model_path);
+    return RunCreateSessionSimplified(model_path.c_str());
   } else if (strcmp(flag, "3") == 0) {
-    return RunSessionParallel(model_path);
+    return RunSessionParallel(model_path.c_str());
   } else if (strcmp(flag, "4") == 0) {
-    return RunWithSharedMemoryPool(model_path);
+    return RunWithSharedMemoryPool(model_path.c_str());
   } else if (strcmp(flag, "5") == 0) {
-    return RunCallback(model_path);
+    return RunCallback(model_path.c_str());
   } else {
     std::cerr << "Unsupported Flag " << flag << std::endl;
     return -1;
