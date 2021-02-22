@@ -29,25 +29,23 @@
 
 namespace mindspore {
 namespace somas {
+
 class SomasSolverCore {
  public:
   /// Interface Function: receive parameters, creates the model to solve and then save the result
-  SomasSolverCore(const std::unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
-                  const std::vector<DynamicBitSet> *constraints)
-      : tensors_(tensors),
-        constraints_(*constraints),
-        upperbound_(SIZE_MAX),
-        timing_(0),
-        lifelongmemory_(0),
-        verify_(false),
-        all_(true),
-        best_sol_(0),
-        best_sort_(kGreaterSizeSmallerIndex),
-        best_branching_(kBest),
+  SomasSolverCore(const TensorsDescMap &tensors, const std::vector<DynamicBitSet> *constraints, uint32_t sol,
+                  bool isMultiThreadValid = true)
+      : best_sol_(0),
         sort_strategy_(kGreaterSizeSmallerIndex),
         branching_strategy_(kBest),
-        sol_count_(0),
-        algorithm_(kManyObjects) {}
+        sol_count_(sol),
+        algorithm_(kManyObjects),
+        tensors_(tensors),
+        constraints_(*constraints),
+        upperbound_(SIZE_MAX),
+        verify_(false),
+        all_(true),
+        is_multi_thread_valid_(isMultiThreadValid) {}
   ~SomasSolverCore() = default;
 
   Status MemoryAllocationSolver();
@@ -64,37 +62,29 @@ class SomasSolverCore {
   void SetAlgorithmStrategy(AlgorithmType algorithm_strategy) { algorithm_ = algorithm_strategy; }
   void SetAllStrategies(bool all) { all_ = all; }
   const size_t &GetUpperbound() const { return upperbound_; }
+  const size_t &Getlifelongmemory() const { return lifelong_memory_; }
 
- private:
-  std::unordered_map<size_t, SomasSolverTensorDescPtr> tensors_;
-  vector<BlockTensor> block_tensors_;
-  std::vector<DynamicBitSet> constraints_;
-  size_t upperbound_{0};
-  size_t timing_{0};
-  size_t lifelongmemory_{0};
-  bool verify_{false};
-  bool all_{false};
   uint32_t best_sol_{0};
-  SortingType best_sort_;
-  FittingType best_branching_;
   SortingType sort_strategy_;
   FittingType branching_strategy_;
   uint32_t sol_count_{0};
   AlgorithmType algorithm_;
+  size_t timing_{0};
+
+ private:
+  const TensorsDescMap &tensors_;
+  vector<BlockTensor> block_tensors_;
+  const std::vector<DynamicBitSet> &constraints_;
+  size_t upperbound_{0};
+  size_t lifelong_memory_{0};
+  bool verify_{false};
+  bool all_{false};
+  bool is_multi_thread_valid_{true};
 
   size_t FindSolutions();
   size_t Search(const std::shared_ptr<FootPrint> &pFootprint);
   void AppendLifelongTensors();
   void Destroy(std::shared_ptr<FootPrint> &);
-
-  const std::string sorting_[6] = {"size(>), index(<)",
-                                   "size(>), index(>)",
-                                   "size(>), constraints(<), index(<)",
-                                   "size(>), constraints(<), index(>)",
-                                   "size(>), constraints(>), index(<)",
-                                   "size(>), constraints(>), index(>)"};
-  const std::string branching_[4] = {"bestfit", "smallest", "largest", "worstfit"};
-  const std::string algorithm_type_[2] = {"Shared Objects", "Single Object"};
 };
 }  // namespace somas
 }  // namespace mindspore
