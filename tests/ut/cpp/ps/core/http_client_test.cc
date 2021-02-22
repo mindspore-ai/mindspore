@@ -62,6 +62,8 @@ class TestHttpClient : public UT::Common {
       if (memcpy_s(post_message, len, data, len) != 0) {
         MS_LOG(EXCEPTION) << "The memset_s error";
       }
+      MS_LOG(WARNING) << "The path param:" << path_param;
+      MS_LOG(WARNING) << "The header param:" << header_param;
       EXPECT_STREQ(path_param.c_str(), "value1");
       EXPECT_STREQ(header_param.c_str(), "headerValue");
       EXPECT_STREQ(post_message, "postKey=postValue");

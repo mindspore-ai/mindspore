@@ -110,6 +110,12 @@ void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::share
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << meta->request_id()
+                << " the current time is:"
+                << std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now())
+                     .time_since_epoch()
+                     .count();
   request_handler_(conn, meta, res, size);
 }
 

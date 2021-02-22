@@ -24,7 +24,7 @@
 #include <utility>
 #include <algorithm>
 
-#include "ps/core/cluster_config.h"
+#include "ps/core/cluster_metadata.h"
 #include "ps/core/tcp_client.h"
 #include "ps/core/tcp_server.h"
 #include "ps/core/abstract_node.h"
@@ -37,7 +37,7 @@ class WorkerNode : public AbstractNode {
   WorkerNode() = default;
   ~WorkerNode() override;
 
-  bool Start(const uint32_t &timeout = ClusterConfig::cluster_available_timeout()) override;
+  bool Start(const uint32_t &timeout = ClusterMetadata::instance()->cluster_available_timeout()) override;
   bool Stop() override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 

@@ -107,8 +107,8 @@ bool AbstractNode::Send(const NodeRole &node_role, const std::vector<uint32_t> &
                         const uint32_t &timeout) {
   uint64_t request_id = AddMessageTrack(data.size());
 
-  if (rank_ids.size() != data.size()) {
-    MS_LOG(EXCEPTION) << "The number of rank ids is not equal to the number of data!";
+  if (rank_ids.size() != data.size() || rank_ids.size() != lens.size()) {
+    MS_LOG(EXCEPTION) << "The number of rank ids, data and lens are not equal!";
   }
   for (size_t it = 0; it < rank_ids.size(); ++it) {
     if (!CommUtil::ValidateRankId(node_role, rank_ids.at(it))) {
@@ -235,10 +235,8 @@ uint64_t AbstractNode::CollectiveSendAsync(const enum NodeRole &node_role, const
 }
 
 std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum NodeRole &node_role,
-                                                                   const uint32_t &rank_id, void **output,
-                                                                   size_t *size) {
+                                                                   const uint32_t &rank_id, VectorPtr *output) {
   MS_EXCEPTION_IF_NULL(output);
-  MS_EXCEPTION_IF_NULL(size);
   if (!CommUtil::ValidateRankId(node_role, rank_id)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
   }
@@ -248,8 +246,7 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
   receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = false;
   if (received_data_.count(std::make_pair(rank_id, rank_request_id)) > 0) {
     auto res = received_data_[std::make_pair(rank_id, rank_request_id)];
-    *output = res->data();
-    *size = res->size();
+    *output = res;
     received_data_.erase(std::make_pair(rank_id, rank_request_id));
     receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
     MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
@@ -257,8 +254,7 @@ std::pair<uint32_t, uint64_t> AbstractNode::CollectiveReceiveAsync(const enum No
     receive_callbacks_[std::make_pair(rank_id, rank_request_id)] = [=]() mutable {
       receive_callbacks_mutex_.lock();
       auto res = received_data_[std::make_pair(rank_id, rank_request_id)];
-      *output = res->data();
-      *size = res->size();
+      *output = res;
       received_data_.erase(std::make_pair(rank_id, rank_request_id));
       receive_messages_done_[std::make_pair(rank_id, rank_request_id)] = true;
       MS_LOG(DEBUG) << "Receive data from rank id:" << rank_id << ", the rank request id is:" << rank_request_id;
@@ -295,7 +291,7 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
       } else {
         UpdateSchedulerTime();
       }
-      std::this_thread::sleep_for(std::chrono::seconds(ClusterConfig::heartbeat_interval()));
+      std::this_thread::sleep_for(std::chrono::seconds(ClusterMetadata::instance()->heartbeat_interval()));
     }
   });
 }
@@ -327,7 +323,7 @@ void AbstractNode::UpdateSchedulerTime() {
 bool AbstractNode::CheckSchedulerTimeout() const {
   struct timeval current_time {};
   (void)gettimeofday(&current_time, nullptr);
-  if (scheduler_time_.tv_sec + ClusterConfig::scheduler_timeout() < current_time.tv_sec) {
+  if (scheduler_time_.tv_sec + ClusterMetadata::instance()->scheduler_timeout() < current_time.tv_sec) {
     return true;
   }
   return false;
@@ -414,8 +410,8 @@ bool AbstractNode::WaitForDisconnect(const uint32_t &timeout) {
 }
 
 bool AbstractNode::InitClientToScheduler() {
-  std::string scheduler_host = ClusterConfig::scheduler_host();
-  uint16_t scheduler_port = ClusterConfig::scheduler_port();
+  std::string scheduler_host = ClusterMetadata::instance()->scheduler_host();
+  uint16_t scheduler_port = ClusterMetadata::instance()->scheduler_port();
   client_to_scheduler_ = std::make_shared<TcpClient>(scheduler_host, scheduler_port);
   client_to_scheduler_->SetMessageCallback(
     [&](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
@@ -436,7 +432,7 @@ bool AbstractNode::InitClientToScheduler() {
   });
 
   client_to_scheduler_->set_disconnected_callback([&]() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ClusterConfig::connect_interval()));
+    std::this_thread::sleep_for(std::chrono::milliseconds(ClusterMetadata::instance()->connect_interval()));
     client_to_scheduler_->Init();
   });
   return client_to_scheduler_->WaitConnected();
@@ -507,8 +503,7 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, std
   client->SendMessage(meta, protos, data, size);
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
-  bool res = Wait(request_id, timeout);
-  return res;
+  return Wait(request_id, timeout);
 }
 
 void AbstractNode::ProcessSendDataResp(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
@@ -589,7 +584,7 @@ void AbstractNode::RunReceiveCallback(std::shared_ptr<MessageMeta> meta, const P
   }
   received_data_[std::make_pair(rank_id, rank_request_id)] = received_data;
   MS_LOG(DEBUG) << "Run Receive data callback,the rank id:" << rank_id << ", the rank request id is:" << rank_request_id
-                << ", the send request id is:" << meta->request_id();
+                << ", the send request id is:" << meta->request_id() << " the size is:" << size;
   auto it = receive_callbacks_.find(std::make_pair(rank_id, rank_request_id));
   if (it != receive_callbacks_.end()) {
     receive_callbacks_mutex_.unlock();

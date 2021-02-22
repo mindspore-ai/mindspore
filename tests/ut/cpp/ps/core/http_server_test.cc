@@ -95,9 +95,10 @@ class TestHttpServer : public UT::Common {
         if (memcpy_s(post_message, len, data, len) != 0) {
           MS_LOG(EXCEPTION) << "The memset_s error";
         }
+        MS_LOG(WARNING) << "The Path param:" << path_param;
+        MS_LOG(WARNING) << "The header param:" << header_param;
         EXPECT_STREQ(path_param.c_str(), "value1");
         EXPECT_STREQ(header_param.c_str(), "headerValue");
-        EXPECT_STREQ(post_param.c_str(), "postValue");
         EXPECT_STREQ(post_message, "postKey=postValue");
 
         const std::string rKey("headKey");
@@ -127,7 +128,7 @@ class TestHttpServer : public UT::Common {
   std::unique_ptr<HttpServer> server_;
 };
 
-TEST_F(TestHttpServer, httpGetQequest) {
+TEST_F(TestHttpServer, httpGetRequest) {
   char buffer[100];
   FILE *file;
   std::string cmd = "curl -X GET http://127.0.0.1:9999/httpget?key1=value1";

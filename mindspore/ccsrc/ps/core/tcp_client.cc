@@ -88,6 +88,8 @@ void TcpClient::Init() {
     MS_LOG(EXCEPTION) << "The tcp client ip:" << server_address_ << " is illegal!";
   }
 
+  event_enable_debug_logging(EVENT_DBG_ALL);
+  event_set_log_callback(CommUtil::LogCallback);
   int result = evthread_use_pthreads();
   if (result != 0) {
     MS_LOG(EXCEPTION) << "Use event pthread failed!";
@@ -173,16 +175,11 @@ void TcpClient::ReadCallback(struct bufferevent *bev, void *ctx) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(ctx);
   auto tcp_client = reinterpret_cast<TcpClient *>(ctx);
-  struct evbuffer *input = bufferevent_get_input(const_cast<struct bufferevent *>(bev));
-  MS_EXCEPTION_IF_NULL(input);
 
   char read_buffer[kMessageChunkLength];
+  int read = 0;
 
-  while (EVBUFFER_LENGTH(input) > 0) {
-    int read = evbuffer_remove(input, &read_buffer, sizeof(read_buffer));
-    if (read == -1) {
-      MS_LOG(EXCEPTION) << "Can not drain data from the event buffer!";
-    }
+  while ((read = bufferevent_read(bev, &read_buffer, sizeof(read_buffer))) > 0) {
     tcp_client->OnReadHandler(read_buffer, read);
   }
 }
@@ -311,6 +308,10 @@ bool TcpClient::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &pro
   if (bufferevent_write(buffer_event_, data, size) == -1) {
     MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
     res = false;
+  }
+  int result = bufferevent_flush(buffer_event_, EV_READ | EV_WRITE, BEV_FLUSH);
+  if (result < 0) {
+    MS_LOG(EXCEPTION) << "Bufferevent flush failed!";
   }
   bufferevent_unlock(buffer_event_);
   return res;
