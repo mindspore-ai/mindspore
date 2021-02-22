@@ -192,7 +192,7 @@ set(SUB_COMP
         frontend/operator
         pipeline/jit
         pipeline/pynative
-        common debug pybind_api utils vm profiler ps
+        common debug pybind_api utils vm profiler ps mindquantum
 )
 
 foreach(_comp ${SUB_COMP})
@@ -333,13 +333,14 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore mindspore::pybind11_module)
     target_link_libraries(mindspore mindspore_gvar)
     target_link_libraries(_c_expression PRIVATE -Wl,--whole-archive mindspore -Wl,--no-whole-archive)
-elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore mindspore::pybind11_module)
     target_link_libraries(mindspore mindspore_gvar)
     target_link_libraries(_c_expression PRIVATE -Wl,-force_load mindspore -Wl,-noall_load)
-else ()
-    if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
-        target_link_libraries(mindspore mindspore::pslite proto_input mindspore::protobuf mindspore::event mindspore::event_pthreads ${zeromq_DIRPATH}/zmq_install/lib/libzmq.a)
+else()
+    if(ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
+        target_link_libraries(mindspore mindspore::pslite proto_input mindspore::protobuf
+            mindspore::event mindspore::event_pthreads ${zeromq_DIRPATH}/zmq_install/lib/libzmq.a)
         target_link_libraries(mindspore -Wl,--no-as-needed mindspore::event_core ps_cache)
         if(${ENABLE_IBVERBS} STREQUAL "ON")
             target_link_libraries(mindspore ibverbs rdmacm)

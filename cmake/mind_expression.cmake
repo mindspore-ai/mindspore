@@ -48,6 +48,12 @@ if(ENABLE_CPU)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/mkl_dnn.cmake)
 endif()
 
+if(ENABLE_CPU AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux"
+    AND ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    message("Include projectq")
+    include(${CMAKE_SOURCE_DIR}/cmake/external_libs/projectq.cmake)
+endif()
+
 if(ENABLE_GPU)
     if(ENABLE_MPI)
         include(${CMAKE_SOURCE_DIR}/cmake/external_libs/nccl.cmake)

@@ -98,6 +98,7 @@ from .sparse_ops import SparseToDense
 from ._embedding_cache_ops import (CacheSwapHashmap, SearchCacheIdx, CacheSwapTable, UpdateCache, MapCacheIdx,
                                    SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
+from .quantum_ops import PQC
 
 __all__ = [
     'Unique',
@@ -419,6 +420,7 @@ __all__ = [
     "MatrixInverse",
     "Range",
     "IndexAdd",
+    "PQC",
 ]
 
 __all__.sort()

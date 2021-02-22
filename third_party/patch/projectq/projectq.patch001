@@ -1,0 +1,41 @@
+--- ProjectQ-0.5.1/projectq/backends/_sim/_cppkernels/simulator.hpp	2020-06-05 21:07:57.000000000 +0800
++++ ProjectQ-0.5.1_new/projectq/backends/_sim/_cppkernels/simulator.hpp	2021-01-14 10:52:24.822039389 +0800
+@@ -33,7 +33,6 @@
+ #include <random>
+ #include <functional>
+ 
+-
+ class Simulator{
+ public:
+     using calc_type = double;
+@@ -44,8 +43,9 @@ public:
+     using Term = std::vector<std::pair<unsigned, char>>;
+     using TermsDict = std::vector<std::pair<Term, calc_type>>;
+     using ComplexTermsDict = std::vector<std::pair<Term, complex_type>>;
++    StateVector vec_;
+ 
+-    Simulator(unsigned seed = 1) : N_(0), vec_(1,0.), fusion_qubits_min_(4),
++    Simulator(unsigned seed = 1) : vec_(1,0.), N_(0), fusion_qubits_min_(4),
+                                    fusion_qubits_max_(5), rnd_eng_(seed) {
+         vec_[0]=1.; // all-zero initial state
+         std::uniform_real_distribution<double> dist(0., 1.);
+@@ -562,7 +562,6 @@ private:
+     }
+ 
+     unsigned N_; // #qubits
+-    StateVector vec_;
+     Map map_;
+     Fusion fused_gates_;
+     unsigned fusion_qubits_min_, fusion_qubits_max_;
+@@ -570,10 +569,8 @@ private:
+     std::function<double()> rng_;
+ 
+     // large array buffers to avoid costly reallocations
+-    static StateVector tmpBuff1_, tmpBuff2_;
++    StateVector tmpBuff1_, tmpBuff2_;
+ };
+ 
+-Simulator::StateVector Simulator::tmpBuff1_;
+-Simulator::StateVector Simulator::tmpBuff2_;
+ 
+ #endif

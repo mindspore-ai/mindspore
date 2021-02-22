@@ -158,31 +158,32 @@ static std::string ExceptionTypeToString(ExceptionType type) {
 
 static const char *GetSubModuleName(SubModuleId module_id) {
   static const char *sub_module_names[NUM_SUBMODUES] = {
-    "UNKNOWN",    // SM_UNKNOWN
-    "CORE",       // SM_CORE
-    "ANALYZER",   // SM_ANALYZER
-    "COMMON",     // SM_COMMON
-    "DEBUG",      // SM_DEBUG
-    "DEVICE",     // SM_DEVICE
-    "GE_ADPT",    // SM_GE_ADPT
-    "IR",         // SM_IR
-    "KERNEL",     // SM_KERNEL
-    "MD",         // SM_MD
-    "ME",         // SM_ME
-    "EXPRESS",    // SM_EXPRESS
-    "OPTIMIZER",  // SM_OPTIMIZER
-    "PARALLEL",   // SM_PARALLEL
-    "PARSER",     // SM_PARSER
-    "PIPELINE",   // SM_PIPELINE
-    "PRE_ACT",    // SM_PRE_ACT
-    "PYNATIVE",   // SM_PYNATIVE
-    "SESSION",    // SM_SESSION
-    "UTILS",      // SM_UTILS
-    "VM",         // SM_VM
-    "PROFILER",   // SM_PROFILER
-    "PS",         // SM_PS
-    "LITE",       // SM_LITE
-    "HCCL_ADPT"   // SM_HCCL_ADPT
+    "UNKNOWN",     // SM_UNKNOWN
+    "CORE",        // SM_CORE
+    "ANALYZER",    // SM_ANALYZER
+    "COMMON",      // SM_COMMON
+    "DEBUG",       // SM_DEBUG
+    "DEVICE",      // SM_DEVICE
+    "GE_ADPT",     // SM_GE_ADPT
+    "IR",          // SM_IR
+    "KERNEL",      // SM_KERNEL
+    "MD",          // SM_MD
+    "ME",          // SM_ME
+    "EXPRESS",     // SM_EXPRESS
+    "OPTIMIZER",   // SM_OPTIMIZER
+    "PARALLEL",    // SM_PARALLEL
+    "PARSER",      // SM_PARSER
+    "PIPELINE",    // SM_PIPELINE
+    "PRE_ACT",     // SM_PRE_ACT
+    "PYNATIVE",    // SM_PYNATIVE
+    "SESSION",     // SM_SESSION
+    "UTILS",       // SM_UTILS
+    "VM",          // SM_VM
+    "PROFILER",    // SM_PROFILER
+    "PS",          // SM_PS
+    "LITE",        // SM_LITE
+    "HCCL_ADPT",   // SM_HCCL_ADPT
+    "MINDQUANTUM"  // SM_MINDQUANTUM
   };
 
   return sub_module_names[module_id % NUM_SUBMODUES];
@@ -425,7 +426,7 @@ class LogConfigParser {
 bool ParseLogLevel(const std::string &str_level, MsLogLevel *ptr_level) {
   if (str_level.size() == 1) {
     int ch = str_level.c_str()[0];
-    ch = ch - '0';  // substract ASCII code of '0', which is 48
+    ch = ch - '0';  // subtract ASCII code of '0', which is 48
     if (ch >= DEBUG && ch <= ERROR) {
       if (ptr_level != nullptr) {
         *ptr_level = static_cast<MsLogLevel>(ch);
@@ -444,7 +445,7 @@ static MsLogLevel GetGlobalLogLevel() {
   auto str_level = GetEnv("GLOG_v");
   if (str_level.size() == 1) {
     int ch = str_level.c_str()[0];
-    ch = ch - '0';  // substract ASCII code of '0', which is 48
+    ch = ch - '0';  // subtract ASCII code of '0', which is 48
     if (ch >= DEBUG && ch <= ERROR) {
       log_level = ch;
     }

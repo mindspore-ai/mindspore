@@ -16,6 +16,7 @@
 """Generate bprop for other ops"""
 
 from .. import operations as P
+from .. import composite as C
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from .grad_base import bprop_getters
 
@@ -45,4 +46,23 @@ def get_bprop_iou(self):
 
     def bprop(x, y, out, dout):
         return zeros_like(x), zeros_like(y)
+    return bprop
+
+
+@bprop_getters.register(P.PQC)
+def bprop_pqc(self):
+    """Generate bprop for PQC"""
+
+    t = P.Transpose()
+    mul = P.Mul()
+    sum_ = P.ReduceSum()
+
+    def bprop(encoder_data, ansatz_data, out, dout):
+        dx = t(out[1], (2, 0, 1))
+        dx = mul(dout[0], dx)
+        dx = sum_(dx, 2)
+        dx = t(dx, (1, 0))
+        dy = C.tensor_dot(dout[0], out[2], ((0, 1), (0, 1)))
+        return dx, dy
+
     return bprop
