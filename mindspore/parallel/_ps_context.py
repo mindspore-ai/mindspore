@@ -37,7 +37,7 @@ _set_ps_context_func_map = {
 }
 
 _get_ps_context_func_map = {
-    "enable_ps": ps_context().is_ps_enabled
+    "enable_ps": ps_context().is_ps_mode
 }
 
 def _get_ps_mode_rank():
@@ -111,13 +111,13 @@ def _reset_ps_context():
     ps_context().reset()
 
 def _is_role_worker():
-    return ps_context().is_role_worker()
+    return ps_context().is_worker()
 
 def _is_role_pserver():
-    return ps_context().is_role_pserver()
+    return ps_context().is_server()
 
 def _is_role_sched():
-    return ps_context().is_role_sched()
+    return ps_context().is_scheduler()
 
 def _insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size):
     ps_context().insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size)

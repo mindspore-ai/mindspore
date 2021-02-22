@@ -47,6 +47,11 @@ void PSContext::SetPSEnable(bool enabled) {
     } else {
       MS_LOG(WARNING) << "MS_ROLE is " << ms_role << ", which is invalid.";
     }
+
+    worker_num_ = std::strtol(common::GetEnv("MS_WORKER_NUM").c_str(), nullptr, 10);
+    server_num_ = std::strtol(common::GetEnv("MS_SERVER_NUM").c_str(), nullptr, 10);
+    scheduler_host_ = common::GetEnv("MS_SCHED_HOST");
+    scheduler_port_ = std::strtol(common::GetEnv("MS_SCHED_PORT").c_str(), nullptr, 10);
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";
     is_worker_ = false;
@@ -55,7 +60,7 @@ void PSContext::SetPSEnable(bool enabled) {
   }
 }
 
-bool PSContext::is_ps_enabled() const { return ps_enabled_; }
+bool PSContext::is_ps_mode() const { return ps_enabled_; }
 
 void PSContext::Reset() {
   ps_enabled_ = false;
@@ -82,11 +87,19 @@ std::string PSContext::ms_role() const {
   }
 }
 
-bool PSContext::is_role_worker() const { return is_worker_; }
+bool PSContext::is_worker() const { return is_worker_; }
 
-bool PSContext::is_role_pserver() const { return is_pserver_; }
+bool PSContext::is_server() const { return is_pserver_; }
 
-bool PSContext::is_role_sched() const { return is_sched_; }
+bool PSContext::is_scheduler() const { return is_sched_; }
+
+uint32_t PSContext::initial_worker_num() { return worker_num_; }
+
+uint32_t PSContext::initial_server_num() { return server_num_; }
+
+std::string PSContext::scheduler_host() { return scheduler_host_; }
+
+uint16_t PSContext::scheduler_port() { return scheduler_port_; }
 
 void PSContext::SetPSRankId(int rank_id) { rank_id_ = rank_id; }
 

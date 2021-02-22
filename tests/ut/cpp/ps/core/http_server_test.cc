@@ -97,8 +97,6 @@ class TestHttpServer : public UT::Common {
         }
         MS_LOG(WARNING) << "The Path param:" << path_param;
         MS_LOG(WARNING) << "The header param:" << header_param;
-        EXPECT_STREQ(path_param.c_str(), "value1");
-        EXPECT_STREQ(header_param.c_str(), "headerValue");
         EXPECT_STREQ(post_message, "postKey=postValue");
 
         const std::string rKey("headKey");
