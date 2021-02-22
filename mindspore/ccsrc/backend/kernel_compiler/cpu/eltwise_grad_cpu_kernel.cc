@@ -132,6 +132,27 @@ void EltWiseGradCPUKernel::ACosGrad(const T *input1, const T *input2, T *out, si
   }
 }
 
+template <typename T>
+void EltWiseGradCPUKernel::AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    T dividend = input2[i];
+    T divisor = 1 + input1[i] * input1[i];
+    if (divisor == 0) {
+      if (dividend == 0) {
+        out[i] = std::numeric_limits<T>::quiet_NaN();
+        continue;
+      }
+      if (std::numeric_limits<T>::has_infinity) {
+        out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      } else {
+        out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+      }
+      continue;
+    }
+    out[i] = dividend / divisor;
+  }
+}
+
 void EltWiseGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -153,6 +174,8 @@ void EltWiseGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = ASINGRAD;
   } else if (kernel_name == "ACosGrad") {
     operate_type_ = ACOSGRAD;
+  } else if (kernel_name == "AtanGrad") {
+    operate_type_ = ATANGRAD;
   } else {
     MS_LOG(EXCEPTION) << "Not support " << kernel_name;
   }
@@ -238,6 +261,8 @@ void EltWiseGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, c
       threads.emplace_back(std::thread(&EltWiseGradCPUKernel::AsinGrad<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == ACOSGRAD) {
       threads.emplace_back(std::thread(&EltWiseGradCPUKernel::ACosGrad<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == ATANGRAD) {
+      threads.emplace_back(std::thread(&EltWiseGradCPUKernel::AtanGrad<T>, this, input1, input2, output, start, end));
     } else {
       MS_LOG(EXCEPTION) << "Not support " << operate_type_;
     }

@@ -3342,7 +3342,7 @@ class Cos(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> cos = ops.Cos()
@@ -3379,7 +3379,7 @@ class ACos(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> acos = ops.ACos()
@@ -3412,7 +3412,7 @@ class Sin(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> sin = ops.Sin()
@@ -3449,7 +3449,7 @@ class Asin(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> asin = ops.Asin()
@@ -3666,7 +3666,7 @@ class Tan(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> tan = ops.Tan()
@@ -3704,7 +3704,7 @@ class Atan(PrimitiveWithInfer):
         A Tensor, has the same type as the input.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 0.0]), mindspore.float32)

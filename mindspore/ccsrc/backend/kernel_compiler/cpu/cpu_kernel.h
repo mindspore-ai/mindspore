@@ -95,8 +95,13 @@ enum OperateType {
   GELUGRAD,
   ASIN,
   ACOS,
+  ATAN,
   ASINGRAD,
   ACOSGRAD,
+  ATANGRAD,
+  SIN,
+  COS,
+  TAN,
 };
 
 class CPUKernel : public kernel::KernelMod {
