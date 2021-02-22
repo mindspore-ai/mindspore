@@ -734,6 +734,21 @@ class FusedBatchNormGradEx(PrimitiveWithInfer):
         return (x_type, scale_type, scale_type)
 
 
+class InstanceNormGrad(PrimitiveWithInfer):
+    """Gradients of InstanceNorm operation."""
+
+    @prim_attr_register
+    def __init__(self, is_training=True, epsilon=0.0, momentum=0.1):
+        self.init_prim_io_names(inputs=['dy', 'x', 'gamma', 'save_mean', 'save_variance'],
+                                outputs=['dx', 'bn_gamma', 'bn_beta'])
+
+    def infer_shape(self, y_backprop_shape, x_shape, gamma_shape, save_mean_shape, save_variance_shape):
+        return (x_shape, gamma_shape, gamma_shape)
+
+    def infer_dtype(self, y_backprop_type, x_type, gamma_type, save_mean_type, save_variance_type):
+        return (x_type, gamma_type, gamma_type)
+
+
 class UniqueGrad(Primitive):
     """Gradients of Unique operation."""
 

@@ -862,6 +862,119 @@ class FusedBatchNormEx(PrimitiveWithInfer):
         return (input_x, scale, scale, scale, scale, scale)
 
 
+class InstanceNorm(PrimitiveWithInfer):
+    r"""
+    Instance normalization over a 4D input.
+
+    This operator applies Instance Normalization over a 4D input (a mini-batch of 2D inputs with
+    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
+    of data and the learned parameters which can be described in the following formula.
+
+    .. math::
+        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is scale, :math:`\beta` is bias, :math:`\epsilon` is epsilon.
+
+    Args:
+        is_training (bool): Is training or inference. Default: True.
+        epsilon (float): A small value added for numerical stability. Default: 1e-5.
+        momentum (float): The hyper parameter to compute moving average for running_mean and running_var
+            (e.g. :math:`new\_running\_mean = momentum * running\_mean + (1 - momentum) * current\_mean`).
+            Momentum value must be [0, 1]. Default: 0.1.
+        data_format (str): The optional value for data format, is 'NCHW'. Default: "NCHW".
+
+    Inputs:
+        - **input_x** (Tensor) - The input of InstanceNorm, Tensor of shape :math:`(N, C)`,
+          data type: float16 or float32.
+        - **gamma** (Parameter) - scale, Tensor of shape :math:`(C,)`,
+          data type: float32.
+        - **beta** (Parameter) - bias, Tensor of shape :math:`(C,)`,
+          data type: float32.
+        - **mean** (Parameter) - mean value, Tensor of shape :math:`(C,)`, data type: float32.
+        - **variance** (Parameter) - variance value, Tensor of shape :math:`(C,)`, data type: float32.
+
+    Outputs:
+        Tuple of 3 Tensors, the normalized input, the updated parameters.
+
+        - **output_x** (Tensor) - The output of InstanceNorm, same type and shape as the `input_x`.
+        - **updated_moving_mean** (Tensor) - Updated mean value, Tensor of shape :math:`(NC,)`, data type: float32.
+        - **updated_moving_variance** (Tensor) - Updated variance value, Tensor of shape :math:`(NC,)`,
+          data type: float32.
+
+    Supported Platforms:
+        ``GPU``
+
+    Raise:
+        TypeError: If any validator check fails.
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> import numpy as np
+        >>> from mindspore import Parameter
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as ops
+        >>> class InstanceNormNet(nn.Cell):
+        >>>     def __init__(self):
+        >>>         super(InstanceNormNet, self).__init__()
+        >>>         self.instance_norm = ops.InstanceNorm()
+        >>>         self.gamma = Parameter(Tensor(np.ones([64]), mindspore.float32), name="gamma")
+        >>>         self.beta = Parameter(Tensor(np.ones([64]), mindspore.float32), name="beta")
+        >>>         self.mean = Parameter(Tensor(np.ones([64]), mindspore.float32), name="mean")
+        >>>         self.variance = Parameter(Tensor(np.ones([64]), mindspore.float32), name="variance")
+        >>>
+        >>>     def construct(self, input_x):
+        >>>         out = self.instance_norm(input_x, self.gamma, self.beta, self.mean, self.variance)
+        >>>         return out
+        >>>
+        >>> input_x = Tensor(np.ones([128, 64, 32, 64]), mindspore.float32)
+        >>> net = InstanceNormNet()
+        >>> output = net(input_x)
+        >>> result = output[0].shape
+        >>> print(result)
+        (128, 64, 32, 64)
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', dtype=sig.sig_dtype.T2),
+        sig.make_sig('gamma', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('beta', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('mean', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('variance', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+    )
+
+    @prim_attr_register
+    def __init__(self, is_training=True, epsilon=1e-5, momentum=0.1):
+        self.init_prim_io_names(inputs=['x', 'gamma', 'beta', 'mean', 'variance'],
+                                outputs=['y', 'save_mean', 'save_variance'])
+        self.is_training = validator.check_bool(is_training, self.name)
+        self.epsilon = validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        self.momentum = validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
+        self._update_parameter = True
+
+    def infer_shape(self, input_x, gamma, beta, mean, variance):
+        input_shape_norm = input_x
+        validator.check_equal_int(len(gamma), 1, "gamma rank", self.name)
+        validator.check("gamma shape", gamma, "beta shape", beta, Rel.EQ, self.name)
+        validator.check("gamma shape[0]", gamma[0], "input channel", input_shape_norm[1], Rel.EQ, self.name)
+        validator.check_equal_int(len(mean), 1, "mean rank", self.name)
+
+        validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
+        validator.check("mean shape", mean, "gamma shape", gamma, Rel.EQ, self.name)
+        save_mean_shape = gamma
+        save_mean_shape[0] = save_mean_shape[0] * input_shape_norm[0]
+        return (input_x, save_mean_shape, save_mean_shape)
+
+    def infer_dtype(self, input_x, gamma, beta, mean, variance):
+        validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
+        args = {"gamma": gamma, "beta": beta}
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
+        args_moving = {"mean": mean, "variance": variance}
+        valid_dtypes = [mstype.tensor_type(mstype.float32)]
+        validator.check_types_same_and_valid(args_moving, valid_dtypes, self.name)
+        return (input_x, gamma, gamma)
+
+
 class BNTrainingReduce(PrimitiveWithInfer):
     """
     For the BatchNorm operation this operator update the moving averages for training and is used in conjunction with
