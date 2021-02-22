@@ -25,15 +25,14 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.loss.loss import _Loss
 
 from src.data_loader import create_dataset
-from src.unet import UNet
+from src.unet_medical import UNetMedical
+from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet
 
 from scipy.special import softmax
 
 device_id = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, device_id=device_id)
-
-
 
 
 class CrossEntropyWithLogits(_Loss):
@@ -64,10 +63,11 @@ class dice_coeff(nn.Metric):
 
     def update(self, *inputs):
         if len(inputs) != 2:
-            raise ValueError('Mean dice coeffcient need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
+            raise ValueError('Mean dice coefficient need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
 
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
+
         self._samples_num += y.shape[0]
         y_pred = y_pred.transpose(0, 2, 3, 1)
         y = y.transpose(0, 2, 3, 1)
@@ -90,13 +90,20 @@ def test_net(data_dir,
              ckpt_path,
              cross_valid_ind=1,
              cfg=None):
-
-    net = UNet(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
+    if cfg['model'] == 'unet_medical':
+        net = UNetMedical(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
+    elif cfg['model'] == 'unet_nested':
+        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+    elif cfg['model'] == 'unet_simple':
+        net = UNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+    else:
+        raise ValueError("Unsupported model: {}".format(cfg['model']))
     param_dict = load_checkpoint(ckpt_path)
     load_param_into_net(net, param_dict)
 
     criterion = CrossEntropyWithLogits()
-    _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False)
+    _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
+                                      do_crop=cfg['crop'], img_size=cfg['img_size'])
     model = Model(net, loss_fn=criterion, metrics={"dice_coeff": dice_coeff()})
 
     print("============== Starting Evaluating ============")

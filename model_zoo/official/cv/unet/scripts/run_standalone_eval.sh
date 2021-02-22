@@ -14,11 +14,14 @@
 # limitations under the License.
 # ============================================================================
 
-echo "=============================================================================================================="
-echo "Please run the script as: "
-echo "bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]"
-echo "for example: bash run_standalone_eval.sh /path/to/data/ /path/to/checkpoint/"
-echo "=============================================================================================================="
+if [ $# != 2 ]
+then
+    echo "=============================================================================================================="
+    echo "Please run the script as: "
+    echo "bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]"
+    echo "for example: bash run_standalone_eval.sh /path/to/data/ /path/to/checkpoint/"
+    echo "=============================================================================================================="
+fi
 
 export DEVICE_ID=0
 python eval.py --data_url=$1 --ckpt_path=$2 > eval.log 2>&1 &

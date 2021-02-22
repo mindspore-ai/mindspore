@@ -18,7 +18,8 @@ import numpy as np
 
 from mindspore import Tensor, export, load_checkpoint, load_param_into_net, context
 
-from src.unet.unet_model import UNet
+from src.unet_medical.unet_model import UNetMedical
+from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet as cfg
 
 parser = argparse.ArgumentParser(description='unet export')
@@ -38,7 +39,14 @@ if args.device_target == "Ascend":
     context.set_context(device_id=args.device_id)
 
 if __name__ == "__main__":
-    net = UNet(n_channels=cfg["num_channels"], n_classes=cfg["num_classes"])
+    if cfg['model'] == 'unet_medical':
+        net = UNetMedical(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
+    elif cfg['model'] == 'unet_nested':
+        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+    elif cfg['model'] == 'unet_simple':
+        net = UNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+    else:
+        raise ValueError("Unsupported model: {}".format(cfg['model']))
     # return a parameter dict for model
     param_dict = load_checkpoint(args.ckpt_file)
     # load the parameter into net

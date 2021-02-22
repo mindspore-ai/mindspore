@@ -14,11 +14,14 @@
 # limitations under the License.
 # ============================================================================
 
-echo "=============================================================================================================="
-echo "Please run the script as: "
-echo "bash scripts/run_standalone_train.sh [DATASET]"
-echo "for example: bash run_standalone_train.sh /path/to/data/"
-echo "=============================================================================================================="
+if [ $# != 1 ]
+then
+    echo "=============================================================================================================="
+    echo "Please run the script as: "
+    echo "bash scripts/run_standalone_train.sh [DATASET]"
+    echo "for example: bash run_standalone_train.sh /path/to/data/"
+    echo "=============================================================================================================="
+fi
 
 export DEVICE_ID=0
 python train.py --data_url=$1 > train.log 2>&1 &

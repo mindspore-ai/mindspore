@@ -15,6 +15,7 @@
 
 import time
 import numpy as np
+from PIL import Image
 from mindspore.train.callback import Callback
 from mindspore.common.tensor import Tensor
 
@@ -53,3 +54,6 @@ class StepLossTimeMonitor(Callback):
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
             # TEST
             print("step: %s, loss is %s, fps is %s" % (cur_step_in_epoch, loss, step_fps), flush=True)
+
+def mask_to_image(mask):
+    return Image.fromarray((mask * 255).astype(np.uint8))

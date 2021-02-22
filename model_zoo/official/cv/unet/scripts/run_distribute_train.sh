@@ -14,15 +14,14 @@
 # limitations under the License.
 # ============================================================================
 
-echo "=============================================================================================================="
-echo "Please run the script as: "
-echo "bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]"
-echo "for example: bash run_distribute_train.sh /absolute/path/to/RANK_TABLE_FILE /absolute/path/to/data"
-echo "=============================================================================================================="
-
 if [ $# != 2 ]
 then
+    echo "=============================================================================================================="
     echo "Usage: bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]"
+    echo "Please run the script as: "
+    echo "bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]"
+    echo "for example: bash run_distribute_train.sh /absolute/path/to/RANK_TABLE_FILE /absolute/path/to/data"
+    echo "=============================================================================================================="
     exit 1
 fi
 
