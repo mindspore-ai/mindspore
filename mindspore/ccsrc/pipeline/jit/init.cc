@@ -173,6 +173,14 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get enable/disable parallel optimizer.")
     .def("set_communi_parallel_mode", &ParallelContext::set_communi_parallel_mode, "Set communication parallel mode.")
     .def("get_communi_parallel_mode", &ParallelContext::communi_parallel_mode, "Get communication parallel mode.")
+    .def("set_optimizer_weight_shard_size", &ParallelContext::set_optimizer_weight_shard_size,
+         "Set opt shard group size when not fully use parallel optimizer.")
+    .def("get_optimizer_weight_shard_size", &ParallelContext::optimizer_weight_shard_size,
+         "Get opt shard group size when not fully use parallel optimizer.")
+    .def("set_optimizer_weight_shard_integrated_save", &ParallelContext::set_optimizer_weight_shard_integrated_save,
+         "Set whether to integrated save weight shard when enable parallel optimizer.")
+    .def("get_optimizer_weight_shard_integrated_save", &ParallelContext::optimizer_weight_shard_integrated_save,
+         "Get whether to integrated save weight shard when enable parallel optimizer.")
     .def("reset", &ParallelContext::Reset, "Reset auto parallel context.");
 
   (void)py::class_<CostModelContext, std::shared_ptr<CostModelContext>>(m, "CostModelContext")
