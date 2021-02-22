@@ -308,7 +308,8 @@ bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBa
     return false;
   }
   opt::irpass::ResolveIRPassLib irpass;
-  opt::OptimizerPtr opt_resolve = opt::Optimizer::MakeOptimizer("opt_resolve", res, GetOptResolvePasses(irpass));
+  opt::OptimizerPtr opt_resolve =
+    opt::Optimizer::MakeOptimizer("opt_resolve", res, GetOptResolvePasses(irpass), false, false, false);
 
   (void)parse::python_adapter::set_python_scoped();
 

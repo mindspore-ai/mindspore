@@ -154,6 +154,7 @@ class ResolveIRPassLib {
   SubstitutionPtr resolver_resolve_and_getattr_;
   SubstitutionPtr resolver_resolve_;
   SubstitutionPtr resolver_getattr_;
+  SubstitutionPtr resolver_getattr_resolve_;
 };
 
 class InferenceOptPrepareLib {

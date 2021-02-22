@@ -230,6 +230,8 @@ ResolveIRPassLib::ResolveIRPassLib() {
                      {prim::kPrimGetAttr, prim::kPrimResolve});
   resolver_resolve_ = MakeSubstitution(std::make_shared<ResolverResolve>(), "resolver_resolve", prim::kPrimResolve);
   resolver_getattr_ = MakeSubstitution(std::make_shared<ResolverGetAttr>(), "resolver_getattr", prim::kPrimGetAttr);
+  resolver_getattr_resolve_ =
+    MakeSubstitution(std::make_shared<ResolverGetAttrResolve>(), "resolver_getattr_resolve", prim::kPrimGetAttr);
 }
 
 InferenceOptPrepareLib::InferenceOptPrepareLib() {
