@@ -21,9 +21,9 @@
 
 namespace mindspore::lite::opencl {
 
-int OpenCLExecutor::Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs,
-                        std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
-                        const KernelCallBack &after) {
+int OpenCLExecutor::Run(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
+                        const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
+                        const KernelCallBack &before, const KernelCallBack &after) {
   return RunOrTune(inputs, outputs, kernels, allocator, before, after, false);
 }
 

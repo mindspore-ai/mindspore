@@ -16,7 +16,8 @@
 
 #ifndef MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_H
 #define MINDSPORE_CORE_MINDRT_INCLUDE_ASYNC_FUTURE_H
-
+#include <memory>
+#include <utility>
 #include <future>
 #include <iostream>
 #include <list>
@@ -30,7 +31,7 @@
 
 #include "litebus.hpp"
 
-#include "future_base.h"
+#include "async/future_base.h"
 
 namespace mindspore {
 
@@ -114,22 +115,6 @@ class Future : public FutureBase {
     return data->t;
   }
 
-  Option<T> Get(uint64_t timeMs) const {
-    if (data->gotten) {
-      return Option<T>(data->t);
-    }
-
-    if (WaitFor(timeMs).IsError()) {
-      return Option<T>();
-    }
-
-    if (data->status.IsError()) {
-      return Option<T>();
-    }
-
-    return Option<T>(Get());
-  }
-
   bool Valid() const noexcept { return data->future.valid(); }
 
   bool IsInit() const { return data->status.IsInit(); }
@@ -155,32 +140,6 @@ class Future : public FutureBase {
     }
 
     data->future.wait();
-  }
-
-  WaitForStatus WaitFor(uint64_t timeMs) const {
-    if (!data->status.IsInit()) {
-      return Status::KOK;
-    }
-
-    AID aid = mindspore::Spawn(std::make_shared<internal::WaitActor>(
-      internal::WAIT_ACTOR_NAME + std::to_string(mindspore::localid_generator::GenLocalActorId())));
-
-    mindspore::Timer timer = TimerTools::AddTimer(timeMs, aid, std::bind(&internal::Waitf, aid));
-
-    OnComplete(std::bind(&internal::Wait, aid, timer));
-
-    // block
-    mindspore::Await(aid);
-
-    data->lock.Lock();
-    bool ret = data->status.IsInit();
-    data->lock.Unlock();
-
-    if (!ret) {
-      return Status::KOK;
-    }
-
-    return Status::KERROR;
   }
 
   template <typename F>
@@ -339,19 +298,6 @@ class Future : public FutureBase {
   template <typename F>
   const Future<T> &OnAbandoned(F &&f) const {
     return OnAbandoned(std::forward<F>(f), FutureBase());
-  }
-
-  Future<T> After(const Duration &timeMs, const std::function<Future<T>(const Future<T> &)> &f) const {
-    std::shared_ptr<Promise<T>> promise(new (std::nothrow) Promise<T>());
-    BUS_OOM_EXIT(promise);
-    Future<T> future = promise->GetFuture();
-
-    mindspore::Timer timer =
-      TimerTools::AddTimer(timeMs, "__After__", std::bind(&internal::Afterf<T>, f, promise, *this));
-
-    OnComplete(std::bind(&internal::After<T>, promise, timer, std::placeholders::_1));
-
-    return future;
   }
 
  private:

@@ -4,7 +4,6 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         )
-
 add_executable(benchmark
         ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/benchmark.cc

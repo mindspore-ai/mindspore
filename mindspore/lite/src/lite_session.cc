@@ -28,6 +28,9 @@
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/dequant.h"
+#ifdef ENABLE_MINDRT
+#include "src/mindrt_executor.h"
+#endif
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
@@ -419,6 +422,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+
   is_running_.store(false);
   return RET_OK;
 }
@@ -511,7 +515,15 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
+#ifdef ENABLE_MINDRT
+  if (context_->IsCpuEnabled() && !context_->IsGpuEnabled() && !context_->IsNpuEnabled() && kernels_.size() == 1) {
+    executor_ = new (std::nothrow) MindrtExecutor();
+  } else {
+    executor_ = new (std::nothrow) Executor();
+  }
+#else
   executor_ = new (std::nothrow) Executor();
+#endif
   if (nullptr == executor_) {
     MS_LOG(ERROR) << "New Executor failed";
     is_running_.store(false);

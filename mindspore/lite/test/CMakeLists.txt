@@ -180,6 +180,17 @@ if(SUPPORT_GPU STREQUAL vulkan)
             ${VULKAN_RUNTIME_SRC}
             )
 endif()
+
+if(ENABLE_MINDRT)
+    set(TEST_LITE_SRC
+            ${TEST_LITE_SRC}
+            ${LITE_DIR}/src/lite_mindrt.cc
+            ${LITE_DIR}/src/mindrt_executor.cc
+            )
+    include_directories(${TOP_DIR}/mindspore/core/mindrt/include)
+endif()
+
+
 ### converter
 if(ENABLE_CONVERTER)
     add_definitions(-DPRIMITIVE_WRITEABLE)
@@ -331,9 +342,14 @@ endif()
 
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
+
 target_link_libraries(lite-test dl mindspore::gtest)
+
 if(SUPPORT_TRAIN)
     target_link_libraries(lite-test minddata-lite)
+endif()
+if(ENABLE_MINDRT)
+    target_link_libraries(lite-test mindrt_mid)
 endif()
 
 if(PLATFORM_ARM64 AND ENABLE_FP16)

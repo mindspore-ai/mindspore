@@ -48,8 +48,8 @@ static int RunKernel(void *data, int index) {
   return 0;
 }
 
-int ParallelExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
-                          std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
+int ParallelExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                          const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                           const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   for (auto &inTensor : in_tensors) {

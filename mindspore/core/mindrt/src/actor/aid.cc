@@ -15,7 +15,6 @@
  */
 
 #include "actor/aid.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 
@@ -121,6 +120,9 @@ std::string AID::GetIp() const {
 
 uint16_t AID::GetPort() const {
   size_t index = url.rfind(':');
+  if (index == std::string::npos) {
+    return 0;
+  }
   return (uint16_t)std::stoul(url.substr(index + 1));
 }
 

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <atomic>
 #include <random>
 #include "async/uuid_base.h"
-#include <atomic>
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace uuids {
@@ -41,7 +39,7 @@ std::string uuid::ToBytes(const uuid &u) {
 
 Option<uuid> uuid::FromBytes(const std::string &s) {
   if (s.size() != UUID_SIZE) {
-    return None();
+    return MindrtNone();
   }
   uuid u;
   memcpy(&u.uuidData, s.data(), s.size());
@@ -57,7 +55,7 @@ Option<unsigned char> uuid::GetValue(char c) {
   size_t pos = std::find(digitsBegin, digitsEnd, c) - digitsBegin;
   if (pos >= digitsLen) {
     MS_LOG(ERROR) << "invalid char";
-    return None();
+    return MindrtNone();
   }
   return values[pos];
 }
@@ -65,7 +63,7 @@ Option<unsigned char> uuid::GetValue(char c) {
 Option<uuid> uuid::FromString(const std::string &s) {
   auto sBegin = s.begin();
   if (sBegin == s.end()) {
-    return None();
+    return MindrtNone();
   }
   auto c = *sBegin;
   bool hasOpenBrace = (c == '{');
@@ -84,12 +82,12 @@ Option<uuid> uuid::FromString(const std::string &s) {
         c = *(sBegin++);
       } else {
         MS_LOG(ERROR) << "str invalid";
-        return None();
+        return MindrtNone();
       }
     }
     Option<unsigned char> oc1 = GetValue(c);
     if (oc1.IsNone()) {
-      return None();
+      return MindrtNone();
     }
     u.uuidData[i] = oc1.Get();
     if (sBegin != s.end()) {
@@ -98,13 +96,13 @@ Option<uuid> uuid::FromString(const std::string &s) {
     u.uuidData[i] <<= SHIFT_BIT;
     Option<unsigned char> oc2 = GetValue(c);
     if (oc2.IsNone()) {
-      return None();
+      return MindrtNone();
     }
     u.uuidData[i] |= oc2.Get();
   }
   if ((hasOpenBrace && (c != '}')) || (sBegin != s.end())) {
     MS_LOG(ERROR) << "No } end or leng invalid";
-    return None();
+    return MindrtNone();
   }
   return u;
 }
@@ -140,14 +138,14 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
   std::mt19937 gen(rd());
 
   // We use uniform distribution
-  std::uniform_int_distribution<unsigned long> distribution((std::numeric_limits<unsigned long>::min)(),
-                                                            (std::numeric_limits<unsigned long>::max)());
+  std::uniform_int_distribution<uint64_t> distribution((std::numeric_limits<uint64_t>::min)(),
+                                                       (std::numeric_limits<uint64_t>::max)());
 
-  unsigned long randomValue = distribution(gen);
+  uint64_t randomValue = distribution(gen);
 
   unsigned int i = 0;
   for (uint8_t *it = tmpUUID.BeginAddress(); it != tmpUUID.EndAddress(); ++it, ++i) {
-    if (i == sizeof(unsigned long)) {
+    if (i == sizeof(uint64_t)) {
       randomValue = distribution(gen);
       i = 0;
     }
@@ -156,9 +154,9 @@ uuid RandomBasedGenerator::GenerateRandomUuid() {
   }
 
   // use atomic ++ to replace random
-  static std::atomic<unsigned long> ul(1);
-  unsigned long lCount = ul.fetch_add(1);
-  unsigned long offSet = distribution(gen) % RIGHT_SHIFT_BITS;
+  static std::atomic<uint64_t> ul(1);
+  uint64_t lCount = ul.fetch_add(1);
+  uint64_t offSet = distribution(gen) % RIGHT_SHIFT_BITS;
   auto ret = memcpy(tmpUUID.BeginAddress() + offSet, &lCount, sizeof(lCount));
   if (ret != 0) {
     MS_LOG(ERROR) << "memcpy_s error.";

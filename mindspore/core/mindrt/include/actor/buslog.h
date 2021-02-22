@@ -22,10 +22,13 @@
 
 #include <sstream>
 #include <string>
-#include <string.h>
 
 #include "actor/buserrcode.h"
-
+#ifdef USE_GLOG
+#include "utils/log_adapter.h"
+#else
+#include "common/log_adapter.h"
+#endif
 namespace mindspore {
 
 #define BUS_LOG(severity)       // LOG(severity)
@@ -37,7 +40,6 @@ namespace mindspore {
 #define ICTSBASE_LOG_COMMON_CODE
 #define HLOG_LEVEL_INFO
 #define PID_LITEBUS_LOG
-//#define BUS_OOM_EXIT
 #define HLOG_LEVEL_DEBUG 1
 #define ICTSBASE_LOG0(logig, level, pid, format)
 #define ICTSBASE_LOG1(logig, level, pid, format, para)

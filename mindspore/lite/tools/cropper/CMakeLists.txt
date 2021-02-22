@@ -3,6 +3,8 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/log_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/errorcode.cc
         )
 
 add_executable(cropper
@@ -14,7 +16,7 @@ add_executable(cropper
 
 add_dependencies(cropper fbs_src)
 
-target_link_libraries(cropper mindspore-lite_static)
+target_link_libraries(cropper)
 
 add_custom_command(TARGET cropper POST_BUILD COMMAND
         bash build_cropper_config.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

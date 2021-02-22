@@ -14,38 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_EXECUTOR_H_
-#define MINDSPORE_LITE_SRC_EXECUTOR_H_
-
+#ifndef MINDSPORE_LITE_SRC_MINDRT_EXECUTOR_H_
+#define MINDSPORE_LITE_SRC_MINDRT_EXECUTOR_H_
+#include <memory>
 #include <vector>
 #include "src/runtime/allocator.h"
 #include "src/lite_kernel.h"
+#include "src/lite_mindrt.h"
+#include "src/executor.h"
 #include "include/lite_session.h"
 
 namespace mindspore::lite {
-class Executor {
+// class Executor {
+class MindrtExecutor : public Executor {
  public:
-  Executor() = default;
-  virtual ~Executor() = default;
+  MindrtExecutor() = default;
+  virtual ~MindrtExecutor() = default;
 
-  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels) { return RET_OK; }
+  virtual int Prepare(const std::vector<kernel::LiteKernel *> &kernels);
 
   virtual int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                   const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
                   const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
  protected:
-  static int CheckInputs(const std::vector<Tensor *> &in_tensors);
-};
-
-class CpuExecutor : public Executor {
- public:
-  CpuExecutor() = default;
-  virtual ~CpuExecutor() = default;
-
-  int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-          const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
-          const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr) override;
+  std::vector<std::shared_ptr<LiteOpActor>> opActors_;
+  std::vector<OpDataPtr<Tensor>> inputData_;
+  std::vector<OpDataPtr<Tensor>> outputData_;
 };
 
 }  // namespace mindspore::lite

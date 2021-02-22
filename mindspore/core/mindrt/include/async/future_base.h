@@ -19,14 +19,15 @@
 
 #include <future>
 #include <iostream>
+#include <string>
+#include <utility>
+#include <memory>
 #include <list>
 
 #include "actor/actor.h"
 #include "actor/buslog.h"
 #include "async/spinlock.h"
 #include "async/status.h"
-
-#include "timer/timertools.h"
 
 namespace mindspore {
 
@@ -104,15 +105,6 @@ struct FutureData {
 
 namespace internal {
 
-const std::string WAIT_ACTOR_NAME = "WACTOR_";
-
-class WaitActor : public ActorBase {
- public:
-  explicit WaitActor(const std::string &name) : mindspore::ActorBase(name) {}
-
-  ~WaitActor() override {}
-};
-
 template <typename T>
 class DeferredHelper;
 
@@ -186,15 +178,7 @@ static void Afterf(const std::function<Future<T>(const Future<T> &)> &f, const s
   promise->Associate(f(future));
 }
 
-template <typename T>
-static void After(const std::shared_ptr<Promise<T>> &promise, const mindspore::Timer &timer, const Future<T> &future) {
-  (void)mindspore::TimerTools::Cancel(timer);
-  promise->Associate(future);
-}
-
 void Waitf(const AID &aid);
-
-void Wait(const AID &aid, const mindspore::Timer &timer);
 
 }  // namespace internal
 

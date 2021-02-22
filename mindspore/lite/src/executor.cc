@@ -40,8 +40,8 @@ int Executor::CheckInputs(const std::vector<Tensor *> &in_tensors) {
   return RET_OK;
 }
 
-int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
-                  std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
+int Executor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                  const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
                   const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   auto ret = this->CheckInputs(in_tensors);
@@ -89,9 +89,9 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
   return RET_OK;
 }
 
-int CpuExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
-                     std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
-                     const KernelCallBack &after) {
+int CpuExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                     const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
+                     const KernelCallBack &before, const KernelCallBack &after) {
   MS_ASSERT(nullptr != allocator);
   //  not check input for merge. too hard
   if (kernels.front()->Type() != schema::PrimitiveType_Merge) {
