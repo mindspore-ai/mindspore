@@ -22,13 +22,12 @@
 #include <memory>
 #include "include/api/context.h"
 #include "include/api/types.h"
-#include "minddata/dataset/core/device_resource.h"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
 
 namespace mindspore {
 namespace dataset {
-
+class DeviceResource;
 // class to run tensor operations in eager mode
 class Execute {
  public:
