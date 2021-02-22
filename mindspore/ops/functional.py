@@ -97,8 +97,13 @@ gather_d = P.GatherD()
 gather_nd = P.GatherNd()
 scatter_update = P.ScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
-pack = P.Pack()
 stack = P.Stack()
+
+def pack(x):
+    print("WARNING: 'pack' is deprecated from version 1.1 and will be removed in a future version, use 'stack' instead"
+          ".")
+    return stack(x)
+
 partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
