@@ -102,6 +102,14 @@ enum OperateType {
   SIN,
   COS,
   TAN,
+  SINH,
+  COSH,
+  ASINH,
+  ACOSH,
+  ATANH,
+  ASINHGRAD,
+  ACOSHGRAD,
+  ATAN2,
 };
 
 class CPUKernel : public kernel::KernelMod {

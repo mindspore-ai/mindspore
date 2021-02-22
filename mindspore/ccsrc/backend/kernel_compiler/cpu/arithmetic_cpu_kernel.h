@@ -58,6 +58,8 @@ class ArithmeticCPUKernel : public CPUKernel {
   template <typename T>
   void AssignAdd(T *input1, const T *input2, T *out, size_t start, size_t end);
   template <typename T>
+  void Atan2(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
   void Less(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   template <typename T>
   void Equal(const T *input1, const T *input2, bool *out, size_t start, size_t end);
@@ -278,6 +280,10 @@ MS_REG_CPU_KERNEL(
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
   LogicalOr, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Atan2,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

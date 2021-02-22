@@ -2561,7 +2561,7 @@ class Acosh(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> acosh = ops.Acosh()
@@ -2597,7 +2597,7 @@ class Cosh(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> cosh = ops.Cosh()
@@ -2638,7 +2638,7 @@ class Asinh(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> asinh = ops.Asinh()
@@ -2671,7 +2671,7 @@ class Sinh(PrimitiveWithInfer):
         Tensor, has the same shape as `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> sinh = ops.Sinh()
@@ -3886,7 +3886,7 @@ class Atanh(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
@@ -3931,7 +3931,7 @@ class Atan2(_MathBinaryOp):
         TypeError: If `input_x` or `input_y` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0, 1]), mindspore.float32)
