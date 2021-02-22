@@ -250,6 +250,56 @@ bool TaskGenerator::LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list,
 }
 
 #ifdef ENABLE_DUMP_IR
+void TaskGenerator::DumpTaskInfo(const string &real_filename,
+                                 const std::vector<TaskDebugInfoPtr> &task_debug_info_list) {
+  OrderedMap<AnfNodePtr, int32_t> para_map;
+  ChangeFileMode(real_filename, S_IRWXU);
+  std::ofstream fout(real_filename);
+
+  if (!fout.is_open()) {
+    MS_LOG(ERROR) << "Open dump file '" << real_filename << "' failed!";
+    return;
+  }
+
+  size_t index = 0;
+  for (auto &task_debug_info : task_debug_info_list) {
+    fout << "op_name:" << task_debug_info->op_name_ << "\n"
+         << "task_index:" << index << "\t"
+         << "task_num:" << task_debug_info->task_num_ << "\t"
+         << "task0_stream_id:" << task_debug_info->stream_id_ << "\t"
+         << "task0_type:" << task_debug_info->type_ << "\t"
+         << "task0_dump_flag:" << task_debug_info->dump_flag_ << "\n";
+    index++;
+    if (task_debug_info->input_addrs_.size()) {
+      fout << "input address:";
+      for (auto &input : task_debug_info->input_addrs_) {
+        fout << input->addr << "(" << input->size << ")\t";
+      }
+      fout << "\n";
+    }
+
+    if (task_debug_info->output_addrs_.size()) {
+      fout << "output address:";
+      for (auto &output : task_debug_info->output_addrs_) {
+        fout << output->addr << "(" << output->size << ")\t";
+      }
+      fout << "\n";
+    }
+
+    if (task_debug_info->workspace_addrs_.size()) {
+      fout << "workspace address:";
+      for (auto &workspace : task_debug_info->workspace_addrs_) {
+        fout << workspace->addr << "(" << workspace->size << ")\t";
+      }
+      fout << "\n";
+    }
+    fout << "\n";
+  }
+
+  fout.close();
+  // set file mode to read only by user
+  ChangeFileMode(real_filename, S_IRUSR);
+}
 void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
   if (real_filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << real_filename << " is too long.";
@@ -322,8 +372,18 @@ void TaskGenerator::DumpTaskInfo(const std::string &real_filename) {
     return;
   }
   already_printed = true;
-  MS_LOG(WARNING) << "The functionality of dumping function graph IR is disabled, "
-                  << "please recompile source to enable it. See help of building script.";
+  MS_LOG(WARNING) << "The functionality of dumping task debug info is disabled, "
+                  << "please enable ENABLE_DUMP_IR with '-D on' and recomiple source.";
+}
+void TaskGenerator::DumpTaskInfo(const string &real_filename,
+                                 const std::vector<TaskDebugInfoPtr> &task_debug_info_list) {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The functionality of dumping task debug info is disabled, "
+                  << "please enable ENABLE_DUMP_IR with '-D on' and recomiple source.";
 }
 #endif
 }  // namespace tasksink

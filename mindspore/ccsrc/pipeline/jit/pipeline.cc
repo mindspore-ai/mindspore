@@ -62,6 +62,9 @@
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/op_adapter_map.h"
 #endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore {
 // namespace to support intermediate representation definition
@@ -346,6 +349,9 @@ void ExecutorPy::DelNetRes(const std::string &id) {
 void ExecutorPy::ClearRes() {
   MS_LOG(INFO) << "Clean executor resource!";
   Resource::mem_cleaner().ClearPrimitivePyPythonObj();
+#ifdef ENABLE_DUMP_IR
+  mindspore::RDR::ClearAll();
+#endif
   executor_ = nullptr;
 }
 

@@ -22,7 +22,10 @@
 #include "debug/rdr/stream_exec_order_recorder.h"
 #include "mindspore/core/ir/func_graph.h"
 #include "mindspore/core/ir/anf.h"
-
+#ifdef ENABLE_D
+#include "runtime/device/ascend/tasksink/task_generator.h"
+#include "debug/rdr/task_debug_info_recorder.h"
+#endif  // ENABLE_D
 namespace mindspore {
 namespace {
 static const char *GetSubModuleName(SubModuleId module_id) {
@@ -59,6 +62,17 @@ static const char *GetSubModuleName(SubModuleId module_id) {
 }
 }  // namespace
 namespace RDR {
+#ifdef ENABLE_D
+bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
+                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list, int graph_id) {
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  TaskDebugInfoRecorderPtr task_debug_info_recorder =
+    std::make_shared<TaskDebugInfoRecorder>(submodule_name, tag, task_debug_info_list, graph_id);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(task_debug_info_recorder));
+  return ans;
+}
+#endif  // ENABLE_D
+
 #ifdef __linux__
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type, int graph_id) {
@@ -145,6 +159,15 @@ bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, con
 }
 
 void TriggerAll() {
+  static bool already_printed = false;
+  if (already_printed) {
+    return;
+  }
+  already_printed = true;
+  MS_LOG(WARNING) << "The RDR presently only support linux os.";
+}
+
+void ClearAll() {
   static bool already_printed = false;
   if (already_printed) {
     return;

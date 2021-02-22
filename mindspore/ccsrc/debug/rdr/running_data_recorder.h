@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
 #define MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
-
 #include <vector>
 #include <string>
 #include <memory>
@@ -26,6 +25,16 @@ class FuncGraph;
 class CNode;
 using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 using CNodePtr = std::shared_ptr<CNode>;
+#ifdef ENABLE_D
+namespace device {
+namespace ascend {
+namespace tasksink {
+class TaskDebugInfo;
+}  // namespace tasksink
+}  // namespace ascend
+}  // namespace device
+using TaskDebugInfoPtr = std::shared_ptr<device::ascend::tasksink::TaskDebugInfo>;
+#endif  // ENABLE_D
 namespace RDR {
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type = ".ir;.pb;.dat", int graph_id = -1);
@@ -35,6 +44,10 @@ bool RecordString(SubModuleId module, const std::string &tag, const std::string 
                   const std::string &filename = "");
 bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
                            const std::vector<CNodePtr> &exec_order);
+#ifdef ENABLE_D
+bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
+                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list, int graph_id = 0);
+#endif  // ENABLE_D
 void TriggerAll();
 void ClearAll();
 }  // namespace RDR

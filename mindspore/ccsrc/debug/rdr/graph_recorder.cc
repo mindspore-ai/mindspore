@@ -86,7 +86,6 @@ void GraphRecorder::Export() {
   }
   if (graph_type_.find(".pb") != std::string::npos) {
     save_flag = true;
-
     protobuf::DumpIRProto(realpath + ".pb", func_graph_);  // save *.pb file
   }
   if (!save_flag) {
