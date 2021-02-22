@@ -1262,7 +1262,8 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
         along the first dimension for `x1`, the second for `x2` and so on.
 
     Raises:
-        TypeError: if the input is not a tensor.
+        TypeError: if the input is not a tensor, or sparse is not boolean, or
+            indexing is not 'xy' or 'ij'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1285,6 +1286,10 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
         [1.]
     """
     _check_input_tensor(*xi)
+    if not isinstance(sparse, bool):
+        _raise_type_error('argument sparse should be boolean')
+    if indexing not in ('xy', 'ij'):
+        _raise_type_error("Valid values for `indexing` are 'xy' and 'ij'.")
 
     grids = []
     for x in xi:
