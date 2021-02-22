@@ -39,8 +39,12 @@ def load_backbone_params(network, param_dict):
         if param_name in param_dict:
             param.set_data(param_dict[param_name].data)
 
-def filter_checkpoint_parameter(param_dict):
-    """remove useless parameters"""
+
+def filter_checkpoint_parameter_by_list(param_dict, filter_list):
+    """remove useless parameters according to filter_list"""
     for key in list(param_dict.keys()):
-        if 'multi_loc_layers' in key or 'multi_cls_layers' in key:
-            del param_dict[key]
+        for name in filter_list:
+            if name in key:
+                print("Delete parameter from checkpoint: ", key)
+                del param_dict[key]
+                break

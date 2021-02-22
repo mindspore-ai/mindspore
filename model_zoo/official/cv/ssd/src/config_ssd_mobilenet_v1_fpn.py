@@ -54,6 +54,8 @@ config = ed({
 
     # `mindrecord_dir` and `coco_root` are better to use absolute path.
     "feature_extractor_base_param": "/ckpt/mobilenet_v1.ckpt",
+    "checkpoint_filter_list": ['network.multi_box.cls_layers.0.weight', 'network.multi_box.cls_layers.0.bias',
+                               'network.multi_box.loc_layers.0.weight', 'network.multi_box.loc_layers.0.bias'],
     "mindrecord_dir": "/data/MindRecord_COCO",
     "coco_root": "/data/coco2017",
     "train_data_type": "train2017",

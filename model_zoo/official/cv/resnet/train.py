@@ -46,6 +46,8 @@ parser.add_argument('--device_target', type=str, default='Ascend', choices=("Asc
                     help="Device target, support Ascend, GPU and CPU.")
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
 parser.add_argument('--parameter_server', type=ast.literal_eval, default=False, help='Run parameter server train')
+parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
+                    help="Filter head weight parameters, default is False.")
 args_opt = parser.parse_args()
 
 set_seed(1)
@@ -72,6 +74,16 @@ if cfg.optimizer == "Thor":
         from src.config import config_thor_Ascend as config
     else:
         from src.config import config_thor_gpu as config
+
+
+def filter_checkpoint_parameter_by_list(origin_dict, param_filter):
+    """remove useless parameters according to filter_list"""
+    for key in list(origin_dict.keys()):
+        for name in param_filter:
+            if name in key:
+                print("Delete parameter from checkpoint: ", key)
+                del origin_dict[key]
+                break
 
 
 if __name__ == '__main__':
@@ -119,6 +131,9 @@ if __name__ == '__main__':
     # init weight
     if args_opt.pre_trained:
         param_dict = load_checkpoint(args_opt.pre_trained)
+        if args_opt.filter_weight:
+            filter_list = [x.name for x in net.end_point.get_parameters()]
+            filter_checkpoint_parameter_by_list(param_dict, filter_list)
         load_param_into_net(net, param_dict)
     else:
         for _, cell in net.cells_and_names():
