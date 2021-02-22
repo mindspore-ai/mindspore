@@ -16,8 +16,8 @@
 
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/core/de_tensor.h"
-#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/device_resource.h"
+#include "minddata/dataset/core/device_tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/type_id.h"
@@ -35,12 +35,11 @@ namespace mindspore {
 namespace dataset {
 
 // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
-Execute::Execute(std::shared_ptr<TensorOperation> op, std::string deviceType) {
+Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType) {
   ops_.emplace_back(std::move(op));
   device_type_ = deviceType;
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -51,14 +50,18 @@ Execute::Execute(std::shared_ptr<TensorOperation> op, std::string deviceType) {
 #endif
 }
 
-Execute::Execute(std::shared_ptr<TensorTransform> op, std::string deviceType) {
+Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType) {
   // Convert op from TensorTransform to TensorOperation
-  std::shared_ptr<TensorOperation> operation = op->Parse();
+  std::shared_ptr<TensorOperation> operation;
+  if (deviceType == MapTargetDevice::kCpu) {
+    operation = op->Parse();
+  } else {
+    operation = op->Parse(deviceType);
+  }
   ops_.emplace_back(std::move(operation));
   device_type_ = deviceType;
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -70,14 +73,13 @@ Execute::Execute(std::shared_ptr<TensorTransform> op, std::string deviceType) {
 }
 
 /*
-Execute::Execute(TensorTransform op, std::string deviceType) {
+Execute::Execute(TensorTransform op, MapTargetDevice deviceType) {
   // Convert op from TensorTransform to TensorOperation
   std::shared_ptr<TensorOperation> operation = op.Parse();
   ops_.emplace_back(std::move(operation));
   device_type_ = deviceType;
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -90,14 +92,18 @@ Execute::Execute(TensorTransform op, std::string deviceType) {
 */
 
 // Execute function for the example case: auto decode(new vision::Decode());
-Execute::Execute(TensorTransform *op, std::string deviceType) {
+Execute::Execute(TensorTransform *op, MapTargetDevice deviceType) {
   // Convert op from TensorTransform to TensorOperation
-  std::shared_ptr<TensorOperation> operation = op->Parse();
+  std::shared_ptr<TensorOperation> operation;
+  if (deviceType == MapTargetDevice::kCpu) {
+    operation = op->Parse();
+  } else {
+    operation = op->Parse(deviceType);
+  }
   ops_.emplace_back(std::move(operation));
   device_type_ = deviceType;
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -108,11 +114,10 @@ Execute::Execute(TensorTransform *op, std::string deviceType) {
 #endif
 }
 
-Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string deviceType)
+Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, MapTargetDevice deviceType)
     : ops_(std::move(ops)), device_type_(deviceType) {
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -123,15 +128,21 @@ Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string 
 #endif
 }
 
-Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, std::string deviceType) {
+Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDevice deviceType) {
   // Convert ops from TensorTransform to TensorOperation
-  (void)std::transform(
-    ops.begin(), ops.end(), std::back_inserter(ops_),
-    [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
+  if (deviceType == MapTargetDevice::kCpu) {
+    (void)std::transform(ops.begin(), ops.end(), std::back_inserter(ops_),
+                         [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> {
+                           return operation->Parse();
+                         });
+  } else {
+    for (auto &op : ops) {
+      ops_.emplace_back(op->Parse(deviceType));
+    }
+  }
   device_type_ = deviceType;
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -142,15 +153,20 @@ Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, std::string 
 #endif
 }
 
-Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, std::string deviceType) {
+Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, MapTargetDevice deviceType) {
   // Convert ops from TensorTransform to TensorOperation
-  (void)std::transform(
-    ops.begin(), ops.end(), std::back_inserter(ops_),
-    [](TensorTransform &operation) -> std::shared_ptr<TensorOperation> { return operation.Parse(); });
+  if (deviceType == MapTargetDevice::kCpu) {
+    (void)std::transform(
+      ops.begin(), ops.end(), std::back_inserter(ops_),
+      [](TensorTransform &operation) -> std::shared_ptr<TensorOperation> { return operation.Parse(); });
+  } else {
+    for (auto &op : ops) {
+      ops_.emplace_back(op.get().Parse(deviceType));
+    }
+  }
   device_type_ = deviceType;
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -162,15 +178,20 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
 }
 
 // Execute function for the example vector case: auto decode(new vision::Decode());
-Execute::Execute(std::vector<TensorTransform *> ops, std::string deviceType) {
+Execute::Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType) {
   // Convert ops from TensorTransform to TensorOperation
-  (void)std::transform(
-    ops.begin(), ops.end(), std::back_inserter(ops_),
-    [](TensorTransform *operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
+  if (deviceType == MapTargetDevice::kCpu) {
+    (void)std::transform(
+      ops.begin(), ops.end(), std::back_inserter(ops_),
+      [](TensorTransform *operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
+  } else {
+    for (auto &op : ops) {
+      ops_.emplace_back(op->Parse(deviceType));
+    }
+  }
   device_type_ = deviceType;
-  MS_LOG(INFO) << "Running Device: " << device_type_;
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
     Status rc = device_resource_->InitResource();
     if (!rc.IsOk()) {
@@ -183,7 +204,7 @@ Execute::Execute(std::vector<TensorTransform *> ops, std::string deviceType) {
 
 Execute::~Execute() {
 #ifdef ENABLE_ACL
-  if (device_type_ == "Ascend310") {
+  if (device_type_ == MapTargetDevice::kAscend310) {
     if (device_resource_) {
       device_resource_->FinalizeResource();
     } else {
@@ -205,7 +226,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
     transforms.emplace_back(ops_[i]->Build());
   }
-  if (device_type_ == "CPU") {
+  if (device_type_ == MapTargetDevice::kCpu) {
     // Convert mindspore::Tensor to dataset::Tensor
     std::shared_ptr<dataset::Tensor> de_tensor;
     Status rc = dataset::Tensor::CreateFromMemory(dataset::TensorShape(input.Shape()),
@@ -268,7 +289,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
     RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
     transforms.emplace_back(ops_[i]->Build());
   }
-  if (device_type_ == "CPU") {  // Case CPU
+  if (device_type_ == MapTargetDevice::kCpu) {  // Case CPU
     TensorRow de_tensor_list;
     for (auto &tensor : input_tensor_list) {
       std::shared_ptr<dataset::Tensor> de_tensor;
@@ -325,8 +346,8 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
 }
 
 Status Execute::validate_device_() {
-  if (device_type_ != "CPU" && device_type_ != "Ascend310") {
-    std::string err_msg = device_type_ + " is not supported. (Option: CPU or Ascend310)";
+  if (device_type_ != MapTargetDevice::kCpu && device_type_ != MapTargetDevice::kAscend310) {
+    std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }

@@ -200,7 +200,7 @@ TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   auto hwc2chw(new vision::HWC2CHW());
 
   std::vector<TensorTransform *> op_list = {decode, resize, centercrop, hwc2chw};
-  mindspore::dataset::Execute Transform(op_list, "CPU");
+  mindspore::dataset::Execute Transform(op_list, MapTargetDevice::kCpu);
 
   // Apply transform on image
   Status rc = Transform(image, &image);

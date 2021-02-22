@@ -44,6 +44,11 @@ class TensorTransform : public std::enable_shared_from_this<TensorTransform> {
   /// \brief Pure virtual function to convert a TensorTransform class into a IR TensorOperation object.
   /// \return shared pointer to the newly created TensorOperation.
   virtual std::shared_ptr<TensorOperation> Parse() = 0;
+
+  /// \brief Virtual function to convert a TensorTransform class into a IR TensorOperation object.
+  /// \param[in] env A string to determine the running environment
+  /// \return shared pointer to the newly created TensorOperation.
+  virtual std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) { return nullptr; }
 };
 
 // Transform operations for performing data transformation.

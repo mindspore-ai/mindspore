@@ -52,6 +52,8 @@ class CenterCrop : public TensorTransform {
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
+
  private:
   std::vector<int32_t> size_;
 };
@@ -93,6 +95,8 @@ class Decode : public TensorTransform {
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
+
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
   bool rgb_;
@@ -138,6 +142,8 @@ class Resize : public TensorTransform {
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
+
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
   std::vector<int32_t> size_;
