@@ -65,13 +65,30 @@ Status MultiProcess::MainProcess(ProcessFuncCall parent_process, ProcessFuncCall
   if (pid == 0) {
     ChildProcess(child_process);
     shared_memory.Detach();
-    MS_LOG_INFO << "Model converter: child process exit";
-    exit(0);
+    MS_LOG_INFO << "Model converter: child process sleep waiting for exit signal.";
+    while (1) {
+      // waiting for signal
+    }
   } else {  // parent process
     ret = ParentProcess(parent_process);
     shared_memory.Detach();
-    int status;
-    wait(&status);
+
+    MS_LOG_INFO << "Model converter: parent process kills child of fork.";
+    (void)kill(pid, SIGKILL);
+    constexpr uint32_t kMaxLoopCount = 5;
+    bool child_exited = false;
+    for (uint32_t i = 0; i < kMaxLoopCount; ++i) {
+      int status;
+      if (waitpid(pid, &status, WNOHANG) == pid) {
+        MS_LOG(INFO) << "Child process " << pid << " exits success.";
+        child_exited = true;
+        break;
+      }
+      sleep(1);
+    }
+    if (!child_exited) {
+      MS_LOG(WARNING) << "Child process " << pid << " has been killed but waitpid failed.";
+    }
     shared_memory.Destroy();
   }
   return ret;
