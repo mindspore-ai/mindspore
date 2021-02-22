@@ -19,7 +19,9 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-void NodeManager::InitNodeNum() { total_node_num_ = ClusterConfig::server_num() + ClusterConfig::worker_num(); }
+void NodeManager::InitNodeNum() {
+  total_node_num_ = ClusterMetadata::instance()->server_num() + ClusterMetadata::instance()->worker_num();
+}
 
 int NodeManager::NextRankId(const RegisterMessage &register_message) {
   std::lock_guard<std::mutex> lock(assign_rank_id_mutex_);
@@ -92,7 +94,7 @@ void NodeManager::UpdateClusterState() {
   (void)gettimeofday(&current_time, nullptr);
   timeout_nodes_info_.clear();
   for (auto it = heartbeats_.begin(); it != heartbeats_.end(); ++it) {
-    if (it->second.tv_sec + ClusterConfig::heartbeat_timeout() < current_time.tv_sec) {
+    if (it->second.tv_sec + ClusterMetadata::instance()->heartbeat_timeout() < current_time.tv_sec) {
       MS_LOG(ERROR) << "The node id:" << it->first << " is timeout!";
       timeout_nodes_info_[it->first] = nodes_info_[it->first];
     }
@@ -118,7 +120,7 @@ void NodeManager::UpdateClusterState() {
 
 void NodeManager::CheckClusterTimeout() {
   if (total_node_num_ != nodes_info_.size()) {
-    MS_LOG(WARNING) << "The cluster is not ready after " << ClusterConfig::cluster_available_timeout()
+    MS_LOG(WARNING) << "The cluster is not ready after " << ClusterMetadata::instance()->cluster_available_timeout()
                     << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
                     << nodes_info_.size();
     current_node_num_ = nodes_info_.size();

@@ -23,6 +23,8 @@
 #include <event2/event.h>
 #include <event2/listener.h>
 #include <event2/util.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <csignal>
 #include <utility>
@@ -90,7 +92,15 @@ bool TcpConnection::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos 
     MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
     res = false;
   }
+  int result = bufferevent_flush(buffer_event_, EV_READ | EV_WRITE, BEV_FLUSH);
+  if (result < 0) {
+    MS_LOG(EXCEPTION) << "Bufferevent flush failed!";
+  }
   bufferevent_unlock(buffer_event_);
+  MS_LOG(DEBUG) << "SendMessage the request id is:" << meta->request_id() << " the current time is:"
+                << std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now())
+                     .time_since_epoch()
+                     .count();
   return res;
 }
 
@@ -136,6 +146,8 @@ void TcpServer::Init() {
     MS_LOG(EXCEPTION) << "Use event pthread failed!";
   }
 
+  event_enable_debug_logging(EVENT_DBG_ALL);
+  event_set_log_callback(CommUtil::LogCallback);
   is_stop_ = false;
   base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(base_);
@@ -284,7 +296,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
 
   std::shared_ptr<TcpConnection> conn = server->onCreateConnection(bev, fd);
   MS_EXCEPTION_IF_NULL(conn);
-
+  SetTcpNoDelay(fd);
   server->AddConnection(fd, conn);
   conn->InitConnection([=](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
     OnServerReceiveMessage on_server_receive = server->GetServerReceive();
@@ -337,6 +349,11 @@ void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
       MS_LOG(EXCEPTION) << "Can not drain data from the event buffer!";
     }
     conn->OnReadHandler(read_buffer, IntToSize(read));
+    MS_LOG(DEBUG) << "the current time is:"
+                  << std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now())
+                       .time_since_epoch()
+                       .count()
+                  << " the read size is:" << read;
   }
 }
 
@@ -385,6 +402,14 @@ void TcpServer::TimerOnceCallback(evutil_socket_t, int16_t, void *arg) {
   auto tcp_server = reinterpret_cast<TcpServer *>(arg);
   if (tcp_server->on_timer_once_callback_) {
     tcp_server->on_timer_once_callback_(*tcp_server);
+  }
+}
+
+void TcpServer::SetTcpNoDelay(const evutil_socket_t &fd) {
+  const int one = 1;
+  int ret = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(int));
+  if (ret < 0) {
+    MS_LOG(EXCEPTION) << "Set socket no delay failed!";
   }
 }
 

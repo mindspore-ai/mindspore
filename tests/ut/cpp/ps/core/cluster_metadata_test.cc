@@ -18,27 +18,27 @@
 #include <string>
 
 #include "common/common_test.h"
-#include "ps/core/cluster_config.h"
+#include "ps/core/cluster_metadata.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-class TestClusterConfig : public UT::Common {
+class TestClusterMetadata : public UT::Common {
  public:
-  TestClusterConfig() = default;
-  virtual ~TestClusterConfig() = default;
+  TestClusterMetadata() = default;
+  virtual ~TestClusterMetadata() = default;
 
   void SetUp() override {}
   void TearDown() override {}
 };
 
-TEST_F(TestClusterConfig, HeartbeatInterval) {
-  ClusterConfig::Init(2, 2, "127.0.0.1", 8080);
-  EXPECT_TRUE(ClusterConfig::heartbeat_interval() == 3);
-  ClusterConfig::set_heartbeat_interval(100);
-  EXPECT_TRUE(ClusterConfig::heartbeat_interval() == 100);
-  EXPECT_STREQ(ClusterConfig::scheduler_host().c_str(), "127.0.0.1");
-  EXPECT_TRUE(ClusterConfig::scheduler_port() == 8080);
+TEST_F(TestClusterMetadata, HeartbeatInterval) {
+  ClusterMetadata::instance()->Init(2, 2, "127.0.0.1", 8080);
+  EXPECT_TRUE(ClusterMetadata::instance()->heartbeat_interval() == 3);
+  ClusterMetadata::instance()->set_heartbeat_interval(100);
+  EXPECT_TRUE(ClusterMetadata::instance()->heartbeat_interval() == 100);
+  EXPECT_STREQ(ClusterMetadata::instance()->scheduler_host().c_str(), "127.0.0.1");
+  EXPECT_TRUE(ClusterMetadata::instance()->scheduler_port() == 8080);
 }
 }  // namespace core
 }  // namespace ps
