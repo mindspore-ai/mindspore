@@ -321,14 +321,16 @@ class Duplicate(cde.DuplicateOp):
 
 class Unique(cde.UniqueOp):
     """
-    Return an output tensor containing all the unique elements of the input tensor in
-    the same order that they occur in the input tensor.
+    Perform the unique operation on the input tensor, only support transform one column each time.
 
-    Also return an index tensor that contains the index of each element of the
-    input tensor in the Unique output tensor.
+    Return 3 tensor: unique output tensor, index tensor, count tensor.
 
-    Finally, return a count tensor that contains the count of each element of
-    the output tensor in the input tensor.
+    Unique output tensor contains all the unique elements of the input tensor
+    in the same order that they occur in the input tensor.
+
+    Index tensor that contains the index of each element of the input tensor in the unique output tensor.
+
+    Count tensor that contains the count of each element of the output tensor in the input tensor.
 
     Note:
         Call batch op before calling this function.
