@@ -1433,5 +1433,89 @@ bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> ds
   return true;
 }
 
+bool GetAffineTransformImpl(LiteMat src, LiteMat dst) {
+  int m = src.height_;
+  int n = dst.width_;
+  for (int i = 0; i < m; i++) {
+    int k = i;
+    for (int j = i + 1; j < m; j++) {
+      if (std::abs(src.ptr<double>(j)[i]) > std::abs(src.ptr<double>(k)[i])) {
+        k = j;
+      }
+    }
+
+    if (std::abs(src.ptr<double>(k)[i]) < DBL_EPSILON * 100) {
+      return false;
+    }
+    if (k != i) {
+      for (int j = i; j < m; j++) {
+        std::swap(src.ptr<double>(i)[j], src.ptr<double>(k)[j]);
+      }
+
+      if (dst.data_ptr_) {
+        for (int j = 0; j < n; j++) {
+          std::swap(dst.ptr<double>(i)[j], dst.ptr<double>(k)[j]);
+        }
+      }
+    }
+
+    double d = -1 / src.ptr<double>(i)[i];
+    for (int j = i + 1; j < m; j++) {
+      double alpha = src.ptr<double>(j)[i] * d;
+      for (k = i + 1; k < m; k++) {
+        src.ptr<double>(j)[k] += alpha * src.ptr<double>(i)[k];
+      }
+
+      if (dst.data_ptr_) {
+        for (k = 0; k < n; k++) {
+          dst.ptr<double>(j)[k] += alpha * dst.ptr<double>(i)[k];
+        }
+      }
+    }
+  }
+
+  if (dst.data_ptr_) {
+    for (int i = m - 1; i >= 0; i--) {
+      for (int j = 0; j < n; j++) {
+        double s = dst.ptr<double>(i)[j];
+        for (int k = i + 1; k < m; k++) {
+          s -= src.ptr<double>(i)[k] * dst.ptr<double>(k)[j];
+        }
+        dst.ptr<double>(i)[j] = s / src.ptr<double>(i)[i];
+      }
+    }
+  }
+
+  return true;
+}
+
+bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M) {
+  double m[6 * 6];
+  double n[6];
+  LiteMat src1(6, 6, m, LDataType(LDataType::DOUBLE));
+  LiteMat src2(1, 6, n, LDataType(LDataType::DOUBLE));
+
+  for (int i = 0; i < 3; i++) {
+    int j = i * 12;
+    int k = i * 12 + 6;
+    m[j] = m[k + 3] = src_point[i].x;
+    m[j + 1] = m[k + 4] = src_point[i].y;
+    m[j + 2] = m[k + 5] = 1;
+    m[j + 3] = m[j + 4] = m[j + 5] = 0;
+    m[k] = m[k + 1] = m[k + 2] = 0;
+    n[i * 2] = dst_point[i].x;
+    n[i * 2 + 1] = dst_point[i].y;
+  }
+
+  GetAffineTransformImpl(src1, src2);
+  M.Init(3, 2, LDataType(LDataType::DOUBLE));
+  for (int i = 0; i < M.height_; i++) {
+    for (int j = 0; j < M.width_; j++) {
+      M.ptr<double>(i)[j] = src2.ptr<double>(i * M.width_ + j)[0];
+    }
+  }
+  return true;
+}
+
 }  // namespace dataset
 }  // namespace mindspore

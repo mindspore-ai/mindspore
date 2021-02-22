@@ -1241,9 +1241,8 @@ TEST_F(MindDataImageProcess, testWarpPerspectiveGrayResize) {
 }
 
 TEST_F(MindDataImageProcess, testGetRotationMatrix2D) {
-  std::vector<std::vector<double>> expect_matrix = {{0.250000, 0.433013, -0.116025},
-                                                    {-0.433013, 0.250000, 1.933013}};
-  
+  std::vector<std::vector<double>> expect_matrix = {{0.250000, 0.433013, -0.116025}, {-0.433013, 0.250000, 1.933013}};
+
   double angle = 60.0;
   double scale = 0.5;
 
@@ -1255,16 +1254,28 @@ TEST_F(MindDataImageProcess, testGetRotationMatrix2D) {
 }
 
 TEST_F(MindDataImageProcess, testGetPerspectiveTransform) {
-  std::vector<std::vector<double>> expect_matrix = {{1.272113, 3.665216, -788.484287},
-                                                    {-0.394146, 3.228247, -134.009780},
-                                                    {-0.001460, 0.006414, 1}};
-  
+  std::vector<std::vector<double>> expect_matrix = {
+    {1.272113, 3.665216, -788.484287}, {-0.394146, 3.228247, -134.009780}, {-0.001460, 0.006414, 1}};
+
   std::vector<Point> src = {Point(165, 270), Point(835, 270), Point(360, 125), Point(615, 125)};
   std::vector<Point> dst = {Point(165, 270), Point(835, 270), Point(100, 100), Point(500, 30)};
 
   LiteMat M;
   bool ret = false;
   ret = GetPerspectiveTransform(src, dst, M);
+  EXPECT_TRUE(ret);
+  AccuracyComparison(expect_matrix, M);
+}
+
+TEST_F(MindDataImageProcess, testGetAffineTransform) {
+  std::vector<std::vector<double>> expect_matrix = {{0.400000, 0.066667, 16.666667}, {0.000000, 0.333333, 23.333333}};
+
+  std::vector<Point> src = {Point(50, 50), Point(200, 50), Point(50, 200)};
+  std::vector<Point> dst = {Point(40, 40), Point(100, 40), Point(50, 90)};
+
+  LiteMat M;
+  bool ret = false;
+  ret = GetAffineTransform(src, dst, M);
   EXPECT_TRUE(ret);
   AccuracyComparison(expect_matrix, M);
 }
