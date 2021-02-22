@@ -213,17 +213,16 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
     Measures the distribution error between the probabilities of the input (computed with softmax function) and the
     target where the classes are mutually exclusive (only one class is positive) using cross entropy loss.
 
-    Typical input into this function is unnormalized scores and target of each class.
-    Scores Tensor :math:`x` is of shape :math:`(N, C)` and target Tensor :math:`t` is a
-    Tensor of shape :math:`(N, C)` which contains one-hot labels of length :math:`C`.
+    Typical input into this function is unnormalized scores denoted as x whose shape is (N, C),
+    and the corresponding targets.
 
-    For each instance :math:`N_i`, the loss is given as:
+    For each instance :math:`x_i`, i ranges from 0 to N-1, the loss is given as:
 
     .. math::
-        \ell(x_i, t_i) = - \log\left(\frac{\exp(x_{t_i})}{\sum_j \exp(x_j)}\right)
-        =  -x_{t_i} + \log\left(\sum_j \exp(x_j)\right)
+        \ell(x_i, c) = - \log\left(\frac{\exp(x_i[c])}{\sum_j \exp(x_i[j])}\right)
+        =  -x_i[c] + \log\left(\sum_j \exp(x_i[j])\right)
 
-    where :math:`x_i` is a 1D score Tensor, :math:`t_i` is a scalar.
+    where :math:`x_i` is a 1D score Tensor, :math:`c` is the index of 1 in one-hot.
 
     Note:
         While the target classes are mutually exclusive, i.e., only one class is positive in the target, the predicted
