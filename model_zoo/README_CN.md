@@ -52,6 +52,7 @@
         - [Transformer](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/transformer/README.md)
     - [推荐系统](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend)
         - [DeepFM](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/deepfm/README.md)
+        - [NAML](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/naml/README.md)
         - [Wide&Deep[基准]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/wide_and_deep/README.md)
     - [图神经网络](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn)
         - [BGCF](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/gnn/bgcf/README.md)
