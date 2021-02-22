@@ -27,7 +27,7 @@ from mindspore.train._utils import _make_directory
 from mindspore.train.serialization import save_checkpoint, _save_graph
 from mindspore.parallel._ps_context import _is_role_pserver, _get_ps_mode_rank
 from ._callback import Callback, set_cur_net
-
+from ...common.tensor import Tensor
 
 _cur_dir = os.getcwd()
 _save_dir = _cur_dir
@@ -295,6 +295,10 @@ class ModelCheckpoint(Callback):
         """
         cb_params = run_context.original_args()
         _to_save_last_ckpt = True
+
+        # if param is cache enable, flush data from cache to host before epoch end
+        self._flush_from_cache(cb_params)
+
         self._save_ckpt(cb_params, _to_save_last_ckpt)
 
         thread_list = threading.enumerate()
@@ -358,6 +362,13 @@ class ModelCheckpoint(Callback):
                             self._config.async_save)
 
             self._latest_ckpt_file_name = cur_file
+
+    def _flush_from_cache(self, cb_params):
+        """Flush cache data to host if tensor is cache enable."""
+        params = cb_params.train_network.get_parameters()
+        for param in params:
+            if param.cache_enable:
+                Tensor(param).flush_from_cache()
 
     @property
     def latest_ckpt_file_name(self):

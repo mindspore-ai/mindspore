@@ -799,6 +799,6 @@ class Model:
         params = cb_params.train_network.get_parameters()
         for param in params:
             if param.cache_enable:
-                Tensor(param)._flush_from_cache()
+                Tensor(param).flush_from_cache()
 
 __all__ = ["Model"]
