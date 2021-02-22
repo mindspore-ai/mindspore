@@ -14,11 +14,43 @@
 # ============================================================================
 """akg process"""
 import os
+import shutil
 import subprocess
 import sys
 from multiprocessing import Pool, cpu_count
 
-def _compile_akg_task(*json_strs):
+def copy_json(pid_path, ppid_path):
+    """
+    copy json from pid_path to ppid_path
+    """
+    if not os.path.exists(ppid_path):
+        os.mkdir(ppid_path)
+    json_files = os.listdir(pid_path)
+    for json_file in json_files:
+        shutil.move(pid_path + '/' + json_file, ppid_path)
+
+def _compile_akg_task_gpu(*json_strs):
+    """
+    compile func called in single process
+
+    Parameters:
+        json_strs: list. List contains multiple kernel infos, suitable for json compile api.
+    """
+
+    p = __import__("akg", globals(), locals(), ['ms'], 0)
+    func = getattr(p.ms, "compilewithjson")
+
+    for json_str in json_strs:
+        res = func(json_str)
+        if not res:
+            raise ValueError("Compile error, args: {}!".format(json_str))
+
+    pid_path = os.path.realpath("./cuda_meta_" + str(os.getpid()))
+    if os.path.exists(pid_path):
+        copy_json(pid_path, os.path.realpath("./cuda_meta_" + str(os.getppid())))
+        shutil.rmtree(pid_path)
+
+def _compile_akg_task_ascend(*json_strs):
     """
     compile func called in single process
 
@@ -28,24 +60,26 @@ def _compile_akg_task(*json_strs):
     akg_compiler = os.path.join(os.path.split(
         os.path.realpath(__file__))[0], "compiler.py")
     for json_str in json_strs:
-        res = subprocess.run(
-            [sys.executable, akg_compiler, json_str], text=True)
+        res = subprocess.run([sys.executable, akg_compiler, json_str], text=True)
+
         if res.returncode != 0:
             raise ValueError("Failed, args: {}!".format(json_str))
 
-def create_akg_parallel_process(process_num, wait_time):
+
+
+def create_akg_parallel_process(process_num, wait_time, platform=""):
     """
     create AkgParallelCompiler object
 
     Returns:
         AkgParallelCompiler
     """
-    return AkgProcess(process_num, wait_time)
+    return AkgProcess(process_num, wait_time, platform)
 
 class AkgProcess:
     """akg kernel parallel process"""
 
-    def __init__(self, process_num, wait_time):
+    def __init__(self, process_num, wait_time, platform=""):
         """
         Args:
             process_num: int. processes number
@@ -61,6 +95,7 @@ class AkgProcess:
         self.process_num = min([cpu_count(), max_proc_num, process_num])
         self.args = [[] for _ in range(self.process_num)]
         self.wait_time = wait_time
+        self.platform = platform
         self.argc = 0
 
     def compile(self):
@@ -71,9 +106,16 @@ class AkgProcess:
         """
         if self.argc == 0:
             raise ValueError("json must be not null")
-        with Pool(processes=self.process_num) as pool:
-            res = pool.starmap_async(_compile_akg_task, self.args)
-            res.get(timeout=self.wait_time)
+        if self.platform == "GPU":
+            with Pool(processes=self.process_num) as pool:
+                res = pool.starmap_async(_compile_akg_task_gpu, self.args)
+                res.get(timeout=self.wait_time)
+        elif self.platform == "ASCEND":
+            with Pool(processes=self.process_num) as pool:
+                res = pool.starmap_async(_compile_akg_task_ascend, self.args)
+                res.get(timeout=self.wait_time)
+        else:
+            raise ValueError("The value of 'platform' must be 'GPU' or 'ASCEND'.")
         return True
 
     def accept_json(self, json):

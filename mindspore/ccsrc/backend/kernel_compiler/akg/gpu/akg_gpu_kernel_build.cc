@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,35 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "backend/kernel_compiler/kernel.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/kernel_compiler/akg/gpu/akg_gpu_kernel_mod.h"
 #include "utils/ms_utils.h"
-#include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr int32_t ARGS_SIZE = 1;
 constexpr auto kCompileWithJsonFunc = "compilewithjson";
+
+KernelPackPtr AkgGpuKernelBuilder::AkgSearchCache(const std::string &kernel_name, const std::string &processor) {
+  return SearchCache(kernel_name, processor);
+}
+
+KernelPackPtr AkgGpuKernelBuilder::AkgInsertCache(const std::string &kernel_name, const std::string &processor) {
+  return InsertCache(kernel_name, processor);
+}
+
+void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
+                                          const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
+  auto kernel_mod_ptr = std::make_shared<GpuKernelMod>(kernel_pack);
+  kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
+  kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());
+  AnfAlgo::SetKernelMod(kernel_mod_ptr, anf_node.get());
+}
+
+void AkgGpuKernelBuilder::AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) {
+  kernel::SaveJsonInfo(kernel_name, kernel_json, kernel::KernelMeta::GetInstance()->kernel_meta_path());
+}
 
 KernelPackPtr AkgGpuKernelBuilder::OpBuild(const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);

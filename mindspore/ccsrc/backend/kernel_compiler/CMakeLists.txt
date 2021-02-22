@@ -13,6 +13,7 @@ if(ENABLE_D)
     file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "kernel_query.cc"
         "kernel_fusion.cc"
+        "akg/akg_kernel_build.cc"
         "akg/ascend/*.cc"
         "akg/akg_kernel_json_generator.cc"
         "akg/akg_kernel_json_decoder.cc"
@@ -74,6 +75,7 @@ endif()
 if(ENABLE_GPU)
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "gpu/*.cu"
+        "akg/akg_kernel_build.cc"
         "akg/gpu/*.cc"
         "akg/akg_kernel_json_generator.cc"
         "akg/akg_kernel_json_decoder.cc"

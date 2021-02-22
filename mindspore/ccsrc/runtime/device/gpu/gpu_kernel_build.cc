@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   bool already_check_nvcc = false;
   auto kernels = kernel_graph->execution_order();
+  std::vector<AnfNodePtr> akg_nodes;
   for (const auto &kernel : kernels) {
     std::string kernel_name = session::AnfRuntimeAlgorithm::GetCNodeName(kernel);
     if (kernel_name == prim::kPrimTupleGetItem->name() || kernel_name == prim::kPrimMakeTuple->name() ||
@@ -54,11 +55,7 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
                "cuda library(eg. /usr/local/cuda).";
         }
       }
-      auto gpu_kernel_ptr = kernel::AkgGpuKernelBuild(kernel);
-      if (!gpu_kernel_ptr) {
-        MS_LOG(EXCEPTION) << "Build akg kernel op[" << kernel->fullname_with_scope() << "] failed";
-      }
-      session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_ptr, kernel.get());
+      akg_nodes.push_back(kernel);
     } else {
       auto gpu_kernel_ptr = kernel::GpuKernelFactory::GetInstance().Create(kernel_name, kernel);
       if (!gpu_kernel_ptr) {
@@ -72,6 +69,21 @@ void GpuBuild(const KernelGraphPtr &kernel_graph) {
       session::AnfRuntimeAlgorithm::SetKernelMod((kernel::KernelModPtr)gpu_kernel_ptr, kernel.get());
     }
   }
+
+  struct timeval start_time, end_time;
+  (void)gettimeofday(&start_time, nullptr);
+
+  kernel::AkgGpuKernelBuilder akg_gpu_kernel_builder;
+  bool akg_ret = akg_gpu_kernel_builder.AkgKernelParallelBuild(akg_nodes);
+  if (!akg_ret) {
+    MS_LOG(ERROR) << "Akg-Kernel Parallel Building in GPU fail.";
+  }
+
+  (void)gettimeofday(&end_time, nullptr);
+  const uint64_t kUSecondInSecond = 1000000;
+  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Akg GPU KernelBuild run in  " << PRIu64 << " us " << cost;
 }
 }  // namespace gpu
 }  // namespace device
