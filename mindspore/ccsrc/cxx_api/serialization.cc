@@ -85,20 +85,20 @@ Graph Serialization::LoadModel(const void *model_data, size_t data_size, ModelTy
 }
 
 Graph Serialization::LoadModel(const std::string &file, ModelType model_type) {
-  Buffer data = ReadFile(file);
-  if (data.Data() == nullptr) {
-    MS_LOG(EXCEPTION) << "Read file " << file << " failed.";
-  }
   if (model_type == kMindIR) {
     FuncGraphPtr anf_graph = nullptr;
     try {
-      anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(data.Data()), data.DataSize());
+      anf_graph = LoadMindIR(file);
     } catch (const std::exception &) {
       MS_LOG(EXCEPTION) << "Load MindIR failed.";
     }
 
     return Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
   } else if (model_type == kOM) {
+    Buffer data = ReadFile(file);
+    if (data.Data() == nullptr) {
+      MS_LOG(EXCEPTION) << "Read file " << file << " failed.";
+    }
     return Graph(std::make_shared<Graph::GraphData>(data, kOM));
   }
   MS_LOG(EXCEPTION) << "Unsupported ModelType " << model_type;

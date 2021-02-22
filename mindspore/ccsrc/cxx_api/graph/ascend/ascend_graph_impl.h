@@ -73,7 +73,7 @@ class AscendGraphImpl::MsEnvGuard {
   static std::shared_ptr<MsEnvGuard> GetEnv(uint32_t device_id);
 
  private:
-  static std::weak_ptr<MsEnvGuard> global_ms_env_;
+  static std::map<uint32_t, std::weak_ptr<MsEnvGuard>> global_ms_env_;
   static std::mutex global_ms_env_mutex_;
 
   Status errno_;
