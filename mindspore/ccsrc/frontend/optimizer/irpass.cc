@@ -24,6 +24,7 @@
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/inline.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
+#include "frontend/optimizer/irpass/load_eliminate.h"
 #include "frontend/optimizer/irpass/stopgrad_eliminate.h"
 #include "frontend/optimizer/irpass/incorporate_call.h"
 #include "frontend/optimizer/irpass/incorporate_getitem.h"
@@ -155,6 +156,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<UpdatestateEliminater>(), "updatestate_eliminater", prim::kPrimUpdateState);
   switch_call_monad_eliminater_ = MakeSubstitution(std::make_shared<SwitchCallMonadParameterEliminater>(),
                                                    "switch_call_monad_eliminater", IsCNodeDup);
+
+  // Load eliminate
+  load_eliminater_ = MakeSubstitution(std::make_shared<LoadEliminater>(), "load_eliminater", prim::kPrimLoad);
 
   // StopGradient eliminate
   stopgrad_eliminater_ =

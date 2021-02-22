@@ -103,6 +103,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     // Safe inlining
     irpass.inline_,
     irpass.updatestate_eliminater_,
+    irpass.load_eliminater_,
     irpass.stopgrad_eliminater_,
     irpass.partial_eliminate_,
     irpass.replace_applicator_,
@@ -130,6 +131,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     // Safe inlining
     irpass.inline_,
     irpass.updatestate_eliminater_,
+    irpass.load_eliminater_,
     irpass.stopgrad_eliminater_,
     irpass.sparse_tensor_eliminate_,
   });
@@ -195,6 +197,7 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
     // Safe inlining,
     irpass.inline_,
     irpass.updatestate_eliminater_,
+    irpass.load_eliminater_,
     irpass.switch_call_monad_eliminater_,
     irpass.stopgrad_eliminater_,
     irpass.partial_eliminate_,
@@ -220,9 +223,9 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig b_1 = opt::OptPassConfig(
     {irpass.zero_like_fill_zero_, irpass.item_tuple_or_list_eliminate_, irpass.float_tuple_getitem_switch_,
-     irpass.reset_defer_inline_, irpass.inline_, irpass.updatestate_eliminater_, irpass.stopgrad_eliminater_,
-     irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_, irpass.incorporate_env_getitem_,
-     irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
+     irpass.reset_defer_inline_, irpass.inline_, irpass.updatestate_eliminater_, irpass.load_eliminater_,
+     irpass.stopgrad_eliminater_, irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_,
+     irpass.incorporate_env_getitem_, irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
      irpass.incorporate_env_getitem_switch_layer_, irpass.value_based_eliminate_, irpass.receive_eliminate_});
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.replace_refkey_by_param_,
