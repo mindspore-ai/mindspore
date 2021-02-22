@@ -744,8 +744,8 @@ def test_diag():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_diag_indices():
-    mnp_res = mnp.diag_indices(0)
-    onp_res = onp.diag_indices(0)
+    mnp_res = mnp.diag_indices(5, 7)
+    onp_res = onp.diag_indices(5, 7)
     match_all_arrays(mnp_res, onp_res)
 
 

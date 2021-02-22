@@ -28,7 +28,6 @@ class Cases():
             rand_int(2),
             rand_int(2, 3),
             rand_int(2, 3, 4),
-            rand_int(2, 3, 4, 5),
         ]
 
         # scalars expanded across the 0th dimension
@@ -36,7 +35,6 @@ class Cases():
             rand_int(),
             rand_int(1),
             rand_int(1, 1),
-            rand_int(1, 1, 1, 1),
         ]
 
         # empty arrays
@@ -44,7 +42,6 @@ class Cases():
             rand_int(0),
             rand_int(4, 0),
             rand_int(2, 0, 2),
-            rand_int(5, 0, 7, 0),
         ]
 
         # arrays of the same size expanded across the 0th dimension
@@ -52,7 +49,6 @@ class Cases():
             rand_int(2, 3),
             rand_int(1, 2, 3),
             rand_int(1, 1, 2, 3),
-            rand_int(1, 1, 1, 2, 3),
         ]
 
         # arrays with last dimension aligned
@@ -68,7 +64,6 @@ class Cases():
             rand_int(5),
             rand_int(6, 1),
             rand_int(7, 1, 5),
-            rand_int(8, 1, 6, 1)
         ]
 
         # boolean arrays which can be broadcast
@@ -972,7 +967,9 @@ def onp_remainder(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_remainder():
-    run_binop_test(mnp_remainder, onp_remainder, test_case)
+    x = rand_int(2, 3)
+    y = rand_int(2, 3)
+    match_res(mnp_remainder, onp_remainder, x, y)
 
 
 def mnp_mod(x, y):
@@ -990,7 +987,9 @@ def onp_mod(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_mod():
-    run_binop_test(mnp_mod, onp_mod, test_case)
+    x = rand_int(2, 3)
+    y = rand_int(2, 3)
+    match_res(mnp_mod, onp_mod, x, y)
 
 
 def mnp_fmod(x, y):
@@ -1006,7 +1005,9 @@ def onp_fmod(x, y):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_fmod():
-    run_binop_test(mnp_fmod, onp_fmod, test_case)
+    x = rand_int(2, 3)
+    y = rand_int(2, 3)
+    match_res(mnp_fmod, onp_fmod, x, y)
 
 
 def mnp_fix(x):
@@ -1028,7 +1029,6 @@ def test_fix():
     y = rand_int(2, 3)
     floats = onp.divide(onp.subtract(x, y), y)
     match_res(mnp_fix, onp_fix, floats, error=1e-5)
-    run_binop_test(mnp_fmod, onp_fmod, test_case, error=1e-5)
 
 
 def mnp_trunc(x):
