@@ -91,6 +91,50 @@ def test_cosine_embedding_loss():
     loss(x1, x2, label)
 
 
+def test_focal_loss():
+    """ test_FocalLoss """
+    x1 = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
+    x2 = Tensor([[1], [1], [0]], mstype.int32)
+    focalloss = nn.FocalLoss()
+    focalloss(x1, x2)
+
+
+def test_focal_loss_gamma():
+    """ test_FocalLoss """
+    x1 = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
+    x2 = Tensor([[1], [1], [0]], mstype.int32)
+    with pytest.raises(TypeError):
+        focalloss = nn.FocalLoss(weight=None, gamma="mmm", reduction='mean')
+        focalloss(x1, x2)
+
+
+def test_focal_loss_weight():
+    """ test_FocalLoss """
+    x1 = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
+    x2 = Tensor([[1], [1]], mstype.int32)
+    with pytest.raises(TypeError):
+        focalloss = nn.FocalLoss(weight='a', gamma=2.0, reduction='mean')
+        focalloss(x1, x2)
+
+
+def test_focal_loss_reduction():
+    """ test_FocalLoss """
+    x1 = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
+    x2 = Tensor([[1], [1], [0]], mstype.int32)
+    with pytest.raises(ValueError):
+        focalloss = nn.FocalLoss(weight=None, gamma=2.0, reduction='m')
+        focalloss(x1, x2)
+
+
+def test_focal_loss_input():
+    """ test_FocalLoss """
+    x1 = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
+    x2 = Tensor([[1]], mstype.int32)
+    focalloss = nn.FocalLoss(weight=None, gamma=2.0, reduction='mean')
+    with pytest.raises(ValueError):
+        focalloss(x1, x2)
+
+
 def test_dice_loss():
     """ test_dice_loss """
     loss = nn.DiceLoss()
