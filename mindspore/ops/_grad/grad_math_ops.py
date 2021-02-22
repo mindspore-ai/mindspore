@@ -1300,3 +1300,15 @@ def get_bprop_lin_space(self):
         return zeros_like(start), zeros_like(stop), zeros_like(num)
 
     return bprop
+
+
+@bprop_getters.register(P.IndexAdd)
+def get_bprop_index_add(self):
+    """Generate bprop for IndexAdd"""
+    gather = P.Gather()
+    _axis = self.axis
+
+    def bprop(input_x, indices, input_y, out, dout):
+        return dout, zeros_like(indices), gather(dout, indices, _axis)
+
+    return bprop

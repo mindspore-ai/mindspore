@@ -16,10 +16,12 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 
 
 class NetIndexAdd(nn.Cell):
@@ -257,3 +259,110 @@ def test_index_add_invalid_inputs():
         net = NetIndexAdd(1)
         _ = net(Tensor(x), Tensor(idx), Tensor(y))
     assert "out of range" in str(info.value)
+
+
+class IndexAddGradNet(nn.Cell):
+    def __init__(self, network):
+        super(IndexAddGradNet, self).__init__()
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    def construct(self, x, idx, y, dout):
+        out = self.grad(self.network)(x, idx, y, dout)
+        return out
+
+
+def index_add_grad_with_type(nptype):
+    net = NetIndexAdd(1)
+    grad_net = IndexAddGradNet(net)
+    x = Tensor(np.arange(15).reshape(5, 3).astype(nptype))
+    y = Tensor(np.arange(5).reshape(5, 1).astype(nptype))
+    dout = Tensor(np.array([[63., 64., 65.],
+                            [66., 67., 68.],
+                            [69., 70., 71.],
+                            [72., 73., 74.],
+                            [75., 76., 77.]]).astype(nptype))
+    index = Tensor(np.array([1]), dtype=mindspore.int32)
+    xgrad, _, ygrad = grad_net(x, index, y, dout)
+    expect_xgrad = np.array([[63., 64., 65.],
+                             [66., 67., 68.],
+                             [69., 70., 71.],
+                             [72., 73., 74.],
+                             [75., 76., 77.]]).astype(nptype)
+    expect_ygrad = np.array([[64.],
+                             [67.],
+                             [70.],
+                             [73.],
+                             [76.]]).astype(nptype)
+    np.testing.assert_array_equal(xgrad.asnumpy(), expect_xgrad)
+    np.testing.assert_array_equal(ygrad.asnumpy(), expect_ygrad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_grad_float64():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    index_add_grad_with_type(np.float64)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    index_add_grad_with_type(np.float64)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_grad_float32():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    index_add_grad_with_type(np.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    index_add_grad_with_type(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_grad_float16():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    index_add_grad_with_type(np.float16)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    index_add_grad_with_type(np.float16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_grad_int32():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    index_add_grad_with_type(np.int32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    index_add_grad_with_type(np.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_grad_int16():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    index_add_grad_with_type(np.int16)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    index_add_grad_with_type(np.int16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_grad_int8():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    index_add_grad_with_type(np.int8)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    index_add_grad_with_type(np.int8)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_grad_uint8():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    index_add_grad_with_type(np.uint8)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+    index_add_grad_with_type(np.uint8)
