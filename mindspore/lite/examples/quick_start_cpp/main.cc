@@ -24,6 +24,34 @@
 #include "include/context.h"
 #include "include/lite_session.h"
 
+std::string RealPath(const char *path) {
+  size_t PATH_MAX = 4096;
+  if (path == nullptr) {
+    std::cerr << "path is nullptr" << std::endl;
+    return "";
+  }
+  if ((strlen(path)) >= PATH_MAX) {
+    std::cerr << "path is too long" << std::endl;
+    return "";
+  }
+  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
+  if (resolved_path == nullptr) {
+    std::cerr << "new resolved_path failed" << std::endl;
+    return "";
+  }
+#ifdef _WIN32
+  char *real_path = _fullpath(resolved_path.get(), path, 1024);
+#else
+  char *real_path = realpath(path, resolved_path.get());
+#endif
+  if (real_path == nullptr || strlen(real_path) == 0) {
+    std::cerr << "file path is not valid : " << path << std::endl;
+    return "";
+  }
+  std::string res = resolved_path.get();
+  return res;
+}
+
 char *ReadFile(const char *file, size_t *size) {
   if (file == nullptr) {
     std::cerr << "file is nullptr." << std::endl;
@@ -68,14 +96,11 @@ void GenerateRandomData(int size, void *data, Distribution distribution) {
 int GenerateInputDataWithRandom(std::vector<mindspore::tensor::MSTensor *> inputs) {
   for (auto tensor : inputs) {
     auto input_data = tensor->MutableData();
-    void *random_data = malloc(tensor->Size());
     if (input_data == nullptr) {
       std::cerr << "MallocData for inTensor failed." << std::endl;
       return -1;
     }
-    GenerateRandomData<float>(tensor->Size(), random_data, std::uniform_real_distribution<float>(0.1f, 1.0f));
-    // Copy data to input tensor.
-    memcpy(input_data, random_data, tensor->Size());
+    GenerateRandomData<float>(tensor->Size(), input_data, std::uniform_real_distribution<float>(0.1f, 1.0f));
   }
   return mindspore::lite::RET_OK;
 }
@@ -126,6 +151,7 @@ mindspore::session::LiteSession *Compile(mindspore::lite::Model *model) {
   // Compile graph.
   auto ret = session->CompileGraph(model);
   if (ret != mindspore::lite::RET_OK) {
+    delete session;
     std::cerr << "Compile failed while running." << std::endl;
     return nullptr;
   }
@@ -143,9 +169,13 @@ int CompileAndRun(int argc, const char **argv) {
     return -1;
   }
   // Read model file.
-  auto model_path = argv[1];
+  auto model_path = RealPath(argv[1]);
+  if (model_path.empty()) {
+    std::cerr << "model path " << argv[1] << " is invalid.";
+    return -1;
+  }
   size_t size = 0;
-  char *model_buf = ReadFile(model_path, &size);
+  char *model_buf = ReadFile(model_path.c_str(), &size);
   if (model_buf == nullptr) {
     std::cerr << "Read model file failed." << std::endl;
     return -1;
@@ -160,12 +190,15 @@ int CompileAndRun(int argc, const char **argv) {
   // Compile MindSpore Lite model.
   auto session = Compile(model);
   if (session == nullptr) {
+    delete model;
     std::cerr << "Create session failed." << std::endl;
     return -1;
   }
   // Run inference.
   auto ret = Run(session);
   if (ret != mindspore::lite::RET_OK) {
+    delete model;
+    delete session;
     std::cerr << "MindSpore Lite run failed." << std::endl;
     return -1;
   }
