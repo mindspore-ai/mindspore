@@ -51,6 +51,8 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_SpaceToBatch,
                                                               schema::PrimitiveType_SpaceToBatchND};
 
+static const std::vector<schema::PrimitiveType> nchwOpList = {schema::PrimitiveType_InstanceNorm};
+
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
   schema::PrimitiveType_AvgPoolGrad,    schema::PrimitiveType_MaxPoolGrad,
   schema::PrimitiveType_ActivationGrad, schema::PrimitiveType_Conv2DBackpropFilterFusion,
@@ -152,6 +154,8 @@ std::vector<schema::PrimitiveType> GetInsertOpList() { return needInsertOpList; 
 std::vector<schema::PrimitiveType> Getfp32FullOpList() { return fp32FullOpList; }
 
 std::vector<schema::PrimitiveType> GetNhwcOpList() { return nhwcOpList; }
+
+std::vector<schema::PrimitiveType> GetNchwOpList() { return nchwOpList; }
 
 std::unordered_map<schema::PrimitiveType, std::vector<int>> GetExtNhwcIndexes() { return extNhwcInsertIndex; }
 

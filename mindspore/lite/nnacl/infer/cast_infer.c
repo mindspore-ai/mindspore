@@ -36,7 +36,8 @@ int CastInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
   if (input->data_type_ != kNumberTypeBool && input->data_type_ != kNumberTypeUInt8 &&
       input->data_type_ != kNumberTypeInt8 && input->data_type_ != kNumberTypeInt32 &&
-      input->data_type_ != kNumberTypeFloat32 && input->data_type_ != kNumberTypeFloat16) {
+      input->data_type_ != kNumberTypeInt64 && input->data_type_ != kNumberTypeFloat32 &&
+      input->data_type_ != kNumberTypeFloat16) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
 

@@ -41,6 +41,20 @@ inline void Int32ToFloat32(const int32_t *input, float *output, int number) {
   }
 }
 
+inline void Int64ToFloat32(const int64_t *input, float *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float)input[i];
+  }
+}
+
+#ifdef ENABLE_FP16
+inline void Int64ToFp16(const int64_t *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+#endif
+
 inline void Fp16ToFloat32(const uint16_t *input, float *output, int number) {
   for (int i = 0; i < number; ++i) {
     output[i] = ShortToFloat32(input[i]);
@@ -82,6 +96,7 @@ inline void BoolToInt32(const bool *input, int32_t *output, int number) {
     output[i] = (int32_t)input[i];
   }
 }
+
 #ifdef __cplusplus
 }
 #endif
