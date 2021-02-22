@@ -29,4 +29,32 @@ void PReluShareChannel(float *input, float *output, const PReluParameter *prelu_
 }
 #endif
 
+#define PRELU_CALCULATE_256X8(dst, src)                                                                          \
+  MS_FLOAT32X8 dst##1 =                                                                                          \
+    MS_MUL256_F32(src##1, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##1, zero_value_8, 30))); \
+  MS_FLOAT32X8 dst##2 =                                                                                          \
+    MS_MUL256_F32(src##2, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##2, zero_value_8, 30))); \
+  MS_FLOAT32X8 dst##3 =                                                                                          \
+    MS_MUL256_F32(src##3, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##3, zero_value_8, 30))); \
+  MS_FLOAT32X8 dst##4 =                                                                                          \
+    MS_MUL256_F32(src##4, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##4, zero_value_8, 30))); \
+  MS_FLOAT32X8 dst##5 =                                                                                          \
+    MS_MUL256_F32(src##5, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##5, zero_value_8, 30))); \
+  MS_FLOAT32X8 dst##6 =                                                                                          \
+    MS_MUL256_F32(src##6, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##6, zero_value_8, 30))); \
+  MS_FLOAT32X8 dst##7 =                                                                                          \
+    MS_MUL256_F32(src##7, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##7, zero_value_8, 30))); \
+  MS_FLOAT32X8 dst##8 =                                                                                          \
+    MS_MUL256_F32(src##8, MS_BLEND256_F32(slope_value_8, one_value_8, MS_CMP256_F32(src##8, zero_value_8, 30)));
+
+#define PRELU_CALCULATE_128X8(dst, src)                                                                                \
+  MS_FLOAT32X4 dst##1 = MS_MULQ_F32(src##1, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##1, zero_value))); \
+  MS_FLOAT32X4 dst##2 = MS_MULQ_F32(src##2, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##2, zero_value))); \
+  MS_FLOAT32X4 dst##3 = MS_MULQ_F32(src##3, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##3, zero_value))); \
+  MS_FLOAT32X4 dst##4 = MS_MULQ_F32(src##4, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##4, zero_value))); \
+  MS_FLOAT32X4 dst##5 = MS_MULQ_F32(src##5, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##5, zero_value))); \
+  MS_FLOAT32X4 dst##6 = MS_MULQ_F32(src##6, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##6, zero_value))); \
+  MS_FLOAT32X4 dst##7 = MS_MULQ_F32(src##7, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##7, zero_value))); \
+  MS_FLOAT32X4 dst##8 = MS_MULQ_F32(src##8, MS_BLENDQ_F32(slope_value, one_value, MS_CMPGTQ_F32(src##8, zero_value)));
+
 #endif  // MINDSPORE_LITE_NNACL_FP32_PRELU_H_
