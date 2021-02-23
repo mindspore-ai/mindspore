@@ -223,7 +223,11 @@ void SetConv2DAttrs(const CNodePtr &conv2d, const CNodePtr &depth_conv) {
   SetCommonAttrs(conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrInputNames, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrStride, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrOffsetA, conv2d, depth_conv);
+  if (AnfAlgo::HasNodeAttr(kAttrOffsetA, conv2d)) {
+    AnfAlgo::CopyNodeAttr(kAttrOffsetA, conv2d, depth_conv);
+  } else {
+    AnfAlgo::SetNodeAttr(kAttrOffsetA, MakeValue(0), depth_conv);
+  }
 }
 
 void SetConv2DBackpropInputAttrs(const CNodePtr &conv2d_backin, const CNodePtr &depth_conv_backin) {

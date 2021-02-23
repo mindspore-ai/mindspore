@@ -231,7 +231,7 @@ bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, con
 bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name,
                                                     ValuePtr *const value) {
   if (value == nullptr || *value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
+    MS_LOG(INFO) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
     return false;
   }
   if (!(*value)->isa<Int64Imm>()) {
@@ -587,7 +587,7 @@ TypeId CheckAndConvertUtils::CheckTypeSame(const std::string &arg_name, const Ty
 bool CheckAndConvertUtils::CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name,
                                                ValuePtr *const value) {
   if (*value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr";
+    MS_LOG(INFO) << "value is nullptr! op_type = " << op_type << ", attr_name = " << attr_name;
     return false;
   }
   if (op_type.empty() || attr_name.empty()) {
