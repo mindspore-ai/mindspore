@@ -36,6 +36,7 @@ class RecorderManager {
 
   bool RecordObject(const BaseRecorderPtr &recorder);
   void TriggerAll();
+  void ClearAll();
 
  private:
   RecorderManager() {}

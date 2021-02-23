@@ -97,6 +97,8 @@ bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, con
 
 void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 
+void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
+
 #else
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type, int graph_id) {

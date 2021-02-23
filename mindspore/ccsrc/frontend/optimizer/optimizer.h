@@ -146,15 +146,22 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
     // Optimizer step counter;
     int64_t counter = 1;
     bool changes = true;
+    // If no changes since last renormalization, then no need to do the renormalization again.
+    // Set the initial value to true, so the renormalization can be executed once if it's the
+    // only pass.
+    bool changes_since_last_renorm = true;
 
     while (changes) {
       changes = false;
-      auto run_runc = [&counter, &func_graph, &changes, use_profile, this]() {
+      auto run_runc = [&counter, &func_graph, &changes, &changes_since_last_renorm, use_profile, this]() {
         for (size_t i = 0; i < passes_.size(); ++i) {
           const OptPass &opt = passes_[i];
           CurPass_ = {counter, pass_names_[i]};
-          auto opt_func = [&func_graph, &changes, &opt, this]() {
+          auto opt_func = [&func_graph, &changes, &opt, &changes_since_last_renorm, this]() {
             if (opt.is_renormalize()) {
+              if (!changes_since_last_renorm) {
+                return;
+              }
               auto resource_ptr = std::dynamic_pointer_cast<pipeline::Resource>(resource_);
               if (resource_ptr != nullptr) {
                 // StepParallel may replace the AbstractValue of the parameters of func_graph,
@@ -177,8 +184,10 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
                   func_graph = pipeline::Renormalize(resource_ptr, func_graph, maybe_new_args_spec);
                 }
               }
+              changes_since_last_renorm = false;
             } else if (opt(func_graph, shared_from_this())) {
               changes = true;
+              changes_since_last_renorm = true;
             }
           };
           use_profile ? (WITH(MsProfile::GetProfile()->Step(pass_names_[i])) opt_func) : opt_func();

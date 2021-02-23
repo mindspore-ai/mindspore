@@ -36,6 +36,7 @@ bool RecordString(SubModuleId module, const std::string &tag, const std::string 
 bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
                            const std::vector<CNodePtr> &exec_order);
 void TriggerAll();
+void ClearAll();
 }  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_

@@ -52,4 +52,6 @@ void RecorderManager::TriggerAll() {
     MS_LOG(WARNING) << "There is no recorder to export.";
   }
 }
+
+void RecorderManager::ClearAll() { recorder_container_.clear(); }
 }  // namespace mindspore

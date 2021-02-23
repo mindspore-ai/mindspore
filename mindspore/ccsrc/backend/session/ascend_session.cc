@@ -984,6 +984,9 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
 #endif
     MS_LOG(EXCEPTION) << "run task error!";
   }
+#ifdef ENABLE_DUMP_IR
+  mindspore::RDR::ClearAll();
+#endif
   MS_LOG(INFO) << "Finish!";
 }
 
