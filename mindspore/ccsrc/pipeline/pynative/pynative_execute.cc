@@ -1647,7 +1647,6 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   PushCellStack(cell_id);
   // Init kPynativeCellPtr with input parameters of top cell
   if (!top_cell()->is_init_kpynative()) {
-    mindspore::device::clear_step_kernel_mod();
     auto graph_info = std::make_shared<GraphInfo>(cell_id);
     top_cell()->graph_info_map()[curr_g_] = graph_info;
     auto df_builder = GetDfbuilder(cell_id);

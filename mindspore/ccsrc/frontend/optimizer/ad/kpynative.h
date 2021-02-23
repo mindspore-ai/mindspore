@@ -70,6 +70,8 @@ bool GradPynativeOp(const KPynativeCellPtr &k_cell, const CNodePtr &c_node, cons
 //           Should have prototype: (sens_input1, sens_input2, ...) bprop_fg(input1, input2, ..., out, dout)
 bool GradPynativeWithBProp(const KPynativeCellPtr &k_cell, const CNodePtr &c_node, const ValuePtrList &op_args,
                            const ValuePtr &out, const FuncGraphPtr &bprop_fg);
+
+FuncGraphPtr GetPynativeBg(const KPynativeCellPtr &k_cell);
 }  // namespace ad
 }  // namespace mindspore
 

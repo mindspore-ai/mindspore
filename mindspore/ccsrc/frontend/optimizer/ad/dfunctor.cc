@@ -361,7 +361,7 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   auto func_graph = GetValueNode<FuncGraphPtr>(input_fg);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto manager = Manage({fg, func_graph}, false);
-  auto need_replace_forward = pynative::PynativeExecutor::GetInstance()->need_replace_forward();
+  auto need_replace_forward = true;
   auto forward_value = GenNewTensor(manager, equivdout, forward, need_replace_forward);
   if (!need_replace_forward) {
     cnode_morph->clear_inputs_value();
