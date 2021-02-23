@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
-
-context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
 
 class NetZerosLike(nn.Cell):
     def __init__(self):
@@ -109,7 +106,6 @@ def test_zeros_like_dynamic_int8():
     x = Tensor(np.arange(24).reshape(1, 4, 1, 6).astype(np.int8))
     output = zeros_like_dynamic(x)
     expected = np.zeros([1, 4, 1, 6])
-    print(output)
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 @pytest.mark.level0
@@ -146,6 +142,15 @@ def test_zeros_like_dynamic_float32():
     x = Tensor(np.arange(63).reshape(3, 7, 3).astype(np.float32))
     output = zeros_like_dynamic(x)
     expected = np.zeros([3, 7, 3])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_float64():
+    x = Tensor(np.arange(2).reshape(2, 1, 1).astype(np.float64))
+    output = zeros_like_dynamic(x)
+    expected = np.zeros([2, 1, 1])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 @pytest.mark.level0
