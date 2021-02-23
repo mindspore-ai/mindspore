@@ -111,10 +111,10 @@ def test_pow():
 
 def test_exp():
     """ test_exp """
-    input_tensor = Tensor(np.array([[2, 2], [3, 3]]))
+    input_tensor = Tensor(np.array([[2, 2], [3, 3]], np.float32))
     testexp = P.Exp()
     result = testexp(input_tensor)
-    expect = np.exp(np.array([[2, 2], [3, 3]]))
+    expect = np.exp(np.array([[2, 2], [3, 3]], np.float32))
     assert np.all(result.asnumpy() == expect)
 
 

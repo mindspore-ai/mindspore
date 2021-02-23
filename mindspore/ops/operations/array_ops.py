@@ -140,9 +140,6 @@ class ExpandDims(PrimitiveWithInfer):
         If the specified axis is a negative number, the index is counted
         backward from the end and starts at 1.
 
-    Raises:
-        ValueError: If axis is not an integer or not in the valid range.
-
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **axis** (int) - Specifies the dimension index at which to expand
@@ -152,6 +149,9 @@ class ExpandDims(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
         value of `axis` is 0. It has the same type as `input_x`.
+
+    Raises:
+        ValueError: If `axis` is not an int or not in the valid range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -205,6 +205,9 @@ class DType(PrimitiveWithInfer):
     Outputs:
         mindspore.dtype, the data type of a tensor.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -231,10 +234,6 @@ class SameTypeShape(PrimitiveWithInfer):
     """
     Checks whether the data type and shape of two tensors are the same.
 
-    Raises:
-        TypeError: If the data types of two tensors are not the same.
-        ValueError: If the shapes of two tensors are not the same.
-
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **input_y** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
@@ -242,6 +241,10 @@ class SameTypeShape(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`,
         if data type and shape of `input_x` and `input_y` are the same.
+
+    Raises:
+        TypeError: If the data types of `input_x` and `input_y` are not the same.
+        ValueError: If the shapes of `input_x` and `input_y` are not the same.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -286,6 +289,10 @@ class Cast(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input_x` is neither Tensor nor Number.
+        TypeError: If `type` is not a Number.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -363,6 +370,9 @@ class IsSubClass(PrimitiveWithInfer):
     Outputs:
         bool, the check result.
 
+    Raises:
+        TypeError: If `sub_type` or `type_` is not a Type.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -402,6 +412,9 @@ class IsInstance(PrimitiveWithInfer):
     Outputs:
         bool, the check result.
 
+    Raises:
+        TypeError: If `type_` is not a Type.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -439,11 +452,6 @@ class Reshape(PrimitiveWithInfer):
     """
     Reshapes the input tensor with the same values based on a given shape tuple.
 
-    Raises:
-        ValueError: Given a shape tuple, if it has several -1; or if the product
-            of its elements is less than or equal to 0 or cannot be divided by the product
-            of the input tensor shape; or if it does not match the input's array size.
-
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **input_shape** (tuple[int]) - The input tuple is constructed by multiple
@@ -451,6 +459,11 @@ class Reshape(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+
+    Raises:
+        ValueError: Given a shape tuple, if it has several -1; or if the product
+            of its elements is less than or equal to 0 or cannot be divided by the product
+            of the input tensor shape; or if it does not match the input's array size.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -544,6 +557,9 @@ class Shape(PrimitiveWithInfer):
         tuple[int], the output tuple is constructed by multiple integers,
         :math:`(x_1, x_2, ..., x_R)`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -577,6 +593,9 @@ class DynamicShape(Primitive):
     Outputs:
         Tensor[int], 1-dim Tensor of type int32
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -602,9 +621,6 @@ class Squeeze(PrimitiveWithInfer):
     Note:
         The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim`.
 
-    Raises:
-        ValueError: If the corresponding dimension of the specified axis does not equal to 1.
-
     Args:
         axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
             all the dimensions that are equal to 1. If specified, it must be int32 or int64.
@@ -619,6 +635,7 @@ class Squeeze(PrimitiveWithInfer):
     Raises:
         TypeError: If `axis` is neither an int nor tuple.
         TypeError: If `axis` is a tuple whose elements are not all int.
+        ValueError: If the corresponding dimension of the specified axis does not equal to 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -677,6 +694,10 @@ class Transpose(PrimitiveWithInfer):
     Outputs:
         Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
         shape of `input_x` and the value of `input_perm`.
+
+    Raises:
+        TypeError: If `input_perm` is not a tuple.
+        ValueError: If length of shape of `input_x` is not equal to length of shape of `input_perm`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -746,6 +767,9 @@ class Unique(Primitive):
         ascending order. `idx` is a tensor containing indices of elements in
         the input corresponding to the output tensor.
 
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -791,6 +815,9 @@ class Gather(PrimitiveWithCheck):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Raises:
+        TypeError: If `axis` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -860,6 +887,9 @@ class SparseGatherV2(Gather):
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
+    Raises:
+        TypeError: If `axis` is not an int.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -888,6 +918,10 @@ class Padding(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Raises:
+        TypeError: If `pad_dim_size` is not an int.
+        ValueError: If `pad_dim_size` is less than 1.
 
     Supported Platforms:
         ``Ascend``
@@ -934,6 +968,10 @@ class UniqueWithPad(PrimitiveWithInfer):
         - y (Tensor) - The unique elements filled with pad_num, the shape and type same as x.
         - idx (Tensor) - The index of each value of x in the unique output y, the shape and type same as x.
 
+    Raises:
+        TypeError: If dtype of `x` is neither int32 nor int64.
+        ValueError: If length of shape of `x` is not equal to 1.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -970,16 +1008,17 @@ class Split(PrimitiveWithCheck):
         axis (int): Index of the split position. Default: 0.
         output_num (int): The number of output tensors. Must be positive int. Default: 1.
 
-    Raises:
-        ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
-            or if the `output_num` is less than or equal to 0.
-
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
         tuple[Tensor], the shape of each output tensor is the same, which is
         :math:`(y_1, y_2, ..., y_S)`.
+
+    Raises:
+        TypeError: If `axis` or `output_num` is not an int.
+        ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
+            or if the `output_num` is less than or equal to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1032,6 +1071,9 @@ class Rank(PrimitiveWithInfer):
 
     Outputs:
         Tensor. 0-D int32 Tensor representing the rank of input, i.e., :math:`R`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1108,6 +1150,9 @@ class Size(PrimitiveWithInfer):
         int, a scalar representing the elements size of `input_x`, tensor is the number of elements
         in a tensor, :math:`size=x_1*x_2*...x_R`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1150,6 +1195,9 @@ class Fill(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as input value.
+
+    Raises:
+        TypeError: If `shape` is not a tuple.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1199,6 +1247,9 @@ class Ones(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type and shape as input shape value.
+
+    Raises:
+        TypeError: If `shape` is neither tuple nor int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1253,6 +1304,10 @@ class Zeros(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same type and shape as input shape value.
 
+    Raises:
+        TypeError: If `shape` is neither int nor tuple.
+        TypeError: If `shape` is a tuple whose elements are not all int.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1304,6 +1359,9 @@ class OnesLike(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and type as `input_x` but filled with ones.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1340,6 +1398,9 @@ class ZerosLike(PrimitiveWithCheck):
     Outputs:
         Tensor, has the same shape and data type as `input_x` but filled with zeros.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1373,6 +1434,10 @@ class TupleToArray(PrimitiveWithInfer):
 
     Outputs:
         Tensor, if the input tuple contains `N` numbers, then the shape of the output tensor is (N,).
+
+    Raises:
+        TypeError: If `input_x` is not a tuple.
+        ValueError: If length of `input_x` is less than or equal to 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1420,6 +1485,9 @@ class ScalarToArray(PrimitiveWithInfer):
     Outputs:
         Tensor. 0-D Tensor and the content is the input.
 
+    Raises:
+        TypeError: If `input_x` is neither int nor float.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1455,6 +1523,9 @@ class ScalarToTensor(PrimitiveWithInfer):
 
     Outputs:
         Tensor. 0-D Tensor and the content is the input.
+
+    Raises:
+        TypeError: If `input_x` is neither int nor float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1501,6 +1572,10 @@ class InvertPermutation(PrimitiveWithInfer):
 
     Outputs:
         tuple[int]. It has the same length as the input.
+
+    Raises:
+        TypeError: If `input_x` is neither tuple nor list.
+        TypeError: If element of `input_x` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1570,6 +1645,10 @@ class Argmax(PrimitiveWithInfer):
     Outputs:
         Tensor, indices of the max value of input tensor across the axis.
 
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If `output_type` is neither int32 nor int64.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1621,6 +1700,10 @@ class Argmin(PrimitiveWithInfer):
 
     Outputs:
         Tensor, indices of the min value of input tensor across the axis.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If `output_type` is neither int32 nor int64.
 
     Supported Platforms:
         ``Ascend``
@@ -1683,6 +1766,10 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
 
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `axis` is not an int.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -1739,6 +1826,10 @@ class ArgMinWithValue(PrimitiveWithInfer):
         output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
         :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
         - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `axis` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -1797,6 +1888,10 @@ class Tile(PrimitiveWithInfer):
           Such as set the shape of `input_x` as :math:`(1, ..., x_1, x_2, ..., x_S)`,
           then the shape of their corresponding positions can be multiplied, and
           the shape of Outputs is :math:`(1*y_1, ..., x_S*y_R)`.
+
+    Raises:
+        TypeError: If `multiples` is not a tuple or its elements are not all int.
+        ValueError: If the elements of `multiples` are not all greater than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1875,6 +1970,10 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
+
+    Raises:
+        TypeError: If `num_segments` is not an int.
+        ValueError: If length of shape of `segment_ids` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -1966,6 +2065,10 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
 
+    Raises:
+        TypeError: If `num_segments` is not an int.
+        ValueError: If length of shape of `segment_ids` is not equal to 1.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -2021,6 +2124,10 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
 
+    Raises:
+        TypeError: If `num_segments` is not an int.
+        ValueError: If length of shape of `segment_ids` is not equal to 1.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -2073,6 +2180,10 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
 
     Outputs:
         Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `num_segments` is not an int.
+        ValueError: If length of shape of `segment_ids` is not equal to 1.
 
     Supported Platforms:
         ``Ascend``
@@ -2140,6 +2251,9 @@ class Concat(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
 
+    Raises:
+        TypeError: If `axis` is not an int.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2205,6 +2319,9 @@ class ParallelConcat(PrimitiveWithInfer):
 
     Outputs:
         Tensor, data type is the same as `values`.
+
+    Raises:
+        ValueError: If length of shape of `values` is less than 1.
 
     Supported Platforms:
         ``Ascend``
@@ -2469,6 +2586,9 @@ class Slice(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape is : input `size`, the data type is the same as input `x`.
 
+    Raises:
+        TypeError: If `begin` or `size` is neither tuple nor list.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2526,6 +2646,10 @@ class ReverseV2(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and type as `input_x`.
 
+    Raises:
+        TypeError: If `axis` is neither list nor tuple.
+        TypeError: If element of `axis` is not an int.
+
     Supported Platforms:
         ``Ascend``
 
@@ -2567,6 +2691,9 @@ class Rint(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
@@ -2630,6 +2757,10 @@ class Select(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+
+    Raises:
+        TypeError: If `input_x` or `input_y` is not a Tensor.
+        ValueError: If shape of `input_x` is not equal to shape of `input_y` or shape of `input_cond`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2767,6 +2898,11 @@ class StridedSlice(PrimitiveWithInfer):
               Based on the return value of the 1st dimension, return the element with :math:`index = 0,1,2`,
               i.e., [3, 3, 3].
             - Finally, the output is [3, 3, 3].
+
+    Raises:
+        TypeError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is not an int.
+        TypeError: If `begin`, `end` or `strides` is not a tuple.
+        ValueError: If `begin_mask`, `end_mask`, `ellipsis_mask`, `new_axis_mask` or `shrink_axis_mask` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3041,6 +3177,10 @@ class Eye(PrimitiveWithInfer):
     Outputs:
         Tensor, a tensor with ones on the diagonal and the rest of elements are zero.
 
+    Raises:
+        TypeError: If `m` or `n` is not an int.
+        ValueError: If `m` or `n` is less than 1.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3089,6 +3229,10 @@ class ScatterNd(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
+
+    Raises:
+        TypeError: If `shape` is not a tuple.
+        ValueError: If any element of `shape` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -3146,6 +3290,11 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, C, NEW\_H, NEW\_W)`.
 
+    Raises:
+        TypeError: If `size` is neither tuple nor list.
+        TypeError: If `align_corners` is not a bool.
+        ValueError: If length of `size` is not equal to 2.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -3190,6 +3339,9 @@ class GatherNd(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same type as `input_x` and the shape is indices_shape[:-1] + x_shape[indices_shape[-1]:].
 
+    Raises:
+        ValueError: If length of shape of `input_x` is less than the last dimension of `indices`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3223,12 +3375,16 @@ class TensorScatterUpdate(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be equal to indices.shape[-1].
-        - **indices** (Tensor) - The index of input tensor whose data type is int32.
+        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
         - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
           and update.shape = indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
 
     Supported Platforms:
         ``Ascend``
@@ -3293,6 +3449,9 @@ class ScatterUpdate(_ScatterOp_Dynamic):
     Outputs:
         Tensor, has the same shape and type as `input_x`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -3350,6 +3509,9 @@ class ScatterNdUpdate(_ScatterNdOp):
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -3411,6 +3573,9 @@ class ScatterMax(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3457,6 +3622,9 @@ class ScatterMin(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3501,6 +3669,9 @@ class ScatterAdd(_ScatterOp_Dynamic):
 
     Outputs:
         Parameter, the updated `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -3555,6 +3726,9 @@ class ScatterSub(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3600,6 +3774,9 @@ class ScatterMul(_ScatterOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3644,6 +3821,9 @@ class ScatterDiv(_ScatterOp):
 
     Outputs:
         Parameter, the updated `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
 
     Supported Platforms:
         ``Ascend``
@@ -3694,6 +3874,9 @@ class ScatterNdAdd(_ScatterNdOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3742,6 +3925,9 @@ class ScatterNdSub(_ScatterNdOp):
     Outputs:
         Parameter, the updated `input_x`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3776,6 +3962,10 @@ class ScatterNonAliasingAdd(_ScatterNdOp):
 
     Outputs:
         Parameter, the updated `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is not int32.
+        TypeError: If dtype of `input_x` is not one of float16, float32, int32.
 
     Supported Platforms:
         ``Ascend``
@@ -3824,6 +4014,11 @@ class SpaceToDepth(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the same data type as `x`. It must be a 4-D tensor.
+
+    Raises:
+        TypeError: If `block_size` is not an int.
+        ValueError: If `block_size` is less than 2.
+        ValueError: If length of shape of `x` is not equal to 4.
 
     Supported Platforms:
         ``Ascend``
@@ -3887,6 +4082,11 @@ class DepthToSpace(PrimitiveWithInfer):
     Outputs:
         Tensor of shape :math:`(N, C_{in} / \text{block_size}, H_{in} * \text{block_size}, W_{in} * \text{block_size})`.
 
+    Raises:
+        TypeError: If `block_size` is not an int.
+        ValueError: If `block_size` is less than 2.
+        ValueError: If length of shape of `x` is not equal to 4.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3934,7 +4134,7 @@ class SpaceToBatch(PrimitiveWithInfer):
     of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_size (int): The block size of dividing blocks with value greater than 2.
+        block_size (int): The block size of dividing blocks with value greater than or euqual to 2.
         paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction lists.
             Each subtraction list contains 2 integer value. All values must be greater than 0.
             paddings[i] specifies the paddings for the spatial dimension i, which corresponds to the
@@ -3956,6 +4156,10 @@ class SpaceToBatch(PrimitiveWithInfer):
             :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_size`
 
             :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_size`
+
+    Raises:
+        TypeError: If `block_size` is not an int.
+        ValueError: If `block_size` is less than 2.
 
     Supported Platforms:
         ``Ascend``
@@ -4035,6 +4239,11 @@ class BatchToSpace(PrimitiveWithInfer):
                 :math:`h' = h*block\_size-crops[0][0]-crops[0][1]`
 
                 :math:`w' = w*block\_size-crops[1][0]-crops[1][1]`
+
+    Raises:
+        TypeError: If `block_size` or element of `crops` is not an int.
+        TypeError: If `crops` is neither list nor tuple.
+        ValueError: If `block_size` is less than 2.
 
     Supported Platforms:
         ``Ascend``
@@ -4120,6 +4329,12 @@ class SpaceToBatchND(PrimitiveWithInfer):
             :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_shape[0]`
 
             :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_shape[1]`
+
+    Raises:
+        TypeError: If `block_shape` is not one of list, tuple, int.
+        TypeError: If `paddings` is neither list nor tuple.
+        ValueError: If length of shape of `block_shape` is not equal to 1.
+        ValueError: If length of `block_shape` or `paddings` is not equal to 2.
 
     Supported Platforms:
         ``Ascend``
@@ -4217,6 +4432,11 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
                 :math:`w' = w*block\_shape[1]-crops[1][0]-crops[1][1]`
 
+    Raises:
+        TypeError: If `block_shape` is not one of list, tuple, int.
+        TypeError: If `crops` is neither list nor tuple.
+        ValueError: If length of `block_shape` or `crops` is not equal to 2.
+
     Supported Platforms:
         ``Ascend``
 
@@ -4302,6 +4522,7 @@ class BroadcastTo(PrimitiveWithInfer):
         Tensor, with the given `shape` and the same data type as `input_x`.
 
     Raises:
+        TypeError: If `shape` is not a tuple.
         ValueError: Given a shape tuple, if it has several -1; or if the -1 is in an invalid position
             such as one that does not have a opposing dimension in an input tensor; or if the target and
             input shapes are incompatible.
@@ -4390,6 +4611,10 @@ class Meshgrid(PrimitiveWithInfer):
 
     Outputs:
         Tensors, A Tuple of N N-D Tensor objects.
+
+    Raises:
+        TypeError: If `indexing` is not a str or `input` is not a tuple.
+        ValueError: If `indexing` is neither 'xy' nor 'ij'.
 
     Supported Platforms:
         ``Ascend``
@@ -4489,6 +4714,10 @@ class InplaceUpdate(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the input `x`.
 
+    Raises:
+        TypeError: If `indices` is neither int nor tuple.
+        TypeError: If `indices` is a tuple and its element is not an int.
+
     Supported Platforms:
         ``Ascend``
 
@@ -4548,6 +4777,9 @@ class ReverseSequence(PrimitiveWithInfer):
 
     Outputs:
         Reversed tensor with the same shape and data type as input.
+
+    Raises:
+        TypeError: If `seq_dim` or `batch_dim` is not an int.
 
     Supported Platforms:
         ``Ascend``
@@ -4611,6 +4843,9 @@ class EditDistance(PrimitiveWithInfer):
 
     Outputs:
         Tensor, a dense tensor with rank `R-1` and float32 data type.
+
+    Raises:
+        TypeError: If `normalize` is not a bool.
 
     Supported Platforms:
         ``Ascend``
@@ -4729,6 +4964,11 @@ class Sort(PrimitiveWithInfer):
         - **y1** (Tensor) - A tensor whose values are the sorted values, with the same shape and data type as input.
         - **y2** (Tensor) - The indices of the elements in the original input tensor. Data type is int32.
 
+    Raises:
+        TypeError: If `axis` is not an int.
+        TypeError: If `descending` is not a bool.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -4779,6 +5019,10 @@ class EmbeddingLookup(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Raises:
+        TypeError: If dtype of `input_indices` is not int.
+        ValueError: If length of shape of `input_params` is greater than 2.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4843,12 +5087,16 @@ class GatherD(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The source tensor.
-        - **dim** (int) - The axis along which to index. It must be int32. Only constant value is allowed.
+        - **dim** (int) - The axis along which to index. It must be int32 or int64. Only constant value is allowed.
         - **index** (Tensor) - The indices of elements to gather. It can be one of the following data types:
           int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
+
+    Raises:
+        TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
+        ValueError: If length of shape of `x` is not equal to length of shape of `index`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4902,6 +5150,9 @@ class Identity(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is the same as `input_x`, :math:`(x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
