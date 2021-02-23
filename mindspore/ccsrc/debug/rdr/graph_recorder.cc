@@ -63,11 +63,13 @@ void GraphRecorder::Export() {
     return;
   }
 
-  std::string realpath = tmp_realpath.value() + std::to_string(id_);
-
+  std::string realpath = tmp_realpath.value();
+  if (graph_id_ >= 0) {
+    realpath += "_" + std::to_string(graph_id_);
+  }
   if (graph_type_.find(".dat") != std::string::npos) {
     save_flag = true;
-    AnfExporter exporter(std::to_string(id_));
+    AnfExporter exporter("");
     std::string realpath_dat = realpath + ".dat";
     ChangeFileMode(realpath_dat, S_IRWXU);
     exporter.ExportFuncGraph(realpath_dat, func_graph_);

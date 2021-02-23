@@ -267,10 +267,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-#ifdef ENABLE_DUMP_IR
-  std::string tag = "hwopt_before_graph";
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_OPTIMIZER, tag, kernel_graph, false, ".ir;.pb");
-#endif
   if (save_graphs) {
     std::string file_name = "hwopt_d_ir_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
@@ -391,12 +387,9 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   (void)optimizer2->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
 #ifdef ENABLE_DUMP_IR
-  std::string tag = "hwopt_after_graph";
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_OPTIMIZER, tag, kernel_graph, true, ".ir;.pb");
   const std::vector<CNodePtr> &exec_order = kernel_graph->execution_order();
-  std::vector<CNodePtr> graph_exec_order(exec_order);
-  tag = "graph_exec_order";
-  mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_OPTIMIZER, tag, std::move(graph_exec_order));
+  std::string exec_order_tag = "graph_exec_order";
+  mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_OPTIMIZER, exec_order_tag, exec_order, kernel_graph->graph_id());
 #endif
   if (save_graphs) {
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";

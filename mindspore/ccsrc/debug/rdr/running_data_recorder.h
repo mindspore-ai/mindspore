@@ -28,9 +28,9 @@ using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 using CNodePtr = std::shared_ptr<CNode>;
 namespace RDR {
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
-                    const std::string &file_type = ".ir;.pb;.dat", int graph_id = 0);
+                    const std::string &file_type = ".ir;.pb;.dat", int graph_id = -1);
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
-                          const std::vector<CNodePtr> &&final_exec_order);
+                          const std::vector<CNodePtr> &final_exec_order, int graph_id = 0);
 bool RecordString(SubModuleId module, const std::string &tag, const std::string &data,
                   const std::string &filename = "");
 void TriggerAll();

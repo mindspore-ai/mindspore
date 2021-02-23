@@ -999,15 +999,16 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (!save_graphs) {
-    return;
-  }
   for (auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
-    std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph, true, kWholeStack);
-    DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
-    DumpIR("trace_code_graph", graph, true, kWholeStack);
+    std::string tag = "graph_build";
+    mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, tag, graph, true, ".ir;.pb", graph->graph_id());
+    if (save_graphs) {
+      std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
+      DumpIR(file_name, graph, true, kWholeStack);
+      DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
+      DumpIR("trace_code_graph", graph, true, kWholeStack);
+    }
   }
 #endif
 }
