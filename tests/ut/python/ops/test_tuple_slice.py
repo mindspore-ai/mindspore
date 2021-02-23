@@ -31,13 +31,15 @@ class NetWork_1(Cell):
     def __init__(self):
         super(NetWork_1, self).__init__()
         self.addN = P.AddN()
+        self.index_0 = Tensor(3)
+        self.index_1 = Tensor([5])
+        self.index_3 = Tensor([True])
 
-    def construct(self, tensor1, tensor2, tensor3, tensor4, tensor5, tensor6):
-        tensor_tuple = (tensor1, tensor2, tensor3, tensor4, tensor5, tensor6)
+    def construct(self, tensor_tuple):
         tensor_tuple_slice0 = tensor_tuple[:]
-        tensor_tuple_slice1 = tensor_tuple[:3]
-        tensor_tuple_slice2 = tensor_tuple[1:]
-        tensor_tuple_slice3 = tensor_tuple[2:5:1]
+        tensor_tuple_slice1 = tensor_tuple[:self.index_0]
+        tensor_tuple_slice2 = tensor_tuple[self.index_3:]
+        tensor_tuple_slice3 = tensor_tuple[2:self.index_1:True]
         sum0 = self.addN(tensor_tuple_slice0)
         sum1 = self.addN(tensor_tuple_slice1)
         sum2 = self.addN(tensor_tuple_slice2)
@@ -52,13 +54,14 @@ class NetWork_2(Cell):
     def __init__(self):
         super(NetWork_2, self).__init__()
         self.addN = P.AddN()
+        self.step = Tensor([-1])
+        self.index_0 = Tensor(-6)
 
-    def construct(self, tensor1, tensor2, tensor3, tensor4, tensor5, tensor6):
-        tensor_tuple = (tensor1, tensor2, tensor3, tensor4, tensor5, tensor6)
-        tensor_tuple_slice0 = tensor_tuple[::-1]
+    def construct(self, tensor_tuple):
+        tensor_tuple_slice0 = tensor_tuple[::self.step]
         tensor_tuple_slice1 = tensor_tuple[-1::-1]
         tensor_tuple_slice2 = tensor_tuple[:-4:-1]
-        tensor_tuple_slice3 = tensor_tuple[-6:3]
+        tensor_tuple_slice3 = tensor_tuple[self.index_0:3]
         tensor_tuple_slice4 = tensor_tuple[-1:-6:-2]
         sum0 = self.addN(tensor_tuple_slice0)
         sum1 = self.addN(tensor_tuple_slice1)
@@ -69,17 +72,15 @@ class NetWork_2(Cell):
         return ret
 
 
-class NetWork_3(Cell):
+class NetWorkSliceStepZero(Cell):
     """ NetWork_3 definition """
 
     def __init__(self):
-        super(NetWork_3, self).__init__()
-        self.addN = P.AddN()
+        super(NetWorkSliceStepZero, self).__init__()
 
-    def construct(self, tensor_tuple, start, stop, step=1):
-        tensor_tuple_slice0 = tensor_tuple[start:stop:step]
-        res = self.addN(tensor_tuple_slice0)
-        return res
+    def construct(self, tensor_tuple):
+        tensor_tuple_slice = tensor_tuple[0:3:0]
+        return tensor_tuple_slice
 
 
 class NetWorkOutOfBounds(Cell):
@@ -87,45 +88,60 @@ class NetWorkOutOfBounds(Cell):
 
     def __init__(self):
         super(NetWorkOutOfBounds, self).__init__()
-        self.addN = P.AddN()
 
     def construct(self, tensor_tuple):
         return tensor_tuple[100]
 
 
+class NetWorkTensorSizeGreaterThanTwo(Cell):
+    """ NetWork_3 definition """
+
+    def __init__(self):
+        super(NetWorkTensorSizeGreaterThanTwo, self).__init__()
+        self.index_0 = Tensor([2, 3])
+
+    def construct(self, tensor_tuple):
+        return tensor_tuple[1:self.index_0]
+
+
+class NetWorkTensorDtypeFloat(Cell):
+    """ NetWork_3 definition """
+
+    def __init__(self):
+        super(NetWorkTensorDtypeFloat, self).__init__()
+        self.index_0 = Tensor([2.1])
+
+    def construct(self, tensor_tuple):
+        return tensor_tuple[1:self.index_0]
+
+
 test_cases = [
     ('SlicePositive', {
         'block': NetWork_1(),
-        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.zeros([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.zeros([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32))],
+        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)))],
     }),
     ('SliceNegative', {
         'block': NetWork_2(),
-        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.zeros([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.zeros([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32))],
+        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)))],
     }),
 ]
 
 test_cases_for_verify_exception = [
-    ('SliceStartCross', {
-        'block': (NetWork_3(), {'exception': TypeError}),
-        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.zeros([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32))],
-    }),
     ('SliceStepZero', {
-        'block': (NetWork_3(), {'exception': TypeError}),
-        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.int32)),
-                        Tensor(np.zeros([2, 3, 4], np.int32)),
-                        Tensor(np.ones([2, 3, 4], np.int32))],
+        'block': (NetWorkSliceStepZero(), {'exception': ValueError}),
+        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)))],
     }),
     ('SliceOutOfBounds', {
         'block': (NetWorkOutOfBounds(), {'exception': IndexError}),
@@ -133,7 +149,18 @@ test_cases_for_verify_exception = [
                          Tensor(np.zeros([2, 3, 4], np.int32)),
                          Tensor(np.ones([2, 3, 4], np.int32)))],
     }),
-
+    ('SliceTensorSizeGreaterThanTwo', {
+        'block': (NetWorkTensorSizeGreaterThanTwo(), {'exception': TypeError}),
+        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)))],
+    }),
+    ('SliceTensorDtypeFloat', {
+        'block': (NetWorkTensorDtypeFloat(), {'exception': TypeError}),
+        'desc_inputs': [(Tensor(np.ones([2, 3, 4], np.int32)),
+                         Tensor(np.zeros([2, 3, 4], np.int32)),
+                         Tensor(np.ones([2, 3, 4], np.int32)))],
+    }),
 ]
 
 
