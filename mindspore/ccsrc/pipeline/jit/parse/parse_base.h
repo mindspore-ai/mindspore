@@ -42,6 +42,7 @@ enum AstSubType : int64_t {
   AST_SUB_TYPE_TUPLE = 6,      // ast.Tuple
   AST_SUB_TYPE_SUBSCRIPT = 7,  // ast.Subscript
   AST_SUB_TYPE_STARRED = 8,    // ast.Starred
+  AST_SUB_TYPE_ATTRIBUTE = 9,  // ast.Attribute
   AST_SUB_TYPE_UNKNOWN = 0xFF  // Error
 };
 
@@ -147,7 +148,7 @@ const char RESOLVE_NAMESPACE_NAME_MODULE[] = "Module";             // fro Module
 // define Resolve type
 enum ResolveTypeDef : int64_t {
   RESOLVE_TYPE_NONE = 0,            // resolve None
-  RESOLVE_TYPE_FUNCTION = 1,        // reslove function
+  RESOLVE_TYPE_FUNCTION = 1,        // resolve function
   RESOLVE_TYPE_METHOD = 2,          // resolve class method
   RESOLVE_TYPE_CLASS_TYPE = 3,      // resolve class type
   RESOLVE_TYPE_CLASS_INSTANCE = 4,  // resolve the class instance of common class

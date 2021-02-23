@@ -66,6 +66,7 @@ AST_SUB_TYPE_NAME = 5                  # ast.Name
 AST_SUB_TYPE_TUPLE = 6                 # ast.Tuple
 AST_SUB_TYPE_SUBSCRIPT = 7             # ast.Subscript
 AST_SUB_TYPE_STARRED = 8               # ast.Starred
+AST_SUB_TYPE_ATTRIBUTE = 9             # ast.Attribute
 AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 
 # Process expr statement white list
@@ -456,6 +457,8 @@ class Parser:
             ast_type = AST_SUB_TYPE_SUBSCRIPT
         elif isinstance(node, ast.Starred):
             ast_type = AST_SUB_TYPE_STARRED
+        elif isinstance(node, ast.Attribute):
+            ast_type = AST_SUB_TYPE_ATTRIBUTE
         else:
             ast_type = AST_SUB_TYPE_UNKNOWN
         return ast_type

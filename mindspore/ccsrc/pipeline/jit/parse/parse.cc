@@ -1588,6 +1588,9 @@ void Parser::WriteAssignVars(const FunctionBlockPtr &block, const py::object &ta
     HandleAssignSubscript(block, targ, value_node);
   } else if (ast_->IsClassMember(targ)) {
     HandleAssignClassMember(block, targ, value_node);
+  } else if (ast_type == AST_SUB_TYPE_ATTRIBUTE) {
+    MS_LOG(EXCEPTION) << "The subnet attributes cannot be changed in the network"
+                      << " NodeInfo: " << trace::GetDebugInfo(value_node->debug_info());
   } else {
     MS_LOG(EXCEPTION) << "Not supported assign type: " << ast_type
                       << " NodeInfo: " << trace::GetDebugInfo(value_node->debug_info());
