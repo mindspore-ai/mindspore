@@ -30,12 +30,14 @@ def test_use_undefined_var():
             self.value = [11, 22, 33, 44]
 
         def construct(self, x):
-            ret = x + c
+            ret = x + a
             return ret
     net = Net()
     with pytest.raises(NameError) as err:
         net(Tensor(np.arange(4)))
-    assert "The name 'c' is not defined" in str(err.value)
+    assert "The name 'a' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(33)" in str(err.value)
+    assert "ret = x + a" in str(err.value)
 
 
 def test_insert_undefined_var():
@@ -45,13 +47,15 @@ def test_insert_undefined_var():
             self.value = [11, 22, 33, 44]
 
         def construct(self, x):
-            c
+            b
             ret = x + x
             return ret
     net = Net()
     with pytest.raises(NameError) as err:
         net(Tensor(np.arange(4)))
-    assert "The name 'c' is not defined" in str(err.value)
+    assert "The name 'b' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(50)" in str(err.value)
+    assert "b" in str(err.value)
 
 
 def test_insert_undefined_var_compute():
@@ -61,13 +65,125 @@ def test_insert_undefined_var_compute():
             self.value = [11, 22, 33, 44]
 
         def construct(self, x):
-            c + d
+            c + x
             ret = x + x
             return ret
     net = Net()
     with pytest.raises(NameError) as err:
         net(Tensor(np.arange(4)))
     assert "The name 'c' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(68)" in str(err.value)
+    assert "c + x" in str(err.value)
+
+def test_use_undefined_var_in_for():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = [11, 22, 33, 44]
+
+        def construct(self, x):
+            for i in self.value:
+                x = x + d + i
+            return x
+    net = Net()
+    with pytest.raises(NameError) as err:
+        net(Tensor(np.arange(4)))
+    assert "The name 'd' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(86)" in str(err.value)
+    assert "x = x + d + i" in str(err.value)
+
+
+def test_insert_undefined_var_in_for():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = [11, 22, 33, 44]
+
+        def construct(self, x):
+            for i in self.value:
+                e
+                x = x + i
+            return x
+    net = Net()
+    with pytest.raises(NameError) as err:
+        net(Tensor(np.arange(4)))
+    assert "The name 'e' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(104)" in str(err.value)
+    assert "e" in str(err.value)
+
+
+def test_insert_undefined_var_compute_for():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = [11, 22, 33, 44]
+
+        def construct(self, x):
+            for i in self.value:
+                f + i
+                x = x + i
+            return x
+    net = Net()
+    with pytest.raises(NameError) as err:
+        net(Tensor(np.arange(4)))
+    assert "The name 'f' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(123)" in str(err.value)
+    assert "f + i" in str(err.value)
+
+
+def test_use_undefined_var_in_while():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self, x):
+            while x < 0:
+                x = x - g
+            return x
+    net = Net()
+    with pytest.raises(NameError) as err:
+        net(Tensor(np.arange(4)))
+    assert "The name 'g' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(141)" in str(err.value)
+    assert "x = x - g" in str(err.value)
+
+
+def test_insert_undefined_var_in_while():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = [11, 22, 33, 44]
+
+        def construct(self, x):
+            while x < 0:
+                h
+                x = x - 1
+            return x
+    net = Net()
+    with pytest.raises(NameError) as err:
+        net(Tensor(np.arange(4)))
+    assert "The name 'h' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(159)" in str(err.value)
+    assert "h" in str(err.value)
+
+
+def test_insert_undefined_var_compute_while():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = [11, 22, 33, 44]
+
+        def construct(self, x):
+            while x < 0:
+                x + i
+                x = x - 1
+            return x
+    net = Net()
+    with pytest.raises(NameError) as err:
+        net(Tensor(np.arange(4)))
+    assert "The name 'i' is not defined" in str(err.value)
+    assert "tests/ut/python/pipeline/parse/test_use_undefined_var.py(178)" in str(err.value)
+    assert "x + i" in str(err.value)
 
 
 def test_insert_defined_var():
