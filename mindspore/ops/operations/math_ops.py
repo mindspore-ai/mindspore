@@ -200,6 +200,9 @@ class AssignAdd(PrimitiveWithInfer):
         - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
 
+    Raises:
+        TypeError: If `value` is neither Number nor Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -255,6 +258,9 @@ class AssignSub(PrimitiveWithInfer):
         - **variable** (Parameter) - The `Parameter`.
         - **value** (Union[numbers.Number, Tensor]) - The value to be subtracted from the `variable`.
           It must have the same shape as `variable` if it is a Tensor.
+
+    Raises:
+        TypeError: If `value` is neither Number nor Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -673,6 +679,10 @@ class CumProd(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
 
+    Raises:
+        TypeError: If `exclusive` or `reverse` is not a bool.
+        ValueError: If `axis` is None.
+
     Supported Platforms:
         ``Ascend``
 
@@ -815,6 +825,10 @@ class BatchMatMul(MatMul):
     Outputs:
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
+    Raises:
+        TypeError: If `transpose_a` or `transpose_b` is not a bool.
+        ValueError: If length of shape of `input_x` is less than 3 or not equal to length of shape of `input_y`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -881,6 +895,10 @@ class CumSum(PrimitiveWithInfer):
     Outputs:
         Tensor, the shape of the output tensor is consistent with the input tensor's.
 
+    Raises:
+        TypeError: If `exclusive` or `reverse` is not a bool.
+        TypeError: If `axis` is not an int.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -928,6 +946,9 @@ class AddN(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as each entry of the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is neither tuple nor list.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1014,6 +1035,9 @@ class AccumulateNV2(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as each entry of the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is neither tuple nor list.
 
     Supported Platforms:
         ``Ascend``
@@ -1125,6 +1149,11 @@ class InplaceAdd(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and dtype as input_x.
 
+    Raises:
+        TypeError: If `indices` is neither int nor tuple.
+        TypeError: If `indices` is a tuple whose elements are not all int.
+        ValueError: If length of shape of `input_x` is not equal to length of shape of `input_v`.
+
     Supported Platforms:
         ``Ascend``
 
@@ -1186,6 +1215,11 @@ class InplaceSub(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as input_x.
+
+    Raises:
+        TypeError: If `indices` is neither int nor tuple.
+        TypeError: If `indices` is a tuple whose elements are not all int.
+        ValueError: If length of shape of `input_x` is not equal to length of shape of `input_v`.
 
     Supported Platforms:
         ``Ascend``
@@ -1591,6 +1625,9 @@ class Exp(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
 
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1611,7 +1648,7 @@ class Exp(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("x", x_type, mstype.tensor, self.name)
+        validator.check_tensor_dtype_valid("x", x_type, [mstype.float16, mstype.float32], self.name)
         return x_type
 
     def infer_value(self, x):
@@ -1636,6 +1673,9 @@ class Expm1(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1678,6 +1718,11 @@ class HistogramFixedWidth(PrimitiveWithInfer):
     Outputs:
         Tensor, the type is int32.
 
+    Raises:
+        TypeError: If `dtype` is not a str or `nbins` is not an int.
+        ValueError: If `nbins` is less than 1.
+        ValueError: If `dtype` is neither 'int32' nor 'int64'.
+
     Supported Platforms:
         ``Ascend``
 
@@ -1719,6 +1764,9 @@ class Log(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as the `input_x`.
 
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -1739,6 +1787,7 @@ class Log(PrimitiveWithInfer):
 
     def infer_dtype(self, x):
         validator.check_subclass("x", x, mstype.tensor, self.name)
+        validator.check_tensor_dtype_valid("x", x, [mstype.float16, mstype.float32], self.name)
         return x
 
     def infer_value(self, x):
@@ -1759,6 +1808,9 @@ class Log1p(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
@@ -1798,6 +1850,9 @@ class Erf(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
 
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -1835,6 +1890,9 @@ class Erfc(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
@@ -2015,6 +2073,9 @@ class Div(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2056,6 +2117,9 @@ class DivNoNan(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2157,6 +2221,9 @@ class FloorDiv(_MathBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2296,6 +2363,9 @@ class Floor(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Raises:
+        TypeError: If dtype of `input_x` is not float.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2340,6 +2410,9 @@ class FloorMod(_MathBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,
         and the data type is the one with higher precision or higher digits among the two inputs.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -2366,6 +2439,9 @@ class Ceil(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
@@ -2481,6 +2557,9 @@ class Acosh(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and type as `input_x`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -2513,6 +2592,9 @@ class Cosh(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -2551,6 +2633,9 @@ class Asinh(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2642,6 +2727,9 @@ class Equal(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2692,6 +2780,9 @@ class ApproximateEqual(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the shape of 'x1', and the data type is bool.
 
+    Raises:
+        TypeError: If `tolerance` is not a float.
+
     Supported Platforms:
         ``Ascend``
 
@@ -2732,6 +2823,10 @@ class EqualCount(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the type same as input tensor and size as (1,).
+
+    Raises:
+        TypeError: If `input_x` or `input_y` is not a Tensor.
+        ValueError: If shape of `input_x` is not equal to shape of `input_y`.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -2819,7 +2914,10 @@ class Greater(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2860,7 +2958,10 @@ class GreaterEqual(_LogicBinaryOp):
           a bool when the first input is a tensor or a tensor whose data type is number or bool.
 
     Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
+        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
+
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2903,6 +3004,9 @@ class Less(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2944,6 +3048,9 @@ class LessEqual(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2974,6 +3081,9 @@ class LogicalNot(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is the same as the `input_x`, and the dtype is bool.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3018,6 +3128,9 @@ class LogicalAnd(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3053,6 +3166,9 @@ class LogicalOr(_LogicBinaryOp):
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3078,6 +3194,9 @@ class IsNan(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``GPU``
@@ -3112,6 +3231,9 @@ class IsInf(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``GPU``
 
@@ -3144,6 +3266,9 @@ class IsFinite(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape of input, and the dtype is bool.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3178,6 +3303,9 @@ class FloatStatus(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the shape of `(1,)`, and the dtype is `mindspore.dtype.float32`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``
@@ -3341,6 +3469,9 @@ class Cos(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3377,6 +3508,9 @@ class ACos(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3447,6 +3581,9 @@ class Asin(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3549,6 +3686,9 @@ class Abs(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3665,6 +3805,9 @@ class Tan(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Raises:
+        TypeError: If dtype of `input_x` is not one of float16, float32, int32.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -3703,6 +3846,9 @@ class Atan(PrimitiveWithInfer):
     Outputs:
         A Tensor, has the same type as the input.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3735,6 +3881,9 @@ class Atanh(PrimitiveWithInfer):
 
     Outputs:
         A Tensor, has the same type as the input.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -3777,6 +3926,9 @@ class Atan2(_MathBinaryOp):
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is same as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` or `input_y` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -3851,6 +4003,9 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Outputs:
         Tensor, has the same type as the `input_x1`.
 
+    Raises:
+        TypeError: If `input_x1` or `input_x2` is not a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3880,6 +4035,9 @@ class BitwiseOr(_BitwiseBinaryOp):
 
     Outputs:
         Tensor, has the same type as the `input_x1`.
+
+    Raises:
+        TypeError: If `input_x1` or `input_x2` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -3911,6 +4069,9 @@ class BitwiseXor(_BitwiseBinaryOp):
     Outputs:
         Tensor, has the same type as the `input_x1`.
 
+    Raises:
+        TypeError: If `input_x1` or `input_x2` is not a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3934,6 +4095,9 @@ class BesselI0e(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -3969,6 +4133,9 @@ class BesselI1e(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape as `input_x`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -4003,6 +4170,9 @@ class Inv(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same shape and data type as `input_x`.
 
+    Raises:
+        TypeError: If dtype of `input_x` is not one of float16, float32, int32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -4036,6 +4206,9 @@ class Invert(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same shape as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither int16 nor uint16.
 
     Supported Platforms:
         ``Ascend``
