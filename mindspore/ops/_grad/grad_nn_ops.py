@@ -1217,7 +1217,7 @@ def get_bprop_ce_with_logits_loss(self):
     reduction = self.reduction
     mul = P.Mul()
     sigmoid = P.Sigmoid()
-    add = P.TensorAdd()
+    add = P.Add()
     sub = P.Sub()
     size = P.Size()
 
