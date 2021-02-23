@@ -32,92 +32,92 @@ void TileOneDimensionFp16(const float16_t *inData, float16_t *outData, int dim, 
 void TileDimensionsFp16(const float16_t *data0, const float16_t *data1, float16_t *tile_data0, float16_t *tile_data1,
                         ArithmeticParameter *param);
 
-int ElementOptMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMulFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param);
-int ElementOptMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMulReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMulRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptAddFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param);
-int ElementOptAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptAddReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptAddRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptSubFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param);
-int ElementOptSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptSubReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptSubRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param);
-int ElementOptDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptDivReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptFloorModFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptFloorDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLogicalAndFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                              ArithmeticParameter *param);
-int ElementOptLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLogicalOrFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                             ArithmeticParameter *param);
-int ElementOptSquaredDifferenceFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
-                                    ArithmeticParameter *param);
-int ElementOptMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptSquaredDifferenceFp16(const float16_t *input0, const float16_t *input1, float16_t *output,
+                                    int element_size, ArithmeticParameter *param);
+int ElementOptMaximumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMinimumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptNotEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                            ArithmeticParameter *param);
-int ElementOptEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                         ArithmeticParameter *param);
-int ElementOptLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptLessFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                        ArithmeticParameter *param);
-int ElementOptLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptLessEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                             ArithmeticParameter *param);
-int ElementOptGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptGreaterFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                           ArithmeticParameter *param);
-int ElementOptGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptGreaterEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                                ArithmeticParameter *param);
 
-int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementMulFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementMulReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementMulRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 
-int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementAddFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementAddReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementAddRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 int BroadcastAddFp16(const float16_t *in0, const float16_t *in1, float16_t *tile_in0, float16_t *tile_in1,
                      float16_t *out, int size, ArithmeticParameter *param);
 
-int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementSubFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementSubReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementSubRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 
-int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementDivReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 
-int ElementFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementFloorModFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementFloorDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 
-int ElementLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementLogicalAndFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementLogicalOrFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 
-int ElementSquaredDifferenceFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementSquaredDifferenceFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 
-int ElementMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
-int ElementMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size);
+int ElementMaximumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
+int ElementMinimumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size);
 
-int ElementNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
-int ElementEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
-int ElementLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
-int ElementLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
-int ElementGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
-int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
+int ElementNotEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size);
+int ElementEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size);
+int ElementLessFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size);
+int ElementLessEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size);
+int ElementGreaterFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size);
+int ElementGreaterEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size);
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "include/errorcode.h"
+
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 float16_t *ConvertInputFp32toFp16(lite::Tensor *input, const lite::InnerContext *ctx) {
@@ -52,23 +55,20 @@ float16_t *MallocOutputFp16(lite::Tensor *output, const lite::InnerContext *ctx)
   return fp16_data;
 }
 
-bool IsExistFp16Tensor(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs) {
-  bool result = false;
-  for (auto &input : inputs) {
-    if (input->data_type() == kNumberTypeFloat16) {
-      result = true;
-      break;
-    }
+int ConvertFp32TensorToFp16(lite::Tensor *tensor, const lite::InnerContext *ctx) {
+  if (tensor->data_type() == TypeId::kNumberTypeFloat16) {
+    return RET_OK;
   }
-  if (result) {
-    return true;
+  auto fp32_data = tensor->data_c();
+  tensor->set_data(nullptr);
+  tensor->set_data_type(TypeId::kNumberTypeFloat16);
+  auto ret = tensor->MallocData();
+  if (RET_OK != ret) {
+    MS_LOG(ERROR) << "malloc data failed";
+    return RET_ERROR;
   }
-  for (auto &output : outputs) {
-    if (output->data_type() == kNumberTypeFloat16) {
-      result = true;
-      break;
-    }
-  }
-  return result;
+  Float32ToFloat16(static_cast<float *>(fp32_data), static_cast<float16_t *>(tensor->data_c()), tensor->ElementsNum());
+  ctx->allocator->Free(fp32_data);
+  return RET_OK;
 }
 }  // namespace mindspore::kernel

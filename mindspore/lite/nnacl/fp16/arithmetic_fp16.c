@@ -52,7 +52,7 @@ void TileDimensionsFp16(const float16_t *data0, const float16_t *data1, float16_
                        param->multiples1_);
 }
 
-int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementMulFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -68,7 +68,7 @@ int ElementMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   return NNACL_OK;
 }
 
-int ElementOptMulFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMulFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -101,7 +101,7 @@ int ElementOptMulFp16(float16_t *input0, float16_t *input1, float16_t *output, i
   return NNACL_OK;
 }
 
-int ElementMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementMulReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
 #endif
@@ -122,7 +122,7 @@ int ElementMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   return NNACL_OK;
 }
 
-int ElementOptMulReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMulReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -160,7 +160,7 @@ int ElementOptMulReluFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementMulRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
@@ -179,7 +179,7 @@ int ElementMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
   return NNACL_OK;
 }
 
-int ElementOptMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMulRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -216,7 +216,7 @@ int ElementOptMulRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *outp
   return NNACL_OK;
 }
 
-int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementAddFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -238,7 +238,7 @@ int ElementAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   return NNACL_OK;
 }
 
-int ElementOptAddFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptAddFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -271,7 +271,7 @@ int ElementOptAddFp16(float16_t *input0, float16_t *input1, float16_t *output, i
   return NNACL_OK;
 }
 
-int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementAddReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
@@ -298,7 +298,7 @@ int ElementAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   return NNACL_OK;
 }
 
-int ElementOptAddReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptAddReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -336,7 +336,7 @@ int ElementOptAddReluFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementAddRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
@@ -364,7 +364,7 @@ int ElementAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
   return NNACL_OK;
 }
 
-int ElementOptAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptAddRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -401,7 +401,7 @@ int ElementOptAddRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *outp
   return NNACL_OK;
 }
 
-int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementSubFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -417,7 +417,7 @@ int ElementSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   return NNACL_OK;
 }
 
-int ElementOptSubFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptSubFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -450,7 +450,7 @@ int ElementOptSubFp16(float16_t *input0, float16_t *input1, float16_t *output, i
   return NNACL_OK;
 }
 
-int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementSubReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
@@ -469,7 +469,7 @@ int ElementSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   return NNACL_OK;
 }
 
-int ElementOptSubReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptSubReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -507,7 +507,7 @@ int ElementOptSubReluFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementSubRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
@@ -526,7 +526,7 @@ int ElementSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
   return NNACL_OK;
 }
 
-int ElementOptSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptSubRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -563,7 +563,7 @@ int ElementOptSubRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *outp
   return NNACL_OK;
 }
 
-int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -580,7 +580,7 @@ int ElementDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int 
   return NNACL_OK;
 }
 
-int ElementOptDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                       ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -617,7 +617,7 @@ int ElementOptDivFp16(float16_t *input0, float16_t *input1, float16_t *output, i
   return NNACL_OK;
 }
 
-int ElementDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementDivReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
@@ -640,7 +640,7 @@ int ElementDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   return NNACL_OK;
 }
 
-int ElementOptDivReluFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptDivReluFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -681,7 +681,7 @@ int ElementOptDivReluFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t zeros = vdupq_n_f16(0.0);
@@ -703,7 +703,7 @@ int ElementDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output,
   return NNACL_OK;
 }
 
-int ElementOptDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptDivRelu6Fp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -744,7 +744,7 @@ int ElementOptDivRelu6Fp16(float16_t *input0, float16_t *input1, float16_t *outp
   return NNACL_OK;
 }
 
-int ElementFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementFloorModFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; ++i) {
     if (input1[i] == 0) {
       return NNACL_ERRCODE_DIVISOR_ZERO;
@@ -754,7 +754,7 @@ int ElementFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output,
   return NNACL_OK;
 }
 
-int ElementOptFloorModFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptFloorModFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
     for (int i = 0; i < element_size; ++i) {
@@ -770,14 +770,14 @@ int ElementOptFloorModFp16(float16_t *input0, float16_t *input1, float16_t *outp
   return NNACL_OK;
 }
 
-int ElementFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementFloorDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   for (int i = 0; i < element_size; ++i) {
     NNACL_ASSERT(input1[i] != 0);
     output[i] = floorf(input0[i] / input1[i]);
   }
   return NNACL_OK;
 }
-int ElementOptFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptFloorDivFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                            ArithmeticParameter *param) {
   if (param->in_elements_num1_ == 1) {
     for (int i = 0; i < element_size; ++i) {
@@ -793,7 +793,7 @@ int ElementOptFloorDivFp16(float16_t *input0, float16_t *input1, float16_t *outp
   return NNACL_OK;
 }
 
-int ElementLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementLogicalAndFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t vtrue = vdupq_n_f16(1);
@@ -813,7 +813,7 @@ int ElementLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementOptLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLogicalAndFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                              ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -854,7 +854,7 @@ int ElementOptLogicalAndFp16(float16_t *input0, float16_t *input1, float16_t *ou
   return NNACL_OK;
 }
 
-int ElementLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementLogicalOrFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   float16x8_t vtrue = vdupq_n_f16(1);
@@ -874,7 +874,7 @@ int ElementLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *output
   return NNACL_OK;
 }
 
-int ElementOptLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptLogicalOrFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                             ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -915,18 +915,19 @@ int ElementOptLogicalOrFp16(float16_t *input0, float16_t *input1, float16_t *out
   return NNACL_OK;
 }
 
-int ElementSquaredDifferenceFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementSquaredDifferenceFp16(const float16_t *input0, const float16_t *input1, float16_t *output,
+                                 int element_size) {
   ElementSubFp16(input0, input1, output, element_size);
   return ElementMulFp16(output, output, output, element_size);
 }
 
-int ElementOptSquaredDifferenceFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
-                                    ArithmeticParameter *param) {
+int ElementOptSquaredDifferenceFp16(const float16_t *input0, const float16_t *input1, float16_t *output,
+                                    int element_size, ArithmeticParameter *param) {
   ElementOptSubFp16(input0, input1, output, element_size, param);
   return ElementMulFp16(output, output, output, element_size);
 }
 
-int ElementMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementMaximumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -942,7 +943,7 @@ int ElementMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   return NNACL_OK;
 }
 
-int ElementOptMaximumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMaximumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -975,7 +976,7 @@ int ElementOptMaximumFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size) {
+int ElementMinimumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -991,7 +992,7 @@ int ElementMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, 
   return NNACL_OK;
 }
 
-int ElementOptMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, int element_size,
+int ElementOptMinimumFp16(const float16_t *input0, const float16_t *input1, float16_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -1024,7 +1025,7 @@ int ElementOptMinimumFp16(float16_t *input0, float16_t *input1, float16_t *outpu
   return NNACL_OK;
 }
 
-int ElementNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
+int ElementNotEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -1040,7 +1041,7 @@ int ElementNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, i
   return NNACL_OK;
 }
 
-int ElementOptNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptNotEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                            ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -1073,7 +1074,7 @@ int ElementOptNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output
   return NNACL_OK;
 }
 
-int ElementEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
+int ElementEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -1089,7 +1090,7 @@ int ElementEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int 
   return NNACL_OK;
 }
 
-int ElementOptEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                         ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -1122,7 +1123,7 @@ int ElementOptEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, i
   return NNACL_OK;
 }
 
-int ElementLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
+int ElementLessFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -1138,7 +1139,7 @@ int ElementLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int e
   return NNACL_OK;
 }
 
-int ElementOptLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptLessFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                        ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -1171,7 +1172,7 @@ int ElementOptLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, in
   return NNACL_OK;
 }
 
-int ElementLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
+int ElementLessEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -1187,7 +1188,7 @@ int ElementLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, 
   return NNACL_OK;
 }
 
-int ElementOptLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptLessEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                             ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -1220,7 +1221,7 @@ int ElementOptLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *outpu
   return NNACL_OK;
 }
 
-int ElementGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
+int ElementGreaterFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -1236,7 +1237,7 @@ int ElementGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, in
   return NNACL_OK;
 }
 
-int ElementOptGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptGreaterFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                           ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);
@@ -1269,7 +1270,7 @@ int ElementOptGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output,
   return NNACL_OK;
 }
 
-int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size) {
+int ElementGreaterEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON
   for (; index <= element_size - 8; index += C8NUM) {
@@ -1285,7 +1286,7 @@ int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *outpu
   return NNACL_OK;
 }
 
-int ElementOptGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
+int ElementOptGreaterEqualFp16(const float16_t *input0, const float16_t *input1, uint8_t *output, int element_size,
                                ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
   float16x8_t vin0_opt = vdupq_n_f16(input0[0]);

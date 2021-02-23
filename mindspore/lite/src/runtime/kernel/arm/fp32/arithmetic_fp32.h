@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "schema/model_generated.h"
 
 using mindspore::schema::PrimitiveType_Add;
 using mindspore::schema::PrimitiveType_Div;
@@ -41,6 +39,14 @@ using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
 using mindspore::schema::PrimitiveType_Sub;
+
+#define CHECK_NULL_RETURN(ptr, errcode)         \
+  do {                                          \
+    if (ptr == nullptr) {                       \
+      MS_LOG(ERROR) << "ptr must not be null."; \
+      return errcode;                           \
+    }                                           \
+  } while (0);
 
 namespace mindspore::kernel {
 class ArithmeticCPUKernel : public LiteKernel {
@@ -66,11 +72,10 @@ class ArithmeticCPUKernel : public LiteKernel {
   ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
-    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);
-    InitRunFunction();
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    param_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
-  ~ArithmeticCPUKernel() override;
+  ~ArithmeticCPUKernel() { FreeConstTileBuff(); }
 
   int Init() override;
   int ReSize() override;
@@ -78,33 +83,33 @@ class ArithmeticCPUKernel : public LiteKernel {
   virtual int DoArithmetic(int task_id);
   virtual int BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count, int out_thread_stride);
 
- private:
-  void InitRunFunction();
-  void InitParam();
-  void FreeTmpPtr();
-  int CheckDataType();
-  int InitBroadCastCase();
-  void InitParamInRunTime();
-  bool CanBatchScalar();
-  int BatchScalarCalc(int task_id);
-
  protected:
+  virtual void InitRunFunction();
+  virtual int CheckDataType();
+  virtual int ConstTensorBroadCast();
+  virtual void TileConstTensor(const void *in_data, void *out_data, size_t ndim, const int *in_shape,
+                               const int *in_strides, const int *out_strides, const int *multiple);
+  virtual int Execute(const void *input0, const void *input1, void *output, int size, bool is_opt);
   bool input0_broadcast_ = false;
   bool input1_broadcast_ = false;
   void *input0_ptr_ = nullptr;
   void *input1_ptr_ = nullptr;
+  void *output_ptr_ = nullptr;
   int break_pos_ = 0;
   int outside_ = 0;
-  int thread_count_ = 1;
-  ArithmeticParameter *arithmeticParameter_ = nullptr;
-  LiteDataType data_type_ = kDataTypeFloat;
+  ArithmeticParameter *param_ = nullptr;
+  int data_type_len_ = sizeof(float);
 
  private:
+  bool CanBatchScalar();
+  int BatchScalarCalc(int task_id);
+  void FreeConstTileBuff();
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
   ArithmeticIntRun arithmetic_run_int_ = nullptr;
   ArithmeticOptIntRun arithmetic_opt_run_int_ = nullptr;
   ArithmeticBoolRun arithmetic_run_bool_ = nullptr;
 };
+int ArithmeticsRun(void *cdata, int task_id);
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_H_

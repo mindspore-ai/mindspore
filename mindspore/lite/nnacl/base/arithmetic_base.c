@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 #include "nnacl/base/arithmetic_base.h"
 
 void CalcMultiplesAndStrides(ArithmeticParameter *param) {
-  NNACL_ASSERT(param->in_shape0_[i] != 0);
-  NNACL_ASSERT(param->in_shape1_[i] != 0);
   for (size_t i = 0; i < param->ndim_; i++) {
     if (param->in_shape0_[i] != 0) {
       param->multiples0_[i] = param->out_shape_[i] / param->in_shape0_[i];

@@ -23,9 +23,10 @@
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {
-typedef int (*ArithmeticCompareFuncFp16)(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
-typedef int (*ArithmeticCompareOptFuncFp16)(float16_t *input0, float16_t *input1, uint8_t *output, int element_size,
-                                            ArithmeticParameter *param);
+typedef int (*ArithmeticCompareFuncFp16)(const float16_t *input0, const float16_t *input1, uint8_t *output,
+                                         int element_size);
+typedef int (*ArithmeticCompareOptFuncFp16)(const float16_t *input0, const float16_t *input1, uint8_t *output,
+                                            int element_size, ArithmeticParameter *param);
 typedef struct {
   int primitive_type_;
   int activation_type_;
