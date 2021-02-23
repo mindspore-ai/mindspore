@@ -697,7 +697,7 @@ class Dataset:
                           python_multiprocessing, cache, callbacks)
 
     @check_filter
-    def filter(self, predicate, input_columns=None, num_parallel_workers=1):
+    def filter(self, predicate, input_columns=None, num_parallel_workers=None):
         """
         Filter dataset by predicate.
 

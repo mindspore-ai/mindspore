@@ -107,6 +107,9 @@ bool GetRotationMatrix2D(float x, float y, double angle, double scale, LiteMat &
 /// \brief Perspective transformation
 bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M);
 
+/// \brief Affine transformation
+bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M);
+
 /// \brief Matrix transpose
 bool Transpose(LiteMat &src, LiteMat &dst);
 
