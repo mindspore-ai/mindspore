@@ -51,6 +51,7 @@ class AscendKernelRuntime : public KernelRuntime {
                                  const std::vector<CNodePtr> &execution_order) override;
   void ClearGlobalIdleMem() override;
   bool SyncStream() override;
+  bool MemcpyAsync(void *dst, const void *src, uint64_t size, int32_t kind) override;
   void SetContext() override;
   void CreateContext() override;
   void *context() const override { return rt_context_; }
