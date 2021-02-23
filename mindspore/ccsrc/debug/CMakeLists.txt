@@ -13,6 +13,7 @@ if(ENABLE_DUMP_IR)
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/base_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_exec_order_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_recorder.cc"
+        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/stream_exec_order_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/string_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/recorder_manager.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/running_data_recorder.cc"

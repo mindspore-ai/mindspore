@@ -28,6 +28,10 @@
 #include "backend/kernel_compiler/oplib/oplib.h"
 #include "utils/utils.h"
 
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -108,6 +112,12 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     GetNeedActiveStreams(graph_ptr);
     CheckResourceAssign(graph_ptr);
     MS_LOG(INFO) << "After finish stream assign";
+#ifdef ENABLE_DUMP_IR
+    SubModuleId module = SubModuleId::SM_SESSION;
+    std::string tag = "assign_stream";
+    const std::vector<CNodePtr> &exec_order = graph_ptr->execution_order();
+    mindspore::RDR::RecordStreamExecOrder(module, tag, graph_ptr->graph_id(), exec_order);
+#endif
     graph_ptr->PrintGraphExecuteOrder();
 
     FindStreamRelations(graph_ptr);

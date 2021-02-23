@@ -37,9 +37,15 @@ void BaseRecorder::SetFilename(const std::string &filename) {
   }
 }
 
-std::optional<std::string> BaseRecorder::GetFileRealPath() {
+std::optional<std::string> BaseRecorder::GetFileRealPath(const std::string &suffix) {
   if (filename_.empty()) {
-    filename_ = module_ + "_" + tag_ + "_" + timestamp_;
+    filename_ = module_ + "_" + tag_;
+    if (!suffix.empty()) {
+      filename_ += "_" + suffix;
+    }
+    filename_ += "_" + timestamp_;
+  } else if (!suffix.empty()) {
+    filename_ += "_" + suffix;
   }
   std::string file_path = directory_ + filename_;
   auto realpath = Common::GetRealPath(file_path);
