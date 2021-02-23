@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""FasterRcnn anchor generator."""
+"""CTPN anchor generator."""
 import numpy as np
 class AnchorGenerator():
-    """Anchor generator for FasterRcnn."""
+    """Anchor generator for CTPN."""
     def __init__(self, config):
         """Anchor generator init method."""
         self.base_size = config.anchor_base
