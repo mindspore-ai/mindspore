@@ -13,38 +13,31 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for LayerNorm"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.model import DataFormat as DF
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_layernorm(expand_info):
+@VLD.add_format(DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
+@VLD.check_attrs('begin_norm_axis', 'begin_params_axis', 'epsilon')
+class LayerNorm(Expander):
     """LayerNorm expander"""
-    # get op info.
-    input_desc_0 = expand_info['input_desc'][0]
-    input_desc_1 = expand_info['input_desc'][1]
-    input_desc_2 = expand_info['input_desc'][2]
-    attrs = expand_info['attr']
-    begin_norm_axis = attrs['begin_norm_axis']
-    epsilon = attrs['epsilon']
 
-    graph_builder = builder.GraphBuilder()
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
-        input_gamma = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        input_beta = graph_builder.tensor(input_desc_2['shape'], input_desc_2['data_type'], input_desc_2['format'])
+    def _expand(self, graph_builder):
+        input_x, input_gamma, input_beta = self.inputs
+        begin_norm_axis = self.attrs['begin_norm_axis']
+        epsilon = self.attrs['epsilon']
 
         # Calculate the scaling ratio of the average
-        shape_x = input_desc_0['shape']
         if begin_norm_axis < 0:
-            begin_norm_axis += len(shape_x)
+            begin_norm_axis += len(input_x.shape)
         reduce_axis = ()
-        for i, _ in enumerate(shape_x):
+        for i, _ in enumerate(input_x.shape):
             if i > begin_norm_axis or i == begin_norm_axis:
                 reduce_axis = reduce_axis + (i,)
 
         reduce_elts = 1.0
         for i in reduce_axis:
-            reduce_elts *= shape_x[i]
+            reduce_elts *= input_x.shape[i]
         mean_cof = 1.0 / reduce_elts
         mean_cof_v = graph_builder.value(input_x.dtype, mean_cof)
 
@@ -70,8 +63,4 @@ def expand_layernorm(expand_info):
         scale_mul = graph_builder.emit('Mul', [input_gamma, normalize_mul])
         res = graph_builder.emit('Add', [scale_mul, input_beta])
 
-        # set graph output.
-        graph_scope.set_output(res, mean, variance)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return res, mean, variance

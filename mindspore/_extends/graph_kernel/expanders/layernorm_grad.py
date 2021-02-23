@@ -13,42 +13,30 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for LayerNormGrad"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.model import DataFormat as DF
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_layernormgrad(expand_info):
+@VLD.add_format(DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT, DF.DEFAULT)
+@VLD.check_attrs('begin_norm_axis', 'begin_params_axis')
+class LayerNormGrad(Expander):
     """LayerNormGrad expander"""
-    # get op info.
-    x_desc = expand_info['input_desc'][0]
-    dy_desc = expand_info['input_desc'][1]
-    var_desc = expand_info['input_desc'][2]
-    mean_desc = expand_info['input_desc'][3]
-    gamma_desc = expand_info['input_desc'][4]
-    attrs = expand_info['attr']
-    begin_norm_axis = attrs['begin_norm_axis']
-    begin_params_axis = attrs['begin_params_axis']
-    epsilon = attrs['epsilon'] if 'epsilon' in attrs else 1e-11
 
-    shape_x = x_desc['shape']
-    if begin_norm_axis < 0:
-        begin_norm_axis += len(shape_x)
-    if begin_params_axis < 0:
-        begin_params_axis += len(shape_x)
-    norm_axis = tuple(range(begin_norm_axis, len(shape_x)))
-    param_axis = tuple(range(0, begin_params_axis))
-    reduce_size = 1.0
-    for i in norm_axis:
-        reduce_size *= shape_x[i]
+    def _expand(self, graph_builder):
+        x, dy, variance, mean, gamma = self.inputs
+        begin_norm_axis = self.attrs['begin_norm_axis']
+        begin_params_axis = self.attrs['begin_params_axis']
+        epsilon = self.attrs['epsilon'] if 'epsilon' in self.attrs else 1e-11
 
-    graph_builder = builder.GraphBuilder()
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create input tensors.
-        x = graph_builder.tensor(x_desc['shape'], x_desc['data_type'], x_desc['format'])
-        dy = graph_builder.tensor(dy_desc['shape'], dy_desc['data_type'], dy_desc['format'])
-        variance = graph_builder.tensor(var_desc['shape'], var_desc['data_type'], var_desc['format'])
-        mean = graph_builder.tensor(mean_desc['shape'], mean_desc['data_type'], mean_desc['format'])
-        gamma = graph_builder.tensor(gamma_desc['shape'], gamma_desc['data_type'], gamma_desc['format'])
-        graph_scope.set_input(x, dy, variance, mean, gamma)
+        if begin_norm_axis < 0:
+            begin_norm_axis += len(x.shape)
+        if begin_params_axis < 0:
+            begin_params_axis += len(x.shape)
+        norm_axis = tuple(range(begin_norm_axis, len(x.shape)))
+        param_axis = tuple(range(0, begin_params_axis))
+        reduce_size = 1.0
+        for i in norm_axis:
+            reduce_size *= x.shape[i]
 
         # set some constant val.
         eps = graph_builder.value(x.dtype, epsilon)
@@ -99,8 +87,4 @@ def expand_layernormgrad(expand_info):
         dx_tmp = graph_builder.emit('Add', [dx_1, dx_2])
         dx = graph_builder.emit('Add', [dx_tmp, dx_3])
 
-        # set graph output.
-        graph_scope.set_output(dx, dg, db)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return dx, dg, db

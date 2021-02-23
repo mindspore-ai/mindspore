@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,27 +13,15 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for ClipByNormNoDivSum"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_clipbynormnodivsum(expand_info):
+@VLD.check_all_formats_same
+class ClipByNormNoDivSum(Expander):
     """ClipByNormNoDivSum expander"""
 
-    # get op info.
-    input_desc_0 = expand_info['input_desc'][0]
-    input_desc_1 = expand_info['input_desc'][1]
-    input_desc_2 = expand_info['input_desc'][2]
-    input_desc_3 = expand_info['input_desc'][3]
-    graph_builder = builder.GraphBuilder()
-
-    # generate a graph.
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x0 = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
-        input_x1 = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        input_x2 = graph_builder.tensor(input_desc_2['shape'], input_desc_2['data_type'], input_desc_2['format'])
-        input_x3 = graph_builder.tensor(input_desc_3['shape'], input_desc_3['data_type'], input_desc_3['format'])
-        graph_scope.set_input(input_x0, input_x1, input_x2, input_x3)
+    def _expand(self, graph_builder):
+        input_x0, input_x1, input_x2, input_x3 = self.inputs
 
         # cal result
         greater_res = graph_builder.emit('Greater', [input_x0, input_x1], attrs={'fusion': 'SelectGT_000'})
@@ -44,8 +32,4 @@ def expand_clipbynormnodivsum(expand_info):
                                          attrs={'fusion': 'SelectGT_000_end'})
         result = graph_builder.emit('Maximum', [select_res1, input_x3])
 
-        # set graph output.
-        graph_scope.set_output(result)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return result

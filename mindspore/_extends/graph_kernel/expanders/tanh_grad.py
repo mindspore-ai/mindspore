@@ -13,34 +13,19 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for tanh_grad"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
-
-ONE = 1.0
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_tanhgrad(expand_info):
+@VLD.check_all_formats_same
+class TanhGrad(Expander):
     """TanhGrad expander"""
 
-    # get op info.
-    input_desc_0 = expand_info['input_desc'][0]
-    input_desc_1 = expand_info['input_desc'][1]
-    graph_builder = builder.GraphBuilder()
+    def _expand(self, graph_builder):
+        input_y, input_dy = self.inputs
 
-    # generate a graph.
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_y = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
-        input_dy = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        const_one = graph_builder.value(input_y.dtype, ONE)
-        graph_scope.set_input(input_y, input_dy)
-
-        # cal result
+        const_one = graph_builder.value(input_y.dtype, 1)
         double_y = graph_builder.emit('Mul', [input_y, input_y])
         one_sub_double_y = graph_builder.emit('Sub', [const_one, double_y])
         result = graph_builder.emit('Mul', [input_dy, one_sub_double_y])
 
-        # set graph output.
-        graph_scope.set_output(result)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return result

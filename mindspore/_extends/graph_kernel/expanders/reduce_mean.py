@@ -13,45 +13,30 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for reduce_mean"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.model import DataFormat as DF
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_reducemean(expand_info):
+@VLD.add_format(DF.DEFAULT)
+@VLD.check_attrs('axis', 'keep_dims')
+class ReduceMean(Expander):
     """ReduceMean expander"""
-    # get op info.
-    input_desc = expand_info['input_desc'][0]
-    attrs = expand_info['attr']
-    axis = attrs['axis']
-    keep_dims = attrs['keep_dims']
 
-    graph_builder = builder.GraphBuilder()
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
-        x_shape = input_x.shape
-        graph_scope.set_input(input_x)
+    def _expand(self, graph_builder):
+        x = self.inputs[0]
+        axis = self.attrs['axis']
+        keep_dims = self.attrs['keep_dims']
 
-        # cal reduce_mean, when axis = None, reduce axis are all
-        all_shape = 1.0
-        real_axis = []
+        # cal reduce_mean, when axis is None, reduce all axes.
         if not axis:
-            for i, shape in enumerate(x_shape):
-                real_axis.append(i)
-                all_shape *= shape
-        else:
-            for idx in axis:
-                all_shape *= x_shape[idx]
+            axis = list(range(len(x.shape)))
+        reduce_size = 1.0
+        for idx in axis:
+            reduce_size *= x.shape[idx]
 
-        all_shape_value = graph_builder.value(input_x.dtype, all_shape)
+        reduce_size_value = graph_builder.value(x.dtype, reduce_size)
 
-        if not axis:
-            sum_x = graph_builder.emit('ReduceSum', [input_x], attrs={'reduce_axis': real_axis, 'keep_dims': keep_dims})
-        else:
-            sum_x = graph_builder.emit('ReduceSum', [input_x], attrs={'reduce_axis': axis, 'keep_dims': keep_dims})
-        result = graph_builder.emit('RealDiv', [sum_x, all_shape_value])
+        sum_x = graph_builder.emit('ReduceSum', [x], attrs={'reduce_axis': axis, 'keep_dims': keep_dims})
+        result = graph_builder.emit('RealDiv', [sum_x, reduce_size_value])
 
-        # set graph output.
-        graph_scope.set_output(result)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return result

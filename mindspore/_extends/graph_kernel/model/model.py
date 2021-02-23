@@ -55,6 +55,25 @@ class DataFormat:
     NDHWC = "NDHWC"
 
 
+class DataType:
+    """Data Type"""
+    FLOAT = "float"
+    FLOAT16 = "float16"
+    FLOAT32 = "float32"
+    FLOAT64 = "float64"
+    INT = "int"
+    INT8 = "int8"
+    INT16 = "int16"
+    INT32 = "int32"
+    INT64 = "int64"
+    UINT = "uint"
+    UINT8 = "uint8"
+    UINT16 = "uint16"
+    UINT32 = "uint32"
+    UINT64 = "uint64"
+    BOOL = "bool"
+
+
 class Config:
     R0 = 8.0
     UB_SIZE = 256 * 1024
@@ -508,3 +527,9 @@ class AddControlBuddy(GraphVisitor):
         for owner in self.buddies:
             for op in self.buddies[owner]:
                 owner.add_buddy(op.output)
+
+
+class GraphKernelUnsupportedException(Exception):
+    def __init__(self, message):
+        super().__init__()
+        self.message = message

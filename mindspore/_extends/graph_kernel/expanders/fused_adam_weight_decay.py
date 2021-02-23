@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,41 +13,15 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for fused_adam_weight_decay"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_fusedadamweightdecay(expand_info):
-    """FusedAdmaWeightDecay expander"""
-    # get op info.
-    input_desc_0 = expand_info['input_desc'][0]
-    input_desc_1 = expand_info['input_desc'][1]
-    input_desc_2 = expand_info['input_desc'][2]
-    input_desc_3 = expand_info['input_desc'][3]
-    input_desc_4 = expand_info['input_desc'][4]
-    input_desc_5 = expand_info['input_desc'][5]
-    input_desc_6 = expand_info['input_desc'][6]
-    input_desc_7 = expand_info['input_desc'][7]
-    input_desc_8 = expand_info['input_desc'][8]
-    input_desc_9 = expand_info['input_desc'][9]
-    input_desc_10 = expand_info['input_desc'][10]
-    graph_builder = builder.GraphBuilder()
+@VLD.check_all_formats_same
+class FusedAdamWeightDecay(Expander):
+    """FusedAdamWeightDecay expander"""
 
-    # generate a graph.
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        beta_1 = graph_builder.tensor(input_desc_0['shape'], input_desc_0['data_type'], input_desc_0['format'])
-        one_sub_beta_1 = graph_builder.tensor(input_desc_1['shape'], input_desc_1['data_type'], input_desc_1['format'])
-        beta_2 = graph_builder.tensor(input_desc_2['shape'], input_desc_2['data_type'], input_desc_2['format'])
-        one_sub_beta_2 = graph_builder.tensor(input_desc_3['shape'], input_desc_3['data_type'], input_desc_3['format'])
-        eps = graph_builder.tensor(input_desc_4['shape'], input_desc_4['data_type'], input_desc_4['format'])
-        lr = graph_builder.tensor(input_desc_5['shape'], input_desc_5['data_type'], input_desc_5['format'])
-        param = graph_builder.tensor(input_desc_6['shape'], input_desc_6['data_type'], input_desc_6['format'])
-        m = graph_builder.tensor(input_desc_7['shape'], input_desc_7['data_type'], input_desc_7['format'])
-        v = graph_builder.tensor(input_desc_8['shape'], input_desc_8['data_type'], input_desc_8['format'])
-        gradient = graph_builder.tensor(input_desc_9['shape'], input_desc_9['data_type'], input_desc_9['format'])
-        weight_decay = graph_builder.tensor(input_desc_10['shape'], input_desc_10['data_type'], input_desc_10['format'])
-        graph_scope.set_input(beta_1, one_sub_beta_1, beta_2, one_sub_beta_2,
-                              eps, lr, param, m, v, gradient, weight_decay)
+    def _expand(self, graph_builder):
+        beta_1, one_sub_beta_1, beta_2, one_sub_beta_2, eps, lr, param, m, v, gradient, weight_decay = self.inputs
 
         # compute result
         beta_1_mul_m = graph_builder.emit('Mul', [beta_1, m])
@@ -65,12 +39,9 @@ def expand_fusedadamweightdecay(expand_info):
         update_with_lr = graph_builder.emit('Mul', [lr, update])
         next_para = graph_builder.emit('Sub', [param, update_with_lr])
 
-        para_result = graph_builder.emit('InplaceAssign', [param, next_para, next_para], attrs={'fake_output': True})
+        para_result = graph_builder.emit(
+            'InplaceAssign', [param, next_para, next_para], attrs={'fake_output': True})
         para_result = graph_builder.emit('InplaceAssign', [m, next_m, para_result], attrs={'fake_output': True})
         para_result = graph_builder.emit('InplaceAssign', [v, next_v, para_result], attrs={'fake_output': True})
 
-        # set graph output.
-        graph_scope.set_output(para_result)
-
-    graph = graph_builder.get()[0]
-    return graph
+        return para_result

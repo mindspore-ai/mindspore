@@ -13,26 +13,23 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for softmax"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.model import DataFormat as DF
+from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
-def expand_softmax(expand_info):
+@VLD.add_format(DF.DEFAULT)
+@VLD.check_attrs('axis')
+class Softmax(Expander):
     """Softmax expander"""
-    input_desc = expand_info['input_desc'][0]
-    axis = expand_info['attr']['axis']
 
-    graph_builder = builder.GraphBuilder()
-    with graph_builder.graph_scope('main') as graph_scope:
-        # create tensor input.
-        input_x = graph_builder.tensor(input_desc['shape'], input_desc['data_type'], input_desc['format'])
-        # cal softmax.
+    def _expand(self, graph_builder):
+        input_x = self.inputs[0]
+        axis = self.attrs['axis']
+
         max_x = graph_builder.emit('ReduceMax', [input_x], attrs={'reduce_axis': axis, 'keep_dims': True})
         data_sub = graph_builder.emit('Sub', [input_x, max_x])
         data_exp = graph_builder.emit('Exp', [data_sub])
         data_expsum = graph_builder.emit('ReduceSum', [data_exp], attrs={'reduce_axis': axis, 'keep_dims': True})
         result = graph_builder.emit('RealDiv', [data_exp, data_expsum])
-        # set graph output.
-        graph_scope.set_output(result)
 
-    graph = graph_builder.get()[0]
-    return graph
+        return result
