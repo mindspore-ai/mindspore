@@ -86,13 +86,10 @@ Graph Serialization::LoadModel(const void *model_data, size_t data_size, ModelTy
 
 Graph Serialization::LoadModel(const std::string &file, ModelType model_type) {
   if (model_type == kMindIR) {
-    FuncGraphPtr anf_graph = nullptr;
-    try {
-      anf_graph = LoadMindIR(file);
-    } catch (const std::exception &) {
-      MS_LOG(EXCEPTION) << "Load MindIR failed.";
+    FuncGraphPtr anf_graph = LoadMindIR(file);
+    if (anf_graph == nullptr) {
+      MS_LOG(EXCEPTION) << "Load model failed.";
     }
-
     return Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
   } else if (model_type == kOM) {
     Buffer data = ReadFile(file);

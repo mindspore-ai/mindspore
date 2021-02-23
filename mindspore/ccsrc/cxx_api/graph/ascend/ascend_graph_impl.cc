@@ -24,6 +24,7 @@
 #include "backend/session/session_factory.h"
 #include "backend/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
+#include "runtime/dev.h"
 
 namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, Ascend910, AscendGraphImpl);
