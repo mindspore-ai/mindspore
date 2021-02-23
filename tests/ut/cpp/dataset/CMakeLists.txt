@@ -34,7 +34,13 @@ SET(DE_UT_SRCS
         c_api_text_sentence_piece_vocab_test.cc
         c_api_text_vocab_test.cc
         c_api_transforms_test.cc
-        c_api_vision_test.cc
+        c_api_vision_a_to_q_test.cc
+        c_api_vision_bounding_box_augment_test.cc
+        c_api_vision_random_subselect_policy_test.cc
+        c_api_vision_random_test.cc
+        c_api_vision_r_to_z_test.cc
+        c_api_vision_soft_dvpp_test.cc
+        c_api_vision_uniform_aug_test.cc
         celeba_op_test.cc
         center_crop_op_test.cc
         channel_swap_test.cc
