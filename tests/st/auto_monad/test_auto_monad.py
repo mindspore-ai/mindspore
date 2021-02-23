@@ -1464,3 +1464,43 @@ def test_multi_add_assign():
     outputs = [r2.asnumpy(), r1.asnumpy(), net.p.data.asnumpy()]
     expects = numpy_out(p, i0, i1, i2)
     np.testing.assert_array_equal(outputs, expects)
+
+
+@pytest.mark.skip(reason="not supported yet")
+def test_multi_abs_add_assign():
+    class Net(Cell):
+        def __init__(self, para):
+            super(Net, self).__init__()
+            self.add = P.Add()
+            self.sub = P.Sub()
+            self.mul = P.Mul()
+            self.abs = P.Abs()
+            self.assign = P.Assign()
+            self.p = Parameter(para, name='para')
+
+        def construct(self, a, d, e):
+            tmp = self.abs(self.add(self.abs(a), self.abs(self.mul(a, a))))
+            res1 = self.add(self.p, tmp)
+            mul = self.mul(d, e)
+            self.assign(self.p, mul)
+            res2 = self.sub(self.p, e)
+            return res2, res1, tmp
+
+    def numpy_out(p, a, d, e):
+        tmp = np.abs(np.abs(a) + np.abs(a * a))
+        res1 = p + tmp
+        res_as = d * e
+        res2 = d * e - e
+        return res2, res1, res_as, tmp
+
+    p = -(np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+    i0 = -(np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+    i1 = -(np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+    i2 = -(np.abs(np.random.normal(0, 1, [3])) + 1).astype(np.float32)
+
+    net = Net(Tensor(p))
+    r2, r1, tmp = net(Tensor(i0), Tensor(i1), Tensor(i2))
+
+    outputs = [r2.asnumpy(), r1.asnumpy(), net.p.data.asnumpy(), tmp.asnumpy()]
+    expects = numpy_out(p, i0, i1, i2)
+    np.testing.assert_array_equal(outputs, expects)
