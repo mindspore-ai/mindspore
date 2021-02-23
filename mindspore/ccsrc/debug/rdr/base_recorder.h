@@ -65,6 +65,7 @@ class BaseRecorder {
 
   void SetDirectory(const std::string &directory);
   void SetFilename(const std::string &filename);
+  void SetModule(const std::string &module) { module_ = module; }
   virtual void Export() {}
 
  protected:
@@ -73,6 +74,7 @@ class BaseRecorder {
   std::string directory_;
   std::string filename_;
   std::string timestamp_;  // year,month,day,hour,minute,second
+  std::string delimiter_{"."};
 };
 using BaseRecorderPtr = std::shared_ptr<BaseRecorder>;
 }  // namespace mindspore

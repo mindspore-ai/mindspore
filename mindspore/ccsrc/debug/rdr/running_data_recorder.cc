@@ -65,6 +65,9 @@ namespace RDR {
 #ifdef ENABLE_D
 bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
                          const std::vector<TaskDebugInfoPtr> &task_debug_info_list, int graph_id) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
   std::string submodule_name = std::string(GetSubModuleName(module));
   TaskDebugInfoRecorderPtr task_debug_info_recorder =
     std::make_shared<TaskDebugInfoRecorder>(submodule_name, tag, task_debug_info_list, graph_id);
@@ -73,9 +76,11 @@ bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
 }
 #endif  // ENABLE_D
 
-#ifdef __linux__
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
   std::string submodule_name = std::string(GetSubModuleName(module));
   GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, tag, graph, file_type);
   graph_recorder->SetDumpFlag(full_name);
@@ -85,6 +90,9 @@ bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const Func
 
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
                           const std::vector<CNodePtr> &final_exec_order, int graph_id) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
   std::string submodule_name = std::string(GetSubModuleName(module));
   GraphExecOrderRecorderPtr graph_exec_order_recorder =
     std::make_shared<GraphExecOrderRecorder>(submodule_name, tag, final_exec_order, graph_id);
@@ -93,6 +101,9 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
 }
 
 bool RecordString(SubModuleId module, const std::string &tag, const std::string &data, const std::string &filename) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
   std::string submodule_name = std::string(GetSubModuleName(module));
   StringRecorderPtr string_recorder = std::make_shared<StringRecorder>(submodule_name, tag, data, filename);
   string_recorder->SetFilename(filename);
@@ -102,6 +113,9 @@ bool RecordString(SubModuleId module, const std::string &tag, const std::string 
 
 bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
                            const std::vector<CNodePtr> &exec_order) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
   std::string submodule_name = std::string(GetSubModuleName(module));
   StreamExecOrderRecorderPtr stream_exec_order_recorder =
     std::make_shared<StreamExecOrderRecorder>(submodule_name, tag, graph_id, exec_order);
@@ -113,68 +127,5 @@ void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 
 void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
 
-#else
-bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
-                    const std::string &file_type) {
-  static bool already_printed = false;
-  std::string submodule_name = std::string(GetSubModuleName(module));
-  if (already_printed) {
-    return false;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The RDR presently only support linux os " << submodule_name;
-  return false;
-}
-
-bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
-                          const std::vector<CNodePtr> &final_exec_order, int graph_id) {
-  static bool already_printed = false;
-  if (already_printed) {
-    return false;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The RDR presently only support linux os.";
-  return false;
-}
-
-bool RecordString(SubModuleId module, const std::string &tag, const std::string &data, const std::string &filename) {
-  static bool already_printed = false;
-  if (already_printed) {
-    return false;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The RDR presently only support linux os.";
-  return false;
-}
-
-bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
-                           const std::vector<CNodePtr> &exec_order) {
-  static bool already_printed = false;
-  if (already_printed) {
-    return false;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The RDR presently only support linux os.";
-  return false;
-}
-
-void TriggerAll() {
-  static bool already_printed = false;
-  if (already_printed) {
-    return;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The RDR presently only support linux os.";
-}
-
-void ClearAll() {
-  static bool already_printed = false;
-  if (already_printed) {
-    return;
-  }
-  already_printed = true;
-  MS_LOG(WARNING) << "The RDR presently only support linux os.";
-}
-#endif  // __linux__
 }  // namespace RDR
 }  // namespace mindspore
