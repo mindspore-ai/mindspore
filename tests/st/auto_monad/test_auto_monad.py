@@ -1429,10 +1429,7 @@ def test_if_cast():
     np.testing.assert_array_equal(r1.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="not supported yet")
 def test_multi_add_assign():
     class Net(Cell):
         def __init__(self, i1):
