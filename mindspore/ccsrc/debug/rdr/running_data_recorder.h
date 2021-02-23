@@ -34,6 +34,7 @@ bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
 bool RecordString(SubModuleId module, const std::string &tag, const std::string &data,
                   const std::string &filename = "");
 void TriggerAll();
+void ClearAll();
 }  // namespace RDR
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_

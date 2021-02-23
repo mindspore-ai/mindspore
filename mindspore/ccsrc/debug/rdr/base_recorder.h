@@ -57,7 +57,7 @@ class BaseRecorder {
       timestamp_ = ss.str();
     }
   }
-  ~BaseRecorder() {}
+  virtual ~BaseRecorder() {}
 
   std::string GetModule() const { return module_; }
   std::string GetTag() const { return tag_; }
