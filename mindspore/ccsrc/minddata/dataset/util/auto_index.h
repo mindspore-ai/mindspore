@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_AUTO_INDEX_H_
 
 #include <atomic>
+#include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -30,16 +31,16 @@ namespace dataset {
 /// Use minKey() function to query the min key.
 /// Use maxKey() function to query the max key.
 /// @tparam T
-template <typename T, typename A = std::allocator<T>>
-class AutoIndexObj : public BPlusTree<int64_t, T, A> {
+template <typename V, typename A = std::allocator<V>, typename T = BPlusTreeTraits>
+class AutoIndexObj : public BPlusTree<int64_t, V, A, std::less<int64_t>, T> {
  public:
-  using my_tree = BPlusTree<int64_t, T, A>;
+  using my_tree = BPlusTree<int64_t, V, A, std::less<int64_t>, T>;
   using key_type = typename my_tree::key_type;
   using value_type = typename my_tree::value_type;
 
   AutoIndexObj() : my_tree::BPlusTree(), inx_(kMinKey) {}
 
-  explicit AutoIndexObj(const Allocator<T> &alloc) : my_tree::BPlusTree(alloc), inx_(kMinKey) {}
+  explicit AutoIndexObj(const Allocator<V> &alloc) : my_tree::BPlusTree(alloc), inx_(kMinKey) {}
 
   ~AutoIndexObj() = default;
 
