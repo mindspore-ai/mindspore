@@ -137,6 +137,12 @@ enum SubModuleId : int {
 const char *EnumStrForMsLogLevel(MsLogLevel level);
 
 #if defined(_WIN32) || defined(_WIN64)
+extern std::string GetTimeString() __attribute__((dllexport));
+#else
+extern std::string GetTimeString() __attribute__((visibility("default")));
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
 extern int g_ms_submodule_log_levels[] __attribute__((dllexport));
 #else
 extern int g_ms_submodule_log_levels[] __attribute__((visibility("default")));
