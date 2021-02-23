@@ -44,6 +44,8 @@ class KPynativeCellImpl : public KPynativeCell {
   }
   ~KPynativeCellImpl() override = default;
   bool KPynativeOp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out);
+  bool KPynativeWithBProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
+                          const FuncGraphPtr &bprop_fg);
   FuncGraphPtr Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
 
  private:
@@ -54,6 +56,8 @@ class KPynativeCellImpl : public KPynativeCell {
   AnfNodePtr last_node_;
 
   bool BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app);
+  bool BuildBProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
+                  const FuncGraphPtr &bprop_fg);
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
@@ -128,6 +132,43 @@ bool GradPynativeOp(const KPynativeCellPtr &k_cell, const CNodePtr &c_node, cons
   return k_cell_impl->KPynativeOp(c_node, op_args, out);
 }
 
+bool KPynativeCellImpl::KPynativeOp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out) {
+  MS_EXCEPTION_IF_NULL(c_node);
+  auto prim = GetCNodePrimitive(c_node);
+  if (prim == nullptr) {
+    MS_LOG(EXCEPTION) << "should be primitive, but: " << c_node->DebugString();
+  }
+  auto bprop_fg = g_k_prims.GetBprop(prim);
+  MS_EXCEPTION_IF_NULL(bprop_fg);
+  BuildBProp(c_node, op_args, out, bprop_fg);
+
+  return true;
+}
+
+bool GradPynativeWithBProp(const KPynativeCellPtr &k_cell, const CNodePtr &c_node, const ValuePtrList &op_args,
+                           const ValuePtr &out, const FuncGraphPtr &bprop_fg) {
+  auto k_cell_impl = std::dynamic_pointer_cast<KPynativeCellImpl>(k_cell);
+  return k_cell_impl->KPynativeWithBProp(c_node, op_args, out, bprop_fg);
+}
+
+bool KPynativeCellImpl::KPynativeWithBProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
+                                           const FuncGraphPtr &bprop_fg) {
+  MS_EXCEPTION_IF_NULL(c_node);
+  auto primal_fg = GetCNodeFuncGraph(c_node);
+  if (primal_fg == nullptr) {
+    MS_LOG(EXCEPTION) << "should be func graph, but: " << c_node->DebugString();
+  }
+  MS_EXCEPTION_IF_NULL(bprop_fg);
+  BuildBProp(c_node, op_args, out, bprop_fg);
+
+  return true;
+}
+
+FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
+                                    const ValuePtr &out) {
+  return bprop_fg;
+}
+
 bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app) {
   for (size_t i = 1; i < cnode_primal->size(); i++) {
     auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i - 1))});
@@ -142,12 +183,8 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
   return true;
 }
 
-bool KPynativeCellImpl::KPynativeOp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out) {
-  MS_EXCEPTION_IF_NULL(c_node);
-  auto prim = GetCNodePrimitive(c_node);
-  if (prim == nullptr) {
-    MS_LOG(EXCEPTION) << "should be primitive, but: " << c_node->DebugString();
-  }
+bool KPynativeCellImpl::BuildBProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
+                                   const FuncGraphPtr &bprop_fg) {
   auto anfnode_adjoint_iter = anfnode_to_adjoin_.find(c_node);
   if (anfnode_adjoint_iter != anfnode_to_adjoin_.end()) {
     MS_LOG(EXCEPTION) << "CNode should be unique, but: " << c_node->DebugString();
@@ -156,9 +193,6 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &c_node, const ValuePtrList &
   last_node_ = c_node;
   auto cnode_adjoint = std::make_shared<Adjoint>(c_node, NewValueNode(out), tape_);
   anfnode_to_adjoin_.emplace(c_node, cnode_adjoint);
-
-  auto bprop_fg = g_k_prims.GetBprop(prim);
-  MS_EXCEPTION_IF_NULL(bprop_fg);
 
   // Optimize the bprop_fg based on value.
   auto optimized_bprop_fg = OptimizeBPropFuncGraph(bprop_fg, c_node, op_args, out);
@@ -186,11 +220,5 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &c_node, const ValuePtrList &
 
   return true;
 }
-
-FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
-                                    const ValuePtr &out) {
-  return bprop_fg;
-}
-
 }  // namespace ad
 }  // namespace mindspore
