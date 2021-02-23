@@ -121,7 +121,7 @@ class _DenseBlock(nn.Cell):
 
 class _Transition(nn.Cell):
     """
-    the transiton layer
+    the transition layer
     """
     def __init__(self, num_input_features, num_output_features):
         super(_Transition, self).__init__()
@@ -203,7 +203,7 @@ def _densenet201(**kwargs):
 
 class DenseNet121(nn.Cell):
     """
-    the densenet121 architectur
+    the densenet121 architecture
     """
     def __init__(self, num_classes, include_top=True):
         super(DenseNet121, self).__init__()

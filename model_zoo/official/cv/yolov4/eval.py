@@ -115,7 +115,7 @@ class DetectionEngine:
 
     def _nms(self, predicts, threshold):
         """Calculate NMS."""
-        # conver xywh -> xmin ymin xmax ymax
+        # convert xywh -> xmin ymin xmax ymax
         x1 = predicts[:, 0]
         y1 = predicts[:, 1]
         x2 = x1 + predicts[:, 2]
@@ -139,13 +139,13 @@ class DetectionEngine:
             intersect_area = intersect_w * intersect_h
             ovr = intersect_area / (areas[i] + areas[order[1:]] - intersect_area)
 
-            indexs = np.where(ovr <= threshold)[0]
-            order = order[indexs + 1]
+            indexes = np.where(ovr <= threshold)[0]
+            order = order[indexes + 1]
         return reserved_boxes
 
     def _diou_nms(self, dets, thresh=0.5):
         """
-        conver xywh -> xmin ymin xmax ymax
+        convert xywh -> xmin ymin xmax ymax
         """
         x1 = dets[:, 0]
         y1 = dets[:, 1]
@@ -248,7 +248,7 @@ class DetectionEngine:
 
                 x_top_left = x - w / 2.
                 y_top_left = y - h / 2.
-                # creat all False
+                # create all False
                 flag = np.random.random(cls_emb.shape) > sys.maxsize
                 for i in range(flag.shape[0]):
                     c = cls_argmax[i]

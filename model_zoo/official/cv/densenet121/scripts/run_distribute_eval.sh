@@ -15,13 +15,13 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh scripts/run_distribute_eval.sh DEVICE_NUM RANK_TABLE_FILE DATASET CKPT_PATH"
 echo "for example: sh scripts/run_distribute_train.sh 8 /data/hccl.json /path/to/dataset /path/to/ckpt"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-echo "After running the scipt, the network runs in the background. The log will be generated in eval_x/log.txt"
+echo "After running the script, the network runs in the background. The log will be generated in eval_x/log.txt"
 
 export RANK_SIZE=$1
 export RANK_TABLE_FILE=$2
@@ -37,7 +37,7 @@ do
     cp -r ./src ./eval_$i
     cd ./eval_$i || exit
     export RANK_ID=$i
-    echo "start infering for rank $i, device $DEVICE_ID"
+    echo "start inferring for rank $i, device $DEVICE_ID"
     env > env.log
     python eval.py  \
     --data_dir=$DATASET  \

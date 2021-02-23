@@ -261,7 +261,7 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 
 ### 训练性能
 
-| 参数 | Faster R-CNN |
+| 参数 | CNNCTC |
 | -------------------------- | ----------------------------------------------------------- |
 | 模型版本 | V1 |
 | 资源 | Ascend 910；CPU 2.60GHz，192核；内存：755G |
@@ -278,7 +278,7 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 
 ### 评估性能
 
-| 参数 | Faster R-CNN |
+| 参数 | CNNCTC |
 | ------------------- | --------------------------- |
 | 模型版本 | V1 |
 | 资源 | Ascend 910 |

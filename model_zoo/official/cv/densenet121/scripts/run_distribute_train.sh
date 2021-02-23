@@ -15,13 +15,13 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh scripts/run_distribute_train.sh DEVICE_NUM RANK_TABLE_FILE DATASET CKPT_FILE"
 echo "for example: sh scripts/run_distribute_train.sh 8 /data/hccl.json /path/to/dataset ckpt_file"
 echo "It is better to use absolute path."
 echo "================================================================================================================="
 
-echo "After running the scipt, the network runs in the background. The log will be generated in train_x/log.txt"
+echo "After running the script, the network runs in the background. The log will be generated in train_x/log.txt"
 
 export RANK_SIZE=$1
 export RANK_TABLE_FILE=$2
