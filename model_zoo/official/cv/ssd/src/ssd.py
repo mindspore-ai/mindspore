@@ -26,7 +26,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
-from .mobilenet_v1_fpn import mobilenet_v1_fpn
+from .fpn import mobilenet_v1_fpn, resnet50_fpn
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -371,6 +371,35 @@ class SsdMobilenetV1Fpn(nn.Cell):
         pred_label = F.cast(pred_label, mstype.float32)
         return pred_loc, pred_label
 
+class SsdResNet50Fpn(nn.Cell):
+    """
+    SSD Network using ResNet50 with fpn to extract features
+
+    Args:
+        config (dict): The default config of SSD.
+
+    Returns:
+        Tensor, localization predictions.
+        Tensor, class conf scores.
+
+    Examples:backbone
+         SsdResNet50Fpn(config).
+    """
+    def __init__(self, config):
+        super(SsdResNet50Fpn, self).__init__()
+        self.multi_box = WeightSharedMultiBox(config)
+        self.activation = P.Sigmoid()
+        self.feature_extractor = resnet50_fpn()
+
+    def construct(self, x):
+        features = self.feature_extractor(x)
+        pred_loc, pred_label = self.multi_box(features)
+        if not self.training:
+            pred_label = self.activation(pred_label)
+        pred_loc = F.cast(pred_loc, mstype.float32)
+        pred_label = F.cast(pred_label, mstype.float32)
+        return pred_loc, pred_label
+
 
 class SigmoidFocalClassificationLoss(nn.Cell):
     """"
@@ -608,6 +637,8 @@ class SsdInferWithDecoder(nn.Cell):
 def ssd_mobilenet_v1_fpn(**kwargs):
     return SsdMobilenetV1Fpn(**kwargs)
 
+def ssd_resnet50_fpn(**kwargs):
+    return SsdResNet50Fpn(**kwargs)
 
 def ssd_mobilenet_v2(**kwargs):
     return SSDWithMobileNetV2(**kwargs)

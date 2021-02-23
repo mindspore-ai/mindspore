@@ -25,7 +25,7 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed, dtype
-from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn
+from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn
 from src.config import config
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.lr_schedule import get_lr
@@ -60,6 +60,36 @@ def get_args():
     args_opt = parser.parse_args()
     return args_opt
 
+def ssd_model_build(args_opt):
+    if config.model == "ssd300":
+        backbone = ssd_mobilenet_v2()
+        ssd = SSD300(backbone=backbone, config=config)
+        init_net_param(ssd)
+        if args_opt.freeze_layer == "backbone":
+            for param in backbone.feature_1.trainable_params():
+                param.requires_grad = False
+    elif config.model == "ssd_mobilenet_v1_fpn":
+        ssd = ssd_mobilenet_v1_fpn(config=config)
+        init_net_param(ssd)
+        if config.feature_extractor_base_param != "":
+            param_dict = load_checkpoint(config.feature_extractor_base_param)
+            for x in list(param_dict.keys()):
+                param_dict["network.feature_extractor.mobilenet_v1." + x] = param_dict[x]
+                del param_dict[x]
+            load_param_into_net(ssd.feature_extractor.mobilenet_v1.network, param_dict)
+    elif config.model == "ssd_resnet50_fpn":
+        ssd = ssd_resnet50_fpn(config=config)
+        init_net_param(ssd)
+        if config.feature_extractor_base_param != "":
+            param_dict = load_checkpoint(config.feature_extractor_base_param)
+            for x in list(param_dict.keys()):
+                param_dict["network.feature_extractor.resnet." + x] = param_dict[x]
+                del param_dict[x]
+            load_param_into_net(ssd.feature_extractor.resnet, param_dict)
+    else:
+        raise ValueError(f'config.model: {config.model} is not supported')
+    return ssd
+
 def main():
     args_opt = get_args()
     rank = 0
@@ -74,7 +104,10 @@ def main():
             context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                               device_num=device_num)
             init()
-            context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 89])
+            if config.model == "ssd_resnet50_fpn":
+                context.set_auto_parallel_context(all_reduce_fusion_config=[90, 183, 279])
+            else:
+                context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 89])
             rank = get_rank()
 
     mindrecord_file = create_mindrecord(args_opt.dataset, "ssd.mindrecord", True)
@@ -92,27 +125,11 @@ def main():
                                  device_num=device_num, rank=rank, use_multiprocessing=use_multiprocessing)
 
     dataset_size = dataset.get_dataset_size()
-    print("Create dataset done!")
-
-    backbone = ssd_mobilenet_v2()
-    if config.model == "ssd300":
-        ssd = SSD300(backbone=backbone, config=config)
-    elif config.model == "ssd_mobilenet_v1_fpn":
-        ssd = ssd_mobilenet_v1_fpn(config=config)
-    else:
-        raise ValueError(f'config.model: {config.model} is not supported')
-    if args_opt.run_platform == "GPU":
+    print(f"Create dataset done! dataset size is {dataset_size}")
+    ssd = ssd_model_build(args_opt)
+    if ("use_float16" in config and config.use_float16) or args_opt.run_platform == "GPU":
         ssd.to_float(dtype.float16)
     net = SSDWithLossCell(ssd, config)
-
-    init_net_param(net)
-
-    if config.feature_extractor_base_param != "":
-        param_dict = load_checkpoint(config.feature_extractor_base_param)
-        for x in list(param_dict.keys()):
-            param_dict["network.feature_extractor.mobilenet_v1." + x] = param_dict[x]
-            del param_dict[x]
-        load_param_into_net(ssd.feature_extractor.mobilenet_v1.network, param_dict)
 
     # checkpoint
     ckpt_config = CheckpointConfig(save_checkpoint_steps=dataset_size * args_opt.save_checkpoint_epochs)
@@ -124,10 +141,6 @@ def main():
         if args_opt.filter_weight:
             filter_checkpoint_parameter_by_list(param_dict, config.checkpoint_filter_list)
         load_param_into_net(net, param_dict, True)
-
-    if args_opt.freeze_layer == "backbone":
-        for param in backbone.feature_1.trainable_params():
-            param.requires_grad = False
 
     lr = Tensor(get_lr(global_step=args_opt.pre_trained_epoch_size * dataset_size,
                        lr_init=config.lr_init, lr_end=config.lr_end_rate * args_opt.lr, lr_max=args_opt.lr,
