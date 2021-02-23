@@ -86,7 +86,7 @@ run_ascend(){
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
         if [ $# == 3 ]
-        then	    
+        then
             python train.py  --device_target=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> train.log &
         fi
         
@@ -140,7 +140,7 @@ run_ascend(){
 #     echo "start training"
 #     env > env.log
 #     if [ $# == 2 ]
-#     then	    
+#     then
 #         mpirun --allow-run-as-root -n $RANK_SIZE
 #         python train.py --device_target=$1  --dataset_path=$PATH1 &> log &
 #     fi

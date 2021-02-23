@@ -19,11 +19,11 @@ export RANK_SIZE=8
 PATH_CHECKPOINT=""
 if [ $# == 2 ]
 then
-	PATH_CHECKPOINT=$2
+    PATH_CHECKPOINT=$2
 fi
 
 mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-	python train.py  \
+    python train.py  \
     --is_distribute=1 \
     --platform="GPU" \
     --pretrained=$PATH_CHECKPOINT \

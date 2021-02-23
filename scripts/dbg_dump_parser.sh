@@ -64,7 +64,7 @@ function checkopts()
           usage
           exit 1
         fi
-		;;
+        ;;
       h)
         usage
         exit 0

@@ -18,10 +18,10 @@ set -e
 BASEPATH=$(cd "$(dirname "$0")"; pwd)
 PROJECT_PATH=${BASEPATH}/../../..
 if [ $BUILD_PATH ];then
-	echo "BUILD_PATH = $BUILD_PATH"
+    echo "BUILD_PATH = $BUILD_PATH"
 else
-  BUILD_PATH=${PROJECT_PATH}/build
-	echo "BUILD_PATH = $BUILD_PATH"
+    BUILD_PATH=${PROJECT_PATH}/build
+    echo "BUILD_PATH = $BUILD_PATH"
 fi
 cd ${BUILD_PATH}/mindspore/tests/ut/cpp
 

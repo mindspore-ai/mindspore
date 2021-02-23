@@ -16,16 +16,16 @@
 
 if [ $# != 2 ] && [ $# != 1 ]
 then 
-	echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH](optional)"
-exit 1
+    echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH](optional)"
+    exit 1
 fi
 
 get_real_path(){
-  if [ "${1:0:1}" == "/" ]; then
-    echo "$1"
-  else
-    echo "$(realpath -m $PWD/$1)"
-  fi
+    if [ "${1:0:1}" == "/" ]; then
+        echo "$1"
+    else
+        echo "$(realpath -m $PWD/$1)"
+    fi
 }
 PATH1=$(get_real_path $1)
 PATH2=$2
@@ -40,7 +40,7 @@ fi
 if [ ! -f $PATH1 ]
 then 
     echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
-exit 1
+    exit 1
 fi 
 
 ulimit -u unlimited

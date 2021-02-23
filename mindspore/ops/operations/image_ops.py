@@ -29,7 +29,7 @@ class CropAndResize(PrimitiveWithInfer):
         In case that the output shape depends on crop_size, the crop_size must be constant.
 
     Args:
-        method (str):  	An optional string that specifies the sampling method for resizing.
+        method (str): An optional string that specifies the sampling method for resizing.
             It can be "bilinear", "nearest" or "bilinear_v2". The option "bilinear" stands for standard bilinear
             interpolation algorithm, while "bilinear_v2" may result in better result in some cases. Default: "bilinear"
         extrapolation_value (float): An optional float value used extrapolation, if applicable. Default: 0.

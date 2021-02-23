@@ -17,13 +17,13 @@
 if [ $# != 3 ] && [ $# != 4 ]
 then 
     echo "Usage: sh run_distribute_train.sh [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
-exit 1
+    exit 1
 fi
 
 if [ $1 != "cifar10" ] && [ $1 != "imagenet2012" ]
 then 
     echo "error: the selected dataset is neither cifar10 nor imagenet2012"
-exit 1
+    exit 1
 fi
 
 get_real_path(){
@@ -45,19 +45,19 @@ fi
 if [ ! -f $PATH1 ]
 then 
     echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
-exit 1
+    exit 1
 fi 
 
 if [ ! -d $PATH2 ]
 then 
     echo "error: DATASET_PATH=$PATH2 is not a directory"
-exit 1
+    exit 1
 fi 
 
 if [ $# == 4 ] && [ ! -f $PATH3 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH3 is not a file"
-exit 1
+    exit 1
 fi
 
 ulimit -u unlimited
@@ -81,7 +81,7 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     if [ $# == 3 ]
-    then	    
+    then    
         python train.py --dataset=$1 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
     fi
     

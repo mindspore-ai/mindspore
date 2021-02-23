@@ -18,10 +18,10 @@ IGNORE_EXEC="--ignore=$CURRPATH/exec"
 PROJECT_PATH=$(cd ${CURRPATH}/../../..; pwd)
 
 if [ $BUILD_PATH ];then
-	echo "BUILD_PATH = $BUILD_PATH"
+    echo "BUILD_PATH = $BUILD_PATH"
 else
     BUILD_PATH=${PROJECT_PATH}/build
-	echo "BUILD_PATH = $BUILD_PATH"
+    echo "BUILD_PATH = $BUILD_PATH"
 fi
 
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${BUILD_PATH}/third_party/gtest/lib

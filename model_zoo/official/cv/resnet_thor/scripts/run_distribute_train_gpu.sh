@@ -15,9 +15,9 @@
 # ============================================================================
 
 if [ $# != 2 ]
-then 
-	echo "Usage: sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]"
-exit 1
+then
+    echo "Usage: sh run_distribute_train_gpu.sh [DATASET_PATH] [DEVICE_NUM]"
+    exit 1
 fi
 
 get_real_path(){

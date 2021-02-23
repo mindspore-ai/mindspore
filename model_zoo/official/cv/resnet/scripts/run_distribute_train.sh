@@ -16,8 +16,8 @@
 
 if [ $# != 4 ] && [ $# != 5 ]
 then 
-	echo "Usage: sh run_distribute_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
-exit 1
+    echo "Usage: sh run_distribute_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    exit 1
 fi
 
 if [ $1 != "resnet50" ] && [ $1 != "resnet101" ] && [ $1 != "se-resnet50" ]
@@ -99,7 +99,7 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     if [ $# == 4 ]
-    then	    
+    then    
         python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
     fi
     

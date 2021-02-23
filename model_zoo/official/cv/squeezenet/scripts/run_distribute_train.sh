@@ -16,20 +16,20 @@
 
 if [ $# != 4 ] && [ $# != 5 ]
 then 
-	echo "Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
-exit 1
+    echo "Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)"
+    exit 1
 fi
 
 if [ $1 != "squeezenet" ] && [ $1 != "squeezenet_residual" ]
 then 
     echo "error: the selected net is neither squeezenet nor squeezenet_residual"
-exit 1
+    exit 1
 fi
 
 if [ $2 != "cifar10" ] && [ $2 != "imagenet" ]
 then 
     echo "error: the selected dataset is neither cifar10 nor imagenet"
-exit 1
+    exit 1
 fi
 
 get_real_path(){
@@ -51,19 +51,19 @@ fi
 if [ ! -f $PATH1 ]
 then 
     echo "error: RANK_TABLE_FILE=$PATH1 is not a file"
-exit 1
+    exit 1
 fi 
 
 if [ ! -d $PATH2 ]
 then 
     echo "error: DATASET_PATH=$PATH2 is not a directory"
-exit 1
+    exit 1
 fi 
 
 if [ $# == 5 ] && [ ! -f $PATH3 ]
 then
     echo "error: PRETRAINED_CKPT_PATH=$PATH3 is not a file"
-exit 1
+    exit 1
 fi
 
 ulimit -u unlimited
@@ -86,7 +86,7 @@ do
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
     if [ $# == 4 ]
-    then	    
+    then
         python train.py --net=$1 --dataset=$2 --run_distribute=True --device_num=$DEVICE_NUM --dataset_path=$PATH2 &> log &
     fi
     

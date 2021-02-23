@@ -41,7 +41,7 @@ Dataset used: [Oxford-IIIT Pet](https://www.robots.ox.ac.uk/~vgg/data/pets/)
   - Train:  3680 images
   - Test: 3369 images
 - Data format: RGB images.
-	- Note: Data will be processed in src/dataset.py
+  - Note: Data will be processed in src/dataset.py
 
 # [Environment Requirements](#contents)
 
