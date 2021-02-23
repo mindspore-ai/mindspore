@@ -338,7 +338,7 @@ class Tensor(Tensor_):
         self.init_check()
         return Tensor_.asnumpy(self)
 
-    def _flush_from_cache(self):
+    def flush_from_cache(self):
         """Flush cache data to host if tensor is cache enable."""
         self.init_check()
         Tensor_._flush_from_cache(self)
