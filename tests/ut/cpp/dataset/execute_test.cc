@@ -181,3 +181,34 @@ TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   ASSERT_EQ(image.Shape()[1], 224);
   ASSERT_EQ(image.Shape()[2], 224);
 }
+
+TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformDecodeResizeCenterCrop1.";
+  // Test Execute with Decode, Resize and CenterCrop transform ops input using API constructors, with auto pointers
+
+  // Read image
+  std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
+  mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
+  auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+
+  // Define transform operations
+  std::vector<int32_t> resize_paras = {256, 256};
+  std::vector<int32_t> crop_paras = {224, 224};
+  auto decode(new vision::Decode());
+  auto resize(new vision::Resize(resize_paras));
+  auto centercrop(new vision::CenterCrop(crop_paras));
+  auto hwc2chw(new vision::HWC2CHW());
+
+  std::vector<TensorTransform *> op_list = {decode, resize, centercrop, hwc2chw};
+  mindspore::dataset::Execute Transform(op_list, "CPU");
+
+  // Apply transform on image
+  Status rc = Transform(image, &image);
+
+  // Check image info
+  ASSERT_TRUE(rc.IsOk());
+  ASSERT_EQ(image.Shape().size(), 3);
+  ASSERT_EQ(image.Shape()[0], 3);
+  ASSERT_EQ(image.Shape()[1], 224);
+  ASSERT_EQ(image.Shape()[2], 224);
+}
