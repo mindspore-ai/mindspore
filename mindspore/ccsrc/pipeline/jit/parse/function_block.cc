@@ -205,6 +205,7 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
     MS_EXCEPTION_IF_NULL(pred);
     MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " pred_blocks_ " << pred->func_graph_->ToString();
     AnfNodePtr arg_node = pred->ReadVariable(var);
+    arg_node->set_debug_info(phi->debug_info());
     CNodePtr jump = pred->jumps_[this];
     jump->add_input(arg_node);
   }
@@ -257,12 +258,13 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   MS_EXCEPTION_IF_NULL(phi);
   std::string var = phi_nodes_[phi];
   MS_LOG(DEBUG) << "check phi " << phi->DebugString() << " for " << var;
-  if (prev_blocks_.size() == 0) {
+  if (prev_blocks_.empty()) {
     MS_LOG(DEBUG) << "no phi " << phi->DebugString() << " for var " << var;
     return false;
   }
   AnfNodePtr arg_node = SearchReplaceNode(var, phi);
   if (arg_node != nullptr) {
+    arg_node->set_debug_info(phi->debug_info());
     MS_LOG(DEBUG) << "graph " << func_graph_->ToString() << " phi " << phi->ToString() << " can be replaced with "
                   << arg_node->DebugString();
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
@@ -299,7 +301,7 @@ void FunctionBlock::Mature() {
   const auto &graphParamVec = func_graph_->parameters();
   for (auto &paramItr : graphParamVec) {
     MS_EXCEPTION_IF_NULL(paramItr);
-    ParameterPtr param = paramItr->cast<ParameterPtr>();
+    auto param = paramItr->cast<ParameterPtr>();
     if (phi_nodes_.find(param) != phi_nodes_.cend()) {
       SetPhiArgument(param);
     }
@@ -321,7 +323,7 @@ CNodePtr FunctionBlock::ForceToWhileCond(const AnfNodePtr &cond) {
 }
 
 // Perform a jump from this block to target block
-void FunctionBlock::Jump(const FunctionBlockPtr &target_block, AnfNodePtr node) {
+void FunctionBlock::Jump(const FunctionBlockPtr &target_block, const AnfNodePtr &node) {
   if (func_graph()->get_return() != nullptr) {
     MS_LOG(EXCEPTION) << "Failure: have return node! NodeInfo: "
                       << trace::GetDebugInfo(func_graph()->get_return()->debug_info());
@@ -407,7 +409,7 @@ void FunctionBlock::FindIsolatedNodes() {
 void FunctionBlock::AddIsolatedNode(const AnfNodePtr &target) { isolated_nodes_.add(target); }
 
 void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
-  if (isolated_nodes_.size() == 0) {
+  if (isolated_nodes_.empty()) {
     return;
   }
 
@@ -415,7 +417,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   states.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (auto &node : isolated_nodes_) {
     MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
-    if (node->func_graph() == func_graph()) {
+    if (node->func_graph() == func_graph() || node->isa<Parameter>()) {
       states.emplace_back(node);
     } else {
       MS_LOG(INFO) << "Ignored FV dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
@@ -438,7 +440,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   AnfNodePtr old_output = nullptr;
   auto return_node = func_graph()->get_return();
   if (return_node) {
-    if (return_node->inputs().size() < 1) {
+    if (return_node->inputs().empty()) {
       MS_LOG(EXCEPTION) << "Length of inputs of output node is less than 2";
     }
     old_output = return_node->input(1);
