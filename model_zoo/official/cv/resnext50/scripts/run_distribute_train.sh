@@ -22,7 +22,7 @@ echo "hccl connect time out has changed to 600 second"
 PATH_CHECKPOINT=""
 if [ $# == 3 ]
 then
-	PATH_CHECKPOINT=$3
+    PATH_CHECKPOINT=$3
 fi
 
 cores=`cat /proc/cpuinfo|grep "processor" |wc -l`

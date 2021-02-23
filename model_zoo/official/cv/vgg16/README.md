@@ -47,8 +47,8 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 
 #### Dataset used: [ImageNet2012](http://www.image-net.org/) 
 - Dataset size: ~146G, 1.28 million colorful images in 1000 classes
-	- Train: 140G, 1,281,167 images
-	- Test: 6.4G, 50, 000 images
+    - Train: 140G, 1,281,167 images
+    - Test: 6.4G, 50, 000 images
  - Data format: RGB images
     - Note: Data will be processed in src/dataset.py
 

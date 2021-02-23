@@ -30,13 +30,13 @@ TEACHER_CKPT_PATH=$5
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 
 mpirun --allow-run-as-root -n $RANK_SIZE --output-filename log_output --merge-stderr-to-stdout \
-	python ${PROJECT_DIR}/../run_general_distill.py  \
-	--distribute="true" \
-	--device_target="GPU" \
-	--epoch_size=$EPOCH_SIZE \
-	--save_ckpt_path="" \
-	--data_dir=$DATA_DIR \
-	--schema_dir=$SCHEMA_DIR \
-	--dataset_type="tfrecord" \
-	--enable_data_sink="false" \
-	--load_teacher_ckpt_path=$TEACHER_CKPT_PATH > log.txt 2>&1 &
+    python ${PROJECT_DIR}/../run_general_distill.py  \
+    --distribute="true" \
+    --device_target="GPU" \
+    --epoch_size=$EPOCH_SIZE \
+    --save_ckpt_path="" \
+    --data_dir=$DATA_DIR \
+    --schema_dir=$SCHEMA_DIR \
+    --dataset_type="tfrecord" \
+    --enable_data_sink="false" \
+    --load_teacher_ckpt_path=$TEACHER_CKPT_PATH > log.txt 2>&1 &

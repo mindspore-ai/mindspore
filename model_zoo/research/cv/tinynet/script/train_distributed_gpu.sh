@@ -78,5 +78,5 @@ time mpirun -n $RANK_SIZE --allow-run-as-root python3 ${current_exec_path}/train
                                 --distributed \
                                 --data_path /path_to_ImageNet/  \
                                 --GPU \
-			      	              --dataset_sink > tinynet_c.log 2>&1 &
+                                --dataset_sink > tinynet_c.log 2>&1 &
 

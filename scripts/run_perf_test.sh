@@ -22,10 +22,10 @@ PYTHONTEST_DIR="${PROJECT_PATH}/tests/perf_test"
 PERF_RESULT_DIR="${CURRPATH}/"
 PERF_SUFFIX=".perf"
 if [[ "${BUILD_PATH}" ]];then
-	echo "BUILD_PATH = ${BUILD_PATH}"
+    echo "BUILD_PATH = ${BUILD_PATH}"
 else
     BUILD_PATH="${PROJECT_PATH}/build"
-	echo "BUILD_PATH = ${BUILD_PATH}"
+    echo "BUILD_PATH = ${BUILD_PATH}"
 fi
 
 cd "${PROJECT_PATH}"; sh build.sh -t off -l none -r -p on -j 20; cd -

@@ -24,4 +24,4 @@ RANK_SIZE=$1
 export CUDA_VISIBLE_DEVICES="$2"
 
 mpirun --allow-run-as-root -n $RANK_SIZE \
-	python train.py > train.log 2>&1 &
+    python train.py > train.log 2>&1 &

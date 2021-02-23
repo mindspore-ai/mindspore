@@ -119,7 +119,7 @@ run_ascend(){
         echo "start training for rank $RANK_ID, device $DEVICE_ID"
         env > env.log
         if [ $# == 3 ]
-        then	    
+        then    
             python train.py --device_target=$1  --dataset_path=$PATH2 &> train.log &
         fi
         

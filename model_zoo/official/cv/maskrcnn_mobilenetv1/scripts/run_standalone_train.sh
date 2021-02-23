@@ -16,16 +16,16 @@
 
 if [ $# != 1 ] && [ $# != 0 ]
 then 
-	echo "Usage: sh run_standalone_train.sh [PRETRAINED_PATH](optional)"
-exit 1
+    echo "Usage: sh run_standalone_train.sh [PRETRAINED_PATH](optional)"
+    exit 1
 fi
 
 get_real_path(){
-  if [ "${1:0:1}" == "/" ]; then
-    echo "$1"
-  else
-    echo "$(realpath -m $PWD/$1)"
-  fi
+    if [ "${1:0:1}" == "/" ]; then
+        echo "$1"
+    else
+        echo "$(realpath -m $PWD/$1)"
+    fi
 }
 
 if [ $# == 1 ]

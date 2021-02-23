@@ -16,10 +16,10 @@
 
 if [ $# != 1 ] && [ $# != 2 ] && [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
 then 
-	echo "Usage: sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional)\
-   [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)"
-  echo "Example: sh run_gpu_resnet_benchmark.sh /path/imagenet/train 256 FP16 8 true /path/ckpt"
-exit 1
+    echo "Usage: sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional)\
+          [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)"
+    echo "Example: sh run_gpu_resnet_benchmark.sh /path/imagenet/train 256 FP16 8 true /path/ckpt"
+    exit 1
 fi
 
 get_real_path(){
