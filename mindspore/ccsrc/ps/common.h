@@ -76,6 +76,8 @@ constexpr int64_t kFinalizeCmd = 40;
 constexpr size_t kInvalidKey = UINT64_MAX;
 constexpr int64_t kInvalidID = -1;
 
+using DataPtr = std::shared_ptr<unsigned char>;
+using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = ::ps::Key;
 using Keys = ::ps::SArray<Key>;
 using Values = ::ps::SArray<float>;

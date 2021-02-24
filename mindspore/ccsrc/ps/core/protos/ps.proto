@@ -35,6 +35,13 @@ enum CommandCode {
   FINALIZE = 10;
 }
 
+message ParamInitInfoMessage {
+  int32 param_type = 1;
+  uint64 global_seed = 2;
+  uint64 op_seed = 3;
+  float init_val = 4;
+}
+
 message KVMessage {
   repeated int32 keys = 2;
   repeated float values = 3;
@@ -46,6 +53,7 @@ message EmbeddingTableMeta {
   repeated uint64 input_shape = 2;
   repeated uint64 indices_shape = 3;
   repeated uint64 output_shape = 4;
+  ParamInitInfoMessage info = 5;
 }
 
 message EmbeddingTableLookup {
