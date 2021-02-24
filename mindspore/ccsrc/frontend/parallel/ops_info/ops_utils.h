@@ -326,6 +326,7 @@ constexpr char DROPOUT[] = "Dropout";
 constexpr char KStridedSlice[] = "StridedSlice";
 constexpr char UNIQUE[] = "Unique";
 constexpr char GATHERND[] = "GatherNd";
+constexpr char SCATTER_UPDATE[] = "ScatterUpdate";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";
