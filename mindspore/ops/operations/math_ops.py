@@ -1620,13 +1620,13 @@ class Exp(PrimitiveWithInfer):
         out_i = e^{x_i}
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
+        - **input_x** (Tensor) - The input tensor.
 
     Outputs:
         Tensor, has the same shape and dtype as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1648,7 +1648,7 @@ class Exp(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_type):
-        validator.check_tensor_dtype_valid("x", x_type, [mstype.float16, mstype.float32], self.name)
+        validator.check_subclass("x", x_type, mstype.tensor, self.name)
         return x_type
 
     def infer_value(self, x):
@@ -1759,13 +1759,13 @@ class Log(PrimitiveWithInfer):
     Returns the natural logarithm of a tensor element-wise.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. With float16 or float32 data type. The value must be greater than 0.
+        - **input_x** (Tensor) - The input tensor. The value must be greater than 0.
 
     Outputs:
         Tensor, has the same shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1787,7 +1787,6 @@ class Log(PrimitiveWithInfer):
 
     def infer_dtype(self, x):
         validator.check_subclass("x", x, mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("x", x, [mstype.float16, mstype.float32], self.name)
         return x
 
     def infer_value(self, x):
@@ -1813,7 +1812,7 @@ class Log1p(PrimitiveWithInfer):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -1895,7 +1894,7 @@ class Erfc(PrimitiveWithInfer):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
@@ -3959,7 +3958,7 @@ class SquareSumAll(PrimitiveWithInfer):
         - **output_y2** (Tensor) - The same type as the `input_x1`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x1 = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
