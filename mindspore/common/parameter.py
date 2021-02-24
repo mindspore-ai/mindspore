@@ -463,7 +463,8 @@ class Parameter(Tensor_):
             if mstype.implicit_conversion_seq[self.dtype] < mstype.implicit_conversion_seq[data.dtype]:
                 raise_type_error(data.dtype)
             else:
-                data = Tensor(data, self.dtype)
+                from mindspore.ops import functional as F
+                data = F.cast(data, self.dtype)
         if isinstance(data, Tensor) and data.has_init:
             # The parameter has been initializered, directly update by the data
             if current_tensor_is_init:
