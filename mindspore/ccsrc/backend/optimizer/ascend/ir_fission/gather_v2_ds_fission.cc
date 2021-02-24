@@ -96,8 +96,6 @@ CNodePtr CreateGatherV2Ds(const FuncGraphPtr &graph, const CNodePtr &origin_node
   AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(origin_node, 0)}, {shape}, gather_v2.get());
   AnfAlgo::SetNodeAttr(kAttrIsDynamicShape, MakeValue(true), gather_v2);
   AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), gather_v2);
-  auto depends_list_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(origin_node, kAttrDynamicShapeDepends);
-  AnfAlgo::SetNodeAttr(kAttrDynamicShapeDepends, MakeValue(depends_list_me), gather_v2);
   auto input_names = AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrInputNames);
   AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(input_names), gather_v2);
   auto output_names = AnfAlgo::GetNodeAttr<std::vector<std::string>>(origin_node, kAttrOutputNames);
