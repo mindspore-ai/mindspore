@@ -78,8 +78,7 @@ void MatMulAcc(float *output, const float *input, const float *weight, int rows,
 
 void LstmMatMul(float *c, const float *a, const float *b, const float *bias, int row, int deep, int col, bool is_vec) {
   if (is_vec) {
-    memcpy(c, bias, col * sizeof(float));
-    MatMulAcc(c, a, b, row, col, deep);
+    MatVecMulFp32(a, b, c, bias, ActType_No, deep, col);
   } else {
     MatMulOpt(a, b, c, bias, ActType_No, deep, row, col, col, OutType_Nhwc);
   }
