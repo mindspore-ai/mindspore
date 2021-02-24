@@ -222,8 +222,9 @@ class Primitive(Primitive_):
 
     def recompute(self, mode):
         """
-        Set the primitive recomputed. If a primitive feeds into a grad node and is set recomputed,
-        we will compute it again for the grad node after the forward computation.
+        Set the primitive recomputed. If a primitive set recomputed feeds into a gradient node,
+        we will compute it again for the gradient node after the forward computation.
+
         Args:
             mode (bool): Specifies whether the primitive is recomputed. Default: True.
         """
