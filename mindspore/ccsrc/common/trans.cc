@@ -1330,7 +1330,7 @@ bool FracZ3DToNcdhw(const FormatArgs &args, void *result) {
   auto h = args.host_shape[3];
   auto w = args.host_shape[4];
   auto n0 = args.device_shape[1];
-  auto ni = args.device_shape[1];
+  auto ni = args.device_shape[2];
   auto c0 = args.device_shape[3];
   auto hw = h * w;
   auto dhw = d * hw;
