@@ -410,6 +410,22 @@ int LiteSession::CompileGraph(Model *model) {
   }
 #endif
   InitGraphInOutTensors(model);
+
+#ifdef ENABLE_MINDRT
+  if (context_->IsCpuEnabled() && !context_->IsGpuEnabled() && !context_->IsNpuEnabled() && kernels_.size() == 1) {
+    executor_ = new (std::nothrow) MindrtExecutor();
+  } else {
+    executor_ = new (std::nothrow) Executor();
+  }
+#else
+  executor_ = new (std::nothrow) Executor();
+#endif
+  if (nullptr == executor_) {
+    MS_LOG(ERROR) << "New Executor failed";
+    is_running_.store(false);
+    return RET_ERROR;
+  }
+
   ret = executor_->Prepare(this->kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare executor failed: " << ret;
@@ -515,20 +531,7 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
-#ifdef ENABLE_MINDRT
-  if (context_->IsCpuEnabled() && !context_->IsGpuEnabled() && !context_->IsNpuEnabled() && kernels_.size() == 1) {
-    executor_ = new (std::nothrow) MindrtExecutor();
-  } else {
-    executor_ = new (std::nothrow) Executor();
-  }
-#else
-  executor_ = new (std::nothrow) Executor();
-#endif
-  if (nullptr == executor_) {
-    MS_LOG(ERROR) << "New Executor failed";
-    is_running_.store(false);
-    return RET_ERROR;
-  }
+
   is_running_.store(false);
   return RET_OK;
 }

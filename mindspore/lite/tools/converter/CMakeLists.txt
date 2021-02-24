@@ -78,7 +78,7 @@ add_subdirectory(parser/onnx)
 add_subdirectory(parser/tf)
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../../core mindspore_core)
+add_subdirectory(${CORE_DIR} mindspore_core)
 
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(LITE_SRC
@@ -101,6 +101,13 @@ set(LITE_SRC
         ${SRC_DIR}/dequant.cc
         ${SRC_DIR}/huffman_decode.cc
         )
+
+set(ENABLE_MINDRT "off")
+if(ENABLE_MINDRT)
+    set(LITE_SRC ${LITE_SRC} ${SRC_DIR}/lite_mindrt.cc ${SRC_DIR}/mindrt_executor.cc)
+    include_directories(${CORE_DIR}/mindrt/include)
+endif()
+
 set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
 file(GLOB KERNEL_SRC
         ${ARM_DIR}/base/*.cc
@@ -149,6 +156,10 @@ add_executable(converter_lite
         )
 add_dependencies(converter_lite fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
+
+if(ENABLE_MINDRT)
+    target_link_libraries(converter_lite PRIVATE mindrt_mid)
+endif()
 
 target_link_libraries(converter_lite PRIVATE
         tflite_parser_mid
