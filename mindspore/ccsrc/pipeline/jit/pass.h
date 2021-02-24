@@ -24,6 +24,12 @@
 #include "pipeline/jit/resource.h"
 
 namespace mindspore {
+namespace opt {
+namespace irpass {
+class OptimizeIRPassLib;
+}  // namespace irpass
+}  // namespace opt
+
 namespace pipeline {
 using PassItem = std::pair<std::string, std::function<bool(ResourcePtr)>>;
 
@@ -40,6 +46,8 @@ bool AddCacheEmbeddingPass(const ResourcePtr &res);
 bool InferenceOptPreparePass(const ResourcePtr &res);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &res);
+FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);
+FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);
 }  // namespace pipeline
 }  // namespace mindspore
 

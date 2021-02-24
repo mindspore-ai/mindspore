@@ -200,6 +200,56 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
   return expanded_fg;
 }
 
+FuncGraphPtr KPrim::KPrimitiveForPrimBpOpt(const CNodePtr &cnode, const ValueNodePtr &value_node,
+                               const pipeline::ResourceBasePtr &resources) {
+  if (!IsValueNode<Primitive>(value_node)) {
+    MS_LOG(EXCEPTION) << "Primitive node is not valid.";
+  }
+
+  auto prim = GetValueNode<PrimitivePtr>(value_node);
+  if (prim->Hash() == prim::kPrimSwitchLayer->Hash() && prim->name() == prim::kPrimSwitchLayer->name()) {
+    auto fprop = GetFprop(prim);
+    fprop->transforms().emplace("primal", FuncGraphTransform(prim::kPrimSwitchLayer));
+    return fprop;
+  } else if (prim->Hash() == prim::kPrimMakeTuple->Hash() && prim->name() == prim::kPrimMakeTuple->name()) {
+    return nullptr;
+  } else if (prim->Hash() == prim::kPrimMakeList->Hash() && prim->name() == prim::kPrimMakeList->name()) {
+    return nullptr;
+  }
+
+  FuncGraphPtr bprop_fg = nullptr;
+  if (prim->Hash() == prim::kPrimHookBackward->Hash() && prim->name() == prim::kPrimHookBackward->name()) {
+    if (MsContext::GetInstance()->get_param<int>(MsCtxParam::MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      MS_LOG(EXCEPTION) << "HookBackward is not supported in graph mode.";
+    }
+    bprop_fg = BpropCut(value_node, resources);
+  } else {
+    auto iter = bprop_registry_.find(prim);
+    if (iter != bprop_registry_.end()) {
+      bprop_fg = iter->second;
+    }
+
+    if (bprop_fg == nullptr) {
+      bprop_fg = GetBprop(prim);
+      if (bprop_fg != nullptr) {
+        // Set bprop_g graph cache
+        bprop_registry_[prim] = bprop_fg;
+      } else {
+        bprop_fg = FakeBprop(value_node, resources);
+      }
+    }
+  }
+  AdjustForAutoMonad(prim, bprop_fg);
+  auto cloned_bprop_fg = BasicClone(bprop_fg);
+  MS_EXCEPTION_IF_NULL(cloned_bprop_fg);
+  auto debug_info = std::make_shared<GraphDebugInfo>();
+  debug_info->set_name(prim->ToString());
+  cloned_bprop_fg->debug_info()->set_name(prim->ToString());
+  cloned_bprop_fg->debug_info()->set_trace_info(std::make_shared<TraceGradBprop>(debug_info));
+
+  return cloned_bprop_fg;
+}
+
 AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) {
   // current_primal_fg may have extra parameters like u_monad, io_monad
   std::vector<AnfNodePtr> extra_args;

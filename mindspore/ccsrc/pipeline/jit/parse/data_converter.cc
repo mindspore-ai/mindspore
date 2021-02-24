@@ -511,11 +511,11 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
   FuncGraphPtr func_graph = nullptr;
   ValuePtr value = nullptr;
   bool is_cache = data_converter::GetObjectValue(obj_id, &value);
-  if (is_cache && value != nullptr && value->isa<FuncGraph>()) {
-    MS_LOG(DEBUG) << "Get the cache data, obj = " << obj_id;
-    func_graph = value->cast<FuncGraphPtr>();
-    if (!func_graph->dropped()) {
-      return func_graph;
+  if (is_cache) {
+    if (value && value->isa<FuncGraph>()) {
+      MS_LOG(DEBUG) << "Get the cache data, obj = " << obj_id;
+      func_graph = value->cast<FuncGraphPtr>();
+      return BasicClone(func_graph);
     }
   }
 
@@ -531,7 +531,8 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     MS_LOG(DEBUG) << "Add graph:" << obj_key << ", func_graph:" << func_graph->ToString();
     data_converter::SetObjGraphValue(obj_key, func_graph);
   }
-  return func_graph;
+
+  return BasicClone(func_graph);
 }
 namespace data_converter {
 static std::unordered_map<std::string, ValuePtr> object_map_;
