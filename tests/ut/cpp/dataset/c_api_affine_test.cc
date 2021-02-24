@@ -31,7 +31,7 @@ TEST_F(MindDataTestPipeline, TestAffineAPI) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 5));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
 
   // Create a Repeat operation on ds
   int32_t repeat_num = 3;
@@ -74,7 +74,7 @@ TEST_F(MindDataTestPipeline, TestAffineAPIFail) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 5));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
 
   // Create a Repeat operation on ds
   int32_t repeat_num = 3;

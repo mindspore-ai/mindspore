@@ -39,7 +39,7 @@ namespace dataset {
 // Transform operations for computer vision.
 namespace vision {
 #ifndef ENABLE_ANDROID
-// FUNCTIONS TO CREATE VISION TRANSFORM OPERATIONS
+// CONSTRUCTORS FOR API CLASSES TO CREATE VISION TENSOR TRANSFORM OPERATIONS
 // (In alphabetical order)
 
 Affine::Affine(float_t degrees, const std::vector<float> &translation, float scale, const std::vector<float> &shear,
@@ -63,16 +63,23 @@ std::shared_ptr<TensorOperation> AutoContrast::Parse() {
 }
 
 // BoundingBoxAugment Transform Operation.
-BoundingBoxAugment::BoundingBoxAugment(std::shared_ptr<TensorTransform> transform, float ratio) {
-  // Convert transform from TensorTransform to TensorOperation
-  transform_ = transform->Parse();
-  ratio_ = ratio;
+BoundingBoxAugment::BoundingBoxAugment(TensorTransform *transform, float ratio) : ratio_(ratio) {
+  transform_ = transform ? transform->Parse() : nullptr;
+}
+
+BoundingBoxAugment::BoundingBoxAugment(const std::shared_ptr<TensorTransform> &transform, float ratio) : ratio_(ratio) {
+  transform_ = transform ? transform->Parse() : nullptr;
+}
+
+BoundingBoxAugment::BoundingBoxAugment(const std::reference_wrapper<TensorTransform> transform, float ratio)
+    : ratio_(ratio) {
+  transform_ = transform.get().Parse();
 }
 
 std::shared_ptr<TensorOperation> BoundingBoxAugment::Parse() {
   return std::make_shared<BoundingBoxAugmentOperation>(transform_, ratio_);
 }
-#endif
+#endif  // not ENABLE_ANDROID
 
 // CenterCrop Transform Operation.
 CenterCrop::CenterCrop(std::vector<int32_t> size) : size_(size) {}
@@ -86,7 +93,7 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
     usize_.reserve(size_.size());
     std::transform(size_.begin(), size_.end(), std::back_inserter(usize_), [](int32_t i) { return (uint32_t)i; });
     return std::make_shared<DvppCropJpegOperation>(usize_);
-#endif
+#endif  // ENABLE_ACL
   }
   return std::make_shared<CenterCropOperation>(size_);
 }
@@ -109,6 +116,7 @@ std::shared_ptr<TensorOperation> CutMixBatch::Parse() {
 CutOut::CutOut(int32_t length, int32_t num_patches) : length_(length), num_patches_(num_patches) {}
 
 std::shared_ptr<TensorOperation> CutOut::Parse() { return std::make_shared<CutOutOperation>(length_, num_patches_); }
+#endif  // not ENABLE_ANDROID
 
 // Decode Transform Operation.
 Decode::Decode(bool rgb) : rgb_(rgb) {}
@@ -118,12 +126,10 @@ std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
   if (env == MapTargetDevice::kAscend310) {
 #ifdef ENABLE_ACL
     return std::make_shared<DvppDecodeJpegOperation>();
-#endif
+#endif  // ENABLE_ACL
   }
   return std::make_shared<DecodeOperation>(rgb_);
 }
-
-#endif
 
 #ifdef ENABLE_ACL
 // DvppDecodeResize Transform Operation.
@@ -157,7 +163,7 @@ std::shared_ptr<TensorOperation> DvppDecodePng::Parse() { return std::make_share
 std::shared_ptr<TensorOperation> DvppDecodePng::Parse(const MapTargetDevice &env) {
   return std::make_shared<DvppDecodePngOperation>();
 }
-#endif
+#endif  // ENABLE_ACL
 
 #ifndef ENABLE_ANDROID
 // Equalize Transform Operation.
@@ -178,7 +184,7 @@ std::shared_ptr<TensorOperation> Invert::Parse() { return std::make_shared<Inver
 MixUpBatch::MixUpBatch(float alpha) : alpha_(alpha) {}
 
 std::shared_ptr<TensorOperation> MixUpBatch::Parse() { return std::make_shared<MixUpBatchOperation>(alpha_); }
-#endif
+#endif  // not ENABLE_ANDROID
 
 // Normalize Transform Operation.
 Normalize::Normalize(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
@@ -333,10 +339,49 @@ std::shared_ptr<TensorOperation> RandomRotation::Parse() {
 }
 
 // RandomSelectSubpolicy Transform Operation.
-// FIXME - Provide TensorTransform support for policy
+RandomSelectSubpolicy::RandomSelectSubpolicy(std::vector<std::vector<std::pair<TensorTransform *, double>>> policy) {
+  for (int32_t i = 0; i < policy.size(); i++) {
+    std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
+
+    for (int32_t j = 0; j < policy[i].size(); j++) {
+      TensorTransform *op = policy[i][j].first;
+      std::shared_ptr<TensorOperation> operation = (op ? op->Parse() : nullptr);
+      double prob = policy[i][j].second;
+      subpolicy.emplace_back(std::move(std::make_pair(operation, prob)));
+    }
+    policy_.emplace_back(subpolicy);
+  }
+}
+
 RandomSelectSubpolicy::RandomSelectSubpolicy(
-  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy)
-    : policy_(policy) {}
+  std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> policy) {
+  for (int32_t i = 0; i < policy.size(); i++) {
+    std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
+
+    for (int32_t j = 0; j < policy[i].size(); j++) {
+      std::shared_ptr<TensorTransform> op = policy[i][j].first;
+      std::shared_ptr<TensorOperation> operation = (op ? op->Parse() : nullptr);
+      double prob = policy[i][j].second;
+      subpolicy.emplace_back(std::move(std::make_pair(operation, prob)));
+    }
+    policy_.emplace_back(subpolicy);
+  }
+}
+
+RandomSelectSubpolicy::RandomSelectSubpolicy(
+  std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> policy) {
+  for (int32_t i = 0; i < policy.size(); i++) {
+    std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
+
+    for (int32_t j = 0; j < policy[i].size(); j++) {
+      TensorTransform &op = policy[i][j].first;
+      std::shared_ptr<TensorOperation> operation = op.Parse();
+      double prob = policy[i][j].second;
+      subpolicy.emplace_back(std::move(std::make_pair(operation, prob)));
+    }
+    policy_.emplace_back(subpolicy);
+  }
+}
 
 std::shared_ptr<TensorOperation> RandomSelectSubpolicy::Parse() {
   return std::make_shared<RandomSelectSubpolicyOperation>(policy_);
@@ -374,8 +419,8 @@ std::shared_ptr<TensorOperation> RandomVerticalFlipWithBBox::Parse() {
 Rescale::Rescale(float rescale, float shift) : rescale_(rescale), shift_(shift) {}
 
 std::shared_ptr<TensorOperation> Rescale::Parse() { return std::make_shared<RescaleOperation>(rescale_, shift_); }
+#endif  // not ENABLE_ANDROID
 
-#endif
 // Resize Transform Operation.
 Resize::Resize(std::vector<int32_t> size, InterpolationMode interpolation)
     : size_(size), interpolation_(interpolation) {}
@@ -389,7 +434,7 @@ std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
     usize_.reserve(size_.size());
     std::transform(size_.begin(), size_.end(), std::back_inserter(usize_), [](int32_t i) { return (uint32_t)i; });
     return std::make_shared<DvppResizeJpegOperation>(usize_);
-#endif
+#endif  // ENABLE_ACL
   }
   return std::make_shared<ResizeOperation>(size_, interpolation_);
 }
@@ -399,7 +444,7 @@ std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
 Rotate::Rotate() {}
 
 std::shared_ptr<TensorOperation> Rotate::Parse() { return std::make_shared<RotateOperation>(); }
-#endif
+#endif  // ENABLE_ANDROID
 
 #ifndef ENABLE_ANDROID
 // ResizeWithBBox Transform Operation.
@@ -442,18 +487,29 @@ SwapRedBlue::SwapRedBlue() {}
 std::shared_ptr<TensorOperation> SwapRedBlue::Parse() { return std::make_shared<SwapRedBlueOperation>(); }
 
 // UniformAug Transform Operation.
-UniformAugment::UniformAugment(std::vector<std::shared_ptr<TensorTransform>> transforms, int32_t num_ops) {
-  // Convert ops from TensorTransform to TensorOperation
+UniformAugment::UniformAugment(const std::vector<TensorTransform *> &transforms, int32_t num_ops) : num_ops_(num_ops) {
   (void)std::transform(
     transforms.begin(), transforms.end(), std::back_inserter(transforms_),
-    [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
-  num_ops_ = num_ops;
+    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op ? op->Parse() : nullptr; });
+}
+
+UniformAugment::UniformAugment(const std::vector<std::shared_ptr<TensorTransform>> &transforms, int32_t num_ops)
+    : num_ops_(num_ops) {
+  (void)std::transform(
+    transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+    [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> { return op ? op->Parse() : nullptr; });
+}
+
+UniformAugment::UniformAugment(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, int32_t num_ops)
+    : num_ops_(num_ops) {
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+                       [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
 }
 
 std::shared_ptr<TensorOperation> UniformAugment::Parse() {
   return std::make_shared<UniformAugOperation>(transforms_, num_ops_);
 }
-#endif
+#endif  // not ENABLE_ANDROID
 
 }  // namespace vision
 }  // namespace dataset

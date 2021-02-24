@@ -61,9 +61,19 @@ class AutoContrast : public TensorTransform {
 class BoundingBoxAugment : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] transform A TensorTransform transform.
+  /// \param[in] transform Raw pointer to a TensorTransform operation.
   /// \param[in] ratio Ratio of bounding boxes to apply augmentation on. Range: [0, 1] (default=0.3).
-  explicit BoundingBoxAugment(std::shared_ptr<TensorTransform> transform, float ratio = 0.3);
+  explicit BoundingBoxAugment(TensorTransform *transform, float ratio = 0.3);
+
+  /// \brief Constructor.
+  /// \param[in] transform Smart pointer to a TensorTransform operation.
+  /// \param[in] ratio Ratio of bounding boxes to apply augmentation on. Range: [0, 1] (default=0.3).
+  explicit BoundingBoxAugment(const std::shared_ptr<TensorTransform> &transform, float ratio = 0.3);
+
+  /// \brief Constructor.
+  /// \param[in] transform Object pointer to a TensorTransform operation.
+  /// \param[in] ratio Ratio of bounding boxes to apply augmentation on. Range: [0, 1] (default=0.3).
+  explicit BoundingBoxAugment(const std::reference_wrapper<TensorTransform> transform, float ratio = 0.3);
 
   /// \brief Destructor.
   ~BoundingBoxAugment() = default;
@@ -620,16 +630,22 @@ class RandomRotation : public TensorTransform {
 /// \brief RandomSelectSubpolicy TensorTransform.
 /// \notes Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
 ///     (op, prob), where op is a TensorTransform operation and prob is the probability that this op will be applied.
-///     Once a sub-policy is selected, each op within the subpolicy with be applied in sequence according to its
+///     Once a sub-policy is selected, each op within the sub-policy with be applied in sequence according to its
 ///     probability.
 class RandomSelectSubpolicy : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] policy Vector of sub-policies to choose from.
+  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are raw pointers
+  explicit RandomSelectSubpolicy(std::vector<std::vector<std::pair<TensorTransform *, double>>> policy);
 
-  // FIXME - Provide TensorTransform support for policy
-  explicit RandomSelectSubpolicy(std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy);
-  // RandomSelectSubpolicy(std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> policy);
+  /// \brief Constructor.
+  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are shared pointers
+  explicit RandomSelectSubpolicy(std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> policy);
+
+  /// \brief Constructor.
+  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are object pointers
+  explicit RandomSelectSubpolicy(
+    std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> policy);
 
   /// \brief Destructor.
   ~RandomSelectSubpolicy() = default;
@@ -871,9 +887,19 @@ class SwapRedBlue : public TensorTransform {
 class UniformAugment : public TensorTransform {
  public:
   /// \brief Constructor.
-  /// \param[in] transforms A vector of TensorTransform transforms.
+  /// \param[in] transforms Raw pointer to vector of TensorTransform operations.
   /// \param[in] num_ops An integer representing the number of OPs to be selected and applied.
-  explicit UniformAugment(std::vector<std::shared_ptr<TensorTransform>> transforms, int32_t num_ops = 2);
+  explicit UniformAugment(const std::vector<TensorTransform *> &transforms, int32_t num_ops = 2);
+
+  /// \brief Constructor.
+  /// \param[in] transforms Smart pointer to vector of TensorTransform operations.
+  /// \param[in] num_ops An integer representing the number of OPs to be selected and applied.
+  explicit UniformAugment(const std::vector<std::shared_ptr<TensorTransform>> &transforms, int32_t num_ops = 2);
+
+  /// \brief Constructor.
+  /// \param[in] transforms Object pointer to vector of TensorTransform operations.
+  /// \param[in] num_ops An integer representing the number of OPs to be selected and applied.
+  explicit UniformAugment(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, int32_t num_ops = 2);
 
   /// \brief Destructor.
   ~UniformAugment() = default;

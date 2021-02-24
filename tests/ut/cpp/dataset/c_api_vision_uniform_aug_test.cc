@@ -27,54 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 // Tests for vision UniformAugment
 // Tests for vision C++ API UniformAugment TensorTransform Operations
 
-TEST_F(MindDataTestPipeline, TestUniformAugmentFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail1 with invalid num_ops parameter.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  /*
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  EXPECT_NE(random_crop_op, nullptr);
-
-  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
-  EXPECT_NE(center_crop_op, nullptr);
-
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // UniformAug: num_ops must be greater than 0
-  std::shared_ptr<TensorTransform> uniform_aug_op1(new vision::UniformAugment({random_crop_op, center_crop_op}, 0));
-  EXPECT_EQ(uniform_aug_op1, nullptr);
-
-  // UniformAug: num_ops must be greater than 0
-  std::shared_ptr<TensorTransform> uniform_aug_op2(new vision::UniformAugment({random_crop_op, center_crop_op}, -1));
-  EXPECT_EQ(uniform_aug_op2, nullptr);
-
-  // UniformAug: num_ops is greater than transforms size
-  std::shared_ptr<TensorTransform> uniform_aug_op3(new vision::UniformAugment({random_crop_op, center_crop_op}, 3));
-  EXPECT_EQ(uniform_aug_op3, nullptr);
-  */
-
-}
-
-TEST_F(MindDataTestPipeline, TestUniformAugmentFail2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail2 with invalid transform.";
-
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  /*
-  // UniformAug: transform ops must not be null
-  std::shared_ptr<TensorTransform> uniform_aug_op1(new vision::UniformAugment({vision::RandomCrop({-28})}, 1));
-  EXPECT_NE(uniform_aug_op1, nullptr);
-
-  // UniformAug: transform ops must not be null
-  std::shared_ptr<TensorTransform> uniform_aug_op2(new vision::UniformAugment({vision::RandomCrop({28}), nullptr}, 2));
-  EXPECT_NE(uniform_aug_op2, nullptr);
-
-  // UniformAug: transform list must not be empty
-  std::shared_ptr<TensorTransform> uniform_aug_op3(new vision::UniformAugment({}, 1));
-  EXPECT_NE(uniform_aug_op3, nullptr);
-  */
-}
-
-TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps.";
+TEST_F(MindDataTestPipeline, TestUniformAugWithOps1Shr) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps1Shr.";
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
@@ -87,17 +41,11 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
+  // Use shared pointers
   std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
-  EXPECT_NE(resize_op, nullptr);
-
   std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  EXPECT_NE(random_crop_op, nullptr);
-
   std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
-  EXPECT_NE(center_crop_op, nullptr);
-
   std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 2));
-  EXPECT_NE(uniform_aug_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({resize_op, uniform_aug_op});
@@ -124,4 +72,219 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
 
   // Manually terminate the pipeline
   iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestUniformAugWithOps2Auto) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps2Auto.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 1;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Use auto for raw pointers
+  auto resize_op(new vision::Resize({30, 30}));
+  auto random_crop_op(new vision::RandomCrop({28, 28}));
+  auto center_crop_op(new vision::CenterCrop({16, 16}));
+  auto uniform_aug_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 2));
+
+  // Create a Map operation on ds
+  ds = ds->Map({resize_op, uniform_aug_op});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    // auto image = row["image"];
+    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestUniformAugWithOps3Obj) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugWithOps3Obj.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 1;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Use object references
+  vision::Resize resize_op = vision::Resize({30, 30});
+  vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
+  vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
+  vision::UniformAugment uniform_aug_op = vision::UniformAugment({random_crop_op, center_crop_op}, 2);
+
+  // Create a Map operation on ds
+  ds = ds->Map({resize_op, uniform_aug_op});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    // auto image = row["image"];
+    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestUniformAugmentFail1num_ops) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail1num_ops with invalid num_ops parameter.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
+  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+
+  // UniformAug: num_ops must be greater than 0
+  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 0));
+
+  // Create a Map operation on ds
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid UniformAugment input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestUniformAugmentFail2num_ops) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail2num_ops with invalid num_ops parameter.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
+  std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
+
+  // UniformAug: num_ops is greater than transforms size
+  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 3));
+
+  // Create a Map operation on ds
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid UniformAugment input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestUniformAugmentFail3transforms) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail3transforms with invalid transform.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // RandomRotation has invalid input, negative size
+  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({-28}));
+
+  // Create UniformAug op with invalid transform op
+  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op}, 1));
+
+  // Create a Map operation on ds
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid UniformAugment input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestUniformAugmentFail4transforms) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail4transforms with invalid transform.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28}));
+
+  // Create UniformAug op with invalid transform op, nullptr
+  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment({random_crop_op, nullptr}, 2));
+
+  // Create a Map operation on ds
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid UniformAugment input
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestUniformAugmentFail5transforms) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUniformAugmentFail5transforms with invalid transform.";
+
+  // Create a Mnist Dataset
+  std::string folder_path = datasets_root_path_ + "/testMnistData/";
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  EXPECT_NE(ds, nullptr);
+
+  // Create UniformAug op with invalid transform op empty list
+  std::vector<std::shared_ptr<TensorTransform>> list = {};
+  std::shared_ptr<TensorTransform> uniform_aug_op(new vision::UniformAugment(list, 1));
+
+  // Create a Map operation on ds
+  ds = ds->Map({uniform_aug_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: Invalid UniformAugment input
+  EXPECT_EQ(iter, nullptr);
 }
