@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ TEST_F(MindDataTestPipeline, TestCocoDetection) {
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
-  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Detection", false, SequentialSampler(0, 6));
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Detection", false, std::make_shared<SequentialSampler>(0, 6));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -220,7 +220,7 @@ TEST_F(MindDataTestPipeline, TestCocoKeypoint) {
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/key_point.json";
 
-  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Keypoint", false, SequentialSampler(0, 2));
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Keypoint", false, std::make_shared<SequentialSampler>(0, 2));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -275,7 +275,7 @@ TEST_F(MindDataTestPipeline, TestCocoPanoptic) {
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/panoptic.json";
 
-  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Panoptic", false, SequentialSampler(0, 2));
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Panoptic", false, std::make_shared<SequentialSampler>(0, 2));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -333,7 +333,7 @@ TEST_F(MindDataTestPipeline, TestCocoPanopticGetClassIndex) {
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/panoptic.json";
 
-  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Panoptic", false, SequentialSampler(0, 2));
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Panoptic", false, std::make_shared<SequentialSampler>(0, 2));
   EXPECT_NE(ds, nullptr);
 
   std::vector<std::pair<std::string, std::vector<int32_t>>> class_index1 = ds->GetClassIndexing();
@@ -355,7 +355,7 @@ TEST_F(MindDataTestPipeline, TestCocoStuff) {
   std::string folder_path = datasets_root_path_ + "/testCOCO/train";
   std::string annotation_file = datasets_root_path_ + "/testCOCO/annotations/train.json";
 
-  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Stuff", false, SequentialSampler(0, 6));
+  std::shared_ptr<Dataset> ds = Coco(folder_path, annotation_file, "Stuff", false, std::make_shared<SequentialSampler>(0, 6));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

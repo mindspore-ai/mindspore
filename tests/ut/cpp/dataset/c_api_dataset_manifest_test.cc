@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
 
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
   // Create a Manifest Dataset
-  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", RandomSampler(), {}, true);
+  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", std::make_shared<RandomSampler>(), {}, true);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -218,7 +218,7 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   std::vector<int64_t> expected_label = {111, 222};
 
   // Create a Manifest Dataset
-  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", RandomSampler(), map, true);
+  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", std::make_shared<RandomSampler>(), map, true);
   EXPECT_NE(ds, nullptr);
 
   std::vector<std::pair<std::string, std::vector<int32_t>>> class_index1 = ds->GetClassIndexing();
@@ -261,7 +261,7 @@ TEST_F(MindDataTestPipeline, TestManifestNumSamplers) {
 
   std::string file_path = datasets_root_path_ + "/testManifestData/cpp.json";
   // Create a Manifest Dataset
-  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", SequentialSampler(0, 1), {}, true);
+  std::shared_ptr<Dataset> ds = Manifest(file_path, "train", std::make_shared<SequentialSampler>(0, 1), {}, true);
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

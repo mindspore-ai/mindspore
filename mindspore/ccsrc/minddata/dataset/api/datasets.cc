@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -285,7 +285,24 @@ std::shared_ptr<SchemaObj> Schema(const std::string &schema_file) {
 // Function to create a AlbumDataset.
 std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
                                     const std::vector<std::string> &column_names, bool decode,
-                                    const std::shared_ptr<SamplerObj> &sampler,
+                                    const std::shared_ptr<Sampler> &sampler,
+                                    const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<AlbumDataset>(dataset_dir, data_schema, column_names, decode, sampler, cache);
+
+  return ds;
+}
+// Function to create a AlbumDataset.
+std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                    const std::vector<std::string> &column_names, bool decode, Sampler *sampler,
+                                    const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<AlbumDataset>(dataset_dir, data_schema, column_names, decode, sampler, cache);
+
+  return ds;
+}
+// Function to create a AlbumDataset.
+std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                    const std::vector<std::string> &column_names, bool decode,
+                                    const std::reference_wrapper<Sampler> sampler,
                                     const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<AlbumDataset>(dataset_dir, data_schema, column_names, decode, sampler, cache);
 
@@ -295,7 +312,24 @@ std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::s
 #ifndef ENABLE_ANDROID
 // Function to create a CelebADataset.
 std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage,
-                                      const std::shared_ptr<SamplerObj> &sampler, bool decode,
+                                      const std::shared_ptr<Sampler> &sampler, bool decode,
+                                      const std::set<std::string> &extensions,
+                                      const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<CelebADataset>(dataset_dir, usage, sampler, decode, extensions, cache);
+
+  return ds;
+}
+// Function to create a CelebADataset.
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                      bool decode, const std::set<std::string> &extensions,
+                                      const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<CelebADataset>(dataset_dir, usage, sampler, decode, extensions, cache);
+
+  return ds;
+}
+// Function to create a CelebADataset.
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage,
+                                      const std::reference_wrapper<Sampler> sampler, bool decode,
                                       const std::set<std::string> &extensions,
                                       const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<CelebADataset>(dataset_dir, usage, sampler, decode, extensions, cache);
@@ -305,7 +339,22 @@ std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std:
 
 // Function to create a Cifar10Dataset.
 std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage,
-                                        const std::shared_ptr<SamplerObj> &sampler,
+                                        const std::shared_ptr<Sampler> &sampler,
+                                        const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, usage, sampler, cache);
+
+  return ds;
+}
+// Function to create a Cifar10Dataset.
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                        const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, usage, sampler, cache);
+
+  return ds;
+}
+// Function to create a Cifar10Dataset.
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage,
+                                        const std::reference_wrapper<Sampler> sampler,
                                         const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<Cifar10Dataset>(dataset_dir, usage, sampler, cache);
 
@@ -314,7 +363,22 @@ std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const st
 
 // Function to create a Cifar100Dataset.
 std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage,
-                                          const std::shared_ptr<SamplerObj> &sampler,
+                                          const std::shared_ptr<Sampler> &sampler,
+                                          const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<Cifar100Dataset>(dataset_dir, usage, sampler, cache);
+
+  return ds;
+}
+// Function to create a Cifar100Dataset.
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                          const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<Cifar100Dataset>(dataset_dir, usage, sampler, cache);
+
+  return ds;
+}
+// Function to create a Cifar100Dataset.
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage,
+                                          const std::reference_wrapper<Sampler> sampler,
                                           const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<Cifar100Dataset>(dataset_dir, usage, sampler, cache);
 
@@ -332,8 +396,24 @@ std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &clue_files, co
 
 // Function to create a CocoDataset.
 std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                                  const std::string &task, const bool &decode, const std::shared_ptr<Sampler> &sampler,
+                                  const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<CocoDataset>(dataset_dir, annotation_file, task, decode, sampler, cache);
+
+  return ds;
+}
+// Function to create a CocoDataset.
+std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                                  const std::string &task, const bool &decode, Sampler *sampler,
+                                  const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<CocoDataset>(dataset_dir, annotation_file, task, decode, sampler, cache);
+
+  return ds;
+}
+// Function to create a CocoDataset.
+std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                   const std::string &task, const bool &decode,
-                                  const std::shared_ptr<SamplerObj> &sampler,
+                                  const std::reference_wrapper<Sampler> sampler,
                                   const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<CocoDataset>(dataset_dir, annotation_file, task, decode, sampler, cache);
 
@@ -353,7 +433,26 @@ std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, c
 
 // Function to create a ImageFolderDataset.
 std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode,
-                                                const std::shared_ptr<SamplerObj> &sampler,
+                                                const std::shared_ptr<Sampler> &sampler,
+                                                const std::set<std::string> &extensions,
+                                                const std::map<std::string, int32_t> &class_indexing,
+                                                const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<ImageFolderDataset>(dataset_dir, decode, sampler, extensions, class_indexing, cache);
+
+  return ds;
+}
+// Function to create a ImageFolderDataset.
+std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode, Sampler *sampler,
+                                                const std::set<std::string> &extensions,
+                                                const std::map<std::string, int32_t> &class_indexing,
+                                                const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<ImageFolderDataset>(dataset_dir, decode, sampler, extensions, class_indexing, cache);
+
+  return ds;
+}
+// Function to create a ImageFolderDataset.
+std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode,
+                                                const std::reference_wrapper<Sampler> sampler,
                                                 const std::set<std::string> &extensions,
                                                 const std::map<std::string, int32_t> &class_indexing,
                                                 const std::shared_ptr<DatasetCache> &cache) {
@@ -364,7 +463,24 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
 
 // Function to create a ManifestDataset.
 std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage,
-                                          const std::shared_ptr<SamplerObj> &sampler,
+                                          const std::shared_ptr<Sampler> &sampler,
+                                          const std::map<std::string, int32_t> &class_indexing, bool decode,
+                                          const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<ManifestDataset>(dataset_file, usage, sampler, class_indexing, decode, cache);
+
+  return ds;
+}
+// Function to create a ManifestDataset.
+std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage, Sampler *sampler,
+                                          const std::map<std::string, int32_t> &class_indexing, bool decode,
+                                          const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<ManifestDataset>(dataset_file, usage, sampler, class_indexing, decode, cache);
+
+  return ds;
+}
+// Function to create a ManifestDataset.
+std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage,
+                                          const std::reference_wrapper<Sampler> sampler,
                                           const std::map<std::string, int32_t> &class_indexing, bool decode,
                                           const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<ManifestDataset>(dataset_file, usage, sampler, class_indexing, decode, cache);
@@ -374,7 +490,22 @@ std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const
 
 // Function to create a MindDataDataset.
 std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
-                                          const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                          const std::shared_ptr<Sampler> &sampler, nlohmann::json padded_sample,
+                                          int64_t num_padded) {
+  auto ds = std::make_shared<MindDataDataset>(dataset_file, columns_list, sampler, padded_sample, num_padded);
+
+  return ds;
+}
+// Function to create a MindDataDataset.
+std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                          Sampler *sampler, nlohmann::json padded_sample, int64_t num_padded) {
+  auto ds = std::make_shared<MindDataDataset>(dataset_file, columns_list, sampler, padded_sample, num_padded);
+
+  return ds;
+}
+// Function to create a MindDataDataset.
+std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                          const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample,
                                           int64_t num_padded) {
   auto ds = std::make_shared<MindDataDataset>(dataset_file, columns_list, sampler, padded_sample, num_padded);
 
@@ -384,7 +515,24 @@ std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const
 // Function to create a MindDataDataset.
 std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
                                           const std::vector<std::string> &columns_list,
-                                          const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                          const std::shared_ptr<Sampler> &sampler, nlohmann::json padded_sample,
+                                          int64_t num_padded) {
+  auto ds = std::make_shared<MindDataDataset>(dataset_files, columns_list, sampler, padded_sample, num_padded);
+
+  return ds;
+}
+// Function to create a MindDataDataset.
+std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
+                                          const std::vector<std::string> &columns_list, Sampler *sampler,
+                                          nlohmann::json padded_sample, int64_t num_padded) {
+  auto ds = std::make_shared<MindDataDataset>(dataset_files, columns_list, sampler, padded_sample, num_padded);
+
+  return ds;
+}
+// Function to create a MindDataDataset.
+std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
+                                          const std::vector<std::string> &columns_list,
+                                          const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample,
                                           int64_t num_padded) {
   auto ds = std::make_shared<MindDataDataset>(dataset_files, columns_list, sampler, padded_sample, num_padded);
 
@@ -393,7 +541,22 @@ std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &datase
 #endif
 // Function to create a MnistDataset.
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
-                                    const std::shared_ptr<SamplerObj> &sampler,
+                                    const std::shared_ptr<Sampler> &sampler,
+                                    const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<MnistDataset>(dataset_dir, usage, sampler, cache);
+
+  return ds;
+}
+// Function to create a MnistDataset.
+std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                    const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<MnistDataset>(dataset_dir, usage, sampler, cache);
+
+  return ds;
+}
+// Function to create a MnistDataset.
+std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
+                                    const std::reference_wrapper<Sampler> sampler,
                                     const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<MnistDataset>(dataset_dir, usage, sampler, cache);
 
@@ -419,7 +582,23 @@ std::shared_ptr<TextFileDataset> TextFile(const std::vector<std::string> &datase
 // Function to create a VOCDataset.
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                                 const std::map<std::string, int32_t> &class_indexing, bool decode,
-                                const std::shared_ptr<SamplerObj> &sampler,
+                                const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<VOCDataset>(dataset_dir, task, usage, class_indexing, decode, sampler, cache);
+
+  return ds;
+}
+// Function to create a VOCDataset.
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                                const std::map<std::string, int32_t> &class_indexing, bool decode, Sampler *sampler,
+                                const std::shared_ptr<DatasetCache> &cache) {
+  auto ds = std::make_shared<VOCDataset>(dataset_dir, task, usage, class_indexing, decode, sampler, cache);
+
+  return ds;
+}
+// Function to create a VOCDataset.
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                                const std::map<std::string, int32_t> &class_indexing, bool decode,
+                                const std::reference_wrapper<Sampler> sampler,
                                 const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<VOCDataset>(dataset_dir, task, usage, class_indexing, decode, sampler, cache);
 
@@ -831,41 +1010,117 @@ std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint64_t me
 
 AlbumDataset::AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
                            const std::vector<std::string> &column_names, bool decode,
-                           const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler, cache);
+                           const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+AlbumDataset::AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
+                           const std::vector<std::string> &column_names, bool decode, Sampler *sampler,
+                           const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+AlbumDataset::AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
+                           const std::vector<std::string> &column_names, bool decode,
+                           const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
 #ifndef ENABLE_ANDROID
 CelebADataset::CelebADataset(const std::string &dataset_dir, const std::string &usage,
-                             const std::shared_ptr<SamplerObj> &sampler, bool decode,
+                             const std::shared_ptr<Sampler> &sampler, bool decode,
                              const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<CelebANode>(dataset_dir, usage, sampler, decode, extensions, cache);
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<CelebANode>(dataset_dir, usage, sampler_obj, decode, extensions, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+CelebADataset::CelebADataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler, bool decode,
+                             const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<CelebANode>(dataset_dir, usage, sampler_obj, decode, extensions, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+CelebADataset::CelebADataset(const std::string &dataset_dir, const std::string &usage,
+                             const std::reference_wrapper<Sampler> sampler, bool decode,
+                             const std::set<std::string> &extensions, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<CelebANode>(dataset_dir, usage, sampler_obj, decode, extensions, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, const std::string &usage,
+                               const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<Cifar10Node>(dataset_dir, usage, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                               const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<Cifar10Node>(dataset_dir, usage, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 Cifar10Dataset::Cifar10Dataset(const std::string &dataset_dir, const std::string &usage,
-                               const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<Cifar10Node>(dataset_dir, usage, sampler, cache);
+                               const std::reference_wrapper<Sampler> sampler,
+                               const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<Cifar10Node>(dataset_dir, usage, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, const std::string &usage,
+                                 const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<Cifar100Node>(dataset_dir, usage, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<Cifar100Node>(dataset_dir, usage, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 Cifar100Dataset::Cifar100Dataset(const std::string &dataset_dir, const std::string &usage,
-                                 const std::shared_ptr<SamplerObj> &sampler,
+                                 const std::reference_wrapper<Sampler> sampler,
                                  const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<Cifar100Node>(dataset_dir, usage, sampler, cache);
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<Cifar100Node>(dataset_dir, usage, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+
 CLUEDataset::CLUEDataset(const std::vector<std::string> &dataset_files, const std::string &task,
                          const std::string &usage, int64_t num_samples, ShuffleMode shuffle, int32_t num_shards,
                          int32_t shard_id, const std::shared_ptr<DatasetCache> &cache) {
   auto ds = std::make_shared<CLUENode>(dataset_files, task, usage, num_samples, shuffle, num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+
 CocoDataset::CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
-                         const bool &decode, const std::shared_ptr<SamplerObj> &sampler,
+                         const bool &decode, const std::shared_ptr<Sampler> &sampler,
                          const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<CocoNode>(dataset_dir, annotation_file, task, decode, sampler, cache);
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<CocoNode>(dataset_dir, annotation_file, task, decode, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+CocoDataset::CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+                         const bool &decode, Sampler *sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<CocoNode>(dataset_dir, annotation_file, task, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+CocoDataset::CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+                         const bool &decode, const std::reference_wrapper<Sampler> sampler,
+                         const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<CocoNode>(dataset_dir, annotation_file, task, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
 CSVDataset::CSVDataset(const std::vector<std::string> &dataset_files, char field_delim,
                        const std::vector<std::shared_ptr<CsvBase>> &column_defaults,
                        const std::vector<std::string> &column_names, int64_t num_samples, ShuffleMode shuffle,
@@ -874,8 +1129,21 @@ CSVDataset::CSVDataset(const std::vector<std::string> &dataset_files, char field
                                       num_shards, shard_id, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
+
 ImageFolderDataset::ImageFolderDataset(const std::string &dataset_dir, bool decode,
-                                       const std::shared_ptr<SamplerObj> &sampler,
+                                       const std::shared_ptr<Sampler> &sampler, const std::set<std::string> &extensions,
+                                       const std::map<std::string, int32_t> &class_indexing,
+                                       const std::shared_ptr<DatasetCache> &cache) {
+  // This arg exists in ImageFolderOp, but not externalized (in Python API). The default value is false.
+  bool recursive = false;
+
+  // Create logical representation of ImageFolderDataset.
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds =
+    std::make_shared<ImageFolderNode>(dataset_dir, decode, sampler_obj, recursive, extensions, class_indexing, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+ImageFolderDataset::ImageFolderDataset(const std::string &dataset_dir, bool decode, Sampler *sampler,
                                        const std::set<std::string> &extensions,
                                        const std::map<std::string, int32_t> &class_indexing,
                                        const std::shared_ptr<DatasetCache> &cache) {
@@ -883,36 +1151,110 @@ ImageFolderDataset::ImageFolderDataset(const std::string &dataset_dir, bool deco
   bool recursive = false;
 
   // Create logical representation of ImageFolderDataset.
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
   auto ds =
-    std::make_shared<ImageFolderNode>(dataset_dir, decode, sampler, recursive, extensions, class_indexing, cache);
+    std::make_shared<ImageFolderNode>(dataset_dir, decode, sampler_obj, recursive, extensions, class_indexing, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+ImageFolderDataset::ImageFolderDataset(const std::string &dataset_dir, bool decode,
+                                       const std::reference_wrapper<Sampler> sampler,
+                                       const std::set<std::string> &extensions,
+                                       const std::map<std::string, int32_t> &class_indexing,
+                                       const std::shared_ptr<DatasetCache> &cache) {
+  // This arg exists in ImageFolderOp, but not externalized (in Python API). The default value is false.
+  bool recursive = false;
+
+  // Create logical representation of ImageFolderDataset.
+  auto sampler_obj = sampler.get().Parse();
+  auto ds =
+    std::make_shared<ImageFolderNode>(dataset_dir, decode, sampler_obj, recursive, extensions, class_indexing, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
 ManifestDataset::ManifestDataset(const std::string &dataset_file, const std::string &usage,
-                                 const std::shared_ptr<SamplerObj> &sampler,
+                                 const std::shared_ptr<Sampler> &sampler,
                                  const std::map<std::string, int32_t> &class_indexing, bool decode,
                                  const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<ManifestNode>(dataset_file, usage, sampler, class_indexing, decode, cache);
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<ManifestNode>(dataset_file, usage, sampler_obj, class_indexing, decode, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+ManifestDataset::ManifestDataset(const std::string &dataset_file, const std::string &usage, Sampler *sampler,
+                                 const std::map<std::string, int32_t> &class_indexing, bool decode,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<ManifestNode>(dataset_file, usage, sampler_obj, class_indexing, decode, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+ManifestDataset::ManifestDataset(const std::string &dataset_file, const std::string &usage,
+                                 const std::reference_wrapper<Sampler> sampler,
+                                 const std::map<std::string, int32_t> &class_indexing, bool decode,
+                                 const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<ManifestNode>(dataset_file, usage, sampler_obj, class_indexing, decode, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+
+MindDataDataset::MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                 const std::shared_ptr<Sampler> &sampler, nlohmann::json padded_sample,
+                                 int64_t num_padded) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<MindDataNode>(dataset_file, columns_list, sampler_obj, padded_sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
-                                 const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                 Sampler *sampler, nlohmann::json padded_sample, int64_t num_padded) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<MindDataNode>(dataset_file, columns_list, sampler_obj, padded_sample, num_padded);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+MindDataDataset::MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample,
                                  int64_t num_padded) {
-  auto ds = std::make_shared<MindDataNode>(dataset_file, columns_list, sampler, padded_sample, num_padded);
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<MindDataNode>(dataset_file, columns_list, sampler_obj, padded_sample, num_padded);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+MindDataDataset::MindDataDataset(const std::vector<std::string> &dataset_files,
+                                 const std::vector<std::string> &columns_list, const std::shared_ptr<Sampler> &sampler,
+                                 nlohmann::json padded_sample, int64_t num_padded) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<MindDataNode>(dataset_files, columns_list, sampler_obj, padded_sample, num_padded);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+MindDataDataset::MindDataDataset(const std::vector<std::string> &dataset_files,
+                                 const std::vector<std::string> &columns_list, Sampler *sampler,
+                                 nlohmann::json padded_sample, int64_t num_padded) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<MindDataNode>(dataset_files, columns_list, sampler_obj, padded_sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 MindDataDataset::MindDataDataset(const std::vector<std::string> &dataset_files,
                                  const std::vector<std::string> &columns_list,
-                                 const std::shared_ptr<SamplerObj> &sampler, nlohmann::json padded_sample,
+                                 const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample,
                                  int64_t num_padded) {
-  auto ds = std::make_shared<MindDataNode>(dataset_files, columns_list, sampler, padded_sample, num_padded);
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<MindDataNode>(dataset_files, columns_list, sampler_obj, padded_sample, num_padded);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 #endif
 
 MnistDataset::MnistDataset(const std::string &dataset_dir, const std::string &usage,
-                           const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler, cache);
+                           const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+MnistDataset::MnistDataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                           const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+MnistDataset::MnistDataset(const std::string &dataset_dir, const std::string &usage,
+                           const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<MnistNode>(dataset_dir, usage, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
@@ -926,8 +1268,23 @@ TextFileDataset::TextFileDataset(const std::vector<std::string> &dataset_files, 
 
 VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
                        const std::map<std::string, int32_t> &class_indexing, bool decode,
-                       const std::shared_ptr<SamplerObj> &sampler, const std::shared_ptr<DatasetCache> &cache) {
-  auto ds = std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, decode, sampler, cache);
+                       const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                       const std::map<std::string, int32_t> &class_indexing, bool decode, Sampler *sampler,
+                       const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler ? sampler->Parse() : nullptr;
+  auto ds = std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, decode, sampler_obj, cache);
+  ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
+}
+VOCDataset::VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                       const std::map<std::string, int32_t> &class_indexing, bool decode,
+                       const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache) {
+  auto sampler_obj = sampler.get().Parse();
+  auto ds = std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, decode, sampler_obj, cache);
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 

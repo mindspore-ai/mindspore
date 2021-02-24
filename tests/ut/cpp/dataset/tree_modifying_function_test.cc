@@ -49,9 +49,9 @@ TEST_F(MindDataTestTreeModifying, AppendChild) {
   *   ds1
   */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds6 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds6 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
@@ -105,9 +105,9 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt01) {
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
-  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds2 = ds5->Repeat(4);
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
@@ -119,7 +119,7 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt01) {
   EXPECT_EQ(rc, Status::OK());
   // Descend two levels as Compile adds the root node and the epochctrl node on top of ds4
   std::shared_ptr<DatasetNode> ds4_node = ir_tree->RootIRNode()->Children()[0]->Children()[0];
-  std::shared_ptr<Dataset> ds6 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds6 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<DatasetNode> ds6_to_insert = ds6->IRNode();
   std::shared_ptr<DatasetNode> ds2_node = ds4_node->Children()[1];
   rc = ds4_node->InsertChildAt(1, ds6_to_insert);
@@ -132,7 +132,7 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt01) {
   EXPECT_EQ(rc, Status::OK());
   // Descend two levels as Compile adds the root node and the epochctrl node on top of ds4
   ds4_node = ir_tree->RootIRNode()->Children()[0]->Children()[0];
-  ds6 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  ds6 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   ds6_to_insert = ds6->IRNode();
   std::shared_ptr<DatasetNode> ds3_node = ds4_node->Children()[0];
   rc = ds4_node->InsertChildAt(0, ds6_to_insert);
@@ -145,7 +145,7 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt01) {
   EXPECT_EQ(rc, Status::OK());
   // Descend two levels as Compile adds the root node and the epochctrl node on top of ds4
   ds4_node = ir_tree->RootIRNode()->Children()[0]->Children()[0];
-  ds6 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  ds6 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   ds6_to_insert = ds6->IRNode();
   rc = ds4_node->InsertChildAt(2, ds6_to_insert);
   EXPECT_EQ(rc, Status::OK());
@@ -165,9 +165,9 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt04) {
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
-  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds2 = ds5->Repeat(4);
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
@@ -179,7 +179,7 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt04) {
   EXPECT_EQ(rc, Status::OK());
   // Descend two levels as Compile adds the root node and the epochctrl node on top of ds4
   std::shared_ptr<DatasetNode> ds4_node = ir_tree->RootIRNode()->Children()[0]->Children()[0];
-  std::shared_ptr<Dataset> ds6 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds6 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<DatasetNode> ds6_to_insert = ds6->IRNode();
   std::shared_ptr<DatasetNode> ds3_node = ds4_node->Children()[0];
   std::shared_ptr<DatasetNode> ds2_node = ds4_node->Children()[1];
@@ -193,7 +193,7 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt04) {
   EXPECT_EQ(rc, Status::OK());
   // Descend two levels as Compile adds the root node and the epochctrl node on top of ds4
   ds4_node = ir_tree->RootIRNode()->Children()[0]->Children()[0];
-  ds6 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  ds6 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   ds6_to_insert = ds6->IRNode();
   ds3_node = ds4_node->Children()[0];
   ds2_node = ds4_node->Children()[1];
@@ -246,8 +246,8 @@ TEST_F(MindDataTestTreeModifying, InsertAbove01) {
    */
   // Case 1
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
@@ -271,8 +271,8 @@ TEST_F(MindDataTestTreeModifying, InsertAbove02) {
 
   // Case 2
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
   std::shared_ptr<Dataset> ds4 = ds3 + ds2;
   Status rc;
@@ -296,8 +296,8 @@ TEST_F(MindDataTestTreeModifying, InsertAbove03) {
 
   // Case 3
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
@@ -357,11 +357,11 @@ TEST_F(MindDataTestTreeModifying, Drop01) {
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds8 = ds7->Take(20);
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
-  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   std::shared_ptr<Dataset> ds6 = ds4->Take(13);
   std::shared_ptr<Dataset> ds10 = ds9 + ds6;
@@ -419,11 +419,11 @@ TEST_F(MindDataTestTreeModifying, Drop03) {
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds8 = ds7->Take(20);
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
-  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   std::shared_ptr<Dataset> ds6 = ds4->Take(13);
   std::shared_ptr<Dataset> ds10 = ds9 + ds6;
@@ -469,14 +469,14 @@ TEST_F(MindDataTestTreeModifying, Drop04) {
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds8 = ds7->Take(20);
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
-  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
-  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds6 = ds5->Concat({ds4, ds1});
   std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;
@@ -526,13 +526,13 @@ TEST_F(MindDataTestTreeModifying, Drop05) {
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds8 = ds7->Take(20);
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
-  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds4 = ds3->Skip(1);
-  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds6 = ds5->Concat({ds4, ds1});
   std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;
@@ -581,14 +581,14 @@ TEST_F(MindDataTestTreeModifying, Drop06) {
    *
    */
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds8 = ds7->Take(20);
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
-  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
-  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 11));
   std::shared_ptr<Dataset> ds6 = ds5->Concat({ds4, ds1});  // ds1 is put after (ds5, ds4)!!!
   std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;

@@ -76,7 +76,7 @@ TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -118,7 +118,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess1) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -154,7 +154,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess2) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -192,7 +192,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail1) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -212,7 +212,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail2) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -232,7 +232,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail3) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -252,7 +252,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail4) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -272,7 +272,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail5) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -292,7 +292,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail6) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {1, 2}, {1, -2, 3});
@@ -311,7 +311,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail7) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -331,9 +331,9 @@ TEST_F(MindDataTestPipeline, TestConcatFail1) {
   // Create an ImageFolder Dataset
   // Column names: {"image", "label"}
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Rename operation on ds
@@ -362,7 +362,7 @@ TEST_F(MindDataTestPipeline, TestConcatFail2) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Concat operation on the ds
@@ -382,7 +382,7 @@ TEST_F(MindDataTestPipeline, TestConcatFail3) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Concat operation on the ds
@@ -402,7 +402,7 @@ TEST_F(MindDataTestPipeline, TestConcatFail4) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Concat operation on the ds
@@ -422,10 +422,10 @@ TEST_F(MindDataTestPipeline, TestConcatFail5) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds1, nullptr);
 
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -451,13 +451,13 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess) {
   // Create an ImageFolder Dataset
   // Column names: {"image", "label"}
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Cifar10 Dataset
   // Column names: {"image", "label"}
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 9));
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 9));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -502,13 +502,13 @@ TEST_F(MindDataTestPipeline, TestConcatGetDatasetSize) {
   // Create an ImageFolder Dataset
   // Column names: {"image", "label"}
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Cifar10 Dataset
   // Column names: {"image", "label"}
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 9));
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 9));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -531,13 +531,13 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess2) {
   // Create an ImageFolder Dataset
   // Column names: {"image", "label"}
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Cifar10 Dataset
   // Column names: {"image", "label"}
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 9));
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 9));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -755,7 +755,7 @@ TEST_F(MindDataTestPipeline, TestImageFolderBatchAndRepeat) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -796,7 +796,7 @@ TEST_F(MindDataTestPipeline, TestPipelineGetDatasetSize) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -818,7 +818,7 @@ TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize1) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, DistributedSampler(4, 0, false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, false, 10));
   EXPECT_NE(ds, nullptr);
 
   // num_per_shard is equal to 44/4 = 11 which is more than num_samples = 10, so the output is 10
@@ -849,7 +849,7 @@ TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize2) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, DistributedSampler(4, 0, false, 15));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<DistributedSampler>(4, 0, false, 15));
   EXPECT_NE(ds, nullptr);
 
   // num_per_shard is equal to 44/4 = 11 which is less than num_samples = 15, so the output is 11
@@ -879,7 +879,7 @@ TEST_F(MindDataTestPipeline, TestProjectMap) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -933,7 +933,7 @@ TEST_F(MindDataTestPipeline, TestProjectDuplicateColumnFail) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 3));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -962,7 +962,7 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -1002,7 +1002,7 @@ TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1054,7 +1054,7 @@ TEST_F(MindDataTestPipeline, TestRenameFail1) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1078,7 +1078,7 @@ TEST_F(MindDataTestPipeline, TestRenameFail2) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Rename operation on ds
@@ -1097,7 +1097,7 @@ TEST_F(MindDataTestPipeline, TestRenameFail3) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Rename operation on ds
@@ -1124,7 +1124,7 @@ TEST_F(MindDataTestPipeline, TestRenameSuccess) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1174,7 +1174,7 @@ TEST_F(MindDataTestPipeline, TestRepeatDefault) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1217,7 +1217,7 @@ TEST_F(MindDataTestPipeline, TestRepeatOne) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1256,7 +1256,7 @@ TEST_F(MindDataTestPipeline, TestRepeatFail1) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1276,7 +1276,7 @@ TEST_F(MindDataTestPipeline, TestRepeatFail2) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1295,7 +1295,7 @@ TEST_F(MindDataTestPipeline, TestShuffleDataset) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Shuffle operation on ds
@@ -1341,7 +1341,7 @@ TEST_F(MindDataTestPipeline, TestSkipDataset) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Skip operation on ds
@@ -1379,7 +1379,7 @@ TEST_F(MindDataTestPipeline, TestSkipTakeRepeat) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 6));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 6));
 
   // Create a Skip operation on ds
   int32_t count = 0;
@@ -1424,7 +1424,7 @@ TEST_F(MindDataTestPipeline, TestSkipGetDatasetSize) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Skip operation on ds
@@ -1440,7 +1440,7 @@ TEST_F(MindDataTestPipeline, TestSkipDatasetError1) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Skip operation on ds with invalid count input
@@ -1459,7 +1459,7 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetDefault) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 7));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 7));
   EXPECT_NE(ds, nullptr);
 
   // Create a Take operation on ds, default count = -1
@@ -1496,7 +1496,7 @@ TEST_F(MindDataTestPipeline, TestTakeGetDatasetSize) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 7));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 7));
   EXPECT_NE(ds, nullptr);
 
   // Create a Take operation on ds, default count = -1
@@ -1511,7 +1511,7 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetError1) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Take operation on ds with invalid count input
@@ -1540,7 +1540,7 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetNormal) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 8));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 8));
   EXPECT_NE(ds, nullptr);
 
   // Create a Take operation on ds
@@ -1577,7 +1577,7 @@ TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 20));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -1631,11 +1631,11 @@ TEST_F(MindDataTestPipeline, TestZipFail) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an ImageFolder Dataset
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds1, nullptr);
 
   // Create a Zip operation on the datasets
@@ -1659,7 +1659,7 @@ TEST_F(MindDataTestPipeline, TestZipFail2) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Zip operation on the datasets
@@ -1679,7 +1679,7 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Project operation on ds
@@ -1688,7 +1688,7 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create an ImageFolder Dataset
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds1, nullptr);
 
   // Create a Rename operation on ds (so that the 3 datasets we are going to zip have distinct column names)
@@ -1696,7 +1696,7 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   EXPECT_NE(ds1, nullptr);
 
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -1749,7 +1749,7 @@ TEST_F(MindDataTestPipeline, TestZipGetDatasetSize) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 2));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
   EXPECT_NE(ds, nullptr);
 
   // Create a Project operation on ds
@@ -1758,7 +1758,7 @@ TEST_F(MindDataTestPipeline, TestZipGetDatasetSize) {
   EXPECT_NE(ds, nullptr);
 
   // Create an ImageFolder Dataset
-  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, RandomSampler(false, 3));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 3));
   EXPECT_NE(ds1, nullptr);
 
   // Create a Rename operation on ds (so that the 3 datasets we are going to zip have distinct column names)
@@ -1766,7 +1766,7 @@ TEST_F(MindDataTestPipeline, TestZipGetDatasetSize) {
   EXPECT_NE(ds1, nullptr);
 
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 5));
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 5));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -1787,9 +1787,9 @@ TEST_F(MindDataTestPipeline, TestZipSuccess2) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 9));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 9));
   EXPECT_NE(ds, nullptr);
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds2, nullptr);
 
   // Create a Rename operation on ds (so that the 2 datasets we are going to zip have distinct column names)
@@ -1840,7 +1840,7 @@ TEST_F(MindDataTestPipeline, TestNumWorkersValidate) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, SequentialSampler(0, 1));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<SequentialSampler>(0, 1));
 
   // ds needs to be non nullptr otherwise, the subsequent logic will core dump
   ASSERT_NE(ds, nullptr);

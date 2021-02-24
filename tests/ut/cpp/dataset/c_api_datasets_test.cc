@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ TEST_F(MindDataTestPipeline, TestCelebADataset) {
 
   // Create a CelebA Dataset
   std::string folder_path = datasets_root_path_ + "/testCelebAData/";
-  std::shared_ptr<Dataset> ds = CelebA(folder_path, "all", SequentialSampler(0, 2), false, {});
+  std::shared_ptr<Dataset> ds = CelebA(folder_path, "all", std::make_shared<SequentialSampler>(0, 2), false, {});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -208,7 +208,7 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongExtensionFail) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 2), {".JGP"});
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2), {".JGP"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -260,7 +260,7 @@ TEST_F(MindDataTestPipeline, TestImageFolderFailWithWrongSamplerFail) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(-2, 5));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(-2, 5));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -274,7 +274,7 @@ TEST_F(MindDataTestPipeline, TestMnistGetDatasetSize) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 20));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
   EXPECT_NE(ds, nullptr);
   EXPECT_EQ(ds->GetDatasetSize(), 20);
 }
@@ -283,7 +283,7 @@ TEST_F(MindDataTestPipeline, TestMnistFailWithWrongDatasetDirFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMnistFailWithWrongDatasetDirFail.";
 
   // Create a Mnist Dataset
-  std::shared_ptr<Dataset> ds = Mnist("", "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Mnist("", "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -311,7 +311,7 @@ TEST_F(MindDataTestPipeline, TestImageFolderClassIndexDatasetSize) {
   std::map<std::string, int32_t> class_index;
   class_index["class1"] = 111;
   class_index["class2"] = 333;
-  auto ds = ImageFolder(folder_path, false, RandomSampler(), {}, class_index);
+  auto ds = ImageFolder(folder_path, false, std::make_shared<RandomSampler>(), {}, class_index);
   EXPECT_EQ(ds->GetNumClasses(), 2);
 }
 
@@ -320,6 +320,6 @@ TEST_F(MindDataTestPipeline, TestImageFolderClassIndexDatasetSizeFail) {
   std::map<std::string, int32_t> class_index;
   class_index["class1"] = 111;
   class_index["wrong class"] = 333;
-  auto ds = ImageFolder(folder_path, false, RandomSampler(), {}, class_index);
+  auto ds = ImageFolder(folder_path, false, std::make_shared<RandomSampler>(), {}, class_index);
   EXPECT_EQ(ds->GetNumClasses(), -1);
 }

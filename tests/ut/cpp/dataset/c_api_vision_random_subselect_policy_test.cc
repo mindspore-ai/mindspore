@@ -31,7 +31,7 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 7));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 7));
   EXPECT_NE(ds, nullptr);
 
   /* FIXME - Resolve RandomSelectSubpolicy to properly handle TensorTransform input

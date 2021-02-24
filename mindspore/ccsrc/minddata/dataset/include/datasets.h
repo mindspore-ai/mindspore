@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -585,7 +585,13 @@ class AlbumDataset : public Dataset {
  public:
   AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
                const std::vector<std::string> &column_names = {}, bool decode = false,
-               const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+               const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+               const std::shared_ptr<DatasetCache> &cache = nullptr);
+  AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
+               const std::vector<std::string> &column_names, bool decode, Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache = nullptr);
+  AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
+               const std::vector<std::string> &column_names, bool decode, const std::reference_wrapper<Sampler> sampler,
                const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~AlbumDataset() = default;
 };
@@ -597,20 +603,53 @@ class AlbumDataset : public Dataset {
 /// \param[in] column_names Column names used to specify columns to load, if empty, will read all columns.
 ///     (default = {})
 /// \param[in] decode the option to decode the images in dataset (default = false)
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
                                     const std::vector<std::string> &column_names = {}, bool decode = false,
-                                    const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                    const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                    const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create an AlbumDataset
+/// \notes The generated dataset is specified through setting a schema
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] data_schema Path to dataset schema file
+/// \param[in] column_names Column names used to specify columns to load
+/// \param[in] decode the option to decode the images in dataset
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                    const std::vector<std::string> &column_names, bool decode, Sampler *sampler,
+                                    const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create an AlbumDataset
+/// \notes The generated dataset is specified through setting a schema
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] data_schema Path to dataset schema file
+/// \param[in] column_names Column names used to specify columns to load
+/// \param[in] decode the option to decode the images in dataset
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                    const std::vector<std::string> &column_names, bool decode,
+                                    const std::reference_wrapper<Sampler> sampler,
                                     const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 #ifndef ENABLE_ANDROID
 class CelebADataset : public Dataset {
  public:
   explicit CelebADataset(const std::string &dataset_dir, const std::string &usage = "all",
-                         const std::shared_ptr<SamplerObj> &sampler = RandomSampler(), bool decode = false,
+                         const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                         bool decode = false, const std::set<std::string> &extensions = {},
+                         const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit CelebADataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                         bool decode = false, const std::set<std::string> &extensions = {},
+                         const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit CelebADataset(const std::string &dataset_dir, const std::string &usage,
+                         const std::reference_wrapper<Sampler> sampler, bool decode = false,
                          const std::set<std::string> &extensions = {},
                          const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~CelebADataset() = default;
@@ -621,21 +660,54 @@ class CelebADataset : public Dataset {
 ///      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
 /// \param[in] dataset_dir Path to the root directory that contains the dataset.
 /// \param[in] usage One of "all", "train", "valid" or "test" (default = "all").
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] decode Decode the images after reading (default=false).
 /// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage = "all",
-                                      const std::shared_ptr<SamplerObj> &sampler = RandomSampler(), bool decode = false,
+                                      const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                      bool decode = false, const std::set<std::string> &extensions = {},
+                                      const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a CelebADataset
+/// \notes The generated dataset has two columns ['image', 'attr'].
+///      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage One of "all", "train", "valid" or "test"
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                      bool decode = false, const std::set<std::string> &extensions = {},
+                                      const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a CelebADataset
+/// \notes The generated dataset has two columns ['image', 'attr'].
+///      The type of the image tensor is uint8. The attr tensor is uint32 and one hot type.
+/// \param[in] dataset_dir Path to the root directory that contains the dataset.
+/// \param[in] usage One of "all", "train", "valid" or "test"
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] extensions Set of file extensions to be included in the dataset (default={}).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CelebADataset> CelebA(const std::string &dataset_dir, const std::string &usage,
+                                      const std::reference_wrapper<Sampler> sampler, bool decode = false,
                                       const std::set<std::string> &extensions = {},
                                       const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 class Cifar10Dataset : public Dataset {
  public:
   explicit Cifar10Dataset(const std::string &dataset_dir, const std::string &usage = "all",
-                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                          const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit Cifar10Dataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                          const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit Cifar10Dataset(const std::string &dataset_dir, const std::string &usage,
+                          const std::reference_wrapper<Sampler> sampler,
                           const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~Cifar10Dataset() = default;
 };
@@ -644,18 +716,43 @@ class Cifar10Dataset : public Dataset {
 /// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] usage of CIFAR10, can be "train", "test" or "all" (default = "all").
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage = "all",
-                                        const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                        const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                        const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a Cifar10 Dataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of CIFAR10, can be "train", "test" or "all"
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                        const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a Cifar10 Dataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of CIFAR10, can be "train", "test" or "all"
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar10Dataset> Cifar10(const std::string &dataset_dir, const std::string &usage,
+                                        const std::reference_wrapper<Sampler> sampler,
                                         const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 class Cifar100Dataset : public Dataset {
  public:
   explicit Cifar100Dataset(const std::string &dataset_dir, const std::string &usage = "all",
-                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit Cifar100Dataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit Cifar100Dataset(const std::string &dataset_dir, const std::string &usage,
+                           const std::reference_wrapper<Sampler> sampler,
                            const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~Cifar100Dataset() = default;
 };
@@ -664,12 +761,32 @@ class Cifar100Dataset : public Dataset {
 /// \notes The generated dataset has three columns ["image", "coarse_label", "fine_label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] usage of CIFAR100, can be "train", "test" or "all" (default = "all").
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage = "all",
-                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                          const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a Cifar100 Dataset
+/// \notes The generated dataset has three columns ["image", "coarse_label", "fine_label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of CIFAR100, can be "train", "test" or "all".
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                          const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a Cifar100 Dataset
+/// \notes The generated dataset has three columns ["image", "coarse_label", "fine_label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of CIFAR100, can be "train", "test" or "all".
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<Cifar100Dataset> Cifar100(const std::string &dataset_dir, const std::string &usage,
+                                          const std::reference_wrapper<Sampler> sampler,
                                           const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 class CLUEDataset : public Dataset {
@@ -707,7 +824,12 @@ std::shared_ptr<CLUEDataset> CLUE(const std::vector<std::string> &dataset_files,
 class CocoDataset : public Dataset {
  public:
   CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task = "Detection",
-              const bool &decode = false, const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+              const bool &decode = false, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+              const std::shared_ptr<DatasetCache> &cache = nullptr);
+  CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+              const bool &decode, Sampler *sampler, const std::shared_ptr<DatasetCache> &cache = nullptr);
+  CocoDataset(const std::string &dataset_dir, const std::string &annotation_file, const std::string &task,
+              const bool &decode, const std::reference_wrapper<Sampler> sampler,
               const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~CocoDataset() = default;
 };
@@ -725,13 +847,53 @@ class CocoDataset : public Dataset {
 /// \param[in] annotation_file Path to the annotation json
 /// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
 /// \param[in] decode Decode the images after reading
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
                                   const std::string &task = "Detection", const bool &decode = false,
-                                  const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                  const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a CocoDataset
+/// \notes The generated dataset has multi-columns :
+///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                  ['iscrowd', dtype=uint32]].
+///     - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd', dtype=uint32]].
+///     - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
+///                                 ['num_keypoints', dtype=uint32]].
+///     - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                 ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] annotation_file Path to the annotation json
+/// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
+/// \param[in] decode Decode the images after reading
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                                  const std::string &task, const bool &decode, Sampler *sampler,
+                                  const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a CocoDataset
+/// \notes The generated dataset has multi-columns :
+///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                  ['iscrowd', dtype=uint32]].
+///     - task='Stuff', column: [['image', dtype=uint8], ['segmentation',dtype=float32], ['iscrowd', dtype=uint32]].
+///     - task='Keypoint', column: [['image', dtype=uint8], ['keypoints', dtype=float32],
+///                                 ['num_keypoints', dtype=uint32]].
+///     - task='Panoptic', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['category_id', dtype=uint32],
+///                                 ['iscrowd', dtype=uint32], ['area', dtype=uitn32]].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] annotation_file Path to the annotation json
+/// \param[in] task Set the task type of reading coco data, now support 'Detection'/'Stuff'/'Panoptic'/'Keypoint'
+/// \param[in] decode Decode the images after reading
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<CocoDataset> Coco(const std::string &dataset_dir, const std::string &annotation_file,
+                                  const std::string &task, const bool &decode,
+                                  const std::reference_wrapper<Sampler> sampler,
                                   const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 class CSVDataset : public Dataset {
@@ -774,7 +936,16 @@ std::shared_ptr<CSVDataset> CSV(const std::vector<std::string> &dataset_files, c
 class ImageFolderDataset : public Dataset {
  public:
   explicit ImageFolderDataset(const std::string &dataset_dir, bool decode = false,
-                              const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                              const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                              const std::set<std::string> &extensions = {},
+                              const std::map<std::string, int32_t> &class_indexing = {},
+                              const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit ImageFolderDataset(const std::string &dataset_dir, bool decode, Sampler *sampler,
+                              const std::set<std::string> &extensions = {},
+                              const std::map<std::string, int32_t> &class_indexing = {},
+                              const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit ImageFolderDataset(const std::string &dataset_dir, bool decode,
+                              const std::reference_wrapper<Sampler> sampler,
                               const std::set<std::string> &extensions = {},
                               const std::map<std::string, int32_t> &class_indexing = {},
                               const std::shared_ptr<DatasetCache> &cache = nullptr);
@@ -787,14 +958,46 @@ class ImageFolderDataset : public Dataset {
 ///     The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] decode A flag to decode in ImageFolder
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] extensions File extensions to be read
 /// \param[in] class_indexing a class name to label map
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current ImageFolderDataset
-std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode = false,
-                                                const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+std::shared_ptr<ImageFolderDataset> ImageFolder(
+  const std::string &dataset_dir, bool decode = false,
+  const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+  const std::set<std::string> &extensions = {}, const std::map<std::string, int32_t> &class_indexing = {},
+  const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create an ImageFolderDataset
+/// \notes A source dataset that reads images from a tree of directories
+///     All images within one folder have the same label
+///     The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] decode A flag to decode in ImageFolder
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] extensions File extensions to be read
+/// \param[in] class_indexing a class name to label map
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current ImageFolderDataset
+std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode, Sampler *sampler,
+                                                const std::set<std::string> &extensions = {},
+                                                const std::map<std::string, int32_t> &class_indexing = {},
+                                                const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create an ImageFolderDataset
+/// \notes A source dataset that reads images from a tree of directories
+///     All images within one folder have the same label
+///     The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] decode A flag to decode in ImageFolder
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] extensions File extensions to be read
+/// \param[in] class_indexing a class name to label map
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current ImageFolderDataset
+std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, bool decode,
+                                                const std::reference_wrapper<Sampler> sampler,
                                                 const std::set<std::string> &extensions = {},
                                                 const std::map<std::string, int32_t> &class_indexing = {},
                                                 const std::shared_ptr<DatasetCache> &cache = nullptr);
@@ -802,7 +1005,14 @@ std::shared_ptr<ImageFolderDataset> ImageFolder(const std::string &dataset_dir, 
 class ManifestDataset : public Dataset {
  public:
   explicit ManifestDataset(const std::string &dataset_file, const std::string &usage = "train",
-                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                           const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit ManifestDataset(const std::string &dataset_file, const std::string &usage, Sampler *sampler,
+                           const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
+                           const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit ManifestDataset(const std::string &dataset_file, const std::string &usage,
+                           const std::reference_wrapper<Sampler> sampler,
                            const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
                            const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~ManifestDataset() = default;
@@ -812,7 +1022,8 @@ class ManifestDataset : public Dataset {
 /// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_file The dataset file to be read
 /// \param[in] usage Need "train", "eval" or "inference" data (default="train")
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] class_indexing A str-to-int mapping from label name to index (default={}, the folder
 ///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
@@ -820,19 +1031,56 @@ class ManifestDataset : public Dataset {
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current ManifestDataset
 std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage = "train",
-                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                          const std::map<std::string, int32_t> &class_indexing = {},
+                                          bool decode = false, const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a ManifestDataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_file The dataset file to be read
+/// \param[in] usage Need "train", "eval" or "inference" data
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] class_indexing A str-to-int mapping from label name to index (default={}, the folder
+///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current ManifestDataset
+std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage, Sampler *sampler,
+                                          const std::map<std::string, int32_t> &class_indexing = {},
+                                          bool decode = false, const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a ManifestDataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_file The dataset file to be read
+/// \param[in] usage Need "train", "eval" or "inference" data
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] class_indexing A str-to-int mapping from label name to index (default={}, the folder
+///     names will be sorted alphabetically and each class will be given a unique index starting from 0).
+/// \param[in] decode Decode the images after reading (default=false).
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current ManifestDataset
+std::shared_ptr<ManifestDataset> Manifest(const std::string &dataset_file, const std::string &usage,
+                                          const std::reference_wrapper<Sampler> sampler,
                                           const std::map<std::string, int32_t> &class_indexing = {},
                                           bool decode = false, const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 class MindDataDataset : public Dataset {
  public:
   explicit MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list = {},
-                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
                            nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+  explicit MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                           Sampler *sampler, nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+  explicit MindDataDataset(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                           const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample = nullptr,
+                           int64_t num_padded = 0);
   explicit MindDataDataset(const std::vector<std::string> &dataset_files,
                            const std::vector<std::string> &columns_list = {},
-                           const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
                            nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+  explicit MindDataDataset(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
+                           Sampler *sampler, nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+  explicit MindDataDataset(const std::vector<std::string> &dataset_files, const std::vector<std::string> &columns_list,
+                           const std::reference_wrapper<Sampler> sampler, nlohmann::json padded_sample = nullptr,
+                           int64_t num_padded = 0);
   ~MindDataDataset() = default;
 };
 
@@ -840,7 +1088,8 @@ class MindDataDataset : public Dataset {
 /// \param[in] dataset_file File name of one component of a mindrecord source. Other files with identical source
 ///     in the same path will be found and loaded automatically.
 /// \param[in] columns_list List of columns to be read (default={})
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()),
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
@@ -848,13 +1097,38 @@ class MindDataDataset : public Dataset {
 /// \return Shared pointer to the current MindDataDataset
 std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file,
                                           const std::vector<std::string> &columns_list = {},
-                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                          nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+/// \brief Function to create a MindDataDataset
+/// \param[in] dataset_file File name of one component of a mindrecord source. Other files with identical source
+///     in the same path will be found and loaded automatically.
+/// \param[in] columns_list List of columns to be read
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
+/// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
+/// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \return Shared pointer to the current MindDataDataset
+std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                          Sampler *sampler, nlohmann::json padded_sample = nullptr,
+                                          int64_t num_padded = 0);
+/// \brief Function to create a MindDataDataset
+/// \param[in] dataset_file File name of one component of a mindrecord source. Other files with identical source
+///     in the same path will be found and loaded automatically.
+/// \param[in] columns_list List of columns to be read
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
+/// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
+/// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \return Shared pointer to the current MindDataDataset
+std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file, const std::vector<std::string> &columns_list,
+                                          const std::reference_wrapper<Sampler> sampler,
                                           nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
 
 /// \brief Function to create a MindDataDataset
 /// \param[in] dataset_files List of dataset files to be read directly.
 /// \param[in] columns_list List of columns to be read (default={})
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler()),
 ///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
 /// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
@@ -862,14 +1136,42 @@ std::shared_ptr<MindDataDataset> MindData(const std::string &dataset_file,
 /// \return Shared pointer to the current MindDataDataset
 std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
                                           const std::vector<std::string> &columns_list = {},
-                                          const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                          const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                          nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+/// \brief Function to create a MindDataDataset
+/// \param[in] dataset_files List of dataset files to be read directly.
+/// \param[in] columns_list List of columns to be read
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
+/// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
+/// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \return Shared pointer to the current MindDataDataset
+std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
+                                          const std::vector<std::string> &columns_list, Sampler *sampler,
+                                          nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
+/// \brief Function to create a MindDataDataset
+/// \param[in] dataset_files List of dataset files to be read directly.
+/// \param[in] columns_list List of columns to be read
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+///     supported sampler list: SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler.
+/// \param[in] padded_sample Samples will be appended to dataset, where keys are the same as column_list.
+/// \param[in] num_padded Number of padding samples. Dataset size plus num_padded should be divisible by num_shards.
+/// \return Shared pointer to the current MindDataDataset
+std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> &dataset_files,
+                                          const std::vector<std::string> &columns_list,
+                                          const std::reference_wrapper<Sampler> sampler,
                                           nlohmann::json padded_sample = nullptr, int64_t num_padded = 0);
 #endif
 
 class MnistDataset : public Dataset {
  public:
   explicit MnistDataset(const std::string &dataset_dir, const std::string &usage = "all",
-                        const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                        const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                        const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit MnistDataset(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                        const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit MnistDataset(const std::string &dataset_dir, const std::string &usage,
+                        const std::reference_wrapper<Sampler> sampler,
                         const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~MnistDataset() = default;
 };
@@ -878,12 +1180,32 @@ class MnistDataset : public Dataset {
 /// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] usage of MNIST, can be "train", "test" or "all" (default = "all").
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MnistDataset
 std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
-                                    const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                    const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                    const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a MnistDataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of MNIST, can be "train", "test" or "all"
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current MnistDataset
+std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                    const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a MnistDataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of MNIST, can be "train", "test" or "all"
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current MnistDataset
+std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
+                                    const std::reference_wrapper<Sampler> sampler,
                                     const std::shared_ptr<DatasetCache> &cache = nullptr);
 #ifndef ENABLE_ANDROID
 /// \brief Function to create a ConcatDataset
@@ -909,8 +1231,6 @@ class RandomDataDataset : public Dataset {
 /// \param[in] total_rows Number of rows for the dataset to generate (default=0, number of rows is random)
 /// \param[in] schema SchemaObj to set column type, data type and data shape
 /// \param[in] columns_list List of columns to be read (default={}, read all columns)
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
-///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 template <typename T = std::shared_ptr<SchemaObj>>
@@ -1027,7 +1347,14 @@ class VOCDataset : public Dataset {
  public:
   explicit VOCDataset(const std::string &dataset_dir, const std::string &task = "Segmentation",
                       const std::string &usage = "train", const std::map<std::string, int32_t> &class_indexing = {},
-                      bool decode = false, const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                      bool decode = false, const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                      const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                      const std::map<std::string, int32_t> &class_indexing, bool decode, Sampler *sampler,
+                      const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit VOCDataset(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                      const std::map<std::string, int32_t> &class_indexing, bool decode,
+                      const std::reference_wrapper<Sampler> sampler,
                       const std::shared_ptr<DatasetCache> &cache = nullptr);
   ~VOCDataset() = default;
 };
@@ -1042,14 +1369,48 @@ class VOCDataset : public Dataset {
 /// \param[in] usage The type of data list text file to be read (default = "train").
 /// \param[in] class_indexing A str-to-int mapping from label name to index, only valid in "Detection" task
 /// \param[in] decode Decode the images after reading
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
 std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task = "Segmentation",
                                 const std::string &usage = "train",
                                 const std::map<std::string, int32_t> &class_indexing = {}, bool decode = false,
-                                const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
+                                const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a VOCDataset
+/// \notes The generated dataset has multi-columns :
+///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
+///                                  ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+///     - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
+/// \param[in] usage The type of data list text file to be read.
+/// \param[in] class_indexing A str-to-int mapping from label name to index, only valid in "Detection" task
+/// \param[in] decode Decode the images after reading
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                                const std::map<std::string, int32_t> &class_indexing, bool decode, Sampler *sampler,
+                                const std::shared_ptr<DatasetCache> &cache = nullptr);
+/// \brief Function to create a VOCDataset
+/// \notes The generated dataset has multi-columns :
+///     - task='Detection', column: [['image', dtype=uint8], ['bbox', dtype=float32], ['label', dtype=uint32],
+///                                  ['difficult', dtype=uint32], ['truncate', dtype=uint32]].
+///     - task='Segmentation', column: [['image', dtype=uint8], ['target',dtype=uint8]].
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] task Set the task type of reading voc data, now only support "Segmentation" or "Detection"
+/// \param[in] usage The type of data list text file to be read.
+/// \param[in] class_indexing A str-to-int mapping from label name to index, only valid in "Detection" task
+/// \param[in] decode Decode the images after reading
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::string &task, const std::string &usage,
+                                const std::map<std::string, int32_t> &class_indexing, bool decode,
+                                const std::reference_wrapper<Sampler> sampler,
                                 const std::shared_ptr<DatasetCache> &cache = nullptr);
 
 /// \brief Function the create a cache to be attached to a dataset

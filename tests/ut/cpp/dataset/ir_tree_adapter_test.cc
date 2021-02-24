@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", SequentialSampler(0, 4));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<SequentialSampler>(0, 4));
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Batch(2);
@@ -83,7 +83,7 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", SequentialSampler(0, 3));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Batch(2, false);
@@ -115,7 +115,7 @@ TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(0, 2));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(0, 2));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops

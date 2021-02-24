@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ TEST_F(MindDataTestPipeline, TestCifar10Dataset) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -64,8 +64,8 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetWithPipeline) {
 
   // Create two Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds1 = Cifar10(folder_path, "all", RandomSampler(false, 10));
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds1 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds1, nullptr);
   EXPECT_NE(ds2, nullptr);
 
@@ -168,7 +168,7 @@ TEST_F(MindDataTestPipeline, TestCifar100Dataset) {
 
   // Create a Cifar100 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
-  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -203,7 +203,7 @@ TEST_F(MindDataTestPipeline, TestCifar100Getters) {
 
   // Create a Cifar100 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
-  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   std::vector<std::string> column_names = {"image", "coarse_label", "fine_label"};
@@ -230,7 +230,7 @@ TEST_F(MindDataTestPipeline, TestCifar100DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar100DatasetFail.";
 
   // Create a Cifar100 Dataset
-  std::shared_ptr<Dataset> ds = Cifar100("", "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar100("", "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -243,7 +243,7 @@ TEST_F(MindDataTestPipeline, TestCifar10DatasetFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCifar10DatasetFail.";
 
   // Create a Cifar10 Dataset
-  std::shared_ptr<Dataset> ds = Cifar10("", "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10("", "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -299,7 +299,7 @@ TEST_F(MindDataTestPipeline, TestCifar100DatasetWithWrongSamplerFail) {
 
   // Create a Cifar100 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar100Data/";
-  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", RandomSampler(false, -10));
+  std::shared_ptr<Dataset> ds = Cifar100(folder_path, "all", std::make_shared<RandomSampler>(false, -10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset

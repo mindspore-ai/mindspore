@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,7 +182,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess5) {
   // Pass one mindrecord shard file to parse dataset info, and search for other mindrecord files with same dataset info,
   // thus all records in imagenet.mindrecord0 ~ imagenet.mindrecord3 will be read
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
-  std::shared_ptr<Dataset> ds = MindData(file_path1, {}, SequentialSampler(0, 3));
+  std::shared_ptr<Dataset> ds = MindData(file_path1, {}, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -223,26 +223,26 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
   std::vector<std::string> file_list = {file_path1};
 
   // Check sequential sampler, output number is 5
-  std::shared_ptr<Dataset> ds1 = MindData(file_list, {}, SequentialSampler(0, 10));
+  std::shared_ptr<Dataset> ds1 = MindData(file_list, {}, std::make_shared<SequentialSampler>(0, 10));
   EXPECT_NE(ds1, nullptr);
 
   // Check random sampler, output number is 5, same rows with file
-  std::shared_ptr<Dataset> ds2 = MindData(file_list, {}, RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds2 = MindData(file_list, {}, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds2, nullptr);
 
   // Check pk sampler, output number is 2, get 2 samples with label 0
-  std::shared_ptr<Dataset> ds3 = MindData(file_list, {}, PKSampler(2, false, 10));
+  std::shared_ptr<Dataset> ds3 = MindData(file_list, {}, std::make_shared<PKSampler>(2, false, 10));
   EXPECT_NE(ds3, nullptr);
 
   // Check distributed sampler, output number is 3, get 3 samples in shard 0
-  std::shared_ptr<Dataset> ds4 = MindData(file_list, {}, DistributedSampler(2, 0, false, 10));
+  std::shared_ptr<Dataset> ds4 = MindData(file_list, {}, std::make_shared<DistributedSampler>(2, 0, false, 10));
   EXPECT_NE(ds4, nullptr);
 
   // Check distributed sampler get 3 samples with indice 0, 1 ,2
-  std::shared_ptr<Dataset> ds5 = MindData(file_list, {}, SubsetRandomSampler({0, 1, 2}, 10));
+  std::shared_ptr<Dataset> ds5 = MindData(file_list, {}, new SubsetRandomSampler({0, 1, 2}, 10));
   EXPECT_NE(ds5, nullptr);
 
-  std::shared_ptr<Dataset> ds6 = MindData(file_list, {}, SubsetSampler({1, 2}, 10));
+  std::shared_ptr<Dataset> ds6 = MindData(file_list, {}, new SubsetSampler({1, 2}, 10));
   EXPECT_NE(ds5, nullptr);
 
   std::vector<std::shared_ptr<Dataset>> ds = {ds1, ds2, ds3, ds4, ds5, ds6};
@@ -283,7 +283,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
   // Pass a list of mindrecord file name, files in list will be read directly but not search for related files
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::vector<std::string> file_list = {file_path1};
-  std::shared_ptr<Dataset> ds = MindData(file_list, {"file_name", "label"}, SequentialSampler(), pad, 4);
+  std::shared_ptr<Dataset> ds = MindData(file_list, {"file_name", "label"}, std::make_shared<SequentialSampler>(), pad, 4);
   EXPECT_NE(ds, nullptr);
 
   // Create a Skip operation on ds, skip original data in mindrecord and get padded samples
@@ -332,7 +332,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
   // Pass a list of mindrecord file name, files in list will be read directly but not search for related files
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::vector<std::string> file_list = {file_path1};
-  std::shared_ptr<Dataset> ds = MindData(file_list, {"file_name", "label"}, SequentialSampler(), pad, 4);
+  std::shared_ptr<Dataset> ds = MindData(file_list, {"file_name", "label"}, std::make_shared<SequentialSampler>(), pad, 4);
   EXPECT_NE(ds, nullptr);
 
   std::vector<DataType> types = ds->GetOutputTypes();
@@ -400,12 +400,12 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
   // Pass a list of mindrecord file name, files in list will be read directly but not search for related files
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
   std::vector<std::string> file_list = {file_path1};
-  std::shared_ptr<Dataset> ds1 = MindData(file_list, {"file_name", "label"}, SequentialSampler(), pad, 4);
+  std::shared_ptr<Dataset> ds1 = MindData(file_list, {"file_name", "label"}, std::make_shared<SequentialSampler>(), pad, 4);
   EXPECT_NE(ds1, nullptr);
   ds1 = ds1->Skip(5);
   EXPECT_NE(ds1, nullptr);
 
-  std::shared_ptr<Dataset> ds2 = MindData(file_list, {"file_name", "label"}, SequentialSampler(), pad, 4);
+  std::shared_ptr<Dataset> ds2 = MindData(file_list, {"file_name", "label"}, std::make_shared<SequentialSampler>(), pad, 4);
   EXPECT_NE(ds2, nullptr);
   ds2 = ds2->Skip(5);
   EXPECT_NE(ds2, nullptr);
@@ -534,7 +534,7 @@ TEST_F(MindDataTestPipeline, TestMindDataFail3) {
 
   // Create a MindData Dataset with unsupported sampler
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
-  std::shared_ptr<Dataset> ds1 = MindData(file_path1, {}, WeightedRandomSampler({1, 1, 1, 1}));
+  std::shared_ptr<Dataset> ds1 = MindData(file_path1, {}, new WeightedRandomSampler({1, 1, 1, 1}));
   EXPECT_NE(ds1, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -558,7 +558,7 @@ TEST_F(MindDataTestPipeline, TestMindDataFail4) {
 
   // Create a MindData Dataset
   std::string file_path1 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
-  std::shared_ptr<Dataset> ds1 = MindData(file_path1, {}, RandomSampler(), nullptr, 2);
+  std::shared_ptr<Dataset> ds1 = MindData(file_path1, {}, std::make_shared<RandomSampler>(), nullptr, 2);
   EXPECT_NE(ds1, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -573,7 +573,7 @@ TEST_F(MindDataTestPipeline, TestMindDataFail4) {
 
   // Create a MindData Dataset
   std::string file_path2 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
-  std::shared_ptr<Dataset> ds2 = MindData(file_path2, {"label"}, RandomSampler(), pad, -2);
+  std::shared_ptr<Dataset> ds2 = MindData(file_path2, {"label"}, std::make_shared<RandomSampler>(), pad, -2);
   EXPECT_NE(ds2, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -583,7 +583,7 @@ TEST_F(MindDataTestPipeline, TestMindDataFail4) {
 
   // Create a MindData Dataset
   std::string file_path3 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
-  std::shared_ptr<Dataset> ds3 = MindData(file_path3, {}, RandomSampler(), pad, 1);
+  std::shared_ptr<Dataset> ds3 = MindData(file_path3, {}, std::make_shared<RandomSampler>(), pad, 1);
   EXPECT_NE(ds3, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -598,7 +598,7 @@ TEST_F(MindDataTestPipeline, TestMindDataFail4) {
 
   // Create a MindData Dataset
   std::string file_path4 = datasets_root_path_ + "/../mindrecord/testMindDataSet/testImageNetData/imagenet.mindrecord0";
-  std::shared_ptr<Dataset> ds4 = MindData(file_path4, {"file_name", "label"}, RandomSampler(), pad2, 1);
+  std::shared_ptr<Dataset> ds4 = MindData(file_path4, {"file_name", "label"}, std::make_shared<RandomSampler>(), pad2, 1);
   EXPECT_NE(ds4, nullptr);
 
   // Create an iterator over the result of the above dataset
