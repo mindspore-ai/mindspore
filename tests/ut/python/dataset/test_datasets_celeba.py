@@ -179,7 +179,7 @@ def test_celeba_sampler_exception():
             pass
         assert False
     except TypeError as e:
-        assert "Argument" in str(e)
+        assert "Unsupported sampler object of type (<class 'str'>)" in str(e)
 
 
 if __name__ == '__main__':

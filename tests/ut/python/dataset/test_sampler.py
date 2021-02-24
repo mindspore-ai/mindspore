@@ -274,6 +274,26 @@ def test_sampler_list():
 
     dataset_equal(data1, data21 + data22 + data23, 0)
 
+    data3 = ds.ImageFolderDataset("../data/dataset/testPK/data", sampler=1)
+    dataset_equal(data3, data21, 0)
+
+    def bad_pipeline(sampler, msg):
+        with pytest.raises(Exception) as info:
+            data1 = ds.ImageFolderDataset("../data/dataset/testPK/data", sampler=sampler)
+            for _ in data1:
+                pass
+        assert msg in str(info.value)
+
+    bad_pipeline(sampler=[1.5, 7],
+                 msg="Type of indices element must be int, but got list[0]: 1.5, type: <class 'float'>")
+
+    bad_pipeline(sampler=["a", "b"],
+                 msg="Type of indices element must be int, but got list[0]: a, type: <class 'str'>.")
+    bad_pipeline(sampler="a", msg="Unsupported sampler object of type (<class 'str'>)")
+    bad_pipeline(sampler="", msg="Unsupported sampler object of type (<class 'str'>)")
+    bad_pipeline(sampler=np.array([1, 2]),
+                 msg="Type of indices element must be int, but got list[0]: 1, type: <class 'numpy.int64'>.")
+
 
 if __name__ == '__main__':
     test_sequential_sampler(True)
