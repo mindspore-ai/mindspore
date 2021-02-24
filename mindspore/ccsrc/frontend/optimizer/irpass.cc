@@ -72,7 +72,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // ops eliminate
   item_tuple_or_list_eliminate_ = MakeSubstitution(
-    std::make_shared<ItemTupleOrListEliminater>(), "item_tuple_or_list_eliminate",
+    std::make_shared<ItemTupleOrListEliminator>(), "item_tuple_or_list_eliminate",
     {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});
   tile_eliminate_ = MakeSubstitution(std::make_shared<TileEliminater>(), "tile_eliminate", prim::kPrimTile);
   cast_eliminate_ = MakeSubstitution(std::make_shared<CastEliminater>(), "cast_eliminate", prim::kPrimCast);
