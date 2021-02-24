@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -28,7 +29,7 @@ init()
 rank = get_rank()
 size = get_group_size()
 x = np.ones([3, 1, 3, 3]).astype(np.float32) * 0.01 * (rank + 1)
-
+y = np.ones([3, 4, 6, 3]).astype(np.float32) * 0.01 * (rank + 1)
 
 class Net(nn.Cell):
     def __init__(self):
@@ -92,9 +93,9 @@ class Net2(nn.Cell):
 
     def construct(self):
         x_ = self.all_reduce1(self.x1)
-        y = self.all_reduce2(x_)
-        z = self.all_reduce3(y)
-        return (x_, y, z)
+        y_ = self.all_reduce2(x_)
+        z_ = self.all_reduce3(y_)
+        return (x_, y_, z_)
 
 
 def test_AllReduce2():
@@ -121,3 +122,43 @@ def test_AllReduce2():
     error2 = np.ones(shape=expect2.shape) * 1.0e-5
     assert np.all(diff2 < error2)
     assert output[2].shape == expect2.shape
+
+
+class DynamicAllReduceNet(nn.Cell):
+    def __init__(self):
+        super(DynamicAllReduceNet, self).__init__()
+        self.op = "sum"
+        self.all_reduce = P.AllReduce(self.op, group=NCCL_WORLD_COMM_GROUP)
+        self.d = inner.GpuConvertToDynamicShape()
+
+    def construct(self, input_x):
+        out = self.d(input_x)
+        out = self.all_reduce(out)
+        return out
+
+
+def test_all_reduce_dynamic():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    input1 = Tensor(x)
+    input2 = Tensor(y)
+    net = DynamicAllReduceNet()
+
+    output1 = net(input1)
+    expect1 = np.ones([3, 1, 3, 3]).astype(np.float32) * 0
+    for i in range(size):
+        part = np.ones([3, 1, 3, 3]).astype(np.float32) * 0.01 * (i + 1)
+        expect1 += part
+    diff1 = abs(output1.asnumpy() - expect1)
+    error1 = np.ones(shape=expect1.shape) * 1.0e-5
+    assert np.all(diff1 < error1)
+    assert output1.shape == expect1.shape
+
+    output2 = net(input2)
+    expect2 = np.ones([3, 4, 6, 3]).astype(np.float32) * 0
+    for i in range(size):
+        part = np.ones([3, 4, 6, 3]).astype(np.float32) * 0.01 * (i + 1)
+        expect2 += part
+    diff2 = abs(output2.asnumpy() - expect2)
+    error2 = np.ones(shape=expect2.shape) * 1.0e-5
+    assert np.all(diff2 < error2)
+    assert output2.shape == expect2.shape
