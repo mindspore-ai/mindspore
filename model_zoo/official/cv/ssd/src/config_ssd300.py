@@ -50,6 +50,7 @@ config = ed({
 
     # `mindrecord_dir` and `coco_root` are better to use absolute path.
     "feature_extractor_base_param": "",
+    "checkpoint_filter_list": ['multi_loc_layers', 'multi_cls_layers'],
     "mindrecord_dir": "/data/MindRecord_COCO",
     "coco_root": "/data/coco2017",
     "train_data_type": "train2017",

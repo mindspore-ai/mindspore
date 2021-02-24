@@ -29,7 +29,7 @@ from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2, 
 from src.config import config
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.lr_schedule import get_lr
-from src.init_params import init_net_param, filter_checkpoint_parameter
+from src.init_params import init_net_param, filter_checkpoint_parameter_by_list
 
 set_seed(1)
 
@@ -45,7 +45,7 @@ def get_args():
     parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
     parser.add_argument("--lr", type=float, default=0.05, help="Learning rate, default is 0.05.")
     parser.add_argument("--mode", type=str, default="sink", help="Run sink mode or not, default is sink.")
-    parser.add_argument("--dataset", type=str, default="coco", help="Dataset, defalut is coco.")
+    parser.add_argument("--dataset", type=str, default="coco", help="Dataset, default is coco.")
     parser.add_argument("--epoch_size", type=int, default=500, help="Epoch size, default is 500.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size, default is 32.")
     parser.add_argument("--pre_trained", type=str, default=None, help="Pretrained Checkpoint file path.")
@@ -122,8 +122,8 @@ def main():
     if args_opt.pre_trained:
         param_dict = load_checkpoint(args_opt.pre_trained)
         if args_opt.filter_weight:
-            filter_checkpoint_parameter(param_dict)
-        load_param_into_net(net, param_dict)
+            filter_checkpoint_parameter_by_list(param_dict, config.checkpoint_filter_list)
+        load_param_into_net(net, param_dict, True)
 
     if args_opt.freeze_layer == "backbone":
         for param in backbone.feature_1.trainable_params():
