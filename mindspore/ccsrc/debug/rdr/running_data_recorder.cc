@@ -75,9 +75,9 @@ bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
 
 #ifdef __linux__
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
-                    const std::string &file_type, int graph_id) {
+                    const std::string &file_type) {
   std::string submodule_name = std::string(GetSubModuleName(module));
-  GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, tag, graph, file_type, graph_id);
+  GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, tag, graph, file_type);
   graph_recorder->SetDumpFlag(full_name);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_recorder));
   return ans;
@@ -115,7 +115,7 @@ void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
 
 #else
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
-                    const std::string &file_type, int graph_id) {
+                    const std::string &file_type) {
   static bool already_printed = false;
   std::string submodule_name = std::string(GetSubModuleName(module));
   if (already_printed) {

@@ -37,7 +37,7 @@ using TaskDebugInfoPtr = std::shared_ptr<device::ascend::tasksink::TaskDebugInfo
 #endif  // ENABLE_D
 namespace RDR {
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
-                    const std::string &file_type = ".ir;.pb;.dat", int graph_id = -1);
+                    const std::string &file_type = ".ir;.pb;.dat");
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
                           const std::vector<CNodePtr> &final_exec_order, int graph_id = 0);
 bool RecordString(SubModuleId module, const std::string &tag, const std::string &data,

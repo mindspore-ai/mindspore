@@ -16,6 +16,7 @@
 #include "debug/rdr/graph_recorder.h"
 #include "mindspore/core/base/base.h"
 #include "mindspore/core/ir/func_graph.h"
+#include "backend/session/kernel_graph.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/anf_ir_utils.h"
@@ -57,16 +58,17 @@ void DumpIRProto(const std::string &, const FuncGraphPtr &) {
 
 void GraphRecorder::Export() {
   bool save_flag = false;
-
-  auto tmp_realpath = GetFileRealPath();
+  int graph_id = -1;
+  if (func_graph_->isa<session::KernelGraph>()) {
+    auto kernel_graph = func_graph_->cast<KernelGraphPtr>();
+    graph_id = kernel_graph->graph_id();
+  }
+  std::string suffix = graph_id >= 0 ? std::to_string(graph_id) : "";
+  auto tmp_realpath = GetFileRealPath(suffix);
   if (!tmp_realpath.has_value()) {
     return;
   }
-
   std::string realpath = tmp_realpath.value();
-  if (graph_id_ >= 0) {
-    realpath += "_" + std::to_string(graph_id_);
-  }
   if (graph_type_.find(".dat") != std::string::npos) {
     save_flag = true;
     AnfExporter exporter("");
@@ -81,7 +83,7 @@ void GraphRecorder::Export() {
     if (full_name_) {
       DumpIRForRDR(realpath_ir, func_graph_, true, kTopStack);
     } else {
-      DumpIRForRDR(realpath_ir, func_graph_, false, kOff);
+      DumpIRForRDR(realpath_ir, func_graph_, false, kWholeStack);
     }
   }
   if (graph_type_.find(".pb") != std::string::npos) {
