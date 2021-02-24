@@ -106,7 +106,7 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
         body_to_cond_inputs.emplace_back(body_output_cnode->input(i));
       }
     } else {
-      body_to_cond_inputs.emplace_back(body_output_cnode->input(1));
+      body_to_cond_inputs.emplace_back(body_output_cnode);
     }
 
     // concat body to cond
@@ -141,9 +141,9 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
 
     // create cond partial cnode
     auto manager = graph->manager();
-    auto node_users = manager->node_users()[while_cnode];
-    for (auto &node_user : node_users) {
-      manager->SetEdge(node_user.first, node_user.second, switch_cnode);
+    if (!manager->Replace(while_cnode, switch_cnode)) {
+      MS_LOG(ERROR) << "replace node failed.";
+      return false;
     }
   }
   return true;

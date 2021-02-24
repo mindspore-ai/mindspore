@@ -204,17 +204,14 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeOutput() {
 }
 
 STATUS FunctionalizeWhile::UpdateExitNodeUser() {
+  auto manager = fg_->manager();
   if (output_exit_nodes_.size() == 1) {
-    auto manager = fg_->manager();
-    auto node_users = manager->node_users()[output_exit_nodes_[0]];
-    for (auto &node_user : node_users) {
-      if (fg_->nodes().contains(node_user.first)) {
-        manager->SetEdge(node_user.first, node_user.second, while_node_);
-      }
+    if (!manager->Replace(output_exit_nodes_[0], while_node_)) {
+      MS_LOG(ERROR) << "replace node failed.";
+      return RET_ERROR;
     }
   } else {
     for (auto &node : output_exit_nodes_) {
-      auto manager = fg_->manager();
       auto node_users = manager->node_users()[node];
       for (auto &node_user : node_users) {
         // new getitem
@@ -245,7 +242,10 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
         get_item_node->set_fullname_with_scope(output_item_name);
         // set
         if (fg_->nodes().contains(node_user.first)) {
-          manager->SetEdge(node_user.first, node_user.second, get_item_node);
+          if (!manager->Replace(output_exit_nodes_[0], while_node_)) {
+            MS_LOG(ERROR) << "replace node failed.";
+            return RET_ERROR;
+          }
         }
       }
     }
