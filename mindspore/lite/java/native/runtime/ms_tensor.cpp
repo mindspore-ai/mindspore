@@ -15,6 +15,7 @@
  */
 
 #include <jni.h>
+#include <cstring>
 #include "common/ms_log.h"
 #include "include/ms_tensor.h"
 #include "ir/dtype/type_id.h"
@@ -34,8 +35,8 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getShape
   for (size_t i = 0; i < shape_size; i++) {
     tmp[i] = local_shape.at(i);
   }
-  delete[](tmp);
   env->SetIntArrayRegion(shape, 0, shape_size, tmp);
+  delete[](tmp);
   return shape;
 }
 
@@ -181,14 +182,12 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setData(J
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setByteBufferData(JNIEnv *env, jobject thiz,
                                                                                          jlong tensor_ptr,
                                                                                          jobject buffer) {
-  jbyte *p_data = reinterpret_cast<jbyte *>(env->GetDirectBufferAddress(buffer));  // get buffer poiter
+  auto *p_data = reinterpret_cast<jbyte *>(env->GetDirectBufferAddress(buffer));  // get buffer pointer
   jlong data_len = env->GetDirectBufferCapacity(buffer);                           // get buffer capacity
   if (p_data == nullptr) {
     MS_LOGE("GetDirectBufferAddress return null");
     return false;
   }
-  jbyteArray data = env->NewByteArray(data_len);       // create byte[]
-  env->SetByteArrayRegion(data, 0, data_len, p_data);  // copy data to byte[]
 
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
@@ -205,11 +204,8 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setByteBu
 #endif
     return static_cast<jboolean>(false);
   }
-  jboolean is_copy = false;
-  auto *data_arr = env->GetByteArrayElements(data, &is_copy);
   auto *local_data = ms_tensor_ptr->MutableData();
-  memcpy(local_data, data_arr, data_len);
-  env->ReleaseByteArrayElements(data, data_arr, JNI_ABORT);
+  memcpy(local_data, p_data, data_len);
   return static_cast<jboolean>(true);
 }
 

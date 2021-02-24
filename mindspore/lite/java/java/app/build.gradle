@@ -9,17 +9,6 @@ android {
         targetSdkVersion 30
         versionCode 1
         versionName project.hasProperty("LITE_VERSION") ? LITE_VERSION : ""
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++17"
-            }
-        }
-        ndk {
-            abiFilters 'arm64-v8a'
-            abiFilters 'armeabi-v7a'
-        }
     }
 
     buildTypes {
@@ -45,7 +34,6 @@ android {
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    testImplementation 'junit:junit:4.12'
 }
 
 publishing {

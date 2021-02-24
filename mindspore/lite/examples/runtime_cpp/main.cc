@@ -167,7 +167,7 @@ int GetInputsAndSetData(mindspore::session::LiteSession *session) {
 }
 
 int GetInputsByTensorNameAndSetData(mindspore::session::LiteSession *session) {
-  auto in_tensor = session->GetInputsByTensorName("2029_2028_1_construct_wrapper:x");
+  auto in_tensor = session->GetInputsByTensorName("2031_2030_1_construct_wrapper:x");
   if (in_tensor == nullptr) {
     std::cerr << "Input tensor is nullptr" << std::endl;
     return -1;
@@ -183,7 +183,7 @@ int GetInputsByTensorNameAndSetData(mindspore::session::LiteSession *session) {
 
 void GetOutputsByNodeName(mindspore::session::LiteSession *session) {
   // model has a output node named output_node_name_0.
-  auto output_vec = session->GetOutputsByNodeName("Default/Sigmoid-op204");
+  auto output_vec = session->GetOutputsByNodeName("Default/head-MobileNetV2Head/Softmax-op204");
   // output node named output_node_name_0 has only one output tensor.
   auto out_tensor = output_vec.front();
   if (out_tensor == nullptr) {

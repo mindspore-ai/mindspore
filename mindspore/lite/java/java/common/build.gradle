@@ -1,0 +1,9 @@
+plugins {
+    id 'java'
+}
+
+archivesBaseName = 'mindspore-lite-java-common'
+
+repositories {
+    mavenCentral()
+}
