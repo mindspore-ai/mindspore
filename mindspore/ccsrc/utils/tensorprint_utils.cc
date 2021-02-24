@@ -35,24 +35,24 @@ const char kShapeSeperator[] = ",";
 const char kShapeScalar[] = "[0]";
 const char kShapeNone[] = "[]";
 static std::map<std::string, TypeId> print_type_map = {
-  {"int8_t", TypeId::kNumberTypeInt8},     {"uint8_t", TypeId::kNumberTypeUInt8},
-  {"int16_t", TypeId::kNumberTypeInt16},   {"uint16_t", TypeId::kNumberTypeUInt16},
-  {"int32_t", TypeId::kNumberTypeInt32},   {"uint32_t", TypeId::kNumberTypeUInt32},
-  {"int64_t", TypeId::kNumberTypeInt64},   {"uint64_t", TypeId::kNumberTypeUInt64},
-  {"float16", TypeId::kNumberTypeFloat16}, {"float", TypeId::kNumberTypeFloat32},
-  {"double", TypeId::kNumberTypeFloat64},  {"bool", TypeId::kNumberTypeBool}};
+  {"int8", TypeId::kNumberTypeInt8},        {"uint8", TypeId::kNumberTypeUInt8},
+  {"int16", TypeId::kNumberTypeInt16},      {"uint16", TypeId::kNumberTypeUInt16},
+  {"int32", TypeId::kNumberTypeInt32},      {"uint32", TypeId::kNumberTypeUInt32},
+  {"int64", TypeId::kNumberTypeInt64},      {"uint64", TypeId::kNumberTypeUInt64},
+  {"bfloat16", TypeId::kNumberTypeFloat16}, {"float", TypeId::kNumberTypeFloat32},
+  {"double", TypeId::kNumberTypeFloat64},   {"bool", TypeId::kNumberTypeBool}};
 
 static std::map<std::string, size_t> type_size_map = {
-  {"int8_t", sizeof(int8_t)},     {"uint8_t", sizeof(uint8_t)},   {"int16_t", sizeof(int16_t)},
-  {"uint16_t", sizeof(uint16_t)}, {"int32_t", sizeof(int32_t)},   {"uint32_t", sizeof(uint32_t)},
-  {"int64_t", sizeof(int64_t)},   {"uint64_t", sizeof(uint64_t)}, {"float16", sizeof(float) / 2},
-  {"float", sizeof(float)},       {"double", sizeof(double)},     {"bool", sizeof(bool)}};
+  {"int8", sizeof(int8_t)},     {"uint8", sizeof(uint8_t)},   {"int16", sizeof(int16_t)},
+  {"uint16", sizeof(uint16_t)}, {"int32", sizeof(int32_t)},   {"uint32", sizeof(uint32_t)},
+  {"int64", sizeof(int64_t)},   {"uint64", sizeof(uint64_t)}, {"bfloat16", sizeof(float) / 2},
+  {"float", sizeof(float)},     {"double", sizeof(double)},   {"bool", sizeof(bool)}};
 
 std::string GetParseType(const std::string &tensorType_) {
   static const std::map<std::string, std::string> print_parse_map = {
-    {"int8_t", "Int8"},     {"uint8_t", "Uint8"},   {"int16_t", "Int16"},  {"uint16_t", "Uint16"},
-    {"int32_t", "Int32"},   {"uint32_t", "Uint32"}, {"int64_t", "Int64"},  {"uint64_t", "Uint64"},
-    {"float16", "Float16"}, {"float", "Float32"},   {"double", "Float64"}, {"bool", "Bool"}};
+    {"int8", "Int8"},        {"uint8", "Uint8"},   {"int16", "Int16"},    {"uint16", "Uint16"},
+    {"int32", "Int32"},      {"uint32", "Uint32"}, {"int64", "Int64"},    {"uint64", "Uint64"},
+    {"bfloat16", "Float16"}, {"float", "Float32"}, {"double", "Float64"}, {"bool", "Bool"}};
   auto type_iter = print_parse_map.find(tensorType_);
   if (type_iter == print_parse_map.end()) {
     MS_LOG(EXCEPTION) << "type of tensor need to print is not support " << tensorType_;
