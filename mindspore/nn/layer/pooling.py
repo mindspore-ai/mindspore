@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ class MaxPool1d(_PoolNd):
         Tensor of shape :math:`(N, C, L_{out}))`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> max_pool = nn.MaxPool1d(kernel_size=3, stride=1)
@@ -312,7 +312,7 @@ class AvgPool1d(_PoolNd):
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> pool = nn.AvgPool1d(kernel_size=6, stride=1)

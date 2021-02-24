@@ -6820,6 +6820,14 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
         - **log_probability** (Tensor) - A tensor with shape of (`batch_size`, 1),
           containing sequence log-probability, has the same type as `inputs`.
 
+    Raises:
+        TypeError: If `merge_repeated` is not a bool.
+        ValueError: If length of shape of `inputs` is not equal to 3.
+        ValueError: If length of shape of `sequence_length` is not equal to 1.
+
+    Supported Platforms:
+        ``Ascend``
+
     Examples:
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)

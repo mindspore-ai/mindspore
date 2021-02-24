@@ -1007,6 +1007,7 @@ class MatrixSetDiag(Cell):
     Assume `x` has :math:`k+1` dimensions :math:`[I, J, K, ..., M, N]` and `diagonal` has :math:`k`
     dimensions :math:`[I, J, K, ..., min(M, N)]`. Then the output is a tensor of rank :math:`k+1` with dimensions
     :math:`[I, J, K, ..., M, N]` where:
+
     :math:`output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n]\ for\ m == n`
 
     :math:`output[i, j, k, ..., m, n] = x[i, j, k, ..., m, n]\ for\ m != n`

@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -198,6 +198,12 @@ class GradOperation(GradOperation_):
     Returns:
         The higher-order function which takes a function as argument and returns gradient function for it.
 
+    Raises:
+        TypeError: If `get_all`, `get_by_list` or `sens_param` is not a bool.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> from mindspore.common import ParameterTuple
         >>> class Net(nn.Cell):
@@ -377,7 +383,7 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
 
     MultitypeFuncGraph is a class used to generate overloaded functions, considering different types as inputs.
     Initialize an `MultitypeFuncGraph` object with name, and use `register` with input types as the decorator
-    for the function to be registed. And the object can be called with different types of inputs,
+    for the function to be registered. And the object can be called with different types of inputs,
     and work with `HyperMap` and `Map`.
 
     Args:
@@ -387,6 +393,9 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
 
     Raises:
         ValueError: If failed to find find a matching function for the given arguments.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # `add` is a metagraph object which will add two objects according to
@@ -478,6 +487,9 @@ class HyperMap(HyperMap_):
     Outputs:
         Sequence or nested sequence, the sequence of output after applying the function.
         e.g. `operation(args[0][i], args[1][i])`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import dtype as mstype
