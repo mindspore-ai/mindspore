@@ -215,7 +215,7 @@ char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
 }
 
 /**
- * To process the result of mindspore inference.
+ * To process the result of MindSpore inference.
  * @param msOutputs
  * @return
  */
@@ -363,7 +363,7 @@ Java_com_mindspore_classification_gallery_classify_TrackingMobile_loadModel(JNIE
     return (jlong) nullptr;
   }
 
-  // To create a mindspore network inference environment.
+  // To create a MindSpore network inference environment.
   void **labelEnv = new void *;
   MSNetWork *labelNet = new MSNetWork;
   *labelEnv = labelNet;
@@ -415,7 +415,7 @@ Java_com_mindspore_classification_gallery_classify_TrackingMobile_runNet(JNIEnv 
   inputDims.width = lite_norm_mat_cut.width_;
   inputDims.height = lite_norm_mat_cut.height_;
 
-  // Get the mindsore inference environment which created in loadModel().
+  // Get the MindSpore inference environment which created in loadModel().
   void **labelEnv = reinterpret_cast<void **>(netEnv);
   if (labelEnv == nullptr) {
     MS_PRINT("MindSpore error, labelEnv is a nullptr.");
@@ -451,7 +451,7 @@ Java_com_mindspore_classification_gallery_classify_TrackingMobile_runNet(JNIEnv 
   }
 
   /**
-   * Get the mindspore inference results.
+   * Get the MindSpore inference results.
    * Return the map of output node name and MindSpore Lite MSTensor.
    */
   auto names = mSession->GetOutputTensorNames();
