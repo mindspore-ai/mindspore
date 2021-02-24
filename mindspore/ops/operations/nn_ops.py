@@ -3725,14 +3725,14 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
 
     .. math::
         \ell(x, y) = \begin{cases}
-        L, & \text{if reduction} = \text{`none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
-            If "none", do not perform reduction. Default:`mean`.
+        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none'.
+            If 'none', do not perform reduction. Default:'mean'.
 
     Inputs:
         - **predict** (Tensor) - Input logits. Data type must be float16 or float32.
@@ -3745,7 +3745,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
           Data type must be float16 or float32.
 
     Outputs:
-        Scalar. If reduction is "none", it's a tensor with the same shape and type as input `predict`.
+        Scalar. If reduction is 'none', it's a tensor with the same shape and type as input `predict`.
 
     Raises:
         TypeError: If data type of any input is neither float16 nor float32.
@@ -3785,7 +3785,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         for i, v in enumerate(reversed_pos_shape):
             if v not in (reversed_target[i], 1):
                 raise ValueError(f"For {self.name}, shapes can not broadcast. "
-                                 f"predict: {tuple(predict)}, weight shape {tuple(weight)}.")
+                                 f"predict: {tuple(predict)}, weight shape {tuple(pos_weight)}.")
 
         if self.reduction in ('mean', 'sum'):
             shape = []

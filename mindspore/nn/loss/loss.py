@@ -834,14 +834,14 @@ class BCEWithLogitsLoss(_Loss):
 
     .. math::
         \ell(x, y) = \begin{cases}
-        L, & \text{if reduction} = \text{`none';}\\
-        \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
-            If "none", do not perform reduction. Default:`mean`.
+        reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none'.
+            If 'none', do not perform reduction. Default:'mean'.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             If not None, it must can be broadcast to a tensor with shape of `predict`,
             data type must be float16 or float32. Default: None.
@@ -854,7 +854,7 @@ class BCEWithLogitsLoss(_Loss):
         - **target** (Tensor) - Ground truth label. Has the same data type and shape with `predict`.
 
     Outputs:
-        Scalar. If reduction is "none", it's a tensor with the same shape and type as input `predict`.
+        Scalar. If reduction is 'none', it's a tensor with the same shape and type as input `predict`.
 
     Raises:
         TypeError: If data type of `predict` or `target` is neither float16 nor float32.
