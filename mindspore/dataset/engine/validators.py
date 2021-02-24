@@ -659,8 +659,6 @@ def check_filter(method):
         if not callable(predicate):
             raise TypeError("Predicate should be a Python function or a callable Python object.")
 
-        check_num_parallel_workers(num_parallel_workers)
-
         if num_parallel_workers is not None:
             check_num_parallel_workers(num_parallel_workers)
 
