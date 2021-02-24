@@ -81,7 +81,7 @@ private:
                                    FuncGraphPtr &bprop_fg, PrimBpropOptGraphInfoPtr &bprop_info);
 
   // converter tensor args to abs value;
-  void ArgsToAbs(const ValuePtrList &op_args, abstract::AbstractBasePtrList &abs_list);
+  void ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList &abs_list);
 
   // add out && dout to abs list
   void AddOutToAbsList(const ValuePtr &out, abstract::AbstractBasePtrList &abs_list);

@@ -62,16 +62,19 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   }
 
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(inputs[0]);
+  MS_LOG(WARNING) << "hash of prim " << prim->ToString() << " is:" << prim->hash();
 
   abstract::AbstractBasePtrList abs_list;
-  ArgsToAbs(op_args, abs_list);
+  ArgsToAbs(prim, op_args, abs_list);
 
   FuncGraphPtr ret_bprop_fg;
   PrimBpropOptGraphInfoPtr ret_bprop_info;
   ECacheQrtRes cache_res = GetOptBpfgFromCache(prim, abs_list, ret_bprop_fg, ret_bprop_info);
 
+  MS_LOG(WARNING) << "cache match result " << cache_res << ", prim: " << prim->ToString();
   if (cache_res == E_LEVEL_2) {
     FreeTensorValue(op_args, out, ret_bprop_info);
+    MS_LOG(WARNING)<< "cache level 2 matched, prim: " << prim->ToString();
     return ret_bprop_fg;
   }
 
@@ -122,6 +125,11 @@ FuncGraphPtr PrimBpropOptimizer::PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
 ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
                                                      const abstract::AbstractBasePtrList &abs_list,
                                                      FuncGraphPtr &bprop_fg, PrimBpropOptGraphInfoPtr &bprop_info) {
+  auto attrs_ = prim->attrs();
+  for (auto& item : attrs_){
+    MS_LOG(WARNING)<< "attr: " << item.first<<" value:"<<item.second->ToString();
+  }
+
   auto iter = prim_bprop_cache.find(prim);
   if (iter == prim_bprop_cache.end()) {
     return E_NOT_FOUND;
@@ -137,37 +145,36 @@ ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
   return E_LEVEL_2;
 }
 
-void PrimBpropOptimizer::ArgsToAbs(const ValuePtrList &op_args, abstract::AbstractBasePtrList &abs_list) {
-  for (auto &item : op_args) {
-    MS_EXCEPTION_IF_NULL(item);
-    auto abs = item->ToAbstract();
-    abs_list.emplace_back(abs);
+void PrimBpropOptimizer::ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_args,
+                                   abstract::AbstractBasePtrList &abs_list) {
+  auto const_input_index = prim->get_const_input_indexes();
+  bool have_const_input = !const_input_index.empty();
+  bool is_const_prim = prim->is_const_prim();
+  for (size_t i = 0; i < op_args.size(); ++i) {
+    bool is_const_input =
+      have_const_input && std::find(const_input_index.begin(), const_input_index.end(), i) != const_input_index.end();
+    auto &arg_value = op_args[i];
+    auto arg_abs = arg_value->ToAbstract();
+    if (!is_const_prim && !is_const_input) {
+      auto config = abstract::AbstractBase::kBroadenTensorOnly;
+      arg_abs = arg_abs->Broaden(config);
+      MS_LOG(DEBUG) << "Broaden for " << prim->ToString() << " " << config;
+    }
+    abs_list.emplace_back(arg_abs);
   }
 }
 
 void PrimBpropOptimizer::AddOutToAbsList(const ValuePtr &out, abstract::AbstractBasePtrList &abs_list) {
-  if (!out->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "Just suport tensor out now, tuple out need support later.";
+
+  if (!out->isa<tensor::Tensor>() && !out->isa<ValueTuple>()) {
+    MS_LOG(EXCEPTION) << "Out value not Tensor or Tuple, please check the input arguments.";
   }
 
-  auto tens = out->cast<tensor::TensorPtr>();
-  if (tens->is_parameter()) {
-    abs_list.emplace_back(out->ToAbstract());
-    abs_list.emplace_back(out->ToAbstract());
-  }
-
-  auto dtype = tens->Dtype();
-  if (!IsSubType(dtype, kNumber)) {
-    MS_LOG(EXCEPTION) << "Expect tensor type kNumber but got: " << dtype->ToString() << ".";
-  }
-  auto tensor_shape = tens->shape();
-  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dtype, tensor_shape);
-  std::string param_name("dout");
-  auto ref_key = std::make_shared<RefKey>(param_name);
-  auto abs_ref_key = ref_key->ToAbstract();
-  auto ref_out = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_tensor);
-  abs_list.emplace_back(ref_out);
-  abs_list.emplace_back(ref_out);
+  auto out_abs = out->ToAbstract();
+  auto config = abstract::AbstractBase::kBroadenTensorOnly;
+  out_abs = out_abs->Broaden(config);
+  abs_list.emplace_back(out_abs);
+  abs_list.emplace_back(out_abs);
 }
 
 FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
