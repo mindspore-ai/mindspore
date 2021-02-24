@@ -127,6 +127,8 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False,
                 continue
             if not greater_zero and item >= 0:
                 continue
+            _raise_message()
+
     if third_one:
         if ret_value[-3] != 1:
             _raise_message(third_one)

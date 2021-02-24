@@ -309,9 +309,11 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
 
     Inputs:
         - **x** (Tensor) - The input of the convolution, then the shape is :math:`(C_{out}, C_{in}, D_{in}, K_1, K_2)`.
+          Currently dout data type only support float16 and float32.
         - **dout** (Tensor) - The gradients w.r.t the output of the convolution. The shape conforms to the default
-          data_format :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
-        - **w_size** (Tensor) - A tuple describes the shape of the weight which conforms to the format
+          data_format :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Currently dout data type only support float16
+          and float32.
+        - **w_size** (tuple(int)) - A tuple describes the shape of the weight which conforms to the format
           :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
@@ -420,7 +422,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         out = {
             'value': None,
             'shape': w_size_v,
-            'dtype': mstype.float32,
+            'dtype': x['dtype'],
         }
         return out
 
