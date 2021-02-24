@@ -31,8 +31,7 @@ PrimBpropOptimizer::PrimBpropOptimizer() {
   prim_bprop_opt_manage = prim_bprop_opt_res->manager();
 }
 
-PrimBpropOptimizer::~PrimBpropOptimizer() {
-}
+PrimBpropOptimizer::~PrimBpropOptimizer() {}
 
 void PrimBpropOptimizer::Clear() {
   prim_bprop_cache.clear();
@@ -122,6 +121,20 @@ FuncGraphPtr PrimBpropOptimizer::PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
   return opt_bprop_fg;
 }
 
+FuncGraphPtr PrimBpropOptimizer::BpropGraphInlineOpt(const FuncGraphPtr &bprop_fg) {
+  MS_EXCEPTION_IF_NULL(bprop_fg);
+  auto bprop_graph_opt_res = std::make_shared<pipeline::Resource>();
+  auto bprop_graph_opt_manage = bprop_graph_opt_res->manager();
+  bprop_graph_opt_res->set_func_graph(bprop_fg);
+  bprop_graph_opt_manage->AddFuncGraph(bprop_fg);
+  auto after_inline_bg = BpropGraphInlineOptPass(bprop_graph_opt_res);
+  // Clear resource
+  bprop_graph_opt_manage->Clear();
+  bprop_graph_opt_res->Clean();
+
+  return after_inline_bg;
+}
+
 ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
                                                      const abstract::AbstractBasePtrList &abs_list,
                                                      FuncGraphPtr &bprop_fg, PrimBpropOptGraphInfoPtr &bprop_info) {
@@ -164,9 +177,8 @@ void PrimBpropOptimizer::ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_ar
   }
 }
 
-abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(
-  const ValuePtr &out, const abstract::AbstractBasePtrList &abs_list) {
-
+abstract::AbstractBasePtrList PrimBpropOptimizer::AddOutToAbsList(const ValuePtr &out,
+                                                                  const abstract::AbstractBasePtrList &abs_list) {
   if (!out->isa<tensor::Tensor>() && !out->isa<ValueTuple>()) {
     MS_LOG(EXCEPTION) << "Out value not Tensor or Tuple, please check the input arguments.";
   }

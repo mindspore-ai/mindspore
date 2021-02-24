@@ -20,6 +20,7 @@
 #include <string>
 #include <utility>
 #include "ir/anf.h"
+#include "pipeline/jit/prim_bprop_optimizer.h"
 #include "frontend/optimizer/ad/adjoint.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/kpynative.h"
@@ -28,6 +29,7 @@
 #include "utils/primitive_utils.h"
 #include "utils/ms_context.h"
 #include "utils/info.h"
+#include "debug/anf_ir_dump.h"
 #include "debug/trace.h"
 
 namespace mindspore {
@@ -47,7 +49,6 @@ class KPynativeCellImpl : public KPynativeCell {
   bool KPynativeWithBProp(const CNodePtr &c_node, const ValuePtrList &op_args, const ValuePtr &out,
                           const FuncGraphPtr &bprop_fg);
   FuncGraphPtr Finish(const AnfNodePtrList &weights, bool grad_inputs, bool grad_weights);
-  FuncGraphPtr bg() { return tape_; }
 
  private:
   FuncGraphPtr tape_;
@@ -64,11 +65,6 @@ using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
 KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs) {
   return std::make_shared<KPynativeCellImpl>(cell_inputs);
-}
-
-FuncGraphPtr GetPynativeBg(const KPynativeCellPtr &k_cell) {
-  auto k_cell_impl = std::dynamic_pointer_cast<KPynativeCellImpl>(k_cell);
-  return k_cell_impl->bg();
 }
 
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights, bool grad_inputs,
@@ -129,6 +125,11 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   }
   tr.Commit();
 
+  // Do inline opt for final bprop graph
+  DumpIR("before_final_inline.ir", tape_);
+  tape_ = pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphInlineOpt(tape_);
+  DumpIR("after_final_inline.ir", tape_);
+
   return tape_;
 }
 
@@ -172,7 +173,9 @@ bool KPynativeCellImpl::KPynativeWithBProp(const CNodePtr &c_node, const ValuePt
 
 FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
                                     const ValuePtr &out) {
-  return bprop_fg;
+  auto optimized_bprop_fg =
+    pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().OptimizeBPropFuncGraph(bprop_fg, c_node, op_args, out);
+  return optimized_bprop_fg;
 }
 
 bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app) {

@@ -116,20 +116,20 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
     irpass.bool_scalar_eliminate,
   });
 
-  OptPassGroupMap map({
-    {"ad_eliminate_",         pynative_eliminate_},
-    {"ad_resolver_prim",      resolver_prim},
-    {"ad_inline_",            inline_},
-    {"bool_scalar_eliminate", bool_scalar_eliminate},
-    {"ad_switch_simplify_",   switch_simplify_}});
+  OptPassGroupMap map({{"ad_eliminate_", pynative_eliminate_},
+                       {"ad_resolver_prim", resolver_prim},
+                       {"ad_inline_", inline_},
+                       {"bool_scalar_eliminate", bool_scalar_eliminate},
+                       {"ad_switch_simplify_", switch_simplify_}});
 
   auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", res, map);
   FuncGraphPtr func_graph = res->func_graph();
-  WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_1")) [&prim_bprop_opt_step_1, &func_graph]() {
+  WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_1"))[&prim_bprop_opt_step_1, &func_graph]() {
     func_graph = prim_bprop_opt_step_1->step(func_graph, true);
   };
   return func_graph;
 }
+
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res) {
   opt::OptPassConfig switch_simplify_ = opt::OptPassConfig({
     irpass.switch_simplify_,
@@ -142,17 +142,31 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
   auto re_auto_monadwrapper = [](const FuncGraphPtr &root, const opt::OptimizerPtr &) -> bool {
     return ReAutoMonad(root);
   };
-  OptPassGroupMap map({
-    {"ad_renormalize",      opt::OptPassConfig::Renormalize()},
-    {"ad_inline_",          inline_},
-    {"ad_switch_simplify_", switch_simplify_},
-    {"auto_monad_grad",     opt::OptPassConfig(re_auto_monadwrapper)}
-  });
+  OptPassGroupMap map({{"ad_renormalize", opt::OptPassConfig::Renormalize()},
+                       {"ad_inline_", inline_},
+                       {"ad_switch_simplify_", switch_simplify_},
+                       {"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)}});
 
   auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", res, map);
   FuncGraphPtr func_graph = res->func_graph();
   WITH(MsProfile::GetProfile()->Step("prim_bprop_opt_step_2"))[&prim_bprop_opt_step_2, &func_graph]() {
     func_graph = prim_bprop_opt_step_2->step(func_graph, true);
+  };
+  return func_graph;
+}
+
+FuncGraphPtr BpropGraphInlineOptPass(const ResourcePtr &res) {
+  opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig inline_ = opt::OptPassConfig({
+    irpass.inline_,
+  });
+
+  OptPassGroupMap map({{"ad_inline_", inline_}});
+
+  auto bprop_graph_inline_opt = opt::Optimizer::MakeOptimizer("bprop_graph_inline_opt", res, map);
+  FuncGraphPtr func_graph = res->func_graph();
+  WITH(MsProfile::GetProfile()->Step("bprop_graph_inline_opt"))[&bprop_graph_inline_opt, &func_graph]() {
+    func_graph = bprop_graph_inline_opt->step(func_graph, true);
   };
   return func_graph;
 }

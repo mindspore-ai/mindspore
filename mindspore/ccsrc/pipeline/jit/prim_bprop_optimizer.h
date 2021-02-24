@@ -31,7 +31,7 @@ using PrimBpropOptGraphInfoPtr = std::shared_ptr<PrimBpropOptGraphInfo>;
 using PrimBpropCache = std::unordered_map<PrimitivePtr, PrimBpropOptGraphInfoPtr, PrimitiveHasher, PrimitiveTotalEqual>;
 
 using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
-  abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+                                           abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
 struct PrimitiveTotalEqual {
   bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
@@ -41,9 +41,7 @@ struct PrimitiveTotalEqual {
   }
 };
 
-enum ECacheQrtRes {
-  E_NOT_FOUND, E_LEVEL_1, E_LEVEL_2
-};
+enum ECacheQrtRes { E_NOT_FOUND, E_LEVEL_1, E_LEVEL_2 };
 
 struct PrimBpropOptGraphInfo {
   // the opt funcgraph without infer, level1 cache
@@ -56,7 +54,7 @@ struct PrimBpropOptGraphInfo {
 };
 
 class PrimBpropOptimizer {
-public:
+ public:
   ~PrimBpropOptimizer();
 
   void Clear();
@@ -71,10 +69,13 @@ public:
   FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &c_node, const ValuePtrList &op_args,
                                       const ValuePtr &out);
 
+  // do inline opt for final bprop graph
+  FuncGraphPtr BpropGraphInlineOpt(const FuncGraphPtr &bprop_fg);
+
   // need ? how to shrink ?
   // void CacheShrink();
 
-private:
+ private:
   PrimBpropOptimizer();
 
   ECacheQrtRes GetOptBpfgFromCache(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
@@ -87,7 +88,7 @@ private:
   abstract::AbstractBasePtrList AddOutToAbsList(const ValuePtr &out, const abstract::AbstractBasePtrList &abs_list);
 
   // TODO: how To?
-  void FreeTensorValue(const ValuePtrList &op_args, const ValuePtr &out, PrimBpropOptGraphInfoPtr &bprop_info) {};
+  void FreeTensorValue(const ValuePtrList &op_args, const ValuePtr &out, PrimBpropOptGraphInfoPtr &bprop_info){};
 
   // do opt without input info, no infer
   FuncGraphPtr PrimBpropOptStep1(const FuncGraphPtr &bprop_fg);
@@ -97,7 +98,7 @@ private:
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
 
-private:
+ private:
   FuncGraphManagerPtr prim_bprop_opt_manage;
   ResourcePtr prim_bprop_opt_res;
   // cache optimized bprop graph

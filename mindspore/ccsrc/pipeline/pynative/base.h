@@ -51,7 +51,6 @@ enum RunOpArgsEnum { PY_PRIM = 0, PY_NAME, PY_INPUTS, PY_ARGS_NUM };
 
 struct OpExecInfo {
   std::string op_name;
-  std::string op_index;
   PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
 
