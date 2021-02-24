@@ -38,7 +38,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    datas = []
+    data = []
     with open(args.data_lst) as f:
         lines = f.readlines()
     if args.shuffle:
@@ -59,14 +59,14 @@ if __name__ == '__main__':
             sample_['data'] = f.read()
         with open(os.path.join(args.data_root, label_path), 'rb') as f:
             sample_['label'] = f.read()
-        datas.append(sample_)
+        data.append(sample_)
         cnt += 1
         if cnt % 1000 == 0:
-            writer.write_raw_data(datas)
+            writer.write_raw_data(data)
             print('number of samples written:', cnt)
-            datas = []
+            data = []
 
-    if datas:
-        writer.write_raw_data(datas)
+    if data:
+        writer.write_raw_data(data)
     writer.commit()
     print('number of samples written:', cnt)
