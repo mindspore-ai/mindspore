@@ -349,6 +349,7 @@ void Executor::WaitTaskGraphAvailable(const SessionPtr &session, const std::shar
     mindspore::ScopedLongRunning long_running;
     for (auto &tensor : task->input_tensors_) {
       if (tensor->NeedWait() && !tensor->IsGraphOutput()) {
+        MsException::Instance().CheckException();
         tensor->Wait();
       }
     }
