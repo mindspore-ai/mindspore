@@ -58,6 +58,8 @@ class TaskGenerator {
 
   bool GenTasks(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
                 uint32_t graph_id);
+  std::vector<TaskDebugInfoPtr> GetTaskDebugInfo() const { return task_debug_info_list_; }
+  static void DumpTaskInfo(const string &real_filename, const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 
  private:
   std::vector<TaskDebugInfoPtr> task_debug_info_list_;

@@ -9,6 +9,9 @@ set(_DEBUG_SRC_LIST
 )
 
 if(ENABLE_DUMP_IR)
+    if(ENABLE_D)
+        list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/rdr/task_debug_info_recorder.cc")
+    endif()
     list(APPEND _DEBUG_SRC_LIST
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/base_recorder.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_exec_order_recorder.cc"
@@ -29,7 +32,6 @@ if(ENABLE_DEBUGGER)
         "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
         )
 endif()
-
 if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/common.cc")
     list(APPEND _DEBUG_SRC_LIST "data_dump/dump_json_parser.cc")

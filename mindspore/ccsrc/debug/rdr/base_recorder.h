@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
 #define MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
-
 #include <memory>
 #include <string>
 #include <sstream>
@@ -75,7 +74,6 @@ class BaseRecorder {
   std::string filename_;
   std::string timestamp_;  // year,month,day,hour,minute,second
 };
-
 using BaseRecorderPtr = std::shared_ptr<BaseRecorder>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
