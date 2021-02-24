@@ -3105,8 +3105,14 @@ class LogicalNot(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, [mstype.bool_], self.name)
+        validator.check_tensor_dtype_valid("x", x_dtype, [mstype.bool_], self.name + " or '~' operator")
         return mstype.tensor_type(mstype.bool_)
+
+    def infer_value(self, x):
+        if x is not None:
+            x = x.asnumpy()
+            return Tensor(np.logical_not(x))
+        return None
 
 
 class LogicalAnd(_LogicBinaryOp):
@@ -3146,6 +3152,14 @@ class LogicalAnd(_LogicBinaryOp):
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.name)
 
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.logical_and(x, y))
+            return Tensor(out)
+        return None
+
 
 class LogicalOr(_LogicBinaryOp):
     """
@@ -3183,6 +3197,14 @@ class LogicalOr(_LogicBinaryOp):
 
     def infer_dtype(self, x_dtype, y_dtype):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, (mstype.bool_,), self.name)
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.logical_or(x, y))
+            return Tensor(out)
+        return None
 
 
 class IsNan(PrimitiveWithInfer):

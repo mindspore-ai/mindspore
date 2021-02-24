@@ -93,7 +93,7 @@ convert_object_map = {
     T.xor:          NO_IMPLEMENT,
     T.pos:          multitype_ops.uadd,
     T.neg:          multitype_ops.negative,
-    T.invert:       NO_IMPLEMENT,
+    T.invert:       F.logical_not,
     T.not_:         multitype_ops.logical_not,
     T.eq:           multitype_ops.equal,
     T.ne:           multitype_ops.not_equal,

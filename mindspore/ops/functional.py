@@ -223,6 +223,7 @@ tensor_operator_registry.register('__lt__', tensor_lt)
 tensor_operator_registry.register('__le__', tensor_le)
 tensor_operator_registry.register('__gt__', tensor_gt)
 tensor_operator_registry.register('__ge__', tensor_ge)
+tensor_operator_registry.register('__logical_not__', logical_not)
 tensor_operator_registry.register('shape', shape)
 tensor_operator_registry.register('squeeze', squeeze)
 # support GE backend for no compare operators
