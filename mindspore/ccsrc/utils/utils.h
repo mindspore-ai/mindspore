@@ -368,7 +368,6 @@ constexpr auto kAttrSize = "size";
 constexpr auto kAttrIsDynamicShape = "is_dynamic_shape";
 constexpr auto kAttrInputIsDynamicShape = "input_is_dynamic_shape";
 constexpr auto kAttrOutputIsDynamicShape = "output_is_dynamic_shape";
-constexpr auto kAttrDynamicShapeDepends = "dynamic_shape_depends";
 constexpr auto kAttrPynativeNextOpName = "next_op";
 constexpr auto kAttrPynativeNextIndex = "next_index";
 constexpr auto kAttrCompileInfo = "compile_info";

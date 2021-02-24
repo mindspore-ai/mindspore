@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace device {
-constexpr auto kDynamicShapeDepends = "dynamic_shape_depends";
 
 class DynamicKernel {
  public:
