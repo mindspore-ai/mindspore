@@ -33,15 +33,18 @@ class Execute {
  public:
   /// \brief Constructor
   // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
-  explicit Execute(std::shared_ptr<TensorOperation> op, std::string deviceType = "CPU");
-  explicit Execute(std::shared_ptr<TensorTransform> op, std::string deviceType = "CPU");
-  // explicit Execute(TensorTransform op, std::string deviceType = "CPU");
-  explicit Execute(TensorTransform *op, std::string deviceType = "CPU");
+  explicit Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  // explicit Execute(TensorTransform op, MapTargetDevice deviceType = MapTargetDevice::KCpu);
+  explicit Execute(TensorTransform *op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
 
-  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops, std::string deviceType = "CPU");
-  explicit Execute(std::vector<std::shared_ptr<TensorTransform>> ops, std::string deviceType = "CPU");
-  explicit Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, std::string deviceType = "CPU");
-  explicit Execute(std::vector<TensorTransform *> ops, std::string deviceType = "CPU");
+  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops,
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(std::vector<std::shared_ptr<TensorTransform>> ops,
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType = MapTargetDevice::kCpu);
 
   /// \brief Destructor
   ~Execute();
@@ -65,7 +68,7 @@ class Execute {
 
   std::vector<std::shared_ptr<TensorOperation>> ops_;
 
-  std::string device_type_;
+  MapTargetDevice device_type_;
 
   std::shared_ptr<DeviceResource> device_resource_;
 };

@@ -32,186 +32,67 @@ namespace dataset {
 // Transform operations for performing computer vision.
 namespace vision {
 
-// Char arrays storing name of corresponding classes (in alphabetical order)
-constexpr char kDvppCropJpegOperation[] = "DvppCropJpeg";
-constexpr char kDvppDecodeResizeOperation[] = "DvppDecodeResize";
-constexpr char kDvppDecodeResizeCropOperation[] = "DvppDecodeResizeCrop";
-constexpr char kDvppDecodeJpegOperation[] = "DvppDecodeJpeg";
-constexpr char kDvppDecodePngOperation[] = "DvppDecodePng";
-constexpr char kDvppResizeJpegOperation[] = "DvppResizeJpeg";
-
-class DvppCropJpegOperation;
 class DvppDecodeResizeOperation;
 class DvppDecodeResizeCropOperation;
-class DvppDecodeJpegOperation;
 class DvppDecodePngOperation;
-class DvppResizeJpegOperation;
 
-/// \brief Function to create a DvppCropJpeg TensorOperation.
-/// \notes Tensor operation to crop JPEG image using the simulation algorithm of Ascend series
-///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
-///     When training, the DVPP of the Ascend chip is not used,
-///     and the DVPP of the Ascend chip is used during inference,
-///     and the accuracy of inference is lower than the accuracy of training;
-///     and the input image size should be in range [32*32, 2048*2048].
-///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-/// \param[in] crop vector representing the output size of the final crop image.
-/// \param[in] size A vector representing the output size of the intermediate resized image.
-///     If size is a single value, the shape will be a square. If size has 2 values, it should be (height, width).
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DvppCropJpegOperation> DvppCropJpeg(std::vector<uint32_t> crop = {256, 256});
+/* ##################################### API class ###########################################*/
 
-/// \brief Function to create a DvppDecodeResizeJpeg TensorOperation.
-/// \notes Tensor operation to decode and resize JPEG image using the simulation algorithm of Ascend series
-///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
-///     When training, the DVPP of the Ascend chip is not used,
-///     and the DVPP of the Ascend chip is used during inference,
-///     and the accuracy of inference is lower than the accuracy of training;
-///     and the input image size should be in range [32*32, 2048*2048].
-///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-/// \param[in] crop vector representing the output size of the final crop image.
-/// \param[in] size A vector representing the output size of the intermediate resized image.
-///     If size is a single value, smaller edge of the image will be resized to this value with
-///     the same image aspect ratio. If size has 2 values, it should be (height, width).
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DvppDecodeResizeOperation> DvppDecodeResizeJpeg(std::vector<uint32_t> resize = {256, 256});
-
-/// \brief Function to create a DvppDecodeResizeCropJpeg TensorOperation.
-/// \notes Tensor operation to decode and resize JPEG image using the simulation algorithm of Ascend series
-///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
-///     When training, the DVPP of the Ascend chip is not used,
-///     and the DVPP of the Ascend chip is used during inference,
-///     and the accuracy of inference is lower than the accuracy of training;
-///     and the input image size should be in range [32*32, 2048*2048].
-///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-/// \param[in] crop vector representing the output size of the final crop image.
-/// \param[in] Resize vector representing the output size of the intermediate resized image.
-///     If size is a single value, smaller edge of the image will be resized to the value with
-///     the same image aspect ratio. If size has 2 values, it should be (height, width).
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DvppDecodeResizeCropOperation> DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop = {224, 224},
-                                                                        std::vector<uint32_t> resize = {256, 256});
-
-/// \brief Function to create a DvppDecodeJpeg TensorOperation.
-/// \notes Tensor operation to decode JPEG image using the simulation algorithm of Ascend series
-///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
-///     When training, the DVPP of the Ascend chip is not used,
-///     and the DVPP of the Ascend chip is used during inference,
-///     and the accuracy of inference is lower than the accuracy of training;
-///     and the input image size should be in range [32*32, 2048*2048].
-///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DvppDecodeJpegOperation> DvppDecodeJpeg();
-
-/// \brief Function to create a DvppDecodePng TensorOperation.
-/// \notes Tensor operation to decode PNG image using the simulation algorithm of Ascend series
-///     chip DVPP module. It is recommended to use this algorithm in the following scenarios:
-///     When training, the DVPP of the Ascend chip is not used,
-///     and the DVPP of the Ascend chip is used during inference,
-///     and the accuracy of inference is lower than the accuracy of training;
-///     and the input image size should be in range [32*32, 2048*2048].
-///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DvppDecodePngOperation> DvppDecodePng();
-
-/// \brief Function to create a DvppResizeJpeg TensorOperation.
-/// \notes Tensor operation to resize JPEG image using Ascend series chip DVPP module.
-///     It is recommended to use this algorithm in the following scenarios:
-///     When training, the DVPP of the Ascend chip is not used,
-///     and the DVPP of the Ascend chip is used during inference,
-///     and the accuracy of inference is lower than the accuracy of training;
-///     and the input image size should be in range [32*32, 2048*2048].
-///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-/// \param[in] resize vector represents the shape of image after resize.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DvppResizeJpegOperation> DvppResizeJpeg(std::vector<uint32_t> resize = {256, 256});
-
-class DvppCropJpegOperation : public TensorOperation {
+class DvppDecodeResizeJpeg : public TensorTransform {
  public:
-  explicit DvppCropJpegOperation(const std::vector<uint32_t> &resize);
+  /// \brief Constructor.
+  /// \param[in] resize A vector of int value for each dimension, w.r.t H,W order.
+  explicit DvppDecodeResizeJpeg(std::vector<uint32_t> resize);
 
-  ~DvppCropJpegOperation() = default;
+  /// \brief Destructor.
+  ~DvppDecodeResizeJpeg() = default;
 
-  std::shared_ptr<TensorOp> Build() override;
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDvppCropJpegOperation; }
-
- private:
-  std::vector<uint32_t> crop_;
-};
-
-class DvppDecodeResizeOperation : public TensorOperation {
- public:
-  explicit DvppDecodeResizeOperation(const std::vector<uint32_t> &resize);
-
-  ~DvppDecodeResizeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDvppDecodeResizeOperation; }
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
   std::vector<uint32_t> resize_;
 };
 
-class DvppDecodeResizeCropOperation : public TensorOperation {
+class DvppDecodeResizeCropJpeg : public TensorTransform {
  public:
-  explicit DvppDecodeResizeCropOperation(const std::vector<uint32_t> &crop, const std::vector<uint32_t> &resize);
+  /// \brief Constructor.
+  /// \param[in] crop A vector of int value for each dimension after final crop, w.r.t H,W order.
+  /// \param[in] resize A vector of int value for each dimension after resize, w.r.t H,W order.
+  explicit DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop, std::vector<uint32_t> resize);
 
-  ~DvppDecodeResizeCropOperation() = default;
+  /// \brief Destructor.
+  ~DvppDecodeResizeCropJpeg() = default;
 
-  std::shared_ptr<TensorOp> Build() override;
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDvppDecodeResizeCropOperation; }
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
   std::vector<uint32_t> crop_;
   std::vector<uint32_t> resize_;
 };
 
-class DvppDecodeJpegOperation : public TensorOperation {
+class DvppDecodePng : public TensorTransform {
  public:
-  ~DvppDecodeJpegOperation() = default;
+  /// \brief Constructor.
+  DvppDecodePng();
 
-  std::shared_ptr<TensorOp> Build() override;
+  /// \brief Destructor.
+  ~DvppDecodePng() = default;
 
-  Status ValidateParams() override;
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 
-  std::string Name() const override { return kDvppDecodeJpegOperation; }
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 };
 
-class DvppDecodePngOperation : public TensorOperation {
- public:
-  ~DvppDecodePngOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDvppDecodePngOperation; }
-};
-
-class DvppResizeJpegOperation : public TensorOperation {
- public:
-  explicit DvppResizeJpegOperation(const std::vector<uint32_t> &resize);
-
-  ~DvppResizeJpegOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDvppResizeJpegOperation; }
-
- private:
-  std::vector<uint32_t> resize_;
-};
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

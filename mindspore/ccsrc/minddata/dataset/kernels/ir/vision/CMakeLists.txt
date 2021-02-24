@@ -5,4 +5,10 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         vision_ir.cc
         )
 
+if(ENABLE_ACL)
+    set(DATASET_KERNELS_IR_VISION_SRC_FILES
+            ${DATASET_KERNELS_IR_VISION_SRC_FILES}
+            ascend_vision_ir.cc)
+endif()
+
 add_library(kernels-ir-vision OBJECT ${DATASET_KERNELS_IR_VISION_SRC_FILES})

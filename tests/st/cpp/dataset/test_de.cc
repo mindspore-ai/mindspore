@@ -73,14 +73,15 @@ TEST_F(TestDE, TestDvpp) {
   // Define dvpp transform
   std::vector<uint32_t> crop_paras = {224, 224};
   std::vector<uint32_t> resize_paras = {256, 256};
-  mindspore::dataset::Execute Transform(DvppDecodeResizeCropJpeg(crop_paras, resize_paras));
+  auto decode_resize_crop(new vision::DvppDecodeResizeCropJpeg(crop_paras, resize_paras));
+  mindspore::dataset::Execute Transform(decode_resize_crop, MapTargetDevice::kAscend310);
 
   // Apply transform on images
   Status rc = Transform(image, &image);
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(image.Shape().size(), 3);
+  ASSERT_EQ(image.Shape().size(), 2);
   int32_t real_h = 0;
   int32_t real_w = 0;
   int32_t remainder = crop_paras[crop_paras.size() - 1] % 16;
@@ -91,9 +92,9 @@ TEST_F(TestDE, TestDvpp) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
-  ASSERT_EQ(image.Shape()[0], real_h * real_w * 1.5);  // For image in YUV format, each pixel takes 1.5 byte
-  ASSERT_EQ(image.Shape()[1], 1);
-  ASSERT_EQ(image.Shape()[2], 1);
+  ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
+  ASSERT_EQ(image.Shape()[1], real_w);
+  ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
 #endif
 }
 
@@ -105,10 +106,13 @@ TEST_F(TestDE, TestDvppSinkMode) {
   auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define dvpp transform
-  std::vector<uint32_t> crop_paras = {224, 224};
-  std::vector<uint32_t> resize_paras = {256};
-  mindspore::dataset::Execute Transform({DvppDecodeJpeg(), DvppResizeJpeg(resize_paras), DvppCropJpeg(crop_paras)},
-                                        "Ascend310");
+  std::vector<int32_t> crop_paras = {224, 224};
+  std::vector<int32_t> resize_paras = {256};
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize(new vision::Resize(resize_paras));
+  std::shared_ptr<TensorTransform> centercrop(new vision::CenterCrop(crop_paras));
+  std::vector<std::shared_ptr<TensorTransform>> transforms = {decode, resize, centercrop};
+  mindspore::dataset::Execute Transform(transforms, MapTargetDevice::kAscend310);
 
   // Apply transform on images
   Status rc = Transform(image, &image);
@@ -140,9 +144,13 @@ TEST_F(TestDE, TestDvppDecodeResizeCrop) {
   auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define dvpp transform
-  std::vector<uint32_t> crop_paras = {416};
-  std::vector<uint32_t> resize_paras = {512};
-  mindspore::dataset::Execute Transform(DvppDecodeResizeCropJpeg(crop_paras, resize_paras), "Ascend310");
+  std::vector<int32_t> crop_paras = {416};
+  std::vector<int32_t> resize_paras = {512};
+  auto decode(new vision::Decode());
+  auto resize(new vision::Resize(resize_paras));
+  auto centercrop(new vision::CenterCrop(crop_paras));
+  std::vector<TensorTransform *> transforms = {decode, resize, centercrop};
+  mindspore::dataset::Execute Transform(transforms, MapTargetDevice::kAscend310);
 
   // Apply transform on images
   Status rc = Transform(image, &image);
