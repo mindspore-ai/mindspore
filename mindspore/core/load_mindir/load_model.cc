@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-#include "load_mindir/load_model.h"
+#include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <memory>
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 
+#include "load_mindir/load_model.h"
 #include "load_mindir/anf_model_parser.h"
 
 using std::string;
@@ -71,20 +76,106 @@ std::shared_ptr<std::vector<char>> ReadProtoFile(const std::string &file) {
   return buf;
 }
 
+bool get_all_files(const std::string &dir_in, std::vector<std::string> *files) {
+  if (dir_in.empty()) {
+    return false;
+  }
+  struct stat s;
+  stat(dir_in.c_str(), &s);
+  if (!S_ISDIR(s.st_mode)) {
+    return false;
+  }
+  DIR *open_dir = opendir(dir_in.c_str());
+  if (NULL == open_dir) {
+    std::exit(EXIT_FAILURE);
+  }
+  dirent *p = nullptr;
+  while ((p = readdir(open_dir)) != nullptr) {
+    struct stat st;
+    if (p->d_name[0] != '.') {
+      std::string name = dir_in + std::string("/") + std::string(p->d_name);
+      stat(name.c_str(), &st);
+      if (S_ISDIR(st.st_mode)) {
+        get_all_files(name, files);
+      } else if (S_ISREG(st.st_mode)) {
+        files->push_back(name);
+      }
+    }
+  }
+  closedir(open_dir);
+  return true;
+}
+
+int endsWith(string s, string sub) { return s.rfind(sub) == (s.length() - sub.length()) ? 1 : 0; }
+
 std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite) {
-  auto graphBuf = ReadProtoFile(file_name);
-  if (graphBuf == nullptr) {
-    MS_LOG(ERROR) << "Read Mind IR failed, file name is " << file_name.c_str();
+  const char *file_path = reinterpret_cast<const char *>(file_name.c_str());
+  char abs_path_buff[PATH_MAX];
+  char abs_path[PATH_MAX];
+
+  vector<string> files;
+
+#ifdef _WIN32
+  _fullpath(abs_path_buff, file_path, 1024);
+#else
+  if (!realpath(file_path, abs_path_buff)) {
+    MS_LOG(ERROR) << "Load MindIR get absolute path failed";
+  }
+#endif
+  // Read graph
+  std::fstream input_graph(abs_path_buff, std::ios::in | std::ios::binary);
+  mind_ir::ModelProto origin_model;
+
+  if (!input_graph || !origin_model.ParseFromIstream(&input_graph)) {
+    MS_LOG(ERROR) << "Load MindIR file failed.";
     return nullptr;
   }
 
-  try {
-    auto graph = ConvertStreamToFuncGraph(graphBuf->data(), graphBuf->size(), is_lite);
-    return graph;
-  } catch (std::exception &e) {
-    MS_LOG(ERROR) << "Load graph model failed, file name is " << file_name.c_str();
-    return nullptr;
+  // Load parameter into graph
+  if (endsWith(abs_path_buff, "_graph.mindir")) {
+    char *mindir_name, delimiter = '/';
+    mindir_name = strrchr(abs_path_buff, delimiter);
+    int path_len = strlen(abs_path_buff) - strlen(mindir_name) + 1;
+    memcpy(abs_path, abs_path_buff, path_len);
+    abs_path[path_len] = '\0';
+    snprintf(abs_path, sizeof(abs_path), "variables");
+    std::ifstream ifs(abs_path);
+    if (ifs.good()) {
+      MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";
+      string path = abs_path;
+      get_all_files(path, &files);
+    } else {
+      MS_LOG(ERROR) << "MindIR graph has not variable path. ";
+    }
+
+    int file_size = files.size();
+    mind_ir::GraphProto *mod_graph = origin_model.mutable_graph();
+    for (auto file_index = 0; file_index < file_size; file_index++) {
+      std::fstream input_param(files[file_index], std::ios::in | std::ios::binary);
+      mind_ir::GraphProto param_graph;
+      if (!input_param || !param_graph.ParseFromIstream(&input_param)) {
+        MS_LOG(ERROR) << "Load param proto file failed.";
+        return nullptr;
+      }
+
+      for (int param_index = 0; param_index < param_graph.parameter_size(); param_index++) {
+        mind_ir::TensorProto *param_proto = mod_graph->add_parameter();
+        param_proto->set_name(param_graph.parameter(param_index).name());
+        param_proto->set_data_type(param_graph.parameter(param_index).data_type());
+        param_proto->set_raw_data(param_graph.parameter(param_index).raw_data());
+        for (const auto &dim : param_graph.parameter(param_index).dims()) {
+          param_proto->add_dims(dim);
+        }
+      }
+    }
   }
+
+  MSANFModelParser model_parser;
+  if (is_lite) {
+    model_parser.SetLite();
+  }
+  FuncGraphPtr dstgraph_ptr = model_parser.Parse(origin_model);
+  return dstgraph_ptr;
 }
 
 std::shared_ptr<FuncGraph> ConvertStreamToFuncGraph(const char *buf, const size_t buf_size, bool is_lite) {

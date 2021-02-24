@@ -494,10 +494,11 @@ class _Executor:
 
         if graph is None:
             logger.error("%r graph compile failed.", phase)
-        if not do_convert:
-            return phase, True
 
         self._auto_parallel_process(obj, phase, is_sink_mode, auto_parallel_mode, *args)
+
+        if not do_convert:
+            return phase, True
 
         # the following GE init process is not needed when use vm or ms backend
         if enable_ge:
