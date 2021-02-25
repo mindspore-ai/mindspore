@@ -204,3 +204,17 @@ def test_multi_class_dice_loss_init_activation2():
         y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
         y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)
         loss(y_pred, y)
+
+
+def test_rmse_loss():
+    loss = nn.RMSELoss()
+    input_data = Tensor(np.array([[1, 2, 3], [2, 3, 2]]).astype(np.float32))
+    target_data = Tensor(np.array([[0, 0, 5], [1, 2, 3]]).astype(np.float32))
+    loss(input_data, target_data)
+
+
+def test_mae_loss():
+    loss = nn.MAELoss()
+    input_data = Tensor(np.array([[1, 2, 3], [2, 3, 2]]).astype(np.float32))
+    target_data = Tensor(np.array([[0, 0, 5], [1, 2, 3]]).astype(np.float32))
+    loss(input_data, target_data)
