@@ -55,6 +55,28 @@ class TestKPynative : public UT::Common {
     return g;
   }
 
+  // a = x * y
+  // b = stop_gradient(a)
+  // c = b * y
+  // return c
+  FuncGraphPtr BuildStopGradient(const std::string &testCase) {
+    auto g = std::make_shared<FuncGraph>();
+    auto x = g->add_parameter();
+    auto y = g->add_parameter();
+    x->set_abstract(BuildArg());
+    y->set_abstract(BuildArg());
+    auto a_node = g->NewCNode({NewValueNode(prim::GetPythonOps("tensor_mul", "mindspore.ops.functional")), x, y});
+    a_node->set_abstract(BuildArg());
+    auto b_node = g->NewCNode({NewValueNode(prim::kPrimStopGradient), a_node});
+    b_node->set_abstract(BuildArg());
+    auto c_node = g->NewCNode({NewValueNode(prim::GetPythonOps("tensor_mul", "mindspore.ops.functional")), b_node, y});
+    c_node->set_abstract(BuildArg());
+    auto d_node = g->NewCNode({NewValueNode(prim::GetPythonOps("tensor_mul", "mindspore.ops.functional")), a_node, c_node});
+    d_node->set_abstract(BuildArg());
+    g->set_output(d_node);
+    return g;
+  }
+
   FuncGraphPtr BuildBpropFuncGraph(const FuncGraphPtr &primal_fg) {
     auto k_pynative_cell = GradPynativeCellBegin(primal_fg->parameters());
     auto node_list = TopoSort(primal_fg->output());
@@ -74,9 +96,19 @@ class TestKPynative : public UT::Common {
   }
 };
 
-
 TEST_F(TestKPynative, test_simple_add) {
   auto primal_fg = BuildPrimalFuncGraph("test_simple_add");
+  resource->manager()->KeepRoots({primal_fg});
+  ExportIR(primal_fg->ToString() + ".dat", "", primal_fg);
+
+  auto bprop_fg = BuildBpropFuncGraph(primal_fg);
+  resource->manager()->KeepRoots({bprop_fg});
+
+  ExportIR(bprop_fg->ToString() + ".dat", "", bprop_fg);
+}
+
+TEST_F(TestKPynative, test_stop_gradient) {
+  auto primal_fg = BuildStopGradient("test_stop_gradient");
   resource->manager()->KeepRoots({primal_fg});
   ExportIR(primal_fg->ToString() + ".dat", "", primal_fg);
 
