@@ -123,7 +123,7 @@ class SummaryRecord:
             - tensor_format (Union[str, None]): Customize the export tensor format. Supports ["npy", None].
               Default: None, it means that the tensor is not exported.
 
-                - npy: export tensor as npy file.
+              - npy: export tensor as npy file.
 
     Raises:
         TypeError: If the parameter type is incorrect.
