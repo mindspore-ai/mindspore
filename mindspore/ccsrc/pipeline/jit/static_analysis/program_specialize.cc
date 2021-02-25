@@ -246,6 +246,22 @@ static AnfNodePtr CreateNoBroadenDepend() {
   return BuildValueNode(prim, FromValueInside(prim));
 }
 
+bool AllowDependIsolateNodes(const AnfNodePtr &node) {
+  auto abstract = node->abstract();
+  if (abstract->GetTypeTrack()->isa<EnvType>()) {
+    return false;
+  }
+  auto abstract_tuple = dyn_cast<abstract::AbstractTuple>(abstract);
+  if (abstract_tuple != nullptr) {
+    for (auto &abs : abstract_tuple->elements()) {
+      if (abs->GetTypeTrack()->isa<EnvType>()) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
@@ -288,17 +304,18 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
         MS_EXCEPTION_IF_NULL(replace_node);
         replace_node->set_abstract(ival);
         MS_LOG(DEBUG) << "Set replaced: " << replace_node->ToString() << ", to abstract: " << ival->ToString();
-      } else if (node_input->isa<CNode>() && eval_result->HasIsolateNodesPropagateCNodeFlag() &&
-                 node_input != node_input->func_graph()->output()) {
+      } else if (node_input->isa<CNode>() && eval_result->HasIsolateNodesPropagateCNodeFlag()) {
         // Handle isolate nodes
         auto inp_c_node = node_input->cast<CNodePtr>();
         auto collected = CollectCNodeWithIsolateNodes(inp_c_node, eval_result, c_new->func_graph());
-        auto depend_ops = CreateNoBroadenDepend();
-        AnfNodePtr new_cnode = specialized_func_graph_->NewCNode({depend_ops, replace_node, collected});
-        new_cnode->set_abstract(ival);
-        replace_node = new_cnode;
-        MS_LOG(DEBUG) << "Build possible depend node for node: " << node_input->DebugString()
-                      << ", ival: " << ival->ToString() << ", replace_node: " << replace_node->DebugString();
+        if (AllowDependIsolateNodes(collected)) {
+          auto depend_ops = CreateNoBroadenDepend();
+          AnfNodePtr new_cnode = specialized_func_graph_->NewCNode({depend_ops, replace_node, collected});
+          new_cnode->set_abstract(ival);
+          replace_node = new_cnode;
+          MS_LOG(DEBUG) << "Build possible depend node for node: " << node_input->DebugString()
+                        << ", ival: " << ival->ToString() << ", replace_node: " << replace_node->DebugString();
+        }
       } else {
         MS_LOG(DEBUG) << "Not set replace value node for node: " << node_input->DebugString()
                       << ", ival: " << ival->ToString() << ", replace_node: " << replace_node->DebugString();
