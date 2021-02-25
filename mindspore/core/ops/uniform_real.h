@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_RANDOM_STANDARD_NORMAL_H_
-#define MINDSPORE_CORE_OPS_RANDOM_STANDARD_NORMAL_H_
+#ifndef MINDSPORE_CORE_OPS_RANDOM_UNIFORM_REAL_H_
+#define MINDSPORE_CORE_OPS_RANDOM_UNIFORM_REAL_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -26,12 +26,12 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameRandomStandardNormal = "RandomStandardNormal";
-class RandomStandardNormal : public PrimitiveC {
+constexpr auto kNameUniformReal = "UniformReal";
+class UniformReal : public PrimitiveC {
  public:
-  RandomStandardNormal() : PrimitiveC(kNameRandomStandardNormal) {}
-  ~RandomStandardNormal() = default;
-  MS_DECLARE_PARENT(RandomStandardNormal, PrimitiveC);
+  UniformReal() : PrimitiveC(kNameUniformReal) {}
+  ~UniformReal() = default;
+  MS_DECLARE_PARENT(UniformReal, PrimitiveC);
   void Init(const int64_t seed, const int64_t seed2);
 
   void set_seed(const int64_t seed);
@@ -40,11 +40,7 @@ class RandomStandardNormal : public PrimitiveC {
   int64_t get_seed() const;
   int64_t get_seed2() const;
 };
-
-AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
-using PrimRandomStandardNormalPtr = std::shared_ptr<RandomStandardNormal>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_RANDOM_STANDARD_NORMAL_H_
+#endif  // MINDSPORE_CORE_OPS_RANDOM_UNIFORM_REAL_H_
