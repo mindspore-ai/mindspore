@@ -74,7 +74,6 @@ AbstractBasePtr BiasAddInfer(const abstract::AnalysisEnginePtr &, const Primitiv
                                                     BiasAddInferShape(primitive, input_args));
 }
 // Add
-REGISTER_PRIMITIVE_EVAL_IMPL(BiasAdd, prim::kPrimBiasAdd, BiasAddInfer);
 REGISTER_PRIMITIVE_C(kNameBiasAdd, BiasAdd);
 }  // namespace ops
 }  // namespace mindspore

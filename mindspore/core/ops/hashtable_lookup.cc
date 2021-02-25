@@ -49,8 +49,6 @@ AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const 
   }
   return std::make_shared<abstract::AbstractTuple>(output1);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(HashtableLookup, prim::kPrimHashtableLookup, HashtableLookupInfer);
 REGISTER_PRIMITIVE_C(kNameHashtableLookup, HashtableLookup);
 }  // namespace ops
 }  // namespace mindspore

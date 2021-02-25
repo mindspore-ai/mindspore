@@ -50,7 +50,6 @@ AbstractBasePtr TanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
 
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Tan, prim::kPrimTan, TanInfer);
 REGISTER_PRIMITIVE_C(kNameTan, Tan);
 }  // namespace ops
 }  // namespace mindspore

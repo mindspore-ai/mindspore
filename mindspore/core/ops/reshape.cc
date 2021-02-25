@@ -97,8 +97,6 @@ AbstractBasePtr ReshapeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
     return std::make_shared<abstract::AbstractTensor>(x->element(), std::make_shared<abstract::Shape>(shape_v));
   }
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Reshape, prim::kPrimReshape, ReshapeInfer);
 REGISTER_PRIMITIVE_C(kNameReshape, Reshape);
 }  // namespace ops
 }  // namespace mindspore

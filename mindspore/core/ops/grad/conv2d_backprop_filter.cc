@@ -146,8 +146,6 @@ AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, c
   return std::make_shared<abstract::AbstractTensor>(Conv2DBackpropFilterInferType(primitive, input_args),
                                                     Conv2DBackpropFilterInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropFilter, prim::kPrimConv2DBackpropFilter, Conv2DBackpropFilterInfer);
 REGISTER_PRIMITIVE_C(kNameConv2DBackpropFilter, Conv2DBackpropFilter);
 }  // namespace ops
 }  // namespace mindspore

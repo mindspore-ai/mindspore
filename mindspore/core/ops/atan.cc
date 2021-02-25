@@ -44,7 +44,6 @@ AbstractBasePtr AtanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Atan, prim::kPrimAtan, AtanInfer);
 REGISTER_PRIMITIVE_C(kNameAtan, Atan);
 }  // namespace ops
 }  // namespace mindspore

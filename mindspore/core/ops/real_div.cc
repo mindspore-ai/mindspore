@@ -51,7 +51,6 @@ AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(RealDiv, prim::kPrimRealDiv, RealDivInfer);
 REGISTER_PRIMITIVE_C(kNameRealDiv, RealDiv);
 }  // namespace ops
 }  // namespace mindspore

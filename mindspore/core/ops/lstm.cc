@@ -169,8 +169,6 @@ AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(LstmInfer(primitive, input_args));
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(LSTM, prim::kPrimLstm, LstmInfer);
 REGISTER_PRIMITIVE_C(kNameLSTM, LSTM);
 }  // namespace ops
 }  // namespace mindspore

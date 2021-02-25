@@ -73,8 +73,6 @@ AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &,
   return std::make_shared<abstract::AbstractTensor>(BinaryCrossEntroyGradInferType(primitive, input_args),
                                                     BinaryCrossEntroyGradInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(BinaryCrossEntropyGrad, prim::kPrimBinaryCrossEntropyGrad, BinaryCrossEntropyGradInfer);
 REGISTER_PRIMITIVE_C(kNameBinaryCrossEntropyGrad, BinaryCrossEntropyGrad);
 }  // namespace ops
 }  // namespace mindspore

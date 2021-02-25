@@ -39,7 +39,6 @@ int64_t TopKFusion::get_largest() const {
   auto value_ptr = GetAttr(kLargest);
   return GetValue<int64_t>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameTopKFusion, TopKFusion);
 }  // namespace ops
 }  // namespace mindspore

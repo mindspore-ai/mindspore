@@ -60,7 +60,6 @@ int64_t Conv2DBackpropFilterFusion::get_in_channel() const {
   auto value_ptr = GetAttr(kInChannel);
   return GetValue<int64_t>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameConv2DBackpropFilterFusion, Conv2DBackpropFilterFusion);
 }  // namespace ops
 }  // namespace mindspore

@@ -63,8 +63,6 @@ AbstractBasePtr AddNInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<abstract::AbstractTensor>(TypeIdToType(infer_type),
                                                     std::make_shared<abstract::Shape>(element0_shape));
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(AddN, prim::kPrimAddN, AddNInfer);
 REGISTER_PRIMITIVE_C(kNameAddN, AddN);
 }  // namespace ops
 }  // namespace mindspore

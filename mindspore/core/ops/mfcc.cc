@@ -93,7 +93,6 @@ AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Mfcc, prim::kPrimMfcc, MfccInfer);
 REGISTER_PRIMITIVE_C(kNameMfcc, Mfcc);
 }  // namespace ops
 }  // namespace mindspore

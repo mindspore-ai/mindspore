@@ -56,7 +56,6 @@ AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto x_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Crop, prim::kPrimCrop, CropInfer);
 REGISTER_PRIMITIVE_C(kNameCrop, Crop);
 }  // namespace ops
 }  // namespace mindspore

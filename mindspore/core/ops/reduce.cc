@@ -108,7 +108,6 @@ AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Reduce, prim::kPrimReduce, ReduceInfer);
 REGISTER_PRIMITIVE_C(kNameReduce, Reduce);
 }  // namespace ops
 }  // namespace mindspore

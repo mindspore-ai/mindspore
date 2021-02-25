@@ -111,7 +111,6 @@ GateOrderMode GRU::get_gate_order() const {
   auto value_ptr = this->GetAttr(kGateOrder);
   return GateOrderMode(GetValue<int64_t>(value_ptr));
 }
-
 REGISTER_PRIMITIVE_C(kNameGRU, GRU);
 }  // namespace ops
 }  // namespace mindspore

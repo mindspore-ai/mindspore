@@ -51,8 +51,6 @@ AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<abstract::AbstractTensor>(GeLUInferType(primitive, input_args),
                                                     GeLUInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(GeLU, prim::kPrimGeLU, GeLUInfer);
 REGISTER_PRIMITIVE_C(kNameGeLU, GeLU);
 }  // namespace ops
 }  // namespace mindspore

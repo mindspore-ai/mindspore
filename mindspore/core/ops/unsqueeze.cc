@@ -69,7 +69,6 @@ AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const Primit
   }
   return std::make_shared<abstract::AbstractTensor>(input_type, out_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Unsqueeze, prim::kPrimUnsqueeze, UnsqueezeInfer);
 REGISTER_PRIMITIVE_C(kNameUnsqueeze, Unsqueeze);
 }  // namespace ops
 }  // namespace mindspore

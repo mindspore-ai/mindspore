@@ -192,8 +192,6 @@ AbstractBasePtr Conv2dTransposeInfer(const abstract::AnalysisEnginePtr &, const 
   return std::make_shared<abstract::AbstractTensor>(Conv2dTransposeInferType(primitive, input_args),
                                                     Conv2dTransposeInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Conv2dTranspose, prim::kPrimConv2DTranspose, Conv2dTransposeInfer);
 REGISTER_PRIMITIVE_C(kNameConv2dTranspose, Conv2dTranspose);
 }  // namespace ops
 }  // namespace mindspore

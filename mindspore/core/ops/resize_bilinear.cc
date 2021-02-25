@@ -70,7 +70,6 @@ AbstractBasePtr ResizeBilinearInfer(const abstract::AnalysisEnginePtr &, const P
 
   return std::make_shared<abstract::AbstractTensor>(out_type, out_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ResizeBilinear, prim::kPrimResizeBilinear, ResizeBilinearInfer);
 REGISTER_PRIMITIVE_C(kNameResizeBilinear, ResizeBilinear);
 }  // namespace ops
 }  // namespace mindspore

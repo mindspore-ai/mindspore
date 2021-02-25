@@ -78,7 +78,6 @@ AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const Primi
 
   return std::make_shared<abstract::AbstractTensor>(output_data_type, std::make_shared<abstract::Shape>(output_shape));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ROIPooling, prim::kPrimROIPooling, ROIPoolingInfer);
 REGISTER_PRIMITIVE_C(kNameROIPooling, ROIPooling);
 }  // namespace ops
 }  // namespace mindspore

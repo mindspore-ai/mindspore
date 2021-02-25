@@ -81,8 +81,6 @@ AbstractBasePtr BroadcastToInfer(const abstract::AnalysisEnginePtr &, const Prim
   return std::make_shared<abstract::AbstractTensor>(BroadcastToInferType(primitive, input_args),
                                                     BroadcastToInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(BroadcastTo, prim::kPrimBroadcastTo, BroadcastToInfer);
 REGISTER_PRIMITIVE_C(kNameBroadcastTo, BroadcastTo);
 }  // namespace ops
 }  // namespace mindspore

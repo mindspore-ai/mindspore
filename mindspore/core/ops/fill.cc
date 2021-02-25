@@ -58,7 +58,6 @@ AbstractBasePtr FillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   abs->set_value(tensor);
   return abs;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Fill, prim::kPrimFill, FillInfer);
 REGISTER_PRIMITIVE_C(kNameFill, Fill);
 }  // namespace ops
 }  // namespace mindspore

@@ -35,7 +35,6 @@ AbstractBasePtr FlattenGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   ret->set_shape(std::make_shared<abstract::Shape>(out_shape));
   return ret;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(FlattenGrad, prim::kPrimFlattenGrad, FlattenGradInfer);
 REGISTER_PRIMITIVE_C(kNameFlattenGrad, FlattenGrad);
 }  // namespace ops
 }  // namespace mindspore

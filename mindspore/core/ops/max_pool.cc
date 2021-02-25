@@ -152,7 +152,6 @@ AbstractBasePtr MaxPoolInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxPool, prim::kPrimMaxPool, MaxPoolInfer);
 REGISTER_PRIMITIVE_C(kNameMaxPool, MaxPool);
 }  // namespace ops
 }  // namespace mindspore

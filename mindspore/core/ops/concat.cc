@@ -78,8 +78,6 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return std::make_shared<abstract::AbstractTensor>(TypeIdToType(infer_type),
                                                     std::make_shared<abstract::Shape>(ret_shape));
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Concat, prim::kPrimConcat, ConcatInfer);
 REGISTER_PRIMITIVE_C(kNameConcat, Concat);
 }  // namespace ops
 }  // namespace mindspore

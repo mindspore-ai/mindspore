@@ -58,9 +58,6 @@ AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEngin
   AbstractBasePtrList output = {output0, output1};
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(SoftmaxCrossEntropyWithLogits, prim::kPrimSoftmaxCrossEntropyWithLogits,
-                             SoftmaxCrossEntropyWithLogitsInfer);
 REGISTER_PRIMITIVE_C(kNameSoftmaxCrossEntropyWithLogits, SoftmaxCrossEntropyWithLogits);
 }  // namespace ops
 }  // namespace mindspore

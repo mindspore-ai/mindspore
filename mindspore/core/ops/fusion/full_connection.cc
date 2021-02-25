@@ -110,7 +110,6 @@ AbstractBasePtr FullConnectionInfer(const abstract::AnalysisEnginePtr &, const P
   auto input0_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   return std::make_shared<abstract::AbstractTensor>(input0_type, out_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(FullConnection, prim::kPrimFullConnection, FullConnectionInfer);
 REGISTER_PRIMITIVE_C(kNameFullConnection, FullConnection);
 }  // namespace ops
 }  // namespace mindspore

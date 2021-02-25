@@ -50,7 +50,6 @@ AbstractBasePtr CustomExtractFeaturesInfer(const abstract::AnalysisEnginePtr &, 
   AbstractBasePtrList output = {output0, output1};
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(CustomExtractFeatures, prim::kPrimCustomExtractFeatures, CustomExtractFeaturesInfer);
 REGISTER_PRIMITIVE_C(kNameCustomExtractFeatures, CustomExtractFeatures);
 }  // namespace ops
 }  // namespace mindspore

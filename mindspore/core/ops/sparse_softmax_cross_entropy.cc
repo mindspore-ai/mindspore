@@ -57,8 +57,6 @@ AbstractBasePtr SparseSoftmaxCrossEntropyInfer(const abstract::AnalysisEnginePtr
   auto output_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   return std::make_shared<abstract::AbstractTensor>(output_type, output_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseSoftmaxCrossEntropy, prim::kPrimSparseSoftmaxCrossEntropy,
-                             SparseSoftmaxCrossEntropyInfer);
 REGISTER_PRIMITIVE_C(kNameSparseSoftmaxCrossEntropy, SparseSoftmaxCrossEntropy);
 }  // namespace ops
 }  // namespace mindspore

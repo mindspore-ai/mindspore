@@ -102,7 +102,6 @@ AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Lrn, prim::kPrimLrn, LrnInfer);
 REGISTER_PRIMITIVE_C(kNameLrn, Lrn);
 }  // namespace ops
 }  // namespace mindspore

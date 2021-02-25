@@ -78,7 +78,6 @@ int64_t StridedSliceGrad::get_shrink_axis_mask() const {
   auto value_ptr = GetAttr(kShrinkAxisMask);
   return GetValue<int64_t>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameStridedSliceGrad, StridedSliceGrad);
 }  // namespace ops
 }  // namespace mindspore

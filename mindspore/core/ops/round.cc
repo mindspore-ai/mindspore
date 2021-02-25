@@ -44,7 +44,6 @@ AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Round, prim::kPrimRound, RoundInfer);
 REGISTER_PRIMITIVE_C(kNameRound, Round);
 }  // namespace ops
 }  // namespace mindspore

@@ -66,8 +66,6 @@ AbstractBasePtr BatchNormGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   AbstractBasePtrList rets = {dx, dscale, dscale, reserve_1, reserve_2};
   return std::make_shared<abstract::AbstractTuple>(rets);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(BatchNormGrad, prim::kPrimBatchNormGrad, BatchNormGradInfer);
 REGISTER_PRIMITIVE_C(kNameBatchNormGrad, BatchNormGrad);
 }  // namespace ops
 }  // namespace mindspore

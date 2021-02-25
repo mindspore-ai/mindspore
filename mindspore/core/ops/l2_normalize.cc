@@ -59,7 +59,6 @@ AbstractBasePtr L2NormalizeInfer(const abstract::AnalysisEnginePtr &, const Prim
   }
   return input_args[0]->Broaden();
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(L2Normalize, prim::kPrimL2Normalize, L2NormalizeInfer);
 REGISTER_PRIMITIVE_C(kNameL2Normalize, L2Normalize);
 }  // namespace ops
 }  // namespace mindspore

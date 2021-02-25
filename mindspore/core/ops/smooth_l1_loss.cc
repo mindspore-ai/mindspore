@@ -56,7 +56,6 @@ AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const Pri
 
   return std::make_shared<abstract::AbstractTensor>(prediction_type, prediction);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SmoothL1Loss, prim::kPrimSmoothL1Loss, SmoothL1LossInfer);
 REGISTER_PRIMITIVE_C(kNameSmoothL1Loss, SmoothL1Loss);
 }  // namespace ops
 }  // namespace mindspore

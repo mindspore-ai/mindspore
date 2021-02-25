@@ -161,7 +161,6 @@ AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, c
 
   return std::make_shared<abstract::AbstractTensor>(type, shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(GroupConv2DGradInput, prim::kPrimGroupConv2DGradInput, GroupConv2DGradInputInfer);
 REGISTER_PRIMITIVE_C(kNameGroupConv2DGradInput, GroupConv2DGradInput);
 }  // namespace ops
 }  // namespace mindspore

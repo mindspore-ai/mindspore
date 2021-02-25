@@ -64,8 +64,6 @@ AbstractBasePtr LshProjectionInfer(const abstract::AnalysisEnginePtr &, const Pr
   TypePtr infer_type = TypeIdToType(kNumberTypeInt32);
   return std::make_shared<abstract::AbstractTensor>(infer_type, out_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(LshProjection, prim::kPrimLshProjection, LshProjectionInfer);
 REGISTER_PRIMITIVE_C(kNameLshProjection, LshProjection);
 }  // namespace ops
 }  // namespace mindspore

@@ -63,8 +63,6 @@ AbstractBasePtr SliceFusionInfer(const abstract::AnalysisEnginePtr &, const Prim
   }
   return std::make_shared<abstract::AbstractTensor>(data_type, size);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(SliceFusion, prim::kPrimSliceFusion, SliceFusionInfer);
 REGISTER_PRIMITIVE_C(kNameSliceFusion, SliceFusion);
 }  // namespace ops
 }  // namespace mindspore

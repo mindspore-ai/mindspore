@@ -34,8 +34,6 @@ AbstractBasePtr RankInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   std::vector<int64_t> infer_shape;
   return std::make_shared<abstract::AbstractTensor>(RankInferType(primitive, input_args), infer_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Rank, prim::kPrimRank, RankInfer);
 REGISTER_PRIMITIVE_C(kNameRank, Rank);
 }  // namespace ops
 }  // namespace mindspore

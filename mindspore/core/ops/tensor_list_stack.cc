@@ -69,8 +69,6 @@ AbstractBasePtr TensorListStackInfer(const abstract::AnalysisEnginePtr &, const 
   input1_shape.insert(input1_shape.begin(), 1);
   return std::make_shared<abstract::AbstractTensor>(input_args[0]->BuildType(), input1_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorListStack, prim::kPrimTensorListStack, TensorListStackInfer);
 REGISTER_PRIMITIVE_C(kNameTensorListStack, TensorListStack);
 }  // namespace ops
 }  // namespace mindspore

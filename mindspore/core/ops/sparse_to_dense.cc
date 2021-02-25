@@ -45,7 +45,6 @@ AbstractBasePtr SparseToDenseInfer(const abstract::AnalysisEnginePtr &, const Pr
   CheckAndConvertUtils::CheckSubClass("values_type", values_type, valid_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(values_type, dense_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseToDense, prim::kPrimSparseToDense, SparseToDenseInfer);
 REGISTER_PRIMITIVE_C(kNameSparseToDense, SparseToDense);
 }  // namespace ops
 }  // namespace mindspore

@@ -81,8 +81,6 @@ AbstractBasePtr AdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
                           const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(AdamInfer(primitive, input_args));
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Adam, prim::kPrimAdam, AdamInfer);
 REGISTER_PRIMITIVE_C(kNameAdam, Adam);
 }  // namespace ops
 }  // namespace mindspore

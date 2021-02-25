@@ -44,7 +44,6 @@ AbstractBasePtr ReciprocalInfer(const abstract::AnalysisEnginePtr &, const Primi
   CheckAndConvertUtils::CheckSubClass("x_type", x_type, valid_x_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(x_type, in_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Reciprocal, prim::kPrimReciprocal, ReciprocalInfer);
 REGISTER_PRIMITIVE_C(kNameReciprocal, Reciprocal);
 }  // namespace ops
 }  // namespace mindspore

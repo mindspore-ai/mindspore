@@ -40,7 +40,6 @@ bool RandomStandardNormal::get_seed2() const {
   auto value_ptr = GetAttr(kSeed2);
   return GetValue<bool>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameRandomStandardNormal, RandomStandardNormal);
 }  // namespace ops
 }  // namespace mindspore

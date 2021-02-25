@@ -168,7 +168,6 @@ AbstractBasePtr DetectionPostProcessInfer(const abstract::AnalysisEnginePtr &, c
   }
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(DetectionPostProcess, prim::kPrimDetectionPostProcess, DetectionPostProcessInfer);
 REGISTER_PRIMITIVE_C(kNameDetectionPostProcess, DetectionPostProcess);
 }  // namespace ops
 }  // namespace mindspore

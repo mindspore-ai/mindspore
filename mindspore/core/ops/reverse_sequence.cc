@@ -72,7 +72,6 @@ AbstractBasePtr ReverseSequenceInfer(const abstract::AnalysisEnginePtr &, const 
   CheckAndConvertUtils::CheckTensorTypeValid("seq_type", seq_type, valid_seq_types, prim_name);
   return std::make_shared<abstract::AbstractTensor>(x_type, input_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ReverseSequence, prim::kPrimReverseSequence, ReverseSequenceInfer);
 REGISTER_PRIMITIVE_C(kNameReverseSequence, ReverseSequence);
 }  // namespace ops
 }  // namespace mindspore

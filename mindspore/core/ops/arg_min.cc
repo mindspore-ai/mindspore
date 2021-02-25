@@ -67,7 +67,6 @@ AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const Primitive
 
   return std::make_shared<abstract::AbstractTensor>(x_dtype, std::make_shared<abstract::Shape>(out_shape));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ArgMin, prim::kPrimArgMin, ArgMinInfer);
 REGISTER_PRIMITIVE_C(kNameArgMin, ArgMin);
 }  // namespace ops
 }  // namespace mindspore

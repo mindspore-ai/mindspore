@@ -118,8 +118,6 @@ AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const
   return std::make_shared<abstract::AbstractTensor>(AudioSpectrogramInferType(primitive, input_args),
                                                     AudioSpectrogramInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(AudioSpectrogram, prim::kPrimAudioSpectrogram, AudioSpectrogramInfer);
 REGISTER_PRIMITIVE_C(kNameAudioSpectrogram, AudioSpectrogram);
 }  // namespace ops
 }  // namespace mindspore

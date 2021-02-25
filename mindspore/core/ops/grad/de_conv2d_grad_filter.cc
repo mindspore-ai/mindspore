@@ -132,7 +132,6 @@ bool DeConv2DGradFilter::get_has_bias() const {
   auto value_ptr = GetAttr(kHasBias);
   return GetValue<bool>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameDeConv2DGradFilter, DeConv2DGradFilter);
 }  // namespace ops
 }  // namespace mindspore

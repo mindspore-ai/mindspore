@@ -60,8 +60,6 @@ AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto element = tensor_type->element();
   return std::make_shared<abstract::AbstractTensor>(element, x1_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxPoolGrad, prim::kPrimMaxPoolGrad, MaxPoolGradInfer);
 REGISTER_PRIMITIVE_C(kNameMaxPoolGrad, MaxPoolGrad);
 }  // namespace ops
 }  // namespace mindspore

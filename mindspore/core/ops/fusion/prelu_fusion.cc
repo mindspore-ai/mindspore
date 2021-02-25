@@ -42,7 +42,6 @@ std::vector<float> PReLUFusion::get_slope() const {
   auto value_ptr = GetAttr(kSlope);
   return GetValue<std::vector<float>>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNamePReLUFusion, PReLUFusion);
 }  // namespace ops
 }  // namespace mindspore

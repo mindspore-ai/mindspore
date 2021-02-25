@@ -46,7 +46,6 @@ AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Asin, prim::kPrimAsin, AsinInfer);
 REGISTER_PRIMITIVE_C(kNameAsin, Asin);
 }  // namespace ops
 }  // namespace mindspore

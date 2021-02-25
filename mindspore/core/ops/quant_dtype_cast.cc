@@ -46,8 +46,6 @@ AbstractBasePtr QuantDTypeCastInfer(const abstract::AnalysisEnginePtr &, const P
   return std::make_shared<abstract::AbstractTensor>(TypeIdToType(TypeId(QuantDTypeCast_prim->get_dst_t())),
                                                     input_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(QuantDTypeCast, prim::kPrimQuantDTypeCast, QuantDTypeCastInfer);
 REGISTER_PRIMITIVE_C(kNameQuantDTypeCast, QuantDTypeCast);
 }  // namespace ops
 }  // namespace mindspore

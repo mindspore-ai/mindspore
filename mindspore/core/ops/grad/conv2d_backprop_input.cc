@@ -196,7 +196,6 @@ std::vector<int64_t> Conv2DBackpropInput::get_pad_list() const {
   auto value_ptr = GetAttr(kPadList);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Conv2DBackpropInput, prim::kPrimConv2DBackpropInput, Conv2DBackpropInputInfer);
 REGISTER_PRIMITIVE_C(kNameConv2DBackpropInput, Conv2DBackpropInput);
 }  // namespace ops
 }  // namespace mindspore
