@@ -176,7 +176,7 @@ std::vector<MSTensor> ModelImpl::GetInputs() {
   res.resize(inputs.size());
   for (size_t i = 0; i < inputs.size(); i++) {
     auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(inputs[i]));
-    if (impl == nullptr) {
+    if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
     }
@@ -214,7 +214,7 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
   res.resize(names.size());
   for (size_t i = 0; i < names.size(); i++) {
     auto impl = std::shared_ptr<MSTensor::Impl>(new (std::nothrow) MSTensor::Impl(outputs[names[i]]));
-    if (impl == nullptr) {
+    if (impl == nullptr || impl->lite_tensor() == nullptr) {
       MS_LOG(ERROR) << "Create tensor failed.";
       return empty;
     }
