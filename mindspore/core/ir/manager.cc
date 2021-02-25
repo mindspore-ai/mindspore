@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ bool FuncGraphManager::func_graph_j_total(const FuncGraphPtr &fg) const {
   return j_total_->j_total_analysis()[fg];
 }
 
-// add a func graph to this manager, optionally as a root func graph.
+// Add a func graph to this manager, optionally as a root func graph.
 void FuncGraphManager::AddFuncGraph(FuncGraphPtr func_graph, bool is_root) {
   MS_EXCEPTION_IF_NULL(func_graph);
   if (is_root) {
@@ -198,26 +198,23 @@ void FuncGraphManager::AddFuncGraph(FuncGraphPtr func_graph, bool is_root) {
     return;
   }
 
+  // Add func_graph as a managed graph.
+  AddIntoManaged(func_graph);
+
   // New nodes to be acquired.
   std::vector<AnfNodePtr> new_nodes = func_graph->parameters();
   new_nodes.emplace_back(func_graph->get_return());
-  auto &isolate_nodes = func_graph->isolate_nodes();
-  new_nodes.insert(new_nodes.end(), isolate_nodes.begin(), isolate_nodes.end());
-
-  // Add func_graph as a managed graph.
-  AddIntoManaged(func_graph);
 
   // Acquire all nodes from func_graph.
   AcquireNodes(new_nodes);
 }
 
-// clear the all information in manager
+// Clear the all information in manager
 void FuncGraphManager::Clear() {
   func_graphs_.clear();
   all_nodes_.clear();
   node_users_.clear();
   roots_.clear();
-  isolate_nodes_.clear();
 
   signals_->InvalidateComputer();
 }
@@ -282,8 +279,6 @@ void FuncGraphManager::AddIntoManaged(const FuncGraphPtr &fg) {
     FuncGraphManagerPtr this_manager = shared_from_this();
     fg->set_manager(this_manager);
   }
-  const auto &fg_isolate_nodes = fg->isolate_nodes();
-  isolate_nodes_.insert(fg_isolate_nodes.begin(), fg_isolate_nodes.end());
   func_graphs_.add(fg);
 }
 
@@ -639,29 +634,6 @@ void FuncGraphManager::CommitChanges(const std::vector<Change> &changes) {
 
   auto drop_func_graphs = MaybeDropNodes(nodes_reverse);
   MaybeDropFuncGraphs(*drop_func_graphs);
-}
-
-void FuncGraphManager::ReplaceIsolateNode(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
-  MS_EXCEPTION_IF_NULL(old_node);
-  MS_EXCEPTION_IF_NULL(new_node);
-  if (isolate_nodes_.erase(old_node) == 0) {
-    return;
-  }
-  if (!new_node->isa<CNode>()) {
-    MS_LOG(EXCEPTION) << "Replace isolate node: " << old_node->DebugString()
-                      << " with non-cnode: " << new_node->DebugString();
-  }
-  isolate_nodes_.insert(new_node);
-}
-
-void FuncGraphManager::ClearIsolateNodes() {
-  // If FuncGraph A has IsolateNode which input is FuncGraph B, B had been add to FuncGraph A's valuenode
-  // by AddFuncGraph api, so if that isolate node is totoaly unused after AutoMonad, FuncGraph B should
-  // be removed from FuncGraph A's valuenode, otherwise it will confuse FVTotalComputer.
-  std::vector<AnfNodePtr> isolate_nodes_vec(isolate_nodes_.cbegin(), isolate_nodes_.cend());
-  auto drop_func_graphs = MaybeDropNodes(isolate_nodes_vec);
-  MaybeDropFuncGraphs(*drop_func_graphs);
-  isolate_nodes_.clear();
 }
 
 void FuncGraphTransaction::SetParameters(FuncGraphPtr fg, const std::vector<AnfNodePtr> &params) {

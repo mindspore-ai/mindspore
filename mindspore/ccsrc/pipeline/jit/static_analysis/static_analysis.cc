@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ void AnalysisCache::set_value(const AnfNodeConfigPtr &conf, const EvalResultPtr 
   MS_LOG(DEBUG) << "AnalysisCache set for NodeConfig: " << conf->node()->DebugString()
                 << ", Context: " << conf->context()->ToString() << ", Value: " << result->abstract()->ToString()
                 << ", Pointer: " << result->abstract().get();
-  cache_[conf] = result;
+  analysis_cache_map_[conf] = result;
 
   // Set intermediate abstract value.
   if (IsIntermediateAbstract(result->abstract())) {
@@ -77,8 +77,8 @@ void AnalysisCache::set_value(const AnfNodeConfigPtr &conf, const EvalResultPtr 
 }
 
 EvalResultPtr AnalysisCache::GetValue(const AnfNodeConfigPtr &conf) {
-  auto value = cache_.find(conf);
-  if (value == cache_.end()) {
+  auto value = analysis_cache_map_.find(conf);
+  if (value == analysis_cache_map_.end()) {
     return nullptr;
   }
   return value->second;
@@ -124,7 +124,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
 
   AnalysisResult result;
   MS_EXCEPTION_IF_NULL(output_conf);
-  result.inferred = output_conf->GetEvaluatedValue();
+  result.inferred = output_conf->ObtainEvalResult();
   result.context = root_context;
   return result;
 }
@@ -136,25 +136,24 @@ AnalysisContextPtr AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Ana
   return eval->graph_context();
 }
 
-EvalResultPtr AnalysisEngine::GetEvaluatedValue(const AnfNodeConfigPtr &conf) {
+EvalResultPtr AnalysisEngine::ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
-  auto value = cache_.GetValue(conf);
-  if (value != nullptr) {
-    MS_LOG(DEBUG) << "Evaluate cache hit for NodeConfig: " << conf->ToString() << ", Value: " << value->abstract().get()
-                  << ", " << value->abstract()->ToString() << ", flag: " << value->HasIsolateNodesPropagateCNodeFlag();
-    return value;
+  EvalResultPtr result = analysis_cache_.GetValue(conf);
+  if (result != nullptr) {
+    MS_LOG(DEBUG) << "Evaluate cache hit for NodeConfig: " << conf->ToString()
+                  << ", Value: " << result->abstract().get() << ", " << result->abstract()->ToString();
+    return result;
   }
 
   MS_LOG(DEBUG) << "Evaluate cache miss for NodeConfig: " << conf->ToString();
-  value = Eval(conf);
-  if (value == nullptr) {
+  result = Eval(conf);
+  if (result == nullptr) {
     MS_LOG(EXCEPTION) << "Evaluate for NodeConfig " << conf->ToString() << " get nullptr";
   }
   MS_LOG(DEBUG) << "Evaluate node on demond for NodeConfig: " << conf->ToString()
-                << ", Value: " << value->abstract().get() << ", " << value->abstract()->ToString()
-                << ", flag: " << value->HasIsolateNodesPropagateCNodeFlag();
-  cache_.set_value(conf, value);
-  return value;
+                << ", result: " << result->abstract().get() << ", " << result->abstract()->ToString();
+  analysis_cache_.set_value(conf, result);
+  return result;
 }
 
 EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
@@ -198,8 +197,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
                       << " NodeInfo: " << trace::GetDebugInfo(node->debug_info());
   }
 #endif
-  MS_LOG(DEBUG) << "End Eval NodeConfig " << conf->ToString() << ", res: " << eval_result->abstract()->ToString()
-                << ", flag: " << eval_result->HasIsolateNodesPropagateCNodeFlag();
+  MS_LOG(DEBUG) << "End Eval NodeConfig " << conf->ToString() << ", res: " << eval_result->abstract()->ToString();
   return eval_result;
 }
 
@@ -251,20 +249,6 @@ AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, co
   return out;
 }
 
-static bool CheckIsolateNodesPropagateFlag(const AbstractFunctionPtr &abs_func, const ConfigPtrList &conf_list) {
-  if (abs_func->HasIsolateNodesFlag()) {
-    MS_LOG(DEBUG) << "Propagate isolate nodes flag from: " << abs_func->ToString();
-    return true;
-  }
-  auto flag = std::any_of(conf_list.cbegin(), conf_list.cend(), [](const ConfigPtr &conf) {
-    auto eval_result = conf->GetEvaluatedValue();
-    MS_LOG(DEBUG) << "Propagate isolate nodes flag from: " << eval_result->abstract()->ToString()
-                  << ", flag: " << eval_result->HasIsolateNodesPropagateCNodeFlag();
-    return eval_result->HasIsolateNodesPropagateCNodeFlag();
-  });
-  return flag;
-}
-
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -280,10 +264,10 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   AnfNodeConfigPtr func_conf = MakeConfig(func_node, context);
   MS_EXCEPTION_IF_NULL(func_conf);
   // Keep it in a local variable, otherwise smart pointer will free it.
-  auto maybe_func_eval_result = func_conf->GetEvaluatedValue();
+  auto maybe_func_eval_result = func_conf->ObtainEvalResult();
   AbstractBasePtr maybe_func = maybe_func_eval_result->abstract();
   if (maybe_func == nullptr) {
-    MS_LOG(EXCEPTION) << "func_conf.GetEvaluatedValue() return null, func_conf: " << func_conf->ToString()
+    MS_LOG(EXCEPTION) << "No abstract, func_conf: " << func_conf->ToString()
                       << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
   }
   if (maybe_func->BuildType()->type_id() == kObjectTypeUndeterminedType) {
@@ -292,8 +276,7 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   }
   AbstractFunctionPtr func = dyn_cast<AbstractFunction>(maybe_func);
   if (func == nullptr) {
-    MS_LOG(EXCEPTION) << "func_conf.GetEvaluatedValue() return not AbstractFunction: " << maybe_func->ToString()
-                      << ", func_conf: " << func_conf->ToString()
+    MS_LOG(EXCEPTION) << "Not AbstractFunction: " << maybe_func->ToString() << ", func_conf: " << func_conf->ToString()
                       << " NodeInfo: " << trace::GetDebugInfo(cnode->debug_info());
   }
 
@@ -313,21 +296,6 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   func->Visit(build_evaluator);
 
   auto eval_result = ExecuteEvaluators(infs, conf, args_conf_list);
-  auto flag = CheckIsolateNodesPropagateFlag(func, args_conf_list);
-  if (flag != eval_result->HasIsolateNodesPropagateCNodeFlag()) {
-    MS_LOG(DEBUG) << "Different propagate isolate nodes flag from: " << eval_result->abstract()->ToString()
-                  << ", cnode flag: " << eval_result->HasIsolateNodesPropagateCNodeFlag()
-                  << ", funcgraph flag: " << eval_result->HasIsolateNodesPropagateFuncGraphFlag()
-                  << ", check flag:" << flag;
-    // This eval_result may be fetch from an Evaluator's cache based on args_spec_list equality.
-    // But args may be come from different CNode, so propagate flag is not same,
-    // a new copy of eval_result should be used.
-    auto new_eval_result = eval_result->Clone();
-    // FuncGraph flag should be used for HOF call or used FuncGraph propagate.
-    flag = flag | new_eval_result->HasIsolateNodesPropagateFuncGraphFlag();
-    new_eval_result->SetIsolateNodesPropagateCNodeFlag(flag);
-    eval_result = new_eval_result;
-  }
   return eval_result;
 }
 
@@ -349,25 +317,25 @@ void AnalysisEngine::ClearEvaluatorCache() {
   for (std::pair<AbstractFunctionPtr, EvaluatorPtr> element : constructors_) {
     EvaluatorPtr evaluator = element.second;
     MS_EXCEPTION_IF_NULL(evaluator);
-    MS_EXCEPTION_IF_NULL(evaluator->cache());
-    evaluator->cache()->clear();
+    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_map());
+    evaluator->evaluator_cache_map()->clear();
   }
   for (auto &element : prim_constructors_) {
     EvaluatorPtr evaluator = element.second;
     MS_EXCEPTION_IF_NULL(evaluator);
-    MS_EXCEPTION_IF_NULL(evaluator->cache());
-    evaluator->cache()->clear();
+    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_map());
+    evaluator->evaluator_cache_map()->clear();
   }
   for (auto &element : prim_py_evaluators_) {
     EvaluatorPtr evaluator = element.second;
     MS_EXCEPTION_IF_NULL(evaluator);
-    MS_EXCEPTION_IF_NULL(evaluator->cache());
-    evaluator->cache()->clear();
+    MS_EXCEPTION_IF_NULL(evaluator->evaluator_cache_map());
+    evaluator->evaluator_cache_map()->clear();
   }
 }
 
 void AnalysisEngine::Clear() {
-  cache_.Clear();
+  analysis_cache_.Clear();
   anfnode_config_map_.clear();
   eval_trace_.clear();
   constructors_.clear();
@@ -586,7 +554,7 @@ EvalResultPtr AnalysisEngine::ForwardConfig(const AnfNodeConfigPtr &orig_conf, c
     }
   }
   forward_count_++;
-  auto res = GetEvaluatedValue(new_conf);
+  auto res = ObtainEvalResultWithCache(new_conf);
   forward_count_--;
   return res;
 }
@@ -651,7 +619,7 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   for (auto u_eval : undetermined_evals) {
     MS_LOG(DEBUG) << u_eval.evaluator_->ToString() << "check undetermined.";
     auto &alternate_evaluator = multi_poss_[u_eval.evaluator_];
-    auto &eval_cache = alternate_evaluator->cache();
+    auto &eval_cache = alternate_evaluator->evaluator_cache_map();
     const auto &alt_eval_args = EvaluatorArgs(alternate_evaluator, args_spec_list);
     if ((!undetermined_evals.count(alt_eval_args)) &&
         (((!continued_evals_.count(u_eval)) && (eval_cache->find(args_spec_list) != eval_cache->end())) ||
@@ -698,7 +666,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
-                         return conf->GetEvaluatedValue()->abstract();
+                         return conf->ObtainEvalResult()->abstract();
                        });
   for (auto eval : evaluators) {
     SetUndeterminedFlag(eval);
@@ -741,9 +709,9 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   return ProcessEvalResults(out_specs);
 }
 
-EvalResultPtr AnfNodeConfig::GetEvaluatedValue() {
+EvalResultPtr AnfNodeConfig::ObtainEvalResult() {
   AnfNodeConfigPtr self = shared_from_base<AnfNodeConfig>();
-  return engine_.lock()->GetEvaluatedValue(self);
+  return engine_.lock()->ObtainEvalResultWithCache(self);
 }
 
 abstract::AbstractBasePtr MakeAbstractClosure(const FuncGraphPtr &func_graph,

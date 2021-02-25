@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
                                         AnfNodeConfigPtr out_conf) {
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
   auto do_signature = prim_->cast<prim::DoSignaturePrimitivePtr>();
   auto &func = do_signature->function();
   if (func->isa<Primitive>()) {
@@ -145,7 +145,7 @@ EvalResultPtr UnpackGraphEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   AnfNodePtrList args_inputs{out_node_inputs.begin() + 1, out_node_inputs.end()};
   AbstractBasePtrList args_spec_list;
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
   // get the forward graph
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   auto fn = args_spec_list[0]->cast<AbstractFunctionPtr>();
@@ -244,7 +244,7 @@ EvalResultPtr MixedPrecisionCastEvaluator::Run(AnalysisEnginePtr engine, const C
                       << ", inputs size " << out_node_inputs.size();
   }
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->GetEvaluatedValue()->abstract(); });
+                       [](const ConfigPtr &ref) -> AbstractBasePtr { return ref->ObtainEvalResult()->abstract(); });
 
   ScopePtr scope = kDefaultScope;
   if (out_conf != nullptr) {
@@ -600,8 +600,8 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
   }
   MS_LOG(DEBUG) << "Eval for:" << prim_py_->ToString();
 
-  const auto &iter = cache_->find(args);
-  if (iter != cache_->end()) {
+  const auto &iter = evaluator_cache_map_->find(args);
+  if (iter != evaluator_cache_map_->end()) {
     return iter->second;
   }
   auto py_args = PreparePyInputs(prim_py_, args);
@@ -614,7 +614,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Abs
 
   MS_LOG(DEBUG) << "Python InferTensor result spec: " << res_spec->ToString() << ".";
   auto infer_result = std::make_shared<EvalResult>(res_spec, std::make_shared<AttrValueMap>(added_attrs));
-  (*cache_)[args] = infer_result;
+  (*evaluator_cache_map_)[args] = infer_result;
   return infer_result;
 }
 
@@ -936,7 +936,7 @@ class EmbedEvaluator : public SymbolicPrimEvaluator {
     AnfNodeConfigPtr node_conf = dyn_cast<AnfNodeConfig>(args_conf_list[0]);
     MS_EXCEPTION_IF_NULL(node_conf);
 
-    AbstractBasePtr x = node_conf->GetEvaluatedValue()->abstract();
+    AbstractBasePtr x = node_conf->ObtainEvalResult()->abstract();
     x = SensitivityTransform(x);
     SymbolicKeyInstancePtr key = std::make_shared<SymbolicKeyInstance>(node_conf->node(), x);
     AbstractScalarPtr abs_scalar = std::make_shared<AbstractScalar>(key, std::make_shared<SymbolicKeyType>());
@@ -976,7 +976,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_LOG(ERROR) << "Conf should be AnfNodeConfig";
       return nullptr;
     }
-    AbstractBasePtr abs = node_conf->GetEvaluatedValue()->abstract();
+    AbstractBasePtr abs = node_conf->ObtainEvalResult()->abstract();
     AbstractRefPtr ref_abs = abs->cast<AbstractRefPtr>();
     if (ref_abs == nullptr) {
       MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref, but " << abs->ToString();
@@ -1040,7 +1040,7 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
     }
     // don't lookup from cache, as different out_conf with same node but different context
     // may add different entry to anfnode_config_map, like getattr primitive;
-    (*cache_)[args_spec_list] = ret;
+    (*evaluator_cache_map_)[args_spec_list] = ret;
     return ret;
   }
 };
@@ -1126,7 +1126,7 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
 
     AbstractBasePtr ret = ToAbstract(converted_ret, AnalysisContext::DummyContext(), out_conf);
     auto infer_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
-    (*cache_)[args_spec_list] = infer_result;
+    (*evaluator_cache_map_)[args_spec_list] = infer_result;
     return infer_result;
   }
 
@@ -1161,7 +1161,7 @@ class PartialEvaluator : public Evaluator {
 
     MS_EXCEPTION_IF_NULL(out_conf);
     MS_EXCEPTION_IF_NULL(out_conf->node());
-    auto arg0_value = args_conf_list[0]->GetEvaluatedValue()->abstract();
+    auto arg0_value = args_conf_list[0]->ObtainEvalResult()->abstract();
     AbstractBasePtrList args_spec_list{arg0_value};
     // Func in hypermap(partial(Func, arg0), arg1, arg2) may become Poly Node.
     if (arg0_value->isa<AbstractError>()) {
@@ -1169,7 +1169,7 @@ class PartialEvaluator : public Evaluator {
       MS_LOG(DEBUG) << "AbstractError for node: " << out_conf->node()->DebugString()
                     << " as func is: " << arg0_value->ToString();
       auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
-      (*cache_)[args_spec_list] = eval_result;
+      (*evaluator_cache_map_)[args_spec_list] = eval_result;
       return eval_result;
     }
     auto func = CheckArg<AbstractFunction>("partial", args_spec_list, 0);
@@ -1182,11 +1182,9 @@ class PartialEvaluator : public Evaluator {
       }
     }
 
-    std::vector<EvalResultPtr> eval_result_list;
-    (void)std::transform(args_conf_list.cbegin() + 1, args_conf_list.cend(), std::back_inserter(eval_result_list),
-                         [](const ConfigPtr &config) -> EvalResultPtr { return config->GetEvaluatedValue(); });
-    (void)std::transform(eval_result_list.cbegin(), eval_result_list.cend(), std::back_inserter(args_spec_list),
-                         [](const EvalResultPtr &eval_result) -> AbstractBasePtr { return eval_result->abstract(); });
+    (void)std::transform(
+      args_conf_list.begin() + 1, args_conf_list.end(), std::back_inserter(args_spec_list),
+      [](const ConfigPtr &config) -> AbstractBasePtr { return config->ObtainEvalResult()->abstract(); });
     AbstractBasePtrList args(args_spec_list.begin() + 1, args_spec_list.end());
 
     auto cnode = out_conf->node()->cast<CNodePtr>();
@@ -1195,25 +1193,16 @@ class PartialEvaluator : public Evaluator {
       MS_LOG(EXCEPTION) << "Out_conf node: " << cnode->DebugString()
                         << ", args_conf_list: " << mindspore::ToString(args_conf_list);
     }
-
-    auto flag = std::any_of(eval_result_list.cbegin(), eval_result_list.cend(), [](const EvalResultPtr &eval_result) {
-      MS_LOG(DEBUG) << "Propagate isolate nodes flag from: " << eval_result->abstract()->ToString()
-                    << ", flag: " << eval_result->HasIsolateNodesPropagateCNodeFlag();
-      return eval_result->HasIsolateNodesPropagateCNodeFlag();
-    });
     AbstractFuncAtomPtrList partial_funcs_list;
-    auto build_partial = [args, cnode, flag, &partial_funcs_list](const AbstractFuncAtomPtr &atom_func) {
+    auto build_partial = [args, cnode, &partial_funcs_list](const AbstractFuncAtomPtr &atom_func) {
       auto new_func = std::make_shared<PartialAbstractClosure>(atom_func, args, cnode);
       partial_funcs_list.push_back(new_func);
-      if (atom_func->HasIsolateNodesFlag() || flag) {
-        new_func->SetIsolateNodesFlag(true);
-      }
     };
     func->Visit(build_partial);
 
     auto ret = AbstractFunction::MakeAbstractFunction(partial_funcs_list);
     auto eval_result = std::make_shared<EvalResult>(ret, std::make_shared<AttrValueMap>());
-    (*cache_)[args_spec_list] = eval_result;
+    (*evaluator_cache_map_)[args_spec_list] = eval_result;
     return eval_result;
   }
 

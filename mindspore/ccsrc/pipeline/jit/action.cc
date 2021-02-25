@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@ bool CombineLikeGraphs(const ResourcePtr &res) {
     auto &graphs = it.second;
     MS_LOG(DEBUG) << "Start combine like graph:" << it.first << ", size:" << graphs.size();
     auto fg = graphs[0];
-    FuncGraphPtrList func_graphs = {fg};
+    FuncGraphVector func_graphs = {fg};
     ClonerPtr cloner = std::make_shared<Cloner>(func_graphs, false, false, true, std::make_shared<TraceCopy>(),
                                                 std::make_shared<TraceCombileLikeGraphs>());
     cloner->Run();

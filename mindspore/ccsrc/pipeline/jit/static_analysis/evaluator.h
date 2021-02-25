@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ using EvaluatorAttrMapPtr = std::shared_ptr<EvaluatorAttrMap>;
 class Evaluator : public Base {
  public:
   explicit Evaluator(const std::string &id)
-      : cache_(std::make_shared<EvaluatorCacheMap>()),
+      : evaluator_cache_map_(std::make_shared<EvaluatorCacheMap>()),
         attr_cache_(std::make_shared<EvaluatorAttrMap>()),
         identifier_(id) {}
   ~Evaluator() override = default;
@@ -86,10 +86,10 @@ class Evaluator : public Base {
 
   virtual void set_bound_node(const AnfNodePtr &node) { bound_node_ = AnfNodeWeakPtr(node); }
 
-  EvaluatorCacheMapPtr &cache() { return cache_; }
+  EvaluatorCacheMapPtr &evaluator_cache_map() { return evaluator_cache_map_; }
   EvaluatorAttrMapPtr &attr_cache() { return attr_cache_; }
 
-  EvaluatorCacheMapPtr cache_;
+  EvaluatorCacheMapPtr evaluator_cache_map_;
   EvaluatorAttrMapPtr attr_cache_;
   std::string identifier_;
 

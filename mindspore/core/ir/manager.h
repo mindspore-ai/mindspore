@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -351,15 +351,6 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
 
   IncludeType Limit(const AnfNodePtr &node);
 
-  // Gets isolate nodes that not related to output, e.g. side-effect calls.
-  const std::set<AnfNodePtr> &isolate_nodes() const { return isolate_nodes_; }
-
-  // Replace node in isolate node list.
-  void ReplaceIsolateNode(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
-
-  // Clear all isolate nodes.
-  void ClearIsolateNodes();
-
   // Static Analysis
   NodeUsersMap node_users_;
   AnfNodeSet all_nodes_;  // managed nodes
@@ -379,8 +370,8 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   void DropEdge(AnfNodePtr node, int index, AnfNodePtr input);
   void MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target);
 
-  FuncGraphSet roots_;        // managed roots
-  FuncGraphSet func_graphs_;  // managed func graphs
+  FuncGraphSet roots_;        // Managed roots.
+  FuncGraphSet func_graphs_;  // Managed func graphs.
 
   std::shared_ptr<Signals> signals_;
 
@@ -392,9 +383,6 @@ class FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
   std::shared_ptr<FuncGraphsUsedTotalComputer> func_graphs_used_total_;
   std::shared_ptr<RecursiveComputer> recursive_;
   std::shared_ptr<FuncGraphJTotalComputer> j_total_;
-
-  // Isolate Nodes
-  std::set<AnfNodePtr> isolate_nodes_;
 
   bool is_manage_;
   std::function<IncludeType(AnfNodePtr)> limit_;

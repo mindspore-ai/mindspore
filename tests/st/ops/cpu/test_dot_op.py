@@ -174,8 +174,8 @@ def test_dot_008():
     network = NetDot()
     try:
         network(x2_tensor, x1_tensor)
-    except ValueError as e:
-        assert ValueError == type(e)
+    except IndexError as e:
+        assert IndexError == type(e)
 
 
 @pytest.mark.level0

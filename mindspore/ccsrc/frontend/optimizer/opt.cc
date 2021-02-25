@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,27 +238,6 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
   return changes;
 }
 
-bool SubstitutionList::ApplySubstitutionsToIRForIsolate(const OptimizerPtr &optimizer) const {
-  const auto &manager = optimizer->manager();
-  const auto &nodes = manager->isolate_nodes();
-  bool changes = false;
-  bool loop = true;
-  while (loop) {
-    loop = false;
-    std::for_each(list_.cbegin(), list_.cend(), [&](const auto &substitution) {
-      std::for_each(nodes.cbegin(), nodes.cend(), [&](const auto &node) {
-        bool change = ApplySubstitutionToIR(optimizer, node, substitution);
-        changes = changes || change;
-        loop = loop || change;
-      });
-    });
-    if (is_once_) {
-      break;
-    }
-  }
-  return changes;
-}
-
 bool SubstitutionList::ApplySubstitutionsToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const {
   // Add for substitution status counting
   size_t space = 0;
@@ -335,18 +314,6 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
     changes = ApplyIRToSubstitutions(optimizer, func_graph);
   } else {
     changes = ApplySubstitutionsToIR(optimizer, func_graph);
-  }
-
-  bool has_isolate = !manager->isolate_nodes().empty();
-  if (has_isolate) {
-#ifdef ENABLE_PROFILE
-    double t = GetTime();
-#endif
-    bool change = ApplySubstitutionsToIRForIsolate(optimizer);
-    changes = changes || change;
-#ifdef ENABLE_PROFILE
-    MsProfile::StatTime("opt.isolate.transform." + optimizer->name(), GetTime() - t);
-#endif
   }
   return changes;
 }

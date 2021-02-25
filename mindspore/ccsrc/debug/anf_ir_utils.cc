@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -610,24 +610,7 @@ void AnfExporter::OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_g
   constexpr int width = 4;
   ofs << "# order:\n";
   int i = 1;
-  auto &isolate_nodes = func_graph->isolate_nodes();
   for (auto &node : order_list) {
-    bool is_isolate = (isolate_nodes.find(node) != isolate_nodes.end());
-    const std::string isolate_str = (is_isolate ? " # isolate" : "");
-    ofs << '#' << std::setw(width) << i << ": " << node->DebugString() << isolate_str << '\n';
-    ++i;
-  }
-}
-
-void AnfExporter::OutputIsolateNodes(std::ofstream &ofs, const FuncGraphPtr &func_graph) {
-  auto &isolate_nodes = func_graph->isolate_nodes();
-  if (isolate_nodes.empty()) {
-    return;
-  }
-  constexpr int width = 4;
-  ofs << "# isolate nodes:\n";
-  int i = 1;
-  for (auto &node : isolate_nodes) {
     ofs << '#' << std::setw(width) << i << ": " << node->DebugString() << '\n';
     ++i;
   }
@@ -670,7 +653,6 @@ void AnfExporter::ExportOneFuncGraph(std::ofstream &ofs, const FuncGraphPtr &fun
   ofs << "}\n";
 
   OutputOrderList(ofs, func_graph);
-  OutputIsolateNodes(ofs, func_graph);
 }
 
 void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph) {

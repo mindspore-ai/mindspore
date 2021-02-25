@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -602,7 +602,7 @@ void FuncGraph::EraseUnusedNodeInOrder() {
     // Erase unused cnode.
     for (auto it = order_.begin(); it != order_.end();) {
       if (!all_nodes.contains(*it)) {
-        MS_LOG(DEBUG) << "Remove node " << (*it)->ToString() << " in graph " << ToString() << " order.";
+        MS_LOG(DEBUG) << "Remove node: " << (*it)->ToString() << " in graph " << ToString() << " order.";
         it = order_.erase(it);
         continue;
       }
@@ -616,7 +616,7 @@ void FuncGraph::EraseUnusedNodeInOrder(const AnfNodePtr &node) {
     auto cnode = node->cast<CNodePtr>();
     if (cnode) {
       order_.erase(cnode);
-      MS_LOG(DEBUG) << "Remove the node" << node->DebugString() << " from order list.";
+      MS_LOG(DEBUG) << "Remove node: " << node->DebugString() << " from order list.";
     }
   }
 }
@@ -648,40 +648,6 @@ void FuncGraph::ReplaceInOrder(const AnfNodePtr &old_node, const AnfNodePtr &new
   // Remove old node from order list.
   // Unused children nodes can be cleared by EraseUnusedNodeInOrder().
   order_.erase(iter);
-  // Replace isolate node if it is.
-  ReplaceIsolateNode(old_node, new_node);
-}
-
-void FuncGraph::ReplaceIsolateNode(const AnfNodePtr &old_node, const AnfNodePtr &new_node) {
-  if (isolate_nodes_.erase(old_node) == 0) {
-    // Skip if old node is not an isloate node.
-    return;
-  }
-  if (!new_node->isa<CNode>()) {
-    // Isolate node can not replaced by a non-cnode.
-    LOG(WARNING) << "Try replace isolate node: " << old_node->DebugString() << " with: " << new_node->DebugString();
-    return;
-  }
-  // Replace old node with the new one.
-  isolate_nodes_.insert(new_node);
-  // Replace isloate node in manager.
-  auto graph_manager = manager();
-  if (graph_manager != nullptr) {
-    graph_manager->ReplaceIsolateNode(old_node, new_node);
-  }
-}
-
-const std::vector<AnfNodePtr> FuncGraph::GetIsolateNodesInOrder() const {
-  if (isolate_nodes_.empty()) {
-    return {};
-  }
-  if (isolate_nodes_.size() == 1) {
-    return std::vector<AnfNodePtr>(isolate_nodes_.cbegin(), isolate_nodes_.cend());
-  }
-  std::vector<AnfNodePtr> ordered_isolate_nodes;
-  std::copy_if(order_.cbegin(), order_.cend(), std::back_inserter(ordered_isolate_nodes),
-               [&](const auto &node) { return isolate_nodes_.find(node) != isolate_nodes_.end(); });
-  return ordered_isolate_nodes;
 }
 
 static std::vector<AnfNodePtr> MakeInputNodes(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &inputs) {

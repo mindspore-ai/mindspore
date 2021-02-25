@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,6 @@ class AnfExporter {
   void OutputStatementComment(std::ofstream &ofs, const CNodePtr &node);
   virtual void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph);
   void OutputOrderList(std::ofstream &ofs, const FuncGraphPtr &func_graph);
-  void OutputIsolateNodes(std::ofstream &ofs, const FuncGraphPtr &func_graph);
 
   int param_index;
   OrderedSet<FuncGraphPtr> func_graph_set{};
