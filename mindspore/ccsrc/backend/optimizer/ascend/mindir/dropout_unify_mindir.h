@@ -21,21 +21,13 @@
 
 namespace mindspore {
 namespace opt {
-class DropoutUnifyMindIR : public PatternProcessPass {
+class DropoutAndDropoutGradUnifyMindIR : public PatternProcessPass {
  public:
-  explicit DropoutUnifyMindIR(bool multigraph = true) : PatternProcessPass("dropout_unify_mindir", multigraph) {}
-  ~DropoutUnifyMindIR() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-};
-
-class DropoutGradUnifyMindIR : public PatternProcessPass {
- public:
-  explicit DropoutGradUnifyMindIR(bool multigraph = true)
-      : PatternProcessPass("dropout_grad_unify_mindir", multigraph) {
+  explicit DropoutAndDropoutGradUnifyMindIR(bool multigraph = true)
+      : PatternProcessPass("dropout_and_dropoutgrad_unify_mindir", multigraph) {
     grad_input_ = std::make_shared<Var>();
   }
-  ~DropoutGradUnifyMindIR() override = default;
+  ~DropoutAndDropoutGradUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
@@ -43,20 +35,27 @@ class DropoutGradUnifyMindIR : public PatternProcessPass {
   VarPtr grad_input_;
 };
 
-class DropoutUnifyMindIRPynative : public PatternProcessPass {
+class DropoutUnifyMindIR0 : public PatternProcessPass {
  public:
-  explicit DropoutUnifyMindIRPynative(bool multigraph = true)
-      : PatternProcessPass("dropout_unify_mindir_pynative", multigraph) {}
-  ~DropoutUnifyMindIRPynative() override = default;
+  explicit DropoutUnifyMindIR0(bool multigraph = true) : PatternProcessPass("dropout_unify_mindir0", multigraph) {}
+  ~DropoutUnifyMindIR0() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 
-class DropoutGradUnifyMindIRPynative : public PatternProcessPass {
+class DropoutUnifyMindIR1 : public PatternProcessPass {
  public:
-  explicit DropoutGradUnifyMindIRPynative(bool multigraph = true)
-      : PatternProcessPass("dropout_grad_unify_mindir_pynative", multigraph) {}
-  ~DropoutGradUnifyMindIRPynative() override = default;
+  explicit DropoutUnifyMindIR1(bool multigraph = true) : PatternProcessPass("dropout_unify_mindir1", multigraph) {}
+  ~DropoutUnifyMindIR1() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+};
+
+class DropoutGradUnifyMindIR : public PatternProcessPass {
+ public:
+  explicit DropoutGradUnifyMindIR(bool multigraph = true)
+      : PatternProcessPass("dropoutgrad_unify_mindir", multigraph) {}
+  ~DropoutGradUnifyMindIR() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
