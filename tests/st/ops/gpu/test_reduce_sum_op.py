@@ -324,3 +324,12 @@ def test_reduce_sum_float64():
     error = np.ones(shape=expect.shape) * 1.0e-5
     assert np.all(diff < error)
     assert output.shape == expect.shape
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = ReduceSumTypeNet(np.float64)
+    output = net()
+    expect = np.sum(x0, axis=axis0, keepdims=keep_dims0).astype(np.float64)
+    diff = abs(output.asnumpy() - expect)
+    error = np.ones(shape=expect.shape) * 1.0e-5
+    assert np.all(diff < error)
+    assert output.shape == expect.shape
