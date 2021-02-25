@@ -204,6 +204,7 @@ using RsqrtCost = SqrtCost;
 using AsinhCost = SqrtCost;
 using AcoshCost = SqrtCost;
 using ReLUV2Cost = SqrtCost;
+using TopKCost = SqrtCost;
 
 class ReLU6Cost : public CastCost {
  public:
@@ -232,6 +233,7 @@ using AsinCost = ReLU6Cost;
 using ErfCost = ReLU6Cost;
 using ErfcCost = ReLU6Cost;
 using ActivationInfoCost = ReLU6Cost;
+using SelectCost = ReLU6Cost;
 
 class TransposeCost : public CastCost {
  public:
@@ -608,6 +610,7 @@ using GreaterCost = SubCost;
 using GreaterEqualCost = SubCost;
 using LessCost = SubCost;
 using LessEqualCost = SubCost;
+using GatherNdCost = SubCost;
 
 class MulCost : public SubCost {
  public:

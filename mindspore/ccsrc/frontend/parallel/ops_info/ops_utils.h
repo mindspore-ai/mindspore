@@ -189,6 +189,7 @@ constexpr char REDUCE_SCATTER[] = "ReduceScatter";
 constexpr char HOST_REDUCE_SCATTER[] = "_HostReduceScatter";
 constexpr char EMBEDDING_LOOKUP[] = "EmbeddingLookup";
 constexpr char CONCAT[] = "Concat";
+constexpr char SELECT[] = "Select";
 constexpr char SOFTMAX_CROSS_ENTROPY_WITH_LOGITS[] = "SoftmaxCrossEntropyWithLogits";
 constexpr char SIGMOID_CROSS_ENTROPY_WITH_LOGITS[] = "SigmoidCrossEntropyWithLogits";
 constexpr char MATMUL[] = "MatMul";
@@ -325,6 +326,7 @@ constexpr char DEPTHWISE_CONV2D[] = "DepthwiseConv2D";
 constexpr char DROPOUT[] = "Dropout";
 constexpr char KStridedSlice[] = "StridedSlice";
 constexpr char UNIQUE[] = "Unique";
+constexpr char GATHERND[] = "GatherNd";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";
