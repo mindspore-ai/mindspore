@@ -21,7 +21,7 @@ import time
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from src.ssd import SSD300, SsdInferWithDecoder, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn
+from src.ssd import SSD300, SsdInferWithDecoder, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn, ssd_vgg16
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.config import config
 from src.eval_utils import metrics
@@ -34,6 +34,8 @@ def ssd_eval(dataset_path, ckpt_path, anno_json):
                             is_training=False, use_multiprocessing=False)
     if config.model == "ssd300":
         net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
+    elif config.model == "ssd_vgg16":
+        net = ssd_vgg16(config=config)
     elif config.model == "ssd_mobilenet_v1_fpn":
         net = ssd_mobilenet_v1_fpn(config=config)
     elif config.model == "ssd_resnet50_fpn":
