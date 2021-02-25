@@ -58,7 +58,7 @@ void TaskGenerator::LaunchAddrCleanAkgKernel(const CNodePtr &anf_node_ptr, Addre
     MS_EXCEPTION_IF_NULL(graph);
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    auto node_users = manager->node_users();
+    auto &node_users = manager->node_users();
     if (node_users[anf_node_ptr].empty()) {
       MS_LOG(EXCEPTION) << "Node users of " << anf_node_ptr->ToString() << " is empty.";
     }

@@ -433,12 +433,12 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(switch_call_cnode);
     auto manager = fg->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    auto node_users_map = manager->node_users();
+    auto &node_users_map = manager->node_users();
     auto it = node_users_map.find(switch_call);
     if (it == node_users_map.end()) {
       return false;
     }
-    auto node_users = it->second;
+    auto &node_users = it->second;
     // If switch was used by more than 1 tuple_getitem nodes, this pass shouldn't be execute.s
     auto tuple_getitem_num = std::count_if(node_users.begin(), node_users.end(), [](std::pair<AnfNodePtr, int> &user) {
       return IsPrimitiveCNode(user.first, prim::kPrimTupleGetItem);
