@@ -62,7 +62,14 @@
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
+#include "debug/anf_ir_dump.h"
 #include "debug/data_dump/e2e_dump_util.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/proto_exporter.h"
+#else
+#include "debug/debugger/proto_exporter_stub.h"
+#endif
+#include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
 #include "debug/dump_proto.h"
 #include "runtime/device/gpu/gpu_kernel_build.h"
@@ -103,7 +110,9 @@ void GPUSession::Init(uint32_t device_id) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
-
+  auto &json_parser = DumpJsonParser::GetInstance();
+  // Dump json config file if dump is enabled
+  json_parser.CopyJsonToDir();
   MS_LOG(INFO) << "Set device id " << device_id << " for gpu session.";
   InitExecutor(kGPUDevice, device_id);
 }
@@ -361,6 +370,11 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  uint32_t device_id = runtime_instance->device_id();
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
   // Dump .pb graph before graph optimization
   if (save_graphs) {
     DumpIRProto(graph, "before_opt_" + std::to_string(graph->graph_id()));
@@ -398,6 +412,13 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   // Dump .pb graph after graph optimization
   if (save_graphs) {
     DumpIRProto(graph, "after_opt_" + std::to_string(graph->graph_id()));
+  }
+  if (json_parser.e2e_dump_enabled()) {
+    std::string target_dir =
+      json_parser.path() + "/" + json_parser.net_name() + "/device_" + std::to_string(device_id) + "/graphs";
+    std::string ir_file_path = target_dir + "/" + "after_opt_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIRProtoWithSrcInfo(graph, "after_opt_" + std::to_string(graph->graph_id()), target_dir, kDebugWholeStack);
+    DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
   }
   // Set graph manager.
   MS_EXCEPTION_IF_NULL(context_);

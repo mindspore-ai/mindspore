@@ -65,6 +65,11 @@
 #include "debug/data_dump/e2e_dump_util.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/proto_exporter.h"
+#else
+#include "debug/debugger/proto_exporter_stub.h"
+#endif
 #include "toolchain/adx_datadump_server.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
@@ -802,6 +807,7 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
 void DumpInit() {
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
+  json_parser.CopyJsonToDir();
   if (json_parser.async_dump_enabled()) {
     if (AdxDataDumpServerInit() != 0) {
       MS_LOG(EXCEPTION) << "Adx data dump server init failed";
@@ -999,6 +1005,14 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled()) {
+    return;
+  }
+  auto kernel_runtime = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(kernel_runtime);
+  uint32_t device_id = kernel_runtime->device_id();
   for (auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
     std::string tag = "graph_build";
@@ -1008,6 +1022,19 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
       DumpIR(file_name, graph, true, kWholeStack);
       DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
       DumpIR("trace_code_graph", graph, true, kWholeStack);
+    }
+    std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
+    if (json_parser.e2e_dump_enabled()) {
+      std::string target_dir =
+        json_parser.path() + "/" + json_parser.net_name() + "/device_" + std::to_string(device_id) + "/graphs";
+      std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
+      DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
+      DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
+    } else if (json_parser.async_dump_enabled()) {
+      std::string target_dir = json_parser.path() + "/device_" + std::to_string(device_id) + "/graphs";
+      std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
+      DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
+      DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
     }
   }
 #endif

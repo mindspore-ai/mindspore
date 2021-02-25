@@ -233,6 +233,7 @@ message NodeProto {
 
   // for debugger, full name with scope
   optional string full_name = 8;
+  optional string source_address = 9;
 }
 
 // Models

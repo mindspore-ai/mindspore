@@ -558,12 +558,16 @@ void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
 }
 
 #ifdef ENABLE_DUMP_IR
-void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, LocDumpMode dump_location) {
+void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, LocDumpMode dump_location,
+            const std::string &target_file) {
   GetEnvDumpIrLineLevel(&dump_location);
   if (graph == nullptr) {
     return;
   }
   auto path = pipeline::GetSaveGraphsPathName(AddGlobalId(filename));
+  if (!target_file.empty()) {
+    path = target_file;
+  }
   auto realpath = Common::GetRealPath(path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << path;
@@ -642,7 +646,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
 }
 
 #else
-void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) {
+void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode, const std::string &) {
   static bool already_printed = false;
   if (already_printed) {
     return;
