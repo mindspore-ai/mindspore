@@ -99,6 +99,9 @@ from ._embedding_cache_ops import (CacheSwapHashmap, SearchCacheIdx, CacheSwapTa
                                    SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
 from .quantum_ops import PQC
+from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAtomEnergy, BondForceWithAtomVirial,
+                         DihedralForce, DihedralEnergy, DihedralAtomEnergy, DihedralForceWithAtomEnergy,
+                         AngleForce, AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy)
 
 __all__ = [
     'Unique',
@@ -421,6 +424,19 @@ __all__ = [
     "Range",
     "IndexAdd",
     "PQC",
+    "BondForce",
+    "BondEnergy",
+    "BondAtomEnergy",
+    "BondForceWithAtomEnergy",
+    "BondForceWithAtomVirial",
+    "DihedralForce",
+    "DihedralEnergy",
+    "DihedralAtomEnergy",
+    "DihedralForceWithAtomEnergy",
+    "AngleForce",
+    "AngleEnergy",
+    "AngleAtomEnergy",
+    "AngleForceWithAtomEnergy",
 ]
 
 __all__.sort()
