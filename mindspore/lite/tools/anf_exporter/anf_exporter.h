@@ -64,6 +64,8 @@ class AnfExporter {
                       const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   void ProcessInt(const ValueNodePtr &valueNode, std::unique_ptr<schema::TensorT> *paramTensor,
                   schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
+  int ProcessNumber(const ValueNodePtr &valueNode, schema::TensorT *paramTensor, schema::CNodeT *output_cnode,
+                    const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
   int ProcessValueSequence(const ValueNodePtr &valueNode, std::unique_ptr<schema::TensorT> *paramTensor,
                            const std::shared_ptr<Value> &value, schema::CNodeT *output_cnode,
                            const std::unique_ptr<schema::MetaGraphT> &meta_graphT);
