@@ -26,7 +26,7 @@ namespace mindspore {
 
 template <typename T>
 struct InnerSome {
-  InnerSome(const T &t) : _t(std::move(t)) {}
+  explicit InnerSome(const T &t) : _t(std::move(t)) {}
   T _t;
 };
 
@@ -35,7 +35,7 @@ InnerSome<typename std::decay<T>::type> Some(T &&t) {
   return InnerSome<typename std::decay<T>::type>(std::forward<T>(t));
 }
 
-struct None {};
+struct MindrtNone {};
 
 template <typename T>
 class Option {
@@ -48,7 +48,7 @@ class Option {
 
   Option(const InnerSome<T> &some) : data(some._t), state(SOME) {}
 
-  Option(const None &none) : data(), state(NONE) {}
+  Option(const MindrtNone &none) : data(), state(NONE) {}
 
   Option(const Option<T> &that) : data(), state(that.state) {
     if (that.IsSome()) {

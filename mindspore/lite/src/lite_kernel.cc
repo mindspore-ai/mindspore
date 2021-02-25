@@ -378,7 +378,7 @@ int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *ke
   return RET_OK;
 }
 
-void LiteKernelUtil::InitTensorInitRefCount(std::vector<kernel::LiteKernel *> &kernels) {
+void LiteKernelUtil::InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels) {
   for (auto *kernel : kernels) {
     kernel->InitOutTensorInitRefCount();
   }

@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_SUB_GRAPH_H
 #define MINDSPORE_LITE_SRC_SUB_GRAPH_H
 
+#include <atomic>
 #include <utility>
 #include <string>
 #include <vector>
@@ -145,7 +146,8 @@ class CpuFp32SubGraph : public CpuSubGraph {
                   std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
       : CpuSubGraph(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
-    this->name_ = "CpuFP32SubGraph";
+    static std::atomic_int index = 0;
+    this->name_ = "CpuFP32SubGraph" + std::to_string(index++);
   }
 
   ~CpuFp32SubGraph() override = default;
@@ -166,7 +168,8 @@ class CpuFp16SubGraph : public CpuSubGraph {
                   std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
       : CpuSubGraph(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
     subgraph_type_ = kCpuFP16SubGraph;
-    this->name_ = "CpuFP16SubGraph";
+    static std::atomic_int index = 0;
+    this->name_ = "CpuFP16SubGraph" + std::to_string(index++);
   }
 
   ~CpuFp16SubGraph() override = default;

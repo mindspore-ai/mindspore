@@ -20,9 +20,11 @@
 #include <future>
 #include <iostream>
 #include <list>
-
+#include <memory>
+#include <tuple>
 #include "async/common.h"
 #include "async/future.h"
+#include "async/defer.h"
 #include "async/spinlock.h"
 
 #include "actor/actor.h"

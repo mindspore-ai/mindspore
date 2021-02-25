@@ -16,7 +16,6 @@
 
 #include "actor/actorthread.h"
 #include <atomic>
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 constexpr int MAXTHREADNAMELEN = 12;
@@ -97,7 +96,6 @@ void ActorThread::Run() {
       terminate = true;
       MS_LOG(DEBUG) << "Actor this Threads have finished exiting.";
     }
-
   } while (!terminate);
 }
 

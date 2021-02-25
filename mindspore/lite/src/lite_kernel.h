@@ -197,7 +197,7 @@ class LiteKernel {
   std::vector<LiteKernel *> in_kernels_;
   std::vector<LiteKernel *> out_kernels_;
   bool train_mode_ = false;
-  bool trainable_ = false;  // paramaters of this Kernel are trained in Train Session
+  bool trainable_ = false;  // parameters of this Kernel are trained in Train Session
   bool is_model_output_ = false;
   SubGraphType subgraph_type_ = kNotSubGraph;
 #ifdef SUPPORT_TRAIN
@@ -223,7 +223,7 @@ class LiteKernelUtil {
 
   static int TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels);
 
-  static void InitTensorInitRefCount(std::vector<kernel::LiteKernel *> &kernels);
+  static void InitTensorInitRefCount(const std::vector<kernel::LiteKernel *> &kernels);
 
   static int SetInput(LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
 };

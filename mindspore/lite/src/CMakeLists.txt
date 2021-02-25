@@ -106,6 +106,14 @@ if(SUPPORT_TRAIN)
             )
 endif()
 
+if(ENABLE_MINDRT)
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
+            )
+endif()
+
 add_subdirectory(ops)
 add_subdirectory(runtime/kernel/arm)
 
@@ -119,6 +127,12 @@ set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-li
 set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
+
+if(ENABLE_MINDRT)
+    target_link_libraries(mindspore-lite mindrt_mid)
+    target_link_libraries(mindspore-lite_static mindrt_mid)
+endif()
+
 if(SUPPORT_GPU STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
     target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl cpu_ops_mid)

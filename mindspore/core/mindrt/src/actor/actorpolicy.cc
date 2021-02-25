@@ -17,7 +17,6 @@
 #include "actor/actor.h"
 #include "actor/actormgr.h"
 #include "actor/actorpolicy.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 

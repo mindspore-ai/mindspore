@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <list>
 #include <vector>
 #include <memory>
 #include <string>
@@ -21,35 +22,44 @@
 #include "actor/actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"
+#include "async/async.h"
+#include "mindrt/include/async/collect.h"
 
 namespace mindspore {
 // OpActor data route.
 struct OpArrow {
-  OpArrow(int from_output_index, AID *to_op_id, int to_input_index)
+  OpArrow(int from_output_index, AID to_op_id, int to_input_index)
       : from_output_index_(from_output_index), to_op_id_(to_op_id), to_input_index_(to_input_index) {}
   int from_output_index_;
-  AID *to_op_id_;
+  AID to_op_id_;
   int to_input_index_;
 };
 
 // OpActor data.
 template <typename T>
 struct OpData {
-  OpData(T *data, int to_input_index) : data_(data), to_input_index_(to_input_index) {}
+  OpData(const AID &op_id, T *data, int index) : op_id_(op_id), data_(data), index_(index) {}
+  AID op_id_;
   T *data_;
-  int to_input_index_;
-};
-
-// The context of opActor running.
-template <typename T>
-struct OpContext {
-  uuids::uuid *sequential_num_;
-  std::vector<Promise<T *>> *results_;
+  int index_;
 };
 
 using OpArrowPtr = std::shared_ptr<OpArrow>;
 template <typename T>
 using OpDataPtr = std::shared_ptr<OpData<T>>;
+// The context of opActor running.
+template <typename T>
+struct OpContext {
+  uuids::uuid *sequential_num_;
+  std::vector<OpDataPtr<T>> *outputData_;
+  std::vector<Promise<int>> *results_;
+  void SetFailed(int32_t code) {
+    for (auto promise : *results_) {
+      promise.SetFailed(code);
+    }
+  }
+  void SetResult(size_t index, int value) { results_->at(index).SetValue(value); }
+};
 
 template <typename T>
 class OpActor : public ActorBase {
@@ -62,4 +72,38 @@ class OpActor : public ActorBase {
   std::unordered_map<uuids::uuid *, std::vector<OpDataPtr<T>>> input_op_datas_;
   std::vector<OpArrowPtr> output_op_arrow_;
 };
+
+template <typename T>
+Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &inputData, OpContext<T> *context) {
+  std::list<Future<int>> futures;
+  for (auto promise : *(context->results_)) {
+    futures.push_back(promise.GetFuture());
+  }
+  Future<std::list<int>> collect = mindspore::Collect<int>(futures);
+
+  for (auto data : inputData) {
+    Async(data->op_id_, &mindspore::OpActor<T>::OpRun, data, context);
+  }
+
+  return collect;
+}
+
+template <typename T>
+int MindrtRun(const std::vector<OpDataPtr<T>> &inputData, std::vector<OpDataPtr<T>> *outputData) {
+  OpContext<T> context;
+  std::vector<Promise<int>> promises(outputData->size());
+  uuids::uuid uid;
+  context.sequential_num_ = &uid;
+  context.results_ = &promises;
+  context.outputData_ = outputData;
+
+  auto collect = MindrtAsyncRun<T>(inputData, &context);
+  collect.Wait();
+  if (!collect.IsOK()) {
+    return -1;
+  }
+
+  return 0;
+}
+
 }  // namespace mindspore

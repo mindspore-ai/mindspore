@@ -15,7 +15,6 @@
  */
 
 #include "async/future.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace internal {
@@ -23,11 +22,6 @@ namespace internal {
 void Waitf(const AID &aid) {
   mindspore::Terminate(aid);
   MS_LOG(WARNING) << "WaitFor is timeout.";
-}
-
-void Wait(const AID &aid, const mindspore::Timer &timer) {
-  mindspore::TimerTools::Cancel(timer);
-  mindspore::Terminate(aid);
 }
 
 }  // namespace internal
