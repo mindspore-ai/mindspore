@@ -61,7 +61,15 @@ MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
                   ResizeNearestNeighborGradCPUKernel);
 
 MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
+                  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                  ResizeNearestNeighborGradCPUKernel);
+
+MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
                   KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                  ResizeNearestNeighborGradCPUKernel);
+
+MS_REG_CPU_KERNEL(ResizeNearestNeighborGrad,
+                  KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
                   ResizeNearestNeighborGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
