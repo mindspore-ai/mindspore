@@ -39,6 +39,7 @@ ComplexType ComplexInnerProductWithControl(const Simulator::StateVector &, const
                                            std::size_t);
 const char kNThreads[] = "n_threads";
 const char kNQubits[] = "n_qubits";
+const char kParamNames[] = "param_names";
 const char kEncoderParamsNames[] = "encoder_params_names";
 const char kAnsatzParamsNames[] = "ansatz_params_names";
 const char kGateNames[] = "gate_names";
