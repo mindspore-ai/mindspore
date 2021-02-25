@@ -2084,11 +2084,10 @@ def fmod(x1, x2, out=None, where=True, dtype=None):
 
 def trunc(x, out=None, where=True, dtype=None):
     """
-    Returns the element-wise remainder of division.
+    Returns the truncated value of the input, element-wise.
 
-    This is the NumPy implementation of the C library function fmod, the remainder
-    has the same sign as the dividend `x1`. It is equivalent to the Matlab(TM) rem
-    function and should not be confused with the Python modulus operator ``x1 % x2``.
+    The truncated value of the scalar `x` is the nearest integer `i` which is closer to zero
+    than `x` is. In short, the fractional part of the signed number `x` is discarded.
 
     Note:
         Numpy arguments `casting`, `order`, `dtype`, `subok`, `signature`, and `extobj` are
@@ -2112,8 +2111,8 @@ def trunc(x, out=None, where=True, dtype=None):
             output Tensor.
 
     Returns:
-        Tensor or scalar, the remainder of the division of `x1` by `x2`. This is a
-        scalar if both `x1` and `x2` are scalars.
+        Tensor or scalar, the truncated value of each element in `x`. This is a scalar if `x` is
+        a scalar.
 
     Raises:
         TypeError: if the input is not a tensor.
