@@ -280,10 +280,8 @@ bool KPynativeCellImpl::BackPropagate() {
     // Optimize the bprop_fg based on value.
     auto optimized_bprop_fg = OptimizeBPropFuncGraph(bprop_fg, cnode, iter->second->op_args(), iter->second->out());
     AnfNodePtrList node_list{NewValueNode(optimized_bprop_fg)};
-    for (size_t i = 1; i < cnode->inputs().size(); ++i) {
-      auto inp_i = cnode->input(i);
-      node_list.push_back(inp_i);
-    }
+    std::transform(iter->second->op_args().begin(), iter->second->op_args().end(), std::back_inserter(node_list),
+                   [](const ValuePtr &value) { return NewValueNode(value); });
     node_list.push_back(NewValueNode(iter->second->out()));
     node_list.push_back(iter->second->RealDout());
 
