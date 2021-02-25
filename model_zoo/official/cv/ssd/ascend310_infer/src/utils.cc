@@ -19,10 +19,8 @@
 #include <iostream>
 #include "../inc/utils.h"
 
-using mindspore::api::Tensor;
-using mindspore::api::Buffer;
-using mindspore::api::DataType;
-
+using mindspore::MSTensor;
+using mindspore::DataType;
 
 std::vector<std::string> GetAllFiles(std::string_view dirName) {
     struct dirent *filename;
@@ -45,11 +43,11 @@ std::vector<std::string> GetAllFiles(std::string_view dirName) {
     return res;
 }
 
-int WriteResult(const std::string& imageFile, const std::vector<Buffer> &outputs) {
+int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
     std::string homePath = "./result_Files";
     for (size_t i = 0; i < outputs.size(); ++i) {
         size_t outputSize;
-        const void * netOutput;
+        std::shared_ptr<const void> netOutput;
         netOutput = outputs[i].Data();
         outputSize = outputs[i].DataSize();
         int pos = imageFile.rfind('/');
@@ -57,43 +55,41 @@ int WriteResult(const std::string& imageFile, const std::vector<Buffer> &outputs
         fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
         std::string outFileName = homePath + "/" + fileName;
         FILE * outputFile = fopen(outFileName.c_str(), "wb");
-        fwrite(netOutput, outputSize, sizeof(char), outputFile);
+        fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
         fclose(outputFile);
         outputFile = nullptr;
     }
     return 0;
 }
 
-std::shared_ptr<Tensor>  ReadFileToTensor(const std::string &file) {
-    auto buffer = std::make_shared<Tensor>();
-    if (file.empty()) {
-        std::cout << "Pointer file is nullptr" << std::endl;
-        return buffer;
-    }
-    std::ifstream ifs(file);
-    if (!ifs.good()) {
-        std::cout << "File: " << file << " is not exist" << std::endl;
-        return buffer;
-    }
-    if (!ifs.is_open()) {
-        std::cout << "File: " << file << "open failed" << std::endl;
-        return buffer;
-    }
-    ifs.seekg(0, std::ios::end);
-    size_t size = ifs.tellg();
-    buffer->ResizeData(size);
-    if (buffer->DataSize() != size) {
-        std::cout << "Malloc buf failed, file: " << file << std::endl;
-        ifs.close();
-        return buffer;
-    }
-    ifs.seekg(0, std::ios::beg);
-    ifs.read(reinterpret_cast<char *>(buffer->MutableData()), size);
-    ifs.close();
-    buffer->SetDataType(DataType::kMsUint8);
-    buffer->SetShape({static_cast<int64_t>(size)});
-    return buffer;
+mindspore::MSTensor ReadFileToTensor(const std::string &file) {
+  if (file.empty()) {
+    std::cout << "Pointer file is nullptr" << std::endl;
+    return mindspore::MSTensor();
+  }
+
+  std::ifstream ifs(file);
+  if (!ifs.good()) {
+    std::cout << "File: " << file << " is not exist" << std::endl;
+    return mindspore::MSTensor();
+  }
+
+  if (!ifs.is_open()) {
+    std::cout << "File: " << file << "open failed" << std::endl;
+    return mindspore::MSTensor();
+  }
+
+  ifs.seekg(0, std::ios::end);
+  size_t size = ifs.tellg();
+  mindspore::MSTensor buffer(file, mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
+
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(reinterpret_cast<char *>(buffer.MutableData()), size);
+  ifs.close();
+
+  return buffer;
 }
+
 
 DIR *OpenDir(std::string_view dirName) {
     if (dirName.empty()) {
