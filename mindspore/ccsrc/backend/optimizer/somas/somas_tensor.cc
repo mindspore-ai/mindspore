@@ -56,10 +56,11 @@ SomasSolverTensorDescPtr SomasTensor::GetSolverTensorDesc() {
 }
 
 void SomasTensor::ComputeMaxDestinationId() {
-  for (SomasStreamPtr stream : destinationStreams_) max_destination_id_[stream] = 0;
-
-  for (SomasNodePtr node : destinations_)
-    if (node->GetId() > max_destination_id_[node->GetStream()]) max_destination_id_[node->GetStream()] = node->GetId();
+  for (const auto &node : destinations_)
+    if (node->GetId() > max_destination_id_[node->GetStream()]) {
+      max_destination_id_[node->GetStream()] = node->GetId();
+      max_destinations_[node->GetStream()] = node;
+    }
 }
 }  // namespace somas
 }  // namespace mindspore

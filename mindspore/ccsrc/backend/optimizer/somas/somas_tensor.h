@@ -82,6 +82,7 @@ class SomasTensor {
   std::set<SomasNodePtr> destinations_;
   std::set<SomasStreamPtr> destinationStreams_;
   unordered_map<SomasStreamPtr, size_t> max_destination_id_;
+  unordered_map<SomasStreamPtr, SomasNodePtr> max_destinations_;
 
   // Constructors/Destructors
   explicit SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr source_stream, size_t real_size,

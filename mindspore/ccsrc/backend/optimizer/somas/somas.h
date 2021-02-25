@@ -121,7 +121,6 @@ class Somas {
   SomasTensorPtr CreateGapTensor(size_t gap_tensor_id);
   void GenContiguousList(const session::KernelGraph *graph);
 
-  void PreprocessingConflicts();
   void ComputeConflictPairs();
 
   bool Assign(const session::KernelGraph *graph);
