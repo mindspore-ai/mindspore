@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,28 +116,30 @@ int NPUInsertTransformPass::InsertNode(kernel::LiteKernel *kernel, kernel::LiteK
   std::vector<int> nhwc_shape = in_tensor->shape();
   std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
 
+  auto nh2nc_name = kernel_name + "_nh2nc_" + std::to_string(total++);
   auto nh2nc_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), nchw_shape, schema::Format_NHWC, Tensor::VAR);
   if (nh2nc_tensor == nullptr) {
     MS_LOG(ERROR) << "New nchw tensor failed when inserting nchw2nhwc kernel.";
     return RET_ERROR;
   }
+  nh2nc_tensor->set_tensor_name(nh2nc_name + "/output0");
   std::vector<Tensor *> nh2nc_tensors = {nh2nc_tensor};
   all_tensors_->push_back(nh2nc_tensors[0]);
 
+  auto nc2nh_name = kernel_name + "_nc2nh_" + std::to_string(total++);
   auto nc2nh_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), nhwc_shape, schema::Format_NCHW, Tensor::VAR);
   if (nc2nh_tensor == nullptr) {
     MS_LOG(ERROR) << "New nhwc tensor failed when inserting nhwc2nchw kernel.";
     return RET_ERROR;
   }
+  nc2nh_tensor->set_tensor_name(nc2nh_name + "/output0");
   std::vector<Tensor *> nc2nh_tensors = {nc2nh_tensor};
   all_tensors_->push_back(nc2nh_tensors[0]);
 
-  auto nh2nc_name = kernel_name + "_nh2nc_" + std::to_string(total++);
   auto *nh2nc_kernel = NPUPassUtils::CreateNhwc2NchwKernel({in_tensor}, nh2nc_tensors, context_, nh2nc_name);
   trans_kernels->push_back(nh2nc_kernel);
   insert_primitive_.push_back(nh2nc_kernel->GetPrimitive());
 
-  auto nc2nh_name = kernel_name + "_nc2nh_" + std::to_string(total++);
   auto *nc2nh_kernel = NPUPassUtils::CreateNchw2NhwcKernel(nh2nc_tensors, nc2nh_tensors, context_, nc2nh_name);
   trans_kernels->push_back(nc2nh_kernel);
   insert_primitive_.push_back(nc2nh_kernel->GetPrimitive());

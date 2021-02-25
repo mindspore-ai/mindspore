@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,13 @@ using mindspore::schema::PrimitiveType_Resize;
 namespace mindspore::kernel {
 int ResizeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                OpParameter *opParameter) {
-  if (resize_parameter_->method_ != schema::ResizeMethod_LINEAR ||
-      resize_parameter_->method_ == schema::ResizeMethod_NEAREST) {
+  if (resize_parameter_->method_ != schema::ResizeMethod_LINEAR &&
+      resize_parameter_->method_ != schema::ResizeMethod_NEAREST) {
     MS_LOG(WARNING) << "Unsupported resize method type:" << resize_parameter_->method_;
+    return RET_ERROR;
+  }
+  if (inputs[0]->Height() > outputs[0]->Height() || inputs[0]->Width() > outputs[0]->Width()) {
+    MS_LOG(WARNING) << "Npu resize does not support reduction.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -55,7 +59,7 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
     op->set_input_size(*out_size);
     op->set_attr_half_pixel_centers(resize_parameter_->preserve_aspect_ratio_);
     op_ = op;
-  } else {
+  } else if (resize_parameter_->method_ == schema::ResizeMethod_NEAREST) {
     auto op = new (std::nothrow) hiai::op::ResizeNearestNeighborV2(name_);
     if (op == nullptr) {
       MS_LOG(ERROR) << " op is nullptr.";
@@ -66,6 +70,9 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
     op->set_input_x(*npu_inputs[0]);
     op->set_input_size(*out_size);
     op_ = op;
+  } else {
+    MS_LOG(WARNING) << "Unsupported resize method type:" << resize_parameter_->method_;
+    return RET_ERROR;
   }
   return RET_OK;
 }

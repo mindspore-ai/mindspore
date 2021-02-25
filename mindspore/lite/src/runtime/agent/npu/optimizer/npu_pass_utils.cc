@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,11 @@ void NPUPassUtils::UpdateNC2NHTransNodePostKernel(kernel::LiteKernel *kernel, ke
 
   // For post_kernel after trans, kernel in in_kernels should be replaced with trans_kernel.
   auto post_in_kernels = post_kernel->in_kernels();
-  std::replace(post_in_kernels.begin(), post_in_kernels.end(), kernel, trans_kernel);
+  if (kernel == nullptr) {
+    post_in_kernels.push_back(trans_kernel);
+  } else {
+    std::replace(post_in_kernels.begin(), post_in_kernels.end(), kernel, trans_kernel);
+  }
   post_kernel->set_in_kernels(post_in_kernels);
 }
 
