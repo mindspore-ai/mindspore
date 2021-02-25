@@ -238,7 +238,7 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
-  int32_t label_idx = 0;
+  // int32_t label_idx = 0;
   while (row.size() != 0) {
     i++;
     // auto image = row["image"];

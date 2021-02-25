@@ -22,12 +22,11 @@
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
+#include "minddata/dataset/kernels/ir/tensor_operation.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-
-class TensorOperation;
 
 // Helper function to validate probability
 Status ValidateProbability(const std::string &op_name, const float probability);

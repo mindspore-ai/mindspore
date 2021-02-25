@@ -25,11 +25,11 @@
 #include "include/api/status.h"
 #include "minddata/dataset/include/constants.h"
 
-// FIXME - This internal IR header will be removed when external API classes are provided
-#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
-
 namespace mindspore {
 namespace dataset {
+
+class TensorOperation;
+
 // Abstract class to represent a tensor transform operation in the data pipeline.
 /// \class TensorTransform transforms.h
 /// \brief A base class to represent a tensor transform operation in the data pipeline.
@@ -54,16 +54,26 @@ class TensorTransform : public std::enable_shared_from_this<TensorTransform> {
 // Transform operations for performing data transformation.
 namespace transforms {
 
-// Transform Op classes (in alphabetical order)
-class ComposeOperation;
-class RandomApplyOperation;
-class RandomChoiceOperation;
-
-/// \brief Function to create a Compose TensorOperation.
+/// \brief Compose Op.
 /// \notes Compose a list of transforms into a single transform.
-/// \param[in] transforms A vector of transformations to be applied.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<ComposeOperation> Compose(const std::vector<std::shared_ptr<TensorOperation>> &transforms);
+class Compose : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of transformations to be applied.
+  explicit Compose(const std::vector<TensorTransform *> &transforms);
+  explicit Compose(const std::vector<std::shared_ptr<TensorTransform>> &transforms);
+  explicit Compose(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
+
+  /// \brief Destructor
+  ~Compose() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  std::vector<std::shared_ptr<TensorOperation>> transforms_;
+};
 
 /// \brief Duplicate Op.
 /// \notes Duplicate the input tensor to a new output tensor.
@@ -77,7 +87,7 @@ class Duplicate : public TensorTransform {
   ~Duplicate() = default;
 
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return return code
+  /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
 
@@ -93,26 +103,56 @@ class OneHot : public TensorTransform {
   ~OneHot() = default;
 
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return return code
+  /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
   float num_classes_;
 };
 
-/// \brief Function to create a RandomApply TensorOperation.
+/// \brief RandomApply Op.
 /// \notes Randomly perform a series of transforms with a given probability.
-/// \param[in] transforms A vector of transformations to be applied.
-/// \param[in] prob The probability to apply the transformation list (default=0.5)
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RandomApplyOperation> RandomApply(const std::vector<std::shared_ptr<TensorOperation>> &transforms,
-                                                  double prob = 0.5);
+class RandomApply : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of transformations to be applied.
+  /// \param[in] prob The probability to apply the transformation list (default=0.5)
+  explicit RandomApply(const std::vector<TensorTransform *> &transforms, double prob = 0.5);
+  explicit RandomApply(const std::vector<std::shared_ptr<TensorTransform>> &transforms, double prob = 0.5);
+  explicit RandomApply(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, double prob = 0.5);
 
-/// \brief Function to create a RandomChoice TensorOperation.
+  /// \brief Destructor
+  ~RandomApply() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  std::vector<std::shared_ptr<TensorOperation>> transforms_;
+  double prob_;
+};
+
+/// \brief RandomChoice Op.
 /// \notes Randomly selects one transform from a list of transforms to perform operation.
-/// \param[in] transforms A vector of transformations to be chosen from to apply.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RandomChoiceOperation> RandomChoice(const std::vector<std::shared_ptr<TensorOperation>> &transforms);
+class RandomChoice : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] transforms A vector of transformations to be chosen from to apply.
+  explicit RandomChoice(const std::vector<TensorTransform *> &transforms);
+  explicit RandomChoice(const std::vector<std::shared_ptr<TensorTransform>> &transforms);
+  explicit RandomChoice(const std::vector<std::reference_wrapper<TensorTransform>> &transforms);
+
+  /// \brief Destructor
+  ~RandomChoice() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  std::vector<std::shared_ptr<TensorOperation>> transforms_;
+};
 
 /// \brief TypeCast Op.
 /// \notes Tensor operation to cast to a given MindSpore data type.
@@ -126,14 +166,13 @@ class TypeCast : public TensorTransform {
   ~TypeCast() = default;
 
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return return code
+  /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
   std::string data_type_;
 };
 
-#ifndef ENABLE_ANDROID
 /// \brief Unique Op.
 /// \notes Return an output tensor containing all the unique elements of the input tensor in
 ///     the same order that they occur in the input tensor.
@@ -146,10 +185,9 @@ class Unique : public TensorTransform {
   ~Unique() = default;
 
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return return code
+  /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
-#endif
 }  // namespace transforms
 }  // namespace dataset
 }  // namespace mindspore

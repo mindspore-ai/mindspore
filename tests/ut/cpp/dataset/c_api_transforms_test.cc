@@ -35,10 +35,11 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, RandomSampler(false, 3));
   EXPECT_NE(ds, nullptr);
-  /* FIXME - Disable until proper external API for Compose is provided
+
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> compose = transforms::Compose({vision::Decode(), vision::Resize({777, 777})});
-  EXPECT_NE(compose, nullptr);
+  auto decode_op(new vision::Decode());
+  auto resize_op(new vision::Resize({777, 777}));
+  transforms::Compose compose({decode_op, resize_op});
 
   // Create a Map operation on ds
   ds = ds->Map({compose}, {"image"});
@@ -69,25 +70,71 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
 
   // Manually terminate the pipeline
   iter->Stop();
-  */
 }
 
-TEST_F(MindDataTestPipeline, TestComposeFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail with invalid transform.";
-  /* FIXME - Disable until proper external API for Compose is provided
+TEST_F(MindDataTestPipeline, TestComposeFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail1 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
   // Resize: Non-positive size value: -1 at element: 0
   // Compose: transform ops must not be null
-  std::shared_ptr<TensorOperation> compose1 = transforms::Compose({vision::Decode(), vision::Resize({-1})});
-  EXPECT_EQ(compose1, nullptr);
+  auto decode_op = vision::Decode();
+  auto resize_op = vision::Resize({-1});
+  auto compose = transforms::Compose({decode_op, resize_op});
+
+  // Create a Map operation on ds
+  ds = ds->Map({compose}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Compose parameter(invalid transform op)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestComposeFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail2 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // Compose: transform ops must not be null
-  std::shared_ptr<TensorOperation> compose2 = transforms::Compose({vision::Decode(), nullptr});
-  EXPECT_EQ(compose2, nullptr);
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> compose(new transforms::Compose({decode_op, nullptr}));
+
+  // Create a Map operation on ds
+  ds = ds->Map({compose}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Compose parameter (transform ops must not be null)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestComposeFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail3 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // Compose: transform list must not be empty
-  std::shared_ptr<TensorOperation> compose3 = transforms::Compose({});
-  EXPECT_EQ(compose3, nullptr);
-  */
+  std::vector<std::shared_ptr<TensorTransform>> list = {};
+  auto compose = transforms::Compose(list);
+
+  // Create a Map operation on ds
+  ds = ds->Map({compose}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid Compose parameter (transform list must not be empty)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
@@ -296,10 +343,10 @@ TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 5));
   EXPECT_NE(ds, nullptr);
-  /* FIXME - Disable until proper external API for RandomApply is provided
+
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_apply = transforms::RandomApply({vision::Resize({777, 777})}, 0.8);
-  EXPECT_NE(random_apply, nullptr);
+  auto resize_op = vision::Resize({777, 777});
+  auto random_apply = transforms::RandomApply({resize_op}, 0.8);
 
   // Create a Map operation on ds
   ds = ds->Map({random_apply}, {"image"});
@@ -328,29 +375,92 @@ TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
 
   // Manually terminate the pipeline
   iter->Stop();
-  */
 }
 
-TEST_F(MindDataTestPipeline, TestRandomApplyFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail with invalid transform.";
-  /* FIXME - Disable until proper external API for RandomApply is provided
+TEST_F(MindDataTestPipeline, TestRandomApplyFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail1 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
   // Resize: Non-positive size value: -1 at element: 0
   // RandomApply: transform ops must not be null
-  std::shared_ptr<TensorOperation> random_apply1 = transforms::RandomApply({vision::Decode(), vision::Resize({-1})});
-  EXPECT_EQ(random_apply1, nullptr);
+  auto decode_op = vision::Decode();
+  auto resize_op = vision::Resize({-1});
+  auto random_apply = transforms::RandomApply({decode_op, resize_op});
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_apply}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid RandomApply parameter (transform ops must not be null)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomApplyFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail2 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // RandomApply: transform ops must not be null
-  std::shared_ptr<TensorOperation> random_apply2 = transforms::RandomApply({vision::Decode(), nullptr});
-  EXPECT_EQ(random_apply2, nullptr);
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> random_apply(new transforms::RandomApply({decode_op, nullptr}));
 
-  // RandomApply: transform list must not be empty
-  std::shared_ptr<TensorOperation> random_apply3 = transforms::RandomApply({});
-  EXPECT_EQ(random_apply3, nullptr);
+  // Create a Map operation on ds
+  ds = ds->Map({random_apply}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid RandomApply parameter (transform ops must not be null)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomApplyFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail3 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // RandomApply: Probability has to be between 0 and 1
-  std::shared_ptr<TensorOperation> random_apply4 = transforms::RandomApply({vision::Resize({100})}, -1);
-  EXPECT_EQ(random_apply4, nullptr);
-  */
+  auto resize_op = vision::Resize({100});
+  auto random_apply = transforms::RandomApply({resize_op}, -1);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_apply}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid RandomApply parameter (Probability has to be between 0 and 1)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomApplyFail4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomApplyFail4 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // RandomApply: transform list must not be empty
+  std::vector<std::shared_ptr<TensorTransform>> list = {};
+  auto random_apply = transforms::RandomApply(list);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_apply}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid RandomApply parameter (transform list must not be empty)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
@@ -360,11 +470,11 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 3));
   EXPECT_NE(ds, nullptr);
-  /* FIXME - Disable until proper external API for RandomChoice is provided
+
   // Create objects for the tensor ops
-  std::shared_ptr<TensorOperation> random_choice =
-    transforms::RandomChoice({vision::Resize({777, 777}), vision::Resize({888, 888})});
-  EXPECT_NE(random_choice, nullptr);
+  std::shared_ptr<TensorTransform> resize_op1(new vision::Resize({777, 777}));
+  std::shared_ptr<TensorTransform> resize_op2(new vision::Resize({888, 888}));
+  auto random_choice = transforms::RandomChoice({resize_op1, resize_op2});
 
   // Create a Map operation on ds
   ds = ds->Map({random_choice}, {"image"});
@@ -393,25 +503,71 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
 
   // Manually terminate the pipeline
   iter->Stop();
-  */
 }
 
-TEST_F(MindDataTestPipeline, TestRandomChoiceFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail with invalid transform.";
-  /* FIXME - Disable until proper external API for RandomChoice is provided
+TEST_F(MindDataTestPipeline, TestRandomChoiceFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail1 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
   // Resize: Non-positive size value: -1 at element: 0
   // RandomChoice: transform ops must not be null
-  std::shared_ptr<TensorOperation> random_choice1 = transforms::RandomChoice({vision::Decode(), vision::Resize({-1})});
-  EXPECT_EQ(random_choice1, nullptr);
+  auto decode_op = vision::Decode();
+  auto resize_op = vision::Resize({-1});
+  auto random_choice = transforms::RandomChoice({decode_op, resize_op});
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_choice}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid RandomApply parameter (transform ops must not be null)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomChoiceFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail2 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // RandomChoice: transform ops must not be null
-  std::shared_ptr<TensorOperation> random_choice2 = transforms::RandomChoice({vision::Decode(), nullptr});
-  EXPECT_EQ(random_choice2, nullptr);
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
+  std::shared_ptr<TensorTransform> random_choice(new transforms::RandomApply({decode_op, nullptr}));
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_choice}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid RandomApply parameter (transform ops must not be null)
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomChoiceFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomChoiceFail3 with invalid transform.";
+
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
 
   // RandomChoice: transform list must not be empty
-  std::shared_ptr<TensorOperation> random_choice3 = transforms::RandomChoice({});
-  EXPECT_EQ(random_choice3, nullptr);
-  */
+  std::vector<std::shared_ptr<TensorTransform>> list = {};
+  auto random_choice = transforms::RandomChoice(list);
+
+  // Create a Map operation on ds
+  ds = ds->Map({random_choice}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure: invalid RandomApply parameter (transform list must not be empty)
+  EXPECT_EQ(iter, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {

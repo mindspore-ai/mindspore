@@ -16,21 +16,39 @@
 
 #include "minddata/dataset/include/transforms.h"
 
+#include <algorithm>
+
+#include "minddata/dataset/kernels/ir/data/transforms_ir.h"
+
 namespace mindspore {
 namespace dataset {
 
 // Transform operations for data.
 namespace transforms {
 
-// FUNCTIONS TO CREATE DATA TRANSFORM OPERATIONS
+// API CLASS FOR DATA TRANSFORM OPERATIONS
 // (In alphabetical order)
 
-// Function to create ComposeOperation.
-std::shared_ptr<ComposeOperation> Compose(const std::vector<std::shared_ptr<TensorOperation>> &transforms) {
-  auto op = std::make_shared<ComposeOperation>(transforms);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// Constructor to Compose.
+Compose::Compose(const std::vector<TensorTransform *> &transforms) {
+  (void)std::transform(
+    transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
 }
+
+Compose::Compose(const std::vector<std::shared_ptr<TensorTransform>> &transforms) {
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+                       [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                         return op != nullptr ? op->Parse() : nullptr;
+                       });
+}
+
+Compose::Compose(const std::vector<std::reference_wrapper<TensorTransform>> &transforms) {
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+                       [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
+}
+
+std::shared_ptr<TensorOperation> Compose::Parse() { return std::make_shared<ComposeOperation>(transforms_); }
 
 // Constructor to Duplicate
 Duplicate::Duplicate() {}
@@ -42,31 +60,66 @@ OneHot::OneHot(int32_t num_classes) : num_classes_(num_classes) {}
 
 std::shared_ptr<TensorOperation> OneHot::Parse() { return std::make_shared<OneHotOperation>(num_classes_); }
 
-// Function to create RandomApplyOperation.
-std::shared_ptr<RandomApplyOperation> RandomApply(const std::vector<std::shared_ptr<TensorOperation>> &transforms,
-                                                  double prob) {
-  auto op = std::make_shared<RandomApplyOperation>(transforms, prob);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+// Constructor to RandomApply.
+RandomApply::RandomApply(const std::vector<TensorTransform *> &transforms, double prob) : prob_(prob) {
+  (void)std::transform(
+    transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
 }
 
-// Function to create RandomChoiceOperation.
-std::shared_ptr<RandomChoiceOperation> RandomChoice(const std::vector<std::shared_ptr<TensorOperation>> &transforms) {
-  auto op = std::make_shared<RandomChoiceOperation>(transforms);
-  // Input validation
-  return op->ValidateParams() ? op : nullptr;
+RandomApply::RandomApply(const std::vector<std::shared_ptr<TensorTransform>> &transforms, double prob) : prob_(prob) {
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+                       [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                         return op != nullptr ? op->Parse() : nullptr;
+                       });
 }
+
+RandomApply::RandomApply(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, double prob)
+    : prob_(prob) {
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+                       [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
+}
+
+std::shared_ptr<TensorOperation> RandomApply::Parse() {
+  return std::make_shared<RandomApplyOperation>(transforms_, prob_);
+}
+
+// Constructor to RandomChoice.
+RandomChoice::RandomChoice(const std::vector<TensorTransform *> &transforms) {
+  (void)std::transform(
+    transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
+}
+
+RandomChoice::RandomChoice(const std::vector<std::shared_ptr<TensorTransform>> &transforms) {
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+                       [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                         return op != nullptr ? op->Parse() : nullptr;
+                       });
+}
+
+RandomChoice::RandomChoice(const std::vector<std::reference_wrapper<TensorTransform>> &transforms) {
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(transforms_),
+                       [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
+}
+
+std::shared_ptr<TensorOperation> RandomChoice::Parse() { return std::make_shared<RandomChoiceOperation>(transforms_); }
 
 // Constructor to TypeCast
 TypeCast::TypeCast(std::string data_type) : data_type_(data_type) {}
 
 std::shared_ptr<TensorOperation> TypeCast::Parse() { return std::make_shared<TypeCastOperation>(data_type_); }
 
-#ifndef ENABLE_ANDROID
 // Constructor to Unique
 Unique::Unique() {}
 
+#ifndef ENABLE_ANDROID
 std::shared_ptr<TensorOperation> Unique::Parse() { return std::make_shared<UniqueOperation>(); }
+#else
+std::shared_ptr<TensorOperation> Unique::Parse() {
+  MS_LOG(ERROR) << "Unique op is not supported for Android.";
+  return nullptr;
+}
 #endif
 }  // namespace transforms
 }  // namespace dataset

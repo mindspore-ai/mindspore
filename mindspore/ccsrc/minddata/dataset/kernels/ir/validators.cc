@@ -184,6 +184,8 @@ Status ValidateVectorTransforms(const std::string &op_name,
         op_name + ": transform ops must not be null, got transform[" + std::to_string(i) + "] == nullptr.";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    } else {
+      RETURN_IF_NOT_OK(transforms[i]->ValidateParams());
     }
   }
 
