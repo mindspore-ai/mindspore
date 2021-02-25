@@ -305,6 +305,9 @@ class AscendAutoMonadConverter {
       }
       if (return_label_ != kNoLabel) {
         (void)LabelGoto(return_label_);
+      } else {
+        // Clear end goto if return label not set.
+        kernel_graph_->set_end_goto(nullptr);
       }
     }
   }
