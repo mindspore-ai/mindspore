@@ -27,8 +27,11 @@ namespace mindspore::kernel {
 class ConvolutionBaseFP16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionBaseFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
+                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+                               TypeId origin_weight_data_type, TypeId origin_bias_data_type)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
+        origin_weight_data_type_(origin_weight_data_type),
+        origin_bias_data_type_(origin_bias_data_type) {}
   ~ConvolutionBaseFP16CPUKernel() override;
 
   int Init() override { return mindspore::lite::RET_OK; }
@@ -46,6 +49,8 @@ class ConvolutionBaseFP16CPUKernel : public ConvolutionBaseCPUKernel {
   float16_t *execute_input_ = nullptr;
   float16_t *execute_weight_ = nullptr;
   float16_t *execute_output_ = nullptr;
+  TypeId origin_weight_data_type_;
+  TypeId origin_bias_data_type_;
 };
 }  // namespace mindspore::kernel
 

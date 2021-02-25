@@ -49,11 +49,6 @@ int ArithmeticCPUKernel::Init() {
 }
 
 int ArithmeticCPUKernel::ReSize() {
-  if (CheckDataType() != RET_OK) {
-    MS_LOG(ERROR) << "ArithmeticCPUKernel resize failed.";
-    return RET_ERROR;
-  }
-
   CalcMultiplesAndStrides(param_);
   if (param_->broadcasting_) {
     outside_ = 1;
@@ -359,6 +354,10 @@ int ArithmeticsRun(void *cdata, int task_id) {
 }
 
 int ArithmeticCPUKernel::Run() {
+  if (CheckDataType() != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticCPUKernel check dataType failed.";
+    return RET_ERROR;
+  }
   if (!input0_broadcast_) {
     input0_ptr_ = in_tensors_[0]->data_c();
   }

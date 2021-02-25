@@ -136,6 +136,10 @@ int ArithmeticFP16CPUKernel::Execute(const void *input0, const void *input1, voi
 }
 
 int ArithmeticFP16CPUKernel::Run() {
+  if (CheckDataType() != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticFP16CPUKernel check dataType failed.";
+    return RET_ERROR;
+  }
   if (!input0_broadcast_) {
     input0_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
   }

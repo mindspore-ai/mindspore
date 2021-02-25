@@ -216,21 +216,25 @@ kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *>
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
+  auto weight_data_type = inputs.at(1)->data_type();
+  TypeId bias_data_type = kTypeUnknown;
+  if (inputs.size() == 3) {
+    bias_data_type = inputs.at(2)->data_type();
+  }
   kernel::LiteKernel *kernel = nullptr;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
-
   if (conv_param->group_ == 1) {
     if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
-        (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
-      kernel = new (std::nothrow) kernel::DeConvWinogradFp16CPUKernel(op_parameter, inputs, outputs, ctx);
+        (conv_param->dilation_h_ == 1 && conv_param->dilation_w_ == 1)) {
+      kernel = new (std::nothrow)
+        kernel::DeConvWinogradFp16CPUKernel(op_parameter, inputs, outputs, ctx, weight_data_type, bias_data_type);
     } else {
-      kernel = new (std::nothrow) kernel::DeConvolutionFp16CPUKernel(op_parameter, inputs, outputs, ctx);
+      kernel = new (std::nothrow)
+        kernel::DeConvolutionFp16CPUKernel(op_parameter, inputs, outputs, ctx, weight_data_type, bias_data_type);
     }
   } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = new (std::nothrow) DeconvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, ctx);
-  } else {
-    MS_LOG(ERROR) << "deconv do not support group deconv!";
-    kernel = nullptr;
+    kernel = new (std::nothrow)
+      DeconvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, ctx, weight_data_type, bias_data_type);
   }
 
   if (kernel == nullptr) {
