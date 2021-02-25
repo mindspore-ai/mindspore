@@ -39,11 +39,6 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
   }
   op_->set_input_x(*npu_inputs[0]);
 
-  auto gamma = new (std::nothrow) hiai::op::Const(name_ + "_gamma");
-  if (gamma == nullptr) {
-    MS_LOG(ERROR) << "New gamma const failed.";
-    return RET_ERROR;
-  }
   auto gamma_shape = inputs[1]->shape();
   std::shared_ptr<ge::Tensor> gamma_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
   if (gamma_tensor == nullptr) {
@@ -54,14 +49,14 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
                                    lite::ConverterToNPUDataType(inputs[1]->data_type()));
   gamma_tensor->SetTensorDesc(gamma_tensor_desc);
   gamma_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[1]->data_c()), inputs[1]->Size());
-  gamma->set_attr_value(gamma_tensor);
-  op_->set_input_gamma(*gamma);
-
-  auto beta = new (std::nothrow) hiai::op::Const(name_ + "_beta");
-  if (beta == nullptr) {
-    MS_LOG(ERROR) << "New beta const failed.";
+  gamma_ = new (std::nothrow) hiai::op::Const(name_ + "_gamma");
+  if (gamma_ == nullptr) {
+    MS_LOG(ERROR) << "New gamma_ const failed.";
     return RET_ERROR;
   }
+  gamma_->set_attr_value(gamma_tensor);
+  op_->set_input_gamma(*gamma_);
+
   auto beta_shape = inputs[2]->shape();
   std::shared_ptr<ge::Tensor> beta_tensor = std::shared_ptr<ge::Tensor>(new (std::nothrow) ge::Tensor());
   if (beta_tensor == nullptr) {
@@ -72,8 +67,13 @@ int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
                                   lite::ConverterToNPUDataType(inputs[2]->data_type()));
   beta_tensor->SetTensorDesc(beta_tensor_desc);
   beta_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs[2]->data_c()), inputs[2]->Size());
-  beta->set_attr_value(beta_tensor);
-  op_->set_input_beta(*beta);
+  beta_ = new (std::nothrow) hiai::op::Const(name_ + "_beta");
+  if (beta_ == nullptr) {
+    MS_LOG(ERROR) << "New beta_ const failed.";
+    return RET_ERROR;
+  }
+  beta_->set_attr_value(beta_tensor);
+  op_->set_input_beta(*beta_);
   op_->set_attr_epsilon(instance_norm_param_->epsilon_);
   return RET_OK;
 }
@@ -84,6 +84,14 @@ InstanceNormNPUKernel::~InstanceNormNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
+  }
+  if (gamma_ != nullptr) {
+    delete gamma_;
+    gamma_ = nullptr;
+  }
+  if (beta_ != nullptr) {
+    delete beta_;
+    beta_ = nullptr;
   }
 }
 

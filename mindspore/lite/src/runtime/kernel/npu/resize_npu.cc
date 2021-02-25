@@ -46,8 +46,8 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
   vector<int32_t> dataValue = {static_cast<int32_t>(resize_parameter_->new_height_),
                                static_cast<int32_t>(resize_parameter_->new_width_)};
   sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), 2 * sizeof(int32_t));
-  auto out_size = new (std::nothrow) hiai::op::Const(name_ + "_size");
-  out_size->set_attr_value(sizeTensor);
+  out_size_ = new (std::nothrow) hiai::op::Const(name_ + "_size");
+  out_size_->set_attr_value(sizeTensor);
   if (resize_parameter_->method_ == schema::ResizeMethod_LINEAR) {
     auto op = new (std::nothrow) hiai::op::ResizeBilinearV2(name_);
     if (op == nullptr) {
@@ -57,7 +57,7 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
     op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
                                schema::CoordinateTransformMode_ALIGN_CORNERS);
     op->set_input_x(*npu_inputs[0]);
-    op->set_input_size(*out_size);
+    op->set_input_size(*out_size_);
     op->set_attr_half_pixel_centers(resize_parameter_->preserve_aspect_ratio_);
     op_ = op;
   } else if (resize_parameter_->method_ == schema::ResizeMethod_NEAREST) {
@@ -69,7 +69,7 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
     op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
                                schema::CoordinateTransformMode_ALIGN_CORNERS);
     op->set_input_x(*npu_inputs[0]);
-    op->set_input_size(*out_size);
+    op->set_input_size(*out_size_);
     op_ = op;
   } else {
     MS_LOG(WARNING) << "Unsupported resize method type:" << resize_parameter_->method_;
@@ -84,6 +84,10 @@ ResizeNPUKernel::~ResizeNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
+  }
+  if (out_size_ != nullptr) {
+    delete out_size_;
+    out_size_ = nullptr;
   }
 }
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Resize, NPUKernelCreator<ResizeNPUKernel>)

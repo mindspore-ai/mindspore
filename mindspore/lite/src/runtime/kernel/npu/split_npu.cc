@@ -39,20 +39,20 @@ int SplitNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
   ge::TensorDesc size_splits_tensor_desc(ge::Shape({size}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr size_splits_tensor = std::make_shared<hiai::Tensor>(size_splits_tensor_desc);
   size_splits_tensor->SetData(reinterpret_cast<uint8_t *>(param_->split_sizes_), size * sizeof(int));
-  auto size_splits = new hiai::op::Const(name_ + "_size");
-  size_splits->set_attr_value(size_splits_tensor);
+  size_splits_ = new hiai::op::Const(name_ + "_size");
+  size_splits_->set_attr_value(size_splits_tensor);
 
   ge::TensorDesc split_dim_tensor_desc(ge::Shape({1}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr split_dim_tensor = std::make_shared<hiai::Tensor>(split_dim_tensor_desc);
   vector<int32_t> split_dim_data_value = {param_->split_dim_};
   split_dim_tensor->SetData(reinterpret_cast<uint8_t *>(split_dim_data_value.data()), 1 * sizeof(int));
-  auto split_dim = new hiai::op::Const(name_ + "_dim");
-  split_dim->set_attr_value(split_dim_tensor);
+  split_dim_ = new hiai::op::Const(name_ + "_dim");
+  split_dim_->set_attr_value(split_dim_tensor);
 
   op_->set_input_x(*npu_inputs[0]);
   op_->set_attr_num_split(param_->num_split_);
-  op_->set_input_split_dim(*split_dim);
-  op_->set_input_size_splits(*size_splits);
+  op_->set_input_split_dim(*split_dim_);
+  op_->set_input_size_splits(*size_splits_);
   op_->create_dynamic_output_y(param_->num_split_);
   return RET_OK;
 }
@@ -63,6 +63,14 @@ SplitNPUKernel::~SplitNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
+  }
+  if (size_splits_ != nullptr) {
+    delete size_splits_;
+    size_splits_ = nullptr;
+  }
+  if (split_dim_ != nullptr) {
+    delete split_dim_;
+    split_dim_ = nullptr;
   }
 }
 

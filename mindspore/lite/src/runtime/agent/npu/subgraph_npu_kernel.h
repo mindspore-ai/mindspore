@@ -18,10 +18,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_SUBGRAPH_NPU_KERNEL_H_
 #include <vector>
 #include <string>
+#include <memory>
 #include "include/hiai_ir_build.h"
 #include "src/sub_graph_kernel.h"
 #include "src/runtime/agent/npu/npu_executor.h"
 #include "include/graph/op/all_ops.h"
+#ifdef SUPPORT_NPU
+#include "src/runtime/agent/npu/npu_manager.h"
+#endif
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -31,8 +35,8 @@ class SubGraphNpuKernel : public SubGraphKernel {
   SubGraphNpuKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                     const std::vector<kernel::LiteKernel *> &inKernels,
                     const std::vector<kernel::LiteKernel *> &outKernels, const std::vector<kernel::LiteKernel *> &nodes,
-                    const lite::InnerContext *ctx = nullptr)
-      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx) {
+                    const lite::InnerContext *ctx = nullptr, lite::NPUManager *npu_manager = nullptr)
+      : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx), npu_manager_(npu_manager) {
     subgraph_type_ = kNpuSubGraph;
   }
 
@@ -56,7 +60,7 @@ class SubGraphNpuKernel : public SubGraphKernel {
   }
 
  private:
-  domi::ModelBufferData *BuildIRModel();
+  std::shared_ptr<domi::ModelBufferData> BuildIRModel();
 
   int BuildNPUInputOp();
 
@@ -71,11 +75,15 @@ class SubGraphNpuKernel : public SubGraphKernel {
  private:
   bool is_compiled_ = false;
 
+  lite::NPUManager *npu_manager_ = nullptr;
+
   std::vector<ge::Operator> subgraph_input_op_;
 
   std::vector<ge::Operator> subgraph_output_op_;
 
   std::vector<lite::Tensor *> out_tensor_sorted_;
+
+  std::vector<ge::Operator *> op_buffer_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_SUBGRAPH_NPU_KERNEL_H_

@@ -40,6 +40,8 @@ class PadNPUKernel : public NPUKernel {
   hiai::op::PadV2 *op_ = nullptr;
   PadParameter *param_;
   std::vector<int> paddings_;
+  hiai::op::Const *hiai_paddings_ = nullptr;
+  hiai::op::Const *hiai_constant_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_PAD_NPU_H_

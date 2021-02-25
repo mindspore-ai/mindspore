@@ -20,6 +20,9 @@
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"
 #include "src/runtime/allocator.h"
+#ifdef SUPPORT_NPU
+#include "src/runtime/agent/npu/npu_manager.h"
+#endif
 
 namespace mindspore::lite {
 struct InnerContext : public Context {
@@ -30,7 +33,9 @@ struct InnerContext : public Context {
   InnerContext() = default;
 
   explicit InnerContext(const Context *context);
-
+#if SUPPORT_NPU
+  InnerContext(const Context *context, NPUManager *npu_manager);
+#endif
   int Init();
 
   bool IsCpuFloat16Enabled() const;
@@ -52,6 +57,12 @@ struct InnerContext : public Context {
   int IsValid() const;
 
   virtual ~InnerContext();
+
+#if SUPPORT_NPU
+
+ private:
+  NPUManager *npu_manager_ = nullptr;
+#endif
 };
 }  // namespace mindspore::lite
 
