@@ -62,7 +62,7 @@ class AscendMessager(Messager):
 
     def __init__(self, fdin, fdout):
         super().__init__(fdin, fdout)
-        get_logger().info('[TRACE]', 'Ascend Messager init...')
+        get_logger().info("[TRACE] Ascend Messager init...")
         self.tbe_builder = TbeBuilder()
         self.akg_builder = AkgBuilder()
 
@@ -83,7 +83,7 @@ class AscendMessager(Messager):
         elif arg == 'TBE/WAIT':
             self.send_ack()
             task_id, res, pre = self.tbe_builder.wait()
-            get_logger().debug('[TRACE]', str(task_id) + '/' + str(res) + '/' + str(pre))
+            get_logger().debug(f"[TRACE] {str(task_id)} / {str(res)} / {str(pre)}")
             if self.get_message() != 'CONTINUE':
                 self.send_ack(False)
                 self.exit()
@@ -127,7 +127,7 @@ class AscendMessager(Messager):
         elif arg == 'SUPPORT':
             self.send_ack()
             json = self.get_message()
-            get_logger().debug('[SUPPORT]', json)
+            get_logger().debug(f"[SUPPORT] {json}")
             try:
                 res = check_supported(json)
             except json.decoder.JSONDecodeError:
@@ -143,12 +143,12 @@ class AscendMessager(Messager):
     def exit(self):
         self.tbe_builder.reset()
         self.tbe_builder.exit()
-        get_logger().info('[TRACE]', 'Ascend Messager Exit...')
+        get_logger().info("[TRACE] Ascend Messager Exit...")
         exit()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         raise Exception('Incorrect argv: {}'.format(sys.argv))
-    get_logger().debug('[TRACE]', 'argv: ' + str(sys.argv))
+    get_logger().debug(f"[TRACE] argv: {str(sys.argv)}")
     messager = AscendMessager(int(sys.argv[1]), int(sys.argv[2]))
     messager.run()

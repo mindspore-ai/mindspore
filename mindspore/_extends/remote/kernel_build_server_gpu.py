@@ -26,7 +26,7 @@ class GpuMessager(Messager):
 
     def __init__(self, fdin, fdout):
         super().__init__(fdin, fdout)
-        get_logger().info('[TRACE]', 'GPU Messager init...')
+        get_logger().info("[TRACE] GPU Messager init...")
 
     def handle(self):
         """
@@ -52,12 +52,12 @@ class GpuMessager(Messager):
             self.exit()
 
     def exit(self):
-        get_logger().info('[TRACE]', 'GPU Messager Exit...')
+        get_logger().info("[TRACE] GPU Messager Exit...")
         exit()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         raise Exception('Incorrect argv: {}'.format(sys.argv))
-    get_logger().debug('[TRACE]', 'argv: ' + str(sys.argv))
+    get_logger().debug(f"[TRACE] argv: {str(sys.argv)}")
     messager = GpuMessager(int(sys.argv[1]), int(sys.argv[2]))
     messager.run()
