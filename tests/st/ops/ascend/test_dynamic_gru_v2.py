@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
+import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -31,6 +32,10 @@ class DynamicGRUV2(nn.Cell):
         return self.dynamic_gru(x, weight_i, weight_h, bias_i, bias_h, None, init_h)
 
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
 def test_dynamic_gru_v2():
     x = Tensor(np.random.rand(2, 8, 64).astype(np.float16))
     weight_i = Tensor(np.random.rand(64, 48).astype(np.float16))
@@ -40,4 +45,4 @@ def test_dynamic_gru_v2():
     init_h = Tensor(np.random.rand(8, 16).astype(np.float16))
     gru_net = DynamicGRUV2()
     output = gru_net(x, weight_i, weight_h, bias_i, bias_h, init_h)
-    print(output)
+    assert output[0].shape == (2, 8, 16)

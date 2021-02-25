@@ -99,8 +99,8 @@ constexpr auto kJDynamicIndex = "dynamic_index";
 
 bool IsNeedChangeDefaultFormat(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  if (AnfAlgo::HasNodeAttr("io_format", cnode->cast<CNodePtr>())) {
-    auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, "io_format");
+  if (AnfAlgo::HasNodeAttr(kAttrFormat, cnode->cast<CNodePtr>())) {
+    auto attr = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFormat);
     return attr == kOpFormat_NCDHW;
   }
   return false;

@@ -47,6 +47,14 @@ apply_momentum_op_info = TBERegOp("ApplyMomentum") \
                   DataType.F32_Default, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0) \
     .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_Default, DataType.F32_FracZ,
                   DataType.F32_Default, DataType.F32_FracZ, DataType.F32_FracZ) \
+    .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_NDC1HWC0, DataType.F16_Default, DataType.F16_NDC1HWC0,
+                  DataType.F16_Default, DataType.F16_NDC1HWC0, DataType.F16_NDC1HWC0) \
+    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F16_FRACTAL_Z_3D, DataType.F16_Default, DataType.F16_FRACTAL_Z_3D,
+                  DataType.F16_Default, DataType.F16_FRACTAL_Z_3D, DataType.F16_FRACTAL_Z_3D) \
+    .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NDC1HWC0, DataType.F32_Default, DataType.F32_NDC1HWC0,
+                  DataType.F32_Default, DataType.F32_NDC1HWC0, DataType.F32_NDC1HWC0) \
+    .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_FRACTAL_Z_3D, DataType.F32_Default, DataType.F32_FRACTAL_Z_3D,
+                  DataType.F32_Default, DataType.F32_FRACTAL_Z_3D, DataType.F32_FRACTAL_Z_3D) \
     .get_op_info()
 
 

@@ -3783,7 +3783,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         for i, v in enumerate(reversed_pos_shape):
             if v not in (reversed_target[i], 1):
                 raise ValueError(f"For {self.name}, shapes can not broadcast. "
-                                 f"predict: {tuple(predict)}, weight shape {tuple(pos_weight)}.")
+                                 f"predict: {tuple(predict)}, pos_weight shape {tuple(pos_weight)}.")
 
         if self.reduction in ('mean', 'sum'):
             shape = []
