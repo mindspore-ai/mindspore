@@ -27,7 +27,6 @@
 #include "base/core_ops.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
-#include "backend/optimizer/common/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -354,24 +353,6 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
     }
   }
 }
-
-void RemoveCircle(const session::KernelGraph &kernel_graph,
-                  std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
-  MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
-  for (auto &[fusion_id, fusion_info] : *buffer_fusion_infos) {
-    bool has_circle = false;
-    for (auto &inp : fusion_info.inputs_list) {
-      if (IsDepend(kernel_graph, inp, fusion_info.anf_nodes)) {
-        has_circle = true;
-        break;
-      }
-    }
-
-    if (has_circle) {
-      buffer_fusion_infos->erase(fusion_id);
-    }
-  }
-}
 }  // namespace
 
 void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
@@ -380,9 +361,6 @@ void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
   GetFusionScopeComputeNodeList(kernel_graph, buffer_fusion_infos);
   GetFusionScopeInputNodeList(*kernel_graph, buffer_fusion_infos);
   GetFusionScopeOutputNodeList(kernel_graph, buffer_fusion_infos);
-  // Remove circle which will produce a circle if do fusion
-  RemoveCircle(*kernel_graph, buffer_fusion_infos);
-
   for (auto &buffer_fusion_info : *buffer_fusion_infos) {
     buffer_fusion_info.second.kernel_build_info =
       CreateFusionOpKernelInfo(buffer_fusion_info.second.inputs_list, buffer_fusion_info.second.outputs_list);
