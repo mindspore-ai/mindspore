@@ -25,10 +25,10 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 
-class BoolScalarEliminate: public OptimizerCaller {
-   public:
-    AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
-  };
+class BoolScalarEliminate : public OptimizerCaller {
+public:
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override;
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

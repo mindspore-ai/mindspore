@@ -84,7 +84,7 @@ private:
   void ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList &abs_list);
 
   // add out && dout to abs list
-  void AddOutToAbsList(const ValuePtr &out, abstract::AbstractBasePtrList &abs_list);
+  abstract::AbstractBasePtrList AddOutToAbsList(const ValuePtr &out, const abstract::AbstractBasePtrList &abs_list);
 
   // TODO: how To?
   void FreeTensorValue(const ValuePtrList &op_args, const ValuePtr &out, PrimBpropOptGraphInfoPtr &bprop_info) {};
