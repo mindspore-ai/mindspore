@@ -153,6 +153,10 @@ class Tensor(Tensor_):
         out = tensor_operator_registry.get('__neg__')(self)
         return out
 
+    def __invert__(self):
+        out = tensor_operator_registry.get('__logical_not__')(self)
+        return out
+
     def __bool__(self):
         data = self.asnumpy()
         if data.shape == ():
