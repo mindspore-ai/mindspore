@@ -93,11 +93,13 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
                std::accumulate(in_shape.begin(), in_shape.begin() + param->axis_, 1, std::multiplies<int>()),
                std::accumulate(in_shape.begin() + param->axis_, in_shape.end(), 1, std::multiplies<int>()),
                static_cast<int>(in_shape.at(param->axis_))};
+  int out_axis = (param->axis_ == 3 && param->topk_ == 1 && !param->keep_dims_) ? 4 : param->axis_;
   strides_ = {
     std::accumulate(in_shape_align.begin() + param->axis_ + 1, in_shape_align.end(), 1, std::multiplies<int>()),
     std::accumulate(in_shape_align.begin() + param->axis_, in_shape_align.end(), 1, std::multiplies<int>()),
-    std::accumulate(out_shape_align.begin() + param->axis_ + 1, out_shape_align.end(), 1, std::multiplies<int>()),
-    std::accumulate(out_shape_align.begin() + param->axis_, out_shape_align.end(), 1, std::multiplies<int>()),
+    std::accumulate(out_shape_align.begin() + std::min(out_axis + 1, 4), out_shape_align.end(), 1,
+                    std::multiplies<int>()),
+    std::accumulate(out_shape_align.begin() + out_axis, out_shape_align.end(), 1, std::multiplies<int>()),
   };
   switch (param->axis_) {
     case 0:
