@@ -59,7 +59,7 @@ class BinaryCrossEntropyGpuKernel : public GpuKernel {
       reduction_ = 2;
     }
     workspace_size_ = sizeof(T);
-    if (reduction_ == 0) {
+    if (reduction_ != 0) {
       workspace_size_ *= input_size_;
     }
     InitSizeLists();
