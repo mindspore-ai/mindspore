@@ -1,6 +1,7 @@
 include(GoogleTest)
 
 SET(DE_UT_SRCS
+        affine_op_test.cc
         execute_test.cc
         album_op_test.cc
         arena_test.cc
@@ -11,6 +12,7 @@ SET(DE_UT_SRCS
         btree_test.cc
         buddy_test.cc
         build_vocab_test.cc
+        c_api_affine_test.cc
         c_api_cache_test.cc
         c_api_dataset_album_test.cc
         c_api_dataset_cifar_test.cc

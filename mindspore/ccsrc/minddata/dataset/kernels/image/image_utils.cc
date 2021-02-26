@@ -1101,5 +1101,25 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
   jpeg_destroy_decompress(&cinfo);
   return Status::OK();
 }
+
+Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
+              InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    cv::Mat affine_mat(mat);
+    affine_mat = affine_mat.reshape(1, {2, 3});
+
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
+    RETURN_UNEXPECTED_IF_NULL(output_cv);
+    cv::warpAffine(input_cv->mat(), output_cv->mat(), affine_mat, input_cv->mat().size(),
+                   GetCVInterpolationMode(interpolation), cv::BORDER_CONSTANT, cv::Scalar(fill_r, fill_g, fill_b));
+    (*output) = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Affine: " + std::string(e.what()));
+  }
+}
+
 }  // namespace dataset
 }  // namespace mindspore

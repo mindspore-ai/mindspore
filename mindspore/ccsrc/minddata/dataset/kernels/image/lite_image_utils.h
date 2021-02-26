@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,69 +52,80 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
                          int w = 0, int h = 0);
 
 /// \brief Returns cropped ROI of an image
-/// \param input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-/// \param x: starting horizontal position of ROI
-/// \param y: starting vertical position of ROI
-/// \param w: width of the ROI
-/// \param h: height of the ROI
-/// \param output: Cropped image Tensor of shape <h,w,C> or <h,w> and same input type.
+/// \param[in] input: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
+/// \param[in] x Starting horizontal position of ROI
+/// \param[in] y Starting vertical position of ROI
+/// \param[in] w Width of the ROI
+/// \param[in] h Height of the ROI
+/// \param[out] output: Cropped image Tensor of shape <h,w,C> or <h,w> and same input type.
 Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x, int y, int w, int h);
 
 /// \brief Returns Decoded image
 /// Supported images:
 ///  BMP JPEG JPG PNG TIFF
 /// supported by opencv, if user need more image analysis capabilities, please compile opencv particularlly.
-/// \param input: CVTensor containing the not decoded image 1D bytes
-/// \param output: Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
+/// \param[in] input CVTensor containing the not decoded image 1D bytes
+/// \param[out] output Decoded image Tensor of shape <H,W,C> and type DE_UINT8. Pixel order is RGB
 Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
 /// \brief Get jpeg image width and height
-/// \param input: CVTensor containing the not decoded image 1D bytes
-/// \param img_width: the jpeg image width
-/// \param img_height: the jpeg image height
+/// \param[in] input CVTensor containing the not decoded image 1D bytes
+/// \param[in] img_width The jpeg image width
+/// \param[in] img_height The jpeg image height
 Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, int *img_height);
 
 /// \brief Returns Normalized image
-/// \param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
-/// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
-/// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
-/// \param output: Normalized image Tensor of same input shape and type DE_FLOAT32
+/// \param[in] input Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
+/// \param[in] mean Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
+/// \param[in] std  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
+/// \param[out] output Normalized image Tensor of same input shape and type DE_FLOAT32
 Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                  const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std);
 
 /// \brief  Returns Resized image.
-/// \param input/output: Tensor of shape <H,W,C> or <H,W> and any OpenCv compatible type, see CVTensor.
-/// \param output_height: height of output
-/// \param output_width: width of output
-/// \param fx: horizontal scale
-/// \param fy: vertical scale
-/// \param InterpolationMode: the interpolation mode
-/// \param output: Resized image of shape <outputHeight,outputWidth,C> or <outputHeight,outputWidth>
+/// \param[in] input
+/// \param[in] output_height Height of output
+/// \param[in] output_width Width of output
+/// \param[in] fx Horizontal scale
+/// \param[in] fy Vertical scale
+/// \param[in] InterpolationMode The interpolation mode
+/// \param[out] output Resized image of shape <outputHeight,outputWidth,C> or <outputHeight,outputWidth>
 ///                and same type as input
 Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t output_height,
               int32_t output_width, double fx = 0.0, double fy = 0.0,
               InterpolationMode mode = InterpolationMode::kLinear);
 
 /// \brief Pads the input image and puts the padded image in the output
-/// \param input: input Tensor
-/// \param output: padded Tensor
-/// \param pad_top: amount of padding done in top
-/// \param pad_bottom: amount of padding done in bottom
-/// \param pad_left: amount of padding done in left
-/// \param pad_right: amount of padding done in right
-/// \param border_types: the interpolation to be done in the border
-/// \param fill_r: red fill value for pad
-/// \param fill_g: green fill value for pad
-/// \param fill_b: blue fill value for pad.
+/// \param[in] input: input Tensor
+/// \param[out] output: padded Tensor
+/// \param[in] pad_top Amount of padding done in top
+/// \param[in] pad_bottom Amount of padding done in bottom
+/// \param[in] pad_left Amount of padding done in left
+/// \param[in] pad_right Amount of padding done in right
+/// \param[in] border_types The interpolation to be done in the border
+/// \param[in] fill_r Red fill value for pad
+/// \param[in] fill_g Green fill value for pad
+/// \param[in] fill_b Blue fill value for pad
 Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const int32_t &pad_top,
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
 /// \brief Rotate the input image by orientation
-/// \param input: input Tensor
-/// \param output: padded Tensor
-/// \param orientation:  the orientation of EXIF
+/// \param[in] input Input Tensor
+/// \param[out] output Rotated Tensor
+/// \param[in] orientation The orientation of EXIF
 Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation);
+
+/// \brief Geometrically transform the input image
+/// \param[in] input Input Tensor
+/// \param[out] output Transformed Tensor
+/// \param[in] mat The transformation matrix
+/// \param[in] interpolation The interpolation mode, support only bilinear for now
+/// \param[in] fill_r Red fill value for pad
+/// \param[in] fill_g Green fill value for pad
+/// \param[in] fill_b Blue fill value for pad
+Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
+              InterpolationMode interpolation, uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
 
 }  // namespace dataset
 }  // namespace mindspore

@@ -299,6 +299,17 @@ Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 /// \param img_height: the jpeg image height
 Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, int *img_height);
 
+/// \brief Geometrically transform the input image
+/// \param[in] input Input Tensor
+/// \param[out] output Transformed Tensor
+/// \param[in] mat The transformation matrix
+/// \param[in] interpolation The interpolation mode
+/// \param[in] fill_r Red fill value for pad
+/// \param[in] fill_g Green fill value for pad
+/// \param[in] fill_b Blue fill value for pad
+Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
+              InterpolationMode interpolation, uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

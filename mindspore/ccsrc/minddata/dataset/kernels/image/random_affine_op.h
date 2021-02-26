@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/image/affine_op.h"
 #include "minddata/dataset/util/status.h"
@@ -51,7 +50,6 @@ class RandomAffineOp : public AffineOp {
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
  private:
-  std::string kRandomAffineOp = "RandomAffineOp";
   std::vector<float_t> degrees_range_;    // min_degree, max_degree
   std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
   std::vector<float_t> scale_range_;      // min_scale, max_scale

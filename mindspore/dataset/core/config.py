@@ -229,7 +229,7 @@ def set_auto_num_workers(enable):
     If turned on, the num_parallel_workers in each op will be adjusted automatically, possibly overwriting the
     num_parallel_workers passed in by user or the default value (if user doesn't pass anything) set by
     ds.config.set_num_parallel_workers().
-    For now, this function is only optimized for Yolo3 dataset with per_batch_map (running map in batch).
+    For now, this function is only optimized for YoloV3 dataset with per_batch_map (running map in batch).
     This feature aims to provide a baseline for optimized num_workers assignment for each op.
     Op whose num_parallel_workers is adjusted to a new value will be logged.
 

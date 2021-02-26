@@ -84,8 +84,8 @@ PYBIND_REGISTER(CutOutOperation, 1, ([](const py::module *m) {
 PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::DecodeOperation, TensorOperation, std::shared_ptr<vision::DecodeOperation>>(
                     *m, "DecodeOperation")
-                    .def(py::init([]() {
-                      auto decode = std::make_shared<vision::DecodeOperation>();
+                    .def(py::init([](bool rgb) {
+                      auto decode = std::make_shared<vision::DecodeOperation>(rgb);
                       THROW_IF_ERROR(decode->ValidateParams());
                       return decode;
                     }))

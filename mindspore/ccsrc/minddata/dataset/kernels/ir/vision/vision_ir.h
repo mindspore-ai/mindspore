@@ -35,6 +35,7 @@ namespace dataset {
 namespace vision {
 
 // Char arrays storing name of corresponding classes (in alphabetical order)
+constexpr char kAffineOperation[] = "Affine";
 constexpr char kAutoContrastOperation[] = "AutoContrast";
 constexpr char kBoundingBoxAugmentOperation[] = "BoundingBoxAugment";
 constexpr char kCenterCropOperation[] = "CenterCrop";
@@ -81,9 +82,34 @@ constexpr char kUniformAugOperation[] = "UniformAug";
 
 /* ####################################### Derived TensorOperation classes ################################# */
 
+class AffineOperation : public TensorOperation {
+ public:
+  explicit AffineOperation(float_t degrees, const std::vector<float> &translation, float scale,
+                           const std::vector<float> &shear, InterpolationMode interpolation,
+                           const std::vector<uint8_t> &fill_value);
+
+  ~AffineOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kAffineOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+ private:
+  float degrees_;
+  std::vector<float> translation_;
+  float scale_;
+  std::vector<float> shear_;
+  InterpolationMode interpolation_;
+  std::vector<uint8_t> fill_value_;
+};
+
 class AutoContrastOperation : public TensorOperation {
  public:
-  explicit AutoContrastOperation(float cutoff = 0.0, std::vector<uint32_t> ignore = {});
+  explicit AutoContrastOperation(float cutoff, std::vector<uint32_t> ignore);
 
   ~AutoContrastOperation() = default;
 
@@ -102,7 +128,7 @@ class AutoContrastOperation : public TensorOperation {
 
 class BoundingBoxAugmentOperation : public TensorOperation {
  public:
-  explicit BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio = 0.3);
+  explicit BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio);
 
   ~BoundingBoxAugmentOperation() = default;
 
@@ -156,7 +182,7 @@ class CropOperation : public TensorOperation {
 
 class CutMixBatchOperation : public TensorOperation {
  public:
-  explicit CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha = 1.0, float prob = 1.0);
+  explicit CutMixBatchOperation(ImageBatchFormat image_batch_format, float alpha, float prob);
 
   ~CutMixBatchOperation() = default;
 
@@ -176,7 +202,7 @@ class CutMixBatchOperation : public TensorOperation {
 
 class CutOutOperation : public TensorOperation {
  public:
-  explicit CutOutOperation(int32_t length, int32_t num_patches = 1);
+  explicit CutOutOperation(int32_t length, int32_t num_patches);
 
   ~CutOutOperation() = default;
 
@@ -195,7 +221,7 @@ class CutOutOperation : public TensorOperation {
 
 class DecodeOperation : public TensorOperation {
  public:
-  explicit DecodeOperation(bool rgb = true);
+  explicit DecodeOperation(bool rgb);
 
   ~DecodeOperation() = default;
 
@@ -246,7 +272,7 @@ class InvertOperation : public TensorOperation {
 
 class MixUpBatchOperation : public TensorOperation {
  public:
-  explicit MixUpBatchOperation(float alpha = 1);
+  explicit MixUpBatchOperation(float alpha);
 
   ~MixUpBatchOperation() = default;
 
@@ -283,8 +309,7 @@ class NormalizeOperation : public TensorOperation {
 
 class NormalizePadOperation : public TensorOperation {
  public:
-  NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std,
-                        const std::string &dtype = "float32");
+  NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype);
 
   ~NormalizePadOperation() = default;
 
@@ -304,8 +329,7 @@ class NormalizePadOperation : public TensorOperation {
 
 class PadOperation : public TensorOperation {
  public:
-  PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value = {0},
-               BorderType padding_mode = BorderType::kConstant);
+  PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode);
 
   ~PadOperation() = default;
 
@@ -325,11 +349,9 @@ class PadOperation : public TensorOperation {
 
 class RandomAffineOperation : public TensorOperation {
  public:
-  RandomAffineOperation(const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range = {0.0, 0.0},
-                        const std::vector<float_t> &scale_range = {1.0, 1.0},
-                        const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
-                        InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
-                        const std::vector<uint8_t> &fill_value = {0, 0, 0});
+  RandomAffineOperation(const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range,
+                        const std::vector<float_t> &scale_range, const std::vector<float_t> &shear_ranges,
+                        InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
 
   ~RandomAffineOperation() = default;
 
@@ -371,8 +393,8 @@ class RandomColorOperation : public TensorOperation {
 
 class RandomColorAdjustOperation : public TensorOperation {
  public:
-  RandomColorAdjustOperation(std::vector<float> brightness = {1.0, 1.0}, std::vector<float> contrast = {1.0, 1.0},
-                             std::vector<float> saturation = {1.0, 1.0}, std::vector<float> hue = {0.0, 0.0});
+  RandomColorAdjustOperation(std::vector<float> brightness, std::vector<float> contrast, std::vector<float> saturation,
+                             std::vector<float> hue);
 
   ~RandomColorAdjustOperation() = default;
 
@@ -393,9 +415,8 @@ class RandomColorAdjustOperation : public TensorOperation {
 
 class RandomCropOperation : public TensorOperation {
  public:
-  RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                      bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
-                      BorderType padding_mode = BorderType::kConstant);
+  RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
+                      std::vector<uint8_t> fill_value, BorderType padding_mode);
 
   ~RandomCropOperation() = default;
 
@@ -417,10 +438,8 @@ class RandomCropOperation : public TensorOperation {
 
 class RandomResizedCropOperation : public TensorOperation {
  public:
-  RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
-                             std::vector<float> ratio = {3. / 4., 4. / 3.},
-                             InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
-                             int32_t max_attempts = 10);
+  RandomResizedCropOperation(std::vector<int32_t> size, std::vector<float> scale, std::vector<float> ratio,
+                             InterpolationMode interpolation, int32_t max_attempts);
 
   /// \brief default copy constructor
   explicit RandomResizedCropOperation(const RandomResizedCropOperation &) = default;
@@ -461,9 +480,8 @@ class RandomCropDecodeResizeOperation : public RandomResizedCropOperation {
 
 class RandomCropWithBBoxOperation : public TensorOperation {
  public:
-  RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding = {0, 0, 0, 0},
-                              bool pad_if_needed = false, std::vector<uint8_t> fill_value = {0, 0, 0},
-                              BorderType padding_mode = BorderType::kConstant);
+  RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
+                              std::vector<uint8_t> fill_value, BorderType padding_mode);
 
   ~RandomCropWithBBoxOperation() = default;
 
@@ -485,7 +503,7 @@ class RandomCropWithBBoxOperation : public TensorOperation {
 
 class RandomHorizontalFlipOperation : public TensorOperation {
  public:
-  explicit RandomHorizontalFlipOperation(float probability = 0.5);
+  explicit RandomHorizontalFlipOperation(float probability);
 
   ~RandomHorizontalFlipOperation() = default;
 
@@ -503,7 +521,7 @@ class RandomHorizontalFlipOperation : public TensorOperation {
 
 class RandomHorizontalFlipWithBBoxOperation : public TensorOperation {
  public:
-  explicit RandomHorizontalFlipWithBBoxOperation(float probability = 0.5);
+  explicit RandomHorizontalFlipWithBBoxOperation(float probability);
 
   ~RandomHorizontalFlipWithBBoxOperation() = default;
 
@@ -521,7 +539,7 @@ class RandomHorizontalFlipWithBBoxOperation : public TensorOperation {
 
 class RandomPosterizeOperation : public TensorOperation {
  public:
-  explicit RandomPosterizeOperation(const std::vector<uint8_t> &bit_range = {4, 8});
+  explicit RandomPosterizeOperation(const std::vector<uint8_t> &bit_range);
 
   ~RandomPosterizeOperation() = default;
 
@@ -575,10 +593,9 @@ class RandomResizeWithBBoxOperation : public TensorOperation {
 
 class RandomResizedCropWithBBoxOperation : public TensorOperation {
  public:
-  explicit RandomResizedCropWithBBoxOperation(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
-                                              std::vector<float> ratio = {3. / 4., 4. / 3.},
-                                              InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
-                                              int32_t max_attempts = 10);
+  explicit RandomResizedCropWithBBoxOperation(std::vector<int32_t> size, std::vector<float> scale,
+                                              std::vector<float> ratio, InterpolationMode interpolation,
+                                              int32_t max_attempts);
 
   ~RandomResizedCropWithBBoxOperation() = default;
 
@@ -642,7 +659,7 @@ class RandomSelectSubpolicyOperation : public TensorOperation {
 
 class RandomSharpnessOperation : public TensorOperation {
  public:
-  explicit RandomSharpnessOperation(std::vector<float> degrees = {0.1, 1.9});
+  explicit RandomSharpnessOperation(std::vector<float> degrees);
 
   ~RandomSharpnessOperation() = default;
 
@@ -678,7 +695,7 @@ class RandomSolarizeOperation : public TensorOperation {
 
 class RandomVerticalFlipOperation : public TensorOperation {
  public:
-  explicit RandomVerticalFlipOperation(float probability = 0.5);
+  explicit RandomVerticalFlipOperation(float probability);
 
   ~RandomVerticalFlipOperation() = default;
 
@@ -696,7 +713,7 @@ class RandomVerticalFlipOperation : public TensorOperation {
 
 class RandomVerticalFlipWithBBoxOperation : public TensorOperation {
  public:
-  explicit RandomVerticalFlipWithBBoxOperation(float probability = 0.5);
+  explicit RandomVerticalFlipWithBBoxOperation(float probability);
 
   ~RandomVerticalFlipWithBBoxOperation() = default;
 
@@ -733,8 +750,7 @@ class RescaleOperation : public TensorOperation {
 
 class ResizeOperation : public TensorOperation {
  public:
-  explicit ResizeOperation(std::vector<int32_t> size,
-                           InterpolationMode interpolation_mode = InterpolationMode::kLinear);
+  explicit ResizeOperation(std::vector<int32_t> size, InterpolationMode interpolation_mode);
 
   ~ResizeOperation() = default;
 
@@ -753,8 +769,7 @@ class ResizeOperation : public TensorOperation {
 
 class ResizeWithBBoxOperation : public TensorOperation {
  public:
-  explicit ResizeWithBBoxOperation(std::vector<int32_t> size,
-                                   InterpolationMode interpolation_mode = InterpolationMode::kLinear);
+  explicit ResizeWithBBoxOperation(std::vector<int32_t> size, InterpolationMode interpolation_mode);
 
   ~ResizeWithBBoxOperation() = default;
 
@@ -870,7 +885,7 @@ class SwapRedBlueOperation : public TensorOperation {
 
 class UniformAugOperation : public TensorOperation {
  public:
-  explicit UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops = 2);
+  explicit UniformAugOperation(std::vector<std::shared_ptr<TensorOperation>> transforms, int32_t num_ops);
 
   ~UniformAugOperation() = default;
 

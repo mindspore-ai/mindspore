@@ -192,9 +192,13 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/image/lite_image_utils.cc
         ${MINDDATA_DIR}/kernels/image/center_crop_op.cc
         ${MINDDATA_DIR}/kernels/image/crop_op.cc
+        ${MINDDATA_DIR}/kernels/image/decode_op.cc
         ${MINDDATA_DIR}/kernels/image/normalize_op.cc
+        ${MINDDATA_DIR}/kernels/image/affine_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_op.cc
         ${MINDDATA_DIR}/kernels/image/rotate_op.cc
+        ${MINDDATA_DIR}/kernels/image/random_affine_op.cc
+        ${MINDDATA_DIR}/kernels/image/math_utils.cc
         ${MINDDATA_DIR}/kernels/data/compose_op.cc
         ${MINDDATA_DIR}/kernels/data/duplicate_op.cc
         ${MINDDATA_DIR}/kernels/data/one_hot_op.cc
@@ -350,7 +354,6 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         "${MINDDATA_DIR}/kernels/image/hwc_to_chw_op.cc"
         "${MINDDATA_DIR}/kernels/image/image_utils.cc"
         "${MINDDATA_DIR}/kernels/image/invert_op.cc"
-        "${MINDDATA_DIR}/kernels/image/math_utils.cc"
         "${MINDDATA_DIR}/kernels/image/mixup_batch_op.cc"
         "${MINDDATA_DIR}/kernels/image/pad_op.cc"
         "${MINDDATA_DIR}/kernels/image/posterize_op.cc"

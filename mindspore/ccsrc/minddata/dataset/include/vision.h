@@ -35,7 +35,6 @@ class TensorOperation;
 
 // Transform operations for performing computer vision.
 namespace vision {
-
 /// \brief AutoContrast TensorTransform.
 /// \notes Apply automatic contrast on input image.
 class AutoContrast : public TensorTransform {
@@ -251,48 +250,6 @@ class Pad : public TensorTransform {
   std::vector<int32_t> padding_;
   std::vector<uint8_t> fill_value_;
   BorderType padding_mode_;
-};
-
-/// \brief RandomAffine TensorTransform.
-/// \notes Applies a Random Affine transformation on input image in RGB or Greyscale mode.
-class RandomAffine : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] degrees A float vector of size 2, representing the starting and ending degree
-  /// \param[in] translate_range A float vector of size 2 or 4, representing percentages of translation on x and y axes.
-  ///    if size is 2, (min_dx, max_dx, 0, 0)
-  ///    if size is 4, (min_dx, max_dx, min_dy, max_dy)
-  ///    all values are in range [-1, 1]
-  /// \param[in] scale_range A float vector of size 2, representing the starting and ending scales in the range.
-  /// \param[in] shear_ranges A float vector of size 2 or 4, representing the starting and ending shear degrees
-  ///    vertically and horizontally.
-  ///    if size is 2, (min_shear_x, max_shear_x, 0, 0)
-  ///    if size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y)
-  /// \param[in] interpolation An enum for the mode of interpolation
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
-  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
-  explicit RandomAffine(const std::vector<float_t> &degrees,
-                        const std::vector<float_t> &translate_range = {0.0, 0.0, 0.0, 0.0},
-                        const std::vector<float_t> &scale_range = {1.0, 1.0},
-                        const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
-                        InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
-                        const std::vector<uint8_t> &fill_value = {0, 0, 0});
-
-  /// \brief Destructor.
-  ~RandomAffine() = default;
-
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  std::vector<float_t> degrees_;          // min_degree, max_degree
-  std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
-  std::vector<float_t> scale_range_;      // min_scale, max_scale
-  std::vector<float_t> shear_ranges_;     // min_x_shear, max_x_shear, min_y_shear, max_y_shear
-  InterpolationMode interpolation_;
-  std::vector<uint8_t> fill_value_;
 };
 
 /// \brief Blends an image with its grayscale version with random weights
