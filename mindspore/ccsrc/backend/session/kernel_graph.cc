@@ -274,6 +274,25 @@ std::vector<CNodePtr> KernelGraph::SortStartLabelAndEndGoto() {
       continue;
     }
 
+    //
+    // Re-order:
+    //   u = LabelGoto(...)
+    //   x = Mul(...)
+    //   LabelSet(u)
+    // To:
+    //   u = LabelGoto(...)
+    //   LabelSet(u)
+    //   x = Mul(...)
+    // This prevent Mul be skipped.
+    //
+    if (IsPrimitiveCNode(node, prim::kPrimLabelSet) && (re_order.back() != node->input(1))) {
+      auto iter = std::find(re_order.rbegin() + 1, re_order.rend(), node->input(1));
+      if (iter != re_order.rend()) {
+        re_order.insert(iter.base(), node);
+        continue;
+      }
+    }
+
     re_order.push_back(node);
   }
   if (end_goto_ != nullptr) {

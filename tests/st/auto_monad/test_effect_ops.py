@@ -15,6 +15,7 @@
 import os
 import tempfile
 import pytest
+import scipy
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops.operations as P
@@ -395,3 +396,24 @@ def test_summary():
                 event = summary_writer.read_event()
                 tags = set(value.tag for value in event.summary.value)
                 assert tags == {'tensor', 'histogram', 'scalar', 'image'}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_igamma():
+    class IGammaTest(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.igamma = nn.IGamma()
+
+        def construct(self, x, a):
+            return self.igamma(a=a, x=x)
+
+    x = 4.22
+    a = 2.29
+    net = IGammaTest()
+    out = net(Tensor(x, mstype.float32), Tensor(a, mstype.float32))
+    expect = scipy.special.gammainc(a, x)
+    assert np.allclose(out.asnumpy(), expect, rtol=1e-5, atol=1e-5, equal_nan=True)
