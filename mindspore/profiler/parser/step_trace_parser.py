@@ -343,7 +343,7 @@ class BaseStepTraceParser:
                         row_data[FP_DURATION] += row_data[TAIL]
                         row_data = row_data[:BP_POINT] + row_data[BP_POINT+1:TAIL]
                     csv_writer.writerow(row_data)
-            os.chmod(self._output_path, stat.S_IRUSR)
+            os.chmod(self._output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             log.warning('Failed to save step trace raw info. %s', err)
             raise ProfilerIOException
@@ -387,7 +387,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
         try:
             with open(output_path, 'w') as json_file:
                 json.dump(points, json_file)
-            os.chmod(output_path, stat.S_IRUSR)
+            os.chmod(output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             log.warning('Failed to save point info. %s', err)
             raise ProfilerIOException
@@ -506,7 +506,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
         try:
             with open(output_path, 'w') as json_file:
                 json.dump(points, json_file)
-            os.chmod(output_path, stat.S_IRUSR)
+            os.chmod(output_path, stat.S_IREAD | stat.S_IWRITE)
         except (IOError, OSError) as err:
             log.warning('Failed to save point info. %s', err)
             raise ProfilerIOException

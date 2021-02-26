@@ -29,18 +29,6 @@ namespace profiler {
 namespace cpu {
 std::shared_ptr<CPUProfiler> CPUProfiler::profiler_inst_ = nullptr;
 
-uint64_t GetMonoTimeStamp() {
-  struct timespec ts;
-#if defined(_WIN32) || defined(_WIN64)
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-#else
-  clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-#endif
-  constexpr uint64_t kNSecondInSecond = 1000000000;
-  uint64_t cur_time_stamp = ts.tv_sec * kNSecondInSecond + ts.tv_nsec;
-  return cur_time_stamp;
-}
-
 std::shared_ptr<CPUProfiler> CPUProfiler::GetInstance() {
   if (profiler_inst_ == nullptr) {
     profiler_inst_ = std::shared_ptr<CPUProfiler>(new (std::nothrow) CPUProfiler());
@@ -50,7 +38,7 @@ std::shared_ptr<CPUProfiler> CPUProfiler::GetInstance() {
 
 void CPUProfiler::Init(const std::string &profileDataPath = "") {
   MS_LOG(INFO) << "Initialize CPU Profiling";
-  base_time_ = GetMonoTimeStamp();
+  base_time_ = GetHostMonoTimeStamp();
   profile_data_path_ = profileDataPath;
   MS_LOG(INFO) << " Host start time(ns): " << base_time_ << " profile data path: " << profile_data_path_;
 }
@@ -75,34 +63,19 @@ void CPUProfiler::SetRunTimeData(const std::string &op_name, const uint32_t pid)
   pid_ = pid;
 }
 
-void CPUProfiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
-  auto iter = op_info_map_.find(op_name);
-  if (iter != op_info_map_.end()) {
-    // The time unit is ms, convert to us
-    iter->second.op_cost_time += time_elapsed;
-  }
-}
-
-void CPUProfiler::SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration) {
-  auto iter = op_info_map_.find(op_name);
-  if (iter != op_info_map_.end()) {
-    iter->second.start_duration.emplace_back(StartDuration({start, duration}));
-  }
-}
-
 void CPUProfiler::OpDataProducerBegin(const std::string op_name, const uint32_t pid) {
-  op_time_start_ = GetMonoTimeStamp();
-  op_time_mono_start_ = GetMonoTimeStamp();
+  op_time_start_ = GetHostMonoTimeStamp();
+  op_time_mono_start_ = GetHostMonoTimeStamp();
   SetRunTimeData(op_name, pid);
 }
 
 void CPUProfiler::OpDataProducerEnd() {
   float op_time_elapsed = 0;
-  op_time_stop_ = GetMonoTimeStamp();
+  op_time_stop_ = GetHostMonoTimeStamp();
   op_time_elapsed = (op_time_stop_ - op_time_start_) / kTimeUnit;
   MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
-  SetRunTimeData(op_name_, op_time_elapsed);
-  SetRunTimeData(op_name_, op_time_mono_start_, op_time_elapsed);
+  Profiler::SetRunTimeData(op_name_, op_time_elapsed);
+  Profiler::SetRunTimeData(op_name_, op_time_mono_start_, op_time_elapsed);
 }
 
 void CPUProfiler::Stop() {
@@ -115,7 +88,7 @@ void CPUProfiler::SaveProfileData() {
   if (profile_data_path_.empty()) {
     MS_LOG(WARNING) << "Profile data path is empty, skip save profile data.";
   } else {
-    DataSaver dataSaver;
+    CpuDataSaver dataSaver;
     dataSaver.ParseOpInfo(op_info_map_);
     dataSaver.WriteFile(profile_data_path_);
   }

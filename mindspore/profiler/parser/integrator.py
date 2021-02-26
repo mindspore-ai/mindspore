@@ -642,7 +642,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
     """Generate gpu Timeline data from file."""
     _display_filename = 'gpu_timeline_display_{}.json'
     _timeline_summary_filename = 'gpu_timeline_summary_{}.json'
-    _output_op_execute_time_file_path = "op_execute_timestamp_{}.txt"
+    _output_op_execute_time_file_path = "gpu_op_execute_timestamp_{}.txt"
     _output_activity_execute_time_file_path = "activity_execute_timestamp_{}.txt"
     _output_gpu_activity_info_file_path = "gpu_activity_data_{}.csv"
     _activity_keys_list = []

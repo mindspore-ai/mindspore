@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_GPU_PROFILING_H
-#define MINDSPORE_GPU_PROFILING_H
+#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_PROFILING_H
+#define MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_PROFILING_H
 #include <cuda.h>
 #include <cupti.h>
 #include <algorithm>
@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include "profiler/device/profiling.h"
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 
 namespace mindspore {
@@ -86,23 +87,6 @@ struct Event {
   };
 };
 
-struct StartDuration {
-  uint64_t start_timestamp = 0l;
-  float duration = 0l;
-};
-
-struct OpInfo {
-  std::string op_name;
-  float cupti_api_call_time = 0l;
-  float cupti_activity_time = 0l;
-  float op_host_cost_time = 0;
-  int op_kernel_api_count = 0;
-  int op_kernel_count = 0;
-  int op_count = 0;
-  std::vector<StartDuration> start_duration;
-  void *stream;
-};
-
 struct BaseTime {
   // nanosecond
   uint64_t host_start_time = 0l;
@@ -124,17 +108,17 @@ class ProfilingOp {
   std::string op_name_;
 };
 
-class GPUProfiler {
+class GPUProfiler : public Profiler {
  public:
   static std::shared_ptr<GPUProfiler> GetInstance();
   ~GPUProfiler() { StopCUPTI(); }
   GPUProfiler(const GPUProfiler &) = delete;
   GPUProfiler &operator=(const GPUProfiler &) = delete;
 
-  void Init(const std::string &profileDataPath);
-  void Stop();
+  void Init(const std::string &profileDataPath) override;
+  void Stop() override;
   void StopCUPTI();
-  void StepProfilingEnable(const bool enable_flag);
+  void StepProfilingEnable(const bool enable_flag) override;
   void SyncEnable(const bool enable_flag);
   bool GetEnableFlag() const { return enable_flag_; }
   bool GetSyncEnableFlag() const { return sync_enable_flag_; }
@@ -143,7 +127,7 @@ class GPUProfiler {
   void CUPTIAPI AllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNumRecords);
   void CUPTIAPI ProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *buffer, size_t size, size_t validSize);
   void OpDataProducerBegin(const std::string op_name, void *stream);
-  void OpDataProducerEnd();
+  void OpDataProducerEnd() override;
   void ProcessEvents();
   void RegisterProfilingOp(std::shared_ptr<ProfilingOp> node);
   void SetStepTraceOpName(ProfilingTraceInfo trace_op_name);
@@ -153,24 +137,21 @@ class GPUProfiler {
   GPUProfiler() = default;
   void OpsParser();
   void EventLog(const Event &event);
-  void ClearInst();
+  void ClearInst() override;
   void HandleActivityRecord(CUpti_Activity *record);
   void AddEvent(Event &&event);
   void SetRunTimeData(const std::string &op_name, void *stream);
-  void SetRunTimeData(const std::string &op_name, const float time_elapsed);
-  void SetRunTimeData(const std::string &op_name, const uint64_t start, const float duration);
   void FixOpNameByCorrelationId(Event *event);
 
   static std::shared_ptr<GPUProfiler> profiler_inst_;
   bool enable_flag_ = false;
   bool sync_enable_flag_ = true;
-  std::unordered_map<std::string, OpInfo> op_info_map_;
   std::unordered_map<uint32_t, std::string> op_name_map_;
   std::vector<Event> events_;
   BaseTime base_time_;
   std::string op_name_;
   void *stream_;
-  void SaveProfileData();
+  void SaveProfileData() override;
   void SaveExtraProfileData();
   std::mutex event_mutex_;
 
@@ -198,4 +179,4 @@ class GPUProfiler {
 }  // namespace profiler
 }  // namespace mindspore
 
-#endif  // MINDSPORE_GPU_PROFILING_H
+#endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_PROFILING_H
