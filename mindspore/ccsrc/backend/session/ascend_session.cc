@@ -51,16 +51,7 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
 #include "debug/anf_ir_utils.h"
-#include "backend/optimizer/graph_kernel/reorder_ops.h"
-#include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
-#include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
-#include "backend/optimizer/graph_kernel/tensor_promotion.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
-#include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
-#include "backend/optimizer/graph_kernel/value_graph_binder.h"
-#include "backend/optimizer/graph_kernel/add_atomic_clean.h"
-#include "backend/optimizer/pass/getitem_tuple.h"
+#include "backend/optimizer/graph_kernel/graph_kernel_optimization.h"
 #include "backend/session/ascend_auto_monad.h"
 #include "debug/data_dump/e2e_dump_util.h"
 #include "debug/anf_ir_dump.h"
@@ -843,22 +834,8 @@ void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kern
   if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
     return;
   }
-  auto optimizer = std::make_shared<opt::GraphOptimizer>();
-  auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
-  pm->AddPass(std::make_shared<opt::ReorderOps>());
-  pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
-  pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
-  pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
-  pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
-  pm->AddPass(std::make_shared<opt::TensorPromotion>());
-  pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
-  // After Simplify and Splitter, a lot of redundant getitem/maketuple
-  // will be exposed, use GetitemTuple Pass to delete them.
-  pm->AddPass(std::make_shared<opt::GetitemTuple>());
-  pm->AddPass(std::make_shared<opt::BindValueToGraph>());
-  pm->AddPass(std::make_shared<opt::CleanAddAtomic>());
-  optimizer->AddPassManager(pm);
-  (void)optimizer->Optimize(kernel_graph);
+  opt::GraphKernelOptimize(kernel_graph);
+  kernel_graph->SetExecOrderByDefault();
 }
 
 void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
