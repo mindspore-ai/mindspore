@@ -871,11 +871,12 @@ class FusedBatchNorm(Primitive):
         self.target = context.get_context("device_target")
 
 
-class FusedBatchNormEx(PrimitiveWithInfer):
+class FusedBatchNormEx(PrimitiveWithCheck):
     r"""
     FusedBatchNormEx is an extension of FusedBatchNorm, FusedBatchNormEx has one more output(output reserve)
     than FusedBatchNorm, reserve will be used in backpropagation phase. FusedBatchNorm is a BatchNorm that
-    moving mean and moving variance will be computed instead of being loaded.
+    moving mean and moving variance will be computed instead of being loaded. FusedBatchNormEx currently only
+    supports 4D inputs.
 
     Batch Normalization is widely used in convolutional networks. This operation applies
     Batch Normalization over input to avoid internal covariate shift as described in the
@@ -899,7 +900,7 @@ class FusedBatchNormEx(PrimitiveWithInfer):
             Default: "NCHW".
 
     Inputs:
-        - **input_x** (Tensor) - The input of FusedBatchNormEx, Tensor of shape :math:`(N, C)`,
+        - **input_x** (Tensor) - The input of FusedBatchNormEx, Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
           data type: float16 or float32.
         - **scale** (Parameter) - Parameter scale, same with gamma above-mentioned, Tensor of shape :math:`(C,)`,
           data type: float32.
@@ -970,25 +971,22 @@ class FusedBatchNormEx(PrimitiveWithInfer):
             raise ValueError("NHWC format only support in GPU target.")
         self.add_prim_attr('data_format', self.format)
 
-    def infer_shape(self, input_x, scale, bias, mean, variance):
+    def check_shape(self, input_x, scale, bias, mean, variance):
         input_shape_norm = input_x if self.format == "NCHW" else (input_x[0], input_x[3], input_x[1], input_x[2])
+        validator.check_equal_int(len(input_shape_norm), 4, "x rank", self.name)
         validator.check_equal_int(len(scale), 1, "scale rank", self.name)
         validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
-        validator.check("scale shape[0]", scale[0], "input channel", input_shape_norm[1], Rel.EQ, self.name)
         validator.check_equal_int(len(mean), 1, "mean rank", self.name)
-
         validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)
         validator.check("mean shape", mean, "scale shape", scale, Rel.EQ, self.name)
-        return (input_x, scale, scale, scale, scale, scale)
 
-    def infer_dtype(self, input_x, scale, bias, mean, variance):
+    def check_dtype(self, input_x, scale, bias, mean, variance):
         validator.check_tensor_dtype_valid("input_x", input_x, [mstype.float16, mstype.float32], self.name)
         args = {"scale": scale, "bias": bias}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
         args_moving = {"mean": mean, "variance": variance}
         valid_dtypes = [mstype.tensor_type(mstype.float32)]
         validator.check_types_same_and_valid(args_moving, valid_dtypes, self.name)
-        return (input_x, scale, scale, scale, scale, scale)
 
 
 class InstanceNorm(PrimitiveWithInfer):
