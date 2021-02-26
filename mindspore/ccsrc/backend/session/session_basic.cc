@@ -1288,6 +1288,9 @@ GraphInfo SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel,
       const auto format = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address())->format();
       (void)graph_info.append(format + "_");
     }
+    for (const auto &padding_type : tensor->padding_type()) {
+      (void)graph_info.append(std::to_string(padding_type) + "_");
+    }
   }
   // get attr info
   const auto &attr_map = prim->attrs();
