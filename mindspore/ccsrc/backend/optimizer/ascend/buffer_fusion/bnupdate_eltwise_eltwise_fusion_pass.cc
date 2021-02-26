@@ -63,10 +63,6 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
     auto bnupdate = getitem->input(1);
     MS_EXCEPTION_IF_NULL(bnupdate);
     if (bnupdate->isa<CNode>() && AnfAlgo::GetCNodeName(bnupdate) == kBNTrainingUpdateOpName) {
-      if (cnode->size() == ELTWISE_DOUBLE_IN_INPUT_SIZE &&
-          IsDepend(kernel_graph, cnode->input(2), {relu_input, bnupdate})) {
-        return;
-      }
       std::vector<int64_t> output_used_num(AnfAlgo::GetOutputTensorNum(bnupdate), 0);
       for (auto out_getitem : manager->node_users()[bnupdate]) {
         MS_EXCEPTION_IF_NULL(out_getitem.first);

@@ -61,12 +61,13 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost.count() << " us";
 #else
       (void)gettimeofday(&end_time, nullptr);
-      const uint64_t kUSecondInSecond = 1000000;
-      uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+      // time unit: us
+      uint64_t cost = 1000000 * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
       cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
       MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
 #endif
-      if (save_graphs) {
+      static const auto enable_dump = (common::GetEnv("ENV_NO_DUMP_BE_PASS_IR") != "1");
+      if (save_graphs && enable_dump) {
         std::ostringstream oss;
         oss << "verbose_ir_files"
             << "/";

@@ -49,23 +49,6 @@ std::vector<int64_t> Convert2Long(const std::vector<size_t> &v) {
 
 bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes) {
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<AnfNodePtr> node_list = TopoSort(graph.get_return());
-  std::map<AnfNodePtr, std::set<AnfNodePtr>> control_depend_map;
-  for (auto &nd : node_list) {
-    MS_EXCEPTION_IF_NULL(nd);
-    if (AnfAlgo::CheckPrimitiveType(nd, prim::kPrimControlDepend)) {
-      auto control_depend = nd->cast<CNodePtr>();
-      auto prior_node = control_depend->input(kControlDependPriorIndex);
-      auto behind_node = control_depend->input(kControlDependBehindIndex);
-      auto it = control_depend_map.find(behind_node);
-      if (it == control_depend_map.end()) {
-        control_depend_map[behind_node] = std::set<AnfNodePtr>{prior_node};
-      } else {
-        it->second.insert(prior_node);
-      }
-    }
-  }
-
   FuncGraphManagerPtr manager = graph.manager();
   MS_EXCEPTION_IF_NULL(manager);
 
@@ -87,10 +70,6 @@ bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
       (void)todo.insert(todo.end(), inputs.begin(), inputs.end());
-    }
-    auto it = control_depend_map.find(nd);
-    if (it != control_depend_map.end()) {
-      (void)todo.insert(todo.end(), it->second.begin(), it->second.end());
     }
   }
   return false;
