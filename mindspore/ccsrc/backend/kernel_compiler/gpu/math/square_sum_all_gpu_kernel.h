@@ -43,7 +43,9 @@ class SquareSumAllGpuFwdKernel : public GpuKernel {
     T *input_addr_1 = GetDeviceAddress<T>(inputs, 1);
     T *output_addr_0 = GetDeviceAddress<T>(outputs, 0);
     T *output_addr_1 = GetDeviceAddress<T>(outputs, 1);
-    SquareSumAll(input_size_, input_addr_0, input_addr_1, output_addr_0, output_addr_1,
+    float *ws_addr_0 = GetDeviceAddress<float>(workspace, 0);
+    float *ws_addr_1 = GetDeviceAddress<float>(workspace, 1);
+    SquareSumAll(input_size_, input_addr_0, input_addr_1, output_addr_0, output_addr_1, ws_addr_0, ws_addr_1,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
 
     return true;
@@ -67,7 +69,8 @@ class SquareSumAllGpuFwdKernel : public GpuKernel {
     input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(sizeof(T));
     output_size_list_.push_back(sizeof(T));
-    workspace_size_list_.push_back(0);
+    workspace_size_list_.push_back(sizeof(float));
+    workspace_size_list_.push_back(sizeof(float));
   }
 
  private:
