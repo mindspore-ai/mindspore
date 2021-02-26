@@ -25,23 +25,25 @@
 
 #include "include/api/model.h"
 #include "include/api/context.h"
-#include "minddata/dataset/include/minddata_eager.h"
-#include "../inc/utils.h"
 #include "include/api/types.h"
 #include "include/api/serialization.h"
-#include "minddata/dataset/include/vision.h"
+#include "include/minddata/dataset/include/vision.h"
+#include "include/minddata/dataset/include/execute.h"
 
-using mindspore::api::Context;
-using mindspore::api::Serialization;
-using mindspore::api::Model;
-using mindspore::api::kModelOptionInsertOpCfgPath;
-using mindspore::api::Status;
-using mindspore::api::MindDataEager;
-using mindspore::api::Buffer;
-using mindspore::api::ModelType;
-using mindspore::api::GraphCell;
-using mindspore::api::SUCCESS;
-using mindspore::dataset::vision::DvppDecodeResizeJpeg;
+#include "../inc/utils.h"
+
+using mindspore::GlobalContext;
+using mindspore::Serialization;
+using mindspore::Model;
+using mindspore::ModelContext;
+using mindspore::Status;
+using mindspore::ModelType;
+using mindspore::GraphCell;
+using mindspore::kSuccess;
+using mindspore::MSTensor;
+using mindspore::dataset::Execute;
+using mindspore::dataset::vision::DvppDecodeResizeCropJpeg;
+
 
 DEFINE_string(mindir_path, "", "mindir path");
 DEFINE_string(dataset_path, ".", "dataset path");
@@ -59,16 +61,17 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    Context::Instance().SetDeviceTarget("Ascend310").SetDeviceID(FLAGS_device_id);
+    GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
+    GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
     auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
-    Model model((GraphCell(graph)));
-    std::map<std::string, std::string> build_options;
+    auto model_context = std::make_shared<mindspore::ModelContext>();
     if (!FLAGS_aipp_path.empty()) {
-        build_options.emplace(kModelOptionInsertOpCfgPath, FLAGS_aipp_path);
+      ModelContext::SetInsertOpConfigPath(model_context, FLAGS_aipp_path);
     }
 
-    Status ret = model.Build(build_options);
-    if (ret != SUCCESS) {
+    Model model(GraphCell(graph), model_context);
+    Status ret = model.Build();
+    if (ret != kSuccess) {
         std::cout << "ERROR: Build failed." << std::endl;
         return 1;
     }
@@ -81,22 +84,24 @@ int main(int argc, char **argv) {
 
     std::map<double, double> costTime_map;
     size_t size = all_files.size();
-    MindDataEager SingleOp({DvppDecodeResizeJpeg({640, 640})});
+    Execute resize_op(DvppDecodeResizeCropJpeg({640, 640}, {640, 640}));
     for (size_t i = 0; i < size; ++i) {
         struct timeval start = {0};
         struct timeval end = {0};
         double startTimeMs;
         double endTimeMs;
-        std::vector<Buffer> inputs;
-        std::vector<Buffer> outputs;
+        std::vector<MSTensor> inputs;
+        std::vector<MSTensor> outputs;
         std::cout << "Start predict input files:" << all_files[i] << std::endl;
-        auto imgDvpp = SingleOp(ReadFileToTensor(all_files[i]));
+        auto imgDvpp = std::make_shared<MSTensor>();
+        resize_op(ReadFileToTensor(all_files[i]), imgDvpp.get());
 
-        inputs.emplace_back(imgDvpp->Data(), imgDvpp->DataSize());
+        inputs.emplace_back(imgDvpp->Name(), imgDvpp->DataType(), imgDvpp->Shape(),
+                            imgDvpp->Data().get(), imgDvpp->DataSize());
         gettimeofday(&start, nullptr);
         ret = model.Predict(inputs, &outputs);
         gettimeofday(&end, nullptr);
-        if (ret != SUCCESS) {
+        if (ret != kSuccess) {
             std::cout << "Predict " << all_files[i] << " failed." << std::endl;
             return 1;
         }

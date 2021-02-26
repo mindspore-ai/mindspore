@@ -423,7 +423,6 @@ class SSDWithLossCell(nn.Cell):
         self.less = P.Less()
         self.tile = P.Tile()
         self.reduce_sum = P.ReduceSum()
-        self.reduce_mean = P.ReduceMean()
         self.expand_dims = P.ExpandDims()
         self.class_loss = SigmoidFocalClassificationLoss(config.gamma, config.alpha)
         self.loc_loss = nn.SmoothL1Loss()
@@ -436,7 +435,7 @@ class SSDWithLossCell(nn.Cell):
         # Localization Loss
         mask_loc = self.tile(self.expand_dims(mask, -1), (1, 1, 4))
         smooth_l1 = self.loc_loss(pred_loc, gt_loc) * mask_loc
-        loss_loc = self.reduce_sum(self.reduce_mean(smooth_l1, -1), -1)
+        loss_loc = self.reduce_sum(self.reduce_sum(smooth_l1, -1), -1)
 
         # Classification Loss
         loss_cls = self.class_loss(pred_label, gt_label)
