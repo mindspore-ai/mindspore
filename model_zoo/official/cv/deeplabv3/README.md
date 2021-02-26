@@ -496,7 +496,7 @@ Note: There OS is output stride, and MS is multiscale.
 | Loss Function              | Softmax Cross Entropy                                  |
 | Outputs                    | probability                                       |
 | Loss                       | 0.0065883575                                       |
-| Speed                      | 60 ms/step（1pc, s16）<br> 480 ms/step（8pcs, s16） <br> 244 ms/step (8pcs, s8)      |  
+| Speed                      | 60 fps（1pc, s16）<br> 480 fps（8pcs, s16） <br> 244 fps (8pcs, s8)      |  
 | Total time                 | 8pcs: 706 mins                     |
 | Parameters (M)             | 58.2                                       |
 | Checkpoint for Fine tuning | 443M (.ckpt file)                       |

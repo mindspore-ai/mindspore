@@ -510,7 +510,7 @@ python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
 | 损失函数 | Softmax交叉熵 |
 | 输出 | 概率 |
 | 损失 | 0.0065883575 |
-| 速度 | 31毫秒/步（单卡，s8）<br> 234毫秒/步（8卡，s8） |  
+| 速度 | 31 帧数/秒（单卡，s8）<br> 234 帧数/秒（8卡，s8） |  
 | 微调检查点 | 443M （.ckpt文件） |
 | 脚本 | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) |
 
