@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/random_standard_normal.h"
+#include "ops/uniform_real.h"
 #include <string>
 #include <memory>
 #include <vector>
@@ -22,25 +22,25 @@
 
 namespace mindspore {
 namespace ops {
-void RandomStandardNormal::Init(const int64_t seed, const int64_t seed2) {
+void UniformReal::Init(const int64_t seed, const int64_t seed2) {
   this->set_seed(seed);
   this->set_seed2(seed2);
 }
 
-void RandomStandardNormal::set_seed(const int64_t seed) { this->AddAttr(kSeed, MakeValue(seed)); }
+void UniformReal::set_seed(const int64_t seed) { this->AddAttr(kSeed, MakeValue(seed)); }
 
-void RandomStandardNormal::set_seed2(const int64_t seed2) { this->AddAttr(kSeed2, MakeValue(seed2)); }
+void UniformReal::set_seed2(const int64_t seed2) { this->AddAttr(kSeed2, MakeValue(seed2)); }
 
-int64_t RandomStandardNormal::get_seed() const {
+int64_t UniformReal::get_seed() const {
   auto value_ptr = GetAttr(kSeed);
   return GetValue<int64_t>(value_ptr);
 }
 
-int64_t RandomStandardNormal::get_seed2() const {
+int64_t UniformReal::get_seed2() const {
   auto value_ptr = GetAttr(kSeed2);
   return GetValue<int64_t>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_C(kNameRandomStandardNormal, RandomStandardNormal);
+REGISTER_PRIMITIVE_C(kNameUniformReal, UniformReal);
 }  // namespace ops
 }  // namespace mindspore
