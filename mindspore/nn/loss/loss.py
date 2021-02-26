@@ -173,6 +173,98 @@ class MSELoss(_Loss):
         return self.get_loss(x)
 
 
+class RMSELoss(_Loss):
+    r"""
+    RMSELoss creates a standard to measure the root mean square error between :math:`x` and :math:`y`
+    element-wise, where :math:`x` is the input and :math:`y` is the target.
+
+    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
+    the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
+
+    .. math::
+        loss = \sqrt{\frac{1}{M}\sum_{m=1}^{M}{(x_m-y_m)^2}}
+
+    Args:
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+                         Default: "mean".
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
+        - **label** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
+
+    Outputs:
+        Tensor, weighted loss float tensor.
+
+    Raises:
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If the dimensions are different.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> loss = nn.RMSELoss()
+        >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> output = loss(input_data, target_data)
+        >>> print(output)
+        0.57735026
+    """
+    def __init__(self):
+        super(RMSELoss, self).__init__()
+        self.MSELoss = MSELoss()
+
+    def construct(self, logits, label):
+        _check_shape(logits.shape, label.shape)
+        rmse_loss = F.sqrt(self.MSELoss(logits, label))
+
+        return rmse_loss
+
+
+class MAELoss(_Loss):
+    r"""
+    MAELoss creates a standard to measure the average absolute error between :math:`x` and :math:`y`
+    element-wise, where :math:`x` is the input and :math:`y` is the target.
+
+    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
+    the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
+
+    .. math::
+        \text{MAE} = \frac{1}{M}\sum_{m=1}^N\left| x_m - y_m \right|
+
+    Args:
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+                         Default: "mean".
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
+        - **label** (Tensor) - Tensor of shape :math:`(y_1, y_2, ..., y_S)`.
+
+    Outputs:
+        Tensor, weighted loss float tensor.
+
+    Raises:
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If the dimensions are different.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> loss = nn.MAELoss()
+        >>> input_data = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> target_data = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> output = loss(input_data, target_data)
+        >>> print(output)
+        0.33333334
+    """
+
+    def construct(self, logits, label):
+        _check_shape(logits.shape, label.shape)
+        x = F.absolute(logits - label)
+        return self.get_loss(x)
+
+
 class SmoothL1Loss(_Loss):
     r"""
     A loss class for learning region proposals.

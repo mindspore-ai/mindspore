@@ -21,9 +21,11 @@ It shows how well the model works on a dataset and the optimization target which
 
 from .loss import L1Loss, MSELoss, SmoothL1Loss, FocalLoss,\
     SoftmaxCrossEntropyWithLogits, BCELoss, CosineEmbeddingLoss, \
-    SampledSoftmaxLoss, DiceLoss, BCEWithLogitsLoss, MultiClassDiceLoss
+    SampledSoftmaxLoss, DiceLoss, BCEWithLogitsLoss, MultiClassDiceLoss,\
+    RMSELoss, MAELoss
 
 
 __all__ = ['L1Loss', 'MSELoss', 'SmoothL1Loss', 'FocalLoss',
            'SoftmaxCrossEntropyWithLogits', 'BCELoss', 'BCEWithLogitsLoss',
-           'CosineEmbeddingLoss', 'SampledSoftmaxLoss', 'DiceLoss', 'MultiClassDiceLoss']
+           'CosineEmbeddingLoss', 'SampledSoftmaxLoss', 'DiceLoss', 'MultiClassDiceLoss',
+           'RMSELoss', 'MAELoss']
