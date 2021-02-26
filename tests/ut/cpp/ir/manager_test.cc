@@ -391,7 +391,7 @@ TEST_F(TestManager, test_nested_manual) {
   ASSERT_EQ(2, f->nodes().size());
   ASSERT_EQ(1, g->nodes().size());
 
-  auto users = mng->node_users();
+  auto &users = mng->node_users();
   for (auto& iter : users) {
     ASSERT_EQ(1, iter.second.size());
   }

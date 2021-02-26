@@ -1878,10 +1878,9 @@ bool CNodeFirstInputIsPrimitive(const AnfNodePtr &node) {
 
 std::vector<AnfNodePtr> ExtendNodeUsers(const FuncGraphManagerPtr &front_func_graph_manager,
                                         const AnfNodePtr &front_node) {
-  auto node_users = front_func_graph_manager->node_users();
-  auto users = node_users[front_node];
+  auto &users = front_func_graph_manager->node_users()[front_node];
   std::vector<AnfNodePtr> result;
-  for (auto user : users) {
+  for (auto &user : users) {
     if (IsPrimitiveCNode(user.first, prim::kPrimControlDepend)) {
       continue;
     }

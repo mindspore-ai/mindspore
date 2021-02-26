@@ -52,25 +52,24 @@ static bool IsInWhiteList(const CNodePtr &cnode) {
   return false;
 }
 
-static void SetGradTag(const AnfNodePtr &node, NodeUsersMap node_users_map) {
-  auto node_users = node_users_map[node];
+static void SetGradTag(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
+  const auto &node_users = manager->node_users()[node];
   for (auto &user_pair : node_users) {
     auto user_node = user_pair.first;
     if (!user_node->grad()) {
       user_node->set_grad(true);
-      SetGradTag(user_node, node_users_map);
+      SetGradTag(user_node, manager);
     }
   }
 }
 
 void PipelineTransformer::LabelRequiredGradCNode() {
   auto parameters = root_->parameters();
-  auto node_users_map = manager_->node_users();
   for (auto parameter : parameters) {
     if (!ParameterRequireGrad(parameter)) {
       continue;
     }
-    SetGradTag(parameter, node_users_map);
+    SetGradTag(parameter, manager_);
   }
 }
 
@@ -243,7 +242,7 @@ void PipelineTransformer::DoBroadCast(const FuncGraphPtr &func) {
   while (need_coloring) {
     need_coloring = false;
     auto all_nodes = func->nodes();
-    auto node_users = manager_->node_users();
+    auto &node_users = manager_->node_users();
     for (auto &node : all_nodes) {
       if (node->isa<CNode>() || node->stage() == -1) {
         continue;
