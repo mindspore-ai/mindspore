@@ -765,6 +765,7 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
   BuildKernel(kernels);
   // Record single op graphs in run_op_graphs_ so that these graphs can be reused in BuildOpImpl
   for (const auto &single_op_graph : single_op_graphs) {
+    RunOpMemoryClear(single_op_graph.first.get());
     for (const auto &graph_info : single_op_graph.second) {
       run_op_graphs_[graph_info] = single_op_graph.first;
       MS_LOG(DEBUG) << "Pre build op finished, graph info: " << graph_info;
