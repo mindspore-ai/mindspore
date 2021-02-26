@@ -38,11 +38,8 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 
 import com.mindspore.hiobject.R;
 import com.mindspore.hiobject.help.RecognitionObjectBean;
@@ -57,10 +54,16 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+
 import static com.mindspore.hiobject.help.RecognitionObjectBean.getRecognitionList;
 
 
 public class CameraFragment extends Fragment {
+
+    private long lasttime = System.currentTimeMillis();
 
     /**
      * Conversion from screen rotation to JPEG orientation.
@@ -158,6 +161,11 @@ public class CameraFragment extends Fragment {
     private ObjectRectView mObjectRectView;
 
     /**
+     * An {@link TextView} for display infer time.
+     */
+    private TextView mTvInferInfo;
+
+    /**
      * A {@link CameraCaptureSession } for ic_launcher preview.
      */
     private CameraCaptureSession mCaptureSession;
@@ -214,6 +222,16 @@ public class CameraFragment extends Fragment {
      * A {@link Handler} for running tasks in the background.
      */
     private Handler mBackgroundHandler, mPreBackgroundHandler;
+
+    /**
+     * A {@link Handler} for running tasks in the ui thread.
+     */
+    private Handler mUiHandler;
+
+    /**
+     * A {@link Long} UI Thread ID.
+     */
+    private Long mUiThreadId;
 
     /**
      * An {@link ImageReader} that handles still image capture.
@@ -404,6 +422,8 @@ public class CameraFragment extends Fragment {
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         mTextureView = view.findViewById(R.id.texture);
         mObjectRectView = view.findViewById(R.id.objRectView);
+        mTvInferInfo = view.findViewById(R.id.tv_infer_info);
+        mUiThreadId = Thread.currentThread().getId();
     }
 
     @Override
@@ -612,7 +632,9 @@ public class CameraFragment extends Fragment {
         mPreBackgroundThread = new HandlerThread("AlgoBackground");
         mPreBackgroundThread.start();
         mPreBackgroundHandler = new Handler(mPreBackgroundThread.getLooper());
-        mPreBackgroundHandler.postDelayed(periodicClassify, 500);
+        mPreBackgroundHandler.postDelayed(periodicClassify, 5);
+
+        mUiHandler = new Handler();
     }
 
 
@@ -620,15 +642,12 @@ public class CameraFragment extends Fragment {
 
     private Runnable periodicClassify = new Runnable() {
         public void run() {
-            synchronized (CameraFragment.this) {
-                Bitmap bitmap = mTextureView.getBitmap();
-                if (bitmap != null) {
-                    drawBitmapToRect(bitmap);
-                }
-                //重复请求
-                if (mPreBackgroundHandler != null && !isPreBackgroundThreadPause) {
-                    mPreBackgroundHandler.postDelayed(periodicClassify, 500);
-                }
+            Bitmap bitmap = mTextureView.getBitmap();
+            if (bitmap != null) {
+                drawBitmapToRect(bitmap);
+            } else {
+                Log.d(TAG, "bitmap is null");
+                mPreBackgroundHandler.postDelayed(periodicClassify, 5);
             }
         }
     };
@@ -704,22 +723,61 @@ public class CameraFragment extends Fragment {
 
     private List<RecognitionObjectBean> recognitionObjectBeanList;
 
+    public boolean isPreFinished = true;
+
     public void drawBitmapToRect(Bitmap bitmap) {
+        if (!isPreFinished) {
+            return;
+        }
+        isPreFinished = false;
+
+        long stepDelayTime = (System.currentTimeMillis() - lasttime);
+        Log.d(TAG, "Step Delay time>>>" + stepDelayTime);
+
         if (recognitionObjectBeanList != null) {
             recognitionObjectBeanList.clear();
         }
 
+        Log.d(TAG, "bitmap_w:" + bitmap.getWidth() + " bitmap_h:" + bitmap.getHeight());
         long startTime = System.currentTimeMillis();
         String result = mTrackingMobile.MindSpore_runnet(bitmap);
         long endTime = System.currentTimeMillis();
-        Log.d(TAG, "MindSpore_runnet:time>>>" + (endTime - startTime));
+        long inferTime = (endTime - startTime);
+        Log.d(TAG, "MindSpore_runnet:time>>>" + inferTime);
         Log.d(TAG, "MindSpore_runnet:result>>>" + result);
+        isPreFinished = true;
+        lasttime = System.currentTimeMillis();
+        mPreBackgroundHandler.post(periodicClassify);
         if (TextUtils.isEmpty(result)) {
             mObjectRectView.clearCanvas();
-            return;
+        } else {
+            long startTimeMills = System.currentTimeMillis();
+            recognitionObjectBeanList = getRecognitionList(result);
+            long endTimeMills = System.currentTimeMillis();
+            Log.d(TAG, "getRecognitionList use time>>>" + (endTimeMills - startTimeMills));
+            long startDraw = System.currentTimeMillis();
+            mObjectRectView.setInfo(recognitionObjectBeanList);
+            setInferInfo(inferTime, stepDelayTime);
+            long endDraw = System.currentTimeMillis();
+            Log.d(TAG, "Draw time>>>" + (endDraw - startDraw));
         }
-        recognitionObjectBeanList = getRecognitionList(result);
-        mObjectRectView.setInfo(recognitionObjectBeanList);
+    }
+
+    private void runOnUiThread(Runnable runnable) {
+        if (Thread.currentThread().getId() != mUiThreadId) {
+            mUiHandler.post(runnable);
+        } else {
+            runnable.run();
+        }
+    }
+
+    private void setInferInfo(final long inferTime, final long stepDelayTime) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mTvInferInfo.setText("pre and infer time:" + inferTime + "ms  Step_Delay_time:" + stepDelayTime+"ms");
+            }
+        });
     }
 
 

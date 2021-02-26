@@ -15,4 +15,14 @@
             android:layout_height="match_parent"
            />
 
+        <TextView
+            android:id="@+id/tv_infer_info"
+            android:paddingTop="5dp"
+            android:paddingLeft="10dp"
+            android:text=""
+            android:textSize="14dp"
+            android:textColor="#ff000000"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
 </RelativeLayout>
