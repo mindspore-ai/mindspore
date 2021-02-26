@@ -136,42 +136,68 @@ void Tan(const T *in, T *out, size_t start, size_t end) {
     out[i] = tan(in[i]);
   }
 }
+
+template <typename T>
+void Sinh(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = sinh(in[i]);
+  }
+}
+
+template <typename T>
+void Cosh(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = cosh(in[i]);
+  }
+}
+
+template <typename T>
+void Asinh(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = asinh(in[i]);
+  }
+}
+
+template <typename T>
+void Acosh(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = acosh(in[i]);
+  }
+}
+
+template <typename T>
+void Atanh(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = atanh(in[i]);
+  }
+}
 }  // namespace
+
+static const std::map<std::string, OperateType> kArithmeticOpTypeMap = {{prim::kPrimNeg->name(), NEG},
+                                                                        {prim::kPrimSquare->name(), SQUARE},
+                                                                        {prim::kPrimOnesLike->name(), ONESLIKE},
+                                                                        {prim::kPrimZerosLike->name(), ZEROSLIKE},
+                                                                        {prim::kPrimLogicalNot->name(), LOGICALNOT},
+                                                                        {prim::kPrimSign->name(), SIGN},
+                                                                        {prim::kPrimFloor->name(), FLOOR},
+                                                                        {prim::kPrimReciprocal->name(), RECIPROCAL},
+                                                                        {prim::kPrimGeLU->name(), GELU},
+                                                                        {prim::kPrimAsin->name(), ASIN},
+                                                                        {prim::kPrimACos->name(), ACOS},
+                                                                        {prim::kPrimAtan->name(), ATAN},
+                                                                        {prim::kPrimSin->name(), SIN},
+                                                                        {prim::kPrimCos->name(), COS},
+                                                                        {prim::kPrimTan->name(), TAN},
+                                                                        {prim::kPrimSinh->name(), SINH},
+                                                                        {prim::kPrimCosh->name(), COSH},
+                                                                        {prim::kPrimAsinh->name(), ASINH},
+                                                                        {prim::kPrimAcosh->name(), ACOSH},
+                                                                        {prim::kPrimAtanh->name(), ATANH}};
 
 void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == prim::kPrimSquare->name()) {
-    operate_type_ = SQUARE;
-  } else if (kernel_name == prim::kPrimOnesLike->name()) {
-    operate_type_ = ONESLIKE;
-  } else if (kernel_name == prim::kPrimZerosLike->name()) {
-    operate_type_ = ZEROSLIKE;
-  } else if (kernel_name == prim::kPrimNeg->name()) {
-    operate_type_ = NEG;
-  } else if (kernel_name == prim::kPrimLogicalNot->name()) {
-    operate_type_ = LOGICALNOT;
-  } else if (kernel_name == prim::kPrimSign->name()) {
-    operate_type_ = SIGN;
-  } else if (kernel_name == prim::kPrimFloor->name()) {
-    operate_type_ = FLOOR;
-  } else if (kernel_name == prim::kPrimReciprocal->name()) {
-    operate_type_ = RECIPROCAL;
-  } else if (kernel_name == prim::kPrimGeLU->name()) {
-    operate_type_ = GELU;
-  } else if (kernel_name == prim::kPrimAsin->name()) {
-    operate_type_ = ASIN;
-  } else if (kernel_name == prim::kPrimACos->name()) {
-    operate_type_ = ACOS;
-  } else if (kernel_name == prim::kPrimAtan->name()) {
-    operate_type_ = ATAN;
-  } else if (kernel_name == prim::kPrimSin->name()) {
-    operate_type_ = SIN;
-  } else if (kernel_name == prim::kPrimCos->name()) {
-    operate_type_ = COS;
-  } else if (kernel_name == prim::kPrimTan->name()) {
-    operate_type_ = TAN;
-  }
+  operate_type_ = kArithmeticOpTypeMap.at(kernel_name);
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   target_dtype_ = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
 }
@@ -259,7 +285,10 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
                             {GELU, Gelu<T>},         {SIN, Sin<T>},
                             {COS, Cos<T>},           {TAN, Tan<T>},
                             {ASIN, Asin<T>},         {ACOS, ACos<T>},
-                            {ATAN, Atan<T>}};
+                            {ATAN, Atan<T>},         {SINH, Sinh<T>},
+                            {COSH, Cosh<T>},         {ASINH, Asinh<T>},
+                            {ACOSH, Acosh<T>},       {ATANH, Atanh<T>}};
+
   while (start < lens) {
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
     threads.emplace_back(std::thread(kArithmeticOpFuncMap.at(operate_type_), input, output, start, end));

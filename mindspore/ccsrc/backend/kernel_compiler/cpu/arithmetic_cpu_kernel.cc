@@ -16,6 +16,7 @@
 #include <cmath>
 #include <string>
 #include <thread>
+#include <map>
 #include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 
@@ -235,45 +236,40 @@ void ArithmeticCPUKernel::LessEqual(const T *input1, const T *input2, bool *out,
   }
 }
 
+template <typename T>
+void ArithmeticCPUKernel::Atan2(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = atan2(input1[idx[0]], input2[idx[1]]);
+  }
+}
+static const std::map<std::string, OperateType> kArithmeticBinOpTypeMap = {
+  {prim::kPrimGreater->name(), GREATER},
+  {prim::kPrimAdd->name(), ADD},
+  {prim::kPrimGreaterEqual->name(), GREATEREQUAL},
+  {prim::kPrimSub->name(), SUB},
+  {prim::kPrimLogicalAnd->name(), LOGICALAND},
+  {prim::kPrimMul->name(), MUL},
+  {prim::kPrimLessEqual->name(), LESSEQUAL},
+  {prim::kPrimDiv->name(), DIV},
+  {prim::kPrimLogicalOr->name(), LOGICALOR},
+  {prim::kPrimMod->name(), MOD},
+  {prim::kPrimAssignAdd->name(), ASSIGNADD},
+  {prim::kPrimPow->name(), POW},
+  {prim::kPrimFloorDiv->name(), FLOORDIV},
+  {prim::kPrimLess->name(), LESS},
+  {prim::kPrimNotEqual->name(), NOTEQUAL},
+  {prim::kPrimAtan2->name(), ATAN2},
+  {prim::kPrimRealDiv->name(), REALDIV},
+  {prim::kPrimEqual->name(), EQUAL},
+  {prim::kPrimSquaredDifference->name(), SQUAREDDIFFERENCE}};
+
 void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == prim::kPrimAdd->name()) {
-    operate_type_ = ADD;
-  } else if (kernel_name == prim::kPrimSub->name()) {
-    operate_type_ = SUB;
-  } else if (kernel_name == prim::kPrimMul->name()) {
-    operate_type_ = MUL;
-  } else if (kernel_name == prim::kPrimRealDiv->name()) {
-    operate_type_ = REALDIV;
-  } else if (kernel_name == prim::kPrimDiv->name()) {
-    operate_type_ = DIV;
-  } else if (kernel_name == prim::kPrimFloorDiv->name()) {
-    operate_type_ = FLOORDIV;
-  } else if (kernel_name == prim::kPrimMod->name()) {
-    operate_type_ = MOD;
-  } else if (kernel_name == prim::kPrimPow->name()) {
-    operate_type_ = POW;
-  } else if (kernel_name == prim::kPrimLess->name()) {
-    operate_type_ = LESS;
-  } else if (kernel_name == prim::kPrimEqual->name()) {
-    operate_type_ = EQUAL;
-  } else if (kernel_name == prim::kPrimNotEqual->name()) {
-    operate_type_ = NOTEQUAL;
-  } else if (kernel_name == prim::kPrimGreater->name()) {
-    operate_type_ = GREATER;
-  } else if (kernel_name == prim::kPrimGreaterEqual->name()) {
-    operate_type_ = GREATEREQUAL;
-  } else if (kernel_name == prim::kPrimLessEqual->name()) {
-    operate_type_ = LESSEQUAL;
-  } else if (kernel_name == prim::kPrimLogicalAnd->name()) {
-    operate_type_ = LOGICALAND;
-  } else if (kernel_name == prim::kPrimLogicalOr->name()) {
-    operate_type_ = LOGICALOR;
-  } else if (kernel_name == prim::kPrimAssignAdd->name()) {
-    operate_type_ = ASSIGNADD;
-  } else if (kernel_name == prim::kPrimSquaredDifference->name()) {
-    operate_type_ = SQUAREDDIFFERENCE;
+  if (kArithmeticBinOpTypeMap.find(kernel_name) != kArithmeticBinOpTypeMap.end()) {
+    operate_type_ = kArithmeticBinOpTypeMap.at(kernel_name);
   } else {
     MS_LOG(EXCEPTION) << "Not support " << kernel_name;
   }
@@ -448,6 +444,8 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Pow<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == ASSIGNADD) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::AssignAdd<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == ATAN2) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Atan2<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == SQUAREDDIFFERENCE) {
       threads.emplace_back(
         std::thread(&ArithmeticCPUKernel::SquaredDifference<T>, this, input1, input2, output, start, end));
