@@ -70,7 +70,7 @@ bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
 MSTensor MSTensor::CreateTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
                                 const void *data, size_t data_len) noexcept {
   auto impl = std::make_shared<Impl>(name, type, shape, data, data_len);
-  if (impl == nullptr) {
+  if (impl == nullptr || impl->lite_tensor() == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     return MSTensor(nullptr);
   }
