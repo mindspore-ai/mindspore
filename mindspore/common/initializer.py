@@ -229,10 +229,10 @@ class XavierUniform(Initializer):
     Initialize the array with xavier uniform algorithm, and from a uniform distribution collect samples within
     U[-boundary, boundary] The boundary is defined as :
 
-                    where :math:`boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}`.
+    where :math:`boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}`.
 
-    where :math:`n_{in}` is the number of input units in the weight tensor.
-    where :math:`n_{out}` is the number of output units in the weight tensor.
+    - where :math:`n_{in}` is the number of input units in the weight tensor.
+    - where :math:`n_{out}` is the number of output units in the weight tensor.
 
     Args:
         gain (Array): The array to be assigned. Default: 1.
@@ -259,7 +259,7 @@ class HeUniform(Initializer):
     Initialize the array with He kaiming uniform algorithm, and from a uniform distribution collect samples within
     U[-boundary, boundary] The boundary is defined as :
 
-                    where :math:`boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}`.
+    where :math:`boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}`.
 
     Args:
         negative_slope (int, float, bool): Default: 0, used when nonlinearity is 'leaky_relu'.

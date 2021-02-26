@@ -682,11 +682,11 @@ class ParallelMode:
     There are five kinds of parallel modes, "STAND_ALONE", "DATA_PARALLEL",
     "HYBRID_PARALLEL", "SEMI_AUTO_PARALLEL" and "AUTO_PARALLEL". Default: "STAND_ALONE".
 
-        - STAND_ALONE: Only one processor is working.
-        - DATA_PARALLEL: Distributes the data across different processors.
-        - HYBRID_PARALLEL: Achieves data parallelism and model parallelism manually.
-        - SEMI_AUTO_PARALLEL: Achieves data parallelism and model parallelism by setting parallel strategies.
-        - AUTO_PARALLEL: Achieves parallelism automatically.
+    - STAND_ALONE: Only one processor is working.
+    - DATA_PARALLEL: Distributes the data across different processors.
+    - HYBRID_PARALLEL: Achieves data parallelism and model parallelism manually.
+    - SEMI_AUTO_PARALLEL: Achieves data parallelism and model parallelism by setting parallel strategies.
+    - AUTO_PARALLEL: Achieves parallelism automatically.
 
     MODE_LIST: The list of all supported parallel modes.
     """

@@ -138,7 +138,7 @@ class SummaryCollector(Callback):
             - tensor_format (Union[str, None]): Customize the export tensor format. Supports ["npy", None].
               Default: None, it means that the tensor is not exported.
 
-                - npy: export tensor as npy file.
+              - npy: export tensor as npy file.
 
     Raises:
         ValueError: If the parameter value is not expected.
