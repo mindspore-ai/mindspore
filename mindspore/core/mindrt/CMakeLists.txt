@@ -10,7 +10,6 @@ file(GLOB MINDRT_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/timer/*.cc
     )
 
-
 add_library(mindrt_mid OBJECT ${MINDRT_SRC})
 
 

@@ -2,9 +2,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 add_subdirectory(gvar)
-if(NOT(CMAKE_SYSTEM_NAME MATCHES "Windows"))
+
+if(NOT(COMPILE_LITE))
     add_subdirectory(mindrt)
 endif()
+
 message("************ build core ***************")
 
 file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}

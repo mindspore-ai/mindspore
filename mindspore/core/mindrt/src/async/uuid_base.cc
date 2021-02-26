@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "async/uuid_base.h"
+#include <memory.h>
 #include <atomic>
 #include <random>
-#include "async/uuid_base.h"
 
 namespace mindspore {
 namespace uuids {

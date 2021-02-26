@@ -73,7 +73,6 @@ class LiteBusExit {
 int InitializeImp(const std::string &tcpUrl, const std::string &tcpUrlAdv, const std::string &udpUrl,
                   const std::string &udpUrlAdv, int threadCount) {
   ICTSBASE_LOG0(ICTSBASE_LOG_COMMON_CODE, HLOG_LEVEL_INFO, PID_LITEBUS_LOG, "litebus starts ......");
-  signal(SIGPIPE, SIG_IGN);
 
   // start actor's thread
   SetThreadCount(threadCount);
