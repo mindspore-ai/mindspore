@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
@@ -52,8 +53,8 @@ class AutoContrast : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float cutoff_;
-  std::vector<uint32_t> ignore_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief BoundingBoxAugment TensorTransform.
@@ -83,8 +84,8 @@ class BoundingBoxAugment : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::shared_ptr<TensorOperation> transform_;
-  float ratio_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Constructor to apply CutMix on a batch of images
@@ -106,9 +107,8 @@ class CutMixBatch : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float alpha_;
-  float prob_;
-  ImageBatchFormat image_batch_format_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief CutOut TensorOp
@@ -128,8 +128,8 @@ class CutOut : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  int32_t length_;
-  int32_t num_patches_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Equalize TensorTransform.
@@ -194,7 +194,8 @@ class MixUpBatch : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float alpha_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief NormalizePad TensorTransform.
@@ -210,7 +211,10 @@ class NormalizePad : public TensorTransform {
   /// \param[in] dtype The output datatype of Tensor.
   ///     The standard deviation values must be "float32" or "float16"（default = "float32"）
   explicit NormalizePad(const std::vector<float> &mean, const std::vector<float> &std,
-                        const std::string &dtype = "float32");
+                        const std::string &dtype = "float32")
+      : NormalizePad(mean, std, StringToChar(dtype)) {}
+
+  explicit NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::vector<char> &dtype);
 
   /// \brief Destructor.
   ~NormalizePad() = default;
@@ -220,9 +224,8 @@ class NormalizePad : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<float> mean_;
-  std::vector<float> std_;
-  std::string dtype_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Pad TensorOp
@@ -257,9 +260,8 @@ class Pad : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> padding_;
-  std::vector<uint8_t> fill_value_;
-  BorderType padding_mode_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Blends an image with its grayscale version with random weights
@@ -280,8 +282,8 @@ class RandomColor : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float t_lb_;
-  float t_ub_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomColorAdjust TensorTransform.
@@ -309,10 +311,8 @@ class RandomColorAdjust : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<float> brightness_;
-  std::vector<float> contrast_;
-  std::vector<float> saturation_;
-  std::vector<float> hue_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomCrop TensorTransform.
@@ -346,11 +346,8 @@ class RandomCrop : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
-  std::vector<int32_t> padding_;
-  bool pad_if_needed_;
-  std::vector<uint8_t> fill_value_;
-  BorderType padding_mode_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomCropDecodeResize TensorTransform.
@@ -381,11 +378,8 @@ class RandomCropDecodeResize : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
-  std::vector<float> scale_;
-  std::vector<float> ratio_;
-  InterpolationMode interpolation_;
-  int32_t max_attempts_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomCropWithBBox TensorTransform.
@@ -421,11 +415,8 @@ class RandomCropWithBBox : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
-  std::vector<int32_t> padding_;
-  bool pad_if_needed_;
-  std::vector<uint8_t> fill_value_;
-  BorderType padding_mode_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomHorizontalFlip TensorTransform.
@@ -444,7 +435,8 @@ class RandomHorizontalFlip : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float probability_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomHorizontalFlipWithBBox TensorTransform.
@@ -463,7 +455,8 @@ class RandomHorizontalFlipWithBBox : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float probability_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomPosterize TensorTransform.
@@ -482,7 +475,8 @@ class RandomPosterize : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<uint8_t> bit_range_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomResize TensorTransform.
@@ -503,7 +497,8 @@ class RandomResize : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomResizeWithBBox TensorTransform.
@@ -525,7 +520,8 @@ class RandomResizeWithBBox : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomResizedCrop TensorTransform.
@@ -555,11 +551,8 @@ class RandomResizedCrop : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
-  std::vector<float> scale_;
-  std::vector<float> ratio_;
-  InterpolationMode interpolation_;
-  int32_t max_attempts_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomResizedCropWithBBox TensorTransform.
@@ -589,11 +582,8 @@ class RandomResizedCropWithBBox : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
-  std::vector<float> scale_;
-  std::vector<float> ratio_;
-  InterpolationMode interpolation_;
-  int32_t max_attempts_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomRotation TensorOp
@@ -620,11 +610,8 @@ class RandomRotation : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<float> degrees_;
-  InterpolationMode interpolation_mode_;
-  std::vector<float> center_;
-  bool expand_;
-  std::vector<uint8_t> fill_value_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomSelectSubpolicy TensorTransform.
@@ -655,7 +642,8 @@ class RandomSelectSubpolicy : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomSharpness TensorTransform.
@@ -675,7 +663,8 @@ class RandomSharpness : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<float> degrees_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomSolarize TensorTransform.
@@ -695,7 +684,8 @@ class RandomSolarize : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<uint8_t> threshold_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomVerticalFlip TensorTransform.
@@ -714,7 +704,8 @@ class RandomVerticalFlip : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float probability_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomVerticalFlipWithBBox TensorTransform.
@@ -733,7 +724,8 @@ class RandomVerticalFlipWithBBox : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float probability_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RescaleOperation TensorTransform.
@@ -753,8 +745,8 @@ class Rescale : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float rescale_;
-  float shift_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief ResizeWithBBox TensorTransform.
@@ -776,8 +768,8 @@ class ResizeWithBBox : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RgbaToBgr TensorTransform.
@@ -833,10 +825,8 @@ class SoftDvppDecodeRandomCropResizeJpeg : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
-  std::vector<float> scale_;
-  std::vector<float> ratio_;
-  int32_t max_attempts_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief SoftDvppDecodeResizeJpeg TensorTransform.
@@ -864,7 +854,8 @@ class SoftDvppDecodeResizeJpeg : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief SwapRedBlue TensorOp
@@ -909,8 +900,8 @@ class UniformAugment : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
-  int32_t num_ops_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 }  // namespace vision

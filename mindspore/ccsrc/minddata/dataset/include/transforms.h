@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "minddata/dataset/include/constants.h"
 
@@ -72,7 +73,8 @@ class Compose : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Duplicate Op.
@@ -107,7 +109,8 @@ class OneHot : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float num_classes_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomApply Op.
@@ -129,8 +132,8 @@ class RandomApply : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
-  double prob_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomChoice Op.
@@ -151,7 +154,8 @@ class RandomChoice : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief TypeCast Op.
@@ -160,7 +164,9 @@ class TypeCast : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] data_type mindspore.dtype to be cast to.
-  explicit TypeCast(std::string data_type);
+  explicit TypeCast(std::string data_type) : TypeCast(StringToChar(data_type)) {}
+
+  explicit TypeCast(const std::vector<char> &data_type);
 
   /// \brief Destructor
   ~TypeCast() = default;
@@ -170,7 +176,8 @@ class TypeCast : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::string data_type_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Unique Op.

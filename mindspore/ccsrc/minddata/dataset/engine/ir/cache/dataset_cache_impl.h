@@ -20,6 +20,8 @@
 #include <string>
 #include <optional>
 #include <utility>
+#include <vector>
+#include "include/api/dual_abi_helper.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 #include "minddata/dataset/engine/ir/cache/dataset_cache.h"
@@ -39,13 +41,13 @@ class DatasetCacheImpl : public DatasetCache {
   /// \param port optional port (default=50052).
   /// \param num_connections optional number of connections (default=12).
   /// \param prefetch_sz optional prefetch size (default=20).
-  DatasetCacheImpl(session_id_type id, uint64_t mem_sz, bool spill, std::optional<std::string> hostname,
+  DatasetCacheImpl(session_id_type id, uint64_t mem_sz, bool spill, std::optional<std::vector<char>> hostname,
                    std::optional<int32_t> port, std::optional<int32_t> num_connections,
                    std::optional<int32_t> prefetch_sz)
       : session_id_(id),
         cache_mem_sz_(mem_sz),
         spill_(spill),
-        hostname_(std::move(hostname)),
+        hostname_(OptionalCharToString(hostname)),
         port_(std::move(port)),
         num_connections_(std::move(num_connections)),
         prefetch_sz_(std::move(prefetch_sz)) {}

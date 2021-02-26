@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 
+#include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
@@ -64,11 +65,8 @@ class BasicTokenizer : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  bool lower_case_;
-  bool keep_whitespace_;
-  NormalizeForm normalize_form_;
-  bool preserve_unused_token_;
-  bool with_offsets_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Tokenizer used for Bert text process.
@@ -94,7 +92,14 @@ class BertTokenizer : public TensorTransform {
                          int32_t max_bytes_per_token = 100, const std::string &unknown_token = "[UNK]",
                          bool lower_case = false, bool keep_whitespace = false,
                          const NormalizeForm normalize_form = NormalizeForm::kNone, bool preserve_unused_token = true,
-                         bool with_offsets = false);
+                         bool with_offsets = false)
+      : BertTokenizer(vocab, StringToChar(suffix_indicator), max_bytes_per_token, StringToChar(unknown_token),
+                      lower_case, keep_whitespace, normalize_form, preserve_unused_token, with_offsets) {}
+
+  explicit BertTokenizer(const std::shared_ptr<Vocab> &vocab, const std::vector<char> &suffix_indicator,
+                         int32_t max_bytes_per_token, const std::vector<char> &unknown_token, bool lower_case,
+                         bool keep_whitespace, const NormalizeForm normalize_form, bool preserve_unused_token,
+                         bool with_offsets);
 
   /// \brief Destructor
   ~BertTokenizer() = default;
@@ -104,15 +109,8 @@ class BertTokenizer : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::shared_ptr<Vocab> vocab_;
-  std::string suffix_indicator_;
-  int32_t max_bytes_per_token_;
-  std::string unknown_token_;
-  bool lower_case_;
-  bool keep_whitespace_;
-  NormalizeForm normalize_form_;
-  bool preserve_unused_token_;
-  bool with_offsets_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Apply case fold operation on UTF-8 string tensor.
@@ -146,7 +144,11 @@ class JiebaTokenizer : public TensorTransform {
   ///   - JiebaMode.kMIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
   /// \param[in] with_offsets If or not output offsets of tokens (default=false).
   explicit JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path,
-                          const JiebaMode &mode = JiebaMode::kMix, bool with_offsets = false);
+                          const JiebaMode &mode = JiebaMode::kMix, bool with_offsets = false)
+      : JiebaTokenizer(StringToChar(hmm_path), StringToChar(mp_path), mode, with_offsets) {}
+
+  explicit JiebaTokenizer(const std::vector<char> &hmm_path, const std::vector<char> &mp_path, const JiebaMode &mode,
+                          bool with_offsets);
 
   /// \brief Destructor
   ~JiebaTokenizer() = default;
@@ -158,11 +160,8 @@ class JiebaTokenizer : public TensorTransform {
   Status AddWord(const std::string &word, int64_t freq = 0);
 
  private:
-  std::string hmm_path_;
-  std::string mp_path_;
-  JiebaMode mode_;
-  bool with_offsets_;
-  std::vector<std::pair<std::string, int64_t>> words_list_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Look up a word into an id according to the input vocabulary table.
@@ -175,7 +174,11 @@ class Lookup : public TensorTransform {
   ///    specify unknown_token when word being out of Vocabulary (default={}).
   /// \param[in] data_type type of the tensor after lookup, typically int32.
   explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::string> &unknown_token = {},
-                  const std::string &data_type = "int32");
+                  const std::string &data_type = "int32")
+      : Lookup(vocab, OptionalStringToChar(unknown_token), StringToChar(data_type)) {}
+
+  explicit Lookup(const std::shared_ptr<Vocab> &vocab, const std::optional<std::vector<char>> &unknown_token,
+                  const std::vector<char> &data_type);
 
   /// \brief Destructor
   ~Lookup() = default;
@@ -185,9 +188,8 @@ class Lookup : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::shared_ptr<Vocab> vocab_;
-  std::optional<std::string> unknown_token_;
-  std::string data_type_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief TensorOp to generate n-gram from a 1-D string Tensor.
@@ -203,7 +205,11 @@ class Ngram : public TensorTransform {
   ///   be capped at n-1. right_pad=("-":2) would pad right side of the sequence with "--" (default={"", 0}}).
   /// \param[in] separator Symbol used to join strings together (default=" ").
   explicit Ngram(const std::vector<int32_t> &ngrams, const std::pair<std::string, int32_t> &left_pad = {"", 0},
-                 const std::pair<std::string, int32_t> &right_pad = {"", 0}, const std::string &separator = " ");
+                 const std::pair<std::string, int32_t> &right_pad = {"", 0}, const std::string &separator = " ")
+      : Ngram(ngrams, PairStringToChar(left_pad), PairStringToChar(right_pad), StringToChar(separator)) {}
+
+  explicit Ngram(const std::vector<int32_t> &ngrams, const std::pair<std::vector<char>, int32_t> &left_pad,
+                 const std::pair<std::vector<char>, int32_t> &right_pad, const std::vector<char> &separator);
 
   /// \brief Destructor
   ~Ngram() = default;
@@ -213,10 +219,8 @@ class Ngram : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> ngrams_;
-  std::pair<std::string, int32_t> left_pad_;
-  std::pair<std::string, int32_t> right_pad_;
-  std::string separator_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 #ifndef _WIN32
@@ -243,7 +247,8 @@ class NormalizeUTF8 : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  NormalizeForm normalize_form_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
@@ -254,7 +259,10 @@ class RegexReplace : public TensorTransform {
   /// \param[in] replace The string to replace matched element.
   /// \param[in] replace_all Confirm whether to replace all. If false, only replace first matched element;
   ///   if true, replace all matched elements (default=true).
-  explicit RegexReplace(std::string pattern, std::string replace, bool replace_all = true);
+  explicit RegexReplace(std::string pattern, std::string replace, bool replace_all = true)
+      : RegexReplace(StringToChar(pattern), StringToChar(replace), replace_all) {}
+
+  explicit RegexReplace(const std::vector<char> &pattern, const std::vector<char> &replace, bool replace_all);
 
   /// \brief Destructor
   ~RegexReplace() = default;
@@ -264,9 +272,8 @@ class RegexReplace : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::string pattern_;
-  std::string replace_;
-  bool replace_all_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
@@ -278,7 +285,11 @@ class RegexTokenizer : public TensorTransform {
   ///   matched by 'keep_delim_pattern'. The default value is an empty string ("")
   ///   which means that delimiters will not be kept as an output token (default="").
   /// \param[in] with_offsets If or not output offsets of tokens (default=false).
-  explicit RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern = "", bool with_offsets = false);
+  explicit RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern = "", bool with_offsets = false)
+      : RegexTokenizer(StringToChar(delim_pattern), StringToChar(keep_delim_pattern), with_offsets) {}
+
+  explicit RegexTokenizer(const std::vector<char> &delim_pattern, const std::vector<char> &keep_delim_pattern,
+                          bool with_offsets);
 
   /// \brief Destructor
   ~RegexTokenizer() = default;
@@ -288,9 +299,8 @@ class RegexTokenizer : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::string delim_pattern_;
-  std::string keep_delim_pattern_;
-  bool with_offsets_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 #endif
 
@@ -306,7 +316,10 @@ class SentencePieceTokenizer : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] vocab_path vocab model file path.
   /// \param[in] out_type The type of output.
-  SentencePieceTokenizer(const std::string &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type);
+  SentencePieceTokenizer(const std::string &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type)
+      : SentencePieceTokenizer(StringToChar(vocab_path), out_type) {}
+
+  SentencePieceTokenizer(const std::vector<char> &vocab_path, mindspore::dataset::SPieceTokenizerOutType out_type);
 
   /// \brief Destructor
   ~SentencePieceTokenizer() = default;
@@ -316,10 +329,8 @@ class SentencePieceTokenizer : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::shared_ptr<SentencePieceVocab> vocab_;
-  std::string vocab_path_;
-  SPieceTokenizerLoadType load_type_;
-  SPieceTokenizerOutType out_type_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension
@@ -340,8 +351,8 @@ class SlidingWindow : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  int32_t width_;
-  int32_t axis_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Tensor operation to convert every element of a string tensor to a number.
@@ -353,7 +364,9 @@ class ToNumber : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] data_type of the tensor to be casted to. Must be a numeric type.
-  explicit ToNumber(const std::string &data_type);
+  explicit ToNumber(const std::string &data_type) : ToNumber(StringToChar(data_type)) {}
+
+  explicit ToNumber(const std::vector<char> &data_type);
 
   /// \brief Destructor
   ~ToNumber() = default;
@@ -363,7 +376,8 @@ class ToNumber : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::string data_type_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Truncate a pair of rank-1 tensors such that the total length is less than max_length.
@@ -381,7 +395,8 @@ class TruncateSequencePair : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  int32_t max_length_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Tokenize a scalar tensor of UTF-8 string to Unicode characters.
@@ -399,7 +414,8 @@ class UnicodeCharTokenizer : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  bool with_offsets_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 #ifndef _WIN32
@@ -419,8 +435,8 @@ class UnicodeScriptTokenizer : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  bool keep_whitespace_;
-  bool with_offsets_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces.
@@ -438,7 +454,8 @@ class WhitespaceTokenizer : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  bool with_offsets_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 #endif
 }  // namespace text

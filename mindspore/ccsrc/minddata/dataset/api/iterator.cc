@@ -26,7 +26,7 @@ Iterator::Iterator() : consumer_(nullptr) {}
 Iterator::~Iterator() { Stop(); }
 
 // Get the next row from the data pipeline.
-Status Iterator::GetNextRow(MSTensorMap *row) {
+Status Iterator::GetNextRowCharIF(MSTensorMapChar *row) {
   // Clean data buffer
   row->clear();
   std::unordered_map<std::string, std::shared_ptr<dataset::Tensor>> md_map;
@@ -38,7 +38,8 @@ Status Iterator::GetNextRow(MSTensorMap *row) {
   }
   for (auto de_tensor : md_map) {
     CHECK_FAIL_RETURN_UNEXPECTED(de_tensor.second->HasData(), "Apply transform failed, output tensor has no data");
-    row->insert(std::make_pair(de_tensor.first, mindspore::MSTensor(std::make_shared<DETensor>(de_tensor.second))));
+    std::vector<char> col_name(de_tensor.first.begin(), de_tensor.first.end());
+    row->insert(std::make_pair(col_name, mindspore::MSTensor(std::make_shared<DETensor>(de_tensor.second))));
   }
 
   return Status::OK();

@@ -94,8 +94,8 @@ bool set_callback_timeback(int32_t timeout) {
 int32_t get_callback_timeout() { return _config->callback_timeout(); }
 
 // Function to load configurations from a file
-bool load(std::string file) {
-  Status rc = _config->LoadFile(file);
+bool load(const std::vector<char> &file) {
+  Status rc = _config->LoadFile(CharToString(file));
   if (rc.IsError()) {
     MS_LOG(ERROR) << rc << file;
     return false;

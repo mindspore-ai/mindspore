@@ -26,143 +26,59 @@
 namespace mindspore {
 namespace dataset {
 
-// Internal Sampler class forward declaration
-class SamplerRT;
+class SamplerObj;
 
-class SamplerObj {
+// Abstract class to represent a sampler in the data pipeline.
+/// \class Sampler samplers.h
+/// \brief An abstract base class to represent a sampler in the data pipeline.
+class Sampler : std::enable_shared_from_this<Sampler> {
+  friend class AlbumDataset;
+  friend class MindDataDataset;
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+
  public:
   /// \brief Constructor
-  SamplerObj();
+  Sampler() {}
 
   /// \brief Destructor
-  ~SamplerObj() = default;
+  ~Sampler() = default;
 
-  /// \brief Pure virtual function for derived class to implement parameters validation
-  /// \return The Status code of the function. It returns OK status if parameters are valid.
-  virtual Status ValidateParams() = 0;
-
-  /// \brief Pure virtual function to convert a SamplerObj class into a runtime sampler object
-  /// \return Shared pointers to the newly created Sampler
-  virtual std::shared_ptr<SamplerRT> SamplerBuild() = 0;
-
-  /// \brief Pure virtual function to copy a SamplerObj class
-  /// \return Shared pointers to the newly copied SamplerObj
-  virtual std::shared_ptr<SamplerObj> SamplerCopy() = 0;
-
-  /// \brief Function for derived class to get the shard id of sampler
-  /// \return The shard id of the derived sampler
-  virtual int64_t ShardId() { return 0; }
-
-  /// \brief Adds a child to the sampler
-  /// \param[in] child The sampler to be added as child
-  /// \return the Status code returned
-  Status AddChildSampler(std::shared_ptr<SamplerObj> child);
-
-  std::vector<std::shared_ptr<SamplerObj>> GetChild() { return children_; }
+  /// \brief A virtual function to add a child sampler.
+  /// \param[in] child The child sampler to be added as a children of this sampler.
+  virtual void AddChild(std::shared_ptr<Sampler> child) { children_.push_back(child); }
 
  protected:
-  /// \brief A function that calls build on the children of this sampler
-  /// \param[in] sampler The samplerRT object built from this sampler
-  void BuildChildren(std::shared_ptr<SamplerRT> sampler);
+  /// \brief Pure virtual function to convert a Sampler class into an IR Sampler object.
+  /// \return shared pointer to the newly created TensorOperation.
+  virtual std::shared_ptr<SamplerObj> Parse() = 0;
 
-  std::vector<std::shared_ptr<SamplerObj>> children_;
+  std::vector<std::shared_ptr<Sampler>> children_;
 };
 
-class DistributedSamplerObj;
-class PKSamplerObj;
-class PreBuiltSamplerObj;
-class RandomSamplerObj;
-class SequentialSamplerObj;
-class SubsetSamplerObj;
-class SubsetRandomSamplerObj;
-class WeightedRandomSamplerObj;
+/// \brief A class to represent a Distributed Sampler in the data pipeline.
+/// \notes A Sampler that accesses a shard of the dataset.
+class DistributedSampler : public Sampler {
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
 
-/// Function to create a Distributed Sampler.
-/// \notes A Sampler that access a shard of the dataset.
-/// \param[in] num_shards - Number of shards to divide the dataset into.
-/// \param[in] shard_id - Shard ID of the current shard within num_shards.
-/// \param[in] shuffle - If true, the indices are shuffled.
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \param[in] seed - The seed in use when shuffle is true.
-/// \param[in] offset - The starting position where access to elements in the dataset begins.
-/// \param[in] even_dist - If true, each shard would return the same number of rows (default to true).
-///     If false the total rows returned by all the shards would not have overlap.
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true,
-                                                          int64_t num_samples = 0, uint32_t seed = 1,
-                                                          int64_t offset = -1, bool even_dist = true);
-
-/// Function to create a PK Sampler.
-/// \notes Samples K elements for each P class in the dataset.
-///        This will sample all classes.
-/// \param[in] num_val - Number of elements to sample for each class.
-/// \param[in] shuffle - If true, the class IDs are shuffled.
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<PKSamplerObj> PKSampler(int64_t num_val, bool shuffle = false, int64_t num_samples = 0);
-
-/// Function to create a Random Sampler.
-/// \notes Samples the elements randomly.
-/// \param[in] replacement - If true, put the sample ID back for the next draw.
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement = false, int64_t num_samples = 0);
-
-/// Function to create a Sequential Sampler.
-/// \notes Samples the dataset elements sequentially, same as not having a sampler.
-/// \param[in] start_index - Index to start sampling at (default to start at first id).
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
-
-/// Function to create a Subset  Sampler.
-/// \notes Samples the elements from a sequence of indices.
-/// \param[in] indices - A vector sequence of indices.
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<SubsetSamplerObj> SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
-
-/// Function to create a Subset Random Sampler.
-/// \notes Samples the elements randomly from a sequence of indices.
-/// \param[in] indices - A vector sequence of indices.
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
-
-/// Function to create a Weighted Random Sampler.
-/// \notes Samples the elements from [0, len(weights) - 1] randomly with the given
-///        weights (probabilities).
-/// \param[in] weights - A vector sequence of weights, not necessarily summing up to 1.
-/// \param[in] num_samples - The number of samples to draw (default to all elements).
-/// \param[in] replacement - If true, put the sample ID back for the next draw.
-/// \return Shared pointer to the current Sampler.
-std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(std::vector<double> weights, int64_t num_samples = 0,
-                                                                bool replacement = true);
-
-/* ####################################### Derived Sampler classes ################################# */
-class DistributedSamplerObj : public SamplerObj {
  public:
-  DistributedSamplerObj(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples, uint32_t seed,
-                        int64_t offset, bool even_dist);
+  /// \brief Constructor
+  /// \param[in] num_shards - Number of shards to divide the dataset into.
+  /// \param[in] shard_id - Shard ID of the current shard within num_shards.
+  /// \param[in] shuffle - If true, the indices are shuffled.
+  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  /// \param[in] seed - The seed in use when shuffle is true.
+  /// \param[in] offset - The starting position where access to elements in the dataset begins.
+  /// \param[in] even_dist - If true, each shard would return the same number of rows (default to true).
+  ///     If false the total rows returned by all the shards would not have overlap.
+  explicit DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle = true, int64_t num_samples = 0,
+                              uint32_t seed = 1, int64_t offset = -1, bool even_dist = true);
+  /// \brief Destructor.
+  ~DistributedSampler() = default;
 
-  virtual ~DistributedSamplerObj() = default;
-
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_,
-                                                           offset_, even_dist_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
-  Status ValidateParams() override;
-
-  /// \brief Function to get the shard id of sampler
-  /// \return The shard id of sampler
-  int64_t ShardId() override { return shard_id_; }
+ protected:
+  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \return shared pointer to the newly created SamplerObj.
+  std::shared_ptr<SamplerObj> Parse() override;
 
  private:
   int64_t num_shards_;
@@ -174,23 +90,26 @@ class DistributedSamplerObj : public SamplerObj {
   bool even_dist_;
 };
 
-class PKSamplerObj : public SamplerObj {
+/// \brief A class to represent a PK Sampler in the data pipeline.
+/// \notes Samples K elements for each P class in the dataset.
+///        This will sample all classes.
+class PKSampler : public Sampler {
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+
  public:
-  PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples);
+  /// \brief Constructor
+  /// \param[in] num_val - Number of elements to sample for each class.
+  /// \param[in] shuffle - If true, the class IDs are shuffled.
+  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  explicit PKSampler(int64_t num_val, bool shuffle = false, int64_t num_samples = 0);
 
-  virtual ~PKSamplerObj() = default;
+  /// \brief Destructor.
+  ~PKSampler() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
-  Status ValidateParams() override;
+ protected:
+  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \return shared pointer to the newly created SamplerObj.
+  std::shared_ptr<SamplerObj> Parse() override;
 
  private:
   int64_t num_val_;
@@ -198,131 +117,120 @@ class PKSamplerObj : public SamplerObj {
   int64_t num_samples_;
 };
 
-class PreBuiltSamplerObj : public SamplerObj {
+/// \brief A class to represent a Random Sampler in the data pipeline.
+/// \notes Samples the elements randomly.
+class RandomSampler : public Sampler {
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+
  public:
-  explicit PreBuiltSamplerObj(std::shared_ptr<SamplerRT> sampler);
+  /// \brief Constructor
+  /// \param[in] replacement - If true, put the sample ID back for the next draw.
+  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  explicit RandomSampler(bool replacement = false, int64_t num_samples = 0);
 
-  ~PreBuiltSamplerObj() = default;
+  /// \brief Destructor.
+  ~RandomSampler() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override;
-
-  Status ValidateParams() override;
-
- private:
-  std::shared_ptr<SamplerRT> sp_;
-};
-
-class RandomSamplerObj : public SamplerObj {
- public:
-  RandomSamplerObj(bool replacement, int64_t num_samples, bool reshuffle_each_epoch = true);
-
-  virtual ~RandomSamplerObj() = default;
-
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
-  Status ValidateParams() override;
+ protected:
+  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \return shared pointer to the newly created SamplerObj.
+  std::shared_ptr<SamplerObj> Parse() override;
 
  private:
   bool replacement_;
   int64_t num_samples_;
-  bool reshuffle_each_epoch_;
 };
 
-class SequentialSamplerObj : public SamplerObj {
+/// \brief A class to represent a Sequential Sampler in the data pipeline.
+/// \notes Samples the dataset elements sequentially, same as not having a sampler.
+class SequentialSampler : public Sampler {
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+
  public:
-  SequentialSamplerObj(int64_t start_index, int64_t num_samples);
+  /// \brief Constructor
+  /// \param[in] start_index - Index to start sampling at (default to start at first id).
+  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  explicit SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
 
-  virtual ~SequentialSamplerObj() = default;
+  /// \brief Destructor.
+  ~SequentialSampler() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
-  Status ValidateParams() override;
+ protected:
+  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \return shared pointer to the newly created SamplerObj.
+  std::shared_ptr<SamplerObj> Parse() override;
 
  private:
   int64_t start_index_;
   int64_t num_samples_;
 };
 
-class SubsetSamplerObj : public SamplerObj {
+/// \brief A class to represent a Subset Sampler in the data pipeline.
+/// \notes Samples the elements from a sequence of indices.
+class SubsetSampler : public Sampler {
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+
  public:
-  SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
+  /// \brief Constructor
+  /// \param[in] indices - A vector sequence of indices.
+  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  explicit SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
-  virtual ~SubsetSamplerObj() = default;
-
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
-  Status ValidateParams() override;
+  /// \brief Destructor.
+  ~SubsetSampler() = default;
 
  protected:
-  const std::vector<int64_t> indices_;
+  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \return shared pointer to the newly created SamplerObj.
+  std::shared_ptr<SamplerObj> Parse() override;
+
+  std::vector<int64_t> indices_;
   int64_t num_samples_;
 };
 
-class SubsetRandomSamplerObj : public SubsetSamplerObj {
+/// \brief A class to represent a Subset Random Sampler in the data pipeline.
+/// \notes Samples the elements randomly from a sequence of indices.
+class SubsetRandomSampler : public SubsetSampler {
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+
  public:
-  SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
+  /// \brief Constructor
+  /// \param[in] indices - A vector sequence of indices.
+  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  explicit SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
-  ~SubsetRandomSamplerObj() = default;
+  /// \brief Destructor.
+  ~SubsetRandomSampler() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
- private:
+ protected:
+  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \return shared pointer to the newly created SamplerObj.
+  std::shared_ptr<SamplerObj> Parse() override;
 };
 
-class WeightedRandomSamplerObj : public SamplerObj {
+/// \brief A class to represent a Weighted Random Sampler in the data pipeline.
+/// \notes Samples the elements from [0, len(weights) - 1] randomly with the given
+///        weights (probabilities).
+class WeightedRandomSampler : public Sampler {
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+
  public:
-  explicit WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
+  /// \brief Constructor
+  /// \param[in] weights - A vector sequence of weights, not necessarily summing up to 1.
+  /// \param[in] num_samples - The number of samples to draw (default to all elements).
+  /// \param[in] replacement - If true, put the sample ID back for the next draw.
+  explicit WeightedRandomSampler(std::vector<double> weights, int64_t num_samples = 0, bool replacement = true);
 
-  virtual ~WeightedRandomSamplerObj() = default;
+  /// \brief Destructor.
+  ~WeightedRandomSampler() = default;
 
-  std::shared_ptr<SamplerRT> SamplerBuild() override;
-
-  std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
-    for (auto child : children_) {
-      sampler->AddChildSampler(child);
-    }
-    return sampler;
-  }
-
-  Status ValidateParams() override;
+ protected:
+  /// \brief Function to convert a Sampler into an IR SamplerObj.
+  /// \return shared pointer to the newly created SamplerObj.
+  std::shared_ptr<SamplerObj> Parse() override;
 
  private:
-  const std::vector<double> weights_;
+  std::vector<double> weights_;
   int64_t num_samples_;
   bool replacement_;
 };
