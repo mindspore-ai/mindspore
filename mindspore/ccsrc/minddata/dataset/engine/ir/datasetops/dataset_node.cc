@@ -138,7 +138,7 @@ Status ValidateDatasetShardParams(const std::string &dataset_name, int32_t num_s
 
 // Helper function to validate dataset sampler parameter
 Status ValidateDatasetSampler(const std::string &dataset_name, const std::shared_ptr<SamplerObj> &sampler) {
-  if (sampler == nullptr) {
+  if (sampler == nullptr || sampler->ValidateParams().IsError()) {
     std::string err_msg = dataset_name + ": Sampler is not constructed correctly, sampler: nullptr";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -191,17 +191,17 @@ std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int
   if (shuffle) {
     if (num_shards > 1) {
       // If shuffle enabled, sharding enabled, use distributed random sampler
-      return DistributedSampler(num_shards, shard_id, shuffle, num_samples);
+      return DistributedSampler(num_shards, shard_id, shuffle, num_samples).Parse();
     }
     // If shuffle enabled, sharding disabled, use random sampler
-    return RandomSampler(num_samples >= 0, num_samples);
+    return RandomSampler(num_samples >= 0, num_samples).Parse();
   }
   if (num_shards > 1) {
     // If shuffle disabled, sharding enabled, use distributed sequential sampler
-    return DistributedSampler(num_shards, shard_id, shuffle, num_samples);
+    return DistributedSampler(num_shards, shard_id, shuffle, num_samples).Parse();
   }
   // If shuffle disabled, sharding disabled, use sequential sampler
-  return SequentialSampler(0, num_samples);
+  return SequentialSampler(0, num_samples).Parse();
 }
 
 // Constructor to initialize the cache

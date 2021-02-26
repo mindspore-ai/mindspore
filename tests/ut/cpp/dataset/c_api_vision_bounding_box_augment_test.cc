@@ -30,7 +30,7 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   /* FIXME - Resolve BoundingBoxAugment to properly handle TensorTransform input

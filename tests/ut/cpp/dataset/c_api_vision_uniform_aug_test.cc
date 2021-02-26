@@ -78,7 +78,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps) {
 
   // Create a Mnist Dataset
   std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", RandomSampler(false, 20));
+  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds

@@ -33,7 +33,7 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, RandomSampler(false, 3));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, std::make_shared<RandomSampler>(false, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -68,6 +68,7 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
 
   EXPECT_EQ(i, 3);
 
+  
   // Manually terminate the pipeline
   iter->Stop();
 }
@@ -77,7 +78,7 @@ TEST_F(MindDataTestPipeline, TestComposeFail1) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Resize: Non-positive size value: -1 at element: 0
@@ -100,7 +101,7 @@ TEST_F(MindDataTestPipeline, TestComposeFail2) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Compose: transform ops must not be null
@@ -121,7 +122,7 @@ TEST_F(MindDataTestPipeline, TestComposeFail3) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Compose: transform list must not be empty
@@ -142,7 +143,7 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -182,7 +183,7 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   int number_of_classes = 10;
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -248,7 +249,7 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
 TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -299,7 +300,7 @@ TEST_F(MindDataTestPipeline, TestOneHotFail1) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // incorrect num_class
@@ -320,7 +321,7 @@ TEST_F(MindDataTestPipeline, TestOneHotFail2) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // incorrect num_class
@@ -341,7 +342,7 @@ TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 5));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -382,7 +383,7 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail1) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // Resize: Non-positive size value: -1 at element: 0
@@ -405,7 +406,7 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail2) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // RandomApply: transform ops must not be null
@@ -426,7 +427,7 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail3) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // RandomApply: Probability has to be between 0 and 1
@@ -447,7 +448,7 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail4) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // RandomApply: transform list must not be empty
@@ -468,7 +469,7 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 3));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -510,7 +511,8 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail1) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  RandomSampler sampler = RandomSampler(false, 10);
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", sampler);
   EXPECT_NE(ds, nullptr);
 
   // Resize: Non-positive size value: -1 at element: 0
@@ -533,7 +535,7 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail2) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // RandomChoice: transform ops must not be null
@@ -554,7 +556,7 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail3) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // RandomChoice: transform list must not be empty
@@ -575,7 +577,7 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 1));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 1));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -625,7 +627,7 @@ TEST_F(MindDataTestPipeline, TestTypeCastFail) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", RandomSampler(false, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
   // incorrect data type

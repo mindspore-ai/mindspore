@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   // Stage 1: load original dataset
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", SequentialSampler(0, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<SequentialSampler>(0, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -70,7 +70,7 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
 
   // Stage 3: Load dataset from file output by stage 2
   // Create a MindData Dataset
-  std::shared_ptr<Dataset> ds_minddata = MindData(temp_file, {}, SequentialSampler(0, 10));
+  std::shared_ptr<Dataset> ds_minddata = MindData(temp_file, {}, std::make_shared<SequentialSampler>(0, 10));
 
   // Create objects for the tensor ops
   // uint32 will be casted to int64 implicitly in mindrecord file, so we have to cast it back to uint32
@@ -119,7 +119,7 @@ TEST_F(MindDataTestPipeline, TestSaveFail) {
 
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", SequentialSampler(0, 10));
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<SequentialSampler>(0, 10));
   EXPECT_NE(ds, nullptr);
 
   // fail with invalid dataset_path

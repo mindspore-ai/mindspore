@@ -20,78 +20,68 @@
 namespace mindspore {
 namespace dataset {
 
-/// Function to create a Distributed Sampler.
-std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle,
-                                                          int64_t num_samples, uint32_t seed, int64_t offset,
-                                                          bool even_dist) {
-  auto sampler =
-    std::make_shared<DistributedSamplerObj>(num_shards, shard_id, shuffle, num_samples, seed, offset, even_dist);
-  // Input validation
-  if (sampler->ValidateParams().IsError()) {
-    return nullptr;
-  }
-  return sampler;
+// DistributedSampler
+DistributedSampler::DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle, int64_t num_samples,
+                                       uint32_t seed, int64_t offset, bool even_dist)
+    : num_shards_(num_shards),
+      shard_id_(shard_id),
+      shuffle_(shuffle),
+      num_samples_(num_samples),
+      seed_(seed),
+      offset_(offset),
+      even_dist_(even_dist) {}
+
+std::shared_ptr<SamplerObj> DistributedSampler::Parse() {
+  return std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_,
+                                                 even_dist_);
 }
 
-/// Function to create a PK Sampler.
-std::shared_ptr<PKSamplerObj> PKSampler(int64_t num_val, bool shuffle, int64_t num_samples) {
-  auto sampler = std::make_shared<PKSamplerObj>(num_val, shuffle, num_samples);
-  // Input validation
-  if (sampler->ValidateParams().IsError()) {
-    return nullptr;
-  }
-  return sampler;
+// PKSampler
+PKSampler::PKSampler(int64_t num_val, bool shuffle, int64_t num_samples)
+    : num_val_(num_val), shuffle_(shuffle), num_samples_(num_samples) {}
+
+std::shared_ptr<SamplerObj> PKSampler::Parse() {
+  return std::make_shared<PKSamplerObj>(num_val_, shuffle_, num_samples_);
 }
 
-/// Function to create a Random Sampler.
-std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement, int64_t num_samples) {
-  auto sampler = std::make_shared<RandomSamplerObj>(replacement, num_samples);
-  // Input validation
-  if (sampler->ValidateParams().IsError()) {
-    return nullptr;
-  }
-  return sampler;
+// RandomSampler
+RandomSampler::RandomSampler(bool replacement, int64_t num_samples)
+    : replacement_(replacement), num_samples_(num_samples) {}
+
+std::shared_ptr<SamplerObj> RandomSampler::Parse() {
+  return std::make_shared<RandomSamplerObj>(replacement_, num_samples_);
 }
 
-/// Function to create a Sequential Sampler.
-std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index, int64_t num_samples) {
-  auto sampler = std::make_shared<SequentialSamplerObj>(start_index, num_samples);
-  // Input validation
-  if (sampler->ValidateParams().IsError()) {
-    return nullptr;
-  }
-  return sampler;
+// SequentialSampler
+SequentialSampler::SequentialSampler(int64_t start_index, int64_t num_samples)
+    : start_index_(start_index), num_samples_(num_samples) {}
+
+std::shared_ptr<SamplerObj> SequentialSampler::Parse() {
+  return std::make_shared<SequentialSamplerObj>(start_index_, num_samples_);
 }
 
-/// Function to create a Subset Random Sampler.
-std::shared_ptr<SubsetSamplerObj> SubsetSampler(std::vector<int64_t> indices, int64_t num_samples) {
-  auto sampler = std::make_shared<SubsetSamplerObj>(std::move(indices), num_samples);
-  // Input validation
-  if (sampler->ValidateParams().IsError()) {
-    return nullptr;
-  }
-  return sampler;
+// SubsetSampler
+SubsetSampler::SubsetSampler(std::vector<int64_t> indices, int64_t num_samples)
+    : indices_(indices), num_samples_(num_samples) {}
+
+std::shared_ptr<SamplerObj> SubsetSampler::Parse() {
+  return std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
 }
 
-/// Function to create a Subset Random Sampler.
-std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples) {
-  auto sampler = std::make_shared<SubsetRandomSamplerObj>(std::move(indices), num_samples);
-  // Input validation
-  if (sampler->ValidateParams().IsError()) {
-    return nullptr;
-  }
-  return sampler;
+// SubsetRandomSampler
+SubsetRandomSampler::SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples)
+    : SubsetSampler(indices, num_samples) {}
+
+std::shared_ptr<SamplerObj> SubsetRandomSampler::Parse() {
+  return std::make_shared<SubsetRandomSamplerObj>(indices_, num_samples_);
 }
 
-/// Function to create a Weighted Random Sampler.
-std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(std::vector<double> weights, int64_t num_samples,
-                                                                bool replacement) {
-  auto sampler = std::make_shared<WeightedRandomSamplerObj>(std::move(weights), num_samples, replacement);
-  // Input validation
-  if (sampler->ValidateParams().IsError()) {
-    return nullptr;
-  }
-  return sampler;
+// WeightedRandomSampler
+WeightedRandomSampler::WeightedRandomSampler(std::vector<double> weights, int64_t num_samples, bool replacement)
+    : weights_(weights), num_samples_(num_samples), replacement_(replacement) {}
+
+std::shared_ptr<SamplerObj> WeightedRandomSampler::Parse() {
+  return std::make_shared<WeightedRandomSamplerObj>(weights_, num_samples_, replacement_);
 }
 
 }  // namespace dataset

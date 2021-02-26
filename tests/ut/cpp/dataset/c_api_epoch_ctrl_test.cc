@@ -34,7 +34,7 @@ TEST_F(MindDataTestEpochCtrl, TestAutoInjectEpoch) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(0, sampler_size));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(0, sampler_size));
   ds = ds->SetNumWorkers(2);
 
   // Create an iterator over the result of the above dataset
@@ -79,7 +79,7 @@ TEST_F(MindDataTestEpochCtrl, TestEpoch) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(0, sampler_size));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(0, sampler_size));
   ds = ds->SetNumWorkers(3);
 
   // Create an iterator over the result of the above dataset
@@ -125,7 +125,7 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatEpoch) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(0, sampler_size));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(0, sampler_size));
   ds = ds->SetNumWorkers(3);
   ds = ds->Repeat(num_repeats);
 
@@ -172,7 +172,7 @@ TEST_F(MindDataTestEpochCtrl, TestRepeatRepeatEpoch) {
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(5, sampler_size));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(5, sampler_size));
   ds = ds->Repeat(num_repeats[0]);
   ds = ds->Repeat(num_repeats[1]);
 

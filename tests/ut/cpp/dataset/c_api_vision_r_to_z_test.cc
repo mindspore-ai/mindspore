@@ -30,7 +30,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess1.";
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, SequentialSampler(0, 1));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(0, 1));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -76,7 +76,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleSucess2 with different params.";
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 1));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -121,7 +121,7 @@ TEST_F(MindDataTestPipeline, TestResize1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResize1 with single integer input.";
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 6));
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 6));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -183,7 +183,7 @@ TEST_F(MindDataTestPipeline, TestResizeWithBBoxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResizeWithBBoxSuccess.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, SequentialSampler(0, 3));
+  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ TEST_F(MindDataTestPipeline, TestAlbumNumSamplers) {
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "label", "id"};
   // Create a Album Dataset
-  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, SequentialSampler(0, 1));
+  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, std::make_shared<SequentialSampler>(0, 1));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -206,7 +206,7 @@ TEST_F(MindDataTestPipeline, TestAlbumError) {
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "label", "id"};
   // Create an Album Dataset
-  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, SequentialSampler(0, 1));
+  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, true, std::make_shared<SequentialSampler>(0, 1));
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
