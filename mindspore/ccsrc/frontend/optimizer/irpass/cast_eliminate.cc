@@ -60,6 +60,7 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
   }
 
   if (src_type->type_id() == tgt_type->type_id()) {
+    // If 2nd input of cast is a depend, can't erase cast directly, but should replace cast with a new depend.
     if (IsPrimitiveCNode(node->cast<CNodePtr>()->input(2), prim::kPrimDepend)) {
       auto new_depend =
         node->func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), src_, node->cast<CNodePtr>()->input(2)});
@@ -72,11 +73,10 @@ AnfNodePtr CastSameTypeEliminater::operator()(const OptimizerPtr &, const AnfNod
 }
 
 void CastSameTypeEliminater::Visit(const AnfNodePtr &node) {
-  auto cur_node = TransThroughDepend(node);
   if (src_ == nullptr) {
-    src_ = cur_node;
+    src_ = node;
   } else {
-    tgt_ = cur_node;
+    tgt_ = TransThroughDepend(node);
   }
 }
 
