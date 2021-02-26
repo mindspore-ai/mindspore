@@ -162,7 +162,7 @@ usage: run_general_distill.py   [--distribute DISTRIBUTE] [--epoch_size N] [----
 
 options:
     --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
-    --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
+    --distribute               pre_training by several devices: "true"(training by more than 1 device) | "false", default is "false"
     --epoch_size               epoch size: N, default is 1
     --device_id                device id: N, default is 0
     --device_num               number of used devices: N, default is 1
@@ -241,7 +241,7 @@ Parameters for optimizer:
 ```text
 Parameters for bert network:
     seq_length                      length of input sequence: N, default is 128
-    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 30522
+    vocab_size                      size of each embedding vector: N, must be consistent with the dataset you use. Default is 30522
     hidden_size                     size of bert encoder layers: N
     num_hidden_layers               number of hidden layers: N
     num_attention_heads             number of attention heads: N, default is 12
@@ -275,8 +275,8 @@ The command above will run in the background, you can view the results the file 
 
 ```text
 # grep "epoch" log.txt
-epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.2093), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 2, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, 30.1724), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 1, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, 28.2093), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 2, step: 200, outputs are (Tensor(shape=[1], dtype=Float32, 30.1724), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 
@@ -294,7 +294,7 @@ The command above will run in the background, you can view the results the file 
 
 ```text
 # grep "epoch" log.txt
-epoch: 1, step: 100, outpus are 28.2093
+epoch: 1, step: 100, outputs are 28.2093
 ...
 ```
 
@@ -312,9 +312,9 @@ The command above will run in the background, you can view the results the file 
 
 ```text
 # grep "epoch" LOG*/log.txt
-epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.1478), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 1, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, 28.1478), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
-epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 30.5901), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 1, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, 30.5901), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 
@@ -330,7 +330,7 @@ The command above will run in the background, you can view the results the file 
 
 ```text
 # grep "epoch" LOG*/log.txt
-epoch: 1, step: 1, outpus are 63.4098
+epoch: 1, step: 1, outputs are 63.4098
 ...
 ```
 
@@ -410,7 +410,7 @@ The best acc is 0.891176
 | Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G               | NV SMX2 V100-32G, cpu:2.10GHz 64cores,  memory:251G         |
 | uploaded Date              | 08/20/2020                                                 | 08/24/2020                |
 | MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
-| Dataset                    | cn-wiki-128                                                | cn-wiki-128               |
+| Dataset                    | en-wiki-128                                                | en-wiki-128               |
 | Training Parameters        | src/gd_config.py                                           | src/gd_config.py          |
 | Optimizer                  | AdamWeightDecay                                            | AdamWeightDecay           |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |

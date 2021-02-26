@@ -280,8 +280,8 @@ bash scripts/run_standalone_gd.sh
 
 ```text
 # grep "epoch" log.txt
-epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.2093), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 2, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, 30.1724), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 1, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, 28.2093), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 2, step: 200, outputs are (Tensor(shape=[1], dtype=Float32, 30.1724), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 
@@ -299,7 +299,7 @@ bash scripts/run_standalone_gd.sh
 
 ```text
 # grep "epoch" log.txt
-epoch: 1, step: 100, outpus are 28.2093
+epoch: 1, step: 100, outputs are 28.2093
 ...
 ```
 
@@ -317,9 +317,9 @@ bash scripts/run_distributed_gd_ascend.sh 8 1 /path/hccl.json
 
 ```text
 # grep "epoch" LOG*/log.txt
-epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 28.1478), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 1, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, 28.1478), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
-epoch: 1, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, 30.5901), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 1, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, 30.5901), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 
@@ -335,7 +335,7 @@ bash scripts/run_distributed_gd_gpu.sh 8 1 /path/data/ /path/schema.json /path/t
 
 ```text
 # grep "epoch" LOG*/log.txt
-epoch: 1, step: 1, outpus are 63.4098
+epoch: 1, step: 1, outputs are 63.4098
 ...
 ```
 
@@ -415,7 +415,7 @@ The best acc is 0.891176
 | 资源                   | Ascend 910, cpu:2.60GHz 192核, 内存:755G               | NV SMX2 V100-32G, cpu:2.10GHz 64核,  内存:251G         |
 | 上传日期              | 2020-08-20                                           | 2020-08-24      |
 | MindSpore版本          | 0.6.0                                                      | 0.7.0                     |
-| 数据集                    | cn-wiki-128                                                | cn-wiki-128               |
+| 数据集                    | en-wiki-128                                                | en-wiki-128               |
 | 训练参数        | src/gd_config.py                                           | src/gd_config.py          |
 | 优化器| AdamWeightDecay | AdamWeightDecay |
 | 损耗函数             | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
