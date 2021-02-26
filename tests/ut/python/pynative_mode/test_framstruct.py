@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_framstruct """
 import numpy as np
-
+import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -76,11 +76,13 @@ def dynamic_make_tuple(x, lower, upper):
 
 
 def test_dynamic_make_tuple():
-    assert dynamic_make_tuple(2, 1, 5) == (2, 2, 2, 2)
+    # Dynamically recursively creating static type is invalid in mindspore, as mindspore is a static language.
+    with pytest.raises(RuntimeError):
+        dynamic_make_tuple(2, 1, 5)
 
 
 def test_make_tuple():
-    # Staticly recursively creating static type is valid in mindspore.
+    # Statically recursively creating static type is valid in mindspore.
     @ms_function
     def make_tuple(x):
         out = ()

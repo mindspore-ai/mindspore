@@ -199,10 +199,10 @@ class ForwardValueAndGrad(Cell):
             If the sensor_param is True, a sensitivity (gradient with respect to output) needs to be transferred through
             the location parameter or key-value pair parameter. If the value is transferred through the key-value pair
             parameter, the key must be sens.
+        sens (Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
     Inputs:
         - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
-        - sens (Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
     Outputs:
         - **forward value** (a scalar Tensor with shape :math:`()`) - The result of network forward running.
@@ -242,7 +242,7 @@ class ForwardValueAndGrad(Cell):
         >>> loss, grads = forward_value_and_grad(inputs, labels, 1.0)
     """
 
-    def __init__(self, network, weights=None, get_all=False, get_by_list=False, sens_param=False):
+    def __init__(self, network, weights=None, get_all=False, get_by_list=False, sens_param=False, sens=1.0):
         super(ForwardValueAndGrad, self).__init__(auto_prefix=False)
         if not isinstance(network, (Cell, FunctionType, MethodType)):
             raise TypeError(f"The type of training network should be cell, function type or method type, "
@@ -259,19 +259,16 @@ class ForwardValueAndGrad(Cell):
         self.get_all = get_all
         self.get_by_list = get_by_list
         self.sens_param = sens_param
+        self.sens = sens
         self.grad = C.GradOperation(get_all=self.get_all, get_by_list=self.get_by_list, sens_param=self.sens_param)
 
     def construct(self, *inputs):
         weights = self.weights
-        if self.sens_param:
-            sens = inputs[-1]
-            inputs = inputs[:-1]
-        else:
-            sens = None
         loss = self.network(*inputs)
         if self.sens_param:
-            if not isinstance(sens, Tensor):
-                sens = P.Fill()(P.DType()(loss), P.Shape()(loss), sens)
+            sens = self.sens
+            if not isinstance(self.sens, Tensor):
+                sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
             grads = self.grad(self.network, weights)(*inputs, sens)
         else:
             grads = self.grad(self.network, weights)(*inputs)

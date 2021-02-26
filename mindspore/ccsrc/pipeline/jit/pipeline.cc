@@ -98,7 +98,7 @@ std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) 
 
 AbstractBasePtr ArgsToAbstract(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  bool broaden = value->isa<MetaTensor>();
+  bool broaden = value->isa<MetaTensor>() || value->isa<Scalar>();
   return abstract::FromValue(value, broaden);
 }
 
@@ -142,6 +142,21 @@ std::string GetCompileExceptionInfo() {
   return oss.str();
 }
 
+void SetGpuLoopSink(const ResourcePtr &resource_) {
+  auto func_graph = resource_->func_graph();
+  if (func_graph != nullptr && func_graph->manager() != nullptr) {
+    auto manager = func_graph->manager();
+    size_t graph_nums = manager->func_graphs().size();
+    int64_t sinksize = ConfigManager::GetInstance().iter_num();
+    if (graph_nums == 1) {
+      resource_->set_gpu_loopsink(true, sinksize);
+    } else {
+      resource_->set_gpu_loopsink(false, sinksize);
+    }
+    MS_LOG(INFO) << "Change gpu_loopsink_flag_ to " << resource_->gpu_loopsink_flag() << ", set loopsink size to "
+                 << sinksize;
+  }
+}
 }  // namespace
 
 py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults) {
@@ -704,19 +719,7 @@ void Pipeline::Run() {
         MS_LOG(DEBUG) << "Action " << action.first << " end.";
       };
       if (action.first == "task_emit") {
-        auto func_graph = resource_->func_graph();
-        if (func_graph != nullptr && func_graph->manager() != nullptr) {
-          auto manager = func_graph->manager();
-          size_t graph_nums = manager->func_graphs().size();
-          int64_t sinksize = ConfigManager::GetInstance().iter_num();
-          if (graph_nums == 1) {
-            resource_->set_gpu_loopsink(true, sinksize);
-          } else {
-            resource_->set_gpu_loopsink(false, sinksize);
-          }
-          MS_LOG(INFO) << "Change gpu_loopsink_flag_ to " << resource_->gpu_loopsink_flag() << ", set loopsink size to "
-                       << sinksize;
-        }
+        SetGpuLoopSink(resource_);
       }
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;

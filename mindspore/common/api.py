@@ -210,7 +210,7 @@ class _MindSporeFunction:
             return None
         new_inputs = []
         for i in args_list:
-            if isinstance(i, Tensor):
+            if isinstance(i, (Tensor, int, float)):
                 new_inputs.append(i)
         return self._executor(tuple(new_inputs), phase)
 

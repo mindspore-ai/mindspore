@@ -111,11 +111,8 @@ TEST_F(TestOptLib, test_inline) {
   // add infer and renormalize
   std::shared_ptr<mindspore::pipeline::Resource> res = std::make_shared<mindspore::pipeline::Resource>();
   AbstractBasePtrList args_spec_list;
-  tensor::TensorPtr x_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), std::vector<int64_t>{2, 3});
-  tensor::TensorPtr y_tensor = std::make_shared<tensor::Tensor>(kFloat32->type_id(), std::vector<int64_t>{2, 3});
-
-  AbstractBasePtr abstract_v1 = abstract::FromValue(x_tensor, true);
-  AbstractBasePtr abstract_v2 = abstract::FromValue(y_tensor, true);
+  AbstractBasePtr abstract_v1 = abstract::FromValue(static_cast<int64_t>(1), true);
+  AbstractBasePtr abstract_v2 = abstract::FromValue(static_cast<int64_t>(2), true);
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
   AnalysisResult result = pipeline::AbstractAnalyze(res, before1, args_spec_list);

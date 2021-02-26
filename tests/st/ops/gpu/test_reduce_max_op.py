@@ -179,36 +179,41 @@ def test_ReduceMax():
     assert np.all(diff8 < error8)
 
 
+x_1 = x8
+axis_1 = 0
+x_2 = x1
+axis_2 = 0
+
+
 class ReduceMaxDynamic(nn.Cell):
-    def __init__(self):
+    def __init__(self, x, axis):
         super(ReduceMaxDynamic, self).__init__()
         self.reducemax = P.ReduceMax(False)
         self.test_dynamic = inner.GpuConvertToDynamicShape()
+        self.x = x
+        self.axis = axis
 
-    def construct(self, x, axis):
-        x = self.test_dynamic(x)
-        return self.reducemax(x, axis)
+    def construct(self):
+        dynamic_x = self.test_dynamic(self.x)
+        return self.reducemax(dynamic_x, self.axis)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_reduce_max_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    net = ReduceMaxDynamic()
+    net1 = ReduceMaxDynamic(Tensor(x_1), axis_1)
+    net2 = ReduceMaxDynamic(Tensor(x_2), axis_2)
 
-    x_1 = x8
-    axis_1 = 0
     expect_1 = np.max(x_1, axis=0, keepdims=False)
-
-    x_2 = x1
-    axis_2 = 0
     expect_2 = np.max(x_2, axis=0, keepdims=False)
 
-    output_1 = net(Tensor(x_1), axis_1)
-    output_2 = net(Tensor(x_2), axis_2)
+    output1 = net1()
+    output2 = net2()
 
-    np.testing.assert_almost_equal(output_1.asnumpy(), expect_1)
-    np.testing.assert_almost_equal(output_2.asnumpy(), expect_2)
+    np.testing.assert_almost_equal(output1.asnumpy(), expect_1)
+    np.testing.assert_almost_equal(output2.asnumpy(), expect_2)
+
 
 class ReduceMaxTypeNet(nn.Cell):
     def __init__(self, nptype):

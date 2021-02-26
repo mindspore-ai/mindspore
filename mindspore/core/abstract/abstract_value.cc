@@ -88,7 +88,7 @@ std::string AbstractBase::ToString() const {
   return buffer.str();
 }
 
-AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const { return Clone(); }
+AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const { return AbstractBase::Broaden(config); }
 
 AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);

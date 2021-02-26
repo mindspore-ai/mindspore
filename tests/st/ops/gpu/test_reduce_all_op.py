@@ -95,15 +95,23 @@ def test_ReduceAll():
     assert output[3].shape == expect3.shape
 
 
+x_1 = np.array([[True, True], [True, False], [False, False]])
+axis_1 = 0
+x_2 = np.array([[True, True], [True, True], [True, False], [False, False]])
+axis_2 = 0
+
+
 class ReduceAllDynamic(nn.Cell):
-    def __init__(self):
+    def __init__(self, x, axis):
         super(ReduceAllDynamic, self).__init__()
         self.reduceall = P.ReduceAll(False)
         self.test_dynamic = inner.GpuConvertToDynamicShape()
+        self.x = x
+        self.axis = axis
 
-    def construct(self, x, axis):
-        x = self.test_dynamic(x)
-        return self.reduceall(x, axis)
+    def construct(self):
+        dynamic_x = self.test_dynamic(self.x)
+        return self.reduceall(dynamic_x, self.axis)
 
 
 @pytest.mark.level0
@@ -111,18 +119,14 @@ class ReduceAllDynamic(nn.Cell):
 @pytest.mark.env_onecard
 def test_reduce_all_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    net = ReduceAllDynamic()
+    net1 = ReduceAllDynamic(Tensor(x_1), axis_1)
+    net2 = ReduceAllDynamic(Tensor(x_2), axis_2)
 
-    x_1 = np.array([[True, True], [True, False], [False, False]])
-    axis_1 = 0
     expect_1 = np.all(x_1, axis=axis_1, keepdims=False)
-
-    x_2 = np.array([[True, True], [True, True], [True, False], [False, False]])
-    axis_2 = 0
     expect_2 = np.all(x_2, axis=axis_2, keepdims=False)
 
-    output_1 = net(Tensor(x_1), axis_1)
-    output_2 = net(Tensor(x_2), axis_2)
+    output1 = net1()
+    output2 = net2()
 
-    np.testing.assert_almost_equal(output_1.asnumpy(), expect_1)
-    np.testing.assert_almost_equal(output_2.asnumpy(), expect_2)
+    np.testing.assert_almost_equal(output1.asnumpy(), expect_1)
+    np.testing.assert_almost_equal(output2.asnumpy(), expect_2)

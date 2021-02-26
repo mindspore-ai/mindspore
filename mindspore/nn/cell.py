@@ -609,7 +609,7 @@ class Cell(Cell_):
 
         new_inputs = []
         for i in inputs:
-            if isinstance(i, Tensor):
+            if isinstance(i, (Tensor, int, float)):
                 new_inputs.append(i)
 
         if self._auto_parallel_mode:
