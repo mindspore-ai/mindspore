@@ -7496,7 +7496,6 @@ class Conv3D(PrimitiveWithInfer):
         self.add_prim_attr('mode', self.mode)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
-        self.add_prim_attr('io_format', self.format)
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('groups', self.group)
