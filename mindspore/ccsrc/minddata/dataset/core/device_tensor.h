@@ -53,8 +53,10 @@ class DeviceTensor : public Tensor {
   Status SetYuvStrideShape_(const uint32_t &width, const uint32_t &widthStride, const uint32_t &height,
                             const uint32_t &heightStride);
 
-  std::vector<uint32_t> YUV_shape_;
+  std::vector<uint32_t> YUV_shape_;  // YUV_shape_ = {width, widthStride, height, heightStride}
+
   uint8_t *device_data_;
+
   uint32_t size_;
 };
 

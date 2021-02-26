@@ -40,6 +40,7 @@ constexpr char kDvppDecodeResizeOperation[] = "DvppDecodeResize";
 constexpr char kDvppDecodeResizeCropOperation[] = "DvppDecodeResizeCrop";
 constexpr char kDvppDecodeJpegOperation[] = "DvppDecodeJpeg";
 constexpr char kDvppDecodePngOperation[] = "DvppDecodePng";
+constexpr char kDvppNormalizeOperation[] = "DvppNormalize";
 constexpr char kDvppResizeJpegOperation[] = "DvppResizeJpeg";
 
 /* ####################################### Derived TensorOperation classes ################################# */
@@ -119,6 +120,25 @@ class DvppDecodePngOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kDvppDecodePngOperation; }
+};
+
+class DvppNormalizeOperation : public TensorOperation {
+ public:
+  explicit DvppNormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std);
+
+  ~DvppNormalizeOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kDvppNormalizeOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
+
+ private:
+  std::vector<float> mean_;
+  std::vector<float> std_;
 };
 
 class DvppResizeJpegOperation : public TensorOperation {

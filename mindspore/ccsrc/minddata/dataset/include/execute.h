@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <memory>
 #include "include/api/context.h"
 #include "include/api/types.h"
@@ -63,6 +64,8 @@ class Execute {
 
   Status DeviceMemoryRelease();
 
+  std::string AippCfgGenerator();
+
  private:
   Status validate_device_();
 
@@ -71,6 +74,9 @@ class Execute {
   MapTargetDevice device_type_;
 
   std::shared_ptr<DeviceResource> device_resource_;
+
+  struct ExtraInfo;
+  std::shared_ptr<ExtraInfo> info_;
 };
 
 }  // namespace dataset

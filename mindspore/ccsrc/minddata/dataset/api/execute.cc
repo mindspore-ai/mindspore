@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <fstream>
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/core/device_resource.h"
@@ -30,15 +32,22 @@
 #endif
 #ifdef ENABLE_ACL
 #include "minddata/dataset/core/ascend_resource.h"
+#include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 #endif
 
 namespace mindspore {
 namespace dataset {
 
+using json = nlohmann::json;
+struct Execute::ExtraInfo {
+  std::multimap<std::string, std::vector<uint32_t>> aipp_cfg_;
+};
+
 // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
 Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType) {
   ops_.emplace_back(std::move(op));
   device_type_ = deviceType;
+  info_ = std::make_shared<ExtraInfo>();
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
@@ -54,6 +63,7 @@ Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType
 Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType) {
   // Convert op from TensorTransform to TensorOperation
   std::shared_ptr<TensorOperation> operation;
+  info_ = std::make_shared<ExtraInfo>();
   if (deviceType == MapTargetDevice::kCpu) {
     operation = op->Parse();
   } else {
@@ -96,6 +106,7 @@ Execute::Execute(TensorTransform op, MapTargetDevice deviceType) {
 Execute::Execute(TensorTransform *op, MapTargetDevice deviceType) {
   // Convert op from TensorTransform to TensorOperation
   std::shared_ptr<TensorOperation> operation;
+  info_ = std::make_shared<ExtraInfo>();
   if (deviceType == MapTargetDevice::kCpu) {
     operation = op->Parse();
   } else {
@@ -117,6 +128,7 @@ Execute::Execute(TensorTransform *op, MapTargetDevice deviceType) {
 
 Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, MapTargetDevice deviceType)
     : ops_(std::move(ops)), device_type_(deviceType) {
+  info_ = std::make_shared<ExtraInfo>();
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
     device_resource_ = std::make_shared<AscendResource>();
@@ -131,6 +143,7 @@ Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, MapTargetDev
 
 Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDevice deviceType) {
   // Convert ops from TensorTransform to TensorOperation
+  info_ = std::make_shared<ExtraInfo>();
   if (deviceType == MapTargetDevice::kCpu) {
     (void)std::transform(ops.begin(), ops.end(), std::back_inserter(ops_),
                          [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> {
@@ -156,6 +169,7 @@ Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDev
 
 Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, MapTargetDevice deviceType) {
   // Convert ops from TensorTransform to TensorOperation
+  info_ = std::make_shared<ExtraInfo>();
   if (deviceType == MapTargetDevice::kCpu) {
     (void)std::transform(
       ops.begin(), ops.end(), std::back_inserter(ops_),
@@ -181,6 +195,7 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
 // Execute function for the example vector case: auto decode(new vision::Decode());
 Execute::Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType) {
   // Convert ops from TensorTransform to TensorOperation
+  info_ = std::make_shared<ExtraInfo>();
   if (deviceType == MapTargetDevice::kCpu) {
     (void)std::transform(
       ops.begin(), ops.end(), std::back_inserter(ops_),
@@ -268,7 +283,11 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
       device_input = std::move(device_output);
     }
     CHECK_FAIL_RETURN_UNEXPECTED(device_input->HasDeviceData(), "Apply transform failed, output tensor has no data");
-    *output = mindspore::MSTensor(std::make_shared<DETensor>(device_input, true));
+    std::shared_ptr<mindspore::dataset::Tensor> host_output;
+    // Need to optimize later, waiting for computing department development, hence we pop data temporarily.
+    RETURN_IF_NOT_OK(device_resource_->Pop(device_input, &host_output));
+    *output = mindspore::MSTensor(std::make_shared<DETensor>(host_output));
+    // *output = mindspore::MSTensor(std::make_shared<DETensor>(device_input, true)); Use in the future
 #endif
   }
   return Status::OK();
@@ -344,6 +363,169 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
 #endif
   }
   return Status::OK();
+}
+
+std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, const std::vector<uint32_t> &crop_para) {
+  std::vector<uint32_t> aipp_size;
+  if (resize_para.size() == 0) {
+    aipp_size = crop_para;
+  } else if (crop_para.size() == 0) {
+    aipp_size = resize_para;
+  } else {
+    if (resize_para.size() == 1) {
+      aipp_size = *min_element(crop_para.begin(), crop_para.end()) < *resize_para.begin() ? crop_para : resize_para;
+    } else {
+      aipp_size =
+        *min_element(resize_para.begin(), resize_para.end()) < *min_element(crop_para.begin(), crop_para.end())
+          ? resize_para
+          : crop_para;
+    }
+  }
+  return aipp_size;
+}
+
+std::vector<uint32_t> AippMeanFilter(const std::vector<uint32_t> &normalize_para) {
+  std::vector<uint32_t> aipp_mean;
+  if (normalize_para.size() == 6) {
+    std::transform(normalize_para.begin(), normalize_para.begin() + 3, std::back_inserter(aipp_mean),
+                   [](uint32_t i) { return static_cast<uint32_t>(i / 10000); });
+  } else {
+    aipp_mean = {0, 0, 0};
+  }
+  return aipp_mean;
+}
+
+std::vector<float> AippStdFilter(const std::vector<uint32_t> &normalize_para) {
+  std::vector<float> aipp_std;
+  if (normalize_para.size() == 6) {
+    auto zeros = std::find(std::begin(normalize_para), std::end(normalize_para), 0);
+    if (zeros == std::end(normalize_para)) {
+      std::transform(normalize_para.begin() + 3, normalize_para.end(), std::back_inserter(aipp_std),
+                     [](uint32_t i) { return static_cast<float>(10000 / i); });
+    } else {
+      MS_LOG(WARNING) << "Detect 0 in std vector, please verify your input";
+      aipp_std = {1.0, 1.0, 1.0};
+    }
+  } else {
+    aipp_std = {1.0, 1.0, 1.0};
+  }
+  return aipp_std;
+}
+
+Status AippInfoCollection(std::map<std::string, std::string> *aipp_options, const std::vector<uint32_t> &aipp_size,
+                          const std::vector<uint32_t> &aipp_mean, const std::vector<float> &aipp_std) {
+  aipp_options->insert(std::make_pair("related_input_rank", "0"));
+  aipp_options->insert(std::make_pair("src_image_size_w", std::to_string(aipp_size[1])));
+  aipp_options->insert(std::make_pair("src_image_size_h", std::to_string(aipp_size[1])));
+  aipp_options->insert(std::make_pair("crop", "false"));
+  aipp_options->insert(std::make_pair("input_format", "YUV420SP_U8"));
+  aipp_options->insert(std::make_pair("aipp_mode", "static"));
+  aipp_options->insert(std::make_pair("csc_switch", "true"));
+  aipp_options->insert(std::make_pair("rbuv_swap_switch", "false"));
+  std::vector<int32_t> color_space_matrix = {256, 0, 359, 256, -88, -183, 256, 454, 0};
+  int count = 0;
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      std::string key_word = "matrix_r" + std::to_string(i) + "c" + std::to_string(j);
+      aipp_options->insert(std::make_pair(key_word, std::to_string(color_space_matrix[count])));
+      ++count;
+    }
+  }
+  std::vector<uint32_t> color_space_bias = {0, 128, 128};
+  for (int i = 0; i < 3; i++) {
+    std::string key_word = "input_bias_" + std::to_string(i);
+    aipp_options->insert(std::make_pair(key_word, std::to_string(color_space_bias[i])));
+  }
+  for (int i = 0; i < aipp_mean.size(); i++) {
+    std::string key_word = "mean_chn_" + std::to_string(i);
+    aipp_options->insert(std::make_pair(key_word, std::to_string(aipp_mean[i])));
+  }
+  for (int i = 0; i < aipp_mean.size(); i++) {
+    std::string key_word = "min_chn_" + std::to_string(i);
+    aipp_options->insert(std::make_pair(key_word, "0.0"));
+  }
+  for (int i = 0; i < aipp_std.size(); i++) {
+    std::string key_word = "var_reci_chn_" + std::to_string(i);
+    aipp_options->insert(std::make_pair(key_word, std::to_string(aipp_std[i])));
+  }
+  return Status::OK();
+}
+
+std::string Execute::AippCfgGenerator() {
+  std::string config_location = "./aipp.cfg";
+#ifdef ENABLE_ACL
+  std::vector<uint32_t> paras;  // Record the parameters value of each Ascend operators
+  for (int32_t i = 0; i < ops_.size(); i++) {
+    json ir_info;
+    if (ops_[i] == nullptr) {
+      MS_LOG(ERROR) << "Input TensorOperation[" + std::to_string(i) + "] is null";
+      return "";
+    }
+    if (ops_[i]->ValidateParams() != Status::OK()) {
+      MS_LOG(ERROR) << "Input TensorOperation[" + std::to_string(i) + "] has wrong parameters";
+      return "";
+    }
+    ops_[i]->to_json(&ir_info);
+    std::multimap<std::string, std::string> op_list = {{vision::kDvppCropJpegOperation, "size"},
+                                                       {vision::kDvppDecodeResizeOperation, "size"},
+                                                       {vision::kDvppDecodeResizeCropOperation, "crop_size"},
+                                                       {vision::kDvppDecodeResizeCropOperation, "resize_size"},
+                                                       {vision::kDvppNormalizeOperation, "mean"},
+                                                       {vision::kDvppNormalizeOperation, "std"},
+                                                       {vision::kDvppResizeJpegOperation, "size"}};
+    for (auto pos = op_list.equal_range(ops_[i]->Name()); pos.first != pos.second; ++pos.first) {
+      auto paras_key_word = pos.first->second;
+      paras = ir_info[paras_key_word].get<std::vector<uint32_t>>();
+      info_->aipp_cfg_.insert(std::make_pair(ops_[i]->Name(), paras));
+    }
+  }
+  std::ofstream outfile;
+  outfile.open(config_location, std::ofstream::out);
+  if (!outfile.is_open()) {
+    MS_LOG(ERROR) << "Fail to open Aipp config file, please verify your system config(including authority)"
+                  << "We will return empty string which represent the location of Aipp config file in this case";
+    std::string except = "";
+    return except;
+  }
+  if (device_type_ == MapTargetDevice::kAscend310) {
+    // Process resize parameters and crop parameters to find out the final size of input data
+    std::vector<uint32_t> resize_paras;
+    std::vector<uint32_t> crop_paras;
+    auto iter = info_->aipp_cfg_.find(vision::kDvppResizeJpegOperation);
+    if (iter != info_->aipp_cfg_.end()) {
+      resize_paras = iter->second;
+    }
+    iter = info_->aipp_cfg_.find(vision::kDvppCropJpegOperation);
+    if (iter != info_->aipp_cfg_.end()) {
+      crop_paras = iter->second;
+      if (crop_paras.size() == 1) {
+        crop_paras.emplace_back(crop_paras[0]);
+      }
+    }
+    std::vector<uint32_t> aipp_size = AippSizeFilter(resize_paras, crop_paras);
+    // Process normalization parameters to find out the final normalization parameters for Aipp module
+    std::vector<uint32_t> normalize_paras;
+    if (info_->aipp_cfg_.find(vision::kDvppNormalizeOperation) != info_->aipp_cfg_.end()) {
+      for (auto pos = info_->aipp_cfg_.equal_range(vision::kDvppNormalizeOperation); pos.first != pos.second;
+           ++pos.first) {
+        auto mean_or_std = pos.first->second;
+        normalize_paras.insert(normalize_paras.end(), mean_or_std.begin(), mean_or_std.end());
+      }
+    }
+    std::vector<uint32_t> aipp_mean = AippMeanFilter(normalize_paras);
+    std::vector<float> aipp_std = AippStdFilter(normalize_paras);
+    std::map<std::string, std::string> aipp_options;
+    AippInfoCollection(&aipp_options, aipp_size, aipp_mean, aipp_std);
+    std::string tab_char(4, ' ');
+    outfile << "aipp_op {" << std::endl;
+    for (auto &option : aipp_options) {
+      outfile << tab_char << option.first << " : " << option.second << std::endl;
+    }
+    outfile << "}";
+    outfile.close();
+  }
+#endif
+  return config_location;
 }
 
 Status Execute::validate_device_() {

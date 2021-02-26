@@ -145,5 +145,6 @@ Status DvppCropJpegOp::SetAscendResource(const std::shared_ptr<DeviceResource> &
   processor_->SetCropParas(crop_width_, crop_height_);
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -75,5 +75,6 @@ Status TensorOp::SetAscendResource(const std::shared_ptr<DeviceResource> &resour
   return Status(StatusCode::kMDUnexpectedError,
                 "This is a CPU operator which doesn't have Ascend Resource. Please verify your context");
 }
+
 }  // namespace dataset
 }  // namespace mindspore

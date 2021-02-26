@@ -81,7 +81,7 @@ TEST_F(TestDE, TestDvpp) {
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(image.Shape().size(), 2);
+  ASSERT_EQ(image.Shape().size(), 3);
   int32_t real_h = 0;
   int32_t real_w = 0;
   int32_t remainder = crop_paras[crop_paras.size() - 1] % 16;
@@ -92,8 +92,14 @@ TEST_F(TestDE, TestDvpp) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
+  /* Use in the future
   ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
   ASSERT_EQ(image.Shape()[1], real_w);
+  ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
+   */
+  ASSERT_EQ(image.Shape()[0], 1.5 * real_h * real_w);  // For image in YUV format, each pixel takes 1.5 byte
+  ASSERT_EQ(image.Shape()[1], 1);
+  ASSERT_EQ(image.Shape()[2], 1);
   ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
 #endif
 }
@@ -119,7 +125,7 @@ TEST_F(TestDE, TestDvppSinkMode) {
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(image.Shape().size(), 2);
+  ASSERT_EQ(image.Shape().size(), 3);
   int32_t real_h = 0;
   int32_t real_w = 0;
   int32_t remainder = crop_paras[crop_paras.size() - 1] % 16;
@@ -130,14 +136,15 @@ TEST_F(TestDE, TestDvppSinkMode) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
-  ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
-  ASSERT_EQ(image.Shape()[1], real_w);
-  ASSERT_EQ(image.DataSize(), 1.5 * real_w * real_h);
+  ASSERT_EQ(image.Shape()[0], 1.5 * real_h * real_w);  // For image in YUV format, each pixel takes 1.5 byte
+  ASSERT_EQ(image.Shape()[1], 1);
+  ASSERT_EQ(image.Shape()[2], 1);
+  ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
   Transform.DeviceMemoryRelease();
 #endif
 }
 
-TEST_F(TestDE, TestDvppDecodeResizeCrop) {
+TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
 #ifdef ENABLE_ACL
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
   mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
@@ -146,18 +153,24 @@ TEST_F(TestDE, TestDvppDecodeResizeCrop) {
   // Define dvpp transform
   std::vector<int32_t> crop_paras = {416};
   std::vector<int32_t> resize_paras = {512};
+  std::vector<float> mean = {0.485 * 255, 0.456 * 255, 0.406 * 255};
+  std::vector<float> std = {0.229 * 255, 0.224 * 255, 0.225 * 255};
   auto decode(new vision::Decode());
   auto resize(new vision::Resize(resize_paras));
   auto centercrop(new vision::CenterCrop(crop_paras));
-  std::vector<TensorTransform *> transforms = {decode, resize, centercrop};
-  mindspore::dataset::Execute Transform(transforms, MapTargetDevice::kAscend310);
+  auto normalize(new vision::Normalize(mean, std));
+  std::vector<TensorTransform *> trans_lists = {decode, resize, centercrop, normalize};
+  mindspore::dataset::Execute Transform(trans_lists, MapTargetDevice::kAscend310);
+
+  std::string aipp_cfg = Transform.AippCfgGenerator();
+  ASSERT_EQ(aipp_cfg, "./aipp.cfg");
 
   // Apply transform on images
   Status rc = Transform(image, &image);
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(image.Shape().size(), 2);
+  ASSERT_EQ(image.Shape().size(), 3);
   int32_t real_h = 0;
   int32_t real_w = 0;
   int32_t remainder = crop_paras[crop_paras.size() - 1] % 16;
@@ -168,9 +181,10 @@ TEST_F(TestDE, TestDvppDecodeResizeCrop) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
-  ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
-  ASSERT_EQ(image.Shape()[1], real_w);
-  ASSERT_EQ(image.DataSize(), 1.5 * real_w * real_h);
+  ASSERT_EQ(image.Shape()[0], 1.5 * real_h * real_w);  // For image in YUV format, each pixel takes 1.5 byte
+  ASSERT_EQ(image.Shape()[1], 1);
+  ASSERT_EQ(image.Shape()[2], 1);
+  ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
   Transform.DeviceMemoryRelease();
 #endif
 }
