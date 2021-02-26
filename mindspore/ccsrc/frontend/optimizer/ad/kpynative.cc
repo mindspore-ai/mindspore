@@ -33,26 +33,95 @@ namespace mindspore {
 namespace ad {
 extern KPrim g_k_prims;
 
+namespace {
+FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
+  static ValuePtr zeros_like_ops = prim::GetPythonOps("zeros_like");
+  static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+                            abstract::AbstractBasePtrListEqual>
+    zeros_like_funcgraph_cache;
+  auto iter = zeros_like_funcgraph_cache.find(args_spec);
+  if (iter != zeros_like_funcgraph_cache.end()) {
+    MS_LOG(DEBUG) << "Cache hit for zeros_like: " << mindspore::ToString(args_spec);
+    return BasicClone(iter->second);
+  }
+  if (!zeros_like_ops->isa<MetaFuncGraph>()) {
+    MS_LOG(EXCEPTION) << "zeros_like is not a MetaFuncGraph";
+  }
+  auto zeros_like = zeros_like_ops->cast<MetaFuncGraphPtr>();
+  auto zeros_like_fg = zeros_like->GenerateFuncGraph(args_spec);
+  MS_EXCEPTION_IF_NULL(zeros_like_fg);
+  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+  auto specialized_zeros_like_fg = pipeline::Renormalize(resource, zeros_like_fg, args_spec);
+  MS_EXCEPTION_IF_NULL(specialized_zeros_like_fg);
+  zeros_like_funcgraph_cache[args_spec] = specialized_zeros_like_fg;
+  return BasicClone(specialized_zeros_like_fg);
+}
+
+FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
+  static ValuePtr add_ops = prim::GetPythonOps("hyper_add");
+  static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
+                            abstract::AbstractBasePtrListEqual>
+    add_backward_funcgraph_cache;
+  auto iter = add_backward_funcgraph_cache.find(args_spec);
+  if (iter != add_backward_funcgraph_cache.end()) {
+    MS_LOG(DEBUG) << "Cache hit for hyper_add: " << mindspore::ToString(args_spec);
+    return BasicClone(iter->second);
+  }
+  if (!add_ops->isa<MetaFuncGraph>()) {
+    MS_LOG(EXCEPTION) << "add is not a MetaFuncGraph";
+  }
+  auto add = add_ops->cast<MetaFuncGraphPtr>();
+  auto add_fg = add->GenerateFuncGraph(args_spec);
+  MS_EXCEPTION_IF_NULL(add_fg);
+  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+  auto specialized_add_fg = pipeline::Renormalize(resource, add_fg, args_spec);
+  MS_EXCEPTION_IF_NULL(specialized_add_fg);
+  add_backward_funcgraph_cache[args_spec] = specialized_add_fg;
+  return BasicClone(specialized_add_fg);
+}
+}  // namespace
+
 class PynativeAdjoint {
  public:
-  PynativeAdjoint(const AdjointPtr &adjoint, const ValuePtrList &op_args, const ValuePtr &out,
+  PynativeAdjoint(const FuncGraphPtr &tape, const ValuePtrList &op_args, const ValuePtr &out,
                   const FuncGraphPtr &bprop_fg)
-      : adjoint_(adjoint), op_args_(op_args), out_(out), bprop_fg_(bprop_fg) {}
+      : tape_(tape), op_args_(op_args), out_(out), bprop_fg_(bprop_fg) {}
 
   AnfNodePtrList &users() { return users_; }
-  AdjointPtr &adjoint() { return adjoint_; }
   const ValuePtrList &op_args() { return op_args_; }
   const ValuePtr &out() { return out_; }
   const FuncGraphPtr &bprop_fg() { return bprop_fg_; }
-  void ReplaceDoutHole() { adjoint_->CallDoutHole(); }
-  AnfNodePtr RealDout() { return adjoint_->RealDout(); }
-  void AccumulateDout(const AnfNodePtr &dout_factor) { adjoint_->AccumulateDout(dout_factor); }
+  AnfNodePtr RealDout() {
+    if (dout_ != nullptr) {
+      return dout_;
+    }
+    // Build zeros_like(out) as dout
+    abstract::AbstractBasePtrList args_spec{out_->ToAbstract()->Broaden()};
+    auto zeros_like_fg = GetZerosLike(args_spec);
+    auto zeros_like_dout = tape_->NewCNode({NewValueNode(zeros_like_fg), NewValueNode(out_)});
+    return zeros_like_dout;
+  }
+  void AccumulateDout(const AnfNodePtr &dout_factor) {
+    if (dout_ != nullptr) {
+      MS_LOG(DEBUG) << "Update dout " << dout_->ToString() << " with dout_factor " << dout_factor->ToString();
+      auto arg = out_->ToAbstract()->Broaden();
+      abstract::AbstractBasePtrList args_spec{arg, arg};
+      auto add_fg = GetHyperAdd(args_spec);
+      MS_EXCEPTION_IF_NULL(add_fg);
+      dout_ = tape_->NewCNode({NewValueNode(add_fg), dout_, dout_factor});
+      MS_LOG(DEBUG) << "New dout_ " << dout_->DebugString();
+      return;
+    }
+    dout_ = dout_factor;
+  }
 
  private:
+  const FuncGraphPtr tape_;
+  AnfNodePtr dout_{nullptr};
   AnfNodePtrList users_;
-  AdjointPtr adjoint_;
   // cache these arguments from ad caller.
   const ValuePtrList op_args_;
+  // For CNode , it's output of cnode. For Parameter or ValueNode, it's its value.
   const ValuePtr out_;
   // bprop_fg passed from ad caller, it may be user defined back propagate funcgragh.
   const FuncGraphPtr bprop_fg_;
@@ -172,7 +241,7 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
   MS_EXCEPTION_IF_NULL(cnode);
   auto prim = GetCNodePrimitive(cnode);
   if (prim == nullptr) {
-    MS_LOG(EXCEPTION) << "should be primitive, but: " << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Should be primitive, but: " << cnode->DebugString();
   }
   if (IsPrimitiveEquals(prim, prim::kPrimStopGradient) || IsPrimitiveEquals(prim, prim::kPrimUpdateState)) {
     need_propagate_stop_gradient_ = true;
@@ -196,7 +265,7 @@ bool KPynativeCellImpl::KPynativeWithBProp(const CNodePtr &cnode, const ValuePtr
   MS_EXCEPTION_IF_NULL(cnode);
   auto primal_fg = GetCNodeFuncGraph(cnode);
   if (primal_fg == nullptr) {
-    MS_LOG(EXCEPTION) << "should be func graph, but: " << cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Should be func graph, but: " << cnode->DebugString();
   }
   MS_EXCEPTION_IF_NULL(bprop_fg);
   BuildAdjoint(cnode, op_args, out, bprop_fg);
@@ -212,8 +281,7 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
   }
   // Book-keeping last cnode, as dout of this node will be given from outside;
   last_node_ = cnode;
-  auto cnode_adjoint = std::make_shared<Adjoint>(cnode, NewValueNode(out), tape_);
-  auto cnode_pynative_adjoint = std::make_shared<PynativeAdjoint>(cnode_adjoint, op_args, out, bprop_fg);
+  auto cnode_pynative_adjoint = std::make_shared<PynativeAdjoint>(tape_, op_args, out, bprop_fg);
   anfnode_to_adjoin_.insert(std::make_pair(cnode, cnode_pynative_adjoint));
 
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
@@ -221,11 +289,9 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
     auto anfnode_adjoint_iter = anfnode_to_adjoin_.find(inp_i);
     if (anfnode_adjoint_iter == anfnode_to_adjoin_.end()) {
       if (inp_i->isa<CNode>()) {
-        MS_LOG(EXCEPTION) << "cannot find adjoint for anfnode: " << inp_i->DebugString();
+        MS_LOG(EXCEPTION) << "Cannot find adjoint for anfnode: " << inp_i->DebugString();
       } else {
-        auto inp_i_adjoint = std::make_shared<Adjoint>(inp_i, NewValueNode(op_args[i - 1]), tape_);
-        auto inp_i_pynative_adjoint =
-          std::make_shared<PynativeAdjoint>(inp_i_adjoint, ValuePtrList{}, nullptr, nullptr);
+        auto inp_i_pynative_adjoint = std::make_shared<PynativeAdjoint>(tape_, ValuePtrList{}, op_args[i - 1], nullptr);
         anfnode_to_adjoin_.insert(std::make_pair(inp_i, inp_i_pynative_adjoint));
         inp_i_pynative_adjoint->users().push_back(cnode);
       }
@@ -240,7 +306,7 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
 FuncGraphPtr OptimizeBPropFuncGraph(const FuncGraphPtr &bprop_fg, const CNodePtr &cnode, const ValuePtrList &op_args,
                                     const ValuePtr &out) {
   auto optimized_bprop_fg =
-    pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().OptimizeBPropFuncGraph(bprop_fg, c_node, op_args, out);
+    pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().OptimizeBPropFuncGraph(bprop_fg, cnode, op_args, out);
   return optimized_bprop_fg;
 }
 
@@ -295,7 +361,7 @@ bool KPynativeCellImpl::AllReferencesStopped(const CNodePtr &curr_cnode) {
   // If all CNode use curr_cnode has stop_gradient_ flag, then curr_cnode also can set that flag.
   auto iter = anfnode_to_adjoin_.find(curr_cnode);
   if (iter == anfnode_to_adjoin_.end()) {
-    MS_LOG(EXCEPTION) << "Cannot adjoint for cnode: " << curr_cnode->DebugString();
+    MS_LOG(EXCEPTION) << "Cannot find adjoint for cnode: " << curr_cnode->DebugString();
   }
   auto users = iter->second->users();
   if (users.empty()) {

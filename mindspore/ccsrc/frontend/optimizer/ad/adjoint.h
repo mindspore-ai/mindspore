@@ -35,7 +35,6 @@ class Adjoint {
   void UpdateK(const AnfNodePtr &k);
   void RegisterKUser(const CNodePtr &user, size_t index);
   AnfNodePtr dout();
-  AnfNodePtr RealDout();
   void AccumulateDout(const AnfNodePtr &dout_factor);
   void RegisterDoutUser(const CNodePtr &user, size_t index);
   void CallDoutHole();
