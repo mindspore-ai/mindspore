@@ -1905,8 +1905,11 @@ def repeat(a, repeats, axis=None):
         if repeats == 0:
             return _empty(F.dtype(a), (0,))
         return C.repeat_elements(a, repeats, axis)
+
     shape = F.shape(a)
     size = shape[axis]
+    if len(repeats) != size:
+        _raise_value_error('operands could not be broadcast together')
     subs = split(a, size, axis)
     repeated_subs = []
     for sub, rep in zip(subs, repeats):

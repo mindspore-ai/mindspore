@@ -35,7 +35,7 @@ from .array_creations import copy_ as copy
 from .array_creations import (array, asarray, asfarray, ones, zeros, full, arange,
                               linspace, logspace, eye, identity, empty, empty_like,
                               ones_like, zeros_like, full_like, diagonal, tril, triu,
-                              tri, trace, cumsum, meshgrid, mgrid, ogrid, diagflat,
+                              tri, trace, meshgrid, mgrid, ogrid, diagflat,
                               diag, diag_indices, ix_)
 from .dtypes import (int_, int8, int16, int32, int64, uint, uint8, uint16,
                      uint32, uint64, float_, float16, float32, float64, bool_, inf, nan,
@@ -45,7 +45,7 @@ from .math_ops import (mean, inner, add, subtract, multiply, divide, true_divide
                        matmul, square, sqrt, reciprocal, log, maximum, heaviside, amax, amin,
                        hypot, float_power, floor, ptp, deg2rad, rad2deg, count_nonzero,
                        positive, negative, clip, floor_divide, remainder, fix, fmod, trunc,
-                       exp, expm1)
+                       exp, expm1, cumsum)
 from .logic_ops import (not_equal, less_equal, less, greater_equal, greater, equal, isfinite,
                         isnan, isinf, isposinf, isneginf, isscalar)
 
@@ -70,7 +70,7 @@ math_module = ['mean', 'inner', 'add', 'subtract', 'multiply', 'divide', 'true_d
                'minimum', 'matmul', 'square', 'sqrt', 'reciprocal', 'log', 'maximum',
                'heaviside', 'amax', 'amin', 'hypot', 'float_power', 'floor', 'ptp', 'deg2rad',
                'rad2deg', 'count_nonzero', 'positive', 'negative', 'clip', 'floor_divide',
-               'remainder', 'mod', 'fix', 'fmod', 'trunc', 'exp', 'expm1', 'fabs']
+               'remainder', 'mod', 'fix', 'fmod', 'trunc', 'exp', 'expm1', 'fabs', 'cumsum']
 
 logic_module = ['not_equal', 'less_equal', 'less', 'greater_equal', 'greater', 'equal', 'isfinite',
                 'isnan', 'isinf', 'isposinf', 'isneginf', 'isscalar']

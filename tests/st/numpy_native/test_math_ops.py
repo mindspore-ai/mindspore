@@ -20,7 +20,7 @@ import numpy as onp
 import mindspore.numpy as mnp
 
 from .utils import rand_int, rand_bool, run_binop_test, run_unary_test, run_multi_test, \
-    run_single_test, match_res, match_array
+    run_single_test, match_res, match_array, match_meta
 
 class Cases():
     def __init__(self):
@@ -1136,6 +1136,26 @@ def test_negative():
             onp_neg = onp_negative(arr, out=out, where=where)
             mnp_neg = mnp_negative(mnp.asarray(arr), mnp.asarray(out), mnp.asarray(where))
             match_array(mnp_neg.asnumpy(), onp_neg, 1e-5)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cumsum():
+    x = mnp.ones((16, 16), dtype="bool")
+    match_array(mnp.cumsum(x).asnumpy(), onp.cumsum(x.asnumpy()))
+    match_array(mnp.cumsum(x, axis=0).asnumpy(),
+                onp.cumsum(x.asnumpy(), axis=0))
+    match_meta(mnp.cumsum(x).asnumpy(), onp.cumsum(x.asnumpy()))
+
+    x = rand_int(3, 4, 5)
+    match_array(mnp.cumsum(mnp.asarray(x), dtype="bool").asnumpy(),
+                onp.cumsum(x, dtype="bool"))
+    match_array(mnp.cumsum(mnp.asarray(x), axis=-1).asnumpy(),
+                onp.cumsum(x, axis=-1))
 
 
 @pytest.mark.level1

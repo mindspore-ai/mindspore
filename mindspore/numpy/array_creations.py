@@ -20,7 +20,6 @@ import numpy as onp
 from ..common import Tensor
 from ..common import dtype as mstype
 from ..ops import functional as F
-from ..ops import operations as P
 from ..ops.primitive import constexpr
 from ..nn.layer.basic import tril as nn_tril
 from ..nn.layer.basic import triu as nn_triu
@@ -31,7 +30,7 @@ from .utils import _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray
     _expand, _broadcast_to_shape, _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar
 from .utils_const import _raise_value_error, _empty, _check_axis_valid, _max, _min, \
     _check_same_type, _is_shape_empty, _check_shape, _check_dtype, _tile_size, _abs, \
-    _raise_type_error, _expanded_shape, _check_axis_in_range, _check_is_float, _iota, \
+    _raise_type_error, _expanded_shape, _check_is_float, _iota, \
     _type_convert, _canonicalize_axis, _list_comprehensions, _ceil
 from .array_ops import transpose, ravel, concatenate, broadcast_arrays, reshape
 from .dtypes import nan
@@ -41,7 +40,6 @@ from .dtypes import nan
 MAX_NUMPY_DIMS = 32
 # All types that can be accepted as "array_like" parameters in graph mode.
 ARRAY_TYPES = (int, float, bool, list, tuple, Tensor)
-_cumsum_default = P.CumSum()
 
 
 def array(obj, dtype=None, copy=True, ndmin=0):
@@ -1170,53 +1168,6 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
     if not _check_same_type(cast_type, dtype):
         res = F.cast(res, dtype)
     return res
-
-
-def cumsum(a, axis=None, dtype=None):
-    """
-    Returns the cumulative sum of the elements along a given axis.
-
-    Args:
-        a (Tensor): Input tensor.
-        axis (int, optional): Axis along which the cumulative sum is computed. The
-            default (None) is to compute the cumsum over the flattened array.
-        dtype (:class:`mindspore.dtype`, optional): If not specified, stay the same as `a`,
-            unless `a` has an integer dtype with a precision less than that of the
-            default platform integer. In that case, the default platform integer
-            is used.
-
-    Returns:
-        Tensor.
-
-    Raises:
-        TypeError: If input arguments have types not specified above.
-        ValueError: If axis is out of range.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> output = np.cumsum(np.ones((3,3)), axis=0)
-        >>> print(output)
-        [[1. 1. 1.]
-         [2. 2. 2.]
-         [3. 3. 3.]]
-    """
-    _check_input_tensor(a)
-    original_dtype = F.dtype(a)
-    # If original array is int, and has precision less then int32, convert to int32
-    if _check_same_type(original_dtype, mstype.bool_) or \
-       _check_same_type(original_dtype, mstype.int8) or \
-       _check_same_type(original_dtype, mstype.int16):
-        original_dtype = mstype.int32
-    a = a.astype(mstype.float32)
-    if axis is None:
-        a = a.ravel()
-        axis = 0
-    _check_axis_in_range(axis, a.ndim)
-    if dtype is not None and not _check_same_type(original_dtype, dtype):
-        return _cumsum_default(a, axis).astype(dtype, copy=False)
-    return _cumsum_default(a, axis).astype(original_dtype, copy=False)
 
 
 def _index(i, size, Cartesian=True):
