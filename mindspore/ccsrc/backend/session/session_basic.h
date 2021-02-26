@@ -250,5 +250,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
 using SessionPtr = std::shared_ptr<session::SessionBasic>;
 using NamedSummaryOutputs = std::map<std::string, std::pair<AnfNodePtr, int>>;
 }  // namespace session
+void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
+                       const std::vector<CNodePtr> &execution_order);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_SESSION_SESSION_BASIC_H

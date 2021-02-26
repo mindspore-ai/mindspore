@@ -38,6 +38,7 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/utils.h"
 #include "debug/anf_ir_dump.h"
+#include "debug/common.h"
 #include "utils/trace_base.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
@@ -2382,4 +2383,47 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
 }
 #endif
 }  // namespace session
+void DumpGraphExeOrder(const std::string &file_name, const std::string &target_dir,
+                       const std::vector<CNodePtr> &execution_order) {
+  bool status = Common::CreateNotExistDirs(target_dir + "/execution_order/");
+  std::string file_path = target_dir + "/execution_order/" + file_name;
+  if (!status) {
+    MS_LOG(ERROR) << "Failed at CreateNotExistDirs in DumpGraphExeOrder";
+    return;
+  }
+  if (file_path.size() > PATH_MAX) {
+    MS_LOG(ERROR) << "File path " << file_path << " is too long.";
+    return;
+  }
+  char real_path[PATH_MAX] = {0};
+  char *real_path_ret = nullptr;
+#if defined(_WIN32) || defined(_WIN64)
+  real_path_ret = _fullpath(real_path, file_path.c_str(), PATH_MAX);
+#else
+  real_path_ret = realpath(file_path.c_str(), real_path);
+#endif
+  if (nullptr == real_path_ret) {
+    MS_LOG(DEBUG) << "dir " << file_path << " does not exit.";
+  } else {
+    std::string path_string = real_path;
+    if (chmod(common::SafeCStr(path_string), S_IRUSR | S_IWUSR) == -1) {
+      MS_LOG(ERROR) << "Modify file:" << real_path << " to rw fail.";
+      return;
+    }
+  }
+
+  // write to csv file
+  std::ofstream ofs(real_path);
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file '" << real_path << "' failed!";
+    return;
+  }
+  ofs << "NodeExecutionOrder-FullNameWithScope\n";
+  for (const CNodePtr &node : execution_order) {
+    ofs << node->fullname_with_scope() << "\n";
+  }
+  ofs.close();
+  // set file mode to read only by user
+  ChangeFileMode(file_path, S_IRUSR);
+}
 }  // namespace mindspore
