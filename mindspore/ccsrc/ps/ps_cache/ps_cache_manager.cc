@@ -145,7 +145,6 @@ const size_t &PsCacheManager::QueryHashTableSize(const std::string &param_name) 
 void PsCacheManager::Initialize() {
   MS_LOG(INFO) << "PS cache initialize.";
   if (!worker.running()) {
-    Util::SetInternalEnvVar();
     worker.Run();
   }
   embedding_device_cache_ = std::make_shared<EmbeddingDeviceCache>(batch_elements_, vocab_cache_size_);
@@ -177,22 +176,19 @@ void PsCacheManager::InitParameterServer() {
   for (const auto &item : hash_tables_) {
     const auto &param_name = item.first;
     size_t key = worker.SetParamKey(param_name);
-    std::vector<size_t> keys{key, key, key, key, key, key};
-    std::vector<float> values{
-      SizeToFloat(item.second.vocab_size), SizeToFloat(item.second.embedding_size), 1, 1, 1, 1, 1};
-    std::vector<int64_t> lens{2, 2, 3};
     const auto &hash_table_info = item.second;
     const auto &param_init_info = hash_table_info.param_init_info_;
-    if (param_init_info.param_type_ == kWeight) {
-      lens.push_back(1);
-    } else if (param_init_info.param_type_ == kAccumulation) {
-      lens.push_back(2);
-    }
-    values.push_back(param_init_info.init_val_);
-    lens.push_back(param_init_info.global_seed_);
-    lens.push_back(param_init_info.op_seed_);
+
+    std::vector<size_t> input_shape = {item.second.vocab_size, item.second.embedding_size};
+    std::vector<size_t> indices_shape = {1, 1};
+    std::vector<size_t> output_shape = {1, 1, 1};
+    ParamInitInfoMessage info;
+    info.set_param_type(param_init_info.param_type_);
+    info.set_init_val(param_init_info.init_val_);
+    info.set_global_seed(param_init_info.global_seed_);
+    info.set_op_seed(param_init_info.op_seed_);
     // if worker role
-    worker.InitPSEmbeddingTable(keys, values, lens);
+    worker.InitPSEmbeddingTable(key, input_shape, indices_shape, output_shape, info);
   }
 
   finish_init_parameter_server_ = true;
@@ -245,7 +241,7 @@ void PsCacheManager::AllocMemForHashTable() {
 }
 
 void PsCacheManager::SetLocalIdRank() {
-  auto worker_num = ::ps::NumWorkers();
+  auto worker_num = PSContext::instance()->initial_worker_num();
   auto local_shard_size = FloatToInt(std::ceil(SizeToFloat(vocab_size_) / worker_num));
   vocab_cache_size_diff_ = local_shard_size - SizeToInt(vocab_cache_size_);
   emb_table_slice_bounds_.first = local_shard_size * rank_id_;
@@ -829,8 +825,8 @@ bool PsCacheManager::HashSwapHostToServer(size_t key, const HashTableInfo &hash_
   if (swap_indices_size == 0) {
     return true;
   }
-  ::ps::SArray<int> lookup_ids(swap_indices_size, 0);
-  ::ps::SArray<float> swap_out_data;
+  std::vector<int> lookup_ids(swap_indices_size, 0);
+  std::vector<float> swap_out_data;
   auto embedding_size = hash_info.embedding_size;
   swap_out_data.resize(swap_indices_size * embedding_size);
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
@@ -857,22 +853,21 @@ bool PsCacheManager::HashSwapServerToHost(size_t key, const HashTableInfo &hash_
   }
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
   auto embedding_size = hash_info.embedding_size;
-  ::ps::SArray<int> lengths{swap_indices_size};
-  ::ps::SArray<float> lookup_result(swap_indices_size * embedding_size, 0);
-  ::ps::SArray<int> lookup_ids(swap_indices_size, 0);
+  std::vector<float> lookup_result(swap_indices_size * embedding_size, 0);
+  std::vector<int> lookup_ids(swap_indices_size, 0);
   auto copy_len = swap_indices_size * sizeof(int);
   auto ret = memcpy_s(lookup_ids.data(), copy_len, server_to_host_ids, copy_len);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
   }
-  worker.DoPSEmbeddingLookup({key}, lookup_ids, lengths, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
+  worker.DoPSEmbeddingLookup(key, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
   RETURN_IF_FALSE(InsertHostHashTable(embedding_size, IntToSize(swap_indices_size), server_to_host_index,
                                       lookup_result.data(), host_hash_table_addr));
   return true;
 }
 
-bool PsCacheManager::HashSwapDeviceOut(int *swap_out_index, ::ps::SArray<float> *swap_out_data,
+bool PsCacheManager::HashSwapDeviceOut(int *swap_out_index, std::vector<float> *swap_out_data,
                                        const HashTableInfo &hash_info) {
   MS_ERROR_IF_NULL(swap_out_index);
   MS_ERROR_IF_NULL(swap_out_data);
@@ -912,16 +907,15 @@ bool PsCacheManager::HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, cons
   auto cache_vocab_size = hash_info.cache_vocab_size;
   auto embedding_size = hash_info.embedding_size;
   // Get id embs by swap_in_ids in host(Pipeline with hash swap-out in device).
-  ::ps::SArray<int> lengths{swap_in_ids_size};
-  ::ps::SArray<float> lookup_result(swap_in_ids_size * embedding_size, 0);
-  ::ps::SArray<int> lookup_ids(swap_in_ids_size, 0);
+  std::vector<float> lookup_result(swap_in_ids_size * embedding_size, 0);
+  std::vector<int> lookup_ids(swap_in_ids_size, 0);
   auto copy_len = swap_in_ids_size * sizeof(int);
   auto ret = memcpy_s(lookup_ids.data(), copy_len, swap_in_ids, copy_len);
   if (ret != EOK) {
     MS_LOG(ERROR) << "Lookup id memcpy failed.";
     return false;
   }
-  worker.DoPSEmbeddingLookup({key}, lookup_ids, lengths, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
+  worker.DoPSEmbeddingLookup(key, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
   // Hash swap-in in device.
   RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyHostMemToDevice(
     embedding_device_cache_->hash_swap_value_addr_, lookup_result.data(),
@@ -934,7 +928,7 @@ bool PsCacheManager::HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, cons
   return true;
 }
 
-bool PsCacheManager::UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_data, int *swap_out_ids, size_t key) {
+bool PsCacheManager::UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *swap_out_ids, size_t key) {
   MS_ERROR_IF_NULL(embedding_device_cache_);
   MS_ERROR_IF_NULL(embedding_device_cache_->cache_);
   MS_ERROR_IF_NULL(swap_out_ids);
@@ -942,7 +936,7 @@ bool PsCacheManager::UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_da
   if (swap_out_ids_size == 0) {
     return true;
   }
-  ::ps::SArray<int> lookup_ids(swap_out_ids_size, 0);
+  std::vector<int> lookup_ids(swap_out_ids_size, 0);
   auto copy_len = swap_out_ids_size * sizeof(int);
   auto ret = memcpy_s(lookup_ids.data(), copy_len, swap_out_ids, copy_len);
   if (ret != EOK) {
@@ -994,8 +988,8 @@ bool PsCacheManager::SyncHostEmbeddingTable() {
       continue;
     }
     auto key = worker.GetParamKey(item.first);
-    ::ps::SArray<int> lookup_ids(swap_indices_lens, 0);
-    ::ps::SArray<float> swap_out_data;
+    std::vector<int> lookup_ids(swap_indices_lens, 0);
+    std::vector<float> swap_out_data;
     auto embedding_size = hash_info.embedding_size;
     swap_out_data.resize(swap_indices_lens * embedding_size);
     auto host_hash_table_addr = hash_info.host_address.get();
@@ -1038,8 +1032,8 @@ bool PsCacheManager::SyncDeviceEmbeddingTable() {
       continue;
     }
     auto key = worker.GetParamKey(item.first);
-    ::ps::SArray<int> lookup_ids(swap_indices_lens, 0);
-    ::ps::SArray<float> swap_out_data;
+    std::vector<int> lookup_ids(swap_indices_lens, 0);
+    std::vector<float> swap_out_data;
     auto embedding_size = hash_info.embedding_size;
     swap_out_data.resize(swap_indices_lens * embedding_size);
     std::unique_ptr<float[]> device_hash_table_addr_tmp =

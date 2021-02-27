@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {

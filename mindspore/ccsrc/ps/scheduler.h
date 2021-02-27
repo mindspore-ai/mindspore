@@ -16,6 +16,11 @@
 
 #ifndef MINDSPORE_CCSRC_PS_SCHEDULER_H_
 #define MINDSPORE_CCSRC_PS_SCHEDULER_H_
+
+#include "ps/core/scheduler_node.h"
+#include "ps/util.h"
+#include "ps/ps_context.h"
+
 namespace mindspore {
 namespace ps {
 class Scheduler {
@@ -32,6 +37,7 @@ class Scheduler {
   ~Scheduler() = default;
   Scheduler(const Scheduler &) = delete;
   Scheduler &operator=(const Scheduler &) = delete;
+  core::SchedulerNode scheduler_node_;
 };
 }  // namespace ps
 }  // namespace mindspore

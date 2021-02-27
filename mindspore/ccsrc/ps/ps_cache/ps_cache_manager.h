@@ -29,9 +29,9 @@
 #include "backend/kernel_compiler/kernel.h"
 #include "utils/shape_utils.h"
 #include "ir/tensor.h"
-#include "ps/ps.h"
-#include "ps/common.h"
+#include "ps/constants.h"
 #include "ps/worker.h"
+#include "ps/ps_context.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "ps/ps_cache/embedding_hash_map.h"
 #include "ps/ps_cache/ps_cache_factory.h"
@@ -155,7 +155,7 @@ class PsCacheManager {
   bool ParseDeviceData(size_t id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index);
   bool ParseHostDataHostToDevice(size_t id);
   bool ParseHostDataDeviceToHost();
-  bool HashSwapDeviceOut(int *swap_out_index, ::ps::SArray<float> *swap_out_data, const HashTableInfo &hash_info);
+  bool HashSwapDeviceOut(int *swap_out_index, std::vector<float> *swap_out_data, const HashTableInfo &hash_info);
   bool HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, const HashTableInfo &hash_info, size_t key);
   bool HashSwapHostToDevice(const HashTableInfo &hash_info);
   bool HashSwapDeviceToHost(const HashTableInfo &hash_info);
@@ -165,7 +165,7 @@ class PsCacheManager {
                            float *hash_table_addr);
   bool LookUpHostHashTable(size_t embedding_size, size_t indices_lens, const float *hash_table_addr,
                            const int *indices_addr, float *output_addr);
-  bool UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_data, int *swap_out_ids, size_t key);
+  bool UpdataEmbeddingTable(const std::vector<float> &swap_out_data, int *swap_out_ids, size_t key);
   void LookUpTableTask(size_t indices_lens, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
                        const int *indices_addr, float *output_addr);
   bool CheckFinishInsertInitInfo() const;

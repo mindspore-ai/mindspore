@@ -62,7 +62,7 @@ class PullKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(param_node);
     param_name_ = param_node->fullname_with_scope();
 
-    if (mindspore::ps::Util::IsRoleOfWorker()) {
+    if (mindspore::ps::PSContext::instance()->is_worker()) {
       key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
     }
     InitSizeLists();

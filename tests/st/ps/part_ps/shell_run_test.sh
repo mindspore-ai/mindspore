@@ -15,8 +15,7 @@
 # ============================================================================
 
 execute_path=$(pwd)
-self_path=$(dirname "${script_self}")
-export MS_COMM_TYPE=zmq
+self_path=$(dirname $0)
 export MS_SCHED_NUM=1
 DEVICE_TARGET=$1
 DATASET_PATH=$2

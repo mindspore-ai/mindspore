@@ -41,8 +41,9 @@
 #include "utils/trace_base.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
-#include "ps/common.h"
+#include "ps/constants.h"
 #include "ps/util.h"
+#include "ps/ps_context.h"
 #include "abstract/abstract_value.h"
 #endif
 
@@ -2287,7 +2288,7 @@ void SessionBasic::RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const {
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 void SessionBasic::InitPsWorker(const KernelGraphPtr &kernel_graph) {
-  if (!ps::Util::IsRoleOfWorker()) {
+  if (!ps::PSContext::instance()->is_worker()) {
     return;
   }
   CheckPSModeConsistence(kernel_graph);
@@ -2384,7 +2385,7 @@ void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
 
 void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
                                        const std::vector<tensor::TensorPtr> &inputs_const) {
-  if (!ps::Util::IsRoleOfWorker()) {
+  if (!ps::PSContext::instance()->is_worker()) {
     return;
   }
   std::vector<tensor::TensorPtr> inputs(inputs_const);

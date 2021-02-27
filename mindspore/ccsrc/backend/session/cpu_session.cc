@@ -30,6 +30,7 @@
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
+#include "ps/ps_context.h"
 #endif
 
 namespace mindspore {
@@ -75,9 +76,9 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
   MS_LOG(INFO) << "Set kernel info";
   SetKernelInfo(graph.get());
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsParamServerMode()) {
+  if (ps::PSContext::instance()->is_ps_mode()) {
     AssignParamKey(graph);
-    if (ps::Util::IsRoleOfWorker()) {
+    if (ps::PSContext::instance()->is_worker()) {
       Optimize(graph);
     }
   }

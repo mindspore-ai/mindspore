@@ -84,7 +84,7 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   for (size_t i = 0; i < grad_index; i++) {
     grad_offset += lengths[i];
   }
-  float *grad_data = values.data() + grad_offset;
+  float *grad_data = const_cast<float *>(values.data()) + grad_offset;
   CHECK_EQ(size, static_cast<size_t>(lengths[grad_index]));
 
   for (size_t i = 0; i < size; i++) {
@@ -121,7 +121,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   for (size_t i = 0; i < grad_index; i++) {
     grad_offset += lengths[i];
   }
-  float *incr_grad_data = values.data() + grad_offset;
+  float *incr_grad_data = const_cast<float *>(values.data()) + grad_offset;
   MS_EXCEPTION_IF_NULL(incr_grad_data);
 
   size_t incr_grad_size = lengths[grad_index] * sizeof(float);
@@ -148,7 +148,11 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   for (size_t i = 0; i < indices_index; i++) {
     indice_offset += lengths[i];
   }
-  int *incr_indice_data = reinterpret_cast<int *>(values.data()) + indice_offset;
+
+  void *incr_indice_data_temp = const_cast<float *>(values.data()) + indice_offset;
+
+  int *incr_indice_data = reinterpret_cast<int *>(incr_indice_data_temp);
+
   MS_EXCEPTION_IF_NULL(incr_indice_data);
   size_t incr_indice_size = lengths[indices_index];
   size_t incr_indice_data_size = incr_indice_size * sizeof(int);
@@ -259,7 +263,7 @@ MomentumOptimInfo::MomentumOptimInfo(const AddressPtr &weight, const AddressPtr 
 }
 
 void MomentumOptimInfo::Update(const Values &values, const Lengths &lens) {
-  UpdateOptimInputValue<float>(kApplyMomentum, "lr", values.data(), lens);
+  UpdateOptimInputValue<float>(kApplyMomentum, "lr", const_cast<float *>(values.data()), lens);
 }
 
 const size_t SparseOptimInfo::indice_size() const { return indices_offset_; }
@@ -303,12 +307,12 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
 }
 
 void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
-  UpdateOptimInputValue<float>(kSparseAdam, "beta1_power", values.data(), lens);
-  UpdateOptimInputValue<float>(kSparseAdam, "beta2_power", values.data(), lens);
-  UpdateOptimInputValue<float>(kSparseAdam, "lr", values.data(), lens);
-  UpdateOptimInputValue<float>(kSparseAdam, "beta1", values.data(), lens);
-  UpdateOptimInputValue<float>(kSparseAdam, "beta2", values.data(), lens);
-  UpdateOptimInputValue<float>(kSparseAdam, "eps", values.data(), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "beta1_power", const_cast<float *>(values.data()), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "beta2_power", const_cast<float *>(values.data()), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "lr", const_cast<float *>(values.data()), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "beta1", const_cast<float *>(values.data()), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "beta2", const_cast<float *>(values.data()), lens);
+  UpdateOptimInputValue<float>(kSparseAdam, "eps", const_cast<float *>(values.data()), lens);
 }
 
 const AddressPtr &SparseAdamOptimInfo::gradient() {

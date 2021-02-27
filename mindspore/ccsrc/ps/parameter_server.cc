@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-#include "ps/internal/parameter_server.h"
+#include "ps/parameter_server.h"
 
 namespace mindspore {
 namespace ps {
-namespace internal {
-
 void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";
@@ -44,8 +42,8 @@ void ParameterServer::Run(const FuncGraphPtr &func_graph) {
 }
 
 bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
-  pserver_num_ = std::strtol(mindspore::common::GetEnv(kEnvWorkerNum).c_str(), nullptr, 10);
-  worker_num_ = std::strtol(mindspore::common::GetEnv(kEnvPServerNum).c_str(), nullptr, 10);
+  pserver_num_ = std::strtol(mindspore::common::GetEnv(kEnvPServerNum).c_str(), nullptr, 10);
+  worker_num_ = std::strtol(mindspore::common::GetEnv(kEnvWorkerNum).c_str(), nullptr, 10);
   func_graph_ = func_graph;
   handler_.reset(new ServerHandler(this));
   handler_->Init();
@@ -257,12 +255,21 @@ void ParameterServer::AccumGrad(const Keys &keys, const Values &values, const Le
     std::shared_ptr<OptimizerInfo> optim_info = optim_infos_[key];
 
     // Create or update the optimizer info
-    std::shared_ptr<kernel::ps::PServerKernel> pserver_kernel = optimizers_[key];
-    if (pserver_kernel == nullptr) {
-      MS_LOG(EXCEPTION) << "no optimizer found for key " << key << " optim name " << weight_key_to_optims_[key];
+    if (optim_info == nullptr) {
+      const std::shared_ptr<OptimizerInfoBuilder> &builder = optim_info_builders_[weight_key_to_optims_[key]];
+      std::shared_ptr<kernel::ps::PServerKernel> pserver_kernel = optimizers_[key];
+      if (pserver_kernel == nullptr) {
+        MS_LOG(EXCEPTION) << "no optimizer found for key " << key << " optim name " << weight_key_to_optims_[key];
+      }
+      MS_EXCEPTION_IF_NULL(pserver_kernel);
+      OptimizerInfo *optim = builder->Build(pserver_kernel, weights_[key], keys, values, lengths,
+                                            optim_inputs_shape_[key], worker_num_, is_embedding_[key]);
+      optim_info.reset(optim);
+      optim_infos_[key] = optim_info;
+    } else {
+      optim_info->Update(values, lengths);
+      optim_info->Accumulate(values, lengths);
     }
-    MS_EXCEPTION_IF_NULL(pserver_kernel);
-    optim_infos_[key] = optim_info;
   }
 
   grads_accum_counter_[key] += 1;
@@ -373,7 +380,7 @@ inline bool ParameterServer::ReadyForPush(const Key &key) {
     MS_LOG(EXCEPTION) << "The weights in server is empty. Many reasons could cause this: 1.The Worker didn't send "
                          "kInitWeightsCmd command. 2.The Server failed to initialize weights.";
   }
-  MS_LOG(INFO) << "the grad_accum_count_:" << grad_accum_count_ << " the weights_:" << weights_.size()
+  MS_LOG(INFO) << "The grad_accum_count_:" << grad_accum_count_ << " the weights_:" << weights_.size()
                << " the token:" << (tokens_[key] <= 0);
   return grad_accum_count_ < weights_.size() && tokens_[key] <= 0;
 }
@@ -544,11 +551,9 @@ void ParameterServer::ServerHandler::HandleInitWeights(DataPtr data, size_t size
   for (int i = 0; i < key_num; i++) {
     Key key = input.keys()[i];
     size_t data_len = input.len_size() != key_num ? input.values_size() / key_num : input.len()[i];
-    MS_LOG(DEBUG) << "The data len:" << data_len;
 
     if (!ps_->HasWeight(key)) {
       WeightPtr weight_ptr = std::make_shared<std::vector<float>>(data_ptr + pos, data_ptr + (pos + data_len));
-      MS_LOG(DEBUG) << "The weight ptr:" << *weight_ptr;
       MS_EXCEPTION_IF_NULL(weight_ptr);
       ps_->InitWeight(key, weight_ptr);
 
@@ -637,7 +642,7 @@ void ParameterServer::ServerHandler::HandleCheckReadyForPush(DataPtr data, size_
   input.ParseFromArray(data.get(), size);
   const Key &key = input.keys()[0];
   bool ready = ps_->ReadyForPush(key);
-  MS_LOG(INFO) << "the ready is:" << ready;
+  MS_LOG(INFO) << "The ready is:" << ready;
   KVMessage res_data;
   res_data.add_keys(key);
   res_data.add_values(ready);
@@ -671,7 +676,6 @@ void ParameterServer::ServerHandler::HandleEmbeddingLookup(DataPtr data, size_t 
   EmbeddingTableLookup input;
   input.ParseFromArray(data.get(), size);
   const Key &key = input.key();
-  MS_LOG(DEBUG) << "The key is:" << key;
 
   KVMessage res_data;
   std::vector<Key> keys = {input.keys().begin(), input.keys().end()};
@@ -701,6 +705,5 @@ void ParameterServer::ServerHandler::HandleFinalize(DataPtr data, size_t size, V
   MS_EXCEPTION_IF_NULL(res);
   ps_->Finalize();
 }
-}  // namespace internal
 }  // namespace ps
 }  // namespace mindspore

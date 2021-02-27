@@ -25,7 +25,6 @@ export RANK_SIZE=$1
 export EPOCH_SIZE=$2
 export DEVICE_TARGET=$3
 export DATASET=$4
-export MS_COMM_TYPE=zmq
 export MS_SCHED_NUM=1
 export MS_WORKER_NUM=$RANK_SIZE
 export MS_SERVER_NUM=$5

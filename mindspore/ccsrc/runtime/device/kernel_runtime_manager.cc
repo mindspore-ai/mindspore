@@ -24,7 +24,7 @@ namespace mindspore {
 namespace device {
 void KernelRuntimeManager::ClearRuntimeResource() {
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsRoleOfWorker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
+  if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::ps_cache_instance.SyncEmbeddingTable();
   }
 #endif

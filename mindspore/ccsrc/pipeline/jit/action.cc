@@ -460,7 +460,7 @@ bool StartPSWorkerAction(const ResourcePtr &res) {
 
 bool StartPSServerAction(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
-  auto &ps = ps::ParameterServer<float>::GetInstance();
+  auto &ps = ps::ParameterServer::GetInstance();
   ps.Run(func_graph);
   return true;
 }
@@ -626,7 +626,7 @@ std::vector<ActionItem> VmPipeline() {
 
   actions.emplace_back(std::make_pair("validate", ValidateAction));
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsRoleOfWorker()) {
+  if (ps::PSContext::instance()->is_worker()) {
     actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));
   }
 #endif

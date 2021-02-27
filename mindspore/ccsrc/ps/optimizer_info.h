@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include "backend/kernel_compiler/kernel.h"
-#include "ps/common.h"
+#include "ps/constants.h"
 
 namespace mindspore {
 namespace ps {

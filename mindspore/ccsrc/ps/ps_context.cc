@@ -48,10 +48,10 @@ void PSContext::SetPSEnable(bool enabled) {
       MS_LOG(WARNING) << "MS_ROLE is " << ms_role << ", which is invalid.";
     }
 
-    worker_num_ = std::strtol(common::GetEnv("MS_WORKER_NUM").c_str(), nullptr, 10);
-    server_num_ = std::strtol(common::GetEnv("MS_SERVER_NUM").c_str(), nullptr, 10);
-    scheduler_host_ = common::GetEnv("MS_SCHED_HOST");
-    scheduler_port_ = std::strtol(common::GetEnv("MS_SCHED_PORT").c_str(), nullptr, 10);
+    worker_num_ = std::strtol(common::GetEnv(kEnvWorkerNum).c_str(), nullptr, 10);
+    server_num_ = std::strtol(common::GetEnv(kEnvPServerNum).c_str(), nullptr, 10);
+    scheduler_host_ = common::GetEnv(kEnvSchedulerHost);
+    scheduler_port_ = std::strtol(common::GetEnv(kEnvSchedulerPort).c_str(), nullptr, 10);
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";
     is_worker_ = false;
