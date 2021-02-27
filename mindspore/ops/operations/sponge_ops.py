@@ -27,6 +27,11 @@ class BondForce(PrimitiveWithInfer):
     Calculate the force exerted by the simple harmonic bond on the
     corresponding atoms. Assume the number of harmonic bonds is M and
     the number of atoms is N.
+    
+    .. math::
+        
+        dr = (x_1-x_2, y_1-y_2, z_1-z_2)
+        F = (F_x, F_y, F_z) = 2*k*(1 - r_0/|dr|)*dr
 
     Inputs:
         - **uint_crd_f** (Tensor, uint32 ) - [N, 3], the unsigned int coordinate
@@ -45,14 +50,12 @@ class BondForce(PrimitiveWithInfer):
         ``GPU``
     Examples:
     """
-
     @prim_attr_register
     def __init__(self, bond_numbers):
         self.bond_numbers = bond_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'bond_k', 'bond_r0'],
                                 outputs=['frc_f'])
         self.add_prim_attr('bond_numbers', self.bond_numbers)
-
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
         validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
         validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
@@ -70,25 +73,28 @@ class BondEnergy(PrimitiveWithInfer):
     Calculate the harmonic potential energy between each bonded atom pair.
     Assume our system has N atoms and M harmonic bonds.
 
+    .. math::
+        
+        dr = (x_1-x_2, y_1-y_2, z_1-z_2)
+        E = k*(|dr| - r_0)^2
+    
     Inputs:
         Same as operator BondForce().
 
     Outputs:
-        - **bond_ene** (Tensor, float32) - [M, 1], The harmonic potential energy
+        - **bond_ene** (Tensor, float32) - [M, 1], the harmonic potential energy
         for each bond.
 
     Supported Platforms:
         ``GPU``
     Examples:
     """
-
     @prim_attr_register
     def __init__(self, bond_numbers):
         self.bond_numbers = bond_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'bond_k', 'bond_r0'],
                                 outputs=['bond_ene'])
         self.add_prim_attr('bond_numbers', self.bond_numbers)
-
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
         validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
         validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
@@ -106,25 +112,25 @@ class BondAtomEnergy(PrimitiveWithInfer):
     Add the potential energy caused by simple harmonic bonds to the total
     potential energy of each atom.
 
+    The calculation formula is the same as operator BondEnergy().
+
     Inputs:
         Same as operator BondForce().
 
     Outputs:
-        - **atom_ene** (Tensor, float32) - [N, 1], he accumulated potential
+        - **atom_ene** (Tensor, float32) - [N, 1], the accumulated potential
         energy for each atom.
 
     Supported Platforms:
         ``GPU``
     Examples:
     """
-
     @prim_attr_register
     def __init__(self, bond_numbers):
         self.bond_numbers = bond_numbers
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'bond_k', 'bond_r0'],
                                 outputs=['atom_ene'])
         self.add_prim_attr('bond_numbers', self.bond_numbers)
-
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
         validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
         validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
@@ -140,13 +146,15 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
     BondForceWithAtomEnergy:
 
     Calculate bond force and harmonic potential energy together.
+    
+    The calculation formula is the same as operator BondForce() and BondEnergy().
 
     Inputs:
         Same as operator BondForce().
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [N, 3], Same as operator BondForce().
-        - **atom_e** (Tensor, float32) - [N, 1], Same as atom_ene in operator BondAtomEnergy().
+        - **frc_f** (Tensor, float32) - [N, 3], same as operator BondForce().
+        - **atom_e** (Tensor, float32) - [N, 1], same as atom_ene in operator BondAtomEnergy().
 
     Supported Platforms:
         ``GPU``
@@ -159,7 +167,6 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'bond_k', 'bond_r0'],
                                 outputs=['frc_f', 'atom_e'])
         self.add_prim_attr('bond_numbers', self.bond_numbers)
-
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
         validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
         validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
@@ -179,12 +186,20 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
     Calculate bond force and the virial coefficient caused by simple harmonic
     bond for each atom together.
 
+    The calculation formula of the force part is the same as operator BondForce().
+    The Virial part is as follows:
+
+    .. math::
+        
+        dr = (x_1-x_2, y_1-y_2, z_1-z_2)
+        virial = |dr|*(|dr| - r_0)*k
+
     Inputs:
         Same as operator BondForce()
 
     Outputs:
-        - **frc_f** (Tensor, float32) - [N, 3], Same as operator BondForce().
-        - **atom_v** (Tensor, float32) - [N, 1],The accumulated virial coefficient
+        - **frc_f** (Tensor, float32) - [N, 3], same as operator BondForce().
+        - **atom_v** (Tensor, float32) - [N, 1], the accumulated virial coefficient
         for each atom.
 
     Supported Platforms:
@@ -198,7 +213,6 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['uint_crd_f', 'scaler_f', 'atom_a', 'atom_b', 'bond_k', 'bond_r0'],
                                 outputs=['frc_f', 'atom_v'])
         self.add_prim_attr('bond_numbers', self.bond_numbers)
-
     def infer_dtype(self, uint_crd_f_dtype, scaler_f_type, atom_a_type, atom_b_type, bond_k_type, bond_r0_type):
         validator.check_tensor_dtype_valid('uint_crd_f_dtype', uint_crd_f_dtype, [mstype.uint32], self.name)
         validator.check_tensor_dtype_valid('scaler_f_type', scaler_f_type, [mstype.float32], self.name)
@@ -210,10 +224,61 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid('bond_r0_type', bond_r0_type, [mstype.float32], self.name)
         return bond_r0_type, bond_r0_type
 
-
 class DihedralForce(PrimitiveWithInfer):
     """
     DihedralForce:
+
+    Calculate the force exerted by the dihedral term which made of 4-atoms
+    on the corresponding atoms. Assume the number of dihedral terms is M and
+    the number of atoms is N.
+
+    .. math::
+        
+        dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
+        dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
+        dr_{cd} = (x_d-x_c, y_d-y_c, z_d-z_c)
+        
+        r1 = dr_{ab}*dr_{cb}
+        r2 = dr_{cd}*dr_{cb}
+        
+        phi = pi - sign(inner_product(r1*r2), dr_{cb}) 
+            * arccos(inner_product(r1, r2)/|r1|/|r2|)
+        dEdphi = n*phi*(k*cos(phi_0)*sin(n*phi) - k*sin(phi_0)*cos(n*phi))/sin(phi)
+        dphidr1 = r2/|r1|/|r2| + cos(phi)/|r1|^2*r1
+        dphidr2 = r1/|r1|/|r2| + cos(phi)/|r2|^2*r2
+
+        dEdra = dEdphi * dr_{cb} * dphidr1
+        dEdrd = dEdphi * dphi_dr2 * dr_{cb}
+        dEdrjpart = dEdphi * ((dr_{ab} * dphidr1) + (dr_{cd} * dphidr2))
+
+        F_a = dEdri
+        F_b = dEdrjpart - dEdri
+        F_c = - dEdrl - dEdrjpart
+        F_d = dEdrl
+    
+    Inputs:
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinates
+        value of each atom.
+        - **scalar_f** (Tensor, float32) - [3, 1], the 3-D scale factor between
+        the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M, 1], the 1st atom index of each dihedral.
+        - **atom_b** (Tensor, int32) - [M, 1], the 2nd atom index of each dihedral.
+        - **atom_c** (Tensor, int32) - [M, 1], the 3rd atom index of each dihedral.
+        - **atom_d** (Tensor, int32) - [M, 1], the 4th atom index of each dihedral.
+        4 atoms are connected in the form a-b-c-d.
+        - **ipn** (Tensor, int32) - [M, 1], the period of dihedral angle of each dihedral.
+        - **pk** (Tensor, float32) - [M, 1], the force constant of each dihedral.
+        - **gamc** (Tensor, float32) - [M, 1], k*cos(phi_0) of each dihedral.
+        - **gams** (Tensor, float32) - [M, 1], k*sin(phi_0) of each dihedral.
+        - **pn** (Tensor, float32) - [M, 1], the floating point form of ipn.
+
+    Outputs:
+        - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
+
+    Supported Platforms:
+        ``GPU``
+    
+    Examples:
     """
 
     @prim_attr_register
@@ -244,6 +309,25 @@ class DihedralForce(PrimitiveWithInfer):
 class DihedralEnergy(PrimitiveWithInfer):
     """
     DihedralEnergy:
+
+    Calculate the potential energy caused by dihedral terms for each 4-atom pair.
+    Assume our system has N atoms and M dihedral terms.
+    
+    .. math::
+        
+        E = k(1 + cos(n*phi - phi_0))
+
+    Inputs:
+        Same as operator DihedralForce().
+
+    Outputs:
+        - **ene** (Tensor, float32) - [M, 1], the potential energy for each
+        dihedral term.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
     """
 
     @prim_attr_register
@@ -274,6 +358,23 @@ class DihedralEnergy(PrimitiveWithInfer):
 class DihedralAtomEnergy(PrimitiveWithInfer):
     """
     DihedralAtomEnergy:
+
+    Add the potential energy caused by dihedral terms to the total potential
+    energy of each atom.
+
+    The calculation formula is the same as operator DihedralEnergy().
+    
+    Inputs:
+        Same as operator DihedralEnergy().
+
+    Outputs:
+        - **ene** (Tensor, float32) - [N, 1], the accumulated potential
+        energy for each atom.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
     """
 
     @prim_attr_register
@@ -304,6 +405,22 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
 class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
     """
     DihedralForceWithAtomEnergy:
+
+    Caculate dihedral force and potential energy together.
+
+    The calculation formula is the same as operator DihedralForce() and DihedralEnergy().
+
+    Inputs:
+        Same as operator DihedralForce().
+
+    Outputs:
+        - **frc_f** (Tensor, float32) - [N, 3], same as operator DihedralForce().
+        - **ene** (Tensor, float32) - [N, 1], same as operator DihedralAtomEnergy().
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
     """
 
     @prim_attr_register
@@ -334,6 +451,42 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 class AngleForce(PrimitiveWithInfer):
     """
     AngleForce:
+    
+    Calculate the force exerted by angles made of 3 atoms on the
+    corresponding atoms. Assume the number of angles is M and the
+    number of atoms is N.
+
+    .. math::
+        
+        dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
+        dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
+        theta = arccos(inner_product(dr_{ab}, dr_{cb})/|dr_{ab}|/|dr_{cb}|)
+        F_a = -2*k*(theta-theta_0)/sin(theta)*[cos(theta)/|dr_{ab}|^2*dr_{ab}
+            - 1/|dr_{ab}|/|dr_{cb}|*dr_{cb}]
+        F_c = -2*k*(theta-theta_0)/sin(theta)*[cos(theta)/|dr_{cb}|^2*dr_{cb}
+             - 1/|dr_{cb}|/|dr_{ab}|*dr_{ab}]
+        F_b = -F_a - F_c
+
+    Inputs:
+        - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate
+        value of each atom.
+        - **scaler_f** (Tensor, float32) - [3, 1], the 3-D scale factor between 
+        the real space float coordinates and the unsigned int coordinates.
+        - **atom_a** (Tensor, int32) - [M, 1], the 1st atom index of each angle.
+        - **atom_b** (Tensor, int32) - [M, 1], the 2nd and the central atom index
+        of each angle.
+        - **atom_c** (Tensor, int32) - [M, 1], the 3rd atom index of each angle.
+        - **angle_k** (Tensor, float32) - [M, 1], the force constant for each angle.
+        - **angle_theta0** (Tensor, float32) - [M, 1], the equilibrium position value
+        for each angle.
+
+    Outputs:
+        - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
+
+    Supported Platforms:    
+        ``GPU``
+    
+    Examples:
     """
 
     @prim_attr_register
@@ -359,6 +512,27 @@ class AngleForce(PrimitiveWithInfer):
 class AngleEnergy(PrimitiveWithInfer):
     """
     AngleEnergy:
+
+    Calculate the energy caused by 3-atoms angle term.
+
+    .. math::
+        
+        dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
+        dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
+        theta = arccos(inner_product(dr_{ab}, dr_{cb})/|dr_{ab}|/|dr_{cb}|)
+        E = k*(theta - theta_0)^2
+
+    Inputs:
+        Same as operator AngleForce().
+
+    Outputs:
+        - **ene** (Tensor, float32) - [M, 1], the potential energy for
+        each angle term.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
     """
 
     @prim_attr_register
@@ -384,6 +558,23 @@ class AngleEnergy(PrimitiveWithInfer):
 class AngleAtomEnergy(PrimitiveWithInfer):
     """
     AngleAtomEnergy:
+
+    Add the potential energy caused by angle terms to the total potential
+    energy of each atom.
+
+    The calculation formula is the same as operator AngleEnergy().
+
+    Inputs:
+        Same as operator AngleForce().
+
+    Outputs:
+        - **ene** (Tensor, float32) - [N, 1], the accumulated potential energy
+        for each atom.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
     """
 
     @prim_attr_register
@@ -409,6 +600,22 @@ class AngleAtomEnergy(PrimitiveWithInfer):
 class AngleForceWithAtomEnergy(PrimitiveWithInfer):
     """
     AngleForceWithAtomEnergy:
+
+    Calculate angle force and potential energy together.
+
+    The calculation formula is the same as operator AngleForce() and AngleEnergy().
+
+    Inputs:
+        Same as operator AngleForce().
+
+    Outputs:
+        - **frc_f** (Tensor, float32) - [N, 3], same as operator AngleForce().
+        - **ene** (Tensor, float) - [N, 1], same as operator AngleAtomEnergy().
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
     """
 
     @prim_attr_register
