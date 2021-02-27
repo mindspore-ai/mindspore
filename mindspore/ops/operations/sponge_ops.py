@@ -27,9 +27,9 @@ class BondForce(PrimitiveWithInfer):
     Calculate the force exerted by the simple harmonic bond on the
     corresponding atoms. Assume the number of harmonic bonds is M and
     the number of atoms is N.
-    
+
     .. math::
-        
+     
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         F = (F_x, F_y, F_z) = 2*k*(1 - r_0/|dr|)*dr
 
@@ -74,10 +74,10 @@ class BondEnergy(PrimitiveWithInfer):
     Assume our system has N atoms and M harmonic bonds.
 
     .. math::
-        
+     
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         E = k*(|dr| - r_0)^2
-    
+
     Inputs:
         Same as operator BondForce().
 
@@ -146,7 +146,7 @@ class BondForceWithAtomEnergy(PrimitiveWithInfer):
     BondForceWithAtomEnergy:
 
     Calculate bond force and harmonic potential energy together.
-    
+
     The calculation formula is the same as operator BondForce() and BondEnergy().
 
     Inputs:
@@ -190,7 +190,7 @@ class BondForceWithAtomVirial(PrimitiveWithInfer):
     The Virial part is as follows:
 
     .. math::
-        
+
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         virial = |dr|*(|dr| - r_0)*k
 
@@ -233,15 +233,15 @@ class DihedralForce(PrimitiveWithInfer):
     the number of atoms is N.
 
     .. math::
-        
+
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
         dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
         dr_{cd} = (x_d-x_c, y_d-y_c, z_d-z_c)
-        
+
         r1 = dr_{ab}*dr_{cb}
         r2 = dr_{cd}*dr_{cb}
-        
-        phi = pi - sign(inner_product(r1*r2), dr_{cb}) 
+
+        phi = pi - sign(inner_product(r1*r2), dr_{cb})
             * arccos(inner_product(r1, r2)/|r1|/|r2|)
         dEdphi = n*phi*(k*cos(phi_0)*sin(n*phi) - k*sin(phi_0)*cos(n*phi))/sin(phi)
         dphidr1 = r2/|r1|/|r2| + cos(phi)/|r1|^2*r1
@@ -255,7 +255,7 @@ class DihedralForce(PrimitiveWithInfer):
         F_b = dEdrjpart - dEdri
         F_c = - dEdrl - dEdrjpart
         F_d = dEdrl
-    
+
     Inputs:
         - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinates
         value of each atom.
@@ -277,7 +277,7 @@ class DihedralForce(PrimitiveWithInfer):
 
     Supported Platforms:
         ``GPU``
-    
+
     Examples:
     """
 
@@ -312,9 +312,9 @@ class DihedralEnergy(PrimitiveWithInfer):
 
     Calculate the potential energy caused by dihedral terms for each 4-atom pair.
     Assume our system has N atoms and M dihedral terms.
-    
+
     .. math::
-        
+
         E = k(1 + cos(n*phi - phi_0))
 
     Inputs:
@@ -363,7 +363,7 @@ class DihedralAtomEnergy(PrimitiveWithInfer):
     energy of each atom.
 
     The calculation formula is the same as operator DihedralEnergy().
-    
+
     Inputs:
         Same as operator DihedralEnergy().
 
@@ -451,13 +451,13 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
 class AngleForce(PrimitiveWithInfer):
     """
     AngleForce:
-    
+
     Calculate the force exerted by angles made of 3 atoms on the
     corresponding atoms. Assume the number of angles is M and the
     number of atoms is N.
 
     .. math::
-        
+
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
         dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
         theta = arccos(inner_product(dr_{ab}, dr_{cb})/|dr_{ab}|/|dr_{cb}|)
@@ -470,7 +470,7 @@ class AngleForce(PrimitiveWithInfer):
     Inputs:
         - **uint_crd_f** (Tensor, uint32) - [N, 3], the unsigned int coordinate
         value of each atom.
-        - **scaler_f** (Tensor, float32) - [3, 1], the 3-D scale factor between 
+        - **scaler_f** (Tensor, float32) - [3, 1], the 3-D scale factor between
         the real space float coordinates and the unsigned int coordinates.
         - **atom_a** (Tensor, int32) - [M, 1], the 1st atom index of each angle.
         - **atom_b** (Tensor, int32) - [M, 1], the 2nd and the central atom index
@@ -483,9 +483,9 @@ class AngleForce(PrimitiveWithInfer):
     Outputs:
         - **frc_f** (Tensor, float32) - [N, 3], the force felt by each atom.
 
-    Supported Platforms:    
+    Supported Platforms:
         ``GPU``
-    
+
     Examples:
     """
 
@@ -516,7 +516,7 @@ class AngleEnergy(PrimitiveWithInfer):
     Calculate the energy caused by 3-atoms angle term.
 
     .. math::
-        
+
         dr_{ab} = (x_b-x_a, y_b-y_a, z_b-z_a)
         dr_{cb} = (x_b-x_c, y_b-y_c, z_b-z_c)
         theta = arccos(inner_product(dr_{ab}, dr_{cb})/|dr_{ab}|/|dr_{cb}|)
