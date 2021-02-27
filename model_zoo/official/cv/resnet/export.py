@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import numpy as np
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
 parser = argparse.ArgumentParser(description='resnet export')
-parser.add_argument('--network_dataset', type=str, default='resnet50_cifar10', choices=['resnet50_cifar10',
+parser.add_argument('--network_dataset', type=str, default='resnet50_cifar10', choices=['resnet18_cifar10',
+                                                                                        'resnet18_imagenet2012',
+                                                                                        'resnet50_cifar10',
                                                                                         'resnet50_imagenet2012',
                                                                                         'resnet101_imagenet2012',
                                                                                         "se-resnet50_imagenet2012"],
@@ -44,8 +46,13 @@ if args.device_target == "Ascend":
 
 if __name__ == '__main__':
 
-
-    if args.network_dataset == 'resnet50_cifar10':
+    if args.network_dataset == 'resnet18_cifar10':
+        from src.config import config1 as config
+        from src.resnet import resnet18 as resnet
+    elif args.network_dataset == 'resnet18_imagenet2012':
+        from src.config import config2 as config
+        from src.resnet import resnet18 as resnet
+    elif args.network_dataset == 'resnet50_cifar10':
         from src.config import config1 as config
         from src.resnet import resnet50 as resnet
     elif args.network_dataset == 'resnet50_imagenet2012':
