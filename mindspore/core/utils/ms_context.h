@@ -76,6 +76,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_SAVE_GRAPHS_FLAG,
   MS_CTX_ENABLE_PARALLEL_SPLIT,
   MS_CTX_ENABLE_INFER_OPT,
+  MS_CTX_GRAD_FOR_SCALAR,
   MS_CTX_TYPE_BOOL_END,
 
   // parameter of type int

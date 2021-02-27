@@ -22,6 +22,7 @@
 
 #include "utils/symbolic.h"
 #include "abstract/utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace abstract {
@@ -88,7 +89,13 @@ std::string AbstractBase::ToString() const {
   return buffer.str();
 }
 
-AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const { return AbstractBase::Broaden(config); }
+AbstractBasePtr AbstractScalar::Broaden(uint8_t config) const {
+  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
+    return AbstractBase::Broaden(config);
+  } else {
+    return Clone();
+  }
+}
 
 AbstractBasePtr AbstractScalar::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);

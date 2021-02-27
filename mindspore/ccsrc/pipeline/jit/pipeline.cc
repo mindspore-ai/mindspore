@@ -98,7 +98,8 @@ std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) 
 
 AbstractBasePtr ArgsToAbstract(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
-  bool broaden = value->isa<MetaTensor>() || value->isa<Scalar>();
+  bool broaden = value->isa<MetaTensor>() ||
+                 (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && value->isa<Scalar>());
   return abstract::FromValue(value, broaden);
 }
 

@@ -490,7 +490,8 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
     }
     AbstractBasePtr par_abs = param_node->abstract();
     if (par_abs->isa<abstract::AbstractUndetermined>() ||
-        (par_abs->BuildType() != nullptr && par_abs->BuildType()->isa<Number>())) {
+        (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && par_abs->BuildType() != nullptr &&
+         par_abs->BuildType()->isa<Number>())) {
       new_paras.push_back(param_node);
     }
   }
