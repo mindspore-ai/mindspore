@@ -21,6 +21,7 @@ if(NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
     list(REMOVE_ITEM _PS_SRC_FILES "core/abstract_node.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/scheduler_node.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/http_client.cc")
+    list(REMOVE_ITEM _PS_SRC_FILES "internal/worker.cc")
 endif()
 
 if(NOT ENABLE_D)

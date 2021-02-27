@@ -46,13 +46,13 @@ std::unordered_map<int64_t, std::string> Util::id_to_optimizer_nodes{
   {3, kSparseFtrlOp},
 };
 
-bool Util::IsParamServerMode() { return PSContext::instance()->is_ps_enabled(); }
+bool Util::IsParamServerMode() { return PSContext::instance()->is_ps_mode(); }
 
-bool Util::IsRoleOfWorker() { return PSContext::instance()->is_role_worker(); }
+bool Util::IsRoleOfWorker() { return PSContext::instance()->is_worker(); }
 
-bool Util::IsRoleOfPServer() { return PSContext::instance()->is_role_pserver(); }
+bool Util::IsRoleOfPServer() { return PSContext::instance()->is_server(); }
 
-bool Util::IsRoleOfScheduler() { return PSContext::instance()->is_role_sched(); }
+bool Util::IsRoleOfScheduler() { return PSContext::instance()->is_scheduler(); }
 
 void Util::SetInternalEnvVar() {
   if (IsParamServerMode()) {
