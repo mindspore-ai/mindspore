@@ -34,6 +34,22 @@ namespace ad {
 extern KPrim g_k_prims;
 
 namespace {
+FuncGraphPtr ZerosLikePrimOptPass(const pipeline::ResourcePtr &res) {
+  static const opt::irpass::OptimizeIRPassLib irpass;
+  opt::OptPassConfig eliminate_zeros_like_prim_pass = opt::OptPassConfig({
+    irpass.zero_like_fill_zero_,
+  });
+
+  opt::OptPassGroupMap map({{"eliminate_zeros_like_prim_", eliminate_zeros_like_prim_pass}});
+
+  auto eliminate_zeros_like_prim = opt::Optimizer::MakeOptimizer("eliminate_zeros_like_prim", res, map);
+  FuncGraphPtr func_graph = res->func_graph();
+  WITH(MsProfile::GetProfile()->Step("eliminate_zeros_like_prim"))[&eliminate_zeros_like_prim, &func_graph]() {
+    func_graph = eliminate_zeros_like_prim->step(func_graph, true);
+  };
+  return func_graph;
+}
+
 FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
   static ValuePtr zeros_like_ops = prim::GetPythonOps("zeros_like");
   static std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,
@@ -53,8 +69,10 @@ FuncGraphPtr GetZerosLike(const abstract::AbstractBasePtrList &args_spec) {
   pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
   auto specialized_zeros_like_fg = pipeline::Renormalize(resource, zeros_like_fg, args_spec);
   MS_EXCEPTION_IF_NULL(specialized_zeros_like_fg);
-  zeros_like_funcgraph_cache[args_spec] = specialized_zeros_like_fg;
-  return BasicClone(specialized_zeros_like_fg);
+  auto opted_zeros_like_fg = ZerosLikePrimOptPass(resource);
+  MS_EXCEPTION_IF_NULL(opted_zeros_like_fg);
+  zeros_like_funcgraph_cache[args_spec] = opted_zeros_like_fg;
+  return BasicClone(opted_zeros_like_fg);
 }
 
 FuncGraphPtr GetHyperAdd(const abstract::AbstractBasePtrList &args_spec) {
@@ -313,6 +331,10 @@ bool KPynativeCellImpl::BackPropagate(const CNodePtr &cnode_primal, const CNodeP
   for (size_t i = 1; i < cnode_primal->size(); i++) {
     auto din = tape_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), bprop_app, NewValueNode(SizeToLong(i - 1))});
     auto input = cnode_primal->input(i);
+    // Useless to accumulate sens for ValueNode, the sens for ValueNode should be zeros_like;
+    if (input->isa<ValueNode>()) {
+      continue;
+    }
     // Backprop sens wrt inputs.
     auto input_adjoint_iter = anfnode_to_adjoin_.find(input);
     if (input_adjoint_iter == anfnode_to_adjoin_.end()) {
