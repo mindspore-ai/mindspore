@@ -95,7 +95,6 @@ AbstractBasePtr MatMulInfer(const abstract::AnalysisEnginePtr &, const Primitive
 }
 
 // Add
-REGISTER_PRIMITIVE_EVAL_IMPL(MatMul, prim::kPrimMatMul, MatMulInfer);
 REGISTER_PRIMITIVE_C(kNameMatMul, MatMul);
 }  // namespace ops
 }  // namespace mindspore

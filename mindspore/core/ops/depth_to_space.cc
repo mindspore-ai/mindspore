@@ -81,7 +81,6 @@ AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
   ret->set_shape(std::make_shared<abstract::Shape>(out_shape));
   return ret;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(DepthToSpace, prim::kPrimDepthToSpace, DepthToSpaceInfer);
 REGISTER_PRIMITIVE_C(kNameDepthToSpace, DepthToSpace);
 }  // namespace ops
 }  // namespace mindspore

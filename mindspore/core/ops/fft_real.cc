@@ -37,7 +37,6 @@ AbstractBasePtr FftRealInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   out_shape.pop_back();
   return std::make_shared<abstract::AbstractTensor>(out_dtype, std::make_shared<abstract::Shape>(out_shape));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(FftReal, prim::kPrimFftReal, FftRealInfer);
 REGISTER_PRIMITIVE_C(kNameFftReal, FftReal);
 }  // namespace ops
 }  // namespace mindspore

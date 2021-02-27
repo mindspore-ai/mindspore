@@ -71,8 +71,6 @@ AbstractBasePtr AssertInfer(const abstract::AnalysisEnginePtr &, const Primitive
   }
   return std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeInt32), output_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Assert, prim::kPrimAssert, AssertInfer);
 REGISTER_PRIMITIVE_C(kNameAssert, Assert);
 }  // namespace ops
 }  // namespace mindspore

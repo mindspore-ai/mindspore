@@ -75,7 +75,6 @@ AbstractBasePtr BatchToSpaceInfer(const abstract::AnalysisEnginePtr &, const Pri
   ret->set_shape(std::make_shared<abstract::Shape>(out_shape));
   return ret;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(BatchToSpace, prim::kPrimBatchToSpace, BatchToSpaceInfer);
 REGISTER_PRIMITIVE_C(kNameBatchToSpace, BatchToSpace);
 }  // namespace ops
 }  // namespace mindspore

@@ -57,7 +57,6 @@ AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Rfft, prim::kPrimRfft, RfftInfer);
 REGISTER_PRIMITIVE_C(kNameRfft, Rfft);
 }  // namespace ops
 }  // namespace mindspore

@@ -64,7 +64,6 @@ AbstractBasePtr DropoutInfer(const abstract::AnalysisEnginePtr &, const Primitiv
 
   return std::make_shared<abstract::AbstractTensor>(infer_type, infer_shape->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Dropout, prim::kPrimDropout, DropoutInfer);
 REGISTER_PRIMITIVE_C(kNameDropout, Dropout);
 }  // namespace ops
 }  // namespace mindspore

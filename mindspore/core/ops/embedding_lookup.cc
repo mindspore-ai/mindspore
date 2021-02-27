@@ -80,8 +80,6 @@ AbstractBasePtr EmbeddingLookupInfer(const abstract::AnalysisEnginePtr &, const 
   return std::make_shared<abstract::AbstractTensor>(params->element(),
                                                     std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(EmbeddingLookup, prim::kPrimEmbeddingLookup, EmbeddingLookupInfer);
 REGISTER_PRIMITIVE_C(kNameEmbeddingLookup, EmbeddingLookup);
 }  // namespace ops
 }  // namespace mindspore

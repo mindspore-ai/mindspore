@@ -75,8 +75,6 @@ AbstractBasePtr StackInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
                            const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(StackInfer(primitive, input_args));
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Stack, prim::kPrimStack, StackInfer);
 REGISTER_PRIMITIVE_C(kNameStack, Stack);
 }  // namespace ops
 }  // namespace mindspore

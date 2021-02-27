@@ -62,7 +62,6 @@ AbstractBasePtr AddFusionInfer(const abstract::AnalysisEnginePtr &, const Primit
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(AddFusion, prim::kPrimAddFusion, AddFusionInfer);
 REGISTER_PRIMITIVE_C(kNameAddFusion, AddFusion);
 }  // namespace ops
 }  // namespace mindspore

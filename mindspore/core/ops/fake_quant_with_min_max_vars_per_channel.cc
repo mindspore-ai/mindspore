@@ -69,9 +69,6 @@ AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(const abstract::AnalysisE
   MS_EXCEPTION_IF_NULL(data_type);
   return std::make_shared<abstract::AbstractTensor>(data_type, x_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(FakeQuantWithMinMaxVarsPerChannel, prim::kPrimFakeQuantWithMinMaxVarsPerChannel,
-                             FakeQuantWithMinMaxVarsPerChannelInfer);
 REGISTER_PRIMITIVE_C(kNameFakeQuantWithMinMaxVarsPerChannel, FakeQuantWithMinMaxVarsPerChannel);
 }  // namespace ops
 }  // namespace mindspore

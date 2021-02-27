@@ -67,7 +67,6 @@ AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const Primiti
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(GatherNd, prim::kPrimGatherND, GatherNdInfer);
 REGISTER_PRIMITIVE_C(kNameGatherNd, GatherNd);
 }  // namespace ops
 }  // namespace mindspore

@@ -58,9 +58,6 @@ AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(const abstract::AnalysisE
 
   return std::make_shared<abstract::AbstractTensor>(dout_type, x_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(SigmoidCrossEntropyWithLogitsGrad, prim::kPrimSigmoidCrossEntropyWithLogitsGrad,
-                             SigmoidCrossEntropyWithLogitsGradInfer);
 REGISTER_PRIMITIVE_C(kNameSigmoidCrossEntropyWithLogitsGrad, SigmoidCrossEntropyWithLogitsGrad);
 }  // namespace ops
 }  // namespace mindspore

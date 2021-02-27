@@ -80,7 +80,6 @@ AbstractBasePtr UnsortedSegmentSumInfer(const abstract::AnalysisEnginePtr &, con
 
   return std::make_shared<abstract::AbstractTensor>(x_type, shp);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(UnsortedSegmentSum, prim::kPrimUnsortedSegmentSum, UnsortedSegmentSumInfer);
 REGISTER_PRIMITIVE_C(kNameUnsortedSegmentSum, UnsortedSegmentSum);
 }  // namespace ops
 }  // namespace mindspore

@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace ops {
-
 std::vector<int64_t> PoolGrad::_grad_check_vector(std::string arg_name, std::vector<int64_t> arg_val,
                                                   std::string op_name) {
   std::vector<int64_t> ret;
@@ -83,7 +82,6 @@ PadMode PoolGrad::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
   return PadMode(GetValue<int64_t>(value_ptr));
 }
-
 REGISTER_PRIMITIVE_C(kNamePoolGrad, PoolGrad);
 }  // namespace ops
 }  // namespace mindspore

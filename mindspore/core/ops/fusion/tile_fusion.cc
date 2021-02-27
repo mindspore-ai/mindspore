@@ -28,7 +28,6 @@ std::vector<int64_t> TileFusion::get_dims() const {
   auto value_ptr = GetAttr(kDims);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameTileFusion, TileFusion);
 }  // namespace ops
 }  // namespace mindspore

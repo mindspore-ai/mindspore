@@ -52,8 +52,6 @@ AbstractBasePtr MergeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   AbstractBasePtrList output = {output1, output2};
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Merge, prim::kPrimMerge, MergeInfer);
 REGISTER_PRIMITIVE_C(kNameMerge, Merge);
 }  // namespace ops
 }  // namespace mindspore

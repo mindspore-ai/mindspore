@@ -60,7 +60,6 @@ AbstractBasePtr PowFusionInfer(const abstract::AnalysisEnginePtr &, const Primit
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(PowFusion, prim::kPrimPowFusion, PowFusionInfer);
 REGISTER_PRIMITIVE_C(kNamePowFusion, PowFusion);
 }  // namespace ops
 }  // namespace mindspore

@@ -52,10 +52,10 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
 
   int64_t i = 0;
   int64_t j = 0;
-  int64_t start = 0;
-  int64_t finish = 0;
-  int64_t strides = 0;
-  int64_t slicing_length = 0;
+  int64_t start;
+  int64_t finish;
+  int64_t strides;
+  int64_t slicing_length;
   bool has_ellipsis = false;
   std::vector<int64_t> infer_shape;
   while (i < x_rank || j < slice_len) {
@@ -280,9 +280,6 @@ AbstractBasePtr StridedSliceInfer(const abstract::AnalysisEnginePtr &, const Pri
   return std::make_shared<abstract::AbstractTensor>(StridedSliceInferType(primitive, input_args),
                                                     StridedSliceInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(StridedSlice, prim::kPrimStridedSlice, StridedSliceInfer);
 REGISTER_PRIMITIVE_C(kNameStridedSlice, StridedSlice);
-
 }  // namespace ops
 }  // namespace mindspore

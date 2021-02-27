@@ -66,7 +66,6 @@ AbstractBasePtr ReverseV2Infer(const abstract::AnalysisEnginePtr &, const Primit
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ReverseV2, prim::kPrimReverseV2, ReverseV2Infer);
 REGISTER_PRIMITIVE_C(kNameReverseV2, ReverseV2);
 }  // namespace ops
 }  // namespace mindspore

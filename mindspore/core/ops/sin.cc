@@ -50,7 +50,6 @@ AbstractBasePtr SinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Sin, prim::kPrimSin, SinInfer);
 REGISTER_PRIMITIVE_C(kNameSin, Sin);
 }  // namespace ops
 }  // namespace mindspore

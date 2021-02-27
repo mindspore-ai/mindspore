@@ -40,7 +40,6 @@ int64_t TensorListReserve::get_shape_type() const {
   auto value_ptr = GetAttr(kShapeType);
   return GetValue<int64_t>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameTensorListReserve, TensorListReserve);
 }  // namespace ops
 }  // namespace mindspore

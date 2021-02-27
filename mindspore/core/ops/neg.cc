@@ -34,7 +34,6 @@ AbstractBasePtr NegInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_args[0]->BuildType(), common_valid_types, prim_name);
   return input_args[0]->Broaden();
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Neg, prim::kPrimNeg, NegInfer);
 REGISTER_PRIMITIVE_C(kNameNeg, Neg);
 }  // namespace ops
 }  // namespace mindspore

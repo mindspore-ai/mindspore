@@ -70,8 +70,6 @@ AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<abstract::AbstractTensor>(TileInferType(primitive, input_args),
                                                     TileInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Tile, prim::kPrimTile, TileInfer);
 REGISTER_PRIMITIVE_C(kNameTile, Tile);
 }  // namespace ops
 }  // namespace mindspore

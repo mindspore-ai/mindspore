@@ -42,7 +42,6 @@ AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   abs->set_value(MakeValue(in_shape));
   return abs;
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Shape, prim::kPrimShape, ShapeInfer);
 REGISTER_PRIMITIVE_C(kNameShape, Shape);
 }  // namespace ops
 }  // namespace mindspore

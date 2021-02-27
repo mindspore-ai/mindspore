@@ -55,7 +55,6 @@ AbstractBasePtr ExpandDimsInfer(const abstract::AnalysisEnginePtr &, const Primi
   CheckAndConvertUtils::CheckSubClass("x_type", x_type, valid_x_type, prim_name);
   return std::make_shared<abstract::AbstractTensor>(x_type, out_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ExpandDims, prim::kPrimExpandDims, ExpandDimsInfer);
 REGISTER_PRIMITIVE_C(kNameExpandDims, ExpandDims);
 }  // namespace ops
 }  // namespace mindspore

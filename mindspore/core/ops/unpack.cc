@@ -57,8 +57,6 @@ AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const Primitive
   }
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Unpack, prim::kPrimUnpack, UnpackInfer);
 REGISTER_PRIMITIVE_C(kNameUnpack, Unpack);
 }  // namespace ops
 }  // namespace mindspore

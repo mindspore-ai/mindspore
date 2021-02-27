@@ -55,7 +55,6 @@ AbstractBasePtr LogicalAndInfer(const abstract::AnalysisEnginePtr &, const Primi
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(LogicalAnd, prim::kPrimLogicalAnd, LogicalAndInfer);
 REGISTER_PRIMITIVE_C(kNameLogicalAnd, LogicalAnd);
 }  // namespace ops
 }  // namespace mindspore

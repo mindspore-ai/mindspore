@@ -74,8 +74,6 @@ AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   return std::make_shared<abstract::AbstractTensor>(SoftMaxInferType(primitive, input_args),
                                                     SoftMaxInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Softmax, prim::kPrimSoftmax, SoftmaxInfer);
 REGISTER_PRIMITIVE_C(kNameSoftmax, Softmax);
 }  // namespace ops
 }  // namespace mindspore

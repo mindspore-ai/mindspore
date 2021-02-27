@@ -51,7 +51,6 @@ AbstractBasePtr DivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Div, prim::kPrimDiv, DivInfer);
 REGISTER_PRIMITIVE_C(kNameDiv, Div);
 }  // namespace ops
 }  // namespace mindspore

@@ -109,8 +109,6 @@ AbstractBasePtr BatchNormFoldInfer(const abstract::AnalysisEnginePtr &, const Pr
   AbstractBasePtrList output1 = {output, output, output, output};
   return std::make_shared<abstract::AbstractTuple>(output1);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(BatchNormFold, prim::kPrimBatchNormFold, BatchNormFoldInfer);
 REGISTER_PRIMITIVE_C(kNameBatchNormFold, BatchNormFold);
 }  // namespace ops
 }  // namespace mindspore

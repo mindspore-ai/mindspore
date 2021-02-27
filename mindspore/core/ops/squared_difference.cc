@@ -51,7 +51,6 @@ AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, cons
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SquaredDifference, prim::kPrimSquaredDifference, SquaredDifferenceInfer);
 REGISTER_PRIMITIVE_C(kNameSquaredDifference, SquaredDifference);
 }  // namespace ops
 }  // namespace mindspore

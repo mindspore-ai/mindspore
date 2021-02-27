@@ -41,7 +41,6 @@ AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Log, prim::kPrimLog, LogInfer);
 REGISTER_PRIMITIVE_C(kNameLog, Log);
 }  // namespace ops
 }  // namespace mindspore

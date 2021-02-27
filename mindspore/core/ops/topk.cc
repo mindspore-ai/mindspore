@@ -53,7 +53,6 @@ AbstractBasePtr TopKInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   AbstractBasePtrList output = {output0, output1};
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(TopK, prim::kPrimTopK, TopKInfer);
 REGISTER_PRIMITIVE_C(kNameTopK, TopK);
 }  // namespace ops
 }  // namespace mindspore

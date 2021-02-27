@@ -73,8 +73,6 @@ AbstractBasePtr PackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(data_type);
   return std::make_shared<abstract::AbstractTensor>(data_type, all_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Pack, prim::kPrimPack, PackInfer);
 REGISTER_PRIMITIVE_C(kNamePack, Pack);
 }  // namespace ops
 }  // namespace mindspore

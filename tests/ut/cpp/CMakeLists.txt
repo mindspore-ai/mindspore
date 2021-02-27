@@ -39,7 +39,6 @@ if(ENABLE_MINDDATA)
             ./abstract/*.cc
             ./base/*.cc
             ./dataset/*.cc
-            ./ops/*.cc
             ./ir/dtype/*.cc
             ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image/lite_cv/*.cc
             ./debug/*.cc

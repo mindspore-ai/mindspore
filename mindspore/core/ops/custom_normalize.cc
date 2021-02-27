@@ -62,8 +62,6 @@ AbstractBasePtr CustomNormalizeInfer(const abstract::AnalysisEnginePtr &, const 
   return std::make_shared<abstract::AbstractTensor>(CustomNormalizeInferType(primitive, input_args),
                                                     CustomNormalizeInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(CustomNormalize, prim::kPrimCustomNormalize, CustomNormalizeInfer);
 REGISTER_PRIMITIVE_C(kNameCustomNormalize, CustomNormalize);
 }  // namespace ops
 }  // namespace mindspore

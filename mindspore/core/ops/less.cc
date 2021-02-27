@@ -50,7 +50,6 @@ AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Less, prim::kPrimLess, LessInfer);
 REGISTER_PRIMITIVE_C(kNameLess, Less);
 }  // namespace ops
 }  // namespace mindspore

@@ -58,8 +58,6 @@ AbstractBasePtr WhileInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   }
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(While, prim::kPrimWhile, WhileInfer);
 REGISTER_PRIMITIVE_C(kNameWhile, While);
 }  // namespace ops
 }  // namespace mindspore

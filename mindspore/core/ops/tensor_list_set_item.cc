@@ -30,7 +30,6 @@ int64_t TensorListSetItem::get_element_dtype() const {
   auto value_ptr = GetAttr(kElement_dtype);
   return GetValue<int64_t>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameTensorListSetItem, TensorListSetItem);
 }  // namespace ops
 }  // namespace mindspore

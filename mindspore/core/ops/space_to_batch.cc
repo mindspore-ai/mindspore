@@ -91,7 +91,6 @@ AbstractBasePtr SpaceToBatchInfer(const abstract::AnalysisEnginePtr &, const Pri
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(SpaceToBatch, prim::kPrimSpaceToBatch, SpaceToBatchInfer);
 REGISTER_PRIMITIVE_C(kNameSpaceToBatch, SpaceToBatch);
 }  // namespace ops
 }  // namespace mindspore

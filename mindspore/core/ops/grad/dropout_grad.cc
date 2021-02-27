@@ -63,8 +63,6 @@ AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   return std::make_shared<abstract::AbstractTensor>(DropoutGradInferType(primitive, input_args),
                                                     DropoutGradInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(DropoutGrad, prim::kPrimDropoutGrad, DropoutGradInfer);
 REGISTER_PRIMITIVE_C(kNameDropoutGrad, DropoutGrad);
 }  // namespace ops
 }  // namespace mindspore

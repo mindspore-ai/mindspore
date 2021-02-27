@@ -107,7 +107,6 @@ AbstractBasePtr RangeInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   return std::make_shared<abstract::AbstractTensor>(
     TypeIdToType(dtype), std::make_shared<abstract::Shape>(std::vector<int64_t>{shape_size}));
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Range, prim::kPrimRange, RangeInfer);
 REGISTER_PRIMITIVE_C(kNameRange, Range);
 }  // namespace ops
 }  // namespace mindspore

@@ -39,7 +39,6 @@ float BNGrad::get_momentum() const {
   auto value_ptr = this->GetAttr(kMomentum);
   return GetValue<float>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameBNGrad, BNGrad);
 }  // namespace ops
 }  // namespace mindspore

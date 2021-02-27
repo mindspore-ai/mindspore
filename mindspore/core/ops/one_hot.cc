@@ -71,8 +71,6 @@ AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return std::make_shared<abstract::AbstractTensor>(OneHotInferType(primitive, input_args),
                                                     OneHotInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(OneHot, prim::kPrimOneHot, OneHotInfer);
 REGISTER_PRIMITIVE_C(kNameOneHot, OneHot);
 }  // namespace ops
 }  // namespace mindspore

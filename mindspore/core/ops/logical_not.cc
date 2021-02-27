@@ -50,8 +50,6 @@ AbstractBasePtr LogicalNotInfer(const abstract::AnalysisEnginePtr &, const Primi
   return std::make_shared<abstract::AbstractTensor>(LogicalNotInferType(primitive, input_args),
                                                     LogicalNotInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(LogicalNot, prim::kPrimLogicalNot, LogicalNotInfer);
 REGISTER_PRIMITIVE_C(kNameLogicalNot, LogicalNot);
 }  // namespace ops
 }  // namespace mindspore

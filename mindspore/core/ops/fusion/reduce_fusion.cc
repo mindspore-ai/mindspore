@@ -67,8 +67,6 @@ void ReduceFusion::Init(const bool keep_dims, const ReduceMode mode, const bool 
   this->set_reduce_to_end(reduce_to_end);
   this->set_coeff(coeff);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(ReduceFusion, prim::kPrimReduceMean, ReduceInfer);
 REGISTER_PRIMITIVE_C(kNameReduceFusion, ReduceFusion);
 }  // namespace ops
 }  // namespace mindspore

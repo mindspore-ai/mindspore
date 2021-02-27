@@ -84,8 +84,6 @@ AbstractBasePtr TensorListFromTensorInfer(const abstract::AnalysisEnginePtr &, c
   return std::make_shared<abstract::AbstractTensor>(TensorListFromTensorInferType(primitive, input_args),
                                                     TensorListFromTensorInferShape(primitive, input_args)->shape());
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(TensorListFromTensor, prim::kPrimTensorListFromTensor, TensorListFromTensorInfer);
 REGISTER_PRIMITIVE_C(kNameTensorListFromTensor, TensorListFromTensor);
 }  // namespace ops
 }  // namespace mindspore

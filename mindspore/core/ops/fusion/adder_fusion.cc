@@ -44,7 +44,6 @@ ActivationType AdderFusion::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
-
 REGISTER_PRIMITIVE_C(kNameAdderFusion, AdderFusion);
 }  // namespace ops
 }  // namespace mindspore

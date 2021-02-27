@@ -60,7 +60,6 @@ AbstractBasePtr PReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(PReLU, prim::kPrimPRelu, PReLUInfer);
 REGISTER_PRIMITIVE_C(kNamePReLU, PReLU);
 }  // namespace ops
 }  // namespace mindspore

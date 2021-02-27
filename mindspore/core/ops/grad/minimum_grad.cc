@@ -37,7 +37,6 @@ bool MinimumGrad::get_grad_y() const {
   auto value_ptr = GetAttr(kGradY);
   return GetValue<bool>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameMinimumGrad, MinimumGrad);
 }  // namespace ops
 }  // namespace mindspore

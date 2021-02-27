@@ -31,10 +31,6 @@ AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   for (auto input : input_args) {
     MS_EXCEPTION_IF_NULL(input);
   }
-
-  if (input_args.size() < 3) {
-    MS_LOG(ERROR) << "Input shape tensors should b";
-  }
   auto op_name = Where_prim->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 3, op_name);
   auto input0_type_ = input_args[0]->BuildType()->cast<TensorTypePtr>();
@@ -73,8 +69,6 @@ AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   input0_shape[axisout] = nummax;
   return std::make_shared<abstract::AbstractTensor>(input0_type, input0_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Where, prim::kPrimWhere, WhereInfer);
 REGISTER_PRIMITIVE_C(kNameWhere, Where);
 }  // namespace ops
 }  // namespace mindspore

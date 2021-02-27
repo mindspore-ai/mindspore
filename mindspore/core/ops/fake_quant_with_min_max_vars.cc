@@ -85,7 +85,6 @@ AbstractBasePtr FakeQuantWithMinMaxVarsInfer(const abstract::AnalysisEnginePtr &
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(FakeQuantWithMinMaxVars, prim::kPrimFakeQuantWithMinMaxVars, FakeQuantWithMinMaxVarsInfer);
 REGISTER_PRIMITIVE_C(kNameFakeQuantWithMinMaxVars, FakeQuantWithMinMaxVars);
 }  // namespace ops
 }  // namespace mindspore

@@ -80,7 +80,6 @@ AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto element = g_type_tensor->element();
   return std::make_shared<abstract::AbstractTensor>(element, v_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ApplyMomentum, prim::kPrimApplyMomentum, ApplyMomentumInfer);
 REGISTER_PRIMITIVE_C(kNameApplyMomentum, ApplyMomentum);
 }  // namespace ops
 }  // namespace mindspore

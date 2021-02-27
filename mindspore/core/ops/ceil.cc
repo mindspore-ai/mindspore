@@ -43,7 +43,6 @@ AbstractBasePtr CeilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   MS_EXCEPTION_IF_NULL(data_type);
   return std::make_shared<abstract::AbstractTensor>(data_type, x_shape);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Ceil, prim::kPrimCeil, CeilInfer);
 REGISTER_PRIMITIVE_C(kNameCeil, Ceil);
 }  // namespace ops
 }  // namespace mindspore

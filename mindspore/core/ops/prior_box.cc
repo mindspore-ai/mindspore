@@ -145,8 +145,6 @@ AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const Primiti
   std::vector<int64_t> output_shape{1, h, 1, 2};
   return std::make_shared<abstract::AbstractTensor>(TypeIdToType(kNumberTypeFloat32), output_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(PriorBox, prim::kPrimPriorBox, PriorBoxInfer);
 REGISTER_PRIMITIVE_C(kNamePriorBox, PriorBox);
 }  // namespace ops
 }  // namespace mindspore

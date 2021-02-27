@@ -56,8 +56,6 @@ AbstractBasePtr UnstackInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   }
   return std::make_shared<abstract::AbstractTuple>(output);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(Unstack, prim::kPrimUnstack, UnstackInfer);
 REGISTER_PRIMITIVE_C(kNameUnstack, Unstack);
 }  // namespace ops
 }  // namespace mindspore
