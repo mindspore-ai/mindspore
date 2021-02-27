@@ -116,11 +116,12 @@ if(SUPPORT_TRAIN)
 endif()
 
 if(ENABLE_MINDRT)
+    add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
     set(LITE_SRC
-            ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
-            )
+        ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
+        )
 endif()
 
 add_subdirectory(ops)

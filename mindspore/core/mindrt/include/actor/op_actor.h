@@ -53,6 +53,8 @@ struct OpContext {
   uuids::uuid *sequential_num_;
   std::vector<OpDataPtr<T>> *outputData_;
   std::vector<Promise<int>> *results_;
+  const void *kernel_call_back_before_;
+  const void *kernel_call_back_after_;
   void SetFailed(int32_t code) {
     for (auto promise : *results_) {
       promise.SetFailed(code);
@@ -89,13 +91,16 @@ Future<std::list<int>> MindrtAsyncRun(const std::vector<OpDataPtr<T>> &inputData
 }
 
 template <typename T>
-int MindrtRun(const std::vector<OpDataPtr<T>> &inputData, std::vector<OpDataPtr<T>> *outputData) {
+int MindrtRun(const std::vector<OpDataPtr<T>> &inputData, std::vector<OpDataPtr<T>> *outputData,
+              const void *kernel_call_back_before, const void *kernel_call_back_after) {
   OpContext<T> context;
   std::vector<Promise<int>> promises(outputData->size());
   uuids::uuid uid;
   context.sequential_num_ = &uid;
   context.results_ = &promises;
   context.outputData_ = outputData;
+  context.kernel_call_back_before_ = kernel_call_back_before;
+  context.kernel_call_back_after_ = kernel_call_back_after;
 
   auto collect = MindrtAsyncRun<T>(inputData, &context);
   collect.Wait();

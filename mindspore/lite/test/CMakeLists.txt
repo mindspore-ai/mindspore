@@ -186,12 +186,22 @@ if(SUPPORT_GPU STREQUAL vulkan)
 endif()
 
 if(ENABLE_MINDRT)
-    set(TEST_LITE_SRC
-            ${TEST_LITE_SRC}
-            ${LITE_DIR}/src/lite_mindrt.cc
-            ${LITE_DIR}/src/mindrt_executor.cc
-            )
-    include_directories(${TOP_DIR}/mindspore/core/mindrt/include)
+    include_directories(${CORE_DIR}/mindrt/)
+    include_directories(${CORE_DIR}/mindrt/src/)
+    set(TEST_LITE_SRC ${TEST_LITE_SRC}
+        ${LITE_DIR}/src/lite_mindrt.cc
+        ${LITE_DIR}/src/mindrt_executor.cc
+        ${CORE_DIR}/mindrt/src/litebus.cc
+        ${CORE_DIR}/mindrt/src/actor/actor.cc
+        ${CORE_DIR}/mindrt/src/actor/actormgr.cc
+        ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
+        ${CORE_DIR}/mindrt/src/actor/actorthread.cc
+        ${CORE_DIR}/mindrt/src/actor/aid.cc
+        ${CORE_DIR}/mindrt/src/async/async.cc
+        ${CORE_DIR}/mindrt/src/async/future.cc
+        ${CORE_DIR}/mindrt/src/async/uuid_base.cc
+        ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
+        )
 endif()
 
 
@@ -352,10 +362,6 @@ add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
 
 target_link_libraries(lite-test dl mindspore::gtest)
-
-if(ENABLE_MINDRT)
-    target_link_libraries(lite-test mindrt_mid)
-endif()
 
 if(PLATFORM_ARM64 AND ENABLE_FP16)
     target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
