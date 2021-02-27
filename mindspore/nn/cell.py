@@ -609,7 +609,9 @@ class Cell(Cell_):
 
         new_inputs = []
         for i in inputs:
-            if isinstance(i, (Tensor, int, float)):
+            if isinstance(i, Tensor):
+                new_inputs.append(i)
+            elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
 
         if self._auto_parallel_mode:

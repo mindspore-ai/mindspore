@@ -533,6 +533,7 @@ def set_context(**kwargs):
     save_graphs                  variable_memory_max_size
     save_graphs_path
     env_config_path
+    grad_for_scalar
     ===========================  ===========================  =================
 
     Args:
@@ -602,6 +603,7 @@ def set_context(**kwargs):
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Default: 1000.
         env_config_path (str): Config path for DFX.
+        grad_for_scalar (bool): Whether to get gradient for scalar. Default: False.
 
     Raises:
         ValueError: If input key is not an attribute in context.

@@ -34,6 +34,7 @@
 #include "pybind_api/api_register.h"
 #include "ir/signature.h"
 #include "debug/trace.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -403,7 +404,8 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
   if (tail_type_ == kGradFirst) {
     if (sequeue->size() > 1 && (*sequeue)[1] != nullptr &&
         ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() ||
-         ((*sequeue)[1]->BuildType() != nullptr && (*sequeue)[1]->BuildType()->isa<Number>()))) {
+         (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[1]->BuildType() != nullptr &&
+          (*sequeue)[1]->BuildType()->isa<Number>()))) {
       ret->set_output(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(1))}));
     } else {
       ret->set_output(NewValueNode(std::make_shared<ValueTuple>(std::vector<ValuePtr>{})));
@@ -416,7 +418,8 @@ FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &
     if (tail_type_ == kGradAll) {
       MS_EXCEPTION_IF_NULL((*sequeue)[i]);
       if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>() ||
-          ((*sequeue)[i]->BuildType() != nullptr && (*sequeue)[i]->BuildType()->isa<Number>())) {
+          (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[i]->BuildType() != nullptr &&
+           (*sequeue)[i]->BuildType()->isa<Number>())) {
         elems.push_back(ret->NewCNodeInOrder({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
       }
     } else {

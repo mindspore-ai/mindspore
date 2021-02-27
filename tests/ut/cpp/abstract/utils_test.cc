@@ -32,18 +32,10 @@ TEST_F(TestUtils, test_join) {
   AbstractBasePtr abs_s1 = FromValue(static_cast<int64_t>(1), false);
   AbstractBasePtr abs_s2 = FromValue(static_cast<int64_t>(2), false);
   AbstractBasePtr abs_s_anything = FromValue(static_cast<int64_t>(2), true);
+  abs_s_anything->set_value(kAnyValue);
 
   AbstractBasePtr res_s1 = abs_s1->Join(abs_s2);
   ASSERT_EQ(*res_s1, *abs_s_anything);
-
-  // AbstractTuple join;
-  std::vector<int64_t> list1 = {1, 2, 3, 4, 5};
-  std::vector<int64_t> list2 = {5, 4, 3, 2, 1};
-  AbstractBasePtr abs_t1 = FromValue(list1, true);
-  AbstractBasePtr abs_t2 = FromValue(list2, true);
-
-  AbstractBasePtr res_t1 = abs_t1->Join(abs_t2);
-  ASSERT_EQ(res_t1, abs_t1);
 
   abs_s1 = FromValue(static_cast<int64_t>(1), false);
 
@@ -51,7 +43,7 @@ TEST_F(TestUtils, test_join) {
   AbstractBasePtr t2 = std::make_shared<AbstractTuple>(AbstractBasePtrList({abs_s1, abs_s_anything}));
   AbstractBasePtr t3 = std::make_shared<AbstractTuple>(AbstractBasePtrList({abs_s_anything, abs_s_anything}));
 
-  res_t1 = t1->Join(t2);
+  AbstractBasePtr res_t1 = t1->Join(t2);
   ASSERT_EQ(res_t1, t1);
 
   res_t1 = t1->Join(t3);
