@@ -37,7 +37,7 @@ class AbstractNode : public Node {
 
   typedef void (AbstractNode::*ResponseHandler)(std::shared_ptr<MessageMeta> meta, const void *data, size_t size);
 
-  using DataPtr = std::shared_ptr<unsigned char>;
+  using DataPtr = std::shared_ptr<unsigned char[]>;
   using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 
   bool Broadcast(const enum NodeRole &node_role, const DataPtr &message, size_t size, int command,

@@ -21,6 +21,8 @@ namespace ps {
 void ParameterServer::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(INFO) << "PServer starts connecting to scheduler and workers...";
+  server_node_ = std::make_shared<core::ServerNode>();
+
   core::ClusterMetadata::instance()->Init(
     PSContext::instance()->initial_worker_num(), PSContext::instance()->initial_server_num(),
     PSContext::instance()->scheduler_host(), PSContext::instance()->scheduler_port());
@@ -30,14 +32,14 @@ void ParameterServer::Run(const FuncGraphPtr &func_graph) {
     return;
   }
   Init(func_graph);
-  server_node_.Start();
-  rank_id_ = server_node_.rank_id();
+  server_node_->Start();
+  rank_id_ = server_node_->rank_id();
   PSContext::instance()->SetPSRankId(rank_id_);
   thread_->join();
   SyncEmbeddingTables();
   MS_LOG(INFO) << "PServer finished updating models, starts finalizing...";
-  server_node_.Finish();
-  server_node_.Stop();
+  server_node_->Finish();
+  server_node_->Stop();
   MS_LOG(INFO) << "PServer finalized successfully.";
 }
 
@@ -49,7 +51,14 @@ bool ParameterServer::Init(const FuncGraphPtr &func_graph) {
   handler_->Init();
 
   InitOptimInfoBuilders();
-  server_node_.set_handler(*handler_);
+  server_node_->set_handler(*handler_);
+  server_node_->set_event_callback([&](const core::NodeEvent &event) {
+    if ((event == core::NodeEvent::CLUSTER_TIMEOUT) ||
+        (event == core::NodeEvent::SCHEDULER_TIMEOUT || (event == core::NodeEvent::NODE_TIMEOUT))) {
+      MS_LOG(ERROR) << "Trigger timeout event:" << event << " begin to exit the system!";
+      Finalize();
+    }
+  });
   thread_.reset(new std::thread(&ParameterServer::UpdateWeights, this));
   GetEmbeddingTableParamPtr();
   return true;
@@ -496,7 +505,7 @@ void ParameterServer::ServerHandler::operator()(std::shared_ptr<core::TcpConnect
 
   auto &handler_ptr = handlers_[meta->user_cmd()];
   (this->*handler_ptr)(data, size, output);
-  std::shared_ptr<unsigned char> res(new unsigned char[output->size()]);
+  std::shared_ptr<unsigned char[]> res(new unsigned char[output->size()]);
   MS_LOG(DEBUG) << "The output size is:" << output->size();
   if (output->size() > 0) {
     int ret = memcpy_s(res.get(), output->size(), output->data(), output->size());
@@ -505,7 +514,7 @@ void ParameterServer::ServerHandler::operator()(std::shared_ptr<core::TcpConnect
     }
   }
 
-  ps_->server_node_.Response(conn, meta, res, output->size());
+  ps_->server_node_->Response(conn, meta, res, output->size());
   MS_LOG(DEBUG) << "The request id is:" << meta->request_id() << " the current time is:"
                 << std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now())
                      .time_since_epoch()
@@ -682,6 +691,7 @@ void ParameterServer::ServerHandler::HandleEmbeddingLookup(DataPtr data, size_t 
   *res_data.mutable_keys() = {input.keys().begin(), input.keys().end()};
 
   ps_->DoEmbeddingLookup(key, keys, &res_data);
+
   res->resize(res_data.ByteSizeLong());
   int ret =
     memcpy_s(res->data(), res_data.ByteSizeLong(), res_data.SerializeAsString().data(), res_data.ByteSizeLong());

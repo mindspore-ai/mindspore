@@ -105,7 +105,7 @@ void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::share
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  std::shared_ptr<unsigned char> res(new unsigned char[size]);
+  std::shared_ptr<unsigned char[]> res(new unsigned char[size]);
   int ret = memcpy_s(res.get(), size, data, size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
@@ -131,14 +131,18 @@ bool ServerNode::Stop() {
   if (!is_already_stopped_.load()) {
     is_already_stopped_ = true;
     is_finish_ = true;
-    heart_beat_thread_->join();
+    if (heart_beat_thread_->joinable()) {
+      heart_beat_thread_->join();
+    }
     client_to_scheduler_->Stop();
     if (!connected_nodes_.empty()) {
       for (auto &connected_node : connected_nodes_) {
         connected_node.second->Stop();
       }
     }
-    client_to_scheduler_thread_->join();
+    if (client_to_scheduler_thread_->joinable()) {
+      client_to_scheduler_thread_->join();
+    }
     server_->Stop();
     server_thread_->join();
   }

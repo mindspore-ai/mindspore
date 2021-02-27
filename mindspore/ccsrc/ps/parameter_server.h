@@ -59,6 +59,7 @@
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 #include "ps/core/server_node.h"
+#include "ps/core/node.h"
 
 namespace mindspore {
 namespace ps {
@@ -82,7 +83,8 @@ class ParameterServer {
         func_graph_(nullptr),
         sess_(nullptr),
         running_(true),
-        thread_(nullptr) {}
+        thread_(nullptr),
+        server_node_(nullptr) {}
   ~ParameterServer() = default;
   ParameterServer(const ParameterServer &) = delete;
   ParameterServer &operator=(const ParameterServer &) = delete;
@@ -167,7 +169,7 @@ class ParameterServer {
   std::condition_variable apply_grads_cv_;
 
   std::unique_ptr<std::thread> thread_;
-  core::ServerNode server_node_;
+  std::shared_ptr<core::ServerNode> server_node_;
   std::map<Key, ParameterPtr> embedding_tables_;
 
   friend class ServerHandler;

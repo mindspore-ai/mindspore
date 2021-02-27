@@ -281,7 +281,7 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
       if (!Heartbeat(client)) {
         MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                         << ", the node id is:" << node_info_.node_id_ << " Send heartbeat timeout!";
-        if (!CheckSchedulerTimeout() && on_node_event_message_) {
+        if (CheckSchedulerTimeout() && on_node_event_message_) {
           MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                           << ", the node id is:" << node_info_.node_id_ << " exited due to scheduler timeout!";
           is_finish_ = true;
@@ -294,6 +294,7 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
       std::this_thread::sleep_for(std::chrono::seconds(ClusterMetadata::instance()->heartbeat_interval()));
     }
   });
+  heart_beat_thread_->detach();
 }
 
 bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client, bool is_node_finish) {
@@ -307,6 +308,7 @@ bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client, bool is_n
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, heartbeat_message.SerializeAsString().data(),
                        heartbeat_message.ByteSizeLong())) {
     MS_LOG(WARNING) << "The node id:" << node_info_.node_id_ << " Send heartbeat timeout!";
+    return false;
   }
   return true;
 }
@@ -315,9 +317,7 @@ void AbstractNode::UpdateSchedulerTime() {
   struct timeval current_time {};
   (void)gettimeofday(&current_time, nullptr);
   scheduler_time_ = current_time;
-  MS_LOG(DEBUG) << "The node role: " << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << ", the node id:" << node_info_.node_id_ << ", the node rank id:" << node_info_.rank_id_
-                << " update scheduler time, the current time is: " << current_time.tv_sec;
+  MS_LOG(DEBUG) << "Update scheduler time, the current time is: " << current_time.tv_sec;
 }
 
 bool AbstractNode::CheckSchedulerTimeout() const {
@@ -430,10 +430,13 @@ bool AbstractNode::InitClientToScheduler() {
     MS_LOG(INFO) << "The node start a tcp client!";
     client_to_scheduler_->Start();
   });
+  client_to_scheduler_thread_->detach();
 
   client_to_scheduler_->set_disconnected_callback([&]() {
     std::this_thread::sleep_for(std::chrono::milliseconds(ClusterMetadata::instance()->connect_interval()));
-    client_to_scheduler_->Init();
+    if (is_ready_.load() == false) {
+      client_to_scheduler_->Init();
+    }
   });
   return client_to_scheduler_->WaitConnected();
 }

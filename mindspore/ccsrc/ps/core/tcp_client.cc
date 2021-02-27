@@ -311,7 +311,8 @@ bool TcpClient::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &pro
   }
   int result = bufferevent_flush(buffer_event_, EV_READ | EV_WRITE, BEV_FLUSH);
   if (result < 0) {
-    MS_LOG(EXCEPTION) << "Bufferevent flush failed!";
+    MS_LOG(ERROR) << "Bufferevent flush failed!";
+    res = false;
   }
   bufferevent_unlock(buffer_event_);
   return res;
