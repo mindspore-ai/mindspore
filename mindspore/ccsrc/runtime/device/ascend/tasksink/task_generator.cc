@@ -21,6 +21,9 @@
 #include "utils/ms_utils.h"
 #include "runtime/device/ascend/profiling/profiling_utils.h"
 #include "runtime/device/ascend/profiling/profiling_manager.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -36,6 +39,10 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
     return false;
   }
   MS_LOG(INFO) << "GenTasks end...";
+#ifdef ENABLE_DUMP_IR
+  string task_info_tag = "task_info_graph";
+  mindspore::RDR::RecordTaskDebugInfo(SUBMODULE_ID, task_info_tag, task_debug_info_list_, graph_id);
+#endif
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);

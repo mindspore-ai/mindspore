@@ -724,6 +724,21 @@ void Pipeline::Run() {
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
+#ifdef ENABLE_DUMP_IR
+      MS_LOG(INFO) << "Clone func_graph.";
+      std::string tag = GetBaseNameForIR(i, action.first);
+      if (resource_->func_graph() != nullptr) {
+        auto graph_clone = BasicClone(resource_->func_graph());
+        if (graph_clone != nullptr) {
+          mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, tag, graph_clone, false, ".ir");
+        } else {
+          MS_LOG(WARNING) << "Clone func_graph failed in pipeline, no func_graph recording in RDR.";
+        }
+      } else {
+        MS_LOG(WARNING) << "Resource's func_graph is empty in pipeline, no func_graph recording in RDR";
+      }
+      MS_LOG(INFO) << "Clone func_graph end.";
+#endif
       if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && resource_->func_graph() != nullptr) {
         auto graph = resource_->func_graph();
         if (graph != nullptr) {

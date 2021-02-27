@@ -86,6 +86,9 @@
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 namespace mindspore {
 namespace session {
@@ -408,6 +411,10 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   }
   // Build kernel if node is cnode
   BuildKernel(graph);
+#ifdef ENABLE_DUMP_IR
+  std::string tag = "graph_build";
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, false, ".ir,.pb");
+#endif
   // Get summary nodes.
   SetSummaryNodes(graph.get());
   // Dump .pb graph after graph optimization
