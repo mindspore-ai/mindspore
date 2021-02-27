@@ -29,7 +29,7 @@ class BondForce(PrimitiveWithInfer):
     the number of atoms is N.
 
     .. math::
-     
+
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         F = (F_x, F_y, F_z) = 2*k*(1 - r_0/|dr|)*dr
 
@@ -74,7 +74,7 @@ class BondEnergy(PrimitiveWithInfer):
     Assume our system has N atoms and M harmonic bonds.
 
     .. math::
-     
+
         dr = (x_1-x_2, y_1-y_2, z_1-z_2)
         E = k*(|dr| - r_0)^2
 
