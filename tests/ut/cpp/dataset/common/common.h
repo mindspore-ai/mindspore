@@ -41,6 +41,24 @@ using mindspore::StatusCode;
     }                                          \
   } while (false)
 
+#define ASSERT_ERROR(_s)                       \
+  do {                                         \
+    Status __rc = (_s);                        \
+    if (__rc.IsOk()) {                         \
+      MS_LOG(ERROR) << __rc.ToString() << "."; \
+      ASSERT_TRUE(false);                      \
+    }                                          \
+  } while (false)
+
+#define EXPECT_ERROR(_s)                       \
+  do {                                         \
+    Status __rc = (_s);                        \
+    if (__rc.IsOk()) {                         \
+      MS_LOG(ERROR) << __rc.ToString() << "."; \
+      EXPECT_TRUE(false);                      \
+    }                                          \
+  } while (false)
+
 namespace UT {
 class Common : public testing::Test {
  public:

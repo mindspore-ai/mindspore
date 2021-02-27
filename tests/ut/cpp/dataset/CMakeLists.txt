@@ -76,6 +76,7 @@ SET(DE_UT_SRCS
         ir_callback_test.cc
         ir_tensor_op_fusion_pass_test.cc
         ir_tree_adapter_test.cc
+        ir_vision_test.cc
         jieba_tokenizer_op_test.cc
         main_test.cc
         map_op_test.cc
