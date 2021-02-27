@@ -401,8 +401,9 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
   // Update Graph Dynamic Shape Attr.
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
   graph->UpdateGraphDynamicAttr();
+  const bool pynative_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
   // Hide NopOp from execution graph in graph mode
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+  if (!pynative_mode) {
     opt::HideNopNode(graph.get());
   }
   // Build kernel if node is cnode
@@ -428,8 +429,10 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
   }
-  // Alloc memory, including static memory and dynamic memory
-  AllocateMemory(graph.get());
+  // Alloc memory in graph mode, including static memory and dynamic memory
+  if (!pynative_mode) {
+    AllocateMemory(graph.get());
+  }
 
 #ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
