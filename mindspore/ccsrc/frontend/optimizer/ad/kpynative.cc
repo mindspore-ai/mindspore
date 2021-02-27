@@ -175,7 +175,10 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   PropagateStopGradient();
 
   for (size_t i = 0; i < weights.size(); ++i) {
-    tape_->add_parameter();
+    auto p = tape_->add_parameter();
+    auto input_w = weights[i]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(input_w);
+    p->set_default_param(input_w->default_param());
   }
   // sens parameter;
   auto sens_param = tape_->add_parameter();
@@ -223,11 +226,7 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   }
   tr.Commit();
 
-  // Do inline opt for final bprop graph
-  DumpIR("before_final_inline.ir", tape_);
-  tape_ = pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphInlineOpt(tape_);
-  DumpIR("after_final_inline.ir", tape_);
-
+  DumpIR("before_final_opt.ir", tape_);
   return tape_;
 }
 
@@ -286,8 +285,8 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
 
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     auto inp_i = cnode->input(i);
-    auto anfnode_adjoint_iter = anfnode_to_adjoin_.find(inp_i);
-    if (anfnode_adjoint_iter == anfnode_to_adjoin_.end()) {
+    auto input_anfnode_adjoint_iter = anfnode_to_adjoin_.find(inp_i);
+    if (input_anfnode_adjoint_iter == anfnode_to_adjoin_.end()) {
       if (inp_i->isa<CNode>()) {
         MS_LOG(EXCEPTION) << "Cannot find adjoint for anfnode: " << inp_i->DebugString();
       } else {
@@ -296,7 +295,7 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
         inp_i_pynative_adjoint->users().push_back(cnode);
       }
     } else {
-      anfnode_adjoint_iter->second->users().push_back(cnode);
+      input_anfnode_adjoint_iter->second->users().push_back(cnode);
     }
   }
 

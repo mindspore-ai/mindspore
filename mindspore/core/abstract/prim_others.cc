@@ -498,7 +498,13 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());
-  auto input_type = primitive->GetAttr("dst_type")->cast<TypePtr>();
+  auto attr = primitive->GetAttr("dst_type");
+  if (attr == nullptr) {
+    attr = args_spec_list[1]->BuildValue();
+    MS_EXCEPTION_IF_NULL(attr);
+    primitive->set_attr("dst_type", attr);
+  }
+  auto input_type = attr->cast<TypePtr>();
   auto ret = std::make_shared<AbstractTensor>(input_type, input_x->shape()->shape());
   return ret;
 }

@@ -121,18 +121,10 @@ FuncGraphPtr PrimBpropOptimizer::PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
   return opt_bprop_fg;
 }
 
-FuncGraphPtr PrimBpropOptimizer::BpropGraphInlineOpt(const FuncGraphPtr &bprop_fg) {
-  MS_EXCEPTION_IF_NULL(bprop_fg);
-  auto bprop_graph_opt_res = std::make_shared<pipeline::Resource>();
-  auto bprop_graph_opt_manage = bprop_graph_opt_res->manager();
-  bprop_graph_opt_res->set_func_graph(bprop_fg);
-  bprop_graph_opt_manage->AddFuncGraph(bprop_fg);
-  auto after_inline_bg = BpropGraphInlineOptPass(bprop_graph_opt_res);
-  // Clear resource
-  bprop_graph_opt_manage->Clear();
-  bprop_graph_opt_res->Clean();
-
-  return after_inline_bg;
+FuncGraphPtr PrimBpropOptimizer::BpropGraphFinalOpt(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  auto after_opt_bg = BpropGraphFinalOptPass(res);
+  return after_opt_bg;
 }
 
 ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,

@@ -48,7 +48,7 @@ void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &res);
 FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);
 FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, const ResourcePtr &res);
-FuncGraphPtr BpropGraphInlineOptPass(const ResourcePtr &res);
+FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res);
 }  // namespace pipeline
 }  // namespace mindspore
 

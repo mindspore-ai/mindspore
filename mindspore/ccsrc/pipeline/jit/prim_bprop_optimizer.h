@@ -70,7 +70,7 @@ class PrimBpropOptimizer {
                                       const ValuePtr &out);
 
   // do inline opt for final bprop graph
-  FuncGraphPtr BpropGraphInlineOpt(const FuncGraphPtr &bprop_fg);
+  FuncGraphPtr BpropGraphFinalOpt(const ResourcePtr &res);
 
   // need ? how to shrink ?
   // void CacheShrink();

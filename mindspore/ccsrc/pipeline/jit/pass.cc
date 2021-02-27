@@ -155,7 +155,8 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
   return func_graph;
 }
 
-FuncGraphPtr BpropGraphInlineOptPass(const ResourcePtr &res) {
+FuncGraphPtr BpropGraphFinalOptPass(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
   opt::irpass::OptimizeIRPassLib irpass;
   opt::OptPassConfig inline_ = opt::OptPassConfig({
     irpass.inline_,
@@ -163,10 +164,10 @@ FuncGraphPtr BpropGraphInlineOptPass(const ResourcePtr &res) {
 
   OptPassGroupMap map({{"ad_inline_", inline_}});
 
-  auto bprop_graph_inline_opt = opt::Optimizer::MakeOptimizer("bprop_graph_inline_opt", res, map);
+  auto bprop_graph_final_opt = opt::Optimizer::MakeOptimizer("bprop_graph_final_opt", res, map);
   FuncGraphPtr func_graph = res->func_graph();
-  WITH(MsProfile::GetProfile()->Step("bprop_graph_inline_opt"))[&bprop_graph_inline_opt, &func_graph]() {
-    func_graph = bprop_graph_inline_opt->step(func_graph, true);
+  WITH(MsProfile::GetProfile()->Step("bprop_graph_final_opt"))[&bprop_graph_final_opt, &func_graph]() {
+    func_graph = bprop_graph_final_opt->step(func_graph, true);
   };
   return func_graph;
 }
