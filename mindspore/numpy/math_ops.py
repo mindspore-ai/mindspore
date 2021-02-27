@@ -32,7 +32,7 @@ from .array_ops import ravel, expand_dims
 from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _check_shape_aligned, _raise_type_error, _check_same_type, _check_is_float, \
     _raise_value_error, _check_matmul_shapes, _promote, _check_axis_type, _canonicalize_axis, \
-    _max, _is_shape_empty, _check_is_int, _expanded_shape
+    _max, _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range
 from .utils import _is_scalar, _expand, _broadcast_to, _broadcast_to_shape, _get_size, \
     _check_input_tensor
 
@@ -50,6 +50,7 @@ _reduce_min_default = P.ReduceMin()
 _reduce_min_keepdims = P.ReduceMin(True)
 _reduce_max_default = P.ReduceMax()
 _reduce_max_keepdims = P.ReduceMax(True)
+_cumsum_default = P.CumSum()
 
 def absolute(x, out=None, where=True, dtype=None):
     """
@@ -2383,6 +2384,53 @@ def negative(a, out=None, where=True, dtype=None):
     """
     _check_input_tensor(a)
     return _apply_tensor_op(F.neg_tensor, a, out=out, where=where, dtype=dtype)
+
+
+def cumsum(a, axis=None, dtype=None):
+    """
+    Returns the cumulative sum of the elements along a given axis.
+
+    Args:
+        a (Tensor): Input tensor.
+        axis (int, optional): Axis along which the cumulative sum is computed. The
+            default (None) is to compute the cumsum over the flattened array.
+        dtype (:class:`mindspore.dtype`, optional): If not specified, stay the same as `a`,
+            unless `a` has an integer dtype with a precision less than that of the
+            default platform integer. In that case, the default platform integer
+            is used.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If axis is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> output = np.cumsum(np.ones((3,3)), axis=0)
+        >>> print(output)
+        [[1. 1. 1.]
+         [2. 2. 2.]
+         [3. 3. 3.]]
+    """
+    _check_input_tensor(a)
+    original_dtype = F.dtype(a)
+    # If original array is int, and has precision less then int32, convert to int32
+    if _check_same_type(original_dtype, mstype.bool_) or \
+       _check_same_type(original_dtype, mstype.int8) or \
+       _check_same_type(original_dtype, mstype.int16):
+        original_dtype = mstype.int32
+    a = a.astype(mstype.float32)
+    if axis is None:
+        a = a.ravel()
+        axis = 0
+    _check_axis_in_range(axis, a.ndim)
+    if dtype is not None and not _check_same_type(original_dtype, dtype):
+        return _cumsum_default(a, axis).astype(dtype, copy=False)
+    return _cumsum_default(a, axis).astype(original_dtype, copy=False)
 
 
 def _apply_tensor_op(fn, *args, out=None, where=True, dtype=None):

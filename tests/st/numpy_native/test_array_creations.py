@@ -549,26 +549,6 @@ def test_tri_triu_tril():
     match_array(mnp.tri(64, 64, -10).asnumpy(), onp.tri(64, 64, -10))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_cumsum():
-    x = mnp.ones((16, 16), dtype="bool")
-    match_array(mnp.cumsum(x).asnumpy(), onp.cumsum(x.asnumpy()))
-    match_array(mnp.cumsum(x, axis=0).asnumpy(),
-                onp.cumsum(x.asnumpy(), axis=0))
-    match_meta(mnp.cumsum(x).asnumpy(), onp.cumsum(x.asnumpy()))
-
-    x = rand_int(3, 4, 5)
-    match_array(mnp.cumsum(mnp.asarray(x), dtype="bool").asnumpy(),
-                onp.cumsum(x, dtype="bool"))
-    match_array(mnp.cumsum(mnp.asarray(x), axis=-1).asnumpy(),
-                onp.cumsum(x, axis=-1))
-
-
 def mnp_diagonal(arr):
     return mnp.diagonal(arr, offset=2, axis1=-1, axis2=0)
 

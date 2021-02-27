@@ -361,7 +361,7 @@ def isnan(x, out=None, where=True, dtype=None):
         When `where` is provided, `out` must have a tensor value. `out` is not supported
         for storing the result, however it can be used in combination with `where` to set
         the value at indices for which `where` is set to False.
-        On GPU, the supported dtypes are np.float16, and np.float32.
+        Only np.float32 is currently supported.
 
     Args:
         x (Tensor): Input values.
@@ -422,7 +422,7 @@ def isinf(x, out=None, where=True, dtype=None):
         When `where` is provided, `out` must have a tensor value. `out` is not supported
         for storing the result, however it can be used in combination with `where` to set
         the value at indices for which `where` is set to False.
-        On GPU, the supported dtypes are np.float16, and np.float32.
+        Only np.float32 is currently supported.
 
     Args:
         x (Tensor): Input values.
@@ -477,7 +477,7 @@ def isposinf(x):
 
     Note:
         Numpy argument `out` is not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
+        Only np.float32 is currently supported.
 
     Args:
         x (Tensor): Input values.
@@ -507,7 +507,7 @@ def isneginf(x):
 
     Note:
         Numpy argument `out` is not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
+        Only np.float32 is currently supported.
 
     Args:
         x (Tensor): Input values.
