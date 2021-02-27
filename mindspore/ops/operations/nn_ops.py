@@ -7412,30 +7412,68 @@ class Conv3D(PrimitiveWithInfer):
     (\text{ks_w} - 1) \times (\text{dilation} - 1) }{\text{stride}}} \right \rfloor` respectively.
 
     Args:
-        out_channel (int): The dimension of the output.
-        kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
+        out_channels (int): The number of output channel :math:`C_{out}`.
+        kernel_size (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers. Specifies the height
+            and width of the 3D convolution window. Single int means the value is for the depth, height and the width
+            of the kernel. A tuple of 3 ints means the first value is for the depth, height and the other is for the
+            width of the kernel.
         mode (int): Modes for different convolutions. Not currently used.
-        pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
+        stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of two int numbers that
+            represent depth, height and width of movement respectively. Default: 1.
+        pad_mode (str): Specifies padding mode. The optional values are
+            "same", "valid", "pad". Default: "same".
+
+            - same: Adopts the way of completion. The depth, height and width of the output will be the same as
+              the input. The total number of padding will be calculated in depth, horizontal and vertical
+              directions and evenly distributed to head and tail, top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the tail, bottom and the right side.
+              If this mode is set, `padding` must be 0.
+
+            - valid: Adopts the way of discarding. The possible largest depth, height and width of output
+              will be returned without padding. Extra pixels will be discarded. If this mode is set, `padding`
+              must be 0.
+
+            - pad: Implicit paddings on both sides of the input. The number of `padding` will be padded to the input
+              Tensor borders. `padding` must be greater than or equal to 0.
+
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
                     head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
                     pad[3], pad[4] and pad[5] correspondingly.
-        stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
-        dilation (Union(int, tuple[int])): Specifies the space to use between kernel elements. Default: 1.
-        group (int): Splits input into groups. Default: 1.
+        dilation (Union[int, tuple[int]]): The data type is int or a tuple of 3 integers
+                                      : math:`(dilation_d, dilation_h, dilation_w)`.
+                                      Currently, dilation on depth only supports the case of 1.
+                                      Specifies the dilation rate to use for dilated convolution.
+                                      If set to be :math:`k > 1`, there will be :math:`k - 1` pixels skipped
+                                      for each sampling location. Its value must be greater or equal to 1 and
+                                      bounded by the height and width of the input. Default: 1.
+        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
+            divisible by the number of groups. Default: 1.
         data_format (str): The optional value for data format. Currently only support "NCDHW".
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+                               Currently input data type only support float16 and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
-          :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`.
-        - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none or zero.
+          :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`. Currently weight data type only support float16 and float32.
+        - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none.
 
     Outputs:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
     Supported Platforms:
         ``Ascend``
+
+    Raises:
+        TypeError: If `out_channel` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        ValueError: If `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 6.
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+        ValueError: If `data_format` is not 'NCDHW'.
 
     Examples:
         >>> input = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
@@ -7506,7 +7544,7 @@ class Conv3D(PrimitiveWithInfer):
         validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
         if b_shape is not None:
             raise ValueError("Bias currently only support None.")
-        validator.check(f"x_shape[1] / group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
+        validator.check(f"x_shape[1] // group", x_shape[1] // self.group, "w_shape[1]", w_shape[1], Rel.EQ, self.name)
         validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape[0], Rel.EQ, self.name)
         validator.check('kernel_size', self.kernel_size, 'w_shape[1:4]', tuple(w_shape[2:]), Rel.EQ, self.name)
 
@@ -7591,10 +7629,11 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
 
     Inputs:
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
-          :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`.
+          :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`. Currently weight data type only support float16 and float32.
         - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
-          data_format :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
-        - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
+          data_format :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Currently dout data type only support float16
+          and float32.
+        - **input_size** (tuple(int)) - A tuple describes the shape of the input which conforms to the format
           :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
 
     Outputs:
@@ -7602,6 +7641,16 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
 
     Supported Platforms:
         ``Ascend``
+
+    Raises:
+        TypeError: If `out_channel` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        ValueError: If `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 6.
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+        ValueError: If `data_format` is not 'NCDHW'.
 
     Examples:
         >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mindspore.float16)
@@ -7658,13 +7707,13 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
     def __infer__(self, w, doutput, x_size):
         validator.check_equal_int(len(w['shape']), 5, 'The dimension of weight ', self.name)
         validator.check_equal_int(len(doutput['shape']), 5, 'The dimension of dout', self.name)
-        validator.check_equal_int(len(x_size['shape']), 5, 'The dimension of input_size', self.name)
         x_size_v = x_size['value']
+        validator.check_equal_int(len(x_size_v), 5, 'The dimension of input_size', self.name)
         validator.check_value_type('x_size', x_size_v, [tuple], self.name)
         for i, dim_len in enumerate(x_size_v):
             validator.check_value_type("x_size[%d]" % i, dim_len, [int], self.name)
         args = {'doutput': doutput['dtype'], 'w': w['dtype']}
-        valid_dtypes = [mstype.float16]
+        valid_dtypes = [mstype.float16, mstype.float32]
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
         validator.check("filter's batch", w['shape'][0], "dout's channel", doutput['shape'][1], Rel.EQ, self.name)
         validator.check("filter's channel", w['shape'][1], "input_size's channel", x_size_v[1], Rel.EQ, self.name)
@@ -7745,16 +7794,30 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
     Inputs:
         - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
-          data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`.
+          data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`. Currently dout data type only support float16
+        and float32.
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
-          :math:`(C_{in}//groups, C_{out}, D_{in}, K_h, K_w)`.
-        - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none or zero.
+          :math:`(C_{in}//groups, C_{out}, D_{in}, K_h, K_w)`. Currently weight data type only support float16
+          and float32.
+        - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none.
 
     Outputs:
         Tensor, the gradients w.r.t the input of convolution 3D. It has the same shape as the input.
 
     Supported Platforms:
         ``Ascend``
+
+    Raise:
+        TypeError: If `in_channel`, `out_channel` or `group` is not an int.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        ValueError: If `in_channel`, `out_channel`, `kernel_size`, `stride` or `dilation` is less than 1.
+        ValueError: If `pad` is less than 0.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+        ValueError: If `pad` is a tuple whose length is not equal to 6.
+        ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
+        ValueError: If `data_format` is not 'NCDHW'.
+        TypeError: If dout and weight data type not float16.
+        ValueError: If bias not none. The rank of dout and weight is not 5.
 
     Examples:
         >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
@@ -7818,6 +7881,12 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
         self.output_padding = _check_3d_int_or_tuple('output_padding', output_padding, self.name,
                                                      allow_five=True, ret_five=True, greater_zero=False)
+        validator.check_int_range(self.kernel_size[0]*self.kernel_size[1]*self.kernel_size[2], 1, 343, Rel.INC_BOTH,
+                                  'The product of height, width and depth of kernel_size belonging [1, 343]', self.name)
+        validator.check_int_range(self.stride[0]*self.stride[1]*self.stride[2], 1, 343, Rel.INC_BOTH,
+                                  'The product of height, width and depth of stride belonging [1, 343]', self.name)
+        validator.check_int_range(self.stride[1]*self.stride[2], 1, 256, Rel.INC_BOTH,
+                                  'The product of height, width and depth of stride belonging [1, 256]', self.name)
         validator.check_int_range(self.output_padding[2], 0, max(self.dilation[2], self.stride[2]), Rel.INC_LEFT,
                                   'output_padding_d belonging [0, max(stride_d, dilation_d))', self.name)
         validator.check_int_range(self.output_padding[3], 0, max(self.dilation[3], self.stride[3]), Rel.INC_LEFT,
@@ -7832,11 +7901,15 @@ class Conv3DTranspose(PrimitiveWithInfer):
             raise ValueError("Bias currently only support None.")
         valid_dtypes = [mstype.float16, mstype.float32]
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check("filter's batch", w['shape'][0], "input x's channel",
-                        x['shape'][1], Rel.EQ, self.name)
+
         # infer shape
         x_shape = x['shape']
         w_shape = w['shape']
+        validator.check_equal_int(len(w_shape), 5, "weight rank", self.name)
+        validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
+        validator.check("filter's batch", w_shape[0], "input x's channel",
+                        x_shape[1], Rel.EQ, self.name)
+
         self.add_prim_attr('pad_list', self.pad_list)
         pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right = self.pad_list
         d_out = (x_shape[2] - 1) * self.stride[2] - (pad_head + pad_tail) + self.dilation[2] * \
