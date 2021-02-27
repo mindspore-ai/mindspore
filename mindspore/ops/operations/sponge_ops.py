@@ -406,7 +406,7 @@ class DihedralForceWithAtomEnergy(PrimitiveWithInfer):
     """
     DihedralForceWithAtomEnergy:
 
-    Caculate dihedral force and potential energy together.
+    Calculate dihedral force and potential energy together.
 
     The calculation formula is the same as operator DihedralForce() and DihedralEnergy().
 
