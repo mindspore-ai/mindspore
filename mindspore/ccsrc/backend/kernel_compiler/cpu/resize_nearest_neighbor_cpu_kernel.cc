@@ -45,8 +45,12 @@ bool ResizeNearestNeighborCPUKernel::Launch(const std::vector<kernel::AddressPtr
     LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat64) {
+    LaunchKernel<double>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int32_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt64) {
+    LaunchKernel<int64_t>(inputs, outputs);
   }
   return true;
 }
