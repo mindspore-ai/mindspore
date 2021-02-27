@@ -862,6 +862,14 @@ class ExecuteOrderGenerator {
           auto kg = target->func_graph()->cast<KernelGraphPtr>();
           MS_EXCEPTION_IF_NULL(kg);
           kg->ReplaceNode(NOT_NULL(target), NOT_NULL(source));
+          // replace parameter in graph input
+          auto &all_graphs = context_.visited_graphs();
+          for (auto &g : all_graphs) {
+            auto child_graph_inputs = g->MutableInputs();
+            std::replace(child_graph_inputs->begin(), child_graph_inputs->end(), target, source);
+            MS_LOG(DEBUG) << "Replace parameter " << target->DebugString() << " by " << source->DebugString()
+                          << " in graph " << g->graph_id() << " inputs";
+          }
           iter = exec_order.erase(iter);
           continue;
         }
