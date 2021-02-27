@@ -40,6 +40,7 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/common.h"
 #include "utils/trace_base.h"
+#include "frontend/parallel/context.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/constants.h"
@@ -556,10 +557,12 @@ void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<Kern
 void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
                      const std::map<KernelWithIndex, std::vector<std::vector<size_t>>> &output_indexes,
                      const std::map<KernelWithIndex, size_t> &ref_count,
-                     std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map, VectorRef *outputs) {
+                     std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map, VectorRef *outputs,
+                     std::vector<TensorPtr> *runop_output_tensors) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(runop_output_tensors);
   auto output_tensors = TransformVectorRefToMultiTensor(op_outputs);
   if (output_tensors.size() > op_outputs.size()) {
     MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
@@ -592,6 +595,7 @@ void HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op_outputs,
       }
       BaseRef &tensor_ref = (*const_cast<VectorRef *>(cur_vector_ref))[ref_indexes.at(n)];
       tensor_ref = output_tensor;
+      runop_output_tensors->emplace_back(output_tensor);
     }
   }
 }
@@ -2196,6 +2200,11 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
   GetRefCount(kernel_graph.get(), &cnode_refcount);
   BuildOpsInGraph(graph_id, parameter_index, inputs, cnode_refcount);
 
+  // Clear bucket resources every step
+  if (kernel_graph->is_bprop()) {
+    ClearAllBucket(graph_id);
+  }
+
   std::map<KernelWithIndex, tensor::TensorPtr> op_output_map;
   for (const auto &kernel : kernel_graph->execution_order()) {
     // Generate input tensors, tensor masks and input kernel with index
@@ -2212,9 +2221,15 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
     RunOpImpl(graph_info, &run_info, &input_tensor_info.input_tensors, &op_outputs,
               input_tensor_info.input_tensors_mask);
 
+    std::vector<tensor::TensorPtr> new_output_tensors;
+
     // Handle inputs and outputs of current op
     HandleOpInputs(input_tensor_info.input_kernel, &cnode_refcount, &op_output_map);
-    HandleOpOutputs(kernel, op_outputs, output_indexes, cnode_refcount, &op_output_map, outputs);
+    HandleOpOutputs(kernel, op_outputs, output_indexes, cnode_refcount, &op_output_map, outputs, &new_output_tensors);
+    // Save grad node to Bucket
+    if (kernel_graph->is_bprop()) {
+      AddGradAddrToBucket(graph_id, new_output_tensors);
+    }
   }
   MS_LOG(INFO) << "Finish!";
 }
@@ -2284,6 +2299,137 @@ void SessionBasic::RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
     opt::HideNopNode(kernel_graph.get());
+  }
+}
+
+std::vector<uint32_t> SessionBasic::GetAllReduceSplitIndex() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  std::string group = GetCommWorldGroup();
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  // PyNative not support multi group allreduce
+  group += "sum1";
+  return parallel_context->GetAllReduceFusionSplitIndices(group);
+}
+
+uint32_t GetBpropGraphGradsCount(const KernelGraphPtr &graph) {
+  return AnfAlgo::GetAllOutput(graph->output(), {prim::kPrimTupleGetItem}).size();
+}
+
+void SetGraphBpropAttr(const KernelGraphPtr &graph) {
+  auto &execution_orders = graph->execution_order();
+  if (std::any_of(execution_orders.begin(), execution_orders.end(),
+                  [](const AnfNodePtr &node) { return node->scope()->name().rfind("Gradient", 0) == 0; })) {
+    graph->set_is_bprop(true);
+    MS_LOG(INFO) << "Match bprop graph";
+  } else {
+    graph->set_is_bprop(false);
+  }
+}
+
+std::vector<uint32_t> GenerateBucketSizeList(const KernelGraphPtr &graph, const std::vector<uint32_t> &split_index) {
+  if (split_index.empty()) {
+    auto grads_count = GetBpropGraphGradsCount(graph);
+    if (grads_count == 0) {
+      MS_LOG(EXCEPTION) << "Bprop graph has no grad";
+    }
+    return {grads_count};
+  }
+
+  std::vector<uint32_t> bucket_size_list;
+  uint32_t old_index = 0;
+  for (auto &index : split_index) {
+    if (old_index == 0) {
+      bucket_size_list.emplace_back(index - old_index + 1);
+    } else {
+      bucket_size_list.emplace_back(index - old_index);
+    }
+    old_index = index;
+  }
+  return bucket_size_list;
+}
+
+void SessionBasic::InitAllBucket(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Init Bucket start, graph_id:" << graph->graph_id();
+  SetGraphBpropAttr(graph);
+
+  if (!graph->is_bprop()) {
+    return;
+  }
+
+  std::vector<std::shared_ptr<device::Bucket>> bucket_list;
+  // Create bucket for every split allreduce ops
+  auto split_index = GetAllReduceSplitIndex();
+  auto bucket_size_list = GenerateBucketSizeList(graph, split_index);
+  uint32_t bucket_id = 0;
+  for (auto bucket_size : bucket_size_list) {
+    MS_LOG(INFO) << "Create new bucket:" << bucket_id;
+    auto bucket = CreateBucket(bucket_id++, bucket_size);
+    bucket->Init();
+    bucket_list.emplace_back(bucket);
+  }
+
+  auto bucket_ret = bucket_map_.try_emplace(graph->graph_id(), bucket_list);
+  if (!bucket_ret.second) {
+    MS_LOG(EXCEPTION) << "Duplicate bucket_map_ graph key:" << graph->graph_id();
+  }
+  // set all free bucket index to 0
+  auto free_bucket_ret = free_bucket_id_map_.try_emplace(graph->graph_id(), 0);
+  if (!free_bucket_ret.second) {
+    MS_LOG(EXCEPTION) << "Duplicate free_bucket_id_map_ graph key:" << graph->graph_id();
+  }
+  MS_LOG(INFO) << "Init Bucket finish";
+}
+
+void SessionBasic::AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor) {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  if (parallel_mode != parallel::DATA_PARALLEL) {
+    return;
+  }
+
+  auto iter = bucket_map_.find(graph_id);
+  if (iter == bucket_map_.end()) {
+    MS_LOG(EXCEPTION) << "unknown graph id:" << graph_id;
+  }
+  auto &bucket_list = iter->second;
+  auto free_bucket_iter = free_bucket_id_map_.find(graph_id);
+  if (free_bucket_iter == free_bucket_id_map_.end()) {
+    MS_LOG(EXCEPTION) << "unknown free graph id:" << graph_id;
+  }
+
+  auto free_bucket_index = free_bucket_iter->second;
+  for (auto &tensor : grad_tensor) {
+    if (free_bucket_index >= bucket_list.size()) {
+      MS_LOG(EXCEPTION) << "Invalid free bucket id:" << free_bucket_iter->second
+                        << " total bucket num:" << bucket_list.size();
+    }
+    auto &free_bucket = bucket_list[free_bucket_index];
+    free_bucket->AddGradTensor(tensor);
+    if (free_bucket->full()) {
+      MS_LOG(INFO) << "bucket is full";
+      free_bucket->Launch();
+      free_bucket_index = ++free_bucket_iter->second;
+      MS_LOG(INFO) << "new free bucket:" << free_bucket_index;
+    }
+  }
+}
+
+void SessionBasic::ClearAllBucket(const GraphId &graph_id) {
+  auto iter = bucket_map_.find(graph_id);
+  if (iter != bucket_map_.end()) {
+    auto bucket_list = iter->second;
+    for (auto &bucket : bucket_list) {
+      MS_LOG(INFO) << "Clear bucket:" << bucket->id();
+      bucket->Release();
+    }
+  }
+  auto free_iter = free_bucket_id_map_.find(graph_id);
+  if (free_iter != free_bucket_id_map_.end()) {
+    free_iter->second = 0;
   }
 }
 

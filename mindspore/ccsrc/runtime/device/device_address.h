@@ -26,6 +26,7 @@
 
 namespace mindspore {
 namespace device {
+class Bucket;
 namespace cpu {
 class CPUSimpleMemPlan;
 class CPUMemoryManager;
@@ -100,6 +101,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   friend class mindspore::device::ascend::AscendKernelRuntime;
   friend class mindspore::device::ascend::AscendMemoryManager;
   friend class mindspore::device::ascend::DataDumper;
+  friend class mindspore::device::Bucket;
 };
 
 using DeviceAddressPtr = std::shared_ptr<DeviceAddress>;

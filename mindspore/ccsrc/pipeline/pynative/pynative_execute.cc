@@ -677,34 +677,9 @@ OpExecInfoPtr PynativeExecutor::GenerateOpExecInfo(const py::args &args) {
   return op_exec_info;
 }
 
-AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
-                                       abstract::AbstractBasePtrList *args_spec_list) {
-  MS_EXCEPTION_IF_NULL(op_masks);
-  MS_EXCEPTION_IF_NULL(args_spec_list);
-  MS_EXCEPTION_IF_NULL(op_exec_info);
-
+void PynativeExecutor::GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
+                                   std::vector<AnfNodePtr> *inputs, abstract::AbstractBasePtrList *args_spec_list) {
   auto prim = op_exec_info->py_primitive;
-  std::vector<AnfNodePtr> inputs;
-  inputs.emplace_back(NewValueNode(prim));
-
-  const auto &signature = prim->signatures();
-  auto sig_size = signature.size();
-  auto size = op_exec_info->op_inputs.size();
-
-  // ignore monad signature
-  for (auto sig : signature) {
-    if (sig.default_value != nullptr && sig.default_value->isa<Monad>()) {
-      --sig_size;
-    }
-  }
-  if (sig_size > 0 && sig_size != size) {
-    MS_EXCEPTION(ValueError) << op_exec_info->op_name << " inputs size " << size << " does not match the requires "
-                             << "inputs size " << sig_size;
-  }
-  if (op_exec_info->op_name != prim::kPrimCast->name()) {
-    RunParameterAutoMixPrecisionCast(op_exec_info);
-  }
-  MS_LOG(DEBUG) << "Get op " << op_exec_info->op_name << " grad_flag_ " << grad_flag();
   for (size_t i = 0; i < op_exec_info->op_inputs.size(); i++) {
     abstract::AbstractBasePtr abs = nullptr;
     const auto &obj = op_exec_info->op_inputs[i];
@@ -733,11 +708,42 @@ AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::v
         if (input_node->abstract() != nullptr) {
           abs = input_node->abstract();
         }
-        inputs.emplace_back(input_node);
+        inputs->emplace_back(input_node);
       }
     }
     (*args_spec_list).emplace_back(CheckConstValue(prim, obj, abs, id, i));
   }
+}
+
+AnfNodePtr PynativeExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
+                                       abstract::AbstractBasePtrList *args_spec_list) {
+  MS_EXCEPTION_IF_NULL(op_masks);
+  MS_EXCEPTION_IF_NULL(args_spec_list);
+  MS_EXCEPTION_IF_NULL(op_exec_info);
+
+  auto prim = op_exec_info->py_primitive;
+  std::vector<AnfNodePtr> inputs;
+  inputs.emplace_back(NewValueNode(prim));
+
+  const auto &signature = prim->signatures();
+  auto sig_size = signature.size();
+  auto size = op_exec_info->op_inputs.size();
+
+  // ignore monad signature
+  for (auto sig : signature) {
+    if (sig.default_value != nullptr && sig.default_value->isa<Monad>()) {
+      --sig_size;
+    }
+  }
+  if (sig_size > 0 && sig_size != size) {
+    MS_EXCEPTION(ValueError) << op_exec_info->op_name << " inputs size " << size << " does not match the requires "
+                             << "inputs size " << sig_size;
+  }
+  if (op_exec_info->op_name != prim::kPrimCast->name()) {
+    RunParameterAutoMixPrecisionCast(op_exec_info);
+  }
+  MS_LOG(DEBUG) << "Get op " << op_exec_info->op_name << " grad_flag_ " << grad_flag();
+  GetArgsSpec(op_exec_info, op_masks, &inputs, args_spec_list);
 
   CNodePtr cnode = nullptr;
   if (need_construct_graph()) {

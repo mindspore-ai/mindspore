@@ -718,6 +718,10 @@ bool AscendKernelRuntime::SyncStream() {
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
   }
+  if (RT_ERROR_NONE != rtStreamSynchronize(communication_stream_)) {  // o for switch stream
+    MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
+    return false;
+  }
   FreeAndClearBufferPtrs();
   return true;
 }
@@ -786,6 +790,10 @@ bool AscendKernelRuntime::InitDevice() {
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
   }
+  ret = rtStreamCreate(&communication_stream_, 0);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "create communication stream failed, ret:" << ret;
+  }
   return true;
 }
 
@@ -797,6 +805,14 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
       MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
     }
     stream_ = nullptr;
+  }
+
+  if (communication_stream_ != nullptr) {
+    auto ret = rtStreamDestroy(communication_stream_);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Call rtStreamDestroy, ret[" << ret << "]";
+    }
+    communication_stream_ = nullptr;
   }
 
   auto ret = rtDeviceReset(device_id);
@@ -919,4 +935,5 @@ uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
   auto ascend_mem_manager = dynamic_pointer_cast<AscendMemoryManager>(mem_manager_);
   return ascend_mem_manager->GetDeviceMemSize();
 }
+
 }  // namespace mindspore::device::ascend

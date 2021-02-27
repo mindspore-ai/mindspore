@@ -44,6 +44,7 @@ FuncGraph::FuncGraph()
       kwonlyargs_count_(0),
       hyper_param_count_(0),
       is_generated_(false),
+      is_bprop_(false),
       return_(nullptr),
       manager_(std::weak_ptr<FuncGraphManager>()),
       stub_(false),

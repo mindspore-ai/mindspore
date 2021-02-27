@@ -946,11 +946,13 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
       AddressPtrList kernel_workspaces;
       AddressPtrList kernel_outputs;
       GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+
       auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
       if (!ret) {
         MS_LOG(ERROR) << "Launch kernel failed.";
         return false;
       }
+
       KernelLaunchProfiling(kernels[i]->fullname_with_scope());
     }
   }

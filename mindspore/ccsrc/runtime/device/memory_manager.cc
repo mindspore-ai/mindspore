@@ -27,7 +27,7 @@ using mindspore::memreuse::MemReuseUtilPtr;
 
 namespace mindspore {
 namespace device {
-size_t MemoryManager::GetCommonAlignSize(size_t input_size) const {
+size_t MemoryManager::GetCommonAlignSize(size_t input_size) {
   return (input_size + kMemAlignSize + 31) / kMemAlignSize * kMemAlignSize;
 }
 

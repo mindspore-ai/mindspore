@@ -61,6 +61,7 @@ class AscendSession : public SessionBasic {
   void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
                        const std::vector<tensor::TensorPtr> &graph_inputs,
                        const std::map<KernelWithIndex, size_t> &cnode_refcount) override;
+  std::string GetCommWorldGroup() override { return kHcclWorldGroup; }
 
  private:
   // compile child graph when session have multiple child graphs
@@ -123,6 +124,7 @@ class AscendSession : public SessionBasic {
                              const std::vector<tensor::TensorPtr> &graph_inputs,
                              const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
                              InputTensorInfo *input_tensor_info);
+  std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs

@@ -64,6 +64,7 @@
 #include "toolchain/adx_datadump_server.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
+#include "runtime/device/ascend/ascend_bucket.h"
 #endif
 #if ENABLE_CPU && ENABLE_D
 #include "ps/util.h"
@@ -258,6 +259,7 @@ GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNode
   // construct graph, if successfully, graph_sum_ + 1
   auto graph = ConstructKernelGraph(lst, outputs);
   auto graph_id = graph->graph_id();
+  InitAllBucket(graph);
   MS_LOG(INFO) << "Compile graph " << graph_id << " success";
   return graph_id;
 }
@@ -632,6 +634,13 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   MS_EXCEPTION_IF_NULL(op_run_info);
   BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
+
+  // wait for allreduce
+  for (auto &tensor : *input_tensors) {
+    if (tensor->NeedWaitDevice()) {
+      tensor->WaitDevice();
+    }
+  }
   // Run op
   auto graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(graph);
@@ -1509,6 +1518,10 @@ void AscendSession::SyncStream() {
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync stream error!";
   }
+}
+
+std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
+  return std::make_shared<device::ascend::AscendBucket>(bucket_id, bucket_size);
 }
 }  // namespace session
 }  // namespace mindspore

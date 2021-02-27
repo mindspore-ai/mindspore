@@ -273,6 +273,10 @@ constexpr auto kOneHotOpName = "OneHot";
 constexpr auto kSoftmaxCrossEntropyWithLogitsOpName = "SoftmaxCrossEntropyWithLogits";
 constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
 
+// Communication world group
+constexpr auto kNcclWorldGroup = "nccl_world_group";
+constexpr auto kHcclWorldGroup = "hccl_world_group";
+
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
 constexpr auto kHcomOpTypeAllGather = "HcomAllGather";
@@ -331,12 +335,15 @@ constexpr auto kAttrSrTag = "sr_tag";
 constexpr auto kAttrRootRank = "root_rank";
 constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
+constexpr auto kAttrBucketId = "bucket_id";
+constexpr auto kAttrGradOutputIndex = "grad_output_index";
 constexpr auto kAttrLabelIndex = "label_index";
 constexpr auto kAttrLabelSwitchList = "label_switch_list";
 constexpr auto kAttrNewAxisMask = "new_axis_mask";
 constexpr auto kAttrShrinkAxisMask = "shrink_axis_mask";
 constexpr auto kAttrDatadumpOriginalNames = "_datadump_original_names";
 constexpr auto kAttrDatadumpIsMultiop = "_datadump_is_multiop";
+constexpr auto kAttrNeedRecordEvent = "need_record_event";
 constexpr auto kAttrStreamId = "stream_id";
 constexpr auto kAttrRecordEvent = "record_event";
 constexpr auto kAttrWaitEvent = "wait_event";

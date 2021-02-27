@@ -217,6 +217,8 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   FuncGraphPtr GenerateGraph(const AbstractBasePtrList &args_spec_list);
   void set_is_generate(bool generated) { is_generated_ = generated; }
   bool is_generated() const { return is_generated_; }
+  void set_is_bprop(bool is_brop) { is_bprop_ = is_brop; }
+  bool is_bprop() const { return is_bprop_; }
 
   std::unordered_map<std::string, ValuePtr> &attrs() { return attrs_; }
   void set_attrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
@@ -439,6 +441,8 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   size_t hyper_param_count_;
   // the argument input list for the graph used to generate this graph
   bool is_generated_;
+
+  bool is_bprop_;
 
   // the cnode that calls 'return' primitive
   // we use shared pointer to manage it.

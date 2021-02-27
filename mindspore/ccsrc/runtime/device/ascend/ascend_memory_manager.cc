@@ -162,6 +162,14 @@ void AscendMemoryManager::MallocSomasDynamicMem(const session::KernelGraph *grap
     somas_reuse_util_ptr_->ConvertToProfilingNode(graph->graph_id());
   }
 }
+
+// communication memory: [512align_size + data + 512align_size]
+// return the pointer to the start of data address.
+uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
+  auto align_size = GetCommunicationAlignSize(size);
+  uint8_t *base_ptr = reinterpret_cast<uint8_t *>(AscendMemoryPool::GetInstance().AllocTensorMem(align_size));
+  return base_ptr + kMemAlignSize;
+}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

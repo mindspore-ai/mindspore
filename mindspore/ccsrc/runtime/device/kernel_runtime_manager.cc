@@ -106,6 +106,14 @@ KernelRuntime *KernelRuntimeManager::GetKernelRuntime(const std::string &device_
   return kernel_runtime.get();
 }
 
+KernelRuntime *KernelRuntimeManager::GetCurrentKernelRuntime() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  return GetKernelRuntime(device_name, device_id);
+}
+
 void KernelRuntimeManager::ReleaseKernelRuntime(const std::string &device_name, uint32_t device_id) {
   std::string runtime_key = GetDeviceKey(device_name, device_id);
   std::lock_guard<std::mutex> guard(lock_);

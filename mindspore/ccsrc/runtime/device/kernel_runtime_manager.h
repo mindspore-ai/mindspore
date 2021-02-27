@@ -38,6 +38,7 @@ class KernelRuntimeManager {
   }
   void Register(const std::string &device_name, KernelRuntimeCreator &&runtime_creator);
   KernelRuntime *GetKernelRuntime(const std::string &device_name, uint32_t device_id);
+  KernelRuntime *GetCurrentKernelRuntime();
   KernelRuntime *GetSingleKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ReleaseKernelRuntime(const std::string &device_name, uint32_t device_id);
   void ClearRuntimeResource();

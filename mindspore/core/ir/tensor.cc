@@ -247,6 +247,47 @@ class TensorDataImpl : public TensorData {
   }
 
  private:
+  void OutputFloatDataString(std::ostringstream &ss, bool isScalar, const T &value) const {
+    if (isScalar) {
+      ss << value;
+    } else {
+      // The placeholder of float16 is fixed at 11, while float/double is fixed at 15.
+      const int width = std::is_same<T, float16>::value ? 11 : 15;
+      // The printing precision of float16 is fixed at 4, while float/double is fixed at 8.
+      const int precision = std::is_same<T, float16>::value ? 4 : 8;
+      ss << std::setw(width) << std::setprecision(precision) << std::setiosflags(std::ios::scientific | std::ios::right)
+         << value;
+    }
+  }
+
+  void OutputBoolDataString(std::ostringstream &ss, bool isScalar, const T &value) const {
+    if (isScalar) {
+      ss << (value ? "True" : "False");
+    } else {
+      constexpr int bool_max_width = sizeof("False") - 1;
+      ss << std::setw(bool_max_width) << std::setiosflags(std::ios::right) << (value ? "True" : "False");
+    }
+  }
+
+  void OutputOtherDataString(std::ostringstream &ss, bool isScalar, const T &value, int *max_width) const {
+    if (isScalar) {
+      ss << value;
+    } else {
+      // Add a padding string before the number, such as "###123", for subsequent replacement.
+      const int width = GetNumLength(value);
+      *max_width = std::max(*max_width, width);
+      std::string pad(width, '#');
+      ss << pad;
+      if constexpr (std::is_same<T, uint8_t>::value) {
+        ss << static_cast<uint16_t>(value);
+      } else if constexpr (std::is_same<T, int8_t>::value) {
+        ss << static_cast<int16_t>(value);
+      } else {
+        ss << value;
+      }
+    }
+  }
+
   void OutputDataString(std::ostringstream &ss, ssize_t cursor, ssize_t start, ssize_t end, bool use_comma,
                         int *max_width) const {
     const bool isScalar = ndim_ == 0 && end - start == 1;
@@ -257,40 +298,11 @@ class TensorDataImpl : public TensorData {
     for (ssize_t i = start; i < end && (cursor + i) < static_cast<ssize_t>(data_size_); i++) {
       const auto value = data_[cursor + i];
       if constexpr (isFloat) {
-        if (isScalar) {
-          ss << value;
-        } else {
-          // The placeholder of float16 is fixed at 11, while float/double is fixed at 15.
-          const int width = std::is_same<T, float16>::value ? 11 : 15;
-          // The printing precision of float16 is fixed at 4, while float/double is fixed at 8.
-          const int precision = std::is_same<T, float16>::value ? 4 : 8;
-          ss << std::setw(width) << std::setprecision(precision)
-             << std::setiosflags(std::ios::scientific | std::ios::right) << value;
-        }
+        OutputFloatDataString(ss, isScalar, value);
       } else if (isBool) {
-        if (isScalar) {
-          ss << (value ? "True" : "False");
-        } else {
-          constexpr int bool_max_width = sizeof("False") - 1;
-          ss << std::setw(bool_max_width) << std::setiosflags(std::ios::right) << (value ? "True" : "False");
-        }
+        OutputBoolDataString(ss, isScalar, value);
       } else {
-        if (isScalar) {
-          ss << value;
-        } else {
-          // Add a padding string before the number, such as "###123", for subsequent replacement.
-          const int width = GetNumLength(value);
-          *max_width = std::max(*max_width, width);
-          std::string pad(width, '#');
-          ss << pad;
-          if constexpr (std::is_same<T, uint8_t>::value) {
-            ss << static_cast<uint16_t>(value);
-          } else if constexpr (std::is_same<T, int8_t>::value) {
-            ss << static_cast<int16_t>(value);
-          } else {
-            ss << value;
-          }
-        }
+        OutputOtherDataString(ss, isScalar, value, max_width);
       }
       if (!isScalar && i != end - 1) {
         if (use_comma) {
@@ -452,7 +464,8 @@ Tensor::Tensor(const Tensor &tensor)
       cache_enable_(tensor.cache_enable_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
-      padding_type_(tensor.padding_type()) {}
+      padding_type_(tensor.padding_type()),
+      device_event_(tensor.device_event_) {}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
@@ -465,7 +478,8 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       cache_enable_(tensor.cache_enable_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
-      padding_type_(tensor.padding_type()) {}
+      padding_type_(tensor.padding_type()),
+      device_event_(tensor.device_event_) {}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
@@ -527,6 +541,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     event_ = tensor.event_;
     sync_status_ = tensor.sync_status_;
     padding_type_ = tensor.padding_type_;
+    device_event_ = tensor.device_event_;
   }
   return *this;
 }
