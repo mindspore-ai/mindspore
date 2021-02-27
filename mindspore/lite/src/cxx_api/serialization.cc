@@ -47,7 +47,7 @@ Graph Serialization::LoadModel(const void *model_data, size_t data_size, ModelTy
   return graph;
 }
 
-Graph Serialization::LoadModel(const std::string &file, ModelType model_type) {
+Graph Serialization::LoadModel(const std::vector<char> &file, ModelType model_type) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return Graph(nullptr);
 }

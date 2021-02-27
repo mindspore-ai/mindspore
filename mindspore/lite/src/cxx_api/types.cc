@@ -60,16 +60,16 @@ class Buffer::Impl {
 MSTensor::MSTensor() : impl_(std::make_shared<Impl>()) {}
 MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) {}
-MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
-                   size_t data_len)
-    : impl_(std::make_shared<Impl>(name, type, shape, data, data_len)) {}
+MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                   const void *data, size_t data_len)
+    : impl_(std::make_shared<Impl>(CharToString(name), type, shape, data, data_len)) {}
 MSTensor::~MSTensor() = default;
 
 bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
 
-MSTensor MSTensor::CreateTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+MSTensor MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                 const void *data, size_t data_len) noexcept {
-  auto impl = std::make_shared<Impl>(name, type, shape, data, data_len);
+  auto impl = std::make_shared<Impl>(CharToString(name), type, shape, data, data_len);
   if (impl == nullptr) {
     MS_LOG(ERROR) << "Allocate tensor impl failed.";
     return MSTensor(nullptr);
@@ -77,7 +77,7 @@ MSTensor MSTensor::CreateTensor(const std::string &name, enum DataType type, con
   return MSTensor(impl);
 }
 
-MSTensor MSTensor::CreateRefTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+MSTensor MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                    const void *data, size_t data_len) noexcept {
   auto tensor = CreateTensor(name, type, shape, data, data_len);
   if (tensor == nullptr) {
@@ -98,13 +98,12 @@ MSTensor MSTensor::Clone() const {
   return ret;
 }
 
-const std::string &MSTensor::Name() const {
-  static std::string empty = "";
+std::vector<char> MSTensor::CharName() const {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Invalid tensor inpmlement.";
-    return empty;
+    return std::vector<char>();
   }
-  return impl_->Name();
+  return StringToChar(impl_->Name());
 }
 
 int64_t MSTensor::ElementNum() const {

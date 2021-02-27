@@ -16,11 +16,11 @@
 #ifndef MINDSPORE_INCLUDE_API_CONTEXT_H
 #define MINDSPORE_INCLUDE_API_CONTEXT_H
 
-#include <map>
-#include <any>
 #include <string>
 #include <memory>
+#include <vector>
 #include "include/api/types.h"
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 constexpr auto kDeviceTypeAscend310 = "Ascend310";
@@ -28,38 +28,108 @@ constexpr auto kDeviceTypeAscend910 = "Ascend910";
 constexpr auto kDeviceTypeGPU = "GPU";
 
 struct MS_API Context {
+ public:
+  Context();
   virtual ~Context() = default;
-  std::map<std::string, std::any> params;
+  struct Data;
+  std::shared_ptr<Data> data;
 };
 
 struct MS_API GlobalContext : public Context {
+ public:
   static std::shared_ptr<Context> GetGlobalContext();
 
-  static void SetGlobalDeviceTarget(const std::string &device_target);
-  static std::string GetGlobalDeviceTarget();
+  static inline void SetGlobalDeviceTarget(const std::string &device_target);
+  static inline std::string GetGlobalDeviceTarget();
 
   static void SetGlobalDeviceID(const uint32_t &device_id);
   static uint32_t GetGlobalDeviceID();
+
+ private:
+  // api without std::string
+  static void SetGlobalDeviceTarget(const std::vector<char> &device_target);
+  static std::vector<char> GetGlobalDeviceTargetChar();
 };
 
 struct MS_API ModelContext : public Context {
-  static void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path);
-  static std::string GetInsertOpConfigPath(const std::shared_ptr<Context> &context);
+ public:
+  static inline void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path);
+  static inline std::string GetInsertOpConfigPath(const std::shared_ptr<Context> &context);
 
-  static void SetInputFormat(const std::shared_ptr<Context> &context, const std::string &format);
-  static std::string GetInputFormat(const std::shared_ptr<Context> &context);
+  static inline void SetInputFormat(const std::shared_ptr<Context> &context, const std::string &format);
+  static inline std::string GetInputFormat(const std::shared_ptr<Context> &context);
 
-  static void SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape);
-  static std::string GetInputShape(const std::shared_ptr<Context> &context);
+  static inline void SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape);
+  static inline std::string GetInputShape(const std::shared_ptr<Context> &context);
 
   static void SetOutputType(const std::shared_ptr<Context> &context, enum DataType output_type);
   static enum DataType GetOutputType(const std::shared_ptr<Context> &context);
 
-  static void SetPrecisionMode(const std::shared_ptr<Context> &context, const std::string &precision_mode);
-  static std::string GetPrecisionMode(const std::shared_ptr<Context> &context);
+  static inline void SetPrecisionMode(const std::shared_ptr<Context> &context, const std::string &precision_mode);
+  static inline std::string GetPrecisionMode(const std::shared_ptr<Context> &context);
 
-  static void SetOpSelectImplMode(const std::shared_ptr<Context> &context, const std::string &op_select_impl_mode);
-  static std::string GetOpSelectImplMode(const std::shared_ptr<Context> &context);
+  static inline void SetOpSelectImplMode(const std::shared_ptr<Context> &context,
+                                         const std::string &op_select_impl_mode);
+  static inline std::string GetOpSelectImplMode(const std::shared_ptr<Context> &context);
+
+ private:
+  // api without std::string
+  static void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path);
+  static std::vector<char> GetInsertOpConfigPathChar(const std::shared_ptr<Context> &context);
+
+  static void SetInputFormat(const std::shared_ptr<Context> &context, const std::vector<char> &format);
+  static std::vector<char> GetInputFormatChar(const std::shared_ptr<Context> &context);
+
+  static void SetInputShape(const std::shared_ptr<Context> &context, const std::vector<char> &shape);
+  static std::vector<char> GetInputShapeChar(const std::shared_ptr<Context> &context);
+
+  static void SetPrecisionMode(const std::shared_ptr<Context> &context, const std::vector<char> &precision_mode);
+  static std::vector<char> GetPrecisionModeChar(const std::shared_ptr<Context> &context);
+
+  static void SetOpSelectImplMode(const std::shared_ptr<Context> &context,
+                                  const std::vector<char> &op_select_impl_mode);
+  static std::vector<char> GetOpSelectImplModeChar(const std::shared_ptr<Context> &context);
 };
+
+void GlobalContext::SetGlobalDeviceTarget(const std::string &device_target) {
+  SetGlobalDeviceTarget(StringToChar(device_target));
+}
+std::string GlobalContext::GetGlobalDeviceTarget() { return CharToString(GetGlobalDeviceTargetChar()); }
+
+void ModelContext::SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path) {
+  SetInsertOpConfigPath(context, StringToChar(cfg_path));
+}
+std::string ModelContext::GetInsertOpConfigPath(const std::shared_ptr<Context> &context) {
+  return CharToString(GetInsertOpConfigPathChar(context));
+}
+
+void ModelContext::SetInputFormat(const std::shared_ptr<Context> &context, const std::string &format) {
+  SetInputFormat(context, StringToChar(format));
+}
+std::string ModelContext::GetInputFormat(const std::shared_ptr<Context> &context) {
+  return CharToString(GetInputFormatChar(context));
+}
+
+void ModelContext::SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape) {
+  SetInputShape(context, StringToChar(shape));
+}
+std::string ModelContext::GetInputShape(const std::shared_ptr<Context> &context) {
+  return CharToString(GetInputShapeChar(context));
+}
+
+void ModelContext::SetPrecisionMode(const std::shared_ptr<Context> &context, const std::string &precision_mode) {
+  SetPrecisionMode(context, StringToChar(precision_mode));
+}
+std::string ModelContext::GetPrecisionMode(const std::shared_ptr<Context> &context) {
+  return CharToString(GetPrecisionModeChar(context));
+}
+
+void ModelContext::SetOpSelectImplMode(const std::shared_ptr<Context> &context,
+                                       const std::string &op_select_impl_mode) {
+  SetOpSelectImplMode(context, StringToChar(op_select_impl_mode));
+}
+std::string ModelContext::GetOpSelectImplMode(const std::shared_ptr<Context> &context) {
+  return CharToString(GetOpSelectImplModeChar(context));
+}
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H

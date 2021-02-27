@@ -60,12 +60,6 @@ TEST_F(TestCxxApiContext, test_context_ascend310_context_nullptr_FAILED) {
   EXPECT_ANY_THROW(ModelContext::GetInsertOpConfigPath(nullptr));
 }
 
-TEST_F(TestCxxApiContext, test_context_ascend310_context_wrong_type_SUCCESS) {
-  auto ctx = std::make_shared<ModelContext>();
-  ctx->params["mindspore.option.op_select_impl_mode"] = 5;
-  ASSERT_EQ(ModelContext::GetOpSelectImplMode(ctx), "");
-}
-
 TEST_F(TestCxxApiContext, test_context_ascend310_context_default_value_SUCCESS) {
   auto ctx = std::make_shared<ModelContext>();
   ASSERT_EQ(ModelContext::GetOpSelectImplMode(ctx), "");

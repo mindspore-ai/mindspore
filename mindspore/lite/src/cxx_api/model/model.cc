@@ -67,7 +67,7 @@ Model::Model(const std::vector<Output> &network, const std::shared_ptr<Context> 
 
 Model::~Model() {}
 
-bool Model::CheckModelSupport(const std::string &device_type, ModelType) {
+bool Model::CheckModelSupport(const std::vector<char> &, ModelType) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return false;
 }

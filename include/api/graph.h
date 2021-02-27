@@ -17,7 +17,6 @@
 #define MINDSPORE_INCLUDE_API_GRAPH_H
 
 #include <cstddef>
-#include <string>
 #include <vector>
 #include <map>
 #include <memory>

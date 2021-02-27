@@ -134,10 +134,11 @@ class TensorReferenceImpl : public MSTensor::Impl {
   std::vector<int64_t> shape_;
 };
 
-MSTensor MSTensor::CreateTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+MSTensor MSTensor::CreateTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                 const void *data, size_t data_len) noexcept {
+  std::string name_str = CharToString(name);
   try {
-    std::shared_ptr<Impl> impl = std::make_shared<TensorDefaultImpl>(name, type, shape, data, data_len);
+    std::shared_ptr<Impl> impl = std::make_shared<TensorDefaultImpl>(name_str, type, shape, data, data_len);
     return MSTensor(impl);
   } catch (const std::bad_alloc &) {
     MS_LOG(ERROR) << "Malloc memory failed.";
@@ -148,10 +149,11 @@ MSTensor MSTensor::CreateTensor(const std::string &name, enum DataType type, con
   }
 }
 
-MSTensor MSTensor::CreateRefTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape,
+MSTensor MSTensor::CreateRefTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
                                    const void *data, size_t data_len) noexcept {
+  std::string name_str = CharToString(name);
   try {
-    std::shared_ptr<Impl> impl = std::make_shared<TensorReferenceImpl>(name, type, shape, data, data_len);
+    std::shared_ptr<Impl> impl = std::make_shared<TensorReferenceImpl>(name_str, type, shape, data, data_len);
     return MSTensor(impl);
   } catch (const std::bad_alloc &) {
     MS_LOG(ERROR) << "Malloc memory failed.";
@@ -165,9 +167,9 @@ MSTensor MSTensor::CreateRefTensor(const std::string &name, enum DataType type, 
 MSTensor::MSTensor() : impl_(std::make_shared<TensorDefaultImpl>()) {}
 MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) { MS_EXCEPTION_IF_NULL(impl); }
-MSTensor::MSTensor(const std::string &name, enum DataType type, const std::vector<int64_t> &shape, const void *data,
-                   size_t data_len)
-    : impl_(std::make_shared<TensorDefaultImpl>(name, type, shape, data, data_len)) {}
+MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,
+                   const void *data, size_t data_len)
+    : impl_(std::make_shared<TensorDefaultImpl>(CharToString(name), type, shape, data, data_len)) {}
 MSTensor::~MSTensor() = default;
 
 bool MSTensor::operator==(std::nullptr_t) const { return impl_ == nullptr; }
@@ -179,9 +181,9 @@ MSTensor MSTensor::Clone() const {
   return ret;
 }
 
-const std::string &MSTensor::Name() const {
+std::vector<char> MSTensor::CharName() const {
   MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->Name();
+  return StringToChar(impl_->Name());
 }
 
 enum DataType MSTensor::DataType() const {
