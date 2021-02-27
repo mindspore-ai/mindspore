@@ -40,9 +40,7 @@ void CheckIfValidType(const TypePtr &type, debugger::TypeProto *type_proto) {
         type->isa<UMonadType>() || type->isa<IOMonadType>())) {
     MS_LOG(EXCEPTION) << "Unknown type: " << type->type_name();
   }
-  if (type == nullptr) {
-    type_proto->set_data_type(debugger::DT_UNDEFINED);
-  } else if (type->isa<Number>()) {
+  if (type->isa<Number>()) {
     type_proto->set_data_type(GetDebuggerNumberDataType(type));
   }
 }
@@ -52,9 +50,11 @@ void DebuggerProtoExporter::SetNodeOutputType(const TypePtr &type, const BaseSha
   if (type_proto == nullptr) {
     return;
   }
-  if (type != nullptr) {
-    CheckIfValidType(type, type_proto);
+  if (type == nullptr) {
+    type_proto->set_data_type(debugger::DT_UNDEFINED);
+    return;
   }
+  CheckIfValidType(type, type_proto);
   if (type->isa<TensorType>()) {
     TypePtr elem_type = dyn_cast<TensorType>(type)->element();
     type_proto->mutable_tensor_type()->set_elem_type(GetDebuggerNumberDataType(elem_type));
