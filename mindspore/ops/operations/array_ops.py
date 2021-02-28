@@ -3375,7 +3375,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
     Updates tensor values using given values, along with the input indices.
 
     Inputs:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be equal to indices.shape[-1].
+        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
         - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
         - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
           and update.shape = indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
