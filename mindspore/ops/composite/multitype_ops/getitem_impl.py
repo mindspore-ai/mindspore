@@ -173,7 +173,7 @@ def _tensor_getitem_by_none(data, none_index):
     Outputs:
         Tensor, element type is as same as the element type of data.
     """
-    return F.expand_dims(data, 0)
+    return compile_utils.tensor_index_by_tuple(data, (none_index,))
 
 
 @getitem.register("Tensor", "Slice")
@@ -188,7 +188,7 @@ def _tensor_getitem_by_slice(data, slice_index):
     Outputs:
         Tensor, element type is the same as the element type of data.
     """
-    return compile_utils.tensor_index_by_slice(data, slice_index)
+    return compile_utils.tensor_index_by_tuple(data, (slice_index,))
 
 
 @getitem.register("Tensor", "Tensor")
@@ -203,7 +203,7 @@ def _tensor_getitem_by_tensor(data, tensor_index):
     Outputs:
         Tensor, element type is the same as the element type of data.
     """
-    return compile_utils.tensor_index_by_tensor(data, tensor_index)
+    return compile_utils.tensor_index_by_tuple(data, (tensor_index,))
 
 
 @getitem.register("Tensor", "Ellipsis")
@@ -218,7 +218,7 @@ def _tensor_getitem_by_ellipsis(data, ellipsis_index):
     Outputs:
         Tensor, same as data.
     """
-    return data
+    return compile_utils.tensor_index_by_tuple(data, (ellipsis_index,))
 
 
 @getitem.register("Tensor", "List")

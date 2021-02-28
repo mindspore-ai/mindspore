@@ -3011,7 +3011,7 @@ class StridedSlice(PrimitiveWithInfer):
                     continue
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise ValueError(f"For {self.name}, when shrink axis, the stride cannot be negative number, "
+                        raise IndexError(f"For {self.name}, when shrink axis, the stride cannot be negative number, "
                                          f"and begin should be in [-{x_shape[i]}, {x_shape[i]}), "
                                          f"but got stride: {stride}, begin: {begin}.")
                     j += 1

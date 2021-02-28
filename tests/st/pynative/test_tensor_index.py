@@ -155,7 +155,7 @@ class TensorGetItemByThreeTensors(Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def Xtest_getitem_by_tensors():
-    """This testcase may encounter a sync stream error occassionally"""
+    """This testcase may encounter a sync stream error occasionally"""
     net = TensorGetItemByThreeTensors()
     input_x = np.arange(6*8*10).reshape(6, 8, 10).astype(np.int32)
     index_0 = np.random.randint(6, size=(3, 4, 5)).astype(np.int32)
@@ -1024,7 +1024,7 @@ def Xtest_tensor_slice_reduce_out_of_bounds_neg():
 
     input_tensor = Tensor(np.ones([6, 8, 10], np.int32))
     net = NetWork()
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(IndexError) as ex:
         net(input_tensor)
     assert "For 'StridedSlice' the `begin[0]` should be an int and must greater or equal to -6, but got `-7`" in str(
         ex.value)
@@ -1042,7 +1042,7 @@ def Xtest_tensor_slice_reduce_out_of_bounds_positive():
 
     input_tensor = Tensor(np.ones([6, 8, 10], np.int32))
     net = NetWork()
-    with pytest.raises(ValueError) as ex:
+    with pytest.raises(IndexError) as ex:
         net(input_tensor)
     assert "For 'StridedSlice' the `begin[0]` should be an int and must less than 6, but got `6`" in str(ex.value)
 
