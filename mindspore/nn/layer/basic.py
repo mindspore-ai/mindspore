@@ -709,7 +709,7 @@ class ResizeBilinear(Cell):
         ValueError: If `size` is a list or tuple whose length is not equal to 2.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> tensor = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)

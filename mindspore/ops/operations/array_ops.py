@@ -3297,7 +3297,7 @@ class ResizeNearestNeighbor(PrimitiveWithInfer):
         ValueError: If length of `size` is not equal to 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_tensor = Tensor(np.array([[[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]]), mindspore.float32)
