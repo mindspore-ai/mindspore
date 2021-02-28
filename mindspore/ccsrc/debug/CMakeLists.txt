@@ -15,6 +15,11 @@ if(ENABLE_DUMP_IR)
     endif()
 endif()
 
+if("${ENABLE_HIDDEN}" STREQUAL "OFF")
+    string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+
 if(ENABLE_DEBUGGER)
     list(APPEND _DEBUG_SRC_LIST
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/debugger.cc"

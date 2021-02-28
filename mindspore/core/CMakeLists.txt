@@ -3,6 +3,11 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 add_subdirectory(gvar)
 
+if("${ENABLE_HIDDEN}" STREQUAL "OFF")
+    string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+
 if(NOT(COMPILE_LITE))
     add_subdirectory(mindrt)
 endif()

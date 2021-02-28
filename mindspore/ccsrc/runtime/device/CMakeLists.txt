@@ -4,6 +4,11 @@ file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "common/*
     "bucket.cc"
 )
 
+if("${ENABLE_HIDDEN}" STREQUAL "OFF")
+    string(REPLACE " -Werror " " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+endif()
+
 if(ENABLE_GPU)
     list(APPEND DEVICE_SRC_LIST "gpu/distribution/collective_init.cc")
 else()
