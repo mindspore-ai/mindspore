@@ -48,6 +48,7 @@
 #include "pybind_api/pybind_patch.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
+#include "load_mindir/load_model.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/constants.h"
 #include "ps/util.h"
@@ -1095,6 +1096,8 @@ void ExportGraph(const std::string &file_name, const std::string &, const std::s
   MS_EXCEPTION(ValueError) << "Only support export file in 'AIR' format with Ascend backend.";
 #endif
 }
+
+FuncGraphPtr LoadMindIR(const std::string &file_name) { return mindspore::LoadMindIR(file_name); }
 
 void ReleaseGeTsd() {
   auto context_ptr = MsContext::GetInstance();

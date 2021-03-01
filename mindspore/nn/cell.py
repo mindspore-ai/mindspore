@@ -25,7 +25,7 @@ from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from mindspore.context import ParallelMode
 from .. import context
-from .._c_expression import init_pipeline, Cell_
+from .._c_expression import init_pipeline, Cell_, FuncGraph
 from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _executor, _pynative_exec
@@ -1191,3 +1191,39 @@ class GraphKernel(Cell):
 
     def construct(self):
         raise NotImplementedError
+
+
+class GraphCell(Cell):
+    """
+    Base class for running the graph loaded from a MindIR.
+
+    This feature is still under development. Currently `GraphCell` do not support modifying the structure of the
+    diagram, and can only use data that shape and type are the same as the input when exporting the MindIR.
+
+    Args:
+        graph (object): A compiled graph loaded from MindIR.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> from mindspore.train import export, load
+        >>>
+        >>> net = nn.Conv2d(1, 1, kernel_size=3)
+        >>> input = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
+        >>> export(net, input, file_name="net", file_format="MINDIR")
+        >>> graph = load("net.mindir")
+        >>> net = nn.GraphCell(graph)
+        >>> output = net(input)
+    """
+    def __init__(self, graph):
+        super(GraphCell, self).__init__(auto_prefix=True)
+        if not isinstance(graph, FuncGraph):
+            raise TypeError(f"graph must be a FuncGraph loaded from MindIR, but got {type(graph)}.")
+        self.graph = graph
+
+    def construct(self, *inputs):
+        return self.graph(*inputs)
+
+    def __call__(self, *inputs):
+        return self.compile_and_run(*inputs)

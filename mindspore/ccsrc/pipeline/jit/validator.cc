@@ -51,6 +51,9 @@ void ValidateOperation(const AnfNodePtr &node) {
   if (abstract::IsInWhiteList(prim)) {
     return;
   }
+  if (prim->HasAttr("is_load")) {
+    return;
+  }
   if (prim->HasPyEvaluator()) {
     MS_LOG(DEBUG) << "Primitive " << prim->name() << " has python evaluator.";
     return;

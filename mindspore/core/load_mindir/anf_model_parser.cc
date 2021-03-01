@@ -228,17 +228,14 @@ tensor::TensorPtr MSANFModelParser::BuildTensorInfoForFuncGraph(const mind_ir::T
   }
 
   if (!tensor_proto.has_data_type()) {
-    MS_LOG(ERROR) << "mind_ir TensorProto has no data_type or name!";
-    return nullptr;
+    MS_LOG(EXCEPTION) << "mind_ir TensorProto has no data_type or name!";
   }
   if (kDefaultValueSwitchMap.find(tensor_proto.data_type()) == kDefaultValueSwitchMap.end()) {
-    MS_LOG(ERROR) << "mind_ir TensorProto data_type is not support yet!";
-    return nullptr;
+    MS_LOG(EXCEPTION) << "mind_ir TensorProto data_type is not support yet!";
   }
 
   tensor::TensorPtr tensor_info =
     std::make_shared<tensor::Tensor>(kDefaultValueSwitchMap[tensor_proto.data_type()], shape);
-  MS_EXCEPTION_IF_NULL(tensor_info);
   return tensor_info;
 }
 
@@ -253,9 +250,14 @@ bool MSANFModelParser::BuildParameterForFuncGraph(const ParameterPtr &node,
   string debug_info_name = ParseParameterName(parameter_proto.name());
   auto debug_info_ptr = std::make_shared<NodeDebugInfo>(debug_info_name);
   node->set_debug_info(debug_info_ptr);
-  node->set_name(parameter_proto.name());
+  node->set_name(debug_info_name);
 
   tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(parameter_proto);
+  MS_EXCEPTION_IF_NULL(tensor_info);
+  ParamInfoPtr param_info = std::make_shared<ParamInfo>();
+  param_info->set_name(debug_info_name);
+  tensor_info->set_param_info(param_info);
+
   auto tensor_abstract = tensor_info->ToAbstract();
   MS_EXCEPTION_IF_NULL(tensor_abstract);
   node->set_abstract(tensor_abstract);
@@ -284,13 +286,13 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
   string debug_info_name = ParseParameterName(value_proto.name());
   auto debug_info_ptr = std::make_shared<NodeDebugInfo>(debug_info_name);
   node->set_debug_info(debug_info_ptr);
-  node->set_name(value_proto.name());
+  node->set_name(debug_info_name);
 
   const mind_ir::TensorProto &tensor_proto = value_proto.tensor(0);
 
   tensor::TensorPtr tensor_info = BuildTensorInfoForFuncGraph(tensor_proto);
+  MS_EXCEPTION_IF_NULL(tensor_info);
   auto tensor_abstract = tensor_info->ToAbstract();
-  MS_EXCEPTION_IF_NULL(tensor_abstract);
   node->set_abstract(tensor_abstract);
 
   anfnode_build_map_[value_proto.name()] = node;
@@ -300,20 +302,20 @@ bool MSANFModelParser::BuildInputForFuncGraph(const ParameterPtr &node, const mi
 bool MSANFModelParser::ImportParametersForGraph(const FuncGraphPtr &outputFuncGraph,
                                                 const mind_ir::GraphProto &importProto) {
   MS_EXCEPTION_IF_NULL(outputFuncGraph);
-  MS_LOG(INFO) << "All Parameters size is: " << importProto.parameter_size();
-  for (int i = 0; i < importProto.parameter_size(); ++i) {
-    const mind_ir::TensorProto &parameter_proto = importProto.parameter(i);
-    if (!BuildParameterForFuncGraph(outputFuncGraph->add_parameter(), parameter_proto)) {
-      MS_LOG(ERROR) << "Build parameter for funcgraph fail at index: " << i;
-      return false;
-    }
-  }
-
   MS_LOG(INFO) << "All inputs size is: " << importProto.input_size();
   for (int i = 0; i < importProto.input_size(); ++i) {
     const mind_ir::ValueInfoProto &input_proto = importProto.input(i);
     if (!BuildInputForFuncGraph(outputFuncGraph->add_parameter(), input_proto)) {
       MS_LOG(ERROR) << "Build input for funcgraph fail at index: " << i;
+      return false;
+    }
+  }
+
+  MS_LOG(INFO) << "All Parameters size is: " << importProto.parameter_size();
+  for (int i = 0; i < importProto.parameter_size(); ++i) {
+    const mind_ir::TensorProto &parameter_proto = importProto.parameter(i);
+    if (!BuildParameterForFuncGraph(outputFuncGraph->add_parameter(), parameter_proto)) {
+      MS_LOG(ERROR) << "Build parameter for funcgraph fail at index: " << i;
       return false;
     }
   }
@@ -745,7 +747,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
 
     inputs.push_back(anfnode_build_map_[input_name]);
   }
-
+  prim->set_attr("is_load", MakeValue(true));
   auto cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
   MS_EXCEPTION_IF_NULL(cnode_ptr);
 
@@ -777,6 +779,7 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
   auto debug_info_ptr = std::make_shared<NodeDebugInfo>(debug_info_name);
   cnode_ptr->set_debug_info(debug_info_ptr);
   cnode_ptr->set_fullname_with_scope(fullname_with_scope);
+  cnode_ptr->set_load_flag(true);
 
   anfnode_build_map_[node_name] = cnode_ptr;
   return cnode_ptr;
@@ -804,6 +807,7 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     inputs.push_back(maketuple_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
+    return_node->set_load_flag(true);
     outputFuncGraph->set_return(return_node);
     MS_LOG(INFO) << "Construct funcgraph finined, all success.";
   } else {
@@ -812,6 +816,7 @@ bool MSANFModelParser::BuildReturnForFuncGraph(const FuncGraphPtr &outputFuncGra
     inputs.push_back(cnode_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     MS_EXCEPTION_IF_NULL(return_node);
+    return_node->set_load_flag(true);
     outputFuncGraph->set_return(return_node);
     MS_LOG(INFO) << "Construct funcgraph finined, all success!";
   }

@@ -38,6 +38,7 @@ from mindspore._checkparam import check_input_data, Validator
 from mindspore.compression.export import quant_export
 from mindspore.parallel._tensor import _load_tensor
 from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices
+from .._c_expression import load_mindir
 
 
 tensor_to_ms_type = {"Int8": mstype.int8, "Uint8": mstype.uint8, "Int16": mstype.int16, "Uint16": mstype.uint16,
@@ -226,6 +227,49 @@ def _check_param_prefix(filter_prefix, param_name):
                 and (param_name == prefix or param_name[len(prefix)] == "." or (prefix and prefix[-1] == ".")):
             return True
     return False
+
+
+def load(file_name):
+    """
+    Load MindIR.
+
+    The returned object can be executed by a `GraphCell`. However, there are some limitations to the current use
+    of `GraphCell`, see class :class:`mindspore.nn.GraphCell` for more details.
+
+    Args:
+        file_name (str): MindIR file name.
+
+    Returns:
+        Object, a compiled graph that can executed by `GraphCell`.
+
+    Raises:
+        ValueError: MindIR file is incorrect.
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> from mindspore.train import export, load
+        >>>
+        >>> net = nn.Conv2d(1, 1, kernel_size=3)
+        >>> input = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
+        >>> export(net, input, file_name="net", file_format="MINDIR")
+        >>> graph = load("net.mindir")
+        >>> net = nn.GraphCell(graph)
+        >>> output = net(input)
+    """
+    if not isinstance(file_name, str):
+        raise ValueError("The file name must be string.")
+    if not os.path.exists(file_name):
+        raise ValueError("The file is not exist.")
+    if not file_name.endswith(".mindir"):
+        raise ValueError("The MindIR should end with mindir, please input the correct file name.")
+
+    logger.info("Execute the process of loading mindir.")
+    graph = load_mindir(file_name)
+    if graph is None:
+        raise RuntimeError("Load MindIR failed.")
+    return graph
 
 
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None):
