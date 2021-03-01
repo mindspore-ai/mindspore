@@ -86,15 +86,19 @@ ms::Status StartServer(int argc, char **argv) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
       ms::Status child_rc;
       rc = msg.ReceiveStatus(&child_rc);
+      std::string warning_string;
       if (rc.IsError()) {
         return rc;
       }
       if (child_rc.IsError()) {
         return child_rc;
+      } else {
+        warning_string = child_rc.ToString();
       }
       std::cout << "Cache server startup completed successfully!\n";
       std::cout << "The cache server daemon has been created as process id " << pid << " and listening on port " << port
-                << std::endl;
+                << ".\n";
+      if (!warning_string.empty()) std::cout << "WARNING: " << warning_string;
       std::cout << "\nRecommendation:\nSince the server is detached into its own daemon process, monitor the server "
                    "logs (under "
                 << ds::DefaultLogDir() << ") for any issues that may happen after startup\n";
@@ -116,12 +120,17 @@ ms::Status StartServer(int argc, char **argv) {
     }
   }
 
+  // Create the instance with some sanity checks built in
+  rc = builder.Build();
   // Dump the summary
   MS_LOG(INFO) << "Cache server has started successfully and is listening on port " << port << std::endl;
   MS_LOG(INFO) << builder << std::endl;
-  // Create the instance with some sanity checks built in
-  rc = builder.Build();
   if (rc.IsOk()) {
+    if (daemonize && !rc.ToString().empty()) {
+      // If we have adjusted the number of workers provided by users, use the message queue to send the warning
+      // message if this is the child daemon.
+      msg.SendStatus(rc);
+    }
     // If all goes well, kick off the threads. Loop forever and never return unless error.
     ds::CacheServer &cs = ds::CacheServer::GetInstance();
     rc = cs.Run(msg.GetMsgQueueId());

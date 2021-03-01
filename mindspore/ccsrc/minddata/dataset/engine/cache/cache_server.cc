@@ -44,7 +44,6 @@ Status CacheServer::DoServiceStart() {
     MS_LOG(INFO) << "CacheServer will use disk folder: " << top_;
   }
   RETURN_IF_NOT_OK(vg_.ServiceStart());
-  RETURN_IF_NOT_OK(hw_info_->GetNumaNodeInfo());
   auto num_numa_nodes = GetNumaNodeCount();
   // If we link with numa library. Set default memory policy.
   // If we don't pin thread to cpu, then use up all memory controllers to maximize
@@ -53,15 +52,6 @@ Status CacheServer::DoServiceStart() {
     CacheServerHW::SetDefaultMemoryPolicy(numa_affinity_ ? CachePoolPolicy::kLocal : CachePoolPolicy::kInterleave));
   auto my_node = hw_info_->GetMyNode();
   MS_LOG(DEBUG) << "Cache server is running on numa node " << my_node;
-  // Bump up num_workers_ to at least the number of numa nodes
-  num_workers_ = std::max(num_numa_nodes, num_workers_);
-  // But also it shouldn't be too many more than the hardware concurrency
-  auto num_cpus = hw_info_->GetCpuCount();
-  num_workers_ = std::min(2 * num_cpus, num_workers_);
-  // Round up num_workers to a multiple of numa nodes.
-  auto remainder = num_workers_ % num_numa_nodes;
-  if (remainder > 0) num_workers_ += (num_numa_nodes - remainder);
-  MS_LOG(INFO) << "Re-adjusting the number of workers to " << num_workers_;
   // There will be some threads working on the grpc queue and
   // some number of threads working on the CacheServerRequest queue.
   // Like a connector object we will set up the same number of queues but
@@ -993,7 +983,8 @@ session_id_type CacheServer::GetSessionID(connection_id_type connection_id) cons
 }
 
 CacheServer::CacheServer(const std::string &spill_path, int32_t num_workers, int32_t port,
-                         int32_t shared_meory_sz_in_gb, float memory_cap_ratio, int8_t log_level)
+                         int32_t shared_meory_sz_in_gb, float memory_cap_ratio, int8_t log_level,
+                         std::shared_ptr<CacheServerHW> hw_info)
     : top_(spill_path),
       num_workers_(num_workers),
       num_grpc_workers_(num_workers_),
@@ -1002,8 +993,8 @@ CacheServer::CacheServer(const std::string &spill_path, int32_t num_workers, int
       global_shutdown_(false),
       memory_cap_ratio_(memory_cap_ratio),
       numa_affinity_(true),
-      log_level_(log_level) {
-  hw_info_ = std::make_shared<CacheServerHW>();
+      log_level_(log_level),
+      hw_info_(std::move(hw_info)) {
   // If we are not linked with numa library (i.e. NUMA_ENABLED is false), turn off cpu
   // affinity which can make performance worse.
   if (!CacheServerHW::numa_enabled()) {
@@ -1282,6 +1273,19 @@ Status CacheServer::Builder::SanityCheck() {
   // Check if the shared memory.
   RETURN_IF_NOT_OK(IpcResourceCleanup());
   return Status::OK();
+}
+
+int32_t CacheServer::Builder::AdjustNumWorkers(int32_t num_workers) {
+  int32_t num_numa_nodes = hw_info_->GetNumaNodeCount();
+  // Bump up num_workers_ to at least the number of numa nodes
+  num_workers = std::max(num_numa_nodes, num_workers);
+  // But also it shouldn't be too many more than the hardware concurrency
+  int32_t num_cpus = hw_info_->GetCpuCount();
+  num_workers = std::min(2 * num_cpus, num_workers);
+  // Round up num_workers to a multiple of numa nodes.
+  auto remainder = num_workers % num_numa_nodes;
+  if (remainder > 0) num_workers += (num_numa_nodes - remainder);
+  return num_workers;
 }
 
 CacheServer::Builder::Builder()

@@ -339,7 +339,8 @@ Status CacheAdminArgHandler::Validate() {
 
   // Additional checks here
   auto max_num_workers = std::max<int32_t>(std::thread::hardware_concurrency(), 100);
-  if (num_workers_ < 1 || num_workers_ > max_num_workers)
+  if (used_args_[ArgValue::kArgNumWorkers] && (num_workers_ < 1 || num_workers_ > max_num_workers))
+    // Check the value of num_workers only if it's provided by users.
     return Status(StatusCode::kMDSyntaxError,
                   "Number of workers must be in range of 1 and " + std::to_string(max_num_workers) + ".");
   if (log_level_ < 0 || log_level_ > 4) return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..4).");
@@ -448,6 +449,7 @@ Status CacheAdminArgHandler::ShowServerInfo() {
   int32_t num_workers = server_cfg_info.num_workers;
   int8_t log_level = server_cfg_info.log_level;
   std::string spill_dir = server_cfg_info.spill_dir;
+  if (spill_dir.empty()) spill_dir = "None";
 
   int name_w = 20;
   int value_w = 15;
@@ -460,11 +462,7 @@ Status CacheAdminArgHandler::ShowServerInfo() {
   std::cout << std::setw(name_w) << "number of workers" << std::setw(value_w) << std::to_string(num_workers)
             << std::endl;
   std::cout << std::setw(name_w) << "log level" << std::setw(value_w) << std::to_string(log_level) << std::endl;
-  if (spill_dir.empty()) {
-    std::cout << std::setw(name_w) << "spill" << std::setw(value_w) << "disabled" << std::endl;
-  } else {
-    std::cout << std::setw(name_w) << "spill dir" << std::setw(value_w) << spill_dir << std::endl;
-  }
+  std::cout << std::setw(name_w) << "spill dir" << std::setw(value_w) << spill_dir << std::endl;
   std::cout << "----------------------------------------" << std::endl;
 
   std::cout << "Active sessions: " << std::endl;
@@ -472,7 +470,7 @@ Status CacheAdminArgHandler::ShowServerInfo() {
     for (auto session_id : session_ids) {
       std::cout << session_id << "  ";
     }
-    std::cout << std::endl << "(Please use 'cache_admin --list_session' to get detailed info of sessions.)\n";
+    std::cout << std::endl << "(Please use 'cache_admin --list_sessions' to get detailed info of sessions.)\n";
   } else {
     std::cout << "No active sessions." << std::endl;
   }
@@ -582,8 +580,10 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
     close(0);
     close(fd[1]);
     // exec the cache server binary in this process
+    // If the user did not provide the value of num_workers, we pass -1 to cache server to allow it assign the default.
+    // So that the server knows if the number is provided by users or by default.
+    std::string workers_string = used_args_[ArgValue::kArgNumWorkers] ? std::to_string(num_workers_) : "-1";
     std::string port_string = std::to_string(port_);
-    std::string workers_string = std::to_string(num_workers_);
     std::string shared_memory_string = std::to_string(shm_mem_sz_);
     std::string minloglevel_string = std::to_string(log_level_);
     std::string daemonize_string = "true";
