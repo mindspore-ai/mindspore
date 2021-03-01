@@ -516,7 +516,7 @@ void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &i
       input_node = AnfAlgo::VisitKernel(input_node, 0).first;
     }
     MS_EXCEPTION_IF_NULL(input_node);
-    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>()) {
+    if (input_attrs.find(i) != input_attrs.end() && input_node->isa<ValueNode>() && !HasAbstractMonad(input_node)) {
       auto value_node = input_node->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
       MS_LOG(DEBUG) << "start erase input[" << i << "] of cnode[" + cnode->DebugString() + "]";
