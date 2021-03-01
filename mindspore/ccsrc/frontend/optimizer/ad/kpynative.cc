@@ -175,6 +175,7 @@ class KPynativeCellImpl : public KPynativeCell {
   // Back propagate for all node;
   bool BackPropagate();
   bool BackPropagate(const CNodePtr &cnode_primal, const CNodePtr &bprop_app);
+  FuncGraphPtr BuildBpropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode);
 };
 using KPynativeCellImplPtr = std::shared_ptr<KPynativeCellImpl>;
 
@@ -264,9 +265,7 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
     need_propagate_stop_gradient_ = true;
   }
 
-  auto bprop_fg = g_k_prims.GetBprop(prim);
-  MS_EXCEPTION_IF_NULL(bprop_fg);
-  BuildAdjoint(cnode, op_args, out, bprop_fg);
+  BuildAdjoint(cnode, op_args, out, nullptr);
 
   return true;
 }
@@ -361,7 +360,11 @@ bool KPynativeCellImpl::BackPropagate() {
       if (prim == nullptr) {
         MS_LOG(EXCEPTION) << "should be primitive, but: " << cnode->DebugString();
       }
-      bprop_fg = g_k_prims.GetBprop(prim);
+      if (IsPrimitiveEquals(prim, prim::kPrimHookBackward)) {
+        bprop_fg = BuildBpropCutFuncGraph(prim, cnode);
+      } else {
+        bprop_fg = g_k_prims.GetPossibleBprop(prim);
+      }
       MS_EXCEPTION_IF_NULL(bprop_fg);
     }
     // Optimize the bprop_fg based on value.
@@ -415,6 +418,36 @@ void KPynativeCellImpl::PropagateStopGradient() {
       }
     }
   }
+}
+
+FuncGraphPtr KPynativeCellImpl::BuildBpropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode) {
+  auto inputs_num = cnode->size() - 1;
+
+  auto func_graph = std::make_shared<FuncGraph>();
+  std::vector<AnfNodePtr> outputs;
+
+  auto bprop_cut = std::make_shared<PrimitivePy>("bprop_cut", py::object());
+  bprop_cut->CopyHookFunction(prim);
+
+  auto cell_id = GetValue<std::string>(prim->GetAttr("cell_id"));
+  if (cell_id != "") {
+    (void)bprop_cut->AddAttr("cell_hook", MakeValue(true));
+    (void)bprop_cut->AddAttr("cell_id", MakeValue(cell_id));
+  }
+
+  outputs.push_back(NewValueNode(bprop_cut));
+  for (size_t i = 0; i < inputs_num; ++i) {
+    auto param = func_graph->add_parameter();
+    outputs.push_back(param);
+  }
+  // out, dout
+  auto p1 = func_graph->add_parameter();
+  auto p2 = func_graph->add_parameter();
+  outputs.push_back(p1);
+  outputs.push_back(p2);
+
+  func_graph->set_output(func_graph->NewCNode(outputs));
+  return func_graph;
 }
 }  // namespace ad
 }  // namespace mindspore

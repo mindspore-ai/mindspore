@@ -75,6 +75,23 @@ FuncGraphPtr KPrim::GetBprop(const PrimitivePtr &prim) {
   return func_graph;
 }
 
+FuncGraphPtr KPrim::GetPossibleBprop(const PrimitivePtr &prim) {
+  FuncGraphPtr bprop_fg = nullptr;
+  auto iter = bprop_registry_.find(prim);
+  if (iter != bprop_registry_.end()) {
+    bprop_fg = iter->second;
+  }
+
+  if (bprop_fg == nullptr) {
+    bprop_fg = GetBprop(prim);
+    if (bprop_fg != nullptr) {
+      // Set bprop_g graph cache
+      bprop_registry_[prim] = bprop_fg;
+    }
+  }
+  return bprop_fg;
+}
+
 FuncGraphPtr KPrim::GetFprop(const PrimitivePtr &prim) {
   static const std::string ad_module = "mindspore.ops._grad.grad_implementations";
   std::string func_name = "_fprop_" + prim->name();
@@ -201,7 +218,7 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
 }
 
 FuncGraphPtr KPrim::KPrimitiveForPrimBpOpt(const CNodePtr &cnode, const ValueNodePtr &value_node,
-                               const pipeline::ResourceBasePtr &resources) {
+                                           const pipeline::ResourceBasePtr &resources) {
   if (!IsValueNode<Primitive>(value_node)) {
     MS_LOG(EXCEPTION) << "Primitive node is not valid.";
   }

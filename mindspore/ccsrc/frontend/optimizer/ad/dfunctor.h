@@ -139,7 +139,7 @@ class KPrim {
   FuncGraphPtr KPrimitive(const CNodePtr &primal_user, const ValueNodePtr &value_node,
                           const pipeline::ResourceBasePtr &resources);
   FuncGraphPtr KPrimitiveForPrimBpOpt(const CNodePtr &primal_user, const ValueNodePtr &value_node,
-                          const pipeline::ResourceBasePtr &resources);
+                                      const pipeline::ResourceBasePtr &resources);
   MetaFuncGraphPtr KMetaFuncGraph(const PrimitivePtr &prim);
   // bprop_fg and primal_fg in bprop_fg's transforms are FuncGraph just after convert.
   // current_primal_fg is the specialized and AutoMonaded primal_fg.
@@ -149,9 +149,10 @@ class KPrim {
     bprop_registry_meta_.clear();
     bprop_registry_.clear();
   }
-  FuncGraphPtr GetBprop(const PrimitivePtr &prim);
+  FuncGraphPtr GetPossibleBprop(const PrimitivePtr &prim);
 
  private:
+  FuncGraphPtr GetBprop(const PrimitivePtr &prim);
   FuncGraphPtr GetFprop(const PrimitivePtr &prim);
   FuncGraphPtr FakeBprop(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
   FuncGraphPtr BpropCut(const ValueNodePtr &value_node, const pipeline::ResourceBasePtr &resources);
