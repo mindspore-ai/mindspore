@@ -44,11 +44,11 @@ TEST_F(TestDE, TestResNetPreprocess) {
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define transform operations
-  auto decode(new vision::Decode());
-  auto resize(new vision::Resize({224, 224}));
-  auto normalize(
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize(new vision::Resize({224, 224}));
+  std::shared_ptr<TensorTransform> normalize(
     new vision::Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}));
-  auto hwc2chw(new vision::HWC2CHW());
+  std::shared_ptr<TensorTransform> hwc2chw(new vision::HWC2CHW());
 
   mindspore::dataset::Execute Transform({decode, resize, normalize, hwc2chw});
 
@@ -73,7 +73,7 @@ TEST_F(TestDE, TestDvpp) {
   // Define dvpp transform
   std::vector<uint32_t> crop_paras = {224, 224};
   std::vector<uint32_t> resize_paras = {256, 256};
-  auto decode_resize_crop(new vision::DvppDecodeResizeCropJpeg(crop_paras, resize_paras));
+  std::shared_ptr<TensorTransform> decode_resize_crop(new vision::DvppDecodeResizeCropJpeg(crop_paras, resize_paras));
   mindspore::dataset::Execute Transform(decode_resize_crop, MapTargetDevice::kAscend310);
 
   // Apply transform on images
@@ -92,7 +92,7 @@ TEST_F(TestDE, TestDvpp) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
-  /* Use in the future
+  /* TODO Use in the future after compute college finish their job
   ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
   ASSERT_EQ(image.Shape()[1], real_w);
   ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
@@ -117,8 +117,8 @@ TEST_F(TestDE, TestDvppSinkMode) {
   std::shared_ptr<TensorTransform> decode(new vision::Decode());
   std::shared_ptr<TensorTransform> resize(new vision::Resize(resize_paras));
   std::shared_ptr<TensorTransform> centercrop(new vision::CenterCrop(crop_paras));
-  std::vector<std::shared_ptr<TensorTransform>> transforms = {decode, resize, centercrop};
-  mindspore::dataset::Execute Transform(transforms, MapTargetDevice::kAscend310);
+  std::vector<std::shared_ptr<TensorTransform>> trans_list = {decode, resize, centercrop};
+  mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310);
 
   // Apply transform on images
   Status rc = Transform(image, &image);
@@ -155,12 +155,14 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
   std::vector<int32_t> resize_paras = {512};
   std::vector<float> mean = {0.485 * 255, 0.456 * 255, 0.406 * 255};
   std::vector<float> std = {0.229 * 255, 0.224 * 255, 0.225 * 255};
-  auto decode(new vision::Decode());
-  auto resize(new vision::Resize(resize_paras));
-  auto centercrop(new vision::CenterCrop(crop_paras));
-  auto normalize(new vision::Normalize(mean, std));
-  std::vector<TensorTransform *> trans_lists = {decode, resize, centercrop, normalize};
-  mindspore::dataset::Execute Transform(trans_lists, MapTargetDevice::kAscend310);
+
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize(new vision::Resize(resize_paras));
+  std::shared_ptr<TensorTransform> centercrop(new vision::CenterCrop(crop_paras));
+  std::shared_ptr<TensorTransform> normalize(new vision::Normalize(mean, std));
+
+  std::vector<std::shared_ptr<TensorTransform>> trans_list = {decode, resize, centercrop, normalize};
+  mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310);
 
   std::string aipp_cfg = Transform.AippCfgGenerator();
   ASSERT_EQ(aipp_cfg, "./aipp.cfg");
