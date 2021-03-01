@@ -257,6 +257,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/mindir_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/onnx_inputs_adjust_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/onnx_pad_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/functionalize_control_op_pass.cc
