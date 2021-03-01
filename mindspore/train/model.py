@@ -430,6 +430,7 @@ class Model:
             train_dataset.__total_batch__ = epoch * sink_size
 
         cb_params.cur_step_num = 0
+        cb_params.dataset_sink_mode = True
 
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
@@ -497,11 +498,11 @@ class Model:
                                                   dataset_sink_mode=False,
                                                   epoch_num=epoch)
         cb_params.cur_step_num = 0
+        cb_params.dataset_sink_mode = False
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
         # used to stop training for early stop, such as stopAtTIme or stopATStep
         should_stop = False
-
         for i in range(epoch):
             cb_params.cur_epoch_num = i + 1
 
@@ -623,8 +624,8 @@ class Model:
                                                              dataset_sink_mode=True)
         self._eval_network = eval_network
         cb_params.eval_network = self._eval_network
+        cb_params.dataset_sink_mode = True
         list_callback.begin(run_context)
-
         for inputs in dataset_helper:
             cb_params.cur_step_num += 1
             list_callback.step_begin(run_context)
@@ -654,8 +655,8 @@ class Model:
             Dict, which returns the loss value and metrics values for the model in the test mode.
         """
         run_context = RunContext(cb_params)
+        cb_params.dataset_sink_mode = False
         list_callback.begin(run_context)
-
         dataset_helper, _ = self._exec_preprocess(self._eval_network,
                                                   is_train=False,
                                                   phase='eval',
