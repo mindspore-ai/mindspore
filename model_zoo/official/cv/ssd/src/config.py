@@ -17,13 +17,14 @@
 
 from .config_ssd300 import config as config_ssd300
 from .config_ssd_mobilenet_v1_fpn import config as config_ssd_mobilenet_v1_fpn
-
+from .config_ssd_resnet50_fpn import config as config_ssd_resnet50_fpn
 
 using_model = "ssd300"
 
 config_map = {
     "ssd300": config_ssd300,
-    "ssd_mobilenet_v1_fpn": config_ssd_mobilenet_v1_fpn
+    "ssd_mobilenet_v1_fpn": config_ssd_mobilenet_v1_fpn,
+    "ssd_resnet50_fpn": config_ssd_resnet50_fpn
 }
 
 config = config_map[using_model]
