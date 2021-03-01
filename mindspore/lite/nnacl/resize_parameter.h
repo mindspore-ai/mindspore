@@ -24,6 +24,7 @@ typedef struct ResizeParameter {
   int64_t new_height_;
   int64_t new_width_;
   int coordinate_transform_mode_;
+  float cubic_coeff_;
   bool preserve_aspect_ratio_;
 } ResizeParameter;
 

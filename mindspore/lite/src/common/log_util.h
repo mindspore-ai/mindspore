@@ -28,4 +28,12 @@
     }                                                            \
   } while (0)
 
+#define CHECK_MALLOC_RES(ptr, errcode)        \
+  do {                                        \
+    if ((ptr) == nullptr) {                   \
+      MS_LOG(ERROR) << "malloc data failed."; \
+      return errcode;                         \
+    }                                         \
+  } while (0);
+
 #endif  // MINDSPORE_LITE_SRC_COMMON_LOG_UTIL_H_

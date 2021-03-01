@@ -35,6 +35,7 @@ OpParameter *PopulateResizeParameter(const void *prim) {
   resize_param->new_width_ = value->new_width();
   resize_param->coordinate_transform_mode_ = value->coordinate_transform_mode();
   resize_param->preserve_aspect_ratio_ = value->preserve_aspect_ratio();
+  resize_param->cubic_coeff_ = value->cubic_coeff();
   return reinterpret_cast<OpParameter *>(resize_param);
 }
 

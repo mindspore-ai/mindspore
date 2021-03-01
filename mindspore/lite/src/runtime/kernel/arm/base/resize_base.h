@@ -30,7 +30,7 @@ class ResizeBaseCPUKernel : public LiteKernel {
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
 
-  virtual ~ResizeBaseCPUKernel() = default;
+  ~ResizeBaseCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override { return 0; };

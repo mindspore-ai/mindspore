@@ -21,6 +21,7 @@
 #include <memory>
 #include <utility>
 #include "src/common/utils.h"
+#include "src/common/log_util.h"
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
 #endif
