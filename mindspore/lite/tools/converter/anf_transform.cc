@@ -45,6 +45,7 @@
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
 #include "tools/optimizer/graph/tflite_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
+#include "tools/optimizer/graph/onnx_pad_adjust_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include "tools/optimizer/graph/unused_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
@@ -218,6 +219,12 @@ int AnfTransform::RunOnnxAdjustPass(const FuncGraphPtr &old_graph, const convert
   auto onnx_adjust_pass = std::make_shared<opt::OnnxInputAdjustOpPass>();
   if (!onnx_adjust_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "onnx adjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
+  auto onnx_pad_adjust_pass = std::make_shared<opt::OnnxPadAdjustPass>();
+  if (!onnx_pad_adjust_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "onnx pad adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace opt {
 static size_t count = 0;
-constexpr size_t kMaxRepassTimes = 9;
+constexpr size_t kMaxRepassTimes = 12;
 const std::vector<PassPtr> &PassManager::Passes() const { return passes_; }
 
 void PassManager::AddPass(const PassPtr &pass) {
