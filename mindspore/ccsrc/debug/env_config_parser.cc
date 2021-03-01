@@ -104,6 +104,8 @@ void EnvConfigParser::ParseRdrSetting(const nlohmann::json &content) {
     return;
   }
 
+  has_rdr_setting_ = true;
+
   auto rdr_enable = CheckJsonKeyExist(*rdr_setting, kRdrSettings, kEnable);
   if (rdr_enable.has_value()) {
     ParseRdrEnable(**rdr_enable);

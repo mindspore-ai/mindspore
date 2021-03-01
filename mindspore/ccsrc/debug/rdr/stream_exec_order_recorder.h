@@ -98,7 +98,6 @@ class StreamExecOrderRecorder : public BaseRecorder {
       exec_order_.push_back(std::move(exec_node_ptr));
     }
   }
-  void SetModule(const std::string &module) { module_ = module; }
   virtual void Export();
 
  private:

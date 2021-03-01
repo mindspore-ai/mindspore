@@ -31,9 +31,12 @@ class RecorderManager {
  public:
   static RecorderManager &Instance() {
     static RecorderManager manager;
+    manager.UpdateRdrEnable();
     return manager;
   }
 
+  void UpdateRdrEnable();
+  bool RdrEnable() const { return rdr_enable_; }
   bool RecordObject(const BaseRecorderPtr &recorder);
   void TriggerAll();
   void ClearAll();
@@ -41,6 +44,8 @@ class RecorderManager {
  private:
   RecorderManager() {}
   ~RecorderManager() {}
+
+  bool rdr_enable_{false};
 
   mutable std::mutex mtx_;
   // module, BaserRecorderPtrList

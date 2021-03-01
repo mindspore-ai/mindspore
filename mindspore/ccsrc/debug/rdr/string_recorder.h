@@ -26,14 +26,14 @@ class StringRecorder : public BaseRecorder {
   StringRecorder() : BaseRecorder() {}
   StringRecorder(const std::string &module, const std::string &tag, const std::string &data,
                  const std::string &filename)
-      : BaseRecorder(module, tag), data_(data), filename_(filename) {}
+      : BaseRecorder(module, tag), data_(data) {
+    SetFilename(filename);
+  }
   ~StringRecorder() {}
-  void SetModule(const std::string &module) { module_ = module; }
   virtual void Export();
 
  private:
   std::string data_;
-  std::string filename_;
 };
 using StringRecorderPtr = std::shared_ptr<StringRecorder>;
 }  // namespace mindspore

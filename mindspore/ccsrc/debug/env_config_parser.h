@@ -27,11 +27,14 @@ class EnvConfigParser {
  public:
   static EnvConfigParser &GetInstance() {
     static EnvConfigParser instance;
+    instance.Parse();
     return instance;
   }
 
   void Parse();
+  std::string config_path() const { return config_file_; }
 
+  bool has_rdr_setting() const { return has_rdr_setting_; }
   bool rdr_enabled() const { return rdr_enabled_; }
   std::string rdr_path() const { return rdr_path_; }
 
@@ -42,7 +45,9 @@ class EnvConfigParser {
   std::mutex lock_;
   std::string config_file_{""};
   bool already_parsed_{false};
+
   bool rdr_enabled_{false};
+  bool has_rdr_setting_{false};
   std::string rdr_path_{"./rdr/"};
 
   std::string GetIfstreamString(const std::ifstream &ifstream);

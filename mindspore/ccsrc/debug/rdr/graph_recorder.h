@@ -31,7 +31,6 @@ class GraphRecorder : public BaseRecorder {
                 const std::string &file_type)
       : BaseRecorder(module, tag), func_graph_(graph), graph_type_(file_type) {}
   ~GraphRecorder() {}
-  void SetModule(const std::string &module) { module_ = module; }
   void SetGraphType(const std::string &file_type) { graph_type_ = file_type; }
   void SetFuncGraph(const FuncGraphPtr &func_graph) { func_graph_ = func_graph; }
   void SetDumpFlag(bool full_name) { full_name_ = full_name; }

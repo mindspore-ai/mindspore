@@ -30,7 +30,6 @@ class GraphExecOrderRecorder : public BaseRecorder {
   GraphExecOrderRecorder(const std::string &module, const std::string &tag,
                          const std::vector<CNodePtr> &final_exec_order, int graph_id)
       : BaseRecorder(module, tag), exec_order_(final_exec_order), graph_id_(graph_id) {}
-  void SetModule(const std::string &module) { module_ = module; }
   void SetExecOrder(const std::vector<CNodePtr> &final_exec_order) { exec_order_ = final_exec_order; }
   virtual void Export();
 

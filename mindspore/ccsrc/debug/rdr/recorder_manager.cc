@@ -21,7 +21,35 @@
 #include "mindspore/core/ir/func_graph.h"
 
 namespace mindspore {
+
+void RecorderManager::UpdateRdrEnable() {
+  static bool updated = false;
+  if (updated) {
+    return;
+  }
+  auto &config_parser = mindspore::EnvConfigParser::GetInstance();
+  rdr_enable_ = config_parser.rdr_enabled();
+  if (config_parser.has_rdr_setting()) {
+#ifdef __linux__
+    if (!rdr_enable_) {
+      MS_LOG(WARNING) << "Please set the 'enable' as true using 'rdr' setting in file '" << config_parser.config_path()
+                      << "' if you want to use RDR.";
+    }
+#else
+    if (rdr_enable_) {
+      MS_LOG(WARNING) << "The RDR only supports linux os currently.";
+    }
+    rdr_enable_ = false;
+#endif
+  }
+  updated = true;
+}
+
 bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
+  if (!rdr_enable_) {
+    return false;
+  }
+
   if (recorder == nullptr) {
     MS_LOG(ERROR) << "register recorder module with nullptr.";
     return false;
@@ -33,10 +61,7 @@ bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
 }
 
 void RecorderManager::TriggerAll() {
-  auto &config_parser_ptr = mindspore::EnvConfigParser::GetInstance();
-  config_parser_ptr.Parse();
-  if (!config_parser_ptr.rdr_enabled()) {
-    MS_LOG(INFO) << "RDR is not enable.";
+  if (!rdr_enable_) {
     return;
   }
 
