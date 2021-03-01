@@ -76,8 +76,8 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -239,7 +239,8 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess2) {
 
   // num_shards=4, shard_id=0, shuffle=false, num_samplers=0, seed=0, offset=-1, even_dist=true
   Sampler *sampler = new DistributedSampler(4, 0, false, 0, 0, -1, true);
-  EXPECT_NE(sampler, nullptr);
+  // Note that with new, we have to explicitly delete the allocated object as shown below.
+  // Note: No need to check for output after calling API class constructor
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -261,6 +262,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess2) {
 
   EXPECT_EQ(i, 11);
   iter->Stop();
+
+  // Delete allocated objects with raw pointers
+  delete sampler;
 }
 
 TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess3) {
@@ -318,7 +322,8 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerFail2) {
   // num_shards=4, shard_id=0, shuffle=false, num_samplers=0, seed=0, offset=5, even_dist=true
   // offset=5 which is greater than num_shards=4 --> will fail later
   Sampler *sampler = new DistributedSampler(4, 0, false, 0, 0, 5, false);
-  EXPECT_NE(sampler, nullptr);
+  // Note that with new, we have to explicitly delete the allocated object as shown below.
+  // Note: No need to check for output after calling API class constructor
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -328,6 +333,9 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerFail2) {
   // Iterate will fail because sampler is not initiated successfully.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
+
+  // Delete allocated objects with raw pointers
+  delete sampler;
 }
 
 TEST_F(MindDataTestPipeline, TestDistributedSamplerFail3) {

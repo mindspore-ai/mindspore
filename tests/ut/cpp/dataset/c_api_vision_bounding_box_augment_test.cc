@@ -30,7 +30,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess1Shr) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess1Shr.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -54,8 +55,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess1Shr) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -68,11 +69,13 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess2Auto) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess2Auto.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   // Use auto for raw pointers
+  // Note that with auto and new, we have to explicitly delete the allocated object as shown below.
   auto random_rotation_op(new vision::RandomRotation({90.0}));
   auto bound_box_augment_op(new vision::BoundingBoxAugment({random_rotation_op}, 1.0));
 
@@ -92,21 +95,26 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess2Auto) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
   EXPECT_EQ(i, 3);
   // Manually terminate the pipeline
   iter->Stop();
+
+  // Delete allocated objects with raw pointers
+  delete random_rotation_op;
+  delete bound_box_augment_op;
 }
 
 TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess3Obj) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBoundingBoxAugmentSuccess3Obj.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -130,8 +138,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentSuccess3Obj) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -145,7 +153,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail1) {
 
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -169,7 +178,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail2) {
 
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -193,7 +203,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail3) {
 
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create BoundingBoxAugment op with invalid nullptr transform
@@ -214,7 +225,8 @@ TEST_F(MindDataTestPipeline, TestBoundingBoxAugmentFail4) {
 
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops

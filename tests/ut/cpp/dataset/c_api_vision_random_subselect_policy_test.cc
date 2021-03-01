@@ -66,8 +66,8 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess1Shr) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -87,6 +87,7 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess2Auto) {
 
   // Create objects for the tensor ops
   // Use auto for raw pointers
+  // Note that with auto and new, we have to explicitly delete the allocated object as shown below.
   // Valid case: TensorTransform is not null and probability is between (0,1)
   auto invert_op(new vision::Invert());
   auto equalize_op(new vision::Equalize());
@@ -118,8 +119,8 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess2Auto) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -127,6 +128,12 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess2Auto) {
 
   // Manually terminate the pipeline
   iter->Stop();
+
+  // Delete allocated objects with raw pointers
+  delete invert_op;
+  delete equalize_op;
+  delete resize_op;
+  delete random_select_subpolicy_op;
 }
 
 TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess3Obj) {
@@ -169,8 +176,8 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess3Obj) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -221,8 +228,8 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicySuccess4MultiPolicy) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
