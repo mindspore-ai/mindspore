@@ -86,6 +86,7 @@ const char FUNC_GRAPH_FLAG_SPECIALIZE_PARAMETER[] = "spec_param";
 const char kFuncGraphFlagUndetermined[] = "Undeterminate";
 const char kFuncGraphFlagBackPropEntry[] = "BackPropEntry";
 const char kFuncGraphFlagReAutoMonad[] = "ReAutoMonad";
+const char kFuncGraphFlagRecursive[] = "Recursive";
 
 namespace abstract {
 class AbstractKeywordArg;

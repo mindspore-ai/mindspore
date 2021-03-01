@@ -398,6 +398,8 @@ constexpr auto kAttrNeedCseAfterRecompute = "need_cse_after_recompute";
 constexpr auto kAttrParallelDimInfo = "parallel_dim_info";
 constexpr auto kAttrStitch = "stitch";
 constexpr auto kAttrTopoSortRhsFirst = "topo_sort_rhs_first";
+constexpr auto kAttrSwitchLayer = "switch_layer";
+constexpr auto kAttrReturn = "return";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
