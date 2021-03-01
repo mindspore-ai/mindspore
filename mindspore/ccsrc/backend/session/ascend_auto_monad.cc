@@ -270,8 +270,9 @@ class AscendAutoMonadConverter {
         MS_LOG(EXCEPTION) << "Invalid CNode: " << cnode->DebugString() << std::endl;
       }
       if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimCall) ||
-          AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
-        // Found call/switch node, set it as the tail call node.
+          AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch) ||
+          AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer)) {
+        // Found call/switch/switchlayer node, set it as the tail call node.
         tail_call_node_ = cnode;
         call_switch_nodes_.emplace_back(cnode);
         monad_map_.emplace(cnode, last_monad);
@@ -292,8 +293,10 @@ class AscendAutoMonadConverter {
         HandleCall(cnode);
       } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitch)) {
         HandleSwitch(cnode);
+      } else if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimSwitchLayer)) {
+        HandleSwitchLayer(cnode);
       } else {
-        MS_LOG(EXCEPTION) << "Not a call/switch node: " << cnode->DebugString();
+        MS_LOG(EXCEPTION) << "Not a call/switch/switchlayer node: " << cnode->DebugString();
       }
     }
     // If no tail call, assign output value to output parameter,
@@ -413,6 +416,60 @@ class AscendAutoMonadConverter {
     }
   }
 
+  //
+  // Convert switch node:
+  //     branch1 = Partial(graph1, arg)
+  //     branch2 = Partial(graph2, arg)
+  //     out = SwitchLayer(index, branch1, branch2)
+  // to:
+  //     r = link_args(graph1, arg)
+  //     c = UpdateState(c, r)
+  //     r = link_args(graph2, arg)
+  //     c = UpdateState(c, r)
+  //     c = LabelSwitch(index, c) : L1, L2
+  //     c = LabelSet(c) : <return label>
+  //
+  void HandleSwitchLayer(const CNodePtr &cnode) {
+    // Update last_monad_.
+    last_monad_ = monad_map_[cnode];
+
+    // Get both branches of the switch, true branch first.
+    auto branches = GetSwitchBranches(cnode);
+
+    // Link arguments and generate labels for branches.
+    std::vector<KernelGraphPtr> graphes;
+    std::vector<uint32_t> labels;
+    graphes.reserve(branches.size());
+    labels.reserve(graphes.size());
+    for (auto &[graph, args] : branches) {
+      if (graph == nullptr) {
+        MS_LOG(EXCEPTION) << "Invalid switch: " << cnode->DebugString();
+      }
+      auto linked_args = LinkArguments(args, graph);
+      if (linked_args != nullptr) {
+        monad_ = UpdateState(GetMonad(), linked_args);
+      }
+      graphes.push_back(graph);
+      labels.push_back(GetOrCreateGraphLabel(graph));
+    }
+
+    // Add LabelSwith node.
+    auto switch_node = LabelSwitch(cnode->input(1), labels);
+
+    // Set child graph attribute for switch node.
+    SetChildGrapAttr(switch_node, graphes);
+
+    // Setup return label if required.
+    const bool is_tail_call = (cnode == tail_call_node_);
+    const bool need_return = (return_label_ == kNoLabel || !is_tail_call);
+    auto [para_pool, output_para, return_label] = MakeReturn(cnode, need_return);
+
+    // Handle sub-graphs recursively.
+    for (auto &graph : graphes) {
+      HandleSubGraph(graph, para_pool, output_para, return_label);
+    }
+  }
+
   ParameterPoolPtr GetParameterPool(bool is_last_call) {
     if (!is_last_call) {
       // There are multiple calls in this graph, use a new parameter pool
@@ -483,10 +540,13 @@ class AscendAutoMonadConverter {
   }
 
   std::vector<GraphArgPair> GetSwitchBranches(const CNodePtr &cnode) {
-    constexpr size_t true_index = 2;
-    constexpr size_t false_index = 3;
-    // True branch first, then false branch.
-    return {GetSwitchBranch(cnode, true_index), GetSwitchBranch(cnode, false_index)};
+    constexpr size_t cond_start_index = 2;
+    // switch branches
+    std::vector<GraphArgPair> switch_branches;
+    for (size_t index = cond_start_index; index < cnode->inputs().size(); ++index) {
+      switch_branches.emplace_back(GetSwitchBranch(cnode, index));
+    }
+    return switch_branches;
   }
 
   //
