@@ -1801,10 +1801,9 @@ class MaxPoolWithArgmax(_Pool):
            [33. 34. 35.]]]]
     """
 
+    @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         super(MaxPoolWithArgmax, self).__init__(kernel_size, strides, pad_mode, data_format)
-        self.is_tbe = context.get_context("device_target") == "Ascend"
-        self.is_gpu = context.get_context("device_target") == "GPU"
 
     def infer_shape(self, x_shape):
         out_shape = _Pool.infer_shape(self, x_shape)
@@ -1887,14 +1886,6 @@ class AvgPool(_Pool):
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
-        if context.get_context("device_target") == "GPU":
-            self.target = "GPU"
-        elif context.get_context("device_target") == "CPU":
-            self.target = "CPU"
-        elif context.get_context("enable_ge"):
-            self.target = "GE"
-        else:
-            self.target = "OTHER"
         super(AvgPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 

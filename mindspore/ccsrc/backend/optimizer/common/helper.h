@@ -168,6 +168,9 @@ void RemoveNopNode(session::KernelGraph *const graph);
 
 CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx);
 
+ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &shape,
+                                  bool to_tensor = false);
+
 bool IsUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node);
 
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedList(const FuncGraphPtr &graph,

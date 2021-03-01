@@ -892,23 +892,6 @@ class _PoolGrad(PrimitiveWithInfer):
         self.add_prim_attr("strides", self.strides)
 
 
-class AvgPoolGrad(_PoolGrad):
-    """Gradients of the avg pool operation for ge."""
-
-    @prim_attr_register
-    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
-        super(AvgPoolGrad, self).__init__(kernel_size, strides, pad_mode)
-
-    def __infer__(self, origin_input, dout):
-        out = {
-            'value': None,
-            'shape': tuple(origin_input['value']),
-            'dtype': dout['dtype'],
-        }
-
-        return out
-
-
 class AvgPoolGradVm(_PoolGrad):
     """Gradients of the avg pool operation for vm."""
 
@@ -927,26 +910,12 @@ class AvgPoolGradVm(_PoolGrad):
         return out
 
 
-class AvgPoolGradGpu(_PoolGrad):
-    """Gradients of the avg pool operation for gpu."""
+class AvgPoolGrad(_PoolGrad):
+    """Gradients of the avg pool operation."""
 
     @prim_attr_register
     def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
-        super(AvgPoolGradGpu, self).__init__(kernel_size, strides, pad_mode, data_format)
-
-    def infer_shape(self, x1_shape, x2_shape, grad_shape):
-        return x1_shape
-
-    def infer_dtype(self, x1_dtype, x2_dtype, grad_dtype):
-        return x1_dtype
-
-
-class AvgPoolGradCpu(_PoolGrad):
-    """Gradients of the avg pool operation for cpu."""
-
-    @prim_attr_register
-    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
-        super(AvgPoolGradCpu, self).__init__(kernel_size, strides, pad_mode, data_format)
+        super(AvgPoolGrad, self).__init__(kernel_size, strides, pad_mode, data_format)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape

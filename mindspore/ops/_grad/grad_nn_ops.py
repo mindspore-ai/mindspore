@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 
 """Define the grad rules of neural network related operations."""
 import os
-import numpy as np
 from mindspore.ops import _selected_grad_ops as SG
 from mindspore.ops.primitive import constexpr
 from mindspore.common.tensor import Tensor
@@ -250,149 +249,20 @@ def get_bprop_max_pool_grad(self):
     return bprop
 
 
-def _windowed_output_size(input_size, ksize, stride, pad_mode):
-    """
-    helper func for AvgPoolGrad
-    """
-
-    tmp_output = 0
-    tmp_pad_need = 0
-    tmp_pad_before = 0
-    tmp_pad_after = 0
-    if pad_mode == 'VALID':
-        tmp_output = (input_size - ksize + stride) // stride
-        tmp_pad_before = 0
-        tmp_pad_after = 0
-    elif pad_mode == 'SAME':
-        tmp_output = (input_size + stride - 1) // stride
-        tmp_pad_need = max(0, (tmp_output - 1) * stride + ksize - input_size)
-        tmp_pad_before = tmp_pad_need // 2
-        tmp_pad_after = tmp_pad_need - tmp_pad_before
-    return tmp_output, tmp_pad_before, tmp_pad_after
-
-
-@constexpr
-def _get_mean_matrix(x_shape, ksize, stride, pad_mode, x_dtype):
-    """
-    helper func for AvgPoolGrad.
-
-    `assist_input_matrix` is a 2d matrix with input_shape after padding,
-    the value of element which is padded is 0, else are 1.
-    For each element of output, it is mapped for slide window: `[h*h_stride : h*h_stride + h_ksize,
-    w*w_stride : w*w_stride + w_ksize]` of `assist_input_matrix`, so the sum of slide window is the
-    number of input that associate with output element.
-    """
-
-    n_input, c_input, h_input, w_input = x_shape
-    h_ksize, w_ksize = ksize[2], ksize[3]
-    h_stride, w_stride = stride[2], stride[3]
-    n_output = n_input
-    c_output = c_input
-    h_output, w_output = 0, 0
-    pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
-    h_output, pad_top, pad_bottom = _windowed_output_size(h_input, h_ksize,
-                                                          h_stride, pad_mode)
-    w_output, pad_left, pad_right = _windowed_output_size(w_input, w_ksize,
-                                                          w_stride, pad_mode)
-
-    output_size = n_output * c_output * h_output * w_output
-    output_shape = (n_output, c_output, h_output, w_output)
-    output = np.array([0.0] * output_size)
-    output = np.reshape(output, output_shape)
-
-    in_shape_after_padding_2d = (h_input + pad_top + pad_bottom, w_input + pad_left + pad_right)
-    assist_input_matrix = np.ones(in_shape_after_padding_2d).astype(np.float32)
-    if pad_top > 0:
-        assist_input_matrix[:pad_top, :] = 0
-    if pad_bottom > 0:
-        assist_input_matrix[-pad_bottom:, :] = 0
-    if pad_left > 0:
-        assist_input_matrix[:, :pad_left] = 0
-    if pad_right > 0:
-        assist_input_matrix[:, -pad_right:] = 0
-
-    for h in range(h_output):
-        for w in range(w_output):
-            curr_input = assist_input_matrix[h * h_stride: h * h_stride + h_ksize, w * w_stride: w * w_stride + w_ksize]
-            curr_sum = np.sum(curr_input)
-            if curr_sum > 0:
-                output[:, :, h, w] = 1. / curr_sum
-    return Tensor(output, x_dtype)
-
-
-@constexpr
-def _get_kernel_matrix(x_shape_nchw, kernel_matrix_shape, pad_mode, x_dtype):
-    kernel_matrix = np.ones(kernel_matrix_shape)
-    return Tensor(kernel_matrix, x_dtype)
-
-
 @bprop_getters.register(P.AvgPool)
 def get_bprop_avg_pool_grad(self):
     """Grad definition for `AvgPool` operation."""
+    avgpool_grad = G.AvgPoolGrad(
+        kernel_size=self.kernel_size,
+        strides=self.strides,
+        pad_mode=self.pad_mode,
+        data_format=self.format)
 
-    # the parameter of AvgPoolGrad in GPU and TBE/CPU is not same
-    if self.target == "GPU":
-        avgpool_grad_gpu = G.AvgPoolGradGpu(
-            kernel_size=self.kernel_size,
-            strides=self.strides,
-            pad_mode=self.pad_mode,
-            data_format=self.format)
+    def bprop(x, out, dout):
+        dx = avgpool_grad(x, out, dout)
+        return (dx,)
 
-        def bprop_gpu(x, out, dout):
-            dx = avgpool_grad_gpu(x, out, dout)
-            return (dx,)
-
-        bprop_fn = bprop_gpu
-
-    elif self.target == "CPU":
-        avgpool_grad_cpu = G.AvgPoolGradCpu(
-            kernel_size=self.kernel_size,
-            strides=self.strides,
-            pad_mode=self.pad_mode,
-            data_format=self.format)
-
-        def bprop_cpu(x, out, dout):
-            dx = avgpool_grad_cpu(x, out, dout)
-            return (dx,)
-
-        bprop_fn = bprop_cpu
-
-    elif self.target == "GE":
-        avgpool_grad_ge = G.AvgPoolGrad(
-            kernel_size=self.kernel_size,
-            strides=self.strides,
-            pad_mode=self.pad_mode)
-        shape_op = P.Shape()
-
-        def bprop_ge(x, out, dout):
-            dx = avgpool_grad_ge(shape_op(x), dout)
-            return (dx,)
-
-        bprop_fn = bprop_ge
-
-    else:
-        avgpool_grad_vm = G.AvgPoolGradVm(
-            kernel_size=self.kernel_size,
-            strides=self.strides,
-            pad_mode=self.pad_mode)
-        k_size_nchw = avgpool_grad_vm.kernel_size
-        stride_nchw = avgpool_grad_vm.strides
-        pad_mode = self.pad_mode
-
-        def bprop_vm(x, out, dout):
-            x_shape_nchw = F.shape(x)
-            x_dtype = F.dtype(x)
-            kernel_matrix_shape = (1, x_shape_nchw[1],
-                                   k_size_nchw[2],
-                                   k_size_nchw[3])
-            mean_matrix = _get_mean_matrix(x_shape_nchw, k_size_nchw, stride_nchw, pad_mode, x_dtype)
-            kernel_matrix = _get_kernel_matrix(x_shape_nchw, kernel_matrix_shape, pad_mode, x_dtype)
-            dx = avgpool_grad_vm(x_shape_nchw, dout, mean_matrix, kernel_matrix)
-            return (dx,)
-
-        bprop_fn = bprop_vm
-
-    return bprop_fn
+    return bprop
 
 
 @bprop_getters.register(P.DropoutGenMask)
