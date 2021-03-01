@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
-#include "minddata/dataset/include/samplers.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore::dataset {

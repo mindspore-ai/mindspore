@@ -20,11 +20,12 @@
 #include <memory>
 #include <vector>
 
-// FIXME - This internal IR header will be removed when external API classes are provided
-#include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
-
 namespace mindspore {
 namespace dataset {
+
+// Forward declare
+class SamplerObj;
+
 // Abstract class to represent a sampler in the data pipeline.
 /// \class Sampler samplers.h
 /// \brief An abstract base class to represent a sampler in the data pipeline.

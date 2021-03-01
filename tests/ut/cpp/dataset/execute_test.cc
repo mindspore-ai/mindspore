@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <fstream>
 #include "common/common.h"
 #include "common/cvop_common.h"
+#include "include/api/types.h"
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/include/transforms.h"
@@ -33,12 +35,37 @@ class MindDataTestExecute : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
+mindspore::MSTensor ReadFileToTensor(const std::string &file) {
+  if (file.empty()) {
+    MS_LOG(ERROR) << "Pointer file is nullptr, return an empty Tensor.";
+    return mindspore::MSTensor();
+  }
+  std::ifstream ifs(file);
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "File: " << file << " does not exist, return an empty Tensor.";
+    return mindspore::MSTensor();
+  }
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "File: " << file << "open failed, return an empty Tensor.";
+    return mindspore::MSTensor();
+  }
+
+  ifs.seekg(0, std::ios::end);
+  size_t size = ifs.tellg();
+  mindspore::MSTensor buf("file", mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
+
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(reinterpret_cast<char *>(buf.MutableData()), size);
+  ifs.close();
+
+  return buf;
+}
+
 TEST_F(MindDataTestExecute, TestComposeTransforms) {
   MS_LOG(INFO) << "Doing TestComposeTransforms.";
 
-  std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
-  auto image = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
 
   // Transform params
   std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
@@ -59,9 +86,7 @@ TEST_F(MindDataTestExecute, TestTransformInput1) {
   // instantiated via mix of make_shared and new
 
   // Read images
-  std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
-  auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
 
   // Define transform operations
   std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
@@ -88,7 +113,7 @@ TEST_F(MindDataTestExecute, TestTransformInput2) {
   // Test Execute with transform op input using API constructors, with std::shared_ptr<TensorTransform pointers,
   // instantiated via new
 
-  // Read images
+  // Read image, construct MSTensor from dataset tensor
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
   mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
@@ -117,30 +142,30 @@ TEST_F(MindDataTestExecute, TestTransformInput3) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInput3.";
   // Test Execute with transform op input using API constructors, with auto pointers
 
-  // Read image
+  // Read image, construct MSTensor from dataset tensor
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
   mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define transform operations
-  auto decode(new vision::Decode()); // auto will create raw pointer to Decode class
-  auto resize(new vision::Resize({224, 224}));
-  auto normalize(
-    new vision::Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}));
-  auto hwc2chw(new vision::HWC2CHW());
+  auto decode = vision::Decode();
+  mindspore::dataset::Execute Transform1(decode);
 
-  std::vector<TensorTransform *> op_list = {decode, resize, normalize, hwc2chw};
-  mindspore::dataset::Execute Transform(op_list);
+  auto resize = vision::Resize({224, 224});
+  mindspore::dataset::Execute Transform2(resize);
 
   // Apply transform on image
-  Status rc = Transform(image, &image);
+  Status rc;
+  rc = Transform1(image, &image);
+  ASSERT_TRUE(rc.IsOk());
+  rc = Transform2(image, &image);
+  ASSERT_TRUE(rc.IsOk());
 
   // Check image info
-  ASSERT_TRUE(rc.IsOk());
   ASSERT_EQ(image.Shape().size(), 3);
-  ASSERT_EQ(image.Shape()[0], 3);
+  ASSERT_EQ(image.Shape()[0], 224);
   ASSERT_EQ(image.Shape()[1], 224);
-  ASSERT_EQ(image.Shape()[2], 224);
+  ASSERT_EQ(image.Shape()[2], 3);
 }
 
 TEST_F(MindDataTestExecute, TestTransformInputSequential) {
@@ -148,28 +173,26 @@ TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   // Test Execute with transform op input using API constructors, with auto pointers;
   // Apply 2 transformations sequentially, including single non-vector Transform op input
 
-  // Read images
+  // Read image, construct MSTensor from dataset tensor
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
   mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define transform#1 operations
-  auto decode(new vision::Decode());  // auto will create raw pointer to Decode class
-  auto resize(new vision::Resize({224, 224}));
-  auto normalize(
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize(new vision::Resize({224, 224}));
+  std::shared_ptr<TensorTransform> normalize(
     new vision::Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}));
 
-  std::vector<TensorTransform *> op_list = {decode, resize, normalize};
+  std::vector<std::shared_ptr<TensorTransform>> op_list = {decode, resize, normalize};
   mindspore::dataset::Execute Transform(op_list);
 
   // Apply transform#1 on image
   Status rc = Transform(image, &image);
 
   // Define transform#2 operations
-  auto hwc2chw(new vision::HWC2CHW());
-
-  TensorTransform *op_single = hwc2chw;
-  mindspore::dataset::Execute Transform2(op_single);
+  std::shared_ptr<TensorTransform> hwc2chw(new vision::HWC2CHW());
+  mindspore::dataset::Execute Transform2(hwc2chw);
 
   // Apply transform#2 on image
   rc = Transform2(image, &image);
@@ -186,7 +209,7 @@ TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformDecodeResizeCenterCrop1.";
   // Test Execute with Decode, Resize and CenterCrop transform ops input using API constructors, with auto pointers
 
-  // Read image
+  // Read image, construct MSTensor from dataset tensor
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
   mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
   auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
@@ -194,12 +217,12 @@ TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   // Define transform operations
   std::vector<int32_t> resize_paras = {256, 256};
   std::vector<int32_t> crop_paras = {224, 224};
-  auto decode(new vision::Decode());
-  auto resize(new vision::Resize(resize_paras));
-  auto centercrop(new vision::CenterCrop(crop_paras));
-  auto hwc2chw(new vision::HWC2CHW());
+  std::shared_ptr<TensorTransform> decode(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize(new vision::Resize(resize_paras));
+  std::shared_ptr<TensorTransform> centercrop(new vision::CenterCrop(crop_paras));
+  std::shared_ptr<TensorTransform> hwc2chw(new vision::HWC2CHW());
 
-  std::vector<TensorTransform *> op_list = {decode, resize, centercrop, hwc2chw};
+  std::vector<std::shared_ptr<TensorTransform>> op_list = {decode, resize, centercrop, hwc2chw};
   mindspore::dataset::Execute Transform(op_list, MapTargetDevice::kCpu);
 
   // Apply transform on image
