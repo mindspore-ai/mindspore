@@ -92,7 +92,8 @@ void RefreshKernelBuildInfo(const std::string &input_format, const std::string &
                             const TypeId &type_id = kTypeUnknown);
 
 CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const KernelSelectPtr &kernel_select,
-                        const bool need_padding, const std::string &op_name);
+                        const bool need_padding, const std::string &op_name,
+                        const std::vector<int64_t> &perm = std::vector<int64_t>{});
 
 CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                               const TypeId &input_type, const TypeId &output_type,
