@@ -13,7 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for Tile"""
-from mindspore._extends.graph_kernel.model import model_builder as builder
+from mindspore._extends.graph_kernel.model.op_infer import Tile as TileInfer
 from mindspore._extends.graph_kernel.model.model import DataFormat as DF
 from ._utils import Expander, ExpanderInfoValidator as VLD
 
@@ -27,8 +27,9 @@ class Tile(Expander):
         input_x = self.inputs[0]
         multiples = self.attrs['multiples']
 
-        output_shape, _, _, shape_compatible = builder.get_tile_output_shape(self.inputs[0].shape, multiples)
-        if shape_compatible:
+        tile_infer = TileInfer(self.name, self.inputs, self.attrs)
+        output_shape, _, _ = tile_infer.infer()
+        if tile_infer.broadcast_compatible:
             result = graph_builder.emit('BroadcastTo', [input_x], attrs={'shape': output_shape})
         else:
             result = graph_builder.emit('Tile', [input_x], attrs={'multiples': multiples})
