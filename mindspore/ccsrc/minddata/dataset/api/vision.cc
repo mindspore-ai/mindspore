@@ -191,6 +191,15 @@ Normalize::Normalize(std::vector<float> mean, std::vector<float> std) : mean_(me
 
 std::shared_ptr<TensorOperation> Normalize::Parse() { return std::make_shared<NormalizeOperation>(mean_, std_); }
 
+std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
+  if (env == MapTargetDevice::kAscend310) {
+#ifdef ENABLE_ACL
+    return std::make_shared<DvppNormalizeOperation>(mean_, std_);
+#endif
+  }
+  return std::make_shared<NormalizeOperation>(mean_, std_);
+}
+
 #ifndef ENABLE_ANDROID
 // NormalizePad Transform Operation.
 NormalizePad::NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype)

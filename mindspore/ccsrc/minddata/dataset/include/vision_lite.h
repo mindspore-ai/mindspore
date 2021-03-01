@@ -155,6 +155,8 @@ class Normalize : public TensorTransform {
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
+
  private:
   std::vector<float> mean_;
   std::vector<float> std_;

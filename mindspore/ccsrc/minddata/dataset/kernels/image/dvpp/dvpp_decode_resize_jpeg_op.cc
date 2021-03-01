@@ -134,5 +134,6 @@ Status DvppDecodeResizeJpegOp::SetAscendResource(const std::shared_ptr<DeviceRes
   processor_->SetResizeParas(resized_width_, resized_height_);
   return Status::OK();
 }
+
 }  // namespace dataset
 }  // namespace mindspore

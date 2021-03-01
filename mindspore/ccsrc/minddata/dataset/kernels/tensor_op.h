@@ -66,6 +66,7 @@ constexpr char kDvppDecodeResizeCropJpegOp[] = "DvppDecodeResizeCropJpegOp";
 constexpr char kDvppDecodeResizeJpegOp[] = "DvppDecodeResizeJpegOp";
 constexpr char kDvppDecodeJpegOp[] = "DvppDecodeJpegOp";
 constexpr char kDvppDecodePngOp[] = "DvppDecodePngOp";
+constexpr char kDvppNormalizeOp[] = "DvppNormalizeOp";
 constexpr char kDvppResizeJpegOp[] = "DvppResizeJpegOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kHwcToChwOp[] = "HWC2CHWOp";

@@ -26,6 +26,7 @@
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_jpeg_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_png_op.h"
+#include "minddata/dataset/kernels/image/dvpp/dvpp_normalize_op.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_resize_jpeg_op.h"
 
 namespace mindspore {
@@ -240,6 +241,53 @@ std::shared_ptr<TensorOp> DvppDecodeJpegOperation::Build() { return std::make_sh
 Status DvppDecodePngOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> DvppDecodePngOperation::Build() { return std::make_shared<DvppDecodePngOp>(); }
+
+// DvppNormalize
+DvppNormalizeOperation::DvppNormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std)
+    : mean_(mean), std_(std) {}
+
+Status DvppNormalizeOperation::ValidateParams() {
+  if (mean_.size() != 3) {
+    std::string err_msg = "DvppNormalization:: mean expecting size 3, got size: " + std::to_string(mean_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (std_.size() != 3) {
+    std::string err_msg = "DvppNormalization: std expecting size 3, got size: " + std::to_string(std_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(mean_.begin(), mean_.end()) < 0 || *max_element(mean_.begin(), mean_.end()) > 256) {
+    std::string err_msg =
+      "Normalization can take parameters in range [0, 256] according to math theory of mean and sigma, got mean "
+      "vector" +
+      std::to_string(std_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(std_.begin(), std_.end()) < 0 || *max_element(std_.begin(), std_.end()) > 256) {
+    std::string err_msg =
+      "Normalization can take parameters in range [0, 256] according to math theory of mean and sigma, got mean "
+      "vector" +
+      std::to_string(std_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> DvppNormalizeOperation::Build() {
+  std::shared_ptr<DvppNormalizeOp> tensor_op = std::make_shared<DvppNormalizeOp>(mean_, std_);
+  return tensor_op;
+}
+
+Status DvppNormalizeOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["mean"] = mean_;
+  args["std"] = std_;
+  *out_json = args;
+  return Status::OK();
+}
 
 // DvppResizeOperation
 DvppResizeJpegOperation::DvppResizeJpegOperation(const std::vector<uint32_t> &resize) : resize_(resize) {}
