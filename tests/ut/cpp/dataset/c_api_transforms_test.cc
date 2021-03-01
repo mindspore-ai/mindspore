@@ -37,8 +37,8 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  auto decode_op(new vision::Decode());
-  auto resize_op(new vision::Resize({777, 777}));
+  std::shared_ptr<TensorTransform> decode_op(new vision::Decode());
+  std::shared_ptr<TensorTransform> resize_op(new vision::Resize({777, 777}));
   transforms::Compose compose({decode_op, resize_op});
 
   // Create a Map operation on ds
@@ -493,10 +493,10 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Label shape: " << label->shape();
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Label shape: " << label.Shape();
     iter->GetNextRow(&row);
   }
 

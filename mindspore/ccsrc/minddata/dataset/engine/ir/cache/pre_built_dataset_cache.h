@@ -22,6 +22,7 @@
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 #include "minddata/dataset/engine/ir/cache/dataset_cache.h"
+#include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"
 
 namespace mindspore {
 namespace dataset {

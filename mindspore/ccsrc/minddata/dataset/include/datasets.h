@@ -45,9 +45,7 @@ class TensorRow;
 class TensorShape;
 class TreeAdapter;
 class TreeGetters;
-#ifndef ENABLE_ANDROID
 class Vocab;
-#endif
 
 class DatasetCache;
 class DatasetNode;
@@ -64,30 +62,22 @@ class BatchDataset;
 class MapDataset;
 class ProjectDataset;
 class ShuffleDataset;
-#ifndef ENABLE_ANDROID
 class BucketBatchByLengthDataset;
 class FilterDataset;
 class CSVDataset;
 class TransferDataset;
 class ConcatDataset;
 class RenameDataset;
-#endif
 
-#ifndef ENABLE_ANDROID
 class SentencePieceVocab;
 enum class SentencePieceModel;
-#endif
 
 class DSCallback;
 
 class RepeatDataset;
-
-#ifndef ENABLE_ANDROID
 class SkipDataset;
 class TakeDataset;
 class ZipDataset;
-
-#endif
 
 /// \class Dataset datasets.h
 /// \brief A base class to represent a dataset in the data pipeline.
@@ -153,7 +143,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     return CreateIteratorCharIF(VectorStringToChar(columns), num_epochs);
   }
 
-#ifndef ENABLE_ANDROID
   /// \brief Function to transfer data through a device.
   /// \notes If device is Ascend, features of data will be transferred one by one. The limitation
   ///     of data transmission per time is 256M.
@@ -186,7 +175,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   bool Save(std::string dataset_path, int32_t num_files = 1, std::string dataset_type = "mindrecord") {
     return SaveCharIF(StringToChar(dataset_path), num_files, StringToChar(dataset_type));
   }
-#endif
 
   /// \brief Function to create a BatchDataset
   /// \notes Combines batch_size number of consecutive rows into batches
@@ -198,7 +186,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \return Shared pointer to the current BatchDataset
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
-#ifndef ENABLE_ANDROID
   /// \brief Function to create a BucketBatchByLengthDataset
   /// \notes Bucket elements according to their lengths. Each bucket will be padded and batched when
   ///    they are full.
@@ -293,7 +280,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                         const std::vector<std::string> &input_columns = {}) {
     return std::make_shared<FilterDataset>(shared_from_this(), predicate, VectorStringToChar(input_columns));
   }
-#endif
 
   /// \brief Function to create a MapDataset
   /// \notes Applies each operation in operations to this dataset
@@ -396,7 +382,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     return std::make_shared<ProjectDataset>(shared_from_this(), VectorStringToChar(columns));
   }
 
-#ifndef ENABLE_ANDROID
   /// \brief Function to create a Rename Dataset
   /// \notes Renames the columns in the input dataset
   /// \param[in] input_columns List of the input columns to rename
@@ -407,7 +392,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     return std::make_shared<RenameDataset>(shared_from_this(), VectorStringToChar(input_columns),
                                            VectorStringToChar(output_columns));
   }
-#endif
   /// \brief Function to create a RepeatDataset
   /// \notes Repeats this dataset count times. Repeat indefinitely if count is -1
   /// \param[in] count Number of times the dataset should be repeated
@@ -417,7 +401,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<RepeatDataset> Repeat(int32_t count = -1) {
     return std::make_shared<RepeatDataset>(shared_from_this(), count);
   }
-#ifndef ENABLE_ANDROID
   /// \brief Function to create a Shuffle Dataset
   /// \notes Randomly shuffles the rows of this dataset
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
@@ -449,7 +432,6 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
     all_datasets.push_back(shared_from_this());
     return std::make_shared<ZipDataset>(all_datasets);
   }
-#endif
 
   std::shared_ptr<DatasetNode> IRNode() { return ir_node_; }
 
@@ -602,7 +584,6 @@ class BatchDataset : public Dataset {
   ~BatchDataset() = default;
 };
 
-#ifndef ENABLE_ANDROID
 class BucketBatchByLengthDataset : public Dataset {
  public:
   BucketBatchByLengthDataset(
@@ -626,7 +607,6 @@ class FilterDataset : public Dataset {
                 const std::vector<std::vector<char>> &input_columns);
   ~FilterDataset() = default;
 };
-#endif
 
 class MapDataset : public Dataset {
  public:
@@ -643,14 +623,12 @@ class ProjectDataset : public Dataset {
   ~ProjectDataset() = default;
 };
 
-#ifndef ENABLE_ANDROID
 class RenameDataset : public Dataset {
  public:
   RenameDataset(std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &input_columns,
                 const std::vector<std::vector<char>> &output_columns);
   ~RenameDataset() = default;
 };
-#endif
 
 class RepeatDataset : public Dataset {
  public:
@@ -664,7 +642,6 @@ class ShuffleDataset : public Dataset {
   ~ShuffleDataset() = default;
 };
 
-#ifndef ENABLE_ANDROID
 class SkipDataset : public Dataset {
  public:
   SkipDataset(std::shared_ptr<Dataset> input, int32_t count);
@@ -682,7 +659,6 @@ class ZipDataset : public Dataset {
   explicit ZipDataset(const std::vector<std::shared_ptr<Dataset>> &inputs);
   ~ZipDataset() = default;
 };
-#endif
 
 /// \brief Function to create a SchemaObj
 /// \param[in] schema_file Path of schema file
@@ -762,7 +738,6 @@ inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const
                                         VectorStringToChar(column_names), decode, sampler, cache);
 }
 
-#ifndef ENABLE_ANDROID
 class CelebADataset : public Dataset {
  public:
   explicit CelebADataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
@@ -1375,7 +1350,6 @@ inline std::shared_ptr<MindDataDataset> MindData(const std::vector<std::string> 
   return std::make_shared<MindDataDataset>(VectorStringToChar(dataset_files), VectorStringToChar(columns_list), sampler,
                                            padded_sample, num_padded);
 }
-#endif
 
 class MnistDataset : public Dataset {
  public:
@@ -1427,7 +1401,6 @@ inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const
                                            const std::shared_ptr<DatasetCache> &cache = nullptr) {
   return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
 }
-#ifndef ENABLE_ANDROID
 
 /// \brief Function to create a ConcatDataset
 /// \notes Reload "+" operator to concat two datasets
@@ -1686,7 +1659,6 @@ inline std::shared_ptr<DatasetCache> CreateDatasetCache(session_id_type id, uint
 inline std::shared_ptr<ZipDataset> Zip(const std::vector<std::shared_ptr<Dataset>> &datasets) {
   return std::make_shared<ZipDataset>(datasets);
 }
-#endif
 }  // namespace dataset
 }  // namespace mindspore
 

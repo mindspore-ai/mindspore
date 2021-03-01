@@ -74,6 +74,7 @@ SET(DE_UT_SRCS
         image_process_test.cc
         interrupt_test.cc
         ir_callback_test.cc
+        ir_sampler_test.cc
         ir_tensor_op_fusion_pass_test.cc
         ir_tree_adapter_test.cc
         ir_vision_test.cc

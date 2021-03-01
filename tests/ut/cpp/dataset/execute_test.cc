@@ -112,6 +112,8 @@ TEST_F(MindDataTestExecute, TestTransformInput2) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInput2.";
   // Test Execute with transform op input using API constructors, with std::shared_ptr<TensorTransform pointers,
   // instantiated via new
+  // With this way of creating TensorTransforms, we don't need to explicitly delete the object created with the
+  // "new" keyword. When the shared pointer goes out of scope the object destructor will be called.
 
   // Read image, construct MSTensor from dataset tensor
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
@@ -171,6 +173,7 @@ TEST_F(MindDataTestExecute, TestTransformInput3) {
 TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInputSequential.";
   // Test Execute with transform op input using API constructors, with auto pointers;
+  // Note that with auto and new, we have to explicitly delete the allocated object as shown below.
   // Apply 2 transformations sequentially, including single non-vector Transform op input
 
   // Read image, construct MSTensor from dataset tensor
@@ -207,7 +210,7 @@ TEST_F(MindDataTestExecute, TestTransformInputSequential) {
 
 TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformDecodeResizeCenterCrop1.";
-  // Test Execute with Decode, Resize and CenterCrop transform ops input using API constructors, with auto pointers
+  // Test Execute with Decode, Resize and CenterCrop transform ops input using API constructors, with shared pointers
 
   // Read image, construct MSTensor from dataset tensor
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
