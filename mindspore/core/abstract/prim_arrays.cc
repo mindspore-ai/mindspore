@@ -247,7 +247,7 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
   MS_EXCEPTION_IF_NULL(segment_ids);
   MS_EXCEPTION_IF_NULL(segment_ids->shape());
   auto segment_ids_shape = segment_ids->shape()->shape();
-  (void)CheckTensorDType(x, {kFloat16, kFloat32, kInt32}, "Input 0 (x) for UnsortedSegmentSum should be %s");
+  (void)CheckTensorDType(x, {kFloat16, kFloat32, kFloat64, kInt32}, "Input 0 (x) for UnsortedSegmentSum should be %s");
   (void)CheckTensorDType(segment_ids, {kInt32, kInt64}, "Input 1 (segment_ids) for UnsortedSegmentSum should be %s");
   bool x_is_dyn = (!x->shape()->min_shape().empty() && !x->shape()->max_shape().empty());  // check if dynamic shape
   bool ids_is_dyn = (!segment_ids->shape()->min_shape().empty() && !segment_ids->shape()->max_shape().empty());
