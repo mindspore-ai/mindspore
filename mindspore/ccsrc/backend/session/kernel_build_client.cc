@@ -28,18 +28,28 @@ void ReplaceStr(std::string *dest, const std::string &replace, char new_char) {
   }
 }
 
-bool AscendKernelBuildClient::TbePre() {
+bool AscendKernelBuildClient::TbePre(const std::string &mode) {
   auto res = SendRequest(kTbePre);
   if (res.find(kSuccess) == res.npos) {
     MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
   }
   MS_LOG(INFO) << "Pre " << res;
+  // init env for auto tune
+  res = SendRequest(kTbeTune);
+  if (res != kAck) {
+    MS_LOG(EXCEPTION) << "Send tune single failed, res: " << res;
+  }
+  res = SendRequest(mode);
+  if (res != kSuccess) {
+    MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
+  }
+
   return true;
 }
 
-int AscendKernelBuildClient::TbeStart(const std::string &json) {
+int AscendKernelBuildClient::TbeStart(const std::string &json, const std::string &mode) {
   if (!init_flag) {
-    if (!TbePre()) {
+    if (!TbePre(mode)) {
       MS_LOG(EXCEPTION) << "START failed";
     }
     init_flag = true;

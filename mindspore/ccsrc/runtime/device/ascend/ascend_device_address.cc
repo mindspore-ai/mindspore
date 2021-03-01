@@ -262,6 +262,13 @@ nlohmann::json ConstructTransDataKernelJson(const std::vector<size_t> &host_shap
   op_info[kernel_name_str] = "";
   op_info[name] = trans_data;
   op_info[outputs_str] = ConstructOutputs(host_shape, type);
+  // construct soc_info
+  nlohmann::json soc_info;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto tune_mode = ms_context->get_param<std::string>(MS_CTX_TUNE_MODE);
+  soc_info["autoTilingMode"] = tune_mode;
+  kernel_json["SocInfo"] = soc_info;
   kernel_json[op_info_str] = op_info;
   kernel_json[platform_str] = platform_tbe;
   std::string json_str = kernel_json[op_info_str].dump();

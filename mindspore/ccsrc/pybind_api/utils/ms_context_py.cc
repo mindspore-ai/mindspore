@@ -94,6 +94,7 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
                            .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)
                            .value("device_id", MsCtxParam::MS_CTX_DEVICE_ID)
+                           .value("tune_mode", MsCtxParam::MS_CTX_TUNE_MODE)
                            .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH)
                            .value("env_config_path", MsCtxParam::MS_CTX_ENV_CONFIG_PATH)
                            .value("grad_for_scalar", MsCtxParam::MS_CTX_GRAD_FOR_SCALAR);

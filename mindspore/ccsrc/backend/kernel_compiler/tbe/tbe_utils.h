@@ -22,6 +22,7 @@
 #include <utility>
 #include <map>
 #include <unordered_map>
+#include <nlohmann/json.hpp>
 
 #include "backend/session/kernel_graph.h"
 #include "ir/anf.h"
@@ -42,6 +43,8 @@ class TbeUtils {
   static void SaveJsonInfo(const std::string &json_name, const std::string &info);
 
   static void LoadCache();
+
+  static void GenSocInfo(nlohmann::json *soc_info_json);
 
   static KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
 

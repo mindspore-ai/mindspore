@@ -204,6 +204,13 @@ class _Context:
         if self.enable_debug_runtime and target == "CPU":
             self.set_backend_policy("vm")
 
+    def set_auto_tune_mode(self, tune_mode):
+        candidate = ["NO_TUNE", "RL", "GA", "RL,GA", "GA,RL"]
+        if tune_mode in candidate:
+            self.set_param(ms_ctx_param.tune_mode, tune_mode)
+        else:
+            raise ValueError(f"Tune mode must be in ['NO_TUNE', 'RL', 'GA', 'RL,GA', 'GA,RL'], but got {tune_mode}")
+
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
             raise ValueError(f"Device id must be in [0, 4095], but got {device_id}")
@@ -276,6 +283,7 @@ class _Context:
         'save_graphs_path': set_save_graphs_path,
         'device_target': set_device_target,
         'device_id': set_device_id,
+        'auto_tune_mode': set_auto_tune_mode,
         'max_call_depth': set_max_call_depth,
         'profiling_options': set_profiling_options,
         'variable_memory_max_size': set_variable_memory_max_size,
@@ -480,6 +488,7 @@ def _check_target_specific_cfgs(device, arg_key):
         'profiling_options': ['Ascend'],
         'print_file_path': ['Ascend'],
         'variable_memory_max_size': ['Ascend'],
+        'auto_tune_mode': ['Ascend'],
         'max_device_memory': ['GPU']
     }
     # configs not in map device_cfgs are supposed to be suitable for all devices
@@ -494,7 +503,7 @@ def _check_target_specific_cfgs(device, arg_key):
 
 
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
-                 save_graphs_path=str, enable_dump=bool,
+                 save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
                  enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, check_bprop=bool, max_device_memory=str, print_file_path=str,
@@ -531,7 +540,7 @@ def set_context(**kwargs):
     mode                         enable_profiling
     reserve_class_name_in_scope  profiling_options
     save_graphs                  variable_memory_max_size
-    save_graphs_path
+    save_graphs_path             auto_tune_mode
     env_config_path
     grad_for_scalar
     ===========================  ===========================  =================
@@ -603,6 +612,13 @@ def set_context(**kwargs):
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Default: 1000.
         env_config_path (str): Config path for DFX.
+        auto_tune_mode (str): The mode of auto tune when op building, get the best tiling performance,
+            default: NO_TUNE. The value must be in ['RL', 'GA', 'RL,GA'].
+            RL: rl_tune;
+            GA: ga_tune;
+            RL,GA: rl_tune/ga_tune(Automatic selection).
+            - rl_tune: Reinforecement Learning tune.
+            - ga_tune: Genetic Algorithm tune.
         grad_for_scalar (bool): Whether to get gradient for scalar. Default: False.
 
     Raises:

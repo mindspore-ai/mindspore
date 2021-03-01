@@ -43,6 +43,7 @@ const int8_t MULTI_ELTWISE_SIZE = 4;
 using FusedNodeRecord = std::vector<std::unordered_set<AnfNodePtr>>;
 
 struct BufferFusionInfo_t {
+  uint32_t graph_id;
   std::vector<AnfNodePtr> anf_nodes;
   std::vector<AnfNodePtr> inputs_list;
   std::vector<AnfNodePtr> outputs_list;

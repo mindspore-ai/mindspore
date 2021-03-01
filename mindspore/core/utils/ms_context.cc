@@ -38,8 +38,10 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_DUMP, false);
   set_param<std::string>(MS_CTX_SAVE_DUMP_PATH, ".");
   set_param<std::string>(MS_CTX_ENV_CONFIG_PATH, "");
+  set_param<std::string>(MS_CTX_TUNE_MODE, "NO_TUNE");
   set_param<uint32_t>(MS_CTX_TSD_REF, 0);
   set_param<uint32_t>(MS_CTX_GE_REF, 0);
+
   set_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK, false);
   set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
   set_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION, true);
