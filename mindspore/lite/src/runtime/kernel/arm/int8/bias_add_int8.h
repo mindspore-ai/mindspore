@@ -17,26 +17,16 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BAIS_ADD_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
-#include "nnacl/arithmetic.h"
-#include "nnacl/int8/add_int8.h"
-#include "nnacl/int8/arithmetic_int8.h"
+#include "src/runtime/kernel/arm/int8/add_int8.h"
 
 namespace mindspore::kernel {
-class BiasAddInt8CPUKernel : public LiteKernel {
+class BiasAddInt8CPUKernel : public QuantizedAddCPUKernel {
  public:
   BiasAddInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {}
-  ~BiasAddInt8CPUKernel() = default;
-
-  int Init() override;
-  int ReSize() override;
-  int Run() override;
-
- private:
-  const lite::InnerContext *ctx_;
+      : QuantizedAddCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~BiasAddInt8CPUKernel() override = default;
 };
 }  // namespace mindspore::kernel
 
