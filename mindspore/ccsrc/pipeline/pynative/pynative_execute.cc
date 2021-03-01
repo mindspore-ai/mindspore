@@ -387,10 +387,8 @@ void ConvertPyObjectToTensor(const py::object &input_object, const PrimitivePtr 
   } else if (py::isinstance<py::float_>(input_object)) {
     double input_value = py::cast<py::float_>(input_object);
     tensor_ptr = std::make_shared<tensor::Tensor>(input_value, kFloat32);
-    *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::int_>(input_object)) {
     tensor_ptr = std::make_shared<tensor::Tensor>(py::cast<int64_t>(input_object), kInt64);
-    *tensor_mask = kValueNodeTensorMask;
   } else if (py::isinstance<py::array>(input_object)) {
     tensor_ptr = TensorPy::MakeTensor(py::cast<py::array>(input_object), nullptr);
   } else if (py::isinstance<py::list>(input_object)) {
