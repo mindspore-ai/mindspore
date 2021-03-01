@@ -157,19 +157,6 @@ TEST_F(TestHttpServer, messageHandler) {
   MS_LOG(WARNING) << "The post output:" << result.substr(result.find("post")).c_str();
   pclose(file);
 }
-
-TEST_F(TestHttpServer, portErrorNoException) {
-  auto server_exception = std::make_unique<HttpServer>("0.0.0.0", -1);
-  OnRequestReceive http_handler_func = std::bind(TestHttpServer::testGetHandler, std::placeholders::_1);
-  EXPECT_NO_THROW(server_exception->RegisterRoute("/handler", &http_handler_func));
-}
-
-TEST_F(TestHttpServer, addressException) {
-  auto server_exception = std::make_unique<HttpServer>("12344.0.0.0", 9998);
-  OnRequestReceive http_handler_func = std::bind(TestHttpServer::testGetHandler, std::placeholders::_1);
-  ASSERT_THROW(server_exception->RegisterRoute("/handler", &http_handler_func), std::exception);
-}
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
