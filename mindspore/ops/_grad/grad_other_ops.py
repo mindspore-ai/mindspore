@@ -17,6 +17,8 @@
 
 from .. import operations as P
 from .. import composite as C
+from ..operations import _grad_ops as G
+from ..operations import _inner_ops as inner
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from .grad_base import bprop_getters
 
@@ -64,5 +66,20 @@ def bprop_pqc(self):
         dx = t(dx, (1, 0))
         dy = C.tensor_dot(dout[0], out[2], ((0, 1), (0, 1)))
         return dx, dy
+    return bprop
 
+
+@bprop_getters.register(inner.SyncBatchNorm)
+def get_bprop_sync_batch_norm(self):
+    """Grad definition for `SyncBatchNorm` operation."""
+    input_grad = G.SyncBatchNormGrad(self.epsilon, self.group, self.device_num)
+
+    def bprop(x, scale, b, mean, variance, out, dout):
+        saved_mean = out[3]
+        saved_variance = out[4]
+        out = input_grad(dout[0], x, scale, saved_mean, saved_variance)
+        dx = out[0]
+        dscale = out[1]
+        dbias = out[2]
+        return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
     return bprop

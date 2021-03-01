@@ -86,7 +86,7 @@ TEST_F(TestHWBnSplit, test_bn_split_tbe) {
   builder.SetKernelType(KernelType::TBE_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), bn.get());
 
-  // do bn_grad_split_pass
+  // do bn_split_pass
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   auto pass = std::make_shared<opt::BnSplit>();
@@ -95,6 +95,55 @@ TEST_F(TestHWBnSplit, test_bn_split_tbe) {
   auto new_graph = optimizer->Optimize(kernel_graph);
 
   FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_bn_split_tbe", "after");
+  EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
+}
+
+TEST_F(TestHWBnSplit, test_sync_bn_split_tbe) {
+  FuncGraphPtr g = get_py_fun_.CallAndParseRet("test_sync_bn_split_tbe", "before");
+  ASSERT_TRUE(g != nullptr);
+  std::vector<int64_t> shp_x{1, 64, 112, 112};
+  std::vector<int64_t> shp_b{64};
+  auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_x);
+  auto b_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shp_b);
+  AbstractBasePtrList args_spec_list{x_abstract, b_abstract, b_abstract, b_abstract, b_abstract};
+  auto kernel_graph = GetKernelGraph(g, args_spec_list);
+
+  // get kernel
+  auto ret = kernel_graph->get_return();
+  EXPECT_NE(ret, nullptr);
+  EXPECT_TRUE(ret->inputs().size() == 2);
+  auto make_tuple = ret->input(1)->cast<CNodePtr>();
+  EXPECT_NE(make_tuple, nullptr);
+  EXPECT_TRUE(make_tuple->inputs().size() == 2);
+  auto item0 = make_tuple->input(1)->cast<CNodePtr>();
+  EXPECT_NE(item0, nullptr);
+  EXPECT_TRUE(item0->inputs().size() == 3);
+  auto bn = item0->input(1);
+  EXPECT_NE(bn, nullptr);
+  EXPECT_TRUE(bn->isa<CNode>());
+
+  // set kernel for SyncBN
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetInputsFormat(
+    {kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
+  builder.SetOutputsFormat(
+    {kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
+  builder.SetInputsDeviceType(
+    {kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32});
+  builder.SetOutputsDeviceType(
+    {kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32});
+  builder.SetKernelType(KernelType::TBE_KERNEL);
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), bn.get());
+
+  // do sync_bn_split_pass
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto pm = std::make_shared<opt::PassManager>();
+  auto pass = std::make_shared<opt::SyncBnSplit>();
+  pm->AddPass(pass);
+  optimizer->AddPassManager(pm);
+  auto new_graph = optimizer->Optimize(kernel_graph);
+
+  FuncGraphPtr g_after = get_py_fun_.CallAndParseRet("test_sync_bn_split_tbe", "after");
   EXPECT_TRUE(CheckEqualGraph(g_after, new_graph));
 }
 }  // namespace opt

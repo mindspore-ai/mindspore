@@ -1755,6 +1755,16 @@ test_case_nn_ops = [
         'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
         'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
         'skip': ['backward']}),
+    ('SyncBatchNorm', {
+        'block': inner.SyncBatchNorm(),
+        'desc_inputs': [[128, 64, 32, 32], [64], [64], [64], [64]],
+        'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
+        'skip': []}),
+    ('SyncBatchNormGrad', {
+        'block': G.SyncBatchNormGrad(),
+        'desc_inputs': [[128, 64, 32, 32], [128, 64, 32, 32], [64], [64], [64]],
+        'desc_bprop': [[128, 64, 32, 32], [64], [64], [64], [64]],
+        'skip': ['backward']}),
     ('TopK', {
         'block': P.TopK(),
         'desc_const': [5],

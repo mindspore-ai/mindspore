@@ -15,16 +15,23 @@
 
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops import _constants as Constants
+from mindspore.common.tensor import Tensor
+import mindspore.common.dtype as mstype
 
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 bn = P.BatchNorm(is_training=True)
+sync_bn = inner.SyncBatchNorm()
 fused_bn1 = Primitive('FusedBN1')
 fused_bn2 = Primitive('FusedBN2')
 fused_bn3 = Primitive('FusedBN3')
 bn_training_reduce = Primitive('BNTrainingReduce')
 bn_training_update = Primitive('BNTrainingUpdate')
+allreduce = Primitive('AllReduce')
+mul = Primitive('Mul')
+mul_value = Tensor(0.5, mstype.float32)
 
 
 class FnDict:
@@ -83,6 +90,33 @@ def test_bn_split_tbe(tag):
         bn_training_reduce_output = bn_training_reduce(x)
         bn_training_update_input1 = tuple_getitem(bn_training_reduce_output, 0)
         bn_training_update_input2 = tuple_getitem(bn_training_reduce_output, 1)
+        bn_training_update_output = bn_training_update(x, bn_training_update_input1, bn_training_update_input2,
+                                                       scale, b, mean, variance)
+        output = tuple_getitem(bn_training_update_output, 0)
+        return make_tuple(output)
+
+    return fns[tag]
+
+
+def test_sync_bn_split_tbe(tag):
+    """ test_sync_split_bn_fusion """
+    fns = FnDict()
+
+    @fns
+    def before(x, scale, b, mean, variance):
+        bn_output = sync_bn(x, scale, b, mean, variance)
+        output = tuple_getitem(bn_output, 0)
+        return output
+
+    @fns
+    def after(x, scale, b, mean, variance):
+        bn_training_reduce_output = bn_training_reduce(x)
+        bn_training_reduce_output0 = tuple_getitem(bn_training_reduce_output, 0)
+        bn_training_reduce_output1 = tuple_getitem(bn_training_reduce_output, 1)
+        allreduce_output0 = allreduce(bn_training_reduce_output0)
+        allreduce_output1 = allreduce(bn_training_reduce_output1)
+        bn_training_update_input1 = mul(allreduce_output0, mul_value)
+        bn_training_update_input2 = mul(allreduce_output1, mul_value)
         bn_training_update_output = bn_training_update(x, bn_training_update_input1, bn_training_update_input2,
                                                        scale, b, mean, variance)
         output = tuple_getitem(bn_training_update_output, 0)

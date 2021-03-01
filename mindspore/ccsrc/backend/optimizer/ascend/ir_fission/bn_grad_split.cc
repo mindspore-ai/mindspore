@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 
+#include "backend/optimizer/ascend/ir_fission/bn_split.h"
 #include "utils/utils.h"
 #include "utils/ms_context.h"
 #include "backend/optimizer/common/helper.h"
@@ -104,6 +105,36 @@ CNodePtr BNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode
   MS_EXCEPTION_IF_NULL(make_tuple);
   return make_tuple;
 }
+
+CNodePtr SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(cnode);
+  std::vector<AnfNodePtr> bn_update_grad_outputs;
+  CreateOutputsOfUpdateGrad(func_graph, cnode, &bn_update_grad_outputs);
+  if (bn_update_grad_outputs.size() != kBNTrainingUpdateGradOutputNum) {
+    MS_LOG(EXCEPTION) << "bn_update_grad_outputs has wrong size"
+                      << " trace: " << trace::DumpSourceLines(cnode);
+  }
+
+  std::vector<AnfNodePtr> allreduce_mul_outputs;
+  for (size_t i = 0; i < bn_update_grad_outputs.size(); ++i) {
+    auto allreduce_mul_output = CreateAllReduceAndMul(func_graph, bn_update_grad_outputs[i], cnode);
+    allreduce_mul_outputs.emplace_back(allreduce_mul_output);
+  }
+
+  std::vector<AnfNodePtr> bn_reduce_grad_outputs;
+  CreateOutputsOfReduceGrad(func_graph, cnode, allreduce_mul_outputs, &bn_reduce_grad_outputs);
+  if (bn_reduce_grad_outputs.size() != 1) {
+    MS_LOG(EXCEPTION) << "bn_reduce_grad_outputs has wrong size"
+                      << " trace: " << trace::DumpSourceLines(cnode);
+  }
+
+  std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), bn_reduce_grad_outputs[0],
+                                               allreduce_mul_outputs[0], allreduce_mul_outputs[1]};
+  auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  MS_EXCEPTION_IF_NULL(make_tuple);
+  return make_tuple;
+}
 }  // namespace
 
 const BaseRef BnGradSplit::DefinePattern() const {
@@ -119,6 +150,18 @@ const AnfNodePtr BnGradSplit::Process(const FuncGraphPtr &func_graph, const AnfN
     return nullptr;
   }
   return BNGradSplitForTBE(func_graph, cnode);
+}
+
+const BaseRef SyncBnGradSplit::DefinePattern() const {
+  VarPtr Xs = std::make_shared<SeqVar>();
+  return VectorRef({prim::kPrimSyncBatchNormGrad, Xs});
+}
+
+const AnfNodePtr SyncBnGradSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                          const EquivPtr &) const {
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  return SyncBNGradSplitForTBE(func_graph, cnode);
 }
 }  // namespace opt
 }  // namespace mindspore
