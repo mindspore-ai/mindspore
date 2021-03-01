@@ -393,7 +393,6 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         self.add_prim_attr('groups', self.group)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
-        self.add_prim_attr('io_format', self.format)
 
     def __infer__(self, x, doutput, w_size):
         w_size_v = w_size['value']
@@ -1367,7 +1366,6 @@ class DynamicRNNGrad(PrimitiveWithInfer):
                  time_major=True,
                  forget_bias=0.0):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
-        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, w_shape, b_shape, y_shape, init_h_shape, init_c_shape, h_shape,
                     c_shape, dy_shape, dh_shape, dc_shape, i_shape, j_shape, f_shape, o_shape, tanhc_shape):
@@ -1478,7 +1476,6 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         self.direction = validator.check_string(direction, ['UNIDIRECTIONAL'], "direction", self.name)
         self.gate_order = validator.check_string(gate_order, ['zrh', 'rzh'], "gate_order", self.name)
         self.reset_after = validator.check_value_type("reset_after", reset_after, [bool], self.name)
-        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, winput_shape, whidden_shape, y_shape, init_h_shape, h_shape,
                     dy_shape, dh_shape, update_shape, reset_shape, new_shape, hnew_shape, seq_shape, mask_shape):
@@ -2063,7 +2060,6 @@ class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
     def __init__(self, forget_bias, activation):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
-        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, c_shape, dht_shape, dct_shape, it_shape, jt_shape, ft_shape, ot_shape, tanhct_shape):
         # dhy and dcy should be same shape
@@ -2110,10 +2106,9 @@ class BasicLSTMCellCStateGrad(PrimitiveWithInfer):
 
 class BasicLSTMCellWeightGrad(PrimitiveWithInfer):
     """Computes the weight gradients of BasicLSTM."""
-
     @prim_attr_register
     def __init__(self):
-        self.add_prim_attr("io_format", "HWCN")
+        pass
 
     def infer_shape(self, x_shape, h_shape, dgate_shape):
         validator.check_equal_int(len(x_shape), 2, "x rank", self.name)
@@ -2145,7 +2140,6 @@ class BasicLSTMCellInputGrad(PrimitiveWithInfer):
     def __init__(self, keep_prob):
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
-        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, dgate_shape, w_shape):
         validator.check_equal_int(len(dgate_shape), 2, "dgate rank", self.name)

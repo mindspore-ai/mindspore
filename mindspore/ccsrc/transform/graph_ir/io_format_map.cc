@@ -18,7 +18,22 @@
 
 namespace mindspore {
 namespace transform {
-std::unordered_map<std::string, std::string> IOFormatMap::io_format_map_ = {{"MatMul", "ND"}, {"Conv3D", "format"}};
+std::unordered_map<std::string, std::string> IOFormatMap::io_format_map_ = {{"BasicLSTMCell", "ND"},
+                                                                            {"BasicLSTMCellInputGrad", "ND"},
+                                                                            {"BasicLSTMCellCStateGrad", "ND"},
+                                                                            {"Dequant", "ND"},
+                                                                            {"DynamicGRUV2", "ND"},
+                                                                            {"DynamicGRUV2Grad", "ND"},
+                                                                            {"DynamicRNN", "ND"},
+                                                                            {"DynamicRNNGrad", "ND"},
+                                                                            {"MatMul", "ND"},
+                                                                            {"Quant", "ND"},
+                                                                            {"BasicLSTMCellWeightGrad", "HWCN"},
+                                                                            {"ExtractImagePatches", "NCHW"},
+                                                                            {"Conv3D", "format"},
+                                                                            {"Conv3DBackpropFilter", "format"},
+                                                                            {"Conv3DBackpropInput", "format"},
+                                                                            {"Conv3DTranspose", "format"}};
 std::unordered_map<std::string, std::string> &IOFormatMap::get() { return io_format_map_; }
 }  // namespace transform
 }  // namespace mindspore
