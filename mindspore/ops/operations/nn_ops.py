@@ -7214,7 +7214,6 @@ class BasicLSTMCell(PrimitiveWithInfer):
         self.forget_bias = validator.check_value_type("forget_bias", forget_bias, [float], self.name)
         self.state_is_tuple = validator.check_value_type("state_is_tuple", state_is_tuple, [bool], self.name)
         self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
-        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, h_shape, c_shape, w_shape, b_shape):
         validator.check_int(len(x_shape), 2, Rel.EQ, "x rank", self.name)
@@ -7365,7 +7364,6 @@ class DynamicRNN(PrimitiveWithInfer):
         self.cell_type = validator.check_string(cell_type, ['LSTM'], "cell_type", self.name)
         self.direction = validator.check_string(direction, ['UNIDIRECTIONAL'], "direction", self.name)
         self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
-        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, w_shape, b_shape, seq_shape, h_shape, c_shape):
         validator.check_int(len(x_shape), 3, Rel.EQ, "x_shape", self.name)
@@ -7525,7 +7523,6 @@ class DynamicGRUV2(PrimitiveWithInfer):
         self.activation = validator.check_string(activation, ['tanh'], "activation", self.name)
         self.gate_order = validator.check_string(gate_order, ['zrh', 'rzh'], "gate_order", self.name)
         self.reset_after = validator.check_value_type("reset_after", reset_after, [bool], self.name)
-        self.add_prim_attr("io_format", "ND")
 
     def infer_shape(self, x_shape, winput_shape, whidden_shape, binput_shape, bhidden_shape, seq_shape, h_shape):
         validator.check_int(len(x_shape), 3, Rel.EQ, "x shape", self.name)
@@ -8016,7 +8013,6 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         self.add_prim_attr('groups', self.group)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
-        self.add_prim_attr('io_format', self.format)
 
     def __infer__(self, w, doutput, x_size):
         validator.check_equal_int(len(w['shape']), 5, 'The dimension of weight ', self.name)
@@ -8194,7 +8190,6 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.add_prim_attr('groups', self.group)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
-        self.add_prim_attr('io_format', self.format)
 
         self.output_padding = _check_3d_int_or_tuple('output_padding', output_padding, self.name,
                                                      allow_five=True, ret_five=True, greater_zero=False)
