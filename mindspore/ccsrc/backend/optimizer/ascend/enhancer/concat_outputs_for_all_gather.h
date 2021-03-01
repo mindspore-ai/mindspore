@@ -33,8 +33,8 @@ class ConcatOutputsForAllGather : public PatternProcessPass {
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                   const std::vector<AnfNodePtr> &new_tuple_getitems, int64_t rank_size) const;
+  static AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                          const std::vector<AnfNodePtr> &new_tuple_getitems, int64_t rank_size);
   KernelSelectPtr kernel_select_;
 };
 }  // namespace opt

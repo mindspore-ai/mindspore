@@ -18,11 +18,47 @@
 #include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::opt {
+kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const AnfNodePtr &concat) {
+  MS_EXCEPTION_IF_NULL(concat);
+  std::vector<std::string> inputs_device_format;
+  std::vector<std::string> outputs_device_format;
+  std::vector<TypeId> inputs_device_type;
+  std::vector<TypeId> outputs_device_type;
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(concat); ++input_index) {
+    inputs_device_format.emplace_back(AnfAlgo::GetPrevNodeOutputFormat(concat, input_index));
+    inputs_device_type.emplace_back(AnfAlgo::GetPrevNodeOutputDeviceDataType(concat, input_index));
+  }
+  // Current only support default format & float16
+  auto cmp_format = inputs_device_format.begin();
+  auto format_iter = std::find_if(inputs_device_format.begin(), inputs_device_format.end(),
+                                  [&](const auto &format) { return format != (*cmp_format); });
+  if (format_iter != inputs_device_format.end()) {
+    MS_LOG(EXCEPTION) << "Input format is not same, value: " << *format_iter;
+  }
+  auto cmp_dtype = inputs_device_type.begin();
+  auto dtype_iter = std::find_if(inputs_device_type.begin(), inputs_device_type.end(),
+                                 [&](const auto &dtype) { return dtype != (*cmp_dtype); });
+  if (dtype_iter != inputs_device_type.end()) {
+    MS_LOG(EXCEPTION) << "Input dtype is not same, value: " << *dtype_iter;
+  }
+  outputs_device_format.emplace_back(*cmp_format);
+  outputs_device_type.emplace_back(*cmp_dtype);
+
+  builder.SetFusionType(kernel::FusionType::OPAQUE);
+  builder.SetProcessor(kernel::Processor::AICORE);
+  builder.SetKernelType(TBE_KERNEL);
+  builder.SetInputsFormat(inputs_device_format);
+  builder.SetOutputsFormat(outputs_device_format);
+  builder.SetInputsDeviceType(inputs_device_type);
+  builder.SetOutputsDeviceType(outputs_device_type);
+  return builder.Build();
+}
+
 AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                             const std::vector<AnfNodePtr> &new_tuple_getitems,
-                                                            int64_t rank_size) const {
+                                                            int64_t rank_size) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> make_tuple_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name()))};
   size_t inputs_size = AnfAlgo::GetInputTensorNum(node);
@@ -43,7 +79,8 @@ AnfNodePtr ConcatOutputsForAllGather::InsertConcatForOutput(const FuncGraphPtr &
     AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue(rank_size), concat);
     std::vector<int64_t> dyn_input_size{rank_size};
     AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat);
-    kernel_select_->SelectKernel(concat);
+    auto kernel_build_info = GenerateKernelBuildInfo(concat);
+    AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info, concat.get());
     make_tuple_inputs.push_back(concat);
   }
 
@@ -78,5 +115,4 @@ const AnfNodePtr ConcatOutputsForAllGather::Process(const FuncGraphPtr &func_gra
   CreateMultipleOutputsOfAnfNode(func_graph, node, AnfAlgo::GetOutputTensorNum(node), &new_outputs);
   return InsertConcatForOutput(func_graph, node, new_outputs, rank_size);
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::opt

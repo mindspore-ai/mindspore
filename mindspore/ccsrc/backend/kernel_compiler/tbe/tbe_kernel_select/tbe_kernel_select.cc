@@ -82,13 +82,7 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
 }
 
 void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
-  // get dynamic inputs
-  auto primitive = AnfAlgo::GetCNodePrimitive(cnode_ptr_);
-  MS_EXCEPTION_IF_NULL(primitive);
-  std::vector<int64_t> dyn_input_sizes;
-  if (primitive->HasAttr(kAttrDynInputSizes)) {
-    dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
-  }
+  auto dyn_input_sizes = GetNodeDynamicInputs();
   // get real input/output num
   size_t real_input_tensor_num = AnfAlgo::GetInputTensorNum(cnode_ptr_);
   const auto inputs_info = op_info.inputs_ptr();
@@ -189,8 +183,9 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
     return;
   }
   std::vector<std::shared_ptr<KernelBuildInfo>> new_kernel_info_list;
+  auto dynamic_inputs = GetNodeDynamicInputs();
   for (auto iter = kernel_info_list_->begin(); iter != kernel_info_list_->end(); ++iter) {
-    if (!FilterInVaildShape(iter)) {
+    if (!FilterInVaildShape(iter, !dynamic_inputs.empty())) {
       continue;
     }
     if (op_info.need_check_supported()) {
@@ -203,13 +198,15 @@ void TbeKernelSelect::FilterInVaildKernelInfo(const OpInfo &op_info) {
   (*kernel_info_list_) = new_kernel_info_list;
 }
 
-bool TbeKernelSelect::FilterInVaildShape(
-  const mindspore::kernel::TbeKernelSelect::KernelBuildInfoIter &kernel_build_info_iter) {
+bool TbeKernelSelect::FilterInVaildShape(const KernelBuildInfoIter &kernel_build_info_iter, bool is_dynamic_input) {
   MS_EXCEPTION_IF_NULL((*kernel_build_info_iter));
   const auto &kernel_build_info_inputs_format = (*kernel_build_info_iter)->GetAllInputFormats();
-  for (size_t i = 0; i < kernel_build_info_inputs_format.size(); ++i) {
+  // dynamic input just need to check first input, because other inputs copy from 1th input;
+  auto iter_num =
+    is_dynamic_input && !kernel_build_info_inputs_format.empty() ? 1 : kernel_build_info_inputs_format.size();
+  for (size_t i = 0; i < iter_num; ++i) {
     auto shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode_ptr_, i);
-    const auto &format = kernel_build_info_inputs_format[i];
+    const auto &format = kernel_build_info_inputs_format.at(i);
     if (!IsShapeMatchFormat(shape, format)) {
       return false;
     }
@@ -277,6 +274,17 @@ void TbeKernelSelect::SetTbeBuildCommonInfo(const mindspore::kernel::OpInfo &op_
   }
   builder->SetOpPattern(op_info.op_pattern());
   builder->SetKernelType(TBE_KERNEL);
+}
+
+std::vector<int64_t> TbeKernelSelect::GetNodeDynamicInputs() {
+  // get dynamic inputs
+  auto primitive = AnfAlgo::GetCNodePrimitive(cnode_ptr_);
+  MS_EXCEPTION_IF_NULL(primitive);
+  std::vector<int64_t> dyn_input_sizes;
+  if (primitive->HasAttr(kAttrDynInputSizes)) {
+    dyn_input_sizes = GetValue<std::vector<int64_t>>(primitive->GetAttr(kAttrDynInputSizes));
+  }
+  return dyn_input_sizes;
 }
 
 bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_index, size_t real_io_tensor_num,
