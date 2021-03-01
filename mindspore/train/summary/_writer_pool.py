@@ -14,9 +14,12 @@
 # ============================================================================
 """Write events to disk in a base directory."""
 import os
+import sys
 import time
 import signal
 from collections import deque
+
+import psutil
 
 import mindspore.log as logger
 from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
@@ -78,6 +81,7 @@ class WriterPool(ctx.Process):
         self._queue, self._writers_ = ctx.Queue(ctx.cpu_count() * 2), None
         self._max_file_size = max_file_size
         self._raise_exception = raise_exception
+        self._training_pid = os.getpid()
         self.start()
 
     def run(self):
@@ -97,10 +101,7 @@ class WriterPool(ctx.Process):
         with ctx.Pool(min(ctx.cpu_count(), 32)) as pool:
             deq = deque()
             while True:
-                if not self._writers:
-                    logger.warning("Can not find any writer to write summary data, "
-                                   "so SummaryRecord will not record data.")
-                    break
+                self._check_heartbeat()
 
                 while deq and deq[0].ready():
                     for plugin, data in deq.popleft().get():
@@ -163,6 +164,7 @@ class WriterPool(ctx.Process):
         """Close the writers in the subprocess."""
         for writer in self._writers:
             writer.close()
+        super().close()
 
     def write(self, data) -> None:
         """
@@ -180,4 +182,19 @@ class WriterPool(ctx.Process):
     def close(self) -> None:
         """Close the writer."""
         self._queue.put(('END', None))
-        self.join()
+
+    def _check_heartbeat(self):
+        """Check if the summary process should survive."""
+        is_exit = False
+        if not psutil.pid_exists(self._training_pid):
+            logger.warning("The training process %d is killed, summary process will exit.", self._training_pid)
+            is_exit = True
+
+        if not self._writers:
+            logger.warning("Can not find any writer to write summary data, "
+                           "so SummaryRecord will not record data.")
+            is_exit = True
+
+        if is_exit:
+            self._close()
+            sys.exit(1)

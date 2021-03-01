@@ -121,7 +121,8 @@ required_package = [
     'decorator >= 4.4.0',
     'setuptools >= 40.8.0',
     'astunparse >= 1.6.3',
-    'packaging >= 20.0'
+    'packaging >= 20.0',
+    'psutil >= 5.6.1'
 ]
 
 package_data = {

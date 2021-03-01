@@ -399,6 +399,7 @@ class SummaryRecord:
             logger.info('Please wait it may take quite some time to finish writing and closing.')
             atexit.unregister(self.close)
             self._event_writer.close()
+            self._event_writer.join()
             self._closed = True
 
     @staticmethod
