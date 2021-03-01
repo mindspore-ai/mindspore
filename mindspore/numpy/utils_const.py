@@ -279,17 +279,6 @@ def _check_is_int(dtype):
 
 
 @constexpr
-def _check_matmul_shapes(shape1, shape2):
-    """Checks shape1 and shape2 are valid shapes to perform matmul"""
-    ndim1, ndim2 = len(shape1), len(shape2)
-    if ndim1 < 1 or ndim2 < 1:
-        raise ValueError('input operands must have at least 1 dimension')
-    if ndim2 >= 2 and shape1[-1] != shape2[-2]:
-        raise ValueError(f'mismatch in core dimension of input operands (size '
-                         f'{shape1[-1]} is different from {shape2[-2]})')
-
-
-@constexpr
 def _check_axis_type(axis, type_int=True, type_tuple=True, type_list=True):
     """Check axis argument type."""
     if type_int and isinstance(axis, int):

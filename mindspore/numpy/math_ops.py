@@ -31,8 +31,8 @@ from .array_ops import ravel, expand_dims
 
 from .utils_const import _infer_out_shape, _check_axis_valid, _get_device, \
     _check_shape_aligned, _raise_type_error, _check_same_type, _check_is_float, \
-    _raise_value_error, _check_matmul_shapes, _promote, _check_axis_type, _canonicalize_axis, \
-    _max, _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range
+    _raise_value_error, _promote, _check_axis_type, _canonicalize_axis, \
+    _is_shape_empty, _check_is_int, _expanded_shape, _check_axis_in_range
 from .utils import _is_scalar, _expand, _broadcast_to, _broadcast_to_shape, _get_size, \
     _check_input_tensor
 
@@ -1285,44 +1285,7 @@ def matmul(x1, x2, dtype=None):
         [ 550.  620.  690.  760.  830.]
         [ 670.  756.  842.  928. 1014.]]]
     """
-    # performs type promotion
-    dtype1 = F.dtype(x1)
-    dtype2 = F.dtype(x2)
-    dtype_out = _promote(dtype1, dtype2)
-    if not _check_same_type(dtype1, dtype_out):
-        x1 = F.cast(x1, dtype_out)
-    if not _check_same_type(dtype2, dtype_out):
-        x2 = F.cast(x2, dtype_out)
-
-    ndim1_orig, ndim2_orig = F.rank(x1), F.rank(x2)
-    shape1_orig, shape2_orig = F.shape(x1), F.shape(x2)
-    _check_matmul_shapes(shape1_orig, shape2_orig)
-    ndim_aligned = _max(ndim1_orig, ndim2_orig)
-    transpose_b = ndim2_orig == 1
-    shape_backbone = _infer_out_shape(
-        shape1_orig[:-2], shape2_orig[:-2])
-    # infers the shape of the output
-    shape_out = shape_backbone + _infer_shape_rem(shape1_orig, shape2_orig,
-                                                  ndim1_orig, ndim2_orig, transpose_b)
-
-    x1 = _expand(x1, _max(ndim_aligned, 2))
-    x2 = _expand(x2, _max(ndim_aligned, 2))
-    shape1_aligned, shape2_aligned = F.shape(x1), F.shape(x2)
-
-    if ndim_aligned <= 2:
-        res = P.MatMul(False, transpose_b)(x1, x2)
-    else:
-        # broadcasts x1.shape[:-2] with x2.shape[:-2]
-        shape_aligned = shape_backbone + _infer_shape_rem(shape1_aligned, shape2_aligned,
-                                                          ndim_aligned, ndim_aligned,
-                                                          transpose_b)
-        x1 = _broadcast_to(x1, shape1_aligned[:-2], shape_aligned[:-2], ndim_aligned)
-        x2 = _broadcast_to(x2, shape2_aligned[:-2], shape_aligned[:-2], ndim_aligned)
-        res = P.BatchMatMul(False, transpose_b)(x1, x2)
-
-    if dtype is not None and not _check_same_type(dtype_out, dtype):
-        res = F.cast(res, dtype)
-    return F.reshape(res, shape_out)
+    return C.matmul(x1, x2, dtype=dtype)
 
 
 def square(x, out=None, where=True, dtype=None):
@@ -2254,20 +2217,6 @@ def _shape_reduced(shape, axes):
             shape_out[idx_out] = shape[i]
             idx_out += 1
     return tuple(shape_out)
-
-
-def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
-    """Infers the shape of the last two dimensions after performing matmul."""
-    shape_rem = ()
-    if ndim1 >= 2:
-        shape_rem += (shape1[-2],)
-    if transpose_b:
-        if ndim2 >= 2:
-            shape_rem += (shape2[-2],)
-    else:
-        if ndim1 >= 1:
-            shape_rem += (shape2[-1],)
-    return shape_rem
 
 
 def _reduce(a, reduce_fn, cmp_fn, axis=None, keepdims=False, initial=None, where=True):
