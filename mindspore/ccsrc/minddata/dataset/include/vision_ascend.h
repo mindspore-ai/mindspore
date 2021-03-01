@@ -47,6 +47,7 @@ class DvppDecodeResizeJpeg : public TensorTransform {
   /// \brief Destructor.
   ~DvppDecodeResizeJpeg() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -67,6 +68,7 @@ class DvppDecodeResizeCropJpeg : public TensorTransform {
   /// \brief Destructor.
   ~DvppDecodeResizeCropJpeg() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -86,6 +88,7 @@ class DvppDecodePng : public TensorTransform {
   /// \brief Destructor.
   ~DvppDecodePng() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;

@@ -59,6 +59,7 @@ class BasicTokenizer : public TensorTransform {
   /// \brief Destructor
   ~BasicTokenizer() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -99,6 +100,7 @@ class BertTokenizer : public TensorTransform {
   /// \brief Destructor
   ~BertTokenizer() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -125,6 +127,7 @@ class CaseFold : public TensorTransform {
   /// \brief Destructor
   ~CaseFold() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   //// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -151,11 +154,12 @@ class JiebaTokenizer : public TensorTransform {
   /// \brief Destructor
   ~JiebaTokenizer() = default;
 
+  Status AddWord(const std::string &word, int64_t freq = 0);
+
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
-
-  Status AddWord(const std::string &word, int64_t freq = 0);
 
  private:
   std::string hmm_path_;
@@ -180,6 +184,7 @@ class Lookup : public TensorTransform {
   /// \brief Destructor
   ~Lookup() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -208,6 +213,7 @@ class Ngram : public TensorTransform {
   /// \brief Destructor
   ~Ngram() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -238,6 +244,7 @@ class NormalizeUTF8 : public TensorTransform {
   /// \brief Destructor
   ~NormalizeUTF8() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -259,6 +266,7 @@ class RegexReplace : public TensorTransform {
   /// \brief Destructor
   ~RegexReplace() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -283,6 +291,7 @@ class RegexTokenizer : public TensorTransform {
   /// \brief Destructor
   ~RegexTokenizer() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -311,6 +320,7 @@ class SentencePieceTokenizer : public TensorTransform {
   /// \brief Destructor
   ~SentencePieceTokenizer() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -335,6 +345,7 @@ class SlidingWindow : public TensorTransform {
   /// \brief Destructor
   ~SlidingWindow() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -358,6 +369,7 @@ class ToNumber : public TensorTransform {
   /// \brief Destructor
   ~ToNumber() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -376,6 +388,7 @@ class TruncateSequencePair : public TensorTransform {
   /// \brief Destructor
   ~TruncateSequencePair() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -394,6 +407,7 @@ class UnicodeCharTokenizer : public TensorTransform {
   /// \brief Destructor
   ~UnicodeCharTokenizer() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -414,6 +428,7 @@ class UnicodeScriptTokenizer : public TensorTransform {
   /// \brief Destructor
   ~UnicodeScriptTokenizer() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -433,6 +448,7 @@ class WhitespaceTokenizer : public TensorTransform {
   /// \brief Destructor
   ~WhitespaceTokenizer() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;

@@ -281,8 +281,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Function to create a MapDataset
   /// \notes Applies each operation in operations to this dataset
-  /// \param[in] operations Vector of operations to be applied on the dataset. Operations are
-  ///     applied in the order they appear in this list
+  /// \param[in] operations Vector of raw pointers to TensorTransform objects to be applied on the dataset. Operations
+  ///     are applied in the order they appear in this list
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
   ///     operation as input. The size of this list must match the number of
   ///     input columns expected by the first operator. The default input_columns
@@ -309,6 +309,22 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                         project_columns, cache, callbacks);
   }
 
+  /// \brief Function to create a MapDataset
+  /// \notes Applies each operation in operations to this dataset
+  /// \param[in] operations Vector of shared pointers to TensorTransform objects to be applied on the dataset.
+  ///     Operations are applied in the order they appear in this list
+  /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
+  ///     operation as input. The size of this list must match the number of
+  ///     input columns expected by the first operator. The default input_columns
+  ///     is the first column
+  /// \param[in] output_columns Vector of names assigned to the columns outputted by the last operation
+  ///     This parameter is mandatory if len(input_columns) != len(output_columns)
+  ///     The size of this list must match the number of output columns of the
+  ///     last operation. The default output_columns will have the same
+  ///     name as the input columns, i.e., the columns will be replaced
+  /// \param[in] project_columns A list of column names to project
+  /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+  /// \return Shared pointer to the current MapDataset
   std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorTransform>> operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
@@ -324,6 +340,22 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
                                         project_columns, cache, callbacks);
   }
 
+  /// \brief Function to create a MapDataset
+  /// \notes Applies each operation in operations to this dataset
+  /// \param[in] operations Vector of TensorTransform objects to be applied on the dataset. Operations are applied in
+  ///     the order they appear in this list
+  /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
+  ///     operation as input. The size of this list must match the number of
+  ///     input columns expected by the first operator. The default input_columns
+  ///     is the first column
+  /// \param[in] output_columns Vector of names assigned to the columns outputted by the last operation
+  ///     This parameter is mandatory if len(input_columns) != len(output_columns)
+  ///     The size of this list must match the number of output columns of the
+  ///     last operation. The default output_columns will have the same
+  ///     name as the input columns, i.e., the columns will be replaced
+  /// \param[in] project_columns A list of column names to project
+  /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+  /// \return Shared pointer to the current MapDataset
   std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},

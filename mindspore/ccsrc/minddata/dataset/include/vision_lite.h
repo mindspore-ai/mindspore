@@ -83,6 +83,7 @@ class CenterCrop : public TensorTransform {
   /// \brief Destructor.
   ~CenterCrop() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -107,6 +108,7 @@ class Crop : public TensorTransform {
   /// \brief Destructor.
   ~Crop() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -127,6 +129,7 @@ class Decode : public TensorTransform {
   /// \brief Destructor.
   ~Decode() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -151,6 +154,7 @@ class Normalize : public TensorTransform {
   /// \brief Destructor.
   ~Normalize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -218,6 +222,7 @@ class Resize : public TensorTransform {
   /// \brief Destructor.
   ~Resize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -239,6 +244,7 @@ class Rotate : public TensorTransform {
   /// \brief Destructor.
   ~Rotate() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
