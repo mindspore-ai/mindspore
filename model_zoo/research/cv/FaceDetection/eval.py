@@ -48,13 +48,14 @@ def parse_args():
     parser.add_argument('--local_rank', type=int, default=0, help='current rank to support distributed')
     parser.add_argument('--world_size', type=int, default=1, help='current process number to support distributed')
 
-    args, _ = parser.parse_known_args()
+    arg, _ = parser.parse_known_args()
 
-    return args
+    return arg
 
 
-def val(args):
-    '''eval'''
+if __name__ == "__main__":
+    args = parse_args()
+
     print('=============yolov3 start evaluating==================')
 
     # logger
@@ -190,7 +191,7 @@ def val(args):
 
     aps_str = ''
     for cls in evaluate:
-        per_line, = plt.plot(evaluate[cls]['recall'], evaluate[cls]['presicion'], 'b-')
+        per_line, = plt.plot(evaluate[cls]['recall'], evaluate[cls]['precision'], 'b-')
         per_line.set_label('%s:AP=%.3f' % (cls, evaluate[cls]['ap']))
         aps_str += '_%s_AP_%.3f' % (cls, evaluate[cls]['ap'])
         plt.plot([i / 1000.0 for i in range(1, 1001)], [i / 1000.0 for i in range(1, 1001)], 'y--')
@@ -208,8 +209,3 @@ def val(args):
     plt.savefig(ap_save_path)
 
     print('=============yolov3 evaluating finished==================')
-
-
-if __name__ == "__main__":
-    arg = parse_args()
-    val(arg)
