@@ -75,7 +75,7 @@ class LstmGpuKernel : public GpuKernel {
     if (!states_init_) {
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_, cudnnSetDropoutDescriptor(dropout_desc_, handle_, dropout_, states_addr, output_size_list_[4], 0),
-        "set dropout_desc failed");
+        "set dropout descriptor failed. Possible reasons: the GPU is out of memory.");
       states_init_ = true;
     }
 
