@@ -206,12 +206,7 @@ class GradExecutor {
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args);
   void GradNetInner(py::object *ret, const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                     const py::args &args);
-<<<<<<< HEAD
   FuncGraphPtr GetBpropGraph(const GradOperationPtr &grad, const std::vector<AnfNodePtr> &weights, size_t arg_size);
-=======
-  FuncGraphPtr GetBpropGraph(const GradOperationPtr &grad, const std::vector<AnfNodePtr> &weights, size_t arg_size,
-                             const ResourcePtr &resource);
->>>>>>> elim-run-twice-forward-and-opt-pass
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
   abstract::AbstractBasePtrList GetArgsSpec(const py::args &args, const FuncGraphPtr &bprop_graph);
   void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,

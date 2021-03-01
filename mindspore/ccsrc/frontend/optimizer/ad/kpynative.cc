@@ -383,7 +383,16 @@ bool KPynativeCellImpl::BackPropagate() {
                    [](const ValuePtr &value) { return NewValueNode(value); });
     node_list.push_back(NewValueNode(iter->second->out()));
     node_list.push_back(iter->second->RealDout());
-
+    // Update abstract info of valuenode with its value
+    for (size_t i = 1; i < node_list.size() - 1; ++i) {
+      auto v_node = node_list[i]->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(v_node);
+      auto value = v_node->value();
+      if (v_node->abstract() == nullptr && value != nullptr && value->ToAbstract() != nullptr) {
+        v_node->set_abstract(value->ToAbstract());
+      }
+    }
+    // Back propagate process
     auto bprop_app = tape_->NewCNode(node_list);
     BackPropagate(cnode, bprop_app);
   }

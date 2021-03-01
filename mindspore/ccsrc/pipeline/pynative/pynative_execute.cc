@@ -1909,11 +1909,7 @@ abstract::AbstractBasePtrList GradExecutor::GetArgsSpec(const py::args &args, co
 }
 
 FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const std::vector<AnfNodePtr> &weights,
-<<<<<<< HEAD
                                          size_t arg_size) {
-=======
-                                         size_t arg_size, const ResourcePtr &resource) {
->>>>>>> elim-run-twice-forward-and-opt-pass
   MS_EXCEPTION_IF_NULL(grad);
   auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
   MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
@@ -1927,25 +1923,14 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const GradOperationPtr &grad, const std
   bprop_graph->debug_info()->set_name(ss.str());
 
   // Do opt for final bprop graph
-<<<<<<< HEAD
   ResourcePtr resource = std::make_shared<pipeline::Resource>();
-=======
-  MS_EXCEPTION_IF_NULL(resource);
->>>>>>> elim-run-twice-forward-and-opt-pass
   resource->set_func_graph(bprop_graph);
   auto manager = resource->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(bprop_graph);
-<<<<<<< HEAD
   auto optimized_bg = pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphFinalOpt(resource);
   DumpIR("after_final_opt.ir", optimized_bg);
   optimized_bg->ClearAllManagerInfo();
-=======
-  manager->KeepRoots({bprop_graph});
-  auto optimized_bg = pipeline::PrimBpropOptimizer::GetPrimBpropOptimizerInst().BpropGraphFinalOpt(resource);
-  DumpIR("after_final_inline.ir", optimized_bg);
-
->>>>>>> elim-run-twice-forward-and-opt-pass
   return optimized_bg;
 }
 
