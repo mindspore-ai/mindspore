@@ -23,6 +23,10 @@
             - [Ascend处理器环境运行](#ascend处理器环境运行-1)
         - [结果](#结果-1)
             - [训练准确率](#训练准确率)
+    - [导出mindir模型](#导出mindir模型)
+    - [推理过程](#推理过程)
+        - [用法](#用法-2)
+        - [结果](#结果-2)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [评估性能](#评估性能)
@@ -491,6 +495,36 @@ python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
 | deeplab_v3 |       | √    | √    | √     | 79.89 | 79.77        |
 
 注意：OS指输出步长（output stride）， MS指多尺度（multiscale）。
+
+## 导出mindir模型
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+
+## 推理过程
+
+### 用法
+
+在执行推理前，air文件必须在910上通过export.py文件导出。
+目前仅可处理batch_Size为1。
+
+```shell
+# Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_ID]
+```
+
+`DEVICE_ID` 可选，默认值为 0。
+
+### 结果
+
+推理结果保存在当前路径，可在acc.log中看到最终精度结果。
+
+| **Network**    | OS=16 | OS=8 | MS   | Flip  | mIOU  | mIOU in paper |
+| :----------: | :-----: | :----: | :----: | :-----: | :-----: | :-------------: |
+| deeplab_v3 |       | √    |      |       | 78.84 | 78.51    |
 
 # 模型描述
 
