@@ -492,8 +492,8 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 0.0002519517                                                    |
-| Speed                      | 10 ms/step（8pcs）                     |
-| Total time                 | 3 mins                          |
+| Speed                      | 13 ms/step（8pcs）                     |
+| Total time                 | 4 mins                          |
 | Parameters (M)             | 11.2                                                        |
 | Checkpoint for Fine tuning | 86M (.ckpt file)                                         |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
@@ -512,8 +512,8 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 2.15702                                                   |
-| Speed                      | 140ms/step（8pcs）                     |
-| Total time                 | 131 mins                          |
+| Speed                      | 110ms/step（8pcs）  (may need to set_numa_enbale in dataset.py)                    |
+| Total time                 | 110 mins                        |
 | Parameters (M)             | 11.7                                                       |
 | Checkpoint for Fine tuning | 90M (.ckpt file)                                         |
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
