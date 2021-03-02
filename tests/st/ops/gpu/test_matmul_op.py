@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.ops.operations import _inner_ops as inner
 
 class MatMulNet(nn.Cell):
@@ -40,6 +41,15 @@ class MatMul_d(nn.Cell):
     def construct(self, x, y):
         x = self.test_dynamic(x)
         y = self.test_dynamic(y)
+        return self.matmul(x, y)
+
+
+class MatMulComposite(nn.Cell):
+    def __init__(self):
+        super(MatMulComposite, self).__init__()
+        self.matmul = C.matmul
+
+    def construct(self, x, y):
         return self.matmul(x, y)
 
 
@@ -77,3 +87,37 @@ def test_matmul_float64():
     output = net(Tensor(x), Tensor(y))
     expect = np.matmul(x, y)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_matmul_composite():
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    net = MatMulComposite()
+
+    scalars = [np.random.randn(1).astype(np.float32), np.random.randn(1).astype(np.float32),
+               np.random.randn(1, 1).astype(np.float32),
+               np.random.randn(1, 1, 1).astype(np.float32)]
+    for x in scalars:
+        for y in scalars:
+            output = net(Tensor(x), Tensor(y))
+            expect = np.matmul(x, y)
+            np.testing.assert_array_almost_equal(output.asnumpy(), expect)
+
+    broadcastables = [
+        np.random.randn(3).astype(np.float32), np.random.randn(3).astype(np.float32),
+        np.random.randn(6).astype(np.float32), np.random.randn(6, 4).astype(np.float32),
+        np.random.randn(5, 2).astype(np.float32), np.random.randn(2).astype(np.float32),
+        np.random.randn(2, 9).astype(np.float32), np.random.randn(9, 8).astype(np.float32),
+        np.random.randn(6).astype(np.float32), np.random.randn(2, 6, 5).astype(np.float32),
+        np.random.randn(9, 2, 7).astype(np.float32), np.random.randn(7).astype(np.float32),
+        np.random.randn(5, 2, 4).astype(np.float32), np.random.randn(6, 1, 4, 9).astype(np.float32),
+        np.random.randn(7, 1, 5, 3, 2).astype(np.float32), np.random.randn(8, 1, 6, 1, 2, 9).astype(np.float32)
+    ]
+    for i in range(8):
+        x = broadcastables[2*i]
+        y = broadcastables[2*i + 1]
+        output = net(Tensor(x), Tensor(y))
+        expect = np.matmul(x, y)
+        np.testing.assert_array_almost_equal(output.asnumpy(), expect)
