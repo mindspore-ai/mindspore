@@ -61,7 +61,7 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   }
 
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(inputs[0]);
-  MS_LOG(WARNING) << "hash of prim " << prim->ToString() << " is:" << prim->hash();
+  MS_LOG(DEBUG) << "Hash of prim " << prim->ToString() << " is:" << prim->hash();
 
   abstract::AbstractBasePtrList abs_list;
   ArgsToAbs(prim, op_args, abs_list);
@@ -70,10 +70,10 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   PrimBpropOptGraphInfoPtr ret_bprop_info;
   ECacheQrtRes cache_res = GetOptBpfgFromCache(prim, abs_list, ret_bprop_fg, ret_bprop_info);
 
-  MS_LOG(WARNING) << "cache match result " << cache_res << ", prim: " << prim->ToString();
+  MS_LOG(DEBUG) << "Cache match result " << cache_res << ", prim: " << prim->ToString();
   if (cache_res == E_LEVEL_2) {
     FreeTensorValue(op_args, out, ret_bprop_info);
-    MS_LOG(WARNING) << "cache level 2 matched, prim: " << prim->ToString();
+    MS_LOG(DEBUG) << "Level 2 cache matched, prim: " << prim->ToString();
     return ret_bprop_fg;
   }
 
@@ -115,9 +115,10 @@ void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
 FuncGraphPtr PrimBpropOptimizer::PrimBpropOptStep2(const FuncGraphPtr &bprop_fg,
                                                    abstract::AbstractBasePtrList &abs_list_input) {
   BindAbsToParameters(bprop_fg, abs_list_input);
-  prim_bprop_opt_res->set_func_graph(bprop_fg);
-  prim_bprop_opt_manage->AddFuncGraph(bprop_fg);
-  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, prim_bprop_opt_res);
+  pipeline::ResourcePtr resource = std::make_shared<pipeline::Resource>();
+  resource->set_func_graph(bprop_fg);
+  resource->manager()->AddFuncGraph(bprop_fg);
+  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource);
   return opt_bprop_fg;
 }
 
@@ -132,7 +133,7 @@ ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
                                                      FuncGraphPtr &bprop_fg, PrimBpropOptGraphInfoPtr &bprop_info) {
   auto attrs_ = prim->attrs();
   for (auto &item : attrs_) {
-    MS_LOG(WARNING) << "attr: " << item.first << " value:" << item.second->ToString();
+    MS_LOG(DEBUG) << "prim:" << prim->ToString() << " attr: " << item.first << " value:" << item.second->ToString();
   }
 
   auto iter = prim_bprop_cache.find(prim);
