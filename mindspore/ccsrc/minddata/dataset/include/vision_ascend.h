@@ -50,7 +50,8 @@ class DvppDecodeResizeJpeg : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
-  std::vector<uint32_t> resize_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 class DvppDecodeResizeCropJpeg : public TensorTransform {
@@ -70,8 +71,8 @@ class DvppDecodeResizeCropJpeg : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
-  std::vector<uint32_t> crop_;
-  std::vector<uint32_t> resize_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 class DvppDecodePng : public TensorTransform {

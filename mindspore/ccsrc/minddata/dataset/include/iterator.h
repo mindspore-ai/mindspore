@@ -17,10 +17,12 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_ITERATOR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_ITERATOR_H_
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "include/api/dual_abi_helper.h"
 #include "include/api/status.h"
 #include "include/api/types.h"
 
@@ -39,6 +41,7 @@ class IteratorConsumer;
 class Dataset;
 
 using MSTensorMap = std::unordered_map<std::string, mindspore::MSTensor>;
+using MSTensorMapChar = std::map<std::vector<char>, mindspore::MSTensor>;
 using MSTensorVec = std::vector<mindspore::MSTensor>;
 
 // Abstract class for iterating over the dataset.
@@ -60,7 +63,18 @@ class Iterator {
   /// \note Type of return data is a map(with column name).
   /// \param[out] row - the output tensor row.
   /// \return - a Status error code, returns OK if no error encountered.
-  Status GetNextRow(MSTensorMap *row);
+  Status GetNextRow(MSTensorMap *row) {
+    MSTensorMapChar row_;
+    row_.clear();
+    row->clear();
+    Status s = GetNextRowCharIF(&row_);
+    TensorMapCharToString(&row_, row);
+    return s;
+  }
+
+  // Char interface(CharIF) of GetNextRow
+  // This api exists because std::string will constrained by ABI compile macro but char don't.
+  Status GetNextRowCharIF(MSTensorMapChar *row);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a vector(without column name).

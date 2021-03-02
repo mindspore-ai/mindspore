@@ -19,6 +19,8 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
+#include "include/api/dual_abi_helper.h"
 
 namespace mindspore {
 namespace dataset {
@@ -70,7 +72,12 @@ int32_t get_callback_timeout();
 
 /// \brief Function to load configuration from a file.
 /// \param[in] file path of the configuration file to be loaded.
-bool load(std::string file);
+/// \note This api exists because std::string will constrained by ABI compile macro but char don't.
+bool load(const std::vector<char> &file);
+
+/// \brief Function to load configuration from a file.
+/// \param[in] file path of the configuration file to be loaded.
+inline bool load(std::string file) { return load(StringToChar(file)); }
 
 }  // namespace config
 }  // namespace dataset

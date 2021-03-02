@@ -26,16 +26,27 @@
 namespace mindspore {
 namespace dataset {
 
+class DeviceResource;
 // class to run tensor operations in eager mode
 class Execute {
  public:
   /// \brief Constructor
-  explicit Execute(std::shared_ptr<TensorOperation> op);
+  // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
+  explicit Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  // explicit Execute(TensorTransform op, MapTargetDevice deviceType = MapTargetDevice::KCpu);
+  explicit Execute(TensorTransform *op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
 
-  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops);
+  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops,
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(std::vector<std::shared_ptr<TensorTransform>> ops,
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
+                   MapTargetDevice deviceType = MapTargetDevice::kCpu);
+  explicit Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType = MapTargetDevice::kCpu);
 
   /// \brief Destructor
-  ~Execute() = default;
+  ~Execute();
 
   /// \brief callable function to execute the TensorOperation in eager mode
   /// \param[in] input Tensor to be transformed
@@ -49,8 +60,16 @@ class Execute {
   /// \return - Status
   Status operator()(const std::vector<mindspore::MSTensor> &input_tensor_list, std::vector<mindspore::MSTensor> *out);
 
+  Status DeviceMemoryRelease();
+
  private:
+  Status validate_device_();
+
   std::vector<std::shared_ptr<TensorOperation>> ops_;
+
+  MapTargetDevice device_type_;
+
+  std::shared_ptr<DeviceResource> device_resource_;
 };
 
 }  // namespace dataset

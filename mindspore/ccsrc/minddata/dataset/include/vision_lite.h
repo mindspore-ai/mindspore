@@ -62,12 +62,8 @@ class Affine : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  float degrees_;
-  std::vector<float> translation_;
-  float scale_;
-  std::vector<float> shear_;
-  InterpolationMode interpolation_;
-  std::vector<uint8_t> fill_value_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief CenterCrop TensorTransform.
@@ -90,7 +86,8 @@ class CenterCrop : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
-  std::vector<int32_t> size_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Crop TensorTransform.
@@ -112,8 +109,8 @@ class Crop : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> coordinates_;
-  std::vector<int32_t> size_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Decode TensorTransform.
@@ -134,7 +131,8 @@ class Decode : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
-  bool rgb_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Normalize TensorTransform.
@@ -158,8 +156,8 @@ class Normalize : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
-  std::vector<float> mean_;
-  std::vector<float> std_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief RandomAffine TensorTransform.
@@ -196,12 +194,8 @@ class RandomAffine : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<float_t> degrees_;          // min_degree, max_degree
-  std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
-  std::vector<float_t> scale_range_;      // min_scale, max_scale
-  std::vector<float_t> shear_ranges_;     // min_x_shear, max_x_shear, min_y_shear, max_y_shear
-  InterpolationMode interpolation_;
-  std::vector<uint8_t> fill_value_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Resize TensorTransform.
@@ -225,8 +219,8 @@ class Resize : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
 
  private:
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Rotate TensorTransform.

@@ -22,7 +22,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-
+#include "include/constants.h"
 #include "include/transforms.h"
 
 namespace mindspore {
@@ -31,167 +31,210 @@ namespace dataset {
 // Transform operations for performing computer vision.
 namespace vision {
 
-// Char arrays storing name of corresponding classes (in alphabetical order)
-constexpr char kCenterCropOperation[] = "CenterCrop";
-constexpr char kCropOperation[] = "Crop";
-constexpr char kDecodeOperation[] = "Decode";
-constexpr char kNormalizeOperation[] = "Normalize";
-constexpr char kResizeOperation[] = "Resize";
-constexpr char kRotateOperation[] = "Rotate";
-// Transform Op classes (in alphabetical order)
-class CenterCropOperation;
-class CropOperation;
-class DecodeOperation;
-class NormalizeOperation;
-class ResizeOperation;
+// Forward Declarations
 class RotateOperation;
 
-/// \brief Function to create a CenterCrop TensorOperation.
+/// \brief Affine TensorTransform.
+/// \notes Apply affine transform on input image.
+class Affine : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] degrees The degrees to rotate the image by
+  /// \param[in] translation The value representing vertical and horizontal translation (default = {0.0, 0.0})
+  ///     The first value represent the x axis translation while the second represents y axis translation.
+  /// \param[in] scale The scaling factor for the image (default = 0.0)
+  /// \param[in] shear A float vector of size 2, representing the shear degrees (default = {0.0, 0.0})
+  /// \param[in] interpolation An enum for the mode of interpolation
+  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
+  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
+  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
+  explicit Affine(float_t degrees, const std::vector<float> &translation = {0.0, 0.0}, float scale = 0.0,
+                  const std::vector<float> &shear = {0.0, 0.0},
+                  InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                  const std::vector<uint8_t> &fill_value = {0, 0, 0});
+
+  /// \brief Destructor.
+  ~Affine() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+/// \brief CenterCrop TensorTransform.
 /// \notes Crops the input image at the center to the given size.
-/// \param[in] size A vector representing the output size of the cropped image.
-///     If size is a single value, a square crop of size (size, size) is returned.
-///     If size has 2 values, it should be (height, width).
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
+class CenterCrop : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] size A vector representing the output size of the cropped image.
+  ///     If size is a single value, a square crop of size (size, size) is returned.
+  ///     If size has 2 values, it should be (height, width).
+  explicit CenterCrop(std::vector<int32_t> size);
 
-/// \brief Function to create a Crop TensorOp
+  /// \brief Destructor.
+  ~CenterCrop() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Crop TensorTransform.
 /// \notes Crop an image based on location and crop size
-/// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
-/// \param[in] size Size of the cropped area.
-///     If size is a single value, a square crop of size (size, size) is returned.
-///     If size has 2 values, it should be (height, width).
-/// \return Shared pointer to the current TensorOp
-std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
+class Crop : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
+  /// \param[in] size Size of the cropped area.
+  ///     If size is a single value, a square crop of size (size, size) is returned.
+  ///     If size has 2 values, it should be (height, width).
+  Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
 
-/// \brief Function to create a Decode TensorOperation.
+  /// \brief Destructor.
+  ~Crop() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Decode TensorTransform.
 /// \notes Decode the input image in RGB mode.
-/// \param[in] rgb A boolean of whether to decode in RGB mode or not.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
+class Decode : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] rgb A boolean of whether to decode in RGB mode or not.
+  explicit Decode(bool rgb = true);
 
-/// \brief Function to create a Normalize TensorOperation.
+  /// \brief Destructor.
+  ~Decode() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Normalize TensorTransform.
 /// \notes Normalize the input image with respect to mean and standard deviation.
-/// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
-///     The mean values must be in range [0.0, 255.0].
-/// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
-///     The standard deviation values must be in range (0.0, 255.0]
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vector<float> std);
+class Normalize : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
+  ///     The mean values must be in range [0.0, 255.0].
+  /// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
+  ///     The standard deviation values must be in range (0.0, 255.0]
+  Normalize(std::vector<float> mean, std::vector<float> std);
 
-/// \brief Function to create a Resize TensorOperation.
+  /// \brief Destructor.
+  ~Normalize() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+class RandomAffine : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] degrees A float vector of size 2, representing the starting and ending degree
+  /// \param[in] translate_range A float vector of size 2 or 4, representing percentages of translation on x and y axes.
+  ///    if size is 2, (min_dx, max_dx, 0, 0)
+  ///    if size is 4, (min_dx, max_dx, min_dy, max_dy)
+  ///    all values are in range [-1, 1]
+  /// \param[in] scale_range A float vector of size 2, representing the starting and ending scales in the range.
+  /// \param[in] shear_ranges A float vector of size 2 or 4, representing the starting and ending shear degrees
+  ///    vertically and horizontally.
+  ///    if size is 2, (min_shear_x, max_shear_x, 0, 0)
+  ///    if size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y)
+  /// \param[in] interpolation An enum for the mode of interpolation
+  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
+  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
+  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
+  explicit RandomAffine(const std::vector<float_t> &degrees,
+                        const std::vector<float_t> &translate_range = {0.0, 0.0, 0.0, 0.0},
+                        const std::vector<float_t> &scale_range = {1.0, 1.0},
+                        const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
+                        InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
+                        const std::vector<uint8_t> &fill_value = {0, 0, 0});
+
+  /// \brief Destructor.
+  ~RandomAffine() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Resize TensorTransform.
 /// \notes Resize the input image to the given size.
-/// \param[in] size A vector representing the output size of the resized image.
-///     If size is a single value, the image will be resized to this value with
-///     the same image aspect ratio. If size has 2 values, it should be (height, width).
-/// \param[in] interpolation An enum for the mode of interpolation
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size,
-                                        InterpolationMode interpolation = InterpolationMode::kLinear);
-/// \brief Applies an rotate transformation to an image.
+class Resize : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] size A vector representing the output size of the resized image.
+  ///     If size is a single value, the image will be resized to this value with
+  ///     the same image aspect ratio. If size has 2 values, it should be (height, width).
+  /// \param[in] interpolation An enum for the mode of interpolation
+  explicit Resize(std::vector<int32_t> size, InterpolationMode interpolation = InterpolationMode::kLinear);
+
+  /// \brief Destructor.
+  ~Resize() = default;
+
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+  std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief Rotate TensorTransform.
 /// \notes Rotate the input image using a specified angle id.
-/// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<RotateOperation> Rotate();
-
-class CenterCropOperation : public TensorOperation {
+class Rotate : public TensorTransform {
  public:
-  explicit CenterCropOperation(std::vector<int32_t> size);
+  /// \brief Constructor.
+  Rotate();
 
-  ~CenterCropOperation() = default;
+  /// \brief Destructor.
+  ~Rotate() = default;
 
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kCenterCropOperation; }
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
 
  private:
-  std::vector<int32_t> size_;
+  std::shared_ptr<RotateOperation> op_;
 };
 
-class CropOperation : public TensorOperation {
- public:
-  CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size);
-
-  ~CropOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kCropOperation; }
-
- private:
-  std::vector<int32_t> coordinates_;
-  std::vector<int32_t> size_;
-};
-class DecodeOperation : public TensorOperation {
- public:
-  explicit DecodeOperation(bool rgb = true);
-
-  ~DecodeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kDecodeOperation; }
-
- private:
-  bool rgb_;
-};
-
-class NormalizeOperation : public TensorOperation {
- public:
-  NormalizeOperation(std::vector<float> mean, std::vector<float> std);
-
-  ~NormalizeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kNormalizeOperation; }
-
- private:
-  std::vector<float> mean_;
-  std::vector<float> std_;
-};
-
-class ResizeOperation : public TensorOperation {
- public:
-  explicit ResizeOperation(std::vector<int32_t> size,
-                           InterpolationMode interpolation_mode = InterpolationMode::kLinear);
-
-  ~ResizeOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kResizeOperation; }
-
- private:
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
-};
-
-class RotateOperation : public TensorOperation {
- public:
-  RotateOperation();
-
-  ~RotateOperation() = default;
-
-  std::shared_ptr<TensorOp> Build() override;
-
-  Status ValidateParams() override;
-
-  std::string Name() const override { return kRotateOperation; }
-
-  void setAngle(uint64_t angle_id);
-
- private:
-  std::shared_ptr<TensorOp> rotate_op;
-};
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore

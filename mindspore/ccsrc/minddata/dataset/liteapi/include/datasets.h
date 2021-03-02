@@ -19,6 +19,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <set>
@@ -28,8 +29,10 @@
 #include <utility>
 #include <vector>
 
+#include "include/api/dual_abi_helper.h"
 #include "include/iterator.h"
 #include "include/samplers.h"
+#include "include/transforms.h"
 
 namespace mindspore {
 namespace dataset {
@@ -94,11 +97,13 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Gets the column names
   /// \return Names of the columns. If failed, return an empty vector
-  std::vector<std::string> GetColumnNames();
+  std::vector<std::string> GetColumnNames() { return VectorCharToString(GetColumnNamesCharIF()); }
 
   /// \brief Gets the class indexing
   /// \return a map of ClassIndexing. If failed, return an empty map
-  std::vector<std::pair<std::string, std::vector<int32_t>>> GetClassIndexing();
+  std::vector<std::pair<std::string, std::vector<int32_t>>> GetClassIndexing() {
+    return ClassIndexCharToString(GetClassIndexingCharIF());
+  }
 
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
@@ -110,7 +115,9 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] num_epochs Number of epochs to run through the pipeline, default -1 which means infinite epochs.
   ///     An empty row is returned at the end of each epoch
   /// \return Shared pointer to the Iterator
-  std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {}, int32_t num_epochs = -1);
+  std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {}, int32_t num_epochs = -1) {
+    return CreateIteratorCharIF(VectorStringToChar(columns), num_epochs);
+  }
 
   /// \brief Function to create a BatchDataset
   /// \notes Combines batch_size number of consecutive rows into batches
@@ -138,14 +145,49 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] project_columns A list of column names to project
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
   /// \return Shared pointer to the current MapDataset
-  std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorOperation>> operations,
+  std::shared_ptr<MapDataset> Map(std::vector<TensorTransform *> operations,
                                   const std::vector<std::string> &input_columns = {},
                                   const std::vector<std::string> &output_columns = {},
                                   const std::vector<std::string> &project_columns = {},
                                   const std::shared_ptr<DatasetCache> &cache = nullptr,
                                   std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
-    return std::make_shared<MapDataset>(shared_from_this(), operations, input_columns, output_columns, project_columns,
-                                        cache, callbacks);
+    std::vector<std::shared_ptr<TensorOperation>> transform_ops;
+    (void)std::transform(
+      operations.begin(), operations.end(), std::back_inserter(transform_ops),
+      [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
+    return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
+                                        VectorStringToChar(output_columns), VectorStringToChar(project_columns), cache,
+                                        callbacks);
+  }
+
+  std::shared_ptr<MapDataset> Map(std::vector<std::shared_ptr<TensorTransform>> operations,
+                                  const std::vector<std::string> &input_columns = {},
+                                  const std::vector<std::string> &output_columns = {},
+                                  const std::vector<std::string> &project_columns = {},
+                                  const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+    std::vector<std::shared_ptr<TensorOperation>> transform_ops;
+    (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
+                         [](std::shared_ptr<TensorTransform> op) -> std::shared_ptr<TensorOperation> {
+                           return op != nullptr ? op->Parse() : nullptr;
+                         });
+    return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
+                                        VectorStringToChar(output_columns), VectorStringToChar(project_columns), cache,
+                                        callbacks);
+  }
+
+  std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> operations,
+                                  const std::vector<std::string> &input_columns = {},
+                                  const std::vector<std::string> &output_columns = {},
+                                  const std::vector<std::string> &project_columns = {},
+                                  const std::shared_ptr<DatasetCache> &cache = nullptr,
+                                  std::vector<std::shared_ptr<DSCallback>> callbacks = {}) {
+    std::vector<std::shared_ptr<TensorOperation>> transform_ops;
+    (void)std::transform(operations.begin(), operations.end(), std::back_inserter(transform_ops),
+                         [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
+    return std::make_shared<MapDataset>(shared_from_this(), transform_ops, VectorStringToChar(input_columns),
+                                        VectorStringToChar(output_columns), VectorStringToChar(project_columns), cache,
+                                        callbacks);
   }
 
   /// \brief Function to create a Project Dataset
@@ -153,7 +195,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] columns The name of columns to project
   /// \return Shared pointer to the current Dataset
   std::shared_ptr<ProjectDataset> Project(const std::vector<std::string> &columns) {
-    return std::make_shared<ProjectDataset>(shared_from_this(), columns);
+    return std::make_shared<ProjectDataset>(shared_from_this(), VectorStringToChar(columns));
   }
 
   /// \brief Function to create a Shuffle Dataset
@@ -169,6 +211,16 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
  protected:
   std::shared_ptr<TreeGetters> tree_getters_;
   std::shared_ptr<DatasetNode> ir_node_;
+
+ private:
+  // Char interface(CharIF) of GetColumnNames
+  std::vector<std::vector<char>> GetColumnNamesCharIF();
+
+  // Char interface(CharIF) of GetClassIndexing
+  std::vector<std::pair<std::vector<char>, std::vector<int32_t>>> GetClassIndexingCharIF();
+
+  // Char interface(CharIF) of CreateIterator
+  std::shared_ptr<Iterator> CreateIteratorCharIF(std::vector<std::vector<char>> columns, int32_t num_epochs);
 };
 
 class BatchDataset : public Dataset {
@@ -180,15 +232,15 @@ class BatchDataset : public Dataset {
 class MapDataset : public Dataset {
  public:
   MapDataset(std::shared_ptr<Dataset> input, std::vector<std::shared_ptr<TensorOperation>> operations,
-             const std::vector<std::string> &input_columns, const std::vector<std::string> &output_columns,
-             const std::vector<std::string> &project_columns, const std::shared_ptr<DatasetCache> &cache,
+             const std::vector<std::vector<char>> &input_columns, const std::vector<std::vector<char>> &output_columns,
+             const std::vector<std::vector<char>> &project_columns, const std::shared_ptr<DatasetCache> &cache,
              std::vector<std::shared_ptr<DSCallback>> callbacks);
   ~MapDataset() = default;
 };
 
 class ProjectDataset : public Dataset {
  public:
-  ProjectDataset(std::shared_ptr<Dataset> input, const std::vector<std::string> &columns);
+  ProjectDataset(std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &columns);
   ~ProjectDataset() = default;
 };
 
@@ -201,14 +253,22 @@ class ShuffleDataset : public Dataset {
 /// \brief Function to create a SchemaObj
 /// \param[in] schema_file Path of schema file
 /// \return Shared pointer to the current schema
-std::shared_ptr<SchemaObj> Schema(const std::string &schema_file = "");
+std::shared_ptr<SchemaObj> SchemaCharIF(const std::vector<char> &schema_file);
 
+inline std::shared_ptr<SchemaObj> Schema(const std::string &schema_file = "") {
+  return SchemaCharIF(StringToChar(schema_file));
+}
 class AlbumDataset : public Dataset {
  public:
-  AlbumDataset(const std::string &dataset_dir, const std::string &data_schema,
-               const std::vector<std::string> &column_names = {}, bool decode = false,
-               const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
-               const std::shared_ptr<DatasetCache> &cache = nullptr);
+  AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
+               const std::vector<std::vector<char>> &column_names, bool decode, const std::shared_ptr<Sampler> &sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+  AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
+               const std::vector<std::vector<char>> &column_names, bool decode, Sampler *sampler,
+               const std::shared_ptr<DatasetCache> &cache);
+  AlbumDataset(const std::vector<char> &dataset_dir, const std::vector<char> &data_schema,
+               const std::vector<std::vector<char>> &column_names, bool decode,
+               const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
   ~AlbumDataset() = default;
 };
 
@@ -219,20 +279,58 @@ class AlbumDataset : public Dataset {
 /// \param[in] column_names Column names used to specify columns to load, if empty, will read all columns.
 ///     (default = {})
 /// \param[in] decode the option to decode the images in dataset (default = false)
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current Dataset
-std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
-                                    const std::vector<std::string> &column_names = {}, bool decode = false,
-                                    const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
-                                    const std::shared_ptr<DatasetCache> &cache = nullptr);
+inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                           const std::vector<std::string> &column_names = {}, bool decode = false,
+                                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
+                                        VectorStringToChar(column_names), decode, sampler, cache);
+}
+/// \brief Function to create an AlbumDataset
+/// \notes The generated dataset is specified through setting a schema
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] data_schema Path to dataset schema file
+/// \param[in] column_names Column names used to specify columns to load
+/// \param[in] decode the option to decode the images in dataset
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                           const std::vector<std::string> &column_names, bool decode, Sampler *sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
+                                        VectorStringToChar(column_names), decode, sampler, cache);
+}
+/// \brief Function to create an AlbumDataset
+/// \notes The generated dataset is specified through setting a schema
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] data_schema Path to dataset schema file
+/// \param[in] column_names Column names used to specify columns to load
+/// \param[in] decode the option to decode the images in dataset
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current Dataset
+inline std::shared_ptr<AlbumDataset> Album(const std::string &dataset_dir, const std::string &data_schema,
+                                           const std::vector<std::string> &column_names, bool decode,
+                                           const std::reference_wrapper<Sampler> sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<AlbumDataset>(StringToChar(dataset_dir), StringToChar(data_schema),
+                                        VectorStringToChar(column_names), decode, sampler, cache);
+}
 
 class MnistDataset : public Dataset {
  public:
-  explicit MnistDataset(const std::string &dataset_dir, const std::string &usage = "all",
-                        const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
-                        const std::shared_ptr<DatasetCache> &cache = nullptr);
+  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::shared_ptr<Sampler> &sampler, const std::shared_ptr<DatasetCache> &cache);
+  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage, Sampler *sampler,
+                        const std::shared_ptr<DatasetCache> &cache);
+  explicit MnistDataset(const std::vector<char> &dataset_dir, const std::vector<char> &usage,
+                        const std::reference_wrapper<Sampler> sampler, const std::shared_ptr<DatasetCache> &cache);
   ~MnistDataset() = default;
 };
 
@@ -240,13 +338,41 @@ class MnistDataset : public Dataset {
 /// \notes The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] usage of MNIST, can be "train", "test" or "all" (default = "all").
-/// \param[in] sampler Object used to choose samples from the dataset. If sampler is not given,
+/// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
+/// given,
 ///     a `RandomSampler` will be used to randomly iterate the entire dataset (default = RandomSampler())
 /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
 /// \return Shared pointer to the current MnistDataset
-std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
-                                    const std::shared_ptr<SamplerObj> &sampler = RandomSampler(),
-                                    const std::shared_ptr<DatasetCache> &cache = nullptr);
+inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage = "all",
+                                           const std::shared_ptr<Sampler> &sampler = std::make_shared<RandomSampler>(),
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a MnistDataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of MNIST, can be "train", "test" or "all"
+/// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current MnistDataset
+inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage, Sampler *sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
+
+/// \brief Function to create a MnistDataset
+/// \notes The generated dataset has two columns ["image", "label"]
+/// \param[in] dataset_dir Path to the root directory that contains the dataset
+/// \param[in] usage of MNIST, can be "train", "test" or "all"
+/// \param[in] sampler Sampler object used to choose samples from the dataset.
+/// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+/// \return Shared pointer to the current MnistDataset
+inline std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::string &usage,
+                                           const std::reference_wrapper<Sampler> sampler,
+                                           const std::shared_ptr<DatasetCache> &cache = nullptr) {
+  return std::make_shared<MnistDataset>(StringToChar(dataset_dir), StringToChar(usage), sampler, cache);
+}
 
 }  // namespace dataset
 }  // namespace mindspore
