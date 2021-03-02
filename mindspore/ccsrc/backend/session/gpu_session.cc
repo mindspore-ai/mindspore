@@ -66,6 +66,7 @@
 #include "utils/ms_utils.h"
 #include "utils/config_manager.h"
 #include "utils/ms_context.h"
+#include "utils/utils.h"
 #if ENABLE_CPU && ENABLE_GPU
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
@@ -448,7 +449,8 @@ void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
                              const std::vector<tensor::TensorPtr> &input_tensors,
                              const std::vector<int64_t> &tensors_mask) {
   // Check if the graph cache exists.
-  if (run_op_graphs_.find(graph_info) != run_op_graphs_.end()) {
+  if (run_op_graphs_.find(graph_info) != run_op_graphs_.end() &&
+      kOpCacheAllowList.find(op_run_info.op_name) == kOpCacheAllowList.end()) {
     return;
   }
   // Prepare the graph

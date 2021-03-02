@@ -271,6 +271,7 @@ constexpr auto kPadAndShiftOpName = "PadAndShift";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsOpName = "SparseSoftmaxCrossEntropyWithLogits";
 constexpr auto kOneHotOpName = "OneHot";
 constexpr auto kSoftmaxCrossEntropyWithLogitsOpName = "SoftmaxCrossEntropyWithLogits";
+constexpr auto kUniformCandidateSamplerOpName = "UniformCandidateSampler";
 
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
@@ -491,6 +492,8 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kSparseApplyProximalAdagradOpName};
 
 const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
+
+const std::set<std::string> kOpCacheAllowList = {kUniformCandidateSamplerOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {
   kOpFormat_FRACTAL_Z_3D, kOpFormat_NC1KHKWHWC0,   kOpFormat_NC1HWC0,         kOpFormat_FRAC_NZ,  kOpFormat_C1HWNCoC0,
