@@ -45,12 +45,12 @@ TEST_F(MindDataTestPipeline, TestCocoDefault) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto bbox = row["bbox"];
-    // auto category_id = row["category_id"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor bbox shape: " << bbox->shape();
-    // MS_LOG(INFO) << "Tensor category_id shape: " << category_id->shape();
+    auto image = row["image"];
+    auto bbox = row["bbox"];
+    auto category_id = row["category_id"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor bbox shape: " << bbox.Shape();
+    MS_LOG(INFO) << "Tensor category_id shape: " << category_id.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -102,12 +102,12 @@ TEST_F(MindDataTestPipeline, TestCocoDefaultWithPipeline) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto bbox = row["bbox"];
-    // auto category_id = row["category_id"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor bbox shape: " << bbox->shape();
-    // MS_LOG(INFO) << "Tensor category_id shape: " << category_id->shape();
+    auto image = row["image"];
+    auto bbox = row["bbox"];
+    auto category_id = row["category_id"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor bbox shape: " << bbox.Shape();
+    MS_LOG(INFO) << "Tensor category_id shape: " << category_id.Shape();
     iter->GetNextRow(&row);
     i++;
   }

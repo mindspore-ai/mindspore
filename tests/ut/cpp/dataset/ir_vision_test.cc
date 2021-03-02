@@ -329,7 +329,7 @@ TEST_F(MindDataTestIRVision, TestSoftDvppDecodeResizeJpegFail) {
 
   Status rc;
 
-  // CSoftDvppDecodeResizeJpeg: size must be a vector of one or two values
+  // SoftDvppDecodeResizeJpeg: size must be a vector of one or two values
   std::shared_ptr<TensorOperation> soft_dvpp_decode_resize_jpeg_op1(new vision::SoftDvppDecodeResizeJpegOperation({}));
   rc = soft_dvpp_decode_resize_jpeg_op1->ValidateParams();
   EXPECT_ERROR(rc);

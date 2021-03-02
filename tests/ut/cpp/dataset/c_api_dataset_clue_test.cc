@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
+    auto text = row["sentence1"];
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
     // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -134,8 +134,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetBasic) {
   EXPECT_NE(row.find("sentence1"), row.end());
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["sentence1"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     i++;
     iter->GetNextRow(&row);
   }
@@ -190,8 +190,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetBasicWithPipeline) {
   EXPECT_NE(row.find("sentence1"), row.end());
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["sentence1"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     i++;
     iter->GetNextRow(&row);
   }
@@ -242,12 +242,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
+    auto text = row["sentence1"];
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
     // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -283,12 +283,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCSL) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["abst"];
+    auto text = row["abst"];
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
     // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -322,8 +322,8 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetDistribution) {
   EXPECT_NE(row.find("sentence1"), row.end());
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["sentence1"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     i++;
     iter->GetNextRow(&row);
   }
@@ -424,12 +424,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence"];
+    auto text = row["sentence"];
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
     // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -602,13 +602,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
   //                                             "蚂蚁借呗等额还款能否换成先息后本"};
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["sentence1"];
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
     // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     i++;
     iter->GetNextRow(&row);
   }
@@ -648,12 +647,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetTNEWS) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence"];
+    auto text = row["sentence"];
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
     // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -690,12 +689,12 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetWSC) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
+    auto text = row["text"];
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
     // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
   }

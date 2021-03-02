@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasic) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -128,8 +128,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetBasicWithPipeline) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     i++;
     iter->GetNextRow(&row);
   }
@@ -315,8 +315,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1A) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -373,8 +373,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse1B) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -430,8 +430,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFalse4Shard) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -490,8 +490,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1A) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -550,8 +550,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles1B) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -609,8 +609,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleFiles4) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -664,8 +664,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1A) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -722,8 +722,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal1B) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);
@@ -780,8 +780,8 @@ TEST_F(MindDataTestPipeline, TestTextFileDatasetShuffleGlobal4) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["text"];
-    // MS_LOG(INFO) << "Tensor text shape: " << text->shape();
+    auto text = row["text"];
+    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     // std::string_view sv;
     // text->GetItemAt(&sv, {0});
     // std::string ss(sv);

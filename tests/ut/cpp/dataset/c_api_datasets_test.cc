@@ -93,10 +93,10 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
   // Check if CelebAOp read correct images/attr
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto attr = row["attr"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor attr shape: " << attr->shape();
+    auto image = row["image"];
+    auto attr = row["attr"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor attr shape: " << attr.Shape();
 
     iter->GetNextRow(&row);
     i++;

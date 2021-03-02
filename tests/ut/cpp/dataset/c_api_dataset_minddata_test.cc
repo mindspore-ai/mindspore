@@ -246,7 +246,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
   EXPECT_NE(ds5, nullptr);
 
   std::vector<std::shared_ptr<Dataset>> ds = {ds1, ds2, ds3, ds4, ds5, ds6};
-  // std::vector<int32_t> expected_samples = {5, 5, 2, 3, 3, 2};
+  std::vector<int32_t> expected_samples = {5, 5, 2, 3, 3, 2};
 
   for (int32_t i = 0; i < ds.size(); i++) {
     // Create an iterator over the result of the above dataset
@@ -258,13 +258,13 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess6) {
     std::unordered_map<std::string, mindspore::MSTensor> row;
     iter->GetNextRow(&row);
 
-    // uint64_t j = 0;
-    // while (row.size() != 0) {
-    //   j++;
-    //   MS_LOG(INFO) << "Tensor label: " << *row["label"];
-    //   iter->GetNextRow(&row);
-    // }
-    // EXPECT_EQ(j, expected_samples[i]);
+    uint64_t j = 0;
+    while (row.size() != 0) {
+      j++;
+      // MS_LOG(INFO) << "Tensor label: " << *row["label"];
+      iter->GetNextRow(&row);
+    }
+    EXPECT_EQ(j, expected_samples[i]);
 
     // Manually terminate the pipeline
     iter->Stop();

@@ -70,9 +70,9 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
+    auto image = row["image"];
 
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -279,23 +279,30 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetSchemaObj) {
   EXPECT_NE(row.find("col_float"), row.end());
   EXPECT_NE(row.find("col_2d"), row.end());
 
+  std::vector<int64_t> expect_num = {1};
+  std::vector<int64_t> expect_2d = {2, 2};
+
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto col_sint16 = row["col_sint16"];
-    // auto col_float = row["col_float"];
-    // auto col_2d = row["col_2d"];
+    auto col_sint16 = row["col_sint16"];
+    auto col_float = row["col_float"];
+    auto col_2d = row["col_2d"];
 
-    // EXPECT_EQ(col_sint16->shape(), TensorShape({1}));
-    // EXPECT_EQ(col_float->shape(), TensorShape({1}));
-    // EXPECT_EQ(col_2d->shape(), TensorShape({2, 2}));
+    // Validate shape
+    ASSERT_EQ(col_sint16.Shape(), expect_num);
+    ASSERT_EQ(col_float.Shape(), expect_num);
+    ASSERT_EQ(col_2d.Shape(), expect_2d);
 
-    // EXPECT_EQ(col_sint16->Rank(), 1);
-    // EXPECT_EQ(col_float->Rank(), 1);
-    // EXPECT_EQ(col_2d->Rank(), 2);
+    // Validate Rank
+    ASSERT_EQ(col_sint16.Shape().size(), 1);
+    ASSERT_EQ(col_float.Shape().size(), 1);
+    ASSERT_EQ(col_2d.Shape().size(), 2);
 
-    // EXPECT_EQ(col_sint16->type(), DataType::DE_INT16);
-    // EXPECT_EQ(col_float->type(), DataType::DE_FLOAT32);
-    // EXPECT_EQ(col_2d->type(), DataType::DE_INT64);
+    // Validate type
+    ASSERT_EQ(col_sint16.DataType(), mindspore::DataType::kNumberTypeInt16);
+    ASSERT_EQ(col_float.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_EQ(col_2d.DataType(), mindspore::DataType::kNumberTypeInt64);
+
     iter->GetNextRow(&row);
     i++;
   }
@@ -331,11 +338,11 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetNoSchema) {
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto label = row["label"];
+    auto image = row["image"];
+    auto label = row["label"];
 
-    // MS_LOG(INFO) << "Shape of column [image]:" << image->shape();
-    // MS_LOG(INFO) << "Shape of column [label]:" << label->shape();
+    MS_LOG(INFO) << "Shape of column [image]:" << image.Shape();
+    MS_LOG(INFO) << "Shape of column [label]:" << label.Shape();
     iter->GetNextRow(&row);
     i++;
   }
@@ -486,16 +493,16 @@ TEST_F(MindDataTestPipeline, TestIncorrectTFSchemaObject) {
   EXPECT_NE(ds, nullptr);
   auto itr = ds->CreateIterator();
   EXPECT_NE(itr, nullptr);
-  // TensorMap mp;
-  // this will fail due to the incorrect schema used
-  // EXPECT_FALSE(itr->GetNextRow(&mp));
+  MSTensorMap mp;
+  // This will fail due to the incorrect schema used
+  EXPECT_ERROR(itr->GetNextRow(&mp));
 }
 
 TEST_F(MindDataTestPipeline, TestIncorrectTFrecordFile) {
   std::string path = datasets_root_path_ + "/test_tf_file_3_images2/datasetSchema.json";
   std::shared_ptr<Dataset> ds = TFRecord({path});
   EXPECT_NE(ds, nullptr);
-  // the tf record file is incorrect, hence validate param will fail
+  // The tf record file is incorrect, hence validate param will fail
   auto itr = ds->CreateIterator();
   EXPECT_EQ(itr, nullptr);
 }
