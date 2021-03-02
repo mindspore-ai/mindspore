@@ -57,18 +57,17 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Label shape: " << label->shape();
-    // EXPECT_EQ(image->shape()[0], 777);
-    // EXPECT_EQ(image->shape()[1], 777);
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Label shape: " << label.Shape();
+    EXPECT_EQ(image.Shape()[0], 777);
+    EXPECT_EQ(image.Shape()[1], 777);
     iter->GetNextRow(&row);
   }
 
   EXPECT_EQ(i, 3);
 
-  
   // Manually terminate the pipeline
   iter->Stop();
 }
@@ -165,10 +164,12 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // auto image_copy = row["image_copy"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(*image, *image_copy);
+    // FIXME
+    //    auto image = row["image"];
+    //    auto image_copy = row["image_copy"];
+    //    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    //    auto n = memcmp(&image, &image_copy, image.DataSize());
+    //    EXPECT_EQ(n, 0);
     iter->GetNextRow(&row);
   }
 
@@ -179,6 +180,7 @@ TEST_F(MindDataTestPipeline, TestDuplicateSuccess) {
 }
 
 TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotSuccess1.";
   // Testing CutMixBatch on a batch of CHW images
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -188,7 +190,6 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> hwc_to_chw = std::make_shared<vision::HWC2CHW>();
-  EXPECT_NE(hwc_to_chw, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({hwc_to_chw}, {"image"});
@@ -201,7 +202,6 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(number_of_classes);
-  EXPECT_NE(one_hot_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({one_hot_op}, {"label"});
@@ -209,7 +209,6 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
 
   std::shared_ptr<TensorTransform> cutmix_batch_op =
     std::make_shared<vision::CutMixBatch>(mindspore::dataset::ImageBatchFormat::kNCHW, 1.0, 1.0);
-  EXPECT_NE(cutmix_batch_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({cutmix_batch_op}, {"image", "label"});
@@ -227,16 +226,15 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Label shape: " << label->shape();
-    // EXPECT_EQ(image->shape().AsVector().size() == 4 && batch_size == image->shape()[0] && 3 == image->shape()[1] &&
-    //             32 == image->shape()[2] && 32 == image->shape()[3],
-    //           true);
-    // EXPECT_EQ(label->shape().AsVector().size() == 2 && batch_size == label->shape()[0] &&
-    //             number_of_classes == label->shape()[1],
-    //           true);
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Label shape: " << label.Shape();
+    EXPECT_EQ(image.Shape().size() == 4 && batch_size == image.Shape()[0] && 3 == image.Shape()[1] &&
+                32 == image.Shape()[2] && 32 == image.Shape()[3],
+              true);
+    EXPECT_EQ(label.Shape().size() == 2 && batch_size == label.Shape()[0] && number_of_classes == label.Shape()[1],
+              true);
     iter->GetNextRow(&row);
   }
 
@@ -247,6 +245,7 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
 }
 
 TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotSuccess2.";
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
   std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
@@ -259,14 +258,12 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  EXPECT_NE(one_hot_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({one_hot_op}, {"label"});
   EXPECT_NE(ds, nullptr);
 
   std::shared_ptr<TensorTransform> mixup_batch_op = std::make_shared<vision::MixUpBatch>(2.0);
-  EXPECT_NE(mixup_batch_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({mixup_batch_op}, {"image", "label"});
@@ -284,8 +281,8 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -305,7 +302,6 @@ TEST_F(MindDataTestPipeline, TestOneHotFail1) {
 
   // incorrect num_class
   std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(0);
-  EXPECT_NE(one_hot_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({one_hot_op}, {"label"});
@@ -326,7 +322,6 @@ TEST_F(MindDataTestPipeline, TestOneHotFail2) {
 
   // incorrect num_class
   std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(-5);
-  EXPECT_NE(one_hot_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({one_hot_op}, {"label"});
@@ -365,10 +360,10 @@ TEST_F(MindDataTestPipeline, TestRandomApplySuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Label shape: " << label->shape();
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Label shape: " << label.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -590,17 +585,16 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
   iter->GetNextRow(&row);
 
   // Check original data type of dataset
-  // auto image = row["image"];
-  // std::string ori_type = image->type().ToString();
-  // MS_LOG(INFO) << "Original data type: " << ori_type;
-  // EXPECT_NE(ori_type.c_str(), "uint8");
+  auto image = row["image"];
+  auto ori_type = image.DataType();
+  MS_LOG(INFO) << "Original data type id: " << ori_type;
+  EXPECT_EQ(ori_type, mindspore::DataType(mindspore::TypeId::kNumberTypeUInt8));
 
   // Manually terminate the pipeline
   iter->Stop();
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>("uint16");
-  EXPECT_NE(type_cast, nullptr);
 
   // Create a Map operation on ds
   std::shared_ptr<Dataset> ds2 = ds->Map({type_cast}, {"image"});
@@ -613,10 +607,10 @@ TEST_F(MindDataTestPipeline, TestTypeCastSuccess) {
 
   // Check current data type of dataset
   iter2->GetNextRow(&row);
-  // auto image2 = row["image"];
-  // std::string cur_type = image2->type().ToString();
-  // MS_LOG(INFO) << "Current data type: " << cur_type;
-  // EXPECT_NE(cur_type.c_str(), "uint16");
+  auto image2 = row["image"];
+  auto cur_type = image2.DataType();
+  MS_LOG(INFO) << "Current data type id: " << cur_type;
+  EXPECT_EQ(cur_type, mindspore::DataType(mindspore::TypeId::kNumberTypeUInt16));
 
   // Manually terminate the pipeline
   iter2->Stop();
@@ -632,7 +626,6 @@ TEST_F(MindDataTestPipeline, TestTypeCastFail) {
 
   // incorrect data type
   std::shared_ptr<TensorTransform> type_cast = std::make_shared<transforms::TypeCast>("char");
-  EXPECT_NE(type_cast, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({type_cast}, {"image", "label"});

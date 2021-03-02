@@ -29,16 +29,40 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 
 TEST_F(MindDataTestPipeline, TestRandomAffineFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomAffineFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Empty input for translate
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> affine1(new vision::RandomAffine({0.0, 0.0}, {}));
-  EXPECT_NE(affine1, nullptr);
-  // Invalid number of values for translate
+  auto ds1 = ds->Map({affine1});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomAffine
+  EXPECT_EQ(iter1, nullptr);
+
+  // Case 2: Invalid number of values for translate
+  // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> affine2(new vision::RandomAffine({0.0, 0.0}, {1, 1, 1, 1, 1}));
-  EXPECT_NE(affine2, nullptr);
-  // Invalid number of values for shear
+  auto ds2 = ds->Map({affine2});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid input for RandomAffine
+  EXPECT_EQ(iter2, nullptr);
+
+  // Case 3: Invalid number of values for shear
+  // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> affine3(new vision::RandomAffine({30.0, 30.0}, {0.0, 0.0}, {2.0, 2.0}, {10.0}));
-  EXPECT_NE(affine3, nullptr);
+  auto ds3 = ds->Map({affine3});
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid input for RandomAffine
+  EXPECT_EQ(iter3, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
@@ -57,7 +81,6 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> affine(
     new vision::RandomAffine({30.0, 30.0}, {-1.0, 1.0, -1.0, 1.0}, {2.0, 2.0}, {10.0, 10.0, 20.0, 20.0}));
-  EXPECT_NE(affine, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({affine});
@@ -80,8 +103,8 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -106,7 +129,6 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> affine(new vision::RandomAffine({0.0, 0.0}));
-  EXPECT_NE(affine, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({affine});
@@ -129,8 +151,8 @@ TEST_F(MindDataTestPipeline, TestRandomAffineSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -156,24 +178,12 @@ TEST_F(MindDataTestPipeline, TestRandomColor) {
   // Create objects for the tensor ops
   // Valid case: Set lower bound and upper bound to be the same value zero
   std::shared_ptr<TensorTransform> random_color_op_1 = std::make_shared<vision::RandomColor>(0.0, 0.0);
-  EXPECT_NE(random_color_op_1, nullptr);
-
-  // Failure case: Set invalid lower bound greater than upper bound
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  std::shared_ptr<TensorTransform> random_color_op_2 = std::make_shared<vision::RandomColor>(1.0, 0.1);
-  EXPECT_NE(random_color_op_2, nullptr);
 
   // Valid case: Set lower bound as zero and less than upper bound
-  std::shared_ptr<TensorTransform> random_color_op_3 = std::make_shared<vision::RandomColor>(0.0, 1.1);
-  EXPECT_NE(random_color_op_3, nullptr);
-
-  // Failure case: Set invalid negative lower bound
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  std::shared_ptr<TensorTransform> random_color_op_4 = std::make_shared<vision::RandomColor>(-0.5, 0.5);
-  EXPECT_NE(random_color_op_4, nullptr);
+  std::shared_ptr<TensorTransform> random_color_op_2 = std::make_shared<vision::RandomColor>(0.0, 1.1);
 
   // Create a Map operation on ds
-  ds = ds->Map({random_color_op_1, random_color_op_3});
+  ds = ds->Map({random_color_op_1, random_color_op_2});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -193,8 +203,8 @@ TEST_F(MindDataTestPipeline, TestRandomColor) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -220,25 +230,20 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   // Create objects for the tensor ops
   // Use single value for vectors
   std::shared_ptr<TensorTransform> random_color_adjust1(new vision::RandomColorAdjust({1.0}, {0.0}, {0.5}, {0.5}));
-  EXPECT_NE(random_color_adjust1, nullptr);
 
   // Use same 2 values for vectors
-  std::shared_ptr<TensorTransform> random_color_adjust2(new
-    vision::RandomColorAdjust({1.0, 1.0}, {0.0, 0.0}, {0.5, 0.5}, {0.5, 0.5}));
-  EXPECT_NE(random_color_adjust2, nullptr);
+  std::shared_ptr<TensorTransform> random_color_adjust2(
+    new vision::RandomColorAdjust({1.0, 1.0}, {0.0, 0.0}, {0.5, 0.5}, {0.5, 0.5}));
 
   // Use different 2 value for vectors
-  std::shared_ptr<TensorTransform> random_color_adjust3(new
-    vision::RandomColorAdjust({0.5, 1.0}, {0.0, 0.5}, {0.25, 0.5}, {0.25, 0.5}));
-  EXPECT_NE(random_color_adjust3, nullptr);
+  std::shared_ptr<TensorTransform> random_color_adjust3(
+    new vision::RandomColorAdjust({0.5, 1.0}, {0.0, 0.5}, {0.25, 0.5}, {0.25, 0.5}));
 
   // Use default input values
   std::shared_ptr<TensorTransform> random_color_adjust4(new vision::RandomColorAdjust());
-  EXPECT_NE(random_color_adjust4, nullptr);
 
   // Use subset of explicitly set parameters
   std::shared_ptr<TensorTransform> random_color_adjust5(new vision::RandomColorAdjust({0.0, 0.5}, {0.25}));
-  EXPECT_NE(random_color_adjust5, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map(
@@ -262,8 +267,8 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -273,67 +278,35 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestRandomColorAdjustFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomColorAdjustFail.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // brightness out of range
-  std::shared_ptr<TensorTransform> random_color_adjust1(new vision::RandomColorAdjust({-1.0}));
-  EXPECT_NE(random_color_adjust1, nullptr);
-
-  // contrast out of range
-  std::shared_ptr<TensorTransform> random_color_adjust2(new vision::RandomColorAdjust({1.0}, {-0.1}));
-  EXPECT_NE(random_color_adjust2, nullptr);
-
-  // saturation out of range
-  std::shared_ptr<TensorTransform> random_color_adjust3(new vision::RandomColorAdjust({0.0}, {0.0}, {-0.2}));
-  EXPECT_NE(random_color_adjust3, nullptr);
-
-  // hue out of range
-  std::shared_ptr<TensorTransform> random_color_adjust4(new vision::RandomColorAdjust({0.0}, {0.0}, {0.0}, {-0.6}));
-  EXPECT_NE(random_color_adjust4, nullptr);
-
-  std::shared_ptr<TensorTransform> random_color_adjust5(new vision::RandomColorAdjust({0.0}, {0.0}, {0.0}, {-0.5, 0.6}));
-  EXPECT_NE(random_color_adjust5, nullptr);
-
-  std::shared_ptr<TensorTransform> random_color_adjust6(new vision::RandomColorAdjust({0.0}, {0.0}, {0.0}, {0.51}));
-  EXPECT_NE(random_color_adjust6, nullptr);
-}
-
 TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropSuccess.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 10));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 10));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  // Testing siez of size vector is 1
+  // Testing size of size vector is 1
   std::shared_ptr<TensorTransform> random_crop(new vision::RandomCrop({20}));
-  EXPECT_NE(random_crop, nullptr);
 
-  // Testing siez of size vector is 2
+  // Testing size of size vector is 2
   std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCrop({20, 20}));
-  EXPECT_NE(random_crop1, nullptr);
 
-  // Testing siez of paddiing vector is 1
+  // Testing size of paddiing vector is 1
   std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCrop({20, 20}, {10}));
-  EXPECT_NE(random_crop2, nullptr);
 
-  // Testing siez of paddiing vector is 2
+  // Testing size of paddiing vector is 2
   std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCrop({20, 20}, {10, 20}));
-  EXPECT_NE(random_crop3, nullptr);
 
-  // Testing siez of paddiing vector is 2
+  // Testing size of paddiing vector is 2
   std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCrop({20, 20}, {10, 10, 10, 10}));
-  EXPECT_NE(random_crop4, nullptr);
 
-  // Testing siez of fill_value vector is 1
+  // Testing size of fill_value vector is 1
   std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCrop({20, 20}, {10, 10, 10, 10}, false, {5}));
-  EXPECT_NE(random_crop5, nullptr);
 
-  // Testing siez of fill_value vector is 3
+  // Testing size of fill_value vector is 3
   std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCrop({20, 20}, {10, 10, 10, 10}, false, {4, 4, 4}));
-  EXPECT_NE(random_crop6, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_crop, random_crop1, random_crop2, random_crop3, random_crop4, random_crop5, random_crop6});
@@ -351,8 +324,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -363,55 +336,123 @@ TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
 
 TEST_F(MindDataTestPipeline, TestRandomCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
+  // Case 1: Testing the size parameter is negative.
   // Create objects for the tensor ops
-  // Testing the size parameter is negative.
-  std::shared_ptr<TensorTransform> random_crop(new vision::RandomCrop({-28, 28}));
-  EXPECT_NE(random_crop, nullptr);
-  // Testing the size parameter is None.
-  std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCrop({}));
-  EXPECT_NE(random_crop1, nullptr);
-  // Testing the size of size vector is 3.
-  std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCrop({28, 28, 28}));
-  EXPECT_NE(random_crop2, nullptr);
-  // Testing the padding parameter is negative.
-  std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCrop({28, 28}, {-5}));
-  EXPECT_NE(random_crop3, nullptr);
-  // Testing the size of padding vector is empty.
-  std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCrop({28, 28}, {}));
-  EXPECT_NE(random_crop4, nullptr);
-  // Testing the size of padding vector is 3.
-  std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCrop({28, 28}, {5, 5, 5}));
-  EXPECT_NE(random_crop5, nullptr);
-  // Testing the size of padding vector is 5.
-  std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCrop({28, 28}, {5, 5, 5, 5, 5}));
-  EXPECT_NE(random_crop6, nullptr);
-  // Testing the size of fill_value vector is empty.
-  std::shared_ptr<TensorTransform> random_crop7(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {}));
-  EXPECT_NE(random_crop7, nullptr);
-  // Testing the size of fill_value vector is 2.
-  std::shared_ptr<TensorTransform> random_crop8(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0}));
-  EXPECT_NE(random_crop8, nullptr);
-  // Testing the size of fill_value vector is 4.
-  std::shared_ptr<TensorTransform> random_crop9(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0, 0, 0}));
-  EXPECT_NE(random_crop9, nullptr);
+  std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCrop({-28, 28}));
+  auto ds1 = ds->Map({random_crop1});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter1, nullptr);
+
+  // Case 2: Testing the size parameter is None.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCrop({}));
+  auto ds2 = ds->Map({random_crop2});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter2, nullptr);
+
+  // Case 3: Testing the size of size vector is 3.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCrop({28, 28, 28}));
+  auto ds3 = ds->Map({random_crop3});
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter3, nullptr);
+
+  // Case 4: Testing the padding parameter is negative.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCrop({28, 28}, {-5}));
+  auto ds4 = ds->Map({random_crop4});
+  EXPECT_NE(ds4, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter4, nullptr);
+
+  // Case 5: Testing the size of padding vector is empty.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCrop({28, 28}, {}));
+  auto ds5 = ds->Map({random_crop5});
+  EXPECT_NE(ds5, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter5 = ds5->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter5, nullptr);
+
+  // Case 6: Testing the size of padding vector is 3.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCrop({28, 28}, {5, 5, 5}));
+  auto ds6 = ds->Map({random_crop6});
+  EXPECT_NE(ds6, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter6 = ds6->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter6, nullptr);
+
+  // Case 7: Testing the size of padding vector is 5.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop7(new vision::RandomCrop({28, 28}, {5, 5, 5, 5, 5}));
+  auto ds7 = ds->Map({random_crop7});
+  EXPECT_NE(ds7, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter7 = ds7->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter7, nullptr);
+
+  // Case 8: Testing the size of fill_value vector is empty.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop8(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {}));
+  auto ds8 = ds->Map({random_crop8});
+  EXPECT_NE(ds8, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter8 = ds8->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter8, nullptr);
+
+  // Case 9: Testing the size of fill_value vector is 2.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop9(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0}));
+  auto ds9 = ds->Map({random_crop9});
+  EXPECT_NE(ds9, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter9 = ds9->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter9, nullptr);
+
+  // Case 10: Testing the size of fill_value vector is 4.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop10(new vision::RandomCrop({28, 28}, {0, 0, 0, 0}, false, {0, 0, 0, 0}));
+  auto ds10 = ds->Map({random_crop10});
+  EXPECT_NE(ds10, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter10 = ds10->CreateIterator();
+  // Expect failure: invalid input for RandomCrop
+  EXPECT_EQ(iter10, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithBboxSuccess.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_crop(new mindspore::dataset::vision::RandomCropWithBBox({128, 128}));
-  EXPECT_NE(random_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_crop}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -429,10 +470,10 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0], 128);
-    // EXPECT_EQ(image->shape()[1], 128);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0], 128);
+    EXPECT_EQ(image.Shape()[1], 128);
     iter->GetNextRow(&row);
   }
 
@@ -443,62 +484,105 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxSuccess) {
 
 TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropWithBboxFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
+  // Case 1: The size parameter is negative.
   // Create objects for the tensor ops
-  // The size parameter is negative.
-  std::shared_ptr<TensorTransform> random_crop0(new vision::RandomCropWithBBox({-10}));
-  EXPECT_NE(random_crop0, nullptr);
-  // The parameter in the padding vector is negative.
-  std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCropWithBBox({10, 10}, {-2, 2, 2, 2}));
-  EXPECT_NE(random_crop1, nullptr);
-  // The size container is empty.
-  std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCropWithBBox({}));
-  EXPECT_NE(random_crop2, nullptr);
-  // The size of the size container is too large.
-  std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCropWithBBox({10, 10, 10}));
-  EXPECT_NE(random_crop3, nullptr);
-  // The padding container is empty.
-  std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCropWithBBox({10, 10}, {}));
-  EXPECT_NE(random_crop4, nullptr);
-  // The size of the padding container is too large.
-  std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5, 5}));
-  EXPECT_NE(random_crop5, nullptr);
-  // The fill_value container is empty.
-  std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {}));
-  EXPECT_NE(random_crop6, nullptr);
-  // The size of the fill_value container is too large.
-  std::shared_ptr<TensorTransform> random_crop7(new
-    vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {3, 3, 3, 3}));
-  EXPECT_NE(random_crop7, nullptr);
-}
+  std::shared_ptr<TensorTransform> random_crop1(new vision::RandomCropWithBBox({-10}));
+  auto ds1 = ds->Map({random_crop1});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter1, nullptr);
 
-TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // Create object for the tensor op
-  // Invalid negative input
-  std::shared_ptr<TensorTransform> random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlip>(-0.5);
-  EXPECT_NE(random_horizontal_flip_op, nullptr);
-  // Invalid >1 input
-  random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlip>(2);
-  EXPECT_NE(random_horizontal_flip_op, nullptr);
+  // Case 2: The parameter in the padding vector is negative.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop2(new vision::RandomCropWithBBox({10, 10}, {-2, 2, 2, 2}));
+  auto ds2 = ds->Map({random_crop2});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter2, nullptr);
+
+  // Case 3: The size container is empty.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop3(new vision::RandomCropWithBBox({}));
+  auto ds3 = ds->Map({random_crop3});
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter3, nullptr);
+
+  // Case 4: The size of the size container is too large.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop4(new vision::RandomCropWithBBox({10, 10, 10}));
+  auto ds4 = ds->Map({random_crop4});
+  EXPECT_NE(ds4, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter4, nullptr);
+
+  // Case 5: The padding container is empty.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop5(new vision::RandomCropWithBBox({10, 10}, {}));
+  auto ds5 = ds->Map({random_crop5});
+  EXPECT_NE(ds5, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter5 = ds5->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter5, nullptr);
+
+  // Case 6: The size of the padding container is too large.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop6(new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5, 5}));
+  auto ds6 = ds->Map({random_crop6});
+  EXPECT_NE(ds6, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter6 = ds6->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter6, nullptr);
+
+  // Case 7: The fill_value container is empty.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop7(new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {}));
+  auto ds7 = ds->Map({random_crop7});
+  EXPECT_NE(ds7, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter7 = ds7->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter7, nullptr);
+
+  // Case 8: The size of the fill_value container is too large.
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_crop8(
+    new vision::RandomCropWithBBox({10, 10}, {5, 5, 5, 5}, false, {3, 3, 3, 3}));
+  auto ds8 = ds->Map({random_crop8});
+  EXPECT_NE(ds8, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter8 = ds8->CreateIterator();
+  // Expect failure: invalid input for RandomCropWithBBox
+  EXPECT_EQ(iter8, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipWithBBoxSuccess.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlipWithBBox>(0.5);
-  EXPECT_NE(random_horizontal_flip_op, nullptr);
+  std::shared_ptr<TensorTransform> random_horizontal_flip_op =
+    std::make_shared<vision::RandomHorizontalFlipWithBBox>(0.5);
 
   // Create a Map operation on ds
   ds = ds->Map({random_horizontal_flip_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -516,31 +600,14 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
   EXPECT_EQ(i, 3);
   // Manually terminate the pipeline
   iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipWithBBoxFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipWithBBoxFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // Create an VOC Dataset
-  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  // Incorrect prob parameter.
-  std::shared_ptr<TensorTransform> random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlipWithBBox>(-1.0);
-  EXPECT_NE(random_horizontal_flip_op, nullptr);
-  // Incorrect prob parameter.
-  std::shared_ptr<TensorTransform> random_horizontal_flip_op1 = std::make_shared<vision::RandomHorizontalFlipWithBBox>(2.0);
-  EXPECT_NE(random_horizontal_flip_op1, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
@@ -558,10 +625,7 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlip>(0.75);
-  EXPECT_NE(random_vertical_flip_op, nullptr);
-
   std::shared_ptr<TensorTransform> random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlip>(0.5);
-  EXPECT_NE(random_horizontal_flip_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_vertical_flip_op, random_horizontal_flip_op});
@@ -584,8 +648,8 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -593,24 +657,6 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
 
   // Manually terminate the pipeline
   iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestRandomPosterizeFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomPosterizeFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // Create objects for the tensor ops
-  // Invalid max > 8
-  std::shared_ptr<TensorTransform> posterize1(new vision::RandomPosterize({1, 9}));
-  EXPECT_NE(posterize1, nullptr);
-  // Invalid min < 1
-  std::shared_ptr<TensorTransform> posterize2(new vision::RandomPosterize({0, 8}));
-  EXPECT_NE(posterize2, nullptr);
-  // min > max
-  std::shared_ptr<TensorTransform> posterize3(new vision::RandomPosterize({8, 1}));
-  EXPECT_NE(posterize3, nullptr);
-  // empty
-  //std::shared_ptr<TensorTransform> posterize4(new vision::RandomPosterize({}));
-  // EXPECT_NE(posterize4, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
@@ -628,7 +674,6 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> posterize(new vision::RandomPosterize({1, 4}));
-  EXPECT_NE(posterize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({posterize});
@@ -651,8 +696,8 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -677,7 +722,6 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> posterize(new vision::RandomPosterize());
-  EXPECT_NE(posterize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({posterize});
@@ -700,8 +744,8 @@ TEST_F(MindDataTestPipeline, TestRandomPosterizeSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -721,7 +765,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resize(new vision::RandomResize({66}));
-  EXPECT_NE(random_resize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image"});
@@ -739,9 +782,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 66, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 66, true);
     iter->GetNextRow(&row);
   }
 
@@ -766,7 +809,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resize(new vision::RandomResize({66, 77}));
-  EXPECT_NE(random_resize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image"});
@@ -784,9 +826,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 66 && image->shape()[1] == 77, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 66 && image.Shape()[1] == 77, true);
     iter->GetNextRow(&row);
   }
 
@@ -796,37 +838,17 @@ TEST_F(MindDataTestPipeline, TestRandomResizeSuccess2) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestRandomResizeFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeFail incorrect size.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // RandomResize : size must only contain positive integers
-  std::shared_ptr<TensorTransform> random_resize1(new vision::RandomResize({-66, 77}));
-  EXPECT_NE(random_resize1, nullptr);
-
-  // RandomResize : size must only contain positive integers
-  std::shared_ptr<TensorTransform> random_resize2(new vision::RandomResize({0, 77}));
-  EXPECT_NE(random_resize2, nullptr);
-
-  // RandomResize : size must be a vector of one or two values
-  std::shared_ptr<TensorTransform> random_resize3(new vision::RandomResize({1, 2, 3}));
-  EXPECT_NE(random_resize3, nullptr);
-
-  // RandomResize : size must be a vector of one or two values
-  std::shared_ptr<TensorTransform> random_resize4(new vision::RandomResize({}));
-  EXPECT_NE(random_resize4, nullptr);
-}
-
 TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithBBoxSuccess1 with single integer input.";
 
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resize(new vision::RandomResizeWithBBox({88}));
-  EXPECT_NE(random_resize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image", "bbox"});
@@ -844,9 +866,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 88, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 88, true);
     iter->GetNextRow(&row);
   }
 
@@ -861,7 +883,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
 
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -871,7 +894,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resize(new vision::RandomResizeWithBBox({88, 99}));
-  EXPECT_NE(random_resize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resize}, {"image", "bbox"});
@@ -889,9 +911,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 88 && image->shape()[1] == 99, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 88 && image.Shape()[1] == 99, true);
     iter->GetNextRow(&row);
   }
 
@@ -901,23 +923,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxSuccess2) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestRandomResizeWithBBoxFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizeWithBBoxFail incorrect size.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // RandomResizeWithBBox : size must only contain positive integers
-  std::shared_ptr<TensorTransform> random_resize_with_bbox1(new vision::RandomResizeWithBBox({-66, 77}));
-  EXPECT_NE(random_resize_with_bbox1, nullptr);
-
-  // RandomResizeWithBBox : size must be a vector of one or two values
-  std::shared_ptr<TensorTransform> random_resize_with_bbox2(new vision::RandomResizeWithBBox({1, 2, 3}));
-  EXPECT_NE(random_resize_with_bbox2, nullptr);
-
-  // RandomResizeWithBBox : size must be a vector of one or two values
-  std::shared_ptr<TensorTransform> random_resize_with_bbox3(new vision::RandomResizeWithBBox({}));
-  EXPECT_NE(random_resize_with_bbox3, nullptr);
-}
-
 TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropSuccess1.";
   // Testing RandomResizedCrop with default values
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -926,7 +933,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5}));
-  EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image"});
@@ -944,9 +950,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 5, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 5 && image.Shape()[1] == 5, true);
     iter->GetNextRow(&row);
   }
 
@@ -957,6 +963,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropSuccess2.";
   // Testing RandomResizedCrop with non-default values
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -964,9 +971,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new
-    vision::RandomResizedCrop({5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20));
-  EXPECT_NE(random_resized_crop, nullptr);
+  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop(
+    {5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20));
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image"});
@@ -984,9 +990,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 10, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 5 && image.Shape()[1] == 10, true);
     iter->GetNextRow(&row);
   }
 
@@ -997,6 +1003,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with negative size.";
   // This should fail because size has negative value
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1005,7 +1012,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, -10}));
-  EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1017,6 +1023,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid scale input.";
   // This should fail because scale isn't in {min, max} format
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1025,7 +1032,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, 10}, {4, 3}));
-  EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1037,6 +1043,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid ratio input.";
   // This should fail because ratio isn't in {min, max} format
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1045,7 +1052,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, 10}, {4, 5}, {7, 6}));
-  EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1057,6 +1063,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid scale size.";
   // This should fail because scale has a size of more than 2
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1065,7 +1072,6 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCrop({5, 10, 20}, {4, 5}, {7, 6}));
-  EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop});
@@ -1077,15 +1083,16 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxSuccess1.";
   // Testing RandomResizedCropWithBBox with default values
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5}));
-  EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image", "bbox"});
@@ -1103,9 +1110,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 5, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 5 && image.Shape()[1] == 5, true);
     iter->GetNextRow(&row);
   }
 
@@ -1116,16 +1123,17 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess1) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxSuccess2.";
   // Testing RandomResizedCropWithBBox with non-default values
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox(
     {5, 10}, {0.25, 0.75}, {0.5, 1.25}, mindspore::dataset::InterpolationMode::kArea, 20));
-  EXPECT_NE(random_resized_crop, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_resized_crop}, {"image", "bbox"});
@@ -1143,9 +1151,9 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 5 && image->shape()[1] == 10, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 5 && image.Shape()[1] == 10, true);
     iter->GetNextRow(&row);
   }
 
@@ -1156,7 +1164,7 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxSuccess2) {
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail1) {
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail1 with negative size value.";
   // This should fail because size has negative value
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1165,11 +1173,16 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5, -10}));
-  EXPECT_NE(random_resized_crop, nullptr);
+  auto ds1 = ds->Map({random_resized_crop});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomResizedCropWithBBox
+  EXPECT_EQ(iter1, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail2) {
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail2 with invalid scale input.";
   // This should fail because scale isn't in {min, max} format
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1178,11 +1191,16 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5, 10}, {4, 3}));
-  EXPECT_NE(random_resized_crop, nullptr);
+  auto ds1 = ds->Map({random_resized_crop});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomResizedCropWithBBox
+  EXPECT_EQ(iter1, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail3) {
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail3 with invalid ratio input.";
   // This should fail because ratio isn't in {min, max} format
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1191,11 +1209,16 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail3) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5, 10}, {4, 5}, {7, 6}));
-  EXPECT_NE(random_resized_crop, nullptr);
+  auto ds1 = ds->Map({random_resized_crop});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomResizedCropWithBBox
+  EXPECT_EQ(iter1, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail4) {
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropWithBBoxFail4 with invalid scale size.";
   // This should fail because scale has a size of more than 2
   // Create a Cifar10 Dataset
   std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
@@ -1203,8 +1226,14 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropWithBBoxFail4) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> random_resized_crop(new vision::RandomResizedCropWithBBox({5, 10, 20}, {4, 5}, {7, 6}));
-  EXPECT_NE(random_resized_crop, nullptr);
+  std::shared_ptr<TensorTransform> random_resized_crop(
+    new vision::RandomResizedCropWithBBox({5, 10, 20}, {4, 5}, {7, 6}));
+  auto ds1 = ds->Map({random_resized_crop});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomResizedCropWithBBox
+  EXPECT_EQ(iter1, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomRotation) {
@@ -1223,18 +1252,14 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
   // Create objects for the tensor ops
   // Testing the size of degrees is 1
   std::shared_ptr<TensorTransform> random_rotation_op(new vision::RandomRotation({180}));
-  EXPECT_NE(random_rotation_op, nullptr);
   // Testing the size of degrees is 2
   std::shared_ptr<TensorTransform> random_rotation_op1(new vision::RandomRotation({-180, 180}));
-  EXPECT_NE(random_rotation_op1, nullptr);
   // Testing the size of fill_value is 1
-  std::shared_ptr<TensorTransform> random_rotation_op2(new
-    vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2}));
-  EXPECT_NE(random_rotation_op2, nullptr);
+  std::shared_ptr<TensorTransform> random_rotation_op2(
+    new vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2}));
   // Testing the size of fill_value is 3
-  std::shared_ptr<TensorTransform> random_rotation_op3(new
-    vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2, 2, 2}));
-  EXPECT_NE(random_rotation_op3, nullptr);
+  std::shared_ptr<TensorTransform> random_rotation_op3(
+    new vision::RandomRotation({180}, InterpolationMode::kNearestNeighbour, false, {-1, -1}, {2, 2, 2}));
 
   // Create a Map operation on ds
   ds = ds->Map({random_rotation_op, random_rotation_op1, random_rotation_op2, random_rotation_op3});
@@ -1257,8 +1282,8 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -1270,38 +1295,84 @@ TEST_F(MindDataTestPipeline, TestRandomRotation) {
 
 TEST_F(MindDataTestPipeline, TestRandomRotationFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomRotationFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
+  // Case 1: Testing the size of degrees vector is 0
   // Create objects for the tensor ops
-  // Testing the size of degrees vector is 0
-  std::shared_ptr<TensorTransform> random_rotation_op(new vision::RandomRotation({}));
-  EXPECT_NE(random_rotation_op, nullptr);
-  // Testing the size of degrees vector is 3
-  std::shared_ptr<TensorTransform> random_rotation_op1(new vision::RandomRotation({-50.0, 50.0, 100.0}));
-  EXPECT_NE(random_rotation_op1, nullptr);
-  // Test the case where the first column value of degrees is greater than the second column value
-  std::shared_ptr<TensorTransform> random_rotation_op2(new vision::RandomRotation({50.0, -50.0}));
-  EXPECT_NE(random_rotation_op2, nullptr);
-  // Testing the size of center vector is 1
-  std::shared_ptr<TensorTransform> random_rotation_op3(new vision::RandomRotation(
-    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0}));
-  EXPECT_NE(random_rotation_op3, nullptr);
-  // Testing the size of center vector is 3
-  std::shared_ptr<TensorTransform> random_rotation_op4(new vision::RandomRotation(
-    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0, -1.0}));
-  EXPECT_NE(random_rotation_op4, nullptr);
-  // Testing the size of fill_value vector is 2
+  std::shared_ptr<TensorTransform> random_rotation_op1(new vision::RandomRotation({}));
+  auto ds1 = ds->Map({random_rotation_op1});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid input for RandomRotation
+  EXPECT_EQ(iter1, nullptr);
+
+  // Case 2: Testing the size of degrees vector is 3
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_rotation_op2(new vision::RandomRotation({-50.0, 50.0, 100.0}));
+  auto ds2 = ds->Map({random_rotation_op2});
+  EXPECT_NE(ds2, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  // Expect failure: invalid input for RandomRotation
+  EXPECT_EQ(iter2, nullptr);
+
+  // Case 3: Test the case where the first column value of degrees is greater than the second column value
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_rotation_op3(new vision::RandomRotation({50.0, -50.0}));
+  auto ds3 = ds->Map({random_rotation_op3});
+  EXPECT_NE(ds3, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter3 = ds3->CreateIterator();
+  // Expect failure: invalid input for RandomRotation
+  EXPECT_EQ(iter3, nullptr);
+
+  // Case 4: Testing the size of center vector is 1
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_rotation_op4(
+    new vision::RandomRotation({-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0}));
+  auto ds4 = ds->Map({random_rotation_op4});
+  EXPECT_NE(ds4, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
+  // Expect failure: invalid input for RandomRotation
+  EXPECT_EQ(iter4, nullptr);
+
+  // Case 5: Testing the size of center vector is 3
+  // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_rotation_op5(new vision::RandomRotation(
-    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0}, {2, 2}));
-  EXPECT_NE(random_rotation_op5, nullptr);
-  // Testing the size of fill_value vector is 4
+    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0, -1.0}));
+  auto ds5 = ds->Map({random_rotation_op5});
+  EXPECT_NE(ds5, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter5 = ds5->CreateIterator();
+  // Expect failure: invalid input for RandomRotation
+  EXPECT_EQ(iter5, nullptr);
+
+  // Case 6: Testing the size of fill_value vector is 2
+  // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_rotation_op6(new vision::RandomRotation(
+    {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0}, {2, 2}));
+  auto ds6 = ds->Map({random_rotation_op6});
+  EXPECT_NE(ds6, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter6 = ds6->CreateIterator();
+  // Expect failure: invalid input for RandomRotation
+  EXPECT_EQ(iter6, nullptr);
+
+  // Case 7: Testing the size of fill_value vector is 4
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> random_rotation_op7(new vision::RandomRotation(
     {-50.0, 50.0}, mindspore::dataset::InterpolationMode::kNearestNeighbour, false, {-1.0, -1.0}, {2, 2, 2, 2}));
-  EXPECT_NE(random_rotation_op6, nullptr);
+  auto ds7 = ds->Map({random_rotation_op7});
+  EXPECT_NE(ds7, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter7 = ds7->CreateIterator();
+  // Expect failure: invalid input for RandomRotation
+  EXPECT_EQ(iter7, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestRandomSharpness) {
@@ -1320,25 +1391,12 @@ TEST_F(MindDataTestPipeline, TestRandomSharpness) {
   // Create objects for the tensor ops
   // Valid case: Input start degree and end degree
   std::shared_ptr<TensorTransform> random_sharpness_op_1(new vision::RandomSharpness({0.4, 2.3}));
-  EXPECT_NE(random_sharpness_op_1, nullptr);
-
-  // Failure case: Empty degrees vector
-  //
-  // std::shared_ptr<TensorTransform> random_sharpness_op_2(new vision::RandomSharpness({}));
-  //
-  // EXPECT_NE(random_sharpness_op_2, nullptr);
 
   // Valid case: Use default input values
-  std::shared_ptr<TensorTransform> random_sharpness_op_3(new vision::RandomSharpness());
-  EXPECT_NE(random_sharpness_op_3, nullptr);
-
-  // Failure case: Single degree value
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  std::shared_ptr<TensorTransform> random_sharpness_op_4(new vision::RandomSharpness({0.1}));
-  EXPECT_NE(random_sharpness_op_4, nullptr);
+  std::shared_ptr<TensorTransform> random_sharpness_op_2(new vision::RandomSharpness());
 
   // Create a Map operation on ds
-  ds = ds->Map({random_sharpness_op_1, random_sharpness_op_3});
+  ds = ds->Map({random_sharpness_op_1, random_sharpness_op_2});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -1358,8 +1416,8 @@ TEST_F(MindDataTestPipeline, TestRandomSharpness) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -1379,8 +1437,8 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess1) {
 
   // Create objects for the tensor ops
   std::vector<uint8_t> threshold = {10, 100};
-  std::shared_ptr<TensorTransform> random_solarize = std::make_shared<mindspore::dataset::vision::RandomSolarize>(threshold);
-  EXPECT_NE(random_solarize, nullptr);
+  std::shared_ptr<TensorTransform> random_solarize =
+    std::make_shared<mindspore::dataset::vision::RandomSolarize>(threshold);
 
   // Create a Map operation on ds
   ds = ds->Map({random_solarize});
@@ -1398,8 +1456,8 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -1419,7 +1477,6 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_solarize = std::make_shared<mindspore::dataset::vision::RandomSolarize>();
-  EXPECT_NE(random_solarize, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_solarize});
@@ -1437,8 +1494,8 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -1448,48 +1505,16 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeSucess2) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestRandomSolarizeFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomSolarizeFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  std::vector<uint8_t> threshold = {13, 1};
-  std::shared_ptr<TensorTransform> random_solarize = std::make_shared<mindspore::dataset::vision::RandomSolarize>(threshold);
-  EXPECT_NE(random_solarize, nullptr);
-
-  threshold = {1, 2, 3};
-  random_solarize = std::make_shared<mindspore::dataset::vision::RandomSolarize>(threshold);
-  EXPECT_NE(random_solarize, nullptr);
-
-  threshold = {1};
-  random_solarize = std::make_shared<mindspore::dataset::vision::RandomSolarize>(threshold);
-  EXPECT_NE(random_solarize, nullptr);
-
-  threshold = {};
-  random_solarize = std::make_shared<mindspore::dataset::vision::RandomSolarize>(threshold);
-  EXPECT_NE(random_solarize, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestRandomVerticalFlipFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomVerticalFlipFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // Create object for the tensor op
-  // Invalid negative input
-  std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlip>(-0.5);
-  EXPECT_NE(random_vertical_flip_op, nullptr);
-  // Invalid >1 input
-  random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlip>(1.1);
-  EXPECT_NE(random_vertical_flip_op, nullptr);
-}
-
 TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomVerticalFlipWithBBoxSuccess.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlipWithBBox>(0.4);
-  EXPECT_NE(random_vertical_flip_op, nullptr);
 
   // Create a Map operation on ds
   ds = ds->Map({random_vertical_flip_op}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -1507,29 +1532,12 @@ TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
   EXPECT_EQ(i, 3);
   // Manually terminate the pipeline
   iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestRandomVerticalFlipWithBBoxFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomVerticalFlipWithBBoxFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // Create an VOC Dataset
-  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  // Incorrect prob parameter.
-  std::shared_ptr<TensorTransform> random_vertical_flip_op = std::make_shared<vision::RandomVerticalFlipWithBBox>(-0.5);
-  EXPECT_NE(random_vertical_flip_op, nullptr);
-  // Incorrect prob parameter.
-  std::shared_ptr<TensorTransform> random_vertical_flip_op1 = std::make_shared<vision::RandomVerticalFlipWithBBox>(3.0);
-  EXPECT_NE(random_vertical_flip_op1, nullptr);
 }

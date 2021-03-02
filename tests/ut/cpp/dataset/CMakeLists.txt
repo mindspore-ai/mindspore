@@ -12,7 +12,6 @@ SET(DE_UT_SRCS
         btree_test.cc
         buddy_test.cc
         build_vocab_test.cc
-        c_api_affine_test.cc
         c_api_cache_test.cc
         c_api_dataset_album_test.cc
         c_api_dataset_cifar_test.cc
@@ -37,6 +36,7 @@ SET(DE_UT_SRCS
         c_api_text_vocab_test.cc
         c_api_transforms_test.cc
         c_api_vision_a_to_q_test.cc
+        c_api_vision_affine_test.cc
         c_api_vision_bounding_box_augment_test.cc
         c_api_vision_random_subselect_policy_test.cc
         c_api_vision_random_test.cc
@@ -77,6 +77,7 @@ SET(DE_UT_SRCS
         ir_sampler_test.cc
         ir_tensor_op_fusion_pass_test.cc
         ir_tree_adapter_test.cc
+        ir_vision_random_test.cc
         ir_vision_test.cc
         jieba_tokenizer_op_test.cc
         main_test.cc
