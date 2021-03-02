@@ -16,16 +16,13 @@
 import re
 import os
 import random
-from collections import namedtuple
+import math
 import pickle
 
 import numpy as np
 import mindspore.dataset as ds
 
 ds.config.set_prefetch_size(8)
-
-NEWS_ITEMS = ['category', 'subcategory', 'title', 'abstract']
-News = namedtuple('News', NEWS_ITEMS)
 
 class MINDPreprocess:
     """
@@ -279,10 +276,43 @@ class EvalCandidateNews(EvalDatasetBase):
         nid, label = self.preprocess.impression_list[index]
         return uid, nid, label
 
+class DistributedSampler():
+    """
+    sampling the dataset.
 
-def create_dataset(mindpreprocess, batch_size=64):
+    Args:
+    Returns:
+        num_samples, number of samples.
+    """
+    def __init__(self, preprocess: MINDPreprocess, rank, group_size, shuffle=True, seed=0):
+        self.preprocess = preprocess
+        self.rank = rank
+        self.group_size = group_size
+        self.dataset_length = preprocess.total_count
+        self.num_samples = int(math.ceil(self.dataset_length * 1.0 / self.group_size))
+        self.total_size = self.num_samples * self.group_size
+        self.shuffle = shuffle
+        self.seed = seed
+
+    def __iter__(self):
+        if self.shuffle:
+            self.seed = (self.seed + 1) & 0xffffffff
+            np.random.seed(self.seed)
+            indices = np.random.permutation(self.dataset_length).tolist()
+        else:
+            indices = list(range(len(self.dataset_length)))
+
+        indices += indices[:(self.total_size - len(indices))]
+        indices = indices[self.rank::self.group_size]
+        return iter(indices)
+
+    def __len__(self):
+        return self.num_samples
+
+def create_dataset(mindpreprocess, batch_size=64, rank=0, group_size=1):
     """Get generator dataset when training."""
-    dataset = ds.GeneratorDataset(mindpreprocess, mindpreprocess.column_names, shuffle=True)
+    sampler = DistributedSampler(mindpreprocess, rank, group_size, shuffle=True)
+    dataset = ds.GeneratorDataset(mindpreprocess, mindpreprocess.column_names, sampler=sampler)
     dataset = dataset.batch(batch_size, drop_remainder=True)
     return dataset
 

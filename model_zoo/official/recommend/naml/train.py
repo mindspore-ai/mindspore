@@ -34,7 +34,8 @@ if __name__ == '__main__':
     if args.checkpoint_path is not None:
         load_checkpoint(args.pretrain_checkpoint, net_with_loss)
     mindpreprocess_train = MINDPreprocess(vars(args), dataset_path=args.train_dataset_path)
-    dataset = create_dataset(mindpreprocess_train, batch_size=args.batch_size)
+    dataset = create_dataset(mindpreprocess_train, batch_size=args.batch_size, rank=args.rank,
+                             group_size=args.device_num)
     args.dataset_size = dataset.get_dataset_size()
     args.print_times = min(args.dataset_size, args.print_times)
     if args.weight_decay:

@@ -16,6 +16,7 @@
 import argparse
 import ast
 import os
+import math
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.communication.management import init, get_rank
@@ -52,7 +53,6 @@ def get_args(phase):
     parser.add_argument('--batch_size', type=int, default=64, help='size of each batch')
     # Training specifications
     if phase == "train":
-        parser.add_argument('--train_dataset_path', type=str, default=None, help='training set directory')
         parser.add_argument('--epochs', type=int, default=None, help='number of epochs for training')
         parser.add_argument('--lr', type=float, default=None, help='learning rate')
         parser.add_argument('--beta1', type=float, default=0.9, help='ADAM beta1')
@@ -72,7 +72,6 @@ def get_args(phase):
                             help="Save checkpoint path, default is checkpoint.")
         parser.add_argument('--dropout_ratio', type=float, default=0.2, help='ratio of dropout')
     if phase == "eval":
-        parser.add_argument('--eval_dataset_path', type=str, default=None)
         parser.add_argument('--neg_sample', type=int, default=-1, \
                             help='number of negative samples in negative sampling')
     if phase == "export":
@@ -100,7 +99,7 @@ def get_args(phase):
     args.n_sub_categories = cfg.n_sub_categories
     args.n_words = cfg.n_words
     if phase == "train":
-        args.epochs = cfg.epochs if args.epochs is None else args.epochs
+        args.epochs = cfg.epochs if args.epochs is None else args.epochs * math.ceil(args.device_num ** 0.5)
         args.lr = cfg.lr if args.lr is None else args.lr
         args.print_times = cfg.print_times if args.print_times is None else args.print_times
     args.embedding_file = cfg.embedding_file.format(args.dataset_path)
