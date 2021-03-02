@@ -37,7 +37,8 @@ class LSTM : public PrimitiveC {
   ~LSTM() = default;
   MS_DECLARE_PARENT(LSTM, PrimitiveC);
   void Init(const int64_t input_size, const int64_t hidden_size, const int64_t num_layers, const bool has_bias,
-            const float dropout, const bool bidirectional = false);
+            const float dropout, const bool bidirectional = false, const float zoneout_cell = 0.0f,
+            const float zoneout_hidden = 0.0f);
   void set_input_size(const int64_t input_size);
   int64_t get_input_size() const;
   void set_hidden_size(const int64_t hidden_size);
@@ -52,6 +53,10 @@ class LSTM : public PrimitiveC {
   bool get_bidirectional() const;
   void set_num_directions(const int64_t num_directions);
   int64_t get_num_directions() const;
+  void set_zoneout_cell(float zoneout_cell);
+  float get_zoneout_cell() const;
+  void set_zoneout_hidden(float zoneout_hidden);
+  float get_zoneout_hidden() const;
   int64_t get_good_ld(const int64_t dim, const int64_t type_size);
 };
 AbstractBasePtr LstmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
