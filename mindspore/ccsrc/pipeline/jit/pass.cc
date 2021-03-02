@@ -116,11 +116,12 @@ FuncGraphPtr PrimBpOptPassStep1(const opt::irpass::OptimizeIRPassLib &irpass, co
     irpass.bool_scalar_eliminate,
   });
 
-  OptPassGroupMap map({{"ad_eliminate_", pynative_eliminate_},
-                       {"ad_resolver_prim", resolver_prim},
-                       {"ad_inline_", inline_},
-                       {"bool_scalar_eliminate", bool_scalar_eliminate},
-                       {"ad_switch_simplify_", switch_simplify_}});
+  OptPassGroupMap map({
+    {"ad_eliminate_",         pynative_eliminate_},
+    {"ad_resolver_prim",      resolver_prim},
+    {"ad_inline_",            inline_},
+    {"bool_scalar_eliminate", bool_scalar_eliminate},
+    {"ad_switch_simplify_",   switch_simplify_}});
 
   auto prim_bprop_opt_step_1 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_1", res, map);
   FuncGraphPtr func_graph = res->func_graph();
@@ -139,13 +140,19 @@ FuncGraphPtr PrimBpOptPassStep2(const opt::irpass::OptimizeIRPassLib &irpass, co
     irpass.inline_,
   });
 
+  opt::OptPassConfig zero_like_fill_zero_ = opt::OptPassConfig({
+    irpass.zero_like_fill_zero_,
+  });
+
   auto re_auto_monadwrapper = [](const FuncGraphPtr &root, const opt::OptimizerPtr &) -> bool {
     return ReAutoMonad(root);
   };
-  OptPassGroupMap map({{"ad_renormalize", opt::OptPassConfig::Renormalize()},
-                       {"ad_inline_", inline_},
-                       {"ad_switch_simplify_", switch_simplify_},
-                       {"auto_monad_grad", opt::OptPassConfig(re_auto_monadwrapper)}});
+  OptPassGroupMap map({
+    {"ad_renormalize",          opt::OptPassConfig::Renormalize()},
+    {"ad_inline_",              inline_},
+    {"ad_switch_simplify_",     switch_simplify_},
+    {"ad_zero_like_fill_zero_", zero_like_fill_zero_},
+    {"auto_monad_grad",         opt::OptPassConfig(re_auto_monadwrapper)}});
 
   auto prim_bprop_opt_step_2 = opt::Optimizer::MakeOptimizer("prim_bprop_opt_step_2", res, map);
   FuncGraphPtr func_graph = res->func_graph();
