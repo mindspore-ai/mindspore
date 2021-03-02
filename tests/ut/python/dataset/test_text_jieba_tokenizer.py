@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
+import pytest
 import mindspore.dataset as ds
 from mindspore.dataset.text import JiebaTokenizer
 from mindspore.dataset.text import JiebaMode, to_str
@@ -33,13 +34,18 @@ def test_jieba_callable():
     jieba_op1 = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.MP)
     jieba_op2 = JiebaTokenizer(HMM_FILE, MP_FILE, mode=JiebaMode.HMM)
 
+    # test one tensor
     text1 = "今天天气太好了我们一起去外面玩吧"
     text2 = "男默女泪市长江大桥"
     assert np.array_equal(jieba_op1(text1), ['今天天气', '太好了', '我们', '一起', '去', '外面', '玩吧'])
     assert np.array_equal(jieba_op2(text1), ['今天', '天气', '太', '好', '了', '我们', '一起', '去', '外面', '玩', '吧'])
-
     jieba_op1.add_word("男默女泪")
     assert np.array_equal(jieba_op1(text2), ['男默女泪', '市', '长江大桥'])
+
+    # test input multiple tensors
+    with pytest.raises(RuntimeError) as info:
+        _ = jieba_op1(text1, text2)
+    assert "JiebaTokenizer: input only support one column data." in str(info.value)
 
 
 def test_jieba_1():

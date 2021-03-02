@@ -38,12 +38,13 @@ def test_uniform_augment_callable(num_ops=2):
 
     decode_op = C.Decode()
     img = decode_op(img)
+    assert img.shape == (2268, 4032, 3)
 
     transforms_ua = [C.RandomCrop(size=[400, 400], padding=[32, 32, 32, 32]),
                      C.RandomCrop(size=[400, 400], padding=[32, 32, 32, 32])]
     uni_aug = C.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
-    img = uni_aug([img, img])
-    assert ((np.shape(img) == (2, 2268, 4032, 3)) or (np.shape(img) == (1, 400, 400, 3)))
+    img = uni_aug(img)
+    assert img.shape == (2268, 4032, 3) or img.shape == (400, 400, 3)
 
 
 def test_uniform_augment(plot=False, num_ops=2):
