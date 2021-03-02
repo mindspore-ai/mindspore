@@ -122,9 +122,9 @@ std::string CommUtil::NodeRoleToString(const NodeRole &role) {
   }
 }
 bool CommUtil::ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id) {
-  if (node_role == NodeRole::SERVER && (rank_id > ClusterMetadata::instance()->server_num() - 1)) {
+  if (node_role == NodeRole::SERVER && (rank_id > ClusterMetadata::instance()->total_server_num() - 1)) {
     return false;
-  } else if (node_role == NodeRole::WORKER && (rank_id > ClusterMetadata::instance()->worker_num() - 1)) {
+  } else if (node_role == NodeRole::WORKER && (rank_id > ClusterMetadata::instance()->total_worker_num() - 1)) {
     return false;
   }
   return true;

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "ps/internal/worker.h"
+#include "ps/worker.h"
 
 namespace mindspore {
 namespace ps {
-namespace internal {
 void Worker::Run() {
   std::lock_guard<std::mutex> lock(running_mutex_);
   core::ClusterMetadata::instance()->Init(
@@ -198,7 +197,8 @@ void Worker::AddEmbeddingTable(const Key &key, const size_t &row_count) {
 }
 
 void Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &input_shape,
-                                  const std::vector<size_t> &indices_shape, const std::vector<size_t> &output_shape) {
+                                  const std::vector<size_t> &indices_shape, const std::vector<size_t> &output_shape,
+                                  const ParamInitInfoMessage &info) {
   bool has_init = IsKeyInit(key);
   if (has_init) {
     MS_LOG(DEBUG) << "The key embedding table of key " << key << " is initialized.";
@@ -210,6 +210,7 @@ void Worker::InitPSEmbeddingTable(const size_t &key, const std::vector<size_t> &
   *embedding_table_meta.mutable_input_shape() = {input_shape.begin(), input_shape.end()};
   *embedding_table_meta.mutable_indices_shape() = {indices_shape.begin(), indices_shape.end()};
   *embedding_table_meta.mutable_output_shape() = {output_shape.begin(), output_shape.end()};
+  *embedding_table_meta.mutable_info() = info;
 
   std::string kv_data = embedding_table_meta.SerializeAsString();
 
@@ -295,19 +296,18 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   int64_t single_id_len = SizeToLong(lookup_result->size() / lookup_ids.size());
   std::unordered_map<Key, std::shared_ptr<std::pair<float *, int64_t>>> id_addr_map;
   std::shared_ptr<std::vector<float>> values = std::make_shared<std::vector<float>>();
+  int64_t value_offset = 0;
   for (size_t i = 0; i < resp.size(); ++i) {
     KVMessage message;
     message.ParseFromArray(resp.at(i)->data(), resp.at(i)->size());
-    int64_t offset = 0;
-    values->clear();
     for (auto j = 0; j < message.values_size(); j++) {
       values->push_back(message.values(j));
     }
-    MS_LOG(DEBUG) << "the embedding resp:" << values;
+    MS_LOG(DEBUG) << "The embedding resp:" << values;
     for (auto k = 0; k < message.keys_size(); k++) {
       const Key &key = message.keys(k);
-      float *addr = values->data() + offset;
-      offset += single_id_len;
+      float *addr = values->data() + value_offset;
+      value_offset += single_id_len;
       id_addr_map[key] = std::make_shared<std::pair<float *, int64_t>>(std::make_pair(addr, single_id_len));
     }
   }
@@ -969,6 +969,5 @@ void Worker::SendForPull(int cmd, const KVMessage &send, const KVPartitioner &pa
     }
   }
 }
-}  // namespace internal
 }  // namespace ps
 }  // namespace mindspore

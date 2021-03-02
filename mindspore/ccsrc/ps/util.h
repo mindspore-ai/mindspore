@@ -37,11 +37,8 @@ struct ParamInitInfo {
 
 class Util {
  public:
-  static bool IsParamServerMode();
-  static bool IsRoleOfWorker();
   static bool IsRoleOfPServer();
   static bool IsRoleOfScheduler();
-  static void SetInternalEnvVar();
   static int64_t optimizer_id(std::string name);
   static std::string optimizer_name(int64_t id);
   static std::string optimizer_node_name(int64_t id);

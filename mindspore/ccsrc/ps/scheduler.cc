@@ -15,13 +15,16 @@
  */
 
 #include "ps/scheduler.h"
-#include "ps/ps.h"
 
 namespace mindspore {
 namespace ps {
 void Scheduler::Run() {
-  ::ps::Start(0);
-  ::ps::Finalize(0, true);
+  core::ClusterMetadata::instance()->Init(
+    PSContext::instance()->initial_worker_num(), PSContext::instance()->initial_server_num(),
+    PSContext::instance()->scheduler_host(), PSContext::instance()->scheduler_port());
+  scheduler_node_.Start();
+  scheduler_node_.Finish();
+  scheduler_node_.Stop();
   exit(1);
 }
 }  // namespace ps

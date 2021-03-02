@@ -20,7 +20,7 @@ namespace mindspore {
 namespace ps {
 namespace core {
 void NodeManager::InitNodeNum() {
-  total_node_num_ = ClusterMetadata::instance()->server_num() + ClusterMetadata::instance()->worker_num();
+  total_node_num_ = ClusterMetadata::instance()->total_server_num() + ClusterMetadata::instance()->total_worker_num();
 }
 
 int NodeManager::NextRankId(const RegisterMessage &register_message) {

@@ -48,6 +48,7 @@
 #include "mindspore/core/utils/parallel_node_check.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
+#include "ps/ps_context.h"
 #endif
 
 using mindspore::tensor::Tensor;
@@ -3283,7 +3284,7 @@ static void HandleNoUsedParameter(const FuncGraphPtr &root) {
 
 bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
+  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     return false;
   }
 #endif

@@ -23,7 +23,6 @@ self_path=$(dirname "${script_self}")
 export EPOCH_SIZE=$1
 export DEVICE_TARGET=$2
 export DATASET=$3
-export MS_COMM_TYPE=zmq
 export MS_SCHED_NUM=1
 export MS_WORKER_NUM=1
 export MS_SERVER_NUM=$4

@@ -37,8 +37,8 @@ class ClusterMetadata {
 
   void Init(const uint32_t &worker_num, const uint32_t &server_num, std::string scheduler_host,
             const uint16_t &scheduler_port);
-  uint32_t worker_num();
-  uint32_t server_num();
+  uint32_t total_worker_num();
+  uint32_t total_server_num();
   uint32_t heartbeat_interval();
   void set_heartbeat_interval(const uint32_t &heartbeat_interval);
   std::string scheduler_host();

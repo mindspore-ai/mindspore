@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_COMMON_H_
-#define MINDSPORE_CCSRC_PS_COMMON_H_
+#ifndef MINDSPORE_CCSRC_PS_CONSTANTS_H_
+#define MINDSPORE_CCSRC_PS_CONSTANTS_H_
 
 #include <limits.h>
 
@@ -24,8 +24,6 @@
 #include <memory>
 #include <map>
 #include <string>
-
-#include "ps/ps.h"
 
 namespace mindspore {
 namespace ps {
@@ -36,16 +34,7 @@ constexpr char kEnvWorkerNum[] = "MS_WORKER_NUM";
 constexpr char kEnvSchedulerHost[] = "MS_SCHED_HOST";
 constexpr char kEnvSchedulerPort[] = "MS_SCHED_PORT";
 
-constexpr char kDmlcCommType[] = "DMLC_PS_VAN_TYPE";
-constexpr char kDmlcInterface[] = "DMLC_INTERFACE";
-constexpr char kDmlcPServerNum[] = "DMLC_NUM_SERVER";
-constexpr char kDmlcWorkerNum[] = "DMLC_NUM_WORKER";
-constexpr char kDmlcRole[] = "DMLC_ROLE";
-constexpr char kDmlcSchedulerHost[] = "DMLC_PS_ROOT_URI";
-constexpr char kDmlcSchedulerPort[] = "DMLC_PS_ROOT_PORT";
-
 constexpr char kCommTypeOfIBVerbs[] = "ibverbs";
-constexpr char kCommTypeOfTCP[] = "zmq";
 constexpr char kRoleOfPServer[] = "server";
 constexpr char kRoleOfWorker[] = "worker";
 constexpr char kRoleOfScheduler[] = "scheduler";
@@ -72,20 +61,22 @@ constexpr int64_t kCheckReadyForPushCmd = 25;
 constexpr int64_t kCheckReadyForPullCmd = 26;
 constexpr int64_t kEmbeddingLookupCmd = 30;
 constexpr int64_t kFinalizeCmd = 40;
+constexpr int64_t kPushCmd = 50;
+constexpr int64_t kPullCmd = 51;
 
 constexpr size_t kInvalidKey = UINT64_MAX;
 constexpr int64_t kInvalidID = -1;
 
 using DataPtr = std::shared_ptr<unsigned char>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
-using Key = ::ps::Key;
-using Keys = ::ps::SArray<Key>;
-using Values = ::ps::SArray<float>;
+using Key = uint64_t;
+using Keys = std::vector<Key>;
+using Values = std::vector<float>;
 using ValuesPtr = std::shared_ptr<Values>;
-using Weight = ::ps::SArray<float>;
-using Grad = ::ps::SArray<float>;
-using LookupIds = ::ps::SArray<Key>;
-using Lengths = ::ps::SArray<int>;
+using Weight = std::vector<float>;
+using Grad = std::vector<float>;
+using LookupIds = std::vector<Key>;
+using Lengths = std::vector<int>;
 using WeightPtr = std::shared_ptr<Weight>;
 using GradPtr = std::shared_ptr<Grad>;
 using InputsShape = std::vector<std::shared_ptr<std::vector<size_t>>>;
@@ -137,4 +128,4 @@ const std::map<std::string, OptimOriginIdx> kOptimToPSSendIdx = {{kApplyMomentum
   }
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_COMMON_H_
+#endif  // MINDSPORE_CCSRC_PS_CONSTANTS_H_

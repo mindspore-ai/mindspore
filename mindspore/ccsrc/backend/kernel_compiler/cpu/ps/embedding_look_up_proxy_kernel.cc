@@ -17,6 +17,7 @@
 #include <vector>
 #include <algorithm>
 #include "ps/worker.h"
+#include "ps/util.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,7 +36,7 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
                       << input_shape << " is too large.";
   }
 
-  if (mindspore::ps::Util::IsRoleOfWorker()) {
+  if (mindspore::ps::PSContext::instance()->is_worker()) {
     key_ = AnfAlgo::GetNodeAttr<size_t>(kernel_node, kAttrPsKey);
   }
   std::vector<size_t> keys{key_, key_, key_};
@@ -50,9 +51,10 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
                << ", indices_shape:" << indices_shape << ", output_shape:" << output_shape;
   std::vector<int64_t> lens{SizeToLong(input_shape.size()), SizeToLong(indices_shape.size()),
                             SizeToLong(output_shape.size())};
-  if (mindspore::ps::Util::IsRoleOfWorker()) {
+  if (mindspore::ps::PSContext::instance()->is_worker()) {
     mindspore::ps::worker.AddEmbeddingTable(key_, input_shape[axis]);
-    mindspore::ps::worker.InitPSEmbeddingTable(keys, values, lens);
+    mindspore::ps::ParamInitInfoMessage info;
+    mindspore::ps::worker.InitPSEmbeddingTable(key_, input_shape, indices_shape, output_shape, info);
   }
 }
 
@@ -70,17 +72,16 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
   size_t input_size = inputs[1]->size;
   size_t output_size = outputs[0]->size;
 
-  size_t size = input_size / sizeof(float);
-  ::ps::SArray<int> lookup_ids(size, 0);
-  ::ps::SArray<int> lengths{size};
-  ::ps::SArray<float> lookup_result(output_size / sizeof(float), 0);
+  size_t size = input_size / sizeof(int);
+  std::vector<int> lookup_ids(size, 0);
+  std::vector<int> lengths{SizeToInt(size)};
+  std::vector<float> lookup_result(output_size / sizeof(float), 0);
   auto ret = memcpy_s(lookup_ids.data(), lookup_ids.size() * sizeof(int), indices_addr, input_size);
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
     return false;
   }
-  mindspore::ps::worker.DoPSEmbeddingLookup({key_}, lookup_ids, lengths, &lookup_result,
-                                            mindspore::ps::kEmbeddingLookupCmd);
+  mindspore::ps::worker.DoPSEmbeddingLookup(key_, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
 
   auto ret2 = memcpy_s(output_addr, outputs[0]->size, lookup_result.data(), output_size);
   if (ret2 != EOK) {

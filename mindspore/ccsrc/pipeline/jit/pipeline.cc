@@ -49,7 +49,7 @@
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-#include "ps/common.h"
+#include "ps/constants.h"
 #include "ps/util.h"
 #include "ps/worker.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
@@ -492,14 +492,11 @@ std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::strin
   std::string backend = MsContext::GetInstance()->backend_policy();
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (mindspore::ps::Util::IsParamServerMode()) {
-    mindspore::ps::Util::SetInternalEnvVar();
-  }
-  if (ps::Util::IsRoleOfPServer()) {
+  if (ps::PSContext::instance()->is_server()) {
     resource->results()[kBackend] = compile::CreateBackend();
     return PServerPipeline();
   }
-  if (ps::Util::IsRoleOfScheduler()) {
+  if (ps::PSContext::instance()->is_scheduler()) {
     return PSchedulerPipeline();
   }
 #endif
@@ -978,7 +975,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if ((ps::Util::IsParamServerMode()) && (!ps::Util::IsRoleOfWorker())) {
+  if ((ps::PSContext::instance()->is_ps_mode()) && (!ps::PSContext::instance()->is_worker())) {
     return true;
   }
 #endif
@@ -1030,7 +1027,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   ConfigManager::GetInstance().set_iter_num(size);
   // PS cache does not support loop sink.
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsRoleOfWorker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
+  if (ps::PSContext::instance()->is_worker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
     ConfigManager::GetInstance().set_iter_num(1);
   }
@@ -1151,10 +1148,11 @@ void ClearResAtexit() {
   pynative::ClearPyNativeSession();
   session::ClearPythonParasMap();
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsParamServerMode() && ps::Util::IsRoleOfWorker()) {
+  if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();
     }
+    MS_LOG(INFO) << "ps::worker.Finalize";
     ps::worker.Finalize();
   }
 #endif

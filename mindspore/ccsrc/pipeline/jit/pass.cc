@@ -43,6 +43,7 @@
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
+#include "ps/ps_context.h"
 #endif
 
 namespace mindspore {
@@ -406,7 +407,7 @@ bool AddRecomputationPass(const ResourcePtr &res) {
 
 bool AddCacheEmbeddingPass(const ResourcePtr &res) {
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsParamServerMode()) {
+  if (ps::PSContext::instance()->is_ps_mode()) {
     return true;
   }
 #endif

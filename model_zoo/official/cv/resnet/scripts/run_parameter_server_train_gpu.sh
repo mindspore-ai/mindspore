@@ -70,7 +70,6 @@ fi
 export DEVICE_NUM=8
 export RANK_SIZE=8
 
-export MS_COMM_TYPE=zmq
 export MS_SCHED_NUM=1
 export MS_WORKER_NUM=8
 export MS_SERVER_NUM=8

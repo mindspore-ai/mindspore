@@ -39,9 +39,9 @@ void ClusterMetadata::Init(const uint32_t &worker_num, const uint32_t &server_nu
   scheduler_port_ = scheduler_port;
 }
 
-uint32_t ClusterMetadata::worker_num() { return worker_num_; }
+uint32_t ClusterMetadata::total_worker_num() { return worker_num_; }
 
-uint32_t ClusterMetadata::server_num() { return server_num_; }
+uint32_t ClusterMetadata::total_server_num() { return server_num_; }
 
 uint32_t ClusterMetadata::heartbeat_interval() { return heartbeat_interval_; }
 

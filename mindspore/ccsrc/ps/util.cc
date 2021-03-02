@@ -17,7 +17,7 @@
 #include "ps/util.h"
 #include <unordered_map>
 #include <vector>
-#include "ps/common.h"
+#include "ps/constants.h"
 #include "ps/ps_context.h"
 #include "utils/ms_utils.h"
 
@@ -46,49 +46,9 @@ std::unordered_map<int64_t, std::string> Util::id_to_optimizer_nodes{
   {3, kSparseFtrlOp},
 };
 
-bool Util::IsParamServerMode() { return PSContext::instance()->is_ps_mode(); }
-
-bool Util::IsRoleOfWorker() { return PSContext::instance()->is_worker(); }
-
 bool Util::IsRoleOfPServer() { return PSContext::instance()->is_server(); }
 
 bool Util::IsRoleOfScheduler() { return PSContext::instance()->is_scheduler(); }
-
-void Util::SetInternalEnvVar() {
-  if (IsParamServerMode()) {
-    auto comm_type = common::GetEnv(kEnvCommType);
-    if (!comm_type.empty()) {
-      (void)common::SetEnv(kDmlcCommType, comm_type.c_str());
-    }
-    auto interface = common::GetEnv(kEnvInterface);
-    if (!interface.empty()) {
-      (void)common::SetEnv(kDmlcInterface, interface.c_str());
-    }
-    auto server_num = common::GetEnv(kEnvPServerNum);
-    if (!server_num.empty()) {
-      (void)common::SetEnv(kDmlcPServerNum, server_num.c_str());
-    }
-    auto worker_num = common::GetEnv(kEnvWorkerNum);
-    if (!worker_num.empty()) {
-      (void)common::SetEnv(kDmlcWorkerNum, worker_num.c_str());
-    }
-    if (IsRoleOfScheduler()) {
-      (void)common::SetEnv(kDmlcRole, kRoleOfScheduler);
-    } else if (IsRoleOfPServer()) {
-      (void)common::SetEnv(kDmlcRole, kRoleOfPServer);
-    } else if (IsRoleOfWorker()) {
-      (void)common::SetEnv(kDmlcRole, kRoleOfWorker);
-    }
-    auto scheduler_host = common::GetEnv(kEnvSchedulerHost);
-    if (!scheduler_host.empty()) {
-      (void)common::SetEnv(kDmlcSchedulerHost, scheduler_host.c_str());
-    }
-    auto scheduler_port = common::GetEnv(kEnvSchedulerPort);
-    if (!scheduler_port.empty()) {
-      (void)common::SetEnv(kDmlcSchedulerPort, scheduler_port.c_str());
-    }
-  }
-}
 
 int64_t Util::optimizer_id(std::string name) {
   if (optimizer_to_ids.count(name) > 0) {
