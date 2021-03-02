@@ -74,7 +74,11 @@ You can download the dataset and put the directory in structure as follows:
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
 ```shell
+# train standalone
 bash run_train.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH]
+# train distribute
+bash run_distribute_train.sh [PLATFORM] [DEVICE_NUM] [DATASET] [DATASET_PATH] [RANK_TABLE_FILE]
+# evaluation
 bash run_eval.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
@@ -83,6 +87,7 @@ bash run_eval.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH] [CHECKPOINT_PAT
 - `DATASET` MIND dataset, support large, small and demo.
 - `DATASET_PATH` is the dataset path, the structure as [Dataset](#dataset).
 - `CHECKPOINT_PATH` is a pre-trained checkpoint path.
+- `RANK_TABLE_FILE` is HCCL configuration file when running on Ascend.
 
 ## [Model Export](#contents)
 
