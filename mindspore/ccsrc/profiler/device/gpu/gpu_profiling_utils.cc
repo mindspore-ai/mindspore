@@ -92,7 +92,7 @@ void ProfilingUtils::SetTraceFpStart(const std::vector<CNodePtr> &cnode_exec_ord
     if (cnode_exec_order.size() > 1) {
       profiling_trace.trace_fp_start = cnode_exec_order.at(1)->fullname_with_scope();
     } else {
-      MS_LOG(ERROR) << "No Op Behind the GetNext Op" << std::endl;
+      MS_LOG(WARNING) << "No Op Behind the GetNext Op" << std::endl;
     }
   } else {
     profiling_trace.trace_fp_start = first_node->fullname_with_scope();

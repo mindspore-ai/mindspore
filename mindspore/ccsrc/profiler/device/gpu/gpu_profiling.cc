@@ -194,6 +194,18 @@ void CUPTICallBackFunc(void *user_data, CUpti_CallbackDomain domain, CUpti_Callb
   }
 }
 
+std::string GetKernelFuncName(std::string kernel_name) {
+  // remove the return type name (void) in kernel_name.
+  std::string search_pattern("void ");
+  auto func_name_begin_iter = kernel_name.find(search_pattern);
+  if (func_name_begin_iter == kernel_name.npos) {
+    func_name_begin_iter = 0;
+  } else {
+    func_name_begin_iter += search_pattern.length();
+  }
+  return kernel_name.substr(func_name_begin_iter);
+}
+
 std::shared_ptr<GPUProfiler> GPUProfiler::GetInstance() {
   if (profiler_inst_ == nullptr) {
     profiler_inst_ = std::shared_ptr<GPUProfiler>(new (std::nothrow) GPUProfiler());
@@ -341,6 +353,7 @@ void GPUProfiler::EventHandleProcess(CUpti_CallbackId cbid, const CUpti_Callback
   uint32_t device_id = -1;
   CuptiGetDeviceId(cbdata->context, &device_id);
   event.kernel_name = cbdata->symbolName ? GetKernelFunc(cbdata->symbolName) : cbdata->functionName;
+  event.kernel_name = GetKernelFuncName(event.kernel_name);
   event.kernel_type = typestring;
   event.api_type = CUPTIApiType::kCallback;
   event.start_time_stamp = startTimestamp;
@@ -609,6 +622,7 @@ void HandleActivityKernelRecord(Event *profilingData, CUpti_Activity *record) {
   profilingData->activity_type = ActivityType::kKernel;
   profilingData->api_type = CUPTIApiType::kActivity;
   profilingData->kernel_name = GetKernelFunc(kernel->name);
+  profilingData->kernel_name = GetKernelFuncName(profilingData->kernel_name);
   profilingData->kernel_type = "cuLaunchKernel";
   profilingData->start_time_stamp = kernel->start;
   profilingData->end_time_stamp = kernel->end;
