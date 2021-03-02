@@ -398,19 +398,13 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
 void Executor::RunOp(const SessionPtr &session, OpRunInfo *op_run_info, const GraphInfo &graph_info,
                      std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                      const std::vector<int64_t> &tensors_mask) {
-  auto task = std::make_shared<RunOpTask>();
-  task->session_ = session;
-  task->op_run_info_ = op_run_info;
-  task->graph_info_ = graph_info;
-  task->input_tensors_ = input_tensors;
-  task->tensors_mask_ = tensors_mask;
+  MS_EXCEPTION_IF_NULL(session);
   for (auto &tensor : *input_tensors) {
     if (tensor->NeedWait()) {
       tensor->Wait();
     }
   }
-  RunTask(task, true, true);
-  *outputs = task->outputs_;
+  session->RunOpImpl(graph_info, op_run_info, input_tensors, outputs, tensors_mask);
 }
 
 void Executor::RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id,
