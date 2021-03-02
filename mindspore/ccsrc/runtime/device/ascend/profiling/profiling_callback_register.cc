@@ -19,9 +19,9 @@
 
 namespace Analysis {
 namespace Dvvp {
-namespace ProfilerCommon {
+namespace ProfilerSpecial {
 extern int32_t MsprofilerInit();
-}  // namespace ProfilerCommon
+}  // namespace ProfilerSpecial
 }  // namespace Dvvp
 }  // namespace Analysis
 
@@ -29,6 +29,42 @@ namespace {
 constexpr Status PROF_SUCCESS = 0;
 constexpr Status PROF_FAILED = 0xFFFFFFFF;
 }  // namespace
+
+int32_t _aclprofGetDeviceByModelId(uint32_t modelId, uint32_t &deviceId) { return 0; }
+
+bool _aclprofGetInitFlag() { return true; }
+
+int32_t _aclprofRegisterCtrlCallback(MsprofCtrlCallback callback) {
+  if (VMCallbackRegister::GetInstance().registered()) {
+    return VMCallbackRegister::GetInstance().DoRegProfCtrlCallback(callback);
+  } else {
+    return PROF_SUCCESS;
+  }
+}
+
+int32_t _aclprofRegisterSetDeviceCallback(MsprofSetDeviceCallback callback) {
+  if (VMCallbackRegister::GetInstance().registered()) {
+    return VMCallbackRegister::GetInstance().DoRegProfSetDeviceCallback(callback);
+  } else {
+    return PROF_SUCCESS;
+  }
+}
+
+int32_t _aclprofRegisterReporterCallback(MsprofReporterCallback callback) {
+  if (VMCallbackRegister::GetInstance().registered()) {
+    return VMCallbackRegister::GetInstance().DoRegProfReporterCallback(callback);
+  } else {
+    return PROF_SUCCESS;
+  }
+}
+
+int32_t _aclprofCommandHandle(uint32_t type, void *data, uint32_t len) {
+  if (VMCallbackRegister::GetInstance().registered()) {
+    return VMCallbackRegister::GetInstance().DoProfCommandHandle((ProfCommandHandleType)type, data, len);
+  } else {
+    return PROF_SUCCESS;
+  }
+}
 
 Status RegProfCtrlCallback(MsprofCtrlCallback func) {
   if (VMCallbackRegister::GetInstance().registered()) {
@@ -87,7 +123,7 @@ bool VMCallbackRegister::Register(Status (*pRegProfCtrlCallback)(MsprofCtrlCallb
 
 void VMCallbackRegister::ForceMsprofilerInit() {
   if (!ms_profile_inited_) {
-    Analysis::Dvvp::ProfilerCommon::MsprofilerInit();
+    Analysis::Dvvp::ProfilerSpecial::MsprofilerInit();
     ms_profile_inited_ = true;
   }
 }

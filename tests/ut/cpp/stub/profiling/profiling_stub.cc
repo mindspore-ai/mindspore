@@ -51,6 +51,6 @@ void* ProfMgrStartUp(const ProfMgrCfg* cfg) { return const_cast<void*>(reinterpr
  */
 int ProfMgrStop(void* handle) { return 0; }
 
-namespace Analysis::Dvvp::ProfilerCommon {
+namespace Analysis::Dvvp::ProfilerSpecial {
 uint32_t MsprofilerInit() { return 0; }
 }
