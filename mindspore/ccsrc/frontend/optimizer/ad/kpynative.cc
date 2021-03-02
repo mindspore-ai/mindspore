@@ -117,6 +117,7 @@ class PynativeAdjoint {
     abstract::AbstractBasePtrList args_spec{out_->ToAbstract()->Broaden()};
     auto zeros_like_fg = GetZerosLike(args_spec);
     auto zeros_like_dout = tape_->NewCNode({NewValueNode(zeros_like_fg), NewValueNode(out_)});
+    zeros_like_dout->set_abstract(zeros_like_fg->output()->abstract());
     return zeros_like_dout;
   }
   void AccumulateDout(const AnfNodePtr &dout_factor) {
@@ -127,6 +128,7 @@ class PynativeAdjoint {
       auto add_fg = GetHyperAdd(args_spec);
       MS_EXCEPTION_IF_NULL(add_fg);
       dout_ = tape_->NewCNode({NewValueNode(add_fg), dout_, dout_factor});
+      dout_->set_abstract(add_fg->output()->abstract());
       MS_LOG(DEBUG) << "New dout_ " << dout_->DebugString();
       return;
     }
@@ -150,7 +152,9 @@ class KPynativeCellImpl : public KPynativeCell {
  public:
   explicit KPynativeCellImpl(const AnfNodePtrList &cell_inputs) : cell_inputs_(cell_inputs) {
     tape_ = std::make_shared<FuncGraph>();
+    tape_->debug_info()->set_name("grad_top");
     for (size_t i = 0; i < cell_inputs.size(); ++i) {
+      TraceGuard trace_guard(std::make_shared<TraceCopy>(cell_inputs[i]->debug_info()));
       tape_->add_parameter();
     }
   }
@@ -193,20 +197,23 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   // propagate stop_gradient flag to cnode before back propagate;
   PropagateStopGradient();
 
-  for (size_t i = 0; i < weights.size(); ++i) {
-    auto p = tape_->add_parameter();
-    auto input_w = weights[i]->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(input_w);
-    p->set_default_param(input_w->default_param());
-  }
   // sens parameter;
   auto sens_param = tape_->add_parameter();
+  sens_param->debug_info()->set_name("sens");
   auto last_node_adjoint_iter = anfnode_to_adjoin_.find(last_node_);
   if (last_node_adjoint_iter == anfnode_to_adjoin_.end()) {
     MS_LOG(EXCEPTION) << "BackPropagate adjoint does not exist for input: " << last_node_->ToString();
   }
   // Set dout of last node to sens;
   last_node_adjoint_iter->second->AccumulateDout(sens_param);
+
+  for (size_t i = 0; i < weights.size(); ++i) {
+    TraceGuard trace_guard(std::make_shared<TraceCopy>(weights[i]->debug_info()));
+    auto p = tape_->add_parameter();
+    auto input_w = weights[i]->cast<ParameterPtr>();
+    MS_EXCEPTION_IF_NULL(input_w);
+    p->set_default_param(input_w->default_param());
+  }
 
   // BackPropagate sensitivity;
   BackPropagate();
@@ -240,8 +247,10 @@ FuncGraphPtr KPynativeCellImpl::Finish(const AnfNodePtrList &weights, bool grad_
   for (size_t i = 0; i < cell_inputs_.size(); ++i) {
     tr.Replace(cell_inputs_[i], parameters[i]);
   }
+  // (Inputs, sens, weights)
+  size_t weight_offset = cell_inputs_.size() + 1;
   for (size_t i = 0; i < weights.size(); ++i) {
-    tr.Replace(weights[i], parameters[cell_inputs_.size() + i]);
+    tr.Replace(weights[i], parameters[weight_offset + i]);
   }
   tr.Commit();
 

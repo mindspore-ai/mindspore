@@ -62,7 +62,9 @@ class TestKPynative : public UT::Common {
   FuncGraphPtr BuildStopGradient(const std::string &testCase) {
     auto g = std::make_shared<FuncGraph>();
     auto x = g->add_parameter();
+    x->debug_info()->set_name("x");
     auto y = g->add_parameter();
+    y->debug_info()->set_name("y");
     x->set_abstract(BuildArg());
     y->set_abstract(BuildArg());
     auto a_node = g->NewCNode({NewValueNode(prim::GetPythonOps("tensor_mul", "mindspore.ops.functional")), x, y});
