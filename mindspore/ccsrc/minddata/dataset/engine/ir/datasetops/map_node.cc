@@ -104,7 +104,13 @@ Status MapNode::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   for (const auto &op : operations_) {
-    RETURN_IF_NOT_OK(op->ValidateParams());
+    if (op == nullptr) {
+      std::string err_msg = "MapNode: operation must not be nullptr.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    } else {
+      RETURN_IF_NOT_OK(op->ValidateParams());
+    }
   }
   if (!input_columns_.empty()) {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("MapNode", "input_columns", input_columns_));

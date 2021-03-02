@@ -48,6 +48,7 @@ class AutoContrast : public TensorTransform {
   /// \brief Destructor.
   ~AutoContrast() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -79,6 +80,7 @@ class BoundingBoxAugment : public TensorTransform {
   /// \brief Destructor.
   ~BoundingBoxAugment() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -102,6 +104,7 @@ class CutMixBatch : public TensorTransform {
   /// \brief Destructor.
   ~CutMixBatch() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -123,6 +126,7 @@ class CutOut : public TensorTransform {
   /// \brief Destructor.
   ~CutOut() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -142,6 +146,7 @@ class Equalize : public TensorTransform {
   /// \brief Destructor.
   ~Equalize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -157,6 +162,7 @@ class HWC2CHW : public TensorTransform {
   /// \brief Destructor.
   ~HWC2CHW() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -172,6 +178,7 @@ class Invert : public TensorTransform {
   /// \brief Destructor.
   ~Invert() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -189,6 +196,7 @@ class MixUpBatch : public TensorTransform {
   /// \brief Destructor.
   ~MixUpBatch() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -219,6 +227,7 @@ class NormalizePad : public TensorTransform {
   /// \brief Destructor.
   ~NormalizePad() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -255,6 +264,7 @@ class Pad : public TensorTransform {
   /// \brief Destructor.
   ~Pad() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -277,6 +287,7 @@ class RandomColor : public TensorTransform {
   /// \brief Destructor.
   ~RandomColor() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -306,6 +317,7 @@ class RandomColorAdjust : public TensorTransform {
   /// \brief Destructor.
   ~RandomColorAdjust() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -341,6 +353,7 @@ class RandomCrop : public TensorTransform {
   /// \brief Destructor.
   ~RandomCrop() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -373,6 +386,7 @@ class RandomCropDecodeResize : public TensorTransform {
   /// \brief Destructor.
   ~RandomCropDecodeResize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -410,6 +424,7 @@ class RandomCropWithBBox : public TensorTransform {
   /// \brief Destructor.
   ~RandomCropWithBBox() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -430,6 +445,7 @@ class RandomHorizontalFlip : public TensorTransform {
   /// \brief Destructor.
   ~RandomHorizontalFlip() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -450,6 +466,7 @@ class RandomHorizontalFlipWithBBox : public TensorTransform {
   /// \brief Destructor.
   ~RandomHorizontalFlipWithBBox() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -470,6 +487,7 @@ class RandomPosterize : public TensorTransform {
   /// \brief Destructor.
   ~RandomPosterize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -492,6 +510,7 @@ class RandomResize : public TensorTransform {
   /// \brief Destructor.
   ~RandomResize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -515,6 +534,7 @@ class RandomResizeWithBBox : public TensorTransform {
   /// \brief Destructor.
   ~RandomResizeWithBBox() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -546,6 +566,7 @@ class RandomResizedCrop : public TensorTransform {
   /// \brief Destructor.
   ~RandomResizedCrop() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -577,6 +598,7 @@ class RandomResizedCropWithBBox : public TensorTransform {
   /// \brief Destructor.
   ~RandomResizedCropWithBBox() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -605,6 +627,7 @@ class RandomRotation : public TensorTransform {
   /// \brief Destructor.
   ~RandomRotation() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -637,6 +660,7 @@ class RandomSelectSubpolicy : public TensorTransform {
   /// \brief Destructor.
   ~RandomSelectSubpolicy() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -658,6 +682,7 @@ class RandomSharpness : public TensorTransform {
   /// \brief Destructor.
   ~RandomSharpness() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -679,6 +704,7 @@ class RandomSolarize : public TensorTransform {
   /// \brief Destructor.
   ~RandomSolarize() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -699,6 +725,7 @@ class RandomVerticalFlip : public TensorTransform {
   /// \brief Destructor.
   ~RandomVerticalFlip() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -719,6 +746,7 @@ class RandomVerticalFlipWithBBox : public TensorTransform {
   /// \brief Destructor.
   ~RandomVerticalFlipWithBBox() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -740,6 +768,7 @@ class Rescale : public TensorTransform {
   /// \brief Destructor.
   ~Rescale() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -763,6 +792,7 @@ class ResizeWithBBox : public TensorTransform {
   /// \brief Destructor.
   ~ResizeWithBBox() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -782,6 +812,7 @@ class RGBA2BGR : public TensorTransform {
   /// \brief Destructor.
   ~RGBA2BGR() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -797,6 +828,7 @@ class RGBA2RGB : public TensorTransform {
   /// \brief Destructor.
   ~RGBA2RGB() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -820,6 +852,7 @@ class SoftDvppDecodeRandomCropResizeJpeg : public TensorTransform {
   /// \brief Destructor.
   ~SoftDvppDecodeRandomCropResizeJpeg() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -849,6 +882,7 @@ class SoftDvppDecodeResizeJpeg : public TensorTransform {
   /// \brief Destructor.
   ~SoftDvppDecodeResizeJpeg() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -868,6 +902,7 @@ class SwapRedBlue : public TensorTransform {
   /// \brief Destructor.
   ~SwapRedBlue() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -895,6 +930,7 @@ class UniformAugment : public TensorTransform {
   /// \brief Destructor.
   ~UniformAugment() = default;
 
+ protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;

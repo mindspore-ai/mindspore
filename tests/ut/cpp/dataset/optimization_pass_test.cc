@@ -91,8 +91,9 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPassPreBuiltTensorO
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestTensorFusionPassPreBuiltTensorOperation.";
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
   // make prebuilt tensor operation
-  auto decode = std::make_shared<transforms::PreBuiltOperation>(vision::Decode().Parse()->Build());
-  auto resize = std::make_shared<transforms::PreBuiltOperation>(vision::RandomResizedCrop({100}).Parse()->Build());
+  auto decode = std::make_shared<transforms::PreBuiltOperation>(vision::DecodeOperation(true).Build());
+  auto resize = std::make_shared<transforms::PreBuiltOperation>(
+    vision::RandomResizedCropOperation({100}, {0.5}, {0.1}, InterpolationMode::kNearestNeighbour, 5).Build());
   std::vector<std::shared_ptr<TensorOperation>> op_list = {decode, resize};
   std::vector<std::string> op_name = {"image"};
   std::shared_ptr<DatasetNode> root = ImageFolder(folder_path, false)->IRNode();

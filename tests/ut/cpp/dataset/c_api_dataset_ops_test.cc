@@ -997,6 +997,25 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
   EXPECT_EQ(iter3, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestMapNullOperation) {
+MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapNullOperation.";
+
+// Create an ImageFolder Dataset
+std::string folder_path = datasets_root_path_ + "/testPK/data/";
+std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+EXPECT_NE(ds, nullptr);
+
+// Create a Map operation on ds
+std::shared_ptr<TensorTransform> operation = nullptr;
+auto ds1 = ds->Map({operation}, {"image"}, {}, {});
+EXPECT_NE(ds1, nullptr);
+
+// Create an iterator over the result of the above dataset
+std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+// Expect failure: Operation is nullptr
+EXPECT_EQ(iter1, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline.TestProjectMapAutoInjection";
 
