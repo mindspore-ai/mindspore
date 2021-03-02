@@ -1,1 +1,3 @@
 python-Levenshtein
+Pillow
+xml-python

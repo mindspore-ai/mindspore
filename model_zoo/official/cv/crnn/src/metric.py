@@ -37,9 +37,12 @@ class CRNNAccuracy(nn.Metric):
         if len(inputs) != 2:
             raise ValueError('CRNNAccuracy need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
-        y = self._convert_data(inputs[1])
         str_pred = self._ctc_greedy_decoder(y_pred)
-        str_label = self._convert_labels(y)
+        if isinstance(inputs[1], list) and isinstance(inputs[1][0], str):
+            str_label = [x.lower() for x in inputs[1]]
+        else:
+            y = self._convert_data(inputs[1])
+            str_label = self._convert_labels(y)
 
         for pred, label in zip(str_pred, str_label):
             print(pred, " :: ", label)
