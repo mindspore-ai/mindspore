@@ -72,13 +72,21 @@ Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     // Get a uuid for queue name
     queue_name_ = Services::GetUniqueID();
   }
+
+  // FIXME - This is an issue from MindSpore C++ user
+  // https://gitee.com/mindspore/mindspore/issues/I39J9A
+  // Link _c_expression.so and _c_dataengine.so simultaneously will cause heap overflow because MindData uses MSContext.
+  // We should find a new way to get device_type here.
+  // if (device_type_.empty()) {
+  //   auto context = MsContext::GetInstance();
+  //   if (context == nullptr) {
+  //     device_type_ = kCPUDevice;
+  //   } else {
+  //     device_type_ = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  //   }
+  // }
   if (device_type_.empty()) {
-    auto context = MsContext::GetInstance();
-    if (context == nullptr) {
-      device_type_ = kCPUDevice;
-    } else {
-      device_type_ = context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-    }
+    device_type_ = kCPUDevice;
   }
 
   // Get device type from ms context
