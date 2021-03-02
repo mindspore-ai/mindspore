@@ -44,10 +44,11 @@ class TbeKernelSelect {
   void GetBroadcastPatternKernelInfo(const OpInfo &op_info);
   void GetReducePatternKernelInfo(const OpInfo &op_info);
   void FilterInVaildKernelInfo(const OpInfo &op_info);
-  bool FilterInVaildShape(const KernelBuildInfoIter &kernel_build_info_iter);
+  bool FilterInVaildShape(const KernelBuildInfoIter &kernel_build_info_iter, bool is_dynamic_input);
   static bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &format);
   bool TbeCheckSupported(const KernelBuildInfoIter &kernel_build_info_iter);
   static void SetTbeBuildCommonInfo(const OpInfo &op_info, KernelBuildInfo::KernelBuildInfoBuilder *builder);
+  std::vector<int64_t> GetNodeDynamicInputs();
   bool GenBuilderItem(bool is_input, size_t kernel_build_info_index, size_t real_io_tensor_num,
                       const std::vector<std::shared_ptr<OpIOInfo>> &ios_info,
                       const std::vector<int64_t> &dyn_input_sizes, std::vector<std::string> *formats,
