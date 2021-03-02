@@ -392,13 +392,21 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
 
 std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, const std::vector<uint32_t> &crop_para) {
   std::vector<uint32_t> aipp_size;
+  // Special condition where (no Crop and no Resize) or (no Crop and resize with fixed ratio) will lead to dynamic input
+  if ((resize_para.size() == 0 || resize_para.size() == 1) && crop_para.size() == 0) {
+    aipp_size = {0, 0};
+    MS_LOG(WARNING) << "Dynamic input shape is not supported, incomplete aipp config file will be generated. Please "
+                       "checkout your TensorTransform input, both src_image_size_h and src_image_size will be 0";
+    return aipp_size;
+  }
+
   if (resize_para.size() == 0) {  // If only Crop operator exists
     aipp_size = crop_para;
-  } else if (crop_para.size() == 0) {  // If only Resize operator exists
+  } else if (crop_para.size() == 0) {  // If only Resize operator with 2 parameters exists
     aipp_size = resize_para;
   } else {  // If both of them exist
     if (resize_para.size() == 1) {
-      aipp_size = *min_element(crop_para.begin(), crop_para.end()) < *resize_para.begin() ? crop_para : resize_para;
+      aipp_size = crop_para;
     } else {
       aipp_size =
         *min_element(resize_para.begin(), resize_para.end()) < *min_element(crop_para.begin(), crop_para.end())
@@ -442,7 +450,7 @@ Status AippInfoCollection(std::map<std::string, std::string> *aipp_options, cons
   // Several aipp config parameters
   aipp_options->insert(std::make_pair("related_input_rank", "0"));
   aipp_options->insert(std::make_pair("src_image_size_w", std::to_string(aipp_size[1])));
-  aipp_options->insert(std::make_pair("src_image_size_h", std::to_string(aipp_size[1])));
+  aipp_options->insert(std::make_pair("src_image_size_h", std::to_string(aipp_size[0])));
   aipp_options->insert(std::make_pair("crop", "false"));
   aipp_options->insert(std::make_pair("input_format", "YUV420SP_U8"));
   aipp_options->insert(std::make_pair("aipp_mode", "static"));
@@ -528,18 +536,27 @@ std::string Execute::AippCfgGenerator() {
     // Process resize parameters and crop parameters to find out the final size of input data
     std::vector<uint32_t> resize_paras;
     std::vector<uint32_t> crop_paras;
+
     // Find resize parameters
-    auto iter = info_->aipp_cfg_.find(vision::kDvppResizeJpegOperation);
-    if (iter != info_->aipp_cfg_.end()) {
+    std::map<std::string, std::vector<uint32_t>>::iterator iter;
+    if (info_->aipp_cfg_.find(vision::kDvppResizeJpegOperation) != info_->aipp_cfg_.end()) {
+      iter = info_->aipp_cfg_.find(vision::kDvppResizeJpegOperation);
+      resize_paras = iter->second;
+    } else if (info_->aipp_cfg_.find(vision::kDvppDecodeResizeOperation) != info_->aipp_cfg_.end()) {
+      iter = info_->aipp_cfg_.find(vision::kDvppDecodeResizeOperation);
       resize_paras = iter->second;
     }
+
     // Find crop parameters
-    iter = info_->aipp_cfg_.find(vision::kDvppCropJpegOperation);
-    if (iter != info_->aipp_cfg_.end()) {
+    if (info_->aipp_cfg_.find(vision::kDvppCropJpegOperation) != info_->aipp_cfg_.end()) {
+      iter = info_->aipp_cfg_.find(vision::kDvppCropJpegOperation);
       crop_paras = iter->second;
-      if (crop_paras.size() == 1) {
-        crop_paras.emplace_back(crop_paras[0]);
-      }
+    } else if (info_->aipp_cfg_.find(vision::kDvppDecodeResizeCropOperation) != info_->aipp_cfg_.end()) {
+      iter = info_->aipp_cfg_.find(vision::kDvppDecodeResizeCropOperation);
+      crop_paras = iter->second;
+    }
+    if (crop_paras.size() == 1) {
+      crop_paras.emplace_back(crop_paras[0]);
     }
 
     std::vector<uint32_t> aipp_size = AippSizeFilter(resize_paras, crop_paras);
