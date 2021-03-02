@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Abstract class to represent a sampler in the data pipeline.
 /// \class Sampler samplers.h
 /// \brief An abstract base class to represent a sampler in the data pipeline.

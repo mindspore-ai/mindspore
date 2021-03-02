@@ -32,10 +32,6 @@ namespace dataset {
 // Transform operations for performing computer vision.
 namespace vision {
 
-class DvppDecodeResizeOperation;
-class DvppDecodeResizeCropOperation;
-class DvppDecodePngOperation;
-
 /* ##################################### API class ###########################################*/
 
 class DvppDecodeResizeJpeg : public TensorTransform {

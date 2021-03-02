@@ -222,6 +222,9 @@ APP_ERROR MDAclProcess::D2H_Pop(const std::shared_ptr<mindspore::dataset::Device
 }
 
 APP_ERROR MDAclProcess::JPEG_D(const RawData &ImageInfo) {
+  MS_LOG(WARNING) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
+                     "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
+                     "This API will be removed later";
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);
@@ -307,6 +310,9 @@ APP_ERROR MDAclProcess::JPEG_D_() {
 }
 
 APP_ERROR MDAclProcess::JPEG_R(const DvppDataInfo &ImageInfo) {
+  MS_LOG(WARNING) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
+                     "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
+                     "This API will be removed later";
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);
@@ -414,6 +420,9 @@ APP_ERROR MDAclProcess::JPEG_R_(std::string &last_step) {
 }
 
 APP_ERROR MDAclProcess::JPEG_C(const DvppDataInfo &ImageInfo) {
+  MS_LOG(WARNING) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
+                     "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
+                     "This API will be removed later";
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);
@@ -544,6 +553,9 @@ APP_ERROR MDAclProcess::JPEG_C_(std::string &last_step) {
 }
 
 APP_ERROR MDAclProcess::PNG_D(const RawData &ImageInfo) {
+  MS_LOG(WARNING) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
+                     "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
+                     "This API will be removed later";
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);
@@ -633,6 +645,9 @@ APP_ERROR MDAclProcess::PNG_D_() {
  * @return: aclError which is error code of ACL API
  */
 APP_ERROR MDAclProcess::JPEG_DRC(const RawData &ImageInfo) {
+  MS_LOG(WARNING) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
+                     "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
+                     "This API will be removed later";
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);
@@ -766,6 +781,9 @@ APP_ERROR MDAclProcess::JPEG_DRC_(const RawData &ImageInfo) {
 }
 
 APP_ERROR MDAclProcess::JPEG_DR(const RawData &ImageInfo) {
+  MS_LOG(WARNING) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
+                     "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
+                     "This API will be removed later";
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);
