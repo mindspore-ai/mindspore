@@ -46,11 +46,11 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess1) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> rescale(new mindspore::dataset::vision::Rescale(1.0, 0.0));
-  EXPECT_NE(rescale, nullptr);
+  // Note: No need to check for output after calling API class constructor
 
   // Convert to the same type
   std::shared_ptr<TensorTransform> type_cast(new transforms::TypeCast("uint8"));
-  EXPECT_NE(type_cast, nullptr);
+  // Note: No need to check for output after calling API class constructor
 
   ds = ds->Map({rescale, type_cast}, {"image"});
   EXPECT_NE(ds, nullptr);
@@ -81,7 +81,7 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> rescale(new mindspore::dataset::vision::Rescale(1.0 / 255, 1.0));
-  EXPECT_NE(rescale, nullptr);
+  // Note: No need to check for output after calling API class constructor
 
   ds = ds->Map({rescale}, {"image"});
   EXPECT_NE(ds, nullptr);
@@ -98,8 +98,8 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -107,14 +107,6 @@ TEST_F(MindDataTestPipeline, TestRescaleSucess2) {
 
   // Manually terminate the pipeline
   iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestRescaleFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRescaleFail with invalid params.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // incorrect negative rescale parameter
-  std::shared_ptr<TensorTransform> rescale(new mindspore::dataset::vision::Rescale(-1.0, 0.0));
-  EXPECT_NE(rescale, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestResize1) {
@@ -131,7 +123,7 @@ TEST_F(MindDataTestPipeline, TestResize1) {
 
   // Create resize object with single integer input
   std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30}));
-  EXPECT_NE(resize_op, nullptr);
+  // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
   ds = ds->Map({resize_op});
@@ -154,8 +146,8 @@ TEST_F(MindDataTestPipeline, TestResize1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -165,33 +157,18 @@ TEST_F(MindDataTestPipeline, TestResize1) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestPipeline, TestResizeFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResize with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // negative resize value
-  std::shared_ptr<TensorTransform> resize_op1(new mindspore::dataset::vision::Resize({30, -30}));
-  EXPECT_NE(resize_op1, nullptr);
-  // zero resize value
-  std::shared_ptr<TensorTransform> resize_op2(new mindspore::dataset::vision::Resize({0, 30}));
-  EXPECT_NE(resize_op2, nullptr);
-  // resize with 3 values
-  std::shared_ptr<TensorTransform> resize_op3(new mindspore::dataset::vision::Resize({30, 20, 10}));
-  EXPECT_NE(resize_op3, nullptr);
-}
-
 TEST_F(MindDataTestPipeline, TestResizeWithBBoxSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResizeWithBBoxSuccess.";
   // Create an VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
   std::shared_ptr<TensorTransform> resize_with_bbox_op(new vision::ResizeWithBBox({30}));
-  EXPECT_NE(resize_with_bbox_op, nullptr);
-
   std::shared_ptr<TensorTransform> resize_with_bbox_op1(new vision::ResizeWithBBox({30, 30}));
-  EXPECT_NE(resize_with_bbox_op1, nullptr);
+  // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
   ds = ds->Map({resize_with_bbox_op, resize_with_bbox_op1}, {"image", "bbox"}, {"image", "bbox"}, {"image", "bbox"});
@@ -209,47 +186,12 @@ TEST_F(MindDataTestPipeline, TestResizeWithBBoxSuccess) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
   EXPECT_EQ(i, 3);
   // Manually terminate the pipeline
   iter->Stop();
-}
-
-TEST_F(MindDataTestPipeline, TestResizeWithBBoxFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestResizeWithBBoxFail with invalid parameters.";
-  // FIXME: For error tests, need to check for failure from CreateIterator execution
-  // Testing negative resize value
-  std::shared_ptr<TensorTransform> resize_with_bbox_op(new vision::ResizeWithBBox({10, -10}));
-  EXPECT_NE(resize_with_bbox_op, nullptr);
-  // Testing negative resize value
-  std::shared_ptr<TensorTransform> resize_with_bbox_op1(new vision::ResizeWithBBox({-10}));
-  EXPECT_NE(resize_with_bbox_op1, nullptr);
-  // Testinig zero resize value
-  std::shared_ptr<TensorTransform> resize_with_bbox_op2(new vision::ResizeWithBBox({0, 10}));
-  EXPECT_NE(resize_with_bbox_op2, nullptr);
-  // Testing resize with 3 values
-  std::shared_ptr<TensorTransform> resize_with_bbox_op3(new vision::ResizeWithBBox({10, 10, 10}));
-  EXPECT_NE(resize_with_bbox_op3, nullptr);
-}
-
-TEST_F(MindDataTestPipeline, TestVisionOperationName) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVisionOperationName.";
-
-  std::string correct_name;
-
-  // Create object for the tensor op, and check the name
-  /* FIXME - Update and move test to IR level
-  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0.5);
-  correct_name = "RandomVerticalFlip";
-  EXPECT_EQ(correct_name, random_vertical_flip_op->Name());
-
-  // Create object for the tensor op, and check the name
-  std::shared_ptr<TensorOperation> softDvpp_decode_resize_jpeg_op = vision::SoftDvppDecodeResizeJpeg({1, 1});
-  correct_name = "SoftDvppDecodeResizeJpeg";
-  EXPECT_EQ(correct_name, softDvpp_decode_resize_jpeg_op->Name());
-  */
 }

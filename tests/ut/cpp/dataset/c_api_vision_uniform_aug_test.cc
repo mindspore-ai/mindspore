@@ -63,8 +63,8 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps1Shr) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -89,6 +89,7 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps2Auto) {
 
   // Create objects for the tensor ops
   // Use auto for raw pointers
+  // Note that with auto and new, we have to explicitly delete the allocated object as shown below.
   auto resize_op(new vision::Resize({30, 30}));
   auto random_crop_op(new vision::RandomCrop({28, 28}));
   auto center_crop_op(new vision::CenterCrop({16, 16}));
@@ -110,8 +111,8 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps2Auto) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -119,6 +120,12 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps2Auto) {
 
   // Manually terminate the pipeline
   iter->Stop();
+
+  // Delete allocated objects with raw pointers
+  delete resize_op;
+  delete random_crop_op;
+  delete center_crop_op;
+  delete uniform_aug_op;
 }
 
 TEST_F(MindDataTestPipeline, TestUniformAugWithOps3Obj) {
@@ -157,8 +164,8 @@ TEST_F(MindDataTestPipeline, TestUniformAugWithOps3Obj) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
