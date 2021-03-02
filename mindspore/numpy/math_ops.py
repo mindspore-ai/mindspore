@@ -690,12 +690,16 @@ def minimum(x1, x2, out=None, where=True, dtype=None):
         [[1 2]
         [1 2]]
     """
-    if isinstance(x1, (int, float, bool, list, tuple, Tensor)) and \
-       isinstance(x2, (int, float, bool, list, tuple, Tensor)):
+    if isinstance(x1, (int, float, bool, list, tuple)):
         x1 = asarray_const(x1)
+    elif not isinstance(x1, Tensor):
+        _raise_type_error("Input x1 is expected to be array_like")
+
+    if isinstance(x2, (int, float, bool, list, tuple)):
         x2 = asarray_const(x2)
-    else:
-        _raise_type_error("Input x1 and x2 are expected to be array_like")
+    elif not isinstance(x2, Tensor):
+        _raise_type_error("Input x2 is expected to be array_like")
+
     # if both are scalars, expand x1 to 1d tensor, since cpu kernel doesn't support
     # comparisons with 2 scalars
     if x1.ndim == 0 and x2.ndim == 0:
@@ -1528,12 +1532,16 @@ def maximum(x1, x2, out=None, where=True, dtype=None):
         >>> print(output)
         [2 5 4]
     """
-    if isinstance(x1, (int, float, bool, list, tuple, Tensor)) and \
-       isinstance(x2, (int, float, bool, list, tuple, Tensor)):
+    if isinstance(x1, (int, float, bool, list, tuple)):
         x1 = asarray_const(x1)
+    elif not isinstance(x1, Tensor):
+        _raise_type_error("Input x1 is expected to be array_like")
+
+    if isinstance(x2, (int, float, bool, list, tuple)):
         x2 = asarray_const(x2)
-    else:
-        _raise_type_error("Input x1 and x2 are expected to be array_like")
+    elif not isinstance(x2, Tensor):
+        _raise_type_error("Input x2 is expected to be array_like")
+
     # F.maximum does not support when both operands are scalar
     if x1.ndim == 0 and x2.ndim == 0:
         x1 = expand_dims(x1, 0)

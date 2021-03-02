@@ -516,7 +516,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
         out = reshape(start, bounds_shape)
     else:  # num == 0
         delta = nan
-        out = _type_convert([], Tensor).astype(dtype)
+        out = _type_convert(Tensor, []).astype(dtype)
     if retstep:
         return out.astype(dtype), delta
     return out.astype(dtype)
