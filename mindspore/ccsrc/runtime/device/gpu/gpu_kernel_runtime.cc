@@ -333,8 +333,6 @@ void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph)
       auto prim = AnfAlgo::GetCNodePrimitive(node);
       auto index = GetValue<uint32_t>(prim->GetAttr("inplace_output_index"));
       AnfAlgo::SetOutputAddr(device_address, index, node.get());
-      MS_LOG(INFO) << "[inplace optimizer] group id: " << group.first << ", node: " << node->DebugString()
-                   << ", output_index: " << index;
     }
   }
 }
@@ -653,7 +651,6 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     if (AnfAlgo::IsInplaceNode(kernel, "skip")) {
-      MS_LOG(INFO) << "[inplace optimizer] skip node: " << kernel->DebugString();
       continue;
     }
 
@@ -963,8 +960,6 @@ bool GPUKernelRuntime::AllocKernelInputDynamicRes(const mindspore::AnfNodePtr &k
       if (i == input_index) {
         auto skip_node = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(kernel), input_index);
         device_address = GetPrevNodeMutableOutputAddr(skip_node, 0, false);
-        MS_LOG(INFO) << "[inplace optimizer] aggregate: " << kernel->DebugString()
-                     << ", skip: " << skip_node->DebugString() << ", address: " << device_address->GetMutablePtr();
       }
     }
 
