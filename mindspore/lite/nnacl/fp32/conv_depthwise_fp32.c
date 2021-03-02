@@ -202,8 +202,21 @@ void ConvDwBorder(float *dst, const float *src, const float *weight, const float
 
       const float *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
       const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C4NUM;
-
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+#ifdef ENABLE_AVX
+      ConvDwFp32BorderParam *param = (ConvDwFp32BorderParam *)malloc(sizeof(ConvDwFp32BorderParam));
+      param->dst = dst_kernel;
+      param->src = src_kernel;
+      param->weight = weight_kernel;
+      param->bias = bias;
+      param->height = end_kh - start_kh;
+      param->width = end_kw - start_kw;
+      param->in_kh_step = sliding->in_kh_step_ * sizeof(float);
+      param->in_kw_step = sliding->in_kw_step_ * sizeof(float);
+      param->kernel_w = conv_param->kernel_w_ * C4NUM * sizeof(float);
+      param->relu = relu;
+      param->relu6 = relu6;
+      ConvDwFp32Border(param);
+#elif defined(ENABLE_ARM) || defined(ENABLE_SSE)
       ConvDwFp32Border(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
                        sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
                        conv_param->kernel_w_ * C4NUM * sizeof(float), relu, relu6);

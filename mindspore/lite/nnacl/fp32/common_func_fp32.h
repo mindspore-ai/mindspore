@@ -21,6 +21,20 @@
 #include "nnacl/op_base.h"
 #include "nnacl/conv_parameter.h"
 
+typedef struct ConvDwFp32BorderParam {
+  float *dst;
+  const float *src;
+  const float *weight;
+  const float *bias;
+  size_t height;
+  size_t width;
+  size_t in_kh_step;
+  size_t in_kw_step;
+  size_t kernel_w;
+  size_t relu;
+  size_t relu6;
+} ConvDwFp32BorderParam;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,8 +51,12 @@ void WinogradTransRight(const float *S, const float *B, float *M, size_t w, size
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                       size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, size_t relu, size_t relu6);
+#ifdef ENABLE_AVX
+void ConvDwFp32Border(ConvDwFp32BorderParam *param);
+#else
 void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6);
+#endif
 void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_t height, size_t width, size_t kernel_h,
                         size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step, size_t in_sw_step,
                         size_t in_kh_step, size_t in_kw_step);
