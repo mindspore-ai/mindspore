@@ -1200,6 +1200,8 @@ def moveaxis(a, source, destination):
     ndim = F.rank(a)
     source = _check_axis_valid(source, ndim)
     destination = _check_axis_valid(destination, ndim)
+    if len(source) != len(destination):
+        _raise_value_error('`source` and `destination` arguments must have the same number of elements')
     perm = _get_moved_perm(ndim, source, destination)
 
     shape = F.shape(a)
@@ -1305,7 +1307,7 @@ def broadcast_to(array, shape):
     """
     shape_a = F.shape(array)
     if not _check_can_broadcast_to(shape_a, shape):
-        return _raise_value_error('cannot broadcaast with {shape_a} {shape}')
+        return _raise_value_error('cannot broadcast with ', shape)
     return _broadcast_to_shape(array, shape)
 
 
@@ -1386,6 +1388,7 @@ def split(x, indices_or_sections, axis=0):
          Tensor(shape=[3], dtype=Float32,
           value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
+    _check_input_tensor(x)
     _ = _check_axis_type(axis, True, False, False)
     axis = _canonicalize_axis(axis, x.ndim)
     res = None
@@ -1827,6 +1830,8 @@ def take(a, indices, axis=None, mode='raise'):
         [5 7]]
     """
     _check_input_tensor(a, indices)
+    if mode not in ('raise', 'wrap', 'clip'):
+        _raise_value_error('raise should be one of "raise", "wrap", or "clip"')
     if axis is None:
         a = ravel(a)
         axis = 0

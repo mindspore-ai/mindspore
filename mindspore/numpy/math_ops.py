@@ -1149,11 +1149,13 @@ def ptp(x, axis=None, out=None, keepdims=False):
         [2. 0. 5. 2.]
     """
     _check_input_tensor(x)
+    if not isinstance(keepdims, bool):
+        _raise_type_error('keepdims should be boolean')
     if axis is None:
         axis = ()
     else:
         _check_axis_type(axis, True, True, False)
-        axis = _canonicalize_axis(axis, x.ndim)
+        axis = _check_axis_valid(axis, x.ndim)
 
     if keepdims:
         x_min = _reduce_min_keepdims(x, axis)
