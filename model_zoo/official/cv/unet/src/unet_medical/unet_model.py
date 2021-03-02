@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-from src.unet.unet_parts import DoubleConv, Down, Up1, Up2, Up3, Up4, OutConv
+from src.unet_medical.unet_parts import DoubleConv, Down, Up1, Up2, Up3, Up4, OutConv
 import mindspore.nn as nn
 
-class UNet(nn.Cell):
+class UNetMedical(nn.Cell):
     def __init__(self, n_channels, n_classes):
-        super(UNet, self).__init__()
+        super(UNetMedical, self).__init__()
         self.n_channels = n_channels
         self.n_classes = n_classes
         self.inc = DoubleConv(n_channels, 64)

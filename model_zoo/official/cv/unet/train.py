@@ -26,7 +26,8 @@ from mindspore.train.callback import CheckpointConfig, ModelCheckpoint
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.unet import UNet
+from src.unet_medical import UNetMedical
+from src.unet_nested import NestedUNet, UNet
 from src.data_loader import create_dataset
 from src.loss import CrossEntropyWithLogits
 from src.utils import StepLossTimeMonitor
@@ -53,14 +54,23 @@ def train_net(data_dir,
         context.set_auto_parallel_context(parallel_mode=parallel_mode,
                                           device_num=group_size,
                                           gradients_mean=False)
-    net = UNet(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
+
+    if cfg['model'] == 'unet_medical':
+        net = UNetMedical(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
+    elif cfg['model'] == 'unet_nested':
+        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+    elif cfg['model'] == 'unet_simple':
+        net = UNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+    else:
+        raise ValueError("Unsupported model: {}".format(cfg['model']))
 
     if cfg['resume']:
         param_dict = load_checkpoint(cfg['resume_ckpt'])
         load_param_into_net(net, param_dict)
 
     criterion = CrossEntropyWithLogits()
-    train_dataset, _ = create_dataset(data_dir, epochs, batch_size, True, cross_valid_ind, run_distribute)
+    train_dataset, _ = create_dataset(data_dir, epochs, batch_size, True, cross_valid_ind, run_distribute, cfg["crop"],
+                                      cfg['img_size'])
     train_data_size = train_dataset.get_dataset_size()
     print("dataset length is:", train_data_size)
     ckpt_config = CheckpointConfig(save_checkpoint_steps=train_data_size,

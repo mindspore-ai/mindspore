@@ -82,7 +82,8 @@ def train_data_augmentation(img, mask):
     return img, mask
 
 
-def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cross_val_ind=1, run_distribute=False):
+def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cross_val_ind=1, run_distribute=False,
+                   do_crop=None, img_size=None):
 
     images = _load_multipage_tiff(os.path.join(data_dir, 'train-volume.tif'))
     masks = _load_multipage_tiff(os.path.join(data_dir, 'train-labels.tif'))
@@ -121,8 +122,12 @@ def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cro
     ds_valid_images = ds.NumpySlicesDataset(data=valid_image_data, sampler=None, shuffle=False)
     ds_valid_masks = ds.NumpySlicesDataset(data=valid_mask_data, sampler=None, shuffle=False)
 
-    c_resize_op = c_vision.Resize(size=(388, 388), interpolation=Inter.BILINEAR)
-    c_pad = c_vision.Pad(padding=92)
+    if do_crop:
+        resize_size = [int(img_size[x] * do_crop[x]) for x in range(len(img_size))]
+    else:
+        resize_size = img_size
+    c_resize_op = c_vision.Resize(size=(resize_size[0], resize_size[1]), interpolation=Inter.BILINEAR)
+    c_pad = c_vision.Pad(padding=(img_size[0] - resize_size[0]) // 2)
     c_rescale_image = c_vision.Rescale(1.0/127.5, -1)
     c_rescale_mask = c_vision.Rescale(1.0/255.0, 0)
 
@@ -136,12 +141,13 @@ def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cro
     train_ds = train_ds.project(columns=["image", "mask"])
     if augment:
         augment_process = train_data_augmentation
-        c_resize_op = c_vision.Resize(size=(572, 572), interpolation=Inter.BILINEAR)
+        c_resize_op = c_vision.Resize(size=(img_size[0], img_size[1]), interpolation=Inter.BILINEAR)
         train_ds = train_ds.map(input_columns=["image", "mask"], operations=augment_process)
         train_ds = train_ds.map(input_columns="image", operations=c_resize_op)
         train_ds = train_ds.map(input_columns="mask", operations=c_resize_op)
 
-    train_ds = train_ds.map(input_columns="mask", operations=c_center_crop)
+    if do_crop:
+        train_ds = train_ds.map(input_columns="mask", operations=c_center_crop)
     post_process = data_post_process
     train_ds = train_ds.map(input_columns=["image", "mask"], operations=post_process)
     train_ds = train_ds.shuffle(repeat*24)
@@ -151,7 +157,8 @@ def create_dataset(data_dir, repeat=400, train_batch_size=16, augment=False, cro
     valid_mask_ds = ds_valid_masks.map(input_columns="mask", operations=c_trans_normalize_mask)
     valid_ds = ds.zip((valid_image_ds, valid_mask_ds))
     valid_ds = valid_ds.project(columns=["image", "mask"])
-    valid_ds = valid_ds.map(input_columns="mask", operations=c_center_crop)
+    if do_crop:
+        valid_ds = valid_ds.map(input_columns="mask", operations=c_center_crop)
     post_process = data_post_process
     valid_ds = valid_ds.map(input_columns=["image", "mask"], operations=post_process)
     valid_ds = valid_ds.batch(batch_size=1, drop_remainder=True)
