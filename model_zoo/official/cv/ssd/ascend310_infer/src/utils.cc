@@ -17,49 +17,49 @@
 #include <fstream>
 #include <algorithm>
 #include <iostream>
-#include "../inc/utils.h"
+#include "inc/utils.h"
 
 using mindspore::MSTensor;
 using mindspore::DataType;
 
 std::vector<std::string> GetAllFiles(std::string_view dirName) {
-    struct dirent *filename;
-    DIR *dir = OpenDir(dirName);
-    if (dir == nullptr) {
-        return {};
+  struct dirent *filename;
+  DIR *dir = OpenDir(dirName);
+  if (dir == nullptr) {
+    return {};
+  }
+  std::vector<std::string> res;
+  while ((filename = readdir(dir)) != nullptr) {
+    std::string dName = std::string(filename->d_name);
+    if (dName == "." || dName == ".." || filename->d_type != DT_REG) {
+      continue;
     }
-    std::vector<std::string> res;
-    while ((filename = readdir(dir)) != nullptr) {
-        std::string dName = std::string(filename->d_name);
-        if (dName == "." || dName == ".." || filename->d_type != DT_REG) {
-            continue;
-        }
-        res.emplace_back(std::string(dirName) + "/" + filename->d_name);
-    }
-    std::sort(res.begin(), res.end());
-    for (auto &f : res) {
-        std::cout << "image file: " << f << std::endl;
-    }
-    return res;
+    res.emplace_back(std::string(dirName) + "/" + filename->d_name);
+  }
+  std::sort(res.begin(), res.end());
+  for (auto &f : res) {
+    std::cout << "image file: " << f << std::endl;
+  }
+  return res;
 }
 
 int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
-    std::string homePath = "./result_Files";
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        size_t outputSize;
-        std::shared_ptr<const void> netOutput;
-        netOutput = outputs[i].Data();
-        outputSize = outputs[i].DataSize();
-        int pos = imageFile.rfind('/');
-        std::string fileName(imageFile, pos + 1);
-        fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
-        std::string outFileName = homePath + "/" + fileName;
-        FILE * outputFile = fopen(outFileName.c_str(), "wb");
-        fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
-        fclose(outputFile);
-        outputFile = nullptr;
-    }
-    return 0;
+  std::string homePath = "./result_Files";
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    size_t outputSize;
+    std::shared_ptr<const void> netOutput;
+    netOutput = outputs[i].Data();
+    outputSize = outputs[i].DataSize();
+    int pos = imageFile.rfind('/');
+    std::string fileName(imageFile, pos + 1);
+    fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
+    std::string outFileName = homePath + "/" + fileName;
+    FILE * outputFile = fopen(outFileName.c_str(), "wb");
+    fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
+    fclose(outputFile);
+    outputFile = nullptr;
+  }
+  return 0;
 }
 
 mindspore::MSTensor ReadFileToTensor(const std::string &file) {
@@ -92,38 +92,38 @@ mindspore::MSTensor ReadFileToTensor(const std::string &file) {
 
 
 DIR *OpenDir(std::string_view dirName) {
-    if (dirName.empty()) {
-        std::cout << " dirName is null ! " << std::endl;
-        return nullptr;
-    }
-    std::string realPath = RealPath(dirName);
-    struct stat s;
-    lstat(realPath.c_str(), &s);
-    if (!S_ISDIR(s.st_mode)) {
-        std::cout << "dirName is not a valid directory !" << std::endl;
-        return nullptr;
-    }
-    DIR *dir;
-    dir = opendir(realPath.c_str());
-    if (dir == nullptr) {
-        std::cout << "Can not open dir " << dirName << std::endl;
-        return nullptr;
-    }
-    std::cout << "Successfully opened the dir " << dirName << std::endl;
-    return dir;
+  if (dirName.empty()) {
+    std::cout << " dirName is null ! " << std::endl;
+    return nullptr;
+  }
+  std::string realPath = RealPath(dirName);
+  struct stat s;
+  lstat(realPath.c_str(), &s);
+  if (!S_ISDIR(s.st_mode)) {
+    std::cout << "dirName is not a valid directory !" << std::endl;
+    return nullptr;
+  }
+  DIR *dir;
+  dir = opendir(realPath.c_str());
+  if (dir == nullptr) {
+    std::cout << "Can not open dir " << dirName << std::endl;
+    return nullptr;
+  }
+  std::cout << "Successfully opened the dir " << dirName << std::endl;
+  return dir;
 }
 
 std::string RealPath(std::string_view path) {
-    char realPathMem[PATH_MAX] = {0};
-    char *realPathRet = nullptr;
-    realPathRet = realpath(path.data(), realPathMem);
+  char realPathMem[PATH_MAX] = {0};
+  char *realPathRet = nullptr;
+  realPathRet = realpath(path.data(), realPathMem);
 
-    if (realPathRet == nullptr) {
-        std::cout << "File: " << path << " is not exist.";
-        return "";
-    }
+  if (realPathRet == nullptr) {
+    std::cout << "File: " << path << " is not exist.";
+    return "";
+  }
 
-    std::string realPath(realPathMem);
-    std::cout << path << " realpath is: " << realPath << std::endl;
-    return realPath;
+  std::string realPath(realPathMem);
+  std::cout << path << " realpath is: " << realPath << std::endl;
+  return realPath;
 }
