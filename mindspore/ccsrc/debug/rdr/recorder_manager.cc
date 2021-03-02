@@ -17,8 +17,6 @@
 #include <utility>
 #include "debug/rdr/base_recorder.h"
 #include "debug/env_config_parser.h"
-#include "mindspore/core/base/base.h"
-#include "mindspore/core/ir/func_graph.h"
 
 namespace mindspore {
 
