@@ -6,18 +6,18 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""VGG16 for deeptext"""
+
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-
-# """VGG16 for deeptext"""
-
 
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad'):
     """Conv2D wrapper."""
@@ -60,6 +60,7 @@ class VGG16FeatureExtraction(nn.Cell):
         self.cast = P.Cast()
 
     def construct(self, x):
+        """ Construction of VGG """
         x = self.cast(x, mstype.float32)
         x = self.conv1_1(x)
         x = self.relu(x)

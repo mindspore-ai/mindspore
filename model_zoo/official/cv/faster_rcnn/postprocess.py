@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -28,7 +28,8 @@ parser.add_argument("--ann_file", type=str, required=True, help="ann file.")
 parser.add_argument("--img_path", type=str, required=True, help="image file path.")
 args = parser.parse_args()
 
-def get_eval_result(ann_file, img_path):
+def get_eval_result(ann_file):
+    """ get evaluation result of faster rcnn"""
     max_num = 128
     result_path = "./result_Files/"
 
@@ -69,4 +70,4 @@ def get_eval_result(ann_file, img_path):
     coco_eval(result_files, eval_types, dataset_coco, single_result=False)
 
 if __name__ == '__main__':
-    get_eval_result(args.ann_file, args.img_path)
+    get_eval_result(args.ann_file)

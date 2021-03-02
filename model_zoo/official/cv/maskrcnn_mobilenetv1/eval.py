@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -39,7 +39,7 @@ args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
-def MaskRcnn_eval(dataset_path, ckpt_path, ann_file):
+def maskrcnn_eval(dataset_path, ckpt_path, ann_file):
     """MaskRcnn evaluation."""
     ds = create_maskrcnn_dataset(dataset_path, batch_size=config.test_batch_size, is_training=False)
 
@@ -131,4 +131,4 @@ if __name__ == '__main__':
                 print("IMAGE_DIR or ANNO_PATH not exits.")
 
     print("Start Eval!")
-    MaskRcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)
+    maskrcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)

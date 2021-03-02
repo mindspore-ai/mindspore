@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -32,7 +32,10 @@ from src.lr_schedule import get_lr
 from src.init_params import init_net_param, filter_checkpoint_parameter
 
 
-def main():
+def get_args():
+    """
+    Parse arguments
+    """
     parser = argparse.ArgumentParser(description="SSD training")
     parser.add_argument("--only_create_dataset", type=ast.literal_eval, default=False,
                         help="If set it true, only create Mindrecord, default is False.")
@@ -47,7 +50,7 @@ def main():
     parser.add_argument("--mode", type=str, default="sink",
                         help="Run sink mode or not, default is sink.")
     parser.add_argument("--dataset", type=str, default="coco",
-                        help="Dataset, defalut is coco.")
+                        help="Dataset, default is coco.")
     parser.add_argument("--epoch_size", type=int, default=500,
                         help="Epoch size, default is 500.")
     parser.add_argument("--batch_size", type=int, default=32,
@@ -63,7 +66,10 @@ def main():
     parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
                         help="Filter weight parameters, default is False.")
     args_opt = parser.parse_args()
+    return args_opt
 
+def main():
+    args_opt = get_args()
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend", device_id=args_opt.device_id)
 

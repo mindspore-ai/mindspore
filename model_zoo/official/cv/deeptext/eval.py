@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -43,7 +43,7 @@ args_opt = parser.parse_args()
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
 
-def Deeptext_eval_test(dataset_path='', ckpt_path=''):
+def deeptext_eval_test(dataset_path='', ckpt_path=''):
     """Deeptext evaluation."""
     ds = create_deeptext_dataset(dataset_path, batch_size=config.test_batch_size,
                                  repeat_num=1, is_training=False)
@@ -114,9 +114,9 @@ def Deeptext_eval_test(dataset_path='', ckpt_path=''):
     print("\n========================================\n")
     for i in range(config.num_classes - 1):
         j = i + 1
-        F1 = (2 *  precisions[j] * recalls[j]) / (precisions[j] + recalls[j] + 1e-6)
+        f1 = (2 *  precisions[j] * recalls[j]) / (precisions[j] + recalls[j] + 1e-6)
         print("class {} precision is {:.2f}%, recall is {:.2f}%,"
-              "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, F1 * 100))
+              "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, f1 * 100))
         if config.use_ambigous_sample:
             break
 
@@ -137,4 +137,4 @@ if __name__ == '__main__':
 
     print("CHECKING MINDRECORD FILES DONE!")
     print("Start Eval!")
-    Deeptext_eval_test(mindrecord_file, args_opt.checkpoint_path)
+    deeptext_eval_test(mindrecord_file, args_opt.checkpoint_path)
