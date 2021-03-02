@@ -1003,16 +1003,21 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
     if (json_parser.e2e_dump_enabled()) {
-      std::string target_dir =
-        json_parser.path() + "/" + json_parser.net_name() + "/device_" + std::to_string(device_id) + "/graphs";
+      std::string root_dir = json_parser.path() + "/" + json_parser.net_name() + "/device_" + std::to_string(device_id);
+      std::string target_dir = root_dir + "/graphs";
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
       DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
       DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
+      DumpGraphExeOrder("ms_execution_order_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
+                        graph->execution_order());
     } else if (json_parser.async_dump_enabled()) {
-      std::string target_dir = json_parser.path() + "/device_" + std::to_string(device_id) + "/graphs";
+      std::string root_dir = json_parser.path() + "/device_" + std::to_string(device_id);
+      std::string target_dir = root_dir + "/graphs";
       std::string ir_file_path = target_dir + "/" + "ms_output_" + final_graph + ".ir";
       DumpIRProtoWithSrcInfo(graph, final_graph, target_dir, kDebugWholeStack);
       DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
+      DumpGraphExeOrder("ms_execution_order_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
+                        graph->execution_order());
     }
   }
 #endif
