@@ -40,7 +40,7 @@ Dataset used: [Sentence polarity dataset v1.0](http://www.cs.cornell.edu/people/
 
 ## [Quick Start](#contents)
 
-- Preparing enviroment
+- Preparing environment
 
 ```python
   # download the pretrained GoogleNews-vectors-negative300.bin, put it into /tmp
@@ -59,13 +59,7 @@ Dataset used: [Sentence polarity dataset v1.0](http://www.cs.cornell.edu/people/
 
 ```
 
-- Modify the source code in ```mindspore/train/model.py```, line 173, add "O3".
-
-```python
- self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level in ["O2", "O3"])
-```
-
-- Runing on Ascend
+- Running on Ascend
 
 ```python
 # run training
