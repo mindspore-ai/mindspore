@@ -14,10 +14,14 @@
         - [Training Process](#training-process)
             - [Training on Ascend](#training-on-ascend)
             - [Training on GPU](#training-on-gpu)
+            - [Transfer Training](#transfer-training)
         - [Evaluation Process](#evaluation-process)
             - [Evaluation on Ascend](#evaluation-on-ascend)
             - [Evaluation on GPU](#evaluation-on-gpu)
+    - [Inference Process](#inference-process)
         - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Evaluation Performance](#evaluation-performance)
@@ -130,20 +134,23 @@ After installing MindSpore via the official website, you can start training and 
 
 ```shell
 # distributed training on Ascend
-sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
+bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE]
 
 # run eval on Ascend
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+
+# run inference on Ascend310, MINDIR_PATH is the mindir model which you can export from checkpoint using export.py
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
 ```
 
 - running on GPU
 
 ```shell
 # distributed training on GPU
-sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
+bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET]
 
 # run eval on GPU
-sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 - running on CPU(support Windows and Ubuntu)
@@ -157,6 +164,24 @@ python train.py --run_platform=CPU --lr=[LR] --dataset=[DATASET] --epoch_size=[E
 # run eval on GPU
 python eval.py --run_platform=CPU --dataset=[DATASET] --checkpoint_path=[PRETRAINED_CKPT]
 ```
+
+- Run on docker
+
+Build docker images(Change version to the one you actually used)
+
+```shell
+# build docker
+docker build -t ssd:20.1.0 . --build-arg FROM_IMAGE_NAME=ascend-mindspore-arm:20.1.0
+```
+
+Create a container layer over the created image and start it
+
+```shell
+# start docker
+bash scripts/docker_start.sh ssd:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+Then you can run everything just like on ascend.
 
 ## [Script Description](#contents)
 
@@ -224,7 +249,7 @@ To train the model, run `train.py`. If the `mindrecord_dir` is empty, it will ge
 - Distribute mode
 
 ```shell
-    sh run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [RANK_TABLE_FILE] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need five or seven parameters for this scripts.
@@ -261,7 +286,7 @@ epoch time: 39064.8467540741, per step time: 85.29442522723602
 - Distribute mode
 
 ```shell
-    sh run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
+    bash run_distribute_train_gpu.sh [DEVICE_NUM] [EPOCH_SIZE] [LR] [DATASET] [PRE_TRAINED](optional) [PRE_TRAINED_EPOCH_SIZE](optional)
 ```
 
 We need five or seven parameters for this scripts.
@@ -283,15 +308,23 @@ epoch: 1 step: 3, loss is 476.802
 epoch: 1 step: 458, loss is 3.1283689
 epoch time: 150753.701, per step time: 329.157
 ...
-
 ```
+
+#### Transfer Training
+
+You can train your own model based on either pretrained classification model or pretrained detection model. You can perform transfer training by following steps.
+
+1. Convert your own dataset to COCO or VOC style. Otherwise you havet to add your own data preprocess code.
+2. Change config.py according to your own dataset, especially the `num_classes`.
+3. Set argument `filter_weight` to `True` while calling `train.py`, this will filter the final detection box weight from the pretrained model.
+4. Build your own bash scripts using new config and arguments for further convenient.
 
 ### [Evaluation Process](#contents)
 
 #### Evaluation on Ascend
 
 ```shell
-sh run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 We need two parameters for this scripts.
@@ -326,7 +359,7 @@ mAP: 0.23808886505483504
 #### Evaluation on GPU
 
 ```shell
-sh run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
+bash run_eval_gpu.sh [DATASET] [CHECKPOINT_PATH] [DEVICE_ID]
 ```
 
 We need two parameters for this scripts.
@@ -358,6 +391,8 @@ Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.686
 mAP: 0.2244936111705981
 ```
 
+## Inference Process
+
 ### [Export MindIR](#contents)
 
 ```shell
@@ -365,18 +400,16 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 ```
 
 The ckpt_file parameter is required,
-`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
-## Inference Process
+### Infer on Ascend310
 
-### Usage
-
-Before performing inference, the air file must bu exported by export script on the 910 environment.
-Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space.
+Before performing inference, the mindir file must bu exported by export script on the 910 environment. We only provide an example of inference using MINDIR model.
+Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space, otherwise the process will be killed for execeeding memory limits.
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
 ```
 
 `DEVICE_ID` is optional, default value is 0.
@@ -386,19 +419,18 @@ sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
 Inference result is saved in current path, you can find result like this in acc.log file.
 
 ```bash
-Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.354
-Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.459
-Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.432
-Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.228
-Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.455
-Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.604
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.255
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.409
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.507
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.325
-Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.670
-Average Recall    (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.733
-mAP: 0.35406563212712244
+Average Precision (AP) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.339
+Average Precision (AP) @[ IoU=0.50      | area= all   | maxDets=100 ] = 0.521
+Average Precision (AP) @[ IoU=0.75      | area= all   | maxDets=100 ] = 0.370
+Average Precision (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.168
+Average Precision (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.386
+Average Precision (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.461
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=  1 ] = 0.310
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets= 10 ] = 0.481
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= all   | maxDets=100 ] = 0.515
+Average Recall    (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.293
+Average Recall    (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.659
+mAP: 0.33880018942412393
 ```
 
 ## [Model Description](#contents)

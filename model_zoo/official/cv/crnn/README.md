@@ -18,6 +18,10 @@
             - [Distributed Training](#distributed-training)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
+    - [Inference Process](#inference-process)
+        - [Export MindIR](#export-mindir)
+        - [Infer on Ascend310](#infer-on-ascend310)
+        - [result](#result)
     - [Model Description](#model-description)
         - [Performance](#performance)
             - [Training Performance](#training-performance)
@@ -76,12 +80,36 @@ We provide `convert_ic03.py`, `convert_iiit5k.py`, `convert_svt.py` as exmples f
 
     # standalone training example in Ascend
     $ bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
+
+    # offline inference on Ascend310
+    $ bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DATASET] [DEVICE_ID]
+
     ```
+
+    DATASET_NAME is one of `ic03`, `ic13`, `svt`, `iiit5k`, `synth`.
 
     For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
     Please follow the instructions in the link below:
     [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+
+- Run on docker
+
+Build docker images(Change version to the one you actually used)
+
+```shell
+# build docker
+docker build -t ssd:20.1.0 . --build-arg FROM_IMAGE_NAME=ascend-mindspore-arm:20.1.0
+```
+
+Create a container layer over the created image and start it
+
+```shell
+# start docker
+bash scripts/docker_start.sh ssd:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+Then you can run everything just like on Ascend.
 
 ## [Script Description](#contents)
 
@@ -195,6 +223,42 @@ Check the `eval/log.txt` and you will get outputs as following:
 
 ```shell
 result: {'CRNNAccuracy': (0.806)}
+```
+
+## [Inference Process](#contents)
+
+### [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+### Infer on Ascend310
+
+Before performing inference, the mindir file must bu exported by export script on the 910 environment. We only provide an example of inference using MINDIR model.
+Current batch_Size can only be set to 1. The inference result will be just the network outputs, which will be save in binary file. The accuracy is calculated by `src/metric.`.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DATASET] [DEVICE_ID]
+```
+
+`MINDIR_PATH` is the MINDIR model exported by export.py
+`DATA_PATH` is the path of dataset. If the data has to be converted, passing the path to the converted data.
+`ANN_FILE_PATH` is the path of annotation file. For converted data, the annotation file is exported by convert scripts.
+`DATASET` is the name of dataset, which should be in ["synth", "svt", "iiit5k", "ic03", "ic13"]
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result like this in acc.log file.
+
+```shell
+correct num: 2042 , total num: 3000
+result CRNNAccuracy is: 0.806666666666
 ```
 
 ## [Model Description](#contents)
