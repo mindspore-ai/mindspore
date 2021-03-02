@@ -383,7 +383,7 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
     std::string ir_file_path = target_dir + "/" + "after_opt_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIRProtoWithSrcInfo(graph, "after_opt_" + std::to_string(graph->graph_id()), target_dir, kDebugWholeStack);
     DumpIR("trace_code_graph", graph, true, kWholeStack, ir_file_path);
-    DumpGraphExeOrder("ms_execution_order_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
+    DumpGraphExeOrder("ms_execution_order_graph_" + std::to_string(graph->graph_id()) + ".csv", root_dir,
                       graph->execution_order());
   }
   // Set graph manager.
