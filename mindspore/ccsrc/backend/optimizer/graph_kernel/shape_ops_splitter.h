@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SHAPE_OPS_SPLITTER_H_
 #include <memory>
 #include <vector>
+#include <utility>
 #include "ir/func_graph.h"
 #include "backend/optimizer/common/pass.h"
 
@@ -24,15 +25,15 @@ namespace mindspore {
 namespace opt {
 class ShapeOpsSplitter : public Pass {
  public:
-  explicit ShapeOpsSplitter(const std::vector<PrimitivePtr> &shape_ops)
-      : Pass("shape_ops_splitter"), shape_ops_(shape_ops) {}
+  explicit ShapeOpsSplitter(std::vector<PrimitivePtr> shape_ops)
+      : Pass("shape_ops_splitter"), shape_ops_(std::move(shape_ops)) {}
   ~ShapeOpsSplitter() override = default;
   bool Run(const FuncGraphPtr &func_graph);
 
  private:
   bool Process(const FuncGraphPtr &func_graph);
   bool IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng);
-  const std::vector<PrimitivePtr> &shape_ops_;
+  std::vector<PrimitivePtr> shape_ops_;
 };
 using ShapeOpsSplitterPtr = std::shared_ptr<ShapeOpsSplitter>;
 }  // namespace opt
