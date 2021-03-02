@@ -129,7 +129,7 @@ def test_sit_auto_mix_precision_model_o0():
     model.train(1, dataset1, dataset_sink_mode=False)
     contend = read_validateir_file('./test_amp_o0')
     castnum = re.findall("Cast", contend)
-    assert len(castnum) == 17
+    assert len(castnum) == 5
     model.predict(Tensor(input_data))
     contend = read_validateir_file('./test_amp_o0')
     castnum = re.findall("Cast", contend)

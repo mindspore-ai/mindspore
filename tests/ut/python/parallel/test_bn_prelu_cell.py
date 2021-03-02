@@ -109,8 +109,8 @@ class FusedBatchNorm(nn.Cell):
                 self.bn_train(x,
                               self.gamma,
                               self.beta,
-                              None,
-                              None)
+                              self.moving_mean,
+                              self.moving_variance)
 
             mean_sub = self.sub_mean(self.moving_mean, batch_mean)
             temp_mean = self.mul_mean(mean_sub, self.momentum)

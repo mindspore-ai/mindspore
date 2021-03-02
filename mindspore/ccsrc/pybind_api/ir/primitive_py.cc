@@ -75,7 +75,7 @@ PrimitivePy::~PrimitivePy() {
 void PrimitivePy::SetPyObj(const py::object &obj) { python_obj_ = obj; }
 void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
   signatures_ = signatures;
-  set_has_signature(true);
+  set_has_signature(!signatures.empty());
 }
 
 py::function PrimitivePy::GetBpropFunction() {
