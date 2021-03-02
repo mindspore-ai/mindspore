@@ -34,6 +34,9 @@ class ScalarCast(PrimitiveWithInfer):
     Outputs:
         Scalar. The type is the same as the python type corresponding to `input_y`.
 
+    Raises:
+        TypeError: If neither `input_x` nor `input_y` is a constant value.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -79,6 +82,11 @@ class Randperm(PrimitiveWithInfer):
 
     Outputs:
         - **output** (Tensor) - The output Tensor with shape: (`max_length`,) and type: `dtype`.
+
+    Raises:
+        TypeError: If neither `max_length` nor `pad` is an int.
+        TypeError: If `n` is not a Tensor.
+        TypeError: If `n` has non-Int elements.
 
     Supported Platforms:
         ``Ascend``
@@ -136,6 +144,10 @@ class NoRepeatNGram(PrimitiveWithInfer):
 
     Outputs:
         - **log_probs** (Tensor) - The output Tensor with same shape and type as original `log_probs`.
+
+    Raises:
+        TypeError: If `ngram_size` is not an int.
+        TypeError: If neither `state_seq` nor `log_probs` is a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -323,6 +335,9 @@ class MakeRefKey(Primitive):
 
     Outputs:
         RefKeyType, made from the Parameter name.
+
+    Raises:
+        TypeError: If `tag` is not a str.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

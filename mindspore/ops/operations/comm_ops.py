@@ -64,17 +64,17 @@ class AllReduce(PrimitiveWithInfer):
                   like sum, max, and min. Default: ReduceOp.SUM.
         group (str): The communication group to work on. Default: "hccl_world_group".
 
-    Raises:
-        TypeError: If any of operation and group is not a string,
-                   or fusion is not an integer, or the input's dtype is bool.
-        ValueError: If the operation is "prod".
-
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
         Tensor, has the same shape of the input, i.e., :math:`(x_1, x_2, ..., x_R)`.
         The contents depend on the specified operation.
+
+    Raises:
+        TypeError: If any of `op` and `group` is not a str,
+                   or fusion is not an integer, or the input's dtype is bool.
+        ValueError: If the `op` is "prod".
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -133,17 +133,17 @@ class AllGather(PrimitiveWithInfer):
     Args:
         group (str): The communication group to work on. Default: "hccl_world_group".
 
-    Raises:
-        TypeError: If group is not a string.
-        ValueError: If the local rank id of the calling process in the group
-                    is larger than the group's rank size.
-
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Outputs:
         Tensor. If the number of devices in the group is N,
         then the shape of output is :math:`(N, x_1, x_2, ..., x_R)`.
+
+    Raises:
+        TypeError: If `group` is not a str.
+        ValueError: If the local rank id of the calling process in the group
+                    is larger than the group's rank size.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

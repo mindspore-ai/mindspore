@@ -90,6 +90,7 @@ class Flatten(PrimitiveWithInfer):
         the product of the remaining dimension.
 
     Raises:
+        TypeError: If `input_x` is not a Tensor.
         ValueError: If length of shape of `input_x` is less than 1.
 
     Supported Platforms:
@@ -140,7 +141,7 @@ class Softmax(PrimitiveWithInfer):
         Tensor, with the same type and shape as the logits.
 
     Raises:
-        TypeError: If `axis` is neither an int not a tuple.
+        TypeError: If `axis` is neither an int nor a tuple.
         TypeError: If dtype of `logits` is neither float16 nor float32.
         ValueError: If `axis` is a tuple whose length is less than 1.
         ValueError: If `axis` is a tuple whose elements are not all in range [-len(logits), len(logits)).
@@ -202,7 +203,7 @@ class LogSoftmax(PrimitiveWithInfer):
     Raises:
         TypeError: If `axis` is not an int.
         TypeError: If dtype of `logits` is neither float16 nor float32.
-        ValueError: If `axis` is not in range [-len(logits), len(logits)).
+        ValueError: If `axis` is not in range [-len(logits), len(logits)].
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -245,6 +246,10 @@ class Softplus(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not float.
+
     Supported Platforms:
         ``Ascend``  ``GPU``
 
@@ -285,6 +290,10 @@ class Softsign(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
 
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -322,7 +331,8 @@ class ReLU(PrimitiveWithCheck):
         Tensor, with the same type and shape as the `input_x`.
 
     Raises:
-        TypeError: If dtype of `input_x` is not a number.
+        TypeError: If dtype of `input_x` is not number.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -459,6 +469,7 @@ class ReLU6(PrimitiveWithCheck):
 
     Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -496,6 +507,11 @@ class ReLUV2(PrimitiveWithInfer):
     Outputs:
         - **output** (Tensor) - Has the same type and shape as the `input_x`.
         - **mask** (Tensor) - A tensor whose data type must be uint8.
+
+    Raises:
+        TypeError: If `input_x`, `output` or `mask` is not a Tensor.
+        TypeError: If dtype of `output` is not same as `input_x.
+        TypeError: If dtype of `mask` is not unit8.
 
     Supported Platforms:
         ``Ascend``
@@ -627,6 +643,7 @@ class HSwish(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `input_data`.
 
     Raises:
+        TypeError: If `input_data` is not a Tensor.
         TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
@@ -671,6 +688,7 @@ class Sigmoid(PrimitiveWithInfer):
 
     Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -715,6 +733,7 @@ class HSigmoid(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `input_data`.
 
     Raises:
+        TypeError: If `input_data` is not a Tensor.
         TypeError: If dtype of `input_data` is neither float16 nor float32.
 
     Supported Platforms:
@@ -759,6 +778,7 @@ class Tanh(PrimitiveWithInfer):
 
     Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -821,6 +841,12 @@ class FusedBatchNorm(Primitive):
         - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
         - **updated_moving_mean** (Tensor) - Tensor of shape :math:`(C,)`.
         - **updated_moving_variance** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    Raises:
+        TypeError: If `mode` is not an int.
+        TypeError: If `epsilon` or `momentum` is not a float.
+        TypeError: If `output_x`, `updated_scale`, `updated_bias`, `updated_moving_mean` or
+        `updated_moving_variance` is a Tensor.
 
     Supported Platforms:
         ``CPU``
@@ -919,6 +945,13 @@ class FusedBatchNormEx(PrimitiveWithCheck):
         - **updated_moving_variance** (Tensor) - Updated variance value, Tensor of shape :math:`(C,)`,
           data type: float32.
         - **reserve** (Tensor) - reserve space, Tensor of shape :math:`(C,)`, data type: float32.
+
+    Raises:
+        TypeError: If `mode` is not an int.
+        TypeError: If neither `epsilon` nor `momentum` is a float.
+        TypeError: If `data_format` is not a str.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `scale`, `bias`, `mean` or `variance` is not float32.
 
     Supported Platforms:
         ``GPU``
@@ -1114,6 +1147,10 @@ class BNTrainingReduce(PrimitiveWithInfer):
         - **sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
         - **square_sum** (Tensor) - A 1-D Tensor with float32 data type. Tensor of shape :math:`(C,)`.
 
+    Raises:
+        TypeError: If `x`, `sum` or `square_sum` is not a Tensor.
+        TypeError: If dtype of `square_sum` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -1174,6 +1211,13 @@ class BNTrainingUpdate(PrimitiveWithInfer):
           Has the same shape as `variance`.
         - **batch_variance** (Tensor) - Tensor for the mean of `variance`, with float32 data type.
           Has the same shape as `variance`.
+
+    Raises:
+        TypeError: If `isRef` is not a bool.
+        TypeError: If dtype of `epsilon` or `factor` is not float.
+        TypeError: If `x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is not a Tensor.
+        TypeError: If dtype of `x`, `sum`, `square_sum`, `scale`, `offset`, `mean` or `variance` is neither float16 nor
+        float32.
 
     Supported Platforms:
         ``Ascend``
@@ -1289,6 +1333,13 @@ class BatchNorm(PrimitiveWithInfer):
         - **updated_bias** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_1** (Tensor) - Tensor of shape :math:`(C,)`.
         - **reserve_space_2** (Tensor) - Tensor of shape :math:`(C,)`.
+
+    Raises:
+        TypeError: If `is_training` is not a bool.
+        TypeError: If dtype of `epsilon` or `momentum` is not float.
+        TypeError: If `data_format` is not a str.
+        TypeError: If `input_x`, `scale`, `bias`, `mean` or `variance` is not a Tensor.
+        TypeError: If dtype of `input_x`, `scale` or `mean` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
@@ -1414,7 +1465,7 @@ class Conv2D(PrimitiveWithCheck):
         Tensor, the value that applied 2D convolution. The shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Raises:
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         TypeError: If `out_channel` or `group` is not an int.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
@@ -1520,6 +1571,13 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
 
     Outputs:
         Tensor of shape :math:`(N, C_{in} * \text{channel_multiplier}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
+        TypeError: If `channel_multiplier` or `group` is not an int.
+        ValueError: If `stride` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of the following:'same', 'valid' or 'pad'.
+        ValueError: If `pad_mode` it not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0).
 
     Supported Platforms:
         ``Ascend``
@@ -1811,6 +1869,8 @@ class MaxPoolWithArgmax(_Pool):
 
     Raises:
         TypeError: If the input data type is not float16 or float32.
+        TypeError: If `kernel_size` or `strides` is neither an int nor a tuple.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2054,7 +2114,7 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         Tensor, the gradients w.r.t the input of convolution. It has the same shape as the input.
 
     Raises:
-        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
+        TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int nor a tuple.
         TypeError: If `out_channel` or `group` is not an int.
         ValueError: If `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
@@ -2190,6 +2250,9 @@ class BiasAdd(PrimitiveWithCheck):
     Outputs:
         Tensor, with the same shape and type as `input_x`.
 
+    Raises:
+        TypeError: If `data_format`, `input_x` or `bias` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2241,6 +2304,12 @@ class TopK(PrimitiveWithInfer):
 
         - **values** (Tensor) - The `k` largest elements in each slice of the last dimensional.
         - **indices** (Tensor) - The indices of values within the last dimension of input.
+
+    Raises:
+        TypeError: If `sorted` is not a bool.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `k` is not an int.
+        TypeError: If dtype of `input_x` is not one of the following: float16, float32 or int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2391,6 +2460,7 @@ class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):
 
     Raises:
         TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
+        TypeError: If `logits` or `labels` is not a Tensor.
         ValueError: If shape of `logits` is not the same as `labels`.
 
     Supported Platforms:
@@ -2587,7 +2657,8 @@ class SmoothL1Loss(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `beta` is not a float.
-        TypeError: If dtype of `prediction` or `target` is neither float16 not float32.
+        TypeError: If `prediction` or `target` is not a Tensor.
+        TypeError: If dtype of `prediction` or `target` is neither float16 nor float32.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `prediction` is not the same as `target`.
 
@@ -2634,6 +2705,10 @@ class L2Loss(PrimitiveWithInfer):
     Outputs:
         Tensor, has the same dtype as `input_x`. The output tensor is the value of loss which is a scalar tensor.
 
+    Raises:
+        TypeError: If `input_x` not a Tensor.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -2673,6 +2748,10 @@ class DataFormatDimMap(PrimitiveWithInfer):
 
     Outputs:
         Tensor, has the same type as the `input_x`.
+
+    Raises:
+        TypeError: If `src_format` or `dst_format` is not a str.
+        TypeError: If `input_x` is not a Tensor whose dtype is not int32.
 
     Supported Platforms:
         ``Ascend``
@@ -2717,6 +2796,11 @@ class RNNTLoss(PrimitiveWithInfer):
     Outputs:
         - **costs** (Tensor[int32]) - Tensor of shape :math:`(B,)`.
         - **grads** (Tensor[int32]) - Has the same shape as `acts`.
+
+    Raises:
+        TypeError: If `acts`, `labels`, `input_lengths` or `label_lengths` is not a Tensor.
+        TypeError: If dtype of `acts` is neither float16 nor float32.
+        TypeError: If dtype of `labels`, `input_lengths` or `label_lengths` is not int32.
 
     Supported Platforms:
         ``Ascend``
@@ -2790,6 +2874,13 @@ class SGD(PrimitiveWithCheck):
 
     Outputs:
         Tensor, parameters to be updated.
+
+    Raises:
+        TypeError: If `dampening` or `weight_decay` is not a float.
+        TypeError: If `nesterov` is not a bool.
+        TypeError: If `parameters`, `gradient`, `learning_rate`, `accum`, `momentum` or `stat` is not a Tensor.
+        TypeError: If dtype of `parameters`, `gradient`, `learning_rate`, `accum`, `momentum` or `stat` is neither
+        float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2875,6 +2966,14 @@ class ApplyRMSProp(PrimitiveWithInfer):
 
     Outputs:
         Tensor, parameters to be update.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `var, `mean_square`, `moment` or `decay` is not a Tensor.
+        TypeError: If `learning_rate` is neither a Number nor a Tensor.
+        TypeError: If dtype of `decay`, `momentum` or `epsilon` is not float.
+        TypeError: If dtype of `learning_rate` is neither float16 nor float32.
+        ValueError: If `decay`, `momentum` or `epsilon` is not a constant value.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2972,6 +3071,13 @@ class ApplyCenteredRMSProp(PrimitiveWithInfer):
     Outputs:
         Tensor, parameters to be update.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `var`, `mean_gradient`, `mean_square`, `moment` or `grad` is not a Tensor.
+        TypeError: If `learing_rate` is neither a Number nor a Tensor.
+        TypeError: If dtype of `learing_rate` is neither float16 nor float32.
+        TypeError: If dtype of `decay`, `momentum` or `epsilon` is not float.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -3059,6 +3165,7 @@ class LayerNorm(Primitive):
     Raises:
         TypeError: If `begin_norm_axis` or `begin_params_axis` is not an int.
         TypeError: If `epsilon` is not a float.
+        TypeError: If `input_x`, `gamma` or `beta` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -3109,6 +3216,12 @@ class L2Normalize(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same type and shape as the input.
 
+    Raises:
+        TypeError: If `axis` is not one of the following: list, tuple or int.
+        TypeError: If `epsilon` is not a float.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -3157,6 +3270,11 @@ class DropoutGenMask(Primitive):
     Outputs:
         Tensor, the value of generated mask for input shape.
 
+    Raises:
+        TypeError: If neither `seed0` nor `seed1` is an int.
+        TypeError: If `shape` is not a tuple.
+        TypeError: If `keep_prob` is not a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -3195,6 +3313,11 @@ class DropoutDoMask(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the value that applied dropout on.
+
+    Raises:
+        TypeError: If `input_x`, `mask` or `keep_prob` is not a Tensor.
+        TypeError: If `keep_prob` is not a float.
+        ValueError: If value of `keep_prob` is not same as `DropoutGenMaks`.
 
     Supported Platforms:
         ``Ascend``
@@ -3271,6 +3394,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         TypeError: If `size` is neither a tuple nor list.
         TypeError: If `align_corners` is not a bool.
         TypeError: If dtype of `input` is neither float16 nor float32.
+        TypeError: If `input` is not a Tensor.
         ValueError: If length of shape of `input` is not equal to 4.
 
     Supported Platforms:
@@ -3333,14 +3457,15 @@ class OneHot(PrimitiveWithInfer):
     Outputs:
         Tensor, one-hot tensor. Tensor of shape :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)`.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         TypeError: If `axis` or `depth` is not an int.
         TypeError: If dtype of `indices` is neither int32 nor int64.
+        TypeError: If `indices`, `on_value` or `off_value` is not a Tensor.
         ValueError: If `axis` is not in range [-1, len(indices_shape)].
         ValueError: If `depth` is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> indices = Tensor(np.array([0, 1, 2]), mindspore.int32)
@@ -3419,6 +3544,7 @@ class GeLU(PrimitiveWithInfer):
         Tensor, with the same type and shape as input.
 
     Raises:
+        TypeError: If `input_x` is not a Tensor.
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
@@ -3590,6 +3716,7 @@ class PReLU(PrimitiveWithInfer):
 
     Raises:
         TypeError: If dtype of `input_x` or `weight` is neither float16 nor float32.
+        TypeError: If `input_x` or `weight` is not a Tensor.
         ValueError: If length of shape of `input_x` is equal to 1.
         ValueError: If length of shape of `weight` is not equal to 1.
 
@@ -3804,6 +3931,9 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
     Outputs:
         Tensor, with the same shape and type as input `logits`.
 
+    Raises:
+        TypeError: If `logits` or `label` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -3943,6 +4073,7 @@ class Pad(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `paddings` is not a tuple.
+        TypeError: If `input_x` is not a Tensor.
         ValueError: If shape of `paddings` is not (n, 2).
 
     Supported Platforms:
@@ -4012,6 +4143,10 @@ class MirrorPad(PrimitiveWithInfer):
           according to the symmetry axis, except that it includes the symmetry axis. If the `input_x`
           is [[1,2,3], [4,5,6], [7,8,9]] and `paddings` is [[1,1], [2,2]], then the Outputs is
           [[2,1,1,2,3,3,2], [2,1,1,2,3,3,2], [5,4,4,5,6,6,5], [8,7,7,8,9,9,8], [8,7,7,8,9,9,8]].
+
+    Raises:
+        TypeError: If `input_x` or `paddings` is not a Tensor.
+        TypeError: If `mode` is not a str.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4091,6 +4226,11 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         - **ids** (Tensor) - A Tensor with shape (num_accidental_hits,), with the same type as `true_classes`.
         - **weights** (Tensor) - A Tensor with shape (num_accidental_hits,), with the type float32.
 
+    Raises:
+        TypeError: If dtype of `num_true` is not int.
+        TypeError: If `true_classes` or `sampled_candidates` is not a Tensor.
+        TypeError: If dtype of `true_classes` or `sampled_candidates` is neither int32 nor int64.
+
     Supported Platforms:
         ``Ascend``
 
@@ -4161,6 +4301,11 @@ class ROIAlign(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape is `(rois_n, C, pooled_height, pooled_width)`.
+
+    Raises:
+        TypeError: If `pooled_height`, `pooled_width`, `sample_num` or `roi_end_mode` is not an int.
+        TypeError: If `spatial_scale` is not a float.
+        TypeError: If `features` or `rois` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4252,8 +4397,9 @@ class Adam(PrimitiveWithInfer):
         - **v** (Tensor) - The same shape and data type as `v`.
 
     Raises:
-        TypeError: If `use_locking` or `use_nesterov` is not a bool.
-        ValueError: If shape of `var`, `m` and `v` is not the same.
+        TypeError: If neither `use_locking` nor `use_nesterov` is a bool.
+        TypeError: If `var`, `m` or `v` is not a Tensor.
+        TypeError: If `beta1_power`, `beta2_power1, `lr`, `beta1`, `beta2`, `epsilon` or `gradient` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4360,6 +4506,11 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
     Outputs:
         Tensor, whose shape and data type are the same with `gradient`, is a value that should be added to the
         parameter to be updated.
+
+    Raises:
+        TypeError: If neither `use_locking` nor `use_nesterov` is a bool.
+        TypeError: If `m`,  `v`, `beta1_power`, `beta2_power1, `lr`,
+        `beta1`, `beta2`, `epsilon` or `gradient` is a Tensor.
 
     Supported Platforms:
         ``CPU``
@@ -4475,6 +4626,11 @@ class FusedSparseAdam(PrimitiveWithInfer):
         - **var** (Tensor) - A Tensor with shape (1,).
         - **m** (Tensor) - A Tensor with shape (1,).
         - **v** (Tensor) - A Tensor with shape (1,).
+
+    Raises:
+        TypeError: If neither `use_locking` nor `use_neserov` is a bool.
+        TypeError: If dtype of `var`, `m`, `v`, `beta1_power`, `beta2_power`, `lr`, `beta1`, `beta2`, `epsilon`,
+        `gradient` or `indices` is not float32.
 
     Supported Platforms:
         ``CPU``
@@ -4615,6 +4771,12 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         - **m** (Tensor) - A Tensor with shape (1,).
         - **v** (Tensor) - A Tensor with shape (1,).
 
+    Raises:
+        TypeError: If neither `use_locking` nor `use_nestrov` is a bool.
+        TypeError: If dtype of `var`, `m`, `v`, `beta1_power`, `beta2_power`, `lr`, `beta1`, `beta2`, `epsilon` or
+        gradient is not float32.
+        TypeError: If dtype of `indices` is not int32.
+
     Supported Platforms:
         ``CPU``
 
@@ -4728,6 +4890,14 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         - **accum** (Tensor) - A Tensor with shape (1,).
         - **linear** (Tensor) - A Tensor with shape (1,).
 
+    Raises:
+        TypeError: If `lr`, `l1`, `l2` or `lr_power` is not a float.
+        ValueError: If shape of `lr_power` less than or equal to zero.
+        TypeError: If dtype of `var` is not float32.
+        TypeError: If dtype of `indices` is not int32.
+        TypeError: If shape of `accum`, `linear` or `grad` is not same as `var`.
+        TypeError: If shape of `indices` is not same as shape of first dimension of `grad`.
+
     Supported Platforms:
         ``Ascend`` ``CPU``
 
@@ -4837,6 +5007,11 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         - **var** (Tensor) - A Tensor with shape (1,).
         - **accum** (Tensor) - A Tensor with shape (1,).
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2` or `grad` is not float32.
+        TypeError: If dtype of `indices` is not int32.
+
     Supported Platforms:
         ``CPU``
 
@@ -4936,6 +5111,11 @@ class KLDivLoss(PrimitiveWithInfer):
         Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `input_x`.
         Otherwise it is a scalar.
 
+    Raises:
+        TypeError: If `reduction` is not a str.
+        TypeError: If neither `input_x` nor `input_y` is a Tensor.
+        TypeError: If dtype of `input_x` or `input_y` is not float32.
+
     Supported Platforms:
         ``GPU``
 
@@ -5018,6 +5198,7 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
         TypeError: If dtype of `input_x`, `input_y` or `weight` (if given) is neither float16 not float32.
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
         ValueError: If shape of `input_y` is not the same as `input_x` or `weight` (if given).
+        TypeError: If `input_x`, `input_y` or `weight` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5119,6 +5300,12 @@ class ApplyAdaMax(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
         - **v** (Tensor) - The same shape and data type as `v`.
+
+    Raises:
+        TypeError: If dtype of `var`, `m`, `v`, `beta_power`, `lr`, `beta1`,
+        `beta2`, `epsilon` or `grad` is neither float16 nor float32.
+        TypeError: If `beta_power`, `lr`, `beta1`, `beta2` or `epsilon` is neither a Number nor a Tensor.
+        TypeError: If `grad` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -5254,6 +5441,11 @@ class ApplyAdadelta(PrimitiveWithInfer):
         - **accum** (Tensor) - The same shape and data type as `accum`.
         - **accum_update** (Tensor) - The same shape and data type as `accum_update`.
 
+    Raises:
+        TypeError: If dtype of `var`, `accum`, `accum_update`,
+        `lr`, `rho`, `epsilon` or `grad` is neither float16 nor float32.
+        TypeError: If `accum_update`, `lr`, `rho` or `epsilon` is neither a Number nor a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -5368,6 +5560,10 @@ class ApplyAdagrad(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
 
+    Raises:
+        TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
+        TypeError: If `lr` is neither a Number nor a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
 
@@ -5462,6 +5658,10 @@ class ApplyAdagradV2(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `m`.
+
+    Raises:
+        TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float16 nor float32.
+        TypeError: If `lr` is neither a Number nor a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -5559,6 +5759,13 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
 
+    Raises:
+        TypeError: If `lr` is not a float.
+        TypeError: If neither `update_slots` nor `use_locking` is a bool.
+        TypeError: If dtype of `var`, `accum` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `indices` is not int32.
+
+
     Supported Platforms:
         ``Ascend``
 
@@ -5655,6 +5862,12 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
+
+    Raises:
+        TypeError: If neither `lr` nor `epsilon` is a float.
+        TypeError: If neither `update_slots` nor `use_locking` is a bool.
+        TypeError: If dtype of `var`, `accum` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `indices` is not int32.
 
     Supported Platforms:
         ``Ascend``
@@ -5755,6 +5968,12 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
+
+    Raises:
+        TypeError: If `use_blocking` is not a bool.
+        TypeError: If dtype of `var`, `lr`, `l1` or `l2` is neither float16 nor float32.
+        TypeError: If `lr`, `l1` or `l2` is neither a Number nor a Tensor.
+        TypeError: If `grad` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -5874,6 +6093,12 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **accum** (Tensor) - The same shape and data type as `accum`.
 
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If dtype of `var`, `accum`, `lr`, `l1`, `l2`, `scalar` or `grad` is neither float16
+        nor float32.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -5976,6 +6201,11 @@ class ApplyAddSign(PrimitiveWithInfer):
 
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
+
+    Raises:
+        TypeError: If dtype of `var`, `lr`, `alpha`, `sign_decay` or `beta` is neither float16 nor float32.
+        TypeError: If `lr`, `alpha` or `sign_decay` is neither a Number nor a Tensor.
+        TypeError: If `grad` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -6099,6 +6329,11 @@ class ApplyPowerSign(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
 
+    Raises:
+        TypeError: If dtype of `var`, `lr`, `logbase`, `sign_decay`, `beta` or `grad` is neither float16 nor float32.
+        TypeError: If `lr`, `logbase`, `sign_decay` or `beta` is neither a Number nor a Tensor.
+        TypeError: If `grad` is not a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -6203,6 +6438,11 @@ class ApplyGradientDescent(PrimitiveWithInfer):
     Outputs:
         Tensor, represents the updated `var`.
 
+    Raises:
+        TypeError: If dtype of `var` or `alpha` is neither float16 nor float32.
+        TypeError: If `delta` is not a Tensor.
+        TypeError: If `alpha` is neither a Number nor a Tensor.
+
     Supported Platforms:
         ``Ascend``
 
@@ -6280,6 +6520,11 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     Outputs:
         Tensor, represents the updated `var`.
+
+    Raises:
+        TypeError: If dtype of `var`, `alpha`, `l1` or `l2` is neither float16 nor float32.
+        TypeError: If `alpha`, `l1` or `l2` is neither a Number nor a Tensor.
+        TypeError: If `delta` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -6366,6 +6611,13 @@ class LARSUpdate(PrimitiveWithInfer):
 
     Outputs:
         Tensor, represents the new gradient.
+
+    Raises:
+        TypeError: If neither `epsilon` nor `hyperpara` is a float.
+        TypeError: If `use_clip` is a bool.
+        TypeError: If `weight`, `gradient`, `norm_weight` or `norm_gradient` is not a Tensor.
+        TypeError: If `weight_decay` or `learning_rate` is neither a Number nor a Tensor.
+        TypeError: If shape of `gradient` is not same as `weight`.
 
     Supported Platforms:
         ``Ascend``
@@ -6458,6 +6710,12 @@ class ApplyFtrl(PrimitiveWithInfer):
     Outputs:
         - **var** (Tensor) - represents the updated `var`. As the input parameters has been updated in-place, this
           value is always zero when the platforms is GPU.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If dtype of `var`, `grad`, `lr`, `l1`, `l2` or `lr_power` is neither float16 nor float32.
+        TypeError: If `lr`, `l1`, `l2` or `lr_power` is neither a Number nor a Tensor.
+        TypeError: If `grad` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -6552,6 +6810,13 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
         - **accum** (Tensor) - Tensor, has the same shape and data type as `accum`.
         - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
+
+    Raises:
+        TypeError: If `lr`, `l1`, `l2` or `lr_power` is not a float.
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If dtype of `var`, `accum`, `linear` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -6660,6 +6925,12 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         - **accum** (Tensor) - Tensor, has the same shape and data type as `accum`.
         - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
 
+    Raises:
+        TypeError: If `lr`, `l1`, `l2`, `lr_power` or`use_locking` is not a float.
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If dtype of `var`, `accum`, `linear` or `grad` is neither float16 nor float32.
+        TypeError: If dtype of `indices` is not int32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -6754,9 +7025,8 @@ class Dropout(PrimitiveWithCheck):
     Raises:
         TypeError: If `keep_prob` is not a float.
         TypeError: If `Seed0` or `Seed1` is not an int.
-        TypeError: If dtype of `input` is not neither float16 nor float32.
-        ValueError: If `keep_prob` is not in range (0, 1].
-        ValueError: If length of shape of `input` is less than 1.
+        TypeError: If dtype of `input` is neither float16 nor float32.
+        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6866,6 +7136,14 @@ class CTCLoss(PrimitiveWithInfer):
         - **loss** (Tensor) - A tensor containing log-probabilities, the shape is (`batch_size`). The tensor has
           the same type with `inputs`.
         - **gradient** (Tensor) - The gradient of `loss`, has the same type and shape with `inputs`.
+
+    Raises:
+        TypeError: If `preprocess_collapse_repeated`, `ctc_merge_repeated` or `ignore_longer_outputs_than_inputs` is
+        not a bool.
+        TypeError: If `inputs`, `labels_indices`, `labels_values` or `sequence_length` is not a Tensor.
+        TypeError: If dtype of `inputs` is not one of the following: float16, float32 or float64.
+        TypeError: If dtype of `labels_indices` is not int64.
+        TypeError: If dtype of `labels_values` or `sequence_length` is not int32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -7048,6 +7326,13 @@ class BasicLSTMCell(PrimitiveWithInfer):
         - **tanhct** (Tensor) - Forward :math:`tanh c_t` cache at moment `t`.
           Tensor of shape (`batch_size`, `hidden_size`), has the same type with input `c`.
 
+    Raises:
+        TypeError: If dtype of `keep_prob` or `forget_bias` is not float.
+        TypeError: If `state_is_tuple` is not a bool.
+        TypeError: If `activation` is not a str.
+        TypeError: If `x`, `h`, `c`, `w` or `b` is not a Tensor.
+        TypeError: If dtype of `x`, `h`, `c` or `w` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -7179,6 +7464,15 @@ class DynamicRNN(PrimitiveWithInfer):
           Has the same type with input `b`.
         - **tanhct** (Tensor) - A Tensor of shape (`num_step`, `batch_size`, `hidden_size`).
           Has the same type with input `b`.
+
+    Raises:
+        TypeError: If `cell_type`, `direction` or `activation` is not a str.
+        TypeError: If `cell_depth` or `num_proj` is not an int.
+        TypeError: If `keep_prob`, `cell_clip` or `forget_bias` is not a float.
+        TypeError: If `use_peehpole`, `time_major` or `is_training` is not a bool.
+        TypeError: If `x`, `w`, `b`, `seq_length`, `init_h` or `init_c` is not a Tensor.
+        TypeError: If dtype of `x`, `w`, `init_h` or `nit_c` is not float16.
+        TypeError: If dtype of `b` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
@@ -7332,6 +7626,16 @@ class DynamicGRUV2(PrimitiveWithInfer):
         - If `bias_input` is not `None`, `bias_type` is the date type of `bias_input`.
         - If `bias_input` is `None` and `bias_hidden` is not `None, `bias_type` is the date type of `bias_hidden`.
 
+    Raises:
+        TypeError: If `direction`, `activation` or `gate_order` is not a str.
+        TypeError: If `cell_depth` or `num_proj` is not an int.
+        TypeError: If `keep_prob` or `cell_clip` is not a float.
+        TypeError: If `time_major`, `reset_after` or `is_training` is not a bool.
+        TypeError: If `x`, `weight_input`, `weight_hidden`, `bias_input`, `bias_hidden`, `seq_length` or `ini_h` is
+        not a Tensor.
+        TypeError: If dtype of `x`, `weight_input` or `weight_hidden` is not float16.
+        TypeError: If dtype of `init_h` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -7446,6 +7750,11 @@ class InTopK(PrimitiveWithInfer):
         Tensor has 1 dimension of type bool and the same shape with `x2`. For labeling sample `i` in `x2`,
         if the label in the first `k` predictions for sample `i` is in `x1`, then the value is True, otherwise False.
 
+    Raises:
+        TypeError: If `k` is not an int.
+        TypeError: If `x1` or `x2` is not a Tensor.
+        TypeError: If dtype of `x1` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -7498,6 +7807,12 @@ class LRN(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with the same shape and data type as the input tensor.
+
+    Raises:
+        TypeError: If `depth_radius` is not an int.
+        TypeError: If `bias`, `alpha` or `beta` is not a float.
+        TypeError: If `norm_region` is not a str.
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -7607,9 +7922,6 @@ class Conv3D(PrimitiveWithInfer):
     Outputs:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
 
-    Supported Platforms:
-        ``Ascend``
-
     Raises:
         TypeError: If `out_channel` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
@@ -7619,6 +7931,9 @@ class Conv3D(PrimitiveWithInfer):
         ValueError: If `pad` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> input = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
@@ -7787,9 +8102,6 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
     Outputs:
         Tensor, the gradients w.r.t the input of convolution 3D. It has the same shape as the input.
 
-    Supported Platforms:
-        ``Ascend``
-
     Raises:
         TypeError: If `out_channel` or `group` is not an int.
         TypeError: If `kernel_size`, `stride`, `pad` or `dilation` is neither an int not a tuple.
@@ -7799,6 +8111,9 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         ValueError: If `pad` is a tuple whose length is not equal to 6.
         ValueError: If `pad_mode` is not equal to 'pad' and `pad` is not equal to (0, 0, 0, 0, 0, 0).
         ValueError: If `data_format` is not 'NCDHW'.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mindspore.float16)

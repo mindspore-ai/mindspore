@@ -229,6 +229,10 @@ def tensor_dot(x1, x2, axes):
         Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
         contracted in both inputs
 
+    Raises:
+        TypeError: If `x1` or `x2` is not a Tensor.
+        TypeError: If `axes` is not one of the following: int, tuple, list.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 

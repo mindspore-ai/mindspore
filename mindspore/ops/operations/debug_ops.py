@@ -58,6 +58,10 @@ class ScalarSummary(PrimitiveWithInfer):
         - **name** (str) - The name of the input variable, it must not be an empty string.
         - **value** (Tensor) - The value of scalar, and the shape of value must be [] or [1].
 
+    Raises:
+        TypeError: If `name` is not a str.
+        TypeError: If `value` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -101,6 +105,10 @@ class ImageSummary(PrimitiveWithInfer):
         - **name** (str) - The name of the input variable, it must not be an empty string.
         - **value** (Tensor) - The value of image, the rank of tensor must be 4.
 
+    Raises:
+        TypeError: If `name` is not a str.
+        TypeError: If `value` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -142,6 +150,10 @@ class TensorSummary(PrimitiveWithInfer):
     Inputs:
         - **name** (str) - The name of the input variable.
         - **value** (Tensor) - The value of tensor, and the rank of tensor must be greater than 0.
+
+    Raises:
+        TypeError: If `name` is not a str.
+        TypeError: If `value` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -185,6 +197,10 @@ class HistogramSummary(PrimitiveWithInfer):
     Inputs:
         - **name** (str) - The name of the input variable.
         - **value** (Tensor) - The value of tensor, and the rank of tensor must be greater than 0.
+
+    Raises:
+        TypeError: If `name` is not a str.
+        TypeError: If `value` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -233,6 +249,9 @@ class InsertGradientOf(PrimitiveWithInfer):
 
     Outputs:
         Tensor, returns `input_x` directly. `InsertGradientOf` does not affect the forward result.
+
+    Raises:
+        TypeError: If `f` is not a function of mindspore.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -299,6 +318,10 @@ class HookBackward(PrimitiveWithInfer):
     Inputs:
         - **inputs** (Tensor) - The variable to hook.
 
+    Raises:
+        TypeError: If `inputs` are not a Tensor.
+        TypeError: If `hook_fn` is not a function of python.
+
     Examples:
         >>> def hook_fn(grad_out):
         ...     print(grad_out)
@@ -351,6 +374,9 @@ class Print(PrimitiveWithInfer):
     Inputs:
         - **input_x** (Union[Tensor, bool, int, float, str, tuple, list]) - The graph node to attach to.
           Supports multiple inputs which are separated by ','. GPU does not support string as an input.
+
+    Raises:
+        TypeError: If `input_x` is not one of the following: Tensor, bool, int, float, str, tuple, list.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -410,6 +436,11 @@ class Assert(PrimitiveWithInfer):
     Inputs:
         - **condition** [Union[Tensor[bool], bool]] - The condition to evaluate.
         - **input_data** (Union(tuple[Tensor], list[Tensor])) - The tensors to print out when condition is false.
+
+    Raises:
+        TypeError: If `summarize` is not an int.
+        TypeError: If `condition` is neither a Tensor nor a bool.
+        TypeError: If `input_data` is neither a tuple nor a list.
 
     Examples:
         >>> class AssertDemo(nn.Cell):

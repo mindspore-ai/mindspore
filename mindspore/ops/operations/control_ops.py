@@ -101,6 +101,10 @@ class GeSwitch(PrimitiveWithInfer):
         tuple. Output is tuple(false_output, true_output). The Elements in the tuple has the same shape of input data.
         The false_output connects with the false_branch and the true_output connects with the true_branch.
 
+    Raises:
+        TypeError: If `data` is neither a Tensor nor a Number.
+        TypeError: If `pred` is not a Tensor.
+
     Examples:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -158,6 +162,9 @@ class Merge(PrimitiveWithInfer):
 
     Outputs:
         tuple. Output is tuple(`data`, `output_index`). The `data` has the same shape of `inputs` element.
+
+    Raises:
+        TypeError: If `inputs` is neither Tuple nor list.
 
     Examples:
         >>> merge = ops.Merge()

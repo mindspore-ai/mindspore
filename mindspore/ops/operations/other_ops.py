@@ -79,12 +79,18 @@ class InplaceAssign(PrimitiveWithInfer):
     """
     Inplace assign `Parameter` with a value.
     This primitive can only use in graph kernel.
+
     Inputs:
         - **variable** (Parameter) - The `Parameter`.
         - **value** (Tensor) - The value to be assigned.
         - **depend** (Tensor) - The dependent tensor to keep this op connected in graph.
+
     Outputs:
         Tensor, has the same type as original `variable`.
+
+    Raises:
+        TypeError: If `value` or `depend` is not a Tensor.
+
     Examples:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
@@ -149,6 +155,10 @@ class BoundingBoxEncode(PrimitiveWithInfer):
     Outputs:
         Tensor, encoded bounding boxes.
 
+    Raises:
+        TypeError: If `means` or `stds` is not a tuple.
+        TypeError: If `anchor_box` or `groundtruth_box` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -204,6 +214,11 @@ class BoundingBoxDecode(PrimitiveWithInfer):
 
     Outputs:
         Tensor, decoded boxes.
+
+    Raises:
+        TypeError: If `means`, `stds` or `max_shape` is not a tuple.
+        TypeError: If `wh_ratio_clip` is not a float.
+        TypeError: If `anchor_box` or `deltas` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -262,6 +277,10 @@ class CheckValid(PrimitiveWithInfer):
 
     Outputs:
         Tensor, with shape of (N,) and dtype of bool.
+
+    Raises:
+        TypeError: If `bboxes` or `img_metas` is not a Tensor.
+        TypeError: If dtype of `bboxes` or `img_metas` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -480,9 +499,6 @@ class CheckBprop(PrimitiveWithInfer):
     """
     Checks whether the data type and the shape of corresponding elements from tuples x and y are the same.
 
-    Raises:
-        TypeError: If tuples x and y are not the same.
-
     Inputs:
         - **input_x** (tuple[Tensor]) - The `input_x` contains the outputs of bprop to be checked.
         - **input_y** (tuple[Tensor]) - The `input_y` contains the inputs of bprop to check against.
@@ -490,6 +506,9 @@ class CheckBprop(PrimitiveWithInfer):
     Outputs:
         (tuple[Tensor]), the `input_x`,
         if data type and shape of corresponding elements from `input_x` and `input_y` are the same.
+
+    Raises:
+        TypeError: If `input_x` or `input_y` is not a Tensor.
 
     Examples:
         >>> input_x = (Tensor(np.array([[2, 2], [2, 2]]), mindspore.float32),)
@@ -560,6 +579,11 @@ class ConfusionMatrix(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the confusion matrix, with shape (`num_classes`, `num_classes`).
+
+    Raises:
+        TypeError: If `num_classes` is not an int.
+        TypeError: If `dtype` is not a str.
+        TypeError: If `labels`, `predictions` or weight` is not a Tensor.
 
     Examples:
         >>> confusion_matrix = ops.ConfusionMatrix(4)

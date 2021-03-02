@@ -135,6 +135,11 @@ def sequence_mask(lengths, maxlen=None):
     Outputs:
         One mask tensor of shape lengths.shape + (maxlen,).
 
+    Raises:
+        TypeError: If `lengths` is not a Tensor.
+        TypeError: If `maxlen` is not an int.
+        TypeError: If dtype of `lengths` is neither int32 nor int64.
+
     Supported Platforms:
         ``GPU``
 

@@ -488,6 +488,10 @@ class HyperMap(HyperMap_):
         Sequence or nested sequence, the sequence of output after applying the function.
         e.g. `operation(args[0][i], args[1][i])`.
 
+    Raises:
+        TypeError: If `ops` is neither MultitypeFuncGraph nor None.
+        TypeError: If `args` is not a Tuple.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
