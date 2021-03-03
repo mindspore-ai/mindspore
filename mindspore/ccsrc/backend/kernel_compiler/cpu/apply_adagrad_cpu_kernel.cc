@@ -38,9 +38,9 @@ bool ApplyAdagradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const 
   CheckParam(inputs, outputs);
 
   if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs);
+    LaunchKernel<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs);
+    LaunchKernel<float>(inputs, outputs);
   }
 
   return true;
@@ -67,7 +67,8 @@ void ApplyAdagradCPUKernel::CheckParam(const std::vector<AddressPtr> &inputs, co
 }
 
 template <typename T>
-void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs) {
+void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) {
   auto var = reinterpret_cast<T *>(inputs[0]->addr);
   auto accum = reinterpret_cast<T *>(inputs[1]->addr);
   auto lr = reinterpret_cast<T *>(inputs[2]->addr);
@@ -95,6 +96,17 @@ void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs) 
 
   for (auto &it : threads) {
     it.join();
+  }
+
+  // Copy result to output tensor
+  auto output_var = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_accum = reinterpret_cast<T *>(outputs[1]->addr);
+  if (memcpy_s(output_var, outputs[0]->size, var, inputs[0]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "Launch kernel error: memcpy failed.";
+  }
+
+  if (memcpy_s(output_accum, outputs[1]->size, accum, inputs[1]->size) != EOK) {
+    MS_LOG(EXCEPTION) << "Launch kernel error: memcpy failed.";
   }
 }
 
