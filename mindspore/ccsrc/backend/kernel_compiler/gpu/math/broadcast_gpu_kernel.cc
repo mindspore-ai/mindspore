@@ -20,6 +20,13 @@ namespace mindspore {
 namespace kernel {
 // fp64
 MS_REG_GPU_KERNEL_ONE(
+  Greater,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, double)
+MS_REG_GPU_KERNEL_ONE(
+  Less, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
+  BroadcastOpGpuKernel, double)
+MS_REG_GPU_KERNEL_ONE(
   Add, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   BroadcastOpGpuKernel, double)
 MS_REG_GPU_KERNEL_ONE(
