@@ -41,22 +41,6 @@ def select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
         Sampler, sampler selected based on user input.
     """
 
-    def _is_iterable(obj):
-        try:
-            iter(obj)
-        except TypeError:
-            return False
-        return True
-
-    def _get_sample_ids_as_list(sampler, number_of_samples=None):
-        if number_of_samples is None:
-            return list(sampler)
-
-        if isinstance(sampler, list):
-            return sampler[:number_of_samples]
-
-        return [sample_id for sample_id, _ in zip(sampler, range(number_of_samples))]
-
     if input_sampler is not None:
         # If the user provided a sampler, then it doesn't matter what the other args are because
         # we are being asked specifically to use the given sampler.
@@ -73,11 +57,8 @@ def select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
                 ' shard_id: {}, shuffle: {}.'.format(num_samples, num_shards, shard_id, shuffle))
         if isinstance(input_sampler, BuiltinSampler):
             return input_sampler
-        if not isinstance(input_sampler, str) and _is_iterable(input_sampler):
-            return SubsetSampler(_get_sample_ids_as_list(input_sampler, num_samples))
-        if isinstance(input_sampler, int):
-            return SubsetSampler([input_sampler])
-        raise TypeError('Unsupported sampler object of type ({})'.format(type(input_sampler)))
+        return SubsetSampler(input_sampler, num_samples)
+
     if shuffle is None:
         if num_shards is not None:
             # If shuffle is not specified, sharding enabled, use distributed random sampler
@@ -640,11 +621,31 @@ class SubsetSampler(BuiltinSampler):
     """
 
     def __init__(self, indices, num_samples=None):
-        if not isinstance(indices, list):
+        def _is_iterable(obj):
+            try:
+                iter(obj)
+            except TypeError:
+                return False
+            return True
+
+        def _get_sample_ids_as_list(sampler, number_of_samples=None):
+            if number_of_samples is None:
+                return list(sampler)
+
+            if isinstance(sampler, list):
+                return sampler[:number_of_samples]
+
+            return [sample_id for sample_id, _ in zip(sampler, range(number_of_samples))]
+
+        if not isinstance(indices, str) and _is_iterable(indices):
+            indices = _get_sample_ids_as_list(indices, num_samples)
+        elif isinstance(indices, int):
             indices = [indices]
+        else:
+            raise TypeError('Unsupported sampler object of type ({})'.format(type(indices)))
 
         for i, item in enumerate(indices):
-            if not isinstance(item, int):
+            if not isinstance(item, (int, np.integer)):
                 raise TypeError("SubsetSampler: Type of indices element must be int, "
                                 "but got list[{}]: {}, type: {}.".format(i, item, type(item)))
 
