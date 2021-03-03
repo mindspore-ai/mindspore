@@ -98,7 +98,7 @@ from .sparse_ops import SparseToDense
 from ._embedding_cache_ops import (CacheSwapHashmap, SearchCacheIdx, CacheSwapTable, UpdateCache, MapCacheIdx,
                                    SubAndFilter,
                                    MapUniform, DynamicAssign, PadAndShift)
-from .quantum_ops import PQC
+from .quantum_ops import PQC, Evolution
 from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAtomEnergy, BondForceWithAtomVirial,
                          DihedralForce, DihedralEnergy, DihedralAtomEnergy, DihedralForceWithAtomEnergy,
                          AngleForce, AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy)
@@ -424,6 +424,7 @@ __all__ = [
     "Range",
     "IndexAdd",
     "PQC",
+    "Evolution",
     "BondForce",
     "BondEnergy",
     "BondAtomEnergy",
