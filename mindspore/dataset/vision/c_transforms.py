@@ -62,24 +62,11 @@ class ImageTensorOperation(TensorOperation):
     """
     Base class of Image Tensor Ops
     """
-    def __call__(self, *tensor_list):
-        tensor_array = []
-        output_list = []
-        # Combine input tensor_list to a TensorRow
-        for input_tensor in tensor_list:
-            if not isinstance(input_tensor, (np.ndarray, Image.Image)):
-                raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(input_tensor)))
-            tensor_array.append(cde.Tensor(np.asarray(input_tensor)))
-        callable_op = cde.Execute(self.parse())
-        output_list = callable_op(tensor_array)
-
-        for i, element in enumerate(output_list):
-            arr = element.as_array()
-            if arr.dtype.char == 'S':
-                output_list[i] = np.char.decode(arr)
-            else:
-                output_list[i] = arr
-        return output_list[0] if len(output_list) == 1 else output_list
+    def __call__(self, *input_tensor_list):
+        for tensor in input_tensor_list:
+            if not isinstance(tensor, (np.ndarray, Image.Image)):
+                raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(tensor)))
+        return super().__call__(*input_tensor_list)
 
     def parse(self):
         raise NotImplementedError("ImageTensorOperation has to implement parse() method.")
@@ -285,9 +272,7 @@ class Decode(ImageTensorOperation):
         """
         if not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
             raise TypeError("Input should be an encoded image with 1-D NumPy type, got {}.".format(type(img)))
-        decode = cde.Execute(cde.DecodeOperation(self.rgb))
-        img = decode(cde.Tensor(np.asarray(img)))
-        return img.as_array()
+        return super().__call__(img)
 
     def parse(self):
         return cde.DecodeOperation(self.rgb)
