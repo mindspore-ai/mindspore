@@ -97,7 +97,7 @@ class FTRL(Optimizer):
             \end{cases}\\
         \end{array}
 
-    :math:`m` represents `accum`, :math:`g` represents `grads`, :math:`t` represents updateing step,
+    :math:`m` represents `accum`, :math:`g` represents `grads`, :math:`t` represents updating step,
     :math:`u` represents `linear`, :math:`p` represents `lr_power`, :math:`\alpha` represents `learning_rate`,
     :math:`\omega` represents `params`.
 
@@ -128,6 +128,10 @@ class FTRL(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' must be in one of group parameters.
 
+            - grad_centralization: Optional. If "grad_centralization" is in the keys, the set value will be used.
+              If not, the `grad_centralization` in the base class will be used.This parameter only works on the
+              convolution layer.
+
         initial_accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
         learning_rate (float): The learning rate value, must be zero or positive, dynamic learning rate is currently
             not supported. Default: 0.001.
@@ -157,12 +161,13 @@ class FTRL(Optimizer):
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
+        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
         ...                 {'params': no_conv_params},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.FTRL(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # The conv_params's parameters will use weight decay of 0.01.
-        >>> # The no_conv_params's parameters will use default weight decay of 0.0.
+        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
+        >>> # centralization of True.
+        >>> # The no_conv_params's parameters will use default weight decay of 0.0 and grad centralization of False.
         >>> # The final parameters order in which the optimizer will be followed is the value of 'order_params'.
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -201,6 +206,7 @@ class FTRL(Optimizer):
         grads = self.decay_weight(grads)
         grads = self.scale_grad(grads)
         grads = self._grad_sparse_indices_deduplicate(grads)
+        grads = self.gradients_centralization(grads)
         lr = self.get_lr()
 
         success = self.map_(F.partial(_ftrl_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
