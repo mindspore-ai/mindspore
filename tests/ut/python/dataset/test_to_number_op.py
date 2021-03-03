@@ -33,6 +33,24 @@ def string_dataset_generator(strings):
         yield (np.array(string, dtype='S'),)
 
 
+def test_to_number_eager():
+    """
+    Test ToNumber op is callable
+    """
+    input_strings = [["1", "2", "3"], ["4", "5", "6"]]
+    op = text.ToNumber(mstype.int8)
+
+    # test input_strings as one 2D tensor
+    result1 = op(input_strings) # np array: [[1 2 3] [4 5 6]]
+    assert np.array_equal(result1, np.array([[1, 2, 3], [4, 5, 6]], dtype='i'))
+
+    # test input multiple tensors
+    with pytest.raises(RuntimeError) as info:
+        # test input_strings as two 1D tensor. It's error because to_number is an OneToOne op
+        _ = op(*input_strings)
+    assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
+
+
 def test_to_number_typical_case_integral():
     input_strings = [["-121", "14"], ["-2219", "7623"], ["-8162536", "162371864"],
                      ["-1726483716", "98921728421"]]
@@ -194,6 +212,7 @@ def test_to_number_invalid_type():
 
 
 if __name__ == '__main__':
+    test_to_number_eager()
     test_to_number_typical_case_integral()
     test_to_number_typical_case_non_integral()
     test_to_number_boundaries_integral()

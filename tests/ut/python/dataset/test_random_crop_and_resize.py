@@ -44,10 +44,12 @@ def test_random_crop_and_resize_callable():
 
     decode_op = c_vision.Decode()
     img = decode_op(img)
+    assert img.shape == (2268, 4032, 3)
 
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
-    img = random_crop_and_resize_op(img)
-    assert np.shape(img) == (256, 512, 3)
+    # test one tensor
+    random_crop_and_resize_op1 = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
+    img1 = random_crop_and_resize_op1(img)
+    assert img1.shape == (256, 512, 3)
 
 
 def test_random_crop_and_resize_op_c(plot=False):
