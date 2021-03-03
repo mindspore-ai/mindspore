@@ -151,6 +151,8 @@ trans_data_op_info = TBERegOp("TransData") \
     .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_DHWCN) \
     .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NDHWC) \
     .dtype_format(DataType.F32_NDHWC, DataType.F32_NDC1HWC0) \
+    .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NCDHW) \
+    .dtype_format(DataType.F32_NCDHW, DataType.F32_NDC1HWC0) \
     .get_op_info()
 
 

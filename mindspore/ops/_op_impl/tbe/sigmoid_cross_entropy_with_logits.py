@@ -30,6 +30,8 @@ sigmoid_cross_entropy_with_logits_op_info = TBERegOp("SigmoidCrossEntropyWithLog
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
+    .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_NDC1HWC0, DataType.F16_NDC1HWC0) \
+    .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NDC1HWC0, DataType.F32_NDC1HWC0) \
     .get_op_info()
 
 
