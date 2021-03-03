@@ -36,7 +36,7 @@ class Execute {
   // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
   explicit Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
   explicit Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
-  // explicit Execute(TensorTransform op, MapTargetDevice deviceType = MapTargetDevice::KCpu);
+  explicit Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
   explicit Execute(TensorTransform *op, MapTargetDevice deviceType = MapTargetDevice::kCpu);
 
   explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops,

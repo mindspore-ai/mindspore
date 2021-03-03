@@ -83,10 +83,9 @@ Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType
 #endif
 }
 
-/*
-Execute::Execute(TensorTransform op, MapTargetDevice deviceType) {
+Execute::Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice deviceType) {
   // Convert op from TensorTransform to TensorOperation
-  std::shared_ptr<TensorOperation> operation = op.Parse();
+  std::shared_ptr<TensorOperation> operation = op.get().Parse();
   ops_.emplace_back(std::move(operation));
   device_type_ = deviceType;
 #ifdef ENABLE_ACL
@@ -100,7 +99,6 @@ Execute::Execute(TensorTransform op, MapTargetDevice deviceType) {
   }
 #endif
 }
-*/
 
 // Execute function for the example case: auto decode(new vision::Decode());
 Execute::Execute(TensorTransform *op, MapTargetDevice deviceType) {
