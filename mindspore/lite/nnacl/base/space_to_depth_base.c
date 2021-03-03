@@ -47,7 +47,7 @@ int SpaceToDepthForNHWC(const void *input, void *output, const int *in_shape, co
         size_t in_offset_w = in_offset_h + k * block_size * in_strides[2];
         size_t out_offset_w = out_offset_h + k * out_strides[2];
         for (int l = 0; l < block_size; ++l) {
-          memcpy(int8_outoput_ptr + out_offset_w + l * block_size * in_strides[2] * data_size,
+          memcpy(int8_outoput_ptr + (out_offset_w + l * block_size * in_strides[2]) * data_size,
                  int8_input_ptr + (in_offset_w + l * in_strides[1]) * data_size,
                  block_size * in_strides[2] * data_size);
         }
