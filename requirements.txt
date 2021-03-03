@@ -17,3 +17,4 @@ astunparse >= 1.6.3
 packaging >= 20.0
 pycocotools >= 2.0.0        # for st test
 tables >= 3.6.1             # for st test
+psutil >= 5.6.1
