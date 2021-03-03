@@ -3671,7 +3671,7 @@ class ManifestDataset(MappableDataset):
         decode (bool, optional): decode the images after reading (default=False).
         num_shards (int, optional): Number of shards that the dataset will be divided
             into (default=None). When this argument is specified, `num_samples` reflects
-            the max sample number of per shard.
+            the max number of samples per shard.
         shard_id (int, optional): The shard ID within `num_shards` (default=None). This
             argument can only be specified when `num_shards` is also specified.
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing.

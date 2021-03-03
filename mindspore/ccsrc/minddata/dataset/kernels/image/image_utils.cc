@@ -608,7 +608,7 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     } else {
       // we resize here since the shape changes
       // create a new bounding box with the rotate
-      cv::Rect2f bbox = cv::RotatedRect(cv::Point2f(), input_img.size(), degree).boundingRect2f();
+      cv::Rect2f bbox = cv::RotatedRect(pc, input_img.size(), degree).boundingRect2f();
       rot.at<double>(0, 2) += bbox.width / 2.0 - input_img.cols / 2.0;
       rot.at<double>(1, 2) += bbox.height / 2.0 - input_img.rows / 2.0;
       // use memcpy and don't compute the new shape since openCV has a rounding problem

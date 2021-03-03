@@ -138,11 +138,12 @@ Status ValidateDatasetShardParams(const std::string &dataset_name, int32_t num_s
 
 // Helper function to validate dataset sampler parameter
 Status ValidateDatasetSampler(const std::string &dataset_name, const std::shared_ptr<SamplerObj> &sampler) {
-  if (sampler == nullptr || sampler->ValidateParams().IsError()) {
+  if (sampler == nullptr) {
     std::string err_msg = dataset_name + ": Sampler is not constructed correctly, sampler: nullptr";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+  RETURN_IF_NOT_OK(sampler->ValidateParams());
   return Status::OK();
 }
 

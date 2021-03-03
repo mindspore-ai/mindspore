@@ -56,9 +56,9 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 500 && image->shape()[1] == 500, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 500 && image.Shape()[1] == 500, true);
     iter->GetNextRow(&row);
   }
 
@@ -98,9 +98,9 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeRandomCropResizeJpegSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_EQ(image->shape()[0] == 500 && image->shape()[1] == 600, true);
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[0] == 500 && image.Shape()[1] == 600, true);
     iter->GetNextRow(&row);
   }
 
@@ -142,7 +142,7 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeResizeJpegSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
+    // std::shared_ptr<TensorTransform> image = row["image"];
     // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
     iter->GetNextRow(&row);
   }
@@ -180,8 +180,8 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeResizeJpegSuccess2) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
