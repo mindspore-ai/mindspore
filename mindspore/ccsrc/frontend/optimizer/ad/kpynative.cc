@@ -274,7 +274,14 @@ bool KPynativeCellImpl::KPynativeOp(const CNodePtr &cnode, const ValuePtrList &o
     need_propagate_stop_gradient_ = true;
   }
 
-  BuildAdjoint(cnode, op_args, out, nullptr);
+  FuncGraphPtr bprop_fg = nullptr;
+  if (IsPrimitiveEquals(prim, prim::kPrimHookBackward)) {
+    bprop_fg = BuildBpropCutFuncGraph(prim, cnode);
+  } else {
+    bprop_fg = g_k_prims.GetPossibleBprop(prim);
+  }
+  MS_EXCEPTION_IF_NULL(bprop_fg);
+  BuildAdjoint(cnode, op_args, out, bprop_fg);
 
   return true;
 }
@@ -298,15 +305,42 @@ bool KPynativeCellImpl::KPynativeWithBProp(const CNodePtr &cnode, const ValuePtr
   return true;
 }
 
+namespace {
+ValuePtr ShallowCopyValue(const ValuePtr &value) {
+  if (value->isa<mindspore::tensor::Tensor>()) {
+    auto tensor_value = value->cast<mindspore::tensor::TensorPtr>();
+    return std::make_shared<mindspore::tensor::Tensor>(*tensor_value);
+  } else if (value->isa<ValueTuple>()) {
+    std::vector<ValuePtr> values;
+    auto value_tuple = value->cast<ValueTuplePtr>();
+    std::transform(value_tuple->value().begin(), value_tuple->value().end(), std::back_inserter(values),
+                   [](const ValuePtr &elem) { return ShallowCopyValue(elem); });
+    return std::make_shared<ValueTuple>(values);
+  } else {
+    return value;
+  }
+}
+} // namespace
+
 bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
                                      const FuncGraphPtr &bprop_fg) {
+  // Optimize the bprop_fg based on value.
+  // Clone op_args and out, so the address of tensor data can be reset to nullptr if the value of tensor
+  // is not used in bprop_fg;
+  ValuePtrList cloned_op_args;
+  std::transform(op_args.begin(), op_args.end(), std::back_inserter(cloned_op_args),
+                 [](const ValuePtr &value) { return ShallowCopyValue(value); });
+  ValuePtr cloned_out = ShallowCopyValue(out);
+  auto optimized_bprop_fg = OptimizeBPropFuncGraph(bprop_fg, cnode, cloned_op_args, cloned_out);
+
   auto anfnode_adjoint_iter = anfnode_to_adjoin_.find(cnode);
   if (anfnode_adjoint_iter != anfnode_to_adjoin_.end()) {
     MS_LOG(EXCEPTION) << "CNode should be unique, but: " << cnode->DebugString();
   }
   // Book-keeping last cnode, as dout of this node will be given from outside;
   last_node_ = cnode;
-  auto cnode_pynative_adjoint = std::make_shared<PynativeAdjoint>(tape_, op_args, out, bprop_fg);
+  auto cnode_pynative_adjoint =
+    std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, optimized_bprop_fg);
   anfnode_to_adjoin_.insert(std::make_pair(cnode, cnode_pynative_adjoint));
 
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
@@ -364,21 +398,9 @@ bool KPynativeCellImpl::BackPropagate() {
       continue;
     }
     auto bprop_fg = iter->second->bprop_fg();
-    if (bprop_fg == nullptr) {
-      auto prim = GetCNodePrimitive(cnode);
-      if (prim == nullptr) {
-        MS_LOG(EXCEPTION) << "should be primitive, but: " << cnode->DebugString();
-      }
-      if (IsPrimitiveEquals(prim, prim::kPrimHookBackward)) {
-        bprop_fg = BuildBpropCutFuncGraph(prim, cnode);
-      } else {
-        bprop_fg = g_k_prims.GetPossibleBprop(prim);
-      }
-      MS_EXCEPTION_IF_NULL(bprop_fg);
-    }
+    MS_EXCEPTION_IF_NULL(bprop_fg);
     // Optimize the bprop_fg based on value.
-    auto optimized_bprop_fg = OptimizeBPropFuncGraph(bprop_fg, cnode, iter->second->op_args(), iter->second->out());
-    AnfNodePtrList node_list{NewValueNode(optimized_bprop_fg)};
+    AnfNodePtrList node_list{NewValueNode(bprop_fg)};
     std::transform(iter->second->op_args().begin(), iter->second->op_args().end(), std::back_inserter(node_list),
                    [](const ValuePtr &value) { return NewValueNode(value); });
     node_list.push_back(NewValueNode(iter->second->out()));
