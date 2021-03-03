@@ -78,6 +78,8 @@ TEST_F(TestDE, TestDvpp) {
 
   // Apply transform on images
   Status rc = Transform(image, &image);
+  std::string aipp_cfg = Transform.AippCfgGenerator();
+  ASSERT_EQ(aipp_cfg, "./aipp.cfg");
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());

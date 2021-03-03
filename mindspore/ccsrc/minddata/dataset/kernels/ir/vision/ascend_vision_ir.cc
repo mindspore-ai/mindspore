@@ -283,8 +283,14 @@ std::shared_ptr<TensorOp> DvppNormalizeOperation::Build() {
 
 Status DvppNormalizeOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
-  args["mean"] = mean_;
-  args["std"] = std_;
+  std::vector<uint32_t> enlarge_mean_;
+  std::vector<uint32_t> enlarge_std_;
+  std::transform(mean_.begin(), mean_.end(), std::back_inserter(enlarge_mean_),
+                 [](float i) -> uint32_t { return static_cast<uint32_t>(10000 * i); });
+  std::transform(std_.begin(), std_.end(), std::back_inserter(enlarge_std_),
+                 [](float j) -> uint32_t { return static_cast<uint32_t>(10000 * j); });
+  args["mean"] = enlarge_mean_;
+  args["std"] = enlarge_std_;
   *out_json = args;
   return Status::OK();
 }
