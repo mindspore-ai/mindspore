@@ -21,5 +21,9 @@
 template <typename T>
 void ApplyAdam(const size_t size, const T *gradient, const T *beta1_power, const T *beta2_power, const T *learning_rate,
                const T *beta1, const T *beta2, const T *epsilon, T *variable, T *m, T *v, cudaStream_t cuda_stream);
+template <typename T>
+void AdamWeightDecayOp(const size_t size, const T *gradient, const float *learning_rate, const float *beta1,
+                       const float *beta2, const float *epsilon, const float *decay, T *variable, T *m, T *v,
+                       cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADAM_IMPL_H_
