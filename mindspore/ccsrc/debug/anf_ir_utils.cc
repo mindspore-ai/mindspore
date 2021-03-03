@@ -1312,7 +1312,7 @@ class IrParser {
       return nullptr;
     }
 
-    PrimitivePtr prim = std::make_shared<Primitive>("return");
+    PrimitivePtr prim = std::make_shared<Primitive>("Return");
     ValueNodePtr input0 = std::make_shared<ValueNode>(prim);
     std::vector<AnfNodePtr> inputs;
     inputs.push_back(input0);

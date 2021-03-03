@@ -315,7 +315,7 @@ TEST_F(TestOps, SwitchTest) {
 }
 
 TEST_F(TestOps, ReturnTest) {
-  auto prim = std::make_shared<Primitive>("return");
+  auto prim = std::make_shared<Primitive>("Return");
   ASSERT_EQ(prim->name(), kPrimReturn->name());
 }
 

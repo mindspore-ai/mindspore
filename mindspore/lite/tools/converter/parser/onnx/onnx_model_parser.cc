@@ -392,7 +392,7 @@ STATUS OnnxModelParser::BuildReturnNode(const FuncGraphPtr &anf_graph, const std
     MS_LOG(ERROR) << "new cnode error";
     return RET_ERROR;
   }
-  returnCnode->set_fullname_with_scope("return");
+  returnCnode->set_fullname_with_scope("Return");
   anf_graph->set_return(returnCnode);
   return RET_OK;
 }

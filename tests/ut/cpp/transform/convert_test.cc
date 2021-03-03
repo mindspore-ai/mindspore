@@ -171,7 +171,7 @@ TEST_F(TestConvert, TestConvertBatchNorm) {
   CNodePtr cnode_relu = anf_graph->NewCNode(inputs);
   inputs.clear();
 
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>("return")));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>("Return")));
   inputs.push_back(cnode_relu);
   CNodePtr cnode_return = anf_graph->NewCNode(inputs);
   anf_graph->set_return(cnode_return);
@@ -811,7 +811,7 @@ TEST_F(TestConvert, TestConvertMakeTuple) {
   }
   CNodePtr cnode_prim = func_graph->NewCNode(inputs);
   inputs.clear();
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>("return")));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>("Return")));
   inputs.push_back(cnode_prim);
   CNodePtr cnode_return = func_graph->NewCNode(inputs);
   func_graph->set_return(cnode_return);
