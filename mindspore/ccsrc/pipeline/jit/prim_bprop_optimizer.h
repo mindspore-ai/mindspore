@@ -17,6 +17,9 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PRIM_BPROP_OPTIMIZER_H
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PRIM_BPROP_OPTIMIZER_H
 
+#include <vector>
+#include <unordered_map>
+
 #include "frontend/optimizer/irpass.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/resource.h"
@@ -24,14 +27,19 @@
 namespace mindspore {
 namespace pipeline {
 struct PrimBpropOptGraphInfo;
+
+class PrimBpropOptGraphLevel2Info;
+
 struct PrimitiveTotalEqual;
 
 using PrimBpropOptGraphInfoPtr = std::shared_ptr<PrimBpropOptGraphInfo>;
 
+using PrimBpropOptGraphLevel2InfoPtr = std::shared_ptr<PrimBpropOptGraphLevel2Info>;
+
 using PrimBpropCache = std::unordered_map<PrimitivePtr, PrimBpropOptGraphInfoPtr, PrimitiveHasher, PrimitiveTotalEqual>;
 
-using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, FuncGraphPtr,
-                                           abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+using PrimBpropLevel2Cache = std::unordered_map<abstract::AbstractBasePtrList, PrimBpropOptGraphLevel2InfoPtr,
+  abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
 struct PrimitiveTotalEqual {
   bool operator()(PrimitivePtr const &t1, PrimitivePtr const &t2) const {
@@ -41,20 +49,54 @@ struct PrimitiveTotalEqual {
   }
 };
 
-enum ECacheQrtRes { E_NOT_FOUND, E_LEVEL_1, E_LEVEL_2 };
+enum ECacheQrtRes {
+  E_NOT_FOUND, E_LEVEL_1, E_LEVEL_2
+};
 
 struct PrimBpropOptGraphInfo {
-  // the opt funcgraph without infer, level1 cache
-  FuncGraphPtr opt_fungraph;
-  // the opt funcgraph with infer, level2 cache
-  // key: hash value of arguments
-  AbstractListMap graph_level_2_cache;
-  // to indicate using tencer value or not, if flg is false release value
-  std::vector<bool> args_value_using_flg;
+  // the level1 opt func_graph without infer, no shape/type info provide
+  FuncGraphPtr opt_func_graph;
+  // the opt func_graph after infer, func_graph level2 cache
+  PrimBpropLevel2Cache graph_level_2_cache;
+};
+
+struct ParamUsingInfo {
+  bool using_flg{false};
+  bool tuple_flg{false};
+  size_t tuple_size;
+  std::vector<ParamUsingInfo> sub_using_info;
+};
+
+class PrimBpropOptGraphLevel2Info {
+public:
+  explicit PrimBpropOptGraphLevel2Info(const FuncGraphPtr &func_graph) :
+    opt_func_graph_(func_graph) {
+  }
+
+  const FuncGraphPtr &opt_func_graph() const { return opt_func_graph_; }
+
+  void TryFreeArgsValue(const ValuePtrList &op_args, const ValuePtr &out);
+
+  void AnalysisArgUsingInfo(FuncGraphManagerPtr &manager);
+
+private:
+  void ArgInfoRefresh(const std::shared_ptr<AnfNode> &param, ParamUsingInfo &arg_info) const;
+
+  void AnalysisNodeUsingInfo(const NodeUsersMap &node_users, const std::shared_ptr<AnfNode> &param,
+                             ParamUsingInfo &arg_info) const;
+
+  void TryFreeOneValue(const ValuePtrList &op_args, const std::vector<ParamUsingInfo> &param_info_vec);
+
+private:
+  // the level2 opt func_graph
+  FuncGraphPtr opt_func_graph_;
+  // to indicate arguments value using or not, if not using should free device memory
+  std::vector<ParamUsingInfo> args_value_using_info;
+  bool analysis_finish_flg{false};
 };
 
 class PrimBpropOptimizer {
- public:
+public:
   ~PrimBpropOptimizer();
 
   void Clear();
@@ -72,14 +114,12 @@ class PrimBpropOptimizer {
   // do inline opt for final bprop graph
   FuncGraphPtr BpropGraphFinalOpt(const ResourcePtr &res);
 
-  // need ? how to shrink ?
-  // void CacheShrink();
-
- private:
+private:
   PrimBpropOptimizer();
 
   ECacheQrtRes GetOptBpfgFromCache(const PrimitivePtr &prim, const abstract::AbstractBasePtrList &abs_list,
-                                   FuncGraphPtr &bprop_fg, PrimBpropOptGraphInfoPtr &bprop_info);
+                                   PrimBpropOptGraphLevel2InfoPtr &level_2_graph_info,
+                                   PrimBpropOptGraphInfoPtr &level_1_graph_info);
 
   // converter tensor args to abs value;
   void ArgsToAbs(PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList &abs_list);
@@ -87,18 +127,16 @@ class PrimBpropOptimizer {
   // add out && dout to abs list
   abstract::AbstractBasePtrList AddOutToAbsList(const ValuePtr &out, const abstract::AbstractBasePtrList &abs_list);
 
-  // TODO: how To?
-  void FreeTensorValue(const ValuePtrList &op_args, const ValuePtr &out, PrimBpropOptGraphInfoPtr &bprop_info){};
-
   // do opt without input info, no infer
-  FuncGraphPtr PrimBpropOptStep1(const FuncGraphPtr &bprop_fg);
+  PrimBpropOptGraphInfoPtr PrimBpropOptStep1(const FuncGraphPtr &bprop_fg);
 
   // do opt with input info
-  FuncGraphPtr PrimBpropOptStep2(const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
+  PrimBpropOptGraphLevel2InfoPtr PrimBpropOptStep2(
+    const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
 
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
 
- private:
+private:
   FuncGraphManagerPtr prim_bprop_opt_manage;
   ResourcePtr prim_bprop_opt_res;
   // cache optimized bprop graph
