@@ -46,42 +46,78 @@ Loop1x4:
 Depth8_1x4:
   cmp w9, #8
   blt Depth4_1x4
-
+  sub w9, w9, #8
   ld1 {v0.4s, v1.4s}, [x15], #32
   ld1 {v2.4s, v3.4s}, [x7], #32
   ld1 {v4.4s, v5.4s}, [x10], #32
+  cmp w9, #8
+  blt Depth8_1x4_Loop_End
+
+Depth8_1x4_Loop:
   fmla v10.4s, v0.4s, v2.4s
   fmla v10.4s, v1.4s, v3.4s
+  ld1 {v6.4s, v7.4s}, [x11], #32
   fmla v11.4s, v0.4s, v4.4s
   fmla v11.4s, v1.4s, v5.4s
+  ld1 {v8.4s, v9.4s}, [x12], #32
+  fmla v12.4s, v0.4s, v6.4s
+  fmla v12.4s, v1.4s, v7.4s
+  ld1 {v2.4s, v3.4s}, [x7], #32
+  fmla v13.4s, v0.4s, v8.4s
+  fmla v13.4s, v1.4s, v9.4s
+  ld1 {v0.4s, v1.4s}, [x15], #32
+  ld1 {v4.4s, v5.4s}, [x10], #32
+  sub w9, w9, #8
+  cmp w9, #8
+  bge Depth8_1x4_Loop
+
+Depth8_1x4_Loop_End:
+  fmla v10.4s, v0.4s, v2.4s
+  fmla v10.4s, v1.4s, v3.4s
   ld1 {v6.4s, v7.4s}, [x11], #32
+  fmla v11.4s, v0.4s, v4.4s
+  fmla v11.4s, v1.4s, v5.4s
   ld1 {v8.4s, v9.4s}, [x12], #32
   fmla v12.4s, v0.4s, v6.4s
   fmla v12.4s, v1.4s, v7.4s
   fmla v13.4s, v0.4s, v8.4s
   fmla v13.4s, v1.4s, v9.4s
-  sub w9, w9, #8
-  cbz w9, End1x4
-  b Depth8_1x4
 
 Depth4_1x4:
   cmp w9, #4
   blt Depth1_1x4
-
+  sub w9, w9, #4
   ld1 {v0.4s}, [x15], #16
   ld1 {v1.4s}, [x7], #16
   ld1 {v2.4s}, [x10], #16
-  ld1 {v3.4s}, [x11], #16
-  ld1 {v4.4s}, [x12], #16
+  cmp w9, #4
+  blt Depth4_1x4_Loop_End
+
+Depth4_1x4_Loop:
   fmla v10.4s, v1.4s, v0.4s
+  ld1 {v3.4s}, [x11], #16
   fmla v11.4s, v2.4s, v0.4s
+  ld1 {v4.4s}, [x12], #16
+  fmla v12.4s, v3.4s, v0.4s
+  ld1 {v1.4s}, [x7], #16
+  fmla v13.4s, v4.4s, v0.4s
+  ld1 {v0.4s}, [x15], #16
+  ld1 {v2.4s}, [x10], #16
+  sub w9, w9, #4
+  cmp w9, #4
+  bge Depth4_1x4_Loop
+
+Depth4_1x4_Loop_End:
+  fmla v10.4s, v1.4s, v0.4s
+  ld1 {v3.4s}, [x11], #16
+  fmla v11.4s, v2.4s, v0.4s
+  ld1 {v4.4s}, [x12], #16
   fmla v12.4s, v3.4s, v0.4s
   fmla v13.4s, v4.4s, v0.4s
-  sub w9, w9, #4
-  cbz w9, End1x4
-  b Depth8_1x4
 
 Depth1_1x4:
+  cmp w9, #0
+  beq End1x4
   ld1 {v0.s}[0], [x15], #4
   ld1 {v1.s}[0], [x7], #4
   ld1 {v1.s}[1], [x10], #4
