@@ -33,6 +33,7 @@
 #include "utils/comm_manager.h"
 #include "frontend/parallel/context.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "frontend/parallel/step_parallel.h"
 
 namespace mindspore {
 namespace opt {
@@ -155,7 +156,7 @@ class CheckBpropEliminater : public AnfVisitor {
   AnfNodePtr x_{nullptr};
 };
 
-// {prim::kPrimMirrorMiniStep, X, Y, Z} -> X
+// {prim::kPrimMirrorMiniStep, X, Z} -> X
 class MirrorMiniStepEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
@@ -163,16 +164,38 @@ class MirrorMiniStepEliminater : public AnfVisitor {
       return nullptr;
     }
 
-    auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) {
-      return nullptr;
-    }
-    auto inputs = cnode->inputs();
+    auto &inputs = node->cast<CNodePtr>()->inputs();
     if (inputs.size() < 2) {
       return nullptr;
     }
 
     return inputs[1];
+  }
+
+  void Visit(const AnfNodePtr &) override {}
+};
+
+// {prim::kPrimMiniStepAllGather, X, Z} -> {prim::kPrimAllGather, X}
+class MiniStepAllGatherPass : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimMiniStepAllGather) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    if (inputs.size() < 2) {
+      return nullptr;
+    }
+    auto prim = GetValueNode<PrimitivePtr>(node->cast<CNodePtr>()->input(0));
+    MS_EXCEPTION_IF_NULL(prim);
+    auto attrs = prim->attrs();
+    std::string group = attrs[parallel::GROUP]->ToString();
+    parallel::Operator op = parallel::CreateAllGatherOp(group);
+    std::vector<AnfNodePtr> node_input = parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER);
+    auto func_graph = inputs[1]->func_graph();
+    CNodePtr new_node = func_graph->NewCNode(node_input);
+    return new_node;
   }
 
   void Visit(const AnfNodePtr &) override {}
@@ -328,6 +351,80 @@ class PynativeEliminater : public OptimizerCaller {
     return out;
   }
 
+ private:
+  AnfNodePtr OperatorHandle1(const PatternNode<AnfNodePtr> &arg, const AnfNodePtr &node) {
+    auto rep = (arg).GetNode(node);
+    if (rep != nullptr) {
+      if (rep->isa<ValueNode>()) {
+        auto value_node = rep->cast<ValueNodePtr>();
+        auto new_value_node = NewValueNode(FillZero(value_node->value()));
+        new_value_node->set_has_new_value(value_node->has_new_value());
+        MS_LOG(DEBUG) << "Zeros_like replace ok " << rep->DebugString(4);
+        return new_value_node;
+      }
+    }
+    return nullptr;
+  }
+
+  AnfNodePtr OperatorHandle2(const PatternNode<AnfNodePtr> &arg, const AnfNodePtr &node) {
+    auto rep = (arg).GetNode(node);
+    if (rep != nullptr) {
+      if (rep->isa<ValueNode>() && !HasAbstractMonad(rep)) {
+        auto value_node = rep->cast<ValueNodePtr>();
+        auto new_value_node = NewValueNode(FillZero(value_node->value()));
+        new_value_node->set_has_new_value(value_node->has_new_value());
+        MS_LOG(DEBUG) << "Zeros_like replace ok 2 " << rep->DebugString(4);
+        return new_value_node;
+      }
+    }
+    return nullptr;
+  }
+
+  void OperatorHandle3(const std::vector<PatternNode<AnfNodePtr>> &args, const AnfNodePtr &node) {
+    for (size_t i = 0; i < 2; i++) {
+      auto rep = (args[i]).GetNode(node);
+      if (rep != nullptr && rep->isa<ValueNode>()) {
+        auto value_node = rep->cast<ValueNodePtr>();
+        MS_EXCEPTION_IF_NULL(value_node);
+        auto &value = value_node->value();
+        MS_EXCEPTION_IF_NULL(value);
+        // when the use count of value node equals to one, it only used in binop_grad_common function
+        if (value->isa<tensor::Tensor>() && value_node->used_graph_count() == 1) {
+          auto tensor = value->cast<tensor::TensorPtr>();
+          MS_EXCEPTION_IF_NULL(tensor);
+          auto new_tensor = std::make_shared<tensor::Tensor>(tensor->Dtype()->type_id(), tensor->shape());
+          value_node->set_value(new_tensor);
+        }
+      }
+    }
+  }
+
+  AnfNodePtr OperatorHandle4(const PatternNode<AnfNodePtr> &arg, const PatternNode<AnfNodePtr> &arg1,
+                             const AnfNodePtr &node) {
+    auto rep = (arg).GetNode(node);
+    if (rep != nullptr) {
+      if (rep->isa<ValueNode>()) {
+        MS_LOG(DEBUG) << "Rep is " << rep->DebugString(4);
+        ValueNodePtr new_node;
+        auto value_node = rep->cast<ValueNodePtr>();
+        auto rep1 = (arg1).GetNode(node);
+        if (rep1 != nullptr) {
+          if (rep1->isa<ValueNode>()) {
+            auto idx = rep1->cast<ValueNodePtr>();
+            if (!value_node->value()->isa<ValueTuple>()) {
+              return nullptr;
+            }
+            new_node = NewValueNode(FillGetItem(value_node->value(), idx->value()));
+            new_node->set_has_new_value(value_node->has_new_value());
+          }
+        }
+        MS_LOG(DEBUG) << "Fill getitem  replace ok " << new_node->DebugString(4);
+        return new_node;
+      }
+    }
+    return nullptr;
+  }
+
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     MS_LOG(DEBUG) << "Start replace node " << node->DebugString(4);
@@ -342,15 +439,9 @@ class PynativeEliminater : public OptimizerCaller {
     if ((pattern).TryCapture(node) &&
         (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "SymbolStr") &&
          CheckSymbolVNode(c_vnode.GetNode(node), "C") && CheckStrVNode(zeros_like_vnode.GetNode(node), "zeros_like"))) {
-      auto rep = (arg).GetNode(node);
-      if (rep != nullptr) {
-        if (rep->isa<ValueNode>()) {
-          auto value_node = rep->cast<ValueNodePtr>();
-          auto new_value_node = NewValueNode(FillZero(value_node->value()));
-          new_value_node->set_has_new_value(value_node->has_new_value());
-          MS_LOG(DEBUG) << "Zeros_like replace ok " << rep->DebugString(4);
-          return new_value_node;
-        }
+      auto new_value_node = OperatorHandle1(arg, node);
+      if (new_value_node != nullptr) {
+        return new_value_node;
       }
     }
     MS_LOG(DEBUG) << "End replace 1 " << node->DebugString(4);
@@ -360,15 +451,9 @@ class PynativeEliminater : public OptimizerCaller {
 
     if ((pattern1).TryCapture(node) && (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "SymbolStr") &&
                                         CheckSymbolVNode(zeros_like_vnode.GetNode(node), "zeros_like"))) {
-      auto rep = (arg).GetNode(node);
-      if (rep != nullptr) {
-        if (rep->isa<ValueNode>() && !HasAbstractMonad(rep)) {
-          auto value_node = rep->cast<ValueNodePtr>();
-          auto new_value_node = NewValueNode(FillZero(value_node->value()));
-          new_value_node->set_has_new_value(value_node->has_new_value());
-          MS_LOG(DEBUG) << "Zeros_like replace ok 2 " << rep->DebugString(4);
-          return new_value_node;
-        }
+      auto new_value_node = OperatorHandle2(arg, node);
+      if (new_value_node != nullptr) {
+        return new_value_node;
       }
     }
     // {prim:getattr, {prim::resolve, SymbolStr, binop_grad_common}, x, y, out, dout} -> {shape(x), shape(y), out, dout}
@@ -379,22 +464,7 @@ class PynativeEliminater : public OptimizerCaller {
     auto pattern_binop = PCNode(resolve_binop, args[0], args[1], args[2], args[3]);
     if ((pattern_binop).TryCapture(node) && (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "SymbolStr") &&
                                              CheckSymbolVNode(binop_grad_common.GetNode(node), "binop_grad_common"))) {
-      for (size_t i = 0; i < 2; i++) {
-        auto rep = (args[i]).GetNode(node);
-        if (rep != nullptr && rep->isa<ValueNode>()) {
-          auto value_node = rep->cast<ValueNodePtr>();
-          MS_EXCEPTION_IF_NULL(value_node);
-          auto &value = value_node->value();
-          MS_EXCEPTION_IF_NULL(value);
-          // when the use count of value node equals to one, it only used in binop_grad_common function
-          if (value->isa<tensor::Tensor>() && value_node->used_graph_count() == 1) {
-            auto tensor = value->cast<tensor::TensorPtr>();
-            MS_EXCEPTION_IF_NULL(tensor);
-            auto new_tensor = std::make_shared<tensor::Tensor>(tensor->Dtype()->type_id(), tensor->shape());
-            value_node->set_value(new_tensor);
-          }
-        }
-      }
+      OperatorHandle3(args, node);
       return nullptr;
     }
     // resolve(CommonOPS, getitem)((tensors), 3)
@@ -403,26 +473,9 @@ class PynativeEliminater : public OptimizerCaller {
     auto pattern2 = PCNode(resolve2, arg, arg1);
     if ((pattern2).TryCapture(node) && (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "CommonOPS") &&
                                         CheckSymbolVNode(getitem_vnode.GetNode(node), "getitem"))) {
-      auto rep = (arg).GetNode(node);
-      if (rep != nullptr) {
-        if (rep->isa<ValueNode>()) {
-          MS_LOG(DEBUG) << "Rep is " << rep->DebugString(4);
-          ValueNodePtr new_node;
-          auto value_node = rep->cast<ValueNodePtr>();
-          auto rep1 = (arg1).GetNode(node);
-          if (rep1 != nullptr) {
-            if (rep1->isa<ValueNode>()) {
-              auto idx = rep1->cast<ValueNodePtr>();
-              if (!value_node->value()->isa<ValueTuple>()) {
-                return nullptr;
-              }
-              new_node = NewValueNode(FillGetItem(value_node->value(), idx->value()));
-              new_node->set_has_new_value(value_node->has_new_value());
-            }
-          }
-          MS_LOG(DEBUG) << "Fill getitem  replace ok " << new_node->DebugString(4);
-          return new_node;
-        }
+      auto new_value_node = OperatorHandle4(arg, arg1, node);
+      if (new_value_node != nullptr) {
+        return new_value_node;
       }
     }
 

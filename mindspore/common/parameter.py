@@ -134,7 +134,7 @@ class Parameter(Tensor_):
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
 
     def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False, parallel_optimizer=True):
-        self._param_info = ParamInfo()
+        self.param_info = ParamInfo()
         self.init_in_server = False
         self.cache_enable = False
         self.name = name
@@ -230,7 +230,7 @@ class Parameter(Tensor_):
                                "sparse operator support initialization in server.".format(self.name))
         self.is_param_ps = True
         self.init_in_server = init_in_server
-        self._param_info.init_in_server = init_in_server
+        self.param_info.init_in_server = init_in_server
 
     @property
     def inited_param(self):
@@ -245,7 +245,7 @@ class Parameter(Tensor_):
     @property
     def name(self):
         """Get the name of the parameter."""
-        return self._param_info.name
+        return self.param_info.name
 
     @name.setter
     def name(self, name_):
@@ -272,9 +272,9 @@ class Parameter(Tensor_):
             if len(self.shape) != 2:
                 raise RuntimeError("The dims of parameter '{}' must be 2, but got {}."
                                    .format(self.name, len(self.shape)))
-            _reinsert_hash_table_size(name_, self._param_info.name, self.shape[0], self.shape[1])
+            _reinsert_hash_table_size(name_, self.param_info.name, self.shape[0], self.shape[1])
 
-        self._param_info.name = name_
+        self.param_info.name = name_
 
     @property
     def sliced(self):
@@ -288,12 +288,12 @@ class Parameter(Tensor_):
     @property
     def comm_fusion(self):
         """Get the fusion type for communication operators corresponding to this parameter."""
-        return self._param_info.comm_fusion
+        return self.param_info.comm_fusion
 
     @comm_fusion.setter
     def comm_fusion(self, comm_fusion_):
         """Set the fusion type for communication operators corresponding to this parameter."""
-        self._param_info.comm_fusion = comm_fusion_
+        self.param_info.comm_fusion = comm_fusion_
 
     @property
     def unique(self):
@@ -339,7 +339,7 @@ class Parameter(Tensor_):
         """
         x = copy(self)
         # pylint: disable=protected-access
-        x._param_info = self._param_info.clone()
+        x.param_info = self.param_info.clone()
         x.is_init = False
         x.init = self.init
         x.is_param_ps = self.is_param_ps
@@ -355,57 +355,57 @@ class Parameter(Tensor_):
 
     @property
     def layerwise_parallel(self):
-        return self._param_info.layerwise_parallel
+        return self.param_info.layerwise_parallel
 
     @layerwise_parallel.setter
     def layerwise_parallel(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`layerwise_parallel` parameter must be bool type")
-        self._param_info.layerwise_parallel = value
+        self.param_info.layerwise_parallel = value
 
     @property
     def parallel_optimizer(self):
         """Return whether the parameter requires weight shard for parallel optimizer."""
-        return self._param_info.parallel_optimizer
+        return self.param_info.parallel_optimizer
 
     @parallel_optimizer.setter
     def parallel_optimizer(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`parallel_optimizer` parameter must be bool type")
-        self._param_info.parallel_optimizer = value
+        self.param_info.parallel_optimizer = value
 
     @property
     def cache_enable(self):
         """Return whether the parameter is cache enable."""
-        return self._param_info.cache_enable
+        return self.param_info.cache_enable
 
     @cache_enable.setter
     def cache_enable(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`cache_enable` parameter must be bool type")
-        self._param_info.cache_enable = value
+        self.param_info.cache_enable = value
 
     @property
     def cache_shape(self):
         """Return the cache shape corresponding to the parameter if use cache."""
-        return self._param_info.cache_shape
+        return self.param_info.cache_shape
 
     @cache_shape.setter
     def cache_shape(self, value):
         if not isinstance(value, (tuple, list)):
             raise TypeError("`cache_shape` parameter must be tuple or list type")
-        self._param_info.cache_shape = value
+        self.param_info.cache_shape = value
 
     @property
     def requires_grad(self):
         """Return whether the parameter requires gradient."""
-        return self._param_info.requires_grad
+        return self.param_info.requires_grad
 
     @requires_grad.setter
     def requires_grad(self, value=True):
         if not isinstance(value, bool):
             raise TypeError("`requires_grad` parameter must be bool type")
-        self._param_info.requires_grad = value
+        self.param_info.requires_grad = value
 
     @property
     def data(self):
@@ -419,7 +419,9 @@ class Parameter(Tensor_):
             self.init = None
             return self.assign_value(data)
         # create a new tensor
-        return Parameter(data, self.name, self.requires_grad)
+        new_param = Parameter(data, self.name, self.requires_grad)
+        new_param.param_info = self.param_info
+        return new_param
 
     def set_data(self, data, slice_shape=False):
         """

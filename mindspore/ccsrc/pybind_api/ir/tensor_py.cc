@@ -374,7 +374,7 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                            .def(py::init<TypePtr, const ShapeVector>(), py::arg("dtype"), py::arg("shape"))
                            .def_property_readonly("dtype", &MetaTensor::Dtype, "Get the MetaTensor's dtype.")
                            .def_property_readonly("shape", &MetaTensor::shape, "Get the MetaTensor's shape.")
-                           .def_property("_param_info", &MetaTensor::param_info, &MetaTensor::set_param_info)
+                           .def_property("param_info", &MetaTensor::param_info, &MetaTensor::set_param_info)
                            .def(py::pickle(
                              [](const MetaTensor &t) {  // __getstate__
                                /* Return a tuple that fully encodes the state of the object */

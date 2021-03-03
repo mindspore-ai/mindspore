@@ -36,6 +36,7 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 #include "utils/log_adapter.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace parallel {
@@ -160,7 +161,7 @@ class OperatorInfo {
   void set_refkey_parameter_name(std::string p_name) { refkey_parameter_name_ = std::move(p_name); }
   const std::string &refkey_parameter_name() const { return refkey_parameter_name_; }
   // When the output of a Parameter (require_grad) being used by multiple operators, the Parameter's cost is calculated
-  // multiple times. This method is to correct this, and makes the cost is calulated only once.
+  // multiple times. This method is to correct this, and makes the cost is calculated only once.
   Status CorrectMemoryCost(size_t input_index);
   int64_t is_output_parameter_involve() const { return is_output_parameter_involve_; }
   int64_t is_output_critical() const { return is_output_critical_; }
@@ -242,7 +243,7 @@ class OperatorInfo {
   bool is_auto_parallel_ = false;  // false: semi_auto_parallel; true: auto_parallel
   // 'corrected_input_indices_' used to store the indices of input that have ALREADY been corrected.
   std::vector<size_t> corrected_input_indices_;
-  // Given a parallization strategy, there is a cost.
+  // Given a parallelization strategy, there is a cost.
   std::vector<std::shared_ptr<StrategyWithCost>> strategy_cost_;
   // For each input in 'inputs_', there is a bool variable indicating whether that the corresponding input is parameter
   std::vector<bool> is_parameter_;
@@ -288,6 +289,9 @@ Operator CreateVirtualDivOp(int64_t div_num);
 Operator CreateAllReduceOp(const std::string &reduce_op, const std::string &group);
 Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &group);
 Operator CreateAllGatherOp(const std::string &group);
+Operator CreateMiniStepAllGatherOp(const std::string &group);
+void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node);
+void AddCommOpMeanFlag(const CNodePtr &comm_node);
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);

@@ -30,6 +30,7 @@
 #include "ir/func_graph.h"
 #include "utils/convert_utils.h"
 #include "utils/info.h"
+#include "pipeline/jit/pipeline.h"
 
 namespace mindspore {
 namespace parallel {
@@ -43,6 +44,7 @@ constexpr char DYNAMIC_PROGRAMMING[] = "dynamic_programming";
 constexpr char RECURSIVE_PROGRAMMING[] = "recursive_programming";
 
 constexpr char TRAINING[] = "training";
+constexpr char ACCUMULATION[] = "accumulation";
 
 class ParallelContext {
  public:
@@ -111,6 +113,11 @@ class ParallelContext {
   bool enable_parallel_optimizer() const { return enable_parallel_optimizer_; }
 
   void Reset();
+  void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
+  void ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
+                                            AbstractBasePtr ptr);
+  void ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
+                                         const AbstractBasePtr &ptr);
 
  private:
   ParallelContext();
@@ -136,13 +143,9 @@ class ParallelContext {
   std::string strategy_ckpt_save_file_;
   std::string group_ckpt_save_file_;
   bool enable_parallel_optimizer_;
+  bool init_param_shape_;
 };
 
-void ParallelParameterContextInit(const FuncGraphPtr &func_graph);
-void ParallelParameterContextRestoreInNoTraining(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                                 AbstractBasePtr ptr);
-void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                            const AbstractBasePtr &ptr);
 }  // namespace parallel
 }  // namespace mindspore
 

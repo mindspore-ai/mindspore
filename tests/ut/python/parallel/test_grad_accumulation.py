@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@ import numpy as np
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore import context, Tensor, Parameter
-from mindspore.nn import Cell, Momentum, Norm
 from mindspore.train import Model
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.common.initializer import initializer
-from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.context import ParallelMode
-
+from mindspore.nn import DistributedGradReducer, DynamicLossScaleUpdateCell, Cell, Momentum, Norm
+from mindspore.parallel._utils import _get_device_num
 from tests.dataset_mock import MindData
 
 
@@ -142,29 +141,29 @@ class TrainAccumulateStepsWithLossScaleCell(Cell):
         accumulation_steps (int): Number of accumulation steps before gradient update. The global batch size =
                                 batch_size * accumulation_steps. Default: 1.
     """
-    def __init__(self, network, optimizer, scale_update_cell=None, accumulation_steps=4):
+    def __init__(self, network, optimizer, scale_update_cell=None):
         super(TrainAccumulateStepsWithLossScaleCell, self).__init__(auto_prefix=False)
+        self.accu = False
+        self.is_accu_step = Tensor(np.array([self.accu]))
         self.network = network
         self.network.set_grad()
         self.weights = optimizer.parameters
         self.optimizer = optimizer
-        self.accumulation_steps = accumulation_steps
+        self.accumulation_steps = context.get_auto_parallel_context("grad_accumulation_step")
         self.one = Tensor(np.array([1]).astype(np.int32))
         self.zero = Tensor(np.array([0]).astype(np.int32))
-        self.local_step = Parameter(initializer(0, [1], mstype.int32), name="local_step")
         self.accu_grads = self.weights.clone(prefix="accu_grads", init='zeros')
         self.accu_overflow = Parameter(initializer(0, [1], mstype.int32))
         self.accu_loss = Parameter(initializer(0, [1], mstype.float32))
-
-        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.reducer_flag = False
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
         if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
-        self.grad_reducer = F.identity
         self.degree = 1
+        self.grad_reducer = F.identity
         if self.reducer_flag:
-            self.degree = get_group_size()
+            self.degree = _get_device_num()
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, False, self.degree)
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.overflow_reducer = F.identity
@@ -197,34 +196,27 @@ class TrainAccumulateStepsWithLossScaleCell(Cell):
         else:
             scaling_sens = sens
 
-        # update accumulation parameters
-        is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
-        self.local_step = self.select(is_accu_step, self.local_step + self.one, self.one)
-        self.accu_loss = self.select(is_accu_step, self.accu_loss + loss, loss)
-        mean_loss = self.accu_loss / self.local_step
-        is_accu_step = self.not_equal(self.local_step, self.accumulation_steps)
-
         # alloc status and clear should be right before gradoperation
         init = self.alloc_status()
         self.clear_before_grad(init)
         grads = self.grad(self.network, weights)(x, b, self.cast(scaling_sens, mstype.float32))
 
-        accu_succ = self.hyper_map(update_accu_grads, self.accu_grads, grads)
-        mean_loss = F.depend(mean_loss, accu_succ)
+        if self.is_accu_step and self.accumulation_steps > 1:
+            accu_succ = self.hyper_map(update_accu_grads, self.accu_grads, grads)
+            loss = F.depend(loss, accu_succ)
 
         self.get_status(init)
         flag_sum = self.reduce_sum(init, (0,))
         overflow = self.less_equal(self.base, flag_sum)
         overflow = self.logical_or(self.not_equal(self.accu_overflow, self.zero), overflow)
         accu_overflow = self.select(overflow, self.one, self.zero)
-        self.accu_overflow = self.select(is_accu_step, accu_overflow, self.zero)
-        is_accu_step = self.reshape(is_accu_step, (()))
+        self.accu_overflow = self.select(self.is_accu_step, accu_overflow, self.zero)
 
-        if is_accu_step:
+        if self.is_accu_step:
             succ = False
         else:
             # apply grad reducer on grads
-            grads = self.grad_reducer(self.accu_grads)
+            grads = self.grad_reducer(grads)
             scaling = scaling_sens * self.degree * self.accumulation_steps
             grads = self.hyper_map(F.partial(grad_scale, scaling), grads)
             grads = ClipByGlobalNorm()(grads)
@@ -241,7 +233,7 @@ class TrainAccumulateStepsWithLossScaleCell(Cell):
             else:
                 succ = self.optimizer(grads)
 
-        ret = (mean_loss, overflow, scaling_sens)
+        ret = (loss, overflow, scaling_sens)
         return F.depend(ret, succ)
 
 
@@ -265,25 +257,51 @@ _b = Tensor(np.ones([16]), dtype=ms.float32)
 _w1 = Tensor(np.ones([16]), dtype=ms.float32)
 
 
-def compile_net(net, grad_accumulation_step):
-    context.set_context(save_graphs=True)
+def compile_net(net):
+    context.set_context(enable_sparse=False)
     learning_rate = 0.1
     momentum = 0.9
     epoch_size = 2
     dataset = Dataset(_x, _b)
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     update_cell = DynamicLossScaleUpdateCell(loss_scale_value=65536, scale_factor=2, scale_window=1000)
-    net_wrap = TrainAccumulateStepsWithLossScaleCell(net, opt, scale_update_cell=update_cell,
-                                                     accumulation_steps=grad_accumulation_step)
+    net_wrap = TrainAccumulateStepsWithLossScaleCell(net, opt, scale_update_cell=update_cell)
     model = Model(net_wrap)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
     context.reset_auto_parallel_context()
 
 
-def test_grad_accumulation():
+def test_grad_accumulation_accu():
     grad_accumulation_step = 4
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
                                       grad_accumulation_step=grad_accumulation_step)
     strategy = ((2,), (2,))
-    net = Net(_w1, strategy)
-    compile_net(net, grad_accumulation_step)
+    net = Net(_w1, strategy).add_flags_recursive(accu=True)
+    compile_net(net)
+
+
+def test_grad_accu_and_opt_shard_accu():
+    grad_accumulation_step = 4
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      grad_accumulation_step=grad_accumulation_step, enable_parallel_optimizer=True)
+    strategy = ((2,), (2,))
+    net = Net(_w1, strategy).add_flags_recursive(accu=True)
+    compile_net(net)
+
+
+def test_grad_accumulation_not_accu():
+    grad_accumulation_step = 4
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      grad_accumulation_step=grad_accumulation_step)
+    strategy = ((2,), (2,))
+    net = Net(_w1, strategy).add_flags_recursive(accu=False)
+    compile_net(net)
+
+
+def test_grad_accu_and_opt_shard_not_accu():
+    grad_accumulation_step = 4
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0,
+                                      grad_accumulation_step=grad_accumulation_step, enable_parallel_optimizer=True)
+    strategy = ((2,), (2,))
+    net = Net(_w1, strategy).add_flags_recursive(accu=False)
+    compile_net(net)

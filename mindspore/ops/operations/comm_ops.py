@@ -200,6 +200,38 @@ class AllGather(PrimitiveWithInfer):
         raise NotImplementedError
 
 
+class _MiniStepAllGather(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator. Do nothing in forward, do reducescatter in backward in mini-step. It is only for
+    internal use of parallel modules and cannot be called by users.
+
+    Args:
+        group (str): The communication group to work on. Default: None.
+        grad_accumulation_step (int): The grad accumulation step. Default: None.
+    """
+    @prim_attr_register
+    def __init__(self, group=GlobalComm.WORLD_COMM_GROUP, grad_accumulation_step=None, mean_flag=None):
+        validator.check_value_type('group', _get_group(group), (str,), self.name)
+        self.rank = get_rank(_get_group(group))
+        self.rank_size = get_group_size(_get_group(group))
+        validator.check('rank', self.rank, 'rank_size', self.rank_size, Rel.LT, self.name)
+        self.add_prim_attr('rank_size', self.rank_size)
+        self.add_prim_attr('group', _get_group(group))
+        self.add_prim_attr('fusion', 1)
+        self.grad_accumulation_step = grad_accumulation_step
+        self.mean_flag = mean_flag
+
+    def infer_shape(self, x_shape, z_shape):
+        validator.check_positive_int(len(x_shape), "x shape", self.name)
+        if x_shape[0] > 0:
+            x_shape[0] = x_shape[0] * self.rank_size
+        return x_shape
+
+    def infer_dtype(self, x_dtype, z_shape):
+        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        return x_dtype
+
+
 class _HostAllGather(PrimitiveWithInfer):
     """
     Gathers tensors from the specified communication group on host.
@@ -590,10 +622,10 @@ class _MirrorMiniStepOperator(PrimitiveWithInfer):
         self.mean_flag = mean_flag
         self.grad_accumulation_step = grad_accumulation_step
 
-    def infer_shape(self, x_shape, y_shape, z_shape):
+    def infer_shape(self, x_shape, z_shape):
         return x_shape
 
-    def infer_dtype(self, x_dtype, y_shape, z_shape):
+    def infer_dtype(self, x_dtype, z_shape):
         return x_dtype
 
 

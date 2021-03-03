@@ -160,6 +160,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.replace_applicator_,
     irpass.mirror_mini_step_elim_,
     irpass.row_tensor_add_zeros_like_,
+    irpass.mini_step_allgather_replace_,
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
   opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);

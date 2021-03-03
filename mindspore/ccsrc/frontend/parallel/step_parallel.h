@@ -30,6 +30,8 @@
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
 #include "pipeline/jit/pipeline.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
+#include "frontend/parallel/auto_parallel/operator_costmodel.h"
 
 using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
 

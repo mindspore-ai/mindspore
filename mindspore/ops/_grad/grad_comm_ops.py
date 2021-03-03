@@ -20,7 +20,7 @@ from mindspore.communication import get_rank, get_group_size
 from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
-from ..operations.comm_ops import (AllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
+from ..operations.comm_ops import (AllGather, _MiniStepAllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
                                    _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
                                    ReduceScatter, _HostReduceScatter, _VirtualDiv, AllSwap)
 from .grad_base import bprop_getters
@@ -146,6 +146,39 @@ def get_bprop_all_gather(self):
             if mean_flag:
                 dx = F.tensor_mul(dx, scale)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(_MiniStepAllGather)
+def get_bprop_mini_step_all_gather(self):
+    """Generate bprop for _MiniStepAllGather"""
+    fusion = self.get_attr_dict()["fusion"]
+    mean_flag = self.get_attr_dict()["mean_flag"]
+    do_mirror = self.get_attr_dict()["do_mirror"]
+    scale = 1 / self.rank_size
+    all_reduce = AllReduce(ReduceOp.SUM, self.group).add_prim_attr("fusion", fusion)
+    if self.instance_name:
+        instance_name = "grad_" + self.instance_name
+        all_reduce.set_prim_instance_name(instance_name)
+    rank = get_rank(self.group)
+    dev_num = get_group_size(self.group)
+    split = P.Split(output_num=dev_num)
+
+    def bprop(x, z, out, dout):
+        if do_mirror:
+            if mean_flag:
+                tmp = z + dout
+                grad = all_reduce(tmp)
+                dx = split(grad)[rank]
+                dx = F.tensor_mul(dx, scale)
+            else:
+                tmp = z + dout
+                grad = all_reduce(tmp)
+                dx = split(grad)[rank]
+        else:
+            dx = dout
+        return (dx, zeros_like(z))
 
     return bprop
 
@@ -291,18 +324,13 @@ def get_bprop_mirror_mini_step_operator(self):
     group = self.group
     dev_num = self.dev_num
     mean_flag = self.mean_flag
-    grad_accumulation_step = self.grad_accumulation_step
 
     all_reduce = AllReduce(group=group)
     all_gather = AllGather(group=group)
     mul = P.Mul()
     cast = P.Cast()
-    equal = P.Equal()
-    reshape = P.Reshape()
 
-    fusion = 1
-    if hasattr(self, 'fusion'):
-        fusion = self.fusion
+    fusion = self.get_attr_dict()["fusion"]
     all_reduce.add_prim_attr("fusion", fusion)
     if hasattr(self, 'parameter'):
         parameter = self.parameter
@@ -311,16 +339,15 @@ def get_bprop_mirror_mini_step_operator(self):
     if self.instance_name:
         instance_name = "grad_mirror" + self.instance_name
         all_reduce.set_prim_instance_name(instance_name)
+    do_mirror = self.get_attr_dict()["do_mirror"]
 
-    def bprop(x, y, z, out, dout):
-        do_mirror = equal(y, grad_accumulation_step)
-        do_mirror = reshape(do_mirror, (()))
+    def bprop(x, z, out, dout):
         if mean_flag:
             if F.issubclass_(F.typeof(dout), mstype.tensor):
                 if do_mirror:
                     tmp = z + dout
                     real_grad = all_reduce(tmp)
-                    dx = real_grad - z
+                    dx = real_grad
                 else:
                     dx = dout
                 float_one = F.scalar_cast(1.0, F.dtype(dx))
@@ -342,7 +369,7 @@ def get_bprop_mirror_mini_step_operator(self):
                 if do_mirror:
                     tmp = z + dout
                     real_grad = all_reduce(tmp)
-                    dx = real_grad - z
+                    dx = real_grad
                 else:
                     dx = dout
             else:
@@ -354,7 +381,7 @@ def get_bprop_mirror_mini_step_operator(self):
                     grad = dout.values
                 dx = RowTensor(indices, grad, dout.dense_shape)
 
-        return (dx, zeros_like(y), zeros_like(z))
+        return (dx, zeros_like(z))
     return bprop
 
 
