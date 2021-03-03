@@ -358,9 +358,11 @@ void SetFusionOpRefInfos(session::KernelGraph *kernel_graph, const std::vector<A
 void RemoveCircle(const session::KernelGraph &kernel_graph,
                   std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
+  std::vector<int64_t> fusion_ids;
   for (auto &[fusion_id, fusion_info] : *buffer_fusion_infos) {
     bool has_circle = false;
-    for (const auto &inp : fusion_info.inputs_list) {
+    for (auto &inp : fusion_info.inputs_list) {
+      MS_EXCEPTION_IF_NULL(inp);
       if (!inp->isa<CNode>() || AnfAlgo::CheckPrimitiveType(inp, prim::kPrimLoad)) {
         continue;
       }
@@ -372,8 +374,12 @@ void RemoveCircle(const session::KernelGraph &kernel_graph,
     }
 
     if (has_circle) {
-      buffer_fusion_infos->erase(fusion_id);
+      fusion_ids.emplace_back(fusion_id);
     }
+  }
+
+  for (auto &fusion_id : fusion_ids) {
+    buffer_fusion_infos->erase(fusion_id);
   }
 }
 }  // namespace
