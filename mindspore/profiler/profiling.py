@@ -454,7 +454,8 @@ class Profiler:
                                 path, training_device_id, self._dev_id)
 
         if not job_id:
-            msg = "Fail to get profiling job, please check whether job dir was generated"
+            msg = "Fail to get profiling job, please check whether job dir was generated, " \
+                  "or may be the device id from job dir dismatch the device_id in current process."
             raise RuntimeError(msg)
 
         return job_id
