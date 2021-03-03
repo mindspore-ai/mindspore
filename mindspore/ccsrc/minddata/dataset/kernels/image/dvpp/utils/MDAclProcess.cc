@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020.Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021.Huawei Technologies Co., Ltd. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -112,7 +112,7 @@ APP_ERROR MDAclProcess::Release() {
  */
 APP_ERROR MDAclProcess::InitModule() {
   // Create Dvpp JpegD object
-  dvppCommon_ = std::make_shared<DvppCommon>(stream_);
+  dvppCommon_ = std::make_shared<DvppCommon>(context_, stream_);
   if (dvppCommon_ == nullptr) {
     MS_LOG(ERROR) << "Failed to create dvppCommon_ object";
     return APP_ERR_COMM_INIT_FAIL;
@@ -153,20 +153,31 @@ APP_ERROR MDAclProcess::InitResource() {
 
 std::shared_ptr<DvppCommon> MDAclProcess::GetDeviceModule() { return dvppCommon_; }
 
+aclrtContext MDAclProcess::GetContext() { return context_; }
+
+aclrtStream MDAclProcess::GetStream() { return stream_; }
+
 /*
  * Sink data from Tensor(On host) to DeviceTensor(On device)
  * Two cases are different, jpeg and png
  */
 APP_ERROR MDAclProcess::H2D_Sink(const std::shared_ptr<mindspore::dataset::Tensor> &input,
                                  std::shared_ptr<mindspore::dataset::DeviceTensor> &device_input) {
+  // Recall the context created in InitResource()
+  APP_ERROR ret = aclrtSetCurrentContext(context_);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
+    return ret;
+  }
+
   RawData imageinfo;
   uint32_t filesize = input->SizeInBytes();
   // MS_LOG(INFO) << "Filesize on host is: " << filesize;
   imageinfo.lenOfByte = filesize;
   unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());
   imageinfo.data = static_cast<void *>(buffer);
+
   // Transfer RawData(Raw image) from host to device, which we call sink
-  APP_ERROR ret;
   if (IsNonEmptyJPEG(input)) {  // case JPEG
     ret = dvppCommon_->SinkImageH2D(imageinfo, PIXEL_FORMAT_YUV_SEMIPLANAR_420);
   } else {  // case PNG

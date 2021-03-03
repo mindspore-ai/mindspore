@@ -94,5 +94,9 @@ Status AscendResource::DeviceDataRelease() {
 
 std::shared_ptr<void> AscendResource::GetInstance() { return processor_; }
 
+void *AscendResource::GetContext() { return processor_->GetContext(); }
+
+void *AscendResource::GetStream() { return processor_->GetStream(); }
+
 }  // namespace dataset
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020.Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021.Huawei Technologies Co., Ltd. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -117,7 +117,7 @@ const uint8_t YUV_GREYER_VALUE = 128;     // Filling value of the resized YUV im
 
 class DvppCommon {
  public:
-  explicit DvppCommon(aclrtStream dvppStream);
+  explicit DvppCommon(aclrtContext dvppContext, aclrtStream dvppStream);
   explicit DvppCommon(const VdecConfig &vdecConfig);  // Need by vdec
   ~DvppCommon();
   APP_ERROR Init(void);
@@ -235,7 +235,11 @@ class DvppCommon {
   std::shared_ptr<acldvppPicDesc> decodeOutputDesc_ = nullptr;
 
   acldvppChannelDesc *dvppChannelDesc_ = nullptr;
+
+  // Ascend resource core: (context, stream) is a pair so must bind with each other to make all function perform well
+  aclrtContext dvppContext_ = nullptr;
   aclrtStream dvppStream_ = nullptr;
+
   std::shared_ptr<DvppDataInfo> inputImage_ = nullptr;
   std::shared_ptr<DvppDataInfo> decodedImage_ = nullptr;
   std::shared_ptr<DvppDataInfo> encodedImage_ = nullptr;
