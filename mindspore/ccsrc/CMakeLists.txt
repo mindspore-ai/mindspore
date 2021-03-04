@@ -74,6 +74,13 @@ if(ENABLE_GPU)
         endif()
     endif()
 
+    if(DEFINED ENV{TENSORRT_HOME} AND NOT $ENV{TENSORRT_HOME} STREQUAL "")
+        message("Enable GPU inference. Tensor-RT dir: $ENV{TENSORRT_HOME}")
+        set(ENABLE_GPU_INFER TRUE)
+        add_compile_definitions(ENABLE_GPU_INFER)
+        include_directories($ENV{TENSORRT_HOME}/include)
+    endif()
+
     if(NOT CUPTI_INCLUDE_DIRS OR CUPTI_INCLUDE_DIRS STREQUAL "")
         set(CUPTI_INCLUDE_DIRS  ${CUDA_PATH}/extras/CUPTI/include)
     endif()
@@ -290,6 +297,14 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore -Wl proto_input mindspore::protobuf mindspore::sentencepiece -Wl)
 else()
     target_link_libraries(mindspore -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
+endif()
+
+if(ENABLE_GPU_INFER)
+    find_library(trt_plugin libnvinfer_plugin.so $ENV{TENSORRT_HOME}/lib)
+    find_library(trt_nvinfo libnvinfer.so $ENV{TENSORRT_HOME}/lib)
+    find_library(trt_parser libnvparsers.so $ENV{TENSORRT_HOME}/lib)
+    target_link_libraries(mindspore ${trt_plugin} ${trt_nvinfo} ${trt_parser})
+    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:$ENV{TENSORRT_HOME}/lib)
 endif()
 
 # set c_expression building

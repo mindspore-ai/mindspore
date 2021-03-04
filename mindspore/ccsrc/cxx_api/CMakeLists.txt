@@ -45,7 +45,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
             -Wl,-force_load mindspore -Wl,-noall_load proto_input mindspore_gvar mindspore::protobuf)
 else()
-    if(ENABLE_D OR ENABLE_ACL)
+    if(ENABLE_D OR ENABLE_ACL OR ENABLE_GPU)
         target_link_libraries(mindspore_shared_lib PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
             -Wl,--whole-archive mindspore -Wl,--no-whole-archive proto_input mindspore_gvar mindspore::protobuf)
     else()
