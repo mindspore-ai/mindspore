@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/gpu/cuda_impl/unsorted_segment_sum.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/util.cuh"
 
 template<typename T, typename S>
 __global__ void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
@@ -29,7 +30,7 @@ __global__ void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t 
       continue;
     }
     size_t output_index = i * output_dim1 + k;
-    atomicAdd(output_addr + output_index, input_addr[input_index]);
+    MsAtomicAdd(output_addr + output_index, input_addr[input_index]);
   }
 }
 
@@ -41,6 +42,11 @@ void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0
                                   output_dim0, output_dim1, input_addr, ids_addr, output_addr);
   return;
 }
+
+template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
+                                 double* input_addr, int* ids_addr, double* output_addr, cudaStream_t stream);
+template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
+                                 double* input_addr, int64_t* ids_addr, double* output_addr, cudaStream_t stream);
 
 template void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
                                  float* input_addr, int* ids_addr, float* output_addr, cudaStream_t stream);

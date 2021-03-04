@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,9 @@ void CalTranspose(const size_t size, const T *input, const size_t *input_shape, 
   return;
 }
 
+template void CalTranspose<double>(const size_t size, const double *input, const size_t *input_shape,
+                                   const size_t *input_axis, const size_t shape_size, double *output,
+                                   cudaStream_t cuda_stream);
 template void CalTranspose<float>(const size_t size, const float *input, const size_t *input_shape,
                                   const size_t *input_axis, const size_t shape_size, float *output,
                                   cudaStream_t cuda_stream);

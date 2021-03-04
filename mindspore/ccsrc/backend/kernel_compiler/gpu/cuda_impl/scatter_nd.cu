@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,14 @@ void ScatterNd(S *indices, T *update, T *output, const size_t &block_size, const
   return;
 }
 
+template void ScatterNd<double, int>(int *indices, double *update, double *output, const size_t &block_size,
+                                     const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
+                                     const size_t &indices_dim_1, int *indices_stride, int *work_shape,
+                                     cudaStream_t stream);
+template void ScatterNd<double, int64_t>(int64_t *indices, double *update, double *output, const size_t &block_size,
+                                         const size_t &input_size, const size_t &output_size,
+                                         const size_t &indices_dim_0, const size_t &indices_dim_1,
+                                         int64_t *indices_stride, int64_t *work_shape, cudaStream_t stream);
 template void ScatterNd<float, int>(int *indices, float *update, float *output, const size_t &block_size,
                                     const size_t &input_size, const size_t &output_size, const size_t &indices_dim_0,
                                     const size_t &indices_dim_1, int *indices_stride, int *work_shape,
