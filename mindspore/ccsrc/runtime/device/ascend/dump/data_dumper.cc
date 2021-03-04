@@ -260,13 +260,13 @@ void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo 
 
   aicpu::dump::Output output;
   output.set_data_type(ge::proto::DataType::DT_UINT8);
-  output.set_format(GeFormat::kFormat_ND);
+  output.set_format(ge::Format::FORMAT_ND);
 
   output.mutable_shape()->add_dim(kOpDebugShape);
 
   output.set_original_name(kNodeNameOpDebug);
   output.set_original_output_index(0);
-  output.set_original_output_format(GeFormat::kFormat_ND);
+  output.set_original_output_format(ge::Format::FORMAT_ND);
   output.set_original_output_data_type(ge::proto::DataType::DT_UINT8);
   // due to lhisi virtual addr bug, cannot use args now
   output.set_address(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(op_debug_dump_args_)));
