@@ -226,7 +226,6 @@ constexpr auto kReduceToEnd = "reduce_to_end";
 constexpr auto kResetAfter = "reset_after";
 constexpr auto kCoeff = "coeff";
 constexpr auto kIsDepthWise = "is_depth_wise";
-constexpr auto kIsDepthWiseNative = "is_depth_wise_native";
 constexpr auto kZoneoutCell = "zoneout_cell";
 constexpr auto kZoneoutHidden = "zoneout_hidden";
 

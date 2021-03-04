@@ -33,10 +33,10 @@ class ActivationGrad : public PrimitiveC {
   ~ActivationGrad() = default;
   MS_DECLARE_PARENT(ActivationGrad, PrimitiveC);
   void Init(const ActivationType &type = NO_ACTIVATION, const float alpha = 0.2);
-  void set_type(const ActivationType &type);
+  void set_activation_type(const ActivationType &type);
   void set_alpha(const float alpha);
 
-  ActivationType get_type() const;
+  ActivationType get_activation_type() const;
   float get_alpha() const;
 };
 }  // namespace ops
