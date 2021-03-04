@@ -41,6 +41,7 @@ namespace dataset {
 using json = nlohmann::json;
 struct Execute::ExtraInfo {
   std::multimap<std::string, std::vector<uint32_t>> aipp_cfg_;
+  bool init_with_shared_ptr_ = true;  // Initial execute object with shared_ptr as default
 };
 
 // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
@@ -61,15 +62,10 @@ Execute::Execute(std::shared_ptr<TensorOperation> op, MapTargetDevice deviceType
 }
 
 Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType) {
-  // Convert op from TensorTransform to TensorOperation
-  std::shared_ptr<TensorOperation> operation;
+  // Initialize the op and other context
+  transforms_.emplace_back(op);
+
   info_ = std::make_shared<ExtraInfo>();
-  if (deviceType == MapTargetDevice::kCpu) {
-    operation = op->Parse();
-  } else {
-    operation = op->Parse(deviceType);
-  }
-  ops_.emplace_back(std::move(operation));
   device_type_ = deviceType;
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
@@ -84,9 +80,12 @@ Execute::Execute(std::shared_ptr<TensorTransform> op, MapTargetDevice deviceType
 }
 
 Execute::Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice deviceType) {
-  // Convert op from TensorTransform to TensorOperation
+  // Initialize the transforms_ and other context
   std::shared_ptr<TensorOperation> operation = op.get().Parse();
   ops_.emplace_back(std::move(operation));
+
+  info_ = std::make_shared<ExtraInfo>();
+  info_->init_with_shared_ptr_ = false;
   device_type_ = deviceType;
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
@@ -102,15 +101,11 @@ Execute::Execute(std::reference_wrapper<TensorTransform> op, MapTargetDevice dev
 
 // Execute function for the example case: auto decode(new vision::Decode());
 Execute::Execute(TensorTransform *op, MapTargetDevice deviceType) {
-  // Convert op from TensorTransform to TensorOperation
-  std::shared_ptr<TensorOperation> operation;
+  // Initialize the transforms_ and other context
+  std::shared_ptr<TensorTransform> smart_ptr_op(op);
+  transforms_.emplace_back(smart_ptr_op);
+
   info_ = std::make_shared<ExtraInfo>();
-  if (deviceType == MapTargetDevice::kCpu) {
-    operation = op->Parse();
-  } else {
-    operation = op->Parse(deviceType);
-  }
-  ops_.emplace_back(std::move(operation));
   device_type_ = deviceType;
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
@@ -140,18 +135,10 @@ Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops, MapTargetDev
 }
 
 Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDevice deviceType) {
-  // Convert ops from TensorTransform to TensorOperation
+  // Initialize the transforms_ and other context
+  transforms_ = ops;
+
   info_ = std::make_shared<ExtraInfo>();
-  if (deviceType == MapTargetDevice::kCpu) {
-    (void)std::transform(ops.begin(), ops.end(), std::back_inserter(ops_),
-                         [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> {
-                           return operation->Parse();
-                         });
-  } else {
-    for (auto &op : ops) {
-      ops_.emplace_back(op->Parse(deviceType));
-    }
-  }
   device_type_ = deviceType;
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
@@ -166,8 +153,7 @@ Execute::Execute(std::vector<std::shared_ptr<TensorTransform>> ops, MapTargetDev
 }
 
 Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops, MapTargetDevice deviceType) {
-  // Convert ops from TensorTransform to TensorOperation
-  info_ = std::make_shared<ExtraInfo>();
+  // Initialize the transforms_ and other context
   if (deviceType == MapTargetDevice::kCpu) {
     (void)std::transform(
       ops.begin(), ops.end(), std::back_inserter(ops_),
@@ -177,6 +163,9 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
       ops_.emplace_back(op.get().Parse(deviceType));
     }
   }
+
+  info_ = std::make_shared<ExtraInfo>();
+  info_->init_with_shared_ptr_ = false;
   device_type_ = deviceType;
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
@@ -192,17 +181,13 @@ Execute::Execute(const std::vector<std::reference_wrapper<TensorTransform>> ops,
 
 // Execute function for the example vector case: auto decode(new vision::Decode());
 Execute::Execute(std::vector<TensorTransform *> ops, MapTargetDevice deviceType) {
-  // Convert ops from TensorTransform to TensorOperation
-  info_ = std::make_shared<ExtraInfo>();
-  if (deviceType == MapTargetDevice::kCpu) {
-    (void)std::transform(
-      ops.begin(), ops.end(), std::back_inserter(ops_),
-      [](TensorTransform *operation) -> std::shared_ptr<TensorOperation> { return operation->Parse(); });
-  } else {
-    for (auto &op : ops) {
-      ops_.emplace_back(op->Parse(deviceType));
-    }
+  // Initialize the transforms_ and other context
+  for (auto &op : ops) {
+    std::shared_ptr<TensorTransform> smart_ptr_op(op);
+    transforms_.emplace_back(smart_ptr_op);
   }
+
+  info_ = std::make_shared<ExtraInfo>();
   device_type_ = deviceType;
 #ifdef ENABLE_ACL
   if (device_type_ == MapTargetDevice::kAscend310) {
@@ -231,8 +216,14 @@ Execute::~Execute() {
 Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output) {
   // Validate input tensor
   CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data");
-  CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
   CHECK_FAIL_RETURN_UNEXPECTED(validate_device_(), "Device Type should be 'Ascend310' or 'CPU'");
+
+  // Parse TensorTransform transforms_ into TensorOperation ops_
+  if (info_->init_with_shared_ptr_) {
+    RETURN_IF_NOT_OK(ParseTransforms_());
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
+
   // Validate and build runtime ops
   std::vector<std::shared_ptr<TensorOp>> transforms;  // record the transformations
 
@@ -310,8 +301,13 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
   for (auto &tensor : input_tensor_list) {
     CHECK_FAIL_RETURN_UNEXPECTED(tensor.DataSize() > 0, "Input Tensor has no data");
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
   CHECK_FAIL_RETURN_UNEXPECTED(validate_device_(), "Device Type should be 'Ascend310' or 'CPU'");
+
+  // Parse TensorTransform transforms_ into TensorOperation ops_
+  if (info_->init_with_shared_ptr_) {
+    RETURN_IF_NOT_OK(ParseTransforms_());
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
 
   std::map<MapTargetDevice, std::string> env_list = {
     {MapTargetDevice::kCpu, "kCpu"}, {MapTargetDevice::kGpu, "kGpu"}, {MapTargetDevice::kAscend310, "kAscend310"}};
@@ -491,6 +487,9 @@ Status AippInfoCollection(std::map<std::string, std::string> *aipp_options, cons
 std::string Execute::AippCfgGenerator() {
   std::string config_location = "./aipp.cfg";
 #ifdef ENABLE_ACL
+  if (info_->init_with_shared_ptr_) {
+    ParseTransforms_();
+  }
   std::vector<uint32_t> paras;  // Record the parameters value of each Ascend operators
   for (int32_t i = 0; i < ops_.size(); i++) {
     // Validate operator ir
@@ -499,10 +498,7 @@ std::string Execute::AippCfgGenerator() {
       MS_LOG(ERROR) << "Input TensorOperation[" + std::to_string(i) + "] is null";
       return "";
     }
-    if (ops_[i]->ValidateParams() != Status::OK()) {
-      MS_LOG(ERROR) << "Input TensorOperation[" + std::to_string(i) + "] has wrong parameters";
-      return "";
-    }
+
     // Define map between operator name and parameter name
     ops_[i]->to_json(&ir_info);
     std::multimap<std::string, std::string> op_list = {{vision::kDvppCropJpegOperation, "size"},
@@ -585,6 +581,30 @@ std::string Execute::AippCfgGenerator() {
   }
 #endif
   return config_location;
+}
+
+bool IsEmptyPtr(std::shared_ptr<TensorTransform> api_ptr) { return api_ptr == nullptr; }
+
+Status Execute::ParseTransforms_() {
+  auto iter = std::find_if(transforms_.begin(), transforms_.end(), IsEmptyPtr);
+  if (iter != transforms_.end()) {
+    std::string err_msg = "Your input TensorTransforms contain at least one nullptr, please check your input";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  if (device_type_ == MapTargetDevice::kCpu) {
+    (void)std::transform(transforms_.begin(), transforms_.end(), std::back_inserter(ops_),
+                         [](std::shared_ptr<TensorTransform> operation) -> std::shared_ptr<TensorOperation> {
+                           return operation->Parse();
+                         });
+  } else {
+    for (auto &transform_ : transforms_) {
+      ops_.emplace_back(transform_->Parse(device_type_));
+    }
+  }
+
+  return Status::OK();
 }
 
 Status Execute::validate_device_() {

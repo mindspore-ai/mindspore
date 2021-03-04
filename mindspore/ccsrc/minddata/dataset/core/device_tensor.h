@@ -39,11 +39,19 @@ class DeviceTensor : public Tensor {
 
   static Status CreateEmpty(const TensorShape &shape, const DataType &type, std::shared_ptr<DeviceTensor> *out);
 
+  static Status CreateFromDeviceMemory(const TensorShape &shape, const DataType &type, uint8_t *data_ptr,
+                                       const uint32_t &dataSize, const std::vector<uint32_t> &attributes,
+                                       std::shared_ptr<DeviceTensor> *out);
+
   uint8_t *GetDeviceBuffer();
+
+  uint8_t *GetDeviceMutableBuffer();
 
   std::vector<uint32_t> GetYuvStrideShape();
 
   uint32_t DeviceDataSize();
+
+  DataType DeviceDataType() const;
 
   bool HasDeviceData() { return device_data_ != nullptr; }
 
@@ -58,6 +66,8 @@ class DeviceTensor : public Tensor {
   uint8_t *device_data_;
 
   uint32_t size_;
+
+  DataType device_data_type_;
 };
 
 }  // namespace dataset
