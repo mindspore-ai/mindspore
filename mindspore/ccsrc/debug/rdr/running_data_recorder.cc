@@ -20,8 +20,10 @@
 #include "debug/rdr/recorder_manager.h"
 #include "debug/rdr/string_recorder.h"
 #include "debug/rdr/stream_exec_order_recorder.h"
+#include "debug/rdr/mem_address_recorder.h"
 #include "mindspore/core/ir/func_graph.h"
 #include "mindspore/core/ir/anf.h"
+#include "backend/kernel_compiler/kernel.h"
 #ifdef ENABLE_D
 #include "runtime/device/ascend/tasksink/task_generator.h"
 #include "debug/rdr/task_debug_info_recorder.h"
@@ -123,7 +125,21 @@ bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, con
   return ans;
 }
 
-void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &tag, const std::string &op_name,
+                          const GPUMemInfo &mem_info) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  MemAddressRecorder::Instance().SetModule(submodule_name);
+  MemAddressRecorder::Instance().SetTag(tag);
+  MemAddressRecorder::Instance().SaveMemInfo(op_name, mem_info);
+  return true;
+}
+void TriggerAll() {
+  mindspore::RecorderManager::Instance().TriggerAll();
+  MemAddressRecorder::Instance().Export();
+}
 
 void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
 

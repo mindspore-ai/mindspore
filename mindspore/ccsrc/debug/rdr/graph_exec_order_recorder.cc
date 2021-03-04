@@ -19,10 +19,12 @@
 #include "mindspore/core/ir/anf.h"
 #include "mindspore/core/utils/log_adapter.h"
 #include "backend/session/anf_runtime_algorithm.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace {
 bool DumpGraphExeOrder(const std::string &filename, const std::vector<CNodePtr> &execution_order) {
+  ChangeFileMode(filename, S_IRWXU);
   std::ofstream fout(filename, std::ofstream::app);
   if (!fout.is_open()) {
     MS_LOG(WARNING) << "Open file for saving graph exec order failed.";
@@ -41,6 +43,7 @@ bool DumpGraphExeOrder(const std::string &filename, const std::vector<CNodePtr> 
   }
   fout << "================== execution order ==================\n";
   fout.close();
+  ChangeFileMode(filename, S_IRUSR);
   return true;
 }
 }  // namespace

@@ -40,6 +40,10 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debug_services.h"
 #endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/mem_address_recorder.h"
+#endif
 
 namespace mindspore {
 namespace device {
@@ -51,6 +55,9 @@ static const size_t PARAMETER_OUTPUT_INDEX = 0;
 
 bool GPUKernelRuntime::SyncStream() {
   if (!GPUDeviceManager::GetInstance().SyncStream(stream_)) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MS_LOG(ERROR) << "Call SyncStream error.";
     return false;
   }
@@ -637,7 +644,10 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
   }
   auto &kernels = graph->execution_order();
   int exec_order = 1;
-
+#ifdef ENABLE_DUMP_IR
+  std::string exec_order_tag = "graph_exec_order";
+  mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_KERNEL, exec_order_tag, kernels, graph->graph_id());
+#endif
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
 
@@ -678,6 +688,12 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       }
       return false;
     }
+#ifdef ENABLE_DUMP_IR
+    GPUMemInfo mem_info = {&kernel_inputs, &kernel_workspaces, &kernel_outputs};
+    std::string tag = "mem_address_list";
+    std::string op_name = kernel->fullname_with_scope();
+    mindspore::RDR::RecordMemAddressInfo(SubModuleId::SM_KERNEL, tag, op_name, mem_info);
+#endif
     if (!mock) {
       if (!profiling) {
         if (profiler_inst->GetEnableFlag()) {

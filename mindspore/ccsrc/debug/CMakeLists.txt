@@ -9,18 +9,10 @@ set(_DEBUG_SRC_LIST
 )
 
 if(ENABLE_DUMP_IR)
-    if(ENABLE_D)
-        list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/rdr/task_debug_info_recorder.cc")
+    file(GLOB_RECURSE _RDR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "rdr/*.cc")
+    if(NOT ENABLE_D)
+        list(REMOVE_ITEM _RDR_SRC_LIST "rdr/task_debug_info_recorder.cc")
     endif()
-    list(APPEND _DEBUG_SRC_LIST
-        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/base_recorder.cc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_exec_order_recorder.cc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/graph_recorder.cc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/stream_exec_order_recorder.cc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/string_recorder.cc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/recorder_manager.cc"
-        "${CMAKE_CURRENT_SOURCE_DIR}/rdr/running_data_recorder.cc"
-        )
 endif()
 
 if(ENABLE_DEBUGGER)
@@ -38,5 +30,6 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     list(APPEND _DEBUG_SRC_LIST "data_dump/e2e_dump_util.cc")
 endif()
 
-set_property(SOURCE ${_DEBUG_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEBUG)
-add_library(_mindspore_debug_obj OBJECT ${_DEBUG_SRC_LIST})
+set_property(SOURCE ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST} PROPERTY COMPILE_DEFINITIONS
+    SUBMODULE_ID=mindspore::SubModuleId::SM_DEBUG)
+add_library(_mindspore_debug_obj OBJECT ${_DEBUG_SRC_LIST} ${_RDR_SRC_LIST})

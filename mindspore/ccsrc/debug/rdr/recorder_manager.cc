@@ -78,5 +78,8 @@ void RecorderManager::TriggerAll() {
   }
 }
 
-void RecorderManager::ClearAll() { recorder_container_.clear(); }
+void RecorderManager::ClearAll() {
+  std::lock_guard<std::mutex> lock(mtx_);
+  recorder_container_.clear();
+}
 }  // namespace mindspore

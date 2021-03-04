@@ -25,6 +25,13 @@ class FuncGraph;
 class CNode;
 using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 using CNodePtr = std::shared_ptr<CNode>;
+
+namespace kernel {
+class Address;
+using AddressPtr = std::shared_ptr<Address>;
+}  // namespace kernel
+using AddressPtrList = std::vector<kernel::AddressPtr>;
+struct GPUMemInfo;
 #ifdef ENABLE_D
 namespace device {
 namespace ascend {
@@ -35,6 +42,7 @@ class TaskDebugInfo;
 }  // namespace device
 using TaskDebugInfoPtr = std::shared_ptr<device::ascend::tasksink::TaskDebugInfo>;
 #endif  // ENABLE_D
+
 namespace RDR {
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type = ".ir;.pb;.dat");
@@ -44,6 +52,8 @@ bool RecordString(SubModuleId module, const std::string &tag, const std::string 
                   const std::string &filename = "");
 bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
                            const std::vector<CNodePtr> &exec_order);
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &tag, const std::string &op_name,
+                          const GPUMemInfo &mem_info);
 #ifdef ENABLE_D
 bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
                          const std::vector<TaskDebugInfoPtr> &task_debug_info_list, int graph_id = 0);
