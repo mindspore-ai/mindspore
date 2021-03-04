@@ -200,6 +200,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   constexpr inline static auto kAkgStart = "AKG/START";
   constexpr inline static auto kAkgData = "AKG/DATA";
   constexpr inline static auto kAkgWait = "AKG/WAIT";
+  constexpr inline static auto kTbeTune = "TBE/TUNE";
 
   // Send server info. query to server
   constexpr inline static auto kFormat = "FORMAT";
@@ -222,7 +223,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   bool CheckSupported(const std::string &json);
 
   // Run TBE building.
-  int TbeStart(const std::string &json);
+  int TbeStart(const std::string &json, const std::string &mode);
   bool TbeWait(int *task_id, std::string *task_result, std::string *pre_build_result);
   void TbeReset();
 
@@ -239,7 +240,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   AscendKernelBuildClient &operator=(AscendKernelBuildClient &&) = delete;
 
  private:
-  bool TbePre();
+  bool TbePre(const std::string &mode);
   AscendKernelBuildClient() { Open(); }
   ~AscendKernelBuildClient() override { Close(); }
 };

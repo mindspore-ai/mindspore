@@ -117,6 +117,9 @@ class TbeProcess:
             self.__pool.join()
             del self.__pool
 
+    def init_auto_tune_env(self, mode):
+        return "Success"
+
     def init_process_num(self):
         """
         init compile process num

@@ -24,6 +24,9 @@ class TbeBuilder:
     def __init__(self):
         self.tbe_builder = create_tbe_parallel_process()
 
+    def init_auto_tune_env(self, mode):
+        return self.tbe_builder.init_auto_tune_env(mode)
+
     def create(self):
         return self.tbe_builder.init_process_num()
 
@@ -74,6 +77,11 @@ class AscendMessager(Messager):
         arg = self.get_message()
         if arg == 'TBE/PRE':
             ans = self.tbe_builder.create()
+            self.send_res(ans)
+        elif arg == "TBE/TUNE":
+            self.send_ack()
+            tune_mode = self.get_message()
+            ans = self.tbe_builder.init_auto_tune_env(tune_mode)
             self.send_res(ans)
         elif arg == 'TBE/START':
             self.send_ack()

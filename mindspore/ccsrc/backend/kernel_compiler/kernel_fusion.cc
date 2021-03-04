@@ -55,6 +55,20 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
   std::map<int64_t, KernelModPtr> kernel_mod_ret;
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
+  std::string offline_tune = common::GetEnv("ENABLE_TUNE_DUMP");
+  if (!offline_tune.empty()) {
+    for (size_t j = 0; j < offline_tune.length(); j++) {
+      offline_tune[j] = tolower(offline_tune[j]);
+    }
+    if (!(offline_tune == "true" || offline_tune == "false")) {
+      MS_LOG(EXCEPTION) << "The value of ENABLE_TUNE_DUMP must be 'true' or 'false'";
+    }
+  }
+
   for (const auto &fusion_scope_iter : fusion_scopes) {
     string fusion_kernel_name;
     nlohmann::json fusion_op;
@@ -64,11 +78,9 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     }
     // gen kernel_name & check cache
     size_t hash_id = GenFusionJsonHash(fusion_op);
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto json_name =
       fusion_kernel_name.append("_").append(std::to_string(hash_id)).append("_").append(std::to_string(device_id));
+    fusion_op["graph_id"] = fusion_scope_iter.graph_id;
     fusion_op["fusion_op_name"] = json_name;
     // get io size
     std::vector<size_t> input_size_list;
@@ -79,7 +91,7 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     }
     // search cache
     auto kernel_pack = TbeUtils::SearchCache(json_name, tbe::kProcessorAiCore);
-    if (kernel_pack != nullptr) {
+    if (kernel_pack != nullptr && ((!offline_tune.empty() && offline_tune != "true") || tune_mode == "NO_TUNE")) {
       auto kernel_mod =
         build_manger->GenKernelMod(json_name, tbe::kProcessorAiCore, input_size_list, output_size_list, kernel_pack);
       if (kernel_mod != nullptr) {
@@ -87,9 +99,16 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
         continue;
       }
     }
+    // generate soc info json
+    nlohmann::json soc_info_json;
+    TbeUtils::GenSocInfo(&soc_info_json);
+    soc_info_json["autoTilingMode"] = tune_mode;
+    auto soc_version = TbeKernelJsonCreator::GetSocVersion();
+    soc_info_json["socVersion"] = soc_version;
     // fusion build
     nlohmann::json fusion_json;
     fusion_json["fusion_op"] = fusion_op;
+    fusion_json["SocInfo"] = soc_info_json;
     auto task_id = build_manger->StartCompileOp(fusion_json);
     TbeUtils::SaveJsonInfo(json_name, fusion_json.dump());
     if (task_id < 0) {

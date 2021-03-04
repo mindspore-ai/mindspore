@@ -27,7 +27,7 @@ depthwise_conv2d_op_info = TBERegOp("DepthwiseConv2dNative") \
     .attr("dilation", "required", "listInt", "all") \
     .attr("pad_list", "required", "listInt", "all") \
     .attr("format", "required", "str", "all") \
-    .attr("offset_a", "optional", "int", "all") \
+    .attr("offset_a", "optional", "int", "all", "0") \
     .input(0, "x", False, "required", "all") \
     .input(1, "filter", False, "required", "all") \
     .input(2, "bias", False, "optional", "all") \

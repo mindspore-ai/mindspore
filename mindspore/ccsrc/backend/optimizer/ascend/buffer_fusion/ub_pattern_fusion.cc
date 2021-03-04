@@ -387,6 +387,7 @@ void RemoveCircle(const session::KernelGraph &kernel_graph,
 void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
                                           std::unordered_map<int64_t, BufferFusionInfo_t> *buffer_fusion_infos) const {
   MS_EXCEPTION_IF_NULL(buffer_fusion_infos);
+  auto graph_id = kernel_graph->graph_id();
   GetFusionScopeComputeNodeList(kernel_graph, buffer_fusion_infos);
   GetFusionScopeInputNodeList(*kernel_graph, buffer_fusion_infos);
   GetFusionScopeOutputNodeList(kernel_graph, buffer_fusion_infos);
@@ -396,6 +397,7 @@ void UbPatternFusion::GetBufferFusionInfo(session::KernelGraph *kernel_graph,
   for (auto &buffer_fusion_info : *buffer_fusion_infos) {
     buffer_fusion_info.second.kernel_build_info =
       CreateFusionOpKernelInfo(buffer_fusion_info.second.inputs_list, buffer_fusion_info.second.outputs_list);
+    buffer_fusion_info.second.graph_id = graph_id;
   }
 }
 
@@ -409,9 +411,9 @@ bool UbPatternFusion::FuseBufferFusionPattern(session::KernelGraph *kernel_graph
   std::transform(
     buffer_fusion_infos.begin(), buffer_fusion_infos.end(), std::back_inserter(fusion_scope_infos),
     [](const std::pair<int64_t, BufferFusionInfo_t> &buffer_fusion_info) -> mindspore::kernel::FusionScopeInfo {
-      return mindspore::kernel::FusionScopeInfo(buffer_fusion_info.first, buffer_fusion_info.second.inputs_list,
-                                                buffer_fusion_info.second.anf_nodes,
-                                                buffer_fusion_info.second.outputs_list);
+      return mindspore::kernel::FusionScopeInfo(
+        buffer_fusion_info.first, buffer_fusion_info.second.graph_id, buffer_fusion_info.second.inputs_list,
+        buffer_fusion_info.second.anf_nodes, buffer_fusion_info.second.outputs_list);
     });
   auto kernel_mods = mindspore::kernel::KernelFusion(fusion_scope_infos);
   std::set<int64_t> fusion_ids;

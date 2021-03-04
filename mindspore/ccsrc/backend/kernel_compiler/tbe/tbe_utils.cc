@@ -19,6 +19,8 @@
 #include <dirent.h>
 #include <string>
 #include <map>
+#include <set>
+#include <list>
 #include <functional>
 #include <iostream>
 #include <fstream>
@@ -26,7 +28,9 @@
 #include "runtime/kernel.h"
 #include "utils/utils.h"
 #include "utils/ms_utils.h"
+#include "utils/ms_context.h"
 #include "ir/dtype/type.h"
+#include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/tbe/tbe_convert_utils.h"
 #include "securec/include/securec.h"
 
@@ -39,6 +43,19 @@ constexpr auto kInfoSuffix = ".info";
 
 uintptr_t KernelManager::kernel_stub_gen_ = 0;
 std::unordered_map<string, KernelMetaPtr> KernelManager::info_table_ = {};
+
+void TbeUtils::GenSocInfo(nlohmann::json *soc_info_json) {
+  MS_EXCEPTION_IF_NULL(soc_info_json);
+  std::list<int64_t> list;
+  (*soc_info_json)["coreNum"] = "";
+  (*soc_info_json)["coreType"] = "";
+  (*soc_info_json)["l1Fusion"] = "false";
+  (*soc_info_json)["l2Fusion"] = "false";
+  (*soc_info_json)["l2Mode"] = "2";
+  (*soc_info_json)["op_debug_level"] = "";
+  (*soc_info_json)["op_impl_mode"] = "";
+  (*soc_info_json)["op_impl_mode_list"] = list;
+}
 
 void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &info) {
   char real_path[PATH_MAX] = {0};

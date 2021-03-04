@@ -17,6 +17,7 @@
 #include "backend/kernel_compiler/tbe/tbe_kernel_build.h"
 #include <memory>
 #include <map>
+#include <list>
 #include <algorithm>
 #include "base/core_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
@@ -93,9 +94,13 @@ constexpr auto kJPattern = "pattern";
 constexpr auto kJPyModulePath = "py_module_path";
 constexpr auto kJAttrDesc = "attr_desc";
 constexpr auto kJSocVersion = "socVersion";
+constexpr auto kAutoTilingMode = "autoTilingMode";
 constexpr auto kSOC_VERSION = "SOC_VERSION";
 constexpr auto kJIsDynamicShape = "is_dynamic_shape";
 constexpr auto kJDynamicIndex = "dynamic_index";
+constexpr auto kJSocInfo = "SocInfo";
+
+const auto kPyPath = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe";
 
 bool IsNeedChangeDefaultFormat(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
@@ -114,11 +119,14 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   auto op_info_ptr = mindspore::kernel::tbe::TbeDynamicShapeUtil::FindOp(op_name, anf_node);
   MS_EXCEPTION_IF_NULL(op_info_ptr);
   (*kernel_json)[kPlatform] = kPlatTBE;
-  (*kernel_json)[kGenModel] = kSingle;
   (*kernel_json)[kImplPath] = op_info_ptr->impl_path();
   nlohmann::json op_info_json;
   op_info_json[kJIsDynamicShape] = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node->cast<CNodePtr>());
-  op_info_json[kJName] = op_info_ptr->kernel_name();
+  auto func_name = op_info_ptr->kernel_name();
+  op_info_json["graph_id"] = AnfAlgo::GetGraphId(anf_node.get());
+  op_info_json[kJName] = func_name;
+  op_info_json[kJModuleName] = std::string("impl.") + func_name;
+  op_info_json[kJPyModulePath] = kPyPath;
   // generate inputs json
   nlohmann::json inputs_json;
   if (!GenTbeInputsJson(anf_node, op_info_ptr, &inputs_json)) {
@@ -148,11 +156,33 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
+  op_info_json[kJFullName] = anf_node->fullname_with_scope();
   json_name_ = op_name + "_" + std::to_string(hash_id) + "_" + std::to_string(device_id);
   json_info_ = json_str;
+  op_info_json["Type"] = op_name;
   op_info_json[kJKernelName] = json_name_;
+  op_info_json[kGenModel] = kSingle;
+  op_info_json[kJFullName] = anf_node->fullname_with_scope();
+
+  // create attr_desc
+  nlohmann::json attr_desc;
+  for (const auto &attr : attrs_json) {
+    if (attr[kJName] != "isRef" && attr[kJValid] == true) {
+      attr_desc.push_back(attr[kJValue]);
+    }
+  }
+  if (!attr_desc.empty()) {
+    op_info_json[kJAttrDesc] = attr_desc;
+  }
+
+  // generate soc info json
+  nlohmann::json soc_info_json;
+  TbeUtils::GenSocInfo(&soc_info_json);
+  soc_info_json[kAutoTilingMode] = tune_mode;
+  soc_info_json[kJSocVersion] = soc_version;
+  (*kernel_json)[kJSocInfo] = soc_info_json;
   (*kernel_json)[kJOpInfo] = op_info_json;
-  (*kernel_json)[kJFullName] = anf_node->fullname_with_scope();
 
   MS_LOG(DEBUG) << "Operate type:" << creater_type_ << ", full scope name is :" << anf_node->fullname_with_scope()
                 << ", json info name is : " << json_name_ << ", kernel json:" << kernel_json->dump();
@@ -452,14 +482,22 @@ bool TbeKernelJsonCreator::GenTbeAttrJson(const std::shared_ptr<AnfNode> &anf_no
       ParseAttrValue(type, value, &attr_obj);
       attr_obj[kJValid] = true;
     } else {
-      if (op_info->impl_path().empty()) {
-        attr_obj[kJValid] = false;
+      auto default_value = attr_ptr->default_value();
+      if (!default_value.empty()) {
+        std::string type = attr_ptr->type();
+        ParseAttrDefaultValue(type, default_value, &attr_obj);
+        attr_obj[kJValid] = true;
       } else {
-        if (attr_ptr->param_type() == kParamRequred && creater_type_ == SINGLE_BUILD) {
-          MS_LOG(EXCEPTION) << "Op name: " << op_info->op_name() << " attr: " << attr_name
-                            << " is required, but not set.";
-        } else {
+        MS_LOG(INFO) << "op " << op_name << "'s attr \"" << attr_name << "\" should have a default value.";
+        if (op_info->impl_path().empty()) {
           attr_obj[kJValid] = false;
+        } else {
+          if (attr_ptr->param_type() == kParamRequred && creater_type_ == SINGLE_BUILD) {
+            MS_LOG(EXCEPTION) << "Op name: " << op_info->op_name() << " attr: " << attr_name
+                              << " is required, but not set.";
+          } else {
+            attr_obj[kJValid] = false;
+          }
         }
       }
     }
@@ -562,6 +600,26 @@ void TbeKernelJsonCreator::ParseAttrValue(const std::string &type, const mindspo
   } else if (type == kVTypeListListInt) {
     auto attr_value = GetValue<std::vector<std::vector<int64_t>>>(value);
     (*attr_obj)[kJValue] = attr_value;
+  } else {
+    MS_LOG(EXCEPTION) << "Type: " << type << "not support";
+  }
+}
+
+void TbeKernelJsonCreator::ParseAttrDefaultValue(const std::string &type, const std::string &value,
+                                                 nlohmann::json *attr_obj) {
+  MS_EXCEPTION_IF_NULL(attr_obj);
+  if (type == kVTypeInt) {
+    (*attr_obj)[kJValue] = std::stoi(value);
+  } else if (type == kVTypeInt64) {
+    (*attr_obj)[kJValue] = std::stoll(value);
+  } else if (type == kVTypeStr) {
+    (*attr_obj)[kJValue] = value;
+  } else if (type == kVTypeBool) {
+    bool attr_value;
+    std::istringstream(value) >> std::boolalpha >> attr_value;
+    (*attr_obj)[kJValue] = attr_value;
+  } else if (type == kVTypeFloat) {
+    (*attr_obj)[kJValue] = std::stof(value);
   } else {
     MS_LOG(EXCEPTION) << "Type: " << type << "not support";
   }
@@ -792,7 +850,7 @@ void TbeKernelBuild::GenFusionComputeCommonJson(const mindspore::CNodePtr &cnode
   (*compute_op_str)[kJModuleName] = std::string("impl.") + func_name;
   (*compute_op_str)[kJName] = cnode->fullname_with_scope();
   (*compute_op_str)[kJPattern] = GetNodeFusionType(cnode);
-  (*compute_op_str)[kJPyModulePath] = "/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe";
+  (*compute_op_str)[kJPyModulePath] = kPyPath;
   (void)(*fusion_kernel_name).append("_");
   (void)(*fusion_kernel_name).append(func_name);
   // attr_desc
@@ -899,12 +957,14 @@ void TbeKernelBuild::GenFusionOutputDescJson(const std::shared_ptr<mindspore::An
 }
 
 void TbeKernelBuild::GenReusedOutputDesc(const std::shared_ptr<mindspore::AnfNode> &anf_node, size_t index,
-                                         size_t output_index, nlohmann::json *output_desc) {
+                                         size_t output_index, nlohmann::json *output_desc, const size_t out_size) {
   std::string output_desc_name = anf_node->fullname_with_scope() + "_" + std::to_string(index);
   (*output_desc)[kJName] = output_desc_name;
   (*output_desc)[kJOutputIndex] = output_index;
   std::vector<size_t> shape;
   (*output_desc)[kJShape] = shape;
+  auto type_id = AnfAlgo::GetOutputDeviceDataType(anf_node, out_size - 1);
+  (*output_desc)[kJDataType] = tbe::TypeIdToString(type_id);
 }
 
 bool TbeKernelBuild::GetSpecInputLayers(const std::string &op_name,
@@ -1176,7 +1236,7 @@ bool TbeKernelBuild::GenFusionComputeOutputJson(const mindspore::CNodePtr &cnode
     for (size_t j = output_size; j < desc_output_index.size(); ++j) {
       MS_LOG(INFO) << "Fusion index: " << j << ", desc_output_index: " << desc_output_index[j];
       nlohmann::json output_desc;
-      GenReusedOutputDesc(cnode, j, desc_output_index[j], &output_desc);
+      GenReusedOutputDesc(cnode, j, desc_output_index[j], &output_desc, output_size);
       output_desc_list->emplace_back(output_desc);
     }
   } else {

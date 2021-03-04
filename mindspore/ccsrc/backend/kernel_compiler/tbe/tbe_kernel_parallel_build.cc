@@ -37,6 +37,20 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
   set<std::string> processed_kernel;
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
+  std::string offline_tune = common::GetEnv("ENABLE_TUNE_DUMP");
+  if (!offline_tune.empty()) {
+    for (size_t j = 0; j < offline_tune.length(); j++) {
+      offline_tune[j] = tolower(offline_tune[j]);
+    }
+    if (!(offline_tune == "true" || offline_tune == "false")) {
+      MS_LOG(ERROR) << "The value of ENABLE_TUNE_DUMP must be 'true' or 'false'";
+      return false;
+    }
+  }
+
   for (const auto &anf_node : anf_nodes) {
     // gen kernel json
     if (AnfAlgo::GetKernelMod(anf_node) != nullptr) {
@@ -56,7 +70,8 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     (void)TbeKernelBuild::GetIOSize(kernel_json, &input_size_list, &output_size_list, anf_node);
     // search cache
     const std::string &json_name = creator.json_name();
-    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get())) {
+    if (build_manger->SearchInCache(json_name, processor, input_size_list, output_size_list, anf_node.get()) &&
+        ((!offline_tune.empty() && offline_tune != "true") || tune_mode == "NO_TUNE")) {
       continue;
     }
     // same op not need build, but need wait build finish to set kernel mode
@@ -227,7 +242,8 @@ KernelModPtr ParallelBuildManager::GenKernelMod(const string &json_name, const s
 }
 
 int ParallelBuildManager::StartCompileOp(const nlohmann::json &kernel_json) {
-  return AscendKernelBuildClient::Instance().TbeStart(kernel_json.dump());
+  auto tune_mode = kernel_json["SocInfo"]["autoTilingMode"];
+  return AscendKernelBuildClient::Instance().TbeStart(kernel_json.dump(), tune_mode);
 }
 
 bool ParallelBuildManager::WaitOne(int *task_id, std::string *task_result, std::string *pre_build_result) {
