@@ -227,6 +227,8 @@ constexpr auto kResetAfter = "reset_after";
 constexpr auto kCoeff = "coeff";
 constexpr auto kIsDepthWise = "is_depth_wise";
 constexpr auto kIsDepthWiseNative = "is_depth_wise_native";
+constexpr auto kZoneoutCell = "zoneout_cell";
+constexpr auto kZoneoutHidden = "zoneout_hidden";
 
 const std::set<TypeId> common_valid_types = {
   kNumberTypeInt8,   kNumberTypeInt16,  kNumberTypeInt32,   kNumberTypeInt64,   kNumberTypeUInt8,  kNumberTypeUInt16,
