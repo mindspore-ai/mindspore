@@ -245,6 +245,9 @@ std::vector<MSTensor> GPUGraphImpl::GetOutputs() {
     void *data = nullptr;
     size_t data_size = tensor->Size();
     if (i < last_outputs_.size()) {
+      if (last_outputs_[i]->NeedSyncDeviceToHost()) {
+        last_outputs_[i]->data_sync(false);
+      }
       data = last_outputs_[i]->data_c();
       data_size = last_outputs_[i]->Size();
     }

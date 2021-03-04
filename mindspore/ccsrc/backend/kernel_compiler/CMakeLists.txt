@@ -84,11 +84,17 @@ if(ENABLE_GPU)
     list(REMOVE_ITEM GPU_SRC_LIST "gpu/nccl/nccl_collective_gpu_kernel.cc")
     list(REMOVE_ITEM GPU_SRC_LIST "gpu/nccl/nccl_send_gpu_kernel.cc")
     list(REMOVE_ITEM GPU_SRC_LIST "gpu/nccl/nccl_recv_gpu_kernel.cc")
+    list(REMOVE_ITEM GPU_SRC_LIST "gpu/trt/trt_kernel.cc")
 
     if(ENABLE_MPI)
         include(ExternalProject)
         file(GLOB_RECURSE GPU_NCCL_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "gpu/nccl/*.cc")
         list(APPEND GPU_SRC_LIST ${GPU_NCCL_LIST})
+    endif()
+
+    if(ENABLE_GPU_INFER)
+        file(GLOB_RECURSE GPU_TRT_KERNEL_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "gpu/trt/*.cc")
+        list(APPEND GPU_SRC_LIST ${GPU_TRT_KERNEL_LIST})
     endif()
 
     # add_library(_mindspore_kernel_cuda_obj OBJECT ${CUDA_SRC_LIST})
