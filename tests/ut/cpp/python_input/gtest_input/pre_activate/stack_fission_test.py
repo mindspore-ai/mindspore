@@ -18,7 +18,7 @@ from mindspore.ops import Primitive
 
 stack = P.Stack()
 concat = P.Concat()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 
 
 class FnDict:

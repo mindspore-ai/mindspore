@@ -23,7 +23,7 @@ from mindspore.ops import _constants as Constants
 AssignSub = P.AssignSub()
 Mul = P.Mul()
 Sub = P.Sub()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 update_state = Primitive('UpdateState')
 U = monad.U

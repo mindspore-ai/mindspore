@@ -325,7 +325,7 @@ constexpr char UNIQUE[] = "Unique";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";
-constexpr char MAKE_TUPLE[] = "make_tuple";
+constexpr char MAKE_TUPLE[] = "MakeTuple";
 constexpr char MAKE_LIST[] = "make_list";
 constexpr char MAKE_DICT[] = "make_dict";
 constexpr char MAKE_SLICE[] = "make_slice";

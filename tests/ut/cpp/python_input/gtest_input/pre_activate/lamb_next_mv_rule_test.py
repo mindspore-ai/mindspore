@@ -21,7 +21,7 @@ Mul = P.Mul()
 RealDiv = P.RealDiv()
 Rsqrt = P.Rsqrt()
 Sqrt = P.Sqrt()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 LambNextMV = Primitive('LambNextMV')
 

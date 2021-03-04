@@ -48,7 +48,7 @@ __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 
            'exp', 'log', 'sin', 'cos', 'tan']
 
 
-def make_tuple(*elts):  # pragma: no cover
+def MakeTuple(*elts):  # pragma: no cover
     """Tuple builder."""
     raise RuntimeError('This operation is not meant to be called directly.')
 

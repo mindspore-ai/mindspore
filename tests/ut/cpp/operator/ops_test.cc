@@ -173,7 +173,7 @@ TEST_F(TestOps, HasTypeTest) {
 
 // Data structures
 TEST_F(TestOps, MakeTupleTest) {
-  auto prim = std::make_shared<Primitive>("make_tuple");
+  auto prim = std::make_shared<Primitive>("MakeTuple");
   ASSERT_EQ(prim->name(), kPrimMakeTuple->name());
 }
 

@@ -176,7 +176,7 @@ class PrimLib:
         'ReduceSum': Prim(REDUCE),
         'ReduceMax': Prim(REDUCE),
         'ReduceMin': Prim(REDUCE),
-        'make_tuple': Prim(CONTROL),
+        'MakeTuple': Prim(CONTROL),
         'ControlDepend': Prim(CONTROL),
         'Assign': Prim(ELEMWISE),
         'Tanh': Prim(ELEMWISE),

@@ -579,7 +579,7 @@ def test_elim_sum_shape_one(tag):
 def test_tuple_getitem(tag):
     """ test_tuple_getitem """
     fns = FnDict()
-    make_tuple = Primitive('make_tuple')
+    make_tuple = Primitive('MakeTuple')
 
     @fns
     def make_get_0(x, y):
@@ -603,7 +603,7 @@ def test_tuple_getitem(tag):
 def test_tuple_setitem(tag):
     """ test_tuple_setitem """
     fns = FnDict()
-    make_tuple = Primitive('make_tuple')
+    make_tuple = Primitive('MakeTuple')
     tuple_setitem = Primitive('tuple_setitem')
 
     @fns
@@ -924,7 +924,7 @@ def test_convert_switch_ops(tag):
     add = Primitive(Constants.kScalarAdd)
     neg = Primitive('Neg')
     tuple_getitem = Primitive(Constants.kTupleGetItem)
-    make_tuple = Primitive('make_tuple')
+    make_tuple = Primitive('MakeTuple')
 
     @fns
     def before(cond, x, y):
@@ -1032,7 +1032,7 @@ def test_reducesum_one(tag):
 def test_print_tuple_wrapper(tag):
     fns = FnDict()
     print_ = Primitive('Print')
-    make_tuple = Primitive('make_tuple')
+    make_tuple = Primitive('MakeTuple')
 
     @fns
     def before1(x, y):

@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameLRN = "Lrn";
+constexpr auto kNameLRN = "LRN";
 class LRN : public PrimitiveC {
  public:
   LRN() : PrimitiveC(kNameLRN) { InitIOName({"x"}, {"y"}); }

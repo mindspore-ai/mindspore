@@ -2153,7 +2153,7 @@ class IrParser {
 
     std::vector<ValuePtr> elems;
     std::vector<AnfNodePtr> nodes;
-    nodes.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>("make_tuple")));
+    nodes.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>("MakeTuple")));
     ValuePtr elem = nullptr;
     AnfNodePtr node = nullptr;
     bool node_is_valid = false;

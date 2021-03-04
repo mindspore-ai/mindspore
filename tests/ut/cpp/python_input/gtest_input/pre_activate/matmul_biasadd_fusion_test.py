@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 
 MatMul = P.MatMul()
 BiasAdd = P.BiasAdd()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 
 
 class FnDict:

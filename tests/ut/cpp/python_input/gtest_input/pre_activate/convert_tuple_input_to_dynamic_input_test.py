@@ -18,7 +18,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 concat = P.Concat()
 add = P.Add()
 

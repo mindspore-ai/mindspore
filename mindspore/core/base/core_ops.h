@@ -264,7 +264,7 @@ inline const PrimitivePtr kPrimMomentum = std::make_shared<Primitive>("Momentum"
 inline const PrimitivePtr kPrimApplyMomentum = std::make_shared<Primitive>("ApplyMomentum");
 inline const PrimitivePtr kPrimApplyFtrl = std::make_shared<Primitive>("ApplyFtrl");
 inline const PrimitivePtr kPrimLayerNorm = std::make_shared<Primitive>("LayerNorm");
-inline const PrimitivePtr kPrimLrn = std::make_shared<Primitive>("Lrn");
+inline const PrimitivePtr kPrimLrn = std::make_shared<Primitive>("LRN");
 inline const PrimitivePtr kPrimLayerNormGrad = std::make_shared<Primitive>("LayerNormGrad");
 inline const PrimitivePtr kPrimLayerNormXBackprop = std::make_shared<Primitive>("LayerNormXBackprop");
 inline const PrimitivePtr kPrimLayerNormBetaGammaBackprop = std::make_shared<Primitive>("LayerNormBetaGammaBackprop");
@@ -410,7 +410,7 @@ inline const PrimitivePtr kPrimAssignSub = std::make_shared<Primitive>("AssignSu
 inline const PrimitivePtr kPrimSelect = std::make_shared<Primitive>("Select");
 inline const PrimitivePtr kPrimCall = std::make_shared<Primitive>("call");
 
-inline const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>("make_tuple");
+inline const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>("MakeTuple");
 inline const PrimitivePtr kPrimMakeSlice = std::make_shared<Primitive>("make_slice");
 inline const PrimitivePtr kPrimTupleGetItem = std::make_shared<Primitive>(kTupleGetItem);
 inline const PrimitivePtr kPrimArrayGetItem = std::make_shared<Primitive>("array_getitem");

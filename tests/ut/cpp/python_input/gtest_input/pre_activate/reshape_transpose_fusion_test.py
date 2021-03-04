@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 Transpose = P.Transpose()
 Reshape = P.Reshape()
 ConfusionTransposeD = Primitive('ConfusionTransposeD')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 
 
 class FnDict:

@@ -17,7 +17,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 reduce_min = P.ReduceMin(keep_dims=False)
 reduce_min1 = Primitive('ReduceMin')

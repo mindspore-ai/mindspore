@@ -20,7 +20,7 @@ relu = P.ReLU()
 relu_grad = Primitive('ReluGrad')
 relu_v2 = Primitive('ReLUV2')
 relu_grad_v2 = Primitive('ReluGradV2')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 

@@ -24,7 +24,7 @@ real_div = P.RealDiv()
 mul = P.Mul()
 sub = P.Sub()
 lamb_update_with_lr = Primitive('LambUpdateWithLR')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 

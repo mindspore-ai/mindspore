@@ -625,7 +625,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
     name = GetCNodeTargetFuncName(c);
   }
 
-  if (name == "make_tuple") {
+  if (name == "MakeTuple") {
     for (unsigned int i = 1; i < c->inputs().size(); i++) {
       TraceOutput(c->input(i));
     }

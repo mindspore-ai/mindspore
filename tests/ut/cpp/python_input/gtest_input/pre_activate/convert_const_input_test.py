@@ -19,7 +19,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 reshape = P.Reshape()
 backend_reshape = Primitive('Reshape')
 cast = P.Cast()

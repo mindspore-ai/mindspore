@@ -17,7 +17,7 @@ from mindspore.ops.operations import _grad_ops as G
 
 stridedslicegrad = G.StridedSliceGrad()
 backend_stridedslicegrad = Primitive('StridedSliceGrad')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 
 
 class FnDict:

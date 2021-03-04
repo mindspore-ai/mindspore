@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 depend = P.Depend()
 TransData = Primitive('TransData')
 add = P.Add()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 
 
 class FnDict:
