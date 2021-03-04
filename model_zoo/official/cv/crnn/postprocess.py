@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -37,7 +37,7 @@ def read_annotation(ann_file):
 
     return ann
 
-def read_IC13_annotation(ann_file):
+def read_ic13_annotation(ann_file):
     file = open(ann_file)
 
     ann = {}
@@ -60,14 +60,17 @@ def read_svt_annotation(ann_file):
     return ann
 
 def get_eval_result(result_path, ann_file):
+    """
+    Calculate accuracy according to the annotation file and result file.
+    """
     metrics = CRNNAccuracy(config)
 
     if args.dataset == "ic03" or args.dataset == "iiit5k":
-        ann = read_annotation(args.ann_file)
+        ann = read_annotation(ann_file)
     elif args.dataset == "ic13":
-        ann = read_IC13_annotation(args.ann_file)
+        ann = read_ic13_annotation(ann_file)
     elif args.dataset == "svt":
-        ann = read_svt_annotation(args.ann_file)
+        ann = read_svt_annotation(ann_file)
 
     for img_name, label in ann.items():
         result_file = os.path.join(result_path, img_name[:-4] + "_0.bin")

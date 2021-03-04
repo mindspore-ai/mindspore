@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -29,11 +29,11 @@ parser.add_argument("--ann_file", type=str, required=True, help="ann file.")
 parser.add_argument("--img_path", type=str, required=True, help="image file path.")
 args = parser.parse_args()
 
-def get_imgSize(file_name):
+def get_img_size(file_name):
     img = Image.open(file_name)
     return img.size
 
-def get_resizeRatio(img_size):
+def get_resize_ratio(img_size):
     org_width, org_height = img_size
     resize_ratio = dst_width / org_width
     if resize_ratio > dst_height / org_height:
@@ -42,6 +42,7 @@ def get_resizeRatio(img_size):
     return resize_ratio
 
 def get_eval_result(ann_file, img_path):
+    """ Get metrics result according to the annotation file and result file"""
     max_num = 128
     result_path = "./result_Files/"
     outputs = []
@@ -52,8 +53,8 @@ def get_eval_result(ann_file, img_path):
     for img_id in img_ids:
         file_id = str(img_id).zfill(12)
         file = img_path + "/" + file_id + ".jpg"
-        img_size = get_imgSize(file)
-        resize_ratio = get_resizeRatio(img_size)
+        img_size = get_img_size(file)
+        resize_ratio = get_resize_ratio(img_size)
 
         img_metas = np.array([img_size[1], img_size[0]] + [resize_ratio, resize_ratio])
 

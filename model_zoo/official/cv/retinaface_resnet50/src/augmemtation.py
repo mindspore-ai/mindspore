@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -170,7 +170,7 @@ def get_interp_method(interp, sizes=()):
         Neighbors method. (used by default).
         4: Lanczos interpolation over 8x8 pixel neighborhood.
         9: Cubic for enlarge, area for shrink, bilinear for others
-        10: Random select from interpolation method metioned above.
+        10: Random select from interpolation method mentioned above.
         Note:
         When shrinking an image, it will generally look best with AREA-based
         interpolation, whereas, when enlarging an image, it will generally look best

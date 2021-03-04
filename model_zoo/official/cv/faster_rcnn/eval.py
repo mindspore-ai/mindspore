@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -41,7 +41,7 @@ args_opt = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
 
-def FasterRcnn_eval(dataset_path, ckpt_path, ann_file):
+def fasterrcnn_eval(dataset_path, ckpt_path, ann_file):
     """FasterRcnn evaluation."""
     ds = create_fasterrcnn_dataset(dataset_path, batch_size=config.test_batch_size, is_training=False)
     net = Faster_Rcnn_Resnet50(config)
@@ -132,4 +132,4 @@ if __name__ == '__main__':
 
     print("CHECKING MINDRECORD FILES DONE!")
     print("Start Eval!")
-    FasterRcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)
+    fasterrcnn_eval(mindrecord_file, args_opt.checkpoint_path, args_opt.ann_file)

@@ -6,7 +6,7 @@
 #
 # http://www.apache.org/licenses/LICENSE-2.0
 #
-# less required by applicable law or agreed to in writing, software
+# Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
@@ -95,8 +95,8 @@ class DetectionEngine:
             intersect_area = intersect_w * intersect_h
             ovr = intersect_area / (areas[i] + areas[order[1:]] - intersect_area)
 
-            indexs = np.where(ovr <= threshold)[0]
-            order = order[indexs + 1]
+            indices = np.where(ovr <= threshold)[0]
+            order = order[indices + 1]
 
         return reserved_boxes
 
