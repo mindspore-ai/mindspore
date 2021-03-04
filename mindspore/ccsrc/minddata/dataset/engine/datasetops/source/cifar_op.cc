@@ -470,7 +470,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
 
       std::ifstream in(file, std::ios::binary);
 
-      CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), file + " can not be opened.");
+      CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open cifar10 file: " + file);
       *count = *count + num_cifar10_records;
     }
     return Status::OK();
@@ -492,7 +492,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
         num_cifar100_records += 50000;
       }
       std::ifstream in(file, std::ios::binary);
-      CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open file: " + file);
+      CHECK_FAIL_RETURN_UNEXPECTED(in.is_open(), "Invalid file, failed to open cifar100 file: " + file);
     }
     *count = num_cifar100_records;
     return Status::OK();
