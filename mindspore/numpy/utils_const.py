@@ -165,19 +165,18 @@ def _check_axis_valid(axes, ndim):
     Checks axes are valid given ndim, and returns axes that can be passed
     to the built-in operator (non-negative, int or tuple)
     """
-    if isinstance(axes, int):
-        _check_axis_in_range(axes, ndim)
-        return (axes % ndim,)
+    if axes is None:
+        axes = F.make_range(ndim)
+        return axes
     if isinstance(axes, (tuple, list)):
         for axis in axes:
             _check_axis_in_range(axis, ndim)
         axes = tuple(map(lambda x: x % ndim, axes))
-        if all(axes.count(el) <= 1 for el in axes):
-            return axes
-    if axes is None:
-        axes = F.make_range(ndim)
+        if any(axes.count(el) > 1 for el in axes):
+            raise ValueError('duplicate value in "axis"')
         return axes
-    raise ValueError('duplicate value in "axis"')
+    _check_axis_in_range(axes, ndim)
+    return (axes % ndim,)
 
 
 @constexpr
