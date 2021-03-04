@@ -52,21 +52,25 @@ cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
 avg=`expr $cpus \/ $RANK_SIZE`
 gap=`expr $avg \- 1`
 
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+src_dir=$script_dir/..
+
+start_idx=0
 for((i=0;i<RANK_SIZE;i++))
 do
     start=`expr $i \* $avg`
     end=`expr $start \+ $gap`
     cmdopt=$start"-"$end
 
-    export DEVICE_ID=$i
+    export DEVICE_ID=`expr $i \+ $start_idx`
     export RANK_ID=$i
-    rm -rf ./train_parallel$i
-    mkdir ./train_parallel$i
-    cp *.py ./train_parallel$i
-    cp -r src ./train_parallel$i
-    cd ./train_parallel$i || exit
+    rm -rf ./train_parallel$DEVICE_ID
+    mkdir ./train_parallel$DEVICE_ID
+    cp $src_dir/*.py ./train_parallel$DEVICE_ID
+    cp -r $src_dir/src ./train_parallel$DEVICE_ID
+    cd ./train_parallel$DEVICE_ID || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
     env > env.log
-    taskset -c $cmdopt python train.py --data_path=$2 --device_target="Ascend" --device_id=$i --is_distributed=1 --dataset=$dataset_type &> log &
+    taskset -c $cmdopt python train.py --data_path=$2 --device_target="Ascend" --device_id=$DEVICE_ID --is_distributed=1 --dataset=$dataset_type &> log &
     cd ..
 done
