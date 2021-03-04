@@ -23,7 +23,7 @@ using mindspore::dataset::InterpolationMode;
 using mindspore::dataset::Tensor;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {
-  protected:
+ protected:
 };
 
 TEST_F(MindDataTestPipeline, TestAffineAPI) {
@@ -94,4 +94,3 @@ TEST_F(MindDataTestPipeline, TestAffineAPIFail) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
-
