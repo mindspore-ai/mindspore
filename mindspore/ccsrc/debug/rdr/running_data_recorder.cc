@@ -131,8 +131,10 @@ bool RecordMemAddressInfo(const SubModuleId module, const std::string &tag, cons
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
+  std::string directory = mindspore::EnvConfigParser::GetInstance().rdr_path();
   MemAddressRecorder::Instance().SetModule(submodule_name);
-  MemAddressRecorder::Instance().SetTag(tag);
+  MemAddressRecorder::Instance().SetFilename(tag);  // set filename using tag
+  MemAddressRecorder::Instance().SetDirectory(directory);
   MemAddressRecorder::Instance().SaveMemInfo(op_name, mem_info);
   return true;
 }
