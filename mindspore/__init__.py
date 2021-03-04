@@ -15,7 +15,7 @@
 """.. MindSpore package."""
 
 from ._check_version import check_version_and_env_config
-from . import common, train
+from . import common, train, log
 from .common import *
 from .ops import _op_impl
 from .train import *
