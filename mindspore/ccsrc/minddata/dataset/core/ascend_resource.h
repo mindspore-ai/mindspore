@@ -48,6 +48,10 @@ class AscendResource : public DeviceResource {
 
   Status DeviceDataRelease() override;
 
+  void *GetContext() override;
+
+  void *GetStream() override;
+
  private:
   std::shared_ptr<MDAclProcess> processor_;
   std::shared_ptr<ResourceManager> ascend_resource_;

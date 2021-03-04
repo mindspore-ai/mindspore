@@ -54,5 +54,17 @@ std::shared_ptr<void> DeviceResource::GetInstance() {
   return nullptr;
 }
 
+void *DeviceResource::GetContext() {
+  MS_LOG(ERROR)
+    << "Is this a device which contains context resource? If yes, please implement GetContext() in the derived class";
+  return nullptr;
+}
+
+void *DeviceResource::GetStream() {
+  MS_LOG(ERROR)
+    << "Is this a device which contains stream resource? If yes, please implement GetContext() in the derived class";
+  return nullptr;
+}
+
 }  // namespace dataset
 }  // namespace mindspore

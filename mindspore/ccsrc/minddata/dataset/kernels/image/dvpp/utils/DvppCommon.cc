@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020.Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (c) 2020-2021.Huawei Technologies Co., Ltd. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,7 +25,8 @@ static auto g_picDescDeleter = [](acldvppPicDesc *picDesc) { acldvppDestroyPicDe
 static auto g_roiConfigDeleter = [](acldvppRoiConfig *p) { acldvppDestroyRoiConfig(p); };
 static auto g_jpegeConfigDeleter = [](acldvppJpegeConfig *p) { acldvppDestroyJpegeConfig(p); };
 
-DvppCommon::DvppCommon(aclrtStream dvppStream) : dvppStream_(dvppStream) {}
+DvppCommon::DvppCommon(aclrtContext dvppContext, aclrtStream dvppStream)
+    : dvppContext_(dvppContext), dvppStream_(dvppStream) {}
 
 DvppCommon::DvppCommon(const VdecConfig &vdecConfig) : vdecConfig_(vdecConfig) {}
 
@@ -37,10 +38,11 @@ DvppCommon::DvppCommon(const VdecConfig &vdecConfig) : vdecConfig_(vdecConfig) {
 APP_ERROR DvppCommon::Init(void) {
   dvppChannelDesc_ = acldvppCreateChannelDesc();
   if (dvppChannelDesc_ == nullptr) {
-    return -1;
+    return APP_ERR_COMM_INVALID_POINTER;
   }
+
   APP_ERROR ret = acldvppCreateChannel(dvppChannelDesc_);
-  if (ret != 0) {
+  if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to create dvpp channel: " << GetAppErrCodeInfo(ret) << ".";
     acldvppDestroyChannelDesc(dvppChannelDesc_);
     dvppChannelDesc_ = nullptr;
@@ -117,7 +119,14 @@ APP_ERROR DvppCommon::DeInit(void) {
     return DestroyResource();
   }
 
-  APP_ERROR ret = aclrtSynchronizeStream(dvppStream_);  // APP_ERROR ret
+  // Obtain the dvppContext_ allocated by AscendResource which contains the dvppStream_, they mush bind each other
+  APP_ERROR ret = aclrtSetCurrentContext(dvppContext_);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
+    return ret;
+  }
+
+  ret = aclrtSynchronizeStream(dvppStream_);  // APP_ERROR ret
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to synchronize stream, ret = " << ret << ".";
     return ret;
@@ -1292,13 +1301,18 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo, acldvppPixelFormat 
     return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
   }
 
+  APP_ERROR ret = aclrtSetCurrentContext(dvppContext_);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
+    return ret;
+  }
+
   int32_t components;
   // Member variable of inputImage_, uint8_t *data will be on device
   inputImage_ = std::make_shared<DvppDataInfo>();
   inputImage_->format = format;
-  APP_ERROR ret =
-    // GetJpegImageInfo(imageInfo.data.get(), imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
-    GetJpegImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+  ret = GetJpegImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
     return ret;
@@ -1345,12 +1359,18 @@ APP_ERROR DvppCommon::SinkImageH2D(const RawData &imageInfo) {
     return APP_ERR_DVPP_OBJ_FUNC_MISMATCH;
   }
 
+  APP_ERROR ret = aclrtSetCurrentContext(dvppContext_);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to get ACL context, ret = " << ret;
+    return ret;
+  }
+
   int32_t components;
   inputImage_ = std::make_shared<DvppDataInfo>();
   acldvppPixelFormat format = PIXEL_FORMAT_RGB_888;
   inputImage_->format = format;
-  APP_ERROR ret =
-    GetPngImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
+
+  ret = GetPngImageInfo(imageInfo.data, imageInfo.lenOfByte, inputImage_->width, inputImage_->height, components);
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to get input image info, ret = " << ret << ".";
     return ret;

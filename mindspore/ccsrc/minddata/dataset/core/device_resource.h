@@ -44,6 +44,10 @@ class DeviceResource {
   virtual std::shared_ptr<void> GetInstance();
 
   virtual Status DeviceDataRelease();
+
+  virtual void *GetContext();
+
+  virtual void *GetStream();
 };
 
 }  // namespace dataset
