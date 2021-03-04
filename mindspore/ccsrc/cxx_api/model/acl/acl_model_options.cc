@@ -43,6 +43,7 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
 
   precision_mode = ModelContext::GetPrecisionMode(context);
   op_select_impl_mode = ModelContext::GetOpSelectImplMode(context);
+  fusion_switch_cfg_path = ModelContext::GetFusionSwitchConfigPath(context);
 }
 
 std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> AclModelOptions::GenAclOptions()
@@ -50,7 +51,7 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
   const std::map<std::string const *, std::string> init_options_map = {
     {&op_select_impl_mode, ge::ir_option::OP_SELECT_IMPL_MODE},
     {&soc_version, ge::ir_option::SOC_VERSION},
-  };
+    {&fusion_switch_cfg_path, ge::ir_option::FUSION_SWITCH_FILE}};
 
   const std::map<std::string const *, std::string> build_options_map = {
     {&insert_op_cfg_path, ge::ir_option::INSERT_OP_FILE}, {&input_format, ge::ir_option::INPUT_FORMAT},

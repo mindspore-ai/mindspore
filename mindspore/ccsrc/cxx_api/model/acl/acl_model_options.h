@@ -34,6 +34,7 @@ struct AclModelOptions {
   std::string output_type;
   std::string precision_mode;
   std::string op_select_impl_mode;
+  std::string fusion_switch_cfg_path;
   std::string soc_version = "Ascend310";
 
   explicit AclModelOptions(const std::shared_ptr<Context> &context);

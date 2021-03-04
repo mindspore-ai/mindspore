@@ -90,7 +90,7 @@ Status AclGraphImpl::InitEnv() {
     return kSuccess;
   }
 
-  acl_env_ = AclEnvGuard::GetAclEnv("");
+  acl_env_ = AclEnvGuard::GetAclEnv(GlobalContext::GetGlobalDumpConfigPath());
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Acl init failed.";
     return kMCDeviceError;

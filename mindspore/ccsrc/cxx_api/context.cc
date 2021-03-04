@@ -21,6 +21,7 @@
 
 constexpr auto kGlobalContextDeviceTarget = "mindspore.ascend.globalcontext.device_target";
 constexpr auto kGlobalContextDeviceID = "mindspore.ascend.globalcontext.device_id";
+constexpr auto kGlobalContextDumpCfgPath = "mindspore.ascend.globalcontext.dump_config_file_path";
 constexpr auto kModelOptionInsertOpCfgPath = "mindspore.option.insert_op_config_file_path";  // aipp config file
 constexpr auto kModelOptionInputFormat = "mindspore.option.input_format";                    // nchw or nhwc
 constexpr auto kModelOptionInputShape = "mindspore.option.input_shape";
@@ -29,6 +30,7 @@ constexpr auto kModelOptionOutputType = "mindspore.option.output_type";  // "FP3
 constexpr auto kModelOptionPrecisionMode = "mindspore.option.precision_mode";
 // "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
 constexpr auto kModelOptionOpSelectImplMode = "mindspore.option.op_select_impl_mode";
+constexpr auto KModelOptionFusionSwitchCfgPath = "mindspore.option.fusion_switch_config_file_path";
 
 namespace mindspore {
 struct Context::Data {
@@ -91,6 +93,23 @@ uint32_t GlobalContext::GetGlobalDeviceID() {
   auto global_context = GetGlobalContext();
   MS_EXCEPTION_IF_NULL(global_context);
   return GetValue<uint32_t>(global_context, kGlobalContextDeviceID);
+}
+
+void GlobalContext::SetGlobalDumpConfigPath(const std::vector<char> &cfg_path) {
+  auto global_context = GetGlobalContext();
+  MS_EXCEPTION_IF_NULL(global_context);
+  if (global_context->data == nullptr) {
+    global_context->data = std::make_shared<Data>();
+    MS_EXCEPTION_IF_NULL(global_context->data);
+  }
+  global_context->data->params[kGlobalContextDumpCfgPath] = CharToString(cfg_path);
+}
+
+std::vector<char> GlobalContext::GetGlobalDumpConfigPathChar() {
+  auto global_context = GetGlobalContext();
+  MS_EXCEPTION_IF_NULL(global_context);
+  const std::string &ref = GetValue<std::string>(global_context, kGlobalContextDumpCfgPath);
+  return StringToChar(ref);
 }
 
 void ModelContext::SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path) {
@@ -180,6 +199,22 @@ void ModelContext::SetOpSelectImplMode(const std::shared_ptr<Context> &context,
 std::vector<char> ModelContext::GetOpSelectImplModeChar(const std::shared_ptr<Context> &context) {
   MS_EXCEPTION_IF_NULL(context);
   const std::string &ref = GetValue<std::string>(context, kModelOptionOpSelectImplMode);
+  return StringToChar(ref);
+}
+
+void ModelContext::SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context,
+                                             const std::vector<char> &cfg_path) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->data == nullptr) {
+    context->data = std::make_shared<Data>();
+    MS_EXCEPTION_IF_NULL(context->data);
+  }
+  context->data->params[KModelOptionFusionSwitchCfgPath] = CharToString(cfg_path);
+}
+
+std::vector<char> ModelContext::GetFusionSwitchConfigPathChar(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const std::string &ref = GetValue<std::string>(context, KModelOptionFusionSwitchCfgPath);
   return StringToChar(ref);
 }
 }  // namespace mindspore
