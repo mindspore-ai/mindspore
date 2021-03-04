@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimMaxPool->name(), {{0}, {0}}},
   {prim::kPrimMaxPoolGrad->name(), {{0, 1, 2}, {0}}},
   {kAvgPoolOpName, {{0}, {0}}},
-  {kAvgPoolGradGpuOpName, {{0, 1, 2}, {0}}},
+  {kAvgPoolGradOpName, {{0, 1, 2}, {0}}},
   {kFusedBatchNormEx, {{0}, {0}}},
   {kFusedBatchNormExWithActivation, {{0}, {0}}},
   {kFusedBatchNormExWithAddAndActivation, {{0, 5}, {0}}},

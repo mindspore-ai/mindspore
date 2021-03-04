@@ -35,6 +35,8 @@
 namespace mindspore {
 namespace opt {
 constexpr size_t kType32Len = 4;
+constexpr size_t kType64Len = 8;
+
 std::vector<int64_t> Convert2Int(const std::vector<size_t> &v) {
   std::vector<int64_t> result;
   (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
@@ -493,6 +495,46 @@ CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr 
   TypeId origin_type = AnfAlgo::GetOutputInferDataType(node, output_idx);
   AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
   return tuple_getitem;
+}
+
+ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &shape, bool to_tensor) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  ValuePtr shape_value = nullptr;
+  AbstractBasePtr abstract = nullptr;
+  if (to_tensor) {
+    // create Tensor
+    int64_t shape_dim = SizeToLong(shape.size());
+    std::vector<int64_t> shape_vec_shape = {shape_dim};
+    auto shape_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, shape_vec_shape);
+    MS_EXCEPTION_IF_NULL(shape_tensor);
+    auto data_ptr = shape_tensor->data_c();
+    MS_EXCEPTION_IF_NULL(data_ptr);
+    auto elem_num = shape.size() * kType64Len;
+    auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(shape_tensor->data().nbytes()), &shape[0], elem_num);
+    if (ret_code != 0) {
+      MS_LOG(EXCEPTION) << "Failed to copy data into Tensor.";
+    }
+    shape_value = shape_tensor;
+    abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
+  } else {
+    // create ValueTuple
+    std::vector<ValuePtr> dim_values{};
+    abstract::AbstractBasePtrList abs{};
+    for (const auto &dim : shape) {
+      dim_values.push_back(MakeValue(dim));
+      abs.push_back(std::make_shared<abstract::AbstractScalar>(dim));
+    }
+    shape_value = std::make_shared<ValueTuple>(dim_values);
+    abstract = std::make_shared<abstract::AbstractTuple>(abs);
+  }
+  MS_EXCEPTION_IF_NULL(shape_value);
+  MS_EXCEPTION_IF_NULL(abstract);
+  auto shape_value_node = kernel_graph->NewValueNode(abstract, shape_value);
+  MS_EXCEPTION_IF_NULL(shape_value_node);
+  kernel_graph->AddValueNodeToGraph(shape_value_node);
+  return shape_value_node;
 }
 
 void ConstInputToAttr(const CNodePtr &cnode, const std::unordered_set<size_t> &input_attrs) {

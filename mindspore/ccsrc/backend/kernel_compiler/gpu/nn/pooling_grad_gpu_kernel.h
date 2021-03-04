@@ -254,7 +254,7 @@ class PoolingGradGpuKernel : public GpuKernel {
   }
   void SetPoolingMode(const CNodePtr &kernel_node) {
     mode_ = AnfAlgo::GetCNodeName(kernel_node);
-    if (mode_ == "AvgPoolGradGpu") {
+    if (mode_ == "AvgPoolGrad") {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
       pad_value_ = 0.0;
     } else {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class AvgPoolingGradCPUKernel : public MKLCPUKernel {
   std::vector<size_t> kernel_size_;
 };
 
-MS_REG_CPU_KERNEL(AvgPoolGradCpu,
+MS_REG_CPU_KERNEL(AvgPoolGrad,
                   KernelAttr()
                     .AddInputAttr(kNumberTypeFloat32)
                     .AddInputAttr(kNumberTypeFloat32)

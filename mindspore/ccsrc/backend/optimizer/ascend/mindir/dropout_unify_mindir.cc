@@ -104,47 +104,6 @@ ValueNodePtr CreateKeepPorbValueNode(const FuncGraphPtr &func_graph, const AnfNo
   return keep_prob_value;
 }
 
-ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &shape,
-                                  bool is_pynative = false) {
-  MS_LOG(INFO) << "CreateShapeValueNode start.";
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  ValuePtr shape_value = nullptr;
-  AbstractBasePtr abstract = nullptr;
-  if (is_pynative) {
-    // pynative mode need to create tensor
-    int64_t shape_dim = SizeToLong(shape.size());
-    std::vector<int64_t> shape_vec_shape = {shape_dim};
-    auto shape_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, shape_vec_shape);
-    MS_EXCEPTION_IF_NULL(shape_tensor);
-    auto data_ptr = shape_tensor->data_c();
-    MS_EXCEPTION_IF_NULL(data_ptr);
-    auto elem_num = shape.size() * kInt64Len;
-    auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(shape_tensor->data().nbytes()), &shape[0], elem_num);
-    if (ret_code != 0) {
-      MS_LOG(EXCEPTION) << "Failed to copy data into Tensor.";
-    }
-    shape_value = shape_tensor;
-    abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
-  } else {
-    std::vector<ValuePtr> dim_values{};
-    abstract::AbstractBasePtrList abs{};
-    for (const auto &dim : shape) {
-      dim_values.push_back(MakeValue(dim));
-      abs.push_back(std::make_shared<abstract::AbstractScalar>(dim));
-    }
-    shape_value = std::make_shared<ValueTuple>(dim_values);
-    abstract = std::make_shared<abstract::AbstractTuple>(abs);
-  }
-  MS_EXCEPTION_IF_NULL(shape_value);
-  MS_EXCEPTION_IF_NULL(abstract);
-  auto shape_value_node = kernel_graph->NewValueNode(abstract, shape_value);
-  MS_EXCEPTION_IF_NULL(shape_value_node);
-  kernel_graph->AddValueNodeToGraph(shape_value_node);
-  return shape_value_node;
-}
-
 std::vector<int64_t> CalDropoutGenMaskOutput(const std::vector<int64_t> &shape) {
   auto output_size = std::accumulate(shape.begin(), shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   auto output_count = output_size / kMaskAlignNum;
