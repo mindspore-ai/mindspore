@@ -1651,8 +1651,8 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
 
   // Create a RandomDataset which has column names "col1" and "col2"
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::TypeId::kNumberTypeInt16, {5});
-  schema->add_column("col2", mindspore::TypeId::kNumberTypeInt32, {3});
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt16, {5});
+  schema->add_column("col2", mindspore::DataType::kNumberTypeInt32, {3});
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -1719,8 +1719,8 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
 
   // Create a RandomDataset which has column names "col1" and "col2"
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::TypeId::kNumberTypeInt32, {4});
-  schema->add_column("col2", mindspore::TypeId::kNumberTypeInt64, {4});
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt32, {4});
+  schema->add_column("col2", mindspore::DataType::kNumberTypeInt64, {4});
   std::shared_ptr<Dataset> ds = RandomData(4, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -1780,8 +1780,8 @@ TEST_F(MindDataTestPipeline, TestTruncateSequencePairFail) {
 
   // Create a RandomDataset which has column names "col1" and "col2"
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("col1", mindspore::TypeId::kNumberTypeInt8, {3});
-  schema->add_column("col2", mindspore::TypeId::kNumberTypeInt8, {3});
+  schema->add_column("col1", mindspore::DataType::kNumberTypeInt8, {3});
+  schema->add_column("col2", mindspore::DataType::kNumberTypeInt8, {3});
   std::shared_ptr<Dataset> ds = RandomData(3, schema);
   EXPECT_NE(ds, nullptr);
 

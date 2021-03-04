@@ -24,6 +24,8 @@
 #include <utility>
 #include <functional>
 
+#include "minddata/dataset/include/type_id.h"
+
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/constants.h"
 
@@ -1039,6 +1041,10 @@ Status Tensor::SliceString(std::shared_ptr<Tensor> *out, const std::vector<std::
     strings.emplace_back(sv);
   }
   return CreateFromVector(strings, shape, out);
+}
+Status Tensor::CreateFromMSTensor(const MSTensor &in, TensorPtr *out) {
+  return Tensor::CreateFromMemory(TensorShape(in.Shape()), MSTypeToDEType(static_cast<TypeId>(in.DataType())),
+                                  (const uchar *)(in.Data().get()), in.DataSize(), out);
 }
 
 }  // namespace dataset

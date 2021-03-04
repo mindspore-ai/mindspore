@@ -18,6 +18,9 @@
 
 #include "gtest/gtest.h"
 #include "include/api/status.h"
+#include "include/api/types.h"
+#include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/include/type_id.h"
 #include "utils/log_adapter.h"
 
 using mindspore::Status;
@@ -62,19 +65,19 @@ using mindspore::StatusCode;
 namespace UT {
 class Common : public testing::Test {
  public:
-    // every TEST_F macro will enter one
-    virtual void SetUp();
+  // every TEST_F macro will enter one
+  virtual void SetUp();
 
-    virtual void TearDown();
+  virtual void TearDown();
 };
 
 class DatasetOpTesting : public Common {
  public:
-    std::string datasets_root_path_;
-    std::string mindrecord_root_path_;
-    void SetUp() override;
-
+  std::vector<mindspore::dataset::TensorShape> ToTensorShapeVec(const std::vector<std::vector<int64_t>> &v);
+  std::vector<mindspore::dataset::DataType> ToDETypes(const std::vector<mindspore::DataType> &t);
+  std::string datasets_root_path_;
+  std::string mindrecord_root_path_;
+  void SetUp() override;
 };
 }  // namespace UT
 #endif  // TESTS_DATASET_UT_CORE_COMMON_DE_UT_COMMON_H_
-

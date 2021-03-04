@@ -30,8 +30,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
 
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
   std::shared_ptr<Dataset> ds = RandomData(50, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -74,8 +74,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
 
   // Create two RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
   std::shared_ptr<Dataset> ds1 = RandomData(50, schema);
   std::shared_ptr<Dataset> ds2 = RandomData(50, schema);
   EXPECT_NE(ds1, nullptr);
@@ -132,8 +132,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetGetters) {
 
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
   std::shared_ptr<Dataset> ds = RandomData(50, schema);
   EXPECT_NE(ds, nullptr);
 
@@ -480,8 +480,8 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetDuplicateColumnName) {
 
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
   std::shared_ptr<Dataset> ds = RandomData(50, schema, {"image", "image"});
   // Expect failure: duplicate column names
   EXPECT_EQ(ds->CreateIterator(), nullptr);

@@ -329,7 +329,7 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
   std::shared_ptr<DSCallback> cb1 = tst_cb;
   // Create a RandomDataset.  Use random_data to avoid I/O
   std::shared_ptr<SchemaObj> schema = Schema();
-  ASSERT_OK(schema->add_column("label", mindspore::TypeId::kNumberTypeUInt32, {}));
+  ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt32, {}));
   std::shared_ptr<Dataset> ds = RandomData(44, schema);
   ASSERT_NE(ds, nullptr);
   ds = ds->Map({std::make_shared<transforms::TypeCast>("uint64")}, {"label"}, {}, {}, nullptr, {cb1});
