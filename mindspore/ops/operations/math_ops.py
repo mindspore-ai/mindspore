@@ -4403,7 +4403,7 @@ class IndexAdd(PrimitiveWithInfer):
         axis (int): The dimension along which to index.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor to add to, with data type float64, float32, float16, int32, int16,
+        - **input_x** (Parameter) - The input tensor to add to, with data type float64, float32, float16, int32, int16,
           int8, uint8.
         - **indices** (Tensor) - The index of `input_x` on the `axis`th dimension to add to, with data type int32.
           The `indices` must be 1D with the size same as the size of the `axis`th dimension of `input_y`. The values
@@ -4428,21 +4428,26 @@ class IndexAdd(PrimitiveWithInfer):
          [ 5.   5.   7.5]
          [ 8.   7.  10.5]]
     """
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('input_y', dtype=sig.sig_dtype.T)
+    )
 
     @prim_attr_register
     def __init__(self, axis, use_lock=True, check_index_bound=True):
         """Initialize InplaceAdd"""
-        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+        self.init_prim_io_names(inputs=['input_x', 'indices', 'input_y'], outputs=['output'])
         self.axis = axis
         validator.check_value_type('axis', axis, [int], self.name)
 
     def infer_dtype(self, x_dtype, idx_type, y_dtype):
-        args = {'x': x_dtype, 'y': y_dtype}
+        args = {'input_x': x_dtype, 'input_y': y_dtype}
         valid_type = [mstype.float64, mstype.float32, mstype.float16, mstype.int32, mstype.int16, mstype.int8,
                       mstype.uint8]
         validator.check_tensors_dtypes_same_and_valid(args, valid_type, self.name)
         valid_idx_type = [mstype.int32]
-        validator.check_tensor_dtype_valid("idx_type", idx_type, valid_idx_type, self.name)
+        validator.check_tensor_dtype_valid('indices', idx_type, valid_idx_type, self.name)
         return x_dtype
 
     def infer_shape(self, x_shape, idx_shape, y_shape):
