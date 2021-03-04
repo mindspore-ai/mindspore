@@ -1,43 +1,45 @@
-# 目录
+# Unet
 
 <!-- TOC -->
 
-- [目录](#目录)
-- [U-Net说明](#u-net说明)
-- [模型架构](#模型架构)
-- [数据集](#数据集)
-- [环境要求](#环境要求)
-- [快速入门](#快速入门)
-- [脚本说明](#脚本说明)
-    - [脚本及样例代码](#脚本及样例代码)
-    - [脚本参数](#脚本参数)
+- [Unet](#unet)
+    - [U-Net说明](#u-net说明)
+    - [模型架构](#模型架构)
+    - [数据集](#数据集)
+    - [环境要求](#环境要求)
+    - [快速入门](#快速入门)
+    - [脚本说明](#脚本说明)
+        - [脚本及样例代码](#脚本及样例代码)
+        - [脚本参数](#脚本参数)
     - [训练过程](#训练过程)
         - [用法](#用法)
         - [分布式训练](#分布式训练)
     - [评估过程](#评估过程)
         - [评估](#评估)
-- [模型描述](#模型描述)
-    - [性能](#性能)
-        - [评估性能](#评估性能)
-    - [用法](#用法-1)
-        - [推理](#推理)
-        - [继续训练预训练模型](#继续训练预训练模型)
-- [随机情况说明](#随机情况说明)
-- [ModelZoo主页](#modelzoo主页)
+    - [模型描述](#模型描述)
+        - [性能](#性能)
+            - [评估性能](#评估性能)
+        - [用法](#用法-1)
+            - [推理](#推理)
+                - [Ascend 310环境运行](#ascend-310环境运行)
+            - [继续训练预训练模型](#继续训练预训练模型)
+            - [迁移学习](#迁移学习)
+    - [随机情况说明](#随机情况说明)
+    - [ModelZoo主页](#modelzoo主页)
 
 <!-- /TOC -->
 
-# U-Net说明
+## U-Net说明
 
 U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)。在2015年ISBI细胞跟踪竞赛中，U-Net获得了许多最佳奖项。论文中提出了一种用于医学图像分割的网络模型和数据增强方法，有效利用标注数据来解决医学领域标注数据不足的问题。U型网络结构也用于提取上下文和位置信息。
 
 [论文](https://arxiv.org/abs/1505.04597)：  Olaf Ronneberger, Philipp Fischer, Thomas Brox. "U-Net: Convolutional Networks for Biomedical Image Segmentation." *conditionally accepted at MICCAI 2015*. 2015.
 
-# 模型架构
+## 模型架构
 
 具体而言，U-Net的U型网络结构可以更好地提取和融合高层特征，获得上下文信息和空间位置信息。U型网络结构由编码器和解码器组成。编码器由两个3x3卷积和一个2x2最大池化迭代组成。每次下采样后通道数翻倍。解码器由2x2反卷积、拼接层和2个3x3卷积组成，经过1x1卷积后输出。
 
-# 数据集
+## 数据集
 
 使用的数据集： [ISBI Challenge](http://brainiac2.mit.edu/isbi_challenge/home)
 
@@ -51,7 +53,7 @@ U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolu
 - 数据格式：二进制文件（TIF）
     - 注意：数据在src/data_loader.py中处理
 
-# 环境要求
+## 环境要求
 
 - 硬件（Ascend）
     - 准备Ascend处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
@@ -61,7 +63,7 @@ U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolu
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
-# 快速入门
+## 快速入门
 
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
@@ -82,9 +84,27 @@ U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolu
   bash scripts/run_standalone_eval.sh [DATASET] [CHECKPOINT]
   ```
 
-# 脚本说明
+- Docker中运行
 
-## 脚本及样例代码
+创建docker镜像(讲版本号换成你实际使用的版本)
+
+```shell
+# build docker
+docker build -t unet:20.1.0 . --build-arg FROM_IMAGE_NAME=ascend-mindspore-arm:20.1.0
+```
+
+使用创建好的镜像启动一个容器。
+
+```shell
+# start docker
+bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+然后在容器里的操作就和Ascend平台上是一样的。
+
+## 脚本说明
+
+### 脚本及样例代码
 
 ```path
 ├── model_zoo
@@ -108,7 +128,7 @@ U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolu
         ├── eval.py                         // 评估脚本
 ```
 
-## 脚本参数
+### 脚本参数
 
 在config.py中可以同时配置训练参数和评估参数。
 
@@ -202,11 +222,11 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
   ============== Cross valid dice coeff is: {'dice_coeff': 0.9085704886070473}
   ```
 
-# 模型描述
+## 模型描述
 
-## 性能
+### 性能
 
-### 评估性能
+#### 评估性能
 
 | 参数                 | Ascend     |
 | -------------------------- | ------------------------------------------------------------ |
@@ -227,103 +247,64 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
 | 微调检查点 | 355.11M (.ckpt文件)                                         |
 | 脚本                    | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
 
-## 用法
+### 用法
 
-### 推理
+#### 推理
 
 如果您需要使用训练好的模型在Ascend 910、Ascend 310等多个硬件平台上进行推理上进行推理，可参考此[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。下面是一个简单的操作步骤示例：
 
-- Ascend处理器环境运行
+##### Ascend 310环境运行
 
-  ```python
-  # 设置上下文
-  device_id = int(os.getenv('DEVICE_ID'))
-  context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",save_graphs=True,device_id=device_id)
+导出mindir模型
 
-  # 加载未知数据集进行推理
-  _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False)
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
 
-  # 定义模型并加载预训练模型
-  net = UNet(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
-  param_dict= load_checkpoint(ckpt_path)
-  load_param_into_net(net , param_dict)
-  criterion = CrossEntropyWithLogits()
-  model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
+参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
 
-  # 对未知数据集进行预测
-  print("============== Starting Evaluating ============")
-  dice_score = model.eval(valid_dataset, dataset_sink_mode=False)
-  print("============== Cross valid dice coeff is:", dice_score)
+在执行推理前，MINDIR文件必须在910上通过export.py文件导出。
+目前仅可处理batch_Size为1。
 
-  ```
+```shell
+# Ascend310 推理
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+```
 
-- Ascend 310环境运行
+`DEVICE_ID` 可选，默认值为 0。
 
-  导出mindir模型
+推理结果保存在当前路径，可在acc.log中看到最终精度结果。
 
-  ```shell
-  python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
-  ```
+```text
+Cross valid dice coeff is: 0.9054352151297033
+```
 
-  参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+#### 继续训练预训练模型
 
-  在执行推理前，MINDIR文件必须在910上通过export.py文件导出。
-  目前仅可处理batch_Size为1。
+在`config.py`里将`resume`设置成True，并将`resume_ckpt`设置成对应的权重文件路径，例如：
 
-  ```shell
-  # Ascend310 推理
-  bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
-  ```
+```python
+    'resume': True,
+    'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+    'transfer_training': False,
+    'filter_weight': ["final.weight"]
+```
 
-  `DEVICE_ID` 可选，默认值为 0。
+#### 迁移学习
 
-  推理结果保存在当前路径，可在acc.log中看到最终精度结果。
+首先像上面讲的那样讲继续训练的权重加载进来。然后将`transfer_training`设置成True。配置中还有一个 `filter_weight`参数，用于将一些不能适用于不同数据集的权重过滤掉。通常这个`filter_weight`的参数不需要修改，其默认值通常是和模型的分类数相关的参数。例如：
 
-  ```text
-  Cross valid dice coeff is: 0.9054352151297033
-  ```
+```python
+    'resume': True,
+    'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+    'transfer_training': True,
+    'filter_weight': ["final.weight"]
+```
 
-### 继续训练预训练模型
-
-- Ascend处理器环境运行
-
-  ```python
-  # 定义模型
-  net = UNet(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
-  #如果'resume'为True，则继续训练
-  if cfg['resume']:
-      param_dict = load_checkpoint(cfg['resume_ckpt'])
-      load_param_into_net(net, param_dict)
-
-  # 加载数据集
-  train_dataset, _ = create_dataset(data_dir, epochs, batch_size, True, cross_valid_ind, run_distribute)
-  train_data_size = train_dataset.get_dataset_size()
-
-  optimizer = nn.Adam(params=net.trainable_params(), learning_rate=lr, weight_decay=cfg['weight_decay'],
-                        loss_scale=cfg['loss_scale'])
-  criterion = CrossEntropyWithLogits()
-  loss_scale_manager = mindspore.train.loss_scale_manager.FixedLossScaleManager(cfg['FixedLossScaleManager'], False)
-
-  model = Model(net, loss_fn=criterion, loss_scale_manager=loss_scale_manager, optimizer=optimizer, amp_level="O3")
-
-
-  # 设置回调
-  ckpt_config = CheckpointConfig(save_checkpoint_steps=train_data_size,
-                                 keep_checkpoint_max=cfg['keep_checkpoint_max'])
-  ckpoint_cb = ModelCheckpoint(prefix='ckpt_unet_medical_adam',
-                               directory='./ckpt_{}/'.format(device_id),
-                               config=ckpt_config)
-
-  print("============== Starting Training ==============")
-  model.train(1, train_dataset, callbacks=[StepLossTimeMonitor(batch_size=batch_size), ckpoint_cb],
-              dataset_sink_mode=False)
-  print("============== End Training ==============")
-  ```
-
-# 随机情况说明
+## 随机情况说明
 
 dataset.py中设置了“seet_sed”函数内的种子，同时还使用了train.py中的随机种子。
 
-# ModelZoo主页
+## ModelZoo主页
 
- 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。  
+请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。  

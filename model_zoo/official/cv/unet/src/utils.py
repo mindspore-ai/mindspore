@@ -68,6 +68,15 @@ class StepLossTimeMonitor(Callback):
         print("epoch: {:3d}, avg loss:{:.4f}, total cost: {:.3f} s, per step fps:{:5.3f}".format(
             cb_params.cur_epoch_num, np.mean(self.losses), epoch_cost, step_fps), flush=True)
 
-
 def mask_to_image(mask):
     return Image.fromarray((mask * 255).astype(np.uint8))
+
+
+def filter_checkpoint_parameter_by_list(param_dict, filter_list):
+    """remove useless parameters according to filter_list"""
+    for key in list(param_dict.keys()):
+        for name in filter_list:
+            if name in key:
+                print("Delete parameter from checkpoint: ", key)
+                del param_dict[key]
+                break

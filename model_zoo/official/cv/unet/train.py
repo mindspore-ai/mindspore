@@ -30,7 +30,7 @@ from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.data_loader import create_dataset, create_cell_nuclei_dataset
 from src.loss import CrossEntropyWithLogits, MultiCrossEntropyWithLogits
-from src.utils import StepLossTimeMonitor
+from src.utils import StepLossTimeMonitor, filter_checkpoint_parameter_by_list
 from src.config import cfg_unet
 
 device_id = int(os.getenv('DEVICE_ID'))
@@ -45,7 +45,6 @@ def train_net(data_dir,
               lr=0.0001,
               run_distribute=False,
               cfg=None):
-
     rank = 0
     group_size = 1
     if run_distribute:
@@ -69,6 +68,8 @@ def train_net(data_dir,
 
     if cfg['resume']:
         param_dict = load_checkpoint(cfg['resume_ckpt'])
+        if cfg['transfer_training']:
+            filter_checkpoint_parameter_by_list(param_dict, cfg['filter_weight'])
         load_param_into_net(net, param_dict)
 
     if 'use_ds' in cfg and cfg['use_ds']:
