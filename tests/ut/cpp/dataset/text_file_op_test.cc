@@ -22,52 +22,62 @@
 #include "utils/ms_utils.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
+#include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/source/text_file_op.h"
 #include "minddata/dataset/util/status.h"
 
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
-class MindDataTestTextFileOp : public UT::DatasetOpTesting {
-
-};
+class MindDataTestTextFileOp : public UT::DatasetOpTesting {};
 
 TEST_F(MindDataTestTextFileOp, TestTextFileBasic) {
   // Start with an empty execution tree
   auto tree = std::make_shared<ExecutionTree>();
-
+  Status rc;
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testTextFileDataset/1.txt";
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t num_workers = 1;  // Only one file
+  int32_t op_connector_size = 2;
+  int32_t worker_connector_size = config_manager->worker_connector_size();
+  int64_t total_rows = 0;  // read all rows
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  rc = schema->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1));
+  ASSERT_OK(rc);
+  std::vector<std::string> files = {dataset_path};
+  bool shuffle_files = false;
+  int32_t num_devices = 1;
+  int32_t device_id = 0;
 
-  std::shared_ptr<TextFileOp> op;
-  TextFileOp::Builder builder;
-  builder.SetTextFilesList({dataset_path}).SetOpConnectorSize(2);
-
-  Status rc = builder.Build(&op);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<TextFileOp> op =
+    std::make_shared<TextFileOp>(num_workers, total_rows, worker_connector_size, std::move(schema), files,
+                                 op_connector_size, shuffle_files, num_devices, device_id);
+  rc = op->Init();
+  ASSERT_OK(rc);
 
   rc = tree->AssociateNode(op);
-  ASSERT_TRUE(rc.IsOk());
+  ASSERT_OK(rc);
 
   rc = tree->AssignRoot(op);
-  ASSERT_TRUE(rc.IsOk());
+  ASSERT_OK(rc);
 
   MS_LOG(INFO) << "Launching tree and begin iteration.";
   rc = tree->Prepare();
-  ASSERT_TRUE(rc.IsOk());
+  ASSERT_OK(rc);
 
   rc = tree->Launch();
-  ASSERT_TRUE(rc.IsOk());
+  ASSERT_OK(rc);
 
   // Start the loop of reading tensors from our pipeline
   DatasetIterator di(tree);
   TensorRow tensor_list;
   rc = di.FetchNextTensorRow(&tensor_list);
-  ASSERT_TRUE(rc.IsOk());
+  ASSERT_OK(rc);
 
   int row_count = 0;
   while (!tensor_list.empty()) {
@@ -79,25 +89,11 @@ TEST_F(MindDataTestTextFileOp, TestTextFileBasic) {
     }
 
     rc = di.FetchNextTensorRow(&tensor_list);
-    ASSERT_TRUE(rc.IsOk());
+    ASSERT_OK(rc);
     row_count++;
   }
 
   ASSERT_EQ(row_count, 3);
-}
-
-TEST_F(MindDataTestTextFileOp, TestTextFileFileNotExist) {
-  // Start with an empty execution tree
-  auto tree = std::make_shared<ExecutionTree>();
-
-  std::string dataset_path = datasets_root_path_ + "/does/not/exist/0.txt";
-
-  std::shared_ptr<TextFileOp> op;
-  TextFileOp::Builder builder;
-  builder.SetTextFilesList({dataset_path}).SetOpConnectorSize(2);
-
-  Status rc = builder.Build(&op);
-  ASSERT_TRUE(rc.IsOk());
 }
 
 TEST_F(MindDataTestTextFileOp, TestTotalRows) {
@@ -130,5 +126,3 @@ TEST_F(MindDataTestTextFileOp, TestTotalRowsFileNotExist) {
   TextFileOp::CountAllFileRows(files, &total_rows);
   ASSERT_EQ(total_rows, 0);
 }
-
-

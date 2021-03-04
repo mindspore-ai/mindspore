@@ -33,98 +33,6 @@ namespace mindspore {
 namespace dataset {
 class BuildVocabOp : public ParallelOp {
  public:
-  class Builder {
-   public:
-    Builder();
-
-    // Destructor.
-    ~Builder() = default;
-
-    // Setter method
-    // @param int32_t size
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t size) {
-      builder_connector_size_ = size;
-      return *this;
-    }
-
-    // Setter method
-    // @param int32_t num_workers
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      builder_num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method
-    // @param int64_t top_k
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetTopK(int64_t top_k) {
-      builder_top_k_ = top_k;
-      return *this;
-    }
-
-    // Setter method
-    // @param int64_t min_freq
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetMinFreq(int64_t min_freq) {
-      builder_min_freq_ = min_freq;
-      return *this;
-    }
-
-    // Setter method
-    // @param int64_t max_freq
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetMaxFreq(int64_t max_freq) {
-      builder_max_freq_ = max_freq;
-      return *this;
-    }
-
-    // set columns names
-    // @param const std::vector<std::string> & col_names - name of columns to get words
-    // @return Builder & reference to builder class object
-    Builder &SetColumnNames(const std::vector<std::string> &col_names) {
-      builder_col_names_ = col_names;
-      return *this;
-    }
-
-    // set special tokens
-    // @param const std::vector<std::string> & col_names - name of columns to get words
-    // @return Builder & reference to builder class object
-    Builder &SetSpecialTokens(const std::vector<std::string> &tokens) {
-      builder_speical_tokens_ = tokens;
-      return *this;
-    }
-
-    // set vocab object
-    Builder &SetVocab(std::shared_ptr<Vocab> vocab) {
-      builder_vocab_ = vocab;
-      return *this;
-    }
-
-    // set special tokens first (or last)
-    Builder &SetSpecialFirst(bool prepend) {
-      builder_special_first_ = prepend;
-      return *this;
-    }
-
-    // The builder "build" method creates the final object.
-    // @param std::shared_ptr<BuildVocabOp> *op - DatasetOp
-    // @return Status The status code returned
-    Status Build(std::shared_ptr<BuildVocabOp> *op);
-
-   private:
-    int32_t builder_num_workers_;
-    int32_t builder_connector_size_;
-    int64_t builder_min_freq_;
-    int64_t builder_max_freq_;
-    bool builder_special_first_;
-    std::vector<std::string> builder_col_names_;
-    std::vector<std::string> builder_speical_tokens_;
-    std::shared_ptr<Vocab> builder_vocab_;
-    int64_t builder_top_k_;
-  };
-
   BuildVocabOp(std::shared_ptr<Vocab> vocab, std::vector<std::string> col_names, std::pair<int64_t, int64_t> freq_range,
                int64_t top_k, const std::vector<std::string> &tokens, bool prepend, int32_t num_workers,
                int32_t op_connector_size);
@@ -149,7 +57,7 @@ class BuildVocabOp : public ParallelOp {
 
   Status WorkerEntry(int32_t worker_id) override;
 
-  // collect the work product from each worker
+  /// collect the work product from each worker
   Status CollectorThread();
 
   Status EofReceived(int32_t) override { return Status::OK(); }
@@ -158,12 +66,12 @@ class BuildVocabOp : public ParallelOp {
 
   Status operator()() override;
 
-  // Getter
-  // @return the number of workers
+  /// Getter
+  /// @return the number of workers
   int32_t num_producers() const override { return 1; }
 
-  // Getter
-  // @return the number of threads consuming from the previous Connector
+  /// Getter
+  /// @return the number of threads consuming from the previous Connector
   int32_t num_consumers() const override { return 1; }
 
   Status Reset() override { RETURN_STATUS_UNEXPECTED("Reset shouldn't be called in BuildVocabOp"); }

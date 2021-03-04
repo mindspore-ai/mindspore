@@ -26,22 +26,6 @@ namespace mindspore {
 namespace dataset {
 class EpochCtrlOp : public RepeatOp {
  public:
-  class Builder : public RepeatOp::Builder {
-   public:
-    // Builder constructor.  Creates the builder object.
-    // @note No default args
-    // @param count - The number of repeats to do
-    // @return This is a constructor.
-    explicit Builder(int32_t count) : RepeatOp::Builder(count) {}
-
-    // Default destructor
-    ~Builder() = default;
-
-    // The builder "build" method creates the final object.
-    // @return shared_ptr to the new EpochCtrlOp object
-    Status Build(std::shared_ptr<EpochCtrlOp> *);
-  };
-
   // Constructor
   explicit EpochCtrlOp(int32_t num_epoch);
 

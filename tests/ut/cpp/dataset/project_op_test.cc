@@ -20,32 +20,37 @@
 #include "common/common.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestProjectOp : public UT::DatasetOpTesting {};
 
 TEST_F(MindDataTestProjectOp, TestProjectProject) {
   // Start with an empty execution tree
   auto my_tree = std::make_shared<ExecutionTree>();
-
+  Status rc;
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
 
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  TFReaderOp::Builder builder;
-  builder.SetDatasetFilesList({dataset_path}).SetWorkerConnectorSize(16);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  auto num_workers = 1;  // one file, one worker
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {dataset_path};
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
-  builder.SetDataSchema(std::move(schema));
-  Status rc = builder.Build(&my_tfreader_op);  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    num_workers, 16, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
+  ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   ASSERT_TRUE(rc.IsOk());
 

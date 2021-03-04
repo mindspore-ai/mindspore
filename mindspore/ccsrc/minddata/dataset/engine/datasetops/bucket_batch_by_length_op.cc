@@ -29,54 +29,6 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace dataset {
-BucketBatchByLengthOp::Builder::Builder(const std::vector<std::string> &length_dependent_columns,
-                                        const std::vector<int32_t> &bucket_boundaries,
-                                        const std::vector<int32_t> &bucket_batch_sizes)
-    : builder_length_dependent_columns_(length_dependent_columns),
-      builder_bucket_boundaries_(bucket_boundaries),
-      builder_bucket_batch_sizes_(bucket_batch_sizes),
-      builder_pad_info_({}),
-      builder_pad_to_bucket_boundary_(false),
-      builder_drop_remainder_(false) {
-  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
-  builder_op_connector_size_ = config_manager->op_connector_size();
-}
-
-Status BucketBatchByLengthOp::Builder::SanityCheck() const {
-  std::string error_message;
-
-  if (builder_length_dependent_columns_.empty()) {
-    error_message += "Invalid parameter, at least 1 column must be specified for element length calculation.\n";
-  }
-
-  if (builder_bucket_boundaries_.empty()) {
-    error_message += "Invalid parameter, at least 1 bucket boundary must be specified.\n";
-  }
-
-  if (builder_bucket_batch_sizes_.size() != builder_bucket_boundaries_.size() + 1) {
-    error_message +=
-      "Invalid parameter, there must be exactly one bucket batch size specified for each bucket boundary.\n";
-  }
-
-  CHECK_FAIL_RETURN_UNEXPECTED(error_message.empty(), error_message);
-
-  return Status::OK();
-}
-
-Status BucketBatchByLengthOp::Builder::Build(std::shared_ptr<BucketBatchByLengthOp> *bucket_batch_by_length_op) {
-  RETURN_IF_NOT_OK(SanityCheck());
-
-  // insert 0 for the first bucket
-  (void)builder_bucket_boundaries_.insert(builder_bucket_boundaries_.begin(), 0);
-
-  *bucket_batch_by_length_op = std::make_shared<BucketBatchByLengthOp>(
-    builder_length_dependent_columns_, builder_bucket_boundaries_, builder_bucket_batch_sizes_,
-    builder_element_length_function_, builder_pad_info_, builder_pad_to_bucket_boundary_, builder_drop_remainder_,
-    builder_op_connector_size_);
-
-  return Status::OK();
-}
-
 BucketBatchByLengthOp::BucketBatchByLengthOp(const std::vector<std::string> &length_dependent_columns,
                                              const std::vector<int32_t> &bucket_boundaries,
                                              const std::vector<int32_t> &bucket_batch_sizes,

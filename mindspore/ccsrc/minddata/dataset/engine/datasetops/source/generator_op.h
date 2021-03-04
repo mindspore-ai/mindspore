@@ -38,61 +38,6 @@ namespace dataset {
 
 class GeneratorOp : public PipelineOp, public RandomAccessOp {
  public:
-  class Builder {
-   public:
-    /// Builder constructor.  Creates the builder object.
-    /// \note No default args
-    /// \return This is a constructor.
-    Builder();
-
-    ~Builder() = default;
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetGeneratorFunction(py::function generator_function) {
-      build_generator_function_ = generator_function;
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetColumnNames(const std::vector<std::string> &column_names) {
-      build_column_names_ = column_names;
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetColumnTypes(const std::vector<DataType> &column_types) {
-      build_column_types_ = column_types;
-      return *this;
-    }
-
-    /// Setter method.
-    /// \return Builder setter method returns reference to the builder.
-    Builder &SetPrefetchSize(int32_t prefetch_size) {
-      build_prefetch_size_ = prefetch_size;
-      return *this;
-    }
-
-    /// The builder "build" method creates the final object.
-    /// \return shared_ptr to the new GeneratorOp object
-    Status Build(std::shared_ptr<GeneratorOp> *);
-
-   private:
-    // The builder saves all GeneratorOp construction arguments internally.
-    // The following are the arguments.
-    py::function build_generator_function_;
-    std::vector<std::string> build_column_names_;
-    std::vector<DataType> build_column_types_;
-
-    int32_t build_prefetch_size_ = 0;
-    int32_t build_buffer_size_;
-    int32_t build_op_connector_size_;
-
-    Status SanityCheck();
-  };
-
   GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
               std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
               std::shared_ptr<SamplerRT> sampler);

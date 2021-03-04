@@ -36,7 +36,6 @@ BatchOp::Builder::Builder(int32_t batch_size) : builder_drop_(false), builder_pa
 }
 
 Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
 #ifdef ENABLE_PYTHON
   *ptr = std::make_shared<BatchOp>(builder_batch_size_, builder_drop_, builder_pad_, builder_op_connector_size_,
                                    builder_num_workers_, builder_in_names_, builder_out_names_,
@@ -46,20 +45,6 @@ Status BatchOp::Builder::Build(std::shared_ptr<BatchOp> *ptr) {
                                    builder_num_workers_, builder_in_names_, builder_pad_map_);
 #endif
   return Status::OK();
-}
-
-Status BatchOp::Builder::SanityCheck() {
-  std::string err;
-  err += builder_op_connector_size_ <= 0 ? "Invalid parameter, connector_size must be greater than 0, but got " +
-                                             std::to_string(builder_op_connector_size_) + ".\n"
-                                         : "";
-  err += builder_batch_size_ <= 0 ? "Invalid parameter, batch_size must be greater than 0, but got " +
-                                      std::to_string(builder_batch_size_) + ".\n"
-                                  : "";
-  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                       std::to_string(builder_num_workers_) + ".\n"
-                                   : "";
-  return err.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
 }
 
 #ifdef ENABLE_PYTHON

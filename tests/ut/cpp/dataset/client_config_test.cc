@@ -21,6 +21,8 @@
 #include <memory>
 #include <string>
 #include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "gtest/gtest.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/util/status.h"
@@ -33,11 +35,11 @@
 #include <iostream>
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
- class MindDataTestClientConfig : public UT::DatasetOpTesting {
+class MindDataTestClientConfig : public UT::DatasetOpTesting {
  protected:
 };
 
@@ -55,7 +57,6 @@ TEST_F(MindDataTestClientConfig, TestClientConfig1) {
   my_conf->set_seed(5);
   my_conf->set_enable_shared_mem(false);
 
-
   ASSERT_EQ(my_conf->num_parallel_workers(), 2);
   ASSERT_EQ(my_conf->worker_connector_size(), 3);
   ASSERT_EQ(my_conf->op_connector_size(), 4);
@@ -69,7 +70,6 @@ TEST_F(MindDataTestClientConfig, TestClientConfig1) {
   ASSERT_EQ(my_conf->worker_connector_size(), kCfgWorkerConnectorSize);
   ASSERT_EQ(my_conf->op_connector_size(), kCfgOpConnectorSize);
   ASSERT_EQ(my_conf->seed(), kCfgDefaultSeed);
-
 }
 
 TEST_F(MindDataTestClientConfig, TestClientConfig2) {
@@ -84,15 +84,19 @@ TEST_F(MindDataTestClientConfig, TestClientConfig2) {
 
   // Test info:
   // Dataset from testDataset1 has 10 rows, 2 columns.
-  // RowsPerBuffer buffer setting of 2 divides evenly into total rows.
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  TFReaderOp::Builder builder;
-  builder.SetDatasetFilesList({dataset_path});
-  rc = builder.Build(&my_tfreader_op);
-  ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(my_tfreader_op->num_workers(),1);
+  // get defaults for tf_reader
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {dataset_path};
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 2, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
+  ASSERT_OK(rc);
+  ASSERT_EQ(my_tfreader_op->num_workers(), 1);
   my_tree->AssociateNode(my_tfreader_op);
 
   // Set children/root layout.
@@ -113,6 +117,6 @@ TEST_F(MindDataTestClientConfig, TestClientConfig2) {
     ASSERT_TRUE(rc.IsOk());
     row_count++;
   }
-  ASSERT_EQ(row_count, 10); // Should be 10 rows fetched
-  ASSERT_EQ(my_tfreader_op->num_workers(),1);
+  ASSERT_EQ(row_count, 10);  // Should be 10 rows fetched
+  ASSERT_EQ(my_tfreader_op->num_workers(), 1);
 }

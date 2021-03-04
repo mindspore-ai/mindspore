@@ -40,29 +40,27 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::ERROR;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
+// std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
 
-std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
+// std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
-std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
+// std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
 std::shared_ptr<ImageFolderOp> ImageFolder(int64_t num_works, int64_t rows, int64_t conns, std::string path,
                                            bool shuf = false, std::shared_ptr<SamplerRT> sampler = nullptr,
                                            std::map<std::string, int32_t> map = {}, bool decode = false) {
-  std::shared_ptr<ImageFolderOp> so;
-  ImageFolderOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_works)
-                .SetImageFolderDir(path)
-
-                .SetOpConnectorSize(conns)
-                .SetExtensions({".jpg", ".JPEG"})
-                .SetSampler(std::move(sampler))
-                .SetClassIndex(map)
-                .SetDecode(decode)
-                .Build(&so);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "Fail to build ImageFolderOp: " << rc.ToString() << "\n";
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  TensorShape scalar = TensorShape::CreateScalar();
+  (void)schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1));
+  (void)schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_INT32), TensorImpl::kFlexible, 0, &scalar));
+  std::set<std::string> ext = {".jpg", ".JPEG"};
+  if (sampler == nullptr) {
+    int64_t num_samples = 0;  // default num samples of 0 means to sample entire set of data
+    int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
   }
+  std::shared_ptr<ImageFolderOp> so =
+    std::make_shared<ImageFolderOp>(num_works, path, conns, false, decode, ext, map, std::move(schema), sampler);
   return so;
 }
 

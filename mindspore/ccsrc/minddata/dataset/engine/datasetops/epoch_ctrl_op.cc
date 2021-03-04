@@ -21,14 +21,6 @@
 
 namespace mindspore {
 namespace dataset {
-
-// The builder "build" method creates the final object.
-Status EpochCtrlOp::Builder::Build(std::shared_ptr<EpochCtrlOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<EpochCtrlOp>(build_num_repeats_);
-  return Status::OK();
-}
-
 // Constructor
 EpochCtrlOp::EpochCtrlOp(int32_t num_epoch) : RepeatOp(num_epoch) { MS_LOG(INFO) << "Welcome to Epoch Ctrl Op."; }
 

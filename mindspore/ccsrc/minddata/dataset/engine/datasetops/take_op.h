@@ -25,31 +25,6 @@ namespace mindspore {
 namespace dataset {
 class TakeOp : public PipelineOp {
  public:
-  // The nested builder class inside of the TakeOp is used to help manage all of the arguments
-  // for constructing it.  This take op is very simple though, so this builder is really just
-  // provided for a consistent look and feel for creators of Dataset operators overall.
-  class Builder {
-   public:
-    // Builder constructor.  Creates the builder object.
-    // @note No default args
-    // @param count - The number of takes to do
-    // @return This is a constructor.
-    explicit Builder(int32_t count);
-
-    // Default destructor
-    ~Builder() = default;
-
-    // The builder "build" method creates the final object.
-    // @return shared_ptr to the new TakeOp object
-    Status Build(std::shared_ptr<TakeOp> *);
-
-   private:
-    int32_t build_max_takes_;
-    int32_t builder_op_connector_size_;
-
-    Status SanityCheck() const;
-  };
-
   // Constructor of the TakeOp.
   // @note The builder class should be used to call it
   // @param count - The number of takes to do
@@ -59,14 +34,14 @@ class TakeOp : public PipelineOp {
   ~TakeOp() = default;
 
   // A print method typically used for debugging
-  // @param out - The output stream to write output to
-  // @param show_all - A bool to control if you want to show all info or just a summary
+  // \param[in] out - The output stream to write output to
+  // \param[in] show_all - A bool to control if you want to show all info or just a summary
   void Print(std::ostream &out, bool show_all) const override;
 
   // << Stream output operator overload
   // @notes This allows you to write the debug print info using stream operators
-  // @param out - reference to the output stream being overloaded
-  // @param ro - reference to the TakeOp to display
+  // \param[in] out - reference to the output stream being overloaded
+  // \param[in] ro - reference to the TakeOp to display
   // @return - the output stream must be returned
   friend std::ostream &operator<<(std::ostream &out, const TakeOp &ro) {
     ro.Print(out, false);

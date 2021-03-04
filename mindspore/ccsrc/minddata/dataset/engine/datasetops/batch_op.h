@@ -115,10 +115,6 @@ class BatchOp : public ParallelOp {
     Status Build(std::shared_ptr<BatchOp> *);
 
    private:
-    // Sanity check for builder class args
-    // @return Status The status code returned
-    Status SanityCheck();
-
     bool builder_drop_;
     bool builder_pad_;
     int32_t builder_batch_size_;

@@ -26,27 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor. Creates the builder object.
-TakeOp::Builder::Builder(int32_t count) : build_max_takes_(count) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status TakeOp::Builder::SanityCheck() const {
-  if (build_max_takes_ <= 0) {
-    std::string err_msg("Invalid parameter, take count must be greater than 0.");
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object.
-Status TakeOp::Builder::Build(std::shared_ptr<TakeOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<TakeOp>(build_max_takes_);
-  return Status::OK();
-}
-
 // Constructor of the TakeOp.
 TakeOp::TakeOp(int32_t count) : PipelineOp(0), max_takes_(count), take_count_(0) {}
 

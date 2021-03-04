@@ -36,24 +36,6 @@ namespace mindspore {
 namespace dataset {
 namespace test {
 
-std::shared_ptr<ExecutionTree> BuildTree(std::vector<std::shared_ptr<DatasetOp>> ops) {
-  std::shared_ptr<ExecutionTree> tree = std::make_shared<ExecutionTree>();
-  Status rc;
-  for (int i = 0; i < ops.size(); i++) {
-    rc = tree->AssociateNode(ops[i]);
-    EXPECT_TRUE(rc.IsOk());
-    if (i > 0) {
-      rc = ops[i]->AddChild(ops[i - 1]);
-      EXPECT_TRUE(rc.IsOk());
-    }
-    if (i == ops.size() - 1) {
-      rc = tree->AssignRoot(ops[i]);
-      EXPECT_TRUE(rc.IsOk());
-    }
-  }
-  return tree;
-}
-
 class TestCallback : public DSCallback {
  public:
   TestCallback(int32_t step_size)
@@ -155,23 +137,31 @@ TEST_F(MindDataTestCallback, TestBasicCallback) {
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
-  std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetDataSchema(std::move(schema)).SetTotalRows(44).Build(&leaf);
-  EXPECT_TRUE(rc.IsOk());
+
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  int32_t num_workers = config_manager->num_parallel_workers();
+  std::shared_ptr<RandomDataOp> leaf =
+    std::make_shared<RandomDataOp>(num_workers, op_connector_size, 44, std::move(schema));
   // config mapOp
-  std::shared_ptr<MapOp> map_op;
-  auto map_b = MapOp::Builder();
-  rc = map_b.SetInColNames({"label"}).SetTensorFuncs({std::make_shared<NoOp>()}).AddCallbacks({cb1}).Build(&map_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::vector<std::string> input_columns = {"label"};
+  std::vector<std::string> output_columns = {};
+  std::vector<std::shared_ptr<TensorOp>> op_list;
+  std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
+  op_list.push_back(my_no_op);
+  std::shared_ptr<MapOp> map_op =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
+  std::vector<std::shared_ptr<DSCallback>> cbs = {};
+  cbs.push_back(cb1);
+  map_op->AddCallbacks(std::move(cbs));
   // config RepeatOp
-  std::shared_ptr<RepeatOp> repeat_op;
-  rc = RepeatOp::Builder(2).Build(&repeat_op);
+  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
   // start build then launch tree
   leaf->set_total_repeats(2);
   leaf->set_num_repeats_per_epoch(2);
   map_op->set_total_repeats(2);
   map_op->set_num_repeats_per_epoch(2);
-  std::shared_ptr<ExecutionTree> tree = test::BuildTree({leaf, map_op, repeat_op});
+  std::shared_ptr<ExecutionTree> tree = Build({leaf, map_op, repeat_op});
   rc = tree->Prepare();
   EXPECT_TRUE(rc.IsOk());
   rc = tree->Launch();
@@ -203,30 +193,37 @@ TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(4);
   std::shared_ptr<DSCallback> cb1 = tst_cb;
   // config leaf_op, use random_data to avoid I/O
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  int32_t num_workers = config_manager->num_parallel_workers();
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
-  std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> leaf = std::make_shared<RandomDataOp>(4, op_connector_size, 4, std::move(schema));
   // config mapOp
-  std::shared_ptr<MapOp> map_op;
-  auto map_b = MapOp::Builder();
-  rc = map_b.SetInColNames({"label"}).SetTensorFuncs({std::make_shared<NoOp>()}).AddCallbacks({cb1}).Build(&map_op);
+  std::vector<std::string> input_columns = {"label"};
+  std::vector<std::string> output_columns = {};
+  std::vector<std::shared_ptr<TensorOp>> op_list;
+  std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
+  op_list.push_back(my_no_op);
+  std::shared_ptr<MapOp> map_op =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
+  std::vector<std::shared_ptr<DSCallback>> cbs = {};
+  cbs.push_back(cb1);
+
+  map_op->AddCallbacks(std::move(cbs));
   EXPECT_TRUE(rc.IsOk());
   // config RepeatOp
-  std::shared_ptr<RepeatOp> repeat_op;
-  rc = RepeatOp::Builder(2).Build(&repeat_op);
+  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
   // config EpochCtrlOp
-  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op;
-  rc = EpochCtrlOp::Builder(-1).Build(&epoch_ctrl_op);
+  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(-1);
   // start build then launch tree
   leaf->set_total_repeats(-2);
   leaf->set_num_repeats_per_epoch(2);
   map_op->set_total_repeats(-2);
   map_op->set_num_repeats_per_epoch(2);
-  std::shared_ptr<ExecutionTree> tree = test::BuildTree({leaf, map_op, repeat_op, epoch_ctrl_op});
+  std::shared_ptr<ExecutionTree> tree = Build({leaf, map_op, repeat_op, epoch_ctrl_op});
   rc = tree->Prepare();
   EXPECT_TRUE(rc.IsOk());
   rc = tree->Launch();
@@ -268,30 +265,35 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   tst_cb->epoch_end_ = false;
 
   // config leaf_op, use random_data to avoid I/O
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  int32_t num_workers = config_manager->num_parallel_workers();
+
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   TensorShape shape({});  // empty shape is a 1-value scalar Tensor
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
-  std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<RandomDataOp> leaf = std::make_shared<RandomDataOp>(4, op_connector_size, 4, std::move(schema));
   // config mapOp
-  std::shared_ptr<MapOp> map_op;
-  auto map_b = MapOp::Builder();
-  rc = map_b.SetInColNames({"label"}).SetTensorFuncs({std::make_shared<NoOp>()}).AddCallbacks({cb1}).Build(&map_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::vector<std::string> input_columns = {"label"};
+  std::vector<std::string> output_columns = {};
+  std::vector<std::shared_ptr<TensorOp>> op_list;
+  std::shared_ptr<TensorOp> my_no_op = std::make_shared<NoOp>();
+  op_list.push_back(my_no_op);
+  std::shared_ptr<MapOp> map_op =
+    std::make_shared<MapOp>(input_columns, output_columns, std::move(op_list), num_workers, op_connector_size);
+  map_op->AddCallbacks({cb1});
   // config RepeatOp
-  std::shared_ptr<RepeatOp> repeat_op;
-  rc = RepeatOp::Builder(2).Build(&repeat_op);
+  std::shared_ptr<RepeatOp> repeat_op = std::make_shared<RepeatOp>(2);
   // config EpochCtrlOp
-  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op;
-  rc = EpochCtrlOp::Builder(-1).Build(&epoch_ctrl_op);
+  std::shared_ptr<EpochCtrlOp> epoch_ctrl_op = std::make_shared<EpochCtrlOp>(-1);
+
   // start build then launch tree
   leaf->set_total_repeats(-2);
   leaf->set_num_repeats_per_epoch(2);
   map_op->set_total_repeats(-2);
   map_op->set_num_repeats_per_epoch(2);
-  std::shared_ptr<ExecutionTree> tree = test::BuildTree({leaf, map_op, repeat_op, epoch_ctrl_op});
+  std::shared_ptr<ExecutionTree> tree = Build({leaf, map_op, repeat_op, epoch_ctrl_op});
   rc = tree->Prepare();
   EXPECT_TRUE(rc.IsOk());
   rc = tree->Launch();
@@ -332,7 +334,8 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
   ASSERT_OK(schema->add_column("label", mindspore::DataType::kNumberTypeUInt32, {}));
   std::shared_ptr<Dataset> ds = RandomData(44, schema);
   ASSERT_NE(ds, nullptr);
-  ds = ds->Map({std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt64)}, {"label"}, {}, {}, nullptr, {cb1});
+  ds = ds->Map({std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeUInt64)}, {"label"}, {}, {},
+               nullptr, {cb1});
   ASSERT_NE(ds, nullptr);
   ds = ds->Repeat(2);
   ASSERT_NE(ds, nullptr);

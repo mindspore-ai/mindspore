@@ -31,31 +31,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Builder constructor. Creates the builder object.
-MapOp::Builder::Builder() {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  build_num_workers_ = cfg->num_parallel_workers();
-  build_op_connector_size_ = cfg->op_connector_size();
-}
-
-// Check if the required parameters are set by the builder.
-Status MapOp::Builder::sanityCheck() const {
-  if (build_tensor_funcs_.empty()) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Building a MapOp without providing any function/operation to apply");
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object.
-Status MapOp::Builder::Build(std::shared_ptr<MapOp> *ptr) {
-  RETURN_IF_NOT_OK(sanityCheck());
-  *ptr = std::make_shared<MapOp>(std::move(build_in_col_names_), std::move(build_out_col_names_),
-                                 std::move(build_tensor_funcs_), build_num_workers_, build_op_connector_size_);
-  (*ptr)->AddCallbacks(std::move(builder_callbacks_));
-  return Status::OK();
-}
-
 // Constructor of MapOp
 MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std::string> &out_col_names,
              std::vector<std::shared_ptr<TensorOp>> tensor_funcs, int32_t num_workers, int32_t op_connector_size)
@@ -63,6 +38,7 @@ MapOp::MapOp(const std::vector<std::string> &in_col_names, const std::vector<std
       tfuncs_(std::move(tensor_funcs)),
       in_columns_(in_col_names),
       out_columns_(out_col_names) {
+  // Set connector size via config.
   // If caller didn't specify the out_col_names, assume they are same as the in_columns.
   if (out_columns_.empty() || out_columns_[0].empty()) {
     out_columns_ = in_columns_;

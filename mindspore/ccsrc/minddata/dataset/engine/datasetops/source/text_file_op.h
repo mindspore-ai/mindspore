@@ -38,94 +38,6 @@ using StringIndex = AutoIndexObj<std::string>;
 
 class TextFileOp : public NonMappableLeafOp {
  public:
-  class Builder {
-   public:
-    // Builder constructor. Creates the builder object.
-    // @note No default args
-    // @return This is a constructor.
-    Builder();
-
-    // Default destructor
-    ~Builder() = default;
-
-    // Checks if the inputs of the builder is valid.
-    // @return Status - the error code returned.
-    Status ValidateInputs() const;
-
-    // Create the final object.
-    // @param op - dataset op.
-    // @return - the error code return.
-    Status Build(std::shared_ptr<TextFileOp> *op);
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      builder_num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t op_connector_size) {
-      builder_op_connector_size_ = op_connector_size;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int64_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetNumDevices(int64_t num_dev) {
-      builder_num_devices_ = num_dev;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetDeviceId(int64_t dev_id) {
-      builder_device_id_ = dev_id;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetTextFilesList(const std::vector<std::string> &files_list) {
-      builder_text_files_list_ = files_list;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetShuffleFiles(bool shuffle_files) {
-      builder_shuffle_files_ = shuffle_files;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder - setter method returns reference to the builder.
-    Builder &SetTotalRows(int64_t total_rows) {
-      builder_total_rows_ = total_rows;
-      return *this;
-    }
-
-   private:
-    int32_t builder_device_id_;
-    int32_t builder_num_devices_;
-    int32_t builder_num_workers_;
-    int32_t builder_op_connector_size_;
-    int64_t builder_rows_per_buffer_;
-    int64_t builder_total_rows_;
-    int32_t builder_worker_connector_size_;
-    std::vector<std::string> builder_text_files_list_;
-    bool builder_shuffle_files_;
-    std::unique_ptr<DataSchema> builder_schema_;
-  };
-
   // Constructor of TextFileOp
   // @note The builder class should be used to call this constructor.
   // @param num_workers - number of worker threads reading data from tf_file files.
@@ -185,11 +97,6 @@ class TextFileOp : public NonMappableLeafOp {
   // Calculate number of rows in each shard.
   // @return Status - the error code returned.
   Status CalculateNumRowsPerShard() override;
-
-  // Count number of rows in each file.
-  // @param filename - text file name.
-  // @return int64_t - the total number of rows in file.
-  int64_t CountTotalRows(const std::string &file);
 
   // Fill the IOBlockQueue.
   // @para i_keys - keys of file to fill to the IOBlockQueue

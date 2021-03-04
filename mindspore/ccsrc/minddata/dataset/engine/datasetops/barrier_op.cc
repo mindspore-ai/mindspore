@@ -24,24 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-BarrierOp::Builder::Builder() {
-  // Some arguments to the BarrierOp constructor have a default argument that is taken
-  // from the client config.
-  // The user may choose to change these values for the construction of the BarrierOp by
-  // using the various builder set methods.
-
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status BarrierOp::Builder::SanityCheck() const { return Status::OK(); }
-
-Status BarrierOp::Builder::Build(std::shared_ptr<BarrierOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<BarrierOp>(builder_op_connector_size_, builder_condition_name_, builder_condition_func_);
-  return Status::OK();
-}
-
 // Construct BarrierOp here, local variables initialized in operator due to tree construction restrictions
 BarrierOp::BarrierOp(int32_t op_connector_size, const std::string &condition_name, py::function condition_func)
     : PipelineOp(op_connector_size),

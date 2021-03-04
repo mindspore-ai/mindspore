@@ -17,8 +17,10 @@
 #include <string>
 #include "common/common.h"
 #include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/source/album_op.h"
-#include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
+
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
@@ -27,47 +29,34 @@
 #include "minddata/dataset/include/dataset/transforms.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::ERROR;
 
-std::shared_ptr<BatchOp> Batch(int batch_size = 1, bool drop = false);
+// std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
 
-std::shared_ptr<RepeatOp> Repeat(int repeat_cnt);
+// std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 
-std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
+std::shared_ptr<AlbumOp> AlbumSchema(int64_t num_works, int64_t conns, std::string path, std::string schema_file,
+                                     std::vector<std::string> column_names = {}, bool shuf = false,
+                                     std::shared_ptr<SamplerRT> sampler = nullptr, bool decode = false) {
+  auto schema = std::make_unique<DataSchema>();
+  // AlbumOp constructor for reference
+  // AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool do_decode,
+  //         const std::set<std::string> &exts, std::unique_ptr<DataSchema> data_schema,
+  //         std::shared_ptr<SamplerRT> sampler)
 
-std::shared_ptr<AlbumOp> Album(int64_t num_works, int64_t rows, int64_t conns, std::string path, bool shuf = false,
-                               std::unique_ptr<SamplerRT> sampler = nullptr, bool decode = false) {
-  std::shared_ptr<AlbumOp> so;
-  AlbumOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_works)
-                .SetAlbumDir(path)
+  // default schema construction:
 
-                .SetOpConnectorSize(conns)
-                .SetExtensions({".json"})
-                     .SetSampler(std::move(sampler))
-                     .SetDecode(decode)
-                     .Build(&so);
-  return so;
-}
-
-std::shared_ptr<AlbumOp> AlbumSchema(int64_t num_works, int64_t rows, int64_t conns, std::string path,
-                                     std::string schema_file, std::vector<std::string> column_names = {},
-                                     bool shuf = false, std::unique_ptr<SamplerRT> sampler = nullptr,
-                                     bool decode = false) {
-  std::shared_ptr<AlbumOp> so;
-  AlbumOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_works)
-                .SetSchemaFile(schema_file)
-                .SetColumnsToLoad(column_names)
-                .SetAlbumDir(path)
-
-                .SetOpConnectorSize(conns)
-                .SetExtensions({".json"})
-    .SetSampler(std::move(sampler))
-    .SetDecode(decode)
-    .Build(&so);
+  (void)schema->LoadSchemaFile(schema_file, column_names);
+  std::set<std::string> ext = {".json"};
+  if (sampler == nullptr) {
+    const int64_t num_samples = 0;  // default num samples of 0 means to sample entire set of data
+    const int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
+  }
+  std::shared_ptr<AlbumOp> so =
+    std::make_shared<AlbumOp>(num_works, path, conns, decode, ext, std::move(schema), std::move(sampler));
   return so;
 }
 
@@ -79,11 +68,11 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchema) {
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "label", "id"};
-  auto op1 = AlbumSchema(16, 2, 32, folder_path, schema_file, column_names, false);
-  auto op2 = Repeat(2);
+  auto op1 = AlbumSchema(16, 32, folder_path, schema_file, column_names, false);
+  std::shared_ptr<RepeatOp> op2 = Repeat(2);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);
-  auto tree = Build({op1, op2});
+  std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   ASSERT_OK(tree->Prepare());
   ASSERT_OK(tree->Launch());
   DatasetIterator di(tree);
@@ -105,11 +94,11 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchema) {
 TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaNoOrder) {
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
-  auto op1 = AlbumSchema(16, 2, 32, folder_path, schema_file);
-  auto op2 = Repeat(2);
+  auto op1 = AlbumSchema(16, 32, folder_path, schema_file);
+  std::shared_ptr<RepeatOp> op2 = Repeat(2);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);
-  auto tree = Build({op1, op2});
+  std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   ASSERT_OK(tree->Prepare());
   ASSERT_OK(tree->Launch());
   DatasetIterator di(tree);
@@ -132,11 +121,11 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithSchemaFloat) {
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   // add the priority column
   std::string schema_file = datasets_root_path_ + "/testAlbum/floatSchema.json";
-  auto op1 = AlbumSchema(16, 2, 32, folder_path, schema_file);
-  auto op2 = Repeat(2);
+  auto op1 = AlbumSchema(16, 32, folder_path, schema_file);
+  std::shared_ptr<RepeatOp> op2 = Repeat(2);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);
-  auto tree = Build({op1, op2});
+  std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   tree->Prepare();
   ASSERT_OK(tree->Launch());
   DatasetIterator di(tree);
@@ -161,11 +150,11 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithFullSchema) {
   std::string folder_path = datasets_root_path_ + "/testAlbum/images";
   // add the priority column
   std::string schema_file = datasets_root_path_ + "/testAlbum/fullSchema.json";
-  auto op1 = AlbumSchema(16, 2, 32, folder_path, schema_file);
-  auto op2 = Repeat(2);
+  auto op1 = AlbumSchema(16, 32, folder_path, schema_file);
+  std::shared_ptr<RepeatOp> op2 = Repeat(2);
   op1->set_total_repeats(2);
   op1->set_num_repeats_per_epoch(2);
-  auto tree = Build({op1, op2});
+  std::shared_ptr<ExecutionTree> tree = Build({op1, op2});
   ASSERT_OK(tree->Prepare());
   ASSERT_OK(tree->Launch());
   DatasetIterator di(tree);
@@ -188,4 +177,3 @@ TEST_F(MindDataTestAlbum, TestSequentialAlbumWithFullSchema) {
   MS_LOG(INFO) << "got rows: " << i << "\n";
   EXPECT_TRUE(i == 14);
 }
-

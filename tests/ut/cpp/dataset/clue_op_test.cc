@@ -28,18 +28,44 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
-class MindDataTestCLUEOp : public UT::DatasetOpTesting {
+class MindDataTestCLUEOp : public UT::DatasetOpTesting {};
 
-};
+std::shared_ptr<ClueOp> Clue(std::vector<std::string> file_list, int32_t op_connector_size,
+                             std::map<std::string, std::string> key_map) {
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto worker_connector_size = config_manager->worker_connector_size();
+  auto num_workers = config_manager->num_parallel_workers();
+  int64_t num_samples = 0;
+  bool shuffle = false;
+  int32_t num_devices = 1;
+  int32_t device_id = 0;
+  ColKeyMap ck_map;
+  for (auto &p : key_map) {
+    std::vector<std::string> res = {};
+    std::stringstream ss(p.second);
+    std::string item = "";
+
+    while (getline(ss, item, '/')) {
+      res.push_back(item);
+    }
+
+    ck_map.insert({p.first, res});
+  }
+
+  std::shared_ptr<ClueOp> so = std::make_shared<ClueOp>(num_workers, num_samples, worker_connector_size, ck_map,
+                                                        file_list, op_connector_size, shuffle, num_devices, device_id);
+  so->Init();
+  return so;
+}
 
 TEST_F(MindDataTestCLUEOp, TestCLUEBasic) {
   // Start with an empty execution tree
   auto tree = std::make_shared<ExecutionTree>();
-
+  Status rc;
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testCLUE/afqmc/train.json";
   std::map<std::string, std::string> key_map;
@@ -47,15 +73,7 @@ TEST_F(MindDataTestCLUEOp, TestCLUEBasic) {
   key_map["sentence2"] = "sentence2";
   key_map["label"] = "label";
 
-  std::shared_ptr<ClueOp> op;
-  ClueOp::Builder builder;
-  builder.SetClueFilesList({dataset_path})
-
-    .SetOpConnectorSize(2)
-    .SetColsKeyMap(key_map);
-
-  Status rc = builder.Build(&op);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<ClueOp> op = Clue({dataset_path}, 2, key_map);
 
   rc = tree->AssociateNode(op);
   ASSERT_TRUE(rc.IsOk());

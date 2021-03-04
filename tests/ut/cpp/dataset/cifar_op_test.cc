@@ -25,6 +25,7 @@
 #include "minddata/dataset/engine/datasetops/source/cifar_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
@@ -43,15 +44,36 @@ std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops
 
 std::shared_ptr<CifarOp> Cifarop(uint64_t num_works, uint64_t rows, uint64_t conns, std::string path,
                                  std::shared_ptr<SamplerRT> sampler = nullptr, bool cifar10 = true) {
-  std::shared_ptr<CifarOp> so;
-  CifarOp::Builder builder;
-  Status rc = builder.SetNumWorkers(num_works)
-                .SetCifarDir(path)
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  auto num_workers = cfg->num_parallel_workers();
+  std::string usage = "";
+  CifarOp::CifarType cifar_type;
+  if (cifar10) {
+    cifar_type = CifarOp::kCifar10;
+  } else {
+    cifar_type = CifarOp::kCifar100;
+  }
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  TensorShape scalar = TensorShape::CreateScalar();
+  (void)schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1));
+  if (cifar_type == CifarOp::kCifar10) {
+    (void)schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar));
+  } else {
+    (void)schema->AddColumn(
+      ColDescriptor("coarse_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar));
+    TensorShape another_scalar = TensorShape::CreateScalar();
+    (void)schema->AddColumn(
+      ColDescriptor("fine_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &another_scalar));
+  }
 
-                .SetOpConnectorSize(conns)
-                .SetSampler(std::move(sampler))
-                .SetCifarType(cifar10)
-                .Build(&so);
+  if (sampler == nullptr) {
+    const int64_t num_samples = 0;
+    const int64_t start_index = 0;
+    sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
+  }
+
+  std::shared_ptr<CifarOp> so =
+    std::make_shared<CifarOp>(cifar_type, usage, num_workers, path, conns, std::move(schema), std::move(sampler));
   return so;
 }
 

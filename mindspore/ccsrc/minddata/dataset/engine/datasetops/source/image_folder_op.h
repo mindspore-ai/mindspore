@@ -44,7 +44,7 @@
 
 namespace mindspore {
 namespace dataset {
-// Forward declares
+/// Forward declares
 template <typename T>
 class Queue;
 
@@ -53,102 +53,6 @@ using FolderImagesPair = std::shared_ptr<std::pair<std::string, std::queue<Image
 
 class ImageFolderOp : public MappableLeafOp {
  public:
-  class Builder {
-   public:
-    // Constructor for Builder class of ImageFolderOp
-    // @param  int32_t numWrks - number of parallel workers
-    // @param dir - directory folder got ImageNetFolder
-    Builder();
-
-    // Destructor.
-    ~Builder() = default;
-
-    // Setter method
-    // @param int32_t size
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t size) {
-      builder_op_connector_size_ = size;
-      return *this;
-    }
-
-    // Setter method
-    // @param std::set<std::string> & exts, file extensions to be read
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetExtensions(const std::set<std::string> &exts) {
-      builder_extensions_ = exts;
-      return *this;
-    }
-
-    // Setter method
-    // @paramconst std::map<std::string, int32_t>& map - a class name to label map
-    // @return
-    Builder &SetClassIndex(const std::map<std::string, int32_t> &map) {
-      builder_labels_to_read_ = map;
-      return *this;
-    }
-
-    // Setter method
-    // @param bool do_decode
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetDecode(bool do_decode) {
-      builder_decode_ = do_decode;
-      return *this;
-    }
-
-    // Setter method
-    // @param int32_t num_workers
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      builder_num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method
-    // @param std::shared_ptr<Sampler> sampler
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      builder_sampler_ = std::move(sampler);
-      return *this;
-    }
-
-    // Setter method
-    // @param const std::string & dir
-    // @return
-    Builder &SetImageFolderDir(const std::string &dir) {
-      builder_dir_ = dir;
-      return *this;
-    }
-
-    // Whether dir are walked recursively
-    // @param bool recursive - if set to false, only get dirs in top level dir
-    // @return
-    Builder &SetRecursive(bool recursive) {
-      builder_recursive_ = recursive;
-      return *this;
-    }
-
-    // Check validity of input args
-    // @return Status The status code returned
-    Status SanityCheck();
-
-    // The builder "build" method creates the final object.
-    // @param std::shared_ptr<ImageFolderOp> *op - DatasetOp
-    // @return Status The status code returned
-    Status Build(std::shared_ptr<ImageFolderOp> *op);
-
-   private:
-    bool builder_decode_;
-    bool builder_recursive_;
-    std::string builder_dir_;
-    int32_t builder_num_workers_;
-    int32_t builder_rows_per_buffer_;
-    int32_t builder_op_connector_size_;
-    std::set<std::string> builder_extensions_;
-    std::shared_ptr<SamplerRT> builder_sampler_;
-    std::unique_ptr<DataSchema> builder_schema_;
-    std::map<std::string, int32_t> builder_labels_to_read_;
-  };
-
   // Constructor
   // @param int32_t num_wkrs - Num of workers reading images in parallel
   // @param std::string - dir directory of ImageNetFolder
@@ -159,12 +63,12 @@ class ImageFolderOp : public MappableLeafOp {
                 const std::set<std::string> &exts, const std::map<std::string, int32_t> &map,
                 std::unique_ptr<DataSchema>, std::shared_ptr<SamplerRT> sampler);
 
-  // Destructor.
+  /// Destructor.
   ~ImageFolderOp() = default;
 
-  // Initialize ImageFOlderOp related var, calls the function to walk all files
-  // @param - std::string dir file directory to  ImageNetFolder
-  // @return Status The status code returned
+  /// Initialize ImageFOlderOp related var, calls the function to walk all files
+  /// @param - std::string dir file directory to  ImageNetFolder
+  /// @return Status The status code returned
   Status PrescanMasterEntry(const std::string &dir);
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a TensorRow and push it to Connector
@@ -177,24 +81,24 @@ class ImageFolderOp : public MappableLeafOp {
   // @return Status The status code returned
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
-  // A print method typically used for debugging
-  // @param out
-  // @param show_all
+  /// A print method typically used for debugging
+  /// @param out
+  /// @param show_all
   void Print(std::ostream &out, bool show_all) const override;
 
-  // This function is a hack! It is to return the num_class and num_rows. The result
-  // returned by this function may not be consistent with what image_folder_op is going to return
-  // user this at your own risk!
+  /// This function is a hack! It is to return the num_class and num_rows. The result
+  /// returned by this function may not be consistent with what image_folder_op is going to return
+  /// user this at your own risk!
   static Status CountRowsAndClasses(const std::string &path, const std::set<std::string> &exts, int64_t *num_rows,
                                     int64_t *num_classes, std::map<std::string, int32_t> class_index);
 
-  // Op name getter
-  // @return Name of the current Op
+  /// Op name getter
+  /// @return Name of the current Op
   std::string Name() const override { return "ImageFolderOp"; }
 
-  /// \brief Base-class override for GetNumClasses
-  /// \param[out] num_classes the number of classes
-  /// \return Status of the function
+  //// \brief Base-class override for GetNumClasses
+  //// \param[out] num_classes the number of classes
+  //// \return Status of the function
   Status GetNumClasses(int64_t *num_classes) override;
 
  private:
@@ -205,21 +109,21 @@ class ImageFolderOp : public MappableLeafOp {
   // @return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
-  // @param std::string & dir - dir to walk all images
-  // @param int64_t * cnt - number of non folder files under the current dir
-  // @return
+  /// @param std::string & dir - dir to walk all images
+  /// @param int64_t * cnt - number of non folder files under the current dir
+  /// @return
   Status RecursiveWalkFolder(Path *dir);
 
-  // start walking of all dirs
-  // @return
+  /// start walking of all dirs
+  /// @return
   Status StartAsyncWalk();
 
   // Called first when function is called
   // @return
   Status LaunchThreadsAndInitOp() override;
 
-  // Private function for computing the assignment of the column name map.
-  // @return - Status
+  /// Private function for computing the assignment of the column name map.
+  /// @return - Status
   Status ComputeColMap() override;
 
   std::string folder_path_;  // directory of image folder

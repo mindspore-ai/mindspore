@@ -37,28 +37,6 @@ constexpr int32_t ShuffleOp::kShuffleStateInit;
 constexpr int32_t ShuffleOp::kShuffleStateActive;
 constexpr int32_t ShuffleOp::kShuffleStateDrain;
 
-// Builder constructor. Creates the builder object.
-ShuffleOp::Builder::Builder() : build_shuffle_size_(0), build_reshuffle_each_epoch_(true) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  build_op_connector_size_ = cfg->op_connector_size();
-  build_shuffle_seed_ = GetSeed();
-}
-
-Status ShuffleOp::Builder::SanityCheck() const {
-  if (build_shuffle_size_ < 2) {
-    RETURN_STATUS_UNEXPECTED("Invalid parameter, shuffle buffer size must be greater than 1.");
-  }
-  return Status::OK();
-}
-
-// The builder "build" method creates the final object.
-Status ShuffleOp::Builder::Build(std::shared_ptr<ShuffleOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<ShuffleOp>(build_shuffle_size_, build_shuffle_seed_, build_op_connector_size_,
-                                     build_reshuffle_each_epoch_);
-  return Status::OK();
-}
-
 // Constructor of the ShuffleOp
 ShuffleOp::ShuffleOp(int32_t shuffle_size, uint32_t shuffle_seed, int32_t op_connector_size, bool reset_every_epoch)
     : PipelineOp(op_connector_size),

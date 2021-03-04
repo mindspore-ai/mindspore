@@ -83,13 +83,6 @@ void DeviceQueueOp::ReleaseData(void *addr, int32_t worker_id) {
 }
 #endif
 
-DeviceQueueOp::Builder::Builder(int32_t prefetch_size)
-    : builder_prefetch_size_(prefetch_size),
-      builder_device_id_(0),
-      builder_device_type_(DeviceType::CPU),
-      builder_channel_name_(""),
-      builder_total_batch_(0) {}
-
 Status DeviceQueueOp::EoeReceived(int32_t worker_id) {
   state_ = OpState::kDeOpIdle;
   return Status::OK();

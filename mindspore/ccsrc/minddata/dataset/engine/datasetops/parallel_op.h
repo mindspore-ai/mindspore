@@ -96,11 +96,11 @@ class ParallelOp : public DatasetOp {
   // @return Status The status code returned
   virtual Status WorkerEntry(int32_t workerId) = 0;
 
-  /// This function is only intended to be called by CallbackManager within the master thread of ParallelOp
-  /// The expected behavior is this, when this function is invoked, this function will block until all the workers
-  /// have finished their remaining work and go to sleep. Since all ParallelOps use a QueueList to sync with master.
-  /// They would automatically wait on the QueueList when they are done.
-  /// \return Status
+  // This function is only intended to be called by CallbackManager within the master thread of ParallelOp
+  // The expected behavior is this, when this function is invoked, this function will block until all the workers
+  // have finished their remaining work and go to sleep. Since all ParallelOps use a QueueList to sync with master.
+  // They would automatically wait on the QueueList when they are done.
+  // \return Status
   Status WaitForWorkers() override;
 
   // Wait post used to perform the pausing logic

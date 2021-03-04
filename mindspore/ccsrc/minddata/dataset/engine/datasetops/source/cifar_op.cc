@@ -30,60 +30,12 @@
 
 namespace mindspore {
 namespace dataset {
+
 constexpr uint32_t kCifarImageHeight = 32;
 constexpr uint32_t kCifarImageWidth = 32;
 constexpr uint32_t kCifarImageChannel = 3;
 constexpr uint32_t kCifarBlockImageNum = 5;
 constexpr uint32_t kCifarImageSize = kCifarImageHeight * kCifarImageWidth * kCifarImageChannel;
-
-CifarOp::Builder::Builder() : sampler_(nullptr), usage_("") {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  num_workers_ = cfg->num_parallel_workers();
-  op_connect_size_ = cfg->op_connector_size();
-  cifar_type_ = kCifar10;
-}
-
-Status CifarOp::Builder::Build(std::shared_ptr<CifarOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  if (sampler_ == nullptr) {
-    const int64_t num_samples = 0;
-    const int64_t start_index = 0;
-    sampler_ = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
-  }
-  schema_ = std::make_unique<DataSchema>();
-  TensorShape scalar = TensorShape::CreateScalar();
-  RETURN_IF_NOT_OK(schema_->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
-  if (cifar_type_ == kCifar10) {
-    RETURN_IF_NOT_OK(
-      schema_->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-  } else {
-    RETURN_IF_NOT_OK(schema_->AddColumn(
-      ColDescriptor("coarse_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
-    TensorShape another_scalar = TensorShape::CreateScalar();
-    RETURN_IF_NOT_OK(schema_->AddColumn(
-      ColDescriptor("fine_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &another_scalar)));
-  }
-
-  *ptr = std::make_shared<CifarOp>(cifar_type_, usage_, num_workers_, dir_, op_connect_size_, std::move(schema_),
-                                   std::move(sampler_));
-  return Status::OK();
-}
-
-Status CifarOp::Builder::SanityCheck() {
-  const std::set<std::string> valid = {"test", "train", "all", ""};
-  Path dir(dir_);
-  std::string err_msg;
-  err_msg +=
-    dir.IsDirectory() == false ? "Invalid parameter, Cifar path is invalid or not set, path: " + dir_ + ".\n" : "";
-  err_msg += num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                   std::to_string(num_workers_) + ".\n"
-                               : "";
-  err_msg += valid.find(usage_) == valid.end()
-               ? "Invalid parameter, usage must be 'train','test' or 'all', but got " + usage_ + ".\n"
-               : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
-}
-
 CifarOp::CifarOp(CifarType type, const std::string &usage, int32_t num_works, const std::string &file_dir,
                  int32_t queue_size, std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
     : MappableLeafOp(num_works, queue_size, std::move(sampler)),
@@ -327,9 +279,34 @@ Status CifarOp::GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) co
 
 Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage, bool isCIFAR10, int64_t *count) {
   // the logic of counting the number of samples is copied from ReadCifar100Block() and ReadCifar10Block()
-  std::shared_ptr<CifarOp> op;
+  // Note that this count logic is flawed, should be able to copy the sampler of original CifarOp without state
   *count = 0;
-  RETURN_IF_NOT_OK(Builder().SetCifarDir(dir).SetCifarType(isCIFAR10).SetUsage(usage).Build(&op));
+  const int64_t num_samples = 0;
+  const int64_t start_index = 0;
+  auto new_sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples);
+
+  CifarType type = isCIFAR10 ? kCifar10 : kCifar100;
+  // build a new unique schema object
+  auto new_schema = std::make_unique<DataSchema>();
+  TensorShape scalar = TensorShape::CreateScalar();
+  RETURN_IF_NOT_OK(
+    new_schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
+  if (type == kCifar10) {
+    RETURN_IF_NOT_OK(
+      new_schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
+  } else {
+    RETURN_IF_NOT_OK(new_schema->AddColumn(
+      ColDescriptor("coarse_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
+    TensorShape another_scalar = TensorShape::CreateScalar();
+    RETURN_IF_NOT_OK(new_schema->AddColumn(
+      ColDescriptor("fine_label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &another_scalar)));
+  }
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  int32_t num_workers = cfg->num_parallel_workers();
+  int32_t op_connect_size = cfg->op_connector_size();
+  std::shared_ptr<CifarOp> op = std::make_shared<CifarOp>(type, usage, num_workers, dir, op_connect_size,
+                                                          std::move(new_schema), std::move(new_sampler));
+
   RETURN_IF_NOT_OK(op->GetCifarFiles());
   if (op->cifar_type_ == kCifar10) {
     constexpr int64_t num_cifar10_records = 10000;

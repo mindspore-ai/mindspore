@@ -31,63 +31,6 @@ namespace dataset {
 
 class FilterOp : public ParallelOp {
  public:
-  // The nested builder class inside of the FilterOp is used to help manage all of
-  // the arguments for constructing it.  Use the builder by setting each argument
-  // with the provided set methods, and then finally call the build method to execute
-  // the actual construction.
-  class Builder {
-   public:
-    // Builder constructor. Creates the builder object.
-    // @note No default args.
-    // @return This is a constructor.
-    Builder();
-
-    // Default destructor
-    ~Builder() = default;
-
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetPredicateFunc(std::shared_ptr<TensorOp> func) {
-      builder_predicate_func_ = std::move(func);
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetInColNames(const std::vector<std::string> &in_col_names) {
-      build_in_col_names_ = in_col_names;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetNumWorkers(int32_t num_workers) {
-      builder_num_workers_ = num_workers;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t connector_size) {
-      builder_op_connector_size_ = connector_size;
-      return *this;
-    }
-
-    // The builder "build" method creates the final object.
-    // @param ptr The shared_ptr to the new FilterOp object.
-    // @return Status.
-    Status Build(std::shared_ptr<FilterOp> *ptr);
-
-   private:
-    // Sanity check for builder class args.
-    // @return Status The status code returned.
-    Status SanityCheck();
-    std::vector<std::string> build_in_col_names_;
-    std::shared_ptr<TensorOp> builder_predicate_func_;
-    int32_t builder_num_workers_;
-    int32_t builder_op_connector_size_;
-  };
-
   enum filterCtrl : int8_t { kFilterEmpty = 0, kFilterPartial = 1, kFilterFull = 2, kFilterEoe = 3, kFilterEof = 4 };
 
   // Constructor of FilterOp

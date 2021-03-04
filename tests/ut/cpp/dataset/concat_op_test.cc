@@ -20,28 +20,28 @@
 #include "common/common.h"
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestConcatOp : public UT::DatasetOpTesting {};
 
-
 TEST_F(MindDataTestConcatOp, TestConcatProject) {
-/* Tree:
- *
- *            OpId(2) ConcatOp
- *            /               \
- *     OpId(0) TFReaderOp    OpId(1) TFReaderOp
- *
- * Start with an empty execution tree
-*/
+  /* Tree:
+   *
+   *            OpId(2) ConcatOp
+   *            /               \
+   *     OpId(0) TFReaderOp    OpId(1) TFReaderOp
+   *
+   * Start with an empty execution tree
+   */
   MS_LOG(INFO) << "UT test TestConcatProject.";
   auto my_tree = std::make_shared<ExecutionTree>();
 
@@ -49,33 +49,41 @@ TEST_F(MindDataTestConcatOp, TestConcatProject) {
   dataset_path = datasets_root_path_ + "/testTFTestAllTypes/test.data";
 
   // TFReaderOp1
-  std::shared_ptr<TFReaderOp> my_tfreader_op1;
-  TFReaderOp::Builder builder1;
-  builder1.SetDatasetFilesList({dataset_path}).SetWorkerConnectorSize(16);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  int32_t num_workers = 1;  // only one file -> one worker
+  int32_t worker_connector_size = 16;
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {dataset_path};
   std::unique_ptr<DataSchema> schema1 = std::make_unique<DataSchema>();
   schema1->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema1Row.json", {});
-  builder1.SetDataSchema(std::move(schema1));
-  Status rc = builder1.Build(&my_tfreader_op1);
-  ASSERT_TRUE(rc.IsOk());
+  // 16 is worker connector size
+  std::shared_ptr<TFReaderOp> my_tfreader_op1 =
+    std::make_shared<TFReaderOp>(num_workers, worker_connector_size, 0, files, std::move(schema1), op_connector_size,
+                                 columns_to_load, false, 1, 0, false);
+  Status rc = my_tfreader_op1->Init();
+  ASSERT_OK(rc);
   rc = my_tree->AssociateNode(my_tfreader_op1);
-  ASSERT_TRUE(rc.IsOk());
+  ASSERT_OK(rc);
 
   // TFReaderOp2
-  std::shared_ptr<TFReaderOp> my_tfreader_op2;
-  TFReaderOp::Builder builder2;
-  builder2.SetDatasetFilesList({dataset_path}).SetWorkerConnectorSize(16);
   std::unique_ptr<DataSchema> schema2 = std::make_unique<DataSchema>();
   schema2->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema1Row.json", {});
-  builder2.SetDataSchema(std::move(schema2));
-  rc = builder2.Build(&my_tfreader_op2);
-  ASSERT_TRUE(rc.IsOk());
+  // 16 is worker connector size
+  std::shared_ptr<TFReaderOp> my_tfreader_op2 =
+    std::make_shared<TFReaderOp>(num_workers, worker_connector_size, 0, files, std::move(schema2), op_connector_size,
+                                 columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op2->Init();
+  ASSERT_OK(rc);
   rc = my_tree->AssociateNode(my_tfreader_op2);
-  ASSERT_TRUE(rc.IsOk());
+  ASSERT_OK(rc);
 
   // Creating ConcatOp
-  std::shared_ptr<ConcatOp> concat_op;
-  rc = ConcatOp::Builder().Build(&concat_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<SamplerRT> concat_sampler = std::make_shared<DistributedSamplerRT>(1, 0, false, 0);
+  std::vector<std::pair<int, int>> flag_and_nums = {};
+  std::vector<std::pair<int, int>> children_start_end_index = {};
+  std::shared_ptr<ConcatOp> concat_op =
+    std::make_shared<ConcatOp>(std::move(concat_sampler), flag_and_nums, children_start_end_index);
 
   rc = my_tree->AssociateNode(concat_op);
   EXPECT_TRUE(rc.IsOk());
@@ -115,5 +123,5 @@ TEST_F(MindDataTestConcatOp, TestConcatProject) {
     EXPECT_TRUE(rc.IsOk());
     row_count++;
   }
-  ASSERT_EQ(row_count, 2); // Should be 2 rows fetched
+  ASSERT_EQ(row_count, 2);  // Should be 2 rows fetched
 }

@@ -35,68 +35,6 @@ namespace dataset {
 
 class BucketBatchByLengthOp : public PipelineOp {
  public:
-  class Builder {
-   public:
-    Builder(const std::vector<std::string> &length_dependent_columns, const std::vector<int32_t> &bucket_boundaries,
-            const std::vector<int32_t> &bucket_batch_sizes);
-
-    ~Builder() = default;
-
-    Builder &SetLengthDependentColumns(std::vector<std::string> length_dependent_columns) {
-      builder_length_dependent_columns_ = length_dependent_columns;
-      return *this;
-    }
-
-    Builder &SetBucketBoundaries(std::vector<int32_t> bucket_boundaries) {
-      builder_bucket_boundaries_ = bucket_boundaries;
-      return *this;
-    }
-
-    Builder &SetBucketBatchSizes(std::vector<int32_t> bucket_batch_sizes) {
-      builder_bucket_batch_sizes_ = bucket_batch_sizes;
-      return *this;
-    }
-
-    Builder &SetElementLengthFunction(std::shared_ptr<TensorOp> element_length_function) {
-      builder_element_length_function_ = element_length_function;
-      return *this;
-    }
-
-    Builder &SetPadInfo(PadInfo pad_info) {
-      builder_pad_info_ = pad_info;
-      return *this;
-    }
-
-    Builder &SetPadToBucketBoundary(bool pad_to_bucket_boundary) {
-      builder_pad_to_bucket_boundary_ = pad_to_bucket_boundary;
-      return *this;
-    }
-
-    Builder &SetDropRemainder(bool drop_remainder) {
-      builder_drop_remainder_ = drop_remainder;
-      return *this;
-    }
-
-    Builder &SetOpConnectorSize(int32_t op_connector_size) {
-      builder_op_connector_size_ = op_connector_size;
-      return *this;
-    }
-
-    Status Build(std::shared_ptr<BucketBatchByLengthOp> *new_bucket_batch_by_length_op);
-
-   private:
-    Status SanityCheck() const;
-
-    std::vector<std::string> builder_length_dependent_columns_;
-    std::vector<int32_t> builder_bucket_boundaries_;
-    std::vector<int32_t> builder_bucket_batch_sizes_;
-    std::shared_ptr<TensorOp> builder_element_length_function_;
-    PadInfo builder_pad_info_;
-    bool builder_pad_to_bucket_boundary_;
-    bool builder_drop_remainder_;
-    int32_t builder_op_connector_size_;
-  };
-
   BucketBatchByLengthOp(const std::vector<std::string> &length_dependent_columns,
                         const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
                         std::shared_ptr<TensorOp> element_length_function, const PadInfo &pad_info,

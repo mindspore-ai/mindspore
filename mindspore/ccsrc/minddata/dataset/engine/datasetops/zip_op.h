@@ -32,46 +32,6 @@ namespace dataset {
 
 class ZipOp : public PipelineOp {
  public:
-  //  The nested builder class inside of the ZipOp is used to help manage all of
-  //  the arguments for constructing it.  Use the builder by setting each argument
-  //  with the provided set methods, and then finally call the build method to execute
-  //  the actual construction.
-
-  class Builder {
-   public:
-    // Builder constructor.  Creates the builder object.
-    // @note No default args
-    // @return This is a constructor.
-    Builder();
-
-    // Default destructor
-    ~Builder() = default;
-
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetRowsPerBuffer(int32_t rows_per_buffer) {
-      builder_rows_per_buffer_ = rows_per_buffer;
-      return *this;
-    }
-
-    // Setter method.
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetOpConnectorSize(int32_t op_connector_size) {
-      builder_op_connector_size_ = op_connector_size;
-      return *this;
-    }
-
-    // The builder "build" method creates the ZipOp dataset Operator.
-    // @return shared_ptr to the new ZipOp object
-    Status Build(std::shared_ptr<ZipOp> *);
-
-   private:
-    int32_t builder_rows_per_buffer_;
-    int32_t builder_op_connector_size_;
-
-    Status SanityCheck() const;
-  };
-
   // Constructor for ZipOp
   // @param op_connector_size - connector size
   explicit ZipOp(int32_t op_connector_size);
@@ -84,8 +44,8 @@ class ZipOp : public PipelineOp {
   Status EoeReceived(int32_t) override;
 
   // Print function for Zip
-  // @param out - output stream to print to
-  // @param show_all - if it should print everything
+  // \param[in] out - output stream to print to
+  // \param[in] show_all - if it should print everything
   void Print(std::ostream &out, bool show_all) const override;
 
   // Provide stream operator for displaying it
@@ -116,8 +76,8 @@ class ZipOp : public PipelineOp {
   Status drainPipeline(int32_t skip_child, int32_t worker_id, bool retry_if_eoe);
 
   // Merges 1 row from each childIterator together
-  // @param new_zip_row - input and output, will be a non-empty row if all rows from childConnectors are non-empty
-  // @param updateColumnMapping - generates a new column name to index mapping (mColNameIdMap) if set to true
+  // \param[in] new_zip_row - input and output, will be a non-empty row if all rows from childConnectors are non-empty
+  // \param[in] updateColumnMapping - generates a new column name to index mapping (mColNameIdMap) if set to true
   // @details merge rows from iterator together. This is the main functionality for ZipOp
   //          this function takes one row and fills it with tensors from rows fetched
   //          from childIterators.

@@ -29,31 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-
-Status FilterOp::Builder::SanityCheck() {
-  std::string err;
-  err += builder_op_connector_size_ <= 0 ? "Invalid parameter, connector_size must be greater than 0, but got " +
-                                             std::to_string(builder_op_connector_size_) + ".\n"
-                                         : "";
-  err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
-                                       std::to_string(builder_num_workers_) + ".\n"
-                                   : "";
-  return err.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
-}
-
-FilterOp::Builder::Builder() {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  builder_num_workers_ = cfg->num_parallel_workers();
-  builder_op_connector_size_ = cfg->op_connector_size();
-}
-
-Status FilterOp::Builder::Build(std::shared_ptr<FilterOp> *ptr) {
-  RETURN_IF_NOT_OK(SanityCheck());
-  *ptr = std::make_shared<FilterOp>(std::move(build_in_col_names_), builder_num_workers_, builder_op_connector_size_,
-                                    builder_predicate_func_);
-  return Status::OK();
-}
-
 FilterOp::FilterOp(const std::vector<std::string> &in_col_names, int32_t num_workers, int32_t op_queue_size,
                    std::shared_ptr<TensorOp> predicate_func)
     : ParallelOp(num_workers, op_queue_size), predicate_func_(std::move(predicate_func)), in_columns_(in_col_names) {

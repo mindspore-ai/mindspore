@@ -21,18 +21,17 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include "minddata/dataset/util/random.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
-class MindDataTestShuffleOp : public UT::DatasetOpTesting {
-
-};
-
+class MindDataTestShuffleOp : public UT::DatasetOpTesting {};
 
 // Test info:
 // - Dataset from testDataset1 has 10 rows, 2 columns.
@@ -54,19 +53,19 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic1) {
 
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  rc = TFReaderOp::Builder()
-         .SetDatasetFilesList({dataset_path})
-
-         .SetWorkerConnectorSize(16)
-         .SetNumWorkers(1)
-      .Build(&my_tfreader_op);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> columns_to_load = {};
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  std::vector<std::string> files = {dataset_path};
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 16, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  std::shared_ptr<ShuffleOp> my_shuffle_op;
-  rc = ShuffleOp::Builder().SetShuffleSize(4).Build(&my_shuffle_op);
-  EXPECT_TRUE(rc.IsOk());
+  uint32_t shuffle_seed = GetSeed();
+  std::shared_ptr<ShuffleOp> my_shuffle_op = std::make_shared<ShuffleOp>(4, shuffle_seed, op_connector_size, true);
   rc = my_tree->AssociateNode(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -102,7 +101,6 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic1) {
     row_count++;
   }
   ASSERT_EQ(row_count, 10);
-
 }
 
 // Test info:
@@ -127,18 +125,18 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic2) {
 
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path})
-      .SetWorkerConnectorSize(16)
-      .SetNumWorkers(2)
-      .Build(&my_tfreader_op);
-  ASSERT_TRUE(rc.IsOk());
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {dataset_path};
+  std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 16, 0, files, std::move(schema), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
+  EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  std::shared_ptr<ShuffleOp> my_shuffle_op;
-  rc = ShuffleOp::Builder().SetShuffleSize(4).SetShuffleSeed(100).Build(&my_shuffle_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ShuffleOp> my_shuffle_op = std::make_shared<ShuffleOp>(4, 100, op_connector_size, true);
   rc = my_tree->AssociateNode(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -197,17 +195,17 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic3) {
 
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path})
-      .SetWorkerConnectorSize(16)
-      .SetNumWorkers(2)
-      .Build(&my_tfreader_op);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {dataset_path};
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    1, 16, 0, files, std::make_unique<DataSchema>(), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
   EXPECT_TRUE(rc.IsOk());
   my_tree->AssociateNode(my_tfreader_op);
-  std::shared_ptr<ShuffleOp> my_shuffle_op;
-  rc = ShuffleOp::Builder().SetShuffleSize(100).Build(&my_shuffle_op);
-  EXPECT_TRUE(rc.IsOk());
+  uint32_t shuffle_seed = GetSeed();
+  std::shared_ptr<ShuffleOp> my_shuffle_op = std::make_shared<ShuffleOp>(100, shuffle_seed, op_connector_size, true);
   rc = my_tree->AssociateNode(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
 
@@ -244,7 +242,6 @@ TEST_F(MindDataTestShuffleOp, TestShuffleBasic3) {
   ASSERT_EQ(row_count, 10);
 }
 
-
 // Test info:
 // - Dataset from testDataset1 has 10 rows, 2 columns.
 // - RowsPerBuffer buffer setting of 3 does not divide evenly into total rows thereby causing
@@ -270,38 +267,31 @@ TEST_F(MindDataTestShuffleOp, TestRepeatShuffle) {
 
   std::string dataset_path;
   dataset_path = datasets_root_path_ + "/testDataset1/testDataset1.data";
-  std::shared_ptr<TFReaderOp> my_tfreader_op;
-  rc = TFReaderOp::Builder()
-      .SetDatasetFilesList({dataset_path})
-      .SetWorkerConnectorSize(16)
-      .SetNumWorkers(2)
-      .Build(&my_tfreader_op);
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  int32_t op_connector_size = config_manager->op_connector_size();
+  std::vector<std::string> columns_to_load = {};
+  std::vector<std::string> files = {dataset_path};
+  std::shared_ptr<TFReaderOp> my_tfreader_op = std::make_shared<TFReaderOp>(
+    2, 16, 0, files, std::make_unique<DataSchema>(), op_connector_size, columns_to_load, false, 1, 0, false);
+  rc = my_tfreader_op->Init();
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssociateNode(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
-  std::shared_ptr<ShuffleOp> my_shuffle_op;
-  rc = ShuffleOp::Builder()
-      .SetShuffleSize(4)
-      .SetShuffleSeed(100)
-      .SetReshuffleEachEpoch(true)
-      .Build(&my_shuffle_op);
-  EXPECT_TRUE(rc.IsOk());
+  std::shared_ptr<ShuffleOp> my_shuffle_op = std::make_shared<ShuffleOp>(4, 100, op_connector_size, true);
   rc = my_tree->AssociateNode(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
-  uint32_t numRepeats = 2;
-  std::shared_ptr<RepeatOp> my_repeat_op;
-  rc = RepeatOp::Builder(numRepeats).Build(&my_repeat_op);
-  EXPECT_TRUE(rc.IsOk());
+  uint32_t num_repeats = 2;
+  std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(num_repeats);
   rc = my_tree->AssociateNode(my_repeat_op);
   EXPECT_TRUE(rc.IsOk());
 
   // Set children/root layout.
-  my_shuffle_op->set_total_repeats(numRepeats);
-  my_shuffle_op->set_num_repeats_per_epoch(numRepeats);
+  my_shuffle_op->set_total_repeats(num_repeats);
+  my_shuffle_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_shuffle_op);
   EXPECT_TRUE(rc.IsOk());
-  my_tfreader_op->set_total_repeats(numRepeats);
-  my_tfreader_op->set_num_repeats_per_epoch(numRepeats);
+  my_tfreader_op->set_total_repeats(num_repeats);
+  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_shuffle_op->AddChild(my_tfreader_op);
   EXPECT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_repeat_op);

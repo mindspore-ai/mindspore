@@ -16,11 +16,23 @@
 #include <memory>
 #include <string>
 #include "minddata/dataset/core/client.h"
+// #include "minddata/dataset/core/pybind_support.h"
+// #include "minddata/dataset/core/tensor.h"
+// #include "minddata/dataset/core/tensor_shape.h"
+// #include "minddata/dataset/engine/datasetops/batch_op.h"
+#include "minddata/dataset/engine/datasetops/source/tf_reader_op.h"
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 #include "securec.h"
 #include "minddata/dataset/util/status.h"
+// #include "pybind11/numpy.h"
+// #include "pybind11/pybind11.h"
+
+// #include "utils/ms_utils.h"
+
+// #include "minddata/dataset/engine/db_connector.h"
+// #include "minddata/dataset/kernels/data/data_utils.h"
 
 namespace common = mindspore::common;
 namespace de = mindspore::dataset;
@@ -33,44 +45,6 @@ using mindspore::MsLogLevel::ERROR;
 class MindDataTestBatchOp : public UT::DatasetOpTesting {
  protected:
 };
-
-std::shared_ptr<de::BatchOp> Batch(int32_t batch_size = 1, bool drop = false) {
-  Status rc;
-  std::shared_ptr<de::BatchOp> op;
-  rc = de::BatchOp::Builder(batch_size).SetDrop(drop).Build(&op);
-  EXPECT_TRUE(rc.IsOk());
-  return op;
-}
-
-std::shared_ptr<de::RepeatOp> Repeat(int repeat_cnt = 1) {
-  de::RepeatOp::Builder builder(repeat_cnt);
-  std::shared_ptr<de::RepeatOp> op;
-  Status rc = builder.Build(&op);
-  EXPECT_TRUE(rc.IsOk());
-  return op;
-}
-
-std::shared_ptr<de::TFReaderOp> TFReader(std::string schema, int num_works = 8) {
-  std::shared_ptr<de::TFReaderOp> so;
-  de::TFReaderOp::Builder builder;
-  builder.SetDatasetFilesList({schema}).SetNumWorkers(num_works);
-  Status rc = builder.Build(&so);
-  return so;
-}
-
-std::shared_ptr<de::ExecutionTree> Build(std::vector<std::shared_ptr<de::DatasetOp>> ops) {
-  std::shared_ptr<de::ExecutionTree> tree = std::make_shared<de::ExecutionTree>();
-  for (int i = 0; i < ops.size(); i++) {
-    tree->AssociateNode(ops[i]);
-    if (i > 0) {
-      ops[i]->AddChild(ops[i - 1]);
-    }
-    if (i == ops.size() - 1) {
-      tree->AssignRoot(ops[i]);
-    }
-  }
-  return tree;
-}
 
 TEST_F(MindDataTestBatchOp, TestSimpleBatch) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
@@ -321,13 +295,25 @@ TEST_F(MindDataTestBatchOp, TestBatchDropTrueRepeat) {
 
 TEST_F(MindDataTestBatchOp, TestSimpleBatchPadding) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
-  std::shared_ptr<BatchOp> op;
   PadInfo m;
   std::shared_ptr<Tensor> pad_value;
   Tensor::CreateEmpty(TensorShape::CreateScalar(), DataType(DataType::DE_FLOAT32), &pad_value);
   pad_value->SetItemAt<float>({}, -1);
   m.insert({"col_1d", std::make_pair(TensorShape({4}), pad_value)});
-  de::BatchOp::Builder(12).SetDrop(false).SetPaddingMap(m, true).Build(&op);
+  /*
+  std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
+  auto op_connector_size = config_manager->op_connector_size();
+  auto num_workers = config_manager->num_parallel_workers();
+  std::vector<std::string> input_columns = {};
+  std::vector<std::string> output_columns = {};
+  pybind11::function batch_size_func;
+  pybind11::function batch_map_func;
+  */
+  int32_t batch_size = 12;
+  bool drop = false;
+  std::shared_ptr<BatchOp> op = Batch(batch_size, drop, m);
+  //  std::make_shared<BatchOp>(batch_size, drop, pad, op_connector_size, num_workers, input_columns, output_columns,
+  //                            batch_size_func, batch_map_func, m);
   auto tree = Build({TFReader(schema_file), op});
   tree->Prepare();
   Status rc = tree->Launch();
