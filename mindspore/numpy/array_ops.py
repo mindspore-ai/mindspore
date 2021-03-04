@@ -809,13 +809,13 @@ def atleast_1d(*arys):
         >>> c = np.ones(5)
         >>> output = np.atleast_1d(a, b, c)
         >>> print(output)
-            (Tensor(shape=[2, 3], dtype=Float32, value=
+            [Tensor(shape=[2, 3], dtype=Float32, value=
             [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
             [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]),
             Tensor(shape=[1], dtype=Float32, value= [1.00000000e+000]),
             Tensor(shape=[5], dtype=Float32,
             value= [1.00000000e+000, 1.00000000e+000, 1.00000000e+000,
-            1.00000000e+000, 1.00000000e+000]))
+            1.00000000e+000, 1.00000000e+000])]
     """
     return _atleast_xd(1, arys)
 
@@ -846,13 +846,13 @@ def atleast_2d(*arys):
         >>> c = np.ones(5)
         >>> output = np.atleast_2d(a, b, c)
         >>> print(output)
-            (Tensor(shape=[2, 3], dtype=Float32, value=
+            [Tensor(shape=[2, 3], dtype=Float32, value=
             [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
             [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]),
             Tensor(shape=[1, 1], dtype=Float32, value= [[1.00000000e+000]]),
             Tensor(shape=[1, 5], dtype=Float32,
             value= [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000,
-            1.00000000e+000, 1.00000000e+000]]))
+            1.00000000e+000, 1.00000000e+000]])]
     """
     return _atleast_xd(2, arys)
 
@@ -886,13 +886,13 @@ def atleast_3d(*arys):
         >>> c = np.ones(5)
         >>> output = np.atleast_3d(a, b, c)
         >>> print(output)
-            (Tensor(shape=[2, 3, 1], dtype=Float32, value=
+            [Tensor(shape=[2, 3, 1], dtype=Float32, value=
             [[[1.00000000e+000], [1.00000000e+000], [1.00000000e+000]],
             [[1.00000000e+000], [1.00000000e+000], [1.00000000e+000]]]),
             Tensor(shape=[1, 1, 1], dtype=Float32, value= [[[1.00000000e+000]]]),
             Tensor(shape=[1, 5, 1], dtype=Float32,
             value= [[[1.00000000e+000], [1.00000000e+000], [1.00000000e+000],
-            [1.00000000e+000], [1.00000000e+000]]]))
+            [1.00000000e+000], [1.00000000e+000]]])]
     """
     res = []
     for arr in arys:
@@ -1378,7 +1378,7 @@ def split(x, indices_or_sections, axis=0):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> input_x = np.arange(9)
+        >>> input_x = np.arange(9).astype('float32')
         >>> output = np.split(input_x, 3)
         >>> print(output)
         (Tensor(shape=[3], dtype=Float32,
@@ -1455,7 +1455,7 @@ def vsplit(x, indices_or_sections):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> input_x = np.arange(9).reshape((3, 3))
+        >>> input_x = np.arange(9).reshape((3, 3)).astype('float32')
         >>> output = np.vsplit(input_x, 3)
         >>> print(output)
         (Tensor(shape=[1, 3], dtype=Float32,
@@ -1497,7 +1497,7 @@ def hsplit(x, indices_or_sections):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> input_x = np.arange(6).reshape((2, 3))
+        >>> input_x = np.arange(6).reshape((2, 3)).astype('float32')
         >>> output = np.hsplit(input_x, 3)
         >>> print(output)
         (Tensor(shape=[2, 1], dtype=Float32,
@@ -1542,7 +1542,7 @@ def dsplit(x, indices_or_sections):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> input_x = np.arange(6).reshape((1, 2, 3))
+        >>> input_x = np.arange(6).reshape((1, 2, 3)).astype('float32')
         >>> output = np.dsplit(input_x, 3)
         >>> print(output)
         (Tensor(shape=[1, 2, 1], dtype=Float32,

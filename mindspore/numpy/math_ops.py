@@ -1474,10 +1474,10 @@ def log(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = np.array([1, 2, 3]).astype('float32')
+        >>> x = np.array([2, 3, 4]).astype('float32')
         >>> output = np.log(x)
         >>> print(output)
-        [1.09861   1.3862929 1.6094407]
+        [0.69314575 1.09861    1.3862929 ]
     """
     return _apply_tensor_op(F.log, x, out=out, where=where, dtype=dtype)
 
@@ -1718,8 +1718,8 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         [0. 1.]
         >>> output = np.amin(a, axis=1)
         >>> print(output)
-        [1. 3.]
-        >>> output = np.amax(a, where=np.array([False, True]), initial=10, axis=0)
+        [0, 2]
+        >>> output = np.amin(a, where=np.array([False, True]), initial=10, axis=0)
         >>> print(output)
         [10.  1.]
     """
@@ -2288,10 +2288,10 @@ def positive(a, out=None, where=True, dtype=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = np.asarray([1, -1])
+        >>> a = np.asarray([1, -1]).astype('float32')
         >>> output = np.positive(a)
         >>> print(output)
-        [1, -1]
+        [1. -1.]
     """
     _check_input_tensor(a)
     neg_tensor = F.neg_tensor(a)
@@ -2328,10 +2328,10 @@ def negative(a, out=None, where=True, dtype=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = np.asarray([1, -1])
+        >>> a = np.asarray([1, -1]).astype('float32')
         >>> output = np.negative(a)
         >>> print(output)
-        [-1, 1]
+        [-1. 1.]
     """
     _check_input_tensor(a)
     return _apply_tensor_op(F.neg_tensor, a, out=out, where=where, dtype=dtype)
