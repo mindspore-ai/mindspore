@@ -56,7 +56,7 @@ char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
  * @param msOutputs
  * @return
  */
-std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
+std::string ProcessRunnetResult(const int RET_CATEGORY_SUM,
                                 std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
     // Get the branch of the model output.
     // Use iterators to get map elements.
@@ -80,7 +80,7 @@ std::string ProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const la
     // Score for each category.
     // Converted to text information that needs to be displayed in the APP.
     std::string categoryScore = "";
-    categoryScore += labels_name_map[maxIndex];
+    categoryScore += std::to_string(maxIndex);
     return categoryScore;
 }
 
@@ -272,8 +272,7 @@ Java_com_mindspore_classificationforpet_gallery_classify_TrackingMobile_runNet(J
         msOutputs.insert(std::pair<std::string, mindspore::tensor::MSTensor *>{name, temp_dat});
     }
 
-    std::string resultStr = ProcessRunnetResult(::RET_PET_DETAILED_SUM,
-                                                ::labels_name_pet_detailed_map, msOutputs);
+    std::string resultStr = ProcessRunnetResult(::RET_PET_DETAILED_SUM, msOutputs);
 
     const char *resultCharData = resultStr.c_str();
     return (env)->NewStringUTF(resultCharData);

@@ -133,21 +133,18 @@ public class MainActivity extends AppCompatActivity implements OnBackgroundImage
 
     private void openAppDetails() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("HiMindSpore需要访问 “相机” 和 “外部存储器”，请到 “应用信息 -> 权限” 中授予！");
-        builder.setPositiveButton("去手动授权", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                intent.addCategory(Intent.CATEGORY_DEFAULT);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                startActivity(intent);
-            }
+        builder.setMessage(getString(R.string.app_choose_authority));
+        builder.setPositiveButton(getString(R.string.app_choose_authority_manual), (dialog, which) -> {
+            Intent intent = new Intent();
+            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+            startActivity(intent);
         });
-        builder.setNegativeButton("取消", null);
+        builder.setNegativeButton(getString(R.string.app_choose_cancle), null);
         builder.show();
     }
 
@@ -247,8 +244,6 @@ public class MainActivity extends AppCompatActivity implements OnBackgroundImage
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
-
     }
 
     private void initMindspore(Bitmap bitmap) {
@@ -265,8 +260,10 @@ public class MainActivity extends AppCompatActivity implements OnBackgroundImage
             long startTime = System.currentTimeMillis();
             String result = trackingMobile.MindSpore_runnet(bitmap);
             long endTime = System.currentTimeMillis();
+            String[] IMAGECONTENT = getResources().getStringArray(R.array.image_category_pet);
+            int nameIndex = Integer.parseInt(result);
             progressBar.setVisibility(View.GONE);
-            textResult.setText(result);
+            textResult.setText(IMAGECONTENT[nameIndex]);
             Log.d(TAG, "RUNNET CONSUMING：" + (endTime - startTime) + "ms");
             Log.d(TAG, "result：" + result);
         } else {
@@ -289,14 +286,16 @@ public class MainActivity extends AppCompatActivity implements OnBackgroundImage
             progressBar.setVisibility(View.GONE);
             Log.d(TAG, "RUNNET CONSUMING：" + (endTime - startTime) + "ms");
             Log.d(TAG, "result：" + result);
+            String[] IMAGECONTENT = getResources().getStringArray(R.array.image_category);
 
             if (!TextUtils.isEmpty(result)) {
                 String[] resultArray = result.split(";");
                 for (String singleRecognitionResult : resultArray) {
                     String[] singleResult = singleRecognitionResult.split(":");
+                    int nameIndex = Integer.parseInt(singleResult[0]);
                     float score = Float.parseFloat(singleResult[1]);
                     if (score > 0.5) {
-                        recognitionObjectBeanList.add(new RecognitionImageBean(singleResult[0], score));
+                        recognitionObjectBeanList.add(new RecognitionImageBean(IMAGECONTENT[nameIndex], score));
                     }
                 }
                 Collections.sort(recognitionObjectBeanList, (t1, t2) -> Float.compare(t2.getScore(), t1.getScore()));

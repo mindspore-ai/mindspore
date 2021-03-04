@@ -1,22 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PetClassification</string>
-    <string name="action_settings">设置</string>
+    <string name="action_settings">Settings</string>
 
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
 
     <string name="image_invalid">The image path you selected is not valid. Please choose again</string>
     <string name="train_invalid">Sorry, there is no object identified in this picture. Try another picture</string>
 
-    <string name="app_result_identifying">正在识别...</string>
+    <string name="app_result_identifying">Identifying…</string>
     <string name="app_choose_an_image">Choose an image</string>
     <string name="app_photo">PHOTO</string>
     <string name="app_camera">CAMERA</string>
     <string name="app_scan">SCAN</string>
     <string name="app_choose_a_sample">Choose a sample</string>
-    <string name="app_choose_authority">PetClassification需要访问 “相机” 和 “外部存储器”，请到 “应用信息 -> 权限” 中授予！</string>
-    <string name="app_choose_authority_manual">去手动授权</string>
-    <string name="app_choose_cancle">取消</string>
-
+    <string name="app_choose_authority">PetClassification needs to access “Camera” and “External Storage”, please use "Application Information -> Permission" to grant authority. </string>
+    <string name="app_choose_authority_manual"> Manually authorize this APP. </string>
+    <string name="app_choose_cancle">Cancel</string>
     <string-array name="image_category_pet">
         <item>Cat</item>
         <item>Dog</item>
@@ -434,6 +434,4 @@
         <item>Cookie</item>
         <item>Canoe</item>
     </string-array>
-
-
 </resources>

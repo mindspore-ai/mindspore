@@ -116,7 +116,6 @@ public class TrackingMobile {
         InputStream is = null;
         try {
             is = new FileInputStream(modelPath);
-//            is = mActivity.getAssets().open(modelPath);
             byte[] bytes = new byte[is.available()];
             is.read(bytes);
             return ByteBuffer.allocateDirect(bytes.length).put(bytes);

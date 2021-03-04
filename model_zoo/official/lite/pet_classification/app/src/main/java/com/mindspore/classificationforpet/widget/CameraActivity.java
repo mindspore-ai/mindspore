@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.mindspore.classificationforpet.widget;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -54,7 +54,6 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate");
         setContentView(R.layout.activity_camera);
 
         filePath = getIntent().getStringExtra("FILEPATH");
@@ -96,7 +95,9 @@ public class CameraActivity extends AppCompatActivity {
             long startTime = System.currentTimeMillis();
             String result = trackingMobile.MindSpore_runnet(bitmap);
             long endTime = System.currentTimeMillis();
-            resultText.setText(TextUtils.isEmpty(result) ? "正在识别..." : result);
+            String[] IMAGECONTENT = getResources().getStringArray(R.array.image_category_pet);
+            int nameIndex = Integer.parseInt(result);
+            resultText.setText(IMAGECONTENT[nameIndex]);
             Log.d(TAG, "RUNNET CONSUMING：" + (endTime - startTime) + "ms");
             Log.d(TAG, "result：" + result);
         } else {
@@ -111,13 +112,15 @@ public class CameraActivity extends AppCompatActivity {
             long endTime = System.currentTimeMillis();
             Log.d(TAG, "RUNNET CONSUMING：" + (endTime - startTime) + "ms");
             Log.d(TAG, "result：" + result);
+            String[] IMAGECONTENT = getResources().getStringArray(R.array.image_category);
             if (!TextUtils.isEmpty(result)) {
                 String[] resultArray = result.split(";");
                 for (String singleRecognitionResult : resultArray) {
                     String[] singleResult = singleRecognitionResult.split(":");
+                    int nameIndex = Integer.parseInt(singleResult[0]);
                     float score = Float.parseFloat(singleResult[1]);
                     if (score > 0.5) {
-                        recognitionObjectBeanList.add(new RecognitionImageBean(singleResult[0], score));
+                        recognitionObjectBeanList.add(new RecognitionImageBean(IMAGECONTENT[nameIndex], score));
                     }
                 }
                 Collections.sort(recognitionObjectBeanList, (t1, t2) -> Float.compare(t2.getScore(), t1.getScore()));
