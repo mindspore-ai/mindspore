@@ -18,12 +18,12 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
-from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 class Net(nn.Cell):
     def __init__(self, axis=()):
         super(Net, self).__init__()
-        self.centralization = P.Centralization()
+        self.centralization = inner.Centralization()
         self.axis = axis
 
     @ms_function
