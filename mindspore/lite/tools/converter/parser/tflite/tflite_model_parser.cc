@@ -319,7 +319,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     op_inputs.emplace_back(value_node);
     op_inputs.emplace_back(make_tuple_cnode);
     auto cnode = func_graph_->NewCNode(op_inputs);
-    cnode->set_fullname_with_scope("return");
+    cnode->set_fullname_with_scope("Return");
     func_graph_->set_return(cnode);
   } else {
     auto returnPrim = GetReturnPrim();
@@ -339,7 +339,7 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     }
     op_inputs.emplace_back(cnode);
     auto returnCnode = func_graph_->NewCNode(op_inputs);
-    returnCnode->set_fullname_with_scope("return");
+    returnCnode->set_fullname_with_scope("Return");
     func_graph_->set_return(returnCnode);
   }
   return RET_OK;

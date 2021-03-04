@@ -908,7 +908,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
     auto value_node = NewValueNode(return_prim_ptr);
     std::vector<AnfNodePtr> op_inputs = {value_node, make_tuple_cnode};
     auto cnode = anf_graph->NewCNode(op_inputs);
-    cnode->set_fullname_with_scope("return");
+    cnode->set_fullname_with_scope("Return");
     anf_graph->set_return(cnode);
   } else {
     auto return_prim_ptr = GetReturnPrim();
@@ -919,7 +919,7 @@ STATUS TFModelParser::MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes,
     auto value_node = NewValueNode(return_prim_ptr);
     std::vector<AnfNodePtr> op_inputs{value_node, output_nodes->front()};
     auto return_cnode = anf_graph->NewCNode(op_inputs);
-    return_cnode->set_fullname_with_scope("return");
+    return_cnode->set_fullname_with_scope("Return");
     anf_graph->set_return(return_cnode);
   }
   return RET_OK;

@@ -133,7 +133,7 @@ static KernelGraphPtr CreateKernelGraph() {
   next_cnode_ptr = kernelptr_floor;
 
   // return res
-  auto p_return = std::make_shared<Primitive>("return");
+  auto p_return = std::make_shared<Primitive>("Return");
   inputs.clear();
   inputs.push_back(NewValueNode(p_return));
   inputs.push_back(next_cnode_ptr);

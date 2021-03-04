@@ -249,7 +249,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
     op_inputs.emplace_back(make_tuple_cnode);
     auto cnode = func_graph_->NewCNode(op_inputs);
     MS_ASSERT(nullptr != cnode);
-    cnode->set_fullname_with_scope("return");
+    cnode->set_fullname_with_scope("Return");
     func_graph_->set_return(cnode);
   } else {
     auto return_prim_ptr = GetReturnPrim();
@@ -270,7 +270,7 @@ int AnfImporterFromMetaGraphT::AddReturnCNode() {
       MS_LOG(ERROR) << "NewCNode is nullptr";
       return RET_NULL_PTR;
     }
-    return_cnode->set_fullname_with_scope("return");
+    return_cnode->set_fullname_with_scope("Return");
     func_graph_->set_return(return_cnode);
   }
   return RET_OK;

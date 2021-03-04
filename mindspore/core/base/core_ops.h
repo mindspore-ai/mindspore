@@ -401,7 +401,7 @@ inline const PrimitivePtr kPrimFloorMod = std::make_shared<Primitive>("FloorMod"
 inline const PrimitivePtr kPrimWhere = std::make_shared<Primitive>("Where");
 
 // Statements
-inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("return");
+inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("Return");
 inline const PrimitivePtr kPrimSwitch = std::make_shared<Primitive>("switch");
 inline const PrimitivePtr kPrimSwitchLayer = std::make_shared<Primitive>("switch_layer");
 inline const PrimitivePtr kPrimAssign = std::make_shared<Primitive>("Assign");

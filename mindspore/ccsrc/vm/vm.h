@@ -63,7 +63,7 @@ using InstType = std::pair<Instruction, VectorRef>;
 using InstSet = std::vector<InstType>;
 using InstFunctionMap = std::map<Instruction, std::function<void(const VectorRef &)>>;
 
-const std::vector<std::string> inst_str{"call",          "tail_call", "return",    "partial",     "switch",
+const std::vector<std::string> inst_str{"call",          "tail_call", "Return",    "partial",     "switch",
                                         "switch_return", "tuple",     "input",     "external",    "push",
                                         "primitive",     "graph",     "pad_stack", "switch_layer"};
 class StructPartial : public Base {

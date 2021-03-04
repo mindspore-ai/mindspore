@@ -348,17 +348,17 @@ TEST_F(TestStepParallel, CreatOpInstance1) {
 }
 
 TEST_F(TestStepParallel, OperatorInstance) {
-  // creat attrs and prim
+  // create  attrs and prim
   PrimitivePtr prim = NewValueNode(prim::kPrimMatMul)->value()->cast<PrimitivePtr>();
   ValuePtr transpose_a = MakeValue(false);
   ValuePtr transpose_b = MakeValue(false);
   prim->set_attr("transpose_a", transpose_a);
   prim->set_attr("transpose_b", transpose_b);
   auto attrs = prim->attrs();
-  // creat strategy
+  // create  strategy
   Strategys strategy = {{2, 2}, {2, 4}};
   StrategyPtr strategyPtr = parallel::NewStrategy(0, strategy);
-  // creat shape
+  // create  shape
   Shapes inputs_shape = std::vector<Shape>{{64, 32}, {32, 64}};
   Shapes outputs_shape = std::vector<Shape>{{64, 64}};
   std::vector<Shapes> shape = {inputs_shape, outputs_shape};
@@ -433,7 +433,7 @@ TEST_F(TestStepParallel, ForwardCommunication1) {
     }
     auto &inputs = node->cast<CNodePtr>()->inputs();
     PrimitivePtr prim = inputs[0]->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
-    if (prim->name() == "return" || prim->name() == "MatMul") {
+    if (prim->name() == "Return" || prim->name() == "MatMul") {
       if (!inputs[1]->isa<Parameter>()) {
         CNodePtr pre_node = inputs[1]->cast<CNodePtr>();
         PrimitivePtr pre_prim = pre_node->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
@@ -497,7 +497,7 @@ TEST_F(TestStepParallel, ForwardCommunication3) {
 }
 
 TEST_F(TestStepParallel, GetTensorInLayout) {
-  // creat attrs and prim
+  // create  attrs and prim
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   Shape inputs_x_dims = {64, 32};
   Shape inputs_y_dims = {32, 64};
@@ -511,10 +511,10 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   prim->set_attr("transpose_a", transpose_a);
   prim->set_attr("transpose_b", transpose_b);
   auto attrs = prim->attrs();
-  // creat strategy
+  // create  strategy
   Strategys strategy = {{2, 2}, {2, 4}};
   StrategyPtr strategyPtr = parallel::NewStrategy(0, strategy);
-  // creat shape
+  // create  shape
   Shapes inputs_shape = std::vector<Shape>{{64, 32}, {32, 64}};
   Shapes outputs_shape = std::vector<Shape>{{64, 64}};
   std::vector<Shapes> shape = {inputs_shape, outputs_shape};
