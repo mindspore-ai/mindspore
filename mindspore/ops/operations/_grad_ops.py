@@ -183,7 +183,8 @@ class SqrtGrad(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype, dout_dtype):
         args = {"x": x_dtype, "dout": dout_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
+        valid_types = [mstype.float16, mstype.float32, mstype.float64]
+        validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
         return x_dtype
 
 

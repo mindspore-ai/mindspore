@@ -170,6 +170,23 @@ void ReciprocalGrad(const T *input, const T *dout, T *output, const size_t count
   return;
 }
 
+template void SqrtGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                               cudaStream_t cuda_stream);
+template void RsqrtGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                                cudaStream_t cuda_stream);
+template void AsinGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                               cudaStream_t cuda_stream);
+template void ACosGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                               cudaStream_t cuda_stream);
+template void AtanGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                               cudaStream_t cuda_stream);
+template void AsinhGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                                cudaStream_t cuda_stream);
+template void AcoshGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                                cudaStream_t cuda_stream);
+template void ReciprocalGrad<double>(const double *input, const double *dout, double *output, const size_t count,
+                                     cudaStream_t cuda_stream);
+
 template void SqrtGrad<float>(const float *input, const float *dout, float *output, const size_t count,
                               cudaStream_t cuda_stream);
 template void RsqrtGrad<float>(const float *input, const float *dout, float *output, const size_t count,
