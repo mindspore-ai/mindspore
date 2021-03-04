@@ -1810,8 +1810,17 @@ bool PynativeExecutor::ParseAssignExprNode(const std::shared_ptr<parse::ParseAst
     if (func_name == parse::NAMED_PRIMITIVE_SUBSCRIPT) {
       py::object slice_node = parse::python_adapter::GetPyObjAttr(func_node, parse::NAMED_PRIMITIVE_SLICE);
       py::object value_in_slice_node = parse::python_adapter::GetPyObjAttr(slice_node, parse::NAMED_PRIMITIVE_VALUE);
+      if (py::isinstance<py::none>(value_in_slice_node)) {
+        MS_LOG(DEBUG) << "Parse value node is none!";
+        return false;
+      }
       const auto &node_name_in_slice_node = ParseNodeName(ast, value_in_slice_node, parse::AST_MAIN_TYPE_EXPR);
-      if (cell_input_args_.find(node_name_in_slice_node) != cell_input_args_.end()) {
+      std::string id;
+      if (py::hasattr(value_in_slice_node, "id")) {
+        id = py::cast<std::string>(value_in_slice_node.attr("id"));
+      }
+      if (cell_input_args_.find(node_name_in_slice_node) != cell_input_args_.end() ||
+          (!id.empty() && cell_input_args_.find(id) != cell_input_args_.end())) {
         return true;
       }
     }
