@@ -396,7 +396,7 @@ void FunctionBlock::FindIsolatedNodes() {
     if (used.find(node) == used.end() && CanBeIsolatedNode(var_name, node)) {
       // We don't call AddIsolatedNode(node) anymore.
       // If need, to call FindIsolatedNodes() in appropriate place.
-      MS_LOG(ERROR) << "Isolated node found(NoUse), node: " << node->DebugString(2) << ", var_name: " << var_name;
+      MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(2) << ", var_name: " << var_name;
     }
   }
 }
