@@ -47,14 +47,14 @@ cifar_cfg = edict({
 # config for vgg16, imagenet2012
 imagenet_cfg = edict({
     "num_classes": 1000,
-    "lr": 0.01,
+    "lr": 0.04,
     "lr_init": 0.01,
     "lr_max": 0.1,
     "lr_epochs": '30,60,90,120',
     "lr_scheduler": 'cosine_annealing',
     "warmup_epochs": 0,
-    "batch_size": 32,
-    "max_epoch": 150,
+    "batch_size": 64,
+    "max_epoch": 90,
     "momentum": 0.9,
     "weight_decay": 1e-4,
     "loss_scale": 1024,
