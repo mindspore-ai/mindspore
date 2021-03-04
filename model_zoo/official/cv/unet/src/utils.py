@@ -51,9 +51,23 @@ class StepLossTimeMonitor(Callback):
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
                 cb_params.cur_epoch_num, cur_step_in_epoch))
+        self.losses.append(loss)
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
             # TEST
             print("step: %s, loss is %s, fps is %s" % (cur_step_in_epoch, loss, step_fps), flush=True)
+
+    def epoch_begin(self, run_context):
+        self.epoch_start = time.time()
+        self.losses = []
+
+    def epoch_end(self, run_context):
+        cb_params = run_context.original_args()
+        epoch_cost = time.time() - self.epoch_start
+        step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
+        step_fps = self.batch_size * 1.0 * step_in_epoch / epoch_cost
+        print("epoch: {:3d}, avg loss:{:.4f}, total cost: {:.3f} s, per step fps:{:5.3f}".format(
+            cb_params.cur_epoch_num, np.mean(self.losses), epoch_cost, step_fps), flush=True)
+
 
 def mask_to_image(mask):
     return Image.fromarray((mask * 255).astype(np.uint8))

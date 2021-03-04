@@ -42,7 +42,8 @@ if __name__ == "__main__":
     if cfg['model'] == 'unet_medical':
         net = UNetMedical(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
     elif cfg['model'] == 'unet_nested':
-        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'], use_deconv=cfg['use_deconv'],
+                         use_bn=cfg['use_bn'], use_ds=False)
     elif cfg['model'] == 'unet_simple':
         net = UNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
     else:
