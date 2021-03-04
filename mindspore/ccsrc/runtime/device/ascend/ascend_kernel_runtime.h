@@ -57,6 +57,8 @@ class AscendKernelRuntime : public KernelRuntime {
   void *context() const override { return rt_context_; }
   void PreInit() override;
   uint64_t GetAvailableMemMaxSize() const override;
+  void *compute_stream() const override { return stream_; }
+  void *communication_stream() const override { return communication_stream_; }
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

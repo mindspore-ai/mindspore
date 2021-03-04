@@ -33,6 +33,7 @@
 #include "utils/ms_context.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/executor/dynamic_kernel.h"
+#include "ir/device_event.h"
 
 using mindspore::tensor::Tensor;
 using std::vector;
@@ -83,6 +84,9 @@ class KernelRuntime {
   uint8_t *MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
     return mem_manager_->MallocMem(type, size, address);
   }
+  uint8_t *MallocCommunicationMemFromMemPool(size_t size) {
+    return mem_manager_->MallocCommunicationMemFromMemPool(size);
+  }
   static void GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod, const AnfNodePtr &kernel,
                             AddressPtrList *kernel_inputs, AddressPtrList *kernel_workspaces,
                             AddressPtrList *kernel_outputs);
@@ -104,6 +108,8 @@ class KernelRuntime {
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
   void AddBufferPtr(std::shared_ptr<char[]> ptr) { buffer_ptrs_.push_back(ptr); }
   void FreeAndClearBufferPtrs() { buffer_ptrs_.clear(); }
+  virtual void *compute_stream() const { return nullptr; }
+  virtual void *communication_stream() const { return nullptr; }
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
@@ -149,7 +155,8 @@ class KernelRuntime {
 #if !defined(_WIN32) && !defined(_WIN64)
   std::shared_ptr<Debugger> debugger_;
 #endif
-  void *stream_ = nullptr;
+  void *stream_{nullptr};
+  void *communication_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
   std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;
   std::vector<std::shared_ptr<char[]>> buffer_ptrs_ = {};

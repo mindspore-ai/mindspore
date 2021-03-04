@@ -16,6 +16,7 @@
 #include "backend/session/gpu_session.h"
 
 #include <string>
+#include <utility>
 #include "backend/optimizer/common/helper.h"
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
@@ -63,6 +64,7 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/gpu/cuda_driver.h"
 #include "runtime/device/gpu/distribution/collective_init.h"
+#include "runtime/device/gpu/gpu_bucket.h"
 #include "utils/ms_utils.h"
 #include "utils/config_manager.h"
 #include "utils/ms_context.h"
@@ -394,6 +396,8 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
   }
+
+  InitAllBucket(graph);
   // Alloc memory in graph mode, including static memory and dynamic memory
   if (!pynative_mode) {
     AllocateMemory(graph.get());
@@ -473,6 +477,12 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   MS_EXCEPTION_IF_NULL(op_run_info);
   BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
+  // wait for allreduce
+  for (auto &tensor : *input_tensors) {
+    if (tensor->NeedWaitDevice()) {
+      tensor->WaitDevice();
+    }
+  }
   // run op
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -547,6 +557,10 @@ void GPUSession::SyncStream() {
   if (!ret) {
     MS_LOG(EXCEPTION) << "Sync stream error!";
   }
+}
+
+std::shared_ptr<device::Bucket> GPUSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
+  return std::make_shared<device::gpu::GPUBucket>(bucket_id, bucket_size);
 }
 }  // namespace gpu
 }  // namespace session

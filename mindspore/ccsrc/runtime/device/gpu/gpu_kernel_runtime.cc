@@ -236,6 +236,11 @@ bool GPUKernelRuntime::InitDevice() {
     MS_LOG(ERROR) << "No default CUDA stream found.";
     return false;
   }
+  GPUDeviceManager::GetInstance().CreateStream(&communication_stream_);
+  if (communication_stream_ == nullptr) {
+    MS_LOG(ERROR) << "Invalid communication stream";
+    return false;
+  }
   return true;
 }
 
@@ -1262,6 +1267,7 @@ session::KernelWithIndex GPUKernelRuntime::GetPrevNodeOutput(const AnfNodePtr &n
 
   return addr_iter->second[i];
 }
+
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

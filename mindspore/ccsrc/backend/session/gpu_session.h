@@ -19,6 +19,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <string>
 #include "backend/session/session_basic.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/session_factory.h"
@@ -44,6 +45,8 @@ class GPUSession : public SessionBasic {
                    const std::vector<int64_t> &tensors_mask) override;
   void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
+  std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) override;
+  std::string GetCommWorldGroup() override { return kNcclWorldGroup; }
 
  private:
   void SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;

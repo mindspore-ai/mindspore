@@ -30,6 +30,7 @@
 #include "base/float16.h"
 #include "utils/shape_utils.h"
 #include "utils/ms_exception.h"
+#include "ir/device_event.h"
 
 // brief mindspore namespace.
 //
@@ -326,6 +327,21 @@ class Tensor : public MetaTensor {
     event_ = nullptr;
   }
 
+  void SetDeviceEvent(const std::shared_ptr<DeviceEvent> &device_event) { device_event_ = device_event; }
+
+  void WaitDevice() {
+    if (device_event_ != nullptr) {
+      device_event_->WaitEvent();
+    }
+  }
+
+  bool NeedWaitDevice() const {
+    if (device_event_ != nullptr) {
+      return device_event_->NeedWait();
+    }
+    return false;
+  }
+
   void set_sync_status(TensorSyncStatus sync_status) { sync_status_ = sync_status; }
 
   TensorSyncStatus sync_status() const { return sync_status_; }
@@ -352,6 +368,7 @@ class Tensor : public MetaTensor {
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
   std::vector<Axis> padding_type_;
   TypePtr cast_dtype_{nullptr};
+  std::shared_ptr<DeviceEvent> device_event_{nullptr};
 };
 using TensorPtr = std::shared_ptr<Tensor>;
 using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;

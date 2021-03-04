@@ -32,6 +32,7 @@
 #include "utils/contract.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
+#include "runtime/device/bucket.h"
 #if !defined(_WIN32) && !defined(_WIN64)
 #include "debug/debugger/debugger.h"
 #endif
@@ -224,12 +225,20 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void UpdateAllGraphDynamicShapeAttr(const std::vector<KernelGraphPtr> &all_graphs);
   void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const;
   void RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const;
+  virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) { return nullptr; }
+  void InitAllBucket(const KernelGraphPtr &graph);
+  void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
+  void ClearAllBucket(const GraphId &graph_id);
+  std::vector<uint32_t> GetAllReduceSplitIndex();
+  virtual std::string GetCommWorldGroup() { return std::string(); }
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
   void InitPsWorker(const KernelGraphPtr &kernel_graph);
 #endif
 
+  std::map<uint32_t, std::vector<std::shared_ptr<device::Bucket>>> bucket_map_;
+  std::map<uint32_t, uint32_t> free_bucket_id_map_;
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
   std::unordered_map<FuncGraphPtr, KernelGraphPtr> front_backend_graph_map_;

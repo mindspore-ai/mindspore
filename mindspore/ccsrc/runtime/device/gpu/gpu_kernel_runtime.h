@@ -47,6 +47,8 @@ class GPUKernelRuntime : public KernelRuntime {
   bool Run(session::KernelGraph *graph, bool is_task_sink) override;
   bool GenDynamicKernel(const session::KernelGraph *graph) override { return true; }
   bool RunDynamicKernelAsync(const session::KernelGraph *graph) override { return true; }
+  void *compute_stream() const override { return stream_; }
+  void *communication_stream() const override { return communication_stream_; }
 
  protected:
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

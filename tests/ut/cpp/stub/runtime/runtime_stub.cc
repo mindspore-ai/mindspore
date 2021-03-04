@@ -160,3 +160,7 @@ RTS_API rtError_t rtSetMsprofReporterCallback(MsprofReporterCallback callback) {
 RTS_API rtError_t rtRegTaskFailCallbackByModule(const char *moduleName, rtTaskFailCallback callback) {
   return RT_ERROR_NONE;
 }
+
+RTS_API rtError_t rtMemsetAsync(void *ptr, uint64_t destMax, uint32_t value, uint64_t count, rtStream_t stream) {
+  return RT_ERROR_NONE;
+}
