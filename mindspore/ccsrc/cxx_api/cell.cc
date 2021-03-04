@@ -78,6 +78,8 @@ GraphCell::GraphCell(Graph &&graph)
   executor_->SetGraph(graph_);
 }
 
+void GraphCell::SetContext(const std::shared_ptr<Context> &context) { return executor_->SetContext(context); }
+
 Status GraphCell::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
   return executor_->Run(inputs, outputs);
