@@ -40,7 +40,7 @@ class OneHotOp:
         >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
         >>> transforms_list = [py_transforms.OneHotOp(num_classes=10, smoothing_rate=0.1)]
         >>> transform = py_transforms.Compose(transforms_list)
-        >>> mnist_dataset = mnist_dataset(input_columns=["label"], operations=transform)
+        >>> mnist_dataset = mnist_dataset.map(input_columns=["label"], operations=transform)
     """
 
     @check_one_hot_op

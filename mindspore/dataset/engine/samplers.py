@@ -203,14 +203,12 @@ class Sampler(BuiltinSampler):
     dataset_size and num_samples will be set by dataset once a dataset iterator is created.
 
     Examples:
-        >>> import mindspore.dataset as ds
+        >>> class ReverseSampler(ds.Sampler):
+        ...     def __iter__(self):
+        ...         for i in range(self.dataset_size - 1, -1, -1):
+        ...             yield i
         >>>
-        >>> class ReverseSampler(ds,Sampler):
-        >>>     def __iter__(self):
-        >>>         for i in range(self.dataset_size - 1, -1, -1):
-        >>>             yield i
-        >>>
-        >>> ds = ds.ImageFolderDataset(path, sampler=ReverseSampler())
+        >>> ds = ds.ImageFolderDataset(image_folder_dataset_dir, sampler=ReverseSampler())
     """
 
     def __init__(self, num_samples=None):
@@ -698,15 +696,11 @@ class SubsetRandomSampler(SubsetSampler):
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>>
         >>> indices = [0, 1, 2, 3, 7, 88, 119]
         >>>
-        >>> # creates a SubsetRandomSampler, will sample from the provided indices
+        >>> # create a SubsetRandomSampler, will sample from the provided indices
         >>> sampler = ds.SubsetRandomSampler(indices)
-        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> data = ds.ImageFolderDataset(image_folder_dataset_dir, num_parallel_workers=8, sampler=sampler)
 
     Raises:
         TypeError: If type of indices element is not a number.

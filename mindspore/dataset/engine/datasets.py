@@ -506,14 +506,18 @@ class Dataset:
             Dataset, dataset applied by the function.
 
         Examples:
-            >>> # Declare a function which returns a Dataset object
-            >>> def flat_map_func(x):
-            ...     image_folder_dataset_dir = text.to_str(x[0])
-            ...     d = ds.ImageFolderDataset(image_folder_dataset_dir)
-            ...     return d
-            >>> # dataset is an instance of a Dataset object.
-            >>> dataset = ds.TextFileDataset(text_file_dataset_dir)
+            >>> # use NumpySliceDataset as an example
+            >>> dataset = ds.NumpySliceDataset([[0, 1], [2, 3]])
+            >>>
+            >>> def flat_map_func(array):
+            ...     # create a NumpySliceDataset with the array
+            ...     dataset = ds.NumpySliceDataset(array)
+            ...     # repeat the dataset twice
+            ...     dataset = dataset.repeat(2)
+            ...     return dataset
+            >>>
             >>> dataset = dataset.flat_map(flat_map_func)
+            >>> # [[0, 1], [0, 1], [2, 3], [2, 3]]
 
         Raises:
             TypeError: If `func` is not a function.
@@ -588,60 +592,40 @@ class Dataset:
 
         Examples:
             >>> # dataset is an instance of Dataset which has 2 columns, "image" and "label".
-            >>> # ds_pyfunc is an instance of Dataset which has 3 columns, "col0", "col1", and "col2".
-            >>> # Each column is a 2D array of integers.
-            >>> # Set the global configuration value for num_parallel_workers to be 2.
-            >>> # Operations which use this configuration value will use 2 worker threads,
-            >>> # unless otherwise specified in the operator's constructor.
-            >>> # set_num_parallel_workers can be called again later if a different
-            >>> # global configuration value for the number of worker threads is desired.
-            >>> ds.config.set_num_parallel_workers(2)
             >>>
             >>> # Define two operations, where each operation accepts 1 input column and outputs 1 column.
-            >>> decode_op = c_vision.Decode(rgb_format=True)
-            >>> random_jitter_op = c_vision.RandomColorAdjust((0.8, 0.8), (1, 1), (1, 1), (0, 0))
+            >>> decode_op = c_vision.Decode(rgb=True)
+            >>> random_jitter_op = c_vision.RandomColorAdjust(brightness=(0.8, 0.8), contrast=(1, 1),
+            ...                                               saturation=(1, 1), hue=(0, 0))
             >>>
-            >>> # 1) Simple map example
-            >>>
-            >>> operations = [decode_op]
-            >>> input_columns = ["image"]
+            >>> # 1) Simple map example.
             >>>
             >>> # Apply decode_op on column "image". This column will be replaced by the outputted
             >>> # column of decode_op. Since column_order is not provided, both columns "image"
             >>> # and "label" will be propagated to the child node in their original order.
-            >>> dataset = dataset.map(operations, input_columns)
+            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"])
             >>>
-            >>> # Rename column "image" to "decoded_image".
-            >>> output_columns = ["decoded_image"]
-            >>> dataset = dataset.map(operations, input_columns, output_columns)
+            >>> # Decode and rename column "image" to "decoded_image".
+            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"], output_columns=["decoded_image"])
             >>>
-            >>> # Specify the order of the columns.
-            >>> column_order ["label", "image"]
-            >>> dataset = dataset.map(operations, input_columns, None, column_order)
+            >>> # Specify the order of the output columns.
+            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
+            ...                       output_columns=None, column_order=["label", "image"])
             >>>
-            >>> # Rename column "image" to "decoded_image" and also specify the order of the columns.
-            >>> column_order ["label", "decoded_image"]
-            >>> output_columns = ["decoded_image"]
-            >>> dataset = dataset.map(operations, input_columns, output_columns, column_order)
+            >>> # Rename column "image" to "decoded_image" and also specify the order of the output columns.
+            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
+            ...                       output_columns=["decoded_image"], column_order=["label", "decoded_image"])
             >>>
             >>> # Rename column "image" to "decoded_image" and keep only this column.
-            >>> column_order ["decoded_image"]
-            >>> output_columns = ["decoded_image"]
-            >>> dataset = dataset.map(operations, input_columns, output_columns, column_order)
+            >>> dataset = dataset.map(operations=[decode_op], input_columns=["image"],
+            ...                       output_columns=["decoded_image"], column_order=["decoded_image"])
             >>>
-            >>> # A simple example using pyfunc: Renaming columns and specifying column order
+            >>> # A simple example for mapping pyfunc. Renaming columns and specifying column order
             >>> # work in the same way as the previous examples.
-            >>> input_columns = ["col0"]
-            >>> operations = [(lambda x: x + 1)]
-            >>> dataset = dataset.map(operations, input_columns)
+            >>> dataset = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
+            >>> dataset = dataset.map(operations=[(lambda x: x + 1)], input_columns=["data"])
             >>>
-            >>> # 2) Map example with more than one operation
-            >>>
-            >>> # If this list of operations is used with map, decode_op will be applied
-            >>> # first, then random_jitter_op will be applied.
-            >>> operations = [decode_op, random_jitter_op]
-            >>>
-            >>> input_columns = ["image"]
+            >>> # 2) Map example with more than one operation.
             >>>
             >>> # Create a dataset where the images are decoded, then randomly color jittered.
             >>> # decode_op takes column "image" as input and outputs one column. The column
@@ -650,47 +634,47 @@ class Dataset:
             >>> # the column outputted by random_jitter_op (the very last operation). All other
             >>> # columns are unchanged. Since column_order is not specified, the order of the
             >>> # columns will remain the same.
-            >>> dataset = dataset.map(operations, input_columns)
+            >>> dataset = dataset.map(operations=[decode_op, random_jitter_op], input_columns=["image"])
             >>>
-            >>> # Create a dataset that is identical to ds_mapped, except the column "image"
-            >>> # that is outputted by random_jitter_op is renamed to "image_transformed".
+            >>> # Rename the column outputted by random_jitter_op to "image_mapped".
             >>> # Specifying column order works in the same way as examples in 1).
-            >>> output_columns = ["image_transformed"]
-            >>> dataset = dataset.map(operation, input_columns, output_columns)
+            >>> dataset = dataset.map(operation=[decode_op, random_jitter_op], input_columns=["image"],
+            ...                       output_columns=["image_mapped"])
             >>>
-            >>> # Multiple operations using pyfunc: Renaming columns and specifying column order
+            >>> # Map with multiple operations using pyfunc. Renaming columns and specifying column order
             >>> # work in the same way as examples in 1).
-            >>> input_columns = ["col0"]
-            >>> operations = [(lambda x: x + x), (lambda x: x - 1)]
-            >>> output_columns = ["col0_mapped"]
-            >>> dataset = dataset.map(operations, input_columns, output_columns)
+            >>> dataset = ds.NumpySlicesDataset(data=[[0, 1, 2]], column_names=["data"])
+            >>> dataset = dataset.map(operations=[(lambda x: x * x), (lambda x: x - 1)], input_columns=["data"],
+            ...                                   output_columns=["data_mapped"])
             >>>
-            >>> # 3) Example where number of input columns is not equal to number of output columns
+            >>> # 3) Example where number of input columns is not equal to number of output columns.
             >>>
             >>> # operations[0] is a lambda that takes 2 columns as input and outputs 3 columns.
             >>> # operations[1] is a lambda that takes 3 columns as input and outputs 1 column.
-            >>> # operations[1] is a lambda that takes 1 column as input and outputs 4 columns.
+            >>> # operations[2] is a lambda that takes 1 column as input and outputs 4 columns.
             >>> #
             >>> # Note: The number of output columns of operation[i] must equal the number of
             >>> # input columns of operation[i+1]. Otherwise, this map call will also result
             >>> # in an error.
-            >>> operations = [(lambda x y: (x, x + y, x + y + 1)),
-            >>>               (lambda x y z: x * y * z),
-            >>>               (lambda x: (x % 2, x % 3, x % 5, x % 7))]
+            >>> operations = [(lambda x, y: (x, x + y, x + y + 1)),
+            ...               (lambda x, y, z: x * y * z),
+            ...               (lambda x: (x % 2, x % 3, x % 5, x % 7))]
             >>>
             >>> # Note: Since the number of input columns is not the same as the number of
             >>> # output columns, the output_columns and column_order parameters must be
             >>> # specified. Otherwise, this map call will also result in an error.
-            >>> input_columns = ["col2", "col0"]
-            >>> output_columns = ["mod2", "mod3", "mod5", "mod7"]
+            >>>
+            >>> dataset = ds.NumpySlicesDataset(data=([[0, 1, 2]], [[3, 4, 5]]), column_names=["x", "y"])
             >>>
             >>> # Propagate all columns to the child node in this order:
-            >>> column_order = ["col0", "col2", "mod2", "mod3", "mod5", "mod7", "col1"]
-            >>> dataset = dataset.map(operations, input_columns, output_columns, column_order)
+            >>> dataset = dataset.map(operations, input_columns=["x", "y"],
+            ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
+            ...                       column_order=["mod2", "mod3", "mod5", "mod7"])
             >>>
             >>> # Propagate some columns to the child node in this order:
-            >>> column_order = ["mod7", "mod3", "col1"]
-            >>> dataset = dataset.map(operations, input_columns, output_columns, column_order)
+            >>> dataset = dataset.map(operations, input_columns=["x", "y"],
+            ...                       output_columns=["mod2", "mod3", "mod5", "mod7"],
+            ...                       column_order=["mod7", "mod3", "col2"])
         """
 
         return MapDataset(self, operations, input_columns, output_columns, column_order, num_parallel_workers,
@@ -1066,7 +1050,7 @@ class Dataset:
             ...     corpus = {"Z": 4, "Y": 4, "X": 4, "W": 3, "U": 3, "V": 2, "T": 1}
             ...     for k, v in corpus.items():
             ...         yield (np.array([k] * v, dtype='S'),)
-            >>> column_names = ["column1","column2","column3"]
+            >>> column_names = ["column1", "column2", "column3"]
             >>> dataset = ds.GeneratorDataset(gen_corpus, column_names)
             >>> dataset = dataset.build_vocab(columns=["column3", "column1", "column2"],
             ...                               freq_range=(1, 10), top_k=5,
@@ -1344,13 +1328,12 @@ class Dataset:
 
         Examples:
             >>> # dataset is an instance of Dataset object
-            >>>
-            >>> # Create an iterator
-            >>> # The columns in the dataset obtained by the iterator will not be changed.
             >>> iterator = dataset.create_tuple_iterator()
             >>> for item in iterator:
-            ...     # convert the returned tuple to a list and print
-            ...     print(list(item))
+            ...     # item is a list
+            ...     print(type(item))
+            ...     break
+            <class 'list'>
         """
         if output_numpy is None:
             output_numpy = False
@@ -1377,13 +1360,12 @@ class Dataset:
 
         Examples:
             >>> # dataset is an instance of Dataset object
-            >>>
-            >>> # create an iterator
-            >>> # The columns in the data obtained by the iterator might be changed.
             >>> iterator = dataset.create_dict_iterator()
             >>> for item in iterator:
-            ...     # print the data in column1
-            ...     print(item["column1"])
+            ...     # item is a dict
+            ...     print(type(item))
+            ...     break
+            <class 'dict'>
         """
         if output_numpy is None:
             output_numpy = False
@@ -1406,8 +1388,10 @@ class Dataset:
 
         Examples:
             >>> # dataset is an instance of Dataset object
-            >>> dataset = ds.NumpySlicesDataset([1, 2, 3], column_names=["col_1"])
+            >>> # set input_indexs
+            >>> dataset.input_indexs = 10
             >>> print(dataset.input_indexs)
+            10
         """
         if self._input_indexs != ():
             return self._input_indexs
@@ -3432,38 +3416,59 @@ class GeneratorDataset(MappableDataset):
             option could be beneficial if the Python operation is computational heavy (default=True).
 
     Examples:
-        >>> # 1) Multidimensional generator function as callable input
-        >>> def GeneratorMD():
+        >>> # 1) Multidimensional generator function as callable input.
+        >>> def generator_multidimensional():
         ...     for i in range(64):
         ...         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
-        >>> # Create multi_dimension_generator_dataset with GeneratorMD and column name "multi_dimensional_data"
-        >>> multi_dimension_generator_dataset = ds.GeneratorDataset(GeneratorMD, ["multi_dimensional_data"])
         >>>
-        >>> # 2) Multi-column generator function as callable input
-        >>> def GeneratorMC(maxid = 64):
-        ...     for i in range(maxid):
-        ...         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]]))
-        >>> # Create multi_column_generator_dataset with GeneratorMC and column names "col1" and "col2"
-        >>> multi_column_generator_dataset = ds.GeneratorDataset(GeneratorMC, ["col1", "col2"])
+        >>> dataset = ds.GeneratorDataset(generator_multidimensional, ["multi_dimensional_data"])
         >>>
-        >>> # 3) Iterable dataset as iterable input
+        >>> # 2) Multi-column generator function as callable input.
+        >>> def generator_multi_column():
+        ...     for i in range(64):
+        ...         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]])
+        >>>
+        >>> dataset = ds.GeneratorDataset(generator_multi_column, ["col1", "col2"])
+        >>>
+        >>> # 3) Iterable dataset as iterable input.
         >>> class MyIterable:
+        ...     def __init__(self):
+        ...         self._index = 0
+        ...         self._data = np.random.sample((5, 2))
+        ...         self._label = np.random.sample((5, 1))
+        ...
+        ...     def __next__(self):
+        ...         if self._index >= len(self._data):
+        ...             raise StopIteration
+        ...         else:
+        ...             item = (self._data[self._index], self._label[self._index])
+        ...             self._index += 1
+        ...             return item
+        ...
         ...     def __iter__(self):
-        ...         return # User implementation
-        >>> # Create iterable_generator_dataset with MyIterable object
-        >>> iterable_generator_dataset = ds.GeneratorDataset(MyIterable(), ["col1"])
+        ...         return self
+        ...
+        ...     def __len__(self):
+        ...         return len(self._data)
         >>>
-        >>> # 4) Random accessible dataset as random accessible input
-        >>> class MyRA:
+        >>> dataset = ds.GeneratorDataset(MyIterable(), ["data", "label"])
+        >>>
+        >>> # 4) Random accessible dataset as random accessible input.
+        >>> class MyAccessible:
+        ...     def __init__(self):
+        ...         self._data = np.random.sample((5, 2))
+        ...         self._label = np.random.sample((5, 1))
+        ...
         ...     def __getitem__(self, index):
-        ...         return # User implementation
-        >>> # Create ra_generator_dataset with MyRA object
-        >>> ra_generator_dataset = ds.GeneratorDataset(MyRA(), ["col1"])
-        >>> # List/Dict/Tuple is also random accessible
-        >>> list_generator = ds.GeneratorDataset([(np.array(0),), (np.array(1)), (np.array(2))], ["col1"])
+        ...         return self._data[index], self._label[index]
+        ...
+        ...     def __len__(self):
+        ...         return len(self._data)
         >>>
-        >>> # 5) Built-in Sampler
-        >>> my_generator = ds.GeneratorDataset(my_ds, ["img", "label"], sampler=samplers.RandomSampler())
+        >>> dataset = ds.GeneratorDataset(MyAccessible(), ["data", "label"])
+        >>>
+        >>> # list, dict, tuple of Python is also random accessible
+        >>> dataset = ds.GeneratorDataset([(np.array(0),), (np.array(1),), (np.array(2),)], ["col"])
     """
 
     @check_generatordataset
@@ -3582,18 +3587,19 @@ class TFRecordDataset(SourceDataset):
         >>> import mindspore.common.dtype as mstype
         >>>
         >>> tfrecord_dataset_dir = ["/path/to/tfrecord_dataset_file"] # contains 1 or multiple tf data files
+        >>> tfrecord_schema_file = "/path/to/tfrecord_schema_file"
         >>>
-        >>> # 1) Get all rows from tfrecord_dataset_dir with no explicit schema
+        >>> # 1) Get all rows from tfrecord_dataset_dir with no explicit schema.
         >>> # The meta-data in the first row will be used as a schema.
-        >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir)
+        >>> dataset = ds.TFRecordDataset(tfrecord_dataset_dir)
         >>>
-        >>> # 2) Get all rows from tfrecord_dataset_dir with user-defined schema
-        >>> schema = ds.Schema("/path/to/tfrecord_schema_file")
-        >>> schema.add_column('col_1d', de_type=mindspore.int64, shape=[2])
-        >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=schema)
+        >>> # 2) Get all rows from tfrecord_dataset_dir with user-defined schema.
+        >>> schema = ds.Schema()
+        >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
+        >>> dataset = ds.TFRecordDataset(tfrecord_dataset_dir, schema=schema)
         >>>
-        >>> # 3) Get all rows from tfrecord_dataset_dir with schema file "./schema.json"
-        >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema="./schema.json")
+        >>> # 3) Get all rows from tfrecord_dataset_dir with schema file.
+        >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=tfrecord_schema_file)
     """
 
     @check_tfrecorddataset
@@ -4835,7 +4841,7 @@ class NumpySlicesDataset(GeneratorDataset):
         >>>
         >>> # 4) Load data from CSV file
         >>> import pandas as pd
-        >>> df = pd.read_csv(csv_dataset_dir)
+        >>> df = pd.read_csv(csv_dataset_dir[0])
         >>> dataset = ds.NumpySlicesDataset(dict(df), shuffle=False)
     """
 
