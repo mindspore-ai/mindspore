@@ -153,7 +153,7 @@ Status ExecutionTree::Launch() {
     if (handle_ == nullptr) {
       handle_ = GetNumaAdapterHandle();
       if (handle_ == nullptr) {
-        RETURN_STATUS_UNEXPECTED("Numa package not found.");
+        RETURN_STATUS_UNEXPECTED("Numa package (libnuma.so) not found.");
       }
     }
     RETURN_IF_NOT_OK(NumaBind(handle_, rank_id_));
