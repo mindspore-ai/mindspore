@@ -254,6 +254,33 @@ step: 300, loss is 0.18949677, fps is 57.63118508760329
   print("============== Starting Evaluating ============")
   dice_score = model.eval(valid_dataset, dataset_sink_mode=False)
   print("============== Cross valid dice coeff is:", dice_score)
+
+  ```
+
+- Ascend 310环境运行
+
+  导出mindir模型
+
+  ```shell
+  python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+  ```
+
+  参数`ckpt_file` 是必需的，`EXPORT_FORMAT` 必须在 ["AIR", "MINDIR"]中进行选择。
+
+  在执行推理前，MINDIR文件必须在910上通过export.py文件导出。
+  目前仅可处理batch_Size为1。
+
+  ```shell
+  # Ascend310 推理
+  bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+  ```
+
+  `DEVICE_ID` 可选，默认值为 0。
+
+  推理结果保存在当前路径，可在acc.log中看到最终精度结果。
+
+  ```text
+  Cross valid dice coeff is: 0.9054352151297033
   ```
 
 ### 继续训练预训练模型
