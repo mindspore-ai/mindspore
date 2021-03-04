@@ -77,6 +77,9 @@ class Somas {
   // Stream groups
   std::vector<vector<uint32_t>> streams_groups_;
 
+  // event info map
+  std::map<size_t, std::pair<CNodePtr, CNodePtr>> event_map_;
+
   // Solver
   TensorsDescMap solver_tensor_desc_map_;
   SomasSolverPrePtr somas_solver_;
@@ -113,6 +116,7 @@ class Somas {
   void InitSomasStreamAndNode(const session::KernelGraph *graph);
   void InitSomasOutputAndWorkspaceTensors(const session::KernelGraph *graph);
   void InitSomasInputTensors(const session::KernelGraph *graph);
+  void InitSomasEventInfos();
   void GetNextOutputProcess(const session::KernelGraph *graph);
   void IndependentNodeOutputProcess(const session::KernelGraph *graph);
 #ifndef ENABLE_SECURITY

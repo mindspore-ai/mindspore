@@ -77,6 +77,7 @@ std::map<TensorType, std::string> tensor_type_name_map = {{kCommon, "Common"},
                                                           {kSummaryInput, "SummaryInput"},
                                                           {kRefNodeInput, "RefNodeInput"},
                                                           {kRefNodeOutput, "RefNodeOutput"},
+                                                          {kEventVirtualOutput, "EventVirtualOutput"},
                                                           {kUnknown, "Unknown"}};
 
 std::map<LifeLongType, std::string> life_long_name_map = {{kLifeLongNone, "LifeLongNone"},
@@ -629,6 +630,40 @@ void Somas::InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kern
   }
 }
 
+void Somas::InitSomasEventInfos() {
+  // process event infos
+  std::map<CNodePtr, CNodePtr> send_recv_map;
+#ifdef ENABLE_D
+  send_recv_map = device::ascend::AscendStreamAssign::GetInstance().get_event_map();
+#endif
+  for (auto &send_recv : send_recv_map) {
+    size_t event_id = AnfAlgo::GetNodeAttr<uint32_t>(send_recv.first, kAttrEventId);
+    event_map_[event_id] = std::make_pair(send_recv.first, send_recv.second);
+  }
+
+  auto tensor_index = tensors_list_.size();
+  for (auto &event : event_map_) {
+    std::pair<CNodePtr, CNodePtr> send_recv_pair = event.second;
+    auto &somas_send = nodes_map_[send_recv_pair.first.get()].at(0);
+    auto &somas_recv = nodes_map_[send_recv_pair.second.get()].at(0);
+    auto output_tensor_index = tensor_index;
+    tensor_index++;
+    SomasTensorPtr tensor =
+      std::make_shared<SomasTensor>(output_tensor_index, somas_send, somas_send->GetStream(), 0, kLifeLongNone);
+    tensor->lifetime_.start_ = somas_send->GetId();
+    tensor->lifetime_.end_ = somas_recv->GetId();
+    tensor->type_ = kEventVirtualOutput;
+    tensor->destinations_.insert(somas_recv);
+    tensor->destinationStreams_.insert(somas_recv->GetStream());
+    somas_send->tensors_.insert(tensor);
+    somas_send->output_tensors_.push_back(tensor);
+    somas_recv->input_tensors_.push_back(tensor);
+    somas_recv->ancestor_nodes_.insert(somas_send);
+    tensors_list_.push_back(tensor);
+    tensors_map_[output_tensor_index] = tensor;
+  }
+}
+
 SomasParameterPtr Somas::CreateSomasParameter(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto id = parameters_list_.size();
@@ -670,6 +705,7 @@ void Somas::InitBasicInfo(const session::KernelGraph *graph) {
   InitSomasStreamAndNode(graph);
   InitSomasOutputAndWorkspaceTensors(graph);
   InitSomasInputTensors(graph);
+  InitSomasEventInfos();
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -1451,8 +1487,17 @@ std::string Somas::SomasInfo(bool calc_hash) const {
       oss << "\n";
     }
   }
+
+  for (const auto &event : event_map_) {
+    std::pair<CNodePtr, CNodePtr> send_recv_pair = event.second;
+    std::string send_split_name = GetSplitName(send_recv_pair.first->fullname_with_scope());
+    std::string recv_split_name = GetSplitName(send_recv_pair.second->fullname_with_scope());
+    oss << "event_id:" << event.first << " send:" << send_split_name << " recv:" << recv_split_name;
+    oss << "\n";
+  }
+
   return oss.str();
-}
+}  // namespace somas
 
 void Somas::DumpNodes(std::ostringstream &oss) const {
   oss << "\n\nAll Nodes:\n\n";
