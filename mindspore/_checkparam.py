@@ -92,15 +92,15 @@ rel_strs = {
 }
 
 
-def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False,
-                           ret_five=False, greater_zero=True, third_one=False):
+def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret_five=False,
+                           greater_zero=True, third_one=False, three_input=False):
     """
     Checks whether an argument is a positive int or tuple with 3 or 5(when allow_five is True) positive int elements.
     """
 
     def _raise_message(third_one=False):
         if third_one:
-            raise ValueError(f"For '{prim_name}' attr '{arg_name[-3]}' should be 1, but got {arg_value}")
+            raise ValueError(f"For '{prim_name}' the depth of attr '{arg_name}' should be 1, but got {arg_value}")
         raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of three "
                          f"{'or five ' if allow_five else ''}positive int numbers, but got {arg_value}")
 
@@ -120,6 +120,8 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False,
         return ret
 
     Validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
+    if three_input and isinstance(arg_value, tuple):
+        Validator.check_equal_int(len(arg_value), 3, arg_name, prim_name)
     ret_value = _get_return_value()
     for item in ret_value:
         if isinstance(item, int) and not isinstance(item, bool):

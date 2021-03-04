@@ -7429,7 +7429,7 @@ class Conv3D(PrimitiveWithInfer):
             width of the kernel.
         mode (int): Modes for different convolutions. Not currently used.
         stride (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
-            the depth, height and width of movement are both strides, or a tuple of two int numbers that
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
             represent depth, height and width of movement respectively. Default: 1.
         pad_mode (str): Specifies padding mode. The optional values are
             "same", "valid", "pad". Default: "same".
@@ -7508,15 +7508,17 @@ class Conv3D(PrimitiveWithInfer):
         """Initialize Conv3D"""
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
-        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True, ret_five=True)
+        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True,
+                                             ret_five=True, three_input=True)
         self.add_prim_attr('strides', self.stride)
         self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True,
-                                               ret_five=True, third_one=True)
+                                               ret_five=True, third_one=True, three_input=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 6
-        validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        if len(pad) != 6:
+            raise ValueError(f'the size of pad in `conv3d` must be 6, but got `{len(pad)}`.')
         self.add_prim_attr("pad", pad)
         self.padding = pad
         validator.check_int_range(self.padding[0], 0, self.kernel_size[0], Rel.INC_LEFT,
@@ -7857,15 +7859,17 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.out_channel = validator.check_positive_int(out_channel, 'out_channel', self.name)
         self.add_prim_attr('out_channel', self.out_channel)
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
-        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True, ret_five=True)
+        self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True,
+                                             ret_five=True, three_input=True)
         self.add_prim_attr('strides', self.stride)
-        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name,
-                                               allow_five=True, ret_five=True, third_one=True)
+        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True,
+                                               ret_five=True, third_one=True, three_input=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 6
-        validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        if len(pad) != 6:
+            raise ValueError(f'the size of pad in `conv3d` must be 6, but got `{len(pad)}`.')
         self.pad_list = pad
         for item in self.pad_list:
             validator.check_non_negative_int(item, 'pad item', self.name)
