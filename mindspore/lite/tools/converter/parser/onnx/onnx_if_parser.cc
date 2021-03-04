@@ -17,7 +17,7 @@
 #include "tools/converter/parser/onnx/onnx_if_parser.h"
 #include <memory>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
-#include "tools/converter/ops/if.h"
+#include "tools/converter/ops/ops_def.h"
 
 namespace mindspore {
 namespace lite {

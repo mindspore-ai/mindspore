@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BIDIRECTION_TF_GRU_CELL_FUSION_H_
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BIDIRECTION_TF_GRU_CELL_FUSION_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TF_BIDIRECTION_GRU_FUSION_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TF_BIDIRECTION_GRU_FUSION_H_
 #include <vector>
 #include <memory>
 #include <string>
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "schema/inner/model_generated.h"
 #include "src/param_value_lite.h"
 #include "backend/optimizer/common/optimizer.h"
@@ -27,22 +28,26 @@
 
 namespace mindspore {
 namespace opt {
-class BiDirectionTfGruCellFusion : public PatternProcessPass {
+constexpr size_t kWhileUniqInputsLength = 6;
+// fuse tf 2.x bidirection_gru into MSLITE GRU
+class TfBidirectionGruFusion : public PatternProcessPass {
  public:
-  explicit BiDirectionTfGruCellFusion(const std::string &name = "bidirection_tf_gru_cell_fusion",
-                                      bool multigraph = true);
-  ~BiDirectionTfGruCellFusion() override = default;
+  explicit TfBidirectionGruFusion(int num_fw_vars = kWhileUniqInputsLength, int num_bw_vars = kWhileUniqInputsLength,
+                                  const std::string &name = "tf_bidirection_gru_fusion", bool multi_graph = true);
+  ~TfBidirectionGruFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
  protected:
   virtual AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
+  CNodePtr CreateBiDirectionGruNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const EquivPtr &equiv,
+                                    const std::string &base_name, int var_offset) const;
+  CNodePtr GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
+                              const std::string base_name) const;
 
  private:
   AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
-  CNodePtr CreateBiDirectionGruNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const EquivPtr &equiv,
-                                    const EquivPtr &fw_body_equiv, const EquivPtr &bw_body_equiv,
-                                    const std::string &base_name) const;
+
   ParamValueLitePtr GetDefaultParamValue(const AnfNodePtr &parameter_anf) const;
   lite::STATUS GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf, const AnfNodePtr &bw_cand_kernel_anf,
                                      int *input_size, int *hidden_size) const;
@@ -56,10 +61,8 @@ class BiDirectionTfGruCellFusion : public PatternProcessPass {
                           const int c1, float *data, bool t = false) const;
   CNodePtr GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &fw_init_state,
                                  const AnfNodePtr &bw_init_state, const std::string base_name) const;
-  CNodePtr GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
-                              const std::string base_name) const;
 
- private:
+ protected:
   std::vector<VarPtr> fw_vars_;
   std::vector<VarPtr> bw_vars_;
   VarPtr input_;
@@ -68,7 +71,16 @@ class BiDirectionTfGruCellFusion : public PatternProcessPass {
   VarPtr fw_init_state_;
   VarPtr bw_init_state_;
 };
+inline bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
+
+inline bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim);
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_BIDIRECTION_TF_GRU_CELL_FUSION_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_TF_BIDIRECTION_GRU_FUSION_H_

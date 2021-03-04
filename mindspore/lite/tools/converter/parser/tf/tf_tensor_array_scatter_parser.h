@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_exit_parser.h"
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_ARRAY_SCATTER_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_ARRAY_SCATTER_PARSER_H_
 #include <string>
+#include <memory>
 #include <map>
 #include <vector>
-#include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "tools/converter/ops/ops_def.h"
+#include "tools/converter/parser/tf/tf_node_parser.h"
 
 namespace mindspore {
 namespace lite {
-ops::PrimitiveC *TFExitParser::Parse(const tensorflow::NodeDef &tf_op,
-                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                     std::vector<std::string> *inputs, int *output_size) {
-  auto prim = std::make_unique<Exit>();
-
-  *output_size = tf_op.input_size();
-  for (int i = 0; i < tf_op.input_size(); i++) {
-    inputs->emplace_back(tf_op.input(i));
-  }
-
-  return prim.release();
-}
-TFNodeRegistrar g_tfExitParser("Exit", new TFExitParser());
+class TFTensorArrayScatterParser : public TFNodeParser {
+ public:
+  TFTensorArrayScatterParser() = default;
+  ~TFTensorArrayScatterParser() override = default;
+  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
+                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                         std::vector<std::string> *inputs, int *output_size) override;
+};
 }  // namespace lite
 }  // namespace mindspore
+
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_ARRAY_SCATTER_PARSER_H_

@@ -23,10 +23,7 @@
 #include <memory>
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
-#include "tools/converter/ops/enter.h"
-#include "tools/converter/ops/exit.h"
-#include "tools/converter/ops/loop_cond.h"
-#include "tools/converter/ops/next_iteration.h"
+#include "tools/converter/ops/ops_def.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType;
@@ -70,6 +67,7 @@ class FunctionalizeControlOpPass : public Pass {
 
  protected:
   STATUS BuildWhileSubgraph(const FuncGraphPtr &func_graph);
+  STATUS BuildIfSubgraph(const FuncGraphPtr &func_graph);
   std::vector<std::pair<std::string, std::vector<AnfNodePtr>>> node_clusters_{};
   std::vector<CNodePtr> loop_cond_nodes_{};
 };

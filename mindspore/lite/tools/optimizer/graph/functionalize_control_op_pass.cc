@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <deque>
 #include "tools/optimizer/graph/functionalize_while.h"
+#include "tools/optimizer/graph/functionalize_cond.h"
 #include "include/errorcode.h"
 
 namespace mindspore::opt {
@@ -100,10 +101,33 @@ STATUS FunctionalizeControlOpPass::BuildWhileSubgraph(const FuncGraphPtr &func_g
   return ret;
 }
 
+STATUS FunctionalizeControlOpPass::BuildIfSubgraph(const FuncGraphPtr &func_graph) {
+  int ret = RET_OK;
+  auto nodes = func_graph->nodes();
+  for (auto &node : nodes) {
+    if (!IsMerge(node)) {
+      continue;
+    }
+    auto cnode = utils::cast<CNodePtr>(node);
+    FunctionalizeCond fc(func_graph, cnode);
+    ret = fc.Process();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "run functionalize cond failed, ret: " << ret;
+      return ret;
+    }
+  }
+
+  return ret;
+}
+
 bool FunctionalizeControlOpPass::Run(const FuncGraphPtr &func_graph) {
   // use name to find the frame
   InitNodeClusters(func_graph);
   if (BuildWhileSubgraph(func_graph) != RET_OK) {
+    MS_LOG(ERROR) << "build while subgraph failed.";
+    return false;
+  }
+  if (BuildIfSubgraph(func_graph) != RET_OK) {
     MS_LOG(ERROR) << "build while subgraph failed.";
     return false;
   }

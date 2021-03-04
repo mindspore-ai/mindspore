@@ -50,13 +50,15 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/fusion/conv_conv_fusion.cc
         ../optimizer/fusion/tflite_lstm_cell_fusion.cc
         ../optimizer/fusion/tf_lstm_cell_fusion.cc
-        ../optimizer/fusion/bidirection_tf_gru_cell_fusion.cc
+        ../optimizer/fusion/tf_bidirection_gru_fusion.cc
+        ../optimizer/fusion/tf_bidirection_gru_cf_fusion.cc
         ../optimizer/graph/weight_format_transform_pass.cc
         ../optimizer/graph/weight_format_hardcode_pass.cc
         ../optimizer/graph/clip_convert_activation_pass.cc
         ../optimizer/graph/group_depthwise_op_convert_pass.cc
         ../optimizer/graph/tflite_inputs_adjust_pass.cc
         ../optimizer/graph/update_conv2d_param_pass.cc
+        ../optimizer/graph/unused_node_remove_pass.cc
         ../optimizer/graph/unused_cast_node_remove_pass.cc
         ../optimizer/graph/unused_transpose_node_remove_pass.cc
         ../optimizer/graph/redundant_op_remove_pass.cc
@@ -68,6 +70,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/if_pass.cc
         ../optimizer/graph/functionalize_control_op_pass.cc
         ../optimizer/graph/functionalize_while.cc
+        ../optimizer/graph/functionalize_cond.cc
         ../optimizer/graph/inputs_adjust_pass.cc
         ../optimizer/graph/primitive_adjust_pass.cc
         )

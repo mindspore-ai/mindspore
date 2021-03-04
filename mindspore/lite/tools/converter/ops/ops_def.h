@@ -17,16 +17,31 @@
 #ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_OPS_DEF_H_
 #define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_OPS_DEF_H_
 #include "schema/inner/model_generated.h"
+#include "ops/primitive_c.h"
+using mindspore::ops::PrimitiveC;
 
 namespace mindspore {
 namespace lite {
+#define ADD_CONVERTER_ONLY_OP(name)      \
+  constexpr auto kName##name = #name;    \
+  class name : public PrimitiveC {       \
+   public:                               \
+    name() : PrimitiveC(kName##name) {}  \
+    ~name() = default;                   \
+    MS_DECLARE_PARENT(name, PrimitiveC); \
+  };
 
-enum ConverterPrimitiveType {
-  ConverterPrimitiveType_Enter = schema::PrimitiveType_MAX + 1,
-  ConverterPrimitiveType_LoopCond,
-  ConverterPrimitiveType_NextIteration,
-  ConverterPrimitiveType_Exit,
-};
+ADD_CONVERTER_ONLY_OP(Enter);
+ADD_CONVERTER_ONLY_OP(Exit);
+ADD_CONVERTER_ONLY_OP(If);
+ADD_CONVERTER_ONLY_OP(LoopCond);
+ADD_CONVERTER_ONLY_OP(NextIteration);
+ADD_CONVERTER_ONLY_OP(TensorArrayGatherV3);
+ADD_CONVERTER_ONLY_OP(TensorArrayReadV3);
+ADD_CONVERTER_ONLY_OP(TensorArrayScatterV3);
+ADD_CONVERTER_ONLY_OP(TensorArraySizeV3);
+ADD_CONVERTER_ONLY_OP(TensorArrayV3);
+ADD_CONVERTER_ONLY_OP(TensorArrayWriteV3);
 }  // namespace lite
 }  // namespace mindspore
 

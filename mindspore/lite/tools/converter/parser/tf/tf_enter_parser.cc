@@ -19,7 +19,7 @@
 #include <vector>
 #include "tools/converter/parser/tf/tf_enter_parser.h"
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "tools/converter/ops/enter.h"
+#include "tools/converter/ops/ops_def.h"
 
 namespace mindspore {
 namespace lite {
