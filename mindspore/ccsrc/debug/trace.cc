@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
-// namespace to support debug trace infomation
+// namespace to support debug trace information
 namespace trace {
 using abstract::AbstractBasePtr;
 using abstract::AnalysisContextPtr;
@@ -167,7 +167,7 @@ std::string AnalyzedFuncGraphExporter::GetNodeType(const AnfNodePtr &node) {
 
   MS_EXCEPTION_IF_NULL(engine_);
   auto cfg = engine_->MakeConfig(node, cur_ctx_);
-  auto ret = engine_->cache().GetValue(cfg);
+  auto ret = engine_->analysis_cache().GetValue(cfg);
   if (ret == nullptr) {
     return "Undefined";
   }
@@ -180,7 +180,7 @@ AbstractBasePtr AnalyzedFuncGraphExporter::GetNodeAbstract(const AnfNodePtr &nod
   }
   MS_EXCEPTION_IF_NULL(engine_);
   auto cfg = engine_->MakeConfig(node, cur_ctx_);
-  auto ret = engine_->cache().GetValue(cfg);
+  auto ret = engine_->analysis_cache().GetValue(cfg);
   return ret == nullptr ? nullptr : ret->abstract();
 }
 
@@ -439,7 +439,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
   param_index = 1;
   auto tagged_func_graphs = CalcTaggedFuncGraphs();
 
-  // first output graph on the analysis stack
+  // 1. Output graph on the analysis stack
   for (const auto &node_cfg : node_cfgs) {
     auto ctx = node_cfg->context();
     if (engine_ == nullptr) {
@@ -448,7 +448,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
     if (context_map_.insert({ctx, false}).second) {
       context_vec_.push_back(ctx);
     }
-    // the graph has already been printed
+    // If the graph has already been printed
     if (context_map_[ctx]) {
       continue;
     }
@@ -456,7 +456,7 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
 
     auto fg = ctx->func_graph();
 
-    // set current context
+    // Set current context
     cur_ctx_ = ctx;
     tagged_cnodes_ = tagged_func_graphs[fg];
     ExportOneFuncGraph(ofs, fg);
@@ -465,10 +465,10 @@ void AnalyzedFuncGraphExporter::ExportFuncGraph(const std::string &filename,
 
   tagged_cnodes_.clear();
 
-  // print seperator between function graphs on analyzed graph call stack and others
+  // Print separator between function graphs on analyzed graph call stack and others
   ofs << "#===============================================================================\n\n\n";
 
-  // second output other graphs
+  // 2. Output other graphs
   size_t ctx_idx = 0;
   while (ctx_idx < context_vec_.size()) {
     auto ctx = context_vec_[ctx_idx++];

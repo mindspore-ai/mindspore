@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,6 @@ namespace abstract {
 using AttrValueMap = std::unordered_map<std::string, ValuePtr>;
 using AttrValueMapPtr = std::shared_ptr<AttrValueMap>;
 
-inline const int kIsolateNodesPropagateCNodeFlag = 1;
-inline const int kIsolateNodesPropagateFuncGraphFlag = 2;
-
 // the class to save evaluated result: abstract value and modified attribute
 class EvalResult : public Base {
  public:
@@ -58,43 +55,10 @@ class EvalResult : public Base {
   AbstractBasePtr abstract() { return abstract_; }
   AttrValueMapPtr attribute() { return attribute_; }
 
-  std::shared_ptr<EvalResult> Clone() const {
-    auto cloned = std::make_shared<EvalResult>(abstract_, attribute_);
-    cloned->SetIsolateNodesPropagateCNodeFlag(HasIsolateNodesPropagateCNodeFlag());
-    cloned->SetIsolateNodesPropagateFuncGraphFlag(HasIsolateNodesPropagateFuncGraphFlag());
-    return cloned;
-  }
-  // The related AbstractBase is evaluated from CNode which input has isolate nodes.
-  // This flag is propagated to all user node.
-  // When a node A can be specialized to a ValueNode, we should check if that node A has this flag,
-  // if it has, then the original FuncGraph call should be depended, so it's side effect will not
-  // be lost.
-  bool HasIsolateNodesPropagateCNodeFlag() const {
-    auto iter = eval_attr_.find(kIsolateNodesPropagateCNodeFlag);
-    if (iter != eval_attr_.end()) {
-      return GetValue<bool>(iter->second);
-    }
-    return false;
-  }
-  void SetIsolateNodesPropagateCNodeFlag(bool flag) { eval_attr_[kIsolateNodesPropagateCNodeFlag] = MakeValue(flag); }
-
-  // FuncGraph itself may not have IsoloateNodes, but the used FuncGraph or HOF call may have IsolateNodes;
-  bool HasIsolateNodesPropagateFuncGraphFlag() const {
-    auto iter = eval_attr_.find(kIsolateNodesPropagateFuncGraphFlag);
-    if (iter != eval_attr_.end()) {
-      return GetValue<bool>(iter->second);
-    }
-    return false;
-  }
-  void SetIsolateNodesPropagateFuncGraphFlag(bool flag) {
-    eval_attr_[kIsolateNodesPropagateFuncGraphFlag] = MakeValue(flag);
-  }
-
  private:
   AbstractBasePtr abstract_;
   // Attribute related to PrimEvaluator;
   AttrValueMapPtr attribute_;
-  std::unordered_map<int, ValuePtr> eval_attr_;
 };
 using EvalResultPtr = std::shared_ptr<EvalResult>;
 
@@ -104,7 +68,7 @@ class Config : public Base {
   Config() = default;
   ~Config() override = default;
   MS_DECLARE_PARENT(Config, Base);
-  virtual EvalResultPtr GetEvaluatedValue() = 0;
+  virtual EvalResultPtr ObtainEvalResult() = 0;
 };
 
 // Config will be stored in AnalysisCache
@@ -132,7 +96,7 @@ class AnfNodeConfig : public Config {
   ~AnfNodeConfig() override = default;
   MS_DECLARE_PARENT(AnfNodeConfig, Config);
 
-  EvalResultPtr GetEvaluatedValue() override;
+  EvalResultPtr ObtainEvalResult() override;
 
   AnalysisContextPtr context() const { return context_; }
 
@@ -182,7 +146,7 @@ class VirtualConfig : public Config {
 
   ~VirtualConfig() override = default;
   MS_DECLARE_PARENT(VirtualConfig, Config);
-  EvalResultPtr GetEvaluatedValue() override {
+  EvalResultPtr ObtainEvalResult() override {
     return std::make_shared<EvalResult>(abstract_, std::make_shared<AttrValueMap>());
   }
 
@@ -195,12 +159,12 @@ class AnalysisCache {
  public:
   AnalysisCache() = default;
   ~AnalysisCache() = default;
-  void Clear() { cache_.clear(); }
+  void Clear() { analysis_cache_map_.clear(); }
   void set_value(const AnfNodeConfigPtr &conf, const EvalResultPtr &arg);
   EvalResultPtr GetValue(const AnfNodeConfigPtr &conf);
 
  private:
-  std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual> cache_;
+  std::unordered_map<AnfNodeConfigPtr, EvalResultPtr, AnfNodeConfigHasher, AnfNodeConfigEqual> analysis_cache_map_;
 };
 
 using PrimEvaluatorMap = std::unordered_map<PrimitivePtr, EvaluatorPtr, PrimitiveHasher, PrimitiveEqual>;
@@ -222,7 +186,9 @@ struct PartialAppHasher {
 class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
  public:
   AnalysisEngine(const PrimEvaluatorMap &prim_evaluator_map, const FuncGraphManagerPtr &func_graph_manager)
-      : cache_(AnalysisCache()), prim_constructors_(prim_evaluator_map), func_graph_manager_(func_graph_manager) {
+      : analysis_cache_(AnalysisCache()),
+        prim_constructors_(prim_evaluator_map),
+        func_graph_manager_(func_graph_manager) {
     function_call_depth_ = 0;
     forward_count_ = 0;
   }
@@ -231,7 +197,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   // func_graph: The func_graph to analyze.
   // args_spec_list: The abstracted arguments for the func_graph. Must be a tuple of AbstractBase.
   AnalysisResult Run(const FuncGraphPtr &func_graph, const AbstractBasePtrList &args_spec_list);
-  EvalResultPtr GetEvaluatedValue(const AnfNodeConfigPtr &conf);
+  EvalResultPtr ObtainEvalResultWithCache(const AnfNodeConfigPtr &conf);
   // Return the Evaluator for the given function.
   EvaluatorPtr GetEvaluatorFor(const AbstractFunctionPtr &fn);
 
@@ -241,7 +207,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr Execute(const AbstractFunctionPtr &fn, const AbstractBasePtrList &args_spec_list);
   void Clear();
   void ClearEvaluatorCache();
-  AnalysisCache &cache() { return cache_; }
+  AnalysisCache &analysis_cache() { return analysis_cache_; }
   AnfNodeConfigPtr MakeConfig(const AnfNodePtr &node, const AnalysisContextPtr &context) {
     return std::make_shared<AnfNodeConfig>(shared_from_this(), node, context);
   }
@@ -262,7 +228,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   EvalResultPtr ForwardConfig(const AnfNodeConfigPtr &orig_conf, const AnfNodeConfigPtr new_conf);
   const PrimEvaluatorMap &PrimConstructors() const { return prim_constructors_; }
 
-  AnalysisCache cache_;
+  AnalysisCache analysis_cache_;
   std::unordered_map<PrimitivePyPtr, EvaluatorPtr> prim_py_evaluators_;
 
   void ResetFunctionCallDepth() { function_call_depth_ = 0; }

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,6 @@ class AbstractFuncUnion : public AbstractFunction {
   bool operator==(const AbstractFunction &other) const override;
   std::size_t hash() const override;
   AbstractFunctionPtr Copy() const override { MS_LOG(EXCEPTION) << "Cannot Copy from AbstractFuncUnion"; }
-  bool HasIsolateNodesFlag() const override {
-    bool flag = std::any_of(func_list_.cbegin(), func_list_.cend(),
-                            [](const AbstractFunctionPtr &func) { return func->HasIsolateNodesFlag(); });
-    return flag;
-  }
 
  private:
   AbstractFuncAtomPtrList func_list_;
@@ -130,8 +125,6 @@ class FuncGraphAbstractClosure : public AbstractFuncAtom {
   std::size_t hash() const override;
 
   std::string ToString() const override;
-
-  bool HasIsolateNodesFlag() const override { return !func_graph_->isolate_nodes().empty(); }
 
  private:
   FuncGraphPtr func_graph_;
@@ -202,16 +195,12 @@ class PartialAbstractClosure : public AbstractFuncAtom {
   std::size_t hash() const override;
 
   std::string ToString() const override;
-  bool HasIsolateNodesFlag() const override { return isolate_nodes_flag_; }
-  void SetIsolateNodesFlag(bool flag) { isolate_nodes_flag_ = flag; }
 
  private:
   AbstractFuncAtomPtr fn_;
   AbstractBasePtrList args_spec_list_;
   // The CNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
-  // If the bound fn_ has isolate ndoes or arguments evaluated from function has isolate nodes.
-  bool isolate_nodes_flag_{false};
 };
 using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 

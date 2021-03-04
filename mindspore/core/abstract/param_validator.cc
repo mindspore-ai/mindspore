@@ -157,8 +157,8 @@ void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
 void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     if ((shape[i] < 0) && (shape[i] != Shape::SHP_ANY)) {
-      MS_LOG(EXCEPTION) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
-                        << shape[i];
+      MS_EXCEPTION(ValueError) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
+                               << shape[i];
     }
   }
 }

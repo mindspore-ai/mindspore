@@ -36,8 +36,7 @@ class AnfTransform {
   FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
 
  private:
-  STATUS GetAllFuncGraph(const FuncGraphPtr &main_graph, FuncGraphPtrList *subgraphs,
-                         std::vector<ValueNodePtr> *vnodes);
+  STATUS GetAllFuncGraph(const FuncGraphPtr &main_graph, FuncGraphVector *subgraphs, std::vector<ValueNodePtr> *vnodes);
   FuncGraphPtr TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
   std::unique_ptr<quant::Quantizer> mQuantizer = nullptr;
 

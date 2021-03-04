@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -846,7 +846,7 @@ class SideEffectFinder {
   const SccPtr &GetScc(const FuncGraphPtr &func_graph) const {
     auto found = scc_map_.find(func_graph);
     if (found == scc_map_.end()) {
-      MS_LOG(EXCEPTION) << "SCC not found for " << func_graph->ToString();
+      MS_LOG(EXCEPTION) << "SCC not found for " << func_graph->ToString() << "." << func_graph->debug_info()->get_id();
     }
     return found->second;
   }
@@ -1014,7 +1014,6 @@ class AutoMonadConverter {
       HandleCNodes();
     }
     // Clean up after conversion finished.
-    func_graph_->ClearIsolateNodes();
     func_graph_->ClearOrderList();
     return has_effect_cnodes_;
   }
@@ -1248,9 +1247,17 @@ class AutoMonadConverter {
   }
 
   void InsertStateDepend(const AnfNodePtr &state) {
+    auto output = GetGraphOutput();
+    // It's safe to handle isolated nodes here:
+    //   Node: Depend(output, StopGrad)
+    if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
+        IsPrimitiveCNode(output->cast<CNodePtr>()->input(2), prim::kPrimStopGradient)) {
+      // Replace Depend(orig_output, StopGrad) node with orig_output.
+      // After that, nodes may be eliminated if have no side effects.
+      output = output->cast<CNodePtr>()->input(1);
+    }
     // Insert Depend node and set it as output.
     auto depend = NewValueNode(prim::kPrimDepend);
-    auto output = GetGraphOutput();
     auto depend_cnode = func_graph_->NewCNode({depend, output, state});
     depend_cnode->set_abstract(output->abstract());
     func_graph_->set_output(depend_cnode);
@@ -1374,12 +1381,6 @@ bool AutoMonad(const FuncGraphPtr &func_graph) {
     bool fg_has_effects = AutoMonadConverter::Handle(fg, top_flag);
     has_effects = has_effects || fg_has_effects;
   }
-
-  // Clear isolate nodes after auto-monad finished.
-  auto manager = func_graph->manager();
-  if (manager) {
-    manager->ClearIsolateNodes();
-  }
   return has_effects;
 }
 
@@ -1406,7 +1407,6 @@ bool ReAutoMonad(const FuncGraphPtr &func_graph) {
     for (auto &fg : func_graph->func_graphs_used_total()) {
       if (!fg->has_flag(mindspore::kFuncGraphFlagReAutoMonad)) {
         fg->ClearOrderList();
-        fg->ClearIsolateNodes();
       }
     }
     changed = AutoMonad(func_graph);
@@ -1416,13 +1416,9 @@ bool ReAutoMonad(const FuncGraphPtr &func_graph) {
     // After auto monad, Order List and Isolate nodes in graph and manager will be cleared.
   } else {
     func_graph->ClearOrderList();
-    func_graph->ClearIsolateNodes();
     for (auto &fg : func_graph->func_graphs_used_total()) {
       fg->ClearOrderList();
-      fg->ClearIsolateNodes();
     }
-    MS_EXCEPTION_IF_NULL(func_graph->manager());
-    func_graph->manager()->ClearIsolateNodes();
   }
   return changed;
 }

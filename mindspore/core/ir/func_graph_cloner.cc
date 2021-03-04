@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 
 // namespace to support intermediate representation definition
 namespace mindspore {
-Cloner::Cloner(const FuncGraphPtrList &func_graphs, bool clone_all_valuenodes, bool clone_all_child_graphs,
+Cloner::Cloner(const FuncGraphVector &func_graphs, bool clone_all_valuenodes, bool clone_all_child_graphs,
                bool clone_all_used_graphs, const TraceInfoPtr &relation, const TraceInfoPtr &target_relation)
     : clone_all_valuenodes_(clone_all_valuenodes),
       clone_all_child_graphs_(clone_all_child_graphs),
@@ -473,7 +473,6 @@ void Cloner::CloneAllNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &t
   // Only func_graph is inlined, it cannot be found in repl;
   if (repl_func_graph_.find(func_graph) != repl_func_graph_.end()) {
     CloneOrderList(func_graph, target_func_graph);
-    CloneIsolateNodes(func_graph, target_func_graph);
   }
 }
 
@@ -499,15 +498,6 @@ void Cloner::CloneOrderList(const FuncGraphPtr &func_graph, const FuncGraphPtr &
   }
 }
 
-void Cloner::CloneIsolateNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph) {
-  for (auto &node : func_graph->isolate_nodes()) {
-    auto it = repl_node_.find(node);
-    if (it != repl_node_.end()) {
-      target_func_graph->AddIsolateNode(it->second);
-    }
-  }
-}
-
 void Cloner::Run() {
   if (todo_.empty()) {
     return;
@@ -515,7 +505,7 @@ void Cloner::Run() {
 
   if (type_ < kLifting) {
     // Basic and Inline Clone
-    FuncGraphPtrList func_graphs;
+    FuncGraphVector func_graphs;
     (void)std::transform(todo_.begin(), todo_.end(), std::back_inserter(func_graphs),
                          [](const CloneInfo &item) -> FuncGraphPtr { return item.origin; });
     manager_ = Manage(func_graphs, false);
@@ -654,7 +644,7 @@ FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph) {
 
 ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &relation) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  FuncGraphPtrList func_graphs = {func_graph};
+  FuncGraphVector func_graphs = {func_graph};
   ClonerPtr cloner =
     std::make_shared<Cloner>(func_graphs, false, false, false, std::make_shared<TraceCopy>(), relation);
 #ifdef ENABLE_PROFILE

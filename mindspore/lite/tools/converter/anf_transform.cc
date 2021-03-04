@@ -301,7 +301,7 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   return new_graph;
 }
 
-STATUS AnfTransform::GetAllFuncGraph(const FuncGraphPtr &main_graph, FuncGraphPtrList *subgraphs,
+STATUS AnfTransform::GetAllFuncGraph(const FuncGraphPtr &main_graph, FuncGraphVector *subgraphs,
                                      std::vector<ValueNodePtr> *vnodes) {
   auto nodes = TopoSort(main_graph->get_return());
   for (auto &node : nodes) {
@@ -324,7 +324,7 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const conve
   }
 
   // transform sub_graph
-  FuncGraphPtrList subgraphs{};
+  FuncGraphVector subgraphs{};
   std::vector<ValueNodePtr> vnodes{};
   int ret = GetAllFuncGraph(main_graph, &subgraphs, &vnodes);
   if (ret != RET_OK) {

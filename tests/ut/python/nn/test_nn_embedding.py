@@ -82,7 +82,7 @@ def test_check_multifield_embedding_false_type_field_id():
 
 @non_graph_engine
 def test_check_multifield_embedding_false_input_shape():
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         compile_multi_field_embedding((8,), (8, 200), (8, 200),
                                       dtype.int16, dtype.float32, dtype.int16)
 

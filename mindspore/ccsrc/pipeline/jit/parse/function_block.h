@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include <utility>
 #include "pipeline/jit/parse/parse_base.h"
 #include "utils/log_adapter.h"
-#include "utils/ordered_map.h"
+#include "utils/ordered_set.h"
 
 namespace mindspore {
 namespace parse {
@@ -71,46 +71,51 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
   const std::unordered_map<ParameterPtr, AnfNodePtr> &removable_phis() const { return removable_phis_; }
-  void FindIsolateVariables();
+  void FindIsolatedNodes();
+  void AddIsolatedNode(const AnfNodePtr &target);
+  void AttachIsolatedNodesBeforeReturn();
 
  private:
-  // block graph
+  // Block graph
   FuncGraphPtr func_graph_;
 
-  // the block's parser
+  // Block parser
   const Parser &parser_;
 
   // A block is matured if all its prev_blocks is processed
   bool matured_;
 
-  // store the nest-level block
-  // refer to comments in Parser::func_block_list_;
+  // Store the nest-level block.
+  // Refer to comments in Parser::func_block_list_;
   std::vector<FunctionBlock *> prev_blocks_;
 
-  // store args and variable's node, use a bool flag to indicate if the variable is used.
+  // Store args and variable's node, use a bool flag to indicate if the variable is used.
   std::map<std::string, std::pair<AnfNodePtr, bool>> vars_;
 
-  // phi_nodes map the parameter node to variable, it can be resolved if the block's predecessors are processed
+  // Map the parameter node to variable, it can be resolved if the block's predecessors are processed
   std::map<ParameterPtr, std::string> phi_nodes_;
 
-  // jumps map the successor block and the function call that perform jump
-  // refer to comments in Parser::func_block_list_ that how to break the cyclic reference
+  // Jumps map the successor block and the function call that perform jump
+  // Refer to comments in Parser::func_block_list_ that how to break the cyclic reference
   std::map<FunctionBlock *, CNodePtr> jumps_;
 
-  // keeps all removable phis which will be removed in one pass.
+  // Keep all removable phis which will be removed in one pass.
   std::unordered_map<ParameterPtr, AnfNodePtr> removable_phis_;
 
-  // Keeps the map for the resolve node to the removable phi node.
+  // Keep the map for the resolve node to the removable phi node.
   // For the case that ReadVariable returns a phi node although this phi node
   // generated in the prev block is identified as removable. The other blocks
   // should find this phi node.
   std::unordered_map<AnfNodePtr, ParameterPtr> resolve_to_removable_phis_;
 
-  // hold declared global variables in function
+  // Hold declared global variables in function
   std::set<std::string> global_vars_;
 
-  // keeps the new made resolve symbol for the variable not found in vars_.
+  // Keep new made resolve symbol for the variable not found in vars_.
   std::unordered_map<std::string, AnfNodePtr> var_to_resolve_;
+
+  // Isolated nodes.
+  OrderedSet<AnfNodePtr> isolated_nodes_;
 };
 
 }  // namespace parse

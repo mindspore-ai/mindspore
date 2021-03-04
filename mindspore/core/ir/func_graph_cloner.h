@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ struct CloneInfo {
 
 class Cloner {
  public:
-  explicit Cloner(const FuncGraphPtrList &func_graphs = {}, bool clone_all_valuenodes = false,
+  explicit Cloner(const FuncGraphVector &func_graphs = {}, bool clone_all_valuenodes = false,
                   bool clone_all_child_graphs = true, bool clone_all_used_graphs = false,
                   const TraceInfoPtr &relation = std::make_shared<TraceCopy>(),
                   const TraceInfoPtr &target_relation = nullptr);
@@ -84,7 +84,6 @@ class Cloner {
   bool CheckStatus(const FuncGraphPtr &func_graph, bool is_inline);
   void CloneAllNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneOrderList(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
-  void CloneIsolateNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneFuncGraphValueNodes(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void CloneFuncGraphDefaultValues(const FuncGraphPtr &func_graph, const FuncGraphPtr &target_func_graph);
   void InlineCloneParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &params);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -424,16 +424,6 @@ bool AddCacheEmbeddingPass(const ResourcePtr &res) {
     func_graph = pipeline::Renormalize(res, func_graph, args_spec_list);
   }
   return true;
-}
-
-bool MergeDupGraphPass(const ResourcePtr &res) {
-  FuncGraphPtr func_graph = res->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(res->manager());
-  if (res->manager()->func_graphs().size() <= 1) {
-    return true;
-  }
-  return MergeDuplicateGraphs(res->manager());
 }
 
 bool RemoveValueNodeDuplicationsPass(const ResourcePtr &res) {

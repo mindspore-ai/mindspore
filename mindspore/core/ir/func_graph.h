@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,8 +94,8 @@ class AbstractFunction;
 using AbstractFunctionPtr = std::shared_ptr<AbstractFunction>;
 }  // namespace abstract
 
-// ANF transform class
-// either a primitive or a func_graph
+// ANF transform class.
+// Either a primitive or a func_graph.
 class FuncGraphTransform {
  public:
   enum Type { kGtPrimitive, kGtFuncGraph };
@@ -156,11 +156,11 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   ~FuncGraph() override = default;
   MS_DECLARE_PARENT(FuncGraph, FuncGraphBase);
 
-  // get the graph's abstract
+  // Get the graph's abstract.
   abstract::AbstractFunctionPtr abstract();
   abstract::AbstractBasePtr ToAbstract() override;
 
-  // return the graph's output, or nullptr if not yet deduced
+  // Return the graph's output, or nullptr if not yet deduced.
   AnfNodePtr output() const;
   void set_output(const AnfNodePtr &value, bool force_new_ret = false);
 
@@ -169,28 +169,28 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void add_parameter(const ParameterPtr &p);
   void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
   void set_parameters(const std::vector<AnfNodePtr> &params) { parameters_ = params; }
-  // add a weight parameter with specific name
+  // Add a weight parameter with specific name.
   ParameterPtr AddWeightParameter(const std::string &name);
 
-  // create a cnode with given inputs, bound to this graph
+  // Create a cnode with given inputs, bound to this graph.
   virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
   virtual CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
 
-  // create a cnode with given inputs, bound to this graph and push back to order list.
+  // Create a cnode with given inputs, bound to this graph and push back to order list.
   CNodePtr NewCNodeInOrder(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
   CNodePtr NewCNodeInOrder(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
 
-  // create a cnode with given inputs, bound to this graph and push back to front of order list.
+  // Create a cnode with given inputs, bound to this graph and push back to front of order list.
   CNodePtr NewCNodeInFront(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
 
-  // create a cnode with given inputs, put it to order list before the position node.
+  // Create a cnode with given inputs, put it to order list before the position node.
   CNodePtr NewCNodeBefore(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs);
 
-  // create a cnode with given inputs, put it to order list after the position node.
+  // Create a cnode with given inputs, put it to order list after the position node.
   CNodePtr NewCNodeAfter(const AnfNodePtr &position, const std::vector<AnfNodePtr> &inputs);
 
   virtual ParameterPtr add_weight(const tensor::MetaTensorPtr &meta_tensor);
-  // Functions for handling variable argument, keyword-only arguments and variable keyword argument
+  // Functions for handling variable argument, keyword-only arguments and variable keyword argument.
   AnfNodePtr GetDefaultValueByName(const std::string &name);
   void set_param_default_value(const std::string &name, const AnfNodePtr &node) {
     parameter_default_value_[name] = node;
@@ -253,56 +253,56 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
     }
     this->debug_info_ = info;
   }
-  // clear all info from manager
+  // Clear all info from manager.
   void ClearAllManagerInfo();
-  // get all nodes belonging to this func graph
+  // Get all nodes belonging to this func graph.
   const AnfNodeSet &nodes();
   void CopyNodes(const FuncGraphPtr &source);
   void ClearNodes();
   void AddNode(AnfNodePtr node);
   void DropNode(AnfNodePtr node);
 
-  // get all value_nodes belonging to this func graph
+  // Get all value_nodes belonging to this func graph.
   const AnfNodeCounterMap &value_nodes();
   void CopyValueNodes(const FuncGraphPtr &source);
   void ClearValueNodes();
   void AddValueNode(AnfNodePtr node, int count = 1);
   void DropValueNode(AnfNodePtr node);
 
-  // get all free vars directly used in this func graph
+  // Get all free vars directly used in this func graph.
   const AnfNodeCounterMap &free_variables();
   void CopyFreeVariables(const FuncGraphPtr &source);
   void ClearFreeVariables();
   bool AddFreeVariable(AnfNodePtr node, int count = 1);
   bool DropFreeVariable(AnfNodePtr node);
 
-  // get all vars required by this func graph
+  // Get all vars required by this func graph.
   const BaseRefCounterMap &free_variables_total();
 
   // Return the set of graphs free_variables_total belong to.
   std::vector<AnfNodePtr> free_variables_nodes();
 
-  // get all vars that are func graphs
+  // Get all vars that are func graphs
   std::vector<FuncGraphPtr> free_variables_func_graphs();
 
-  // get all value nodes of func graph directly used by this func graph
+  // Get all value nodes of func graph directly used by this func graph.
   const FuncGraphCounterMap &func_graphs_used();
   void CopyFuncGraphsUsed(const FuncGraphPtr &source);
   void ClearFuncGraphsUsed();
   bool AddFuncGraphUsed(FuncGraphPtr fg, int count = 1);
   bool DropFuncGraphUsed(FuncGraphPtr fg);
 
-  // get all value nodes in the inputs of J directly used by this func graph
+  // Get all value nodes in the inputs of J directly used by this func graph.
   const std::unordered_map<AnfNodePtr, int> &j_value_nodes();
   void CopyJValueNodes(const FuncGraphPtr &source);
   void ClearJValueNodes();
   void AddJValueNode(const AnfNodePtr &value_node, int count = 1);
   void DropJValueNode(const AnfNodePtr &value_node);
 
-  // get all func graphs nested used by this func graph
+  // Get all func graphs nested used by this func graph.
   const FuncGraphSet &func_graphs_used_total();
 
-  // get all user value nodes of this func graph, by CNode and its input's index
+  // Get all user value nodes of this func graph, by CNode and its input's index.
   const CNodeIndexCounterMap &func_graph_cnodes_index();
   void CopyFuncGraphCNodesIndex(const FuncGraphPtr &source);
   void ClearFuncGraphCNodesIndex();
@@ -318,10 +318,10 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Return the scope of this graph, scope have graph self but children not have.
   const FuncGraphSet &scope();
 
-  // Return whether this graph is recursive
+  // Return whether this graph is recursive.
   bool recursive();
 
-  // Return graphs which forms a recursive loop
+  // Return graphs which forms a recursive loop.
   std::shared_ptr<std::list<FuncGraphPtr>> recursive_graphs();
 
   std::size_t hash() const override { return std::hash<const FuncGraph *>{}(this); }
@@ -353,7 +353,7 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::unordered_map<std::string, ValuePtr> attrs_;
   std::vector<BaseShapePtr> joined_shapes_;
   std::unordered_map<std::string, FuncGraphTransform> transforms_;
-  // parameter default value
+  // Parameter default value.
   std::map<std::string, AnfNodePtr> parameter_default_value_;
   size_t seen_;
 
@@ -377,21 +377,6 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   // Clear cnode order list.
   void ClearOrderList() { order_.clear(); }
 
-  // Gets nodes that not related to output, e.g. side-effect calls.
-  const std::set<AnfNodePtr> &isolate_nodes() const { return isolate_nodes_; }
-
-  // Add an isolate node.
-  void AddIsolateNode(const AnfNodePtr &node) { isolate_nodes_.insert(node); }
-
-  // Replace an isolate node.
-  void ReplaceIsolateNode(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
-
-  // Clear isolate nodes.
-  void ClearIsolateNodes() { isolate_nodes_.clear(); }
-
-  // Get isolate nodes with order as OrderList.
-  const std::vector<AnfNodePtr> GetIsolateNodesInOrder() const;
-
   bool stub() const { return stub_; }
   void set_stub(bool stub) { stub_ = stub; }
   static void set_drawer(Drawer drawer) { drawer_ = drawer; }
@@ -402,54 +387,51 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_stage(int64_t stage) { stage_ = stage; }
 
  private:
-  // graph is manipulated by manager and others
+  // Graph is manipulated by manager and others.
   friend FuncGraphManager;
 
-  // all nodes of the function
+  // All nodes of the function.
   AnfNodeSet nodes_;
 
-  // all value nodes of the function
+  // All value nodes of the function.
   AnfNodeCounterMap value_nodes_;
 
-  // all func graph value nodes of the function
+  // All func graph value nodes of the function.
   FuncGraphCounterMap func_graphs_used_;
 
-  // all free variables of the function
+  // All free variables of the function.
   AnfNodeCounterMap free_variables_;
 
-  // all value nodes calling J in the function
+  // All value nodes calling J in the function.
   std::unordered_map<AnfNodePtr, int> j_value_nodes_;
 
-  // all user value nodes of this func graph, recording by CNode and its input's index
+  // All user value nodes of this func graph, recording by CNode and its input's index.
   CNodeIndexCounterMap func_graph_cnodes_index_;
 
-  // parameters of this function
+  // Parameters of this function.
   std::vector<AnfNodePtr> parameters_;
 
-  // global parameters used by this function.
+  // Global parameters used by this function.
   std::vector<AnfNodePtr> used_global_parameters_;
 
-  // isolate nodes, i.e. nodes that not related to output.
-  std::set<AnfNodePtr> isolate_nodes_;
-
-  // whether there is a *args and **kwargs, and count kwonlyargs'number
+  // Whether there is a *args and **kwargs, and count kwonlyargs'number.
   bool has_vararg_;
   bool has_kwarg_;
   int kwonlyargs_count_;
-  // the hyper param is placed on the top graph,
-  // and positioned in the end of the param list, so we record the number to trace the position
+  // Hyper param is placed on the top graph,
+  // and positioned in the end of the param list, so we record the number to trace the position.
   size_t hyper_param_count_;
-  // the argument input list for the graph used to generate this graph
+  // Argument input list for the graph used to generate this graph.
   bool is_generated_;
 
   bool is_bprop_;
 
-  // the cnode that calls 'return' primitive
-  // we use shared pointer to manage it.
+  // CNode that calls 'return' primitive.
+  // We use shared pointer to manage it.
   CNodePtr return_;
 
-  // back-ref to its manager
-  // hold a weak ref to FuncGraphManager as FuncGraphManager also hold many ref to FuncGraph.
+  // Back-ref to its manager.
+  // Hold a weak ref to FuncGraphManager as FuncGraphManager also hold many ref to FuncGraph.
   // Otherwise, FuncGraph and FuncGraphManager will make a reference cycles.
   // Notes: Normally, there will be a global FuncGraphManager, it will hold all FuncGraphs.
   // In some ut test cases, they may use local FuncGraphManager in function which
@@ -464,12 +446,12 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
                              const std::vector<AnfNodePtr> &kwarg_keys_tuple_nodes,
                              const std::vector<AnfNodePtr> &kwarg_values_tuple_nodes);
 
-  // CNode order which relates to origin code order
+  // CNode order which relates to origin code order.
   OrderedSet<CNodePtr> order_;
   bool stub_;
   inline static Drawer drawer_ = nullptr;
   // Design switch_layer_input as a ptr to
-  // share between derived backpropagator and cloned graphs
+  // share between derived backpropagator and cloned graphs.
   std::shared_ptr<bool> switch_layer_input_;
   int64_t stage_;
   std::unordered_map<AbstractBasePtrList, FuncGraphPtr, abstract::AbstractBasePtrListHasher,

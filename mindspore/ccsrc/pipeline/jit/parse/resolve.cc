@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,7 @@ AnfNodePtr TransformToMakeTupleNodes(const FuncGraphManagerPtr &manager, const F
   return cnode;
 }
 
-// transform the ValueTuple or ValueList of graph/primitive node to make tuple of const graph/primitive node
+// Transform the ValueTuple or ValueList of graph/primitive node to make tuple of const graph/primitive node
 bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
                                   const ValueNodePtr &value_node, AnfNodePtr *const transformed) {
   MS_EXCEPTION_IF_NULL(value_node);
@@ -208,18 +208,18 @@ bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const Func
 
   // (1) The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
   // So if has graph in list, try to replace the node with make tuple of graph value node.
-  // we do this because the graph manager won't investigate the graph inside valuetuple,
+  // We do this because the graph manager won't investigate the graph inside valuetuple,
   // change the vector of graph to be make_tuple of graph value node.
   // (2) the primitive valuetuple or valuelist may encounter to abstract error, make it all
   // independent nodes.
   auto node_tuple_graphs = TransformToMakeTupleNodes(manager, func_graph, value_vec);
-  // replace the ret ptr to be make tuple of graph value node
+  // Replace the ret ptr to be make tuple of graph value node
   *transformed = node_tuple_graphs;
 
   return true;
 }
 
-// resolve the python obj, and if the resovled node is valuenode with graphs, add the graphs to manager
+// Resolve the python obj, and if the resovled node is valuenode with graphs, add the graphs to manager.
 AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, const py::object &obj,
                                         const AnfNodePtr &node) {
   ScopeGuard scope_guard(node->scope());
@@ -233,7 +233,7 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
     manager->AddFuncGraph(new_fg);
   }
 
-  // if the constant node is constant of vector of graph ,add graph to manager
+  // If the constant node is constant of vector of graph, add graph to manager.
   if (IsValueNode<ValueTuple>(resolved_node) || IsValueNode<ValueList>(resolved_node)) {
     (void)TransformVectorFuncValueNode(manager, node->func_graph(), resolved_node->cast<ValueNodePtr>(),
                                        &resolved_node);

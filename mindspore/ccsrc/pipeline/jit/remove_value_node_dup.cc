@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,108 +72,6 @@ void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, Has
 
   // Meet for the first time, append node to bucket.
   bucket.emplace_back(node);
-}
-
-size_t HashOfGraph(const FuncGraphPtr &fg) {
-  std::vector<AnfNodePtr> toposet = TopoSort(fg->get_return());
-  MS_LOG(DEBUG) << "TopSort for:" << fg->ToString();
-  std::unordered_map<AnfNodePtr, std::size_t> hashes;
-  auto &params = fg->parameters();
-  for (size_t i = 0; i < params.size(); i++) {
-    hashes[params[i]] = std::hash<std::string>{}("param" + std::to_string(i));
-  }
-  for (auto node : toposet) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (hashes.find(node) != hashes.end()) {
-      continue;
-    }
-
-    std::size_t h = 0;
-    if (node->isa<ValueNode>()) {
-      ValueNodePtr value_node = node->cast<ValueNodePtr>();
-      auto value = value_node->value();
-      MS_EXCEPTION_IF_NULL(value);
-      if (IsValueNode<FuncGraph>(value_node)) {
-        auto v_fg = value->cast<FuncGraphPtr>();
-        h = value->hash();
-      } else if (IsValueNode<tensor::Tensor>(value_node)) {
-        // the tensor has same value has been replaced in duplicate value pass,
-        // so we use the value pointer here as an identifier
-        h = hash_combine(value->hash(), std::hash<Value *>{}(value.get()));
-      } else {
-        h = hash_combine(value->hash(), (opt::AbsOf(value_node)->hash()));
-      }
-    } else if (node->isa<CNode>()) {
-      auto cnode = node->cast<CNodePtr>();
-      auto &inputs = cnode->inputs();
-      size_t init = 0;
-      h = std::accumulate(inputs.begin(), inputs.end(), init, [&hashes](std::size_t hash, const AnfNodePtr &node_in) {
-        return hash_combine(hash, hashes[node_in]);
-      });
-    } else if (node->isa<Parameter>()) {
-      h = node->hash();
-    } else {
-      MS_LOG(ERROR) << "Unknow node type";
-    }
-    hashes[node] = h;
-  }
-  return hashes[fg->get_return()];
-}
-
-bool IsCNodeGraph(const AnfNodePtr &node) {
-  if (node == nullptr || !node->isa<CNode>()) {
-    return false;
-  }
-
-  auto inp0 = node->cast<CNodePtr>()->input(0);
-  return IsValueNode<FuncGraph>(inp0);
-}
-
-bool MergeDuplicateGraphs(const FuncGraphManagerPtr manager) {
-  std::unordered_map<size_t, std::vector<FuncGraphPtr>> hash_graphs;
-  std::unordered_map<FuncGraphPtr, size_t> graph_hash;
-  for (auto fg : manager->func_graphs()) {
-    size_t h = HashOfGraph(fg);
-    graph_hash[fg] = h;
-    if (hash_graphs.find(h) == hash_graphs.end()) {
-      hash_graphs[h] = {fg};
-    } else {
-      hash_graphs[h].push_back(fg);
-    }
-  }
-  FuncGraphPairMapEquiv equiv_graph;
-  NodeMapEquiv equiv_node;
-  for (auto &fg : manager->func_graphs()) {
-    MS_LOG(DEBUG) << "Try Merge Graph:" << fg->ToString();
-    for (auto &item : fg->nodes()) {
-      if (!item->isa<CNode>()) {
-        continue;
-      }
-      auto &inputs = item->cast<CNodePtr>()->inputs();
-      for (size_t i = 0; i < inputs.size(); i++) {
-        if (!inputs[i]->isa<ValueNode>()) {
-          continue;
-        }
-        auto value_ptr = GetValueNode(inputs[i]);
-        auto v_fg = value_ptr->cast<FuncGraphPtr>();
-        if (v_fg == nullptr) {
-          continue;
-        }
-        auto &fg_vec = hash_graphs[graph_hash[v_fg]];
-        if (fg_vec.size() > 1) {
-          if (v_fg != fg_vec[0]) {
-            bool is_morphic = Isomorphic(v_fg, fg_vec[0], &equiv_graph, &equiv_node);
-            if (is_morphic) {
-              auto new_node = NewValueNode(fg_vec[0]);
-              MS_LOG(DEBUG) << "Replace graph node :" << inputs[i]->ToString() << " with:" << new_node->ToString();
-              manager->Replace(inputs[i], new_node);
-            }
-          }
-        }
-      }
-    }
-  }
-  return true;
 }
 }  // namespace pipeline
 }  // namespace mindspore
