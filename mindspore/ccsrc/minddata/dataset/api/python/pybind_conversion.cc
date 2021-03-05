@@ -167,7 +167,6 @@ std::shared_ptr<SamplerObj> toSamplerObj(py::handle py_sampler, bool isMindDatas
   if (py_sampler) {
     std::shared_ptr<SamplerObj> sampler_obj;
     if (!isMindDataset) {
-      // Common Sampler
       auto parse = py::reinterpret_borrow<py::object>(py_sampler).attr("parse");
       sampler_obj = parse().cast<std::shared_ptr<SamplerObj>>();
     } else {
