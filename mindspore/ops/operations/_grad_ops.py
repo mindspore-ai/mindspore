@@ -441,7 +441,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         out = {
             'value': None,
             'shape': w_size_v,
-            'dtype': x['dtype'],
+            'dtype': mstype.float32,
         }
         return out
 

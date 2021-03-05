@@ -98,9 +98,12 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
     Checks whether an argument is a positive int or tuple with 3 or 5(when allow_five is True) positive int elements.
     """
 
-    def _raise_message(third_one=False):
-        if third_one:
-            raise ValueError(f"For '{prim_name}' the depth of attr '{arg_name}' should be 1, but got {arg_value}")
+    def _raise_message(third_one_flag=False, three_input_flag=False):
+        if third_one_flag:
+            raise ValueError(f"For '{prim_name}' the depth of attr '{arg_name}' should be 1, but got {arg_value[-3]}")
+        if three_input_flag:
+            raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of "
+                             f"three positive int numbers, but got {arg_value}")
         raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of three "
                          f"{'or five ' if allow_five else ''}positive int numbers, but got {arg_value}")
 
@@ -121,7 +124,8 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
 
     Validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
     if three_input and isinstance(arg_value, tuple):
-        Validator.check_equal_int(len(arg_value), 3, arg_name, prim_name)
+        if len(arg_value) != 3:
+            _raise_message(three_input_flag=three_input)
     ret_value = _get_return_value()
     for item in ret_value:
         if isinstance(item, int) and not isinstance(item, bool):
@@ -133,7 +137,7 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
 
     if third_one:
         if ret_value[-3] != 1:
-            _raise_message(third_one)
+            _raise_message(third_one_flag=third_one)
 
     return tuple(ret_value)
 
