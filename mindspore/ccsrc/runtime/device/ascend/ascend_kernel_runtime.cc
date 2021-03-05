@@ -56,6 +56,9 @@
 #include "tdt/tdt_host_interface.h"
 #include "tdt/status.h"
 #endif
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 
 using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
@@ -480,6 +483,9 @@ bool AscendKernelRuntime::LoadTask(const session::KernelGraph *graph) {
 
   status = ModelRunner::Instance().DistributeTask(model_iter->first);
   if (!status) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MS_LOG(EXCEPTION) << "Distribute Task Failed";
   }
 

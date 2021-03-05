@@ -30,9 +30,7 @@ class BaseRecorder {
  public:
   BaseRecorder() : module_(""), tag_(""), directory_(""), filename_(""), timestamp_("") {}
   BaseRecorder(const std::string &module, const std::string &tag) : module_(module), tag_(tag), filename_("") {
-    auto &config_parser_ptr = mindspore::EnvConfigParser::GetInstance();
-    config_parser_ptr.Parse();
-    directory_ = config_parser_ptr.rdr_path();
+    directory_ = mindspore::EnvConfigParser::GetInstance().rdr_path();
 
     if (tag.length() > maxTagLength) {
       tag_ = tag.substr(0, maxTagLength);
