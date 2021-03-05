@@ -45,8 +45,8 @@ TEST_F(MindDataTestPipeline, TestAlbumBasic) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -100,8 +100,8 @@ TEST_F(MindDataTestPipeline, TestAlbumBasicWithPipeline) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -151,13 +151,11 @@ TEST_F(MindDataTestPipeline, TestAlbumDecode) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    /*
     auto image = row["image"];
-    auto shape = image->shape();
-    MS_LOG(INFO) << "Tensor image shape size: " << shape.Size();
-    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    EXPECT_GT(shape.Size(), 1);  // Verify decode=true took effect
-    */
+    auto shape = image.Shape();
+    MS_LOG(INFO) << "Tensor image shape size: " << shape.size();
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_GT(shape.size(), 1);  // Verify decode=true took effect
     iter->GetNextRow(&row);
   }
 
@@ -189,8 +187,8 @@ TEST_F(MindDataTestPipeline, TestAlbumNumSamplers) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,10 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
   // Check if RandomDataOp read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor label shape: " << label->shape();
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
 
     iter->GetNextRow(&row);
     i++;
@@ -112,10 +112,10 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
   // Check if RandomDataOp read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor label shape: " << label->shape();
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
 
     iter->GetNextRow(&row);
     i++;
@@ -205,47 +205,52 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic3) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
+  std::vector<int64_t> expect_num = {1};
+  std::vector<int64_t> expect_1d = {2};
+  std::vector<int64_t> expect_2d = {2, 2};
+  std::vector<int64_t> expect_3d = {2, 2, 2};
+
   // Check if RandomDataOp read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto col_sint16 = row["col_sint16"];
-    // auto col_sint32 = row["col_sint32"];
-    // auto col_sint64 = row["col_sint64"];
-    // auto col_float = row["col_float"];
-    // auto col_1d = row["col_1d"];
-    // auto col_2d = row["col_2d"];
-    // auto col_3d = row["col_3d"];
-    // auto col_binary = row["col_binary"];
+    auto col_sint16 = row["col_sint16"];
+    auto col_sint32 = row["col_sint32"];
+    auto col_sint64 = row["col_sint64"];
+    auto col_float = row["col_float"];
+    auto col_1d = row["col_1d"];
+    auto col_2d = row["col_2d"];
+    auto col_3d = row["col_3d"];
+    auto col_binary = row["col_binary"];
 
-    // // validate shape
-    // ASSERT_EQ(col_sint16->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_sint32->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_sint64->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_float->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_1d->shape(), TensorShape({2}));
-    // ASSERT_EQ(col_2d->shape(), TensorShape({2, 2}));
-    // ASSERT_EQ(col_3d->shape(), TensorShape({2, 2, 2}));
-    // ASSERT_EQ(col_binary->shape(), TensorShape({1}));
+    // Validate shape
+    ASSERT_EQ(col_sint16.Shape(), expect_num);
+    ASSERT_EQ(col_sint32.Shape(), expect_num);
+    ASSERT_EQ(col_sint64.Shape(), expect_num);
+    ASSERT_EQ(col_float.Shape(), expect_num);
+    ASSERT_EQ(col_1d.Shape(), expect_1d);
+    ASSERT_EQ(col_2d.Shape(), expect_2d);
+    ASSERT_EQ(col_3d.Shape(), expect_3d);
+    ASSERT_EQ(col_binary.Shape(), expect_num);
 
-    // // validate Rank
-    // ASSERT_EQ(col_sint16->Rank(), 1);
-    // ASSERT_EQ(col_sint32->Rank(), 1);
-    // ASSERT_EQ(col_sint64->Rank(), 1);
-    // ASSERT_EQ(col_float->Rank(), 1);
-    // ASSERT_EQ(col_1d->Rank(), 1);
-    // ASSERT_EQ(col_2d->Rank(), 2);
-    // ASSERT_EQ(col_3d->Rank(), 3);
-    // ASSERT_EQ(col_binary->Rank(), 1);
+    // Validate Rank
+    ASSERT_EQ(col_sint16.Shape().size(), 1);
+    ASSERT_EQ(col_sint32.Shape().size(), 1);
+    ASSERT_EQ(col_sint64.Shape().size(), 1);
+    ASSERT_EQ(col_float.Shape().size(), 1);
+    ASSERT_EQ(col_1d.Shape().size(), 1);
+    ASSERT_EQ(col_2d.Shape().size(), 2);
+    ASSERT_EQ(col_3d.Shape().size(), 3);
+    ASSERT_EQ(col_binary.Shape().size(), 1);
 
-    // // validate type
-    // ASSERT_EQ(col_sint16->type(), DataType::DE_INT16);
-    // ASSERT_EQ(col_sint32->type(), DataType::DE_INT32);
-    // ASSERT_EQ(col_sint64->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_float->type(), DataType::DE_FLOAT32);
-    // ASSERT_EQ(col_1d->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_2d->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_3d->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_binary->type(), DataType::DE_UINT8);
+    // Validate type
+    ASSERT_EQ(col_sint16.DataType(), mindspore::DataType::kNumberTypeInt16);
+    ASSERT_EQ(col_sint32.DataType(), mindspore::DataType::kNumberTypeInt32);
+    ASSERT_EQ(col_sint64.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_float.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_EQ(col_1d.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_2d.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_3d.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_binary.DataType(), mindspore::DataType::kNumberTypeUInt8);
 
     iter->GetNextRow(&row);
     i++;
@@ -282,47 +287,52 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
+  std::vector<int64_t> expect_num = {1};
+  std::vector<int64_t> expect_1d = {2};
+  std::vector<int64_t> expect_2d = {2, 2};
+  std::vector<int64_t> expect_3d = {2, 2, 2};
+
   // Check if RandomDataOp read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto col_sint16 = row["col_sint16"];
-    // auto col_sint32 = row["col_sint32"];
-    // auto col_sint64 = row["col_sint64"];
-    // auto col_float = row["col_float"];
-    // auto col_1d = row["col_1d"];
-    // auto col_2d = row["col_2d"];
-    // auto col_3d = row["col_3d"];
-    // auto col_binary = row["col_binary"];
+    auto col_sint16 = row["col_sint16"];
+    auto col_sint32 = row["col_sint32"];
+    auto col_sint64 = row["col_sint64"];
+    auto col_float = row["col_float"];
+    auto col_1d = row["col_1d"];
+    auto col_2d = row["col_2d"];
+    auto col_3d = row["col_3d"];
+    auto col_binary = row["col_binary"];
 
-    // // validate shape
-    // ASSERT_EQ(col_sint16->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_sint32->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_sint64->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_float->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_1d->shape(), TensorShape({2}));
-    // ASSERT_EQ(col_2d->shape(), TensorShape({2, 2}));
-    // ASSERT_EQ(col_3d->shape(), TensorShape({2, 2, 2}));
-    // ASSERT_EQ(col_binary->shape(), TensorShape({1}));
+    // Validate shape
+    ASSERT_EQ(col_sint16.Shape(), expect_num);
+    ASSERT_EQ(col_sint32.Shape(), expect_num);
+    ASSERT_EQ(col_sint64.Shape(), expect_num);
+    ASSERT_EQ(col_float.Shape(), expect_num);
+    ASSERT_EQ(col_1d.Shape(), expect_1d);
+    ASSERT_EQ(col_2d.Shape(), expect_2d);
+    ASSERT_EQ(col_3d.Shape(), expect_3d);
+    ASSERT_EQ(col_binary.Shape(), expect_num);
 
-    // // validate Rank
-    // ASSERT_EQ(col_sint16->Rank(), 1);
-    // ASSERT_EQ(col_sint32->Rank(), 1);
-    // ASSERT_EQ(col_sint64->Rank(), 1);
-    // ASSERT_EQ(col_float->Rank(), 1);
-    // ASSERT_EQ(col_1d->Rank(), 1);
-    // ASSERT_EQ(col_2d->Rank(), 2);
-    // ASSERT_EQ(col_3d->Rank(), 3);
-    // ASSERT_EQ(col_binary->Rank(), 1);
+    // Validate Rank
+    ASSERT_EQ(col_sint16.Shape().size(), 1);
+    ASSERT_EQ(col_sint32.Shape().size(), 1);
+    ASSERT_EQ(col_sint64.Shape().size(), 1);
+    ASSERT_EQ(col_float.Shape().size(), 1);
+    ASSERT_EQ(col_1d.Shape().size(), 1);
+    ASSERT_EQ(col_2d.Shape().size(), 2);
+    ASSERT_EQ(col_3d.Shape().size(), 3);
+    ASSERT_EQ(col_binary.Shape().size(), 1);
 
-    // // validate type
-    // ASSERT_EQ(col_sint16->type(), DataType::DE_INT16);
-    // ASSERT_EQ(col_sint32->type(), DataType::DE_INT32);
-    // ASSERT_EQ(col_sint64->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_float->type(), DataType::DE_FLOAT32);
-    // ASSERT_EQ(col_1d->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_2d->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_3d->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_binary->type(), DataType::DE_UINT8);
+    // Validate type
+    ASSERT_EQ(col_sint16.DataType(), mindspore::DataType::kNumberTypeInt16);
+    ASSERT_EQ(col_sint32.DataType(), mindspore::DataType::kNumberTypeInt32);
+    ASSERT_EQ(col_sint64.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_float.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_EQ(col_1d.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_2d.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_3d.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_binary.DataType(), mindspore::DataType::kNumberTypeUInt8);
 
     iter->GetNextRow(&row);
     i++;
@@ -359,29 +369,32 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic5) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
+  std::vector<int64_t> expect_num = {1};
+  std::vector<int64_t> expect_1d = {2};
+
   // Check if RandomDataOp read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     EXPECT_EQ(row.size(), 3);
 
-    // auto col_sint32 = row["col_sint32"];
-    // auto col_sint64 = row["col_sint64"];
-    // auto col_1d = row["col_1d"];
+    auto col_sint32 = row["col_sint32"];
+    auto col_sint64 = row["col_sint64"];
+    auto col_1d = row["col_1d"];
 
-    // // validate shape
-    // ASSERT_EQ(col_sint32->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_sint64->shape(), TensorShape({1}));
-    // ASSERT_EQ(col_1d->shape(), TensorShape({2}));
+    // Validate shape
+    ASSERT_EQ(col_sint32.Shape(), expect_num);
+    ASSERT_EQ(col_sint64.Shape(), expect_num);
+    ASSERT_EQ(col_1d.Shape(), expect_1d);
 
-    // // validate Rank
-    // ASSERT_EQ(col_sint32->Rank(), 1);
-    // ASSERT_EQ(col_sint64->Rank(), 1);
-    // ASSERT_EQ(col_1d->Rank(), 1);
+    // Validate Rank
+    ASSERT_EQ(col_sint32.Shape().size(), 1);
+    ASSERT_EQ(col_sint64.Shape().size(), 1);
+    ASSERT_EQ(col_1d.Shape().size(), 1);
 
-    // // validate type
-    // ASSERT_EQ(col_sint32->type(), DataType::DE_INT32);
-    // ASSERT_EQ(col_sint64->type(), DataType::DE_INT64);
-    // ASSERT_EQ(col_1d->type(), DataType::DE_INT64);
+    // Validate type
+    ASSERT_EQ(col_sint32.DataType(), mindspore::DataType::kNumberTypeInt32);
+    ASSERT_EQ(col_sint64.DataType(), mindspore::DataType::kNumberTypeInt64);
+    ASSERT_EQ(col_1d.DataType(), mindspore::DataType::kNumberTypeInt64);
 
     iter->GetNextRow(&row);
     i++;

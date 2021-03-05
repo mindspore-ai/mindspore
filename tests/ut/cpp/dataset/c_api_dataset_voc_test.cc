@@ -55,10 +55,10 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
   // uint32_t expect[] = {9, 9, 9, 1, 1, 0};
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor label shape: " << label->shape();
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
     // expect_label->SetItemAt({0, 0}, expect[i]);
     // EXPECT_EQ(*label, *expect_label);
 
@@ -137,10 +137,10 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
   // uint32_t expect_num[] = {5, 5, 4, 3};
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto label = row["label"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor label shape: " << label->shape();
+    auto image = row["image"];
+    auto label = row["label"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
 
     // std::shared_ptr<Tensor> expect_image;
     // Tensor::CreateFromFile(folder_path + "/JPEGImages/" + expect_file[i] + ".jpg", &expect_image);
@@ -210,10 +210,10 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
   // std::string expect_file[] = {"32", "33", "39", "32", "33", "39"};
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto target = row["target"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // MS_LOG(INFO) << "Tensor target shape: " << target->shape();
+    auto image = row["image"];
+    auto target = row["target"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    MS_LOG(INFO) << "Tensor target shape: " << target.Shape();
 
     // std::shared_ptr<Tensor> expect_image;
     // Tensor::CreateFromFile(folder_path + "/JPEGImages/" + expect_file[i] + ".jpg", &expect_image);

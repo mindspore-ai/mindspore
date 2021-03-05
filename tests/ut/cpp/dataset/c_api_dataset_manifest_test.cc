@@ -43,8 +43,8 @@ TEST_F(MindDataTestPipeline, TestManifestBasic) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -95,8 +95,8 @@ TEST_F(MindDataTestPipeline, TestManifestBasicWithPipeline) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -162,11 +162,11 @@ TEST_F(MindDataTestPipeline, TestManifestDecode) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // auto shape = image->shape();
-    // MS_LOG(INFO) << "Tensor image shape size: " << shape.Size();
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
-    // EXPECT_GT(shape.Size(), 1);  // Verify decode=true took effect
+    auto image = row["image"];
+    auto shape = image.Shape();
+    MS_LOG(INFO) << "Tensor image shape size: " << shape.size();
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_GT(shape.size(), 1);  // Verify decode=true took effect
     iter->GetNextRow(&row);
   }
 
@@ -196,8 +196,8 @@ TEST_F(MindDataTestPipeline, TestManifestEval) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
@@ -241,8 +241,8 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   // int32_t label_idx = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     // row["label"]->GetItemAt<int32_t>(&label_idx, {});
     // MS_LOG(INFO) << "Tensor label value: " << label_idx;
     // auto label_it = std::find(expected_label.begin(), expected_label.end(), label_idx);
@@ -276,8 +276,8 @@ TEST_F(MindDataTestPipeline, TestManifestNumSamplers) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 
