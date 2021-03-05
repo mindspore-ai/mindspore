@@ -26,8 +26,10 @@ fi
 HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${MINDSPORE_HOME}/mindspore/core
 -I${MINDSPORE_HOME}/mindspore/core/ir
+-I${MINDSPORE_HOME}/mindspore/core/mindrt/include
 -I${MINDSPORE_HOME}/mindspore/ccsrc
 -I${MINDSPORE_HOME}/mindspore/lite
+-I${MINDSPORE_HOME}/mindspore/lite/src
 -I${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm
 -I${MINDSPORE_HOME}/third_party
 -I${MINDSPORE_HOME}/mindspore/lite/build
