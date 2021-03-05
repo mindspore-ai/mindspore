@@ -40,8 +40,7 @@ Status TensorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
 Status TensorOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   if (OneToOne()) {
-    if (input.size() != 1)
-      return Status(StatusCode::kMDUnexpectedError, "The op is OneToOne, can only accept one tensor as input.");
+    CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "The op is OneToOne, can only accept one tensor as input.");
     output->resize(1);
     return Compute(input[0], &(*output)[0]);
   }

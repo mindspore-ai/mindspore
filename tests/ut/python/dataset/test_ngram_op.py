@@ -20,6 +20,24 @@ import mindspore.dataset as ds
 import mindspore.dataset.text as text
 
 
+def test_ngram_callable():
+    """
+    Test ngram op is callable
+    """
+    op = text.Ngram(2, separator="-")
+
+    input1 = " WildRose Country"
+    input1 = np.array(input1.split(" "), dtype='S')
+    expect1 = ['-WildRose', 'WildRose-Country']
+    result1 = op(input1)
+    assert np.array_equal(result1, expect1)
+
+    input2 = ["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"]
+    expect2 = ["WildRose Country-Canada's Ocean Playground", "Canada's Ocean Playground-Land of Living Skies"]
+    result2 = op(input2)
+    assert np.array_equal(result2, expect2)
+
+
 def test_multiple_ngrams():
     """ test n-gram where n is a list of integers"""
     plates_mottos = ["WildRose Country", "Canada's Ocean Playground", "Land of Living Skies"]
@@ -105,6 +123,7 @@ def test_corner_cases():
 
 
 if __name__ == '__main__':
+    test_ngram_callable()
     test_multiple_ngrams()
     test_simple_ngram()
     test_corner_cases()

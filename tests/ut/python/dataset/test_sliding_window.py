@@ -16,8 +16,32 @@
 Testing SlidingWindow in mindspore.dataset
 """
 import numpy as np
+import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
+
+
+def test_sliding_window_callable():
+    """
+    Test sliding window op is callable
+    """
+    op = text.SlidingWindow(2, 0)
+
+    input1 = ["大", "家", "早", "上", "好"]
+    expect = np.array([['大', '家'], ['家', '早'], ['早', '上'], ['上', '好']])
+    result = op(input1)
+    assert np.array_equal(result, expect)
+
+    # test 2D input
+    input2 = [["大", "家", "早", "上", "好"]]
+    with pytest.raises(RuntimeError) as info:
+        _ = op(input2)
+    assert "SlidingWindow: SlidingWindow supports 1D input only for now." in str(info.value)
+
+    # test input multiple tensors
+    with pytest.raises(RuntimeError) as info:
+        _ = op(input1, input1)
+    assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
 
 
 def test_sliding_window_string():
@@ -104,6 +128,7 @@ def test_sliding_window_exception():
 
 
 if __name__ == '__main__':
+    test_sliding_window_callable()
     test_sliding_window_string()
     test_sliding_window_number()
     test_sliding_window_big_width()

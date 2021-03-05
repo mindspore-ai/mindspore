@@ -50,6 +50,12 @@ def test_to_number_eager():
         _ = op(*input_strings)
     assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
 
+    # test input invalid tensor
+    invalid_input = [["1", "2", "3"], ["4", "5"]]
+    with pytest.raises(RuntimeError) as info:
+        _ = op(invalid_input)
+    assert "Invalid data type." in str(info.value)
+
 
 def test_to_number_typical_case_integral():
     input_strings = [["-121", "14"], ["-2219", "7623"], ["-8162536", "162371864"],

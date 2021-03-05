@@ -35,14 +35,12 @@ def test_HWC2CHW_callable():
     Test HWC2CHW is callable
     """
     logger.info("Test HWC2CHW callable")
-    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-    img = c_vision.Decode()(img)
-    assert img.shape == (2268, 4032, 3)
+    img = np.zeros([50, 50, 3])
+    assert img.shape == (50, 50, 3)
 
     # test one tensor
     img1 = c_vision.HWC2CHW()(img)
-    assert img1.shape == (3, 2268, 4032)
+    assert img1.shape == (3, 50, 50)
 
     # test input multiple tensors
     with pytest.raises(RuntimeError) as info:
@@ -53,7 +51,6 @@ def test_HWC2CHW_callable():
     with pytest.raises(RuntimeError) as info:
         _ = c_vision.HWC2CHW()(img, img)
     assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
-
 
 
 def test_HWC2CHW(plot=False):

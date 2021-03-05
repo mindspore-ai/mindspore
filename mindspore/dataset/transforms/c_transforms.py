@@ -27,8 +27,20 @@ from ..core.datatypes import mstype_to_detype
 
 
 class TensorOperation:
-    def __call__(self):
-        raise NotImplementedError("TensorOperation has to implement __call__() method.")
+    """
+    Base class Tensor Ops
+    """
+    def __call__(self, *input_tensor_list):
+        tensor_row = [cde.Tensor(np.asarray(tensor)) for tensor in input_tensor_list]
+        callable_op = cde.Execute(self.parse())
+        output_tensor_list = callable_op(tensor_row)
+        for i, element in enumerate(output_tensor_list):
+            arr = element.as_array()
+            if arr.dtype.char == 'S':
+                output_tensor_list[i] = np.char.decode(arr)
+            else:
+                output_tensor_list[i] = arr
+        return output_tensor_list[0] if len(output_tensor_list) == 1 else tuple(output_tensor_list)
 
     def parse(self):
         raise NotImplementedError("TensorOperation has to implement parse() method.")

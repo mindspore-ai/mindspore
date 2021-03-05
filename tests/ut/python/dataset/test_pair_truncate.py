@@ -30,6 +30,17 @@ def compare(in1, in2, length, out1, out2):
         np.testing.assert_array_equal(out2, d["s2"])
 
 
+def test_callable():
+    op = text.TruncateSequencePair(3)
+    data = [["1", "2", "3"], ["4", "5"]]
+    result_text = op(*data)
+    column1, column2 = op(["1", "2", "3"], ["4", "5"])
+    assert np.array_equal(result_text[0], ['1', '2'])
+    assert np.array_equal(result_text[1], ['4'])
+    assert np.array_equal(column1, ['1', '2'])
+    assert np.array_equal(column2, ['4'])
+
+
 def test_basics():
     compare(in1=[1, 2, 3], in2=[4, 5], length=4, out1=[1, 2], out2=[4, 5])
     compare(in1=[1, 2], in2=[4, 5], length=4, out1=[1, 2], out2=[4, 5])
@@ -59,6 +70,7 @@ def test_exceptions():
 
 
 if __name__ == "__main__":
+    test_callable()
     test_basics()
     test_basics_odd()
     test_basics_str()
