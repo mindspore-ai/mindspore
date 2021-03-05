@@ -26,7 +26,7 @@ parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--input_size", type=int, default=513, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="deeplabv3", help="output file name.")
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument('--file_format', type=str, choices=["AIR", "MINDIR"], default='AIR', help='file format')
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
 parser.add_argument('--model', type=str.lower, default='deeplab_v3_s8', choices=['deeplab_v3_s16', 'deeplab_v3_s8'],

@@ -12,6 +12,8 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
+    - [Export MindIR](#export-mindir)
+    - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
@@ -477,6 +479,37 @@ Our result were obtained by running the applicable training script. To achieve t
 | deeplab_v3 |       | √    | √    | √     | 79.89 | 79.77        |
 
 Note: There OS is output stride, and MS is multiscale.
+
+## [Export MindIR](#contents)
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
+```
+
+The ckpt_file parameter is required,
+`EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
+
+## [Inference Process](#contents)
+
+### Usage
+
+Before performing inference, the air file must bu exported by export script on the 910 environment.
+Current batch_Size can only be set to 1. The precision calculation process needs about 70G+ memory space.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DATA_ROOT] [DATA_LIST] [DEVICE_ID]
+```
+
+`DEVICE_ID` is optional, default value is 0.
+
+### result
+
+Inference result is saved in current path, you can find result in acc.log file.
+
+| **Network**    | OS=16 | OS=8 | MS   | Flip  | mIOU  | mIOU in paper |
+| :----------: | :-----: | :----: | :----: | :-----: | :-----: | :-------------: |
+| deeplab_v3 |       | √    |      |       | 78.84 | 78.51    |
 
 # [Model Description](#contents)
 
