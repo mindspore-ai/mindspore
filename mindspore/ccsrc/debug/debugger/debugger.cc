@@ -122,7 +122,11 @@ void Debugger::EnableDebugger() {
   MS_LOG(INFO) << "debugger_enabled_ = " << debugger_enabled_;
 
   if (!debugger_enabled_ && !dump_enabled) {
-    MS_LOG(INFO) << "Not enabling debugger. Set environment variable ENABLE_MS_DEBUGGER=1 to enable debugger.";
+    if (device_target_ == kCPUDevice) {
+      MS_LOG(INFO) << "Not enabling debugger. Debugger does not support CPU.";
+    } else {
+      MS_LOG(INFO) << "Not enabling debugger. Set environment variable ENABLE_MS_DEBUGGER=1 to enable debugger.";
+    }
     return;
   }
 
@@ -227,7 +231,7 @@ bool Debugger::CheckDebuggerEnabled() {
   if (env_enable_char != nullptr) {
     std::string env_enable_str = env_enable_char;
     (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
-    if (env_enable_str == "1" || env_enable_str == "true") {
+    if ((env_enable_str == "1" || env_enable_str == "true") && device_target_ != kCPUDevice) {
       return true;
     }
   }
