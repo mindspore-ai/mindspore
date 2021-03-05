@@ -692,7 +692,7 @@ AnfNodePtr KernelGraph::TransTupleToMakeTuple(const AnfNodePtr &node) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
     auto make_tuple = TransValueNodeTuple(value_node->abstract(), value_node->value());
-    if (RemoveValueNodeFromGraph(value_node)) {
+    if (!RemoveValueNodeFromGraph(value_node)) {
       MS_LOG(WARNING) << "Failed to remove the value_node " << value_node->DebugString();
     }
     return make_tuple;
