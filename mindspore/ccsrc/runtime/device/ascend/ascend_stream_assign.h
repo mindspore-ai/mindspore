@@ -184,7 +184,7 @@ class AscendStreamAssign {
   void GetParallelStream(uint32_t cur_stream_id, uint32_t stream_acitve_id, std::vector<uint32_t> *parallel_streams);
   void SetLoopSink();
 
-  // function for memory resue
+  // function for memory reuse
   void GetStreamRelations();
   void DFS(uint32_t start, std::vector<uint32_t> *group);
   bool IsVecExist(const std::vector<uint32_t> &group);
@@ -202,10 +202,14 @@ class AscendStreamAssign {
   bool independent_stream_activated_{false};
   bool hcom_stream_activated_{false};
   bool loop_sink_{false};
-  // key:stream id, value:task nums;
-  std::map<uint32_t, uint32_t> independent_stream_map_{};
-  std::map<uint32_t, uint32_t> hcom_stream_map_{};
+
+  // key:stream id, value:node number
   std::map<uint32_t, uint32_t> common_stream_map_{};
+  // key:stream id, value:node number
+  std::map<uint32_t, uint32_t> independent_stream_map_{};
+  // key:stream id, value:task number
+  std::map<uint32_t, uint32_t> hcom_stream_map_{};
+
   std::set<uint32_t> processed_streams_{};
   std::vector<uint32_t> need_first_active_streams_{};
   std::set<CNodeKey> independent_targets_;
