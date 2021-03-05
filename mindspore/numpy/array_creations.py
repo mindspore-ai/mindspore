@@ -530,11 +530,12 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
     start) and ends with base ** stop (see endpoint below).
 
     Args:
-        start (Union[int, list(int), tuple(int), tensor]): The starting value of the sequence.
-        stop (Union[int, list(int), tuple(int), tensor]): The end value of the sequence,
-            unless `endpoint` is set to False. In that case, the sequence consists
-            of all but the last of `num + 1` evenly spaced samples, so that `stop`
-            is excluded.  Note that the step size changes when `endpoint` is False.
+        start (Union[int, list(int), tuple(int), tensor]): ``base ** start`` is the starting
+            value of the sequence.
+        stop (Union[int, list(int), tuple(int), tensor]): ``base ** stop`` is the final value of
+            the sequence, unless `endpoint` is False. In that case, ``num + 1`` values are spaced
+            over the interval in log-space, of which all but the last (a sequence of length num)
+            are returned.
         num (int, optional): Number of samples to generate. Default is 50.
         endpoint (bool, optional): If True, `stop` is the last sample. Otherwise, it is
             not included. Default is True.
