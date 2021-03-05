@@ -279,11 +279,11 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
   heart_beat_thread_ = std::make_unique<std::thread>([&]() {
     while (!is_finish_.load()) {
       if (!Heartbeat(client)) {
-        MS_LOG(ERROR) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << ", the node id is:" << node_info_.node_id_ << " Send heartbeat timeout!";
+        MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                        << ", the node id is:" << node_info_.node_id_ << " Send heartbeat timeout!";
         if (!CheckSchedulerTimeout() && on_node_event_message_) {
-          MS_LOG(ERROR) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                        << ", the node id is:" << node_info_.node_id_ << " exited due to scheduler timeout!";
+          MS_LOG(WARNING) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                          << ", the node id is:" << node_info_.node_id_ << " exited due to scheduler timeout!";
           is_finish_ = true;
           wait_finish_cond_.notify_all();
           on_node_event_message_(NodeEvent::SCHEDULER_TIMEOUT);
@@ -306,7 +306,7 @@ bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client, bool is_n
 
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, heartbeat_message.SerializeAsString().data(),
                        heartbeat_message.ByteSizeLong())) {
-    MS_LOG(ERROR) << "The node id:" << node_info_.node_id_ << " Send heartbeat timeout!";
+    MS_LOG(WARNING) << "The node id:" << node_info_.node_id_ << " Send heartbeat timeout!";
   }
   return true;
 }

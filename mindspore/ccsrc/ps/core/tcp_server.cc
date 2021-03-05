@@ -375,7 +375,7 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
     srv->RemoveConnection(conn->GetFd());
     bufferevent_free(bev);
   } else if (events & BEV_EVENT_ERROR) {
-    MS_LOG(ERROR) << "Event buffer remain data: " << remain;
+    MS_LOG(WARNING) << "Event buffer remain data: " << remain;
     // Free connection structures
     srv->RemoveConnection(conn->GetFd());
     bufferevent_free(bev);
@@ -385,7 +385,7 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
       srv->client_disconnection_(*srv, *conn);
     }
   } else {
-    MS_LOG(ERROR) << "Unhandled event!";
+    MS_LOG(WARNING) << "Unhandled event!";
   }
 }
 
