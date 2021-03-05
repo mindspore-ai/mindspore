@@ -31,6 +31,8 @@
 #include "utils/ms_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
+#include "backend/optimizer/common/const_input_to_attr_registry.h"
+#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
 namespace opt {
@@ -700,6 +702,92 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
   }
   return CreateCNodeWithGraph(input_nodes, graph);
 }
+
+// rectify absttract if the input has been converted to the attr
+AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
+                                               const AbstractBasePtrList &input_abstract) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  opt::ConstInputToAttrInfoRegister reg;
+  if (!opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(primitive->name(), &reg)) {
+    return input_abstract;
+  }
+  if (AnfAlgo::HasDynamicShapeFlag(primitive) ||
+      DynamicShapeConstInputToAttr.find(primitive->name()) != DynamicShapeConstInputToAttr.end()) {
+    return input_abstract;
+  }
+  auto convert_input_list = reg.GetConstInputAttrInfo();
+  auto input_names = primitive->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    return input_abstract;
+  }
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  AbstractBasePtrList rectify_abs_list;
+  size_t ori_index = 0;
+  rectify_abs_list.resize(input_names_vec.size());
+  for (size_t index = 0; index < rectify_abs_list.size(); ++index) {
+    // if convert input list find the index it means the input has been converted to the attr
+    if (convert_input_list.find(index) != convert_input_list.end()) {
+      AbstractBasePtr rectify_abs = nullptr;
+      auto input_name = input_names_vec[index];
+      auto attr = primitive->GetAttr(input_name);
+      if (attr != nullptr) {
+        rectify_abs = attr->ToAbstract();
+      } else {
+        MS_LOG(DEBUG) << "the node prim name :" << primitive->name() << "input index :" << index
+                      << " input name :" << input_name << "has not been converted to the attr";
+        rectify_abs = input_abstract[ori_index++];
+      }
+      rectify_abs_list[index] = rectify_abs;
+      continue;
+    }
+    if (ori_index > input_abstract.size()) {
+      MS_LOG(EXCEPTION) << "index is out of range input abstract size " << input_abstract.size()
+                        << " get index :" << ori_index;
+    }
+    rectify_abs_list[index] = input_abstract[ori_index++];
+  }
+  return rectify_abs_list;
+}
+
+AbstractBasePtrList RectifyAbstractFromDynamicInput(const PrimitivePtr &primitive,
+                                                    const AbstractBasePtrList &input_abstract) {
+  auto dynamic_inputs_list = primitive->GetAttr(kAttrDynInputSizes);
+  if (dynamic_inputs_list == nullptr) {
+    return input_abstract;
+  }
+  AbstractBasePtrList rectifyed_abs_list;
+  const int kNotDynamicFlag = -1;
+  auto dynamic_inputs_index = GetValue<std::vector<int64_t>>(dynamic_inputs_list);
+  size_t input_index = 0;
+  for (auto item : dynamic_inputs_index) {
+    if (item == kNotDynamicFlag) {
+      if (input_index >= input_abstract.size()) {
+        MS_LOG(EXCEPTION) << " index " << input_index << " is out of range in input abstract " << input_abstract.size();
+      }
+      rectifyed_abs_list.emplace_back(input_abstract[input_index++]);
+    } else {
+      if (item < 0) {
+        MS_LOG(EXCEPTION) << " the dynamic input size check error the index should be -1 or positive number but got "
+                          << item;
+      }
+      AbstractBasePtrList dynamic_inputs_abs;
+      for (auto index = item; index > 0; --index) {
+        if (input_index >= input_abstract.size()) {
+          MS_LOG(EXCEPTION) << " index " << input_index << " is out of range in input abstract "
+                            << input_abstract.size();
+        }
+        dynamic_inputs_abs.emplace_back(input_abstract[input_index++]);
+      }
+      rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(dynamic_inputs_abs));
+    }
+  }
+  return rectifyed_abs_list;
+}
+
+AbstractBasePtrList RectifyAbstract(const PrimitivePtr &primitive, const AbstractBasePtrList &input_abstract) {
+  auto rectify_abs_list = RectifyAbstractFromRegAttr(primitive, input_abstract);
+  return RectifyAbstractFromDynamicInput(primitive, rectify_abs_list);
+}
 }  // namespace
 
 AnfNodePtr SexpToNode(const BaseRef &sexp, const BaseRef &graph, PrimitiveVarMap *primitive_vars, bool multigraph) {
@@ -834,6 +922,25 @@ void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const C
       depend->set_input(index, new_node);
     }
   }
+}
+AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
+  auto ret = prim_eval_implement_map.find(prim);
+  if (ret != prim_eval_implement_map.end()) {
+    // fing infer function in the front infer map and restore input abastract form dynamic inputs and reg attr
+    auto infer_spec_list = RectifyAbstract(prim, args_spec_list);
+    return ret->second.impl_(nullptr, prim, infer_spec_list);
+  } else {
+    // if the infer function has been not founded in the front infer map find it in the backend infer map instead
+    auto &prim_backend_eval_impl_map = abstract::GetPrimitiveToBackendEvalImplMap();
+    auto ret_backend = prim_backend_eval_impl_map.find(prim);
+    if (ret_backend != prim_backend_eval_impl_map.end()) {
+      return ret_backend->second.impl_(nullptr, prim, args_spec_list);
+    }
+  }
+  MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
+                    << " primitive type:" << prim->type_name();
 }
 }  // namespace opt
 }  // namespace mindspore

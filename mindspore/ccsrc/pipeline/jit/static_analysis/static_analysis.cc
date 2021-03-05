@@ -357,6 +357,13 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     return std::make_shared<MixedPrecisionCastEvaluator>(prim);
   }
 
+  // find prim infer function in the prim function map return a standard evaluator
+  StandardPrimitiveEvalImpl eval_impl = GetPrimitiveInferImpl(prim);
+  if (eval_impl != nullptr) {
+    return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
+  }
+
+  // use python infer function if the infer function not founded in the map return a python evaluator
   EvaluatorPtr evaluator = nullptr;
   if (prim->HasPyEvaluator()) {
     auto prim_py = dyn_cast<PrimitivePy>(prim);
@@ -376,17 +383,7 @@ EvaluatorPtr GetPrimEvaluator(const PrimitivePtr &prim, const AnalysisEnginePtr 
     MS_LOG(EXCEPTION) << "The primitive with python evaluator should be a python primitive.";
   }
 
-  if (prim->isa<PrimitivePy>() || prim->HasAttr()) {
-    if (engine == nullptr) {
-      (void)GetPrimEvaluatorConstructors();
-    }
-    // If a primitive may have attr, try to create a new evaluator.
-    StandardPrimitiveEvalImpl eval_impl = GetPrimitiveInferImpl(prim);
-    if (eval_impl != nullptr) {
-      return std::make_shared<StandardPrimEvaluator>(prim, eval_impl);
-    }
-  }
-
+  // return a default evaluator
   if (engine == nullptr) {
     // If engine is nullptr, get constructor from default.
     const PrimEvaluatorMap &prim_evaluator_map = GetPrimEvaluatorConstructors();
@@ -777,17 +774,6 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
   auto trivial_evaluator = dyn_cast<TrivialPrimEvaluator>(evaluator);
   auto eval_result = trivial_evaluator->EvalPrim(nullptr, arg_specs);
   return eval_result;
-}
-
-AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto &prim_eval_implement_map = GetPrimitiveToEvalImplMap();
-  auto ret = prim_eval_implement_map.find(prim);
-  if (ret == prim_eval_implement_map.end()) {
-    MS_LOG(EXCEPTION) << "Get infer shape function failed, primitive name:" << prim->name()
-                      << " primitive type:" << prim->type_name();
-  }
-  return ret->second.impl_(nullptr, prim, args_spec_list);
 }
 }  // namespace abstract
 }  // namespace mindspore

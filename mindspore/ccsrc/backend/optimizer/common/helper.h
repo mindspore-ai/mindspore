@@ -212,6 +212,8 @@ ValueNodePtr MakeValueNode(const ValueNodePtr &value_node);
 
 // Transfer depend or control_depend to the new node
 void TransferDepend(const CNodePtr &old_node, const FuncGraphPtr &graph, const CNodePtr &new_node);
+
+AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_HELPER_H_

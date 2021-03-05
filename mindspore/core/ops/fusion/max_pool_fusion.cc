@@ -104,6 +104,5 @@ AbstractBasePtr MaxPoolFusionInfer(const abstract::AnalysisEnginePtr &, const Pr
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MaxPoolFusion, prim::kPrimMaxPool, MaxPoolFusionInfer);
 }  // namespace ops
 }  // namespace mindspore

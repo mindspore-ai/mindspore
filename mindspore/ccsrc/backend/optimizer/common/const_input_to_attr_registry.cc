@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/optimizer/pass/const_input_to_attr_registry.h"
+#include "backend/optimizer/common/const_input_to_attr_registry.h"
 
 #include <utility>
 

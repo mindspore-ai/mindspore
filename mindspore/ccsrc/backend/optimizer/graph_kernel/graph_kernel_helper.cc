@@ -27,7 +27,7 @@
 #include "backend/kernel_compiler/akg/akg_kernel_json_decoder.h"
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
-#include "backend/optimizer/pass/const_input_to_attr_registry.h"
+#include "backend/optimizer/common/const_input_to_attr_registry.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/func_graph.h"
 #include "pipeline/jit/parse/python_adapter.h"

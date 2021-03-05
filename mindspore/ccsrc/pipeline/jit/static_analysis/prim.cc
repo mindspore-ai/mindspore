@@ -1311,15 +1311,6 @@ bool IsInWhiteList(const PrimitivePtr &primitive) {
   return false;
 }
 
-StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto iter = GetPrimitiveToEvalImplMap().find(primitive);
-  if (iter == GetPrimitiveToEvalImplMap().end()) {
-    return nullptr;
-  }
-  return iter->second.impl_;
-}
-
 PrimEvaluatorMap &GetPrimEvaluatorConstructors() {
   PrimEvaluatorMap &constructor = PrimEvaluatorConstructors;
   if (!constructor.empty()) {

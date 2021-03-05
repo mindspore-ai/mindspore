@@ -123,7 +123,7 @@ void DynamicKernel::InferShape() {
     }
   }
 
-  auto eval_result = abstract::CppInferShape(primitive, args_spec_list);
+  auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   cnode_ptr_->set_abstract(eval_result);
 }
 
