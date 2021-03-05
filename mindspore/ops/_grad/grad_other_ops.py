@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,4 +82,11 @@ def get_bprop_sync_batch_norm(self):
         dscale = out[1]
         dbias = out[2]
         return dx, dscale, dbias, zeros_like(mean), zeros_like(variance)
+    return bprop
+
+
+@bprop_getters.register(inner.GpuConvertToDynamicShape)
+def get_bprop_gpu_convert_to_dynamic_shape(self):
+    def bprop(x, out, dout):
+        return (dout,)
     return bprop
