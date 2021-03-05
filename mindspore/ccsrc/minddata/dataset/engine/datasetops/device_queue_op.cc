@@ -409,6 +409,7 @@ Status DeviceQueueOp::PushDataToGPU() {
 }
 
 Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataItemGpu> &items) {
+  bool flagLog = false;
   while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (ret) {
@@ -416,7 +417,10 @@ Status DeviceQueueOp::RetryPushData(unsigned int handle, const std::vector<DataI
         return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Invalid input data, please check it.");
       } else {
         if (!stop_send_) {
-          MS_LOG(DEBUG) << "Retry pushing data...";
+          if (!flagLog) {
+            MS_LOG(DEBUG) << "Retry pushing data...";
+            flagLog = true;
+          }
           continue;
         }
         break;
