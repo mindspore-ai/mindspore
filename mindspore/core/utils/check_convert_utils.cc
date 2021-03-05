@@ -303,16 +303,6 @@ std::vector<int64_t> CheckAndConvertUtils::CheckPositiveVector(const std::string
       raise_message();
     }
   }
-  //  if (arg_value.size() == 1) {
-  //    return ret_four ? std::vector<int64_t>{1, 1, arg_value[0], arg_value[0]}
-  //                    : std::vector<int64_t>{arg_value[0], arg_value[0]};
-  //  }
-  //  if (arg_value.size() == 2) {
-  //    return ret_four ? std::vector<int64_t>{1, 1, arg_value[0], arg_value[1]} : arg_value;
-  //  } else if (arg_value.size() == 4 && allow_four) {
-  //    return ret_four ? arg_value : std::vector<int64_t>{arg_value[2], arg_value[3]};
-  //  }
-  //  raise_message();
   return arg_value;
 }
 
