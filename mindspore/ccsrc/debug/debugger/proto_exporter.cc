@@ -361,7 +361,7 @@ void DebuggerProtoExporter::ExportParameters(const FuncGraphPtr &func_graph, deb
 
     const ParameterPtr param_ptr = dyn_cast<Parameter>(param);
     if (param_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "Parameter '" << param->ToString() << "' could not cast to parameter.";
+      MS_LOG(INFO) << "Parameter '" << param->ToString() << "' could not cast to parameter.";
     }
   }
 }
