@@ -310,11 +310,17 @@ class OptimizerSemiAutoAndAutoParallelFactory:
 
 def test_optimizer_parallel_auto_4p_6_parameter_same_strategy_1_1_2_1_momentum():
     inputs_np = np.random.randn(16, 1, 32, 32).astype(np.float32)
-    dataset = FakeData(size=32,
-                       batch_size=4,
-                       image_size=(1, 32, 32),
-                       use_parallel=True,
-                       num_classes=116)
+    ds1 = FakeData(size=32,
+                   batch_size=4,
+                   image_size=(1, 32, 32),
+                   use_parallel=True,
+                   num_classes=116)
+
+    ds2 = FakeData(size=32,
+                   batch_size=4,
+                   image_size=(1, 32, 32),
+                   use_parallel=True,
+                   num_classes=116)
     strategy_dict = {'add1': ((1, 1, 2, 1), (1, 1, 2, 1)),
                      'mul1': ((1, 1, 2, 1), (1, 1, 2, 1)),
                      'fc1_matmul': ((1, 2), (1, 2)),
@@ -323,6 +329,6 @@ def test_optimizer_parallel_auto_4p_6_parameter_same_strategy_1_1_2_1_momentum()
                      'mul3': ((1, 2), (1, 2))}
     fact = OptimizerSemiAutoAndAutoParallelFactory(net=OptimizerSemiAutoAndAutoParallel6Net,
                                                    strategy_dict=strategy_dict)
-    fact.mindspore_auto_parallel_impl(dataset=dataset, epoch=2, device_num=4)
-    fact.mindspore_optimizer_auto_parallel_impl(dataset=dataset, epoch=2, device_num=4)
+    fact.mindspore_auto_parallel_impl(dataset=ds1, epoch=2, device_num=4)
+    fact.mindspore_optimizer_auto_parallel_impl(dataset=ds2, epoch=2, device_num=4)
     fact.checkpoint_cmp(inputs_np=inputs_np)

@@ -402,6 +402,7 @@ class Model:
 
         # build callback list
         with _CallbackManager(callbacks) as list_callback:
+            self._check_reuse_dataset(train_dataset)
             if not dataset_sink_mode:
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             elif context.get_context("device_target") == "CPU":
@@ -409,7 +410,6 @@ class Model:
                                "So the training process will be performed with dataset not sink.")
                 self._train_process(epoch, train_dataset, list_callback, cb_params)
             else:
-                self._check_reuse_dataset(train_dataset)
                 self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params, sink_size)
 
     @staticmethod
