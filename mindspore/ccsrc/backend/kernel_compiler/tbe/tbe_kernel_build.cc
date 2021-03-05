@@ -123,7 +123,6 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   nlohmann::json op_info_json;
   op_info_json[kJIsDynamicShape] = tbe::TbeDynamicShapeUtil::GetDynamicShapeAttr(anf_node->cast<CNodePtr>());
   auto func_name = op_info_ptr->kernel_name();
-  op_info_json["graph_id"] = AnfAlgo::GetGraphId(anf_node.get());
   op_info_json[kJName] = func_name;
   op_info_json[kJModuleName] = std::string("impl.") + func_name;
   op_info_json[kJPyModulePath] = kPyPath;
@@ -161,6 +160,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   json_name_ = op_name + "_" + std::to_string(hash_id) + "_" + std::to_string(device_id);
   json_info_ = json_str;
   op_info_json["Type"] = op_name;
+  op_info_json["graph_id"] = AnfAlgo::GetGraphId(anf_node.get());
   op_info_json[kJKernelName] = json_name_;
   op_info_json[kGenModel] = kSingle;
   op_info_json[kJFullName] = anf_node->fullname_with_scope();
