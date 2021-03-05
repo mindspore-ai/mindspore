@@ -387,10 +387,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       for (size_t i = 0; i < ret_tuple.size(); i++) {
         TensorRow output_batch;
         // If user returns a type that is neither a list nor an array, issue a error msg.
-        if (py::isinstance<py::array>(ret_tuple[i])) {
-          MS_LOG(INFO) << "column: " << out_col_names_[i]
-                       << " returned by per_batch_map is a np.array. Please use list instead.";
-        } else if (!py::isinstance<py::list>(ret_tuple[i])) {
+        if (!py::isinstance<py::list>(ret_tuple[i])) {
           MS_LOG(ERROR) << "column: " << out_col_names_[i]
                         << " returned by per_batch_map is not a list, this could lead to conversion failure.";
         }
