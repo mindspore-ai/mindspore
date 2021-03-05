@@ -40,6 +40,7 @@ namespace ascend {
 namespace {
 constexpr uint32_t kDeviceNumOfServer = 8;
 constexpr uint32_t kDeviceNumThreshold = 1024;
+const char kDefaultGroup[] = "__default_group";
 
 constexpr uint32_t kMaxStreamNum = 1024;
 constexpr uint32_t kHcomSecondaryStreamNum = 3;
@@ -60,13 +61,48 @@ bool IsSameServer(const std::vector<uint32_t> &rank_ids) {
   return ((max - min < kDeviceNumOfServer) && (min / kDeviceNumOfServer == max / kDeviceNumOfServer));
 }
 
+string DoGetHcomGroup(const string &original_group) {
+  string communi_parallel_mode = parallel::ParallelContext::GetInstance()->communi_parallel_mode();
+
+  if (communi_parallel_mode == parallel::ALL_GROUP_PARALLEL) {
+    return original_group;
+  }
+
+  if (communi_parallel_mode == parallel::NO_GROUP_PARALLEL) {
+    return kDefaultGroup;
+  }
+
+  MS_EXCEPTION_IF_NULL(parallel::g_device_manager);
+  auto group_info = parallel::g_device_manager->group_info();
+  for (const auto &info : group_info) {
+    if (info.first != original_group) {
+      continue;
+    }
+
+    const auto &rank_ids = info.second;
+    if (IsSameServer(rank_ids)) {
+      return original_group;
+    } else {
+      return kDefaultGroup;
+    }
+  }
+
+  // world group is not in group_info.
+  return kDefaultGroup;
+}
+
 string GetHcomGroup(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!AnfAlgo::HasNodeAttr(kAttrGroup, cnode)) {
     MS_LOG_EXCEPTION << "Hcom node " << cnode->fullname_with_scope() << " has no group attribute.";
   }
 
-  return AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
+  auto group_name = AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrGroup);
+  auto new_group = DoGetHcomGroup(group_name);
+  MS_LOG_INFO << "hcom node: " << cnode->fullname_with_scope() << ", old group: " << group_name
+              << ", new group: " << new_group;
+
+  return new_group;
 }
 
 uint32_t GetHcomTaskNum(const CNodePtr &cnode) {
@@ -167,6 +203,9 @@ StreamActiveKind GetStreamKind(uint32_t cur_stream_id, uint32_t pre_stream_id, u
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
   if (IsTaskSink() && !graph_ptr->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Communication parallel mode: " << parallel::ParallelContext::GetInstance()->communi_parallel_mode()
+                 << ".";
+
     Reset();
     SetLoopSink();
     ReorderIndependentOrders(graph_ptr);

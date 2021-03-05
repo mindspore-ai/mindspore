@@ -46,6 +46,10 @@ constexpr char RECURSIVE_PROGRAMMING[] = "recursive_programming";
 constexpr char TRAINING[] = "training";
 constexpr char ACCUMULATION[] = "accumulation";
 
+constexpr char ALL_GROUP_PARALLEL[] = "all_group_parallel";
+constexpr char SAME_SERVER_GROUP_PARALLEL[] = "same_server_group_parallel";
+constexpr char NO_GROUP_PARALLEL[] = "no_group_parallel";
+
 class ParallelContext {
  public:
   ~ParallelContext() = default;
@@ -112,6 +116,9 @@ class ParallelContext {
   }
   bool enable_parallel_optimizer() const { return enable_parallel_optimizer_; }
 
+  bool set_communi_parallel_mode(const std::string &communi_parallel_mode);
+  std::string communi_parallel_mode() const { return communi_parallel_mode_; }
+
   void Reset();
   void ParallelParameterContextInitShape(const FuncGraphPtr &func_graph);
   void ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
@@ -144,6 +151,7 @@ class ParallelContext {
   std::string group_ckpt_save_file_;
   bool enable_parallel_optimizer_;
   bool init_param_shape_;
+  std::string communi_parallel_mode_;
 };
 
 }  // namespace parallel
