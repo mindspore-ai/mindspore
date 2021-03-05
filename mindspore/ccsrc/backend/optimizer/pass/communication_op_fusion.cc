@@ -224,7 +224,8 @@ static void AdjustAllReduceInputWithLoad(const CNodePtr &cnode) {
     return search_cnode->input(2)->isa<CNode>();
   });
   if (cnode_load != nullptr) {
-    const auto &const_u_monad = NewValueNode(kUMonad);
+    auto const_u_monad = NewValueNode(kUMonad);
+    const_u_monad->set_abstract(kUMonad->ToAbstract());
     const auto &cnode_u = cnode_load->input(2);
     MS_LOG(DEBUG) << "Replace Load with CNode U to constant U for cnode: " << cnode_load->DebugString();
     MS_EXCEPTION_IF_NULL(cnode->func_graph());
