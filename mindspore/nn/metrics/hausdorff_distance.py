@@ -85,6 +85,16 @@ class HausdorffDistance(Metric):
         crop (bool): Crop input images and only keep the foregrounds. In order to maintain two inputs' shapes,
                      here the bounding box is achieved by (y_pred | y) which represents the union set of two images.
                      Default: True.
+
+    Examples:
+        >>> x = Tensor(np.array([[3, 0, 1], [1, 3, 0], [1, 0, 2]]))
+        >>> y = Tensor(np.array([[0, 2, 1], [1, 2, 1], [0, 0, 1]]))
+        >>> metric = nn.HausdorffDistance
+        >>> metric.clear()
+        >>> metric.update(x, y, 0)
+        >>> mean_average_distance = metric.eval()
+        >>> print(mean_average_distance)
+        1.4142135623730951
     """
     def __init__(self, distance_metric="euclidean", percentile=None, directed=False, crop=True):
         super(HausdorffDistance, self).__init__()
@@ -205,6 +215,31 @@ class HausdorffDistance(Metric):
 
         return surface_distance
 
+    def _get_mask_edges_distance(self, y_pred, y):
+        """
+        Do binary erosion and use XOR for input to get the edges. This function is helpful to further
+        calculate metrics such as Average Surface Distance and Hausdorff Distance.
+
+         Args:
+            y_pred (np.ndarray): the edge of the predictions.
+            y (np.ndarray): the edge of the ground truth.
+        """
+        if self.crop:
+            if not np.any(y_pred | y):
+                res1 = np.zeros_like(y_pred)
+                res2 = np.zeros_like(y)
+                return res1, res2
+
+            y_pred, y = np.expand_dims(y_pred, 0), np.expand_dims(y, 0)
+            box_start, box_end = self._create_space_bounding_box(y_pred | y)
+            cropper = _ROISpatialData(roi_start=box_start, roi_end=box_end)
+            y_pred, y = np.squeeze(cropper(y_pred)), np.squeeze(cropper(y))
+
+        y_pred = morphology.binary_erosion(y_pred) ^ y_pred
+        y = morphology.binary_erosion(y) ^ y
+
+        return y_pred, y
+
     def clear(self):
         """Clears the internal evaluation result."""
         self.y_pred_edges = 0
@@ -223,6 +258,7 @@ class HausdorffDistance(Metric):
          Raises:
             ValueError: If the number of the inputs is not 3.
         """
+        self._is_update = True
         if len(inputs) != 3:
             raise ValueError('HausdorffDistance need 3 inputs (y_pred, y, label), but got {}'.format(len(inputs)))
         y_pred = self._convert_data(inputs[0])
@@ -234,21 +270,7 @@ class HausdorffDistance(Metric):
 
         y_pred = (y_pred == label_idx) if y_pred.dtype is not bool else y_pred
         y = (y == label_idx) if y.dtype is not bool else y
-
-        res1, res2 = None, None
-        if self.crop:
-            if not np.any(y_pred | y):
-                res1 = np.zeros_like(y_pred)
-                res2 = np.zeros_like(y)
-
-            y_pred, y = np.expand_dims(y_pred, 0), np.expand_dims(y, 0)
-            box_start, box_end = self._create_space_bounding_box(y_pred | y)
-            cropper = _ROISpatialData(roi_start=box_start, roi_end=box_end)
-            y_pred, y = np.squeeze(cropper(y_pred)), np.squeeze(cropper(y))
-
-        self.y_pred_edges = morphology.binary_erosion(y_pred) ^ y_pred if res1 is None else res1
-        self.y_edges = morphology.binary_erosion(y) ^ y if res2 is None else res2
-        self._is_update = True
+        self.y_pred_edges, self.y_edges = self._get_mask_edges_distance(y_pred, y)
 
     def eval(self):
         """
