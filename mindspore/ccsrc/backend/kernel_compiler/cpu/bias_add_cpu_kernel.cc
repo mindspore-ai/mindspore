@@ -22,21 +22,16 @@ void BiasAddCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   bias_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (input_shape_.size() == 4) {
-    data_shape_ = 4;
-  } else if (input_shape_.size() == 2) {
-    data_shape_ = 2;
-  } else {
-    MS_LOG(EXCEPTION) << "bias add input data format should be NCHW or NC";
-  }
-  if (input_shape_.size() != 2 && input_shape_.size() != 4) {
-    MS_LOG(EXCEPTION) << "bias add input shape nchw or nc";
+  data_shape_ = input_shape_.size();
+  if (input_shape_.size() < 2) {
+    MS_LOG(EXCEPTION) << "Input tensor's rank must be at least 2 for 'BiasAdd' Op, but input tensor's rank is "
+                      << input_shape_.size();
   }
   if (bias_shape_.size() != 1) {
-    MS_LOG(EXCEPTION) << "bias shape invalid";
+    MS_LOG(EXCEPTION) << "Bias's rank must be 1 for 'BiasAdd' Op, but bias' rank is" << bias_shape_.size();
   }
   if (input_shape_[1] != bias_shape_[0]) {
-    MS_LOG(EXCEPTION) << "bias shape not match";
+    MS_LOG(EXCEPTION) << "Bias shape not match, bias shape must be equal to C channel's shape";
   }
 }
 
@@ -50,22 +45,36 @@ bool BiasAddCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::
   auto bias_addr = reinterpret_cast<float *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
-  if (data_shape_ == 4) {
-    size_t h_size = input_shape_[3];
-    size_t c_size = input_shape_[2] * h_size;
-    size_t n_size = input_shape_[1] * c_size;
-    size_t hw_size = input_shape_[2] * input_shape_[3];
-    size_t n_offset = 0;
+  if (input_shape_.size() > 2) {
+    size_t hw_size = 1;
+    for (size_t i = 2; i < input_shape_.size(); ++i) {
+      hw_size *= input_shape_[i];
+    }
+
+    size_t c_size = input_shape_[1];
     for (size_t n = 0; n < input_shape_[0]; ++n) {
-      size_t c_offset = 0;
-      for (size_t c = 0; c < input_shape_[1]; ++c) {
-        for (size_t hw = 0; hw < hw_size; ++hw) {
-          size_t offset = n_offset + c_offset + hw;
-          output_addr[offset] = src_addr[offset] + bias_addr[c];
+      for (size_t c = 0; c < c_size; ++c) {
+        size_t offset = n * c_size * hw_size + c * hw_size;
+        size_t hw = 0;
+#ifdef ENABLE_AVX
+        constexpr size_t C8NUM = 8;
+        size_t hw8 = hw_size / C8NUM * C8NUM;
+        const float *in_ptr = src_addr + offset;
+        float *out_ptr = output_addr + offset;
+        for (; hw < hw8; hw += C8NUM) {
+          __m256 src_r1 = _mm256_loadu_ps(in_ptr);
+          __m256 bias_r2 = _mm256_set1_ps(bias_addr[c]);
+          __m256 dst_r3 = _mm256_add_ps(src_r1, bias_r2);
+          _mm256_storeu_ps(out_ptr, dst_r3);
+
+          in_ptr += C8NUM;
+          out_ptr += C8NUM;
         }
-        c_offset += c_size;
+#endif
+        for (; hw < hw_size; ++hw) {
+          output_addr[offset + hw] = src_addr[offset + hw] + bias_addr[c];
+        }
       }
-      n_offset += n_size;
     }
   } else {
     size_t n_offset = 0;

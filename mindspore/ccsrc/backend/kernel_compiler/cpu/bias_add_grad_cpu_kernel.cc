@@ -21,8 +21,9 @@ namespace kernel {
 void BiasAddGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  if (input_shape_.size() != 4 && input_shape_.size() != 2) {
-    MS_LOG(EXCEPTION) << "input data format not support";
+  if (input_shape_.size() < 2) {
+    MS_LOG(EXCEPTION) << "Input tensor's rank must be at least 2 for 'BiasAddGrad' Op, but input tensor's rank is "
+                      << input_shape_.size();
   }
 }
 
@@ -34,23 +35,21 @@ bool BiasAddGradCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const s
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
 
-  if (input_shape_.size() == 4) {
-    size_t h_size = input_shape_[3];
-    size_t c_size = h_size * input_shape_[2];
-    size_t n_size = c_size * input_shape_[1];
-    size_t hw_size = input_shape_[2] * input_shape_[3];
-    size_t c_offset = 0;
-    for (size_t c = 0; c < input_shape_[1]; ++c) {
+  if (input_shape_.size() > 2) {
+    size_t hw_size = 1;
+    for (size_t i = 2; i < input_shape_.size(); ++i) {
+      hw_size *= input_shape_[i];
+    }
+
+    size_t c_size = input_shape_[1];
+    for (size_t c = 0; c < c_size; ++c) {
       output_addr[c] = 0;
-      size_t n_offset = 0;
       for (size_t n = 0; n < input_shape_[0]; ++n) {
+        size_t offset = n * c_size * hw_size + c * hw_size;
         for (size_t hw = 0; hw < hw_size; ++hw) {
-          size_t offset = c_offset + n_offset + hw;
-          output_addr[c] += input_addr[offset];
+          output_addr[c] += input_addr[offset + hw];
         }
-        n_offset += n_size;
       }
-      c_offset += c_size;
     }
   } else if (input_shape_.size() == 2) {
     for (size_t c = 0; c < input_shape_[1]; ++c) {

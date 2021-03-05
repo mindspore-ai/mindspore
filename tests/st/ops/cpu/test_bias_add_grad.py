@@ -35,7 +35,7 @@ class Net(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_bias_add_grad1():
+def test_bias_add_grad2d():
     dout = np.ones([2, 3]).astype(np.float32)
     bias_add_grad = Net()
     output = bias_add_grad(Tensor(dout))
@@ -47,10 +47,32 @@ def test_bias_add_grad1():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_bias_add_grad2():
+def test_bias_add_grad4d():
     dout = np.ones([2, 3, 4, 4]).astype(np.float32)
     bias_add_grad = Net()
     output = bias_add_grad(Tensor(dout))
     expect_output = np.array([32., 32., 32.]).astype(np.float32)
+    print(output.asnumpy())
+    assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_bias_add_grad5d():
+    dout = np.ones([2, 3, 4, 4, 2]).astype(np.float32)
+    bias_add_grad = Net()
+    output = bias_add_grad(Tensor(dout))
+    expect_output = np.array([64., 64., 64.]).astype(np.float32)
+    print(output.asnumpy())
+    assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_bias_add_grad7d():
+    dout = np.ones([2, 3, 4, 4, 2, 1, 10]).astype(np.float32)
+    bias_add_grad = Net()
+    output = bias_add_grad(Tensor(dout))
+    expect_output = np.array([640., 640., 640.]).astype(np.float32)
     print(output.asnumpy())
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
