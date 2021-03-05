@@ -94,7 +94,7 @@ class _BatchNorm(Cell):
                         SYNC_BN_GROUP_NAME = "sync_bn_group"+ str(i)
                         management.create_group(SYNC_BN_GROUP_NAME, self.rank_list[i])
         # for SyncBatchNorm
-        if self.process_groups != 0 and self.parallel_mode != context.ParallelMode.STAND_ALONE:
+        if self.process_groups != 0:
             self.rank_id = get_rank()
             self.rank_size = get_group_size()
             if self.process_groups is not None:
