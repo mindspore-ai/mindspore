@@ -39,6 +39,7 @@ Status::Status(enum StatusCode status_code, const std::vector<char> &status_msg)
     return;
   }
 
+  data_->err_description = CharToString(status_msg);
   data_->status_msg = CharToString(status_msg);
   data_->status_code = status_code;
 }
@@ -96,7 +97,7 @@ std::vector<char> Status::GetErrDescriptionChar() const {
   if (data_ == nullptr) {
     return std::vector<char>();
   }
-  return StringToChar(data_->status_msg);
+  return StringToChar(data_->err_description);
 }
 
 std::vector<char> Status::CodeAsCString(enum StatusCode c) {
