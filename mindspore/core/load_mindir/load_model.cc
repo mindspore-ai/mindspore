@@ -133,19 +133,18 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
 
   // Load parameter into graph
   if (endsWith(abs_path_buff, "_graph.mindir")) {
-    char *mindir_name, delimiter = '/';
-    mindir_name = strrchr(abs_path_buff, delimiter);
-    int path_len = strlen(abs_path_buff) - strlen(mindir_name) + 1;
+    int path_len = strlen(abs_path_buff) - strlen("graph.mindir");
     memcpy(abs_path, abs_path_buff, path_len);
     abs_path[path_len] = '\0';
-    snprintf(abs_path, sizeof(abs_path), "variables");
+    snprintf(abs_path + path_len, sizeof(abs_path), "variables");
     std::ifstream ifs(abs_path);
     if (ifs.good()) {
       MS_LOG(DEBUG) << "MindIR file has variables path, load parameter into graph.";
       string path = abs_path;
       get_all_files(path, &files);
     } else {
-      MS_LOG(ERROR) << "MindIR graph has not variable path. ";
+      MS_LOG(ERROR) << "MindIR graph has not variable path, load failed";
+      return nullptr;
     }
 
     int file_size = files.size();
