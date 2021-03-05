@@ -33,7 +33,7 @@ Fusion_matmul_relu = Primitive('FusionOp_MatMul_ReLU')
 
 Add = P.Add()
 Sub = P.Sub()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 
 
 class FnDict:

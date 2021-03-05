@@ -23,7 +23,7 @@ add = P.Add()
 sub = P.Sub()
 mul = P.Mul()
 max_pool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=3, strides=2)
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 cast = Primitive('Cast')
 
 

@@ -21,7 +21,7 @@ Mul = P.Mul()
 RealDiv = P.RealDiv()
 Select = P.Select()
 Greater = P.Greater()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 LambUpdateWithLrV2 = Primitive('LambUpdateWithLrV2')
 

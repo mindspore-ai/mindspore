@@ -17,7 +17,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
 addn = P.AddN()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 
 
 class FnDict:

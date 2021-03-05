@@ -803,7 +803,7 @@ TEST_F(TestConvert, TestConvertGeTensor) {
 TEST_F(TestConvert, TestConvertMakeTuple) {
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>("make_tuple")));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>("MakeTuple")));
   for (int i = 0; i < 3; i++) {
     auto input = func_graph->add_parameter();
     input->set_name("x" + std::to_string(i));

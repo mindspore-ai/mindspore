@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 
 batch_norm_grad = G.BatchNormGrad(is_training=False)
 bn_infer_grad = Primitive('BNInferGrad')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 

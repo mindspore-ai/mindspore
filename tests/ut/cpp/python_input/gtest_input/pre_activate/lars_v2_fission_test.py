@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 lars_v2 = Primitive('LarsV2')
 square_sum_all = Primitive('SquareSumAll')
 lars_v2_update = Primitive('LarsV2Update')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 

@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 maximum = P.Maximum()
 minimum = P.Minimum()
 clip_by_value = Primitive('ClipByValue')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 

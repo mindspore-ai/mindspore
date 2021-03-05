@@ -20,7 +20,7 @@ from mindspore.ops import _constants as Constants
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 bn = P.BatchNorm(is_training=True)
 sync_bn = inner.SyncBatchNorm()

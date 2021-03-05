@@ -38,7 +38,7 @@ def first_connected(sp, space):
         nodes = [sp.nodes[i] for i in cand[0]]
         graphs = sp.resolve_connnected_graphs(nodes)
         if len(graphs) != 1:
-            print("connect check faied: ", nodes)
+            print("connect check failed: ", nodes)
             return False
     return True
 
@@ -245,7 +245,7 @@ def graph_pat_7():
         a1 = gb.tensor([1024, 1024], "float32", name="a1")
         a = gb.emit("Abs", a0, 'a')
         b = gb.emit("Abs", a1, 'b')
-        c = gb.emit("make_tuple", [a, b], 'c')
+        c = gb.emit("MakeTuple", [a, b], 'c')
         d = gb.tensor([1024, 1024], "float32", name="d")
         gb.op("AddN", d, [c])
         gb.emit("Abs", d, 'f')

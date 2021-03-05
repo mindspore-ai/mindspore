@@ -15,7 +15,7 @@
 
 from mindspore.ops import Primitive
 
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 cast = Primitive('Cast')
 
 

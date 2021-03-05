@@ -274,12 +274,12 @@ def test_newparameter_pattern():
         new_para_0 = NewParameter("Merlin", default_tensor0)
         new_para_1 = NewParameter("Arthur", default_tensor1)
         target_0 = Call(P.MatMul(), [new_para_0, new_para_1])
-        target = Call("make_tuple", [target_0])
+        target = Call("MakeTuple", [target_0])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
     unregiste_pass(softmax_addn_pass)
     assert "MatMul" in transformed_repr
-    assert "make_tuple" in transformed_repr
+    assert "MakeTuple" in transformed_repr
     assert "Softmax" not in transformed_repr
 
 def test_imm_target():
@@ -296,12 +296,12 @@ def test_imm_target():
         x = Any()
         pattern = Call(P.Softmax(), [x])
         imm = Imm(0)
-        target_0 = Call("make_tuple", [pattern])
+        target_0 = Call("MakeTuple", [pattern])
         target = Call(Constants.kTupleGetItem, [target_0, imm])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
     unregiste_pass(softmax_pass)
-    assert "make_tuple" in transformed_repr
+    assert "MakeTuple" in transformed_repr
     assert Constants.kTupleGetItem in transformed_repr
     assert "Softmax" in transformed_repr
 
@@ -323,7 +323,7 @@ def test_gen_new_parameter():
         softmax = P.Softmax()
         pattern = Call(softmax, [x])
 
-        target = Call("make_tuple", [pattern, new_para])
+        target = Call("MakeTuple", [pattern, new_para])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
     assert "Merlin" in transformed_repr

@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 tensor_scatter_update = P.TensorScatterUpdate()
 tensor_move = Primitive('TensorMove')
 scatter_nd_update = Primitive('ScatterNdUpdate')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 

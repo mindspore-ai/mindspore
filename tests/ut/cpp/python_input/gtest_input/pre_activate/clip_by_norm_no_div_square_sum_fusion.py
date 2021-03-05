@@ -21,7 +21,7 @@ maximum = P.Maximum()
 sqrt = P.Sqrt()
 greater = P.Greater()
 clip_by_norm_no_div_square_sum = Primitive('ClipByNormNoDivSum')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive('MakeTuple')
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
