@@ -142,6 +142,5 @@ void TriggerAll() {
 }
 
 void ClearAll() { mindspore::RecorderManager::Instance().ClearAll(); }
-
 }  // namespace RDR
 }  // namespace mindspore

@@ -43,6 +43,7 @@ class MemAddressRecorder : public BaseRecorder {
  private:
   MemAddressRecorder() {}
   MemAddressRecorder(const MemAddressRecorder &recorder);
+  ~MemAddressRecorder() {}
   MemAddressRecorder &operator=(const MemAddressRecorder &recorder);
 
   mutable std::mutex mtx_;

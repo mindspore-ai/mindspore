@@ -19,7 +19,6 @@
 #include "debug/env_config_parser.h"
 
 namespace mindspore {
-
 void RecorderManager::UpdateRdrEnable() {
   static bool updated = false;
   if (updated) {

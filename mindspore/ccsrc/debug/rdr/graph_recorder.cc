@@ -65,7 +65,6 @@ void GraphRecorder::Export() {
   }
   std::string suffix = graph_id >= 0 ? std::to_string(graph_id) : "";
   auto tmp_realpath = GetFileRealPath(suffix);
-
   if (!tmp_realpath.has_value()) {
     return;
   }
