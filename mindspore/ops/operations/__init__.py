@@ -69,7 +69,7 @@ from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, Adam
                      GeLU, Gelu, FastGeLU, FastGelu, Elu,
 
                      GetNext, L2Normalize, LayerNorm, L2Loss, CTCLoss, CTCGreedyDecoder,
-                     LogSoftmax,
+                     LogSoftmax, MaxPool3D,
                      MaxPool, DataFormatDimMap,
                      AvgPool, Conv2DBackpropInput, ComputeAccidentalHits,
                      MaxPoolWithArgmax, OneHot, Pad, MirrorPad, Mish, PReLU, ReLU, ReLU6, ReLUV2, HSwish, HSigmoid,
@@ -113,6 +113,7 @@ __all__ = [
     'TensorAdd',
     'Argmax',
     'Argmin',
+    'MaxPool3D',
     'ArgMaxWithValue',
     'ArgMinWithValue',
     'AddN',

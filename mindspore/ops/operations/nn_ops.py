@@ -1825,6 +1825,105 @@ class MaxPoolWithArgmax(_Pool):
         return x_dtype, argmax_dtype
 
 
+class MaxPool3D(PrimitiveWithInfer):
+    r"""
+    Max pooling operation.
+
+    Applies a 3D max pooling over an input Tensor which can be regarded as a composition of 3D planes.
+
+    Typically the input is of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, MaxPool outputs
+    regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given kernel size
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, d, h, w) =
+        \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width are both kernel_size, or a tuple
+            of three int numbers that represent depth, height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The total number of padding will be calculated in horizontal and vertical
+              directions and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the last extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
+        data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
+
+    Inputs:
+        - **input** (Tensor) - Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. Data type must be float16.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})`. Has the data type with `input`.
+
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither an int not a tuple.
+        TypeError: If `pad_mode` or `data_format` is not a string.
+        ValueError: If numbers in `kernel_size` or `strides` are not positive.
+        ValueError: If `pad_mode` is not one of 'same', 'valid'.
+        ValueError: If `kernel_size` or `strides` is a tuple whose length is not equal to 3 or 5.
+        ValueError: If `data_format` is not 'NCDHW'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
+        >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="valid")
+        >>> output = max_pool3d(input)
+        >>> print(output)
+        [[[[[10. 11.]]]
+          [[[22. 23.]]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCDHW"):
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.data_format = validator.check_string(data_format, ['NCDHW'], 'data_format', self.name)
+        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name, allow_five=True, ret_five=True)
+        self.add_prim_attr("kernel_size", self.kernel_size)
+        self.strides = _check_3d_int_or_tuple("strides", strides, self.name, allow_five=True, ret_five=True)
+        self.add_prim_attr("strides", self.strides)
+
+    def infer_shape(self, x_shape):
+        validator.check_equal_int(len(x_shape), 5, "x rank", self.name)
+        batch, channel, input_d, input_h, input_w = x_shape
+        self.add_prim_attr("x_shape", x_shape)
+        _, _, kernel_d, kernel_h, kernel_w = self.kernel_size
+        _, _, stride_d, stride_h, stride_w = self.strides
+
+        if self.pad_mode == "VALID":
+            out_d = math.ceil((input_d - (kernel_d - 1)) / stride_d)
+            out_h = math.ceil((input_h - (kernel_h - 1)) / stride_h)
+            out_w = math.ceil((input_w - (kernel_w - 1)) / stride_w)
+        elif self.pad_mode == "SAME":
+            out_d = math.ceil(input_d / stride_d)
+            out_h = math.ceil(input_h / stride_h)
+            out_w = math.ceil(input_w / stride_w)
+        out_shape = [batch, channel, out_d, out_h, out_w]
+
+        _check_shape('output', out_shape, self.name)
+        return out_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_dtype_valid("x", x_dtype, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
 class AvgPool(_Pool):
     r"""
     Average pooling operation.
@@ -2089,8 +2188,8 @@ class BiasAdd(PrimitiveWithCheck):
 
     def check_shape(self, x_shape, b_shape):
         validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
-        if self.format == "NCDHW" and len(x_shape) != 5:
-            raise ValueError("NCDHW format only support 5-dims input.")
+        if self.format == "NCDHW" and (len(x_shape) != 5 or context.get_context("device_target") != "Ascend"):
+            raise ValueError("NCDHW format only support 5-dims input in Ascend target.")
         validator.check_equal_int(len(b_shape), 1, "bias rank", self.name)
         x_channel = x_shape[-1] if self.format == "NHWC" else x_shape[1]
         if np.all(np.array(x_shape) != -1):

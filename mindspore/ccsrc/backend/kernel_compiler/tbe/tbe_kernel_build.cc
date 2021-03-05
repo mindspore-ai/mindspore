@@ -620,6 +620,14 @@ void TbeKernelJsonCreator::ParseAttrDefaultValue(const std::string &type, const 
     (*attr_obj)[kJValue] = attr_value;
   } else if (type == kVTypeFloat) {
     (*attr_obj)[kJValue] = std::stof(value);
+  } else if (type == kVTypeListInt) {
+    std::stringstream string_value(value);
+    std::string list_elem;
+    std::vector<int64_t> attr_value;
+    while (std::getline(string_value, list_elem, ',')) {
+      attr_value.push_back(std::stoi(list_elem));
+    }
+    (*attr_obj)[kJValue] = attr_value;
   } else {
     MS_LOG(EXCEPTION) << "Type: " << type << "not support";
   }

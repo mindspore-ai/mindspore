@@ -220,6 +220,7 @@ constexpr auto kmaxPoolGradOpName = "MaxPoolGrad";
 constexpr auto kMaxPoolWithArgmaxOpName = "MaxPoolWithArgmax";
 constexpr auto kMaxPoolGradWithArgmaxOpName = "MaxPoolGradWithArgmax";
 constexpr auto kTensorAddOpName = "Add";
+constexpr auto kMaxPool3DGradGradOpName = "MaxPool3DGradGrad";
 constexpr auto kCastOpName = "Cast";
 constexpr auto kGreaterEqualOpName = "GreaterEqual";
 constexpr auto kAbsOpName = "Abs";
