@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
 #include "common/common.h"
-#include "common/cvop_common.h"
 #include "include/api/types.h"
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/include/execute.h"
@@ -28,38 +26,9 @@ using mindspore::LogStream;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::MsLogLevel::INFO;
 
-class MindDataTestExecute : public UT::CVOP::CVOpCommon {
+class MindDataTestExecute : public UT::DatasetOpTesting {
  protected:
-  MindDataTestExecute() : CVOpCommon() {}
-
-  std::shared_ptr<Tensor> output_tensor_;
 };
-
-mindspore::MSTensor ReadFileToTensor(const std::string &file) {
-  if (file.empty()) {
-    MS_LOG(ERROR) << "Pointer file is nullptr, return an empty Tensor.";
-    return mindspore::MSTensor();
-  }
-  std::ifstream ifs(file);
-  if (!ifs.good()) {
-    MS_LOG(ERROR) << "File: " << file << " does not exist, return an empty Tensor.";
-    return mindspore::MSTensor();
-  }
-  if (!ifs.is_open()) {
-    MS_LOG(ERROR) << "File: " << file << "open failed, return an empty Tensor.";
-    return mindspore::MSTensor();
-  }
-
-  ifs.seekg(0, std::ios::end);
-  size_t size = ifs.tellg();
-  mindspore::MSTensor buf("file", mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
-
-  ifs.seekg(0, std::ios::beg);
-  ifs.read(reinterpret_cast<char *>(buf.MutableData()), size);
-  ifs.close();
-
-  return buf;
-}
 
 TEST_F(MindDataTestExecute, TestComposeTransforms) {
   MS_LOG(INFO) << "Doing TestComposeTransforms.";

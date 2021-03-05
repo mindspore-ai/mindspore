@@ -51,7 +51,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic1) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     auto image = row["image"];
@@ -109,7 +109,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     auto image = row["image"];
@@ -165,7 +165,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic2) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     // If no schema specified, RandomData will generate random columns
@@ -210,7 +210,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic3) {
   std::vector<int64_t> expect_2d = {2, 2};
   std::vector<int64_t> expect_3d = {2, 2, 2};
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     auto col_sint16 = row["col_sint16"];
@@ -292,7 +292,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic4) {
   std::vector<int64_t> expect_2d = {2, 2};
   std::vector<int64_t> expect_3d = {2, 2, 2};
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     auto col_sint16 = row["col_sint16"];
@@ -372,7 +372,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic5) {
   std::vector<int64_t> expect_num = {1};
   std::vector<int64_t> expect_1d = {2};
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     EXPECT_EQ(row.size(), 3);
@@ -427,7 +427,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic6) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     iter->GetNextRow(&row);
@@ -461,7 +461,7 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasic7) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if RandomDataOp read correct columns
+  // Check if RandomData() read correct columns
   uint64_t i = 0;
   while (row.size() != 0) {
     iter->GetNextRow(&row);

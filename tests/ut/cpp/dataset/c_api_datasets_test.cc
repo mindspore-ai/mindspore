@@ -15,6 +15,7 @@
  */
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/core/tensor.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::Tensor;
@@ -43,25 +44,26 @@ TEST_F(MindDataTestPipeline, TestCelebADataset) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if CelebAOp read correct images/attr
-  // std::string expect_file[] = {"1.JPEG", "2.jpg"};
-  // std::vector<std::vector<uint32_t>> expect_attr_vector = {
-  //   {0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1,
-  //    0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1},
-  //   {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-  //    0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1}};
+  // Check if CelebA() read correct images/attr
+  std::string expect_file[] = {"1.JPEG", "2.jpg"};
+  std::vector<std::vector<uint32_t>> expect_attr_vector = {
+     {0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1,
+      0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1},
+     {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+      0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1}};
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto image = row["image"];
-    // auto attr = row["attr"];
+    auto image = row["image"];
+    auto attr = row["attr"];
 
-    // std::shared_ptr<Tensor> expect_image;
-    // Tensor::CreateFromFile(folder_path + expect_file[i], &expect_image);
-    // EXPECT_EQ(*image, *expect_image);
+    mindspore::MSTensor expect_image = ReadFileToTensor(folder_path + expect_file[i]);
+    EXPECT_MSTENSOR_EQ(image, expect_image);
 
-    // std::shared_ptr<Tensor> expect_attr;
-    // Tensor::CreateFromVector(expect_attr_vector[i], TensorShape({40}), &expect_attr);
-    // EXPECT_EQ(*attr, *expect_attr);
+    std::shared_ptr<Tensor> de_expect_attr;
+    ASSERT_OK(Tensor::CreateFromVector(expect_attr_vector[i], TensorShape({40}), &de_expect_attr));
+    mindspore::MSTensor expect_attr =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_attr));
+    EXPECT_MSTENSOR_EQ(attr, expect_attr);
 
     iter->GetNextRow(&row);
     i++;
@@ -90,7 +92,7 @@ TEST_F(MindDataTestPipeline, TestCelebADefault) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if CelebAOp read correct images/attr
+  // Check if CelebA() read correct images/attr
   uint64_t i = 0;
   while (row.size() != 0) {
     auto image = row["image"];
