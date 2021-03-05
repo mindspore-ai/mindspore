@@ -187,7 +187,7 @@ class WriterPool(ctx.Process):
         """Check if the summary process should survive."""
         is_exit = False
         if not psutil.pid_exists(self._training_pid):
-            logger.warning("The training process %d is killed, summary process will exit.", self._training_pid)
+            logger.warning("The training process %d has exited, summary process will exit.", self._training_pid)
             is_exit = True
 
         if not self._writers:
