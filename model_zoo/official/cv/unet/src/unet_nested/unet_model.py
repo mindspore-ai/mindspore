@@ -16,6 +16,7 @@
 # Model of UnetPlusPlus
 
 import mindspore.nn as nn
+import mindspore.ops as P
 from .unet_parts import UnetConv2d, UnetUp
 
 
@@ -63,6 +64,7 @@ class NestedUNet(nn.Cell):
         self.final2 = nn.Conv2d(filters[0], n_class, 1)
         self.final3 = nn.Conv2d(filters[0], n_class, 1)
         self.final4 = nn.Conv2d(filters[0], n_class, 1)
+        self.stack = P.Stack(axis=0)
 
     def construct(self, inputs):
         x00 = self.conv00(inputs)                   # channel = filters[0]
@@ -86,13 +88,12 @@ class NestedUNet(nn.Cell):
         x04 = self.up_concat04(x13, x00, x01, x02, x03) # channel = filters[0]
 
         final1 = self.final1(x01)
-        final2 = self.final1(x02)
-        final3 = self.final1(x03)
-        final4 = self.final1(x04)
-
-        final = (final1 + final2 + final3 + final4) / 4.0
+        final2 = self.final2(x02)
+        final3 = self.final3(x03)
+        final4 = self.final4(x04)
 
         if self.use_ds:
+            final = self.stack((final1, final2, final3, final4))
             return final
         return final4
 

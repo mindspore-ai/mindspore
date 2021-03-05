@@ -50,6 +50,34 @@ cfg_unet_nested = {
     'weight_decay': 0.0005,
     'loss_scale': 1024.0,
     'FixedLossScaleManager': 1024.0,
+    'use_bn': True,
+    'use_ds': True,
+    'use_deconv': True,
+
+    'resume': False,
+    'resume_ckpt': './',
+}
+
+cfg_unet_nested_cell = {
+    'model': 'unet_nested',
+    'dataset': 'Cell_nuclei',
+    'crop': None,
+    'img_size': [96, 96],
+    'lr': 3e-4,
+    'epochs': 200,
+    'distribute_epochs': 1600,
+    'batchsize': 16,
+    'cross_valid_ind': 1,
+    'num_classes': 2,
+    'num_channels': 3,
+
+    'keep_checkpoint_max': 10,
+    'weight_decay': 0.0005,
+    'loss_scale': 1024.0,
+    'FixedLossScaleManager': 1024.0,
+    'use_bn': True,
+    'use_ds': True,
+    'use_deconv': True,
 
     'resume': False,
     'resume_ckpt': './',

@@ -24,7 +24,7 @@ from mindspore import context, Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.nn.loss.loss import _Loss
 
-from src.data_loader import create_dataset
+from src.data_loader import create_dataset, create_cell_nuclei_dataset
 from src.unet_medical import UNetMedical
 from src.unet_nested import NestedUNet, UNet
 from src.config import cfg_unet
@@ -59,6 +59,7 @@ class dice_coeff(nn.Metric):
         self.clear()
     def clear(self):
         self._dice_coeff_sum = 0
+        self._iou_sum = 0
         self._samples_num = 0
 
     def update(self, *inputs):
@@ -77,13 +78,15 @@ class dice_coeff(nn.Metric):
         union = np.dot(y_pred.flatten(), y_pred.flatten()) + np.dot(y.flatten(), y.flatten())
 
         single_dice_coeff = 2*float(inter)/float(union+1e-6)
-        print("single dice coeff is:", single_dice_coeff)
+        single_iou = single_dice_coeff / (2 - single_dice_coeff)
+        print("single dice coeff is: {}, IOU is: {}".format(single_dice_coeff, single_iou))
         self._dice_coeff_sum += single_dice_coeff
+        self._iou_sum += single_iou
 
     def eval(self):
         if self._samples_num == 0:
             raise RuntimeError('Total samples num must not be 0.')
-        return self._dice_coeff_sum / float(self._samples_num)
+        return (self._dice_coeff_sum / float(self._samples_num), self._iou_sum / float(self._samples_num))
 
 
 def test_net(data_dir,
@@ -93,7 +96,8 @@ def test_net(data_dir,
     if cfg['model'] == 'unet_medical':
         net = UNetMedical(n_channels=cfg['num_channels'], n_classes=cfg['num_classes'])
     elif cfg['model'] == 'unet_nested':
-        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
+        net = NestedUNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'], use_deconv=cfg['use_deconv'],
+                         use_bn=cfg['use_bn'], use_ds=False)
     elif cfg['model'] == 'unet_simple':
         net = UNet(in_channel=cfg['num_channels'], n_class=cfg['num_classes'])
     else:
@@ -102,13 +106,17 @@ def test_net(data_dir,
     load_param_into_net(net, param_dict)
 
     criterion = CrossEntropyWithLogits()
-    _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
-                                      do_crop=cfg['crop'], img_size=cfg['img_size'])
+    if 'dataset' in cfg and cfg['dataset'] == "Cell_nuclei":
+        valid_dataset = create_cell_nuclei_dataset(data_dir, cfg['img_size'], 1, 1, is_train=False, split=0.8)
+    else:
+        _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False,
+                                          do_crop=cfg['crop'], img_size=cfg['img_size'])
     model = Model(net, loss_fn=criterion, metrics={"dice_coeff": dice_coeff()})
 
     print("============== Starting Evaluating ============")
-    dice_score = model.eval(valid_dataset, dataset_sink_mode=False)
-    print("============== Cross valid dice coeff is:", dice_score)
+    eval_score = model.eval(valid_dataset, dataset_sink_mode=False)["dice_coeff"]
+    print("============== Cross valid dice coeff is:", eval_score[0])
+    print("============== Cross valid IOU is:", eval_score[1])
 
 
 def get_args():

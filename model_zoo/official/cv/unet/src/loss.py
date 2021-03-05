@@ -36,3 +36,15 @@ class CrossEntropyWithLogits(_Loss):
         loss = self.reduce_mean(
             self.softmax_cross_entropy_loss(self.reshape_fn(logits, (-1, 2)), self.reshape_fn(label, (-1, 2))))
         return self.get_loss(loss)
+
+class MultiCrossEntropyWithLogits(nn.Cell):
+    def __init__(self):
+        super(MultiCrossEntropyWithLogits, self).__init__()
+        self.loss = CrossEntropyWithLogits()
+        self.squeeze = F.Squeeze()
+
+    def construct(self, logits, label):
+        total_loss = 0
+        for i in range(len(logits)):
+            total_loss += self.loss(self.squeeze(logits[i:i+1]), label)
+        return total_loss
