@@ -30,19 +30,21 @@
 
 namespace mindspore {
 static std::map<std::string, int64_t> DataFormatToEnumMap = {
-  {"NCHW", Format::NCHW}, {"NHWC", Format::NHWC},     {"NHWC4", Format::NHWC4},
-  {"HWKC", Format::HWKC}, {"HWCK", Format::HWCK},     {"KCHW", Format::KCHW},
-  {"CKHW", Format::CKHW}, {"KHWC", Format::KHWC},     {"CHWK", Format::CHWK},
-  {"HW", Format::HW},     {"HW4", Format::HW4},       {"NC", Format::NC},
-  {"NC4", Format::NC4},   {"NC4HW4", Format::NC4HW4}, {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
+  {"NCHW", Format::NCHW},   {"NHWC", Format::NHWC},     {"NHWC4", Format::NHWC4},
+  {"HWKC", Format::HWKC},   {"HWCK", Format::HWCK},     {"KCHW", Format::KCHW},
+  {"CKHW", Format::CKHW},   {"KHWC", Format::KHWC},     {"CHWK", Format::CHWK},
+  {"HW", Format::HW},       {"HW4", Format::HW4},       {"NC", Format::NC},
+  {"NC4", Format::NC4},     {"NC4HW4", Format::NC4HW4}, {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
+  {"NCDHW", Format::NCDHW},
 };
 
 static std::map<int64_t, std::string> DataFormatToStrMap = {
-  {Format::NCHW, "NCHW"}, {Format::NHWC, "NHWC"},     {Format::NHWC4, "NHWC4"},
-  {Format::HWKC, "HWKC"}, {Format::HWCK, "HWCK"},     {Format::KCHW, "KCHW"},
-  {Format::CKHW, "CKHW"}, {Format::KHWC, "KHWC"},     {Format::CHWK, "CHWK"},
-  {Format::HW, "HW"},     {Format::HW4, "HW4"},       {Format::NC, "NC"},
-  {Format::NC4, "NC4"},   {Format::NC4HW4, "NC4HW4"}, {Format::NUM_OF_FORMAT, "NUM_OF_FORMAT"},
+  {Format::NCHW, "NCHW"},   {Format::NHWC, "NHWC"},     {Format::NHWC4, "NHWC4"},
+  {Format::HWKC, "HWKC"},   {Format::HWCK, "HWCK"},     {Format::KCHW, "KCHW"},
+  {Format::CKHW, "CKHW"},   {Format::KHWC, "KHWC"},     {Format::CHWK, "CHWK"},
+  {Format::HW, "HW"},       {Format::HW4, "HW4"},       {Format::NC, "NC"},
+  {Format::NC4, "NC4"},     {Format::NC4HW4, "NC4HW4"}, {Format::NUM_OF_FORMAT, "NUM_OF_FORMAT"},
+  {Format::NCDHW, "NCDHW"},
 };
 
 static std::map<std::string, int64_t> ReductionToEnumMap = {

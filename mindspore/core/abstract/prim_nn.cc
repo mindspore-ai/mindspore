@@ -26,8 +26,8 @@ namespace abstract {
 int64_t GetAndCheckFormat(const ValuePtr &value) {
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
-  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW)) {
-    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW and NHWC";
+  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
+    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW, NHWC and NCDHW";
   }
   return data_format;
 }

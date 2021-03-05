@@ -229,13 +229,13 @@ class BiasAddGrad(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, data_format="NCHW"):
         self.init_prim_io_names(inputs=['dout'], outputs=['output'])
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC', 'NCDHW'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
         self.add_prim_attr('data_format', self.format)
 
     def infer_shape(self, d_output):
-        channel = d_output[1] if self.format == "NCHW" else d_output[-1]
+        channel = d_output[-1] if self.format == "NHWC" else d_output[1]
         return (channel,)
 
     def infer_dtype(self, dout_dtype):
