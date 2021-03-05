@@ -67,7 +67,7 @@ void Conv2dTranspose::Init(int64_t in_channel, int64_t out_channel, const std::v
 }
 
 void Conv2dTranspose::set_in_channel(int64_t in_channel) {
-  AddAttr(kOutChannel, MakeValue(CheckAndConvertUtils::CheckInteger(kInChannel, in_channel, kGreaterThan, 0, name())));
+  AddAttr(kInChannel, MakeValue(CheckAndConvertUtils::CheckInteger(kInChannel, in_channel, kGreaterThan, 0, name())));
 }
 
 void Conv2dTranspose::set_out_channel(int64_t out_channel) {
