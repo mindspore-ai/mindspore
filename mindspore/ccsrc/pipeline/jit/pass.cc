@@ -159,6 +159,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.switch_layer_defer_inline_,
     irpass.replace_applicator_,
     irpass.mirror_mini_step_elim_,
+    irpass.virtual_add_elim_,
     irpass.row_tensor_add_zeros_like_,
     irpass.mini_step_allgather_replace_,
   });

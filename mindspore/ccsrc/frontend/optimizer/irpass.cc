@@ -88,6 +88,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                                             prim::kPrimMirrorMiniStep);
   mini_step_allgather_replace_ = MakeSubstitution(std::make_shared<MiniStepAllGatherPass>(),
                                                   "mini_step_allgather_replace", prim::kPrimMiniStepAllGather);
+  virtual_add_elim_ = MakeSubstitution(std::make_shared<VirtualAddEliminater>(), "virtual add", prim::kPrimVirtualAdd);
   check_bprop_eliminate_ =
     MakeSubstitution(std::make_shared<CheckBpropEliminater>(), "check_bprop_eliminate", prim::kPrimCheckBprop);
   reset_defer_inline_ =

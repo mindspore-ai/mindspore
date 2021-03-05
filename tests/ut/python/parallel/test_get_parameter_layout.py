@@ -47,6 +47,7 @@ def test_get_parameter_layout():
 
     net = Net(strategy1, strategy2, weight)
     net.set_auto_parallel()
+    net.set_train()
     exe = me._executor
     exe.compile(net, x, phase='train', auto_parallel_mode=True)
     x_layout = ([2, 4], [1, -1], [16, 32], 0, True, '')  # device_arrangement = [2, 4], tensor_map = [1, -1]

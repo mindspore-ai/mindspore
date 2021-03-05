@@ -175,6 +175,25 @@ class MirrorMiniStepEliminater : public AnfVisitor {
   void Visit(const AnfNodePtr &) override {}
 };
 
+// {prim::kPrimVirtualAdd, X, Z} -> X
+class VirtualAddEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimVirtualAdd) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto &inputs = node->cast<CNodePtr>()->inputs();
+    if (inputs.size() < 2) {
+      return nullptr;
+    }
+
+    return inputs[1];
+  }
+
+  void Visit(const AnfNodePtr &) override {}
+};
+
 // {prim::kPrimMiniStepAllGather, X, Z} -> {prim::kPrimAllGather, X}
 class MiniStepAllGatherPass : public AnfVisitor {
  public:
@@ -191,8 +210,15 @@ class MiniStepAllGatherPass : public AnfVisitor {
     MS_EXCEPTION_IF_NULL(prim);
     auto attrs = prim->attrs();
     std::string group = attrs[parallel::GROUP]->ToString();
+    auto fusion = attrs[parallel::FUSION];
     parallel::Operator op = parallel::CreateAllGatherOp(group);
     std::vector<AnfNodePtr> node_input = parallel::CreateInput(op, inputs[1], parallel::PARALLEL_OPTIMIZER_ALLGATHER);
+    auto prim_anf_node = node_input[0]->cast<ValueNodePtr>();
+    prim = GetValueNode<PrimitivePtr>(prim_anf_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    attrs = prim->attrs();
+    attrs[parallel::FUSION] = fusion;
+    prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
     CNodePtr new_node = func_graph->NewCNode(node_input);
     return new_node;
