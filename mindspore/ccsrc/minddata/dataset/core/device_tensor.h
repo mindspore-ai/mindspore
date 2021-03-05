@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 #include "include/api/status.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/util/status.h"

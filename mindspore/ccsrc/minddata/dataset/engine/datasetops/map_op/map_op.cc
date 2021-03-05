@@ -21,7 +21,7 @@
 
 #include "minddata/dataset/callback/callback_param.h"
 #include "minddata/dataset/core/config_manager.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"

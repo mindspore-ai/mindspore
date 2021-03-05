@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/engine/datasetops/rename_op.h"
 #include "common/common.h"
 #include "utils/ms_utils.h"

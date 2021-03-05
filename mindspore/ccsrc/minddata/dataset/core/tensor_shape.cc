@@ -25,7 +25,7 @@
 #else
 #include "mindspore/lite/src/common/log_adapter.h"
 #endif
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 
 namespace mindspore {
 namespace dataset {

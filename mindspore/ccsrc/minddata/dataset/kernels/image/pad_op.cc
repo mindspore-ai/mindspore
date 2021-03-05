@@ -16,7 +16,7 @@
 #include "minddata/dataset/kernels/image/pad_op.h"
 
 #include "minddata/dataset/kernels/image/image_utils.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {

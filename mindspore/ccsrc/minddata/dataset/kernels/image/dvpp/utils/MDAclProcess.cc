@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "MDAclProcess.h"

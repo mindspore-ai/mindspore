@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include <vector>
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
 
@@ -51,7 +51,7 @@ class DataBuffer {
   ~DataBuffer() = default;
 
   /// \brief A method for debug printing of the buffer
-  /// \param[inout] out The stream to write to
+  /// \param[in/out] out The stream to write to
   /// \param[in] show_all A boolean to toggle between details and summary printing
   void Print(std::ostream &out, bool show_all) const;
 

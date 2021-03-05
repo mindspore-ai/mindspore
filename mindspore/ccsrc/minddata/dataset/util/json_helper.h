@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_DATA_HELPER_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_DATA_HELPER_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_JSON_DATA_HELPER_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_JSON_DATA_HELPER_H_
 
 #include <fstream>
 #include <iostream>
@@ -34,13 +34,13 @@ namespace mindspore {
 namespace dataset {
 
 /// \brief Simple class to do data manipulation, contains helper function to update json files in dataset
-class DataHelper {
+class JsonHelper {
  public:
   /// \brief constructor
-  DataHelper() {}
+  JsonHelper() {}
 
   /// \brief Destructor
-  ~DataHelper() = default;
+  ~JsonHelper() = default;
 
   /// \brief Create an Album dataset while taking in a path to a image folder
   ///     Creates the output directory if doesn't exist
@@ -200,7 +200,7 @@ class DataHelper {
   /// \param out Reference to the output stream being overloaded
   /// \param ds Reference to the DataSchema to display
   /// \return The output stream must be returned
-  friend std::ostream &operator<<(std::ostream &out, const DataHelper &dh) {
+  friend std::ostream &operator<<(std::ostream &out, const JsonHelper &dh) {
     dh.Print(out);
     return out;
   }
@@ -208,4 +208,4 @@ class DataHelper {
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_DATA_HELPER_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_JSON_HELPER_H_

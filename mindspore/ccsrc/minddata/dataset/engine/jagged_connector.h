@@ -23,7 +23,7 @@
 #include "minddata/dataset/engine/connector.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/util/status.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 
 namespace mindspore {
 namespace dataset {

@@ -16,7 +16,7 @@
 #include "common/common.h"
 #include "gtest/gtest.h"
 
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"

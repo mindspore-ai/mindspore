@@ -22,7 +22,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <thread>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/engine/cache/cache_client.h"
 #include "minddata/dataset/engine/cache/cache_fbb.h"
 namespace mindspore {

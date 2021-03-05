@@ -4909,7 +4909,7 @@ class _PaddedDataset:
 
 class PaddedDataset(GeneratorDataset):
     """
-    Create a dataset with fake data provided by user. Mainly used to add to the original data set
+    Create a dataset with filler data provided by user. Mainly used to add to the original data set
     and assign it to the corresponding shard.
 
     Args:

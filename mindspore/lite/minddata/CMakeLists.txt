@@ -115,6 +115,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/kernels/data/data_utils.cc
         ${MINDDATA_DIR}/api/samplers.cc
         ${MINDDATA_DIR}/api/iterator.cc
+        ${MINDDATA_DIR}/api/data_helper.cc
         ${MINDDATA_DIR}/api/execute.cc
         ${MINDDATA_DIR}/core/de_tensor.cc
         ${MINDDATA_DIR}/core/tensor_shape.cc
@@ -187,7 +188,7 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/util/path.cc
         ${MINDDATA_DIR}/util/status.cc
         ${MINDDATA_DIR}/util/service.cc
-        ${MINDDATA_DIR}/util/data_helper.cc
+        ${MINDDATA_DIR}/util/json_helper.cc
         ${MINDDATA_DIR}/util/cond_var.cc
         ${MINDDATA_DIR}/engine/data_schema.cc
         ${MINDDATA_DIR}/kernels/tensor_op.cc
@@ -267,11 +268,12 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
             ${MINDDATA_DIR}/core/tensor_row.cc
             ${MINDDATA_DIR}/core/de_tensor.cc
             ${MINDDATA_DIR}/api/vision.cc
+            ${MINDDATA_DIR}/api/data_helper.cc
             ${MINDDATA_DIR}/api/execute.cc
             ${MINDDATA_DIR}/api/transforms.cc
             ${MINDDATA_DIR}/util/path.cc
             ${MINDDATA_DIR}/util/status.cc
-            ${MINDDATA_DIR}/util/data_helper.cc
+            ${MINDDATA_DIR}/util/json_helper.cc
             ${MINDDATA_DIR}/util/memory_pool.cc
             ${MINDDATA_DIR}/engine/data_schema.cc
             ${MINDDATA_DIR}/kernels/tensor_op.cc

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <vector>
 #include <utility>
 
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/core/pybind_support.h"
@@ -117,6 +117,102 @@ Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
   }
 }
 
+Status FillHelper(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *out,
+                  std::shared_ptr<Tensor> fill_output, std::shared_ptr<Tensor> fill_value) {
+  const DataType &input_type = input->type();
+  const TensorShape &input_shape = input->shape();
+  switch (input_type.value()) {
+    case DataType::DE_BOOL: {
+      bool value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<bool>(value);
+      break;
+    }
+    case DataType::DE_INT8: {
+      int8_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<int8_t>(value);
+      break;
+    }
+    case DataType::DE_UINT8: {
+      uint8_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<uint8_t>(value);
+      break;
+    }
+    case DataType::DE_UINT16: {
+      uint16_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<uint16_t>(value);
+      break;
+    }
+    case DataType::DE_INT16: {
+      int16_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<int16_t>(value);
+      break;
+    }
+    case DataType::DE_UINT32: {
+      uint32_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<uint32_t>(value);
+      break;
+    }
+    case DataType::DE_INT32: {
+      int32_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<int32_t>(value);
+      break;
+    }
+    case DataType::DE_UINT64: {
+      uint64_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<uint64_t>(value);
+      break;
+    }
+    case DataType::DE_INT64: {
+      int64_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<int64_t>(value);
+      break;
+    }
+    case DataType::DE_FLOAT16: {
+      int64_t value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<float>(value);
+      break;
+    }
+    case DataType::DE_FLOAT32: {
+      float value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<float>(value);
+      break;
+    }
+    case DataType::DE_FLOAT64: {
+      double value = 0;
+      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
+      (*out)->Fill<double>(value);
+      break;
+    }
+    case DataType::DE_STRING: {
+      std::vector<std::string> strings;
+      std::string_view fill_string_view;
+      RETURN_IF_NOT_OK(fill_value->GetItemAt(&fill_string_view, {}));
+      std::string fill_string = std::string(fill_string_view);
+      for (int i = 0; i < input_shape.NumOfElements(); i++) {
+        strings.emplace_back(fill_string);
+      }
+      RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, input_shape, out));
+      break;
+    }
+    case DataType::DE_UNKNOWN: {
+      RETURN_STATUS_UNEXPECTED("Fill: unknown input datatype.");
+      break;
+    }
+  }
+  return Status::OK();
+}
+
 Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, std::shared_ptr<Tensor> fill_value) {
   const DataType &fill_type = fill_value->type();
   const DataType &input_type = input->type();
@@ -140,100 +236,11 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
   if (input_type.IsNumeric()) {
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(input_shape, input_type, &out));
   }
-
-  switch (input_type.value()) {
-    case DataType::DE_BOOL: {
-      bool value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<bool>(value);
-      break;
-    }
-    case DataType::DE_INT8: {
-      int8_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<int8_t>(value);
-      break;
-    }
-    case DataType::DE_UINT8: {
-      uint8_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<uint8_t>(value);
-      break;
-    }
-    case DataType::DE_UINT16: {
-      uint16_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<uint16_t>(value);
-      break;
-    }
-    case DataType::DE_INT16: {
-      int16_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<int16_t>(value);
-      break;
-    }
-    case DataType::DE_UINT32: {
-      uint32_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<uint32_t>(value);
-      break;
-    }
-    case DataType::DE_INT32: {
-      int32_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<int32_t>(value);
-      break;
-    }
-    case DataType::DE_UINT64: {
-      uint64_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<uint64_t>(value);
-      break;
-    }
-    case DataType::DE_INT64: {
-      int64_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<int64_t>(value);
-      break;
-    }
-    case DataType::DE_FLOAT16: {
-      int64_t value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<float>(value);
-      break;
-    }
-    case DataType::DE_FLOAT32: {
-      float value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<float>(value);
-      break;
-    }
-    case DataType::DE_FLOAT64: {
-      double value = 0;
-      RETURN_IF_NOT_OK(fill_output->GetItemAt(&value, {}));
-      out->Fill<double>(value);
-      break;
-    }
-    case DataType::DE_STRING: {
-      std::vector<std::string> strings;
-      std::string_view fill_string_view;
-      RETURN_IF_NOT_OK(fill_value->GetItemAt(&fill_string_view, {}));
-      std::string fill_string = std::string(fill_string_view);
-      for (int i = 0; i < input_shape.NumOfElements(); i++) {
-        strings.emplace_back(fill_string);
-      }
-      RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, input_shape, &out));
-      break;
-    }
-    case DataType::DE_UNKNOWN: {
-      RETURN_STATUS_UNEXPECTED("Fill: unknown input datatype.");
-      break;
-    }
-  }
-
+  RETURN_IF_NOT_OK(FillHelper(input, &out, fill_output, fill_value));
   *output = out;
   return Status::OK();
 }
+
 template <typename FROM, typename TO>
 void Cast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   auto in_itr = input->begin<FROM>();

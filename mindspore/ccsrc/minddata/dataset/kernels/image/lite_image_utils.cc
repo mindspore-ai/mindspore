@@ -21,7 +21,7 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/kernels/image/lite_cv/lite_mat.h"
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/random.h"

@@ -16,7 +16,7 @@
 #include "minddata/dataset/engine/datasetops/barrier_op.h"
 #include <iomanip>
 #include <utility>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/core/config_manager.h"

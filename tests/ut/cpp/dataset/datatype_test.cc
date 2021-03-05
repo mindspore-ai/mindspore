@@ -19,7 +19,7 @@
 #include "common/common.h"
 #include "gtest/gtest.h"
 #include <opencv2/opencv.hpp>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 
 using namespace mindspore::dataset;
 

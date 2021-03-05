@@ -29,6 +29,7 @@ endif()
 
 add_library(cpp-API OBJECT
         config.cc
+        data_helper.cc
         datasets.cc
         execute.cc
         iterator.cc

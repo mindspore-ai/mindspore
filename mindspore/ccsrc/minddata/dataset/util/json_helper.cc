@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "minddata/dataset/util/data_helper.h"
+#include "minddata/dataset/util/json_helper.h"
 
 #include <algorithm>
 #include <fstream>
@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace dataset {
 // Create a numbered json file from image folder
-Status DataHelper::CreateAlbum(const std::string &in_dir, const std::string &out_dir) {
+Status JsonHelper::CreateAlbum(const std::string &in_dir, const std::string &out_dir) {
   // in check
   Path base_dir = Path(in_dir);
   if (!base_dir.IsDirectory() || !base_dir.Exists()) {
@@ -56,12 +56,12 @@ Status DataHelper::CreateAlbum(const std::string &in_dir, const std::string &out
 }
 
 // A print method typically used for debugging
-void DataHelper::Print(std::ostream &out) const {
+void JsonHelper::Print(std::ostream &out) const {
   out << "  Data Helper"
       << "\n";
 }
 
-Status DataHelper::UpdateArray(const std::string &in_file, const std::string &key,
+Status JsonHelper::UpdateArray(const std::string &in_file, const std::string &key,
                                const std::vector<std::string> &value, const std::string &out_file) {
   try {
     Path in = Path(in_file);
@@ -91,7 +91,7 @@ Status DataHelper::UpdateArray(const std::string &in_file, const std::string &ke
   return Status::OK();
 }
 
-Status DataHelper::RemoveKey(const std::string &in_file, const std::string &key, const std::string &out_file) {
+Status JsonHelper::RemoveKey(const std::string &in_file, const std::string &key, const std::string &out_file) {
   try {
     Path in = Path(in_file);
     nlohmann::json js;
@@ -120,7 +120,7 @@ Status DataHelper::RemoveKey(const std::string &in_file, const std::string &key,
   return Status::OK();
 }
 
-size_t DataHelper::DumpData(const unsigned char *tensor_addr, const size_t &tensor_size, void *addr,
+size_t JsonHelper::DumpData(const unsigned char *tensor_addr, const size_t &tensor_size, void *addr,
                             const size_t &buffer_size) {
   // write to address, input order is: destination, source
   errno_t ret = memcpy_s(addr, buffer_size, tensor_addr, tensor_size);

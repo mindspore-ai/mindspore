@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_PERF_DATA_H
 
 #include <vector>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 
 namespace mindspore {
 namespace dataset {
