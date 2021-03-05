@@ -23,7 +23,7 @@ std::mutex AclEnvGuard::global_acl_env_mutex_;
 
 AclEnvGuard::AclEnvGuard(std::string_view cfg_file) {
   errno_ = aclInit(cfg_file.data());
-  if (errno_ != ACL_ERROR_NONE) {
+  if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_INITIALIZE) {
     MS_LOG(ERROR) << "Execute aclInit Failed";
     return;
   }
@@ -32,7 +32,7 @@ AclEnvGuard::AclEnvGuard(std::string_view cfg_file) {
 
 AclEnvGuard::~AclEnvGuard() {
   errno_ = aclFinalize();
-  if (errno_ != ACL_ERROR_NONE) {
+  if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_FINALIZE) {
     MS_LOG(ERROR) << "Finalize acl failed";
   }
   MS_LOG(INFO) << "Acl finalize success";

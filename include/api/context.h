@@ -45,10 +45,16 @@ struct MS_API GlobalContext : public Context {
   static void SetGlobalDeviceID(const uint32_t &device_id);
   static uint32_t GetGlobalDeviceID();
 
+  static inline void SetGlobalDumpConfigPath(const std::string &cfg_path);
+  static inline std::string GetGlobalDumpConfigPath();
+
  private:
   // api without std::string
   static void SetGlobalDeviceTarget(const std::vector<char> &device_target);
   static std::vector<char> GetGlobalDeviceTargetChar();
+
+  static void SetGlobalDumpConfigPath(const std::vector<char> &cfg_path);
+  static std::vector<char> GetGlobalDumpConfigPathChar();
 };
 
 struct MS_API ModelContext : public Context {
@@ -72,6 +78,9 @@ struct MS_API ModelContext : public Context {
                                          const std::string &op_select_impl_mode);
   static inline std::string GetOpSelectImplMode(const std::shared_ptr<Context> &context);
 
+  static inline void SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path);
+  static inline std::string GetFusionSwitchConfigPath(const std::shared_ptr<Context> &context);
+
  private:
   // api without std::string
   static void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path);
@@ -89,12 +98,20 @@ struct MS_API ModelContext : public Context {
   static void SetOpSelectImplMode(const std::shared_ptr<Context> &context,
                                   const std::vector<char> &op_select_impl_mode);
   static std::vector<char> GetOpSelectImplModeChar(const std::shared_ptr<Context> &context);
+
+  static void SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path);
+  static std::vector<char> GetFusionSwitchConfigPathChar(const std::shared_ptr<Context> &context);
 };
 
 void GlobalContext::SetGlobalDeviceTarget(const std::string &device_target) {
   SetGlobalDeviceTarget(StringToChar(device_target));
 }
 std::string GlobalContext::GetGlobalDeviceTarget() { return CharToString(GetGlobalDeviceTargetChar()); }
+
+void GlobalContext::SetGlobalDumpConfigPath(const std::string &cfg_path) {
+  SetGlobalDumpConfigPath(StringToChar(cfg_path));
+}
+std::string GlobalContext::GetGlobalDumpConfigPath() { return CharToString(GetGlobalDumpConfigPathChar()); }
 
 void ModelContext::SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path) {
   SetInsertOpConfigPath(context, StringToChar(cfg_path));
@@ -130,6 +147,13 @@ void ModelContext::SetOpSelectImplMode(const std::shared_ptr<Context> &context,
 }
 std::string ModelContext::GetOpSelectImplMode(const std::shared_ptr<Context> &context) {
   return CharToString(GetOpSelectImplModeChar(context));
+}
+
+void ModelContext::SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path) {
+  SetFusionSwitchConfigPath(context, StringToChar(cfg_path));
+}
+std::string ModelContext::GetFusionSwitchConfigPath(const std::shared_ptr<Context> &context) {
+  return CharToString(GetFusionSwitchConfigPathChar(context));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H
