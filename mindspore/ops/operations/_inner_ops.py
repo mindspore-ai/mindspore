@@ -22,7 +22,7 @@ from ...common import dtype as mstype
 from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from ..operations.math_ops import _infer_shape_reduce
 from ...communication.management import GlobalComm
-
+from .. import signature as sig
 
 class ExtractImagePatches(PrimitiveWithInfer):
     """
@@ -815,3 +815,70 @@ class SyncBatchNorm(PrimitiveWithInfer):
         args_moving = {"mean": mean, "variance": variance}
         validator.check_tensors_dtypes_same_and_valid(args_moving, [mstype.float16, mstype.float32], self.name)
         return (input_x, scale, bias, input_x, input_x)
+
+
+class Centralization(PrimitiveWithInfer):
+    """
+    Computes centralization. y = x - mean(x, axis).
+
+    Note:
+        The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim)`.
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor. The data type mast be float16 or float32.
+        - **axis** (Union[Int, Tuple(Int), List(Int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed. Must be in the range [-rank(input_x), rank(input_x)).
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `input_x`.
+
+    Raises:
+        TypeError: If `axis` is not one of the following types: int, list, tuple, NoneType.
+        TypeError: If `axis` has non-Int elements.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> mindspore.set_seed(1)
+        >>> input_x = Tensor(np.random.randn(2, 2).astype(np.float32))
+        >>> centralization = ops.Centralization()
+        >>> output = centralization(input_x, -1)
+        >>> print(output)
+        [[ 1.1180509 -1.1180508]
+         [ 0.2723984 -0.2723984]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('input_x'),
+        sig.make_sig('axis', default=())
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Centralization"""
+        self.init_prim_io_names(inputs=['input_x', 'axis'], outputs=['output'])
+
+    def __infer__(self, input_x, axis):
+        x_shape = list(input_x['shape'])
+        x_dtype = input_x['dtype']
+        axis_v = axis['value']
+        rank = len(x_shape)
+
+        args = {'input_x': input_x['dtype']}
+        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
+
+        if axis_v is None:
+            raise ValueError(f"For {self.name}, axis must be const.")
+        validator.check_value_type('axis', axis_v, [int, list, tuple], self.name)
+
+        if isinstance(axis_v, int):
+            validator.check_int_range(axis_v, -rank, rank, Rel.INC_LEFT, 'axis', self.name)
+        elif axis:
+            for index, one_axis in enumerate(axis_v):
+                validator.check_value_type('axis[%d]' % index, one_axis, [int], self.name)
+
+        out = {'shape': x_shape,
+               'dtype': x_dtype,
+               'value': None}
+        return out
