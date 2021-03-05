@@ -48,7 +48,4 @@ config = ed({
     "TEST_ROOT_DIR": "psenet/ic15/",
     "TEST_BUFFER_SIZE": 4,
     "TEST_DROP_REMAINDER": False,
-
-    # air config
-    "air_filename": "psenet_bs_1",
 })
