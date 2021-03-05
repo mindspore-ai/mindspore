@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 
 #include <float.h>
-#include <math.h>
 #include <limits.h>
 #include <string.h>
 #include <cmath>
+#include <limits>
 #include <vector>
 #include <utility>
 #include <random>
@@ -29,19 +29,12 @@
 #include <arm_neon.h>
 #endif
 
-#ifdef ENABLE_NEON
 #define R2GRAY 9798
 #define G2GRAY 19235
 #define B2GRAY 3735
 #define GRAYSHIFT 15
 #define GRAYSHIFT_DELTA (1 << (GRAYSHIFT - 1))
 #define U32TOU8CAST(value) ((uint8_t)std::min(value, (uint32_t)UCHAR_MAX))
-#else
-#define R2GRAY 77
-#define G2GRAY 150
-#define B2GRAY 29
-#define GRAYSHIFT 8
-#endif
 
 #define YSCALE 0x0101
 #define UTOB (-128)
@@ -245,6 +238,125 @@ static void ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
     y_weight += 2;
   }
   delete[] data_buf;
+}
+
+static inline uint8_t clip(float value, int min = 0, int max = 255) {
+  int int_val = roundf(value);
+  return std::max<int32_t>(std::numeric_limits<uint8_t>::min(),
+                           std::min<int32_t>(std::numeric_limits<uint8_t>::max(), int_val));
+}
+
+template <typename T1, typename T2>
+static bool Conv2DImplement(const LiteMat &src, const LiteMat &kernel, T2 *dst, LDataType dst_type,
+                            PaddBorderType pad_type) {
+  int border_x = static_cast<int>(kernel.width_ / 2);
+  int border_y = static_cast<int>(kernel.height_ / 2);
+
+  LiteMat pad_mat;
+  pad_mat.Init(src.width_ + 2 * border_x, src.height_ + 2 * border_y, src.channel_, src.data_type_);
+
+  if (!Pad(src, pad_mat, border_y, border_y, border_x, border_x, pad_type)) {
+    return false;
+  }
+
+  const T1 *pad_ptr = pad_mat;
+  const float *kernel_ptr = kernel;
+  T2 *dst_ptr = dst;
+
+  int pad_step = pad_mat.width_ * pad_mat.channel_;
+  int dst_step = src.width_ * src.channel_;
+
+  if (src.channel_ == 1) {
+    for (int y = border_y; y < pad_mat.height_ - border_y; y++) {
+      for (int x = border_x; x < pad_mat.width_ - border_x; x++) {
+        float conv_sum = 0;
+        for (int i = -border_y; i < -border_y + kernel.height_; i++) {
+          for (int j = -border_x; j < -border_x + kernel.width_; j++) {
+            conv_sum += pad_ptr[(y + i) * pad_step + (x + j) * pad_mat.channel_] *
+                        kernel_ptr[(i + border_y) * kernel.width_ + (j + border_x)];
+          }
+        }
+        if (dst_type == LDataType::UINT8) {
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = clip(conv_sum);
+        } else {
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = conv_sum;
+        }
+      }
+    }
+  } else if (src.channel_ == 3) {
+    for (int y = border_y; y < pad_mat.height_ - border_y; y++) {
+      for (int x = border_x; x < pad_mat.width_ - border_x; x++) {
+        float conv_sum_b = 0;
+        float conv_sum_g = 0;
+        float conv_sum_r = 0;
+        for (int i = -border_y; i < -border_y + kernel.height_; i++) {
+          for (int j = -border_x; j < -border_x + kernel.width_; j++) {
+            conv_sum_b += pad_ptr[(y + i) * pad_step + (x + j) * pad_mat.channel_] *
+                          kernel_ptr[(i + border_y) * kernel.width_ + (j + border_x)];
+            conv_sum_g += pad_ptr[(y + i) * pad_step + (x + j) * pad_mat.channel_ + 1] *
+                          kernel_ptr[(i + border_y) * kernel.width_ + (j + border_x)];
+            conv_sum_r += pad_ptr[(y + i) * pad_step + (x + j) * pad_mat.channel_ + 2] *
+                          kernel_ptr[(i + border_y) * kernel.width_ + (j + border_x)];
+          }
+        }
+        if (dst_type == LDataType::UINT8) {
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = clip(conv_sum_b);
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 1] = clip(conv_sum_g);
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 2] = clip(conv_sum_r);
+        } else {
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_] = conv_sum_b;
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 1] = conv_sum_g;
+          dst_ptr[(y - border_y) * dst_step + (x - border_x) * src.channel_ + 2] = conv_sum_r;
+        }
+      }
+    }
+  } else {
+    return false;
+  }
+  return true;
+}
+
+bool Conv2D(const LiteMat &src, const LiteMat &kernel, LiteMat &dst, LDataType dst_type, PaddBorderType pad_type) {
+  if (src.IsEmpty() || kernel.IsEmpty()) {
+    return false;
+  }
+  if ((dst_type != LDataType::UINT8 && dst_type != LDataType::FLOAT32) || kernel.data_type_ != LDataType::FLOAT32) {
+    return false;
+  }
+  if (dst.IsEmpty() || dst.width_ != src.width_ || dst.height_ != src.height_ || dst.channel_ != src.channel_ ||
+      dst.data_type_ != dst_type) {
+    dst.Init(src.width_, src.height_, src.channel_, dst_type);
+  }
+
+  if (src.data_type_ == LDataType::UINT8 && dst.data_type_ == LDataType::UINT8) {
+    return Conv2DImplement<uint8_t, uint8_t>(src, kernel, dst, dst_type, pad_type);
+  } else if (src.data_type_ == LDataType::UINT8 && dst.data_type_ == LDataType::FLOAT32) {
+    return Conv2DImplement<uint8_t, float>(src, kernel, dst, dst_type, pad_type);
+  } else if (src.data_type_ == LDataType::FLOAT32 && dst.data_type_ == LDataType::UINT8) {
+    return Conv2DImplement<float, uint8_t>(src, kernel, dst, dst_type, pad_type);
+  } else if (src.data_type_ == LDataType::FLOAT32 && dst.data_type_ == LDataType::FLOAT32) {
+    return Conv2DImplement<float, float>(src, kernel, dst, dst_type, pad_type);
+  } else {
+    return false;
+  }
+}
+
+bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMat &dst, LDataType dst_type,
+                PaddBorderType pad_type) {
+  if (src.IsEmpty() || kx.IsEmpty() || ky.IsEmpty()) {
+    return false;
+  }
+  if (dst_type != LDataType::UINT8 && dst_type != LDataType::FLOAT32) {
+    return false;
+  }
+  if (dst.IsEmpty() || dst.width_ != src.width_ || dst.height_ != src.height_ || dst.channel_ != src.channel_ ||
+      dst.data_type_ != dst_type) {
+    dst.Init(src.width_, src.height_, src.channel_, dst_type);
+  }
+
+  LiteMat mid;
+  bool ret = Conv2D(src, kx, mid, LDataType::FLOAT32, pad_type) && Conv2D(mid, ky, dst, dst_type, pad_type);
+  return ret;
 }
 
 bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
@@ -485,7 +597,7 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
 #else
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
-        *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY) >> GRAYSHIFT;
+        *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY + GRAYSHIFT_DELTA) >> GRAYSHIFT;
         ptr++;
         data_ptr += 4;
       }
@@ -763,6 +875,45 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
   }
 }
 
+static int PadFromPos(int p, int len, PaddBorderType pad_type) {
+  if (p >= 0 && p < len) {
+    return p;
+  }
+  if (pad_type == PaddBorderType::PADD_BORDER_REPLICATE) {
+    return p < 0 ? 0 : len - 1;
+  } else {
+    return p < 0 ? -p : 2 * len - p - 2;
+  }
+}
+
+template <typename T>
+static void PadImplement(const LiteMat &src, LiteMat &dst, const int top, const int bottom, const int left,
+                         const int right, const PaddBorderType pad_type) {
+  int src_step = src.width_ * src.channel_;
+  int dst_step = dst.width_ * dst.channel_;
+
+  uint8_t *src_data_ptr = reinterpret_cast<uint8_t *>(src.data_ptr_);
+  uint8_t *dst_data_ptr = reinterpret_cast<uint8_t *>(dst.data_ptr_);
+  for (int i = 0; i < src.height_; i++) {
+    memcpy(dst_data_ptr + (i + top) * dst.steps_[0] + left * dst.steps_[1], src_data_ptr + i * src.steps_[0],
+           src.steps_[0]);
+  }
+
+  const T *src_ptr = src;
+  T *dst_ptr = dst;
+  for (int y = 0; y < dst.height_; y++) {
+    for (int x = 0; x < dst.width_; x++) {
+      if (y < top || y >= dst.height_ - bottom || x < left || x >= dst.width_ - right) {
+        int src_y = PadFromPos(y - top, src.height_, pad_type);
+        int src_x = PadFromPos(x - left, src.width_, pad_type);
+        for (int cn = 0; cn < dst.channel_; cn++) {
+          dst_ptr[y * dst_step + x * dst.channel_ + cn] = src_ptr[src_y * src_step + src_x * src.channel_ + cn];
+        }
+      }
+    }
+  }
+}
+
 template <typename T>
 void ExtractChannelImpl(const T *src_ptr, T *dst_ptr, int height, int width, int channel, int col) {
   int total = height * width;
@@ -909,6 +1060,10 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
     PadWithConstant<float>(src, dst, top, bottom, left, right, pad_type, fill_b_or_gray, fill_g, fill_r);
   } else if (pad_type == PADD_BORDER_CONSTANT && src.data_type_ == LDataType::UINT8) {
     PadWithConstant<uint8_t>(src, dst, top, bottom, left, right, pad_type, fill_b_or_gray, fill_g, fill_r);
+  } else if (src.data_type_ == LDataType::FLOAT32) {
+    PadImplement<float>(src, dst, top, bottom, left, right, pad_type);
+  } else if (src.data_type_ == LDataType::UINT8) {
+    PadImplement<uint8_t>(src, dst, top, bottom, left, right, pad_type);
   } else {
     return false;
   }
