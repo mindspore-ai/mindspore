@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPUKERNELBUILD_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPUKERNELBUILD_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_KERNEL_BUILD_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_KERNEL_BUILD_H_
 
+#include <vector>
 #include <memory>
 #include "backend/session/kernel_graph.h"
 namespace mindspore {
 namespace device {
 namespace gpu {
-void GpuBuild(const std::shared_ptr<session::KernelGraph> &kernel_graph);
+void CreateGPUKernel(const std::vector<CNodePtr> &kernels);
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPUKERNELBUILD_H_
+#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_KERNEL_BUILD_H_

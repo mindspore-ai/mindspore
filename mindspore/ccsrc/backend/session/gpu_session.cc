@@ -196,7 +196,8 @@ void GPUSession::AssignStream(const std::shared_ptr<KernelGraph> &kernel_graph) 
 }
 
 void GPUSession::BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  device::gpu::GpuBuild(kernel_graph);
+  auto kernels = kernel_graph->execution_order();
+  device::gpu::CreateGPUKernel(kernels);
 }
 
 void GPUSession::AllocateMemory(KernelGraph *kernel_graph) const {
