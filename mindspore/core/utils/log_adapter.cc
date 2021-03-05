@@ -23,37 +23,6 @@
 // namespace to support utils module definition
 namespace mindspore {
 #ifdef USE_GLOG
-static std::string GetTime() {
-#define BUFLEN 80
-  static char buf[BUFLEN];
-#if defined(_WIN32) || defined(_WIN64)
-  time_t time_seconds = time(0);
-  struct tm now_time;
-  localtime_s(&now_time, &time_seconds);
-  sprintf_s(buf, BUFLEN, "%d-%d-%d %d:%d:%d", now_time.tm_year + 1900, now_time.tm_mon + 1, now_time.tm_mday,
-            now_time.tm_hour, now_time.tm_min, now_time.tm_sec);
-#else
-  struct timeval cur_time;
-  (void)gettimeofday(&cur_time, nullptr);
-
-  struct tm now;
-  (void)localtime_r(&cur_time.tv_sec, &now);
-  (void)strftime(buf, BUFLEN, "%Y-%m-%d-%H:%M:%S", &now);  // format date and time
-  // set micro-second
-  buf[27] = '\0';
-  int idx = 26;
-  auto num = cur_time.tv_usec;
-  for (int i = 5; i >= 0; i--) {
-    buf[idx--] = static_cast<char>(num % 10 + '0');
-    num /= 10;
-    if (i % 3 == 0) {
-      buf[idx--] = '.';
-    }
-  }
-#endif
-  return std::string(buf);
-}
-
 static std::string GetProcName() {
 #if defined(__APPLE__) || defined(__FreeBSD__)
   const char *appname = getprogname();
@@ -193,7 +162,7 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
   auto submodule_name = GetSubModuleName(submodule_);
   google::LogMessage("", 0, GetGlogLevel(log_level_)).stream()
     << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "(" << getpid() << "," << GetProcName()
-    << "):" << GetTime() << " "
+    << "):" << GetTimeString() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
 #else
   auto str_msg = msg.str();

@@ -25,6 +25,10 @@
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/util/status.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#include "minddata/dataset/util/rdr.h"
+#endif
 
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/util/queue.h"
@@ -186,12 +190,14 @@ class DeviceQueueOp : public PipelineOp {
 #ifdef ENABLE_TDTQUE
   void WaitContinueSignal() const;
   Status SendDataToAscend();
+  Status SendRowToTdt(TensorRow currRow, bool isProfilingEnable, int32_t *tdt_cost);
   bool ascend_keep_waiting_;
 #endif
 
 #ifdef ENABLE_GPUQUE
   Status SendDataToGPU();
   Status MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row, const int32_t &worker_id);
+  Status RetryPushData(unsigned int handle, const std::vector<DataItemGpu> &data);
   void ReleaseData(void *addr, int32_t worker_id);
   Status LaunchParallelCopyThread();
   Status PushDataToGPU();
@@ -220,6 +226,10 @@ class DeviceQueueOp : public PipelineOp {
   bool create_data_info_queue_;
   std::unique_ptr<DATA_INFO_QUEUE> data_info_queue_ptr_;
   std::mutex data_info_mutex_;
+  bool send_finished_;
+#ifdef ENABLE_DUMP_IR
+  std::shared_ptr<MDChannelInfo> md_channel_info_;
+#endif
 
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<TdtPlugin> tdtInstancePtr;
