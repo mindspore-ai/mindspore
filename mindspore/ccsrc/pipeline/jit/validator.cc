@@ -66,6 +66,27 @@ void ValidateOperation(const AnfNodePtr &node) {
   MS_LOG(EXCEPTION) << "Illegal primitive: " << prim->name();
 }
 
+bool CheckAbstractScalar(const AnfNodePtr &node) {
+  AbstractBasePtr ptrBase = node->abstract();
+  if (ptrBase->isa<AbstractScalar>()) {
+    TypePtr ptrType = ptrBase->GetTypeTrack();
+    MS_EXCEPTION_IF_NULL(ptrType);
+    if (ptrType->isa<EnvType>()) {
+      MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString() << " for node=" << node->DebugString();
+    }
+    if (ptrType->isa<Problem>() || ptrType->isa<External>()) {
+      // only send string in external
+      if (!IsValueNode<StringImm>(node)) {
+        // Validate a type.
+        MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString()
+                          << " for node=" << node->DebugString();
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 void ValidateAbstract(const AnfNodePtr &node) {
   if (node == nullptr) {
     MS_LOG(DEBUG) << "Node to validate is invalid";
@@ -78,19 +99,9 @@ void ValidateAbstract(const AnfNodePtr &node) {
   }
   if (ptrBase->isa<AbstractClass>() || ptrBase->isa<AbstractJTagged>()) {
     // Validate a type.
-    MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString();
+    MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString() << " for node=" << node->DebugString();
   }
-  if (ptrBase->isa<AbstractScalar>()) {
-    TypePtr ptrType = ptrBase->GetTypeTrack();
-    MS_EXCEPTION_IF_NULL(ptrType);
-    if (ptrType->isa<Problem>() || ptrType->isa<External>()) {
-      // only send string in external
-      if (!IsValueNode<StringImm>(node)) {
-        // Validate a type.
-        MS_LOG(EXCEPTION) << "Illegal type in the graph: " << ptrBase->ToString()
-                          << " for node=" << node->DebugString();
-      }
-    }
+  if (CheckAbstractScalar(node)) {
     return;
   }
   if (ptrBase->isa<AbstractError>()) {
@@ -98,19 +109,12 @@ void ValidateAbstract(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "AbstractError in the graph: " << ptrBase->ToString();
     return;
   }
-
-  if (ptrBase->isa<AbstractType>() || ptrBase->isa<AbstractFunction>() || ptrBase->isa<AbstractTuple>() ||
-      ptrBase->isa<AbstractList>() || ptrBase->isa<AbstractTensor>() || ptrBase->isa<AbstractRowTensor>() ||
-      ptrBase->isa<AbstractSparseTensor>() || ptrBase->isa<abstract::AbstractRefKey>() || ptrBase->isa<AbstractRef>()) {
-    return;
-  }
-
-  if (ptrBase->isa<abstract::AbstractNone>()) {
-    return;
-  }
-
-  // UMonad or IOMonad
-  if (ptrBase->isa<abstract::AbstractMonad>()) {
+  bool checkAbstractIslegal =
+    ptrBase->isa<AbstractType>() || ptrBase->isa<AbstractFunction>() || ptrBase->isa<AbstractTuple>() ||
+    ptrBase->isa<AbstractList>() || ptrBase->isa<AbstractTensor>() || ptrBase->isa<AbstractRowTensor>() ||
+    ptrBase->isa<AbstractSparseTensor>() || ptrBase->isa<abstract::AbstractRefKey>() || ptrBase->isa<AbstractRef>() ||
+    ptrBase->isa<abstract::AbstractNone>() || ptrBase->isa<abstract::AbstractMonad>();
+  if (checkAbstractIslegal) {
     return;
   }
 
