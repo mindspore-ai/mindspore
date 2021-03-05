@@ -28,16 +28,16 @@ namespace mindspore {
 namespace ops {
 
 void ActivationGrad::Init(const ActivationType &type, const float alpha) {
-  this->set_type(type);
+  this->set_activation_type(type);
   this->set_alpha(alpha);
 }
 
-void ActivationGrad::set_type(const ActivationType &type) {
+void ActivationGrad::set_activation_type(const ActivationType &type) {
   int64_t swi = type;
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 
-ActivationType ActivationGrad::get_type() const {
+ActivationType ActivationGrad::get_activation_type() const {
   auto value_ptr = GetAttr(kActivationType);
   return ActivationType(GetValue<int64_t>(value_ptr));
 }

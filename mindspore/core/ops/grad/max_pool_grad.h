@@ -33,12 +33,6 @@ class MaxPoolGrad : public PoolGrad {
   MaxPoolGrad() : PoolGrad(kNameMaxPoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
   ~MaxPoolGrad() = default;
   MS_DECLARE_PARENT(MaxPoolGrad, PoolGrad);
-  void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &strides = {1},
-            const PadMode &pad_mode = VALID, const Format &data_format = NCHW);
-  void set_kernel_size(const std::vector<int64_t> &kernel_size);
-  void set_strides(const std::vector<int64_t> &strides);
-  void set_data_format(const Format &data_format);
-  Format get_data_format() const;
 };
 
 AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
