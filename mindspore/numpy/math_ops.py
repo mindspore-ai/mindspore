@@ -2237,6 +2237,10 @@ def _reduce(a, reduce_fn, cmp_fn, axis=None, keepdims=False, initial=None, where
     ndim = F.rank(a)
     dtype = F.dtype(a)
     axes = _check_axis_valid(axis, ndim)
+    if initial is not None:
+        if ((isinstance(initial, Tensor) and F.rank(initial) > 0) or
+                not isinstance(initial, (int, float, bool, Tensor))):
+            _raise_type_error('initial should be scalar')
 
     if _is_shape_empty(shape):
         if not axes:
