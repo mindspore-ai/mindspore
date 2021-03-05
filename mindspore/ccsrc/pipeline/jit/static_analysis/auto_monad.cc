@@ -1013,6 +1013,10 @@ class AutoMonadConverter {
     if (HasSideEffects()) {
       HandleCNodes();
     }
+
+    // Safe to clear isolated nodes after handled side effect nodes.
+    ClearIsolatedNodes();
+
     // Clean up after conversion finished.
     func_graph_->ClearOrderList();
     return has_effect_cnodes_;
@@ -1074,6 +1078,22 @@ class AutoMonadConverter {
     // Insert Depend nodes for states if required.
     if (update_state) {
       InsertStateDepends();
+    }
+  }
+
+  // Clean no side effect dependency nodes.
+  //   From:  output = Depend(output, StopGrad)
+  //          return output
+  //
+  //   To:    return output
+  void ClearIsolatedNodes() {
+    auto output = GetGraphOutput();
+    if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
+        IsPrimitiveCNode(output->cast<CNodePtr>()->input(2), prim::kPrimStopGradient)) {
+      // Replace Depend(orig_output, StopGrad) node with orig_output.
+      // After that, nodes may be eliminated if have no side effects.
+      auto &orig_output = output->cast<CNodePtr>()->input(1);
+      func_graph_->set_output(orig_output);
     }
   }
 
@@ -1248,16 +1268,19 @@ class AutoMonadConverter {
 
   void InsertStateDepend(const AnfNodePtr &state) {
     auto output = GetGraphOutput();
-    // It's safe to handle isolated nodes here:
-    //   Node: Depend(output, StopGrad)
+    auto depend = NewValueNode(prim::kPrimDepend);
+    // If isolated nodes dependencies exist.
     if (IsPrimitiveCNode(output, prim::kPrimDepend) &&
         IsPrimitiveCNode(output->cast<CNodePtr>()->input(2), prim::kPrimStopGradient)) {
-      // Replace Depend(orig_output, StopGrad) node with orig_output.
-      // After that, nodes may be eliminated if have no side effects.
-      output = output->cast<CNodePtr>()->input(1);
+      // Insert state Depend node into isolated Depend node.
+      auto isolated_depend = output->cast<CNodePtr>();
+      auto &orig_output = isolated_depend->input(1);
+      auto state_depend = func_graph_->NewCNode({depend, orig_output, state});
+      state_depend->set_abstract(orig_output->abstract());
+      manager_->SetEdge(isolated_depend, 1, state_depend);
+      return;
     }
-    // Insert Depend node and set it as output.
-    auto depend = NewValueNode(prim::kPrimDepend);
+    // Insert Depend node and set it as output, if no isolated nodes.
     auto depend_cnode = func_graph_->NewCNode({depend, output, state});
     depend_cnode->set_abstract(output->abstract());
     func_graph_->set_output(depend_cnode);

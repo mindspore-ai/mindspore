@@ -75,10 +75,11 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
     auto is_used = iter->second.second;
     auto hidden_node = iter->second.first;
     auto is_isolated = CanBeIsolatedNode(var_name, hidden_node);
-    MS_LOG(INFO) << "Isolated node found(Hidden), hidden_node: " << hidden_node->DebugString(2) << " is hidden by "
-                 << node->DebugString(2) << " with the same name, var_name: " << var_name
-                 << ", is_isolated: " << is_isolated << ", !is_used: " << !is_used;
     if (!is_used && is_isolated) {
+      MS_LOG(INFO) << "Isolated node found(Hidden), hidden_node: " << hidden_node->DebugString(2) << " is hidden by "
+                   << node->DebugString(2) << " with the same name, var_name: " << var_name << ", block: " << this
+                   << "/" << (func_graph() ? func_graph()->ToString() : "FG(Null)")
+                   << ", Line: " << trace::GetDebugInfo(hidden_node->debug_info(), "", kSourceLineTipDiscard);
       AddIsolatedNode(hidden_node);
     }
     iter->second = std::make_pair(node, false);
@@ -335,8 +336,6 @@ void FunctionBlock::Jump(const FunctionBlockPtr &target_block, AnfNodePtr node) 
   jumps_[target_block.get()] = jump;
   target_block->AddPrevBlock(shared_from_this());
   func_graph()->set_output(jump);
-  // Attach all isolated nodes.
-  AttachIsolatedNodesBeforeReturn();
 }
 
 // Perform a conditional jump using switch operation.
@@ -352,8 +351,6 @@ void FunctionBlock::ConditionalJump(AnfNodePtr condNode, const FunctionBlockPtr 
                                    NewValueNode(false_block->func_graph())});
   CNodePtr switch_app_new = func_graph()->NewCNodeInOrder({switch_app});
   func_graph()->set_output(switch_app_new);
-  // Attach all isolated nodes.
-  AttachIsolatedNodesBeforeReturn();
 }
 
 // Create cnode for the assign statement like 'self.target = source'.
@@ -363,7 +360,9 @@ void FunctionBlock::SetStateAssign(const AnfNodePtr &target, const AnfNodePtr &s
   const std::string module_name("mindspore.ops.functional");
   ValueNodePtr assign_op = NewValueNode(prim::GetPythonOps(primitive_name, module_name, true));
   auto assign_node = func_graph_->NewCNodeInOrder({assign_op, target, source});
-  MS_LOG(DEBUG) << "Isolated node found(Assign), assign_node: " << assign_node->DebugString(2);
+  MS_LOG(DEBUG) << "Isolated node found(Assign), assign_node: " << assign_node->DebugString(2) << ", block: " << this
+                << "/" << (func_graph() ? func_graph()->ToString() : "FG(Null)")
+                << ", Line: " << trace::GetDebugInfo(assign_node->debug_info(), "", kSourceLineTipDiscard);
   AddIsolatedNode(assign_node);
 }
 
@@ -399,7 +398,10 @@ void FunctionBlock::FindIsolatedNodes() {
     if (used.find(node) == used.end() && CanBeIsolatedNode(var_name, node)) {
       // We don't call AddIsolatedNode(node) anymore.
       // If need, to call FindIsolatedNodes() in appropriate place.
-      MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(2) << ", var_name: " << var_name;
+      MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(2) << ", var_name: " << var_name
+                   << ", block: " << this << "/" << (func_graph() ? func_graph()->ToString() : "FG(Null)")
+                   << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
+      AddIsolatedNode(node);
     }
   }
 }
