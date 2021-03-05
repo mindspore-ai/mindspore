@@ -38,7 +38,7 @@ class BatchToSpaceCPUKernel : public LiteKernel {
  private:
   int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
   int32_t crops_[COMM_SHAPE_SIZE];
-  bool no_crop_;
+  bool no_crop_ = false;
 };
 }  // namespace mindspore::kernel
 
