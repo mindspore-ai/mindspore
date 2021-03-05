@@ -65,8 +65,19 @@ Status TileInfo::GetAttrs() {
   return SUCCESS;
 }
 
+// if some dimension of multiples > 1, split the multiple; otherwise, split the dimension of input
 Status TileInfo::CheckStrategy(const StrategyPtr &strategy) {
-  Shapes multiples = {full_multiples_};
+  Shape tmp;
+  for (size_t i = 0; i < full_multiples_.size(); ++i) {
+    if (full_multiples_[i] != 1) {
+      tmp.push_back(full_multiples_[i]);
+    } else {
+      tmp.push_back(inputs_shape_[0][i]);
+    }
+  }
+  Shapes multiples = {tmp};
+  MS_LOG(INFO) << name_ << ": The input shape is " << ShapeToString(inputs_shape_[0]) << ", the multiples is "
+               << ShapeToString(full_multiples_) << ", so the 'shape' can be split is " << ShapeToString(tmp);
   return CheckStrategyValue(strategy, multiples);
 }
 
@@ -74,7 +85,7 @@ Status TileInfo::InferDevMatrixShape() {
   MS_EXCEPTION_IF_NULL(strategy_);
   std::vector<Dimensions> stra = strategy_->GetInputDim();
   if (stra.empty()) {
-    MS_LOG(ERROR) << name_ << "The strategy is empty";
+    MS_LOG(ERROR) << name_ << ": The strategy is empty";
     return FAILED;
   }
   if (full_multiples_.size() != stra[0].size()) {
@@ -86,6 +97,9 @@ Status TileInfo::InferDevMatrixShape() {
 
   slice_multiples_ = full_multiples_;
   for (size_t i = 0; i < full_multiples_.size(); ++i) {
+    if (full_multiples_[i] == 1) {
+      continue;
+    }
     slice_multiples_[i] = slice_multiples_[i] / dev_matrix_shape_[i];
   }
   return SUCCESS;
@@ -95,13 +109,18 @@ Status TileInfo::InferTensorMap() {
   TensorMap input_tensor_map;
   TensorMap output_tensor_map;
   if (inputs_shape_.empty() || outputs_shape_.empty()) {
-    MS_LOG(ERROR) << name_ << "The inputs or outputs' shape is empty";
+    MS_LOG(ERROR) << name_ << ": The inputs or outputs' shape is empty";
     return FAILED;
   }
 
-  // the input tensor cannot be split
+  // if some dimension of multiples > 1, split the multiple; otherwise, split the dimension of input
   for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
-    input_tensor_map.push_back(MAP_NONE);
+    input_tensor_map.push_back(inputs_shape_[0].size() - i - 1);
+  }
+  for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
+    if (full_multiples_[i] != 1) {
+      input_tensor_map[i] = MAP_NONE;
+    }
   }
 
   // cannot use dev_matrix_shape_ replace outputs_shape_[0], because it may not be fully split in all devices.
@@ -163,11 +182,11 @@ Status TileInfo::InferTensorInfo() {
 void TileInfo::UpdateMultiples(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   if (cnode->size() != 3) {
-    MS_LOG(EXCEPTION) << "The size of tile cnode's inputs must be 3";
+    MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 3";
   }
 
   if (!IsValueNode<ValueTuple>(cnode->input(2))) {
-    MS_LOG(EXCEPTION) << "The input[2] of tile cnode is not ValueTuple.";
+    MS_LOG(EXCEPTION) << name_ << ": The input[2] of tile cnode is not ValueTuple.";
   }
 
   auto func_graph = cnode->func_graph();
@@ -199,7 +218,14 @@ Status TileInfo::GenerateStrategies(int64_t stage_id) {
   Shape multiples_split(full_multiples_.size(), 1);
   Shapes splittable_inputs = {multiples_split};
 
+  // if some dimension of multiples > 1, split the multiple; otherwise, split the dimension of input
   std::vector<StrategyPtr> sp_vector;
+  Shape tmp_input_shape = full_multiples_;
+  for (size_t i = 0; i < full_multiples_.size(); ++i) {
+    if (full_multiples_[i] == 0) {
+      tmp_input_shape[i] = inputs_shape_[0][i];
+    }
+  }
   Shapes tmp_inputs_shape = {full_multiples_};
   if (GenerateStrategiesForIndependentInputs(stage_id, tmp_inputs_shape, splittable_inputs, &sp_vector) != SUCCESS) {
     return FAILED;

@@ -94,6 +94,15 @@ def test_select_model_parallel():
     compile_net(net)
 
 
+def test_select_mirror():
+    context.set_auto_parallel_context(
+        parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    strategy1 = ((1, 2, 2), (1, 2, 2))
+    strategy2 = ((1, 2, 2), (1, 2, 2), (1, 2, 2))
+    net = Net(_w1, _w2, strategy1, strategy2)
+    compile_net(net)
+
+
 def test_select_auto_parallel():
     context.set_auto_parallel_context(
         parallel_mode="auto_parallel", device_num=8, global_rank=0)

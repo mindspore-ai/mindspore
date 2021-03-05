@@ -45,7 +45,6 @@ class SelectInfo : public OperatorInfo {
  protected:
   Status GetAttrs() override { return SUCCESS; }
   Status CheckStrategy(const StrategyPtr &strategy) override;
-  Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
