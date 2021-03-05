@@ -184,6 +184,9 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
     for (auto &substitution : list_) {
       auto res = DoTransform(optimizer, node, substitution);
       if (res != nullptr) {
+        if (is_once_) {
+          return true;
+        }
         change = true;
         changes = true;
         node = res;
@@ -228,6 +231,9 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
       change = true;
       changes = true;
       node = res;
+    }
+    if (change && is_once_) {
+      return true;
     }
     UpdateTransformingList(optimizer, node, &todo, change, seen);
   }
