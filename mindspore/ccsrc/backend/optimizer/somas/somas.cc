@@ -47,7 +47,6 @@ using mindspore::profiler::TensorMemory;
 namespace mindspore {
 namespace somas {
 constexpr auto kGapSize = 512;
-constexpr auto kParallelComputeSizeThreshold = 2000;
 
 constexpr auto kGraphId = "graph_id";
 constexpr auto kHashId = "hash_id";
@@ -1193,21 +1192,20 @@ bool Somas::Assign(const session::KernelGraph *graph) {
   for (auto tensor : tensors_list_) {
     if (tensor->GetSolverTensorDesc() != nullptr) {
       SomasSolverTensorDescPtr pSolverTensor = tensor->GetSolverTensorDesc();
-      solver_tensor_desc_list_.insert(
-        std::pair<size_t, SomasSolverTensorDescPtr>(pSolverTensor->index_, pSolverTensor));
+      solver_tensor_desc_map_.insert(std::pair<size_t, SomasSolverTensorDescPtr>(pSolverTensor->index_, pSolverTensor));
     }
   }
   MS_LOG(INFO) << "End Loop to create solver info";
 
   MS_LOG(INFO) << "Start Solving";
-  if (solver_tensor_desc_list_.empty()) {
+  if (solver_tensor_desc_map_.empty()) {
     MS_LOG(INFO) << "solver_tensor_desc_list is empty.";
     return true;
   }
 
   somas_solver_ = std::make_shared<SomasSolverPre>();
-  auto status = somas_solver_->Solving(graph, &solver_tensor_desc_list_, &reuse_matrix_,
-                                       contiguous_tensors_list_removed_ref, false);
+  auto status =
+    somas_solver_->Solving(graph, &solver_tensor_desc_map_, &reuse_matrix_, contiguous_tensors_list_removed_ref, false);
   MS_LOG(INFO) << "End Solving";
   if (status != SUCCESS) {
     GenGraphStatisticInfo();

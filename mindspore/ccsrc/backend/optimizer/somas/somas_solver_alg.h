@@ -108,14 +108,6 @@ class BlockTensor {
     m_size_ = bt.m_size_;
     return *this;
   }
-  void log() {
-    SomasSolverTensorDescPtr p = m_start_tensor_;
-    MS_LOG(DEBUG) << "Block of Tensors [" << m_start_tensor_->index_ << "]\nsize:  " << m_size_ << "Tensors:";
-    while (p) {
-      MS_LOG(DEBUG) << "[" << p->index_ << "," << p->size_ << "]";
-      p = p->right_;
-    }
-  }
   bool Alone() const { return ((NULL == m_start_tensor_->right_) && (NULL == m_start_tensor_->left_)); }
 };
 

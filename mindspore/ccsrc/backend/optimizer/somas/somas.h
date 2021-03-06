@@ -77,7 +77,7 @@ class Somas {
   std::vector<vector<uint32_t>> streams_groups_;
 
   // Solver
-  std::unordered_map<size_t, SomasSolverTensorDescPtr> solver_tensor_desc_list_;
+  TensorsDescMap solver_tensor_desc_map_;
   SomasSolverPrePtr somas_solver_;
 
   // Contiguous list

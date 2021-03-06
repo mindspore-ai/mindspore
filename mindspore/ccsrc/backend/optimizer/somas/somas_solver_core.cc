@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
+#include <map>
 #include "backend/optimizer/somas/somas_solver_alg.h"
 #include "backend/optimizer/somas/somas_solver_core.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
@@ -33,6 +33,7 @@ using std::vector;
 
 namespace mindspore {
 namespace somas {
+
 Status SomasSolverCore::MemoryAllocationSolver() {
   auto start = std::chrono::system_clock::now();
   Status retval = SUCCESS;
@@ -87,21 +88,24 @@ Status SomasSolverCore::MemoryAllocationSolver() {
     MS_LOG(INFO) << "SOMAS SOLVER RESUME:";
     MS_LOG(INFO) << "Best Solution:[" << 1 + best_sol << "/" << sol_count_ << "] ";
     MS_LOG(INFO) << "Best result:" << best << " Bytes " << (best) / (giga) << " GB ("
-                 << (best - lifelongmemory_) / (giga) << " GB + " << lifelongmemory_ / (giga)
+                 << (best - lifelong_memory_) / (giga) << " GB + " << lifelong_memory_ / (giga)
                  << " GB from lifelong tensors)";
 
     MS_LOG(INFO) << "Best timing:" << best_timing << " ms";
-    MS_LOG(INFO) << "Best algorithm: " << algorithm_type_[best_algorithm].c_str();
-    MS_LOG(INFO) << "Best sorting strategy: " << sorting_[best_sorting].c_str();
-    MS_LOG(INFO) << "Best offset strategy: " << branching_[best_branching].c_str();
+    MS_LOG(INFO) << "Best algorithm: " << algorithmTypeNames[best_algorithm];
+    MS_LOG(INFO) << "Best sorting strategy: " << sortingNames[best_sorting];
+    MS_LOG(INFO) << "Best offset strategy: " << branchingNames[best_branching];
     MS_LOG(INFO) << "Time elapsed: " << total_time << " ms";
     MS_LOG(INFO) << "Spread:" << static_cast<double>((worst - best) / static_cast<double>(best * cent)) << " %%";
     best_sol_ = best_sol;
     SetBestSolution();
   } else {
-    MS_LOG(INFO) << "Algorithm strategy: " << algorithm_type_[algorithm_].c_str();
-    MS_LOG(INFO) << "Sorting strategy: " << sorting_[sort_strategy_].c_str();
-    MS_LOG(INFO) << "Offset strategy: " << branching_[branching_strategy_].c_str();
+    // print only for single heuristic no multi thread
+    if (!is_multi_thread_valid_) {
+      MS_LOG(INFO) << "Algorithm strategy: " << algorithmTypeNames[algorithm_];
+      MS_LOG(INFO) << "Sorting strategy: " << sortingNames[sort_strategy_];
+      MS_LOG(INFO) << "Offset strategy: " << branchingNames[branching_strategy_];
+    }
     BuildBlocks();
     SortTensors();
     upperbound_ = FindSolutions();
@@ -167,7 +171,7 @@ bool SomasSolverCore::Verify(const size_t &upperbound) {
   }
   if (upperbound != result) {
     MS_LOG(WARNING) << "ERROR Invalid upperbound result --> Footprint Result: " << upperbound_
-                    << " Tensor Result: " << result + lifelongmemory_;
+                    << " Tensor Result: " << result + lifelong_memory_;
     retval = false;
   }
   MS_LOG(DEBUG)
@@ -179,13 +183,13 @@ bool SomasSolverCore::Verify(const size_t &upperbound) {
 void SomasSolverCore::BuildBlocks() {
   MS_LOG(DEBUG) << "Building block of tensors";
 
-  lifelongmemory_ = 0;
+  lifelong_memory_ = 0;
   uint64_t tensors_block_count = 0;
   for (auto tensor : tensors_) {
     SomasSolverTensorDescPtr pTensor = tensor.second;
     if (pTensor->blocked_) continue;
     if (pTensor->lifelong_) {
-      lifelongmemory_ += pTensor->size_;
+      lifelong_memory_ += pTensor->size_;
       continue;
     }
     // move to the left
@@ -211,9 +215,6 @@ void SomasSolverCore::BuildBlocks() {
 
   if (tensors_block_count != tensors_.size())
     MS_LOG(INFO) << static_cast<int>(tensors_.size() - tensors_block_count) << " lifelong tensors found";
-
-  // for debug
-  for (auto &b : block_tensors_) b.log();
 }
 
 void SomasSolverCore::Clean() {
@@ -264,7 +265,7 @@ static bool GreaterSizeGreaterConstraintsGreaterIndex(const BlockTensor &t1, con
 #endif
 
 void SomasSolverCore::SortTensors() {  // need to sort the tensors for Fast Heuristic
-  MS_LOG(DEBUG) << "Sorting Blocks of tensor, strategy: " << sorting_[sort_strategy_].c_str();
+  MS_LOG(DEBUG) << "Sorting Blocks of tensor, strategy: " << sortingNames[sort_strategy_];
   typedef bool (*SortingFunction)(const BlockTensor &, const BlockTensor &);
   std::unordered_map<SortingType, SortingFunction> sort_map;
   sort_map[kGreaterSizeSmallerIndex] = &GreaterSizeSmallerIndex;
@@ -278,8 +279,6 @@ void SomasSolverCore::SortTensors() {  // need to sort the tensors for Fast Heur
   if (sort_strategy_ < kNumSortingTypes) {
     sort(block_tensors_.begin(), block_tensors_.end(), *(sort_map[sort_strategy_]));
   }
-  // log for debug purposes
-  for (auto &block : block_tensors_) block.log();
 }
 
 void SomasSolverCore::RestoreSolution(uint32_t sol_id) {
@@ -305,12 +304,13 @@ size_t SomasSolverCore::Search(const std::shared_ptr<FootPrint> &pFootprint) {
     result = pFootprint->Result();
     auto end = std::chrono::system_clock::now();
     timing_ = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();
-    if (all_) {
+    // print for serial all_ or multi thread solver
+    if (all_ || is_multi_thread_valid_) {
       const double giga = 1073741824.;
       MS_LOG(INFO) << timing_ << " ms\t" << sol_count_ + 1 << "/"
                    << kNumFittingTypes * kNumAlgorithmTypes * kNumSortingTypes << "\t" << result << " Bytes ("
-                   << result / giga << " GB)\t" << algorithm_type_[algorithm_].c_str() << "\t"
-                   << sorting_[sort_strategy_].c_str() << "\t" << branching_[branching_strategy_].c_str();
+                   << result / giga << " GB)\t" << algorithmTypeNames[algorithm_] << "\t"
+                   << sortingNames[sort_strategy_] << "\t" << branchingNames[branching_strategy_];
     }
   } else {
     MS_LOG(INFO) << "FastSolver could not find solution";
@@ -319,8 +319,6 @@ size_t SomasSolverCore::Search(const std::shared_ptr<FootPrint> &pFootprint) {
   if (result < upperbound_) {
     upperbound_ = result;
     best_sol_ = pFootprint->m_solId_;
-    best_branching_ = branching_strategy_;
-    best_sort_ = sort_strategy_;
   }
 
   return upperbound_;
@@ -329,19 +327,23 @@ size_t SomasSolverCore::Search(const std::shared_ptr<FootPrint> &pFootprint) {
 void SomasSolverCore::AppendLifelongTensors() {
   MS_LOG(DEBUG) << "Appending lifelong tensors to solution";
   size_t offset = upperbound_;
+  std::map<size_t, SomasSolverTensorDescPtr> lifelongTensors;
   for (auto t_ : tensors_) {
-    SomasSolverTensorDescPtr pTensor = t_.second;
-    if (pTensor->lifelong_) {
-      pTensor->offset_ = offset;
-      offset += pTensor->size_;
+    if (t_.second->lifelong_) {
+      lifelongTensors.insert(t_);
     }
   }
-  upperbound_ += lifelongmemory_;
-  MS_LOG(DEBUG) << lifelongmemory_ << " bytes from lifelong tensors added to solution";
+  for (auto t_ : lifelongTensors) {
+    SomasSolverTensorDescPtr pTensor = t_.second;
+    pTensor->offset_ = offset;
+    offset += pTensor->size_;
+  }
+  upperbound_ += lifelong_memory_;
+  MS_LOG(DEBUG) << lifelong_memory_ << " bytes from lifelong tensors added to solution";
 }
 
 size_t SomasSolverCore::FindSolutions() {
-  MS_LOG(DEBUG) << "Start allocating blocks,offset strategy: " << branching_[branching_strategy_].c_str();
+  MS_LOG(DEBUG) << "Start allocating blocks,offset strategy: " << branchingNames[branching_strategy_];
 
   std::shared_ptr<FootPrint> pFootprint = std::make_shared<FootPrint>();
   pFootprint->setBranchingStrategy(branching_strategy_);
