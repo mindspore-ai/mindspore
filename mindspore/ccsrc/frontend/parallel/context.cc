@@ -33,6 +33,9 @@ std::vector<std::string> PARALLEL_MODE_LIST = {STAND_ALONE, DATA_PARALLEL, HYBRI
                                                AUTO_PARALLEL};
 std::vector<std::string> STRATEGY_SEARCH_MODE_LIST = {DYNAMIC_PROGRAMMING, RECURSIVE_PROGRAMMING};
 
+std::vector<std::string> COMMUNI_PARALLEL_MODE_LIST = {ALL_GROUP_PARALLEL, SAME_SERVER_GROUP_PARALLEL,
+                                                       NO_GROUP_PARALLEL};
+
 std::shared_ptr<ParallelContext> ParallelContext::inst_context_ = nullptr;
 
 std::shared_ptr<ParallelContext> ParallelContext::GetInstance() {
@@ -65,6 +68,7 @@ void ParallelContext::Reset() {
   strategy_search_mode_ = DYNAMIC_PROGRAMMING;
   pipeline_stage_split_num_ = 1;
   grad_accumulation_step_ = 1;
+  communi_parallel_mode_ = ALL_GROUP_PARALLEL;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -150,6 +154,17 @@ const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitSizes(const 
     return iter->second;
   }
   return {};
+}
+
+bool ParallelContext::set_communi_parallel_mode(const std::string &communi_parallel_mode) {
+  auto iter = std::find(COMMUNI_PARALLEL_MODE_LIST.begin(), COMMUNI_PARALLEL_MODE_LIST.end(), communi_parallel_mode);
+  if (iter == COMMUNI_PARALLEL_MODE_LIST.end()) {
+    MS_LOG(INFO) << "Invalid communication parallel mode:" << communi_parallel_mode;
+    return false;
+  }
+
+  communi_parallel_mode_ = communi_parallel_mode;
+  return true;
 }
 
 // Clear param_shapes before training in auto-parallel or semi-auto-parallel mode

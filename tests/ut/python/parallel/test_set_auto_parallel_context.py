@@ -21,19 +21,22 @@ from mindspore.parallel._auto_parallel_context import auto_parallel_context
 
 def test_set_auto_parallel_context():
     context.set_auto_parallel_context(device_num=4, global_rank=3, gradients_mean=True, gradient_fp32_sync=False,
-                                      parallel_mode="auto_parallel", parameter_broadcast=False)
+                                      parallel_mode="auto_parallel", parameter_broadcast=False,
+                                      communi_parallel_mode="same_server_group_parallel")
     device_num = context.get_auto_parallel_context("device_num")
     global_rank = context.get_auto_parallel_context("global_rank")
     gradients_mean = context.get_auto_parallel_context("gradients_mean")
     gradient_fp32_sync = context.get_auto_parallel_context("gradient_fp32_sync")
     parallel_mode = context.get_auto_parallel_context("parallel_mode")
     parameter_broadcast = context.get_auto_parallel_context("parameter_broadcast")
+    communi_parallel_mode = context.get_auto_parallel_context("communi_parallel_mode")
     assert device_num == 4
     assert global_rank == 3
     assert gradients_mean
     assert not gradient_fp32_sync
     assert parallel_mode == "auto_parallel"
     assert not parameter_broadcast
+    assert communi_parallel_mode == "same_server_group_parallel"
 
     auto_parallel_context().set_device_num(4)
     device_num = auto_parallel_context().get_device_num()
@@ -77,6 +80,9 @@ def test_set_auto_parallel_context():
     with pytest.raises(ValueError):
         set_algo_parameters(tensor_slice_align_size=1025)
 
+    with pytest.raises(ValueError):
+        context.set_auto_parallel_context(communi_parallel_mode="wrong_mode")
+
     context.set_auto_parallel_context(enable_parallel_optimizer=True)
     assert context.get_auto_parallel_context("enable_parallel_optimizer")
     assert not auto_parallel_context().get_all_reduce_fusion_split_indices()
@@ -98,6 +104,7 @@ def test_reset_auto_parallel_context():
     device_num_is_set = auto_parallel_context().get_device_num_is_set()
     parameter_broadcast_is_set = auto_parallel_context().get_parameter_broadcast_is_set()
     stage = auto_parallel_context().get_pipeline_stages()
+    communi_parallel_mode = context.get_auto_parallel_context("communi_parallel_mode")
 
     assert device_num == 1
     assert global_rank == 0
@@ -108,3 +115,4 @@ def test_reset_auto_parallel_context():
     assert not device_num_is_set
     assert not parameter_broadcast_is_set
     assert stage == 1
+    assert communi_parallel_mode == "all_group_parallel"
