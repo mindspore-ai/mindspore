@@ -387,5 +387,13 @@ def check_tensor_op(param, param_name):
         raise TypeError("{0} is neither a c_transform op (TensorOperation) nor a callable pyfunc.".format(param_name))
 
 
+def check_c_tensor_op(param, param_name):
+    """check whether param is a tensor op or a callable Python function but not a py_transform"""
+    if callable(param) and getattr(param, 'parse', True):
+        raise TypeError("{0} is a py_transform op which is not allow to use.".format(param_name))
+    if not isinstance(param, cde.TensorOp) and not callable(param) and not getattr(param, 'parse', None):
+        raise TypeError("{0} is neither a c_transform op (TensorOperation) nor a callable pyfunc.".format(param_name))
+
+
 def replace_none(value, default):
     return value if value is not None else default

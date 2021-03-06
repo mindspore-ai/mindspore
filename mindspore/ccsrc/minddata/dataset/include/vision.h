@@ -846,6 +846,12 @@ class SoftDvppDecodeRandomCropResizeJpeg : public TensorTransform {
   /// \param[in] size A vector representing the output size of the resized image.
   ///     If size is a single value, smaller edge of the image will be resized to this value with
   ///     the same image aspect ratio. If size has 2 values, it should be (height, width).
+  /// \param[in] scale Range [min, max) of respective size of the original
+  ///     size to be cropped (default=(0.08, 1.0)).
+  /// \param[in] ratio Range [min, max) of aspect ratio to be cropped
+  ///     (default=(3. / 4., 4. / 3.)).
+  /// \param[in] max_attempts The maximum number of attempts to propose a valid
+  ///     crop_area (default=10). If exceeded, fall back to use center_crop instead.
   SoftDvppDecodeRandomCropResizeJpeg(std::vector<int32_t> size, std::vector<float> scale = {0.08, 1.0},
                                      std::vector<float> ratio = {3. / 4., 4. / 3.}, int32_t max_attempts = 10);
 

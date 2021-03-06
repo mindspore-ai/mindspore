@@ -52,8 +52,8 @@ import mindspore.common.dtype as mstype
 from .utils import JiebaMode, NormalizeForm, to_str, SPieceTokenizerOutType, SPieceTokenizerLoadType
 from .validators import check_lookup, check_jieba_add_dict, \
     check_jieba_add_word, check_jieba_init, check_with_offsets, check_unicode_script_tokenizer, \
-    check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate, \
-    check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
+    check_wordpiece_tokenizer, check_regex_replace, check_regex_tokenizer, check_basic_tokenizer, check_ngram, \
+    check_pair_truncate, check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..transforms.c_transforms import TensorOperation
@@ -756,6 +756,7 @@ if platform.system().lower() != 'windows':
             >>> text_file_dataset = text_file_dataset.map(operations=replace_op)
         """
 
+        @check_regex_replace
         def __init__(self, pattern, replace, replace_all=True):
             self.pattern = pattern
             self.replace = replace

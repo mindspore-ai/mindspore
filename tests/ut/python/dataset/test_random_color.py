@@ -239,7 +239,7 @@ def test_random_color_c_errors():
     with pytest.raises(RuntimeError) as error_info:
         for _ in enumerate(mnist_ds):
             pass
-    assert "Invalid number of channels in input image" in str(error_info.value)
+    assert "image shape is not <H,W,C> or channel is not 3" in str(error_info.value)
 
 
 if __name__ == "__main__":

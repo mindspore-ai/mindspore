@@ -160,8 +160,8 @@ Status ValidateVectorRatio(const std::string &op_name, const std::vector<float> 
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  RETURN_IF_NOT_OK(ValidateScalar(op_name, "scale", ratio[0], {0}, true));
-  RETURN_IF_NOT_OK(ValidateScalar(op_name, "scale", ratio[1], {0}, true));
+  RETURN_IF_NOT_OK(ValidateScalar(op_name, "ratio", ratio[0], {0}, true));
+  RETURN_IF_NOT_OK(ValidateScalar(op_name, "ratio", ratio[1], {0}, true));
   if (ratio[1] < ratio[0]) {
     std::string err_msg = op_name + ": ratio must be in the format of (min, max).";
     MS_LOG(ERROR) << op_name + ": ratio must be in the format of (min, max), but got: " << ratio;

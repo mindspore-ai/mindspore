@@ -34,5 +34,5 @@ __all__ = ["CelebADataset", "Cifar100Dataset", "Cifar10Dataset", "CLUEDataset", 
            "GeneratorDataset", "GraphData", "ImageFolderDataset", "ManifestDataset", "MindDataset", "MnistDataset",
            "NumpySlicesDataset", "PaddedDataset", "TextFileDataset", "TFRecordDataset", "VOCDataset",
            "DistributedSampler", "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler",
-           "WeightedRandomSampler",
+           "WeightedRandomSampler", "SubsetSampler",
            "config", "DatasetCache", "Schema", "zip"]

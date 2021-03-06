@@ -95,14 +95,14 @@ def test_eager_exceptions():
         img = C.Decode()(img)
         assert False
     except TypeError as e:
-        assert "Input should be an encoded image with 1-D NumPy type" in str(e)
+        assert "Input should be an encoded image in 1-D NumPy format" in str(e)
 
     try:
         img = np.array(["a", "b", "c"])
         img = C.Decode()(img)
         assert False
     except TypeError as e:
-        assert "Input should be an encoded image with 1-D NumPy type" in str(e)
+        assert "Input should be an encoded image in 1-D NumPy format" in str(e)
 
     try:
         img = cv2.imread("../data/dataset/apple.jpg")

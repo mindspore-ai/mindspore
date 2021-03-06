@@ -43,11 +43,12 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetBasic) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
   std::shared_ptr<TensorTransform> random_horizontal_flip_op = std::make_shared<vision::RandomHorizontalFlip>(0.5);
   EXPECT_NE(random_horizontal_flip_op, nullptr);
 
   // Create a Map operation on ds
-  ds = ds->Map({random_horizontal_flip_op}, {}, {}, {"image"});
+  ds = ds->Map({decode_op, random_horizontal_flip_op}, {}, {}, {"image"});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
