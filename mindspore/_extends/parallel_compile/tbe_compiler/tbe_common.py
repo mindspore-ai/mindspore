@@ -15,6 +15,7 @@
 """tbe common"""
 import os
 
+
 class TBEException(Exception):
     """tbe exception class"""
 
@@ -64,6 +65,7 @@ def _check_arg_info(item):
     if 'param_type' not in item or not item['param_type']:
         raise ValueError("Json string Errors, key:param_type not found.")
 
+
 def get_input_output(io_info, args):
     """
     Parse args.
@@ -100,6 +102,7 @@ def get_input_output(io_info, args):
         if len(item) > 1:
             args.append(arg)
 
+
 def get_attr(attr_info, args):
     """
     Parse args.
@@ -117,6 +120,7 @@ def get_attr(attr_info, args):
                 raise ValueError("Json string Errors, attr key:value not found.")
             if item["name"] != "isRef":
                 args.append(item['value'])
+
 
 def get_args(op_info, arg_type):
     """

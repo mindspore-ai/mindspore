@@ -163,7 +163,6 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   op_info_json["graph_id"] = AnfAlgo::GetGraphId(anf_node.get());
   op_info_json[kJKernelName] = json_name_;
   op_info_json[kGenModel] = kSingle;
-  op_info_json[kJFullName] = anf_node->fullname_with_scope();
 
   // create attr_desc
   nlohmann::json attr_desc;
