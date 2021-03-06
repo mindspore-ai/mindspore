@@ -67,7 +67,11 @@ class Execute {
   std::string AippCfgGenerator();
 
  private:
+  Status ParseTransforms_();
+
   Status validate_device_();
+
+  std::vector<std::shared_ptr<TensorTransform>> transforms_;
 
   std::vector<std::shared_ptr<TensorOperation>> ops_;
 

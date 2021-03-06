@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,12 @@ DETensor::DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bo
 const std::string &DETensor::Name() const { return name_; }
 
 enum mindspore::DataType DETensor::DataType() const {
+#ifndef ENABLE_ANDROID
+  if (is_device_) {
+    ASSERT_NULL(device_tensor_impl_);
+    return static_cast<mindspore::DataType>(DETypeToMSType(device_tensor_impl_->DeviceDataType()));
+  }
+#endif
   ASSERT_NULL(tensor_impl_);
   return static_cast<mindspore::DataType>(DETypeToMSType(tensor_impl_->type()));
 }
@@ -81,19 +87,34 @@ const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
 std::shared_ptr<const void> DETensor::Data() const {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
-    return std::shared_ptr<const void>(device_tensor_impl_->GetDeviceBuffer(), [](const void *) {});
+    MS_LOG(ERROR) << "Data() always return the data on the host.";
+    return nullptr;
   }
 #endif
   return std::shared_ptr<const void>(tensor_impl_->GetBuffer(), [](const void *) {});
 }
 
 void *DETensor::MutableData() {
+#ifndef ENABLE_ANDROID
+  if (is_device_) {
+    ASSERT_NULL(device_tensor_impl_);
+    return static_cast<void *>(device_tensor_impl_->GetDeviceMutableBuffer());
+  }
+#endif
   ASSERT_NULL(tensor_impl_);
-  return tensor_impl_->GetMutableBuffer();
+  return static_cast<void *>(tensor_impl_->GetMutableBuffer());
 }
 
 bool DETensor::IsDevice() const { return is_device_; }
 
-std::shared_ptr<mindspore::MSTensor::Impl> DETensor::Clone() const { return std::make_shared<DETensor>(tensor_impl_); }
+std::shared_ptr<mindspore::MSTensor::Impl> DETensor::Clone() const {
+#ifndef ENABLE_ANDROID
+  if (is_device_) {
+    ASSERT_NULL(device_tensor_impl_);
+    return std::make_shared<DETensor>(device_tensor_impl_, is_device_);
+  }
+#endif
+  return std::make_shared<DETensor>(tensor_impl_);
+}
 }  // namespace dataset
 }  // namespace mindspore
