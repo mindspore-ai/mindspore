@@ -141,7 +141,8 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorTwoColumns.";
   // Create a VOC Dataset
   std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, false, std::make_shared<SequentialSampler>(0, 4));
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, false, std::make_shared<SequentialSampler>(0, 4));
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -198,7 +199,7 @@ TEST_F(MindDataTestPipeline, TestIteratorNumEpoch) {
   std::shared_ptr<SchemaObj> schema = Schema();
   int32_t random_data_num_row = 2;
   int32_t num_epochs = 3;
-  ASSERT_OK(schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2}));
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
   std::shared_ptr<Dataset> ds = RandomData(random_data_num_row, schema)->SetNumWorkers(1);
 
   std::shared_ptr<Iterator> iter = ds->CreateIterator({}, num_epochs);
@@ -228,7 +229,7 @@ TEST_F(MindDataTestPipeline, TestIteratorNumEpochFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorNumEpochFail.";
 
   std::shared_ptr<SchemaObj> schema = Schema();
-  ASSERT_OK(schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2}));
+  ASSERT_OK(schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2}));
   std::shared_ptr<Dataset> ds = RandomData(3, schema)->SetNumWorkers(1);
   // expect nullptr due to incorrect num_epochs value.
   EXPECT_EQ(ds->CreateIterator({}, 0), nullptr);

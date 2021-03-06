@@ -117,6 +117,11 @@ class Tensor {
     return CreateFromMemory(in->shape(), in->type(), in->GetBuffer(), in->SizeInBytes(), out);
   }
 
+  /// Create a copy of the input tensor
+  /// \param[in] MSTensor to create DETensorFrom
+  /// \return Status
+  static Status CreateFromMSTensor(const MSTensor &in, TensorPtr *out);
+
 #ifdef ENABLE_PYTHON
   /// Create a Tensor from a given py::array
   /// \param[in] arr py::array

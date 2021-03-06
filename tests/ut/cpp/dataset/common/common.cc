@@ -22,11 +22,26 @@ extern "C" {
 #endif
 #endif
 
-
 void DatasetOpTesting::SetUp() {
   std::string install_home = "data/dataset";
   datasets_root_path_ = install_home;
   mindrecord_root_path_ = "data/mindrecord";
+}
+
+std::vector<mindspore::dataset::TensorShape> DatasetOpTesting::ToTensorShapeVec(
+  const std::vector<std::vector<int64_t>> &v) {
+  std::vector<mindspore::dataset::TensorShape> ret_v;
+  std::transform(v.begin(), v.end(), std::back_inserter(ret_v),
+                 [](const auto &s) { return mindspore::dataset::TensorShape(s); });
+  return ret_v;
+}
+
+std::vector<mindspore::dataset::DataType> DatasetOpTesting::ToDETypes(const std::vector<mindspore::DataType> &t) {
+  std::vector<mindspore::dataset::DataType> ret_t;
+  std::transform(t.begin(), t.end(), std::back_inserter(ret_t), [](const mindspore::DataType &t) {
+    return mindspore::dataset::MSTypeToDEType(static_cast<mindspore::TypeId>(t));
+  });
+  return ret_t;
 }
 
 #ifdef __cplusplus
@@ -35,5 +50,3 @@ void DatasetOpTesting::SetUp() {
 #endif
 #endif
 }  // namespace UT
-
-

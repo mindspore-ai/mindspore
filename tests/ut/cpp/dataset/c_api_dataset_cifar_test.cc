@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
+
 #include "minddata/dataset/include/datasets.h"
 
 using namespace mindspore::dataset;
@@ -134,8 +135,8 @@ TEST_F(MindDataTestPipeline, TestCifar10Getters) {
   EXPECT_NE(ds, nullptr);
 
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
-  std::vector<DataType> types = ds->GetOutputTypes();
-  std::vector<TensorShape> shapes = ds->GetOutputShapes();
+  std::vector<DataType> types = ToDETypes(ds->GetOutputTypes());
+  std::vector<TensorShape> shapes = ToTensorShapeVec(ds->GetOutputShapes());
   std::vector<std::string> column_names = {"image", "label"};
   int64_t num_classes = ds->GetNumClasses();
   EXPECT_EQ(types.size(), 2);
@@ -149,14 +150,14 @@ TEST_F(MindDataTestPipeline, TestCifar10Getters) {
   EXPECT_EQ(ds->GetRepeatCount(), 1);
 
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
-  EXPECT_EQ(ds->GetOutputTypes(), types);
-  EXPECT_EQ(ds->GetOutputShapes(), shapes);
+  EXPECT_EQ(ToDETypes(ds->GetOutputTypes()), types);
+  EXPECT_EQ(ToTensorShapeVec(ds->GetOutputShapes()), shapes);
   EXPECT_EQ(ds->GetNumClasses(), -1);
 
   EXPECT_EQ(ds->GetColumnNames(), column_names);
   EXPECT_EQ(ds->GetDatasetSize(), 10000);
-  EXPECT_EQ(ds->GetOutputTypes(), types);
-  EXPECT_EQ(ds->GetOutputShapes(), shapes);
+  EXPECT_EQ(ToDETypes(ds->GetOutputTypes()), types);
+  EXPECT_EQ(ToTensorShapeVec(ds->GetOutputShapes()), shapes);
   EXPECT_EQ(ds->GetBatchSize(), 1);
   EXPECT_EQ(ds->GetRepeatCount(), 1);
   EXPECT_EQ(ds->GetNumClasses(), -1);
@@ -207,8 +208,8 @@ TEST_F(MindDataTestPipeline, TestCifar100Getters) {
   EXPECT_NE(ds, nullptr);
 
   std::vector<std::string> column_names = {"image", "coarse_label", "fine_label"};
-  std::vector<DataType> types = ds->GetOutputTypes();
-  std::vector<TensorShape> shapes = ds->GetOutputShapes();
+  std::vector<DataType> types = ToDETypes(ds->GetOutputTypes());
+  std::vector<TensorShape> shapes = ToTensorShapeVec(ds->GetOutputShapes());
   int64_t num_classes = ds->GetNumClasses();
 
   EXPECT_EQ(types.size(), 3);

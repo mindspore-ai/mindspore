@@ -30,10 +30,12 @@
 #include <utility>
 #include <vector>
 
+#include <nlohmann/json.hpp>
+
 #include "include/api/dual_abi_helper.h"
+#include "include/api/types.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
-#include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/text.h"
 #include "minddata/dataset/include/type_id.h"
 
@@ -41,7 +43,6 @@ namespace mindspore {
 namespace dataset {
 
 class Tensor;
-class TensorRow;
 class TensorShape;
 class TreeAdapter;
 class TreeGetters;
@@ -101,11 +102,11 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Gets the output type
   /// \return a vector of DataType. If failed, return an empty vector
-  std::vector<DataType> GetOutputTypes();
+  std::vector<mindspore::DataType> GetOutputTypes();
 
   /// \brief Gets the output shape
   /// \return a vector of TensorShape. If failed, return an empty vector
-  std::vector<TensorShape> GetOutputShapes();
+  std::vector<std::vector<int64_t>> GetOutputShapes();
 
   /// \brief Gets the batch size
   /// \return int64_t
@@ -196,7 +197,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///    0<i<n, and one bucket for [bucket_boundaries[n-1], inf).
   /// \param[in] bucket_batch_sizes A list consisting of the batch sizes for each bucket.
   ///    Must contain elements equal to the size of bucket_boundaries + 1.
-  /// \param[in] element_length_function A function pointer that takes in TensorRow and outputs a TensorRow.
+  /// \param[in] element_length_function A function pointer that takes in MSTensorVec and outputs a MSTensorVec.
   ///    The output must contain a single tensor containing a single int32_t. If no value is provided,
   ///    then size of column_names must be 1, and the size of the first dimension of that column will be taken
   ///    as the length (default=nullptr)
@@ -215,8 +216,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<BucketBatchByLengthDataset> BucketBatchByLength(
     const std::vector<std::string> &column_names, const std::vector<int32_t> &bucket_boundaries,
     const std::vector<int32_t> &bucket_batch_sizes,
-    std::function<TensorRow(TensorRow)> element_length_function = nullptr,
-    const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
+    std::function<MSTensorVec(MSTensorVec)> element_length_function = nullptr,
+    const std::map<std::string, std::pair<std::vector<int64_t>, MSTensor>> &pad_info = {},
     bool pad_to_bucket_boundary = false, bool drop_remainder = false) {
     return std::make_shared<BucketBatchByLengthDataset>(
       shared_from_this(), VectorStringToChar(column_names), bucket_boundaries, bucket_batch_sizes,
@@ -276,7 +277,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] predicate Function callable which returns a boolean value. If false then filter the element
   /// \param[in] input_columns List of names of the input columns to filter
   /// \return Shared pointer to the current FilterNode
-  std::shared_ptr<FilterDataset> Filter(std::function<TensorRow(TensorRow)> predicate,
+  std::shared_ptr<FilterDataset> Filter(std::function<MSTensorVec(MSTensorVec)> predicate,
                                         const std::vector<std::string> &input_columns = {}) {
     return std::make_shared<FilterDataset>(shared_from_this(), predicate, VectorStringToChar(input_columns));
   }
@@ -481,35 +482,37 @@ class SchemaObj {
 
   /// \brief Add new column to the schema with unknown shape of rank 1
   /// \param[in] name Name of the column.
-  /// \param[in] de_type Data type of the column(TypeId).
+  /// \param[in] ms_type Data type of the column(mindspore::DataType).
   /// \return Status code
-  Status add_column(const std::string &name, TypeId de_type) { return add_column_char(StringToChar(name), de_type); }
+  Status add_column(const std::string &name, mindspore::DataType ms_type) {
+    return add_column_char(StringToChar(name), ms_type);
+  }
 
   /// \brief Add new column to the schema with unknown shape of rank 1
   /// \param[in] name Name of the column.
-  /// \param[in] de_type Data type of the column(std::string).
+  /// \param[in] ms_type Data type of the column(std::string).
   /// \param[in] shape Shape of the column.
   /// \return Status code
-  Status add_column(const std::string &name, const std::string &de_type) {
-    return add_column_char(StringToChar(name), StringToChar(de_type));
+  Status add_column(const std::string &name, const std::string &ms_type) {
+    return add_column_char(StringToChar(name), StringToChar(ms_type));
   }
 
   /// \brief Add new column to the schema
   /// \param[in] name Name of the column.
-  /// \param[in] de_type Data type of the column(TypeId).
+  /// \param[in] ms_type Data type of the column(mindspore::DataType).
   /// \param[in] shape Shape of the column.
   /// \return Status code
-  Status add_column(const std::string &name, TypeId de_type, const std::vector<int32_t> &shape) {
-    return add_column_char(StringToChar(name), de_type, shape);
+  Status add_column(const std::string &name, mindspore::DataType ms_type, const std::vector<int32_t> &shape) {
+    return add_column_char(StringToChar(name), ms_type, shape);
   }
 
   /// \brief Add new column to the schema
   /// \param[in] name Name of the column.
-  /// \param[in] de_type Data type of the column(std::string).
+  /// \param[in] ms_type Data type of the column(std::string).
   /// \param[in] shape Shape of the column.
   /// \return Status code
-  Status add_column(const std::string &name, const std::string &de_type, const std::vector<int32_t> &shape) {
-    return add_column_char(StringToChar(name), StringToChar(de_type), shape);
+  Status add_column(const std::string &name, const std::string &ms_type, const std::vector<int32_t> &shape) {
+    return add_column_char(StringToChar(name), StringToChar(ms_type), shape);
   }
 
   /// \brief Get a JSON string of the schema
@@ -556,13 +559,13 @@ class SchemaObj {
   explicit SchemaObj(const std::vector<char> &schema_file);
 
   // Char interface of add_column
-  Status add_column_char(const std::vector<char> &name, TypeId de_type);
+  Status add_column_char(const std::vector<char> &name, mindspore::DataType ms_type);
 
-  Status add_column_char(const std::vector<char> &name, const std::vector<char> &de_type);
+  Status add_column_char(const std::vector<char> &name, const std::vector<char> &ms_type);
 
-  Status add_column_char(const std::vector<char> &name, TypeId de_type, const std::vector<int32_t> &shape);
+  Status add_column_char(const std::vector<char> &name, mindspore::DataType ms_type, const std::vector<int32_t> &shape);
 
-  Status add_column_char(const std::vector<char> &name, const std::vector<char> &de_type,
+  Status add_column_char(const std::vector<char> &name, const std::vector<char> &ms_type,
                          const std::vector<int32_t> &shape);
 
   // Char interface of to_json
@@ -589,8 +592,8 @@ class BucketBatchByLengthDataset : public Dataset {
   BucketBatchByLengthDataset(
     std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &column_names,
     const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
-    std::function<TensorRow(TensorRow)> element_length_function = nullptr,
-    const std::map<std::vector<char>, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info = {},
+    std::function<MSTensorVec(MSTensorVec)> element_length_function = nullptr,
+    const std::map<std::vector<char>, std::pair<std::vector<int64_t>, MSTensor>> &pad_info = {},
     bool pad_to_bucket_boundary = false, bool drop_remainder = false);
   ~BucketBatchByLengthDataset() = default;
 };
@@ -603,7 +606,7 @@ class ConcatDataset : public Dataset {
 
 class FilterDataset : public Dataset {
  public:
-  FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
+  FilterDataset(std::shared_ptr<Dataset> input, std::function<MSTensorVec(MSTensorVec)> predicate,
                 const std::vector<std::vector<char>> &input_columns);
   ~FilterDataset() = default;
 };
@@ -1530,12 +1533,8 @@ std::shared_ptr<TFRecordDataset> TFRecord(const std::vector<std::string> &datase
     std::string schema_path = schema;
     if (!schema_path.empty()) {
       struct stat sb;
-      int rc = stat(common::SafeCStr(schema_path), &sb);
-      if (rc == -1 && errno != ENOENT) {
-        MS_LOG(WARNING) << "Unable to query the status of [" << schema_path << "]. Errno = " << errno << ".";
-      }
+      int rc = stat(schema_path.c_str(), &sb);
       if (rc != 0) {
-        MS_LOG(ERROR) << "TFRecordDataset: schema path [" << schema_path << "] is invalid or does not exist.";
         return nullptr;
       }
     }

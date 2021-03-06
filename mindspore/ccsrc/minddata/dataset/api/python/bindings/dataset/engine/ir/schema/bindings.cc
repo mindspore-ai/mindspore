@@ -34,12 +34,16 @@ PYBIND_REGISTER(
         THROW_IF_ERROR(schema->Init());
         return schema;
       }))
-      .def("add_column", [](SchemaObj &self, std::string name, TypeId de_type,
-                            std::vector<int32_t> shape) { THROW_IF_ERROR(self.add_column(name, de_type, shape)); })
+      .def("add_column",
+           [](SchemaObj &self, std::string name, TypeId de_type, std::vector<int32_t> shape) {
+             THROW_IF_ERROR(self.add_column(name, static_cast<mindspore::DataType>(de_type), shape));
+           })
       .def("add_column", [](SchemaObj &self, std::string name, std::string de_type,
                             std::vector<int32_t> shape) { THROW_IF_ERROR(self.add_column(name, de_type, shape)); })
       .def("add_column",
-           [](SchemaObj &self, std::string name, TypeId de_type) { THROW_IF_ERROR(self.add_column(name, de_type)); })
+           [](SchemaObj &self, std::string name, TypeId de_type) {
+             THROW_IF_ERROR(self.add_column(name, static_cast<mindspore::DataType>(de_type)));
+           })
       .def("add_column", [](SchemaObj &self, std::string name,
                             std::string de_type) { THROW_IF_ERROR(self.add_column(name, de_type)); })
       .def("parse_columns",

@@ -20,12 +20,13 @@
 #include <unordered_set>
 #include <utility>
 
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/runtime_context.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
-
+#include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 
@@ -100,6 +101,37 @@
 
 namespace mindspore {
 namespace dataset {
+
+// convert MSTensorVec to DE TensorRow, return empty if fails
+TensorRow VecToRow(const MSTensorVec &v) {
+  TensorRow row;
+  row.reserve(v.size());
+  for (const MSTensor &t : v) {
+    std::shared_ptr<Tensor> rt;
+    Status rc = Tensor::CreateFromMSTensor(t, &rt);
+    if (rc.IsError()) {
+      MS_LOG_ERROR << "Convert from MSTensor to DETensor failed:" << rc.ToString() << ".";
+      return {};
+    }
+    row.emplace_back(rt);
+  }
+  return row;
+}
+
+// convert DE TensorRow to MSTensorVec, won't fail
+MSTensorVec RowToVec(const TensorRow &v) {
+  MSTensorVec rv;
+  rv.reserve(v.size());
+  std::transform(v.begin(), v.end(), std::back_inserter(rv), [](std::shared_ptr<Tensor> t) -> MSTensor {
+    return mindspore::MSTensor(std::make_shared<DETensor>(t));
+  });
+  return rv;
+}
+
+// Convert a std::function<TensorRow(TensorRow)> to std::function<MSTensorVec(MSTensor)> with this helper
+TensorRow FuncPtrConverter(std::function<MSTensorVec(MSTensorVec)> func, TensorRow in_row) {
+  return VecToRow(func(RowToVec(in_row)));
+}
 
 // Function to create the iterator, which will build and launch the execution tree.
 std::shared_ptr<Iterator> Dataset::CreateIteratorCharIF(std::vector<std::vector<char>> columns, int32_t num_epochs) {
@@ -228,22 +260,29 @@ int64_t Dataset::GetDatasetSize(bool estimate) {
   return dataset_size;
 }
 
-std::vector<DataType> Dataset::GetOutputTypes() {
+std::vector<mindspore::DataType> Dataset::GetOutputTypes() {
   std::vector<DataType> types;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
   RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
   RETURN_SECOND_IF_ERROR(tree_getters_->GetOutputTypes(&types), {});
-  return types;
+  std::vector<mindspore::DataType> ret_types;
+  std::transform(
+    types.begin(), types.end(), std::back_inserter(ret_types),
+    [](const DataType &d) -> mindspore::DataType { return static_cast<mindspore::DataType>(DETypeToMSType(d)); });
+  return ret_types;
 }
 
-std::vector<TensorShape> Dataset::GetOutputShapes() {
+std::vector<std::vector<int64_t>> Dataset::GetOutputShapes() {
   std::vector<TensorShape> shapes;
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   RETURN_SECOND_IF_ERROR(runtime_context->Init(), {});
   RETURN_SECOND_IF_ERROR(tree_getters_->Init(this->IRNode()), {});
   RETURN_SECOND_IF_ERROR(tree_getters_->GetOutputShapes(&shapes), {});
-  return shapes;
+  std::vector<std::vector<int64_t>> ret_shapes;
+  std::transform(shapes.begin(), shapes.end(), std::back_inserter(ret_shapes),
+                 [](const TensorShape &s) -> std::vector<int64_t> { return s.AsVector(); });
+  return ret_shapes;
 }
 
 int64_t Dataset::GetNumClasses() {
@@ -296,16 +335,31 @@ BatchDataset::BatchDataset(std::shared_ptr<Dataset> input, int32_t batch_size, b
 BucketBatchByLengthDataset::BucketBatchByLengthDataset(
   std::shared_ptr<Dataset> input, const std::vector<std::vector<char>> &column_names,
   const std::vector<int32_t> &bucket_boundaries, const std::vector<int32_t> &bucket_batch_sizes,
-  std::function<TensorRow(TensorRow)> element_length_function,
-  const std::map<std::vector<char>, std::pair<TensorShape, std::shared_ptr<Tensor>>> &pad_info,
-  bool pad_to_bucket_boundary, bool drop_remainder) {
+  std::function<MSTensorVec(MSTensorVec)> element_length_function,
+  const std::map<std::vector<char>, std::pair<std::vector<int64_t>, MSTensor>> &pad_info, bool pad_to_bucket_boundary,
+  bool drop_remainder) {
   std::shared_ptr<TensorOp> c_func = nullptr;
   if (element_length_function != nullptr) {
-    c_func = std::make_shared<CFuncOp>(element_length_function);
+    c_func = std::make_shared<CFuncOp>(std::bind(FuncPtrConverter, element_length_function, std::placeholders::_1));
   }
-  auto ds = std::make_shared<BucketBatchByLengthNode>(
-    input->IRNode(), VectorCharToString(column_names), bucket_boundaries, bucket_batch_sizes, c_func,
-    PadInfoCharToString(pad_info), pad_to_bucket_boundary, drop_remainder);
+
+  std::map<std::vector<char>, std::pair<TensorShape, std::shared_ptr<Tensor>>> map;
+  for (auto const &p : pad_info) {
+    const MSTensor &t = p.second.second;
+    std::shared_ptr<Tensor> rt;
+    Status rc = Tensor::CreateFromMemory(TensorShape(t.Shape()), MSTypeToDEType(static_cast<TypeId>(t.DataType())),
+                                         (const uchar *)(t.Data().get()), t.DataSize(), &rt);
+    if (rc.IsError()) {
+      MS_LOG_ERROR << "Fail to create DETensor from MSTensor for pad_info: " << rc.ToString() << ".";
+      map.clear();
+      break;
+    }
+    map.insert({p.first, {TensorShape(p.second.first), rt}});
+  }
+
+  auto ds = std::make_shared<BucketBatchByLengthNode>(input->IRNode(), VectorCharToString(column_names),
+                                                      bucket_boundaries, bucket_batch_sizes, c_func,
+                                                      PadInfoCharToString(map), pad_to_bucket_boundary, drop_remainder);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
@@ -322,10 +376,10 @@ ConcatDataset::ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datase
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
 }
 
-FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<TensorRow(TensorRow)> predicate,
+FilterDataset::FilterDataset(std::shared_ptr<Dataset> input, std::function<MSTensorVec(MSTensorVec)> predicate,
                              const std::vector<std::vector<char>> &input_columns) {
   std::shared_ptr<TensorOp> c_func = nullptr;
-  if (predicate) c_func = std::make_shared<CFuncOp>(predicate);
+  if (predicate) c_func = std::make_shared<CFuncOp>(std::bind(FuncPtrConverter, predicate, std::placeholders::_1));
   auto ds = std::make_shared<FilterNode>(input->IRNode(), c_func, VectorCharToString(input_columns));
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -528,8 +582,9 @@ Status SchemaObj::Init() {
 }
 
 // Function to add a column to schema with a mstype de_type and known shape
-Status SchemaObj::add_column_char(const std::vector<char> &name, TypeId de_type, const std::vector<int32_t> &shape) {
-  DataType data_type = dataset::MSTypeToDEType(de_type);
+Status SchemaObj::add_column_char(const std::vector<char> &name, mindspore::DataType de_type,
+                                  const std::vector<int32_t> &shape) {
+  DataType data_type = dataset::MSTypeToDEType(static_cast<TypeId>(de_type));
   return add_column_char(name, StringToChar(data_type.ToString()), shape);
 }
 
@@ -550,8 +605,8 @@ Status SchemaObj::add_column_char(const std::vector<char> &name, const std::vect
 }
 
 // Function to add a column to schema with a mstype de_type and without shape
-Status SchemaObj::add_column_char(const std::vector<char> &name, TypeId de_type) {
-  DataType data_type = dataset::MSTypeToDEType(de_type);
+Status SchemaObj::add_column_char(const std::vector<char> &name, mindspore::DataType de_type) {
+  DataType data_type = dataset::MSTypeToDEType(static_cast<TypeId>(de_type));
   return add_column_char(name, StringToChar(data_type.ToString()));
 }
 

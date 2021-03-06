@@ -210,7 +210,8 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCelebaCApi) {
 
   // Create a CelebA Dataset, this folder_path has 4 records in it
   std::string folder_path = datasets_root_path_ + "/testCelebAData/";
-  std::shared_ptr<Dataset> ds = CelebA(folder_path, "all", std::make_shared<RandomSampler>(false, 10), false, {}, some_cache);
+  std::shared_ptr<Dataset> ds =
+    CelebA(folder_path, "all", std::make_shared<RandomSampler>(false, 10), false, {}, some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -374,7 +375,8 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheVocCApi) {
 
   // Create a VOC Dataset, this folder_path has 9 records in it
   std::string folder_path = datasets_root_path_ + "/testVOC2012/";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, false, std::make_shared<RandomSampler>(), some_cache);
+  std::shared_ptr<Dataset> ds =
+    VOC(folder_path, "Detection", "train", {}, false, std::make_shared<RandomSampler>(), some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -417,7 +419,8 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheAlbumCApi) {
   std::string schema_file = datasets_root_path_ + "/testAlbum/datasetSchema.json";
   std::vector<std::string> column_names = {"image", "label", "id"};
   // Create a Album Dataset, 7 records in it
-  std::shared_ptr<Dataset> ds = Album(folder_path, schema_file, column_names, false, std::make_shared<RandomSampler>(), some_cache);
+  std::shared_ptr<Dataset> ds =
+    Album(folder_path, schema_file, column_names, false, std::make_shared<RandomSampler>(), some_cache);
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -456,8 +459,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheRandomDataCApi) {
 
   // Create a RandomDataset
   std::shared_ptr<SchemaObj> schema = Schema();
-  schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2});
-  schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
+
+  schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, {2});
+  schema->add_column("label", mindspore::DataType::kNumberTypeUInt8, {1});
   std::shared_ptr<Dataset> ds = RandomData(4, schema, {}, some_cache);
   EXPECT_NE(ds, nullptr);
 
@@ -826,7 +830,8 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare2) {
   // Since sampler does not influence the data in the source, these two pipelines can share a common cache.
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(), {}, {}, some_cache);
   EXPECT_NE(ds1, nullptr);
-  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(), {}, {}, some_cache);
+  std::shared_ptr<Dataset> ds2 =
+    ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(), {}, {}, some_cache);
   EXPECT_NE(ds2, nullptr);
 
   // Create and launch the Execution Tree for ds1

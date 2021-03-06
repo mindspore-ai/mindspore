@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
+#include "include/api/types.h"
 #include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/include/datasets.h"
@@ -26,19 +27,39 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
-mindspore::dataset::TensorRow BucketBatchTestFunction(mindspore::dataset::TensorRow input) {
+TensorRow VecToRow(const MSTensorVec &v) {
+  TensorRow row;
+  for (const mindspore::MSTensor &t : v) {
+    std::shared_ptr<Tensor> rt;
+    Status rc =
+      Tensor::CreateFromMemory(TensorShape(t.Shape()), MSTypeToDEType(static_cast<mindspore::TypeId>(t.DataType())),
+                               (const uchar *)(t.Data().get()), t.DataSize(), &rt);
+    row.emplace_back(rt);
+  }
+  return row;
+}
+MSTensorVec RowToVec(const TensorRow &v) {
+  MSTensorVec rv;  // std::make_shared<DETensor>(de_tensor)
+  std::transform(v.begin(), v.end(), std::back_inserter(rv), [](std::shared_ptr<Tensor> t) -> mindspore::MSTensor {
+    return mindspore::MSTensor(std::make_shared<DETensor>(t));
+  });
+  return rv;
+}
+
+MSTensorVec BucketBatchTestFunction(MSTensorVec input) {
   mindspore::dataset::TensorRow output;
   std::shared_ptr<Tensor> out;
   Tensor::CreateEmpty(mindspore::dataset::TensorShape({1}),
                       mindspore::dataset::DataType(mindspore::dataset::DataType::Type::DE_INT32), &out);
   out->SetItemAt({0}, 2);
   output.push_back(out);
-  return output;
+  return RowToVec(output);
 }
 
-TensorRow Predicate1(TensorRow input) {
+MSTensorVec Predicate1(MSTensorVec in) {
   // Return true if input is equal to 3
   uint64_t input_value;
+  TensorRow input = VecToRow(in);
   input.at(0)->GetItemAt(&input_value, {0});
   bool result = (input_value == 3);
 
@@ -50,13 +71,14 @@ TensorRow Predicate1(TensorRow input) {
   out->SetItemAt({0}, result);
   output.push_back(out);
 
-  return output;
+  return RowToVec(output);
 }
 
-TensorRow Predicate2(TensorRow input) {
+MSTensorVec Predicate2(MSTensorVec in) {
   // Return true if label is more than 1
   // The index of label in input is 1
   uint64_t input_value;
+  TensorRow input = VecToRow(in);
   input.at(1)->GetItemAt(&input_value, {0});
   bool result = (input_value > 1);
 
@@ -68,7 +90,7 @@ TensorRow Predicate2(TensorRow input) {
   out->SetItemAt({0}, result);
   output.push_back(out);
 
-  return output;
+  return RowToVec(output);
 }
 
 TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
@@ -158,7 +180,7 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
-  std::map<std::string, std::pair<mindspore::dataset::TensorShape, std::shared_ptr<Tensor>>> pad_info;
+  std::map<std::string, std::pair<std::vector<int64_t>, mindspore::MSTensor>> pad_info = {};
   ds = ds->BucketBatchByLength({"image"}, {1, 2}, {1, 2, 3}, &BucketBatchTestFunction, pad_info, true, true);
   EXPECT_NE(ds, nullptr);
 
@@ -682,7 +704,7 @@ TEST_F(MindDataTestPipeline, TestFilterFail1) {
   std::shared_ptr<Dataset> ds = TFRecord({data_file}, schema_file, {"image", "label"}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
 
-  std::function<TensorRow(TensorRow)> predicate_null = nullptr;
+  std::function<MSTensorVec(MSTensorVec)> predicate_null = nullptr;
 
   // Create a Filter operation on ds
   ds = ds->Filter(predicate_null);
@@ -998,22 +1020,22 @@ TEST_F(MindDataTestPipeline, TestMapDuplicateColumnFail) {
 }
 
 TEST_F(MindDataTestPipeline, TestMapNullOperation) {
-MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapNullOperation.";
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMapNullOperation.";
 
-// Create an ImageFolder Dataset
-std::string folder_path = datasets_root_path_ + "/testPK/data/";
-std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
-EXPECT_NE(ds, nullptr);
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
 
-// Create a Map operation on ds
-std::shared_ptr<TensorTransform> operation = nullptr;
-auto ds1 = ds->Map({operation}, {"image"}, {}, {});
-EXPECT_NE(ds1, nullptr);
+  // Create a Map operation on ds
+  std::shared_ptr<TensorTransform> operation = nullptr;
+  auto ds1 = ds->Map({operation}, {"image"}, {}, {});
+  EXPECT_NE(ds1, nullptr);
 
-// Create an iterator over the result of the above dataset
-std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
-// Expect failure: Operation is nullptr
-EXPECT_EQ(iter1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: Operation is nullptr
+  EXPECT_EQ(iter1, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestProjectMapAutoInjection) {
