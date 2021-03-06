@@ -11,18 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#" ============================================================================
+# ============================================================================
 
 """Config parameters for SSD models."""
 
 from .config_ssd300 import config as config_ssd300
 from .config_ssd_mobilenet_v1_fpn import config as config_ssd_mobilenet_v1_fpn
 from .config_ssd_resnet50_fpn import config as config_ssd_resnet50_fpn
+from .config_ssd_vgg16 import config as config_ssd_vgg16
 
 using_model = "ssd300"
 
 config_map = {
     "ssd300": config_ssd300,
+    "ssd_vgg16": config_ssd_vgg16,
     "ssd_mobilenet_v1_fpn": config_ssd_mobilenet_v1_fpn,
     "ssd_resnet50_fpn": config_ssd_resnet50_fpn
 }

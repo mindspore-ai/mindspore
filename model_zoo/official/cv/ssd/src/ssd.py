@@ -27,6 +27,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 
 from .fpn import mobilenet_v1_fpn, resnet50_fpn
+from .vgg16 import vgg16
 
 
 def _make_divisible(v, divisor, min_value=None):
@@ -641,3 +642,78 @@ def ssd_resnet50_fpn(**kwargs):
 
 def ssd_mobilenet_v2(**kwargs):
     return SSDWithMobileNetV2(**kwargs)
+
+
+class SSD300VGG16(nn.Cell):
+    def __init__(self, config):
+        super(SSD300VGG16, self).__init__()
+
+        # VGG16 backbone: block1~5
+        self.backbone = vgg16()
+
+        # SSD blocks: block6~7
+        self.b6_1 = nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=3, padding=6, dilation=6, pad_mode='pad')
+        self.b6_2 = nn.Dropout(0.5)
+
+        self.b7_1 = nn.Conv2d(in_channels=1024, out_channels=1024, kernel_size=1)
+        self.b7_2 = nn.Dropout(0.5)
+
+        # Extra Feature Layers: block8~11
+        self.b8_1 = nn.Conv2d(in_channels=1024, out_channels=256, kernel_size=1, padding=1, pad_mode='pad')
+        self.b8_2 = nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=2, pad_mode='valid')
+
+        self.b9_1 = nn.Conv2d(in_channels=512, out_channels=128, kernel_size=1, padding=1, pad_mode='pad')
+        self.b9_2 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2, pad_mode='valid')
+
+        self.b10_1 = nn.Conv2d(in_channels=256, out_channels=128, kernel_size=1)
+        self.b10_2 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, pad_mode='valid')
+
+        self.b11_1 = nn.Conv2d(in_channels=256, out_channels=128, kernel_size=1)
+        self.b11_2 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, pad_mode='valid')
+
+        # boxes
+        self.multi_box = MultiBox(config)
+        if not self.training:
+            self.activation = P.Sigmoid()
+
+    def construct(self, x):
+        # VGG16 backbone: block1~5
+        block4, x = self.backbone(x)
+
+        # SSD blocks: block6~7
+        x = self.b6_1(x)  # 1024
+        x = self.b6_2(x)
+
+        x = self.b7_1(x)  # 1024
+        x = self.b7_2(x)
+        block7 = x
+
+        # Extra Feature Layers: block8~11
+        x = self.b8_1(x)  # 256
+        x = self.b8_2(x)  # 512
+        block8 = x
+
+        x = self.b9_1(x)  # 128
+        x = self.b9_2(x)  # 256
+        block9 = x
+
+        x = self.b10_1(x)  # 128
+        x = self.b10_2(x)  # 256
+        block10 = x
+
+        x = self.b11_1(x)  # 128
+        x = self.b11_2(x)  # 256
+        block11 = x
+
+        # boxes
+        multi_feature = (block4, block7, block8, block9, block10, block11)
+        pred_loc, pred_label = self.multi_box(multi_feature)
+        if not self.training:
+            pred_label = self.activation(pred_label)
+        pred_loc = F.cast(pred_loc, mstype.float32)
+        pred_label = F.cast(pred_label, mstype.float32)
+        return pred_loc, pred_label
+
+
+def ssd_vgg16(**kwargs):
+    return SSD300VGG16(**kwargs)

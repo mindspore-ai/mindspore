@@ -25,7 +25,7 @@ from mindspore.train import Model
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed, dtype
-from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn
+from src.ssd import SSD300, SSDWithLossCell, TrainingWrapper, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn, ssd_resnet50_fpn, ssd_vgg16
 from src.config import config
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.lr_schedule import get_lr
@@ -86,6 +86,17 @@ def ssd_model_build(args_opt):
                 param_dict["network.feature_extractor.resnet." + x] = param_dict[x]
                 del param_dict[x]
             load_param_into_net(ssd.feature_extractor.resnet, param_dict)
+    elif config.model == "ssd_vgg16":
+        ssd = ssd_vgg16(config=config)
+        init_net_param(ssd)
+        if config.feature_extractor_base_param != "":
+            param_dict = load_checkpoint(config.feature_extractor_base_param)
+            from src.vgg16 import ssd_vgg_key_mapper
+            for k in ssd_vgg_key_mapper:
+                v = ssd_vgg_key_mapper[k]
+                param_dict["network.backbone." + v + ".weight"] = param_dict[k + ".weight"]
+                del param_dict[k + ".weight"]
+            load_param_into_net(ssd.backbone, param_dict)
     else:
         raise ValueError(f'config.model: {config.model} is not supported')
     return ssd
@@ -106,6 +117,8 @@ def main():
             init()
             if config.model == "ssd_resnet50_fpn":
                 context.set_auto_parallel_context(all_reduce_fusion_config=[90, 183, 279])
+            if config.model == "ssd_vgg16":
+                context.set_auto_parallel_context(all_reduce_fusion_config=[20, 41, 62])
             else:
                 context.set_auto_parallel_context(all_reduce_fusion_config=[29, 58, 89])
             rank = get_rank()

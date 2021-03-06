@@ -39,11 +39,12 @@ SSD discretizes the output space of bounding boxes into a set of default boxes o
 
 The SSD approach is based on a feed-forward convolutional network that produces a fixed-size collection of bounding boxes and scores for the presence of object class instances in those boxes, followed by a non-maximum suppression step to produce the final detections. The early network layers are based on a standard architecture used for high quality image classification, which is called the base network. Then add auxiliary structure to the network to produce detections.
 
-We present three different base architecture.
+We present four different base architecture.
 
 - **ssd300**, reference from the paper. Using mobilenetv2 as backbone and the same bbox predictor as the paper present.
 - ***ssd-mobilenet-v1-fpn**, using mobilenet-v1 and FPN as feature extractor with weight-shared box predcitors.
 - ***ssd-resnet50-fpn**, using resnet50 and FPN as feature extractor with weight-shared box predcitors.
+- **ssd-vgg16**, reference from the paper. Using vgg16 as backbone and the same bbox predictor as the paper present.
 
 ## [Dataset](#contents)
 
