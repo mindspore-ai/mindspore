@@ -17,14 +17,17 @@
  */
 
 #include "pipeline/jit/parse/function_block.h"
+
 #include <string>
 #include <memory>
+
+#include "pybind11/pybind11.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/parse.h"
 #include "frontend/operator/ops.h"
 #include "utils/info.h"
 #include "debug/trace.h"
-#include "pybind11/pybind11.h"
+#include "utils/utils.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -435,7 +438,10 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
     old_output = NewValueNode(kNone);
   }
   AnfNodePtr stop_grad_node = func_graph()->NewCNode({NewValueNode(prim::kPrimStopGradient), state});
-  AnfNodePtr depend_node = func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), old_output, stop_grad_node});
+  CNodePtr depend_node = func_graph()->NewCNode({NewValueNode(prim::kPrimDepend), old_output, stop_grad_node});
+  // We add this attribute for @constexpr use scene, since we must infer them before other nodes.
+  // That means isolated nodes will be evaluated first. It's not complete, but works in most scenes.
+  depend_node->AddAttr(kAttrTopoSortRhsFirst, MakeValue(true));
   MS_LOG(INFO) << "Attached for side-effect nodes, depend_node: " << depend_node->DebugString()
                << ", state: " << state->DebugString(2);
   func_graph()->set_output(depend_node, true);

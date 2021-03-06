@@ -397,6 +397,7 @@ constexpr auto kAttrRecompute = "recompute";
 constexpr auto kAttrNeedCseAfterRecompute = "need_cse_after_recompute";
 constexpr auto kAttrParallelDimInfo = "parallel_dim_info";
 constexpr auto kAttrStitch = "stitch";
+constexpr auto kAttrTopoSortRhsFirst = "topo_sort_rhs_first";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

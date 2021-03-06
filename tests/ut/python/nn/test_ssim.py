@@ -84,7 +84,7 @@ def test_ssim_different_shape():
     img1 = Tensor(np.random.random(shape_1))
     img2 = Tensor(np.random.random(shape_2))
     net = SSIMNet()
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _executor.compile(net, img1, img2)
 
 
@@ -108,9 +108,9 @@ def test_ssim_invalid_5d_input():
     invalid_img2 = Tensor(np.random.random(invalid_shape))
 
     net = SSIMNet()
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _executor.compile(net, invalid_img1, img2)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _executor.compile(net, img1, invalid_img2)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _executor.compile(net, invalid_img1, invalid_img2)

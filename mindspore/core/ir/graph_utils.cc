@@ -32,6 +32,7 @@
 #include "ir/func_graph.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
+#include "mindspore/ccsrc/utils/utils.h"
 
 namespace mindspore {
 std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, const IncludeFunc &include) {
@@ -170,8 +171,16 @@ std::vector<FuncGraphPtr> BroadFirstSearchGraphUsed(FuncGraphPtr root) {
 static void PushSuccessors(const CNodePtr &cnode, std::vector<AnfNodePtr> *vecs) {
   auto &inputs = cnode->inputs();
   vecs->reserve(vecs->size() + inputs.size());
-  // To keep evaluate order from left to right, we push inputs in reversed order.
-  vecs->insert(vecs->end(), inputs.rbegin(), inputs.rend());
+
+  // To keep sort order from left to right in default, if kAttrTopoSortRhsFirst not set.
+  auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
+  auto sort_rhs_first =
+    attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
+  if (sort_rhs_first) {
+    vecs->insert(vecs->end(), inputs.cbegin(), inputs.cend());
+  } else {
+    vecs->insert(vecs->end(), inputs.crbegin(), inputs.crend());
+  }
 }
 
 std::vector<AnfNodePtr> SuccDeeper(const AnfNodePtr &node) {
