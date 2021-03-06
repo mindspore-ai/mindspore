@@ -98,7 +98,7 @@ bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, 
   return ConvRowCol(src, kx, ky, dst, LDataType::FLOAT32, pad_type);
 }
 
-static float GetEdge(const float *temp, int width, int height, int x, int y) {
+static float GetEdge(const std::vector<float> &temp, int width, int height, int x, int y) {
   if (x >= 0 && y >= 0 && x < width && y < height) {
     return temp[y * width + x];
   } else {
@@ -114,7 +114,7 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
   float *edges_ptr = edges;
 
   int size = gx.height_ * gx.width_;
-  float *temp = new float[size];
+  std::vector<float> temp(size);
   for (int i = 0; i < size; i++) {
     float gx_value = gx_ptr[i];
     float gy_value = gy_ptr[i];
@@ -177,9 +177,9 @@ static void Hysteresis(const LiteMat &edges, uint8_t *dst, double low_thresh, do
   uint8_t *dst_ptr = dst;
 
   int size = edges.height_ * edges.width_;
-  int *buffer = new int[size];
-  int buffer_step = edges.width_;
   std::vector<int> stack;
+  std::vector<int> buffer(size);
+  int buffer_step = edges.width_;
   for (int y = 0; y < edges.height_; y++) {
     for (int x = 0; x < edges.width_; x++) {
       int pos = y * edges.width_ + x;
