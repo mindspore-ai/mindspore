@@ -62,7 +62,7 @@ class ClusterMetadata {
         heartbeat_timeout_(30),
         cluster_available_timeout_(300),
         connect_interval_(100),
-        scheduler_timeout_(3600 * 5) {}
+        scheduler_timeout_(30) {}
   uint32_t worker_num_;
   uint32_t server_num_;
   // The interval for sending heartbeat packets between worker node,server node and scheduler node is 3 seconds.

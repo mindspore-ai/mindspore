@@ -67,7 +67,7 @@ constexpr int64_t kPullCmd = 51;
 constexpr size_t kInvalidKey = UINT64_MAX;
 constexpr int64_t kInvalidID = -1;
 
-using DataPtr = std::shared_ptr<unsigned char>;
+using DataPtr = std::shared_ptr<unsigned char[]>;
 using VectorPtr = std::shared_ptr<std::vector<unsigned char>>;
 using Key = uint64_t;
 using Keys = std::vector<Key>;
