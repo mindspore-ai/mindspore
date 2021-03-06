@@ -176,8 +176,8 @@ class ResidualBlock(nn.Cell):
         in_channel (int): Input channel.
         out_channel (int): Output channel.
         stride (int): Stride size for the first convolutional layer. Default: 1.
-        use_se (bool): enable SE-ResNet50 net. Default: False.
-        se_block(bool): use se block in SE-ResNet50 net. Default: False.
+        use_se (bool): Enable SE-ResNet50 net. Default: False.
+        se_block(bool): Use se block in SE-ResNet50 net. Default: False.
 
     Returns:
         Tensor, output tensor.
@@ -276,8 +276,9 @@ class ResidualBlockBase(nn.Cell):
         in_channel (int): Input channel.
         out_channel (int): Output channel.
         stride (int): Stride size for the first convolutional layer. Default: 1.
-        use_se (bool): enable SE-ResNet50 net. Default: False.
-        se_block(bool): use se block in SE-ResNet50 net. Default: False.
+        use_se (bool): Enable SE-ResNet50 net. Default: False.
+        se_block(bool): Use se block in SE-ResNet50 net. Default: False.
+        res_base (bool): Enable parameter setting of resnet18. Default: True.
 
     Returns:
         Tensor, output tensor.
@@ -290,9 +291,9 @@ class ResidualBlockBase(nn.Cell):
                  in_channel,
                  out_channel,
                  stride=1,
-                 res_base=True,
                  use_se=False,
-                 se_block=False):
+                 se_block=False,
+                 res_base=True):
         super(ResidualBlockBase, self).__init__()
         self.res_base = res_base
         self.conv1 = _conv3x3(in_channel, out_channel, stride=stride, res_base=self.res_base)
@@ -341,8 +342,10 @@ class ResNet(nn.Cell):
         out_channels (list): Output channel in each layer.
         strides (list):  Stride size in each layer.
         num_classes (int): The number of classes that the training images are belonging to.
-        use_se (bool): enable SE-ResNet50 net. Default: False.
-        se_block(bool): use se block in SE-ResNet50 net in layer 3 and layer 4. Default: False.
+        use_se (bool): Enable SE-ResNet50 net. Default: False.
+        se_block(bool): Use se block in SE-ResNet50 net in layer 3 and layer 4. Default: False.
+        res_base (bool): Enable parameter setting of resnet18. Default: True.
+
     Returns:
         Tensor, output tensor.
 
@@ -432,7 +435,7 @@ class ResNet(nn.Cell):
             in_channel (int): Input channel.
             out_channel (int): Output channel.
             stride (int): Stride size for the first convolutional layer.
-            se_block(bool): use se block in SE-ResNet50 net. Default: False.
+            se_block(bool): Use se block in SE-ResNet50 net. Default: False.
         Returns:
             SequentialCell, the output layer.
 

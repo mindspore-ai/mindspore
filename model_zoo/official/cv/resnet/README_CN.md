@@ -459,8 +459,8 @@ result:{'top_5_accuracy':0.9342589628681178, 'top_1_accuracy':0.768065781049936}
 | 损失函数              | Softmax交叉熵                                       |
 | 输出                    | 概率                                                 |
 | 损失                       | 0.0002519517                                                   |
-| 速度                      | 10毫秒/步（8卡）                     |
-| 总时长                 | 3分钟                          |
+| 速度                      | 13毫秒/步（8卡）                     |
+| 总时长                 | 4分钟                          |
 | 参数(M)             | 11.2                                                         |
 | 微调检查点 | 86（.ckpt文件）                                         |
 | 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
@@ -479,8 +479,8 @@ result:{'top_5_accuracy':0.9342589628681178, 'top_1_accuracy':0.768065781049936}
 | 损失函数              | Softmax交叉熵                                       |
 | 输出                    | 概率                                                 |
 | 损失                       | 2.15702                                                       |
-| 速度                      | 140毫秒/步（8卡）                     |
-| 总时长                 | 131分钟                          |
+| 速度                      | 110毫秒/步（8卡） (可能需要在datasetpy中增加set_numa_enbale绑核操作)                    |
+| 总时长                 | 110分钟                          |
 | 参数(M)             | 11.7                                                         |
 | 微调检查点| 90M（.ckpt文件）                                         |
 | 脚本                    | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
