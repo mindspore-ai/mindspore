@@ -184,9 +184,6 @@ class RMSELoss(_Loss):
     .. math::
         loss = \sqrt{\frac{1}{M}\sum_{m=1}^{M}{(x_m-y_m)^2}}
 
-    Args:
-        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
-                         Default: "mean".
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(x_1, x_2, ..., x_R)`.
@@ -429,6 +426,10 @@ class DiceLoss(_Loss):
     Outputs:
         Tensor, a tensor of shape with the per-example sampled Dice losses.
 
+    Raises:
+        ValueError: If the dimensions are different.
+        TypeError: If the type of inputs are not Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -439,10 +440,6 @@ class DiceLoss(_Loss):
         >>> output = loss(y_pred, y)
         >>> print(output)
         [0.7953220862819745]
-
-    Raises:
-        ValueError: If the dimensions are different.
-        TypeError: If the type of inputs are not Tensor.
     """
     def __init__(self, smooth=1e-5):
         super(DiceLoss, self).__init__()
@@ -494,6 +491,10 @@ class MultiClassDiceLoss(_Loss):
     Outputs:
         Tensor, a tensor of shape with the per-example sampled MultiClass Dice Losses.
 
+    Raises:
+        ValueError: If the shapes are different.
+        TypeError: If the type of inputs are not Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -504,10 +505,6 @@ class MultiClassDiceLoss(_Loss):
         >>> output = loss(y_pred, y)
         >>> print(output)
         [0.7761003]
-
-    Raises:
-        ValueError: If the shapes are different.
-        TypeError: If the type of inputs are not Tensor.
     """
     def __init__(self, weights=None, ignore_indiex=None, activation="softmax"):
         super(MultiClassDiceLoss, self).__init__()

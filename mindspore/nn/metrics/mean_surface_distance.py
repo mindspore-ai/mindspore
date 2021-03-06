@@ -41,7 +41,6 @@ class MeanSurfaceDistance(Metric):
         >>> mean_average_distance = metric.eval()
         >>> print(mean_average_distance)
         0.8047378541243649
-
     """
 
     def __init__(self, symmetric=False, distance_metric="euclidean"):
