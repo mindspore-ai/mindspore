@@ -26,6 +26,7 @@ build_in_impl_path = get_built_in_impl_path()
 # op function list
 op_build = "compile"
 
+
 def _initialize(impl_path):
     """Initialize"""
     if impl_path == "":
@@ -37,6 +38,7 @@ def _initialize(impl_path):
 
     sys.path.insert(0, op_module_name)
 
+
 def _replace_range(args):
     for arg in args:
         if not arg.__contains__('range'):
@@ -46,6 +48,7 @@ def _replace_range(args):
             for index, value in enumerate(range_item):
                 if value < 0:
                     range_item[index] = None
+
 
 def build_op(build_type, json_str):
     """
@@ -89,9 +92,9 @@ def build_op(build_type, json_str):
             op_module = __import__(op_name)
         else:
             if is_dynamic_shape:
-                op_module = __import__("impl.dynamic."+op_name, globals(), locals(), [op_name], 0)
+                op_module = __import__("impl.dynamic." + op_name, globals(), locals(), [op_name], 0)
             else:
-                op_module = __import__("impl."+op_name, globals(), locals(), [op_name], 0)
+                op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
         # get function
         if build_type == op_build:
             if custom_flag:
@@ -148,6 +151,7 @@ def compile_with_json(json_str):
     else:
         ret = build_op(op_build, json_str)
     return ret
+
 
 if __name__ == "__main__":
     in_args = sys.stdin.readline()

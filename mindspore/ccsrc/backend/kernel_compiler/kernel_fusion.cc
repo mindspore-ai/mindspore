@@ -80,8 +80,8 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
     size_t hash_id = GenFusionJsonHash(fusion_op);
     auto json_name =
       fusion_kernel_name.append("_").append(std::to_string(hash_id)).append("_").append(std::to_string(device_id));
-    fusion_op["graph_id"] = fusion_scope_iter.graph_id;
     fusion_op["fusion_op_name"] = json_name;
+    fusion_op["full_name"] = fusion_scope_iter.full_name;
     // get io size
     std::vector<size_t> input_size_list;
     std::vector<size_t> output_size_list;
