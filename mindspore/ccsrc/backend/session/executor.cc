@@ -290,10 +290,10 @@ void Executor::RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_r
   task_cond_var_.notify_all();
   if (sync && !sync_run_task_finished_) {
     std::unique_lock<std::mutex> lock(task_mutex_);
-    if (long_run) {
+    if (sync && long_run) {
       mindspore::ScopedLongRunning long_running;
       sync_cond_var_.wait(lock, [this] { return sync_run_task_finished_; });
-    } else {
+    } else if (sync) {
       sync_cond_var_.wait(lock, [this] { return sync_run_task_finished_; });
     }
   }
