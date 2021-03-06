@@ -53,6 +53,7 @@ static size_t GenFusionJsonHash(const nlohmann::json &fusion_json) {
 
 std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> &fusion_scopes) {
   std::map<int64_t, KernelModPtr> kernel_mod_ret;
+  static std::set<std::string> processed_fusion_kernel;
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
   auto context_ptr = MsContext::GetInstance();
@@ -99,6 +100,13 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
         continue;
       }
     }
+    // same op not need build, but need wait build finish to set kernel mode
+    if (processed_fusion_kernel.find(json_name) != processed_fusion_kernel.end()) {
+      build_manger->SaveSameFusionOpInfo(fusion_scope_iter.scope_id, json_name, tbe::kProcessorAiCore, input_size_list,
+                                         output_size_list);
+      continue;
+    }
+    (void)processed_fusion_kernel.insert(json_name);
     // generate soc info json
     nlohmann::json soc_info_json;
     TbeUtils::GenSocInfo(&soc_info_json);
@@ -138,6 +146,11 @@ std::map<int64_t, KernelModPtr> KernelFusion(const std::vector<FusionScopeInfo> 
       (void)kernel_mod_ret.emplace(kernel_mod_item);
     }
   }
+  bool ret = build_manger->GenSameFusionOpKernelMod(&kernel_mod_ret);
+  if (!ret) {
+    MS_LOG(INFO) << "Fusion warning: Fuison op has cache failed.";
+  }
+
   MS_LOG(INFO) << "Build Fusion Kernel Failed Num: " << build_failed_num;
   return kernel_mod_ret;
 }
