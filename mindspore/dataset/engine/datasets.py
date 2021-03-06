@@ -2250,8 +2250,12 @@ class _PythonCallable:
         if self.pool is not None and self.pool._state == 0 and check_iterator_cleanup() is False:  # pylint: disable=W0212
             # This call will send the tensors along with Python callable index to the process pool.
             # Block, yield GIL. Current thread will reacquire GIL once result is returned.
-            result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, self.op_id, self.mapping, self.lock,
-                                                                 self.record, *args])
+            if self.record:
+                result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, self.op_id, self.mapping, self.lock,
+                                                                     self.record, *args])
+            else:
+                result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, self.op_id, None, None, self.record,
+                                                                     *args])
             if self.record:
                 data = self.mapping
                 if len(data[self.op_id][1]) == self.worker_num:
