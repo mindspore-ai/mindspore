@@ -76,7 +76,7 @@ install(
 )
 
 if(USE_GLOG)
-    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libglog*)
+    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
     install(
         FILES ${GLOG_LIB_LIST}
         DESTINATION ${INSTALL_LIB_DIR}

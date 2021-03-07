@@ -23,6 +23,7 @@
 // namespace to support utils module definition
 namespace mindspore {
 #ifdef USE_GLOG
+#define google mindspore_private
 static std::string GetProcName() {
 #if defined(__APPLE__) || defined(__FreeBSD__)
   const char *appname = getprogname();
@@ -71,6 +72,7 @@ static int GetGlogLevel(MsLogLevel level) {
       return google::GLOG_ERROR;
   }
 }
+
 // get threshold level
 static int GetThresholdLevel(std::string threshold) {
   if (threshold.empty()) {
@@ -85,6 +87,7 @@ static int GetThresholdLevel(std::string threshold) {
     return google::GLOG_WARNING;
   }
 }
+#undef google
 #else
 
 #undef Dlog
@@ -143,11 +146,13 @@ static const char *GetSubModuleName(SubModuleId module_id) {
 }
 void LogWriter::OutputLog(const std::ostringstream &msg) const {
 #ifdef USE_GLOG
+#define google mindspore_private
   auto submodule_name = GetSubModuleName(submodule_);
   google::LogMessage("", 0, GetGlogLevel(log_level_)).stream()
     << "[" << GetLogLevel(log_level_) << "] " << submodule_name << "(" << getpid() << "," << GetProcName()
     << "):" << GetTimeString() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
+#undef google
 #else
   auto str_msg = msg.str();
   auto slog_module_id = (submodule_ == SM_MD ? MD : ME);
@@ -479,6 +484,7 @@ __attribute__((constructor)) void mindspore_log_init(void) {
 void mindspore_log_init(void) {
 #endif
 #ifdef USE_GLOG
+#define google mindspore_private
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -486,6 +492,7 @@ void mindspore_log_init(void) {
 #endif
     is_glog_initialzed = true;
   }
+#undef google
 #endif
   common_log_init();
 }
