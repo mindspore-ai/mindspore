@@ -227,15 +227,16 @@ def _calculate_in_and_out(arr):
 class XavierUniform(Initializer):
     r"""
     Initialize the array with xavier uniform algorithm, and from a uniform distribution collect samples within
-    U[-boundary, boundary] The boundary is defined as :
+    U[-boundary, boundary] The boundary is defined as:
 
-    where :math:`boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}`.
+    .. math::
+        boundary = gain * \sqrt{\frac{6}{n_{in} + n_{out}}}
 
     - where :math:`n_{in}` is the number of input units in the weight tensor.
     - where :math:`n_{out}` is the number of output units in the weight tensor.
 
     Args:
-        gain (Array): The array to be assigned. Default: 1.
+        gain (float): An optional scaling factor. Default: 1.
 
     Returns:
         Array, assigned array.
@@ -257,14 +258,19 @@ class XavierUniform(Initializer):
 class HeUniform(Initializer):
     r"""
     Initialize the array with He kaiming uniform algorithm, and from a uniform distribution collect samples within
-    U[-boundary, boundary] The boundary is defined as :
+    U[-boundary, boundary] The boundary is defined as:
 
-    where :math:`boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}`.
+    .. math::
+        boundary = \sqrt{\frac{6}{(1 + a^2) \times \text{fan_in}}}
 
     Args:
-        negative_slope (int, float, bool): Default: 0, used when nonlinearity is 'leaky_relu'.
-        mode (str): Default: fan_in.
-        nonlinearity (str): Default: leaky_relu.
+        negative_slope (int, float, bool): The negativa slope of the rectifier used after this layer
+            (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
+        mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
+            variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
+            in the backwards pass. Default: fan_in.
+        nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
+            Default: leaky_relu.
 
     Returns:
         Array, assigned array.
@@ -292,9 +298,13 @@ class HeNormal(Initializer):
     N(0, sigma).
 
     Args:
-        negative_slope (int, float, bool): Default: 0, used when nonlinearity is 'leaky_relu'.
-        mode (str): Default: fan_in.
-        nonlinearity (str): Default: leaky_relu.
+        negative_slope (int, float, bool): The negativa slope of the rectifier used after this layer
+            (only used when `nonlinearity` is 'leaky_relu'). Default: 0.
+        mode (str): Either 'fan_in' or 'fan_out'. Choosing 'fan_in' preserves the magnitude of the
+            variance of the weights in the forward pass. Choosing 'fan_out' preserves the magnitudes
+            in the backwards pass. Default: fan_in.
+        nonlinearity (str): The non-linear function, recommended to use only with 'relu' or 'leaky_relu'.
+            Default: leaky_relu.
 
     Returns:
         Array, assigned array.
