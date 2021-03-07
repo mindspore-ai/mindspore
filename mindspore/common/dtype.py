@@ -183,7 +183,7 @@ def get_py_obj_dtype(obj):
     Get the MindSpore data type which corresponds to python type or variable.
 
     Args:
-        obj: An object of python type, or a variable in python type.
+        obj (type): An object of python type, or a variable in python type.
 
     Returns:
         Type of MindSpore type.

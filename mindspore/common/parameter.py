@@ -73,7 +73,7 @@ class Parameter(Tensor_):
         otherwise, the parameter name may be different than expected.
 
     Args:
-        default_input (Union[Tensor, Number]): Parameter data, to be set initialized.
+        default_input (Union[Tensor, int, float, numpy.ndarray, list]): Parameter data, to be set initialized.
         name (str): Name of the child parameter. Default: None.
         requires_grad (bool): True if the parameter requires gradient. Default: True.
         layerwise_parallel (bool): When layerwise_parallel is true in data parallel mode,
@@ -82,7 +82,7 @@ class Parameter(Tensor_):
             mode. It works only when enable parallel optimizer in `mindspore.context.set_auto_parallel_context()`.
             Default: True.
 
-    Example:
+    Examples:
         >>> from mindspore import Parameter, Tensor
         >>> from mindspore.common import initializer as init
         >>> from mindspore.ops import operations as P
@@ -161,13 +161,13 @@ class Parameter(Tensor_):
         elif isinstance(default_input, (np.ndarray, list)):
             Tensor_.__init__(self, default_input)
         else:
-            raise TypeError(f"Parameter input must be [`Tensor`, `Number`]."
+            raise TypeError(f"Parameter input must be [`Tensor`, `int`, `float`, `numpy.ndarray`, `list`]."
                             f"But with type {type(default_input)}.")
 
     def __deepcopy__(self, memodict):
         new_obj = Parameter(self)
         new_obj.name = self.name
-        new_obj._inited_param = self._inited_param # pylint: disable=W0212
+        new_obj._inited_param = self._inited_param  # pylint: disable=W0212
         return new_obj
 
     @staticmethod
@@ -488,11 +488,11 @@ class Parameter(Tensor_):
         Initialize the parameter data.
 
         Args:
-            layout (list[list[int]]): Parameter slice layout [dev_mat, tensor_map, slice_shape].
-
-                - dev_mat (list[int]): Device matrix.
-                - tensor_map (list[int]): Tensor map.
-                - slice_shape (list[int]): Shape of slice.
+            layout (Union[None, list(list(int))]): Parameter slice
+                layout [dev_mat, tensor_map, slice_shape]. Default: None.
+                - dev_mat (list(int)): Device matrix.
+                - tensor_map (list(int)): Tensor map.
+                - slice_shape (list(int)): Shape of slice.
             set_sliced (bool): True if the parameter is set sliced after initializing the data.
                 Default: False.
 
