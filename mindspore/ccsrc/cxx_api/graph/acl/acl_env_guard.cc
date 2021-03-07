@@ -51,7 +51,7 @@ std::shared_ptr<AclEnvGuard> AclEnvGuard::GetAclEnv(std::string_view cfg_file) {
   } else {
     acl_env = std::make_shared<AclEnvGuard>(cfg_file);
     aclError ret = acl_env->GetErrno();
-    if (ret != ACL_ERROR_NONE) {
+    if (ret != ACL_ERROR_NONE && ret != ACL_ERROR_REPEAT_INITIALIZE) {
       MS_LOG(ERROR) << "Execute aclInit Failed";
       return nullptr;
     }

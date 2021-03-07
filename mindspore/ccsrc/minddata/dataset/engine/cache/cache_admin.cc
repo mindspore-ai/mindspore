@@ -29,6 +29,7 @@ int main(int argc, char **argv) {
   std::stringstream arg_stream;
 
 #ifdef USE_GLOG
+#define google mindspore_private
   FLAGS_logtostderr = false;
   FLAGS_log_dir = ds::DefaultLogDir();
   // Create default log dir
@@ -39,6 +40,7 @@ int main(int argc, char **argv) {
     return 1;
   }
   google::InitGoogleLogging(argv[0]);
+#undef google
 #endif
 
   if (argc == 1) {

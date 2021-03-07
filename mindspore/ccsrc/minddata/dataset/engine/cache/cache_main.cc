@@ -59,6 +59,7 @@ ms::Status StartServer(int argc, char **argv) {
   ds::SharedMessage msg;
   if (daemonize) {
 #ifdef USE_GLOG
+#define google mindspore_private
     FLAGS_logtostderr = false;
     FLAGS_log_dir = ds::DefaultLogDir();
     // Create cache server default log dir
@@ -69,6 +70,7 @@ ms::Status StartServer(int argc, char **argv) {
     }
     ms::g_ms_submodule_log_levels[SUBMODULE_ID] = strtol(argv[5], nullptr, 10);
     google::InitGoogleLogging(argv[0]);
+#undef google
 #endif
     rc = msg.Create();
     if (rc.IsError()) {

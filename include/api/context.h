@@ -136,12 +136,15 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   inline void SetDumpConfigPath(const std::string &cfg_path);
   inline std::string GetDumpConfigPath() const;
 
+  // aipp config file
   inline void SetInsertOpConfigPath(const std::string &cfg_path);
   inline std::string GetInsertOpConfigPath() const;
 
+  // nchw or nhwc
   inline void SetInputFormat(const std::string &format);
   inline std::string GetInputFormat() const;
 
+  // Mandatory while dynamic batch: e.g. "input_op_name1: 1,2,3,4;input_op_name2: 4,3,2,1"
   inline void SetInputShape(const std::string &shape);
   inline std::string GetInputShape() const;
 
@@ -151,17 +154,24 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
   void SetDynamicBatchSize(const std::vector<size_t> &dynamic_batch_size);
   inline std::string GetDynamicBatchSize() const;
 
+  // FP32, UINT8 or FP16, default as FP32
   void SetOutputType(enum DataType output_type);
   enum DataType GetOutputType() const;
 
+  // "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
   inline void SetPrecisionMode(const std::string &precision_mode);
   inline std::string GetPrecisionMode() const;
 
+  // Optional "high_performance" and "high_precision", "high_performance" is set as default
   inline void SetOpSelectImplMode(const std::string &op_select_impl_mode);
   inline std::string GetOpSelectImplMode() const;
 
   inline void SetFusionSwitchConfigPath(const std::string &cfg_path);
   inline std::string GetFusionSwitchConfigPath() const;
+
+  // Optional "l1_optimize", "l2_optimize", "off_optimize" or "l1_and_l2_optimize", default as "l2_optimize"
+  inline void SetBufferOptimizeMode(const std::string &buffer_optimize_mode);
+  inline std::string GetBufferOptimizeMode() const;
 
  private:
   void SetDumpConfigPath(const std::vector<char> &cfg_path);
@@ -186,6 +196,9 @@ class MS_API Ascend310DeviceInfo : public DeviceInfoContext {
 
   void SetFusionSwitchConfigPath(const std::vector<char> &cfg_path);
   std::vector<char> GetFusionSwitchConfigPathChar() const;
+
+  void SetBufferOptimizeMode(const std::vector<char> &buffer_optimize_mode);
+  std::vector<char> GetBufferOptimizeModeChar() const;
 };
 
 void Ascend310DeviceInfo::SetDumpConfigPath(const std::string &cfg_path) { SetDumpConfigPath(StringToChar(cfg_path)); }
@@ -220,5 +233,10 @@ void Ascend310DeviceInfo::SetFusionSwitchConfigPath(const std::string &cfg_path)
 std::string Ascend310DeviceInfo::GetFusionSwitchConfigPath() const {
   return CharToString(GetFusionSwitchConfigPathChar());
 }
+
+void Ascend310DeviceInfo::SetBufferOptimizeMode(const std::string &buffer_optimize_mode) {
+  SetBufferOptimizeMode(StringToChar(buffer_optimize_mode));
+}
+std::string Ascend310DeviceInfo::GetBufferOptimizeMode() const { return CharToString(GetBufferOptimizeModeChar()); }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H

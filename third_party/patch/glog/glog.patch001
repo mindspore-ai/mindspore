@@ -1,0 +1,11 @@
+diff -Npur glog/CMakeLists.txt glog_modify/CMakeLists.txt
+--- glog/CMakeLists.txt	2019-03-22 10:51:46.000000000 +0800
++++ glog_modify/CMakeLists.txt	2021-03-07 16:58:38.386879400 +0800
+@@ -470,6 +470,7 @@ add_library (glog
+ add_library(glog::glog ALIAS glog)
+ 
+ set_target_properties (glog PROPERTIES POSITION_INDEPENDENT_CODE ON)
++set_target_properties (glog PROPERTIES OUTPUT_NAME mindspore_glog)
+ 
+ if (UNWIND_LIBRARY)
+   target_link_libraries (glog PUBLIC ${UNWIND_LIBRARY})

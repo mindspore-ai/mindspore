@@ -30,20 +30,16 @@ constexpr auto kModelOptionNvidiaGpuTrtInferMode = "mindspore.option.nvidia_gpu.
 constexpr auto kModelOptionAscend910DeviceID = kModelOptionDeviceID;
 constexpr auto kModelOptionAscend310DeviceID = kModelOptionDeviceID;
 constexpr auto kModelOptionAscend310DumpCfgPath = "mindspore.option.ascend310.dump_config_file_path";
-constexpr auto kModelOptionAscend310InsertOpCfgPath =
-  "mindspore.option.ascend310.insert_op_config_file_path";                                    // aipp config file
-constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";  // nchw or nhwc
+constexpr auto kModelOptionAscend310InsertOpCfgPath = "mindspore.option.ascend310.insert_op_config_file_path";
+constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";
 constexpr auto kModelOptionAscend310InputShapeMap = "mindspore.option.ascend310.input_shape_map";
 constexpr auto kModelOptionAscend310InputShape = "mindspore.option.ascend310.input_shape";
-// Mandatory while dynamic batch: e.g. "input_op_name1: n1,c2,h3,w4;input_op_name2: n4,c3,h2,w1"
-constexpr auto kModelOptionAscend310OutputType =
-  "mindspore.option.ascend310.output_type";  // "FP32", "UINT8" or "FP16", default as "FP32"
+constexpr auto kModelOptionAscend310OutputType = "mindspore.option.ascend310.output_type";
 constexpr auto kModelOptionAscend310PrecisionMode = "mindspore.option.ascend310.precision_mode";
-// "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
 constexpr auto kModelOptionAscend310OpSelectImplMode = "mindspore.option.ascend310.op_select_impl_mode";
 constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.ascend310.fusion_switch_config_file_path";
-// "False": Inference with native backend, "True": Inference with Tensor-RT engine, default as "False"
 constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
+constexpr auto kModelOptionAscend310BufferOptimize = "mindspore.option.ascend310.buffer_optimize";
 
 namespace mindspore {
 class Allocator {};
@@ -278,5 +274,15 @@ void Ascend310DeviceInfo::SetOutputType(enum DataType output_type) {
 enum DataType Ascend310DeviceInfo::GetOutputType() const {
   MS_EXCEPTION_IF_NULL(data_);
   return GetValue<enum DataType>(data_, kModelOptionAscend310OutputType);
+}
+
+void Ascend310DeviceInfo::SetBufferOptimizeMode(const std::vector<char> &buffer_optimize_mode) {
+  MS_EXCEPTION_IF_NULL(data_);
+  data_->params[kModelOptionAscend310BufferOptimize] = CharToString(buffer_optimize_mode);
+}
+std::vector<char> Ascend310DeviceInfo::GetBufferOptimizeModeChar() const {
+  MS_EXCEPTION_IF_NULL(data_);
+  const std::string &ref = GetValue<std::string>(data_, kModelOptionAscend310BufferOptimize);
+  return StringToChar(ref);
 }
 }  // namespace mindspore
