@@ -313,7 +313,6 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     for (auto j = 0; j < message.values_size(); j++) {
       values->push_back(message.values(j));
     }
-    MS_LOG(DEBUG) << "The embedding resp:" << *values;
     for (auto k = 0; k < message.keys_size(); k++) {
       const Key &key = message.keys(k);
       float *addr = values->data() + value_offset;

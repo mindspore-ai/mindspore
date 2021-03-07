@@ -505,16 +505,16 @@ void ParameterServer::ServerHandler::operator()(std::shared_ptr<core::TcpConnect
 
   auto &handler_ptr = handlers_[meta->user_cmd()];
   (this->*handler_ptr)(data, size, output);
-  std::shared_ptr<unsigned char[]> res(new unsigned char[output->size()]);
   MS_LOG(DEBUG) << "The output size is:" << output->size();
-  if (output->size() > 0) {
-    int ret = memcpy_s(res.get(), output->size(), output->data(), output->size());
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
-    }
-  }
 
-  ps_->server_node_->Response(conn, meta, res, output->size());
+  if (output->size() > 0) {
+    ps_->server_node_->Response(conn, meta, output->data(), output->size());
+  } else {
+    // If the size of the output is 0, then constructed an empty string, Because the Response function is a synchronous,
+    // the res variable  will be automatically recycled after calling the Response function
+    std::string res;
+    ps_->server_node_->Response(conn, meta, res.data(), res.length());
+  }
   MS_LOG(DEBUG) << "The request id is:" << meta->request_id() << " the current time is:"
                 << std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now())
                      .time_since_epoch()

@@ -46,7 +46,7 @@ bool ServerNode::Start(const uint32_t &timeout) {
 
 void ServerNode::set_handler(const RequestHandler &handler) { request_handler_ = handler; }
 
-void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, DataPtr data,
+void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, void *data,
                           size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
@@ -55,7 +55,7 @@ void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<M
   meta->set_rank_id(node_info_.rank_id_);
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << meta->request_id();
-  server_->SendMessage(conn, meta, Protos::RAW, data.get(), size);
+  server_->SendMessage(conn, meta, Protos::RAW, data, size);
 }
 
 void ServerNode::CreateTcpServer() {
