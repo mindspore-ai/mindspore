@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/base/conv2d_base_coder.h"
+#include "coder/opcoders/base/conv2d_base_coder.h"
 #include <string>
 #include <vector>
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/int8/quantize.h"
-#include "micro/coder/log.h"
+#include "coder/log.h"
 
 namespace {
 int MallocConvQuantParams(ConvQuantArg *quant_arg, size_t input_arg_num, size_t filter_arg_num, size_t output_arg_num) {
@@ -37,8 +37,8 @@ int MallocConvQuantParams(ConvQuantArg *quant_arg, size_t input_arg_num, size_t 
 }  // namespace
 
 namespace mindspore::lite::micro {
-string Conv2DBaseCoder::LayoutTransformFp32(schema::Format src_format, schema::Format dst_format) {
-  string ret;
+std::string Conv2DBaseCoder::LayoutTransformFp32(schema::Format src_format, schema::Format dst_format) {
+  std::string ret;
   if (src_format == schema::Format_NHWC && dst_format == schema::Format_NC4HW4) {
     ret = "PackNHWCToNC4HW4Fp32";
   } else if (src_format == schema::Format_NHWC && dst_format == schema::Format_NHWC4) {
@@ -56,8 +56,8 @@ string Conv2DBaseCoder::LayoutTransformFp32(schema::Format src_format, schema::F
   return ret;
 }
 
-string Conv2DBaseCoder::LayoutTransformInt8(schema::Format src_format, schema::Format dst_format) {
-  string ret;
+std::string Conv2DBaseCoder::LayoutTransformInt8(schema::Format src_format, schema::Format dst_format) {
+  std::string ret;
   if (src_format == schema::Format_NHWC && dst_format == schema::Format_NHWC4) {
     ret = "PackNHWCToNHWC4Int8";
   } else {
@@ -67,8 +67,8 @@ string Conv2DBaseCoder::LayoutTransformInt8(schema::Format src_format, schema::F
   return ret;
 }
 
-string Conv2DBaseCoder::LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format) {
-  string ret;
+std::string Conv2DBaseCoder::LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format) {
+  std::string ret;
   switch (data_type) {
     case kNumberTypeInt8:
       ret = LayoutTransformInt8(src_format, dst_format);
@@ -197,7 +197,7 @@ int Conv2DBaseCoder::SetQuantMultiplier() {
   return RET_OK;
 }
 
-int Conv2DBaseCoder::CheckResizeValid() {
+int Conv2DBaseCoder::CheckResizeValid() const {
   // ===============check in channel================= //
   int32_t filter_in_channel = filter_tensor_->Channel();
   int32_t resize_in_channel = input_tensor_->Channel();
@@ -206,12 +206,39 @@ int Conv2DBaseCoder::CheckResizeValid() {
   return RET_OK;
 }
 
+void Conv2DBaseCoder::SetRoundingAndMultipilerMode() {
+  auto input_quant_arg = input_tensor_->quant_params().front();
+  int round_type = input_quant_arg.roundType;
+  switch (round_type) {
+    case 1:
+      conv_quant_arg_->round_mode_ = Rounding_Away_from_zero;
+      break;
+    case 2:
+      conv_quant_arg_->round_mode_ = Rounding_Up;
+      break;
+    default:
+      conv_quant_arg_->round_mode_ = Rounding_No;
+  }
+  int cal_multiplier_type = input_quant_arg.multiplier;
+  switch (cal_multiplier_type) {
+    case 0:
+      conv_quant_arg_->quant_multiplier_mode_ = Method_SinglePrecision;
+      break;
+    case 1:
+      conv_quant_arg_->quant_multiplier_mode_ = Method_DoublePrecision;
+      break;
+    default:
+      conv_quant_arg_->quant_multiplier_mode_ = Method_No;
+  }
+}
+
 int Conv2DBaseCoder::SetQuantParam() {
   MS_CHECK_RET_CODE(MallocQuantParam(), "Malloc quant param failed.");
   MS_CHECK_RET_CODE(SetInputTensorQuantParam(), "Set Input Tensor Quant Param Failed.");
   MS_CHECK_RET_CODE(SetFilterTensorQuantParam(), "Set Filter Tensor Quant Param Failed.");
   MS_CHECK_RET_CODE(SetOutputTensorQuantParam(), "Set Output Tensor Quant Param Failed.");
   MS_CHECK_RET_CODE(SetIfPerChannel(), "Set if per tensor channel failed.");
+  SetRoundingAndMultipilerMode();
   MS_CHECK_RET_CODE(SetQuantMultiplier(), "Set Quant Multiplier Failed.");
   // now only consider per tensor for output
   MS_CHECK_PTR(conv_param_->conv_quant_arg_.out_act_min_);

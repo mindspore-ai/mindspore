@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/exp.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/exp_fp32.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateExpParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateExpParameter(const void *prim) {
   ExpParameter *exp_parameter = reinterpret_cast<ExpParameter *>(malloc(sizeof(ExpParameter)));
   if (exp_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc ExpParameter failed.";
     return nullptr;
   }
   memset(exp_parameter, 0, sizeof(ExpParameter));
-  exp_parameter->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Exp *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  exp_parameter->base_ = param->GetBase();
-  exp_parameter->scale_ = param->GetScale();
-  exp_parameter->shift_ = param->GetShift();
+
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_ExpFusion();
+  exp_parameter->op_parameter_.type_ = primitive->value_type();
+  exp_parameter->base_ = value->base();
+  exp_parameter->scale_ = value->scale();
+  exp_parameter->shift_ = value->shift();
   if (exp_parameter->base_ != -1 && exp_parameter->base_ <= 0) {
     MS_LOG(ERROR) << "Exp base must be strictly positive, got " << exp_parameter->base_;
     free(exp_parameter);
@@ -41,6 +40,6 @@ OpParameter *PopulateExpParameter(const mindspore::lite::PrimitiveC *primitive) 
   return reinterpret_cast<OpParameter *>(exp_parameter);
 }
 
-Registry ExpParameterRegistry(schema::PrimitiveType_Exp, PopulateExpParameter);
+Registry ExpParameterRegistry(schema::PrimitiveType_ExpFusion, PopulateExpParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

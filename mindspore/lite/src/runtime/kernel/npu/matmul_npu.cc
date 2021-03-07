@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,9 @@ int MatMulNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
   op_ = new (std::nothrow) hiai::op::MatMul(name_);
   op_->set_input_x1(*npu_inputs[0]);
   op_->set_input_x2(*npu_inputs[1]);
+  if (npu_inputs.size() == 3) {
+    op_->set_input_bias(*npu_inputs[2]);
+  }
 
   op_->set_attr_transpose_x1(matmul_parameter_->a_transpose_);
   op_->set_attr_transpose_x2(matmul_parameter_->b_transpose_);

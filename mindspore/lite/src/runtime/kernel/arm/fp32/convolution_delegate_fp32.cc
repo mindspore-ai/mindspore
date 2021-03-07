@@ -18,6 +18,9 @@
 #include "src/runtime/kernel/arm/fp32/convolution_1x1_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_winograd_fp32.h"
 #include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -28,7 +31,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::PrimitiveType_Conv2DFusion;
 using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
@@ -119,8 +122,8 @@ int ConvolutionDelegateCPUKernel::ReSize() {
                           context_);
   if (conv_kernel_ == nullptr) {
     // need to select actual execute kernel here
-    conv_kernel_ = CpuConvFp32KernelSelect(in_tensors_, out_tensors_, op_parameter_, context_, primitive_,
-                                           origin_weight_, origin_bias_);
+    conv_kernel_ =
+      CpuConvFp32KernelSelect(in_tensors_, out_tensors_, op_parameter_, context_, origin_weight_, origin_bias_);
     if (conv_kernel_ == nullptr) {
       MS_LOG(ERROR) << "Selecting execute kernel failed for conv_kernel, got a nullptr.";
       return RET_ERROR;
@@ -226,8 +229,7 @@ lite::Tensor *CreateOutputTensor(const std::vector<int> &out_shape, const std::v
 
 kernel::LiteKernel *CpuConvFp32KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                            const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                            float *origin_weight, float *origin_bias) {
+                                            const InnerContext *ctx, float *origin_weight, float *origin_bias) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   bool use_winograd = false;
   int out_unit;
@@ -235,13 +237,13 @@ kernel::LiteKernel *CpuConvFp32KernelSelect(const std::vector<lite::Tensor *> &i
   kernel::LiteKernel *kernel = nullptr;
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
     kernel = new (std::nothrow)
-      kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, primitive, origin_weight, origin_bias);
+      kernel::Convolution1x1CPUKernel(op_parameter, inputs, outputs, ctx, origin_weight, origin_bias);
   } else if (use_winograd) {
-    kernel = new (std::nothrow) kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, primitive,
-                                                                     out_unit, origin_weight, origin_bias);
-  } else {
     kernel = new (std::nothrow)
-      kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive, origin_weight, origin_bias);
+      kernel::ConvolutionWinogradCPUKernel(op_parameter, inputs, outputs, ctx, out_unit, origin_weight, origin_bias);
+  } else {
+    kernel =
+      new (std::nothrow) kernel::ConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, origin_weight, origin_bias);
   }
   if (kernel != nullptr) {
     auto ret = kernel->Init();
@@ -256,15 +258,14 @@ kernel::LiteKernel *CpuConvFp32KernelSelect(const std::vector<lite::Tensor *> &i
 
 static kernel::LiteKernel *CreateDelegateConv(const std::vector<lite::Tensor *> &inputs,
                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                              const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive) {
-  return new (std::nothrow) kernel::ConvolutionDelegateCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+                                              const InnerContext *ctx) {
+  return new (std::nothrow) kernel::ConvolutionDelegateCPUKernel(op_parameter, inputs, outputs, ctx);
 }
 
 kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                                  const InnerContext *ctx,
-                                                  const mindspore::lite::PrimitiveC *primitive) {
-  bool infer_flag = primitive != nullptr && primitive->infer_flag();
+                                                  const InnerContext *ctx) {
+  bool infer_flag = op_parameter->infer_flag_;
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   int new_in_channel = inputs.at(kWeightIndex)->Channel();
   int new_out_channel;
@@ -341,26 +342,48 @@ kernel::LiteKernel *CpuGroupConvFp32KernelCreator(const std::vector<lite::Tensor
       new_outputs.emplace_back(out_tensor);
     }
     group_convs.emplace_back(
-      CreateDelegateConv(new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_parameter), ctx, primitive));
+      CreateDelegateConv(new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_parameter), ctx));
   }
   return new (std::nothrow)
-    GroupConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, primitive, group_convs, conv_param->group_);
+    GroupConvolutionCPUKernel(op_parameter, inputs, outputs, ctx, group_convs, conv_param->group_);
+}
+
+kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const InnerContext *ctx, const kernel::KernelKey &desc) {
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  kernel::LiteKernel *kernel = nullptr;
+  if (opParameter != nullptr && opParameter->infer_flag_) {
+#if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
+    if (CheckConvDwUseIndirectBuffer(conv_param)) {
+      kernel = new (std::nothrow) kernel::ConvolutionDepthwiseIndirectCPUKernel(opParameter, inputs, outputs, ctx);
+    }
+#endif
+    if (kernel == nullptr && conv_param->input_channel_ < 32) {
+      kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWCPUKernel(opParameter, inputs, outputs, ctx);
+    }
+  }
+  if (kernel == nullptr) {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
+  }
+  return kernel;
 }
 
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
+                                             const InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(op_parameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
   MS_ASSERT(desc.data_type == kNumberTypeFloat32);
 
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   kernel::LiteKernel *kernel = nullptr;
   if (conv_param->group_ == 1) {
-    kernel = CreateDelegateConv(inputs, outputs, op_parameter, ctx, primitive);
+    kernel = CreateDelegateConv(inputs, outputs, op_parameter, ctx);
+  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
+    kernel = CpuConvDwFp32KernelCreator(inputs, outputs, op_parameter, ctx, desc);
   } else {
-    kernel = CpuGroupConvFp32KernelCreator(inputs, outputs, op_parameter, ctx, primitive);
+    kernel = CpuGroupConvFp32KernelCreator(inputs, outputs, op_parameter, ctx);
   }
 
   if (kernel == nullptr) {
@@ -379,5 +402,5 @@ kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Conv2D, CpuConvFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Conv2DFusion, CpuConvFp32KernelCreator)
 }  // namespace mindspore::kernel

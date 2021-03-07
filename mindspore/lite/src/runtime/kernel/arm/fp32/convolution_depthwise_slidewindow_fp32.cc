@@ -15,13 +15,9 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;

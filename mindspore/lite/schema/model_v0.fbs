@@ -35,6 +35,8 @@ table QuantParam {
     varCorr: float = 1;
     meanCorr: float = 0;
     dstDtype: int = 32;
+    roundType: int = 1;
+    multiplier: int = 1; // calculate fixed point multiplier method
 }
 
 table Tensor {
@@ -256,10 +258,6 @@ union PrimitiveType {
     Reciprocal,
     Merge,
     Mod,
-    If,
-    GeLU,
-    Gru,
-    NonZero,
 }
 
 enum QuantType: int {

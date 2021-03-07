@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/base/reduce_base_coder.h"
+#include "coder/opcoders/base/reduce_base_coder.h"
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 
 namespace mindspore::lite::micro {
 namespace {
 constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 }  // namespace
-int ReduceBaseCoder::CheckInputsOutputs() {
+int ReduceBaseCoder::CheckInputsOutputs() const {
   if (input_tensors_.size() < kInputNum) {
     MS_LOG(ERROR) << "Reduce inputs size should be at least " << kInputNum << " but got " << input_tensors_.size();
     return RET_ERROR;

@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class ApplyMomentumCPUKernel : public OptimizerKernel {
  public:
   explicit ApplyMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                  const mindspore::lite::PrimitiveC *primitive)
-      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive, 2, 3),
+                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : OptimizerKernel(parameter, inputs, outputs, ctx, 2, 3),
         thread_count_(ctx->thread_num_),
         apply_momentum_param_(nullptr) {
     apply_momentum_param_ = reinterpret_cast<ApplyMomentumParameter *>(parameter);

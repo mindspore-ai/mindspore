@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,11 @@
 #include "ut/tools/converter/parser/tflite/tflite_parsers_test_utils.h"
 #include <string>
 #include "schema/inner/model_generated.h"
-#include "tools/converter/parser/tflite/tflite_model_parser.h"
 
 namespace mindspore {
 
-schema::MetaGraphT *TestTfliteParser::LoadAndConvert(const string &model_path, const string &weight_path) {
-  lite::TfliteModelParser parser;
-  meta_graph = parser.ParseToFb(model_path, weight_path, schema::QuantType_QUANT_NONE);
-  if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "Parse to metaGraph return nullptr";
-    return nullptr;
-  }
-  return meta_graph;
+schema::MetaGraphT *TestTfliteParser::LoadAndConvert(const std::string &model_path, const std::string &weight_path) {
+  return nullptr;
 }
 
 void TestTfliteParser::TearDown() { free(meta_graph); }

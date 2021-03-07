@@ -19,64 +19,26 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/non_max_suppression.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFNonMaxSuppressionParser::Parse(const tensorflow::NodeDef &tf_op,
-                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                        PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF NonMaxSuppressionParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFNonMaxSuppressionParser::Parse(const tensorflow::NodeDef &tf_op,
+                                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                                  std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::NonMaxSuppression>();
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::NonMaxSuppressionT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-  attr->centerPointBox = 0;
-  primitive->value.type = schema::PrimitiveType_NonMaxSuppression;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_center_point_box(0);
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add Op input failed.";
-    return status;
+  for (int i = 0; i < 5; i++) {
+    if (AddOpInput(tf_op, i, inputs) != RET_OK) {
+      MS_LOG(ERROR) << "Add Op input " << i << " failed.";
+      return nullptr;
+    }
   }
-  status = AddOpInput(tf_op, 1, inputs);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add Op input failed.";
-    return status;
-  }
-  status = AddOpInput(tf_op, 2, inputs);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add Op input failed.";
-    return status;
-  }
-  status = AddOpInput(tf_op, 3, inputs);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add Op input failed.";
-    return status;
-  }
-  status = AddOpInput(tf_op, 4, inputs);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add Op input failed.";
-    return status;
-  }
-  return status;
+
+  return prim.release();
 }
 TFNodeRegistrar g_tfNonMaxSuppressionV3Parser("NonMaxSuppressionV3", new TFNonMaxSuppressionParser());
 }  // namespace lite

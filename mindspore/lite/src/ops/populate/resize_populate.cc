@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/resize.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/resize_parameter.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateResizeParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateResizeParameter(const void *prim) {
   ResizeParameter *resize_param = reinterpret_cast<ResizeParameter *>(malloc(sizeof(ResizeParameter)));
   if (resize_param == nullptr) {
     MS_LOG(ERROR) << "malloc ResizeParameter failed.";
     return nullptr;
   }
   memset(resize_param, 0, sizeof(ResizeParameter));
-  resize_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Resize *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  resize_param->method_ = static_cast<int>(param->GetMethod());
-  resize_param->new_height_ = param->new_height();
-  resize_param->new_width_ = param->new_width();
-  resize_param->coordinate_transform_mode_ = param->GetCoordinateTransformMode();
-  resize_param->preserve_aspect_ratio_ = param->GetPreserveAspectRatio();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_Resize();
+  resize_param->op_parameter_.type_ = primitive->value_type();
+
+  resize_param->method_ = static_cast<int>(value->method());
+  resize_param->new_height_ = value->new_height();
+  resize_param->new_width_ = value->new_width();
+  resize_param->coordinate_transform_mode_ = value->coordinate_transform_mode();
+  resize_param->preserve_aspect_ratio_ = value->preserve_aspect_ratio();
   return reinterpret_cast<OpParameter *>(resize_param);
 }
 
-Registry ResizeParameterRegistry(schema::PrimitiveType_Resize, PopulateResizeParameter);
-
+Registry ResizeParameterRegistry(schema::PrimitiveType_Resize, PopulateResizeParameter, SCHEMA_CUR);
 }  // namespace lite
 
 }  // namespace mindspore

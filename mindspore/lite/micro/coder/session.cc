@@ -27,8 +27,13 @@
 #include "coder/opcoders/op_coder_builder.h"
 #include "coder/utils/coder_utils.h"
 #include "coder/log.h"
+#include "src/ops/populate/populate_register.h"
+#include "src/common/version_manager.h"
+#include "src/runtime/infer_manager.h"
+#include "src/scheduler.h"
 #include "include/errorcode.h"
 #include "src/common/file_utils.h"
+#include "coder/opcoders/nnacl/dequant/de_quant.h"
 
 namespace mindspore::lite::micro {
 
@@ -57,21 +62,28 @@ int CoderSession::InferShape() {
       outputs.push_back(all_tensors.at(curr_node->output_indices_.at(j)));
     }
 
-    PrimitiveC *primitive = curr_node->primitive_;
-    if (primitive == nullptr) {
-      MS_LOG(ERROR) << "Op " << curr_node->name_ << " should exist in model!";
+    auto primitive = curr_node->primitive_;
+    MS_CHECK_PTR(primitive);
+    int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+    auto parame_gen = PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(primitive), schema_version);
+    if (parame_gen == nullptr) {
+      MS_LOG(ERROR) << "parameter generator is nullptr.";
+      return RET_NULL_PTR;
+    }
+    auto parameter = parame_gen(primitive);
+    if (parameter == nullptr) {
+      MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
       return RET_ERROR;
     }
-    primitive->set_infer_flag(true);
-    int ret = primitive->InferShape(inputs, outputs);
+    parameter->infer_flag_ = true;
+    auto ret = KernelInferShape(inputs, &outputs, parameter);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << curr_node->name_
-                   << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
-                   << "flag set to false.";
-      primitive->set_infer_flag(false);
+                   << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive)) << "flag set to false.";
+      parameter->infer_flag_ = false;
     } else if (ret != RET_OK) {
-      MS_LOG(ERROR) << "InferShape failed, name: " << curr_node->name_ << ", type: "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
+      MS_LOG(ERROR) << "InferShape failed, name: " << curr_node->name_
+                    << ", type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
       return RET_ERROR;
     }
   }
@@ -81,7 +93,11 @@ int CoderSession::InferShape() {
 void CoderSession::EndCode() {
   context_->set_tensor_map(allocator_->tensors_map());
   context_->set_saved_weights(allocator_->saved_weights());
-  context_->set_total_buffer_size(allocator_->total_buffer_size());
+  size_t de_quant_max_workspace_size = nnacl::Dequant::GetInstance()->de_quant_max_workspace();
+  size_t final_total_size = allocator_->total_buffer_size() > de_quant_max_workspace_size
+                              ? allocator_->total_buffer_size()
+                              : de_quant_max_workspace_size;
+  context_->set_total_buffer_size(final_total_size);
   context_->set_graph_inputs(coder_graph_->input_tensors());
   context_->set_graph_outputs(coder_graph_->output_tensors());
   Configurator *config = Configurator::GetInstance();
@@ -90,7 +106,7 @@ void CoderSession::EndCode() {
     blocks = AddDumpDataInfo(context_->code_blocks(), op_coders_);
     context_->set_code_blocks(blocks);
   }
-  if (config->code_mode() == Code_Train) {
+  if (config->code_mode() == Train) {
     Train::TransformGraphForTrain(context_.get(), op_coders_);
   }
 }
@@ -104,15 +120,17 @@ int CoderSession::Run() {
   // 2. prepare, init model parameters
   for (const auto &op_coder : op_coders_) {
     MS_CHECK_PTR(op_coder);
+    MS_LOG(DEBUG) << "prepare: " << op_coder->name();
     ret = op_coder->Prepare(context_.get());
-    MS_CHECK_RET_CODE(ret, "prepare coder " << op_coder->ID() << " failed");
+    MS_CHECK_RET_CODE(ret, "prepare coder " << op_coder->name() << " failed");
     allocator_->enable_is_next();
   }
   // 3. docode, write operator code
   for (const auto &op_coder : op_coders_) {
     MS_CHECK_PTR(op_coder);
+    MS_LOG(DEBUG) << "code: " << op_coder->name();
     ret = op_coder->DoCode(this->context_.get());
-    MS_CHECK_RET_CODE(ret, "do coder " << op_coder->ID() << " failed");
+    MS_CHECK_RET_CODE(ret, "do coder " << op_coder->name() << " failed");
   }
 
   this->EndCode();
@@ -126,12 +144,11 @@ int CoderSession::GenerateCode() {
   Configurator *config = Configurator::GetInstance();
   CodeMode code_mode = config->code_mode();
   switch (code_mode) {
-    case Code_Normal:
-    case Code_Inference:
+    case Inference:
       MS_LOG(INFO) << "generate code for Inference";
       generator = std::make_shared<InferenceGenerator>(std::move(context_));
       break;
-    case Code_Train:
+    case Train:
       MS_LOG(INFO) << "generate code for Train";
       generator = std::make_shared<TrainGenerator>(std::move(context_));
       break;
@@ -240,6 +257,7 @@ int CoderSession::CreateOpCoders() {
   Configurator *config = Configurator::GetInstance();
   Target code_target = config->target();
   CodeMode code_mode = config->code_mode();
+  bool support_parallel = config->support_parallel();
   uint32_t nodes_size = model->all_nodes_.size();
   OpCoderBuilder builder;
   for (uint32_t i = 0; i < nodes_size; ++i) {
@@ -293,6 +311,7 @@ int CoderSession::CreateOpCoders() {
                                                 .outputs(outputs)
                                                 .node(node)
                                                 .target(code_target)
+                                                .support_parallel(support_parallel)
                                                 .data_type(tensor_data_type)
                                                 .mode(code_mode)
                                                 .input_indices(input_indices)

@@ -18,26 +18,28 @@
 #include <vector>
 #include <set>
 #include <unordered_map>
-#include "src/ops/while.h"
+#include "src/common/prim_util.h"
 #ifdef ENABLE_V0
 #include "src/ops/compat/compat_register.h"
 #endif
 
 namespace mindspore::lite {
 #ifdef ENABLE_V0
-int LiteModel::ConvertAttrs(Model::Node *node, const schema::v0::Primitive *prim,
-                            std::vector<schema::Tensor *> *dst_tensor) {
+int LiteModel::ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor) {
   if (node == nullptr || dst_tensor == nullptr) {
     MS_LOG(ERROR) << "node or tensor_vec is nullptr.";
     return RET_ERROR;
   }
+  auto primitive = node->primitive_;
+  MS_ASSERT(primitive != nullptr);
+  auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
   int primitive_type = prim->value_type();
   auto creator = CompatRegistry::GetInstance()->GetTransferAttrFunc(SCHEMA_VERSION::SCHEMA_V0, primitive_type);
   if (creator == nullptr) {
     MS_LOG(DEBUG) << "the node don't need to convert attr to tensor.";
     return RET_OK;
   }
-  int status = creator(reinterpret_cast<const void *>(prim), node, dst_tensor, &this->attr_tensor_bufs_);
+  int status = creator(node, dst_tensor, &this->attr_tensor_bufs_);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "translate attr to tensor failed.";
     return status;
@@ -45,14 +47,12 @@ int LiteModel::ConvertAttrs(Model::Node *node, const schema::v0::Primitive *prim
   return RET_OK;
 }
 
-int LiteModel::ConvertAttrToTensors(const void *meta_graph) {
-  MS_ASSERT(meta_graph != nullptr);
+int LiteModel::ConvertAttrToTensors() {
   int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
   if (schema_version != SCHEMA_VERSION::SCHEMA_V0) {
     MS_LOG(DEBUG) << "no need to convert attr to tensor.";
     return RET_OK;
   }
-  auto meta_graph_v0 = reinterpret_cast<const schema::v0::MetaGraph *>(meta_graph);
   std::unordered_map<int, std::set<int>> subgraph_node_indexes;
   for (size_t subgraph_index = 0; subgraph_index < this->sub_graphs_.size(); ++subgraph_index) {
     for (size_t node_index = 0; node_index < this->sub_graphs_[subgraph_index]->node_indices_.size(); ++node_index) {
@@ -62,9 +62,7 @@ int LiteModel::ConvertAttrToTensors(const void *meta_graph) {
   int cur_all_tensors_size = this->all_tensors_.size();
   for (size_t index = 0; index < this->all_nodes_.size(); ++index) {
     std::vector<schema::Tensor *> dst_tensors;
-    auto prim = meta_graph_v0->nodes()->GetAs<schema::v0::CNode>(index)->primitive();
-    MS_ASSERT(prim != nullptr);
-    int status = ConvertAttrs(this->all_nodes_[index], prim, &dst_tensors);
+    int status = ConvertAttrs(this->all_nodes_[index], &dst_tensors);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "fail to convert attr to tensor.";
       return RET_ERROR;
@@ -96,6 +94,11 @@ void LiteModel::Free() {
     free(this->buf);
     this->buf = nullptr;
   }
+  auto nodes_size = this->all_nodes_.size();
+  for (size_t i = 0; i < nodes_size; ++i) {
+    auto node = this->all_nodes_[i];
+    node->primitive_ = nullptr;
+  }
   for (auto &tensor_buf : attr_tensor_bufs_) {
     free(tensor_buf);
     tensor_buf = nullptr;
@@ -109,9 +112,6 @@ void LiteModel::Destroy() {
   for (size_t i = 0; i < nodes_size; ++i) {
     auto node = this->all_nodes_[i];
     MS_ASSERT(node != nullptr);
-    MS_ASSERT(node->primitive_ != nullptr);
-    delete node->primitive_;
-    node->primitive_ = nullptr;
     delete node;
   }
   this->all_nodes_.clear();
@@ -193,15 +193,10 @@ int LiteModel::NodeVerify() const {
       return RET_ERROR;
     }
 
-    auto prim = node->primitive_;
-    if (prim->Type() == schema::PrimitiveType_While) {
-      auto whileOp = reinterpret_cast<mindspore::lite::While *>(const_cast<mindspore::lite::PrimitiveC *>(prim));
-      if (whileOp == nullptr) {
-        MS_LOG(ERROR) << "whileOp is null.";
-        return RET_ERROR;
-      }
-      if (static_cast<uint32_t>(whileOp->GetBodySubgraphIndex()) >= subGraph_size ||
-          static_cast<uint32_t>(whileOp->GetCondSubgraphIndex()) >= subGraph_size) {
+    if (IsWhileNode(node->primitive_)) {
+      auto body_index = GetWhileBodySubgraphIndex(node->primitive_);
+      auto cond_index = GetWhileCondSubgraphIndex(node->primitive_);
+      if (static_cast<uint32_t>(body_index) >= subGraph_size || static_cast<uint32_t>(cond_index) >= subGraph_size) {
         MS_LOG(ERROR) << "index of subGraph is beyond subGraph_size.";
         return RET_ERROR;
       }

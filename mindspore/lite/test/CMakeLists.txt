@@ -32,6 +32,7 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/nnacl/fp32/*.c
         ${LITE_DIR}/nnacl/int8/*.c
         ${LITE_DIR}/nnacl/base/*.c
+        ${LITE_DIR}/nnacl/infer/*.c
         )
 
 file(GLOB KERNEL_OP_TRAIN_SRC
@@ -132,6 +133,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/runtime/runtime_api.cc
         ${LITE_DIR}/src/runtime/thread_pool.c
         ${LITE_DIR}/src/runtime/parallel_executor.cc
+        ${LITE_DIR}/src/runtime/infer_manager.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/executor.cc
@@ -145,6 +147,8 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/scheduler.cc
         ${LITE_DIR}/src/common/graph_util.cc
+        ${LITE_DIR}/src/common/prim_util.cc
+        ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/string_util.cc
@@ -201,7 +205,6 @@ if(ENABLE_CONVERTER)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
             ${TEST_CASE_TFLITE_PARSERS_SRC}
-            ${TOP_DIR}/mindspore/core/utils/flags.cc
             ${LITE_DIR}/tools/common/protobuf_utils.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
@@ -231,7 +234,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/group_depthwise_op_convert_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/tflite_inputs_order_exchange_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/tflite_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/update_conv2d_param_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_cast_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_transpose_node_remove_pass.cc
@@ -239,13 +242,13 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/mindir_adjust_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/mindir_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/onnx_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/functionalize_control_op_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/functionalize_while.cc
             ${LITE_DIR}/tools/optimizer/graph/inputs_adjust_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/primitive_adjust_pass.cc
             )
 endif()
 ### train
@@ -253,6 +256,7 @@ if(SUPPORT_TRAIN)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
             ${LITE_DIR}/src/train/train_populate_parameter.cc
+            ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
             ${LITE_DIR}/src/train/train_session.cc
             ${LITE_DIR}/src/train/transfer_session.cc
             ${LITE_DIR}/src/train/train_model.cc
@@ -261,6 +265,8 @@ if(SUPPORT_TRAIN)
 else()
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
+            ${LITE_DIR}/src/train/train_populate_parameter.cc
+            ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
             ${LITE_DIR}/src/lite_session.cc
             )
 endif()
@@ -270,6 +276,7 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
     ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
+    ${TEST_DIR}/ut/nnacl/infer/*.cc
 )
 
 file(GLOB_RECURSE TEST_CASE_KERNEL_TRAIN_SRC
@@ -293,6 +300,7 @@ if(ENABLE_CONVERTER)
             ${TEST_DIR}/st/converter_test.cc
             ${TEST_DIR}/st/control_flow_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
+            ${TEST_DIR}/common/import_from_meta_graphT.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
@@ -334,9 +342,9 @@ if(ENABLE_FP16)
             )
 endif()
 
-if(SUPPORT_TRAIN)
+if(ENABLE_FP16 AND SUPPORT_TRAIN)
     file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC_GRAD
-        ${TEST_DIR}/ut/src/runtime/kernel/arm/fp6_grad/*.cc)
+        ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16_grad/*.cc)
     list(APPEND TEST_SRC ${TEST_CASE_KERNEL_FP16_SRC_GRAD})
 endif()
 
@@ -345,9 +353,6 @@ add_dependencies(lite-test fbs_src)
 
 target_link_libraries(lite-test dl mindspore::gtest)
 
-if(SUPPORT_TRAIN)
-    target_link_libraries(lite-test minddata-lite)
-endif()
 if(ENABLE_MINDRT)
     target_link_libraries(lite-test mindrt_mid)
 endif()
@@ -358,6 +363,8 @@ endif()
 
 if(PLATFORM_ARM)
     target_link_libraries(lite-test log)
+else()
+    target_link_libraries(lite-test ${SECUREC_LIBRARY} pthread)
 endif()
 
 if(SUPPORT_NPU)
@@ -367,7 +374,6 @@ endif()
 if(ENABLE_CONVERTER)
     add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
-            anf_importer_mid
             anf_exporter_mid
             tflite_parser_mid
             caffe_parser_mid
@@ -377,12 +383,10 @@ if(ENABLE_CONVERTER)
             fusion_mid
             quantizer_mid
             proto_mid
-            pthread
             mindspore::protobuf
             mindspore::eigen
             mindspore::json
-            mindspore_core
+            -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::glog
-            ${SECUREC_LIBRARY}
             )
 endif()

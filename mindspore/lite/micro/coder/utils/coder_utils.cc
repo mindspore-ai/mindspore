@@ -38,7 +38,7 @@ void TensorDataToFile(const lite::Tensor *tensor, std::ofstream &ofs) {
   }
   int len = tensor->ElementsNum();
   for (int i = 0; i < len; ++i) {
-    ofs << data[i] << ", ";
+    ofs << std::to_string(data[i]) << ", ";
     if (i % NUM == NUM - 1) {
       ofs << "\n";
     }
@@ -59,6 +59,7 @@ void PrintTensorData(const lite::Tensor *tensor, std::ofstream &ofs) {
     case kNumberTypeInt:
     case kNumberTypeInt32:
       TensorDataToFile<int32_t>(tensor, ofs);
+      break;
     case kNumberTypeInt64:
       TensorDataToFile<int64_t>(tensor, ofs);
       break;
@@ -113,7 +114,7 @@ std::vector<std::string> AddDumpDataInfo(const std::vector<std::string> &blocks,
   for (size_t i = 0; i < num; ++i) {
     auto &opcoder = opcoders.at(i);
     std::string code = blocks.at(i);
-    std::string name = opcoder->ID();
+    std::string name = opcoder->name();
     code += "    {\n";
     code += "      FILE *output_file = fopen(\"./" + name + ".ir\", \"w\");\n";
     code += "      fprintf(output_file, \"Node:" + name + "\\n\");\n";

@@ -34,12 +34,8 @@ int SqueezeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
     MS_LOG(ERROR) << "New squeeze npu operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
-  std::vector<int64_t> axes;
-  for (int i = 0; i < axes_.size(); i++) {
-    axes.push_back(axes_[i]);
-  }
   op_->set_input_x(*npu_inputs[0]);
-  op_->set_attr_axis(axes);
+  op_->set_attr_axis(axes_);
   return RET_OK;
 }
 

@@ -137,10 +137,7 @@ int ReduceMeanHW(int n, int plane, int count, int c, int8_t *in_data, int8_t *ou
                                                               quant_arg.multiplier_),
                             quant_arg.right_shift_);
       mean += bias;
-      mean = MSMIN(mean, INT8_MAX);
-      mean = MSMAX(mean, INT8_MIN);
-      out_ptr[0] = mean;
-      out_ptr++;
+      *out_ptr++ = MSMAX(MSMIN(mean, INT8_MAX), INT8_MIN);
     }
   }
   return NNACL_OK;
@@ -243,13 +240,7 @@ int ReduceMeanLastAxis(const int outer_size, const int inner_size, const int axi
       }
       mean = mean_scaled + quant->out_zp_;
 
-      if (mean > INT8_MAX) {
-        *inner_dst = INT8_MAX;
-      } else if (mean < INT8_MIN) {
-        *inner_dst = INT8_MIN;
-      } else {
-        *inner_dst = (int8_t)mean;
-      }
+      *inner_dst = MSMAX(MSMIN(mean, INT8_MAX), INT8_MIN);
     }
   }
   return NNACL_OK;

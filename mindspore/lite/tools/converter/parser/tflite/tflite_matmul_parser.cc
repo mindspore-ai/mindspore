@@ -18,28 +18,25 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include "ops/mat_mul.h"
 
-namespace mindspore::lite {
-PrimitiveC *TfliteMatMulParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteMatMulParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::MatMul>();
 
-  std::unique_ptr<schema::MatMulT> attr = std::make_unique<schema::MatMulT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsBatchMatMulOptions();
-  attr->transposeA = tflite_attr->adj_x;
-  attr->transposeB = tflite_attr->adj_y;
-  primitive->value.type = schema::PrimitiveType_MatMul;
-  primitive->value.value = attr.release();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op LRN attr failed";
+    return nullptr;
+  }
+  prim->set_transpose_a(tflite_attr->adj_x);
+  prim->set_transpose_b(tflite_attr->adj_y);
 
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

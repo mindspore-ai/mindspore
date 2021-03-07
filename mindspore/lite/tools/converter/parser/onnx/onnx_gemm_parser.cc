@@ -17,37 +17,30 @@
 #include "tools/converter/parser/onnx/onnx_gemm_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/make_tuple.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxGemmParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                     const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx IdentityParser";
+ops::PrimitiveC *OnnxGemmParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::MakeTuple>();
+
   auto node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser("MatMul");
   if (node_parser == nullptr) {
     MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed.";
     return nullptr;
   }
-  auto *matmul_primitive = node_parser->ParseLitePrimitive(onnx_graph, onnx_node);
+  auto *matmul_primitive = node_parser->Parse(onnx_graph, onnx_node);
+  prim->AddAttr("MatMul", std::shared_ptr<ops::PrimitiveC>(matmul_primitive));
 
   node_parser = OnnxNodeParserRegistry::GetInstance()->GetNodeParser("BiasAdd");
   if (node_parser == nullptr) {
     MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed.";
     return nullptr;
   }
+  auto *bias_add_primitive = node_parser->Parse(onnx_graph, onnx_node);
+  prim->AddAttr("BiasAdd", std::shared_ptr<ops::PrimitiveC>(bias_add_primitive));
 
-  auto *bias_add_primitive = node_parser->ParseLitePrimitive(onnx_graph, onnx_node);
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-
-  primitive->value.type = schema::PrimitiveType_MakeTuple;
-  auto primitve_c = PrimitiveC::Create(primitive.release());
-  primitve_c->set_attr("MatMul", std::shared_ptr<lite::PrimitiveC>(matmul_primitive));
-  primitve_c->set_attr("BiasAdd", std::shared_ptr<lite::PrimitiveC>(bias_add_primitive));
-  return primitve_c;
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxGemmParser("Gemm", new OnnxGemmParser());

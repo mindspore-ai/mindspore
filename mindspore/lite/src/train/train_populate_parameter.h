@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_LITE_SRC_TRAIN_TRAIN_POPULATE_PARAMETER_H_
 #define MINDSPORE_LITE_SRC_TRAIN_TRAIN_POPULATE_PARAMETER_H_
 
-#include "src/ops/primitive_c.h"
-
 namespace mindspore::kernel {
 
 void PopulateTrainParameters();

@@ -24,7 +24,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Slice;
+using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
 
@@ -90,5 +90,5 @@ int SliceInt8CPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Slice, LiteKernelCreator<SliceInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SliceFusion, LiteKernelCreator<SliceInt8CPUKernel>)
 }  // namespace mindspore::kernel

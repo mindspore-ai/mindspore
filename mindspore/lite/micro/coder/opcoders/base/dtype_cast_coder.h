@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <memory>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 
 namespace mindspore::lite::micro {

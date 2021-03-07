@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 #include "tools/converter/parser/caffe/caffe_interp_parser.h"
 #include <memory>
+#include "ops/resize.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                  const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_unique<ops::Resize>();
+
+  prim->set_method(mindspore::ResizeMethod::LINEAR);
+  prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
 
   const caffe::InterpParameter &interp_param = proto.interp_param();
   if (interp_param.has_height()) {
@@ -34,7 +33,7 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
       MS_LOG(ERROR) << "Interp height must be > 0";
       return nullptr;
     }
-    attr->newHeight = height;
+    prim->set_new_height(height);
   }
 
   if (interp_param.has_width()) {
@@ -43,18 +42,13 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
       MS_LOG(ERROR) << "Interp width must be > 0";
       return nullptr;
     }
-    attr->newWidth = width;
+    prim->set_new_width(width);
   }
-  attr->method = schema::ResizeMethod_LINEAR;
-  attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Resize;
-  primitive->value.value = attr.release();
-  auto primitive_c = PrimitiveC::Create(primitive.release());
+
   if (interp_param.has_zoom_factor()) {
-    primitive_c->AddAttr("zoom_factor", MakeValue(interp_param.zoom_factor()));
+    prim->AddAttr("zoom_factor", MakeValue(interp_param.zoom_factor()));
   }
-  return primitive_c;
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeInterpParser("Interp", new CaffeInterpParser());

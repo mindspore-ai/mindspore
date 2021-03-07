@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/ops/hashtable_lookup.h"
-#include "src/common/string_util.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateHashtableLookupParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateHashtableLookupParameter(const void *prim) {
   OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "new OpParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(OpParameter));
-  param->type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  param->type_ = primitive->value_type();
   return param;
 }
-Registry HashtableLookupParameterRegistry(schema::PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter);
+Registry HashtableLookupParameterRegistry(schema::PrimitiveType_HashtableLookup, PopulateHashtableLookupParameter,
+                                          SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

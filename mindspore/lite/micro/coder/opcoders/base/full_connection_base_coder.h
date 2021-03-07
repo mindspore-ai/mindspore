@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_BASE_FULLY_CONNECTED_BASE_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/matmul_parameter.h"
 
 namespace mindspore::lite::micro {
@@ -29,7 +29,8 @@ class FullConnectionBaseCoder : public OperatorCoder {
       : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~FullConnectionBaseCoder() override;
-  int Init();
+
+  virtual int Init();
 
  protected:
   MatMulParameter *fc_param_{nullptr};

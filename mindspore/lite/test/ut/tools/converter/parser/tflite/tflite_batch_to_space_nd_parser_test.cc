@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,8 @@ TEST_F(TestTfliteParserBatchToSpaceNd, OpType) {
 TEST_F(TestTfliteParserBatchToSpaceNd, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsBatchToSpace(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsBatchToSpace();
-  const std::vector<int> blockShape = {2, 2};
-  ASSERT_EQ(val->blockShape, blockShape);
-  const std::vector<int> crops = {0, 0, 2, 0};
-  ASSERT_EQ(val->crops, crops);
+  const std::vector<int64_t> blockShape = {2, 2};
+  ASSERT_EQ(val->block_size, blockShape);
 }
 
 }  // namespace mindspore

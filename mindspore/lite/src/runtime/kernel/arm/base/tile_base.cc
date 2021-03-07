@@ -21,7 +21,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Tile;
+using mindspore::schema::PrimitiveType_TileFusion;
 
 namespace mindspore::kernel {
 namespace {
@@ -147,7 +147,7 @@ int TileCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Tile, LiteKernelCreator<TileCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Tile, LiteKernelCreator<TileCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Tile, LiteKernelCreator<TileCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
 }  // namespace mindspore::kernel

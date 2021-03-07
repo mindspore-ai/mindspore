@@ -28,8 +28,8 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_ArgMax;
-using mindspore::schema::PrimitiveType_ArgMin;
+using mindspore::schema::PrimitiveType_ArgMaxFusion;
+using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
 
@@ -152,7 +152,7 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   param->dims_size_ = in_tensors_[0]->shape().size();
   param->axis_ = (param->axis_ + param->dims_size_) % param->dims_size_;
   param->axis_ = GetBroadcastGpuAxis(param->dims_size_, param->axis_);
-  param->get_max_ = (Type() == PrimitiveType_ArgMax);
+  param->get_max_ = (Type() == PrimitiveType_ArgMaxFusion);
   param->keep_dims_ =
     param->keep_dims_ || param->topk_ > 1 || in_tensors_[0]->shape().size() == out_tensors_[0]->shape().size();
 
@@ -171,8 +171,8 @@ int ArgMinMaxOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMin, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMin, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMax, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMax, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMinFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMinFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMaxFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMaxFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
 }  // namespace mindspore::kernel

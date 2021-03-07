@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,17 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_UNSQUEEZE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_UNSQUEEZE_NPU_H_
 #include <vector>
-#include "include/graph/op/all_ops.h"
-#include "src/ops/unsqueeze.h"
+#include "nnacl/unsqueeze_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class UnsqueezeNPUKernel : public NPUKernel {
  public:
   UnsqueezeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto unsqueeze = reinterpret_cast<const mindspore::lite::Unsqueeze *>(primitive);
-    axis_ = unsqueeze->GetAxis();
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
+    auto *param = reinterpret_cast<UnSqueezeParameter *>(parameter);
+    axis_.insert(axis_.begin(), param->dims_, param->dims_ + param->num_dim_);
   }
   ~UnsqueezeNPUKernel() override;
 

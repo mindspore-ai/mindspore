@@ -39,8 +39,6 @@ void CodeBenchmarkSetBuffer(std::ofstream &ofs, const std::string &module_name);
 
 void CodeBenchmarkInitWeight(std::ofstream &ofs, const std::string &module_name);
 
-void CodeBenchmarkConfigThread(std::ofstream &ofs);
-
 void CodeBenchmarkInference(std::ofstream &ofs, const std::string &module_name);
 
 void CodeBenchmarkPrintOutputs(std::ofstream &ofs, const std::string &module_name);

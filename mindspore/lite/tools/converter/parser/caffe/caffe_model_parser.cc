@@ -17,12 +17,18 @@
 #include <vector>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <algorithm>
 #include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
 #include "tools/converter/parser/caffe/caffe_inspector.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "src/param_value_lite.h"
+#include "ops/return.h"
+#include "ops/make_tuple.h"
+#include "ops/tuple_get_item.h"
+#include "ir/func_graph.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore::lite {
 bool IsSkipedLayer(const caffe::LayerParameter &layer) {
@@ -90,6 +96,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     }
 
     // parse primitive
+    MS_LOG(INFO) << "parse op : " << layer.type();
     auto node_parser = CaffeNodeParserRegistry::GetInstance()->GetNodeParser(layer.type());
     if (node_parser == nullptr) {
       NoSupportOp::GetInstance()->InsertOp(layer.type());
@@ -101,7 +108,7 @@ STATUS CaffeModelParser::ConvertLayers() {
       continue;
     }
 
-    auto primitive_c = node_parser->ParseLitePrimitive(layer, weight);
+    auto primitive_c = node_parser->Parse(layer, weight);
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "parse node " << layer.name() << " failed.";
       status = RET_ERROR;
@@ -125,7 +132,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     }
 
     // build cnode
-    std::vector<AnfNodePtr> op_inputs = {NewValueNode(std::shared_ptr<lite::PrimitiveC>(primitive_c))};
+    std::vector<AnfNodePtr> op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitive_c))};
     op_inputs.insert(op_inputs.end(), input_nodes.begin(), input_nodes.end());
     op_inputs.insert(op_inputs.end(), const_parameters.begin(), const_parameters.end());
     auto new_cnode = func_graph_ptr_->NewCNode(op_inputs);
@@ -244,9 +251,9 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
   caffeInspector.InspectModel(caffe_model_);
   if (caffeInspector.GetGraphOutput().size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = GetMakeTuplePrim();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
-      MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
+      MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
@@ -263,9 +270,9 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     make_tuple_cnode->set_fullname_with_scope("return tuple");
 
     std::vector<AnfNodePtr> op_inputs;
-    auto return_prim_ptr = GetReturnPrim();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
-      MS_LOG(ERROR) << "GetReturnPrim return nullptr";
+      MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
     auto value_node = NewValueNode(return_prim_ptr);
@@ -275,9 +282,9 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
     cnode->set_fullname_with_scope("Return");
     func_graph_ptr_->set_return(cnode);
   } else {
-    auto returnPrim = GetReturnPrim();
+    auto returnPrim = std::make_shared<ops::Return>();
     if (returnPrim == nullptr) {
-      MS_LOG(ERROR) << "GetReturnPrim return nullptr";
+      MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
     auto valueNode = NewValueNode(returnPrim);
@@ -300,23 +307,25 @@ STATUS CaffeModelParser::ConvertGraphOutputs() {
 }
 
 STATUS CaffeModelParser::ConvertLayerQuantParams(const caffe::LayerParameter &layer,
-                                                 const caffe::LayerParameter &weight, lite::PrimitiveC *primitive_c) {
+                                                 const caffe::LayerParameter &weight, ops::PrimitiveC *primitive_c) {
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
     return RET_NULL_PTR;
   }
+  auto quant_params_holder = std::make_shared<QuantParamHolder>();
   for (auto input_idx : layer.bottom()) {
     std::vector<schema::QuantParamT> notinited_quant_params(1);
-    primitive_c->AddInputQuantParam(notinited_quant_params);
+    quant_params_holder->AddInputQuantParam(notinited_quant_params);
   }
   for (auto input_idx : weight.blobs()) {
     std::vector<schema::QuantParamT> notinited_quant_params(1);
-    primitive_c->AddInputQuantParam(notinited_quant_params);
+    quant_params_holder->AddInputQuantParam(notinited_quant_params);
   }
   for (auto output_idx : layer.top()) {
     std::vector<schema::QuantParamT> notinited_quant_params(1);
-    primitive_c->AddOutputQuantParam(notinited_quant_params);
+    quant_params_holder->AddOutputQuantParam(notinited_quant_params);
   }
+  primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
 
@@ -424,9 +433,9 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CN
   AbstractBasePtrList abstract_list;
   for (int i = 0; i < layer.top_size(); i++) {
     abstract_list.emplace_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
-    auto tuple_get_item_prim_ptr = GetTupleGetItemPrim();
+    auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
     if (tuple_get_item_prim_ptr == nullptr) {
-      MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
+      MS_LOG(ERROR) << "new TupleGetItem failed";
       return RET_NULL_PTR;
     }
     auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
@@ -457,10 +466,4 @@ std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) 
   }
   return layer.name();
 }
-
-MetaGraphT *CaffeModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                        const QuantType &quant_type) {
-  return nullptr;
-}
-
 }  // namespace mindspore::lite

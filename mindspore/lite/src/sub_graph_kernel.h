@@ -57,7 +57,7 @@ class SubGraphKernel : public LiteKernel {
   SubGraphKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                  std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
                  std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
-      : LiteKernel(nullptr, inputs, outputs, ctx, nullptr),
+      : LiteKernel(nullptr, inputs, outputs, ctx),
         nodes_(std::move(nodes)),
         in_nodes_(std::move(in_kernels)),
         out_nodes_(std::move(out_kernels)) {

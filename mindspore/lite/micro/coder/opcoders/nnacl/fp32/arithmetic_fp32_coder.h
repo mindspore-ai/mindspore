@@ -25,9 +25,9 @@
 #define DEFAULT_ARITHMETIC_NDIMS 10
 namespace mindspore::lite::micro::nnacl {
 
-using mindspore::schema::PrimitiveType_Add;
+using mindspore::schema::PrimitiveType_AddFusion;
 
-using mindspore::schema::PrimitiveType_Div;
+using mindspore::schema::PrimitiveType_DivFusion;
 
 using mindspore::schema::PrimitiveType_Equal;
 
@@ -51,7 +51,7 @@ using mindspore::schema::PrimitiveType_Maximum;
 
 using mindspore::schema::PrimitiveType_Minimum;
 
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 
 using mindspore::schema::PrimitiveType_NotEqual;
 
@@ -59,7 +59,7 @@ using mindspore::schema::PrimitiveType_RealDiv;
 
 using mindspore::schema::PrimitiveType_SquaredDifference;
 
-using mindspore::schema::PrimitiveType_Sub;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 using mindspore::schema::PrimitiveType_Eltwise;
 

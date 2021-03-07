@@ -17,64 +17,131 @@
 #include "tools/converter/parser/tflite/tflite_conv_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/fusion/conv2d_fusion.h"
 
-namespace mindspore::lite {
-lite::PrimitiveC *TfliteConvParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteConvParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Conv2DFusion>();
+
+  prim->set_pad({0, 0, 0, 0});
+  prim->set_group(1);
+  prim->set_format(mindspore::Format::NHWC);
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
   const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  std::unique_ptr<schema::Conv2DT> attr = std::make_unique<schema::Conv2DT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
   const auto &tflite_attr = tflite_op->builtin_options.AsConv2DOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get conv attr failed";
     return nullptr;
   }
-  attr->group = 1;
-  attr->strideW = tflite_attr->stride_w;
-  attr->strideH = tflite_attr->stride_h;
-  attr->dilateH = tflite_attr->dilation_h_factor;
-  attr->dilateW = tflite_attr->dilation_w_factor;
-  attr->padMode = GetPadMode(tflite_attr->padding);
-  attr->format = schema::Format::Format_NHWC;
-  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
+  prim->set_stride({tflite_attr->stride_h, tflite_attr->stride_w});
+  prim->set_dilation({tflite_attr->dilation_h_factor, tflite_attr->dilation_w_factor});
+  auto padMode = GetPadMode(tflite_attr->padding);
+  prim->set_pad_mode(padMode);
+  prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  // get the conv op weight tensor
-  auto weight_index = tflite_op->inputs[1];
-  const auto &weight_tensor = tflite_subgraph->tensors[weight_index];
+  // get weight tensor
+  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
   if (weight_tensor == nullptr) {
     MS_LOG(ERROR) << "the weight tensor is null";
     return nullptr;
   }
   auto weight_shape = weight_tensor->shape;
-  attr->channelIn = weight_shape[3];
-  attr->channelOut = weight_shape[0];
-  attr->kernelH = weight_shape[1];
-  attr->kernelW = weight_shape[2];
+  prim->set_in_channel(weight_shape[3]);
+  prim->set_out_channel(weight_shape[0]);
+  prim->set_kernel_size({weight_shape[1], weight_shape[2]});
 
   // calculate pad params
-  auto data_index = tflite_op->inputs[0];
-  const auto &data_tensor = tflite_subgraph->tensors[data_index];
+  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs[0]);
   std::vector<int64_t> params;
-  int status =
-    getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->kernelH, attr->kernelW, &params);
+  int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w, weight_shape[1],
+                               weight_shape[2], &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return nullptr;
   } else if (status == RET_OK) {
-    attr->padUp = params.at(0);
-    attr->padDown = params.at(1);
-    attr->padLeft = params.at(2);
-    attr->padRight = params.at(3);
+    prim->set_pad_list(params);
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Conv2D;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteDepthwiseConv2DParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Conv2DFusion>();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "new Conv2DFusion failed";
+    return nullptr;
+  }
+
+  prim->set_pad({0, 0, 0, 0});
+  prim->set_format(mindspore::Format::NHWC);
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
+    return nullptr;
+  }
+  const auto &tflite_attr = tflite_op->builtin_options.AsDepthwiseConv2DOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op de attr failed";
+    return nullptr;
+  }
+  prim->set_stride({tflite_attr->stride_h, tflite_attr->stride_w});
+  prim->set_dilation({tflite_attr->dilation_h_factor, tflite_attr->dilation_w_factor});
+  auto padMode = GetPadMode(tflite_attr->padding);
+  prim->set_pad_mode(padMode);
+  prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
+
+  // get weight tensor
+  const auto &weight_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(1));
+  if (weight_tensor == nullptr) {
+    MS_LOG(ERROR) << "the weight tensor is null";
+    return nullptr;
+  }
+  auto weight_shape = weight_tensor->shape;
+  prim->set_kernel_size({weight_shape[1], weight_shape[2]});
+  prim->set_in_channel(weight_shape[3]);
+  prim->set_group(weight_shape[3] / tflite_attr->depth_multiplier);
+
+  // get data tensor
+  const auto &data_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
+  if (data_tensor == nullptr) {
+    MS_LOG(ERROR) << "data_tensor is nullptr";
+    return nullptr;
+  }
+  auto data_shape = data_tensor->shape;
+  if (!data_shape.empty()) {
+    prim->set_out_channel(data_shape[3] * tflite_attr->depth_multiplier);
+  }
+
+  // calculate pad params
+  std::vector<int64_t> params;
+  int status = getPaddingParam(data_tensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w, weight_shape[1],
+                               weight_shape[2], &params);
+  if (status != RET_OK && status != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "get padding params failed";
+    return nullptr;
+  } else if (status == RET_OK) {
+    prim->set_pad_list(params);
+  }
+  prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteConv2DParser(tflite::BuiltinOperator_CONV_2D, new TfliteConvParser());
-}  // namespace mindspore::lite
+TfliteNodeRegister g_tfliteDepthwiseConv2DParser(tflite::BuiltinOperator_DEPTHWISE_CONV_2D,
+                                                 new TfliteDepthwiseConv2DParser());
+
+}  // namespace lite
+}  // namespace mindspore

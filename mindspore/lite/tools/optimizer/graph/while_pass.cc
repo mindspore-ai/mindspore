@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +16,16 @@
 #include "tools/optimizer/graph/while_pass.h"
 #include <vector>
 #include <memory>
-#include <algorithm>
-#include "mindspore/lite/include/errorcode.h"
-#include "mindspore/lite/src/ops/primitive_c.h"
-#include "tools/anf_importer/import_from_meta_graphT.h"
+#include "ops/switch.h"
+#include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/ops/primitive_c.h"
-#include "schema/inner/model_generated.h"
-#include "src/tensor.h"
 #include "src/common/log_adapter.h"
-#include "src/ops/switch.h"
-#include "src/ops/partial.h"
 
 namespace mindspore::opt {
 
 ValueNodePtr WhilePass::GetSwitchAnfPrim() {
-  auto switch_primitiveT = new (std::nothrow) schema::PrimitiveT;
-  if (switch_primitiveT == nullptr) {
-    MS_LOG(ERROR) << "new switch_primitiveT failed";
-    return nullptr;
-  }
-  switch_primitiveT->value.type = schema::PrimitiveType_Switch;
-  switch_primitiveT->value.value = new (std::nothrow) schema::SwitchT;
-  if (switch_primitiveT->value.value == nullptr) {
-    MS_LOG(ERROR) << "new MakeTupleT failed";
-    delete (switch_primitiveT);
-    return nullptr;
-  }
-
-  auto partial_prim = std::make_shared<lite::Switch>(switch_primitiveT);
-  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
+  auto switch_prim = std::make_shared<mindspore::ops::Switch>();
+  ValueNodePtr partial_anf_prim = NewValueNode(switch_prim);
   return partial_anf_prim;
 }
 
@@ -56,7 +36,7 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    if (opt::GetCNodeType(node) != schema::PrimitiveType_While) {
+    if (!CheckPrimitiveType(node, prim::kPrimWhile)) {
       continue;
     }
     auto while_cnode = node->cast<CNodePtr>();
@@ -93,7 +73,7 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
     // concat body_fg output to cond_fg input
     auto body_output = body_fg->output();
     auto body_output_cnode = utils::cast<CNodePtr>(body_output);
-    auto prim = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(body_output_cnode->input(0));
+    auto prim = GetValueNode<PrimitiveCPtr>(body_output_cnode->input(0));
     if (prim == nullptr) {
       MS_LOG(ERROR) << "Get PrimitiveC of node:" << body_output_cnode->fullname_with_scope() << " failed.";
       return false;
@@ -101,7 +81,7 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
 
     // concat body to cond
     std::vector<AnfNodePtr> body_to_cond_inputs{cond_vnode};
-    if ((schema::PrimitiveType)(prim->Type()) == schema::PrimitiveType_MakeTuple) {
+    if (CheckPrimitiveType(body_output_cnode, kPrimMakeTuple)) {
       for (size_t i = 1; i < body_output_cnode->inputs().size(); ++i) {
         body_to_cond_inputs.emplace_back(body_output_cnode->input(i));
       }

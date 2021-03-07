@@ -17,13 +17,15 @@
 #define MINDSPORE_LITE_NNACL_LAYER_NORM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 enum ElementwiseMode { ELEMENTWISE_NOT = 0, ELEMENTWISE_PER_CHANNEL = 1, ELEMENTWISE_PER_NUM = 2 };
 typedef struct LayerNormParameter {
   // Primitive parameter
   OpParameter op_parameter_;
   float epsilon_;
+  enum ElementwiseMode elementwise_mode_;
+  bool elementwise_affine_;
   int begin_norm_axis_;
   int begin_params_axis_;
   // shape correlative

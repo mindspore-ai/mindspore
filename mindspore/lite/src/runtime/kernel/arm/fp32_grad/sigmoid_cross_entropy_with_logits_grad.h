@@ -25,9 +25,8 @@ class SigmoidCrossEntropyWithLogitsGradCPUKernel : public LiteKernel {
  public:
   explicit SigmoidCrossEntropyWithLogitsGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,
-                                                      const lite::InnerContext *ctx,
-                                                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                                      const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~SigmoidCrossEntropyWithLogitsGradCPUKernel() override {}
   int Init() override;
   int ReSize() override;

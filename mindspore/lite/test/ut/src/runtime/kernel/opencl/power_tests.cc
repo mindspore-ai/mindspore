@@ -16,7 +16,7 @@
 #include "ut/src/runtime/kernel/opencl/common.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/power.h"
 
-// PrimitiveType_Power: src/ops/populate/power_populate.cc
+// PrimitiveType_PowFusion: src/ops/populate/power_populate.cc
 
 using mindspore::lite::Tensor;
 using mindspore::schema::Format::Format_NHWC;
@@ -27,7 +27,7 @@ class TestPowerOpenCLCI : public CommonTest {
 };
 // PrimitiveType_Concat: src/ops/populate/concat_populate.cc
 OpParameter *CreateParameter(bool broadcast_, float shift_, float scale_, float power_ = 2) {
-  auto *param = test::CreateParameter<PowerParameter>(schema::PrimitiveType_Power);
+  auto *param = test::CreateParameter<PowerParameter>(schema::PrimitiveType_PowFusion);
   param->power_ = power_;
   param->broadcast_ = broadcast_;
   param->shift_ = shift_;

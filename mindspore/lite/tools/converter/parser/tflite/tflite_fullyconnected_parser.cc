@@ -17,39 +17,27 @@
 #include "tools/converter/parser/tflite/tflite_fullyconnected_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/fusion/full_connection.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteFullyConnectedParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteFullyConnectedParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::FullConnection>();
 
-  std::unique_ptr<schema::FullConnectionT> attr = std::make_unique<schema::FullConnectionT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+  prim->set_axis(1);
+  prim->set_use_axis(false);
+  prim->set_has_bias(tflite_op->inputs.size() > 2 && tflite_op->inputs.at(2) != -1);
 
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsFullyConnectedOptions();
   if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op fully connect attr failed";
+    MS_LOG(ERROR) << "get FullConnection attr failed";
     return nullptr;
   }
+  prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
-  bool hasBias = tflite_op->inputs.size() > 2 && tflite_op->inputs[2] != -1;
-
-  attr->hasBias = hasBias;
-  attr->axis = 1;
-  attr->useAxis = false;
-  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
-
-  primitive->value.type = schema::PrimitiveType_FullConnection;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteFullyConnectedParser(tflite::BuiltinOperator_FULLY_CONNECTED,

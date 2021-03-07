@@ -22,53 +22,62 @@
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/transpose.cl.inc"
 #endif
+#include "src/runtime/kernel/opencl/utils.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Nchw2Nhwc;
-using mindspore::schema::PrimitiveType_Nhwc2Nchw;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
 
 int TransposeOpenCLKernel::CheckSpecs() {
-  if ((in_tensors_.size() != 1 && in_tensors_.size() != 2) || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Transpose input output size unsupported.";
     return RET_ERROR;
   }
-  tensor_size_ = GpuTensorInfo(out_tensors_[0]);
-  if (tensor_size_.NDim > 4) {
+  int in_ndim = in_tensors_.at(0)->shape().size();
+  int out_ndim = out_tensors_.at(0)->shape().size();
+  if (in_ndim != out_ndim) {
+    MS_LOG(ERROR) << "Transpose only support in_ndim equal to out_ndim.";
+    return RET_ERROR;
+  }
+  if (in_ndim > 4) {
     MS_LOG(ERROR) << "Transpose don't support 5d tensor or higher.";
+    return RET_ERROR;
+  }
+  if (CheckParamLikeTensor("Transpose", "perm", in_tensors_.at(1), kNumberTypeInt32, {in_ndim}) != RET_OK) {
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 int TransposeOpenCLKernel::Prepare() {
-  auto param = reinterpret_cast<TransposeParameter *>(op_parameter_);
+  tensor_size_ = GpuTensorInfo(out_tensors_.front());
+  auto *perm = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+  int num_axes = in_tensors_.at(1)->shape().at(0);
   if (tensor_size_.NDim == 2) {
-    perm_4d_[0] = tensor_size_.AlignAxis(param->perm_[0]);
+    perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
     perm_4d_[1] = 1;
     perm_4d_[2] = 2;
-    perm_4d_[3] = tensor_size_.AlignAxis(param->perm_[1]);
-    if (param->num_axes_ != tensor_size_.NDim) {
+    perm_4d_[3] = tensor_size_.AlignAxis(perm[1]);
+    if (num_axes != tensor_size_.NDim) {
       perm_4d_[0] = 0;
       perm_4d_[1] = 1;
       perm_4d_[2] = 2;
       perm_4d_[3] = 3;
     }
   } else if (tensor_size_.NDim == 3) {
-    perm_4d_[0] = tensor_size_.AlignAxis(param->perm_[0]);
+    perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
     perm_4d_[1] = 1;
-    perm_4d_[2] = tensor_size_.AlignAxis(param->perm_[1]);
-    perm_4d_[3] = tensor_size_.AlignAxis(param->perm_[2]);
+    perm_4d_[2] = tensor_size_.AlignAxis(perm[1]);
+    perm_4d_[3] = tensor_size_.AlignAxis(perm[2]);
   } else if (tensor_size_.NDim == 4) {
-    perm_4d_[0] = tensor_size_.AlignAxis(param->perm_[0]);
-    perm_4d_[1] = tensor_size_.AlignAxis(param->perm_[1]);
-    perm_4d_[2] = tensor_size_.AlignAxis(param->perm_[2]);
-    perm_4d_[3] = tensor_size_.AlignAxis(param->perm_[3]);
+    perm_4d_[0] = tensor_size_.AlignAxis(perm[0]);
+    perm_4d_[1] = tensor_size_.AlignAxis(perm[1]);
+    perm_4d_[2] = tensor_size_.AlignAxis(perm[2]);
+    perm_4d_[3] = tensor_size_.AlignAxis(perm[3]);
   } else {
     perm_4d_[0] = 0;
     perm_4d_[1] = 1;
@@ -161,8 +170,4 @@ int TransposeOpenCLKernel::Run() {
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Transpose, OpenCLKernelCreator<TransposeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Transpose, OpenCLKernelCreator<TransposeOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, OpenCLKernelCreator<TransposeOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Nhwc2Nchw, OpenCLKernelCreator<TransposeOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, OpenCLKernelCreator<TransposeOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Nchw2Nhwc, OpenCLKernelCreator<TransposeOpenCLKernel>)
 }  // namespace mindspore::kernel

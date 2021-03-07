@@ -16,115 +16,73 @@
 
 #include "tools/converter/parser/caffe/caffe_deconvolution_parser.h"
 #include <memory>
+#include "ops/fusion/conv2d_transpose_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS CaffeDeconvolutionParser::ParseGroupDeconvolution(schema::PrimitiveT *primitive, schema::DeConv2DT *attr) {
-  if (attr->group == 1) {
-    return RET_OK;
-  }
+ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &proto,
+                                                 const caffe::LayerParameter &weight) {
+  auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
 
-  std::unique_ptr<schema::DeDepthwiseConv2DT> deDepthwiseConv2DParam = std::make_unique<schema::DeDepthwiseConv2DT>();
-  if (deDepthwiseConv2DParam == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_ERROR;
-  }
-  deDepthwiseConv2DParam->format = attr->format;
-  deDepthwiseConv2DParam->channelIn = attr->channelOut;
-  deDepthwiseConv2DParam->channelMultiplier = attr->channelIn / attr->channelOut;
-  deDepthwiseConv2DParam->kernelW = attr->kernelW;
-  deDepthwiseConv2DParam->kernelH = attr->kernelH;
-  deDepthwiseConv2DParam->strideW = attr->strideW;
-  deDepthwiseConv2DParam->strideH = attr->strideH;
-  deDepthwiseConv2DParam->padMode = attr->padMode;
-  deDepthwiseConv2DParam->padUp = attr->padUp;
-  deDepthwiseConv2DParam->padDown = attr->padDown;
-  deDepthwiseConv2DParam->padLeft = attr->padLeft;
-  deDepthwiseConv2DParam->padRight = attr->padRight;
-  deDepthwiseConv2DParam->dilateW = attr->dilateW;
-  deDepthwiseConv2DParam->dilateH = attr->dilateH;
-  deDepthwiseConv2DParam->activationType = attr->activationType;
-  delete attr;
-  primitive->value.type = schema::PrimitiveType_DeDepthwiseConv2D;
-  primitive->value.value = deDepthwiseConv2DParam.release();
-  return RET_OK;
-}
-
-PrimitiveC *CaffeDeconvolutionParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                         const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::DeConv2DT> attr(new (std::nothrow) schema::DeConv2DT());
-
-  attr->format = schema::Format::Format_NCHW;
+  prim->set_pad({0, 0, 0, 0});
+  prim->set_format(mindspore::Format::NCHW);
+  prim->set_pad_mode(mindspore::PadMode::PAD);
 
   const caffe::ConvolutionParameter &convParam = proto.convolution_param();
   // parse pad
   std::vector<int64_t> pad(4, 0);
-  auto status = CaffeConvBaseParser::ParsePads(convParam, &pad);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
+  if (CaffeConvBaseParser::ParsePads(convParam, &pad) != RET_OK) {
     return nullptr;
   }
-  attr->padUp = pad[0];
-  attr->padDown = pad[1];
-  attr->padLeft = pad[2];
-  attr->padRight = pad[3];
+  prim->set_pad_list({pad[0], pad[1], pad[2], pad[3]});
 
   // parse stride
   std::vector<int64_t> stride(2, 0);
-  status = CaffeConvBaseParser::ParseStrides(convParam, &stride);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
+  if (CaffeConvBaseParser::ParseStrides(convParam, &stride) != RET_OK) {
     return nullptr;
   }
-  attr->strideH = stride[0];
-  attr->strideW = stride[1];
+  prim->set_stride({stride[0], stride[1]});
 
   // parse dilation
   std::vector<int64_t> dilation(2, 0);
-  status = CaffeConvBaseParser::ParseDilations(convParam, &dilation);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParseDilations for " << proto.name().c_str() << " failed";
+  if (CaffeConvBaseParser::ParseDilations(convParam, &dilation) != RET_OK) {
     return nullptr;
   }
-  attr->dilateH = dilation[0];
-  attr->dilateW = dilation[1];
+  prim->set_dilation({dilation[0], dilation[1]});
 
   // parse kernel
   std::vector<int64_t> kernel(2, 0);
-  status = CaffeConvBaseParser::ParseKernels(convParam, &kernel);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParseKernels for " << proto.name().c_str() << " failed";
+  if (CaffeConvBaseParser::ParseKernels(convParam, &kernel) != RET_OK) {
     return nullptr;
   }
-  attr->kernelH = kernel[0];
-  attr->kernelW = kernel[1];
+  prim->set_kernel_size({kernel[0], kernel[1]});
 
-  attr->group = CaffeConvBaseParser::ParseGroup(convParam, proto.type());
-  auto ret = CaffeConvBaseParser::ParseChannelOut(convParam, &(attr->channelOut));
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "deconv channel get failed";
+  // parse group
+  auto group = CaffeConvBaseParser::ParseGroup(convParam, proto.type());
+  prim->set_group(group);
+
+  // parse channelOut
+  int32_t channelOut;
+  if (CaffeConvBaseParser::ParseChannelOut(convParam, &channelOut) != RET_OK) {
     return nullptr;
   }
+  prim->set_out_channel((int64_t)channelOut);
+
+  // parse channelIN
   auto &weightBlob = weight.blobs(0);
   if (weightBlob.has_shape()) {
-    if (attr->group == 1)
-      attr->channelIn = weightBlob.shape().dim(0) * attr->group;
+    if (group == 1)
+      prim->set_in_channel(weightBlob.shape().dim(0) * group);
     else
-      attr->channelIn = weightBlob.shape().dim(1) * attr->group;
+      prim->set_in_channel(weightBlob.shape().dim(1) * group);
   } else {
-    attr->channelIn = weightBlob.num() * attr->group;
+    prim->set_in_channel(weightBlob.num() * group);
   }
-  attr->padMode = schema::PadMode_CAFFE;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_DeConv2D;
-  primitive->value.value = attr.release();
+  if (group != 1) {
+    prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+  }
 
-  status = ParseGroupDeconvolution(primitive.get(), primitive->value.AsDeConv2D());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Parse group deconvolution failed";
-    return nullptr;
-  }
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeDeconvolutionParser("Deconvolution", new CaffeDeconvolutionParser());

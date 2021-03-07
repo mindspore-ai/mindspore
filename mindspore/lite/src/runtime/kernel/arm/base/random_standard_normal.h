@@ -27,9 +27,8 @@ namespace mindspore::kernel {
 class RandomStandardNormalCPUKernel : public LiteKernel {
  public:
   RandomStandardNormalCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                                const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                                const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<RandomStandardNormalParam *>(parameter);
   }
   ~RandomStandardNormalCPUKernel() override = default;

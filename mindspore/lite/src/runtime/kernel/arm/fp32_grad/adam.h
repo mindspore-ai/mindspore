@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class AdamCPUKernel : public OptimizerKernel {
  public:
   explicit AdamCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                         const mindspore::lite::PrimitiveC *primitive)
-      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive, 5, 9), thread_count_(ctx->thread_num_) {
+                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : OptimizerKernel(parameter, inputs, outputs, ctx, 5, 9), thread_count_(ctx->thread_num_) {
     adam_param_ = reinterpret_cast<AdamParameter *>(parameter);
   }
   ~AdamCPUKernel() override {

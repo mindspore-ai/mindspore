@@ -15,7 +15,6 @@
  */
 #include "src/runtime/kernel/arm/fp32/arithmetic_fp32.h"
 #include "src/kernel_registry.h"
-#include "src/ops/arithmetic.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -25,7 +24,24 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 int ArithmeticCPUKernel::Init() {
-  InitRunFunction();
+  auto primitive_type = param_->op_parameter_.type_;
+  if (primitive_type == schema::PrimitiveType_Eltwise) {
+    switch (param_->eltwise_mode_) {
+      case schema::EltwiseMode_PROD:
+        primitive_type = schema::PrimitiveType_MulFusion;
+        break;
+      case schema::EltwiseMode_SUM:
+        primitive_type = schema::PrimitiveType_AddFusion;
+        break;
+      case schema::EltwiseMode_MAXIMUM:
+        primitive_type = schema::PrimitiveType_Maximum;
+        break;
+      default:
+        MS_LOG(ERROR) << "Eltwise mode not support, mode:" << param_->eltwise_mode_;
+        return RET_ERROR;
+    }
+  }
+  InitRunFunction(primitive_type);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -37,15 +53,7 @@ int ArithmeticCPUKernel::ReSize() {
     MS_LOG(ERROR) << "ArithmeticCPUKernel resize failed.";
     return RET_ERROR;
   }
-  auto prim = reinterpret_cast<const lite::Arithmetic *>(primitive_);
-  param_->broadcasting_ = prim->Broadcasting();
-  param_->ndim_ = prim->NDims();
-  param_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
-  param_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
-  param_->out_elements_num_ = out_tensors_[0]->ElementsNum();
-  memcpy(param_->in_shape0_, prim->InShape0().data(), prim->InShape0().size() * sizeof(int));
-  memcpy(param_->in_shape1_, prim->InShape1().data(), prim->InShape1().size() * sizeof(int));
-  memcpy(param_->out_shape_, prim->OutputShape().data(), prim->OutputShape().size() * sizeof(int));
+
   CalcMultiplesAndStrides(param_);
   if (param_->broadcasting_) {
     outside_ = 1;
@@ -137,25 +145,31 @@ void ArithmeticCPUKernel::FreeConstTileBuff() {
   return;
 }
 
-void ArithmeticCPUKernel::InitRunFunction() {
+void ArithmeticCPUKernel::InitRunFunction(int primitive_type) {
   ARITHMETIC_FUNC_INFO_FP32 fun_table[] = {
-    {PrimitiveType_Mul, schema::ActivationType_RELU, ElementMulRelu, ElementMulReluInt, nullptr, ElementOptMulRelu,
-     ElementOptMulReluInt},
-    {PrimitiveType_Mul, schema::ActivationType_RELU6, ElementMulRelu6, ElementMulRelu6Int, nullptr, ElementOptMulRelu6,
-     ElementOptMulRelu6Int},
-    {PrimitiveType_Mul, schema::ActivationType_NO_ACTIVATION, ElementMul, ElementMulInt, nullptr, ElementOptMul,
+    {PrimitiveType_MulFusion, schema::ActivationType_RELU, ElementMulRelu, ElementMulReluInt, nullptr,
+     ElementOptMulRelu, ElementOptMulReluInt},
+    {PrimitiveType_MulFusion, schema::ActivationType_RELU6, ElementMulRelu6, ElementMulRelu6Int, nullptr,
+     ElementOptMulRelu6, ElementOptMulRelu6Int},
+    {PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION, ElementMul, ElementMulInt, nullptr, ElementOptMul,
      ElementOptMulInt},
-    {PrimitiveType_Add, schema::ActivationType_RELU, ElementAddRelu, nullptr, nullptr, ElementOptAddRelu, nullptr},
-    {PrimitiveType_Add, schema::ActivationType_RELU6, ElementAddRelu6, nullptr, nullptr, ElementOptAddRelu6, nullptr},
-    {PrimitiveType_Add, schema::ActivationType_NO_ACTIVATION, ElementAdd, ElementAddInt, nullptr, ElementOptAdd,
+    {PrimitiveType_AddFusion, schema::ActivationType_RELU, ElementAddRelu, nullptr, nullptr, ElementOptAddRelu,
+     nullptr},
+    {PrimitiveType_AddFusion, schema::ActivationType_RELU6, ElementAddRelu6, nullptr, nullptr, ElementOptAddRelu6,
+     nullptr},
+    {PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION, ElementAdd, ElementAddInt, nullptr, ElementOptAdd,
      ElementOptAddInt},
-    {PrimitiveType_Sub, schema::ActivationType_RELU, ElementSubRelu, nullptr, nullptr, ElementOptSubRelu, nullptr},
-    {PrimitiveType_Sub, schema::ActivationType_RELU6, ElementSubRelu6, nullptr, nullptr, ElementOptSubRelu6, nullptr},
-    {PrimitiveType_Sub, schema::ActivationType_NO_ACTIVATION, ElementSub, ElementSubInt, nullptr, ElementOptSub,
+    {PrimitiveType_SubFusion, schema::ActivationType_RELU, ElementSubRelu, nullptr, nullptr, ElementOptSubRelu,
+     nullptr},
+    {PrimitiveType_SubFusion, schema::ActivationType_RELU6, ElementSubRelu6, nullptr, nullptr, ElementOptSubRelu6,
+     nullptr},
+    {PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION, ElementSub, ElementSubInt, nullptr, ElementOptSub,
      ElementOptSubInt},
-    {PrimitiveType_Div, schema::ActivationType_RELU, ElementDivRelu, nullptr, nullptr, ElementOptDivRelu, nullptr},
-    {PrimitiveType_Div, schema::ActivationType_RELU6, ElementDivRelu6, nullptr, nullptr, ElementOptDivRelu6, nullptr},
-    {PrimitiveType_Div, schema::ActivationType_NO_ACTIVATION, ElementDiv, nullptr, nullptr, ElementOptDiv,
+    {PrimitiveType_DivFusion, schema::ActivationType_RELU, ElementDivRelu, nullptr, nullptr, ElementOptDivRelu,
+     nullptr},
+    {PrimitiveType_DivFusion, schema::ActivationType_RELU6, ElementDivRelu6, nullptr, nullptr, ElementOptDivRelu6,
+     nullptr},
+    {PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION, ElementDiv, nullptr, nullptr, ElementOptDiv,
      ElementOptDivInt},
     {PrimitiveType_RealDiv, schema::ActivationType_RELU, ElementDivRelu, nullptr, nullptr, ElementOptDivRelu, nullptr},
     {PrimitiveType_RealDiv, schema::ActivationType_RELU6, ElementDivRelu6, nullptr, nullptr, ElementOptDivRelu6,
@@ -181,8 +195,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
 
   size_t length = sizeof(fun_table) / sizeof(ARITHMETIC_FUNC_INFO_FP32);
   for (size_t i = 0; i < length; i++) {
-    if (fun_table[i].primitive_type_ == param_->op_parameter_.type_ &&
-        fun_table[i].activation_type_ == param_->activation_type_) {
+    if (fun_table[i].primitive_type_ == primitive_type && fun_table[i].activation_type_ == param_->activation_type_) {
       arithmetic_run_ = fun_table[i].func_;
       arithmetic_run_int_ = fun_table[i].int_func_;
       arithmetic_run_bool_ = fun_table[i].bool_func_;
@@ -358,13 +371,13 @@ int ArithmeticCPUKernel::Run() {
   return ParallelLaunch(this->context_->thread_pool_, ArithmeticsRun, this, context_->thread_num_);
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mul, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Mul, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Add, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Add, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sub, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Sub, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Div, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AddFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_AddFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SubFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SubFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DivFusion, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_RealDiv, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mod, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Mod, LiteKernelCreator<ArithmeticCPUKernel>)
@@ -382,5 +395,5 @@ REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_FloorDiv, LiteKernelCreator<Ari
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_FloorMod, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SquaredDifference, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Eltwise, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Div, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_DivFusion, LiteKernelCreator<ArithmeticCPUKernel>)
 }  // namespace mindspore::kernel

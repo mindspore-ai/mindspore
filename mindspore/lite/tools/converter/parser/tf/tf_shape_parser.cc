@@ -19,41 +19,24 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/shape.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFShapeParser::Parse(const tensorflow::NodeDef &tf_op,
-                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                            std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ShapeParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::ShapeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-
-  primitive->value.type = schema::PrimitiveType_Shape;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+ops::PrimitiveC *TFShapeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::Shape>();
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
+  }
+
+  return prim.release();
 }
+
 TFNodeRegistrar g_tfShapeParser("Shape", new TFShapeParser());
 }  // namespace lite
 }  // namespace mindspore

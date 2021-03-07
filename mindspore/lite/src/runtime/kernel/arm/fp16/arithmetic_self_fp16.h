@@ -24,9 +24,8 @@ typedef int (*ArithmeticSelfFp16Func)(float16_t *input, float16_t *output, int e
 class ArithmeticSelfFp16CPUKernel : public ArithmeticSelfCPUKernel {
  public:
   explicit ArithmeticSelfFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                       const mindspore::lite::PrimitiveC *primitive)
-      : ArithmeticSelfCPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ArithmeticSelfCPUKernel(parameter, inputs, outputs, ctx) {
     fp16_func_ = GetArithmeticSelfFp16Fun(parameter->type_);
   }
   ~ArithmeticSelfFp16CPUKernel() override = default;

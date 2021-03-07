@@ -28,7 +28,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Scale;
+using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
 
@@ -159,5 +159,5 @@ void ScaleFp16CPUKernel::FreeTmpBuffer() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Scale, LiteKernelCreator<ScaleFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ScaleFusion, LiteKernelCreator<ScaleFp16CPUKernel>)
 }  // namespace mindspore::kernel

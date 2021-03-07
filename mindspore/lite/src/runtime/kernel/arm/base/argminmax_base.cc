@@ -22,8 +22,8 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_ArgMax;
-using mindspore::schema::PrimitiveType_ArgMin;
+using mindspore::schema::PrimitiveType_ArgMaxFusion;
+using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
 int ArgMinMaxCPUKernel::Init() {
@@ -89,8 +89,8 @@ int ArgMinMaxCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMax, LiteKernelCreator<ArgMinMaxCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMin, LiteKernelCreator<ArgMinMaxCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMax, LiteKernelCreator<ArgMinMaxCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMin, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMaxFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMinFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMaxFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ArgMinFusion, LiteKernelCreator<ArgMinMaxCPUKernel>)
 }  // namespace mindspore::kernel

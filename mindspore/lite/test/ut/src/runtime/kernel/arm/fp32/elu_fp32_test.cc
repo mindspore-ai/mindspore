@@ -54,7 +54,7 @@ TEST_F(TestEluFp32, EluTest) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::EluCPUKernel *elu =
-    new kernel::EluCPUKernel(reinterpret_cast<OpParameter *>(elu_param_), inputs_, outputs_, ctx, nullptr);
+    new kernel::EluCPUKernel(reinterpret_cast<OpParameter *>(elu_param_), inputs_, outputs_, ctx);
 
   elu->Init();
   elu->Run();

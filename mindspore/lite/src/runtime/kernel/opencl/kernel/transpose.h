@@ -40,7 +40,7 @@ class TransposeOpenCLKernel : public OpenCLKernel {
 
  private:
   TransposeType type_{TransposeType::AXIS0312};
-  GpuTensorInfo tensor_size_{GpuTensorInfo(nullptr)};
+  GpuTensorInfo tensor_size_;
   int perm_4d_[4];
 };
 }  // namespace mindspore::kernel

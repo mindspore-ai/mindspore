@@ -19,65 +19,31 @@
 #include <sstream>
 #include <string>
 #include "nnacl/pooling_parameter.h"
+#include "nnacl/slice_parameter.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/int8/add_int8.h"
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::lite::micro {
 
-inline std::ostream &operator<<(std::ostream &code, const ::QuantArg &quant_arg) {
-  code << "{" << static_cast<float>(quant_arg.scale_) << ", " << quant_arg.zp_ << "}";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, const ::QuantArg &quant_arg);
 
-inline std::ostream &operator<<(std::ostream &code, const OpParameter &tile) {
-  code << "{ \"\""
-       << ", " << tile.type_ << ", " << tile.thread_num_ << "}";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, const OpParameter &tile);
 
-inline std::ostream &operator<<(std::ostream &code, const AddQuantQrgs &args) {
-  code << "{" << args.zp_ << ", " << args.left_shift_ << ", " << args.right_shift_ << ", " << args.multiplier_ << "}";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, const AddQuantQrgs &args);
 
-inline std::ostream &operator<<(std::ostream &code, PoolMode pool_mode) {
-  code << "(PoolMode)"
-       << "(" << static_cast<int>(pool_mode) << ")";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, const SliceQuantArg &arg);
 
-inline std::ostream &operator<<(std::ostream &code, RoundMode round_mode) {
-  code << "(RoundMode)"
-       << "(" << static_cast<int>(round_mode) << ")";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, PoolMode pool_mode);
 
-inline std::ostream &operator<<(std::ostream &code, RoundingMode rounding_mode) {
-  code << "(RoundingMode)"
-       << "(" << static_cast<int>(rounding_mode) << ")";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, RoundMode round_mode);
 
-inline std::ostream &operator<<(std::ostream &code, PadMode pad_mode) {
-  code << "(PadMode)"
-       << "(" << static_cast<int>(pad_mode) << ")";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, RoundingMode rounding_mode);
 
-inline std::ostream &operator<<(std::ostream &code, ActType act_type) {
-  code << "(ActType)"
-       << "(" << static_cast<int>(act_type) << ")";
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, PadMode pad_mode);
 
-inline std::ostream &operator<<(std::ostream &code, DataOrder data_order) {
-  if (data_order == RowMajor) {
-    code << "RowMajor";
-  } else {
-    code << "ColMajor";
-  }
-  return code;
-}
+std::ostream &operator<<(std::ostream &code, ActType act_type);
+
+std::ostream &operator<<(std::ostream &code, DataOrder data_order);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_STREAM_UTILS_H_

@@ -164,22 +164,10 @@ struct BaseTuningParameter {
 class OpenCLKernel : public LiteKernel {
  public:
   OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-               const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
-    if (primitive != nullptr) {
-      infer_shape_flag_ = primitive->infer_flag();
-    } else {
-      bool output_shape_setted = true;
-      for (auto output : outputs) {
-        if (output->shape().empty() || output->ElementsNum() < 0) {
-          output_shape_setted = false;
-          break;
-        }
-      }
-      infer_shape_flag_ = output_shape_setted;
-    }
+    infer_shape_flag_ = parameter->infer_flag_;
   }
   ~OpenCLKernel() override = default;
   int AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local);
@@ -246,9 +234,8 @@ class OpenCLKernel : public LiteKernel {
 template <class T>
 kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                        const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx, primitive);
+                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  auto *kernel = new (std::nothrow) T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
     free(opParameter);

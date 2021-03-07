@@ -15,17 +15,14 @@
  */
 
 #include "tools/converter/quantizer/huffman_encode.h"
-
 #include <utility>
-#include <iostream>
-
 #include "src/dequant.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore {
 namespace lite {
-
-STATUS HuffmanEncode::DoHuffmanEncode(const ParamValueLitePtr &weight, const std::shared_ptr<PrimitiveC> &primitive_c,
-                                      void *quant_datas, const size_t &bit_num) {
+STATUS HuffmanEncode::DoHuffmanEncode(const ParamValueLitePtr &weight, const PrimitivePtr &primitive, void *quant_datas,
+                                      const size_t &bit_num) {
   if (quant_datas == nullptr) {
     MS_LOG(ERROR) << "quant data is nullptr";
     return RET_ERROR;
@@ -63,7 +60,9 @@ STATUS HuffmanEncode::DoHuffmanEncode(const ParamValueLitePtr &weight, const std
       return RET_MEMORY_FAILED;
     }
     weight->SetTensorData(encode_data, ch_size);
-    primitive_c->set_enable_huffman_code(true);
+    auto quant_param_holder = quant::GetCNodeQuantHolder(primitive);
+    MS_ASSERT(quant_param_holder != nullptr);
+    quant_param_holder->set_enable_huffman_code(true);
   }
   huffman_encoded_str_.clear();
   huffman_table_.clear();

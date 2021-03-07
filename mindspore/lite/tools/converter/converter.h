@@ -22,24 +22,48 @@
 #include "schema/inner/model_generated.h"
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/model_parser.h"
-#include "tools/anf_importer/anf_importer.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/converter/converter_context.h"
+#include "load_mindir/load_model.h"
 
 namespace mindspore {
 namespace lite {
 class Converter {
  public:
-  Converter();
-  virtual ~Converter();
-  virtual schema::MetaGraphT *Convert(const lite::converter::Flags *flags);
+  static std::unique_ptr<Converter> CreateConverter(converter::FmkType fmk);
+
+  virtual ~Converter() = default;
+
+  virtual schema::MetaGraphT *Convert(const std::unique_ptr<converter::Flags> &flag);
+
+  virtual FuncGraphPtr BuildFuncGraph(const std::string &model_file, const std::string &weight_file,
+                                      schema::QuantType quant_type) = 0;
 
  protected:
-  ModelParser *modelParser = nullptr;
-  AnfImporter *modelImporter = nullptr;
-  GraphDefTransform *transform = nullptr;
-  AnfTransform *anfTransform = nullptr;
+  Converter() = default;
+
+  std::unique_ptr<GraphDefTransform> metagraph_transform_ = std::make_unique<GraphDefTransform>();
+  std::unique_ptr<AnfTransform> funcgraph_transform_ = std::make_unique<AnfTransform>();
+};
+
+class MindsporeImporter : public Converter {
+ public:
+  MindsporeImporter();
+
+  ~MindsporeImporter() override = default;
+
+  FuncGraphPtr BuildFuncGraph(const std::string &model_file, const std::string &weight_file,
+                              schema::QuantType quant_type) override {
+    auto func_graph = LoadMindIR(model_file);
+    if (func_graph == nullptr) {
+      MS_LOG(ERROR) << "get funcgraph failed.";
+      return nullptr;
+    }
+    func_graph->set_attr("graph_name", MakeValue("main_graph"));
+    func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
+    return func_graph;
+  }
 };
 
 int RunConverter(int argc, const char **argv);

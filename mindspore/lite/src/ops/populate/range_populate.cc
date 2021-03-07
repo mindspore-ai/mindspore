@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/range.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/range_fp32.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateRangeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto range_attr = reinterpret_cast<mindspore::lite::Range *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+namespace {
+OpParameter *PopulateRangeParameter(const void *prim) {
   RangeParameter *range_param = reinterpret_cast<RangeParameter *>(malloc(sizeof(RangeParameter)));
   if (range_param == nullptr) {
     MS_LOG(ERROR) << "malloc RangeParameter failed.";
     return nullptr;
   }
   memset(range_param, 0, sizeof(RangeParameter));
-  range_param->op_parameter_.type_ = primitive->Type();
-  range_param->start_ = range_attr->GetStart();
-  range_param->limit_ = range_attr->GetLimit();
-  range_param->delta_ = range_attr->GetDelta();
-  range_param->dType_ = range_attr->GetDType();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  range_param->op_parameter_.type_ = primitive->value_type();
+  auto range_prim = primitive->value_as_Range();
+  range_param->start_ = range_prim->start();
+  range_param->limit_ = range_prim->limit();
+  range_param->delta_ = range_prim->delta();
+  range_param->dType_ = range_prim->d_type();
   return reinterpret_cast<OpParameter *>(range_param);
 }
-Registry RangeParameterRegistry(schema::PrimitiveType_Range, PopulateRangeParameter);
+}  // namespace
+Registry g_rangeParameterRegistry(schema::PrimitiveType_Range, PopulateRangeParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

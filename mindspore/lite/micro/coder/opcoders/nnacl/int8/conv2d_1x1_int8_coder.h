@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_Conv2D_1X1_INT8_CODER_H_
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_Conv2D_1X1_INT8_CODER_H_
-#include "micro/coder/opcoders/base/conv2d_base_coder.h"
+#include "coder/opcoders/base/conv2d_base_coder.h"
 #include <memory>
 #include <string>
 #include <vector>

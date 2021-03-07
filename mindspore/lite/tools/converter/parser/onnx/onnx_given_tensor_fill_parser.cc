@@ -20,17 +20,14 @@
 #include <vector>
 #include <algorithm>
 #include "src/param_value_lite.h"
+#include "ops/constant.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node,
-                                                              lite::PrimitiveC *primitive_c,
+STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                                               const std::vector<int> &shape) {
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  if (param_value == nullptr) {
-    MS_LOG(ERROR) << "new a paramValueLite failed.";
-    return RET_ERROR;
-  }
+
   int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
@@ -57,18 +54,14 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodePr
   param_value->set_format(schema::Format_NUM_OF_FORMAT);
   param_value->set_tensor_type(kNumberTypeInt64);
   param_value->SetTensorData(param_data, data_size);
-  primitive_c->set_attr("const_data", param_value);
+  prim->set_attr("const_data", param_value);
   return RET_OK;
 }
 
-STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node,
-                                                           lite::PrimitiveC *primitive_c,
+STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                                            const std::vector<int> &shape) {
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  if (param_value == nullptr) {
-    MS_LOG(ERROR) << "new a paramValueLite failed.";
-    return RET_ERROR;
-  }
+
   int data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "values"; });
@@ -89,20 +82,13 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto
   param_value->set_format(schema::Format_NUM_OF_FORMAT);
   param_value->set_tensor_type(kNumberTypeUInt8);
   param_value->SetTensorData(param_data, data_count);
-  primitive_c->set_attr("const_data", param_value);
+  prim->set_attr("const_data", param_value);
   return RET_OK;
 }
+ops::PrimitiveC *OnnxGivenTensorFillParser::Parse(const onnx::GraphProto &onnx_graph,
+                                                  const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Constant>();
 
-lite::PrimitiveC *OnnxGivenTensorFillParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                                const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx GivenTensorFillParser";
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Constant;
-  auto primitive_c = PrimitiveC::Create(primitive.release());
   std::vector<int64_t> shape_vector;
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "shape"; });
@@ -113,17 +99,18 @@ lite::PrimitiveC *OnnxGivenTensorFillParser::ParseLitePrimitive(const onnx::Grap
   std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
                  [](const int64_t &val) { return static_cast<int32_t>(val); });
   if (onnx_node.op_type() == "Int8GivenIntTensorFill") {
-    if (ParseInt8GivenIntTensorFill(onnx_node, primitive_c, shape) != RET_OK) {
+    if (ParseInt8GivenIntTensorFill(onnx_node, prim.get(), shape) != RET_OK) {
       MS_LOG(ERROR) << "given tensor fill parse failed.";
       return nullptr;
     }
   } else if (onnx_node.op_type() == "Int8GivenTensorFill") {
-    if (ParseInt8GivenTensorFill(onnx_node, primitive_c, shape) != RET_OK) {
+    if (ParseInt8GivenTensorFill(onnx_node, prim.get(), shape) != RET_OK) {
       MS_LOG(ERROR) << "given tensor fill parse failed.";
       return nullptr;
     }
   }
-  return primitive_c;
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxInt8GivenIntTensorFillParser("Int8GivenIntTensorFill", new OnnxGivenTensorFillParser());

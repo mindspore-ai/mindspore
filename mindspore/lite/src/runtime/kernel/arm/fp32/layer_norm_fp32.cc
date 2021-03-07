@@ -23,7 +23,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_LayerNorm;
+using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
 int LayerNormCPUKernel::Init() {
@@ -93,5 +93,5 @@ int LayerNormCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LayerNorm, LiteKernelCreator<LayerNormCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LayerNormFusion, LiteKernelCreator<LayerNormCPUKernel>)
 }  // namespace mindspore::kernel

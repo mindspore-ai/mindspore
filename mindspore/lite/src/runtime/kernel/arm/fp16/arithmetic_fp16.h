@@ -35,15 +35,14 @@ typedef struct {
 class ArithmeticFP16CPUKernel : public ArithmeticCPUKernel {
  public:
   ArithmeticFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
-      : ArithmeticCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ArithmeticFP16CPUKernel() = default;
   int ReSize() override;
   int Run() override;
 
  private:
-  void InitRunFunction() override;
+  void InitRunFunction(int primitive_type) override;
   int CheckDataType() override;
   int ConstTensorBroadCast() override;
   void TileConstTensor(const void *in_data, void *out_data, size_t ndim, const int *in_shape, const int *in_strides,

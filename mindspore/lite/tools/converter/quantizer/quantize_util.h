@@ -27,8 +27,9 @@
 #include <algorithm>
 #include <limits>
 #include <utility>
+#include "ops/mat_mul.h"
+#include "ops/fusion/full_connection.h"
 #include "tools/converter/quantizer/quantizer.h"
-#include "src/ops/primitive_c.h"
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
@@ -82,18 +83,20 @@ class QuantStrategy {
   bool CanMulOpQuantized(const CNodePtr &node) const;
   bool CanOpPostQuantized(AnfNodePtr &node) const;
 
-  size_t mWeightSize;
-  size_t mConvWeightQuantChannelThreshold;
+  size_t m_weight_size_;
+  size_t m_conv_weight_quant_channel_threshold_;
 
  private:
-  static const std::vector<schema::PrimitiveType> conv_types;
-  static const std::vector<schema::PrimitiveType> mul_types;
+  static const std::vector<std::string> conv_types_;
+  static const std::vector<std::string> mul_types_;
 };
 
 constexpr float delta = 0.1;
 constexpr float ratio = 10.0;
 constexpr int percent = 10;
 constexpr int quant_param_size = 32 * 8;
+
+QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
                              int quant_min, int num_bits);
@@ -326,11 +329,10 @@ STATUS DoBitPack(const ParamValueLitePtr &weight, const size_t &bit_num, const s
 }
 
 template <typename T>
-STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<PrimitiveC> &primitive_c,
-                   QuantType quant_type, int quant_max, int quant_min, size_t bit_num, bool per_channel, int index = 1,
-                   bool k_means = false) {
+STATUS QuantFilter(const ParamValueLitePtr &weight, const PrimitivePtr &primitive, QuantType quant_type, int quant_max,
+                   int quant_min, size_t bit_num, bool per_channel, int index = 1, bool k_means = false) {
   MS_ASSERT(weight != nullptr);
-  MS_ASSERT(primitive_c != nullptr);
+  MS_ASSERT(primitive != nullptr);
   auto dims = weight->tensor_shape();
   if (per_channel) {
     if (dims.size() <= 1) {
@@ -352,11 +354,11 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
   int ret = RET_OK;
   if (per_channel) {
     bool channel_at_first = true;
-    auto op_type = (schema::PrimitiveType)primitive_c->Type();
-    if (op_type == schema::PrimitiveType_MatMul && weight->tensor_shape().size() == 2) {
-      auto matmul_op = primitive_c->primitiveT()->value.AsMatMul();
-      MS_ASSERT(matmul_op != nullptr);
-      channel_at_first = !(index == 1 && !matmul_op->transposeB);
+    if (primitive->name() == ops::kNameMatMul && weight->tensor_shape().size() == 2) {
+      auto matmul_prim = primitive->cast<std::shared_ptr<ops::MatMul>>();
+      MS_ASSERT(matmul_prim != nullptr);
+      channel_at_first =
+        index != 1 || (matmul_prim->GetAttr(ops::kTransposeB) != nullptr && matmul_prim->get_transpose_b());
     }
     // channel at first
     ret = DoPerChannelQuant<T>(weight, quant_type, &quant_params, quant_max, quant_min, bit_num, k_means, &quant_data,
@@ -377,7 +379,7 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
 
 #ifdef HUFFMAN_ENCODE
   auto huffman_encode = std::make_unique<lite::HuffmanEncode>();
-  ret = huffman_encode->DoHuffmanEncode(weight, primitive_c, quant_datas.data(), bit_num);
+  ret = huffman_encode->DoHuffmanEncode(weight, primitive, quant_datas.data(), bit_num);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Do huffman encode failed.";
     return ret;
@@ -395,17 +397,18 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;
   }
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
   if (quant_type == QuantType_PostTraining) {
-    primitive_c->AddInputQuantParam(quant_params);
+    quant_param_holder->AddInputQuantParam(quant_params);
   } else {
-    primitive_c->set_input_quant_param(index, quant_params);
+    quant_param_holder->set_input_quant_param(index, quant_params);
   }
   return ret;
 }
 
 // utils
 
-schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode);
+std::string NodePrimitiveType(const CNodePtr &cnode);
 
 STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "tools/converter/legacy_optimizer/graph/switch_pass.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
-#include "src/ops/primitive_c.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 
@@ -57,20 +56,20 @@ STATUS SwitchPass::Run(mindspore::schema::MetaGraphT *graph) {
   for (size_t i = 0; i < graph->nodes.size(); ++i) {
     auto &node = graph->nodes.at(i);
     auto type = node->primitive->value.type;
-    if (type != schema::PrimitiveType_Partial) {
+    if (type != schema::PrimitiveType_PartialFusion) {
       continue;
     }
     MS_ASSERT(node->primitive != nullptr);
-    MS_ASSERT(node->primitive->value.AsPartial() != nullptr);
-    auto partial_prim = node->primitive->value.AsPartial();
-    if (partial_prim->subGraphIndex == -1) {
+    MS_ASSERT(node->primitive->value..AsPartialFusion() != nullptr);
+    auto partial_prim = node->primitive->value.AsPartialFusion();
+    if (partial_prim->sub_graph_index == -1) {
       continue;
     }
-    if (sub_graph_index_map.find(partial_prim->subGraphIndex) == sub_graph_index_map.end()) {
-      MS_LOG(ERROR) << "subGraphIndex is illegal";
+    if (sub_graph_index_map.find(partial_prim->sub_graph_index) == sub_graph_index_map.end()) {
+      MS_LOG(ERROR) << "sub_graph_index is illegal";
       return RET_ERROR;
     }
-    partial_prim->subGraphIndex = sub_graph_index_map[partial_prim->subGraphIndex];
+    partial_prim->sub_graph_index = sub_graph_index_map[partial_prim->sub_graph_index];
   }
   return RET_OK;
 }
@@ -125,8 +124,9 @@ STATUS SingleSwitchPass::UpdateSwitchUser() {
 
 bool SingleSwitchPass::IsLoop() {
   for (auto &node : second_graph_nodes_) {
-    if (node->primitive->value.type == schema::PrimitiveType_Partial && node->primitive->value.AsPartial() != nullptr &&
-        node->primitive->value.AsPartial()->subGraphIndex == first_subgraph_index_) {
+    if (node->primitive->value.type == schema::PrimitiveType_PartialFusion &&
+        node->primitive->value.AsPartialFusion() != nullptr &&
+        node->primitive->value.AsPartialFusion()->sub_graph_index == first_subgraph_index_) {
       body_to_cond_partial_node_ = node;
       return true;
     }
@@ -467,16 +467,16 @@ STATUS SingleSwitchPass::Init() {
   }
 
   // get cond_graph_nodes_
-  MS_ASSERT(first_partial_node_->primitive->value.AsPartial() != nullptr);
-  first_subgraph_index_ = first_partial_node_->primitive->value.AsPartial()->subGraphIndex;
+  MS_ASSERT(first_partial_node_->primitive->value..AsPartialFusion() != nullptr);
+  first_subgraph_index_ = first_partial_node_->primitive->value.AsPartialFusion()->sub_graph_index;
   auto cond_node_indices = graph_->subGraph.at(first_subgraph_index_)->nodeIndices;
   for (auto &index : cond_node_indices) {
     first_graph_nodes_.push_back(graph_->nodes.at(index).get());
   }
 
   // get second_graph_nodes_
-  MS_ASSERT(second_partial_node_->primitive->value.AsPartial() != nullptr);
-  second_subgraph_index_ = second_partial_node_->primitive->value.AsPartial()->subGraphIndex;
+  MS_ASSERT(second_partial_node_->primitive->value..AsPartialFusion() != nullptr);
+  second_subgraph_index_ = second_partial_node_->primitive->value.AsPartialFusion()->sub_graph_index;
   auto body_node_indices = graph_->subGraph.at(second_subgraph_index_)->nodeIndices;
   for (auto &index : body_node_indices) {
     second_graph_nodes_.push_back(graph_->nodes.at(index).get());
@@ -624,8 +624,8 @@ STATUS SingleSwitchPass::UpdateSubgraphOutput(const size_t &subgraph_index, sche
 STATUS SingleSwitchPass::ConcatCondSubgraphInputAndOutput() {
   if (first_subgraph_index_ == -1) {
     MS_ASSERT(first_partial_node_->primitive != nullptr);
-    MS_ASSERT(first_partial_node_->primitive->value.AsPartial() != nullptr);
-    first_partial_node_->primitive->value.AsPartial()->subGraphIndex = -1;
+    MS_ASSERT(first_partial_node_->primitive->value..AsPartialFusion() != nullptr);
+    first_partial_node_->primitive->value.AsPartialFusion()->sub_graph_index = -1;
     return RET_OK;
   }
   int ret = UpdateSubgraphInput(first_subgraph_index_, first_partial_node_, first_graph_nodes_);
@@ -645,8 +645,8 @@ STATUS SingleSwitchPass::ConcatCondSubgraphInputAndOutput() {
 STATUS SingleSwitchPass::ConcatBodySubgraphInputAndOutput() {
   if (second_subgraph_index_ == -1) {
     MS_ASSERT(first_partial_node_->primitive != nullptr);
-    MS_ASSERT(first_partial_node_->primitive->value.AsPartial() != nullptr);
-    first_partial_node_->primitive->value.AsPartial()->subGraphIndex = -1;
+    MS_ASSERT(first_partial_node_->primitive->value..AsPartialFusion() != nullptr);
+    first_partial_node_->primitive->value.AsPartialFusion()->sub_graph_index = -1;
     return RET_OK;
   }
   int ret = UpdateSubgraphInput(second_subgraph_index_, second_partial_node_, second_graph_nodes_);

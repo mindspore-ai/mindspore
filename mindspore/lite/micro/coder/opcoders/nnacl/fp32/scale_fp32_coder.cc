@@ -18,8 +18,9 @@
 #include "coder/log.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
-using mindspore::schema::PrimitiveType_Scale;
+using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::lite::micro::nnacl {
 ScaleFP32Coder::~ScaleFP32Coder() {
@@ -131,34 +132,26 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code;
   code.CodeStruct("scale_parameter", *scale_param_);
 
-  if (thread_num_ > 1) {
-    code.CodeBaseStruct("ScaleFp32Args", "args", input_tensor_, output_tensor_, scale_tensor, offset_tensor,
+  switch (scale_param_->activation_type_) {
+    case schema::ActivationType_RELU6:
+      code.CodeFunction("DoScaleRelu6", input_tensor_, output_tensor_, scale_tensor, offset_tensor, kDefaultTaskId,
                         "&scale_parameter");
-    CODE_PARALLEL_FUNC("ScaleFp32Run");
-  } else {
-    int task_id = 0;
-    switch (scale_param_->activation_type_) {
-      case schema::ActivationType_RELU6:
-        code.CodeFunction("DoScaleRelu6", input_tensor_, output_tensor_, scale_tensor, offset_tensor, task_id,
-                          "&scale_parameter");
-        break;
-      case schema::ActivationType_RELU:
-        code.CodeFunction("DoScaleRelu", input_tensor_, output_tensor_, scale_tensor, offset_tensor, task_id,
-                          "&scale_parameter");
-        break;
-      case schema::ActivationType_NO_ACTIVATION:
-        code.CodeFunction("DoScale", input_tensor_, output_tensor_, scale_tensor, offset_tensor, task_id,
-                          "&scale_parameter");
-        break;
-      default:
-        MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
-        return RET_ERROR;
-    }
+      break;
+    case schema::ActivationType_RELU:
+      code.CodeFunction("DoScaleRelu", input_tensor_, output_tensor_, scale_tensor, offset_tensor, kDefaultTaskId,
+                        "&scale_parameter");
+      break;
+    case schema::ActivationType_NO_ACTIVATION:
+      code.CodeFunction("DoScale", input_tensor_, output_tensor_, scale_tensor, offset_tensor, kDefaultTaskId,
+                        "&scale_parameter");
+      break;
+    default:
+      MS_LOG(ERROR) << "Scale does not support activation type " << scale_param_->activation_type_;
+      return RET_ERROR;
   }
-  MS_LOG(INFO) << "ScaleFP32Code has been called";
   context->AppendCode(code.str());
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Scale, CPUOpCoderCreator<ScaleFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_ScaleFusion, CPUOpCoderCreator<ScaleFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl

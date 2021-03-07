@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,8 @@ class FusionPass : public GraphPass {
   bool MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
                  std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes);
 
+  bool CheckMatchParams(schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
+                        std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes);
   static bool CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<PatternOp> &patternOp);
 
   void MergeNodeAttrFromPost(std::unique_ptr<schema::CNodeT> &dstOp, std::unique_ptr<schema::CNodeT> &postOp,

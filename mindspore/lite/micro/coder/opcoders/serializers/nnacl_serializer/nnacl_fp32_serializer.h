@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_SERIALIZERS_NNACL_FP32_SERIALIZER_H_
 #include <string>
 #include <sstream>
-#include "micro/coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/serializers/serializer.h"
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "nnacl/conv_parameter.h"
@@ -29,12 +29,14 @@
 #include "nnacl/fp32/transpose_fp32.h"
 #include "nnacl/pooling_parameter.h"
 #include "nnacl/softmax_parameter.h"
+#include "nnacl/splice_parameter.h"
+#include "wrapper/fp32/dequant_int8_to_fp32_wrapper.h"
 namespace mindspore::lite::micro::nnacl {
 
 class NNaclFp32Serializer : public Serializer {
  public:
   NNaclFp32Serializer() = default;
-  ~NNaclFp32Serializer() = default;
+  ~NNaclFp32Serializer() override = default;
   void CodeStruct(const std::string &name, const PoolingParameter &pooling_parameter);
   void CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter);
   void CodeStruct(const std::string &name, const BatchNormParameter &batch_norm_parameter);
@@ -45,6 +47,8 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SliceParameter &slice_parameter);
   void CodeStruct(const std::string &name, const TileParameter &tile_parameter);
   void CodeStruct(const std::string &name, const TransposeParameter &transpose_parameter);
+  void CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg);
+  void CodeStruct(const std::string &name, const SpliceParameter &splice_parameter);
 };
 
 }  // namespace mindspore::lite::micro::nnacl

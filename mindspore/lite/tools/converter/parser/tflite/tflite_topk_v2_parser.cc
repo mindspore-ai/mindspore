@@ -18,36 +18,17 @@
 #include "tools/converter/parser/tflite/tflite_topk_v2_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
+#include "ops/fusion/topk_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteTopKV2Parser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::TopKFusion>();
 
-  std::unique_ptr<schema::TopKT> attr = std::make_unique<schema::TopKT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+  prim->set_sorted(true);
 
-  attr->sorted = true;
-  std::vector<int32_t> k;
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, k)) {
-    MS_LOG(ERROR) << "get topKV2 -> k failed";
-    return nullptr;
-  }
-  attr->k = k.front();
-
-  primitive->value.type = schema::PrimitiveType_TopK;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteTopKV2Parser(tflite::BuiltinOperator_TOPK_V2, new TfliteTopKV2Parser());

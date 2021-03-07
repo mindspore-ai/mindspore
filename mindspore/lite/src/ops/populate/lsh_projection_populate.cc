@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/ops/lsh_projection.h"
 #include "nnacl/lsh_projection_parameter.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateLshProjectionParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateLshProjectionParameter(const void *prim) {
   LshProjectionParameter *lsh_project_param =
     reinterpret_cast<LshProjectionParameter *>(malloc(sizeof(LshProjectionParameter)));
   if (lsh_project_param == nullptr) {
@@ -29,12 +27,15 @@ OpParameter *PopulateLshProjectionParameter(const mindspore::lite::PrimitiveC *p
     return nullptr;
   }
   memset(lsh_project_param, 0, sizeof(LshProjectionParameter));
-  lsh_project_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::LshProjection *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  lsh_project_param->lsh_type_ = param->GetLshType();
+
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_LshProjection();
+  lsh_project_param->op_parameter_.type_ = primitive->value_type();
+  lsh_project_param->lsh_type_ = value->type();
   return reinterpret_cast<OpParameter *>(lsh_project_param);
 }
-Registry LshProjectionParameterRegistry(schema::PrimitiveType_LshProjection, PopulateLshProjectionParameter);
+Registry LshProjectionParameterRegistry(schema::PrimitiveType_LshProjection, PopulateLshProjectionParameter,
+                                        SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MATMUL_PARSER_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MATMUL_PARSER_H
 
@@ -23,14 +22,16 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
 class TfliteMatMulParser : public TfliteNodeParser {
  public:
   TfliteMatMulParser() : TfliteNodeParser("MatMul") {}
 
-  PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_SLICE_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MATMUL_PARSER_H

@@ -18,32 +18,14 @@
 #include "tools/converter/parser/tflite/tflite_unique_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/unique.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteUniqueParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
-
-  std::unique_ptr<schema::UniqueT> attr = std::make_unique<schema::UniqueT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  const auto &tflite_attr = tflite_op->builtin_options.AsUniqueOptions();
-  if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op unique attr failed";
-    return nullptr;
-  }
-
-  primitive->value.type = schema::PrimitiveType_Unique;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *TfliteUniqueParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Unique>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteUniqueParser(tflite::BuiltinOperator_UNIQUE, new TfliteUniqueParser());

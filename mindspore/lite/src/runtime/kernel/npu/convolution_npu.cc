@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 
 #include "src/runtime/kernel/npu/convolution_npu.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
+#include "src/runtime/kernel/npu/convolution_depthwise_npu.h"
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::kernel {
 int ConvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
@@ -31,10 +33,10 @@ int ConvolutionNPUKernel::SetConvParam() {
   conv_->set_attr_dilations(ge::AttrValue::LIST_INT({conv_param_->dilation_h_, conv_param_->dilation_w_}));
   conv_->set_attr_groups(conv_param_->group_);
 
-  if (conv_param_->pad_mode_ == Pad_Same) {
+  if (conv_param_->pad_mode_ == Pad_same) {
     conv_->set_attr_pad_mode(ge::AttrValue::STR{"SAME"});
     conv_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
-  } else if (conv_param_->pad_mode_ == Pad_Valid) {
+  } else if (conv_param_->pad_mode_ == Pad_valid) {
     conv_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
     conv_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
@@ -66,7 +68,6 @@ int ConvolutionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs
     return RET_ERROR;
   }
   conv_->set_input_filter(*weight_);
-
   if (inputs.size() == 3) {
     ret = InitBiasConst(inputs);
     if (ret != RET_OK) {
@@ -102,5 +103,36 @@ ConvolutionNPUKernel::~ConvolutionNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Conv2D, NPUKernelCreator<ConvolutionNPUKernel>)
+kernel::LiteKernel *NpuConvKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                         const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                         const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(op_parameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
+
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  kernel::NPUKernel *kernel = nullptr;
+
+  if (conv_param->group_ == 1) {
+    kernel = new (std::nothrow) kernel::ConvolutionNPUKernel(op_parameter, inputs, outputs, ctx);
+  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseNPUKernel(op_parameter, inputs, outputs, ctx);
+  } else {
+    MS_LOG(ERROR) << "npu do not support group conv!";
+    kernel = nullptr;
+  }
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel " << op_parameter->name_ << "is nullptr.";
+    free(op_parameter);
+    return nullptr;
+  }
+
+  auto ret = kernel->IsSupport(inputs, outputs, op_parameter);
+  if (ret != RET_OK) {
+    delete kernel;
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Conv2DFusion, NpuConvKernelCreator)
 }  // namespace mindspore::kernel

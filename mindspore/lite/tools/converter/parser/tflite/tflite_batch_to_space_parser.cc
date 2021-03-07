@@ -19,33 +19,39 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include <map>
+#include "ops/batch_to_space.h"
 
-namespace mindspore::lite {
-PrimitiveC *TfliteBatchToSpaceParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteBatchToSpaceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::BatchToSpace>();
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
   const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::BatchToSpaceT> attr = std::make_unique<schema::BatchToSpaceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->blockShape)) {
+  std::vector<int64_t> blockShape;
+  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, blockShape)) {
     MS_LOG(ERROR) << "get batchToSpace -> blockShape failed";
     return nullptr;
   }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_subgraph->tensors, tflite_model->buffers, attr->crops)) {
+  prim->set_block_size(blockShape);
+
+  std::vector<std::vector<int64_t>> crops;
+  if (TransTfliteDataToVec2D(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, crops)) {
     MS_LOG(ERROR) << "get batchToSpace -> crops failed";
     return nullptr;
   }
+  prim->set_crops(crops);
 
-  primitive->value.type = schema::PrimitiveType_BatchToSpace;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteBatchToSpaceNDParser(tflite::BuiltinOperator_BATCH_TO_SPACE_ND,
                                                 new TfliteBatchToSpaceParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

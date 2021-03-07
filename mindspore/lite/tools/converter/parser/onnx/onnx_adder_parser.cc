@@ -16,25 +16,13 @@
 
 #include "tools/converter/parser/onnx/onnx_adder_parser.h"
 #include <memory>
+#include "ops/fusion/adder_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxAdderParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                      const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx AdderParser";
-  auto attr = std::make_unique<schema::AdderT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Adder;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxAdderParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::AdderFusion>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxAdderParser("adder_f", new OnnxAdderParser());

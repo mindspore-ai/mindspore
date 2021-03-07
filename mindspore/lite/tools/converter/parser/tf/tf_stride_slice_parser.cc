@@ -19,78 +19,58 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFStrideSliceParser::Parse(const tensorflow::NodeDef &tf_op,
-                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                  PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF StrideSliceParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::StridedSliceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFStrideSliceParser::Parse(const tensorflow::NodeDef &tf_op,
+                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                            std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::StridedSlice>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "begin_mask", &attr_value)) {
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->beginMask = attr_value.i();
+  prim->set_begin_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "end_mask", &attr_value)) {
     MS_LOG(ERROR) << "The end_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->endMask = attr_value.i();
+  prim->set_end_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "ellipsis_mask", &attr_value)) {
     MS_LOG(ERROR) << "The ellipsis_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->ellipsisMask = attr_value.i();
+  prim->set_ellipsis_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "new_axis_mask", &attr_value)) {
     MS_LOG(ERROR) << "The new_axis_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->newAxisMask = attr_value.i();
+  prim->set_new_axis_mask(attr_value.i());
 
   if (!TensorFlowUtils::FindAttrValue(tf_op, "shrink_axis_mask", &attr_value)) {
     MS_LOG(ERROR) << "The shrink_axis_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->shrinkAxisMask = attr_value.i();
-  primitive->value.type = schema::PrimitiveType_StridedSlice;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_shrink_axis_mask(attr_value.i());
 
   *output_size = 1;
-  STATUS status = RET_OK;
   for (int i = 0; i < tf_op.input_size(); i++) {
-    status = AddOpInput(tf_op, i, inputs);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Add Op input failed.";
-      return status;
+    if (AddOpInput(tf_op, i, inputs) != RET_OK) {
+      MS_LOG(ERROR) << "Add Op input " << i << " failed.";
+      return nullptr;
     }
   }
-  return status;
+
+  return prim.release();
 }
+
 TFNodeRegistrar g_tfStrideSliceParser("StridedSlice", new TFStrideSliceParser());
 }  // namespace lite
 }  // namespace mindspore

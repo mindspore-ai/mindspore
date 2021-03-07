@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/npu/arithmetic_self_npu.h"
 #include <string>
+#include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
@@ -54,7 +55,7 @@ int ArithmeticSelfNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inp
                                           const std::vector<lite::Tensor *> &outputs,
                                           const std::vector<ge::Operator *> &npu_inputs) {
   ge::Operator *op = nullptr;
-  switch (primitive_->Type()) {
+  switch (op_parameter_->type_) {
     case PrimitiveType_Cos:
       op = CreateOperator<hiai::op::Cos>(npu_inputs[0], name_);
       break;
@@ -93,7 +94,7 @@ int ArithmeticSelfNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inp
       break;
     default:
       MS_LOG(ERROR) << "Unsupported primitive type:"
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive_->Type()));
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter_->type_));
       return RET_ERROR;
   }
   if (op == nullptr) {

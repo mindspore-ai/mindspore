@@ -21,9 +21,9 @@
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kNPU;
 enum InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
-std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {schema::PrimitiveType_Concat, schema::PrimitiveType_Add,
-                                                               schema::PrimitiveType_Eltwise,
-                                                               schema::PrimitiveType_Activation};
+std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
+  schema::PrimitiveType_Concat, schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
+  schema::PrimitiveType_Activation};
 // this pass goal is to minimize subgraphs generated
 // by inserting nchw2nhwc or nhwc2nchw before or after the operator (e.g. concat, add, etc..) together with
 // fusion pass. If transpose inserted are more than half of input output, we will insert remaining input
@@ -138,14 +138,32 @@ int NPUInsertTransformPass::InsertNode(kernel::LiteKernel *kernel, kernel::LiteK
 
   auto *nh2nc_kernel = NPUPassUtils::CreateNhwc2NchwKernel({in_tensor}, nh2nc_tensors, context_, nh2nc_name);
   trans_kernels->push_back(nh2nc_kernel);
-  insert_primitive_.push_back(nh2nc_kernel->GetPrimitive());
 
   auto *nc2nh_kernel = NPUPassUtils::CreateNchw2NhwcKernel(nh2nc_tensors, nc2nh_tensors, context_, nc2nh_name);
   trans_kernels->push_back(nc2nh_kernel);
-  insert_primitive_.push_back(nc2nh_kernel->GetPrimitive());
 
-  NPUPassUtils::UpdateKernel(nh2nc_kernel, in_kernels, {nc2nh_kernel}, {in_tensor}, nh2nc_tensors);
-  NPUPassUtils::UpdateKernel(nc2nh_kernel, {nh2nc_kernel}, out_kernels, nh2nc_tensors, nc2nh_tensors);
+  auto nh2nc_perm_tensor = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, Tensor::CONST_TENSOR);
+  auto nh2nc_data = nh2nc_perm_tensor->MutableData();
+  if (nh2nc_data == nullptr) {
+    return RET_ERROR;
+  }
+  std::vector<int> nh2nc_perm_vector = {0, 3, 1, 2};
+  memcpy(nh2nc_data, nh2nc_perm_vector.data(), 4 * sizeof(int));
+  all_tensors_->push_back(nh2nc_perm_tensor);
+
+  auto nc2nh_perm_tensor = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, Tensor::CONST_TENSOR);
+  auto nc2nh_data = nc2nh_perm_tensor->MutableData();
+  if (nc2nh_data == nullptr) {
+    return RET_ERROR;
+  }
+
+  std::vector<int> nc2nh_perm_vector = {0, 2, 3, 1};
+  memcpy(nc2nh_data, nc2nh_perm_vector.data(), 4 * sizeof(int));
+  all_tensors_->push_back(nc2nh_perm_tensor);
+
+  NPUPassUtils::UpdateKernel(nh2nc_kernel, in_kernels, {nc2nh_kernel}, {in_tensor, nh2nc_perm_tensor}, nh2nc_tensors);
+  NPUPassUtils::UpdateKernel(nc2nh_kernel, {nh2nc_kernel}, out_kernels, {nh2nc_tensors[0], nc2nh_perm_tensor},
+                             nc2nh_tensors);
   if (kernel != nullptr) {
     NPUPassUtils::UpdateNH2NCTransNodePreKernel(kernel, nh2nc_kernel, post_kernel);
   }

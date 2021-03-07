@@ -17,26 +17,14 @@
 #include "tools/converter/parser/tflite/tflite_rank_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/rank.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteRankParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
-
-  std::unique_ptr<schema::RankT> attr = std::make_unique<schema::RankT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  primitive->value.type = schema::PrimitiveType_Rank;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *TfliteRankParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Rank>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteRankParser(tflite::BuiltinOperator_RANK, new TfliteRankParser());

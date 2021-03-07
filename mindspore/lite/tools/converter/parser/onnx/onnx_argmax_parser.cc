@@ -16,35 +16,23 @@
 
 #include "tools/converter/parser/onnx/onnx_argmax_parser.h"
 #include <memory>
+#include "ops/fusion/arg_max_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxArgMaxParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                       const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ArgMaxParser";
-
-  auto attr = std::make_unique<schema::ArgMaxT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxArgMaxParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::ArgMaxFusion>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      attr->axis = static_cast<int32_t>(onnx_node_attr.i());
+      prim->set_axis(onnx_node_attr.i());
     } else if (attribute_name == "keepdims") {
-      attr->keepDims = static_cast<bool>(onnx_node_attr.i());
+      prim->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_ArgMax;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxArgMaxParser("ArgMax", new OnnxArgMaxParser());

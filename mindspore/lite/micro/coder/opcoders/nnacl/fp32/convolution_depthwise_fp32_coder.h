@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_FP32_CONVOLUTION_DEPTHWISE_FP32_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/base/conv2d_base_coder.h"
+#include "coder/opcoders/base/conv2d_base_coder.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {

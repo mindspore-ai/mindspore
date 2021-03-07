@@ -23,7 +23,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Exp;
+using mindspore::schema::PrimitiveType_ExpFusion;
 
 namespace mindspore::kernel {
 int ExpCPUKernel::Init() {
@@ -81,5 +81,5 @@ int ExpCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Exp, LiteKernelCreator<ExpCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ExpFusion, LiteKernelCreator<ExpCPUKernel>)
 }  // namespace mindspore::kernel

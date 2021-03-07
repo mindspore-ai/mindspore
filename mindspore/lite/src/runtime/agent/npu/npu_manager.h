@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@
 
 namespace mindspore::lite {
 static std::set<mindspore::schema::PrimitiveType> npu_trans_nodes = {
-  schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
-  schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
-  schema::PrimitiveType_Resize,          schema::PrimitiveType_Pooling};
+  schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Resize,
+  schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion};
 struct SubGraphModel {
  public:
   SubGraphModel(int index, std::string model_name, domi::ModelBufferData *model_buffer_data)

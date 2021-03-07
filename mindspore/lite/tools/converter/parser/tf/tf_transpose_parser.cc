@@ -19,72 +19,24 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/transpose.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFTransposeParser::Parse(const tensorflow::NodeDef &tf_op,
-                                const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF TransposeParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::TransposeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-  attr->conjugate = false;
-
-  auto status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
-    return status;
-  }
-
-  auto perm_node = GetConstInputNode(tf_node_map, tf_op.input(1));
-  if (perm_node == nullptr) {
-    status = AddOpInput(tf_op, 1, inputs);
-    if (status != RET_OK) {
-      return status;
-    }
-  } else {
-    tensorflow::AttrValue attr_value;
-    if (!TensorFlowUtils::FindAttrValue(*perm_node, "value", &attr_value)) {
-      MS_LOG(ERROR) << "The value attr should be specified";
-      return RET_ERROR;
-    }
-    auto tensor_proto = attr_value.tensor();
-    if (tensor_proto.int_val_size() > 0) {
-      for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
-        attr->perm.push_back(tensor_proto.int_val(i));
-      }
-    } else {
-      auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
-      auto data = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
-      for (size_t i = 0; i < data_num; ++i) {
-        attr->perm.push_back(data[i]);
-      }
-    }
-  }
-
-  primitive->value.type = schema::PrimitiveType_Transpose;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+ops::PrimitiveC *TFTransposeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                          std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::Transpose>();
 
   *output_size = 1;
-  return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
+  }
+
+  return prim.release();
 }
+
 TFNodeRegistrar g_tfTransposeParser("Transpose", new TFTransposeParser());
 }  // namespace lite
 }  // namespace mindspore

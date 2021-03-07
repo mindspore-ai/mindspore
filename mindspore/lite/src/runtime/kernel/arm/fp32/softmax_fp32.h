@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class SoftmaxCPUKernel : public SoftmaxBaseCPUKernel {
  public:
   SoftmaxCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                   const mindspore::lite::PrimitiveC *primitive)
-      : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive), sum_data_(nullptr) {}
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx), sum_data_(nullptr) {}
   ~SoftmaxCPUKernel() override {
     if (sum_data_ != nullptr) {
       free(sum_data_);

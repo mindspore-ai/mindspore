@@ -17,35 +17,25 @@
 #include "tools/converter/parser/tflite/tflite_skip_gram_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/skip_gram.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteSkipGramParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteSkipGramParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::SkipGram>();
 
-  std::unique_ptr<schema::SkipGramT> attr = std::make_unique<schema::SkipGramT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsSkipGramOptions();
   if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op attr failed";
+    MS_LOG(ERROR) << "get SkipGram attr failed";
     return nullptr;
   }
-  attr->includeAllGrams = tflite_attr->include_all_ngrams;
-  attr->maxSkipSize = tflite_attr->max_skip_size;
-  attr->ngramSize = tflite_attr->ngram_size;
+  prim->set_include_all_grams(tflite_attr->include_all_ngrams);
+  prim->set_max_skip_size(tflite_attr->max_skip_size);
+  prim->set_ngram_size(tflite_attr->ngram_size);
 
-  primitive->value.type = schema::PrimitiveType_SkipGram;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSkiGramParser(tflite::BuiltinOperator_SKIP_GRAM, new TfliteSkipGramParser());

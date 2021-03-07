@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <memory>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "micro/coder/allocator/allocator.h"
 
 namespace mindspore::lite::micro {
@@ -43,6 +43,8 @@ class OpCoderBuilder {
 
   OpCoderBuilder &target(Target target);
 
+  OpCoderBuilder &support_parallel(bool parallel);
+
   void Reset();
 
  private:
@@ -56,13 +58,15 @@ class OpCoderBuilder {
 
   Target target_{kTargetUnknown};
 
-  TypeId data_type_ = kTypeUnknown;
+  TypeId data_type_{kTypeUnknown};
 
-  CodeMode mode_ = Code_Normal;
+  CodeMode mode_{Code_Unknown};
 
   std::vector<uint32_t> input_indices_;
 
   std::vector<uint32_t> output_indices_;
+
+  bool support_parallel_{false};
 };
 
 }  // namespace mindspore::lite::micro

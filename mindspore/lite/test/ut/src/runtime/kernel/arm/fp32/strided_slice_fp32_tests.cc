@@ -157,7 +157,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice3) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
   delete ctx;
@@ -207,7 +207,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice4) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
   delete ctx;
@@ -264,7 +264,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice5) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
   delete ctx;
@@ -321,7 +321,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice6) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
   delete ctx;
@@ -370,7 +370,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice7) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
   delete ctx;
@@ -427,7 +427,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice8) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
   delete ctx;
@@ -577,7 +577,7 @@ TEST_F(TestStridedSliceFp32, StridedSlice9) {
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(strided_slice_param), ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
   delete ctx;

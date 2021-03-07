@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/int8/add_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/add_int8_coder.h"
 #include <algorithm>
 #include <type_traits>
 #include "nnacl/int8/quantize.h"
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/log.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
-using mindspore::schema::PrimitiveType_Add;
+using mindspore::schema::PrimitiveType_AddFusion;
 
-namespace mindspore::lite::micro {
+namespace mindspore::lite::micro::nnacl {
 
 int AddInt8Coder::Prepare(CoderContext *const context) {
   input0 = input_tensors().at(0);
@@ -38,26 +39,8 @@ int AddInt8Coder::Prepare(CoderContext *const context) {
   return RET_OK;
 }
 
-int AddInt8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"wrapper/int8/conv1x1_init_int8.h"}, {"add_int8_wrapper.c", "add_int8.c", "thread_pool.c"});
-
-  nnacl::NNaclInt8Serializer code;
-
-  code.CodeStruct("para", para_);
-  code.CodeStruct("arith_para", *arith_para_);
-  code.CodeBaseStruct("AddArgs", "args", "para", "arith_para", in_size_, out_size_, thread_num_s_, elements_num_,
-                      support_opt_add_, input0, input1, output_tensor_);
-
-  if (arith_para_->broadcasting_) {
-    code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "AddBroadcastRun", "&args", thread_num_s_);
-  } else {
-    code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "AddRun", "&args", thread_num_s_);
-  }
-
-  return RET_OK;
-}
-
 int AddInt8Coder::Init() {
+  arith_para_ = reinterpret_cast<ArithmeticParameter *>(parameter_);
   para_.in0_args_.zp_ = input0->quant_params().front().zeroPoint * -1;
   para_.in1_args_.zp_ = input1->quant_params().front().zeroPoint * -1;
   para_.out_zp_ = output_tensor_->quant_params().front().zeroPoint;
@@ -152,5 +135,32 @@ int AddInt8Coder::ReSize() {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Add, CPUOpCoderCreator<AddInt8Coder>)
-}  // namespace mindspore::lite::micro
+int AddInt8Coder::DoCode(CoderContext *const context) {
+  Collect(context, {"wrapper/int8/add_int8_wrapper.h"},
+          {"add_int8_wrapper.c", "add_int8.c", "arithmetic_base.c", "arithmetic_int8.c", "thread_pool.c"});
+
+  nnacl::NNaclInt8Serializer code;
+
+  code.CodeStruct("para", para_);
+  code.CodeStruct("arith_para", *arith_para_);
+  code.CodeBaseStruct("AddInt8Args", kRunArgs, "&para", "&arith_para", in_size_, out_size_, gThreadNum, elements_num_,
+                      support_opt_add_, input0, input1, output_tensor_);
+  if (support_parallel_) {
+    if (arith_para_->broadcasting_) {
+      code.CodeFunction(kParallelLaunch, gThreadPool, "AddBroadcastInt8Run", kRunArgsAddr, gThreadNum);
+    } else {
+      code.CodeFunction(kParallelLaunch, gThreadPool, "AddInt8Run", kRunArgsAddr, gThreadNum);
+    }
+  } else {
+    if (arith_para_->broadcasting_) {
+      code.CodeFunction("AddBroadcastInt8Run", kRunArgsAddr, kDefaultTaskId);
+    } else {
+      code.CodeFunction("AddInt8Run", kRunArgsAddr, kDefaultTaskId);
+    }
+  }
+  context->AppendCode(code.str());
+  return RET_OK;
+}
+
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_AddFusion, CPUOpCoderCreator<AddInt8Coder>)
+}  // namespace mindspore::lite::micro::nnacl

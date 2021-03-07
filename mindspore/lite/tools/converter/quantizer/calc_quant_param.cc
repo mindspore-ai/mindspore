@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,8 +61,8 @@ STATUS QuantParamCalcer::ComputeConstQuantParam(const schema::TensorT &tensor, Q
   return quant::CalQuantizationParams(quantParam, min, max);
 }
 
-// init inTensor quantParam from preNode if possable
-// init outTensor quantParam from postNode if possable
+// init inTensor quantParam from preNode if possible
+// init outTensor quantParam from postNode if possible
 int QuantParamCalcer::Calc(MetaGraphT *graph, const CNodeT &node) {
   MS_ASSERT(node.inputIndex.size() > 0);
   MS_ASSERT(node.quantParam.size() == node.inputIndex.size() + node.outputIndex.size());
@@ -472,7 +472,7 @@ class CalcActivation : public QuantParamCalcer {
     MS_ASSERT(node.inputIndex.size() == 1);
     MS_ASSERT(node.outputIndex.size() == 1);
     MS_ASSERT(node.attr.AsActivation() != nullptr);
-    if (node.primitive->value.AsActivation()->type == schema::ActivationType_SIGMOID) {
+    if (node.primitive->value.AsActivation()->activation_type == schema::ActivationType_SIGMOID) {
       auto calcToSet = CalcToSet(0, 1);
       return calcToSet.Calc(subGraph, node);
     } else {
@@ -504,21 +504,21 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
   if (!hasError) {
     _registerMap[schema::PrimitiveType_Concat] = std::make_shared<CalcConcat>();
     _registerMap[schema::PrimitiveType_Activation] = std::make_shared<CalcActivation>();
-    _registerMap[schema::PrimitiveType_Add] = std::make_shared<CalcAdd>();
-    _registerMap[schema::PrimitiveType_Mul] = commonCalcer;
-    _registerMap[schema::PrimitiveType_Scale] = std::make_shared<ConvCalcer>();
-    _registerMap[schema::PrimitiveType_Conv2D] = std::make_shared<ConvCalcer>();
-    _registerMap[schema::PrimitiveType_DeConv2D] = std::make_shared<ConvCalcer>();
-    _registerMap[schema::PrimitiveType_DepthwiseConv2D] = std::make_shared<ConvCalcer>();
-    _registerMap[schema::PrimitiveType_Pooling] = linearCalcer;
+    _registerMap[schema::PrimitiveType_AddFusion] = std::make_shared<CalcAdd>();
+    _registerMap[schema::PrimitiveType_MulFusion] = commonCalcer;
+    _registerMap[schema::PrimitiveType_ScaleFusion] = std::make_shared<ConvCalcer>();
+    _registerMap[schema::PrimitiveType_Conv2DFusion] = std::make_shared<ConvCalcer>();
+    _registerMap[schema::PrimitiveType_Conv2dTransposeFusion] = std::make_shared<ConvCalcer>();
+    _registerMap[schema::PrimitiveType_AvgPoolFusion] = linearCalcer;
+    _registerMap[schema::PrimitiveType_MaxPoolFusion] = linearCalcer;
     _registerMap[schema::PrimitiveType_Resize] = linearCalcer;
     _registerMap[schema::PrimitiveType_Reshape] = linearCalcer;
     _registerMap[schema::PrimitiveType_StridedSlice] = linearCalcer;
     _registerMap[schema::PrimitiveType_Shape] = linearCalcer;
-    _registerMap[schema::PrimitiveType_SoftMax] = std::make_shared<CalcToSet>(0, 1);
+    _registerMap[schema::PrimitiveType_Softmax] = std::make_shared<CalcToSet>(0, 1);
     _registerMap[schema::PrimitiveType_Squeeze] = linearCalcer;
     _registerMap[schema::PrimitiveType_RealDiv] = std::make_shared<CalcRealDiv>();
-    _registerMap[schema::PrimitiveType_Reduce] = commonCalcer;
+    _registerMap[schema::PrimitiveType_ReduceFusion] = commonCalcer;
     _registerMap[schema::PrimitiveType_BiasAdd] = std::make_shared<BiasAddCalcer>();
     _registerMap[schema::PrimitiveType_Transpose] = linearCalcer;
     _registerMap[schema::PrimitiveType_MatMul] = std::make_shared<ConvCalcer>();

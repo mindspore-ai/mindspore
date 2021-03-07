@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,13 @@ class UpdateConv2DParamPass : public Pass {
  public:
   UpdateConv2DParamPass() : Pass("update_conv2d_param_pass") {}
   ~UpdateConv2DParamPass() override = default;
+  lite::STATUS UpdateCommonConv2D(const CNodePtr &cnode);
+  lite::STATUS UpdateDepthWiseConv2D(const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &graph) override;
-  void SetFmkType(FmkType fmk_type) { this->fmk_type = fmk_type; }
+  void SetFmkType(FmkType fmk_type) { this->fmk_type_ = fmk_type; }
 
  private:
-  FmkType fmk_type = lite::converter::FmkType_ONNX;
+  FmkType fmk_type_ = lite::converter::FmkType_ONNX;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_

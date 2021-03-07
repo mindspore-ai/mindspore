@@ -43,7 +43,7 @@ class TestScaleInt8 : public mindspore::CommonTest {
   Tensor out_tensor_;
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs = {&out_tensor_};
-  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Scale};
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_ScaleFusion};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::LiteKernel *kernel_ = nullptr;
@@ -94,7 +94,7 @@ void TestScaleInt8::Prepare(const std::vector<int> &in_shape, int8_t *input_data
 
   ctx_.thread_num_ = thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
-  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
 }
 
 TEST_F(TestScaleInt8, scale1) {

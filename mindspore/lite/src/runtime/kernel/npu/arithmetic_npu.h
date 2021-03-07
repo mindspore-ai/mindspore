@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
 #include <vector>
-#include "include/graph/op/all_ops.h"
 #include "nnacl/arithmetic.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class ArithmeticNPUKernel : public NPUKernel {
  public:
   ArithmeticNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
     activation_type_ = reinterpret_cast<ArithmeticParameter *>(parameter)->activation_type_;
   }
   ~ArithmeticNPUKernel() override;

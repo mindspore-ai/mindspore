@@ -23,7 +23,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_LeakyReLU;
+using mindspore::schema::PrimitiveType_LeakyRelu;
 
 namespace mindspore::kernel {
 namespace {
@@ -130,5 +130,5 @@ int LeakyReluInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, LiteKernelCreator<LeakyReluInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyRelu, LiteKernelCreator<LeakyReluInt8CPUKernel>)
 }  // namespace mindspore::kernel

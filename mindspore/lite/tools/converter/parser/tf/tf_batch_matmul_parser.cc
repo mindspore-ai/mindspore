@@ -19,53 +19,32 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
-                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                  PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(DEBUG) << "TF BatchMatMulParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::MatMulT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFBatchMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
+                                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                            std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::MatMul>();
+
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "adj_x", &attr_value)) {
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->transposeA = attr_value.b();
+  prim->set_transpose_a(attr_value.b());
   if (!TensorFlowUtils::FindAttrValue(tf_op, "adj_y", &attr_value)) {
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->transposeB = attr_value.b();
-  primitive->value.type = schema::PrimitiveType_MatMul;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_transpose_b(attr_value.b());
+
   *output_size = 1;
-  for (int i = 0; i < tf_op.input_size(); ++i) {
-    auto status = AddOpInput(tf_op, i, inputs);
-    if (status != RET_OK) {
-      return status;
-    }
+  for (int i = 0; i < tf_op.input_size(); i++) {
+    inputs->emplace_back(tf_op.input(i));
   }
-  return RET_OK;
+  return prim.release();
 }
 TFNodeRegistrar g_tfBatchMatMulParser("BatchMatMul", new TFBatchMatMulParser());
 }  // namespace lite

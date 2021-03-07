@@ -20,8 +20,8 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include "micro/coder/allocator/allocator.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_stream_utils.h"
+#include "coder/allocator/allocator.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_stream_utils.h"
 
 namespace mindspore::lite::micro {
 
@@ -121,6 +121,10 @@ class Serializer {
 
   template <typename T>
   void CodeMallocExpression(T t, size_t size) {
+    if (size == 0) {
+      MS_LOG(ERROR) << "CodeMallocExpression size is zero";
+      exit(1);
+    }
     GenCode(t);
     code << " = malloc(" << size << ");\n";
     code << "if (";

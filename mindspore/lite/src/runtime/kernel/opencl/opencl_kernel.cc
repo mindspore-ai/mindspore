@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <mindspore/lite/src/runtime/infer_manager.h>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "mindspore/lite/src/dequant.h"
 
@@ -193,14 +194,12 @@ int OpenCLKernel::InferShape() {
   if (infer_shape_flag_) {
     return RET_OK;
   }
-  if (primitive_ == nullptr) {
-    return RET_ERROR;
-  }
-  (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
-  auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+  op_parameter_->infer_flag_ = true;
+  auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
   if (ret != RET_OK) {
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
-    MS_LOG(ERROR) << "InferShape fail!";
+    MS_LOG(ERROR) << "InferShape failed, type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(Type()));
+    op_parameter_->infer_flag_ = false;
     return ret;
   }
   infer_shape_flag_ = true;
@@ -287,8 +286,8 @@ int OpenCLKernel::Tune() {
   if (mode == lite::opencl::TuningMode::DEFAULT) {
     return RET_OK;
   }
-  static const std::set<int> FAST_MODE_OPS = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DepthwiseConv2D,
-                                              schema::PrimitiveType_DeConv2D};
+  static const std::set<int> FAST_MODE_OPS = {schema::PrimitiveType_Conv2DFusion,
+                                              schema::PrimitiveType_Conv2dTransposeFusion};
   if (mode == lite::opencl::TuningMode::FAST && FAST_MODE_OPS.find(op_parameter_->type_) == FAST_MODE_OPS.end()) {
     return RET_OK;
   }

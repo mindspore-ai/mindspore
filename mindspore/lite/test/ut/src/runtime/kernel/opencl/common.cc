@@ -19,6 +19,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "nnacl/conv_parameter.h"
+#include "schema/model_v0_generated.h"
 
 using mindspore::kernel::LiteKernel;
 using mindspore::kernel::OpenCLSubGraph;
@@ -40,9 +41,14 @@ void TestMain(const std::vector<ArgsTuple> &input_infos, const std::vector<ArgsT
 void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vector<ArgsTupleOut> &output_info,
               OpParameter *op_parameter, bool fp16_enable, float atol, float rtol, bool print_data) {
   auto primitive_type = static_cast<schema::PrimitiveType>(op_parameter->type_);
-  static std::set<schema::PrimitiveType> packed_op = {
-    schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DepthwiseConv2D,
-    schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_MatMul};
+#ifdef ENABLE_V0
+  static std::set<int> packed_op = {schema::v0::PrimitiveType_Conv2D, schema::v0::PrimitiveType_DeConv2D,
+                                    schema::v0::PrimitiveType_DepthwiseConv2D,
+                                    schema::v0::PrimitiveType_DeDepthwiseConv2D, schema::v0::PrimitiveType_MatMul};
+#else
+  static std::vector<int> packed_ops = {schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
+                                        schema::PrimitiveType_MatMul};
+#endif
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";
@@ -104,7 +110,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
     free(op_parameter);
     FAIL();
   }
-  auto *kernel = creator(kernel_inputs, outputs, op_parameter, nullptr, key, nullptr);
+  auto *kernel = creator(kernel_inputs, outputs, op_parameter, nullptr, key);
   if (kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);
@@ -180,8 +186,8 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
               OpParameter *op_parameter, bool fp16_enable, float atol, float rtol, bool print_data) {
   auto primitive_type = static_cast<schema::PrimitiveType>(op_parameter->type_);
   static std::set<schema::PrimitiveType> packed_op = {
-    schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DepthwiseConv2D,
-    schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_MatMul};
+    schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Conv2DFusion,
+    schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_MatMul};
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";
@@ -237,7 +243,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
     free(op_parameter);
     FAIL();
   }
-  auto *kernel = creator(kernel_inputs, {&output}, op_parameter, nullptr, key, nullptr);
+  auto *kernel = creator(kernel_inputs, {&output}, op_parameter, nullptr, key);
   if (kernel == nullptr) {
     std::cerr << "call registry function error: " << schema::EnumNamePrimitiveType(primitive_type) << std::endl;
     free(op_parameter);

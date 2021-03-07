@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
+#include "ops/lstm.h"
 #include "src/common/utils.h"
 #include "src/param_value_lite.h"
 #include "utils/utils.h"
@@ -36,9 +36,10 @@ const auto &p1 = std::placeholders::_1;
 
 bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
 
-bool IsOpType(const BaseRef &n, const schema::PrimitiveType &type) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    return opt::GetCNodeType(n) == type;
+bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim);
   }
   return false;
 }
@@ -87,21 +88,21 @@ AnfNodePtr TfLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primi
   VectorRef to_new_hidden = VectorRef({std::make_shared<Var>("Tanh"), input_forget_cell});
   VectorRef new_hidden = VectorRef({std::make_shared<Var>("Mul"), output_gate, to_new_hidden});
 
-  VectorRef new_to_cell = VectorRef({std::make_shared<Var>("Mul"), cell_smooth_new_, input_forget_cell});
-  VectorRef old_to_cell = VectorRef({std::make_shared<Var>("Mul"), cell_smooth_old_, placeholders[4]});
+  VectorRef new_to_cell = VectorRef({std::make_shared<Var>("Mul"), cell_zoneout_new_, input_forget_cell});
+  VectorRef old_to_cell = VectorRef({std::make_shared<Var>("Mul"), cell_zoneout_old_, placeholders[4]});
   VectorRef output_cell = VectorRef({std::make_shared<Var>("Add"), new_to_cell, old_to_cell});
 
-  VectorRef new_to_hidden = VectorRef({std::make_shared<Var>("Mul"), hidden_smooth_new_, new_hidden});
-  VectorRef old_to_hidden = VectorRef({std::make_shared<Var>("Mul"), hidden_smooth_old_, placeholders[5]});
+  VectorRef new_to_hidden = VectorRef({std::make_shared<Var>("Mul"), hidden_zoneout_new_, new_hidden});
+  VectorRef old_to_hidden = VectorRef({std::make_shared<Var>("Mul"), hidden_zoneout_old_, placeholders[5]});
   VectorRef output_hidden = VectorRef({std::make_shared<Var>("Add"), new_to_hidden, old_to_hidden});
 
   VectorRef set_item = VectorRef({std::make_shared<Var>(""), placeholders[3], placeholders[2], new_hidden});
 
-  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_MakeTuple));
+  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimMakeTuple));
   std::vector<BaseRef> outputs = {is_make_tuple, add3, placeholders[1], add2, set_item, output_cell, output_hidden};
   outputs.insert(outputs.end(), placeholders.begin() + 6, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Return));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
   VarPtr fg = std::make_shared<Var>("RootG");
@@ -286,17 +287,14 @@ STATUS TfLstmCellFusion::PopulateBiasNode(const EquivPtr &body_equiv, const Para
 
 CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                           const EquivPtr &body_equiv, const std::string &base_name,
-                                          const float smooth) const {
+                                          const float zoneout_cell, const float zoneout_hidden) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
-  auto lstm_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::LstmT> attr = std::make_unique<schema::LstmT>();
-  attr->bidirection = false;
-  attr->smooth = smooth;
-  lstm_primitive->value.type = schema::PrimitiveType_Lstm;
-  lstm_primitive->value.value = attr.release();
-  auto lstm_cvalue = lite::PrimitiveC::Create(lstm_primitive.release());
-  auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(lstm_cvalue));
+  auto lstm_prim = std::make_shared<ops::LSTM>();
+  lstm_prim->set_bidirectional(false);
+  lstm_prim->set_zoneout_cell(zoneout_cell);
+  lstm_prim->set_zoneout_hidden(zoneout_hidden);
+  auto value_node = NewValueNode(lstm_prim);
 
   auto &vars = while_input_vars_;
 
@@ -353,7 +351,7 @@ CNodePtr TfLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
 
-  if (!utils::isa<CNodePtr>(input) || GetCNodeType(input) != schema::PrimitiveType_TensorListFromTensor) {
+  if (!utils::isa<CNodePtr>(input) || !CheckPrimitiveType(input, prim::kPrimTensorListFromTensor)) {
     MS_LOG(DEBUG) << "input is not tensorlistfromtensor op";
     return nullptr;
   }

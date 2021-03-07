@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/binary_cross_entropy.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32_grad/binary_cross_entropy.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateBinaryCrossEntropyParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateBinaryCrossEntropyParameter(const void *prim) {
   BinaryCrossEntropyParameter *bce_param =
     reinterpret_cast<BinaryCrossEntropyParameter *>(malloc(sizeof(BinaryCrossEntropyParameter)));
   if (bce_param == nullptr) {
@@ -29,14 +26,14 @@ OpParameter *PopulateBinaryCrossEntropyParameter(const mindspore::lite::Primitiv
     return nullptr;
   }
   memset(bce_param, 0, sizeof(BinaryCrossEntropyParameter));
-  bce_param->op_parameter_.type_ = primitive->Type();
-  auto param =
-    reinterpret_cast<mindspore::lite::BinaryCrossEntropy *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  bce_param->reduction = param->GetReduction();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_BinaryCrossEntropy();
+  bce_param->op_parameter_.type_ = primitive->value_type();
+  bce_param->reduction = value->reduction();
   return reinterpret_cast<OpParameter *>(bce_param);
 }
 
 Registry BinaryCrossEntropyParameterRegistry(schema::PrimitiveType_BinaryCrossEntropy,
-                                             PopulateBinaryCrossEntropyParameter);
+                                             PopulateBinaryCrossEntropyParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

@@ -30,9 +30,8 @@ namespace mindspore::kernel {
 class MatmulFp32BaseCPUKernel : public LiteKernel {
  public:
   MatmulFp32BaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                          const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
     vec_matmul_ = false;
   }

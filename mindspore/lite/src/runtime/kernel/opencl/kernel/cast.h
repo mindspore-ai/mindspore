@@ -38,7 +38,7 @@ class CastOpenCLKernel : public OpenCLKernel {
   int Run() override;
 
  private:
-  int GetKernelName(std::string *kernel_name, CastParameter *param);
+  GpuTensorInfo shape_;
 };
 
 }  // namespace mindspore::kernel

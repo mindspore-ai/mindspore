@@ -40,6 +40,7 @@ typedef struct ArithmeticParameter {
 
   int multiples0_[10];
   int multiples1_[10];
+  int eltwise_mode_;  // eltwise need
 } ArithmeticParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_ARTITHMETIC_H_

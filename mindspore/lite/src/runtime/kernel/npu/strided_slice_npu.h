@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_
 #include <vector>
-#include "include/graph/op/all_ops.h"
-#include "src/ops/strided_slice.h"
 #include "nnacl/strided_slice_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class StridedSliceNPUKernel : public NPUKernel {
  public:
   StridedSliceNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                        const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    strided_slice_ = reinterpret_cast<const mindspore::lite::StridedSlice *>(primitive);
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
+    param_ = reinterpret_cast<StridedSliceParameter *>(parameter);
   }
   ~StridedSliceNPUKernel() override;
 
@@ -40,7 +38,7 @@ class StridedSliceNPUKernel : public NPUKernel {
 
  private:
   hiai::op::StridedSlice *op_ = nullptr;
-  const mindspore::lite::StridedSlice *strided_slice_;
+  StridedSliceParameter *param_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_

@@ -16,13 +16,14 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+
+#include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "nnacl/fp32/reduce_fp32.h"
 #include "src/runtime/kernel/arm/fp32_grad/arithmetic_grad.h"
 #include "src/kernel_registry.h"
-#include "src/ops/arithmetic_grad.h"
 
 namespace mindspore {
 
@@ -44,13 +45,6 @@ ArithmeticParameter *PopulateArithmeticParameter(mindspore::schema::PrimitiveTyp
   }
 
   prim->value.type = type;
-  auto agrad = mindspore::lite::ArithmeticGrad(prim);
-  agrad.InferShape(inputs, outputs);
-
-  arithmetic_param->ndim_ = agrad.NDims();
-  for (size_t i = 0; i < agrad.dyShape().size(); i++) arithmetic_param->out_shape_[i] = (agrad.dyShape())[i];
-  for (size_t i = 0; i < agrad.x1Shape().size(); i++) arithmetic_param->in_shape0_[i] = (agrad.x1Shape())[i];
-  for (size_t i = 0; i < agrad.x2Shape().size(); i++) arithmetic_param->in_shape1_[i] = (agrad.x2Shape())[i];
   return arithmetic_param;
 }
 
@@ -216,7 +210,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGradFp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_AddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -258,7 +252,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad2Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_AddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -302,7 +296,7 @@ TEST_F(TestArithmeticGradFp32, TestAddGrad3Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_AddGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -347,7 +341,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGradFp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SubGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -392,7 +386,7 @@ TEST_F(TestArithmeticGradFp32, TestSubGrad2Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SubGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -435,7 +429,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGradFp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   int loop_count = 1000;
   auto time_start = mindspore::lite::GetTimeUs();
@@ -487,7 +481,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad2Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -531,7 +525,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad3Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -575,7 +569,7 @@ TEST_F(TestArithmeticGradFp32, TestMulGrad4Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MulGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -619,7 +613,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGradFp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -663,7 +657,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad2Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -708,7 +702,7 @@ TEST_F(TestArithmeticGradFp32, TestDivGrad3Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -752,7 +746,7 @@ TEST_F(TestArithmeticGradFp32, Test3DDivGrad2Fp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DivGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 
@@ -834,7 +828,7 @@ TEST_F(TestArithmeticGradFp32, TestMaximumGradBroadcastFp32) {
   kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_MaximumGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   kernel_obj->Run();
 

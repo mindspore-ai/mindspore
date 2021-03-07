@@ -23,7 +23,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Power;
+using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 int PowerCPUKernel::Init() { return RET_OK; }
@@ -62,14 +62,14 @@ int PowerCPUKernel::RunImpl(int task_id) {
   }
   float *exp_addr = nullptr;
   bool broadcast = true;
-  if (in_tensors_.size() == 2) {
-    exp_addr = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-    MS_ASSERT(exp_addr);
-    broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
-  }
+  MS_ASSERT(in_tensors_.size() == 2);
+  exp_addr = reinterpret_cast<float *>(in_tensors_[1]->data_c());
+  MS_ASSERT(exp_addr != nullptr);
+  broadcast = in_tensors_[0]->shape() == in_tensors_[1]->shape() ? false : true;
+
   float *cur_exp = nullptr;
   if (broadcast) {
-    cur_exp = in_tensors_.size() == 2 ? exp_addr : &power_;
+    cur_exp = exp_addr;
   } else {
     cur_exp = exp_addr + stride * task_id;
   }
@@ -77,5 +77,5 @@ int PowerCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Power, LiteKernelCreator<PowerCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PowFusion, LiteKernelCreator<PowerCPUKernel>)
 }  // namespace mindspore::kernel

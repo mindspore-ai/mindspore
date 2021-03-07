@@ -16,27 +16,23 @@
 
 #include "tools/converter/parser/caffe/caffe_permute_parser.h"
 #include <memory>
+#include "ops/transpose.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffePermuteParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                   const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::TransposeT> attr = std::make_unique<schema::TransposeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *CaffePermuteParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_unique<ops::Transpose>();
 
+  std::vector<int32_t> perm;
   const caffe::PermuteParameter &permuteParam = proto.permute_param();
   const int num_order_dims = permuteParam.order_size();
-  attr->perm.resize(num_order_dims);
+  perm.resize(num_order_dims);
   for (int i = 0; i < num_order_dims; ++i) {
-    attr->perm[i] = (int32_t)permuteParam.order()[i];
+    perm[i] = permuteParam.order()[i];
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Transpose;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->AddAttr("perm", MakeValue(perm));
+
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffePermuteParser("Permute", new CaffePermuteParser());

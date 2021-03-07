@@ -26,7 +26,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_SoftMax;
+using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
 int SoftmaxCPUKernel::Init() {
@@ -111,5 +111,5 @@ int SoftmaxCPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SoftMax, LiteKernelCreator<SoftmaxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Softmax, LiteKernelCreator<SoftmaxCPUKernel>)
 }  // namespace mindspore::kernel

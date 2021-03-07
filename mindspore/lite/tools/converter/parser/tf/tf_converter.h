@@ -18,13 +18,21 @@
 #include <string>
 #include <memory>
 #include "tools/converter/converter.h"
+#include "tools/converter/parser/tf/tf_model_parser.h"
+
 namespace mindspore {
 namespace lite {
 class TFConverter : public Converter {
  public:
-  TFConverter();
+  TFConverter() = default;
 
-  ~TFConverter() = default;
+  ~TFConverter() override = default;
+
+  FuncGraphPtr BuildFuncGraph(const std::string &model_file, const std::string &weight_file,
+                              schema::QuantType quant_type) override {
+    TFModelParser parser;
+    return parser.Parse(model_file, weight_file, quant_type);
+  }
 };
 }  // namespace lite
 }  // namespace mindspore

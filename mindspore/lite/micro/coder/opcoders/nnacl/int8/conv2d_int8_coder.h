@@ -19,9 +19,9 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "micro/coder/opcoders/base/conv2d_base_coder.h"
+#include "coder/opcoders/base/conv2d_base_coder.h"
 #include "nnacl/conv_parameter.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
 class Conv2DINT8Coder final : public Conv2DBaseCoder {
@@ -34,7 +34,14 @@ class Conv2DINT8Coder final : public Conv2DBaseCoder {
 
   int DoCode(CoderContext *const context) override;
 
-  ~Conv2DINT8Coder() override = default;
+  ~Conv2DINT8Coder() override {
+    packed_weight_ = nullptr;
+    bias_data_ = nullptr;
+    filter_zp_ptr_ = nullptr;
+    matmul_packed_input_ = nullptr;
+    packed_input_ = nullptr;
+    input_sum_ = nullptr;
+  }
 
  private:
   int InitWeightBias(CoderContext *ctx);
@@ -63,7 +70,7 @@ class Conv2DINT8Coder final : public Conv2DBaseCoder {
   int32_t *input_sum_{nullptr};
   int8_t *matmul_packed_input_{nullptr};
 
-  string matmul_func_;
+  std::string matmul_func_;
 
   std::function<int(nnacl::NNaclInt8Serializer &, const std::string &, const std::string &)> pack_weight_init_{nullptr};
 };

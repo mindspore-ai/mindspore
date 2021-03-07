@@ -19,8 +19,8 @@
 
 #include <string>
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
-#include "micro/coder/opcoders/base/full_connection_base_coder.h"
+#include "coder/opcoders/op_coder.h"
+#include "coder/opcoders/base/full_connection_base_coder.h"
 #include "nnacl/int8/quantize.h"
 namespace mindspore::lite::micro::cmsis {
 class FullConnectionInt8Coder final : public FullConnectionBaseCoder {

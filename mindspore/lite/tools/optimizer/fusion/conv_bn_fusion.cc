@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 
 #include "tools/optimizer/fusion/conv_bn_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
+#include "ops/batch_norm.h"
+#include "ops/fused_batch_norm.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
-#include "src/ops/batch_norm.h"
-#include "src/ops/fused_batchnorm.h"
 
 namespace mindspore::opt {
 namespace {
@@ -36,10 +34,12 @@ constexpr size_t kTFBNMeanIndex = 4;
 constexpr size_t kTFBNVarIndex = 5;
 constexpr const float EPS = 1e-8;
 constexpr const float POW_NUM = 0.5;
+constexpr const float DEFAULT_EPS = 1e-5;
 bool IsBatchNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_BatchNorm || type == schema::PrimitiveType_FusedBatchNorm;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimBatchNorm) ||
+           CheckPrimitiveType(anf_node, prim::kPrimFusedBatchNorm);
   }
   return false;
 }
@@ -153,8 +153,8 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
   AnfNodePtr bn_scale_node = nullptr;
   AnfNodePtr bn_bias_node = nullptr;
   float eps = 0;
-  auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(bn_node->input(0));
-  if (GetCNodeType(bn_node) == schema::PrimitiveType_BatchNorm) {
+  auto primitive_c = GetValueNode<PrimitiveCPtr>(bn_node->input(0));
+  if (CheckPrimitiveType(bn_node, prim::kPrimBatchNorm)) {
     bn_mean_node = bn_node->input(kCaffeBNMeanIndex);
     bn_variance_node = bn_node->input(kCaffeBNVarIndex);
     AnfNodePtr bn_scale_factor_node = bn_node->input(kCaffeBNScaleFactorIndex);
@@ -162,21 +162,29 @@ void ConvBatchNormFusion::InitTransParam(const CNodePtr &bn_node, int kernel_num
         CheckIfNodeIsParam(bn_scale_factor_node) != lite::RET_OK) {
       return;
     }
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::BatchNorm>>(primitive_c));
-    auto primc = utils::cast<std::shared_ptr<mindspore::lite::BatchNorm>>(primitive_c);
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::BatchNorm>>(primitive_c));
+    auto primc = utils::cast<std::shared_ptr<mindspore::ops::BatchNorm>>(primitive_c);
     MS_ASSERT(primc != nullptr);
-    eps = primc->GetEpsilon();
+    if (primc->GetAttr("epsilon") != nullptr) {
+      eps = primc->get_epsilon();
+    } else {
+      eps = DEFAULT_EPS;
+    }
     CalEstimatedData(bn_mean_node, bn_scale_factor_node);
     CalEstimatedData(bn_variance_node, bn_scale_factor_node);
-  } else if (GetCNodeType(bn_node) == schema::PrimitiveType_FusedBatchNorm) {
+  } else if (CheckPrimitiveType(bn_node, prim::kPrimFusedBatchNorm)) {
     bn_scale_node = bn_node->input(kTFBNScaleIndex);
     bn_bias_node = bn_node->input(kTFBNBiasIndex);
     bn_mean_node = bn_node->input(kTFBNMeanIndex);
     bn_variance_node = bn_node->input(kTFBNVarIndex);
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::FusedBatchNorm>>(primitive_c));
-    auto primc = utils::cast<std::shared_ptr<mindspore::lite::FusedBatchNorm>>(primitive_c);
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::FusedBatchNorm>>(primitive_c));
+    auto primc = utils::cast<std::shared_ptr<mindspore::ops::FusedBatchNorm>>(primitive_c);
     MS_ASSERT(primc != nullptr);
-    eps = primc->GetEpsilon();
+    if (primc->GetAttr("epsilon") != nullptr) {
+      eps = primc->get_epsilon();
+    } else {
+      eps = DEFAULT_EPS;
+    }
   } else {
     MS_LOG(ERROR) << "not caffe or tf batchnorm op.";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);

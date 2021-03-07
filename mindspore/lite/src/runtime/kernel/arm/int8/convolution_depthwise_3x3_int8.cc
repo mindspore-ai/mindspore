@@ -15,17 +15,12 @@
  */
 
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_3x3_int8.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/int8/conv_depthwise_int8.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 ConvolutionDepthwise3x3Int8CPUKernel::~ConvolutionDepthwise3x3Int8CPUKernel() {
@@ -46,7 +41,7 @@ int ConvolutionDepthwise3x3Int8CPUKernel::InitWeightBias() {
   auto origin_weight = reinterpret_cast<int8_t *>(weight_tensor->MutableData());
   int channel = weight_tensor->Batch();
   if (channel % 8 != 0) {
-    MS_LOG(ERROR) << "ConvolutionDepthwise3x3Int8CPUKernel dosen't support channel " << channel;
+    MS_LOG(ERROR) << "ConvolutionDepthwise3x3Int8CPUKernel doesn't support channel " << channel;
     return RET_ERROR;
   }
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();

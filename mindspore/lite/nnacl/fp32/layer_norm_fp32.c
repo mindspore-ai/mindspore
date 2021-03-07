@@ -87,12 +87,10 @@ int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_
         LayerNormGammaAndBeta(dst_param, src_param, gamma_data, beta_data, param->params_inner_size_, mean, deno);
       }
     } else {
-      int x = i / param->norm_outer_size_;
-      const float *src_param = src_norm + x * param->params_inner_size_;
-      float *dst_param = dst_norm + x * param->params_inner_size_;
-      const float *gamma = gamma_data + x * param->params_inner_size_;
-      const float *beta = beta_data + x * param->params_inner_size_;
-      LayerNormGammaAndBeta(dst_param, src_param, gamma, beta, param->norm_inner_size_, mean, deno);
+      int x = i / param->params_outer_size_;
+      const float *gamma = gamma_data + x * param->norm_inner_size_;
+      const float *beta = beta_data + x * param->norm_inner_size_;
+      LayerNormGammaAndBeta(dst_norm, src_norm, gamma, beta, param->norm_inner_size_, mean, deno);
     }
   }
   return NNACL_OK;

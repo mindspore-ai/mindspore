@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,39 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/ops/populate/arithmetic_populate.h"
-#include "src/ops/arithmetic.h"
-#include "src/common/log_adapter.h"
-#include "src/tensor.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
-
-ArithmeticParameter *PopulateArithmeticCommonPara(const mindspore::lite::PrimitiveC *primitive) {
+ArithmeticParameter *PopulateArithmeticCommonPara(const void *prim) {
   ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(ArithmeticParameter));
-  param->op_parameter_.type_ = primitive->Type();
-  param->broadcasting_ = reinterpret_cast<const lite::Arithmetic *>(primitive)->Broadcasting();
-  param->ndim_ = reinterpret_cast<const lite::Arithmetic *>(primitive)->NDims();
+  const schema::Primitive *primitive = static_cast<const schema::Primitive *>(prim);
+  param->op_parameter_.type_ = primitive->value_type();
+  param->broadcasting_ = false;
+  param->ndim_ = 0;
   param->activation_type_ = 0;
-
-  auto tmp_shape = reinterpret_cast<const lite::Arithmetic *>(primitive)->InShape0();
-  memcpy(param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = reinterpret_cast<const lite::Arithmetic *>(primitive)->InShape1();
-  memcpy(param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = reinterpret_cast<const lite::Arithmetic *>(primitive)->OutputShape();
-  memcpy(param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
   return param;
 }
 
-OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateArithmetic(const void *primitive) {
   ArithmeticParameter *param = PopulateArithmeticCommonPara(primitive);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
@@ -54,20 +42,20 @@ OpParameter *PopulateArithmetic(const mindspore::lite::PrimitiveC *primitive) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
-Registry RealDivParameterRegistry(schema::PrimitiveType_RealDiv, PopulateArithmetic);
-Registry LogicalAndParameterRegistry(schema::PrimitiveType_LogicalAnd, PopulateArithmetic);
-Registry ParameterRegistry(schema::PrimitiveType_LogicalOr, PopulateArithmetic);
-Registry EqualParameterRegistry(schema::PrimitiveType_Equal, PopulateArithmetic);
-Registry NotEqualParameterRegistry(schema::PrimitiveType_NotEqual, PopulateArithmetic);
-Registry LessParameterRegistry(schema::PrimitiveType_Less, PopulateArithmetic);
-Registry LessEqualParameterRegistry(schema::PrimitiveType_LessEqual, PopulateArithmetic);
-Registry GreaterParameterRegistry(schema::PrimitiveType_Greater, PopulateArithmetic);
-Registry GreaterEqualParameterRegistry(schema::PrimitiveType_GreaterEqual, PopulateArithmetic);
-Registry MaximumParameterRegistry(schema::PrimitiveType_Maximum, PopulateArithmetic);
-Registry MinimumParameterRegistry(schema::PrimitiveType_Minimum, PopulateArithmetic);
-Registry FloorDivParameterRegistry(schema::PrimitiveType_FloorDiv, PopulateArithmetic);
-Registry FloorModParameterRegistry(schema::PrimitiveType_FloorMod, PopulateArithmetic);
-Registry ModParameterRegistry(schema::PrimitiveType_Mod, PopulateArithmetic);
-Registry SquaredDifferenceParameterRegistry(schema::PrimitiveType_SquaredDifference, PopulateArithmetic);
+Registry g_realDivParameterRegistry(schema::PrimitiveType_RealDiv, PopulateArithmetic, SCHEMA_CUR);
+Registry g_ogicalAndParameterRegistry(schema::PrimitiveType_LogicalAnd, PopulateArithmetic, SCHEMA_CUR);
+Registry g_parameterRegistry(schema::PrimitiveType_LogicalOr, PopulateArithmetic, SCHEMA_CUR);
+Registry g_equalParameterRegistry(schema::PrimitiveType_Equal, PopulateArithmetic, SCHEMA_CUR);
+Registry g_notEqualParameterRegistry(schema::PrimitiveType_NotEqual, PopulateArithmetic, SCHEMA_CUR);
+Registry g_essParameterRegistry(schema::PrimitiveType_Less, PopulateArithmetic, SCHEMA_CUR);
+Registry g_lessEqualParameterRegistry(schema::PrimitiveType_LessEqual, PopulateArithmetic, SCHEMA_CUR);
+Registry g_greaterParameterRegistry(schema::PrimitiveType_Greater, PopulateArithmetic, SCHEMA_CUR);
+Registry g_greaterEqualParameterRegistry(schema::PrimitiveType_GreaterEqual, PopulateArithmetic, SCHEMA_CUR);
+Registry g_maximumParameterRegistry(schema::PrimitiveType_Maximum, PopulateArithmetic, SCHEMA_CUR);
+Registry g_minimumParameterRegistry(schema::PrimitiveType_Minimum, PopulateArithmetic, SCHEMA_CUR);
+Registry g_floorDivParameterRegistry(schema::PrimitiveType_FloorDiv, PopulateArithmetic, SCHEMA_CUR);
+Registry g_floorModParameterRegistry(schema::PrimitiveType_FloorMod, PopulateArithmetic, SCHEMA_CUR);
+Registry g_modParameterRegistry(schema::PrimitiveType_Mod, PopulateArithmetic, SCHEMA_CUR);
+Registry g_squaredDifferenceParameterRegistry(schema::PrimitiveType_SquaredDifference, PopulateArithmetic, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

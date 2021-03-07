@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateCommonParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateCommonParameter(const void *prim) {
   auto *common_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (common_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
   memset(common_parameter, 0, sizeof(OpParameter));
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  common_parameter->type_ = primitive->value_type();
   return common_parameter;
 }
+}  // namespace
 
-Registry ZerosLikeParameterRegistry(schema::PrimitiveType_ZerosLike, PopulateCommonParameter);
-Registry SizeParameterRegistry(schema::PrimitiveType_Size, PopulateCommonParameter);
-Registry InvertPermutationParameterRegistry(schema::PrimitiveType_InvertPermutation, PopulateCommonParameter);
-
+Registry g_zerosLikeParameterRegistry(schema::PrimitiveType_ZerosLike, PopulateCommonParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

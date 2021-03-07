@@ -71,13 +71,14 @@ int SigmoidCrossEntropyWithLogitsCPUKernel::Run() {
 
 int SigmoidCrossEntropyWithLogitsCPUKernel::Init() { return RET_OK; }
 
-kernel::LiteKernel *CpuSigmoidCrossEntropyWithLogitsFp32KernelCreator(
-  const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-  const lite::InnerContext *ctx, const kernel::KernelKey &desc, const mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *CpuSigmoidCrossEntropyWithLogitsFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                                      const std::vector<lite::Tensor *> &outputs,
+                                                                      OpParameter *opParameter,
+                                                                      const lite::InnerContext *ctx,
+                                                                      const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SigmoidCrossEntropyWithLogits);
-  auto *kernel =
-    new (std::nothrow) SigmoidCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) SigmoidCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SigmoidCrossEntropyWithLogits failed";
     return nullptr;

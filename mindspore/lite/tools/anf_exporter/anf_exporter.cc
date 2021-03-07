@@ -15,22 +15,30 @@
  */
 
 #include "tools/anf_exporter/anf_exporter.h"
-
 #include <list>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
 #include <algorithm>
-
-#include "src/ops/quant_dtype_cast.h"
 #include "abstract/abstract_value.h"
 #include "mindspore/core/ir/primitive.h"
+#include "ops/fusion/partial_fusion.h"
+#include "ops/control_depend.h"
+#include "ops/depend.h"
+#include "ops/make_tuple.h"
+#include "ops/quant_dtype_cast.h"
+#include "ops/tuple_get_item.h"
+#include "tools/converter/quant_param_holder.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "src/tensor.h"
 #include "src/param_value_lite.h"
 #include "src/common/utils.h"
-#include "src/ops/partial.h"
+#include "ops/partial.h"
 #include "tools/common/graph_util.h"
+#include "src/ops/ops_utils.h"
+
+using mindspore::ops::PrimitiveC;
 
 namespace mindspore::lite {
 namespace {
@@ -85,7 +93,12 @@ void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
       continue;
     }
     auto make_tuple_node = utils::cast<CNodePtr>(input_node);
-    if (IsPrimitiveCNode(make_tuple_node, schema::PrimitiveType_MakeTuple)) {
+    auto value_node = make_tuple_node->input(0)->cast<ValueNodePtr>();
+    if (value_node == nullptr) {
+      MS_LOG(ERROR) << "value node is invalid.";
+      return;
+    }
+    if (value_node->value() != nullptr && opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTuple)) {
       has_make_tuple = true;
       for (size_t j = 1; j < make_tuple_node->inputs().size(); ++j) {
         inputs.emplace_back(make_tuple_node->input(j));
@@ -100,7 +113,7 @@ void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
 }
 
 void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
-  bool hasDepend = false;
+  bool has_depend = false;
   std::vector<AnfNodePtr> inputs;
   inputs.clear();
 
@@ -111,16 +124,21 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
       inputs.emplace_back(cnode->input(i));
       continue;
     }
-    auto dependNode = utils::cast<CNodePtr>(inputNode);
-    if (IsPrimitiveCNode(dependNode, schema::PrimitiveType_Depend) ||
-        IsPrimitiveCNode(dependNode, schema::PrimitiveType_ControlDepend)) {
-      hasDepend = true;
-      bool maskOut = (dependNode->inputs().size() == 3);
-      for (size_t j = 1; j < dependNode->inputs().size(); ++j) {
-        AnfNodePtr dependInputNode = dependNode->input(j);
-        if (dependInputNode->isa<CNode>()) {
-          inputs.emplace_back(dependInputNode);
-          if (maskOut) {
+    auto depend_node = utils::cast<CNodePtr>(inputNode);
+    auto value_node = depend_node->input(0)->cast<ValueNodePtr>();
+    if (value_node == nullptr) {
+      MS_LOG(ERROR) << "value node is invalid.";
+      return;
+    }
+    if (value_node->value() != nullptr && (opt::CheckPrimitiveType(depend_node, prim::kPrimDepend) ||
+                                           opt::CheckPrimitiveType(depend_node, prim::kPrimControlDepend))) {
+      has_depend = true;
+      bool mask_out = (depend_node->inputs().size() == 3);
+      for (size_t j = 1; j < depend_node->inputs().size(); ++j) {
+        AnfNodePtr depend_input_node = depend_node->input(j);
+        if (depend_input_node->isa<CNode>()) {
+          inputs.emplace_back(depend_input_node);
+          if (mask_out) {
             break;
           }
         }
@@ -129,23 +147,35 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
       inputs.emplace_back(cnode->input(i));
     }
   }
-  if (hasDepend) {
+  if (has_depend) {
     cnode->set_inputs(inputs);
   }
 }
 
 int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                                   const std::shared_ptr<PrimitiveC> &primitive,
+                                   const std::shared_ptr<mindspore::Primitive> &primitive,
                                    const std::unique_ptr<schema::CNodeT> &dst_node) {
   MS_ASSERT(meta_graph != nullptr);
   MS_ASSERT(primitive != nullptr);
   MS_ASSERT(dst_node != nullptr);
   // add quant param
-  dst_node->quantType = primitive->quant_type();
   MS_LOG(DEBUG) << "node: " << dst_node->name << " add QuantParam";
   // activation
-  auto input_quant_params = primitive->input_quant_params();
-  auto node_type = (schema::PrimitiveType)primitive->Type();
+  QuantParamsVector input_quant_params;
+  QuantParamsVector output_quant_params;
+  dst_node->quantType = schema::QuantType_QUANT_NONE;
+  auto quant_param_valueptr = primitive->GetAttr("quant_params");
+  if (quant_param_valueptr != nullptr) {
+    auto quant_param_holder = quant_param_valueptr->cast<QuantParamHolderPtr>();
+    if (quant_param_holder == nullptr) {
+      MS_LOG(ERROR) << "quant param is invalid.";
+      return RET_ERROR;
+    }
+    input_quant_params = quant_param_holder->input_quant_params();
+    output_quant_params = quant_param_holder->output_quant_params();
+    dst_node->quantType = quant_param_holder->quant_type();
+  }
+  // add quant param
   if (!input_quant_params.empty()) {
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       if (i >= dst_node->inputIndex.size()) {
@@ -170,10 +200,8 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
     MS_LOG(DEBUG) << "node: " << dst_node->name << " input quant params is empty";
   }
   // output
-
-  auto output_quant_params = primitive->output_quant_params();
   if (output_quant_params.empty()) {
-    if (node_type != schema::PrimitiveType_QuantDTypeCast) {
+    if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
       MS_LOG(DEBUG) << "node: " << dst_node->name << " output quant params is empty";
     }
   } else {
@@ -202,13 +230,12 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   auto first_output_index = dst_node->outputIndex[0];
   auto first_tensor_output = meta_graph->allTensors[first_output_index].get();
   if (dst_node->quantType == schema::QuantType_PostTraining) {
-    if (node_type != schema::PrimitiveType_QuantDTypeCast) {
+    if (primitive->name() != mindspore::ops::kNameQuantDTypeCast) {
       first_tensor_output->dataType = kNumberTypeInt8;
     } else {
-      MS_ASSERT(utils::isa<std::shared_ptr<QuantDTypeCast>>(primitive));
-      auto primc = utils::cast<std::shared_ptr<QuantDTypeCast>>(primitive);
+      auto primc = primitive->cast<std::shared_ptr<mindspore::ops::QuantDTypeCast>>();
       MS_ASSERT(primc != nullptr);
-      if (primc->GetDstT() != kNumberTypeFloat32) {
+      if (primc->get_dst_t() != kNumberTypeFloat32) {
         first_tensor_output->dataType = kNumberTypeInt8;
       }
     }
@@ -297,23 +324,24 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
   int ret = RET_OK;
   auto cnodes = GetOrderedCNodes(func_graph);
   for (const auto &cnode : cnodes) {
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitive_c == nullptr) {
+    auto prim = GetValueNode<std::shared_ptr<Primitive>>(cnode->input(0));
+    schema::PrimitiveT *primT = nullptr;
+    if (prim == nullptr) {
       auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
       if (fg != nullptr) {
         auto partial_cnode = CreatePartialCnode(fg, cnode);
-        primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(partial_cnode->input(0));
-        auto primT = primitive_c->primitiveT();
+        prim = GetValueNode<std::shared_ptr<Primitive>>(partial_cnode->input(0));
+        primT = GetPrimitiveT(partial_cnode->input(0));
         MS_ASSERT(primT != nullptr);
         auto pos = fg_subgraph_map.find(fg);
         if (pos != fg_subgraph_map.end()) {
-          MS_ASSERT(primT->value.AsPartial() != nullptr);
-          primT->value.AsPartial()->subGraphIndex = fg_subgraph_map.at(fg);
+          MS_ASSERT(primT->value.AsPartialFusion() != nullptr);
+          primT->value.AsPartialFusion()->sub_graph_index = fg_subgraph_map.at(fg);
         } else {
           size_t next_subgraph_index = fg_subgraph_map.size() + 1;
           fg_subgraph_map.insert(std::pair<FuncGraphPtr, int>{fg, next_subgraph_index});
-          MS_ASSERT(primT->value.AsPartial() != nullptr);
-          primT->value.AsPartial()->subGraphIndex = next_subgraph_index;
+          MS_ASSERT(primT->value.AsPartialFusion() != nullptr);
+          primT->value.AsPartialFusion()->sub_graph_index = next_subgraph_index;
           ret = ExportSubgraph(fg, meta_graphT, next_subgraph_index, keep_graph, copy_primitive, cnode);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "ExportSubgraph failed";
@@ -330,25 +358,22 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
     RemoveIfMakeTuple(cnode);
     if (train_flag) {
       RemoveIfDepend(cnode);
-      if (primitive_c->Type() == schema::PrimitiveType_Depend ||
-          primitive_c->Type() == schema::PrimitiveType_ControlDepend) {
+      if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameControlDepend) {
         continue;
       }
     }
 
-    if ((primitive_c->Type() == schema::PrimitiveType_TupleGetItem) ||
-        (primitive_c->Type() == schema::PrimitiveType_MakeTuple)) {
+    if (prim->name() == mindspore::ops::kNameTupleGetItem || prim->name() == mindspore::ops::kNameMakeTuple) {
       continue;
     }
-    auto primT = primitive_c->primitiveT();
     auto node = std::make_unique<schema::CNodeT>();
     if (node == nullptr) {
       MS_LOG(ERROR) << "object failed to be constructed";
       ret = RET_MEMORY_FAILED;
       break;
     }
-    if (primT->value.type == schema::PrimitiveType_Return) {
-      node->name = "return_node";
+    if (opt::CheckPrimitiveType(cnode, opt::kPrimReturn)) {
+      node->name = mindspore::ops::kNameReturn;
       ret = SetGraphoutputIndex(cnode, subgraph_index, meta_graphT, sub_graphT, node.get());
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetOpOutputN failed";
@@ -356,31 +381,22 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       }
       continue;
     }
-
+    if (primT == nullptr) {
+      primT = GetPrimitiveT(cnode->input(0));
+    }
     node->nodeType = schema::NodeType_CNode;
     node->name = cnode->fullname_with_scope();
-    if (copy_primitive) {
-      auto primitive = new (std::nothrow) schema::PrimitiveT();
-      if (primitive != nullptr) {
-        *primitive = *primT;
-        node->primitive = std::unique_ptr<schema::PrimitiveT>(primitive);
-      }
-    } else {
-      node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
-    }
+    node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
     ret = SetOpInputNode(cnode, meta_graphT, node.get());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "SetOpInputNode failed";
       break;
     }
     SetOpOutputNode(cnode, meta_graphT, node.get());
-    ret = ConvertQuantParam(meta_graphT, primitive_c, node);
+    ret = ConvertQuantParam(meta_graphT, prim, node);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ConvertQuantParam failed";
       break;
-    }
-    if (!keep_graph) {
-      primitive_c->ClearPrimitiveT();
     }
     meta_graphT->nodes.push_back(std::move(node));
     meta_graphT->subGraph.at(subgraph_index)->nodeIndices.push_back(node_idx++);
@@ -437,22 +453,59 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
   return meta_graphT.release();
 }
 
-int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode) {
-  std::string input_name = input_anode->fullname_with_scope();
-  auto input_cnode = utils::cast<CNodePtr>(input_anode);
-  if (!IsPrimitiveCNode(input_cnode, schema::PrimitiveType_TupleGetItem)) {
+int AnfExporter::ConvertInputCNodeCommonOp(const AnfNodePtr &input_anode, schema::CNodeT *output_cnode) {
+  MS_ASSERT(input_anode != nullptr && output_cnode != nullptr);
+  auto input_name = input_anode->fullname_with_scope();
+  if (this->train_flag) {
     bool found = false;
     if (node_id_map_.find(input_name) != node_id_map_.end()) {
       output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
       found = true;
     }
-
     if (!found) {
       auto input_index_key = input_name + "_o:" + std::to_string(0);
       if (node_id_map_.find(input_index_key) != node_id_map_.end()) {
         output_cnode->inputIndex.emplace_back(node_id_map_[input_index_key]);
       }
     }
+    return RET_OK;
+  }
+  if (utils::isa<abstract::AbstractTuple>(input_anode->abstract())) {
+    auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(input_anode->abstract());
+    if (tuple == nullptr) {
+      MS_LOG(ERROR) << "tuple is nullptr";
+      return RET_ERROR;
+    }
+    auto elements = tuple->elements();
+    for (size_t i = 0; i < elements.size(); i++) {
+      if (elements.size() == 1) {
+        if (node_id_map_.find(input_name) != node_id_map_.end()) {
+          output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
+        }
+      } else {
+        std::string name = input_name + "_o:" + std::to_string(i);
+        if (node_id_map_.find(name) != node_id_map_.end()) {
+          output_cnode->inputIndex.emplace_back(node_id_map_[name]);
+        }
+      }
+    }
+  } else {
+    if (node_id_map_.find(input_name) != node_id_map_.end()) {
+      output_cnode->inputIndex.emplace_back(node_id_map_[input_name]);
+    }
+  }
+  return RET_OK;
+}
+
+int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode) {
+  auto input_cnode = utils::cast<CNodePtr>(input_anode);
+  auto input_value_node = input_cnode->input(0)->cast<ValueNodePtr>();
+  if (input_value_node == nullptr) {
+    MS_LOG(ERROR) << "value node is invalid.";
+    return RET_ERROR;
+  }
+  if (input_value_node->value() == nullptr || !opt::CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
+    return ConvertInputCNodeCommonOp(input_anode, output_cnode);
   } else {
     auto inputs = input_cnode->inputs();
 
@@ -536,7 +589,11 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_ano
   }
 
   paramTensor->name = input_name;
-  if (primitive_c->enable_huffman_code() && paramTensor->dataType == kNumberTypeInt8) {
+  QuantParamHolderPtr quant_param_holder = primitive_c->GetAttr("quant_params") == nullptr
+                                             ? nullptr
+                                             : primitive_c->GetAttr("quant_params")->cast<QuantParamHolderPtr>();
+  if (quant_param_holder != nullptr && quant_param_holder->enable_huffman_code() &&
+      paramTensor->dataType == kNumberTypeInt8) {
     paramTensor->enableHuffmanCode = true;
   }
   node_id_map_[input_name] = meta_graphT->allTensors.size();
@@ -584,7 +641,7 @@ int AnfExporter::ProcessInt32OrInt64Imm(const ValueNodePtr &valueNode, std::uniq
   (*paramTensor)->dataType = kNumberTypeInt32;
   (*paramTensor)->dims = {1};
   (*paramTensor)->nodeType = schema::NodeType::NodeType_ValueNode;
-  int real_data = CastToInt(value).front();
+  int real_data = opt::CastToInt(value).front();
   (*paramTensor)->data.resize(sizeof(int32_t));
   ret = memcpy_s((*paramTensor)->data.data(), sizeof(int32_t), &real_data, sizeof(int32_t));
   if (ret != EOK) {
@@ -790,9 +847,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         std::string name = cnode_name + "_o:" + std::to_string(i);
         node_id_map_[name] = meta_graphT->allTensors.size();
         meta_graphT->allTensors.emplace_back(msTensor);
-        if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D) ||
-            IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D) ||
-            IsPrimitiveCNode(cnode, schema::PrimitiveType_Adam))
+        if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) || opt::CheckPrimitiveType(cnode, prim::kPrimAdam))
           break;
       } else {
         if (elements.size() == 1) {
@@ -817,10 +872,9 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         }
         msTensor->dataType = type;
         meta_graphT->allTensors.emplace_back(msTensor);
-        if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D) ||
-            IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D) ||
-            IsPrimitiveCNode(cnode, schema::PrimitiveType_FusedBatchNorm) ||
-            IsPrimitiveCNode(cnode, schema::PrimitiveType_LayerNorm)) {
+        if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
+            opt::CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm) ||
+            opt::CheckPrimitiveType(cnode, prim::kPrimLayerNormFusion)) {
           break;
         }
       }
@@ -846,49 +900,8 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
   }
 }
 
-bool AnfExporter::HasPrimitiveCNode(const AnfNodePtr &node) {
-  MS_ASSERT(node != nullptr);
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return false;
-  }
-
-  auto prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-  if (prim == nullptr) {
-    return false;
-  }
-  return true;
-}
-
-bool AnfExporter::IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType type) {
-  MS_ASSERT(node != nullptr);
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    return false;
-  }
-
-  auto prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-  if (prim == nullptr) {
-    return false;
-  }
-  return (schema::PrimitiveType)(prim->Type()) == type;
-}
-
 ValueNodePtr AnfExporter::GetPartialAnfPrim() {
-  auto partial_primitiveT = new (std::nothrow) schema::PrimitiveT;
-  if (partial_primitiveT == nullptr) {
-    MS_LOG(ERROR) << "new partial_primitiveT failed";
-    return nullptr;
-  }
-  partial_primitiveT->value.type = schema::PrimitiveType_Partial;
-  partial_primitiveT->value.value = new (std::nothrow) schema::PartialT;
-  if (partial_primitiveT->value.value == nullptr) {
-    MS_LOG(ERROR) << "new PartialT failed";
-    delete (partial_primitiveT);
-    return nullptr;
-  }
-
-  auto partial_prim = std::make_shared<lite::Partial>(partial_primitiveT);
+  auto partial_prim = std::make_shared<mindspore::ops::PartialFusion>();
   ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
   return partial_anf_prim;
 }

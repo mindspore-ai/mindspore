@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,23 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include "tools/converter/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/anf_exporter/anf_exporter.h"
+#include "tools/common/node_util.h"
+#include "src/common/common.h"
+#include "src/ops/populate/populate_register.h"
 #include "src/kernel_registry.h"
 #include "src/inner_context.h"
-#include "src/ops/primitive_c.h"
 #include "src/tensor.h"
-#include "src/ops/populate/populate_register.h"
+#include "src/ops/ops_utils.h"
+#include "src/runtime/infer_manager.h"
 
 using mindspore::lite::KernelRegistry;
-using mindspore::lite::PrimitiveC;
 using mindspore::lite::Tensor;
 namespace mindspore::opt {
 namespace {
+constexpr size_t INITIAL_SIZE = 1024;
 std::vector<Tensor *> GetCNodeInputTensors(const CNodePtr &CNode) {
   MS_ASSERT(CNode != nullptr);
   auto tmp_meta_graph = std::make_unique<schema::MetaGraphT>();
@@ -111,17 +115,44 @@ ParameterPtr CreateNewParamter(const FuncGraphPtr &func_graph, Tensor *tensor) {
   parameter->set_default_param(param_value);
   return parameter;
 }
-kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, const std::vector<Tensor *> &outputs,
-                                  OpParameter *parameter, lite::InnerContext *context,
-                                  mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(nullptr != lite_primitive);
+kernel::LiteKernel *GetLiteKernel(std::vector<Tensor *> inputs, std::vector<Tensor *> *outputs, const CNodePtr &cnode,
+                                  lite::InnerContext *context) {
+  MS_ASSERT(cnode != nullptr && context != nullptr);
+  auto prim_t = lite::GetPrimitiveT(cnode->input(0));
+  flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
+  auto prim = lite::ConvertToPrimitive(prim_t, &fbb);
+  if (prim == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "get primitive failed.";
+    return nullptr;
+  }
+  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
+  if (parameter_gen == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
+    return nullptr;
+  }
+  auto parameter = parameter_gen(prim);
+  fbb.Clear();
+  if (parameter == nullptr) {
+    MS_LOG(ERROR) << "parameter is nullptr.";
+    return nullptr;
+  }
+  parameter->infer_flag_ = true;
+  auto ret = KernelInferShape(inputs, outputs, parameter);
+  if (ret != lite::RET_OK) {
+    free(parameter);
+    MS_LOG(ERROR) << "infershape failed.";
+    return nullptr;
+  }
   auto data_type = inputs.front()->data_type();
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, (schema::PrimitiveType)primitive->Type()};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(parameter->type_)};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   if (creator != nullptr) {
-    auto lite_kernel = creator(inputs, outputs, parameter, context, desc, primitive);
+    auto lite_kernel = creator(inputs, *outputs, parameter, context, desc);
     return lite_kernel;
   }
+  free(parameter);
   return nullptr;
 }
 
@@ -142,7 +173,7 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
         return lite::RET_ERROR;
       }
       auto tuple_node = used_node_list->at(0).first;
-      if (GetCNodeType(tuple_node) == schema::PrimitiveType_TupleGetItem) {
+      if (CheckPrimitiveType(tuple_node, prim::kPrimTupleGetItem)) {
         auto new_parameter = CreateNewParamter(func_graph, output_tensors.at(k));
         if (new_parameter == nullptr) {
           MS_LOG(ERROR) << "CreateNewParamter failed, name: " << input_node->fullname_with_scope();
@@ -166,7 +197,45 @@ lite::STATUS ReplaceCNode(const FuncGraphPtr &func_graph, const CNodePtr &any_no
   }
   return lite::RET_OK;
 }
-}  //  namespace
+
+lite::STATUS CopyQuantParams(const CNodePtr &cnode, const std::vector<Tensor *> &inputs,
+                             const std::vector<Tensor *> &outputs) {
+  MS_ASSERT(cnode != nullptr);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  auto quant_param_valueptr = prim->GetAttr("quant_params");
+  if (quant_param_valueptr == nullptr) {
+    return lite::RET_OK;
+  }
+  auto quant_param_holder = quant_param_valueptr->cast<lite::QuantParamHolderPtr>();
+  if (quant_param_holder == nullptr) {
+    MS_LOG(ERROR) << "quant param is invalid.";
+    return lite::RET_ERROR;
+  }
+  auto input_quant_params = quant_param_holder->input_quant_params();
+  for (size_t m = 0; m < input_quant_params.size(); m++) {
+    for (auto inputQuantParam : input_quant_params[m]) {
+      lite::QuantArg quant_arg{};
+      quant_arg.scale = inputQuantParam.scale;
+      quant_arg.zeroPoint = inputQuantParam.zeroPoint;
+      quant_arg.roundType = inputQuantParam.roundType;
+      quant_arg.multiplier = inputQuantParam.multiplier;
+      inputs[m]->AddQuantParam(quant_arg);
+    }
+  }
+  auto output_quant_params = quant_param_holder->output_quant_params();
+  for (size_t m = 0; m < output_quant_params.size(); m++) {
+    for (auto outputQuantParam : output_quant_params[m]) {
+      lite::QuantArg quant_arg{};
+      quant_arg.scale = outputQuantParam.scale;
+      quant_arg.zeroPoint = outputQuantParam.zeroPoint;
+      quant_arg.roundType = outputQuantParam.roundType;
+      quant_arg.multiplier = outputQuantParam.multiplier;
+      outputs[m]->AddQuantParam(quant_arg);
+    }
+  }
+  return lite::RET_OK;
+}
+
 void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *output_tensor) {
   if (input_tensor != nullptr) {
     for (auto &i : *input_tensor) {
@@ -181,6 +250,7 @@ void FreeTensors(std::vector<Tensor *> *input_tensor, std::vector<Tensor *> *out
     }
   }
 }
+}  //  namespace
 
 const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
@@ -210,68 +280,30 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     for (size_t j = 0; j < output_nums; j++) {
       output_tensors.push_back(new (std::nothrow) Tensor());
     }
-    auto lite_primitive = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
-    if (lite_primitive == nullptr) {
-      MS_LOG(ERROR) << "lite_primitive is nullptr";
+    if (CopyQuantParams(input_cnode, input_tensors, output_tensors) != lite::RET_OK) {
+      MS_LOG(ERROR) << "copy quant params failed.";
       FreeTensors(&input_tensors, &output_tensors);
       return nullptr;
     }
-    auto inputQuantParams = lite_primitive->input_quant_params();
-    for (size_t m = 0; m < inputQuantParams.size(); m++) {
-      for (auto inputQuantParam : inputQuantParams[m]) {
-        lite::QuantArg quant_arg{};
-        quant_arg.scale = inputQuantParam.scale;
-        quant_arg.zeroPoint = inputQuantParam.zeroPoint;
-        input_tensors[m]->AddQuantParam(quant_arg);
-      }
-    }
-    auto outputQuantParams = lite_primitive->output_quant_params();
-    for (size_t m = 0; m < outputQuantParams.size(); m++) {
-      for (auto outputQuantParam : outputQuantParams[m]) {
-        lite::QuantArg quant_arg{};
-        quant_arg.scale = outputQuantParam.scale;
-        quant_arg.zeroPoint = outputQuantParam.zeroPoint;
-        output_tensors[m]->AddQuantParam(quant_arg);
-      }
-    }
-    lite_primitive->InferShape(input_tensors, output_tensors);
-    auto primitive = lite_primitive.get();
-    if (primitive->Type() == schema::PrimitiveType_RandomStandardNormal) {
-      return nullptr;
-    }
-    MS_ASSERT(primitive != nullptr);
-    MS_ASSERT(primitive->Type() != nullptr);
-    auto func_pointer =
-      lite::PopulateRegistry::GetInstance()->GetParameterCreator(schema::PrimitiveType(primitive->Type()));
-    if (func_pointer == nullptr) {
-      MS_LOG(ERROR) << "ParameterCreator function pointer is nullptr, type: "
-                    << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());
-      return nullptr;
-    }
-    auto parameter = func_pointer(primitive);
-
-    if (parameter == nullptr) {
-      MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
-                    << schema::EnumNamePrimitiveType((schema::PrimitiveType)(lite_primitive->Type()));
-      return nullptr;
-    }
-    auto lite_kernel = GetLiteKernel(input_tensors, output_tensors, parameter, context.get(), lite_primitive.get());
+    auto lite_kernel = GetLiteKernel(input_tensors, &output_tensors, input_cnode, context.get());
     if (lite_kernel == nullptr) {
-      MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
       FreeTensors(&input_tensors, &output_tensors);
+      MS_LOG(ERROR) << "constant_folding schedule node lite kernel nullptr";
       return nullptr;
     }
     for (auto output_tensor : output_tensors) {
-      auto ret = output_tensor->MallocData();
-      if (RET_OK != ret) {
+      auto status = output_tensor->MallocData();
+      if (status != lite::RET_OK) {
         MS_LOG(ERROR) << "MallocData failed";
         FreeTensors(&input_tensors, &output_tensors);
+        delete (lite_kernel);
         return nullptr;
       }
     }
-    auto ret = lite_kernel->Run();
-    if (0 != ret) {
+    auto status = lite_kernel->Run();
+    if (status != lite::RET_OK) {
       FreeTensors(&input_tensors, &output_tensors);
+      delete (lite_kernel);
       MS_LOG(ERROR) << "run kernel failed, name: " << lite_kernel->name();
       return nullptr;
     }

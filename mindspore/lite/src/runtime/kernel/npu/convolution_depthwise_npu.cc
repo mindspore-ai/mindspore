@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 #include "src/runtime/kernel/npu/convolution_depthwise_npu.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
+
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 int ConvolutionDepthwiseNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
@@ -30,10 +31,10 @@ int ConvolutionDepthwiseNPUKernel::SetConvDwParam() {
   conv_dw_->set_attr_strides(ge::AttrValue::LIST_INT({conv_param_->stride_h_, conv_param_->stride_w_}));
   conv_dw_->set_attr_dilations(ge::AttrValue::LIST_INT({conv_param_->dilation_h_, conv_param_->dilation_w_}));
 
-  if (conv_param_->pad_mode_ == Pad_Same) {
+  if (conv_param_->pad_mode_ == Pad_same) {
     conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"SAME"});
     conv_dw_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
-  } else if (conv_param_->pad_mode_ == Pad_Valid) {
+  } else if (conv_param_->pad_mode_ == Pad_valid) {
     conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
     conv_dw_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
@@ -100,6 +101,4 @@ ConvolutionDepthwiseNPUKernel::~ConvolutionDepthwiseNPUKernel() {
     conv_dw_ = nullptr;
   }
 }
-
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D, NPUKernelCreator<ConvolutionDepthwiseNPUKernel>)
 }  // namespace mindspore::kernel

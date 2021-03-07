@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/fp32/batch_to_space_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/ops/batch_to_space.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

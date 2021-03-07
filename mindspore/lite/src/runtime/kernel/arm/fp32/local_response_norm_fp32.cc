@@ -25,7 +25,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_LocalResponseNormalization;
+using mindspore::schema::PrimitiveType_LRN;
 
 namespace mindspore::kernel {
 
@@ -82,6 +82,5 @@ int LocalResponseNormCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LocalResponseNormalization,
-           LiteKernelCreator<LocalResponseNormCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LRN, LiteKernelCreator<LocalResponseNormCPUKernel>)
 }  // namespace mindspore::kernel

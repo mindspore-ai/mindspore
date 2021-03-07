@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 #include "tools/converter/model_parser.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/anf_exporter/anf_exporter.h"
+#include "test/common/import_from_meta_graphT.h"
 
 namespace mindspore {
 class ConvScaleFusionTest : public mindspore::CommonTest {
@@ -46,17 +47,14 @@ CNodeTptr BuildConv2D(int with_bias_flag) {
     convNode->outputIndex = {2};
   }
   convNode->primitive = std::make_unique<schema::PrimitiveT>();
-  convNode->primitive->value.type = schema::PrimitiveType_Conv2D;
-  auto prim1 = new schema::Conv2DT;
-  prim1->padMode = schema::PadMode_SAME_UPPER;
+  convNode->primitive->value.type = schema::PrimitiveType_Conv2DFusion;
+  auto prim1 = new schema::Conv2DFusionT;
+  prim1->pad_mode = schema::PadMode_SAME;
   prim1->format = schema::Format_NHWC;
-  prim1->strideH = 1;
-  prim1->strideW = 1;
-  prim1->kernelH = 3;
-  prim1->kernelW = 3;
-  prim1->dilateH = 1;
-  prim1->dilateW = 1;
-  prim1->channelOut = 3;
+  prim1->stride = {1, 1};
+  prim1->kernel_size = {3, 3};
+  prim1->dilation = {1, 1};
+  prim1->out_channel = 3;
   convNode->primitive->value.value = prim1;
   convNode->name = "Conv2D";
   return convNode;
@@ -72,19 +70,14 @@ CNodeTptr BuildDepthwiseConv2D(int with_bias_flag) {
     convNode->outputIndex = {2};
   }
   convNode->primitive = std::make_unique<schema::PrimitiveT>();
-  convNode->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
-  auto prim1 = new schema::DepthwiseConv2DT;
-  prim1->padMode = schema::PadMode_SAME_UPPER;
+  convNode->primitive->value.type = schema::PrimitiveType_Conv2DFusion;
+  auto prim1 = new schema::Conv2DFusionT;
+  prim1->pad_mode = schema::PadMode_SAME;
   prim1->format = schema::Format_NHWC;
-  prim1->strideH = 1;
-  prim1->strideW = 1;
-  prim1->kernelH = 3;
-  prim1->kernelW = 3;
-  prim1->dilateH = 1;
-  prim1->dilateW = 1;
-  prim1->channelIn = 1;
-  prim1->channelMultiplier = 3;
-
+  prim1->stride = {1, 1};
+  prim1->kernel_size = {3, 3};
+  prim1->dilation = {1, 1};
+  prim1->in_channel = 1;
   convNode->primitive->value.value = prim1;
   convNode->name = "Conv2D";
   return convNode;
@@ -95,7 +88,7 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, bool conv_with_bias) {
   meta_graph->name = "graph";
   // conv node
   CNodeTptr convNode;
-  if (conv_type == schema::PrimitiveType_Conv2D) {
+  if (conv_type == schema::PrimitiveType_Conv2DFusion) {
     convNode = BuildConv2D(conv_with_bias);
   } else {
     convNode = BuildDepthwiseConv2D(conv_with_bias);
@@ -114,8 +107,8 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, bool conv_with_bias) {
   }
 
   scale_node->primitive = std::make_unique<schema::PrimitiveT>();
-  scale_node->primitive->value.type = schema::PrimitiveType_Scale;
-  auto prim2 = new schema::ScaleT;
+  scale_node->primitive->value.type = schema::PrimitiveType_ScaleFusion;
+  auto prim2 = new schema::ScaleFusionT;
   scale_node->primitive->value.value = prim2;
   scale_node->name = "scale";
   meta_graph->nodes.emplace_back(std::move(scale_node));
@@ -193,8 +186,8 @@ MetaGraphTptr BuildGraph(schema::PrimitiveType conv_type, bool conv_with_bias) {
 }
 }  //  namespace
 TEST_F(ConvScaleFusionTest, TestConvScaleNode) {
-  auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2D, true);
-  auto func_graph = lite::ModelParser::Fb2Anf(meta_graph.get());
+  auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, true);
+  auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
   auto new_graph = anf_transform->Transform(func_graph);
   ASSERT_NE(nullptr, new_graph);
@@ -204,8 +197,8 @@ TEST_F(ConvScaleFusionTest, TestConvScaleNode) {
 }
 
 TEST_F(ConvScaleFusionTest, TestDeptiwiseConvScaleNode) {
-  auto meta_graph = BuildGraph(schema::PrimitiveType_DepthwiseConv2D, false);
-  auto func_graph = lite::ModelParser::Fb2Anf(meta_graph.get());
+  auto meta_graph = BuildGraph(schema::PrimitiveType_Conv2DFusion, false);
+  auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
   auto new_graph = anf_transform->Transform(func_graph);
   ASSERT_NE(nullptr, new_graph);

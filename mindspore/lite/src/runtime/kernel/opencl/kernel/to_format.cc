@@ -28,7 +28,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
-using mindspore::schema::PrimitiveType_ToFormat;
 
 namespace mindspore::kernel {
 
@@ -125,6 +124,4 @@ int ToFormatOpenCLKernel::InferShape() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ToFormat, OpenCLKernelCreator<ToFormatOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ToFormat, OpenCLKernelCreator<ToFormatOpenCLKernel>)
 }  // namespace mindspore::kernel

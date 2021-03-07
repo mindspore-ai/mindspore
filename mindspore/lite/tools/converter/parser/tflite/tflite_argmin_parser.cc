@@ -18,26 +18,31 @@
 #include <memory>
 #include <vector>
 #include <map>
+#include "ops/fusion/arg_min_fusion.h"
 
-namespace mindspore::lite {
-PrimitiveC *TfliteArgminParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteArgminParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::ArgMinFusion>();
+
+  prim->set_keep_dims(false);
+  prim->set_out_max_value(false);
+  prim->set_top_k(1);
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
   const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  std::unique_ptr<schema::ArgMinT> attr = std::make_unique<schema::ArgMinT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  attr->outMaxValue = false;
-  attr->topK = 1;
-  attr->keepDims = false;
-  attr->axisType = 1;
-
-  // get axis attr
-  auto axis_idx = tflite_op->inputs[1];
-  auto buffer_idx = tflite_subgraph->tensors[axis_idx]->buffer;
-  auto &buf_data = tflite_model->buffers[buffer_idx];
+  const auto &axis_tensor = tflite_subgraph->tensors.at(tflite_op->inputs[1]);
+  if (axis_tensor == nullptr) {
+    MS_LOG(ERROR) << "axis_tensor is nullptr";
+    return nullptr;
+  }
+  const auto &buf_data = tflite_model->buffers.at(axis_tensor->buffer);
   if (buf_data == nullptr) {
     MS_LOG(ERROR) << "the buf data is null";
     return nullptr;
@@ -47,12 +52,11 @@ PrimitiveC *TfliteArgminParser::ParseLitePrimitive(const std::unique_ptr<tflite:
     MS_LOG(ERROR) << "the data is null";
     return nullptr;
   }
-  attr->axis = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_ArgMin;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_axis(*(static_cast<int64_t *>(static_cast<void *>(data_ptr))));
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteArgminParser(tflite::BuiltinOperator_ARG_MIN, new TfliteArgminParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

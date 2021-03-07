@@ -36,6 +36,12 @@ class BatchnormFP32Coder final : public OperatorCoder {
 
  private:
   int Init();
+
+  float default_momentum_{-1.0f};
+
+  float *mean_{nullptr};
+
+  float *variance_{nullptr};
 };
 
 }  // namespace mindspore::lite::micro::nnacl

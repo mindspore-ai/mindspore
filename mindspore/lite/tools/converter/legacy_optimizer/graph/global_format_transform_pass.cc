@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,7 @@ STATUS GlobalFormatTransformPass::Run(MetaGraphT *graph) {
     if (type != PrimitiveType_Transpose) {
       continue;
     }
-    MS_ASSERT(pre_node->primitive->value.AsTranspose() != nullptr);
-    if (node->primitive->value.AsTranspose()->perm != nchw2nhwc_perm) {
+    if (GetTransposePerm(graph, node) != nchw2nhwc_perm) {
       continue;
     }
     std::vector<size_t> pre_nh2nc_nodes;
@@ -184,9 +183,7 @@ STATUS GlobalFormatTransformPass::FindPreNh2NcNodes(MetaGraphT *graph, size_t nc
       auto &pre_node = graph->nodes.at(input_node_index);
       MS_ASSERT(pre_node != nullptr);
       auto node_type = pre_node->primitive->value.type;
-      MS_ASSERT(pre_node->primitive->value.AsTranspose() != nullptr);
-      if (node_type == schema::PrimitiveType_Transpose &&
-          pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+      if (node_type == schema::PrimitiveType_Transpose && GetTransposePerm(graph, pre_node) == nhwc2nchw_perm) {
         if (!IsContain(*pre_nh2nc_nodes, input_node_index)) {
           pre_nh2nc_nodes->emplace_back(input_node_index);
         }
@@ -203,7 +200,7 @@ STATUS GlobalFormatTransformPass::FindPreNh2NcNodes(MetaGraphT *graph, size_t nc
           }
           for (auto pre_node_output_index : pre_node_output_indexs) {
             MS_ASSERT(graph->nodes.size() > pre_node_output_index);
-            if (graph->nodes.at(pre_node_output_index)->primitive->value.type == schema::PrimitiveType_Pad) {
+            if (graph->nodes.at(pre_node_output_index)->primitive->value.type == schema::PrimitiveType_PadFusion) {
               pre_nh2nc_nodes->clear();
               pre_not_trans_nodes->clear();
               return RET_OK;

@@ -28,9 +28,10 @@ class CaffeScaleParser : public CaffeNodeParser {
   CaffeScaleParser() : CaffeNodeParser("scale") {}
   ~CaffeScaleParser() override = default;
 
-  PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 
-  static STATUS GetAxisIndex(const int32_t &axis, uint32_t *axis_index);
+ private:
+  STATUS GetAxisIndex(const int32_t &axis, uint32_t *axis_index);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -16,33 +16,21 @@
 
 #include "tools/converter/parser/onnx/onnx_topk_parser.h"
 #include <memory>
+#include "ops/fusion/topk_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxTopkParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                     const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx TopKParser";
-  auto attr = std::make_unique<schema::TopKT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxTopkParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::TopKFusion>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "k") {
-      attr->k = static_cast<int32_t>(onnx_node_attr.i());
+      prim->AddAttr("k", MakeValue(static_cast<int32_t>(onnx_node_attr.i())));
     }
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_TopK;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxTopkParser("TopK", new OnnxTopkParser());

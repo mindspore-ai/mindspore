@@ -25,7 +25,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Div;
+using mindspore::schema::PrimitiveType_DivFusion;
 
 namespace mindspore::kernel {
 
@@ -131,5 +131,5 @@ int DivInt8CPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Div, LiteKernelCreator<DivInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DivFusion, LiteKernelCreator<DivInt8CPUKernel>)
 }  // namespace mindspore::kernel

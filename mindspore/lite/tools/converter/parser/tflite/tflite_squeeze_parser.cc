@@ -17,33 +17,28 @@
 #include "tools/converter/parser/tflite/tflite_squeeze_parser.h"
 #include <vector>
 #include <memory>
+#include <algorithm>
+#include "ops/squeeze.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteSqueezeParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteSqueezeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Squeeze>();
 
-  std::unique_ptr<schema::SqueezeT> attr = std::make_unique<schema::SqueezeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsSqueezeOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op squeeze attr failed";
     return nullptr;
   }
-  attr->axis = tflite_attr->squeeze_dims;
+  std::vector<int64_t> dims_vector;
+  (void)std::transform(tflite_attr->squeeze_dims.begin(), tflite_attr->squeeze_dims.end(),
+                       std::back_inserter(dims_vector),
+                       [](const int64_t &value) { return static_cast<int64_t>(value); });
+  prim->set_axis(dims_vector);
 
-  primitive->value.type = schema::PrimitiveType_Squeeze;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSqueezeParser(tflite::BuiltinOperator_SQUEEZE, new TfliteSqueezeParser());

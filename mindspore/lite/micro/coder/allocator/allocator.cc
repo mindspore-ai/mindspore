@@ -22,11 +22,9 @@
 
 namespace mindspore::lite::micro {
 void *MemoryAllocator::MallocWeightTensor(TypeId type_id, size_t size, MallocType type) {
-  static const std::map<TypeId, size_t> size_map = {{kNumberTypeFloat32, sizeof(float)},
-                                                    {kNumberTypeInt32, sizeof(int)},
-                                                    {kNumberTypeInt32, sizeof(int32_t)},
-                                                    {kNumberTypeInt16, sizeof(int16_t)},
-                                                    {kNumberTypeInt8, sizeof(int8_t)}};
+  static const std::map<TypeId, size_t> size_map = {
+    {kNumberTypeFloat, sizeof(float)},   {kNumberTypeFloat32, sizeof(float)}, {kNumberTypeInt32, sizeof(int32_t)},
+    {kNumberTypeInt16, sizeof(int16_t)}, {kNumberTypeInt8, sizeof(int8_t)},   {kNumberTypeUInt8, sizeof(uint8_t)}};
   auto item = size_map.find(type_id);
   MS_CHECK_TRUE_RET_NULL(item != size_map.end(), "unsupported type idnex");
   size_t type_size = item->second;

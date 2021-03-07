@@ -34,8 +34,8 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution1x1CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive, float *origin_weight, float *origin_bias)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive),
+                          float *origin_weight, float *origin_bias)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx),
         origin_weight_(origin_weight),
         origin_bias_(origin_bias) {}
   ~Convolution1x1CPUKernel();

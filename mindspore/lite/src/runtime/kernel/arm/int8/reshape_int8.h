@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class ReshapeInt8CPUKernel : public LiteKernel {
  public:
   ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     reshape_param_ = reinterpret_cast<ReshapeParameter *>(op_parameter_);
   }
   ~ReshapeInt8CPUKernel() = default;

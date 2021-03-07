@@ -19,13 +19,11 @@
 
 #include <vector>
 #include <string>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/softmax_parameter.h"
 #include "nnacl/int8/quantize.h"
 
 namespace mindspore::lite::micro {
-
-using std::string;
 
 class SoftmaxBaseCoder : public OperatorCoder {
  public:

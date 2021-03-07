@@ -17,7 +17,6 @@
 #include <string>
 #include <vector>
 #include "nnacl/fp32/batchnorm_fp32.h"
-#include "src/ops/batch_norm.h"
 #include "nnacl/op_base.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
@@ -27,10 +26,7 @@ using mindspore::schema::PrimitiveType_BatchNorm;
 namespace mindspore::lite::micro::nnacl {
 
 int BatchnormFP32Coder::Init() {
-  auto bn_parameter = reinterpret_cast<BatchNormParameter *>(parameter_);
-  auto bn_prim = reinterpret_cast<const mindspore::lite::BatchNorm *>(OperatorCoder::primitive());
-  bn_parameter->epsilon_ = bn_prim->GetEpsilon();
-
+  auto bn_parameter = reinterpret_cast<BatchNormParameter *>(OperatorCoder::parameter_);
   std::vector<int> input_shapes = input_tensor_->shape();
   if (input_shapes.empty()) {
     return RET_ERROR;
@@ -41,7 +37,9 @@ int BatchnormFP32Coder::Init() {
   for (int i = 0; i < n_dim - 1; i++) {
     bn_parameter->unit_ *= input_shapes.at(i);
   }
-  bn_parameter->op_parameter_.thread_num_ = MSMIN(bn_parameter->op_parameter_.thread_num_, bn_parameter->unit_);
+  if (default_momentum_ < 0.0f) {
+    default_momentum_ = bn_parameter->momentum_;
+  }
   return RET_OK;
 }
 
@@ -59,7 +57,7 @@ int BatchnormFP32Coder::DoCode(CoderContext *const context) {
   Collect(context, {"nnacl/fp32/batchnorm.h"}, {"nnacl/fp32/batchnorm.c"});
   NNaclFp32Serializer code;
   code.CodeStruct("bn_parameter", *bn_parameter);
-  code.CodeFunction("BatchNorm", output_tensor_, input_tensor_, mean_tensor, var_tensor, task_id, "&bn_parameter");
+  code.CodeFunction("BatchNormFp32", input_tensor_, mean_tensor, var_tensor, "&bn_parameter", task_id, output_tensor_);
   MS_LOG(INFO) << "BatchnormFP32Code has been called";
   context->AppendCode(code.str());
   return lite::RET_OK;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,213 @@
 #include <vector>
 #include <memory>
 
-#include "src/ops/primitive_c.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/quantizer/quant_cast.h"
+#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
 
-using mindspore::lite::PrimitiveC;
 namespace mindspore {
 namespace opt {
+namespace {
+constexpr size_t kDoubleNum = 2;
+void FillDefaultInputQuantParamIfNeed(const PrimitivePtr &prim, const size_t &input_size) {
+  auto quant_param_valueptr = prim->GetAttr("quant_params");
+  if (quant_param_valueptr == nullptr) {
+    prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
+  }
+  auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
+  std::vector<schema::QuantParamT> quants;
+  schema::QuantParamT quant_param;
+  auto input_quant_params = quant_param_holder->input_quant_params();
+  if (input_quant_params.size() == kDoubleNum) {
+    quants.clear();
+    quant_param.min = 0.0;
+    quant_param.max = 0.0;
+    quant_param.dstDtype = kNumberTypeInt32;
+    quant_param.inited = input_quant_params.at(0).at(0).inited && input_quant_params.at(1).at(0).inited;
+    quant_param.inited = false;
+    quant_param.zeroPoint = 0;
+    if (quant_param.inited) {
+      quant_param.scale = input_quant_params.at(0).at(0).scale * input_quant_params.at(1).at(0).scale;
+    }
+    quant_param.roundType = 1;
+    quant_param.multiplier = 1;
+    quants.emplace_back(quant_param);
+    input_quant_params.emplace_back(quants);
+  }
+  // fill input_quant_param_ by not inited quant_parm
+  if (input_quant_params.size() < input_size) {
+    schema::QuantParamT tmpQuantParam;
+    quants.emplace_back(tmpQuantParam);
+    input_quant_params.insert(input_quant_params.end(), input_size - input_quant_params.size(), quants);
+  }
+  quant_param_holder->set_input_quant_params(input_quant_params);
+}
+
+int ConvertInputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
+  auto quant_param_valueptr = prim->GetAttr("quant_params");
+  if (quant_param_valueptr == nullptr) {
+    prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
+  }
+  auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
+  std::vector<schema::QuantParamT> quants;
+  schema::QuantParamT quant_param;
+  auto inputMin = prim->GetAttr("input_minq");
+  auto inputMax = prim->GetAttr("input_maxq");
+  if (inputMin != nullptr && inputMax != nullptr) {
+    auto inputMinPtr = inputMin->cast<tensor::TensorPtr>();
+    auto inputMaxPtr = inputMax->cast<tensor::TensorPtr>();
+    auto *minBuf = static_cast<float *>(inputMinPtr->data_c());
+    auto *maxBuf = static_cast<float *>(inputMaxPtr->data_c());
+    quant_param.min = *minBuf;
+    quant_param.max = *maxBuf;
+    auto ret =
+      lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, narrow_range, numbits);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Can't calculate quant parameters";
+      return ret;
+    }
+    quants.emplace_back(quant_param);
+    quant_param_holder->AddInputQuantParam(quants);
+  } else {
+    std::vector<schema::QuantParamT> notinited_quant_params(1);
+    quant_param_holder->AddInputQuantParam(notinited_quant_params);
+  }
+
+  quants.clear();
+  auto filterMin = prim->GetAttr("filter_minq");
+  auto filterMax = prim->GetAttr("filter_maxq");
+  if (filterMin != nullptr && filterMax != nullptr) {
+    auto filterMinPtr = filterMin->cast<tensor::TensorPtr>();
+    auto filterMaxPtr = filterMax->cast<tensor::TensorPtr>();
+    auto *minBuf = static_cast<float *>(filterMinPtr->data_c());
+    auto *maxBuf = static_cast<float *>(filterMaxPtr->data_c());
+    quant_param.min = FLT_MAX;
+    quant_param.max = FLT_MIN;
+    for (int i = 0; i < filterMinPtr->ElementsNum(); ++i) {
+      quant_param.min = (*(minBuf) < quant_param.min) ? (*minBuf) : quant_param.min;
+      quant_param.max = (*(maxBuf) > quant_param.max) ? (*maxBuf) : quant_param.max;
+      minBuf++;
+      maxBuf++;
+    }
+    auto ret = lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, true, numbits);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Can't calculate quant parameters";
+      return ret;
+    }
+    quants.emplace_back(quant_param);
+    quant_param_holder->AddInputQuantParam(quants);
+  } else {
+    std::vector<schema::QuantParamT> notinited_quant_params(1);
+    quant_param_holder->AddInputQuantParam(notinited_quant_params);
+  }
+  return lite::RET_OK;
+}
+
+int ConvertOutputQuantParam(const PrimitivePtr &prim, bool narrow_range, int32_t numbits) {
+  auto quant_param_valueptr = prim->GetAttr("quant_params");
+  if (quant_param_valueptr == nullptr) {
+    prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
+  }
+  auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
+  std::vector<schema::QuantParamT> quants;
+  schema::QuantParamT quant_param;
+  auto outputMin = prim->GetAttr("output_minq");
+  auto outputMax = prim->GetAttr("output_maxq");
+  if (outputMin != nullptr && outputMax != nullptr) {
+    auto outputMinPtr = outputMin->cast<tensor::TensorPtr>();
+    auto outputMaxPtr = outputMax->cast<tensor::TensorPtr>();
+    auto *minBuf = static_cast<float *>(outputMinPtr->data_c());
+    auto *maxBuf = static_cast<float *>(outputMaxPtr->data_c());
+    quant_param.min = *minBuf;
+    quant_param.max = *maxBuf;
+    auto ret =
+      lite::quant::CalQuantizationParams(&quant_param, quant_param.min, quant_param.max, narrow_range, numbits);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Can't calculate quant parameters";
+      return ret;
+    }
+    quants.emplace_back(quant_param);
+    quant_param_holder->AddOutputQuantParam(quants);
+  } else {
+    schema::QuantParamT tmpQuantParam;
+    quants.emplace_back(tmpQuantParam);
+    quant_param_holder->AddOutputQuantParam(quants);
+  }
+  return lite::RET_OK;
+}
+
+void CheckQuantParams(const PrimitivePtr &prim) {
+  auto quant_param_valueptr = prim->GetAttr("quant_params");
+  if (quant_param_valueptr == nullptr) {
+    prim->AddAttr("quant_params", std::make_shared<lite::QuantParamHolder>());
+  }
+  auto quant_param_holder = prim->GetAttr("quant_params")->cast<lite::QuantParamHolderPtr>();
+  auto input_quant_params = quant_param_holder->input_quant_params();
+  bool is_quant = false;
+  for (size_t i = 0; i < input_quant_params.size(); ++i) {
+    if (!input_quant_params.at(i).empty() && input_quant_params.at(i).at(0).inited) {
+      is_quant = true;
+      break;
+    }
+  }
+  auto output_quant_params = quant_param_holder->output_quant_params();
+  for (size_t i = 0; i < output_quant_params.size(); ++i) {
+    if (!output_quant_params.at(i).empty() && output_quant_params.at(i).at(0).inited) {
+      is_quant = true;
+    }
+  }
+  if (!is_quant) {
+    prim->EraseAttr("quant_params");
+  }
+}
+
+int ConvertQuantParam(const PrimitivePtr &prim, const std::vector<AnfNodePtr> &inputs) {
+  auto quant_param_holder = std::make_shared<lite::QuantParamHolder>();
+  prim->AddAttr("quant_params", quant_param_holder);
+  auto narrow_range = prim->GetAttr("narrow_range");
+  bool narrow_range_param = false;
+  if (narrow_range != nullptr) {
+    if (utils::isa<tensor::TensorPtr>(narrow_range)) {
+      auto narrow_range_tensor = narrow_range->cast<tensor::TensorPtr>();
+      narrow_range_param = *reinterpret_cast<bool *>(narrow_range_tensor->data_c());
+    } else if (utils::isa<ImmTraits<bool>::type>(narrow_range)) {
+      narrow_range_param = GetValue<bool>(narrow_range);
+    } else {
+      MS_LOG(ERROR) << "valueptr is invalid.";
+      return lite::RET_ERROR;
+    }
+  }
+  auto num_bits = prim->GetAttr("num_bits");
+  int32_t num_bits_param = 8;
+  if (num_bits != nullptr) {
+    if (utils::isa<tensor::TensorPtr>(num_bits)) {
+      auto num_bits_tensor = num_bits->cast<tensor::TensorPtr>();
+      num_bits_param = *reinterpret_cast<int64_t *>(num_bits_tensor->data_c());
+    } else if (utils::isa<ImmTraits<int64_t>::type>(num_bits)) {
+      num_bits_param = GetValue<int64_t>(num_bits);
+    } else {
+      MS_LOG(ERROR) << "valueptr is invalid.";
+      return lite::RET_ERROR;
+    }
+  }
+  auto status = ConvertInputQuantParam(prim, narrow_range_param, num_bits_param);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "compute int quant param failed.";
+    return status;
+  }
+  FillDefaultInputQuantParamIfNeed(prim, inputs.size());
+  status = ConvertOutputQuantParam(prim, narrow_range_param, num_bits_param);
+  if (status != lite::RET_OK) {
+    MS_LOG(ERROR) << "compute output quant param failed.";
+    return status;
+  }
+  CheckQuantParams(prim);
+  return lite::RET_OK;
+}
+}  // namespace
+
 int MindirAdjustPass::ValueNodeInt64Convert(AnfNodePtr anf_node) {
   if (!utils::isa<ValueNodePtr>(anf_node)) {
     return lite::RET_NO_CHANGE;
@@ -120,7 +318,7 @@ int MindirAdjustPass::ParameterNodeConvert(AnfNodePtr anf_node) {
   return lite::RET_OK;
 }
 
-int MindirAdjustPass::PrimitiveConvert(std::shared_ptr<AnfNode> anf_node) {
+int MindirAdjustPass::ComputeQuantParams(std::shared_ptr<AnfNode> anf_node) {
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(INFO) << "only cnode need to convert primitive.";
     return lite::RET_NO_CHANGE;
@@ -135,10 +333,6 @@ int MindirAdjustPass::PrimitiveConvert(std::shared_ptr<AnfNode> anf_node) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_NULL_PTR;
   }
-  if (utils::isa<PrimitiveCPtr>(value_node->value())) {
-    MS_LOG(INFO) << "the value has been primitiveC.";
-    return lite::RET_NO_CHANGE;
-  }
   auto primitive = value_node->value()->cast<PrimitivePtr>();
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "the value is not primitive.";
@@ -146,19 +340,9 @@ int MindirAdjustPass::PrimitiveConvert(std::shared_ptr<AnfNode> anf_node) {
   }
   auto inputs = cnode->inputs();
   inputs.erase(inputs.begin());
-  if (!CheckPrimitiveType(anf_node, prim::kPrimReturn) && !CheckPrimitiveType(anf_node, prim::kPrimMakeTuple)) {
-    auto primitive_c = PrimitiveC::Create(*primitive, inputs, quant_type_, train_flag_);
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "fail to create a primitive_c: " << cnode->fullname_with_scope();
-      lite::NoSupportOp::GetInstance()->InsertOp(primitive->name());
-      return lite::RET_NOT_FIND_OP;
-    }
-    value_node->set_value(primitive_c);
-  } else {
-    auto primitiveT = std::make_unique<schema::PrimitiveT>();
-    primitiveT->value.type = (CheckPrimitiveType(anf_node, prim::kPrimReturn) ? schema::PrimitiveType_Return
-                                                                              : schema::PrimitiveType_MakeTuple);
-    value_node->set_value(std::make_shared<PrimitiveC>(primitiveT.release()));
+  if (ConvertQuantParam(primitive, inputs) != lite::RET_OK) {
+    MS_LOG(ERROR) << "compute quant param failed.";
+    return lite::RET_ERROR;
   }
   return lite::RET_OK;
 }
@@ -176,11 +360,10 @@ bool MindirAdjustPass::Run(const FuncGraphPtr &graph) {
     if (utils::isa<ParameterPtr>(node)) {
       status = ParameterNodeConvert(node);
     } else if (utils::isa<CNodePtr>(node)) {
-      status = PrimitiveConvert(node);
+      status = ComputeQuantParams(node);
     } else if (utils::isa<ValueNodePtr>(node)) {
       status = ValueNodeInt64Convert(node);
     }
-
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
       success_flag = false;

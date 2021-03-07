@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,17 +28,16 @@ TEST_F(TestTfliteParserArgmax, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ArgMax) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ArgMaxFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserArgmax, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsArgMax(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsArgMax();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsArgMaxFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsArgMaxFusion();
   ASSERT_EQ(val->axis, 1);
-  ASSERT_EQ(val->topK, 1);
-  ASSERT_EQ(val->axisType, 1);
-  ASSERT_EQ(val->keepDims, false);
-  ASSERT_EQ(val->outMaxValue, false);
+  ASSERT_EQ(val->top_k, 1);
+  ASSERT_EQ(val->keep_dims, false);
+  ASSERT_EQ(val->out_max_value, false);
 }
 
 }  // namespace mindspore

@@ -21,6 +21,7 @@
 #include "nnacl/int8/quantize.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
+#include "coder/opcoders/parallel.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 int MallocQuantArgForConcat(ConcatQuantArg *quant_arg, size_t input_num) {
@@ -37,7 +38,6 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
 
   concat_param_->input_shapes_ = nullptr;
   size_t input_num = input_tensors().size();
-  MS_CHECK_PTR(input_data_);
   MS_CHECK_RET_CODE(MallocQuantArgForConcat(&concat_param_->quant_arg_, input_num),
                     "Null pointer reference: quant_concat_parm_->in_quant_args_.");
   for (int i = 0; i < static_cast<int>(input_num); i++) {
@@ -60,7 +60,10 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
   concat_param_->input_shapes_ = reinterpret_cast<int **>(malloc(sizeof(int *) * input_num));
   MS_CHECK_PTR(concat_param_->input_shapes_);
   for (int i = 0; i < static_cast<int>(input_num); i++) {
-    concat_param_->input_shapes_[i] = reinterpret_cast<int *>(input_tensors().at(i)->shape().data());
+    auto in_shape = input_tensors_.at(i)->shape();
+    concat_param_->input_shapes_[i] = reinterpret_cast<int *>(malloc(in_shape.size() * sizeof(int)));
+    MS_CHECK_PTR(concat_param_->input_shapes_[i]);
+    memcpy(reinterpret_cast<void *>(concat_param_->input_shapes_[i]), in_shape.data(), sizeof(int) * in_shape.size());
   }
 
   before_axis_size = 1;
@@ -70,7 +73,10 @@ int ConcatInt8Coder::Prepare(CoderContext *const context) {
 
   int64_t after_axis_size = 1;
   int output_dim = static_cast<int>(output_tensor_->shape().size());
-  concat_param_->output_shapes_ = output_tensor_->shape().data();
+  concat_param_->output_shapes_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
+  MS_CHECK_PTR(concat_param_->output_shapes_);
+  memcpy(reinterpret_cast<void *>(concat_param_->output_shapes_), output_tensor_->shape().data(),
+         sizeof(int) * output_dim);
   for (int i = axis_ + 1; i < output_dim; i++) {
     after_axis_size *= concat_param_->output_shapes_[i];
   }
@@ -84,7 +90,8 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
   count_unit_ = thread_num_ > 1 ? UP_DIV(before_axis_size, thread_num_) : before_axis_size;
   concat_param_->count_unit_ = count_unit_;
 
-  Collect(context, {"nnacl/int8/concat_int8.h"}, {"concat_int8.c"});
+  Collect(context, {"nnacl/int8/concat_int8.h", "wrapper/int8/concat_int8_wrapper.h"},
+          {"concat_int8.c", "concat_int8_wrapper.c"});
   NNaclInt8Serializer code;
 
   int in_tensor_count = input_tensors().size();
@@ -96,15 +103,12 @@ int ConcatInt8Coder::DoCode(CoderContext *const context) {
   }
   code.CodeStruct("concat_param", *concat_param_, in_tensor_count, input_tensor_->shape().size(),
                   output_tensor_->shape().size());
-
-  if (thread_num_ > 1) {
-    code.CodeBaseStruct("ConcatInt8Args", "args", "input_data", output_tensor_, "&concat_param", axis_,
-                        before_axis_size, count_unit_);
-    code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "ConcatInt8Run", "&args", "thread_num");
+  code.CodeBaseStruct("ConcatInt8Args", kRunArgs, "input_data", output_tensor_, "&concat_param", axis_,
+                      before_axis_size, count_unit_);
+  if (support_parallel_) {
+    code.CodeFunction(kParallelLaunch, gThreadPool, "ConcatInt8Run", kRunArgsAddr, gThreadNum);
   } else {
-    int task_id = 0;
-    int64_t real_dst_count = MSMIN(before_axis_size - task_id * count_unit_, count_unit_);
-    code.CodeFunction("Int8Concat", "input_data", output_tensor_, "&concat_param", axis_, real_dst_count, task_id);
+    code.CodeFunction("ConcatInt8Run", kRunArgsAddr, kDefaultTaskId);
   }
   context->AppendCode(code.str());
   return RET_OK;

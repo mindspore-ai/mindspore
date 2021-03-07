@@ -19,41 +19,21 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/zeros_like.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFZerosLikeParser::Parse(const tensorflow::NodeDef &tf_op,
-                                const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::ZerosLikeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  primitive->value.type = schema::PrimitiveType_ZerosLike;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+ops::PrimitiveC *TFZerosLikeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                          std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::ZerosLike>();
 
   *output_size = tf_op.input_size();
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
-  return RET_OK;
+
+  return prim.release();
 }
 TFNodeRegistrar g_tfZerosLikeParser("ZerosLike", new TFZerosLikeParser());
 }  // namespace lite

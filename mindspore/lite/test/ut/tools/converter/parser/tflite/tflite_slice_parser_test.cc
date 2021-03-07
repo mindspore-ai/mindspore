@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,11 @@ TEST_F(TestTfliteParserSlice, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Slice) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SliceFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserSlice, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSlice(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsSlice();
-  ASSERT_EQ(val->format, schema::Format_NHWC);
-  std::vector<int32_t> begin = {1, 0, 0};
-  ASSERT_EQ(val->begin, begin);
-  std::vector<int32_t> size = {1, 1, 3};
-  ASSERT_EQ(val->size, size);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSliceFusion(), nullptr);
 }
 
 }  // namespace mindspore

@@ -93,39 +93,38 @@ int ElementOptMulAccFp16(const float16_t *input0, const float16_t input1, float1
 
 void UpdataStateFp16(float16_t *cell_state, float16_t *forget_gate, const float16_t *input_gate,
                      const float16_t *cell_gate, float16_t *state_buffer, int batch, int hidden_size,
-                     float16_t smooth) {
-  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {  // smooth * old_cell_state
+                     float16_t zoneout) {
+  if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {  // zoneout * old_cell_state
     memcpy(state_buffer, cell_state, batch * hidden_size * sizeof(float16_t));
     ArithmeticParameter parameter;
     parameter.in_elements_num0_ = batch * hidden_size;
     parameter.in_elements_num1_ = 1;
-    ElementOptMulFp16(state_buffer, &smooth, state_buffer, batch * hidden_size, &parameter);
+    ElementOptMulFp16(state_buffer, &zoneout, state_buffer, batch * hidden_size, &parameter);
   }
 
   ElementMulFp16(forget_gate, cell_state, cell_state, batch * hidden_size);
   ElementMulAccFp16(input_gate, cell_gate, cell_state, batch * hidden_size);
 
-  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {  // (1 - smooth) * new_cell_state
-    ElementOptMulAccFp16(cell_state, 1 - smooth, state_buffer, batch * hidden_size);
+  if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {  // (1 - zoneout) * new_cell_state
+    ElementOptMulAccFp16(cell_state, 1 - zoneout, state_buffer, batch * hidden_size);
   }
 }
 
 void UpdataOutputFp16(const float16_t *cell_state, float16_t *output_gate, float16_t *hidden_state,
-                      float16_t *state_buffer_in, int batch, int hidden_size, float16_t smooth) {
-  float16_t *state_buffer = state_buffer_in + batch * hidden_size;
-  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {
+                      float16_t *state_buffer, int batch, int hidden_size, float16_t zoneout) {
+  if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
     memcpy(state_buffer, hidden_state, batch * hidden_size * sizeof(float16_t));
     ArithmeticParameter parameter;
     parameter.in_elements_num0_ = batch * hidden_size;
     parameter.in_elements_num1_ = 1;
-    ElementOptMulFp16(state_buffer, &smooth, state_buffer, batch * hidden_size, &parameter);
+    ElementOptMulFp16(state_buffer, &zoneout, state_buffer, batch * hidden_size, &parameter);
   }
 
   TanhFp16(cell_state, hidden_state, batch * hidden_size);
   ElementMulFp16(hidden_state, output_gate, hidden_state, batch * hidden_size);
 
-  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {
-    ElementOptMulAccFp16(hidden_state, 1 - smooth, state_buffer, batch * hidden_size);
+  if (!(zoneout >= -FLT_EPSILON && zoneout <= FLT_EPSILON)) {
+    ElementOptMulAccFp16(hidden_state, 1 - zoneout, state_buffer, batch * hidden_size);
   }
 }
 
@@ -151,7 +150,7 @@ void UpdateLstmGateFp16(float16_t *gate_buffer, const float16_t *input, const fl
 
 void LstmStepUnitFp16(float16_t *output, const float16_t *input, const float16_t *input_weight,
                       const float16_t *state_weight, const float16_t *bias, float16_t *hidden_state,
-                      float16_t *cell_state, float16_t *gate_buffer, float16_t *state_buffer,
+                      float16_t *cell_state, float16_t *gate_buffer, float16_t *state_buffer[2],
                       float16_t *matmul_buffer[2], const LstmParameter *lstm_param) {
   bool is_vec = lstm_param->batch_ == 1;
   // input * weight
@@ -192,26 +191,28 @@ void LstmStepUnitFp16(float16_t *output, const float16_t *input, const float16_t
   // update cell_gate
   TanhFp16(cell_gate, cell_gate, lstm_param->batch_ * lstm_param->hidden_size_);
   // update cell state
-  UpdataStateFp16(cell_state, forget_gate, input_gate, cell_gate, state_buffer, lstm_param->batch_,
-                  lstm_param->hidden_size_, lstm_param->smooth_);
+  UpdataStateFp16(cell_state, forget_gate, input_gate, cell_gate, state_buffer[0], lstm_param->batch_,
+                  lstm_param->hidden_size_, lstm_param->zoneout_cell_);
 
   // update output_gate
   SigmoidFp16(output_gate, output_gate, lstm_param->batch_ * lstm_param->hidden_size_);
   // update output
-  UpdataOutputFp16(cell_state, output_gate, hidden_state, state_buffer, lstm_param->batch_, lstm_param->hidden_size_,
-                   lstm_param->smooth_);
+  UpdataOutputFp16(cell_state, output_gate, hidden_state, state_buffer[1], lstm_param->batch_, lstm_param->hidden_size_,
+                   lstm_param->zoneout_hidden_);
   memcpy(output, hidden_state, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
 
-  if (!(lstm_param->smooth_ >= -FLT_EPSILON && lstm_param->smooth_ <= FLT_EPSILON)) {
-    memcpy(cell_state, state_buffer, lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
-    memcpy(hidden_state, state_buffer + lstm_param->batch_ * lstm_param->hidden_size_,
-           lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
+  if (!(lstm_param->zoneout_cell_ >= -FLT_EPSILON && lstm_param->zoneout_cell_ <= FLT_EPSILON)) {
+    memcpy(cell_state, state_buffer[0], lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
+  }
+
+  if (!(lstm_param->zoneout_hidden_ >= -FLT_EPSILON && lstm_param->zoneout_hidden_ <= FLT_EPSILON)) {
+    memcpy(hidden_state, state_buffer[1], lstm_param->batch_ * lstm_param->hidden_size_ * sizeof(float16_t));
   }
 }
 
 void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight_i, const float16_t *weight_h,
               const float16_t *bias, float16_t *hidden_state, float16_t *cell_state, float16_t *gate_buffer,
-              float16_t *state_buffer, float16_t *matmul_buffer[2], const LstmParameter *lstm_param) {
+              float16_t *state_buffer[2], float16_t *matmul_buffer[2], const LstmParameter *lstm_param) {
   // forward
   for (int t = 0; t < lstm_param->seq_len_; t++) {
     const float16_t *input_ptr = input + t * lstm_param->input_step_;

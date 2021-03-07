@@ -15,11 +15,13 @@
  */
 
 #include <set>
+#include <algorithm>
 #include <string>
 #include <map>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/reduce.h"
+#include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/reduce.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
@@ -28,7 +30,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
-using mindspore::schema::PrimitiveType_Reduce;
+using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
@@ -65,8 +67,10 @@ cl_float4 ReduceOpenCLKernel::GenC4Mask() {
   return mask;
 }
 
+bool hw_reduce(const int *axes_) { return (axes_[0] == 1 && axes_[1] == 2) || (axes_[0] == 2 && axes_[1] == 1); }
+
 int ReduceOpenCLKernel::CheckSpecs() {
-  if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
+  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
@@ -79,19 +83,36 @@ int ReduceOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "not supported reduce type:" << reduce_param->mode_;
     return RET_PARAM_INVALID;
   }
-  if (reduce_param->num_axes_ == 1 && reduce_param->axes_[0] == 3 && in_tensors_[0]->shape()[2] == 1) {
-    reduce_param->num_axes_ = 2;
-    reduce_param->axes_[1] = 2;
+
+  // axes is input tensor
+  // get num_axes
+  int num_axes = 0;
+  auto *axes_tensor = in_tensors_.at(1);
+  if (axes_tensor->shape().size() != 1) {
+    MS_LOG(ERROR) << "in Reduce: axes tensor's ndim should be 1.";
+    return RET_ERROR;
+  } else {
+    num_axes = axes_tensor->shape().front();
   }
-  if (reduce_param->num_axes_ != 2) {
-    MS_LOG(ERROR) << "reduce op only support axes=2";
+  // check axes tensor
+  if (CheckParamLikeTensor("Reduce", "axes", axes_tensor, kNumberTypeInt32, {num_axes}) != RET_OK) {
+    return RET_ERROR;
+  }
+  // copy axes from tensor to private var
+  for (int i = 0; i < std::min(num_axes, MAX_SHAPE_SIZE); ++i) {
+    axes_[i] = reinterpret_cast<int *>(axes_tensor->data_c())[i];
+  }
+  if (num_axes == 1 && axes_[0] == 3 && in_tensors_[0]->shape()[2] == 1) {
+    num_axes = 2;
+    axes_[1] = 2;
+  }
+  if (num_axes != 2) {
+    MS_LOG(ERROR) << "reduce op only support num_axes=2";
     return RET_PARAM_INVALID;
   }
-  bool hw_reduce = (reduce_param->axes_[0] == 1 && reduce_param->axes_[1] == 2) ||
-                   (reduce_param->axes_[0] == 2 && reduce_param->axes_[1] == 1);
-  wc_reduce_ = (reduce_param->axes_[0] == 2 && reduce_param->axes_[1] == 3) ||
-               (reduce_param->axes_[0] == 3 && reduce_param->axes_[1] == 2);
-  if (!hw_reduce && !wc_reduce_) {
+
+  wc_reduce_ = (axes_[0] == 2 && axes_[1] == 3) || (axes_[0] == 3 && axes_[1] == 2);
+  if (!hw_reduce(axes_) && !wc_reduce_) {
     MS_LOG(ERROR) << "reduce op only support axis (1,2) or (2,3)";
     return RET_PARAM_INVALID;
   }
@@ -103,15 +124,14 @@ int ReduceOpenCLKernel::CheckSpecs() {
 }
 
 int ReduceOpenCLKernel::Prepare() {
-  outShape = GpuTensorInfo(out_tensors_[0]);
   auto reduce_param = reinterpret_cast<ReduceParameter *>(op_parameter_);
   if (reduce_param == nullptr) {
     return RET_NULL_PTR;
   }
 
   std::string kernel_name;
-  if (in_tensors_[0]->shape()[reduce_param->axes_[0]] >= LOCAL_CACHE_THREAD ||
-      in_tensors_[0]->shape()[reduce_param->axes_[1]] >= LOCAL_CACHE_THREAD) {
+  if (in_tensors_[0]->shape()[axes_[0]] >= LOCAL_CACHE_THREAD ||
+      in_tensors_[0]->shape()[axes_[1]] >= LOCAL_CACHE_THREAD) {
     use_local_ = true;
     kernel_name += "Local";
   } else {
@@ -182,6 +202,6 @@ int ReduceOpenCLKernel::Run() {
   return mindspore::lite::RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reduce, OpenCLKernelCreator<ReduceOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reduce, OpenCLKernelCreator<ReduceOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ReduceFusion, OpenCLKernelCreator<ReduceOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ReduceFusion, OpenCLKernelCreator<ReduceOpenCLKernel>)
 }  // namespace mindspore::kernel

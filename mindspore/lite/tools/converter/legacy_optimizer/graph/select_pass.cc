@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
+#include "tools/converter/legacy_optimizer/graph/select_pass.h"
 #include <vector>
 #include <map>
 #include <algorithm>
-#include "tools/converter/legacy_optimizer/graph/select_pass.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
-#include "src/ops/primitive_c.h"
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 
 namespace mindspore::lite {
-
 STATUS SelectPass::Run(mindspore::schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (size_t i = 0; i < graph->nodes.size(); i++) {

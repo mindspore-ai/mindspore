@@ -15,16 +15,15 @@
  */
 #include "coder/opcoders/nnacl/int8/pooling_int8_coder.h"
 #include <memory>
-#include <string>
 #include <vector>
 #include "nnacl/int8/pooling_int8.h"
 #include "coder/log.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
-using std::string;
-
-using mindspore::schema::PrimitiveType_Pooling;
+using mindspore::schema::PrimitiveType_AvgPoolFusion;
+using mindspore::schema::PrimitiveType_MaxPoolFusion;
 namespace mindspore::lite::micro::nnacl {
 
 int PoolingInt8Coder::DoCode(CoderContext *const context) {
@@ -58,25 +57,17 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   pooling_parameter->quant_args_ = quant_args;
   code.CodeStruct("pooling_parameter", *pooling_parameter);
 
-  if (thread_num_ > 1) {
-    code.CodeBaseStruct("PoolingInt8Args", "args", in_tensor, out_tensor, "(PoolingParameter *)&pooling_parameter");
-    if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
-      code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "MaxPoolingInt8Run", "&args", "thread_num");
-    } else {
-      code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "AvgPoolingInt8Run", "&args", "thread_num");
-    }
+  if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
+    code.CodeFunction("MaxPoolingInt8", in_tensor, out_tensor, "(PoolingParameter *)&pooling_parameter",
+                      kDefaultTaskId);
   } else {
-    int task_id = 0;
-    if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
-      code.CodeFunction("MaxPoolingInt8", in_tensor, out_tensor, "(PoolingParameter *)&pooling_parameter", task_id);
-    } else {
-      code.CodeFunction("AvgPoolingInt8", in_tensor, out_tensor, "(PoolingParameter *)&pooling_parameter", task_id);
-    }
+    code.CodeFunction("AvgPoolingInt8", in_tensor, out_tensor, "(PoolingParameter *)&pooling_parameter",
+                      kDefaultTaskId);
   }
-  MS_LOG(INFO) << "PoolingInt8Code has been called";
   context->AppendCode(code.str());
   return lite::RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Pooling, CPUOpCoderCreator<PoolingInt8Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_MaxPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
 }  // namespace mindspore::lite::micro::nnacl

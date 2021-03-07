@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include <functional>
 #include <memory>
-#include "schema/inner/model_generated.h"
-#include "src/ops/conv2d.h"
-#include "src/ops/primitive_c.h"
+#include <vector>
+#include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
@@ -35,9 +34,22 @@ constexpr size_t kNHWC_WDim = 2;
 constexpr size_t kNHWC_CDim = 3;
 
 bool IsCommonConvNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Conv2D;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    if (!CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion)) {
+      return false;
+    }
+    std::shared_ptr<ops::Conv2DFusion> conv = nullptr;
+    if (utils::isa<CNodePtr>(anf_node)) {
+      auto c_node = anf_node->cast<CNodePtr>();
+      conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(c_node->input(0));
+    } else if (utils::isa<ValueNodePtr>(anf_node)) {
+      conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(anf_node);
+    }
+    if (conv == nullptr) {
+      return false;
+    }
+    return conv->GetAttr(ops::kIsDepthWise) == nullptr || !GetValue<bool>(conv->GetAttr(ops::kIsDepthWise));
   }
   return false;
 }
@@ -147,14 +159,6 @@ STATUS GenNewConvWeight(const ParameterPtr &down_weight_node, const ParameterPtr
   new_weight_node->set_abstract(down_weight_node->abstract());
   return RET_OK;
 }
-}  // namespace
-const BaseRef ConvConvFusion::DefinePattern() const {
-  auto up_conv_var = std::make_shared<CondVar>(IsCommonConvNode);
-  auto down_conv_var = std::make_shared<CondVar>(IsCommonConvNode);
-  auto down_weight_var = std::make_shared<CondVar>(IsParamNode);
-  auto down_bias_var = std::make_shared<SeqVar>();
-  return VectorRef({down_conv_var, up_conv_var, down_weight_var, down_bias_var});
-}
 
 void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &up_conv_cnode,
                                const CNodePtr &down_conv_cnode) {
@@ -185,25 +189,33 @@ void ReplaceParametersAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &u
       down_conv_cnode->add_input(new_bias_parameter);
     }
   } else {
-    MS_LOG(INFO) << "up conv node has no bias,no need replace bias.";
+    MS_LOG(INFO) << "up conv node has no bias,no need to replace bias.";
   }
   MS_LOG(INFO) << "fusion node success:" << down_conv_cnode->fullname_with_scope();
   // delete up conv node
   manager->Replace(up_conv_cnode, up_conv_cnode->input(1));
-  return;
 }
 
 bool IsPrimitiveProper(const CNodePtr &up_conv_cnode, const CNodePtr &down_conv_cnode) {
-  auto down_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(down_conv_cnode->input(0));
-  auto down_conv_primitive = utils::cast<std::shared_ptr<lite::Conv2D>>(down_primitive);
-  auto up_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(up_conv_cnode->input(0));
-  auto up_conv_primitive = utils::cast<std::shared_ptr<lite::Conv2D>>(up_primitive);
-  return up_conv_primitive != nullptr &&
-         up_conv_primitive->GetActivationType() == schema::ActivationType_NO_ACTIVATION &&
-         up_conv_primitive->GetGroup() == 1 && down_conv_primitive->GetGroup() == 1 &&
-         up_conv_primitive->GetKernelW() == down_conv_primitive->GetKernelW() &&
-         up_conv_primitive->GetKernelH() == down_conv_primitive->GetKernelH() &&
-         up_conv_primitive->GetPadMode() == down_conv_primitive->GetPadMode();
+  auto down_conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(down_conv_cnode->input(0));
+  MS_ASSERT(down_conv_primitive != nullptr);
+  auto up_conv_primitive = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(up_conv_cnode->input(0));
+  MS_ASSERT(up_conv_primitive != nullptr);
+  int64_t up_pad_mode = up_conv_primitive->GetAttr(ops::kPadMode) == nullptr ? 0 : up_conv_primitive->get_pad_mode();
+  int64_t down_pad_mode =
+    down_conv_primitive->GetAttr(ops::kPadMode) == nullptr ? 0 : down_conv_primitive->get_pad_mode();
+  return (up_conv_primitive->GetAttr(ops::kActivationType) == nullptr ||
+          up_conv_primitive->get_activation_type() == mindspore::NO_ACTIVATION) &&
+         up_conv_primitive->get_group() == 1 && down_conv_primitive->get_group() == 1 && up_pad_mode == down_pad_mode;
+}
+}  // namespace
+
+const BaseRef ConvConvFusion::DefinePattern() const {
+  auto up_conv_var = std::make_shared<CondVar>(IsCommonConvNode);
+  auto down_conv_var = std::make_shared<CondVar>(IsCommonConvNode);
+  auto down_weight_var = std::make_shared<CondVar>(IsParamNode);
+  auto down_bias_var = std::make_shared<SeqVar>();
+  return VectorRef({down_conv_var, up_conv_var, down_weight_var, down_bias_var});
 }
 
 // conv->conv1x1 fusion conv (w1x+b)w2+c = (w1*w2)*x+(w2*b+c)

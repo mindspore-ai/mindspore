@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@
 #define LITE_MINDSPORE_LITE_C_OPS_OP_POPULATE_REGISTER_H
 
 #include <map>
-#include "src/ops/primitive_c.h"
+#include "schema/model_generated.h"
+#include "nnacl/op_base.h"
+#include "src/common/common.h"
+#include "src/common/prim_util.h"
 
 namespace mindspore {
 namespace lite {
-
+typedef OpParameter *(*ParameterGen)(const void *prim);
 class PopulateRegistry {
  public:
   static PopulateRegistry *GetInstance() {
@@ -30,25 +33,30 @@ class PopulateRegistry {
     return &registry;
   }
 
-  void InsertParameterMap(schema::PrimitiveType type, ParameterCreator creator) { parameter_creators[type] = creator; }
+  void InsertParameterMap(int type, ParameterGen creator, int version) {
+    parameters_[GenPrimVersionKey(type, version)] = creator;
+  }
 
-  ParameterCreator GetParameterCreator(schema::PrimitiveType type) {
-    if (parameter_creators.find(type) != parameter_creators.end()) {
-      return parameter_creators[type];
-    } else {
-      MS_LOG(ERROR) << "Unsupported parameter type in Create : " << schema::EnumNamePrimitiveType(type);
+  ParameterGen GetParameterCreator(int type, int version) {
+    ParameterGen param_creator = nullptr;
+    auto iter = parameters_.find(GenPrimVersionKey(type, version));
+    if (iter == parameters_.end()) {
+      MS_LOG(ERROR) << "Unsupported parameter type in Create : " << type;
       return nullptr;
     }
+    param_creator = iter->second;
+    return param_creator;
   }
 
  protected:
-  std::map<schema::PrimitiveType, ParameterCreator> parameter_creators;
+  // key:type * 1000 + schema_version
+  std::map<int, ParameterGen> parameters_;
 };
 
 class Registry {
  public:
-  Registry(schema::PrimitiveType primitive_type, ParameterCreator creator) {
-    PopulateRegistry::GetInstance()->InsertParameterMap(primitive_type, creator);
+  Registry(int primitive_type, ParameterGen creator, int version) {
+    PopulateRegistry::GetInstance()->InsertParameterMap(primitive_type, creator, version);
   }
   ~Registry() = default;
 };

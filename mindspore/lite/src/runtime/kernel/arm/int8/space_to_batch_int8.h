@@ -23,9 +23,8 @@ namespace mindspore::kernel {
 class SpaceToBatchInt8CPUKernel : public SpaceToBatchCPUKernel {
  public:
   SpaceToBatchInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                            const mindspore::lite::PrimitiveC *primitive)
-      : SpaceToBatchCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : SpaceToBatchCPUKernel(parameter, inputs, outputs, ctx) {}
 
   ~SpaceToBatchInt8CPUKernel() = default;
 

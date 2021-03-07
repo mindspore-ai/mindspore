@@ -71,13 +71,14 @@ int SigmoidCrossEntropyWithLogitsGradCPUKernel::Run() {
 
 int SigmoidCrossEntropyWithLogitsGradCPUKernel::Init() { return RET_OK; }
 
-kernel::LiteKernel *CpuSigmoidCrossEntropyWithLogitsGradFp32KernelCreator(
-  const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-  const lite::InnerContext *ctx, const kernel::KernelKey &desc, const mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *CpuSigmoidCrossEntropyWithLogitsGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                                          const std::vector<lite::Tensor *> &outputs,
+                                                                          OpParameter *opParameter,
+                                                                          const lite::InnerContext *ctx,
+                                                                          const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
   MS_ASSERT(desc.type == schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad);
-  auto *kernel =
-    new (std::nothrow) SigmoidCrossEntropyWithLogitsGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) SigmoidCrossEntropyWithLogitsGradCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SigmoidCrossEntropyWithLogitsGradWithLogitsCPUKernel failed";
     return nullptr;

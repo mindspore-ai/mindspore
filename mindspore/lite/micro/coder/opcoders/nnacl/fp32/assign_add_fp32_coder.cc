@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/fp32/assign_add_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/assign_add_fp32_coder.h"
 #include <string>
 #include "schema/inner/ops_generated.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
 

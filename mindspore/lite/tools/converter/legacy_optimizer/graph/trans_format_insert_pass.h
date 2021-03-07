@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,6 @@ class TransOpInsertPass : public FormatTransPass {
   bool CanFusion(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node);
 
   STATUS FindOutTransType();
-
-  void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
-
-  STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node);
 
  private:
   FormatTransNodeType pre_insert_trans_type_ = kNHWC2NCHW;

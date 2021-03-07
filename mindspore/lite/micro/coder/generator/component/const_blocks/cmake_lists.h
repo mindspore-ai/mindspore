@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_CODE_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_CODE_H_
 #define MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_CODE_H_
 
-static const char bench_cmake_lists_txt[] =
+const char *bench_cmake_lists_txt =
   "cmake_minimum_required(VERSION 3.14)\n"
   "project(${PROJ_NAME})\n"
   "\n"
@@ -55,9 +55,9 @@ static const char bench_cmake_lists_txt[] =
   "link_directories(${MODEL_LIB_PATH})\n"
   "include(benchmark.cmake)\n"
   "add_executable(${PROJ_NAME}_bench ${SRC_FILES})\n"
-  "target_link_libraries(${PROJ_NAME}_bench ${MODEL_LIB_NAME} -lm)\n";
+  "target_link_libraries(${PROJ_NAME}_bench ${MODEL_LIB_NAME} -lm -pthread)\n";
 
-static const char src_cmake_lists_txt[] =
+const char *src_cmake_lists_txt =
   "cmake_minimum_required(VERSION 3.14)\n"
   "project(${PROJ_NAME})\n"
   "\n"
@@ -112,4 +112,4 @@ static const char src_cmake_lists_txt[] =
   "string(CONCAT library_name \"lib\" ${PROJ_NAME} \".a\")\n"
   "create_library()\n";
 
-#endif  // MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_CODE_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_CODE_H_

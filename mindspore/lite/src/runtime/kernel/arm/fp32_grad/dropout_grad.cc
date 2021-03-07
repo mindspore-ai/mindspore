@@ -95,8 +95,7 @@ int DropoutGradCPUKernel::Run() {
 kernel::LiteKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                     const std::vector<lite::Tensor *> &outputs,
                                                     OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                    const kernel::KernelKey &desc,
-                                                    const mindspore::lite::PrimitiveC *primitive) {
+                                                    const kernel::KernelKey &desc) {
   if (opParameter == nullptr) {
     MS_LOG(ERROR) << "DropoutGrad opParameter nullptr.";
     return nullptr;
@@ -105,7 +104,7 @@ kernel::LiteKernel *CpuDropoutGradFp32KernelCreator(const std::vector<lite::Tens
     MS_LOG(ERROR) << "DropoutGrad desc type should be " << schema::PrimitiveType_DropoutGrad << " got " << desc.type;
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) DropoutGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) DropoutGradCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "DropoutGrad new kernel failed.";
     return nullptr;

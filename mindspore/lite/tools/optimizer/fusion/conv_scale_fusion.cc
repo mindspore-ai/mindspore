@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,7 @@
 
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
@@ -29,9 +27,9 @@ constexpr size_t kScaleBiasIndex = 3;
 constexpr size_t kScaleNoBiasLen = 3;
 constexpr size_t kScaleWithBiasLen = 4;
 bool IsScaleNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Scale;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimScaleFusion);
   }
   return false;
 }
@@ -62,12 +60,12 @@ void ConvScaleFusion::InitTransParam(const CNodePtr &scale_node, int kernel_num,
     return;
   }
   if (!scale_weight_node->isa<Parameter>()) {
-    MS_LOG(ERROR) << "scale weight node not paramter node";
+    MS_LOG(ERROR) << "scale weight node not parameter node";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
     return;
   }
   if (scale_bias_node != nullptr && !scale_bias_node->isa<Parameter>()) {
-    MS_LOG(ERROR) << "scale bias node not paramter node";
+    MS_LOG(ERROR) << "scale bias node not parameter node";
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_INVALID_OP_ATTR);
     return;
   }

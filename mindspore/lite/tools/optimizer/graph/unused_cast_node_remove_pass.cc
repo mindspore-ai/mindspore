@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/lite/include/errorcode.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore::opt {
+constexpr size_t kCastInputNum = 3;
 void RemoveUnusedCastOpPass::SetFmkType(FmkType type) { this->fmk_type = type; }
 
 bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
@@ -34,8 +34,7 @@ bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    auto type = opt::GetCNodeType(node);
-    if (type != schema::PrimitiveType_Cast) {
+    if (!CheckPrimitiveType(node, prim::kPrimCast)) {
       continue;
     }
     auto cast_cnode = node->cast<CNodePtr>();
@@ -54,7 +53,7 @@ bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
     MS_ASSERT(input_type != nullptr);
     auto input_type_value = input_type->type_id();
 
-    if (cast_cnode->inputs().size() != lite::kTripleNum || !utils::isa<ValueNodePtr>(cast_cnode->input(2))) {
+    if (cast_cnode->inputs().size() != kCastInputNum || !utils::isa<ValueNodePtr>(cast_cnode->input(2))) {
       MS_LOG(ERROR) << "Second input of cast should be a ValueNode";
       return RET_ERROR;
     }

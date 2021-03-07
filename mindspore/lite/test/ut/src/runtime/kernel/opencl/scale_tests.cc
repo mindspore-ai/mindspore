@@ -23,7 +23,7 @@ class TestOpenCL_Scale : public CommonTest {};
 namespace {
 // PrimitiveType_Resize: src/ops/populate/scale_populate.cc
 OpParameter *CreateParameter(int axis, int activation_type = schema::ActivationType_NO_ACTIVATION) {
-  auto *param = test::CreateParameter<ScaleParameter>(schema::PrimitiveType_Scale);
+  auto *param = test::CreateParameter<ScaleParameter>(schema::PrimitiveType_ScaleFusion);
   param->axis_ = axis;
   param->activation_type_ = activation_type;
   return reinterpret_cast<OpParameter *>(param);

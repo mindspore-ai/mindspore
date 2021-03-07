@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Pooling;
+using mindspore::schema::PrimitiveType_AvgPoolFusion;
+using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::kernel {
 int PoolingNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -42,10 +43,10 @@ int PoolingNPUKernel::SetPoolingParam() {
   pooling_->set_attr_global_pooling(pooling_param_->global_);
   pooling_->set_attr_window({pooling_param_->window_h_, pooling_param_->window_w_});
   pooling_->set_attr_stride({pooling_param_->stride_h_, pooling_param_->stride_w_});
-  if (pooling_param_->pad_mode_ == Pad_Same) {
+  if (pooling_param_->pad_mode_ == Pad_same) {
     pooling_->set_attr_pad_mode(6);
     pooling_->set_attr_pad({0, 0, 0, 0});
-  } else if (pooling_param_->pad_mode_ == Pad_Valid) {
+  } else if (pooling_param_->pad_mode_ == Pad_valid) {
     pooling_->set_attr_pad_mode(5);
     pooling_->set_attr_pad({0, 0, 0, 0});
   } else {
@@ -104,5 +105,6 @@ PoolingNPUKernel::~PoolingNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Pooling, NPUKernelCreator<PoolingNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_MaxPoolFusion, NPUKernelCreator<PoolingNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_AvgPoolFusion, NPUKernelCreator<PoolingNPUKernel>)
 }  // namespace mindspore::kernel

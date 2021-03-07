@@ -32,6 +32,7 @@ typedef struct UnSqueezeParameter {
   // primitive parameter
   OpParameter op_parameter_;
   int dims_[COMM_SHAPE_SIZE];
+  int num_dim_;
 
   // shape correlative
   const int *in_shape_;

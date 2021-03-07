@@ -28,15 +28,15 @@ class CaffePoolingParser : public CaffeNodeParser {
   CaffePoolingParser() : CaffeNodeParser("pooling") {}
   ~CaffePoolingParser() override = default;
 
-  PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 
-  static STATUS ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
+  static STATUS ParsePads(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *pad);
 
-  static STATUS ParseStrides(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
+  static STATUS ParseStrides(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *strides);
 
-  static STATUS ParseWindows(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
+  static STATUS ParseWindows(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *windows);
 
-  static STATUS ParsePoolingMode(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr);
+  mindspore::RoundMode ParseRoundMode(const caffe::PoolingParameter &poolingParam);
 };
 }  // namespace lite
 }  // namespace mindspore

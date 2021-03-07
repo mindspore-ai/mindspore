@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class L2NormInt8CPUKernel : public L2NormCPUKernel {
  public:
   explicit L2NormInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                               const mindspore::lite::PrimitiveC *primitive)
-      : L2NormCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : L2NormCPUKernel(parameter, inputs, outputs, ctx) {}
   ~L2NormInt8CPUKernel() {}
 
   int Init() override;

@@ -21,7 +21,8 @@
 #include "coder/log.h"
 #include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_Pooling;
+using mindspore::schema::PrimitiveType_AvgPoolFusion;
+using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -46,7 +47,7 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
   float minf = -FLT_MAX;
   float maxf = FLT_MAX;
   if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
-    Collect(context, {"nnacl/kernel/fp32/max_pooling_fp32_slim.h"}, {"max_pooling_fp32_slim.c"});
+    Collect(context, {"nnacl/fp32/pooling_fp32.h"}, {"pooling_fp32.c"});
     switch (pooling_parameter->act_type_) {
       case ActType_Relu: {
         minf = 0.f;
@@ -63,14 +64,9 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
       }
     }
 
-    if (thread_num_ > 1) {
-      code.CodeBaseStruct("PoolingFp32Args", "args", input_tensor_, output_tensor_, "&pooling_parameter", minf, maxf);
-      CODE_PARALLEL_FUNC("MaxPoolingFp32Run");
-    } else {
-      code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", task_id, minf, maxf);
-    }
+    code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", task_id, minf, maxf);
   } else {
-    Collect(context, {"nnacl/fp32/pooling.h"}, {"pooling.c"});
+    Collect(context, {"nnacl/fp32/pooling_fp32.h"}, {"pooling_fp32.c"});
     switch (pooling_parameter->act_type_) {
       case ActType_Relu: {
         minf = 0.f;
@@ -86,12 +82,7 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
         break;
       }
     }
-    if (thread_num_ > 1) {
-      code.CodeBaseStruct("PoolingFp32Args", "args", input_tensor_, output_tensor_, "&pooling_parameter", minf, maxf);
-      CODE_PARALLEL_FUNC("AvgPoolingFp32Run");
-    } else {
-      code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", task_id, minf, maxf);
-    }
+    code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", task_id, minf, maxf);
   }
 
   MS_LOG(INFO) << "PoolingFp32Code has been called";
@@ -99,5 +90,6 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
   return lite::RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Pooling, CPUOpCoderCreator<PoolingFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_MaxPoolFusion, CPUOpCoderCreator<PoolingFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl

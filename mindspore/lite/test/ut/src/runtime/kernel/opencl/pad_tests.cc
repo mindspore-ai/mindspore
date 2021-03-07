@@ -23,7 +23,7 @@ class TestOpenCL_Pad : public CommonTest {};
 namespace {
 // PrimitiveType_Pad: src/ops/populate/pad_populate.cc
 OpParameter *CreateParameter(const std::vector<int> &paddings, float constant_value) {
-  auto *param = test::CreateParameter<PadParameter>(schema::PrimitiveType_Pad);
+  auto *param = test::CreateParameter<PadParameter>(schema::PrimitiveType_PadFusion);
   param->pad_mode_ = schema::PaddingMode_CONSTANT;
   param->constant_value_ = constant_value;
   param->padding_length = MAX_PAD_SIZE;

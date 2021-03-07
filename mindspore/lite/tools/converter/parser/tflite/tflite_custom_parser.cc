@@ -20,233 +20,165 @@
 #include <vector>
 #include "flatbuffers/flexbuffers.h"
 
+#include "ops/audio_spectrogram.h"
+#include "ops/custom_extract_features.h"
+#include "ops/custom_normalize.h"
+#include "ops/custom_predict.h"
+#include "ops/detection_post_process.h"
+#include "ops/identity.h"
+#include "ops/fft_real.h"
+#include "ops/fft_imag.h"
+#include "ops/mfcc.h"
+#include "ops/rfft.h"
+
 namespace mindspore {
 namespace lite {
-STATUS TfliteCustomParser::DetectPostProcess(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                             const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::DetectionPostProcessT> attr = std::make_unique<schema::DetectionPostProcessT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+ops::PrimitiveC *TfliteCustomParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &custom_attr = tflite_op->custom_options;
+  const auto &opnode = tflite_model->operator_codes.at(tflite_op->opcode_index);
+  if (opnode == nullptr) {
+    MS_LOG(ERROR) << "opnode is null";
+    return nullptr;
   }
+  const auto &custom_type = opnode->custom_code;
+  if (custom_type == "TFLite_Detection_PostProcess") {
+    return DetectPostProcess(custom_attr, tflite_op);
+  } else if (custom_type == "Predict") {
+    return Predict(custom_attr);
+  } else if (custom_type == "Normalize") {
+    return Normalize();
+  } else if (custom_type == "ExtractFeatures") {
+    return ExtractFeatures();
+  } else if (custom_type == "AudioSpectrogram") {
+    return AudioSpectrogram(custom_attr);
+  } else if (custom_type == "Mfcc") {
+    return Mfcc(custom_attr);
+  } else if (custom_type == "FlexRFFT") {
+    return Rfft(custom_attr, tflite_op, tflite_model);
+  } else if (custom_type == "FlexReal") {
+    return FftReal();
+  } else if (custom_type == "FlexImag") {
+    return FftImag();
+  } else {
+    MS_LOG(ERROR) << "custom type : " << custom_type << " is not supported";
+    return nullptr;
+  }
+}
+
+ops::PrimitiveC *TfliteCustomParser::DetectPostProcess(const std::vector<uint8_t> &custom_attr,
+                                                       const std::unique_ptr<tflite::OperatorT> &tflite_op) {
+  auto prim = std::make_unique<ops::DetectionPostProcess>();
+
+  prim->set_format(mindspore::Format::NHWC);
+  prim->set_input_size(tflite_op->inputs.size());
 
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
-  attr->format = schema::Format::Format_NHWC;
-  attr->inputSize = tflite_op->inputs.size();
-  attr->hScale = attr_map["h_scale"].AsFloat();
-  attr->wScale = attr_map["w_scale"].AsFloat();
-  attr->xScale = attr_map["x_scale"].AsFloat();
-  attr->yScale = attr_map["y_scale"].AsFloat();
-  attr->NmsIouThreshold = attr_map["nms_iou_threshold"].AsFloat();
-  attr->NmsScoreThreshold = attr_map["nms_score_threshold"].AsFloat();
-  attr->MaxDetections = attr_map["max_detections"].AsInt32();
+  prim->set_scale({attr_map["h_scale"].AsFloat(), attr_map["w_scale"].AsFloat(), attr_map["x_scale"].AsFloat(),
+                   attr_map["y_scale"].AsFloat()});
+  prim->set_nms_iou_threshold(attr_map["nms_iou_threshold"].AsFloat());
+  prim->set_nms_score_threshold(attr_map["nms_score_threshold"].AsFloat());
+  prim->set_max_detections(attr_map["max_detections"].AsInt64());
   if (attr_map["detections_per_class"].IsNull()) {
-    attr->DetectionsPerClass = 100;
+    prim->set_detections_per_class(100);
   } else {
-    attr->DetectionsPerClass = attr_map["detections_per_class"].AsInt32();
+    prim->set_detections_per_class(attr_map["detections_per_class"].AsInt64());
   }
-  attr->MaxClassesPerDetection = attr_map["max_classes_per_detection"].AsInt32();
-  attr->NumClasses = attr_map["num_classes"].AsInt32();
+  prim->set_max_classes_per_detection(attr_map["max_classes_per_detection"].AsInt64());
+  prim->set_num_classes(attr_map["num_classes"].AsInt64());
   if (attr_map["use_regular_nms"].IsNull()) {
-    attr->UseRegularNms = false;
+    prim->set_use_regular_nms(false);
   } else {
-    attr->UseRegularNms = attr_map["use_regular_nms"].AsBool();
+    prim->set_use_regular_nms(attr_map["use_regular_nms"].AsBool());
   }
   if (attr_map["_output_quantized"].IsNull()) {
-    attr->OutQuantized = false;
+    prim->set_out_quantized(false);
   } else {
-    attr->OutQuantized = attr_map["_output_quantized"].AsBool();
+    prim->set_out_quantized(attr_map["_output_quantized"].AsBool());
   }
 
-  op->primitive->value.type = schema::PrimitiveType_DetectionPostProcess;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  return prim.release();
 }
 
-STATUS TfliteCustomParser::AudioSpectrogram(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                            const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::AudioSpectrogramT> attr = std::make_unique<schema::AudioSpectrogramT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TfliteCustomParser::AudioSpectrogram(const std::vector<uint8_t> &custom_attr) {
+  auto prim = std::make_unique<ops::AudioSpectrogram>();
+
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
-  attr->windowSize = attr_map["window_size"].AsInt64();
-  attr->stride = attr_map["stride"].AsInt64();
-  attr->magSquare = attr_map["magnitude_squared"].AsBool();
+  prim->set_window_size(attr_map["window_size"].AsInt64());
+  prim->set_stride(attr_map["stride"].AsInt64());
+  prim->set_mag_square(attr_map["magnitude_squared"].AsBool());
 
-  op->primitive->value.type = schema::PrimitiveType_AudioSpectrogram;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  return prim.release();
 }
 
-STATUS TfliteCustomParser::Mfcc(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::MfccT> attr = std::make_unique<schema::MfccT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TfliteCustomParser::Mfcc(const std::vector<uint8_t> &custom_attr) {
+  auto prim = std::make_unique<ops::Mfcc>();
+
   auto attr_map = flexbuffers::GetRoot(custom_attr).AsMap();
-  attr->freqUpperLimit = attr_map["upper_frequency_limit"].AsInt64();
-  attr->freqLowerLimit = attr_map["lower_frequency_limit"].AsInt64();
-  attr->filterBankChannelNum = attr_map["filterbank_channel_count"].AsInt64();
-  attr->dctCoeffNum = attr_map["dct_coefficient_count"].AsInt64();
+  prim->set_freq_upper_limit(attr_map["upper_frequency_limit"].AsFloat());
+  prim->set_freq_lower_limit(attr_map["lower_frequency_limit"].AsFloat());
+  prim->set_filter_bank_channel_num(attr_map["filterbank_channel_count"].AsInt64());
+  prim->set_dct_coeff_num(attr_map["dct_coefficient_count"].AsInt64());
 
-  op->primitive->value.type = schema::PrimitiveType_Mfcc;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  return prim.release();
 }
 
-STATUS TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                   const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::CustomPredictT> attr = std::make_unique<schema::CustomPredictT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  attr->outputNum = reinterpret_cast<const int *>(custom_attr.data())[0];
-  attr->weightThreshold = reinterpret_cast<const float *>(custom_attr.data())[1];
-  op->primitive->value.type = schema::PrimitiveType_CustomPredict;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+ops::PrimitiveC *TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_attr) {
+  auto prim = std::make_unique<ops::CustomPredict>();
+
+  prim->set_output_num(reinterpret_cast<const int64_t *>(custom_attr.data())[0]);
+  prim->set_weight_threshold(reinterpret_cast<const float *>(custom_attr.data())[1]);
+
+  return prim.release();
 }
 
-STATUS TfliteCustomParser::Normalize(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                     const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::CustomNormalizeT> attr = std::make_unique<schema::CustomNormalizeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  op->primitive->value.type = schema::PrimitiveType_CustomNormalize;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+ops::PrimitiveC *TfliteCustomParser::Normalize() {
+  auto prim = std::make_unique<ops::CustomNormalize>();
+  return prim.release();
 }
 
-STATUS TfliteCustomParser::ExtractFeatures(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                           const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::CustomExtractFeaturesT> attr = std::make_unique<schema::CustomExtractFeaturesT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  op->primitive->value.type = schema::PrimitiveType_CustomExtractFeatures;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+ops::PrimitiveC *TfliteCustomParser::ExtractFeatures() {
+  auto prim = std::make_unique<ops::CustomExtractFeatures>();
+  return prim.release();
 }
 
-STATUS TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                const std::unique_ptr<tflite::ModelT> &tflite_model,
-                                const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph) {
-  std::unique_ptr<schema::RfftT> attr = std::make_unique<schema::RfftT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+ops::PrimitiveC *TfliteCustomParser::Rfft(const std::vector<uint8_t> &custom_attr,
+                                          const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Rfft>();
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph failed";
+    return nullptr;
   }
-  std::vector<int> fft_length;
+  std::vector<int64_t> fft_length;
   if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, fft_length)) {
     MS_LOG(ERROR) << "rfft -> fftLength get failed";
-    return RET_ERROR;
-  }
-  attr->fftLength = fft_length[0];
-  op->primitive->value.type = schema::PrimitiveType_Rfft;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
-}
-
-STATUS TfliteCustomParser::FftReal(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                   const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::FftRealT> attr = std::make_unique<schema::FftRealT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  op->primitive->value.type = schema::PrimitiveType_FftReal;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
-}
-
-STATUS TfliteCustomParser::FftImag(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                   const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::FftImagT> attr = std::make_unique<schema::FftImagT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  op->primitive->value.type = schema::PrimitiveType_FftImag;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
-}
-
-STATUS TfliteCustomParser::Identity(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                    const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::IdentityT> attr = std::make_unique<schema::IdentityT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  op->primitive->value.type = schema::PrimitiveType_Identity;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
-}
-
-STATUS TfliteCustomParser::BatchMatMul(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                       const std::unique_ptr<tflite::OperatorT> &tflite_op) {
-  std::unique_ptr<schema::MatMulT> attr = std::make_unique<schema::MatMulT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-  attr->transposeA = false;
-  attr->transposeB = false;
-  op->primitive->value.type = schema::PrimitiveType_MatMul;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
-}
-
-PrimitiveC *TfliteCustomParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto op = new schema::CNodeT;
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
     return nullptr;
   }
-  const auto &custom_attr = tflite_op->custom_options;
-  const auto &opcode_index = tflite_op->opcode_index;
-  const auto &custom_type = tflite_model->operator_codes[opcode_index]->custom_code;
-  int status = RET_OK;
-  if (custom_type == "TFLite_Detection_PostProcess") {
-    status = DetectPostProcess(custom_attr, op, tflite_op);
-  } else if (custom_type == "Predict") {
-    status = Predict(custom_attr, op, tflite_op);
-  } else if (custom_type == "Normalize") {
-    status = Normalize(custom_attr, op, tflite_op);
-  } else if (custom_type == "ExtractFeatures") {
-    status = ExtractFeatures(custom_attr, op, tflite_op);
-  } else if (custom_type == "AudioSpectrogram") {
-    status = AudioSpectrogram(custom_attr, op, tflite_op);
-  } else if (custom_type == "Mfcc") {
-    status = Mfcc(custom_attr, op, tflite_op);
-  } else if (custom_type == "FlexRFFT") {
-    status = Rfft(custom_attr, op, tflite_op, tflite_model, tflite_subgraph);
-  } else if (custom_type == "FlexReal") {
-    status = FftReal(custom_attr, op, tflite_op);
-  } else if (custom_type == "FlexImag") {
-    status = FftImag(custom_attr, op, tflite_op);
-  } else {
-    MS_LOG(ERROR) << "the custom op hasn't been supported now";
-    status = RET_NOT_FIND_OP;
-  }
-  if (status != RET_OK) {
-    return nullptr;
-  }
-  auto primitive = op->primitive.release();
-  delete op;
-  return PrimitiveC::Create(primitive);
+  prim->set_fft_length(fft_length[0]);
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteCustomParser::FftReal() {
+  auto prim = std::make_unique<ops::FftReal>();
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteCustomParser::FftImag() {
+  auto prim = std::make_unique<ops::FftImag>();
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteCustomParser::Identity() {
+  auto prim = std::make_unique<ops::Identity>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteCustomParser(tflite::BuiltinOperator_CUSTOM, new TfliteCustomParser());

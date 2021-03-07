@@ -21,7 +21,7 @@
 #include <arm_neon.h>
 #endif
 #include "nnacl/op_base.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 typedef struct ConvParameter {
   OpParameter op_parameter_;
@@ -51,6 +51,9 @@ typedef struct ConvParameter {
   int output_unit_;
   PadMode pad_mode_;
   ActType act_type_;
+  int channel_multiplie_;
+  int output_padding_w;
+  int output_padding_h;
 } ConvParameter;
 
 typedef struct SlidingWindowParam {

@@ -31,15 +31,12 @@ namespace mindspore::kernel {
 int ResizeCPUKernel::Init() {
   auto ret = ResizeBaseCPUKernel::Init();
   switch (coordinate_transform_mode_) {
-    case schema::CoordinateTransformMode_COMMON:
     case schema::CoordinateTransformMode_ASYMMETRIC:
       calculate_ = CalculateAsymmetric;
       break;
     case schema::CoordinateTransformMode_ALIGN_CORNERS:
       calculate_ = CalculateAlignCorners;
       break;
-    case schema::CoordinateTransformMode_PYTORCH_HALF_PIXEL:
-    case schema::CoordinateTransformMode_TF_HALF_PIXEL:
     case schema::CoordinateTransformMode_HALF_PIXEL:
       calculate_ = CalculateHalfPixel;
       break;

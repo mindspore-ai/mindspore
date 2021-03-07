@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace lite {
 // compatibility, transfer attr to input tensor.
-typedef int (*TransferAttrFunc)(const void *primitive, Model::Node *node, std::vector<schema::Tensor *> *tensor,
+typedef int (*TransferAttrFunc)(Model::Node *node, std::vector<schema::Tensor *> *tensor,
                                 std::vector<char *> *tensor_bufs);
 class CompatRegistry {
  public:

@@ -28,6 +28,16 @@ std::string EnumNameDataType(TypeId type) {
       return "kNumberTypeInt16";
     case kNumberTypeInt32:
       return "kNumberTypeInt32";
+    case kNumberTypeInt64:
+      return "kNumberTypeInt64";
+    case kNumberTypeUInt:
+      return "kNumberTypeUInt";
+    case kNumberTypeUInt8:
+      return "kNumberTypeUInt8";
+    case kNumberTypeUInt16:
+      return "kNumberTypeUInt16";
+    case kNumberTypeUInt32:
+      return "kNumberTypeUInt32";
     case kNumberTypeFloat:
     case kNumberTypeFloat32:
       return "kNumberTypeFloat32";
@@ -48,16 +58,18 @@ std::string GetTensorDataType(TypeId type) {
     case kNumberTypeFloat32:
       return "float ";
     case kNumberTypeInt8:
-      return "int8";
+      return "int8_t ";
+    case kNumberTypeInt16:
+      return "int16_t ";
     case kNumberTypeInt:
     case kNumberTypeInt32:
-      return "int32_t";
+      return "int32_t ";
     case kNumberTypeUInt8:
-      return "uint8_t";
+      return "uint8_t ";
     case kNumberTypeUInt32:
-      return "uint32_t";
+      return "uint32_t ";
     case kNumberTypeInt64:
-      return "int64_t";
+      return "int64_t ";
     default:
       MS_LOG(ERROR) << "unsupported data type: " << EnumNameDataType(type);
       return "";

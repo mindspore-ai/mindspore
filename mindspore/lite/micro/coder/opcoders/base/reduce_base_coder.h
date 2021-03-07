@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <memory>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/reduce_parameter.h"
 
 namespace mindspore::lite::micro {
@@ -31,11 +31,10 @@ class ReduceBaseCoder : public OperatorCoder {
 
   ~ReduceBaseCoder() override = default;
 
-  int Init();
-  virtual int ReSize();
+  virtual int Init();
 
  private:
-  int CheckInputsOutputs();
+  int CheckInputsOutputs() const;
   int CheckParameters();
 
  protected:
@@ -54,6 +53,7 @@ class ReduceBaseCoder : public OperatorCoder {
   int outer_size_{0};
   int inner_size_{0};
   int axis_size_{0};
+  virtual int ReSize();
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_REDUCE_BASE_CODER_H

@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class BiasCPUFp16Kernel : public LiteKernel {
  public:
   BiasCPUFp16Kernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     bias_param_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~BiasCPUFp16Kernel() override;

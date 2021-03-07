@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "base/base.h"
 #include "src/param_value_lite.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/quant_param_holder.h"
 
 namespace mindspore::lite::quant {
 using STATUS = int;

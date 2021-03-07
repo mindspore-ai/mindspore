@@ -17,26 +17,14 @@
 #include "tools/converter/parser/tflite/tflite_shape_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/shape.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteShapeParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
-
-  std::unique_ptr<schema::ShapeT> attr = std::make_unique<schema::ShapeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  primitive->value.type = schema::PrimitiveType_Shape;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *TfliteShapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Shape>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteShapeParser(tflite::BuiltinOperator_SHAPE, new TfliteShapeParser());

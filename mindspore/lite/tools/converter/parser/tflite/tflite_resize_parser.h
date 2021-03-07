@@ -26,10 +26,10 @@
 namespace mindspore::lite {
 class TfliteResizeParser : public TfliteNodeParser {
  public:
-  TfliteResizeParser() : TfliteNodeParser("node_name") {}
+  TfliteResizeParser() : TfliteNodeParser("resize_bilinear") {}
 
-  PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 }  // namespace mindspore::lite
 

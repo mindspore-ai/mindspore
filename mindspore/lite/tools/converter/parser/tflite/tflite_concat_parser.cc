@@ -17,27 +17,25 @@
 #include "tools/converter/parser/tflite/tflite_concat_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/concat.h"
 
-namespace mindspore::lite {
-PrimitiveC *TfliteConcatParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteConcatParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Concat>();
 
-  const auto &tfliteAttr = tflite_op->builtin_options.AsConcatenationOptions();
-  if (tfliteAttr == nullptr) {
+  MS_ASSERT(tflite_op != nullptr);
+  const auto &tflite_attr = tflite_op->builtin_options.AsConcatenationOptions();
+  if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op concat attr failed";
     return nullptr;
   }
-  attr->axis = tfliteAttr->axis;
-  primitive->value.type = schema::PrimitiveType_Concat;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_axis(tflite_attr->axis);
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteConcatParser(tflite::BuiltinOperator_CONCATENATION, new TfliteConcatParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

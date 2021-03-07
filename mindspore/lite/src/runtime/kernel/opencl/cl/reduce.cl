@@ -296,28 +296,16 @@ __kernel void LocalWCSumSquare(__read_only image2d_t src_data, __write_only imag
 
 #define DoSum(A, B) A += B
 #define InitSum 0.f
-GlobalHW(Sum)
-GlobalWC(Sum)
-LocalHW(Sum)
-LocalWC(Sum)
+GlobalHW(Sum) GlobalWC(Sum) LocalHW(Sum) LocalWC(Sum)
 
 #define DoMin(A, B) A = min(A, B)
 #define InitMin 10000.f
-GlobalHW(Min)
-GlobalWC(Min)
-LocalHW(Min)
-LocalWC(Min)
+  GlobalHW(Min) GlobalWC(Min) LocalHW(Min) LocalWC(Min)
 
 #define DoMax(A, B) A = max(A, B)
 #define InitMax -10000.f
-GlobalHW(Max)
-GlobalWC(Max)
-LocalHW(Max)
-LocalWC(Max)
+    GlobalHW(Max) GlobalWC(Max) LocalHW(Max) LocalWC(Max)
 
 #define DoProd(A, B) A *= B
 #define InitProd 1.f
-GlobalHW(Prod)
-GlobalWC(Prod)
-LocalHW(Prod)
-LocalWC(Prod)
+      GlobalHW(Prod) GlobalWC(Prod) LocalHW(Prod) LocalWC(Prod)

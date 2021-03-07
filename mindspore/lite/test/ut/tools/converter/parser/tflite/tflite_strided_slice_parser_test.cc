@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,17 +35,7 @@ TEST_F(TestTfliteParserStridedSlice, OpType) {
 TEST_F(TestTfliteParserStridedSlice, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsStridedSlice(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsStridedSlice();
-  ASSERT_EQ(val->beginMask, 0);
-  ASSERT_EQ(val->endMask, 0);
-  ASSERT_EQ(val->beginMask, 0);
-  ASSERT_EQ(val->beginMask, 0);
-  std::vector<int> begin = {1, -1, 0};
-  ASSERT_EQ(val->begin, begin);
-  std::vector<int> end = {2, -3, 3};
-  ASSERT_EQ(val->end, end);
-  std::vector<int> stride = {1, -1, 1};
-  ASSERT_EQ(val->stride, stride);
-  std::vector<int> isscale = {3, 2, 3};
-  ASSERT_EQ(val->isScale, isscale);
+  ASSERT_EQ(val->end_mask, 0);
+  ASSERT_EQ(val->begin_mask, 0);
 }
 }  // namespace mindspore

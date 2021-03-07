@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patte
   auto dstAttr = dstNode->primitive->value.AsQuantDTypeCast();
   MS_ASSERT(srcAttr != nullptr);
   MS_ASSERT(dstAttr != nullptr);
-  if (srcAttr->dstT != dstAttr->srcT) {
+  if (srcAttr->dst_t != dstAttr->src_t) {
     MS_LOG(ERROR) << "srcNode and dstNode can not been fused";
     return RET_ERROR;
   }
@@ -73,14 +73,14 @@ STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patte
     return status;
   }
 
-  if (srcAttr->srcT == dstAttr->dstT) {
+  if (srcAttr->src_t == dstAttr->dst_t) {
     status = IsolateOneWayNode(graph, dstPath->nodeIdx);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "IsolateOneWayNode failed, node: " << dstNode->name.c_str() << ", error: " << status;
       return status;
     }
   } else {
-    dstAttr->srcT = srcAttr->srcT;
+    dstAttr->src_t = srcAttr->src_t;
   }
 
   return RET_OK;

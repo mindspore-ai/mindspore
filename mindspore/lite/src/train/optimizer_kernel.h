@@ -27,9 +27,8 @@ class OptimizerKernel : public LiteKernel {
  public:
   OptimizerKernel() = default;
   OptimizerKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                  const lite::PrimitiveC *primitive, int lr_idx, int grad_idx)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
+                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx, int lr_idx, int grad_idx)
+      : LiteKernel(parameter, inputs, outputs, ctx), lr_idx_(lr_idx), grad_idx_(grad_idx) {}
   ~OptimizerKernel() = default;
 
   enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH };

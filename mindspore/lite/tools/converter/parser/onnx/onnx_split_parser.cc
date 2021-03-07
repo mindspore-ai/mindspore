@@ -16,39 +16,35 @@
 
 #include "tools/converter/parser/onnx/onnx_split_parser.h"
 #include <memory>
+#include <vector>
+#include <algorithm>
+#include "ops/split.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxSplitParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                      const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx SplitParser";
-  auto attr = std::make_unique<schema::SplitT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxSplitParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Split>();
 
-  attr->splitDim = 0;
+  prim->set_axis(0);
+  std::vector<int64_t> size_splits;
+  int64_t split_num = 0;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      attr->splitDim = static_cast<int32_t>(onnx_node_attr.i());
+      prim->set_axis(onnx_node_attr.i());
     } else if (attribute_name == "split") {
-      for (auto sizeSplit : onnx_node_attr.ints()) {
-        attr->sizeSplits.emplace_back(sizeSplit);
-      }
-      attr->numberSplit = onnx_node_attr.ints_size();
+      size_splits.resize(onnx_node_attr.ints_size());
+      std::copy(onnx_node_attr.ints().begin(), onnx_node_attr.ints().end(), size_splits.begin());
+      prim->set_size_splits(size_splits);
+      split_num = onnx_node_attr.ints_size();
     }
   }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
+  if (split_num == 0) {
+    split_num = onnx_node.output_size();
   }
-  primitive->value.type = schema::PrimitiveType_Split;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_output_num(split_num);
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxSplitParser("Split", new OnnxSplitParser());

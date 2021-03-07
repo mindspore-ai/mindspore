@@ -24,7 +24,7 @@ using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Pad;
+using mindspore::schema::PrimitiveType_PadFusion;
 namespace mindspore::kernel {
 
 namespace {
@@ -286,5 +286,5 @@ int PadInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Pad, LiteKernelCreator<PadInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_PadFusion, LiteKernelCreator<PadInt8CPUKernel>)
 }  // namespace mindspore::kernel

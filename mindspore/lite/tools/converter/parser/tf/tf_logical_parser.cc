@@ -19,51 +19,53 @@
 #include <string>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "tools/common/node_util.h"
+#include "ops/logical_and.h"
+#include "ops/logical_or.h"
+#include "ops/logical_not.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
-                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                              std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF LogicalParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  int status = RET_ERROR;
-  if (tf_op.op() == "LogicalAnd") {
-    status = CreateOperator<schema::LogicalAndT>(primitive, schema::PrimitiveType_LogicalAnd);
-  } else if (tf_op.op() == "LogicalOr") {
-    status = CreateOperator<schema::LogicalOrT>(primitive, schema::PrimitiveType_LogicalOr);
-  } else if (tf_op.op() == "LogicalNot") {
-    status = CreateOperator<schema::LogicalNotT>(primitive, schema::PrimitiveType_LogicalNot);
-  }
-  if (status != RET_OK) {
-    return status;
-  }
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+ops::PrimitiveC *TFLogicalAndParser::Parse(const tensorflow::NodeDef &tf_op,
+                                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                           std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::LogicalAnd>();
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return RET_OK;
+  return prim.release();
 }
-TFNodeRegistrar g_tfLogicalNotParser("LogicalNot", new TFLogicalParser());
-TFNodeRegistrar g_tfLogicalOrParser("LogicalOr", new TFLogicalParser());
-TFNodeRegistrar g_tfLogicalAndParser("LogicalAnd", new TFLogicalParser());
+
+ops::PrimitiveC *TFLogicalOrParser::Parse(const tensorflow::NodeDef &tf_op,
+                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                          std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::LogicalOr>();
+
+  *output_size = 1;
+  for (int i = 0; i < tf_op.input_size(); i++) {
+    inputs->emplace_back(tf_op.input(i));
+  }
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TFLogicalNotParser::Parse(const tensorflow::NodeDef &tf_op,
+                                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                           std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::LogicalNot>();
+
+  *output_size = 1;
+  for (int i = 0; i < tf_op.input_size(); i++) {
+    inputs->emplace_back(tf_op.input(i));
+  }
+
+  return prim.release();
+}
+
+TFNodeRegistrar g_tfLogicalAndParser("LogicalAnd", new TFLogicalAndParser());
+TFNodeRegistrar g_tfLogicalOrParser("LogicalOr", new TFLogicalOrParser());
+TFNodeRegistrar g_tfLogicalNotParser("LogicalNot", new TFLogicalNotParser());
 }  // namespace lite
 }  // namespace mindspore

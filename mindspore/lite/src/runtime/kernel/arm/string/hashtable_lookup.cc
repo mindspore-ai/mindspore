@@ -72,9 +72,8 @@ int HashtableLookupCPUKernel::Run() {
 
 kernel::LiteKernel *CpuHashtableLookupKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                     const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                    const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                    const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) HashtableLookupCPUKernel(parameter, inputs, outputs, ctx, primitive);
+                                                    const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  auto *kernel = new (std::nothrow) HashtableLookupCPUKernel(parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new HashtableLookupCPUKernel fail!";
     free(parameter);

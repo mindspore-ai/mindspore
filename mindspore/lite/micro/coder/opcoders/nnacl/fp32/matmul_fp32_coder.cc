@@ -18,6 +18,7 @@
 #include <vector>
 #include "coder/log.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/nnacl/dequant/de_quant.h"
 
 using mindspore::schema::PrimitiveType_MatMul;
 
@@ -77,10 +78,12 @@ int MatMulFP32Coder::Prepare(CoderContext *const context) {
   params_->b_const_ = (filter_tensor_->data_c() != nullptr);
   MatMulFP32BaseCoder::InitParameter();
   if (params_->a_const_) {
-    InitShapeA();
+    de_quant_flag_ = Dequant::GetInstance()->CheckDequantFlag(input_tensor_);
+    MS_CHECK_RET_CODE(InitShapeA(), "MatMulFP32Coder init_shape_a failed");
   }
   if (params_->b_const_) {
-    InitShapeB();
+    de_quant_flag_ = Dequant::GetInstance()->CheckDequantFlag(filter_tensor_);
+    MS_CHECK_RET_CODE(InitShapeB(), "MatMulFP32Coder init_shape_b failed");
   }
   MS_CHECK_RET_CODE(MatMulFP32BaseCoder::Init(), "MatMulFP32Coder init failed");
   return ReSize();

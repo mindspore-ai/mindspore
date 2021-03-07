@@ -18,7 +18,7 @@
 
 #include <math.h>
 #include "nnacl/op_base.h"
-#include "mindspore/lite/nnacl/int8/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 typedef struct ActivationParameter {
   OpParameter op_parameter_;

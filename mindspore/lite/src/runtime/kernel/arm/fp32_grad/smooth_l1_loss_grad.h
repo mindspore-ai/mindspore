@@ -25,11 +25,8 @@ namespace mindspore::kernel {
 class SmoothL1LossGradCPUKernel : public LiteKernel {
  public:
   explicit SmoothL1LossGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive),
-        smooth_l1_param_(nullptr),
-        thread_count_(ctx->thread_num_) {
+                                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), smooth_l1_param_(nullptr), thread_count_(ctx->thread_num_) {
     smooth_l1_param_ = reinterpret_cast<SmoothL1LossParameter *>(parameter);
   }
   ~SmoothL1LossGradCPUKernel() override {}

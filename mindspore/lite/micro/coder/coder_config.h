@@ -21,7 +21,7 @@
 
 namespace mindspore::lite::micro {
 enum Target { kX86 = 0, kARM32M = 1, kARM32A = 2, kARM64 = 3, kAllTargets = 4, kTargetUnknown = 99 };
-enum CodeMode { Code_Normal = 0, Code_Inference = 1, Code_Train = 2, Code_Unknown = 99 };
+enum CodeMode { Inference = 0, Train = 1, Code_Unknown = 99 };
 
 class Configurator {
  public:
@@ -36,9 +36,6 @@ class Configurator {
   void set_code_path(const std::string &code_path) { code_path_ = code_path; }
   std::string code_path() const { return code_path_; }
 
-  void set_subgraph_(const std::string &subgraph) { sub_graph_ = subgraph; }
-  std::string sub_graph() { return sub_graph_; }
-
   void set_target(Target target) { target_ = target; }
   Target target() const { return target_; }
 
@@ -51,16 +48,19 @@ class Configurator {
   void set_is_weight_file(bool flag) { is_weight_file_ = flag; }
   bool is_weight_file() const { return is_weight_file_; }
 
+  void set_support_parallel(bool parallel) { support_parallel_ = parallel; }
+  bool support_parallel() const { return support_parallel_; }
+
  private:
   Configurator() = default;
   ~Configurator() = default;
 
-  bool is_weight_file_{false};
   std::string module_name_;
   std::string code_path_;
-  std::string sub_graph_;
   Target target_{kTargetUnknown};
   CodeMode code_mode_{Code_Unknown};
+  bool is_weight_file_{false};
+  bool support_parallel_{false};
   bool debug_mode_{false};
 };
 }  // namespace mindspore::lite::micro

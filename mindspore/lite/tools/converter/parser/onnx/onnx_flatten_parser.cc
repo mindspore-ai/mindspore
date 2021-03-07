@@ -16,37 +16,13 @@
 
 #include "tools/converter/parser/onnx/onnx_flatten_parser.h"
 #include <memory>
+#include "ops/flatten.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxFlattenParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                        const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx FlattenParser";
-  auto attr = std::make_unique<schema::ReshapeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  int axis = 1;
-  for (const auto &onnx_node_attr : onnx_node.attribute()) {
-    const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "axis") {
-      axis = static_cast<int>(onnx_node_attr.i());
-    }
-  }
-  for (int i = 0; i < axis; ++i) {
-    attr->shape.emplace_back(0);
-  }
-  attr->shape.emplace_back(-1);
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Reshape;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxFlattenParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Flatten>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxFlattenParser("Flatten", new OnnxFlattenParser());

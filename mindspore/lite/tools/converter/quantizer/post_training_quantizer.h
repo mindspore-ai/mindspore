@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@
 #include <cfloat>
 #include <map>
 #include <utility>
+#include "ops/primitive_c.h"
+#include "schema/inner/model_generated.h"
 #include "src/lite_session.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/converter.h"
@@ -68,8 +70,8 @@ class PostTrainingQuantizer : public Quantizer {
   session::LiteSession *int8_session_{nullptr};
   Model *int8_model_{nullptr};
 
-  std::map<std::string, std::vector<float>> fp32_op_input_map;           // concurency
-  std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map;  // concurency
+  std::map<std::string, std::vector<float>> fp32_op_input_map;           // concurrency
+  std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map;  // concurrency
   std::map<std::string, std::vector<float>> op_bias_diff_map;            // only use by int8 model
   std::mutex mutex_op_input;
   std::mutex mutex_op_output;
@@ -82,10 +84,11 @@ class PostTrainingQuantizer : public Quantizer {
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
 
-  const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2D);
-  const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_DepthwiseConv2D);
+  const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion);
+  /* todo checkout */
+  const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion);
   const std::string kTypeConcat = schema::EnumNamePrimitiveType(schema::PrimitiveType_Concat);
-  const std::string kTypeAdd = schema::EnumNamePrimitiveType(schema::PrimitiveType_Add);
+  const std::string kTypeAdd = schema::EnumNamePrimitiveType(schema::PrimitiveType_AddFusion);
 
   STATUS PreProcess();
 
@@ -100,19 +103,25 @@ class PostTrainingQuantizer : public Quantizer {
 
   STATUS ComputeThreshold();
 
+  STATUS QuantNodeSimpleOp(const CNodePtr &cnode);
+
   STATUS QuantNode();
 
-  STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
-                      const std::shared_ptr<PrimitiveC> &lite_primitive) const;
-  STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min,
-                       const std::shared_ptr<PrimitiveC> &) const;
+  STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min, const PrimitivePtr &primitive) const;
 
-  STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, std::shared_ptr<PrimitiveC> primitive_c,
+  STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min, const PrimitivePtr &) const;
+
+  STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, const PrimitivePtr &primitive,
                        bool perchannel) const;
 
-  STATUS DoBiasQuant(const AnfNodePtr &bias, const std::shared_ptr<PrimitiveC> &primitive_c);
+  STATUS DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive);
   STATUS Int8Inference();
   STATUS BiasCorrection(const FuncGraphPtr &func_graph);
+  STATUS BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  KernelCallBack GetBeforeCallBack(bool int8_op);
+  KernelCallBack GetAfterCallBack(bool int8_op);
+  KernelCallBack GetInt8AfterCallBack();
+  KernelCallBack GetFloatAfterCallBack();
 };
 
 struct DivergInfo {
@@ -145,15 +154,18 @@ struct DivergInfo {
     std::fill(histogram.begin(), histogram.end(), 1.0e-7);
   }
 
-  STATUS RecordMaxValue(const std::vector<float> &datas);
+  STATUS RecordMaxValue(const std::vector<float> &data);
 
-  STATUS RecordMaxValueArray(const std::vector<float> &datas);
+  STATUS RecordMaxValueArray(const std::vector<float> &data);
 
   void UpdateInterval();
 
   STATUS UpdateHistogram(const std::vector<float> &data);
 
   void DumpHistogram();
+
+  void HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<float> *quantized_histogram,
+                      std::vector<float> *expanded_histogram);
 
   STATUS ComputeThreshold();
 

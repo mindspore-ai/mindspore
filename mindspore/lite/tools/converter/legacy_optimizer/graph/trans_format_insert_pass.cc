@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@ bool IsInOutCanFusion(schema::MetaGraphT *graph, const std::vector<size_t> &node
     MS_ASSERT(pre_node->primitive->value != nullptr);
     if (*trans_type == kNONE) {
       if (pre_node->primitive->value.type == schema::PrimitiveType_Transpose) {
-        MS_ASSERT(pre_node->primitive->value.AsTranspose() != nullptr);
-        if (pre_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+        auto perm = GetTransposePerm(graph, pre_node);
+        if (perm == nchw2nhwc_perm) {
           *trans_type = kNCHW2NHWC;
-        } else if (pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+        } else if (perm == nhwc2nchw_perm) {
           *trans_type = kNHWC2NCHW;
         } else {
           return false;
@@ -52,9 +52,10 @@ bool IsInOutCanFusion(schema::MetaGraphT *graph, const std::vector<size_t> &node
     } else {
       if (pre_node->primitive->value.type == schema::PrimitiveType_Transpose) {
         auto cur_type = kNONE;
-        if (pre_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+        auto perm = GetTransposePerm(graph, pre_node);
+        if (perm == nchw2nhwc_perm) {
           cur_type = kNCHW2NHWC;
-        } else if (pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+        } else if (perm == nhwc2nchw_perm) {
           cur_type = kNHWC2NCHW;
         } else {
           return false;
@@ -95,7 +96,7 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(node->primitive->value != nullptr);
     MS_ASSERT(node->primitive->value.AsActivation() != nullptr);
     if (node->primitive->value.AsActivation() != nullptr &&
-        node->primitive->value.AsActivation()->type == schema::ActivationType_LEAKY_RELU) {
+        node->primitive->value.AsActivation()->activation_type == schema::ActivationType_LEAKY_RELU) {
       return has_trans_count >= half_count;
     }
   }
@@ -172,10 +173,6 @@ STATUS TransOpInsertPass::Run(schema::MetaGraphT *graph) {
         if (status != RET_OK) {
           MS_LOG(ERROR) << "Insert" << pre_insert_trans_type_ << "before " << (*iter)->name << " failed";
           return status;
-        }
-        if ((*iter)->primitive->value.type == schema::PrimitiveType_StridedSlice ||
-            (*iter)->primitive->value.type == schema::PrimitiveType_Slice) {
-          break;
         }
       }
       auto output_tensor_size = (*iter)->outputIndex.size();

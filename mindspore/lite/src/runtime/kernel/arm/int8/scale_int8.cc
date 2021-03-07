@@ -23,7 +23,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Scale;
+using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
 namespace {
@@ -347,5 +347,5 @@ int ScaleInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Scale, LiteKernelCreator<ScaleInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ScaleFusion, LiteKernelCreator<ScaleInt8CPUKernel>)
 }  // namespace mindspore::kernel

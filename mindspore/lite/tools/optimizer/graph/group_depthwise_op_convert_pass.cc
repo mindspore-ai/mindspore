@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,39 +17,44 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/ops/primitive_c.h"
-#include "schema/inner/model_generated.h"
 #include "src/tensor.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 
-using mindspore::lite::PrimitiveC;
 namespace mindspore::opt {
 namespace {
 constexpr size_t kConvWeightIndex = 2;
 constexpr size_t kConvInputIndex = 1;
 }  // namespace
+
 bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
   auto node_list = TopoSort(graph->get_return());
   for (auto &node : node_list) {
     if (!utils::isa<CNode>(node)) {
       continue;
     }
-    if (opt::GetCNodeType(node) != schema::PrimitiveType_DepthwiseConv2D) {
+    if (!CheckPrimitiveType(node, prim::kPrimConv2DFusion)) {
       continue;
     }
 
-    auto depthwise_cnode = node->cast<CNodePtr>();
-    auto depthwise_primitivec = GetValueNode<std::shared_ptr<PrimitiveC>>(depthwise_cnode->input(0));
-    auto attr = depthwise_primitivec->primitiveT()->value.AsDepthwiseConv2D();
-    if (attr == nullptr) {
+    auto conv_cnode = node->cast<CNodePtr>();
+    auto prim_node = conv_cnode->input(0);
+    MS_ASSERT(prim_node != nullptr);
+    auto prim_value_node = prim_node->cast<ValueNodePtr>();
+    MS_ASSERT(prim_value_node != nullptr && prim_value_node->value != nullptr);
+    auto conv2d_fusion = prim_value_node->value()->cast<std::shared_ptr<mindspore::ops::Conv2DFusion>>();
+    if (conv2d_fusion == nullptr) {
       MS_LOG(ERROR) << "the input of depthwiseConv2d is null";
       return false;
     }
-
-    auto data_node = depthwise_cnode->input(kConvInputIndex)->abstract();
+    if (conv2d_fusion->GetAttr(ops::kIsDepthWise) == nullptr ||
+        !GetValue<bool>(conv2d_fusion->GetAttr(ops::kIsDepthWise))) {
+      continue;
+    }
+    auto data_node = conv_cnode->input(kConvInputIndex)->abstract();
     if (data_node == nullptr) {
       MS_LOG(ERROR) << "the node input is invalid.";
       return false;
@@ -59,7 +64,7 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       MS_LOG(DEBUG) << "the tensor's shape is dynamic.";
       return true;
     }
-    auto weight_data_node = depthwise_cnode->input(kConvWeightIndex)->abstract();
+    auto weight_data_node = conv_cnode->input(kConvWeightIndex)->abstract();
     if (weight_data_node == nullptr) {
       MS_LOG(ERROR) << "the weight node input is invalid.";
       return false;
@@ -69,36 +74,12 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       MS_LOG(DEBUG) << "the weight's shape is dynamic.";
       return true;
     }
-    if ((data_shape[3] == 1) || (data_shape[3] != weight_shape[3])) {
-      auto conv_attr = std::make_unique<schema::Conv2DT>();
-      if (conv_attr == nullptr) {
-        MS_LOG(ERROR) << "conv_attr is null";
-        return false;
-      }
-      conv_attr->channelIn = data_shape[3];
-      conv_attr->channelOut = weight_shape[3];
-
-      // update attr
-      conv_attr->group = data_shape[3];
-      conv_attr->format = attr->format;
-      conv_attr->kernelH = attr->kernelH;
-      conv_attr->kernelW = attr->kernelW;
-      conv_attr->strideH = attr->strideH;
-      conv_attr->strideW = attr->strideW;
-      conv_attr->padMode = attr->padMode;
-      conv_attr->padUp = attr->padUp;
-      conv_attr->padDown = attr->padDown;
-      conv_attr->padLeft = attr->padLeft;
-      conv_attr->padRight = attr->padRight;
-      conv_attr->dilateH = attr->dilateH;
-      conv_attr->dilateW = attr->dilateW;
-      conv_attr->activationType = attr->activationType;
-
-      depthwise_primitivec->primitiveT()->value.type = schema::PrimitiveType_Conv2D;
-      depthwise_primitivec->primitiveT()->value.value = conv_attr.release();
-
-      MS_ASSERT(depthwise_cnode->inputs().size() > kConvWeightIndex);
-      auto weight_node = depthwise_cnode->input(kConvWeightIndex);
+    if (data_shape[3] == 1 || data_shape[3] != weight_shape[3]) {
+      conv2d_fusion->EraseAttr(ops::kIsDepthWise);
+      conv2d_fusion->set_group(static_cast<int64_t>(data_shape[3]));
+      conv2d_fusion->set_in_channel(data_shape[3]);
+      MS_ASSERT(conv_cnode->inputs().size() > kConvWeightIndex);
+      auto weight_node = conv_cnode->input(kConvWeightIndex);
       MS_ASSERT(weight_node != nullptr);
       auto weight_value = GetLiteParamValue(weight_node);
       if (weight_value == nullptr) {

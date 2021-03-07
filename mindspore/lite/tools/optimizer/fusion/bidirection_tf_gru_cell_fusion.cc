@@ -16,7 +16,12 @@
 #include "tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.h"
 #include <memory>
 #include <functional>
-#include "src/ops/primitive_c.h"
+#include "ops/concat.h"
+#include "ops/gru.h"
+#include "ops/split.h"
+#include "ops/squeeze.h"
+#include "ops/stack.h"
+#include "ops/transpose.h"
 #include "src/common/utils.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -34,9 +39,10 @@ const auto &p1 = std::placeholders::_1;
 
 bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
 
-bool IsOpType(const BaseRef &n, const schema::PrimitiveType &type) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    return opt::GetCNodeType(n) == type;
+bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim);
   }
   return false;
 }
@@ -65,75 +71,66 @@ BiDirectionTfGruCellFusion::BiDirectionTfGruCellFusion(const std::string &name, 
 const BaseRef BiDirectionTfGruCellFusion::DefinePattern() const {
   // forward
   auto fw_max1 =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Reduce)), input_length_});
-  auto fw_max2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Maximum)),
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion)), input_length_});
+  auto fw_max2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMaximum)),
                             std::make_shared<CondVar>(IsParameterNode), fw_max1});
 
-  auto fw_shape =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Shape)), transpose_input_});
-  auto fw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)),
-                              fw_shape, std::make_shared<SeqVar>()});
-  auto fw_min =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Minimum)), fw_stride, fw_max2});
+  auto fw_shape = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimShape)), transpose_input_});
+  auto fw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice)), fw_shape,
+                              std::make_shared<SeqVar>()});
+  auto fw_min = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMinimum)), fw_stride, fw_max2});
 
-  auto fw_reserve =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListReserve)),
-               std::make_shared<CondVar>(IsParameterNode), fw_stride});
-  auto fw_from_tensor =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListFromTensor)),
-               transpose_input_, std::make_shared<CondVar>(IsParameterNode)});
-  auto is_fw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_While));
+  auto fw_reserve = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListReserve)),
+                               std::make_shared<CondVar>(IsParameterNode), fw_stride});
+  auto fw_from_tensor = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListFromTensor)),
+                                   transpose_input_, std::make_shared<CondVar>(IsParameterNode)});
+  auto is_fw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
   auto fw_while = VectorRef({is_fw_while, fw_vars_[0], fw_vars_[1], std::make_shared<CondVar>(IsParameterNode),
                              fw_stride, std::make_shared<CondVar>(IsParameterNode), fw_reserve, fw_init_state_, fw_min,
                              fw_from_tensor, input_length_});
   fw_while.insert(fw_while.end(), fw_vars_.begin() + 2, fw_vars_.end());
   fw_while.emplace_back(std::make_shared<Var>());
-  auto fw_get_item = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TupleGetItem)),
-                                fw_while, std::make_shared<Var>()});
-  auto fw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListStack)),
+  auto fw_get_item = VectorRef(
+    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem)), fw_while, std::make_shared<Var>()});
+  auto fw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListStack)),
                              fw_get_item, std::make_shared<CondVar>(IsParameterNode)});
-  auto fw_out_trans = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Transpose)),
-                                 fw_stack, std::make_shared<Var>()});
+  auto fw_out_trans = VectorRef(
+    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), fw_stack, std::make_shared<Var>()});
 
   // backward
-  auto bw_reverse_seq = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_ReverseSequence)), input_, input_length_});
+  auto bw_reverse_seq =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReverseSequence)), input_, input_length_});
   auto bw_max1 =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Reduce)), input_length_});
-  auto bw_max2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Maximum)),
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReduceFusion)), input_length_});
+  auto bw_max2 = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMaximum)),
                             std::make_shared<CondVar>(IsParameterNode), bw_max1});
-  auto bw_trans = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Transpose)),
-                             bw_reverse_seq, std::make_shared<Var>()});
-  auto bw_shape =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Shape)), bw_trans});
-  auto bw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)),
-                              bw_shape, std::make_shared<SeqVar>()});
-  auto bw_min =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Minimum)), bw_stride, bw_max2});
-  auto bw_reserve =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListReserve)),
-               std::make_shared<CondVar>(IsParameterNode), bw_stride});
-  auto bw_from_tensor =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListFromTensor)), bw_trans,
-               std::make_shared<CondVar>(IsParameterNode)});
-  auto is_bw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_While));
+  auto bw_trans = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), bw_reverse_seq,
+                             std::make_shared<Var>()});
+  auto bw_shape = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimShape)), bw_trans});
+  auto bw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimStridedSlice)), bw_shape,
+                              std::make_shared<SeqVar>()});
+  auto bw_min = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimMinimum)), bw_stride, bw_max2});
+  auto bw_reserve = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListReserve)),
+                               std::make_shared<CondVar>(IsParameterNode), bw_stride});
+  auto bw_from_tensor = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListFromTensor)),
+                                   bw_trans, std::make_shared<CondVar>(IsParameterNode)});
+  auto is_bw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
   auto bw_while = VectorRef({is_bw_while, bw_vars_[0], bw_vars_[1], std::make_shared<CondVar>(IsParameterNode),
                              bw_stride, std::make_shared<CondVar>(IsParameterNode), bw_reserve, bw_init_state_, bw_min,
                              bw_from_tensor, input_length_});
   bw_while.insert(bw_while.end(), bw_vars_.begin() + 2, bw_vars_.end());
   bw_while.emplace_back(std::make_shared<Var>());
-  auto bw_get_item = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TupleGetItem)),
-                                bw_while, std::make_shared<Var>()});
-  auto bw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListStack)),
+  auto bw_get_item = VectorRef(
+    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem)), bw_while, std::make_shared<Var>()});
+  auto bw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListStack)),
                              bw_get_item, std::make_shared<CondVar>(IsParameterNode)});
-  auto bw_out_trans = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Transpose)),
-                                 bw_stack, std::make_shared<Var>()});
-  auto bw_reverse1 =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_ReverseSequence)), bw_out_trans,
-               input_length_});
+  auto bw_out_trans = VectorRef(
+    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTranspose)), bw_stack, std::make_shared<Var>()});
+  auto bw_reverse1 = VectorRef(
+    {std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimReverseSequence)), bw_out_trans, input_length_});
 
-  auto concat = VectorRef(
-    {std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Concat)), fw_out_trans, bw_reverse1});
+  auto concat =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimConcat)), fw_out_trans, bw_reverse1});
   return concat;
 }
 
@@ -142,10 +139,10 @@ AnfNodePtr BiDirectionTfGruCellFusion::GetCondGraphPattern(const PrimitiveVarMap
   auto is_parameter2 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter3 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter4 = std::make_shared<CondVar>(IsParameterNode);
-  auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Less));
-  auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Less));
-  auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_LogicalAnd));
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Return));
+  auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
+  auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
+  auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLogicalAnd));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
   VectorRef less1_ref = VectorRef({is_less1, is_parameter1, is_parameter2});
   VectorRef less2_ref = VectorRef({is_less2, is_parameter3, is_parameter4});
   VectorRef logicaland_ref = VectorRef({is_logical_and, less1_ref, less2_ref});
@@ -195,13 +192,13 @@ AnfNodePtr BiDirectionTfGruCellFusion::GetBodyGraphPattern(const PrimitiveVarMap
 
   VectorRef select_hidden = VectorRef({std::make_shared<Var>("Switch"), greater_equal, placeholders[4], new_hidden});
 
-  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_MakeTuple));
+  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimMakeTuple));
   std::vector<BaseRef> outputs = {is_make_tuple,  add1,          placeholders[1], add,
                                   output,         select_hidden, placeholders[5], placeholders[6],
                                   placeholders[7]};
   outputs.insert(outputs.end(), placeholders.begin() + 8, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Return));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
   VarPtr fg = std::make_shared<Var>("RootG");
@@ -417,13 +414,9 @@ CNodePtr BiDirectionTfGruCellFusion::GetStackedHiddenState(const FuncGraphPtr &f
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(fw_init_state != nullptr);
   MS_ASSERT(bw_init_state != nullptr);
-  auto stack_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::StackT> attr = std::make_unique<schema::StackT>();
-  attr->axis = 0;
-  stack_primitive->value.type = schema::PrimitiveType_Stack;
-  stack_primitive->value.value = attr.release();
-  auto stack_cvalue = lite::PrimitiveC::Create(stack_primitive.release());
-  auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(stack_cvalue));
+  auto stack_prim = std::make_shared<ops::Stack>();
+  stack_prim->set_axis(0);
+  auto value_node = NewValueNode(stack_prim);
   std::vector<AnfNodePtr> new_node_inputs = {value_node, fw_init_state, bw_init_state};
   auto new_node = func_graph->NewCNode(new_node_inputs);
   new_node->set_abstract(fw_init_state->abstract()->Clone());
@@ -440,13 +433,9 @@ CNodePtr BiDirectionTfGruCellFusion::CreateBiDirectionGruNode(const FuncGraphPtr
   MS_ASSERT(equiv != nullptr);
   MS_ASSERT(fw_body_equiv != nullptr);
   MS_ASSERT(bw_body_equiv != nullptr);
-  auto gru_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::GruT> attr = std::make_unique<schema::GruT>();
-  attr->bidirection = true;
-  gru_primitive->value.type = schema::PrimitiveType_Gru;
-  gru_primitive->value.value = attr.release();
-  auto gru_cvalue = lite::PrimitiveC::Create(gru_primitive.release());
-  auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(gru_cvalue));
+  auto gru_prim = std::make_shared<ops::GRU>();
+  gru_prim->set_bidirectional(true);
+  auto value_node = NewValueNode(gru_prim);
 
   auto fw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[2]]);
   MS_ASSERT(fw_gate_kernel != nullptr);
@@ -537,14 +526,10 @@ CNodePtr BiDirectionTfGruCellFusion::GetPostProcessNode(const FuncGraphPtr &func
                                                         const std::string base_name) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(gru_output != nullptr);
-  auto split_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::SplitT> split_attr = std::make_unique<schema::SplitT>();
-  split_attr->numberSplit = 2;
-  split_attr->splitDim = 1;
-  split_primitive->value.type = schema::PrimitiveType_Split;
-  split_primitive->value.value = split_attr.release();
-  auto split_cvalue = lite::PrimitiveC::Create(split_primitive.release());
-  auto split_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(split_cvalue));
+  auto split_prim = std::make_shared<ops::Split>();
+  split_prim->set_output_num(2);
+  split_prim->set_axis(1);
+  auto split_value_node = NewValueNode(split_prim);
   std::vector<AnfNodePtr> new_node_inputs = {split_value_node, gru_output};
   auto split_new_node = func_graph->NewCNode(new_node_inputs);
   split_new_node->set_fullname_with_scope("split_" + base_name);
@@ -561,39 +546,25 @@ CNodePtr BiDirectionTfGruCellFusion::GetPostProcessNode(const FuncGraphPtr &func
     return nullptr;
   }
 
-  auto concat_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::ConcatT> concat_attr = std::make_unique<schema::ConcatT>();
-  concat_attr->axis = 3;
-  concat_primitive->value.type = schema::PrimitiveType_Concat;
-  concat_primitive->value.value = concat_attr.release();
-  auto concat_cvalue = lite::PrimitiveC::Create(concat_primitive.release());
-  auto concat_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(concat_cvalue));
+  auto concat_prim = std::make_shared<ops::Concat>();
+  concat_prim->set_axis(3);
+  auto concat_value_node = NewValueNode(concat_prim);
   std::vector<AnfNodePtr> concat_new_node_inputs = {concat_value_node, split_out1, split_out2};
   auto concat_new_node = func_graph->NewCNode(concat_new_node_inputs);
   concat_new_node->set_fullname_with_scope("concat_" + base_name);
   concat_new_node->set_abstract(gru_output->abstract()->Clone());
 
-  auto squeeze_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::SqueezeT> squeeze_attr = std::make_unique<schema::SqueezeT>();
-  squeeze_attr->axis = std::vector<int>{1};
-  squeeze_primitive->value.type = schema::PrimitiveType_Squeeze;
-  squeeze_primitive->value.value = squeeze_attr.release();
-  auto squeeze_cvalue = lite::PrimitiveC::Create(squeeze_primitive.release());
-  auto squeeze_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(squeeze_cvalue));
+  auto squeeze_prim = std::make_shared<ops::Squeeze>();
+  squeeze_prim->set_axis(std::vector<int64_t>{1});
+  auto squeeze_value_node = NewValueNode(squeeze_prim);
   std::vector<AnfNodePtr> squeeze_new_node_inputs = {squeeze_value_node, concat_new_node};
   auto squeeze_new_node = func_graph->NewCNode(squeeze_new_node_inputs);
   squeeze_new_node->set_fullname_with_scope("squeeze_" + base_name);
   squeeze_new_node->set_abstract(gru_output->abstract()->Clone());
 
-  auto transpose_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::TransposeT> transpose_attr = std::make_unique<schema::TransposeT>();
-  transpose_attr->perm = std::vector<int>{1, 0, 2};
-  transpose_primitive->value.type = schema::PrimitiveType_Transpose;
-  transpose_primitive->value.value = transpose_attr.release();
-  auto transpose_cvalue = lite::PrimitiveC::Create(transpose_primitive.release());
-  auto transpose_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(transpose_cvalue));
-  std::vector<AnfNodePtr> transpose_new_node_inputs = {transpose_value_node, squeeze_new_node};
-  auto transpose_new_node = func_graph->NewCNode(transpose_new_node_inputs);
+  auto transpose_prim = std::make_shared<ops::Transpose>();
+  auto transpose_perm = BuildIntVecParameterNode(func_graph, {1, 0, 2}, "transpose_" + base_name + "_perm");
+  auto transpose_new_node = func_graph->NewCNode(transpose_prim, {squeeze_new_node, transpose_perm});
   transpose_new_node->set_fullname_with_scope("transpose_" + base_name);
   transpose_new_node->set_abstract(gru_output->abstract()->Clone());
 
@@ -612,7 +583,7 @@ const AnfNodePtr BiDirectionTfGruCellFusion::Process(const FuncGraphPtr &func_gr
 
   auto transpose_input = utils::cast<AnfNodePtr>((*equiv)[transpose_input_]);
   MS_ASSERT(transpose_input != nullptr);
-  if (!utils::isa<CNodePtr>(transpose_input) || GetCNodeType(transpose_input) != schema::PrimitiveType_Transpose) {
+  if (!utils::isa<CNodePtr>(transpose_input) || !CheckPrimitiveType(transpose_input, prim::kPrimTranspose)) {
     return nullptr;
   }
 

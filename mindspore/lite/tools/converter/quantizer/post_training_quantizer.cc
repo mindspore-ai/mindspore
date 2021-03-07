@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,17 @@
 #include <thread>
 #include <vector>
 #include <fstream>
-#include "schema/inner/model_generated.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/fusion/full_connection.h"
+#include "ops/fusion/layer_norm_fusion.h"
+#include "ops/gather.h"
+#include "ops/tuple_get_item.h"
 #include "src/tensor.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
@@ -45,23 +51,94 @@ using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-STATUS DivergInfo::RecordMaxValue(const std::vector<float> &datas) {
-  for (float data : datas) {
-    max = std::max(data, max);
-    min = std::min(data, min);
+namespace {
+STATUS ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const std::vector<double> &input_scales,
+                                    const float *raw_datas, const QuantParamHolderPtr &quant_param_holder,
+                                    std::vector<schema::QuantParamT> *quant_params, std::vector<int32_t> *quant_datas) {
+  MS_ASSERT(raw_datas != nullptr && quant_param_holder != nullptr);
+  MS_ASSERT(quant_params != nullptr && quant_datas != nullptr);
+  double bias_scale_tmp;
+  const constexpr int32_t quanted_bias_abs_limit = 0.5 * INT32_MAX;
+  auto active_weight_quant_params = quant_param_holder->input_quant_params();
+  auto shape_size = quant_datas->size();
+  if (bias_scales.size() == shape_size) {
+    for (size_t i = 0; i < shape_size; i++) {
+      bias_scale_tmp = bias_scales[i];
+      if (fabs(bias_scale_tmp) <= 0.0f) {
+        MS_LOG(ERROR) << "divisor 'bias_scale_tmp' cannot be 0.";
+        return RET_ERROR;
+      }
+      if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
+        MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][i].scale
+                      << " is too small, need to update";
+        // update filter scale and zp
+        double activate_scale = input_scales[0];
+        double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
+        active_weight_quant_params[1][i].scale = filter_scale;
+        active_weight_quant_params[1][i].zeroPoint = 0;
+        quant_param_holder->set_input_quant_params(active_weight_quant_params);
+        bias_scale_tmp = std::abs(raw_datas[i]) / quanted_bias_abs_limit;
+        quant_params->at(i).scale = bias_scale_tmp;
+        MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
+      }
+      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
+      quant_datas->at(i) = quant_data;
+    }
+    return RET_OK;
+  } else if (bias_scales.size() == 1) {
+    // for fc, per tensor quant
+    bias_scale_tmp = quant_params->front().scale;
+    float max_raw_data = 0.0f;
+    for (size_t i = 0; i < shape_size; i++) {
+      if (std::abs(raw_datas[i]) > max_raw_data) {
+        max_raw_data = std::abs(raw_datas[i]);
+      }
+    }
+    if (fabs(bias_scale_tmp) <= 0.0f) {
+      MS_LOG(ERROR) << "divisor 'bias_scale_tmp' cannot be 0.";
+      return RET_ERROR;
+    }
+    if (std::abs(max_raw_data / bias_scale_tmp) >= quanted_bias_abs_limit) {
+      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][0].scale
+                    << " is too small, need to update";
+      double activate_scale = input_scales[0];
+      double filter_scale = std::abs(max_raw_data) / (activate_scale * quanted_bias_abs_limit);
+      active_weight_quant_params[1][0].scale = filter_scale;
+      active_weight_quant_params[1][0].zeroPoint = 0;
+      quant_param_holder->set_input_quant_params(active_weight_quant_params);
+      bias_scale_tmp = max_raw_data / quanted_bias_abs_limit;
+      quant_params->front().scale = bias_scale_tmp;
+      MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
+    }
+    for (size_t i = 0; i < shape_size; i++) {
+      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
+      quant_datas->at(i) = quant_data;
+    }
+    return RET_OK;
+  }
+  MS_LOG(ERROR) << "unexpected input_scales size: " << input_scales.size()
+                << " weight_scales size: " << active_weight_quant_params[1].size();
+  return RET_ERROR;
+}
+}  // namespace
+
+STATUS DivergInfo::RecordMaxValue(const std::vector<float> &data) {
+  for (float val : data) {
+    max = std::max(val, max);
+    min = std::min(val, min);
   }
   return RET_OK;
 }
 
-STATUS DivergInfo::RecordMaxValueArray(const std::vector<float> &datas) {
-  if (datas.empty()) {
+STATUS DivergInfo::RecordMaxValueArray(const std::vector<float> &data) {
+  if (data.empty()) {
     return RET_ERROR;
   }
-  float max_num = datas.at(0);
-  float min_num = datas.at(0);
-  for (float data : datas) {
-    max_num = std::max(data, max_num);
-    min_num = std::min(data, min_num);
+  float max_num = data.at(0);
+  float min_num = data.at(0);
+  for (float val : data) {
+    max_num = std::max(val, max_num);
+    min_num = std::min(val, min_num);
   }
   this->max_datas.emplace_back(max_num);
   this->min_datas.emplace_back(min_num);
@@ -97,6 +174,71 @@ void DivergInfo::DumpHistogram() {
   std::cout << std::endl;
 }
 
+void DivergInfo::HandleBinForKL(int quant_bint_nums, int bin_index, std::vector<float> *quantized_histogram,
+                                std::vector<float> *expanded_histogram) {
+  MS_ASSERT(quantized_histogram != nullptr && expanded_histogram != nullptr);
+  const float bin_interval = static_cast<float>(bin_index) / static_cast<float>(quant_bint_nums);
+  // merge i bins to target bins
+  for (int j = 0; j < quant_bint_nums; ++j) {
+    const float start = j * bin_interval;
+    const float end = start + bin_interval;
+    const int left_upper = static_cast<int>(std::ceil(start));
+    if (left_upper > start) {
+      const double left_scale = left_upper - start;
+      quantized_histogram->at(j) += left_scale * this->histogram[left_upper - 1];
+    }
+    const int right_lower = static_cast<int>(std::floor(end));
+    if (right_lower < end) {
+      const double right_scale = end - right_lower;
+      quantized_histogram->at(j) += right_scale * this->histogram[right_lower];
+    }
+    std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
+                  [&quantized_histogram, j](float item) { quantized_histogram->at(j) += item; });
+  }
+  // expand target bins to i bins in order to calculate KL with reference_histogram
+  for (int j = 0; j < quant_bint_nums; ++j) {
+    const float start = j * bin_interval;
+    const float end = start + bin_interval;
+    float count = 0;
+    const int left_upper = static_cast<int>(std::ceil(start));
+    float left_scale = 0.0f;
+    if (left_upper > start) {
+      left_scale = left_upper - start;
+      if (this->histogram[left_upper - 1] != 0) {
+        count += left_scale;
+      }
+    }
+    const int right_lower = static_cast<int>(std::floor(end));
+    double right_scale = 0.0f;
+    if (right_lower < end) {
+      right_scale = end - right_lower;
+      if (this->histogram[right_lower] != 0) {
+        count += right_scale;
+      }
+    }
+    std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower, [&count](float item) {
+      if (item != 0) {
+        count += 1;
+      }
+    });
+    if (count == 0) {
+      continue;
+    }
+    const float average_num = quantized_histogram->at(j) / count;
+    if (left_upper > start && this->histogram[left_upper - 1] != 0) {
+      expanded_histogram->at(left_upper - 1) += average_num * left_scale;
+    }
+    if (right_lower < end && this->histogram[right_lower] != 0) {
+      expanded_histogram->at(right_lower) += average_num * right_scale;
+    }
+    for (int k = left_upper; k < right_lower; ++k) {
+      if (this->histogram[k] != 0) {
+        expanded_histogram->at(k) += average_num;
+      }
+    }
+  }
+}
+
 STATUS DivergInfo::ComputeThreshold() {
   if (method_x == kMethodMaxMin) {
     this->best_T = std::max(fabs(this->max), fabs(this->min));
@@ -121,66 +263,8 @@ STATUS DivergInfo::ComputeThreshold() {
     std::vector<float> expanded_histogram(i, 0);
     reference_histogram[i - 1] += after_threshold_sum;
     after_threshold_sum -= this->histogram[i];
-    const float bin_interval = static_cast<float>(i) / static_cast<float>(quant_bint_nums);
-    // merge i bins to target bins
-    for (int j = 0; j < quant_bint_nums; ++j) {
-      const float start = j * bin_interval;
-      const float end = start + bin_interval;
-      const int left_upper = static_cast<int>(std::ceil(start));
-      if (left_upper > start) {
-        const double left_scale = left_upper - start;
-        quantized_histogram[j] += left_scale * this->histogram[left_upper - 1];
-      }
-      const int right_lower = static_cast<int>(std::floor(end));
-      if (right_lower < end) {
-        const double right_scale = end - right_lower;
-        quantized_histogram[j] += right_scale * this->histogram[right_lower];
-      }
-      std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower,
-                    [&quantized_histogram, j](float item) { quantized_histogram[j] += item; });
-    }
-    // expand target bins to i bins in order to calculate KL with reference_histogram
-    for (int j = 0; j < quant_bint_nums; ++j) {
-      const float start = j * bin_interval;
-      const float end = start + bin_interval;
-      float count = 0;
-      const int left_upper = static_cast<int>(std::ceil(start));
-      float left_scale = 0.0f;
-      if (left_upper > start) {
-        left_scale = left_upper - start;
-        if (this->histogram[left_upper - 1] != 0) {
-          count += left_scale;
-        }
-      }
-      const int right_lower = static_cast<int>(std::floor(end));
-      double right_scale = 0.0f;
-      if (right_lower < end) {
-        right_scale = end - right_lower;
-        if (this->histogram[right_lower] != 0) {
-          count += right_scale;
-        }
-      }
-      std::for_each(this->histogram.begin() + left_upper, this->histogram.begin() + right_lower, [&count](float item) {
-        if (item != 0) {
-          count += 1;
-        }
-      });
-      if (count == 0) {
-        continue;
-      }
-      const float average_num = quantized_histogram[j] / count;
-      if (left_upper > start && this->histogram[left_upper - 1] != 0) {
-        expanded_histogram[left_upper - 1] += average_num * left_scale;
-      }
-      if (right_lower < end && this->histogram[right_lower] != 0) {
-        expanded_histogram[right_lower] += average_num * right_scale;
-      }
-      for (int k = left_upper; k < right_lower; ++k) {
-        if (this->histogram[k] != 0) {
-          expanded_histogram[k] += average_num;
-        }
-      }
-    }
+    // handle bins for computing KL.
+    HandleBinForKL(quant_bint_nums, i, &quantized_histogram, &expanded_histogram);
     auto KLDivergence = [](std::vector<float> p, std::vector<float> q) {
       auto sum = 0.0f;
       std::for_each(p.begin(), p.end(), [&sum](float item) { sum += item; });
@@ -237,7 +321,7 @@ std::pair<CNodePtr, int32_t> DivergInfo::GetZeropoint() {
   } else if (quant_min == -127 && quant_max == 127) {
     zero_point = 0;
   } else {
-    MS_LOG(WARNING) << "unexpectd quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
+    MS_LOG(WARNING) << "unexpected quant range, quant_min: " << quant_min << " quant_max: " << quant_max;
   }
   if (this->method_x == kMethodOutlier) {
     MS_ASSERT(fabs(scale_tmp) <= 0.0f);
@@ -330,7 +414,7 @@ STATUS Calibrator::ComputeThreshold() {
           for (const auto &output_diverg_info : outputs_diverg_info.second) {
             auto output_diverg_cnode = output_diverg_info->cnode;
             if (output_diverg_cnode == input_cnode) {
-              if (NodePrimitiveType(input_cnode) != schema::PrimitiveType_TupleGetItem) {
+              if (NodePrimitiveType(input_cnode) != ops::kNameTupleGetItem) {
                 *(input_infos[i]) = *output_diverg_info;
                 input_infos[i]->cnode = cnode;
                 already_computed = true;
@@ -413,7 +497,7 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
   }
   calibrator_ = std::make_unique<Calibrator>(std::move(path), this->bit_num, quant_max, quant_min);
   if (calibrator_ == nullptr) {
-    MS_LOG(ERROR) << "creat calibrator failed!";
+    MS_LOG(ERROR) << "create calibrator failed!";
     return;
   }
 }
@@ -426,9 +510,11 @@ PostTrainingQuantizer::~PostTrainingQuantizer() {
 }
 
 STATUS PostTrainingQuantizer::DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
-                                           const std::shared_ptr<PrimitiveC> &lite_primitive) const {
+                                           const PrimitivePtr &primitive) const {
   MS_ASSERT(max_min != nullptr);
-  MS_ASSERT(lite_primitive != nullptr);
+  MS_ASSERT(primitive != nullptr);
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  MS_ASSERT(quant_param_holder != nullptr);
   schema::QuantParamT quant_param;
   quant_param.scale = scale;
   quant_param.zeroPoint = zeropoint;
@@ -440,14 +526,16 @@ STATUS PostTrainingQuantizer::DoQuantInput(double scale, int32_t zeropoint, stru
   quant_param.roundType = 1;
   quant_param.multiplier = 1;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
-  lite_primitive->AddInputQuantParam(quant_params);
+  quant_param_holder->AddInputQuantParam(quant_params);
   return RET_OK;
 }
 
 STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct MaxMin *max_min,
-                                            const std::shared_ptr<PrimitiveC> &lite_primitive) const {
+                                            const PrimitivePtr &primitive) const {
   MS_ASSERT(max_min != nullptr);
-  MS_ASSERT(lite_primitive != nullptr);
+  MS_ASSERT(primitive != nullptr);
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  MS_ASSERT(quant_param_holder != nullptr);
   schema::QuantParamT quant_param;
   quant_param.scale = scale;
   quant_param.zeroPoint = zeropoint;
@@ -459,14 +547,14 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   quant_param.roundType = 1;
   quant_param.multiplier = 1;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
-  lite_primitive->AddOutputQuantParam(quant_params);
+  quant_param_holder->AddOutputQuantParam(quant_params);
   return RET_OK;
 }
 
 STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight,
-                                            std::shared_ptr<PrimitiveC> primitive_c, bool perchanel) const {
+                                            const PrimitivePtr &primitive, bool perchanel) const {
   MS_ASSERT(weight != nullptr);
-  MS_ASSERT(lite_primitive != nullptr);
+  MS_ASSERT(primitive != nullptr);
   // perlayer
   if (!weight->isa<Parameter>()) {
     MS_LOG(ERROR) << "not a parameter";
@@ -495,8 +583,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
       quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
     }
   }
-  auto status = QuantFilter<int8_t>(paramValue, std::move(primitive_c), QuantType_PostTraining, quant_max_t,
-                                    quant_min_t, bit_num_t, perchanel);
+  auto status =
+    QuantFilter<int8_t>(paramValue, primitive, QuantType_PostTraining, quant_max_t, quant_min_t, bit_num_t, perchanel);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -520,8 +608,8 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const An
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const std::shared_ptr<PrimitiveC> &primitive_c) {
-  if (primitive_c == nullptr || bias == nullptr) {
+STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const PrimitivePtr &primitive) {
+  if (primitive == nullptr || bias == nullptr) {
     MS_LOG(ERROR) << "null pointer!";
     return RET_NULL_PTR;
   }
@@ -530,7 +618,9 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const std::sha
   auto bias_default_param = bias_parameter_ptr->default_param();
   auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
   MS_ASSERT(bias_parameter_ptr != nullptr);
-  auto active_weight_quant_params = primitive_c->input_quant_params();
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  MS_ASSERT(quant_param_holder != nullptr);
+  auto active_weight_quant_params = quant_param_holder->input_quant_params();
   if (active_weight_quant_params.size() != 2) {
     MS_LOG(ERROR) << "unexpected active_weight_quant_params size: " << active_weight_quant_params.size();
     return RET_ERROR;
@@ -566,7 +656,7 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const std::sha
   size_t shape_size = bias_param->tensor_shape_size();
 
   // set bias quant param
-  vector<schema::QuantParamT> quant_params;
+  std::vector<schema::QuantParamT> quant_params;
   for (double bias_scale : bias_scales) {
     schema::QuantParamT quant_param;
     quant_param.scale = bias_scale;
@@ -578,68 +668,12 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const std::sha
   std::vector<int32_t> quant_datas(shape_size);
 
   auto *raw_datas = static_cast<float *>(bias_param->tensor_addr());
-  double bias_scale_tmp;
-  const constexpr int32_t quanted_bias_abs_limit = 0.5 * INT32_MAX;
-
-  if (bias_scales.size() == shape_size) {
-    for (size_t i = 0; i < shape_size; i++) {
-      bias_scale_tmp = bias_scales[i];
-      if (fabs(bias_scale_tmp) <= 0.0f) {
-        MS_LOG(ERROR) << "divisor 'bias_scale_tmp' cannot be 0.";
-        return RET_ERROR;
-      }
-      if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
-        MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][i].scale
-                      << " is too small, need to update";
-        // update filter scale and zp
-        double activate_scale = input_scales[0];
-        double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
-        active_weight_quant_params[1][i].scale = filter_scale;
-        active_weight_quant_params[1][i].zeroPoint = 0;
-        primitive_c->set_input_quant_params(active_weight_quant_params);
-        bias_scale_tmp = std::abs(raw_datas[i]) / quanted_bias_abs_limit;
-        quant_params[i].scale = bias_scale_tmp;
-        MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
-      }
-      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
-      quant_datas[i] = quant_data;
-    }
-  } else if (bias_scales.size() == 1) {
-    // for fc, per tensor quant
-    bias_scale_tmp = quant_params[0].scale;
-    float max_raw_data = 0.0f;
-    for (size_t i = 0; i < shape_size; i++) {
-      if (std::abs(raw_datas[i]) > max_raw_data) {
-        max_raw_data = std::abs(raw_datas[i]);
-      }
-    }
-    if (fabs(bias_scale_tmp) <= 0.0f) {
-      MS_LOG(ERROR) << "divisor 'bias_scale_tmp' cannot be 0.";
-      return RET_ERROR;
-    }
-    if (std::abs(max_raw_data / bias_scale_tmp) >= quanted_bias_abs_limit) {
-      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << active_weight_quant_params[1][0].scale
-                    << " is too small, need to update";
-      double activate_scale = input_scales[0];
-      double filter_scale = std::abs(max_raw_data) / (activate_scale * quanted_bias_abs_limit);
-      active_weight_quant_params[1][0].scale = filter_scale;
-      active_weight_quant_params[1][0].zeroPoint = 0;
-      primitive_c->set_input_quant_params(active_weight_quant_params);
-      bias_scale_tmp = max_raw_data / quanted_bias_abs_limit;
-      quant_params[0].scale = bias_scale_tmp;
-      MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
-    }
-    for (size_t i = 0; i < shape_size; i++) {
-      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
-      quant_datas[i] = quant_data;
-    }
-  } else {
-    MS_LOG(ERROR) << "unexpected input_scales size: " << input_scales.size()
-                  << " weight_scales size: " << active_weight_quant_params[1].size();
+  if (ComputeBiasDataAndQuantParam(bias_scales, input_scales, raw_datas, quant_param_holder, &quant_params,
+                                   &quant_datas) != RET_OK) {
+    MS_LOG(ERROR) << "compute bias data failed.";
     return RET_ERROR;
   }
-
-  primitive_c->AddInputQuantParam(quant_params);
+  quant_param_holder->AddInputQuantParam(quant_params);
   auto ret =
     memcpy_s(bias_param->tensor_addr(), bias_param->tensor_size(), quant_datas.data(), shape_size * sizeof(int32_t));
   if (ret != EOK) {
@@ -665,6 +699,87 @@ STATUS PostTrainingQuantizer::DoBiasQuant(const AnfNodePtr &bias, const std::sha
   return RET_OK;
 }
 
+STATUS PostTrainingQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    return RET_ERROR;
+  }
+  auto op_name = cnode->fullname_with_scope();
+  auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
+  MS_ASSERT(primitive_quant_holder != nullptr);
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    auto input_node = cnode->input(i);
+    MS_ASSERT(input_node != nullptr);
+    bool is_graph_input = false;
+    if (input_node->isa<Parameter>()) {
+      if (!input_node->cast<ParameterPtr>()->has_default()) {
+        is_graph_input = true;
+      }
+    }
+    if (input_node->isa<mindspore::CNode>()) {
+      if (primitive->name() == ops::kNameGather) {
+        continue;
+      }
+      auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+      auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+      if (input_cnode_primitive == nullptr) {
+        MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
+                      << " Primitive is null";
+        continue;
+      }
+      auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
+      MS_ASSERT(input_primitive_quant_holder != nullptr);
+      if (input_primitive_quant_holder->IsOutputQuantParamsInited()) {
+        auto quant_param = input_primitive_quant_holder->output_quant_params().front();
+        primitive_quant_holder->AddInputQuantParam(quant_param);
+      } else {
+        // do input quant
+        auto &info = (*inputs_diverg_info)[op_name][i - 1];
+        auto input_scale = info->GetScale().second;
+        auto input_zp = info->GetZeropoint().second;
+        struct MaxMin input_min_max {};
+        input_min_max.max = info->max;
+        input_min_max.min = info->min;
+        DoQuantInput(input_scale, input_zp, &input_min_max, primitive);
+      }
+    } else if (is_graph_input) {
+      auto &info = (*inputs_diverg_info)[op_name][i - 1];
+      auto input_scale = info->GetScale().second;
+      auto input_zp = info->GetZeropoint().second;
+      struct MaxMin input_min_max {};
+      input_min_max.max = info->max;
+      input_min_max.min = info->min;
+      DoQuantInput(input_scale, input_zp, &input_min_max, primitive);
+    } else {
+      MS_LOG(DEBUG) << "node: " << op_name << " input " << i << " not a cnode";
+      // get dtype
+      auto abstractBase = input_node->abstract();
+      if (abstractBase == nullptr) {
+        MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << input_node->fullname_with_scope();
+        return RET_ERROR;
+      }
+      if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
+        MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << input_node->fullname_with_scope();
+        return RET_ERROR;
+      }
+      auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
+      if (abstractTensor == nullptr || abstractTensor->element() == nullptr) {
+        MS_LOG(ERROR) << "abstractTensor is nullptr, " << input_node->fullname_with_scope();
+        return RET_NULL_PTR;
+      }
+      if (abstractTensor->element()->GetTypeTrack()->type_id() == kNumberTypeFloat32) {
+        MS_LOG(DEBUG) << "this parameter do quant";
+        DoWeightQuant(op_name, input_node, primitive, false);
+      } else {
+        MS_LOG(DEBUG) << "this parameter no need to do quant";
+      }
+    }
+  }
+  return RET_OK;
+}
+
 STATUS PostTrainingQuantizer::QuantNode() {
   auto inputs_diverg_info = calibrator_->GetInputDivergInfo();
   auto outputs_diverg_info = calibrator_->GetOutputDivergInfo();
@@ -672,117 +787,53 @@ STATUS PostTrainingQuantizer::QuantNode() {
   auto cnodes = funcGraph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     auto op_name = cnode->fullname_with_scope();
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "primitive_c is nullptr";
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (primitive == nullptr) {
+      MS_LOG(ERROR) << "primitive is nullptr";
       continue;
     }
+    auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
+    MS_ASSERT(primitive_quant_holder != nullptr);
     if (inputs_diverg_info->find(op_name) == inputs_diverg_info->end()) {
       MS_LOG(INFO) << op_name << " can not do quant";
-      primitive_c->set_quant_type(schema::QuantType_QUANT_NONE);
+      primitive_quant_holder->set_quant_type(schema::QuantType_QUANT_NONE);
       continue;
     }
 
-    auto op_type = (schema::PrimitiveType)primitive_c->Type();
+    auto op_type = primitive->name();
     MS_LOG(DEBUG) << "OpName: " << op_name;
-    if (op_type == PrimitiveType_TupleGetItem) {
+    if (op_type == ops::kNameTupleGetItem) {
       auto index_node = cnode->input(2);
       auto index_value_node = std::dynamic_pointer_cast<mindspore::ValueNode>(index_node);
       if (index_value_node == nullptr) {
         MS_LOG(WARNING) << "index value node is null";
         continue;
       }
-      size_t index = CastToInt(index_value_node->value()).front();
+      size_t index = opt::CastToInt(index_value_node->value()).front();
       auto input_node = cnode->input(1);
       MS_ASSERT(input_node != nullptr);
       auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
       MS_ASSERT(input_cnode != nullptr);
-      auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
-      if (input_cnode_primitive_c == nullptr) {
-        MS_LOG(WARNING) << "input_cnode_primitive_c is null";
+      auto input_cnode_primitive = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+      if (input_cnode_primitive == nullptr) {
+        MS_LOG(WARNING) << "input_cnode_primitive is null";
         continue;
       }
-      if (input_cnode_primitive_c->output_quant_params().size() > index) {
-        auto quant_param = input_cnode_primitive_c->output_quant_params()[index];
-        primitive_c->AddInputQuantParam(quant_param);
-        primitive_c->AddOutputQuantParam(quant_param);
+      auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive);
+      MS_ASSERT(input_primitive_quant_holder != nullptr);
+      if (input_primitive_quant_holder->output_quant_params().size() > index) {
+        auto quant_param = input_primitive_quant_holder->output_quant_params()[index];
+        primitive_quant_holder->AddInputQuantParam(quant_param);
+        primitive_quant_holder->AddOutputQuantParam(quant_param);
       } else {
         MS_LOG(WARNING) << "this TupleGetItem node's input node: " << input_cnode->fullname_with_scope()
-                        << "'s output quant_params size: " << input_cnode_primitive_c->output_quant_params().size()
+                        << "'s output quant_params size: " << input_primitive_quant_holder->output_quant_params().size()
                         << ", but index: " << index;
       }
-      primitive_c->set_quant_type(schema::QuantType_PostTraining);
+      primitive_quant_holder->set_quant_type(schema::QuantType_PostTraining);
       continue;
-    } else if (op_type != PrimitiveType_Conv2D && op_type != PrimitiveType_DepthwiseConv2D &&
-               op_type != PrimitiveType_DeConv2D && op_type != PrimitiveType_DeDepthwiseConv2D &&
-               op_type != PrimitiveType_FullConnection && op_type != PrimitiveType_LayerNorm) {
-      for (size_t i = 1; i < cnode->inputs().size(); i++) {
-        auto input_node = cnode->input(i);
-        MS_ASSERT(input_node != nullptr);
-        bool is_graph_input = false;
-        if (input_node->isa<Parameter>()) {
-          if (!input_node->cast<ParameterPtr>()->has_default()) {
-            is_graph_input = true;
-          }
-        }
-        if (input_node->isa<mindspore::CNode>()) {
-          if (op_type == PrimitiveType_Gather) {
-            continue;
-          }
-          auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
-          auto input_cnode_primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
-          if (input_cnode_primitive_c == nullptr) {
-            MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
-                          << " PrimitiveC is null";
-            continue;
-          }
-          if (input_cnode_primitive_c->IsOutputQuantParamsInited()) {
-            auto quant_param = input_cnode_primitive_c->output_quant_params().front();
-            primitive_c->AddInputQuantParam(quant_param);
-          } else {
-            // do input quant
-            auto &info = (*inputs_diverg_info)[op_name][i - 1];
-            auto input_scale = info->GetScale().second;
-            auto input_zp = info->GetZeropoint().second;
-            struct MaxMin input_min_max {};
-            input_min_max.max = info->max;
-            input_min_max.min = info->min;
-            DoQuantInput(input_scale, input_zp, &input_min_max, primitive_c);
-          }
-        } else if (is_graph_input) {
-          auto &info = (*inputs_diverg_info)[op_name][i - 1];
-          auto input_scale = info->GetScale().second;
-          auto input_zp = info->GetZeropoint().second;
-          struct MaxMin input_min_max {};
-          input_min_max.max = info->max;
-          input_min_max.min = info->min;
-          DoQuantInput(input_scale, input_zp, &input_min_max, primitive_c);
-        } else {
-          MS_LOG(DEBUG) << "node: " << op_name << " input " << i << " not a cnode";
-          // get dtype
-          auto abstractBase = input_node->abstract();
-          if (abstractBase == nullptr) {
-            MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << input_node->fullname_with_scope();
-            return RET_ERROR;
-          }
-          if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
-            MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << input_node->fullname_with_scope();
-            return RET_ERROR;
-          }
-          auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-          if (abstractTensor == nullptr || abstractTensor->element() == nullptr) {
-            MS_LOG(ERROR) << "abstractTensor is nullptr, " << input_node->fullname_with_scope();
-            return RET_NULL_PTR;
-          }
-          if (abstractTensor->element()->GetTypeTrack()->type_id() == kNumberTypeFloat32) {
-            MS_LOG(DEBUG) << "this parameter do quant";
-            DoWeightQuant(op_name, input_node, primitive_c, false);
-          } else {
-            MS_LOG(DEBUG) << "this parameter no need to do quant";
-          }
-        }
-      }
-    } else {
+    } else if (op_type == ops::kNameConv2DFusion || op_type == ops::kNameConv2dTransposeFusion ||
+               op_type == ops::kNameFullConnection || op_type == ops::kNameLayerNormFusion) {
       // do input quant
       auto &info = (*inputs_diverg_info)[op_name][0];
       auto input_scale = info->GetScale().second;
@@ -790,19 +841,24 @@ STATUS PostTrainingQuantizer::QuantNode() {
       struct MaxMin input_min_max {};
       input_min_max.max = info->max;
       input_min_max.min = info->min;
-      DoQuantInput(input_scale, input_zp, &input_min_max, primitive_c);
+      DoQuantInput(input_scale, input_zp, &input_min_max, primitive);
       // do weight quant
       auto weight = cnode->input(2);
       bool perchannel = false;
-      if (op_type == PrimitiveType_Conv2D || op_type == PrimitiveType_DepthwiseConv2D ||
-          op_type == PrimitiveType_FullConnection) {
+      if (op_type == ops::kNameConv2DFusion || op_type == ops::kNameFullConnection) {
         perchannel = true;
       }
-      DoWeightQuant(op_name, weight, primitive_c, perchannel);
+      DoWeightQuant(op_name, weight, primitive, perchannel);
       // do bias quant
       if (cnode->inputs().size() == 4) {
         auto bias = cnode->input(3);
-        DoBiasQuant(bias, primitive_c);
+        DoBiasQuant(bias, primitive);
+      }
+    } else {  // do simple op quant
+      auto status = QuantNodeSimpleOp(cnode);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "simple op quant failed.";
+        return status;
       }
     }
     // do output quant, there may multi-output
@@ -814,8 +870,8 @@ STATUS PostTrainingQuantizer::QuantNode() {
       output_min_max.max = info->max;
       output_min_max.min = info->min;
 
-      DoQuantOutput(output_scale, output_zp, &output_min_max, primitive_c);
-      primitive_c->set_quant_type(schema::QuantType_PostTraining);
+      DoQuantOutput(output_scale, output_zp, &output_min_max, primitive);
+      primitive_quant_holder->set_quant_type(schema::QuantType_PostTraining);
     }
   }
   return RET_OK;
@@ -856,12 +912,14 @@ STATUS PostTrainingQuantizer::PreProcess() {
     if (strategy.CanOpPostQuantized(anf)) {
       calibrator_->AddQuantizedOp(cnode);
     }
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-    if (primitive_c == nullptr) {
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (primitive == nullptr) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " primitive is null";
       continue;
     }
-    primitive_c->ClearInputOutputQuantParam();
+    auto quant_param_holder = GetCNodeQuantHolder(primitive);
+    MS_ASSERT(quant_param_holder != nullptr);
+    quant_param_holder->ClearInputOutputQuantParam();
   }
   return RET_OK;
 }
@@ -989,125 +1047,11 @@ STATUS PostTrainingQuantizer::Int8Inference() {
   }
 
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    KernelCallBack beforeCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-                                           const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-                                           const CallBackParam &callParam) -> bool {
-      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
-        vector<float> fp32_op_input;
-        while (!OpInputDataHandle(FETCH, callParam.node_name, &fp32_op_input)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        auto tensor = beforeInputs[0];
-        MS_ASSERT(tensor != nullptr);
-        auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-        MS_ASSERT(lite_tensor != nullptr);
-        if (tensor->data_type() != kNumberTypeInt8) {
-          MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
-          return false;
-        }
-        // do quantization: activation is always per layer quantized
-        std::vector<int8_t> quant_datas;
-        auto quant_params = lite_tensor->quant_params();
-        if (quant_params.size() != 1) {
-          MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size();
-          return false;
-        }
-        schema::QuantParamT quant_param_t;
-        quant_param_t.scale = quant_params[0].scale;
-        quant_param_t.zeroPoint = quant_params[0].zeroPoint;
-        for (auto float_data : fp32_op_input) {
-          auto quant_data = QuantizeData<int8_t>(float_data, quant_param_t, quant_max, quant_min);
-          quant_datas.push_back(quant_data);
-        }
-
-        if (tensor->Size() != quant_datas.size() * sizeof(int8_t)) {
-          MS_LOG(ERROR) << "unexpected tensor size: " << quant_datas.size()
-                        << " not the same with: " << quant_datas.size() * sizeof(int8_t);
-          return false;
-        }
-
-        auto ret =
-          memcpy_s(tensor->MutableData(), tensor->Size(), quant_datas.data(), quant_datas.size() * sizeof(int8_t));
-        if (ret != EOK) {
-          MS_LOG(ERROR) << "memcpy error: " << ret;
-          return false;
-        }
-      }
-      return true;
-    };
-    // func
-    KernelCallBack afterCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
-                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
-                                          const CallBackParam &callParam) -> bool {
-      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
-        vector<float> fp32_op_output_ch_mean;
-        while (!OpOutputChMeanDataHandle(FETCH, callParam.node_name, &fp32_op_output_ch_mean)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-        auto tensor = afterOutputs[0];
-        MS_ASSERT(tensor != nullptr);
-        auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
-        MS_ASSERT(lite_tensor != nullptr);
-        if (tensor->data_type() != kNumberTypeInt8) {
-          MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
-          return false;
-        }
-        const int8_t *tensor_data = static_cast<int8_t *>(tensor->MutableData());
-        size_t elem_count = tensor->ElementsNum();
-        auto shapes = tensor->shape();
-        if (shapes.size() != 4) {
-          MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
-          return false;
-        }
-        // suppose the the format is NHWC
-        auto channels = shapes[3];
-        if (channels == 0) {
-          MS_LOG(ERROR) << "unexpected channels: 0";
-          return false;
-        }
-        auto quant_params = lite_tensor->quant_params();
-        if (quant_params.size() != 1) {
-          MS_LOG(ERROR) << "unexpected activatation quant_params size: " << quant_params.size();
-          return false;
-        }
-        auto scale = quant_params[0].scale;
-        auto zp = quant_params[0].zeroPoint;
-
-        std::vector<float> dequant_op_output_ch_mean(channels);
-        auto one_filter_size = elem_count / channels;
-        for (int i = 0; i < channels; i++) {
-          float sum = 0;
-          for (size_t j = 0; j < one_filter_size; j++) {
-            auto index = j * channels + i;
-            if (index >= elem_count) {
-              MS_LOG(ERROR) << "over flow!";
-              return RET_ERROR;
-            }
-            // deuqant activation
-            auto float_data = scale * (tensor_data[index] - zp);
-            sum += float_data;
-          }
-          if (one_filter_size == 0) {
-            MS_LOG(ERROR) << "divisor 'one_filter_size' cannot be 0.";
-            return RET_ERROR;
-          }
-          sum = sum / one_filter_size;
-          dequant_op_output_ch_mean[i] = sum;
-        }
-        std::transform(fp32_op_output_ch_mean.begin(), fp32_op_output_ch_mean.end(), dequant_op_output_ch_mean.begin(),
-                       dequant_op_output_ch_mean.begin(), std::minus<>());
-
-        if (op_bias_diff_map.find(callParam.node_name) != op_bias_diff_map.end()) {
-          auto &bias_diff = op_bias_diff_map[callParam.node_name];
-          std::transform(bias_diff.begin(), bias_diff.end(), dequant_op_output_ch_mean.begin(), bias_diff.begin(),
-                         std::plus<>());
-        } else {
-          op_bias_diff_map[callParam.node_name] = dequant_op_output_ch_mean;
-        }
-      }
-      return true;
-    };
-    auto ret = int8_session_->RunGraph(beforeCallBack, afterCallBack);
+    // before func
+    KernelCallBack before_call_back = GetBeforeCallBack(true);
+    // after func
+    KernelCallBack after_call_back = GetAfterCallBack(true);
+    auto ret = int8_session_->RunGraph(before_call_back, after_call_back);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
@@ -1117,7 +1061,6 @@ STATUS PostTrainingQuantizer::Int8Inference() {
 }
 
 STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
-  auto ret = RET_OK;
   std::future<STATUS> int8_inference = std::async(std::launch::async, &PostTrainingQuantizer::Int8Inference, this);
   // get input tensor
   vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
@@ -1134,87 +1077,19 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
         return RET_ERROR;
       }
     }
-    KernelCallBack beforeCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-                                           const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-                                           const CallBackParam &callParam) -> bool {
-      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
-          return false;
-        }
-        auto tensor = beforeInputs[0];
-        MS_ASSERT(tensor != nullptr);
-        size_t elem_count = tensor->ElementsNum();
-        std::vector<float> fp32_op_input(elem_count);
-        auto ret =
-          memcpy_s(fp32_op_input.data(), fp32_op_input.size() * sizeof(float), tensor->MutableData(), tensor->Size());
-        if (ret != EOK) {
-          MS_LOG(ERROR) << "memcpy error: " << ret;
-          return false;
-        }
-        while (!OpInputDataHandle(STORE, callParam.node_name, &fp32_op_input)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-      }
-      return true;
-    };
-    // func
-    KernelCallBack afterCallBack = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
-                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
-                                          const CallBackParam &callParam) -> bool {
-      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
-        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
-          return false;
-        }
-        auto tensor = afterOutputs[0];
-        MS_ASSERT(tensor != nullptr);
-        const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
-        size_t elem_count = tensor->ElementsNum();
-        auto shapes = tensor->shape();
-        if (shapes.size() != 4) {
-          MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
-          return false;
-        }
-        // suppose the activation format: NHWC
-        auto channels = shapes[3];
-        if (channels == 0) {
-          MS_LOG(ERROR) << "unexpected channels: 0";
-          return false;
-        }
-        std::vector<float> fp32_op_output_ch_mean(channels);
-        auto one_filter_size = elem_count / channels;
-        for (int i = 0; i < channels; i++) {
-          float sum = 0;
-          for (size_t j = 0; j < one_filter_size; j++) {
-            auto index = j * channels + i;
-            if (index >= elem_count) {
-              MS_LOG(ERROR) << "over flow!";
-              return RET_ERROR;
-            }
-            sum += tensor_data[index];
-          }
-          if (one_filter_size == 0) {
-            MS_LOG(ERROR) << "divisor 'one_filter_size' cannot be 0.";
-            return false;
-          }
-          sum = sum / one_filter_size;
-          fp32_op_output_ch_mean[i] = sum;
-        }
-        while (!OpOutputChMeanDataHandle(STORE, callParam.node_name, &fp32_op_output_ch_mean)) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-      }
-
-      return true;
-    };
-    auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
+    // before func
+    KernelCallBack before_call_back = GetBeforeCallBack(false);
+    // after func
+    KernelCallBack after_call_back = GetAfterCallBack(false);
+    auto status = fp32_session_->RunGraph(before_call_back, after_call_back);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
     }
   }  // end for images
 
-  ret = int8_inference.get();
-  if (ret != RET_OK) {
+  STATUS status = int8_inference.get();
+  if (status != RET_OK) {
     MS_LOG(ERROR) << "int8 inference failed!";
     return RET_ERROR;
   }
@@ -1229,105 +1104,113 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
     auto op_name = cnode->fullname_with_scope();
-    if (op_bias_diff_map.find(op_name) != op_bias_diff_map.end()) {
-      const auto &bias_diff = op_bias_diff_map[op_name];
-      auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
-      if (primitive_c == nullptr) {
-        MS_LOG(ERROR) << "primitive_c is nullptr";
-        continue;
-      }
-      auto input_quant_params = primitive_c->input_quant_params();
-
-      if (input_quant_params.size() == 3) {
-        // compensate the existed
-        auto bias_quant_params = input_quant_params[2];
-        auto bias = cnode->input(3);
-        auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
-        auto bias_default_param = bias_parameter_ptr->default_param();
-        auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
-        int *bias_datas = static_cast<int *>(bias_param->tensor_addr());
-
-        if (static_cast<size_t>(bias_param->tensor_shape_size()) != bias_diff.size()) {
-          MS_LOG(ERROR) << "unexpected bias data count: " << bias_param->tensor_shape_size()
-                        << " not the same as bias_diff: " << bias_diff.size();
-          continue;
-        }
-        if (bias_quant_params.size() != bias_diff.size()) {
-          MS_LOG(ERROR) << "unexpected bias quant params size: " << bias_quant_params.size()
-                        << " not the same as bias_diff: " << bias_diff.size();
-        }
-
-        for (int i = 0; i < bias_param->tensor_shape_size(); i++) {
-          auto scale = bias_quant_params[i].scale;
-          if (fabs(scale) <= 0.0f) {
-            MS_LOG(ERROR) << "divisor 'scale' cannot be 0.";
-            return RET_ERROR;
-          }
-          double after_correct = std::round(bias_diff[i] / scale) + bias_datas[i];
-          const constexpr int32_t corrected_bias_abs_limit = 0.6 * INT32_MAX;
-          if (after_correct > corrected_bias_abs_limit) {
-            MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too large: " << after_correct
-                            << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i]
-                            << " scale: " << scale;
-            bias_datas[i] = static_cast<int>(corrected_bias_abs_limit);
-          } else if (after_correct < -corrected_bias_abs_limit) {
-            MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too small: " << after_correct
-                            << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i]
-                            << " scale: " << scale;
-            bias_datas[i] = static_cast<int>(-corrected_bias_abs_limit);
-          } else {
-            auto diff = static_cast<int>(std::round(bias_diff[i] / scale));
-            bias_datas[i] += diff;
-          }
-        }
-      } else if (input_quant_params.size() == 2) {
-        MS_LOG(INFO) << op_name << " add bias input";
-        // need to add bias input
-        auto parameter = func_graph->add_parameter();
-        if (parameter == nullptr) {
-          MS_LOG(ERROR) << "parameter is nullptr.";
-          return RET_NULL_PTR;
-        }
-        ShapeVector shape;
-        shape.push_back(bias_diff.size());
-        auto type_ptr = TypeIdToType(kNumberTypeFloat32);
-        auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
-        parameter->set_abstract(abstract_tensor);
-        parameter->set_name("added_" + op_name + "_bias");
-
-        ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-        MS_ASSERT(param_value != nullptr);
-        std::vector<int32_t> shape_vector;
-        (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                             [](const int64_t &value) { return static_cast<int32_t>(value); });
-        param_value->set_tensor_shape(shape_vector);
-        param_value->set_tensor_type(kNumberTypeFloat32);
-
-        auto size = sizeof(float) * bias_diff.size();
-        char *tensor_data = new (std::nothrow) char[size];
-        if (tensor_data == nullptr) {
-          MS_LOG(ERROR) << "new char[] failed";
-          return RET_MEMORY_FAILED;
-        }
-        ret = memcpy_s(tensor_data, size * sizeof(char), bias_diff.data(), size * sizeof(char));
-        if (ret != EOK) {
-          MS_LOG(ERROR) << "memcpy_s error: " << ret;
-          delete[] tensor_data;
-          return false;
-        }
-        param_value->SetTensorData(tensor_data, size);
-        parameter->set_default_param(param_value);
-        cnode->add_input(parameter);
-        DoBiasQuant(parameter, primitive_c);
-        delete[] tensor_data;
-      } else {
-        MS_LOG(ERROR) << "unexpected input_quant_params size: " << input_quant_params.size();
-        continue;
-      }
-    }  // end fine op_name
+    if (op_bias_diff_map.find(op_name) == op_bias_diff_map.end()) {
+      continue;
+    }
+    status = BiasCorrection(func_graph, cnode);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "do node bias correct failed.";
+      break;
+    }
   }
+  return status;
+}
 
-  return ret;
+STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  auto op_name = cnode->fullname_with_scope();
+  const auto &bias_diff = op_bias_diff_map[op_name];
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr";
+    return RET_NULL_PTR;
+  }
+  auto quant_param_holder = GetCNodeQuantHolder(primitive);
+  MS_ASSERT(quant_param_holder != nullptr);
+  auto input_quant_params = quant_param_holder->input_quant_params();
+  if (input_quant_params.size() == 3) {
+    // compensate the existed
+    auto bias_quant_params = input_quant_params[2];
+    auto bias = cnode->input(3);
+    auto bias_parameter_ptr = std::dynamic_pointer_cast<Parameter>(bias);
+    auto bias_default_param = bias_parameter_ptr->default_param();
+    auto bias_param = std::dynamic_pointer_cast<ParamValueLite>(bias_default_param);
+    int *bias_datas = static_cast<int *>(bias_param->tensor_addr());
+
+    if (static_cast<size_t>(bias_param->tensor_shape_size()) != bias_diff.size()) {
+      MS_LOG(DEBUG) << "unexpected bias data count: " << bias_param->tensor_shape_size()
+                    << " not the same as bias_diff: " << bias_diff.size();
+      return RET_ERROR;
+    }
+    if (bias_quant_params.size() != bias_diff.size()) {
+      MS_LOG(ERROR) << "unexpected bias quant params size: " << bias_quant_params.size()
+                    << " not the same as bias_diff: " << bias_diff.size();
+      return RET_ERROR;
+    }
+    for (int i = 0; i < bias_param->tensor_shape_size(); i++) {
+      auto scale = bias_quant_params[i].scale;
+      if (fabs(scale) <= 0.0f) {
+        MS_LOG(ERROR) << "divisor 'scale' cannot be 0.";
+        return RET_ERROR;
+      }
+      double after_correct = std::round(bias_diff[i] / scale) + bias_datas[i];
+      const constexpr int32_t corrected_bias_abs_limit = 0.6 * INT32_MAX;
+      if (after_correct > corrected_bias_abs_limit) {
+        MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too large: " << after_correct
+                        << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
+        bias_datas[i] = static_cast<int>(corrected_bias_abs_limit);
+      } else if (after_correct < -corrected_bias_abs_limit) {
+        MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too small: " << after_correct
+                        << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
+        bias_datas[i] = static_cast<int>(-corrected_bias_abs_limit);
+      } else {
+        auto diff = static_cast<int>(std::round(bias_diff[i] / scale));
+        bias_datas[i] += diff;
+      }
+    }
+  } else if (input_quant_params.size() == 2) {
+    MS_LOG(INFO) << op_name << " add bias input";
+    // need to add bias input
+    auto parameter = func_graph->add_parameter();
+    if (parameter == nullptr) {
+      MS_LOG(ERROR) << "parameter is nullptr.";
+      return RET_NULL_PTR;
+    }
+    ShapeVector shape;
+    shape.push_back(bias_diff.size());
+    auto type_ptr = TypeIdToType(kNumberTypeFloat32);
+    auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
+    parameter->set_abstract(abstract_tensor);
+    parameter->set_name("added_" + op_name + "_bias");
+
+    ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+    MS_ASSERT(param_value != nullptr);
+    std::vector<int32_t> shape_vector;
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                         [](const int64_t &value) { return static_cast<int32_t>(value); });
+    param_value->set_tensor_shape(shape_vector);
+    param_value->set_tensor_type(kNumberTypeFloat32);
+
+    auto size = sizeof(float) * bias_diff.size();
+    char *tensor_data = new (std::nothrow) char[size];
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "new char[] failed";
+      return RET_MEMORY_FAILED;
+    }
+    STATUS status = memcpy_s(tensor_data, size * sizeof(char), bias_diff.data(), size * sizeof(char));
+    if (status != EOK) {
+      MS_LOG(ERROR) << "memcpy_s error: " << status;
+      delete[] tensor_data;
+      return RET_ERROR;
+    }
+    param_value->SetTensorData(tensor_data, size);
+    parameter->set_default_param(param_value);
+    cnode->add_input(parameter);
+    DoBiasQuant(parameter, primitive);
+    delete[] tensor_data;
+  } else {
+    MS_LOG(ERROR) << "unexpected input_quant_params size: " << input_quant_params.size();
+  }
+  return RET_OK;
 }
 
 STATUS PostTrainingQuantizer::CollectDataFrequency() {
@@ -1555,5 +1438,215 @@ bool PostTrainingQuantizer::OpOutputChMeanDataHandle(OperationType type, const s
     MS_LOG(ERROR) << "unexpected type: " << type;
   }
   return false;
+}
+
+KernelCallBack PostTrainingQuantizer::GetBeforeCallBack(bool int8_op) {
+  KernelCallBack before_call_back;
+  if (!int8_op) {
+    before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
+                              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+                              const CallBackParam &callParam) -> bool {
+      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
+        if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, beforeInputs) != RET_OK) {
+          return false;
+        }
+        auto tensor = beforeInputs[0];
+        MS_ASSERT(tensor != nullptr);
+        size_t elem_count = tensor->ElementsNum();
+        std::vector<float> fp32_op_input(elem_count);
+        auto ret =
+          memcpy_s(fp32_op_input.data(), fp32_op_input.size() * sizeof(float), tensor->MutableData(), tensor->Size());
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy error: " << ret;
+          return false;
+        }
+        while (!OpInputDataHandle(STORE, callParam.node_name, &fp32_op_input)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+      }
+      return true;
+    };
+  } else {
+    before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
+                              const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
+                              const CallBackParam &callParam) -> bool {
+      if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
+        vector<float> fp32_op_input;
+        while (!OpInputDataHandle(FETCH, callParam.node_name, &fp32_op_input)) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        auto tensor = beforeInputs[0];
+        MS_ASSERT(tensor != nullptr);
+        auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
+        MS_ASSERT(lite_tensor != nullptr);
+        if (tensor->data_type() != kNumberTypeInt8) {
+          MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
+          return false;
+        }
+        // do quantization: activation is always per layer quantized
+        std::vector<int8_t> quant_datas;
+        auto quant_params = lite_tensor->quant_params();
+        if (quant_params.size() != 1) {
+          MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size();
+          return false;
+        }
+        schema::QuantParamT quant_param_t;
+        quant_param_t.scale = quant_params[0].scale;
+        quant_param_t.zeroPoint = quant_params[0].zeroPoint;
+        for (auto float_data : fp32_op_input) {
+          auto quant_data = QuantizeData<int8_t>(float_data, quant_param_t, quant_max, quant_min);
+          quant_datas.push_back(quant_data);
+        }
+
+        if (tensor->Size() != quant_datas.size() * sizeof(int8_t)) {
+          MS_LOG(ERROR) << "unexpected tensor size: " << quant_datas.size()
+                        << " not the same with: " << quant_datas.size() * sizeof(int8_t);
+          return false;
+        }
+
+        auto ret =
+          memcpy_s(tensor->MutableData(), tensor->Size(), quant_datas.data(), quant_datas.size() * sizeof(int8_t));
+        if (ret != EOK) {
+          MS_LOG(ERROR) << "memcpy error: " << ret;
+          return false;
+        }
+      }
+      return true;
+    };
+  }
+  return before_call_back;
+}
+
+KernelCallBack PostTrainingQuantizer::GetAfterCallBack(bool int8_op) {
+  KernelCallBack after_call_back;
+  if (!int8_op) {
+    return GetFloatAfterCallBack();
+  }
+  return GetInt8AfterCallBack();
+}
+
+KernelCallBack PostTrainingQuantizer::GetInt8AfterCallBack() {
+  KernelCallBack after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
+                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
+                                          const CallBackParam &callParam) -> bool {
+    if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
+      vector<float> fp32_op_output_ch_mean;
+      while (!OpOutputChMeanDataHandle(FETCH, callParam.node_name, &fp32_op_output_ch_mean)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+      auto tensor = afterOutputs[0];
+      MS_ASSERT(tensor != nullptr);
+      auto lite_tensor = dynamic_cast<mindspore::lite::Tensor *>(tensor);
+      MS_ASSERT(lite_tensor != nullptr);
+      if (tensor->data_type() != kNumberTypeInt8) {
+        MS_LOG(ERROR) << "unexpected tensor type: " << tensor->data_type();
+        return false;
+      }
+      const int8_t *tensor_data = static_cast<int8_t *>(tensor->MutableData());
+      size_t elem_count = tensor->ElementsNum();
+      auto shapes = tensor->shape();
+      if (shapes.size() != 4) {
+        MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
+        return false;
+      }
+      // suppose the the format is NHWC
+      auto channels = shapes[3];
+      if (channels == 0) {
+        MS_LOG(ERROR) << "unexpected channels: 0";
+        return false;
+      }
+      auto quant_params = lite_tensor->quant_params();
+      if (quant_params.size() != 1) {
+        MS_LOG(ERROR) << "unexpected activatation quant_params size: " << quant_params.size();
+        return false;
+      }
+      auto scale = quant_params[0].scale;
+      auto zp = quant_params[0].zeroPoint;
+      std::vector<float> dequant_op_output_ch_mean(channels);
+      auto one_filter_size = elem_count / channels;
+      for (int i = 0; i < channels; i++) {
+        float sum = 0;
+        for (size_t j = 0; j < one_filter_size; j++) {
+          auto index = j * channels + i;
+          if (index >= elem_count) {
+            MS_LOG(ERROR) << "over flow!";
+            return RET_ERROR;
+          }
+          // deuqant activation
+          auto float_data = scale * (tensor_data[index] - zp);
+          sum += float_data;
+        }
+        if (one_filter_size == 0) {
+          MS_LOG(ERROR) << "divisor 'one_filter_size' cannot be 0.";
+          return RET_ERROR;
+        }
+        sum = sum / one_filter_size;
+        dequant_op_output_ch_mean[i] = sum;
+      }
+      std::transform(fp32_op_output_ch_mean.begin(), fp32_op_output_ch_mean.end(), dequant_op_output_ch_mean.begin(),
+                     dequant_op_output_ch_mean.begin(), std::minus<>());
+
+      if (op_bias_diff_map.find(callParam.node_name) != op_bias_diff_map.end()) {
+        auto &bias_diff = op_bias_diff_map[callParam.node_name];
+        std::transform(bias_diff.begin(), bias_diff.end(), dequant_op_output_ch_mean.begin(), bias_diff.begin(),
+                       std::plus<>());
+      } else {
+        op_bias_diff_map[callParam.node_name] = dequant_op_output_ch_mean;
+      }
+    }
+    return true;
+  };
+  return after_call_back;
+}
+
+KernelCallBack PostTrainingQuantizer::GetFloatAfterCallBack() {
+  KernelCallBack after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
+                                          const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
+                                          const CallBackParam &callParam) -> bool {
+    if (callParam.node_type == kTypeConv2D || callParam.node_type == kTypeDepthwiseConv2D) {
+      if (PostTrainingQuantizer::CheckFp32TensorVec(callParam.node_name, afterOutputs) != RET_OK) {
+        return false;
+      }
+      auto tensor = afterOutputs[0];
+      MS_ASSERT(tensor != nullptr);
+      const auto *tensor_data = static_cast<const float *>(tensor->MutableData());
+      size_t elem_count = tensor->ElementsNum();
+      auto shapes = tensor->shape();
+      if (shapes.size() != 4) {
+        MS_LOG(ERROR) << "unexpected shape size: " << shapes.size();
+        return false;
+      }
+      // suppose the activation format: NHWC
+      auto channels = shapes[3];
+      if (channels == 0) {
+        MS_LOG(ERROR) << "unexpected channels: 0";
+        return false;
+      }
+      std::vector<float> fp32_op_output_ch_mean(channels);
+      auto one_filter_size = elem_count / channels;
+      for (int i = 0; i < channels; i++) {
+        float sum = 0;
+        for (size_t j = 0; j < one_filter_size; j++) {
+          auto index = j * channels + i;
+          if (index >= elem_count) {
+            MS_LOG(ERROR) << "over flow!";
+            return RET_ERROR;
+          }
+          sum += tensor_data[index];
+        }
+        if (one_filter_size == 0) {
+          MS_LOG(ERROR) << "divisor 'one_filter_size' cannot be 0.";
+          return false;
+        }
+        sum = sum / one_filter_size;
+        fp32_op_output_ch_mean[i] = sum;
+      }
+      while (!OpOutputChMeanDataHandle(STORE, callParam.node_name, &fp32_op_output_ch_mean)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    }
+    return true;
+  };
+  return after_call_back;
 }
 }  // namespace mindspore::lite::quant

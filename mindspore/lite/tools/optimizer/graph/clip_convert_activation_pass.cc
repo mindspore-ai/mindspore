@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include <vector>
 #include <memory>
+#include "ops/clip.h"
+#include "ops/fusion/activation.h"
+#include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/ops/primitive_c.h"
-#include "schema/inner/model_generated.h"
 #include "src/tensor.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "src/common/log_adapter.h"
-#include "securec/include/securec.h"
 
-using mindspore::lite::PrimitiveC;
 namespace mindspore::opt {
 namespace {
 constexpr size_t kClipMinIndex = 2;
@@ -38,20 +37,21 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     if (!utils::isa<CNode>(node)) {
       continue;
     }
-    if (opt::GetCNodeType(node) != schema::PrimitiveType_Clip) {
+    if (!CheckPrimitiveType(node, prim::kPrimClip)) {
       continue;
     }
     auto clip_cnode = node->cast<CNodePtr>();
     MS_ASSERT(clip_cnode->size() >= kClipMinIndex);
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(clip_cnode->input(0));
-    MS_ASSERT(primitive_c != nullptr);
-    auto primT = primitive_c->primitiveT();
-    if (primT == nullptr || primT->value.AsClip() == nullptr) {
-      MS_LOG(ERROR) << "primT is null";
-      return false;
+    auto clip_c = GetValueNode<ops::PrimClipPtr>(clip_cnode->input(0));
+    MS_ASSERT(clip_c != nullptr);
+    float max = -1;
+    float min = -1;
+    if (clip_c->GetAttr(ops::kMax) != nullptr) {
+      max = clip_c->get_max();
     }
-    float max = primT->value.AsClip()->max;
-    float min = primT->value.AsClip()->min;
+    if (clip_c->GetAttr(ops::kMin) != nullptr) {
+      min = clip_c->get_min();
+    }
     if ((min == -1) && (max == -1)) {
       if (clip_cnode->size() > kClipMinIndex) {
         auto min_param_value = GetLiteParamValue(clip_cnode->input(kClipMinIndex));
@@ -77,26 +77,12 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     }
     auto manager = graph->manager();
 
-    // relu node
-    auto primitive = std::make_unique<schema::PrimitiveT>();
-    MS_ASSERT(primitive != nullptr);
-    primitive->value.type = schema::PrimitiveType_Activation;
-    auto prim2 = new (std::nothrow) schema::ActivationT;
-    if (prim2 == nullptr) {
-      MS_LOG(ERROR) << "new ActivationT failed";
-      return false;
+    auto primitive_c = std::make_shared<mindspore::ops::Activation>();
+    primitive_c->Init(0, min, max, mindspore::RELU6);
+    if (min != 0 || max != 6) {
+      primitive_c->set_activation_type(mindspore::HARD_TANH);
     }
-    if (min == 0 && max == 6) {
-      prim2->type = schema::ActivationType_RELU6;
-    } else {
-      prim2->type = schema::ActivationType_HARD_TANH;
-      prim2->min_val = min;
-      prim2->max_val = max;
-    }
-    primitive->value.value = prim2;
-    auto primitiveCValue = PrimitiveC::Create(primitive.release());
-    MS_ASSERT(primitiveCValue != nullptr);
-    auto value_node = NewValueNode(std::shared_ptr<PrimitiveC>(primitiveCValue));
+    auto value_node = NewValueNode(primitive_c);
     std::vector<AnfNodePtr> op_inputs = {value_node};
     op_inputs.push_back(clip_cnode->input(1));
     auto new_cnode = graph->NewCNode(op_inputs);

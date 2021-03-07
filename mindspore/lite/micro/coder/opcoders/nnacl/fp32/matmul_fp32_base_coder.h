@@ -56,6 +56,7 @@ class MatMulFP32BaseCoder : public OperatorCoder {
   float *b_pack_ptr_ = nullptr;
   float *bias_ptr_{nullptr};
   bool vec_matmul_{false};
+  bool de_quant_flag_{false};
 
  private:
   int col_tile_{0};

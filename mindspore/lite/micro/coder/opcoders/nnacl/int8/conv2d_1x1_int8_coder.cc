@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.h"
 #include <string>
 #include <vector>
 #include "securec/include/securec.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/log.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -43,10 +43,10 @@ int Conv2D1x1Int8Coder::Prepare(CoderContext *const context) {
 
 int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   Collect(context,
-          {"nnacl/int8/conv1x1_int8.h", "nnacl/common_func.h", "wrapper/int8/conv1x1_init_int8.h",
-           "wrapper/int8/conv1x1_run_int8.h"},
-          {"common_func.c", "pack.c", "conv1x1_int8.c", "matmul_int8.c", "fixed_point.c", "conv1x1_init_int8_wrapper.c",
-           "conv1x1_run_int8_wrapper.c", "thread_pool.c"});
+          {"nnacl/int8/conv1x1_int8.h", "nnacl/common_func.h", "wrapper/int8/conv1x1_init_int8_wrapper.h",
+           "wrapper/int8/conv1x1_run_int8_wrapper.h"},
+          {"common_func.c", "pack_int8.c", "conv1x1_int8.c", "matmul_int8.c", "fixed_point.c",
+           "conv1x1_init_int8_wrapper.c", "conv1x1_run_int8_wrapper.c", "thread_pool.c", "conv1x1_base.c"});
 
   nnacl::NNaclInt8Serializer code;
 
@@ -54,10 +54,10 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
   code.CodeStruct("matmul_param", *matmul_param_);
 
   code.CodeBaseStruct("Conv1x1Args", "args", input_sum_, filter_zp_ptr_, left_shift_, right_shift_, multiplier_,
-                      packed_weight_, bias_data_, packed_input_, nullptr, nullptr, 0, 0, "conv_param", "matmul_param",
+                      packed_weight_, bias_data_, packed_input_, nullptr, nullptr, 0, 0, "&conv_param", "&matmul_param",
                       matmul_func_, pre_trans_input_, support_optimize_, filter_peroc_);
 
-  code.CodeFunction("Conv1x1Run", input_tensor_, "args", "THREAD_POOL_DEFAULT", thread_num_s_, output_tensor_);
+  code.CodeFunction("Conv1x1Run", input_tensor_, "(Conv1x1Args *)&args", output_tensor_);
 
   context->AppendCode(code.str());
   return RET_OK;

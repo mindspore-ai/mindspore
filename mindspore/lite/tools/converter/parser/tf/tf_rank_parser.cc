@@ -18,41 +18,30 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include "ops/rank.h"
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFRankParser::Parse(const tensorflow::NodeDef &tf_op,
-                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                           std::vector<std::string> *inputs, int *output_size) {
+ops::PrimitiveC *TFRankParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
   MS_LOG(DEBUG) << "TF RankParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
+  if (output_size == nullptr) {
+    MS_LOG(ERROR) << "output_size is nullptr";
+    return nullptr;
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::RankT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-  primitive->value.type = schema::PrimitiveType_Rank;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
+  auto prim = std::make_unique<ops::Rank>();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "New Primitive failed";
+    return nullptr;
   }
   *output_size = 1;
   auto status = AddOpInput(tf_op, 0, inputs);
   if (status != RET_OK) {
-    return status;
+    return nullptr;
   }
-  return RET_OK;
+  return prim.release();
 }
 TFNodeRegistrar g_tfRankParser("Rank", new TFRankParser());
 }  // namespace lite

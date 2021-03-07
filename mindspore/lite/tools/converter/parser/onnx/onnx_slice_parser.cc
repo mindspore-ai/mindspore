@@ -15,28 +15,23 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_slice_parser.h"
-#include <algorithm>
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <algorithm>
 #include <vector>
 #include <string>
+#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxSliceParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                      const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx SliceParser";
-  auto attr = std::make_unique<schema::StridedSliceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::StridedSlice>();
 
-  std::vector<int> starts;
-  std::vector<int> ends;
-  std::vector<int> axes;
-  std::vector<int> steps;
+  std::vector<int32_t> starts;
+  std::vector<int32_t> ends;
+  std::vector<int32_t> axes;
+  std::vector<int32_t> steps;
   constexpr int64_t int_32_max = INT32_MAX;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
@@ -66,16 +61,18 @@ lite::PrimitiveC *OnnxSliceParser::ParseLitePrimitive(const onnx::GraphProto &on
       }
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
+  int size = -1;
+  if (!starts.empty()) {
+    size = static_cast<int>(starts.size());
+  } else if (!ends.empty()) {
+    size = static_cast<int>(ends.size());
+  } else if (!axes.empty()) {
+    size = static_cast<int>(axes.size());
+  } else if (!steps.empty()) {
+    size = static_cast<int>(steps.size());
   }
-  primitive->value.type = schema::PrimitiveType_StridedSlice;
-  primitive->value.value = attr.release();
-  auto primitive_c = PrimitiveC::Create(primitive.release());
-  if (starts.empty()) {
-    return primitive_c;
+  if (size == -1) {
+    return prim.release();
   }
   if (axes.empty()) {
     for (size_t i = 0; i < starts.size(); ++i) {
@@ -85,11 +82,13 @@ lite::PrimitiveC *OnnxSliceParser::ParseLitePrimitive(const onnx::GraphProto &on
   if (steps.empty()) {
     steps.assign(starts.size(), 1);
   }
-  primitive_c->set_attr("starts", MakeValue<std::vector<int>>(starts));
-  primitive_c->set_attr("ends", MakeValue<std::vector<int>>(ends));
-  primitive_c->set_attr("axes", MakeValue<std::vector<int>>(axes));
-  primitive_c->set_attr("steps", MakeValue<std::vector<int>>(steps));
-  return primitive_c;
+
+  prim->AddAttr("starts", MakeValue(starts));
+  prim->AddAttr("axes", MakeValue(axes));
+  prim->AddAttr("ends", MakeValue(ends));
+  prim->AddAttr("steps", MakeValue(steps));
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxSliceParser("Slice", new OnnxSliceParser());

@@ -16,27 +16,21 @@
 
 #include "tools/converter/parser/caffe/caffe_prelu_parser.h"
 #include <memory>
+#include "ops/fusion/prelu_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffePReluParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                 const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::PReLUT> attr = std::make_unique<schema::PReLUT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
+ops::PrimitiveC *CaffePReluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_unique<ops::PReLUFusion>();
+
+  const caffe::PReLUParameter &prelu_param = proto.prelu_param();
+  if (prelu_param.has_channel_shared()) {
+    prim->set_channel_shared(prelu_param.channel_shared());
+  } else {
+    prim->set_channel_shared(false);
   }
 
-  const caffe::PReLUParameter &pReluParam = proto.prelu_param();
-  if (pReluParam.has_channel_shared()) {
-    attr->channelShared = pReluParam.channel_shared();
-  } else {
-    attr->channelShared = false;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_PReLU;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffePReluParser("PReLU", new CaffePReluParser());

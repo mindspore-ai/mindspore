@@ -93,14 +93,14 @@ __kernel void HSwish(__read_only image2d_t input, __write_only image2d_t output,
 }
 
 __kernel void HSigmoid(__read_only image2d_t input, __write_only image2d_t output, const int2 img_shape) {
-    int X = get_global_id(0);  // w*c
-    int Y = get_global_id(1);  // n*h
-    if (X >= img_shape.x || Y >= img_shape.y) return;
-    FLT4 temp = READ_IMAGE(input, smp_zero, (int2)(X, Y));
-    FLT4 result = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);
-    result.x = temp.x <= -3 ? 0 : (temp.x >= 3 ? 1 : temp.x / 6 + 0.5f);
-    result.y = temp.y <= -3 ? 0 : (temp.y >= 3 ? 1 : temp.y / 6 + 0.5f);
-    result.z = temp.z <= -3 ? 0 : (temp.z >= 3 ? 1 : temp.z / 6 + 0.5f);
-    result.w = temp.w <= -3 ? 0 : (temp.w >= 3 ? 1 : temp.w / 6 + 0.5f);
-    WRITE_IMAGE(output, (int2)(X, Y), result);
+  int X = get_global_id(0);  // w*c
+  int Y = get_global_id(1);  // n*h
+  if (X >= img_shape.x || Y >= img_shape.y) return;
+  FLT4 temp = READ_IMAGE(input, smp_zero, (int2)(X, Y));
+  FLT4 result = (FLT4)(0.0f, 0.0f, 0.0f, 0.0f);
+  result.x = temp.x <= -3 ? 0 : (temp.x >= 3 ? 1 : temp.x / 6 + 0.5f);
+  result.y = temp.y <= -3 ? 0 : (temp.y >= 3 ? 1 : temp.y / 6 + 0.5f);
+  result.z = temp.z <= -3 ? 0 : (temp.z >= 3 ? 1 : temp.z / 6 + 0.5f);
+  result.w = temp.w <= -3 ? 0 : (temp.w >= 3 ? 1 : temp.w / 6 + 0.5f);
+  WRITE_IMAGE(output, (int2)(X, Y), result);
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,8 @@ class DTypeTransPass : public GraphPass {
       MS_LOG(ERROR) << "new QuantDTypeCast failed";
       return nullptr;
     }
-    QuantDTypeCastParam->srcT = oldQuantDTypeCastParam->srcT;
-    QuantDTypeCastParam->dstT = oldQuantDTypeCastParam->dstT;
+    QuantDTypeCastParam->src_t = oldQuantDTypeCastParam->src_t;
+    QuantDTypeCastParam->dst_t = oldQuantDTypeCastParam->dst_t;
     newCNode->primitive->value.value = QuantDTypeCastParam;
     return newCNode;
   };

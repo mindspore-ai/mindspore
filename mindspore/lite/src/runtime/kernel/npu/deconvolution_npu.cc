@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 
 #include "src/runtime/kernel/npu/deconvolution_npu.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
+
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_DeConv2D;
+using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore::kernel {
 int DeconvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
@@ -34,10 +36,10 @@ int DeconvolutionNPUKernel::SetConvParam() {
   deconv_->set_attr_dilations(ge::AttrValue::LIST_INT({conv_param_->dilation_h_, conv_param_->dilation_w_}));
   deconv_->set_attr_groups(conv_param_->group_);
 
-  if (conv_param_->pad_mode_ == Pad_Same) {
+  if (conv_param_->pad_mode_ == Pad_same) {
     deconv_->set_attr_pad_mode(ge::AttrValue::STR{"SAME"});
     deconv_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
-  } else if (conv_param_->pad_mode_ == Pad_Valid) {
+  } else if (conv_param_->pad_mode_ == Pad_valid) {
     deconv_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
     deconv_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
@@ -69,7 +71,6 @@ int DeconvolutionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inpu
     return RET_ERROR;
   }
   deconv_->set_input_filter(*weight_);
-
   if (inputs.size() == 3) {
     ret = InitBiasConst(inputs);
     if (ret != RET_OK) {
@@ -105,5 +106,5 @@ DeconvolutionNPUKernel::~DeconvolutionNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_DeConv2D, NPUKernelCreator<DeconvolutionNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Conv2dTransposeFusion, NPUKernelCreator<DeconvolutionNPUKernel>)
 }  // namespace mindspore::kernel

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/npu/strided_slice_npu.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_StridedSlice;
@@ -58,11 +59,11 @@ int StridedSliceNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
   } else {
     op_->set_input_strides(*npu_inputs[3]);
   }
-  op_->set_attr_begin_mask(strided_slice_->GetBeginMask());
-  op_->set_attr_ellipsis_mask(strided_slice_->GetEllipsisMask());
-  op_->set_attr_end_mask(strided_slice_->GetEndMask());
-  op_->set_attr_shrink_axis_mask(strided_slice_->GetShrinkAxisMask());
-  op_->set_attr_new_axis_mask(strided_slice_->GetNewAxisMask());
+  op_->set_attr_begin_mask(param_->begins_mask_);
+  op_->set_attr_ellipsis_mask(param_->ellipsisMask_);
+  op_->set_attr_end_mask(param_->ends_mask_);
+  op_->set_attr_shrink_axis_mask(param_->shrinkAxisMask_);
+  op_->set_attr_new_axis_mask(param_->newAxisMask_);
   return RET_OK;
 }
 

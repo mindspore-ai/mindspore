@@ -27,7 +27,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_LayerNorm;
+using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
 
@@ -200,6 +200,6 @@ int LayerNormOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LayerNorm, OpenCLKernelCreator<LayerNormOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LayerNorm, OpenCLKernelCreator<LayerNormOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LayerNormFusion, OpenCLKernelCreator<LayerNormOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LayerNormFusion, OpenCLKernelCreator<LayerNormOpenCLKernel>)
 }  // namespace mindspore::kernel

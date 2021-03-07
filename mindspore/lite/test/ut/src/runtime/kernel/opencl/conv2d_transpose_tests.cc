@@ -25,7 +25,7 @@ namespace {
 OpParameter *CreateParameter(int n, int h, int w, int ci, int co, int kh, int kw, std::vector<int> pad, int oh, int ow,
                              std::vector<int> *input_shape, std::vector<int> *weight_shape,
                              std::vector<int> *bias_shape, std::vector<int> *output_shape) {
-  auto *param = test::CreateParameter<ConvParameter>(schema::PrimitiveType_DeConv2D);
+  auto *param = test::CreateParameter<ConvParameter>(schema::PrimitiveType_Conv2dTransposeFusion);
   param->kernel_h_ = kh;
   param->kernel_w_ = kw;
   param->stride_h_ = 2;

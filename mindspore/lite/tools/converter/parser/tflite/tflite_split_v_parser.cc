@@ -18,60 +18,62 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include "ops/split.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteSplitVParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
+ops::PrimitiveC *TfliteSplitVParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Split>();
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  std::unique_ptr<schema::SplitT> attr = std::make_unique<schema::SplitT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
   const auto &tflite_attr = tflite_op->builtin_options.AsSplitVOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op splitv attr failed";
     return nullptr;
   }
-  attr->numberSplit = tflite_attr->num_splits;
+  prim->set_output_num(tflite_attr->num_splits);
 
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->sizeSplits)) {
+  std::vector<int64_t> size_splits;
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, size_splits)) {
     MS_LOG(ERROR) << "get spliteV -> sizeSplits failed";
     return nullptr;
   }
+  prim->set_size_splits(size_splits);
 
-  const auto &tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
+  const auto &tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor_shape is null";
     return nullptr;
   }
   auto tensor_shape = tensor->shape;
-  const auto &axis_tensor = tflite_subgraph->tensors[tflite_op->inputs[2]];
+  const auto &axis_tensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(2));
   if (axis_tensor == nullptr) {
     MS_LOG(ERROR) << "axis_tensor is null";
     return nullptr;
   }
-  auto axis = *(reinterpret_cast<int32_t *>(tflite_model->buffers[axis_tensor->buffer]->data.data()));
+  auto &axis_buf_data = tflite_model->buffers.at(axis_tensor->buffer);
+  if (axis_buf_data == nullptr) {
+    MS_LOG(ERROR) << "buf_data is null";
+    return nullptr;
+  }
+  auto axis = *(reinterpret_cast<int32_t *>(axis_buf_data->data.data()));
   if (axis < 0) {
     axis += tensor_shape.size();
   }
-  if (axis >= static_cast<int>(tensor_shape.size())) {
+  if (axis >= static_cast<int32_t>(tensor_shape.size())) {
     MS_LOG(ERROR) << "axis value is too large";
     return nullptr;
   }
-  attr->splitDim = axis;
+  prim->set_axis(static_cast<int64_t>(axis));
 
-  primitive->value.type = schema::PrimitiveType_Split;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSplitVParser(tflite::BuiltinOperator_SPLIT_V, new TfliteSplitVParser());

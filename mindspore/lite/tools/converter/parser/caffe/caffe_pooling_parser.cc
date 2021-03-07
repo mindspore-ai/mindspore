@@ -16,52 +16,53 @@
 
 #include "tools/converter/parser/caffe/caffe_pooling_parser.h"
 #include <memory>
+#include "ops/fusion/avg_pool_fusion.h"
+#include "ops/fusion/max_pool_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *pad) {
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
     if (poolingParam.has_pad()) {
       MS_LOG(ERROR) << "Either pad or pad_h/w should be specified; not both";
       return RET_ERROR;
     }
-    attr->padLeft = poolingParam.pad_w();
-    attr->padRight = poolingParam.pad_w();
-    attr->padUp = poolingParam.pad_h();
-    attr->padDown = poolingParam.pad_h();
+    (*pad)[0] = poolingParam.pad_h();
+    (*pad)[1] = poolingParam.pad_h();
+    (*pad)[2] = poolingParam.pad_w();
+    (*pad)[3] = poolingParam.pad_w();
   } else {
-    attr->padLeft = poolingParam.pad();
-    attr->padRight = poolingParam.pad();
-    attr->padUp = poolingParam.pad();
-    attr->padDown = poolingParam.pad();
+    (*pad)[0] = poolingParam.pad();
+    (*pad)[1] = poolingParam.pad();
+    (*pad)[2] = poolingParam.pad();
+    (*pad)[3] = poolingParam.pad();
   }
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParseStrides(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *strides) {
   if (poolingParam.has_stride_h() && poolingParam.has_stride_w()) {
     if (poolingParam.has_stride()) {
       MS_LOG(ERROR) << "Either stride or stride_h/w should be specified; not both";
       return RET_ERROR;
     }
-    attr->strideH = poolingParam.stride_h();
-    attr->strideW = poolingParam.stride_w();
+    (*strides)[0] = poolingParam.stride_h();
+    (*strides)[1] = poolingParam.stride_w();
   } else {
-    attr->strideH = poolingParam.stride();
-    attr->strideW = poolingParam.stride();
+    (*strides)[0] = poolingParam.stride();
+    (*strides)[1] = poolingParam.stride();
   }
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
+STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingParam, std::vector<int64_t> *windows) {
   if (poolingParam.has_global_pooling() && poolingParam.global_pooling()) {
     if (poolingParam.has_kernel_size() || poolingParam.has_kernel_h() || poolingParam.has_kernel_w()) {
       MS_LOG(ERROR) << "With Global_pooling: true Filter size cannot specified";
       return RET_ERROR;
     }
-    attr->windowH = 0;
-    attr->windowW = 0;
-    attr->global = true;
+    (*windows)[0] = 0;
+    (*windows)[1] = 0;
   } else {
     if (poolingParam.has_kernel_size() == (poolingParam.has_kernel_h() || poolingParam.has_kernel_w())) {
       MS_LOG(ERROR) << "Filter size is kernel_size OR kernel_h and kernel_w; not both";
@@ -73,75 +74,79 @@ STATUS CaffePoolingParser::ParseWindows(const caffe::PoolingParameter &poolingPa
     }
 
     if (poolingParam.has_kernel_h() && poolingParam.has_kernel_w()) {
-      attr->windowH = poolingParam.kernel_h();
-      attr->windowW = poolingParam.kernel_w();
+      (*windows)[0] = poolingParam.kernel_h();
+      (*windows)[1] = poolingParam.kernel_w();
     } else {
-      attr->windowH = poolingParam.kernel_size();
-      attr->windowW = poolingParam.kernel_size();
+      (*windows)[0] = poolingParam.kernel_size();
+      (*windows)[1] = poolingParam.kernel_size();
     }
   }
   return RET_OK;
 }
 
-STATUS CaffePoolingParser::ParsePoolingMode(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
-  if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
-    attr->poolingMode = schema::PoolMode_MAX_POOLING;
-  } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
-    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
-  } else {
-    MS_LOG(ERROR) << "MindSpore support MAX and AVE PoolingMode only.";
-    return RET_ERROR;
+mindspore::RoundMode CaffePoolingParser::ParseRoundMode(const caffe::PoolingParameter &poolingParam) {
+  mindspore::RoundMode roundMode = mindspore::RoundMode::CEIL;
+  if (poolingParam.has_round_mode()) {
+    if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_FLOOR) {
+      roundMode = mindspore::RoundMode::FLOOR;
+    } else if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_CEIL) {
+      roundMode = mindspore::RoundMode::CEIL;
+    }
   }
-  return RET_OK;
+  return roundMode;
 }
-PrimitiveC *CaffePoolingParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                   const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
 
-  attr->format = schema::Format::Format_NCHW;
-
+ops::PrimitiveC *CaffePoolingParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
   const caffe::PoolingParameter &poolingParam = proto.pooling_param();
-  auto status = ParsePads(poolingParam, attr.get());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
-    return nullptr;
-  }
 
-  status = ParseStrides(poolingParam, attr.get());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
-    return nullptr;
-  }
-
-  status = ParseWindows(poolingParam, attr.get());
-  if (status != RET_OK) {
+  // parse kernel params
+  std::vector<int64_t> windows(2, 0);
+  if (ParseWindows(poolingParam, &windows) != RET_OK) {
     MS_LOG(ERROR) << "ParseWindows for " << proto.name().c_str() << " failed";
     return nullptr;
   }
 
-  status = ParsePoolingMode(poolingParam, attr.get());
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "ParsePoolingMode for " << proto.name().c_str() << " failed";
+  // parse strides params
+  std::vector<int64_t> strides(2, 0);
+  if (ParseStrides(poolingParam, &strides) != RET_OK) {
+    MS_LOG(ERROR) << "ParseStrides for " << proto.name().c_str() << " failed";
     return nullptr;
   }
 
-  attr->roundMode = schema::RoundMode_CEIL;
-  if (poolingParam.has_round_mode()) {
-    if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_FLOOR) {
-      attr->roundMode = schema::RoundMode_FLOOR;
-    } else if (poolingParam.round_mode() == caffe::PoolingParameter_RoundMode_CEIL) {
-      attr->roundMode = schema::RoundMode_CEIL;
-    }
+  // parse pad params
+  std::vector<int64_t> pad(4, 0);
+  if (ParsePads(poolingParam, &pad) != RET_OK) {
+    MS_LOG(ERROR) << "ParsePads for " << proto.name().c_str() << " failed";
+    return nullptr;
   }
-  attr->padMode = schema::PadMode_CAFFE;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Pooling;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  // parse round mode
+  auto roundMode = ParseRoundMode(poolingParam);
+
+  if (poolingParam.pool() == caffe::PoolingParameter::MAX) {
+    auto prim = std::make_unique<ops::MaxPoolFusion>();
+    prim->set_format(mindspore::Format::NCHW);
+    prim->set_pad_mode(mindspore::PadMode::PAD);
+    prim->set_kernel_size(windows);
+    prim->set_strides(strides);
+    prim->set_pad(pad);
+    prim->set_round_mode(roundMode);
+    prim->set_global(poolingParam.global_pooling());
+    return prim.release();
+  } else if (poolingParam.pool() == caffe::PoolingParameter::AVE) {
+    auto prim = std::make_unique<ops::AvgPoolFusion>();
+    prim->set_format(mindspore::Format::NCHW);
+    prim->set_pad_mode(mindspore::PadMode::PAD);
+    prim->set_kernel_size(windows);
+    prim->set_strides(strides);
+    prim->set_pad(pad);
+    prim->set_round_mode(roundMode);
+    prim->set_global(poolingParam.global_pooling());
+    return prim.release();
+  } else {
+    MS_LOG(ERROR) << "poolingParam.pool() is not MAX or AVE";
+    return nullptr;
+  }
 }
 
 CaffeNodeRegistrar g_caffePoolingParser("Pooling", new CaffePoolingParser());

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/nnacl/fp32/activation_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/activation_fp32_coder.h"
 #include <string>
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/op_base.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Activation;
 
@@ -34,9 +34,9 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
   int count = MSMIN(stride, length - stride * task_id);
 
   if (activation_parameter->type_ == schema::ActivationType_SIGMOID) {
-    Collect(context, {"runtime/kernel/fp32/sigmoid.h"}, {"sigmoid.c"});
+    Collect(context, {"runtime/kernel/fp32/sigmoid_fp32.h"}, {"sigmoid_fp32.c"});
   } else {
-    Collect(context, {"nnacl/fp32/activation.h"}, {"activation.c"});
+    Collect(context, {"nnacl/fp32/activation_fp32.h"}, {"activation_fp32.c"});
   }
   NNaclFp32Serializer code;
   switch (activation_parameter->type_) {

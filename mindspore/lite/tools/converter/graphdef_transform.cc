@@ -31,7 +31,6 @@
 #include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
 #include "tools/converter/legacy_optimizer/graph/global_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
-#include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
@@ -39,7 +38,6 @@
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
 #include "tools/converter/legacy_optimizer/graph/switch_pass.h"
-#include "tools/converter/legacy_optimizer/graph/select_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_tensor_pass.h"
 #include "tools/converter/legacy_optimizer/graph/nested_loop_expand_pass.h"
@@ -66,7 +64,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     auto old_nodes = GetGraphNodes();
     Optimizer unusedOpRemoveOptimizer;
-    unusedOpRemoveOptimizer.AddPass(new UnusedNodeRemovePass());
     if (!ctx.trainModel) {
       unusedOpRemoveOptimizer.AddPass(new DropoutNodeRemovePass());
     }

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/convolution_depthwise_fp32_coder.h"
 #include <string>
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/log.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 namespace mindspore::lite::micro::nnacl {
 int ConvolutionDepthwiseFP32Coder::Prepare(CoderContext *const context) {
   Conv2DBaseCoder::Init();
@@ -73,6 +72,4 @@ int ConvolutionDepthwiseFP32Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D,
-                   CPUOpCoderCreator<ConvolutionDepthwiseFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl

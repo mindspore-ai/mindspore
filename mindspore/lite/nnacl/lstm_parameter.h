@@ -30,10 +30,8 @@ typedef struct LstmParameter {
   int input_step_;
   int output_step_;
   bool bidirectional_;
-  // smooth factor for hidden/cell state calculation:
-  // output_hidden = old_hidden * smooth + new_hidden * (1 - smooth)
-  // output_cell = old_cell * smooth + new_cell * (1 - smooth)
-  float smooth_;
+  float zoneout_cell_;
+  float zoneout_hidden_;
   int col_align_;
   int row_align_;
 } LstmParameter;

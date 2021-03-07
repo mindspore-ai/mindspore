@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/fp32/pad_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/pad_fp32_coder.h"
 #include <string>
 #include <vector>
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/log.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_Pad;
+using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -99,5 +99,5 @@ int PadFP32Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Pad, CPUOpCoderCreator<PadFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_PadFusion, CPUOpCoderCreator<PadFP32Coder>)
 }  // namespace mindspore::lite::micro::nnacl

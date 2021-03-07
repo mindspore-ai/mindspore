@@ -30,7 +30,6 @@ int SwitchCPUKernel::PostProcess() {
   MS_ASSERT(bool_tensor != nullptr);
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
   MS_ASSERT(bool_tensor->Size() == 1);
-  MS_ASSERT(bool_tensor->Size() == 1);
   auto active = static_cast<bool *>(bool_tensor->data_c());
   if (active == nullptr) {
     MS_LOG(ERROR) << "data of bool tensor is nullptr";
@@ -67,7 +66,6 @@ int SwitchCPUKernel::Run() {
   auto bool_tensor = in_tensors_.front();
   MS_ASSERT(bool_tensor != nullptr);
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
-  MS_ASSERT(bool_tensor->Size() == 1);
   MS_ASSERT(bool_tensor->Size() == 1);
   auto active = static_cast<bool *>(bool_tensor->data_c());
   if (active == nullptr) {

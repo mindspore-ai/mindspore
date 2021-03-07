@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/cast.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/cast_parameter.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateCastParameter(const mindspore::lite::PrimitiveC *primitive) {
-  CastParameter *cast_param = reinterpret_cast<CastParameter *>(malloc(sizeof(CastParameter)));
+namespace {
+OpParameter *PopulateCastParameter(const void *prim) {
+  OpParameter *cast_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (cast_param == nullptr) {
     MS_LOG(ERROR) << "malloc CastParameter failed.";
     return nullptr;
   }
-  memset(cast_param, 0, sizeof(CastParameter));
-  cast_param->op_parameter_.type_ = primitive->Type();
-
-  auto param = reinterpret_cast<mindspore::lite::Cast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  cast_param->src_type_ = param->GetSrcT();
-  cast_param->dst_type_ = param->GetDstT();
-
+  memset(cast_param, 0, sizeof(OpParameter));
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  cast_param->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(cast_param);
 }
+}  // namespace
 
-Registry CastParameterRegistry(schema::PrimitiveType_Cast, PopulateCastParameter);
+Registry g_castParameterRegistry(schema::PrimitiveType_Cast, PopulateCastParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

@@ -28,11 +28,12 @@ class OnnxGivenTensorFillParser : public OnnxNodeParser {
   OnnxGivenTensorFillParser() : OnnxNodeParser("GivenTensorFill") {}
   ~OnnxGivenTensorFillParser() override = default;
 
-  STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c,
+  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+
+  STATUS ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                      const std::vector<int> &shape);
-  STATUS ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c,
+  STATUS ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node, ops::PrimitiveC *prim,
                                   const std::vector<int> &shape);
-  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

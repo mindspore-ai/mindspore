@@ -23,14 +23,15 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
 class TfliteBroadcastToParser : public TfliteNodeParser {
  public:
   TfliteBroadcastToParser() : TfliteNodeParser("BroadcastTo") {}
 
-  PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
-}  // namespace mindspore::lite
-
+}  // namespace lite
+}  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_BROADCAST_TO_PARSER_H

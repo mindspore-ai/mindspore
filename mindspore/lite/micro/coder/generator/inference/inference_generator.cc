@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include "coder/generator/component/common_component.h"
+#include "coder/generator/component/parallel_component.h"
 #include "coder/generator/component/benchmark_component.h"
 #include "coder/generator/component/const_blocks/license.h"
 
@@ -28,13 +29,16 @@ int InferenceGenerator::CodeNetHFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
   ofs << g_hwLicense;
-  if (config_->code_mode() == CodeMode::Code_Inference) {
-    ofs << "#include \"src/runtime/thread_pool.h\"\n";
+  if (config_->support_parallel()) {
+    ofs << "#include \"thread_pool.h\"\n";
   }
   ofs << "#include \"microtensor.h\"\n\n";
   CodeInputAndOutputState(ofs, config_->module_name());
   if (is_get_quant_args_) {
     CodeGraphQuantArgsState(ofs, config_->module_name());
+  }
+  if (config_->support_parallel()) {
+    CodeSetGlobalThreadPoolState(ofs, config_->module_name());
   }
   if (config_->is_weight_file()) {
     CodeInitWeightState(ofs, config_->module_name());
@@ -50,6 +54,9 @@ int InferenceGenerator::CodeNetCFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_impl_file;
   CodeSourceFileInclude(ofs, net_weight_hfile_, net_inc_hfile_);
+  if (config_->support_parallel()) {
+    CodeSetGlobalThreadPoolImplement(ofs, config_->module_name());
+  }
   CodeInputAndOutputImplement(ofs, config_->module_name(), ctx_);
   CodeInitResourceImplement(ofs, config_->module_name(), ctx_);
   CodeFreeResourceImplement(ofs, config_->module_name(), ctx_);
@@ -78,12 +85,14 @@ int InferenceGenerator::CodeBenchmarkFile() {
   if (config_->is_weight_file()) {
     CodeBenchmarkInitWeight(ofs, config_->module_name());
   }
-  if (config_->code_mode() == CodeMode::Code_Inference) {
-    CodeBenchmarkConfigThread(ofs);
+  if (config_->support_parallel()) {
+    CodeCreateThreadPool(ofs, config_->module_name());
   }
   CodeBenchmarkInference(ofs, config_->module_name());
   CodeBenchmarkPrintOutputs(ofs, config_->module_name());
-
+  if (config_->support_parallel()) {
+    CodeDestroyThreadPool(ofs);
+  }
   CodeBenchmarkFreeResourse(ofs, config_->module_name(), inputs_num);
   ofs.close();
   return RET_OK;

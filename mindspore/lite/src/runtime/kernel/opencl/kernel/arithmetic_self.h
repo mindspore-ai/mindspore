@@ -26,7 +26,7 @@ using mindspore::schema::PrimitiveType_Abs;
 using mindspore::schema::PrimitiveType_Ceil;
 using mindspore::schema::PrimitiveType_Cos;
 using mindspore::schema::PrimitiveType_Eltwise;
-using mindspore::schema::PrimitiveType_Exp;
+using mindspore::schema::PrimitiveType_ExpFusion;
 using mindspore::schema::PrimitiveType_Floor;
 using mindspore::schema::PrimitiveType_Log;
 using mindspore::schema::PrimitiveType_LogicalNot;

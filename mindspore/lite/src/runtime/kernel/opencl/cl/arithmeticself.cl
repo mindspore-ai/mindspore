@@ -208,4 +208,3 @@ __kernel void ArithmeticSelf_ElementRound_NHWC4(__read_only image2d_t input0, __
   result.w = round(result.w);
   WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
 }
-

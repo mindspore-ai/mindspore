@@ -34,19 +34,20 @@ namespace mindspore::lite::micro {
 class CoderFlags : public virtual FlagParser {
  public:
   CoderFlags() {
-    AddFlag(&CoderFlags::is_weight_file_, "isWeightFile", "whether generating weight .net file, true| false", false);
+    AddFlag(&CoderFlags::is_weight_file_, "isWeightFile", "whether generating weight binary file, true| false", false);
     AddFlag(&CoderFlags::model_path_, "modelPath", "Input model path", "");
     AddFlag(&CoderFlags::code_path_, "codePath", "Input code path", ".");
     AddFlag(&CoderFlags::code_module_name_, "moduleName", "Input code module name", "");
-    AddFlag(&CoderFlags::target_, "target", "generateed code target, x86| ARM32M| ARM32A| ARM64", "x86");
-    AddFlag(&CoderFlags::code_mode_, "codeMode", "generated code mode, Normal | Inference | Train", "Normal");
-    AddFlag(&CoderFlags::debug_mode_, "debugMode", "dump perlayer's time cost and tensor, true | false", false);
+    AddFlag(&CoderFlags::target_, "target", "generated code target, x86| ARM32M| ARM32A| ARM64", "x86");
+    AddFlag(&CoderFlags::code_mode_, "codeMode", "generated code mode, Inference | Train", "Inference");
+    AddFlag(&CoderFlags::support_parallel_, "supportParallel", "whether support parallel launch, true | false", false);
+    AddFlag(&CoderFlags::debug_mode_, "debugMode", "dump the tensors data for debugging, true | false", false);
   }
 
   ~CoderFlags() override = default;
 
- public:
   std::string model_path_;
+  bool support_parallel_{false};
   bool is_weight_file_{false};
   std::string code_module_name_;
   std::string code_path_;
@@ -87,8 +88,7 @@ int Coder::Run(const std::string &model_path) {
 int Coder::Init(const CoderFlags &flags) const {
   static const std::map<std::string, Target> kTargetMap = {
     {"x86", kX86}, {"ARM32M", kARM32M}, {"ARM32A", kARM32A}, {"ARM64", kARM64}, {"All", kAllTargets}};
-  static const std::map<std::string, CodeMode> kCodeModeMap = {
-    {"Normal", Code_Normal}, {"Inference", Code_Inference}, {"Train", Code_Train}};
+  static const std::map<std::string, CodeMode> kCodeModeMap = {{"Inference", Inference}, {"Train", Train}};
 
   Configurator *config = Configurator::GetInstance();
 
@@ -109,6 +109,11 @@ int Coder::Init(const CoderFlags &flags) const {
     auto code_item = kCodeModeMap.find(flags.code_mode_);
     MS_CHECK_TRUE_RET_BOOL(code_item != kCodeModeMap.end(), "unsupported code mode: " + flags.code_mode_);
     config->set_code_mode(code_item->second);
+    return true;
+  });
+
+  parsers.emplace_back([&flags, config]() -> bool {
+    config->set_support_parallel(flags.support_parallel_);
     return true;
   });
 

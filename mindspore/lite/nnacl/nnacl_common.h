@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-inline void ComputeStrides(const int *shape, int *strides, const int ndim) {
+static inline void ComputeStrides(const int *shape, int *strides, const int ndim) {
   int stride = 1;
   for (int i = ndim - 1; i >= 0; i--) {
     strides[i] = stride;

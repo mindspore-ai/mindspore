@@ -16,78 +16,57 @@
 
 #include "tools/converter/parser/onnx/onnx_pool_parser.h"
 #include <memory>
+#include <vector>
+#include "ops/fusion/avg_pool_fusion.h"
+#include "ops/fusion/max_pool_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxPoolParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                     const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx PoolParser";
-  auto attr = std::make_unique<schema::PoolingT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxAvgPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::AvgPoolFusion>();
 
-  attr->format = schema::Format::Format_NCHW;
-  const auto &pool_type = onnx_node.op_type();
-  if (pool_type == "MaxPool") {
-    attr->poolingMode = schema::PoolMode_MAX_POOLING;
-    attr->global = false;
-  } else if (pool_type == "AveragePool") {
-    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
-    attr->global = false;
-  } else if (pool_type == "GlobalMaxPool") {
-    attr->poolingMode = schema::PoolMode_MAX_POOLING;
-    attr->global = true;
-  } else if (pool_type == "GlobalAveragePool") {
-    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
-    attr->global = true;
-  } else if (pool_type == "Int8AveragePool") {
-    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
-    attr->global = false;
-  } else {
-    MS_LOG(ERROR) << "Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.";
-    return nullptr;
-  }
-
-  attr->roundMode = schema::RoundMode_FLOOR;
-  attr->strideW = 1;
-  attr->strideH = 1;
+  prim->set_format(mindspore::Format::NCHW);
+  prim->set_pad_mode(mindspore::PadMode::PAD);
+  mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
+  std::vector<int64_t> kernels;
+  std::vector<int64_t> strides;
+  std::vector<int64_t> pads;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "kernel_shape") {
       if (onnx_node_attr.ints_size() == 2) {
-        attr->windowH = static_cast<int32_t>(onnx_node_attr.ints(0));
-        attr->windowW = static_cast<int32_t>(onnx_node_attr.ints(1));
+        kernels.push_back(onnx_node_attr.ints(0));
+        kernels.push_back(onnx_node_attr.ints(1));
+        prim->set_kernel_size(kernels);
       }
     }
     if (attribute_name == "strides") {
       if (onnx_node_attr.ints_size() == 2) {
-        attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(0));
-        attr->strideW = static_cast<int32_t>(onnx_node_attr.ints(1));
+        strides.push_back(onnx_node_attr.ints(0));
+        strides.push_back(onnx_node_attr.ints(1));
       }
     }
     if (attribute_name == "auto_pad") {
       if (onnx_node_attr.s() == "SAME_UPPER") {
-        attr->padMode = schema::PadMode_SAME_UPPER;
+        prim->set_pad_mode(mindspore::PadMode::SAME);
       } else if (onnx_node_attr.s() == "SAME_LOWER") {
-        attr->padMode = schema::PadMode_SAME_LOWER;
+        MS_LOG(ERROR) << "PadMode_SAME_LOWER is not supported now";
+        return nullptr;
       }
     }
     if (attribute_name == "pads") {
       if (onnx_node_attr.ints_size() == 4) {
-        attr->padMode = schema::PadMode_CAFFE;
-        attr->padUp = static_cast<int32_t>(onnx_node_attr.ints(0));
-        attr->padDown = static_cast<int32_t>(onnx_node_attr.ints(2));
-        attr->padLeft = static_cast<int32_t>(onnx_node_attr.ints(1));
-        attr->padRight = static_cast<int32_t>(onnx_node_attr.ints(3));
+        pads.push_back(onnx_node_attr.ints(0));
+        pads.push_back(onnx_node_attr.ints(2));
+        pads.push_back(onnx_node_attr.ints(1));
+        pads.push_back(onnx_node_attr.ints(3));
       }
     }
     if (attribute_name == "ceil_mode") {
       if (onnx_node_attr.i() == 0) {
-        attr->roundMode = schema::RoundMode_FLOOR;
+        roundMode = mindspore::RoundMode::FLOOR;
       } else {
-        attr->roundMode = schema::RoundMode_CEIL;
+        roundMode = mindspore::RoundMode::CEIL;
       }
     }
     if (attribute_name == "dilations") {
@@ -95,21 +74,101 @@ lite::PrimitiveC *OnnxPoolParser::ParseLitePrimitive(const onnx::GraphProto &onn
       return nullptr;
     }
   }
+  prim->set_round_mode(roundMode);
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
+  if (strides.empty()) {
+    strides.push_back(1);
+    strides.push_back(1);
   }
-  primitive->value.type = schema::PrimitiveType_Pooling;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_strides(strides);
+  if (pads.empty()) {
+    pads = {0, 0, 0, 0};
+  }
+  prim->set_pad(pads);
+  if (onnx_node.op_type() == "GlobalAveragePool") {
+    prim->set_global(true);
+  } else {
+    prim->set_global(false);
+  }
+
+  return prim.release();
 }
 
-OnnxNodeRegistrar g_onnxMaxPoolParser("MaxPool", new OnnxPoolParser());
-OnnxNodeRegistrar g_onnxAveragePoolParser("AveragePool", new OnnxPoolParser());
-OnnxNodeRegistrar g_onnxGlobalAveragePoolParser("GlobalAveragePool", new OnnxPoolParser());
-OnnxNodeRegistrar g_onnxGlobalMaxPoolParser("GlobalMaxPool", new OnnxPoolParser());
-OnnxNodeRegistrar g_onnxInt8AveragePoolParser("Int8AveragePool", new OnnxPoolParser());
+ops::PrimitiveC *OnnxMaxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::MaxPoolFusion>();
+
+  prim->set_format(mindspore::Format::NCHW);
+  mindspore::RoundMode roundMode = mindspore::RoundMode::FLOOR;
+  std::vector<int64_t> kernels;
+  std::vector<int64_t> strides;
+  std::vector<int64_t> pads;
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "kernel_shape") {
+      if (onnx_node_attr.ints_size() == 2) {
+        kernels.push_back(onnx_node_attr.ints(0));
+        kernels.push_back(onnx_node_attr.ints(1));
+        prim->set_kernel_size(kernels);
+      }
+    }
+    if (attribute_name == "strides") {
+      if (onnx_node_attr.ints_size() == 2) {
+        strides.push_back(onnx_node_attr.ints(0));
+        strides.push_back(onnx_node_attr.ints(1));
+      }
+    }
+    if (attribute_name == "auto_pad") {
+      if (onnx_node_attr.s() == "SAME_UPPER") {
+        prim->set_pad_mode(mindspore::PadMode::SAME);
+      } else if (onnx_node_attr.s() == "SAME_LOWER") {
+        MS_LOG(ERROR) << "PadMode_SAME_LOWER is not supported now";
+        return nullptr;
+      }
+    }
+    if (attribute_name == "pads") {
+      if (onnx_node_attr.ints_size() == 4) {
+        prim->set_pad_mode(mindspore::PadMode::PAD);
+        pads.push_back(onnx_node_attr.ints(0));
+        pads.push_back(onnx_node_attr.ints(2));
+        pads.push_back(onnx_node_attr.ints(1));
+        pads.push_back(onnx_node_attr.ints(3));
+      }
+    }
+    if (attribute_name == "ceil_mode") {
+      if (onnx_node_attr.i() == 0) {
+        roundMode = mindspore::RoundMode::FLOOR;
+      } else {
+        roundMode = mindspore::RoundMode::CEIL;
+      }
+    }
+    if (attribute_name == "dilations") {
+      MS_LOG(ERROR) << "pooling op not support dilations now";
+      return nullptr;
+    }
+  }
+  prim->set_round_mode(roundMode);
+
+  if (pads.empty()) {
+    pads = {0, 0, 0, 0};
+  }
+  prim->set_pad(pads);
+
+  if (strides.empty()) {
+    strides.push_back(1);
+    strides.push_back(1);
+  }
+  prim->set_strides(strides);
+
+  prim->set_global(onnx_node.op_type() == "GlobalMaxPool");
+
+  return prim.release();
+}
+
+OnnxNodeRegistrar g_onnxAveragePoolParser("AveragePool", new OnnxAvgPoolParser());
+OnnxNodeRegistrar g_onnxGlobalAveragePoolParser("GlobalAveragePool", new OnnxAvgPoolParser());
+OnnxNodeRegistrar g_onnxInt8AveragePoolParser("Int8AveragePool", new OnnxAvgPoolParser());
+
+OnnxNodeRegistrar g_onnxMaxPoolParser("MaxPool", new OnnxMaxPoolParser());
+OnnxNodeRegistrar g_onnxGlobalMaxPoolParser("GlobalMaxPool", new OnnxMaxPoolParser());
 }  // namespace lite
 }  // namespace mindspore

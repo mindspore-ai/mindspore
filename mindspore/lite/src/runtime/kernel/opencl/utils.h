@@ -60,6 +60,9 @@ int GetBroadcastGpuAxis(int ndim, int ori_axis);
 
 void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor);
 
+int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tensor_name, lite::Tensor *tensor,
+                         TypeId expect_data_type, const std::vector<int> &expect_shape);
+
 template <class T1, class T2>
 void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane_in, int plane_out, int channel,
                       const std::function<T2(T1)> &to_dtype) {

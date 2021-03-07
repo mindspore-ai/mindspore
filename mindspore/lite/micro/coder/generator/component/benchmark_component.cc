@@ -108,7 +108,7 @@ void CodeBenchmarkSetBuffer(std::ofstream &ofs, const std::string &module_name) 
       << "_SetBuffer(buffer);\n"
          "  if (ret != RET_OK) {\n"
          "    MICRO_ERROR(\"set inputs failed\");\n"
-         "    return RET_ERROR;"
+         "    return RET_ERROR;\n"
          "  }\n";
 }
 
@@ -126,19 +126,6 @@ void CodeBenchmarkInitWeight(std::ofstream &ofs, const std::string &module_name)
          "  }\n"
          "  free(weight_buffer);\n"
          "  weight_buffer = NULL;\n";
-}
-
-void CodeBenchmarkConfigThread(std::ofstream &ofs) {
-  ofs << "  int thread_num = 4;\n"
-         "  BindMode bind_mode = NO_BIND_MODE;\n"
-         "  if (argc >= 6) {\n"
-         "    thread_num = atoi(argv[4]);\n"
-         "    bind_mode = atoi(argv[5]);\n"
-         "  }\n"
-         "  ret = ConfigThreadPool(THREAD_POOL_DEFAULT, thread_num, bind_mode);\n"
-         "  if (ret != 0) {\n"
-         "    MICRO_ERROR(\"create thread pool failed\");\n"
-         "  }\n";
 }
 
 void CodeBenchmarkInference(std::ofstream &ofs, const std::string &module_name) {
@@ -170,7 +157,6 @@ void CodeBenchmarkPrintOutputs(std::ofstream &ofs, const std::string &module_nam
          "      PrintTensorData(tensor);\n"
          "  }\n";
   ofs << "  printf(\"" << module_name << " inference success.\\n\");\n";
-  ofs << "  free(buffer);\n";
 }
 
 /**

@@ -41,11 +41,6 @@ class OnnxModelParser : public ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                        const QuantType &quant_type) override {
-    return nullptr;
-  }
-
   FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
                      const QuantType &quant_type) override;
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
@@ -60,34 +55,35 @@ class OnnxModelParser : public ModelParser {
   STATUS ConvertOnnxGraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
                           std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
                           std::vector<AnfNodePtr> *graph_inputs, const std::string &root_node_name);
-  STATUS ConvertConstTensors(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
-                             std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map);
-  STATUS ConvertGraphInputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
-                            std::unordered_map<std::string, AnfNodePtr> *nodes_map);
-  STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
-                             const std::unordered_map<std::string, AnfNodePtr> &anf_nodes_map);
-  STATUS BuildReturnNode(const FuncGraphPtr &func_graph_ptr, const std::vector<AnfNodePtr> &return_inputs);
-  STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor);
+  static STATUS ConvertConstTensors(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
+                                    std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map);
+  static STATUS ConvertGraphInputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
+                                   std::unordered_map<std::string, AnfNodePtr> *nodes_map);
+  static STATUS ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &func_graph_ptr,
+                                    const std::unordered_map<std::string, AnfNodePtr> &anf_nodes_map);
+  static STATUS BuildReturnNode(const FuncGraphPtr &func_graph_ptr, const std::vector<AnfNodePtr> &return_inputs);
+  static STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor);
   STATUS BuildParameterNodeForQuantParam(const void *data, const std::string &name, TypeId type);
   STATUS BuildCNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
                     std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, std::vector<AnfNodePtr> *graph_inputs,
-                    lite::PrimitiveC *primitive_c, std::string loop_name);
-  STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
-                        std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, const CNodePtr &cnode);
-  STATUS ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
-                                std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
-                                lite::PrimitiveC *primitive_c);
-  STATUS ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
-                             std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, lite::PrimitiveC *primitive_c);
-  STATUS BuildCNodeForGemm(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
-                           std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, lite::PrimitiveC *primitive_c,
-                           const std::string &name);
-  STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
+                    ops::PrimitiveC *primitive_c, std::string loop_name);
+  static STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
+                               std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, const CNodePtr &cnode);
+  static STATUS ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
+                                       std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
+                                       ops::PrimitiveC *primitive_c);
+  static STATUS ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
+                                    std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
+                                    ops::PrimitiveC *primitive_c);
+  static STATUS BuildCNodeForGemm(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
+                                  std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
+                                  ops::PrimitiveC *primitive_c, const std::string &name);
+  STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
   STATUS ParseQuantParam(const onnx::NodeProto &onnx_node);
   STATUS SetTensorQuantParam(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);
   STATUS SetTensorQuantParamFromNode(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);
   STATUS CopyTensorQuantParam(const std::string &tensor_name, QuantParamT *quant_param, bool scale_or_not);
-  bool IsSpecialOnnxNode(const onnx::NodeProto &onnx_node);
+  static bool IsSpecialOnnxNode(const onnx::NodeProto &onnx_node);
   STATUS ConvertLoopOnnxNode(const onnx::NodeProto &onnx_node,
                              std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
                              const std::string &root_node_name);
@@ -98,8 +94,8 @@ class OnnxModelParser : public ModelParser {
                             int act_output_num);
   STATUS AddTensorListStackNode(const AnfNodePtr &root_while_node, const onnx::NodeProto &onnx_node, int act_output_num,
                                 int body_output_size);
-  STATUS BuildCondGraph(const FuncGraphPtr &cond_graph, const AnfNodePtr &root_while_node, int inputs_num,
-                        const std::string &cond_graph_name);
+  static STATUS BuildCondGraph(const FuncGraphPtr &cond_graph, const AnfNodePtr &root_while_node, int inputs_num,
+                               const std::string &cond_graph_name);
   STATUS ConvertIfSubgraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,
                            const std::string &subgrah_name, const std::string &if_node_name,
                            const std::string &root_node_name);

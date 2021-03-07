@@ -39,14 +39,14 @@ class TransposeFp32Coder final : public OperatorCoder {
 
  private:
   TransposeParameter *transpose_parameter_ = nullptr;
-  int thread_num_ = 1;
-  int thread_h_stride_ = 0;
-  int thread_h_num_ = 0;
-  int num_unit_ = 0;
-  int *in_shape_ = nullptr;
-  int *out_shape_ = nullptr;
-  int *dim_size_ = nullptr;
-  int *position_ = nullptr;
+  int thread_num_{1};
+  int thread_h_stride_{0};
+  int thread_h_num_{0};
+  int num_unit_{0};
+  int *in_shape_{nullptr};
+  int *out_shape_{nullptr};
+  int *dim_size_{nullptr};
+  int *position_{nullptr};
 };
 
 }  // namespace mindspore::lite::micro::nnacl

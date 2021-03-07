@@ -69,22 +69,9 @@ TypeId TensorFlowUtils::ParseAttrDataType(const tensorflow::NodeDef &node_def, c
   return GetTFDataType(attr_value.type());
 }
 
-schema::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &node_def) {
-  tensorflow::AttrValue attr_value;
-  if (!FindAttrValue(node_def, "data_format", &attr_value)) {
-    MS_LOG(ERROR) << "Find attr data_format failed";
-    return schema::Format_NUM_OF_FORMAT;
-  }
-  if (attr_value.s() == "NHWC") {
-    return schema::Format_NHWC;
-  } else if (attr_value.s() == "NCHW") {
-    return schema::Format_NCHW;
-  }
-  return schema::Format_NUM_OF_FORMAT;
-}
-
 bool TensorFlowUtils::DecodeInt64(std::string_view *str_view, uint64_t *value) {
   if (str_view == nullptr || value == nullptr) {
+    *value = 0;
     MS_LOG(ERROR) << "str_view or value is nullptr";
     return false;
   }
@@ -121,7 +108,7 @@ std::string TensorFlowUtils::GetFlattenNodeName(const std::string &input_name) {
                                         std::sregex_token_iterator());
   std::string ret = input_name;
   if (input_splits.size() == 3) {
-    if (input_splits[2].compare("0") == 0) {
+    if (input_splits[2] == "0") {
       ret = input_splits[0];
     } else {
       ret = input_splits[0] + ":" + input_splits[2];  // multi output node
@@ -139,6 +126,18 @@ std::string TensorFlowUtils::GetNodeName(const std::string &input_name) {
     return input_splits[0];
   }
   return input_name;
+}
+
+mindspore::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &node_def) {
+  tensorflow::AttrValue attr_value;
+  if (!FindAttrValue(node_def, "data_format", &attr_value)) {
+    MS_LOG(ERROR) << "Find attr data_format failed";
+    return mindspore::Format::NCHW;
+  }
+  if (attr_value.s() == "NHWC") {
+    return mindspore::Format::NHWC;
+  }
+  return mindspore::Format::NCHW;
 }
 }  // namespace lite
 }  // namespace mindspore

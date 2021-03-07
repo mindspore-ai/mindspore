@@ -53,20 +53,3 @@ int Fp16SigmoidGrad(const float16_t *src0, const float16_t *src1, size_t length,
   }
   return NNACL_OK;
 }
-
-int Fp16LogGrad(const float16_t *src0, const float16_t *src1, size_t length, float16_t *dst) {
-  int i = 0;
-#ifdef ENABLE_NEON
-  float16x8_t log_10 = vdupq_n_f16(log(10));
-  for (; i < length - 4; i += 4) {
-    float16x8_t src0_4 = vld1q_f16(src0 + i);
-    float16x8_t src1_4 = vld1q_f16(src1 + i);
-    float16x8_t dst_4 = vmulq_f16(src0_4, vrecpeq_f16(vmulq_f16(src1_4, log_10)));
-    vst1q_f16(dst + i, dst_4);
-  }
-#endif
-  for (; i < length; i++) {
-    dst[i] = src0[i] * 1.0f / (src1[i] * log(10));
-  }
-  return NNACL_OK;
-}

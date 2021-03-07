@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,34 +23,48 @@
 #include <memory>
 #include <vector>
 #include <set>
-#include "src/ops/primitive_c.h"
-#include "mindspore/lite/tools/converter/quantizer/bitpacking.h"
+#include "include/version.h"
+#include "ops/concat.h"
+#include "ops/crop.h"
+#include "ops/eltwise.h"
+#include "ops/fusion/activation.h"
+#include "ops/fusion/add_fusion.h"
+#include "ops/fusion/avg_pool_fusion.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "ops/fusion/full_connection.h"
+#include "ops/fusion/layer_norm_fusion.h"
+#include "ops/fusion/max_pool_fusion.h"
+#include "ops/fusion/mul_fusion.h"
+#include "ops/gather.h"
+#include "ops/mat_mul.h"
+#include "ops/reshape.h"
+#include "ops/split.h"
+#include "ops/transpose.h"
+#include "ops/tuple_get_item.h"
+#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/converter/quantizer/bitpacking.h"
 #include "src/common/utils.h"
 #include "abstract/abstract_value.h"
 #include "securec/include/securec.h"
-#include "tools/anf_exporter/anf_exporter.h"
-#include "mindspore/lite/include/version.h"
 
 using std::string;
 using std::vector;
 
 namespace mindspore::lite::quant {
-const std::vector<schema::PrimitiveType> QuantStrategy::conv_types = {
-  schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_Conv2D,
-  schema::PrimitiveType_DepthwiseConv2D};
-const std::vector<schema::PrimitiveType> QuantStrategy::mul_types = {schema::PrimitiveType_MatMul,
-                                                                     schema::PrimitiveType_FullConnection};
-QuantStrategy::QuantStrategy(size_t weightSize, size_t convWeightQuantChannelThreshold)
-    : mWeightSize(weightSize), mConvWeightQuantChannelThreshold(convWeightQuantChannelThreshold) {}
+const std::vector<std::string> QuantStrategy::conv_types_ = {ops::kNameConv2DFusion, ops::kNameConv2dTransposeFusion};
+const std::vector<std::string> QuantStrategy::mul_types_ = {ops::kNameMatMul, ops::kNameFullConnection};
+QuantStrategy::QuantStrategy(size_t weight_size, size_t conv_weight_quant_channel_threshold)
+    : m_weight_size_(weight_size), m_conv_weight_quant_channel_threshold_(conv_weight_quant_channel_threshold) {}
 
 bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   MS_ASSERT(node != nullptr);
-  auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(node->input(0));
+  auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(node->input(0));
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr";
     return false;
   }
-  if (!IsContain(conv_types, (schema::PrimitiveType)primitive_c->Type())) {
+  if (!IsContain(conv_types_, primitive_c->name())) {
     return false;
   }
   if (node->size() < 3) {
@@ -74,12 +88,12 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
   for (auto dim : weight_shape) {
     shapeSize = shapeSize * dim;
   }
-  if (shapeSize < mWeightSize) {
+  if (shapeSize < m_weight_size_) {
     MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
     return false;
   }
-  if (weight_shape[0] <= static_cast<int>(mConvWeightQuantChannelThreshold)) {
-    MS_LOG(INFO) << "channel less mConvWeightQuantChannelThreshold!" << weight_shape[0];
+  if (weight_shape[0] <= static_cast<int>(m_conv_weight_quant_channel_threshold_)) {
+    MS_LOG(INFO) << "channel less m_conv_weight_quant_channel_threshold_!" << weight_shape[0];
     return false;
   }
   return true;
@@ -92,44 +106,30 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
   }
   auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
   auto type = NodePrimitiveType(cnode);
-  static const std::vector<schema::PrimitiveType> int8OpList = {
-    schema::PrimitiveType_Conv2D,
-    schema::PrimitiveType_DepthwiseConv2D,
-    schema::PrimitiveType_Add,
-    schema::PrimitiveType_Mul,
-    schema::PrimitiveType_Pooling,
-    schema::PrimitiveType_Concat,
-    schema::PrimitiveType_Split,
-    schema::PrimitiveType_TupleGetItem,
-    schema::PrimitiveType_Reshape,
-    schema::PrimitiveType_FullConnection,
-    schema::PrimitiveType_MatMul,
-    schema::PrimitiveType_Crop,
-    schema::PrimitiveType_DeDepthwiseConv2D,
-    schema::PrimitiveType_DeConv2D,
-    schema::PrimitiveType_Activation,
-    schema::PrimitiveType_Transpose,
-    schema::PrimitiveType_Eltwise,
-    schema::PrimitiveType_Gather,
-    schema::PrimitiveType_LayerNorm,
+  static const std::vector<std::string> int8OpList = {
+    ops::kNameAddFusion,     ops::kNameActivation,      ops::kNameAvgPoolFusion,
+    ops::kNameConcat,        ops::kNameConv2DFusion,    ops::kNameConv2dTransposeFusion,
+    ops::kNameCrop,          ops::kNameEltwise,         ops::kNameFullConnection,
+    ops::kNameGather,        ops::kNameLayerNormFusion, ops::kNameMatMul,
+    ops::kNameMaxPoolFusion, ops::kNameMulFusion,       ops::kNameReshape,
+    ops::kNameSplit,         ops::kNameTranspose,       ops::kNameTupleGetItem,
   };
   bool contain = IsContain(int8OpList, type);
   if (!contain) {
-    MS_LOG(INFO) << "not quant, " << cnode->fullname_with_scope()
-                 << " of type: " << schema::EnumNamePrimitiveType(type);
+    MS_LOG(INFO) << "not quant, " << cnode->fullname_with_scope() << " of type: " << type;
   }
   return contain;
 }
 
 bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
   MS_ASSERT(node != nullptr);
-  auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(node->input(0));
+  auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(node->input(0));
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr";
     return false;
   }
 
-  if (!IsContain(mul_types, (schema::PrimitiveType)primitive_c->Type())) {
+  if (!IsContain(mul_types_, primitive_c->name())) {
     return false;
   }
 
@@ -172,12 +172,29 @@ bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
   for (auto dim : weight_shape) {
     shapeSize = shapeSize * dim;
   }
-  if (shapeSize < mWeightSize) {
+  if (shapeSize < m_weight_size_) {
     MS_LOG(INFO) << "shapeSize Invalid!" << shapeSize;
     return false;
   }
 
   return true;
+}
+
+QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
+  MS_ASSERT(primitive != nullptr);
+  QuantParamHolderPtr quant_params_holder = nullptr;
+  auto quant_params_valueptr = primitive->GetAttr("quant_params");
+  if (quant_params_valueptr == nullptr) {
+    quant_params_holder = std::make_shared<QuantParamHolder>();
+    primitive->AddAttr("quant_params", quant_params_holder);
+  } else {
+    quant_params_holder = quant_params_valueptr->cast<QuantParamHolderPtr>();
+    if (quant_params_holder == nullptr) {
+      quant_params_holder = std::make_shared<QuantParamHolder>();
+      primitive->AddAttr("quant_params", quant_params_holder);
+    }
+  }
+  return quant_params_holder;
 }
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
@@ -467,17 +484,17 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
   return clusters_index;
 }
 
-schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode) {
+std::string NodePrimitiveType(const CNodePtr &cnode) {
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "cnode is null";
-    return schema::PrimitiveType_NONE;
+    return "";
   }
-  auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+  auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is null";
-    return schema::PrimitiveType_NONE;
+    return "";
   }
-  return (schema::PrimitiveType)primitive_c->Type();
+  return primitive_c->name();
 }
 
 std::vector<int> DataToVector(const string &str) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/oneslike.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateOnesLikeParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateOnesLikeParameter(const void *prim) {
   OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc OnesLike Parameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(OpParameter));
-  param->type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  param->type_ = primitive->value_type();
   return param;
 }
 
-Registry OnesLikeParameterRegistry(schema::PrimitiveType_OnesLike, PopulateOnesLikeParameter);
+Registry OnesLikeParameterRegistry(schema::PrimitiveType_OnesLike, PopulateOnesLikeParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

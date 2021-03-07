@@ -26,7 +26,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Gru;
+using mindspore::schema::PrimitiveType_GRU;
 
 namespace mindspore::kernel {
 void GruFp16CPUKernel::FreeTmpBuffer() {
@@ -264,5 +264,5 @@ int GruFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Gru, LiteKernelCreator<GruFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_GRU, LiteKernelCreator<GruFp16CPUKernel>)
 }  // namespace mindspore::kernel

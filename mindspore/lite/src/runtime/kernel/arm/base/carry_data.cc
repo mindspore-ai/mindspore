@@ -59,7 +59,7 @@ int CarryDataKernel::MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_
     MS_LOG(ERROR) << "input tensor data_type: " << src_tensor->data_type() << " vs "
                   << "output tensor data_type: " << dst_tensor->data_type()
                   << "input tensor format: " << src_tensor->format() << " vs "
-                  << "output tensor format: " << dst_tensor->format() << "input tensor shape: " << src_tensor->shape()
+                  << "output tensor format: " << dst_tensor->format() << " input tensor shape: " << src_tensor->shape()
                   << " vs "
                   << "output tensor shape: " << dst_tensor->shape();
     return RET_ERROR;

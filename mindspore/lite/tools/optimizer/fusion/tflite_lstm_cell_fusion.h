@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,10 @@ class TfliteLstmCellFusion : public PatternProcessPass {
   static CNodePtr CreateOutputGetItem(const FuncGraphPtr &func_graph, const CNodePtr &node, const int item_index);
 
  protected:
-  VarPtr cell_smooth_old_ = nullptr;
-  VarPtr cell_smooth_new_ = nullptr;
-  VarPtr hidden_smooth_old_ = nullptr;
-  VarPtr hidden_smooth_new_ = nullptr;
+  VarPtr cell_zoneout_old_ = nullptr;
+  VarPtr cell_zoneout_new_ = nullptr;
+  VarPtr hidden_zoneout_old_ = nullptr;
+  VarPtr hidden_zoneout_new_ = nullptr;
   std::vector<VarPtr> while_input_vars_;
 
   lite::STATUS GetFloatScalarFromParamValueLite(const AnfNodePtr &param_value, float *v) const;
@@ -58,11 +58,12 @@ class TfliteLstmCellFusion : public PatternProcessPass {
   AnfNodePtr GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
   virtual AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const;
   virtual CNodePtr CreateLSTMNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const EquivPtr &body_equiv,
-                                  const std::string &base_name, const float smooth) const;
+                                  const std::string &base_name, const float zoneout_cell,
+                                  const float zoneout_hidden) const;
 
  private:
   bool CheckBodyGraph(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const CNodePtr &while_cnode,
-                      float *smooth) const;
+                      float *zoneout_cell, float *zoneout_hidden) const;
   bool CheckReferencedOutputs(const FuncGraphPtr &func_graph, const CNodePtr &while_cnode) const;
 
   lite::STATUS GetConcatedParam(const std::vector<AnfNodePtr> &params, const ParameterPtr &new_param,

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,28 +28,22 @@ TEST_F(TestTfliteParserDepthwiseConv1, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Conv2D) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Conv2DFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserDepthwiseConv1, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsConv2D(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsConv2D();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsConv2DFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsConv2DFusion();
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->group, 0);
-  ASSERT_EQ(val->activationType, schema::ActivationType_NO_ACTIVATION);
-  ASSERT_EQ(val->channelIn, 1);
-  ASSERT_EQ(val->channelOut, 4);
-  ASSERT_EQ(val->kernelH, 3);
-  ASSERT_EQ(val->kernelW, 3);
-  ASSERT_EQ(val->strideH, 1);
-  ASSERT_EQ(val->strideW, 1);
-  ASSERT_EQ(val->dilateH, 1);
-  ASSERT_EQ(val->dilateW, 1);
-  ASSERT_EQ(val->padMode, schema::PadMode_SAME_UPPER);
-  ASSERT_EQ(val->padUp, 1);
-  ASSERT_EQ(val->padDown, 1);
-  ASSERT_EQ(val->padLeft, 1);
-  ASSERT_EQ(val->padRight, 1);
+  ASSERT_EQ(val->activation_type, schema::ActivationType_NO_ACTIVATION);
+  ASSERT_EQ(val->in_channel, 1);
+  ASSERT_EQ(val->out_channel, 4);
+  ASSERT_EQ(val->kernel_size, (std::vector<int64_t>{3, 3}));
+  ASSERT_EQ(val->stride, (std::vector<int64_t>{1, 1}));
+  ASSERT_EQ(val->dilation, (std::vector<int64_t>{1, 1}));
+  ASSERT_EQ(val->pad_mode, schema::PadMode_SAME);
+  ASSERT_EQ(val->pad_list, (std::vector<int64_t>{1, 1, 1, 1}));
 }
 
 class TestTfliteParserDepthwiseConv2 : public TestTfliteParser {
@@ -62,27 +56,20 @@ TEST_F(TestTfliteParserDepthwiseConv2, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_DepthwiseConv2D) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Conv2DFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserDepthwiseConv2, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsDepthwiseConv2D(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsDepthwiseConv2D();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsConv2DFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsConv2DFusion();
   ASSERT_EQ(val->format, schema::Format_NHWC);
-  ASSERT_EQ(val->activationType, schema::ActivationType_NO_ACTIVATION);
-  ASSERT_EQ(val->channelIn, 2);
-  ASSERT_EQ(val->channelMultiplier, 1);
-  ASSERT_EQ(val->kernelH, 3);
-  ASSERT_EQ(val->kernelW, 3);
-  ASSERT_EQ(val->strideH, 1);
-  ASSERT_EQ(val->strideW, 1);
-  ASSERT_EQ(val->dilateH, 1);
-  ASSERT_EQ(val->dilateW, 1);
-  ASSERT_EQ(val->padMode, schema::PadMode_SAME_UPPER);
-  ASSERT_EQ(val->padUp, 1);
-  ASSERT_EQ(val->padDown, 1);
-  ASSERT_EQ(val->padLeft, 1);
-  ASSERT_EQ(val->padRight, 1);
+  ASSERT_EQ(val->activation_type, schema::ActivationType_NO_ACTIVATION);
+  ASSERT_EQ(val->in_channel, 2);
+  ASSERT_EQ(val->kernel_size, (std::vector<int64_t>{3, 3}));
+  ASSERT_EQ(val->stride, (std::vector<int64_t>{1, 1}));
+  ASSERT_EQ(val->dilation, (std::vector<int64_t>{1, 1}));
+  ASSERT_EQ(val->pad_mode, schema::PadMode_SAME);
+  ASSERT_EQ(val->pad_list, (std::vector<int64_t>{1, 1, 1, 1}));
 }
 
 }  // namespace mindspore

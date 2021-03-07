@@ -33,6 +33,11 @@ typedef struct StridedSliceParameter {
   // other parameter
   int num_axes_;
   LiteDataType data_type;
+  int begins_mask_;
+  int ends_mask_;
+  int ellipsisMask_;
+  int newAxisMask_;
+  int shrinkAxisMask_;
 } StridedSliceParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_STRIDED_SLICE_PARAMETER_H_

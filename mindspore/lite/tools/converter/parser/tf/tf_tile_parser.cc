@@ -19,63 +19,38 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/fusion/tile_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
-                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                           std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF TileParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::TileFusion>();
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::TileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-
-  *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-
-  auto multiplies_node = GetConstInputNode(tf_node_map, tf_op.input(1));
   tensorflow::AttrValue attr_value;
-  if (multiplies_node != nullptr && TensorFlowUtils::FindAttrValue(*multiplies_node, "value", &attr_value)) {
-    auto tensor_proto = attr_value.tensor();
-    if (tensor_proto.int_val_size() > 0) {
-      for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
-        attr->dims.push_back(i);
-        attr->multiples.push_back(tensor_proto.int_val(i));
-      }
-    } else {
-      auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
-      auto data = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
-      for (size_t i = 0; i < data_num; ++i) {
-        attr->dims.push_back(i);
-        attr->multiples.push_back(data[i]);
-      }
+  std::vector<int64_t> dims;
+  const auto &tensor_proto = attr_value.tensor();
+  if (tensor_proto.int_val_size() > 0) {
+    for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
+      dims.push_back(i);
     }
   } else {
-    AddOpInput(tf_op, 1, inputs);
+    auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
+    for (size_t i = 0; i < data_num; ++i) {
+      dims.push_back(i);
+    }
   }
+  prim->set_dims(dims);
 
-  primitive->value.type = schema::PrimitiveType_Tile;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
+  *output_size = 1;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
-
-  return status;
+  return prim.release();
 }
+
 TFNodeRegistrar g_tfTileParser("Tile", new TFTileParser());
 }  // namespace lite
 }  // namespace mindspore

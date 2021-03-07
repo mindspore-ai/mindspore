@@ -24,7 +24,16 @@ using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::lite::micro::nnacl {
 
-FullConnectionInt8Coder ::~FullConnectionInt8Coder() { FreeQuantParam(); }
+FullConnectionInt8Coder ::~FullConnectionInt8Coder() {
+  FreeQuantParam();
+  filter_tensor_ = nullptr;
+  bias_tensor_ = nullptr;
+  pack_a_ptr_ = nullptr;
+  pack_b_ptr_ = nullptr;
+  input_sums_ = nullptr;
+  weight_bias_sums_ = nullptr;
+  bias_ptr_ = nullptr;
+}
 
 int FullConnectionInt8Coder::MallocQuantParam() {
   filter_tensor_ = input_tensors_.at(kWeightIndex);

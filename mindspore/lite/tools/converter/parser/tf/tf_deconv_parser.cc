@@ -20,87 +20,60 @@
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/converter/parser/tf/tf_util.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
-                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                             std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(DEBUG) << "TF DeConvParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFDeconvParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::Conv2dTransposeFusion>();
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::DeConv2DT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-
-  attr->group = 1;
-  attr->format = TensorFlowUtils::ParseNodeFormat(tf_op);
+  prim->set_group(1);
+  prim->set_pad({0, 0, 0, 0});
+  auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
+  prim->set_format(format);
 
   std::vector<int64_t> dilations(2);
-  auto status = ParseDilations(tf_op, attr->format, &dilations);
-  if (status != RET_OK) {
-    return status;
+  if (ParseDilations(tf_op, format, &dilations) != RET_OK) {
+    MS_LOG(ERROR) << "parse dilations failed";
+    return nullptr;
   }
-  attr->dilateH = dilations[0];
-  attr->dilateW = dilations[1];
+  prim->set_dilation({dilations[0], dilations[1]});
 
   std::vector<int64_t> strides(2);
-  status = ParseStrides(tf_op, attr->format, &strides);
-  if (status != RET_OK) {
-    return status;
+  if (ParseStrides(tf_op, format, &strides) != RET_OK) {
+    MS_LOG(ERROR) << "parse strides failed";
+    return nullptr;
   }
-  attr->strideH = strides[0];
-  attr->strideW = strides[1];
+  prim->set_stride({strides[0], strides[1]});
 
   auto weight_node = GetConstInputNode(tf_node_map, tf_op.input(1));
   if (weight_node != nullptr) {
     std::vector<int64_t> kernels(4);
-    status = ParseKernels(*weight_node, attr->format, &kernels);
-    if (status != RET_OK) {
-      return status;
+    if (ParseKernels(*weight_node, format, &kernels) != RET_OK) {
+      MS_LOG(ERROR) << "parse kernels failed";
+      return nullptr;
     }
-    attr->kernelH = kernels[0];
-    attr->kernelW = kernels[1];
-    attr->channelOut = kernels[2];
-    attr->channelIn = kernels[3];
+    prim->set_kernel_size({kernels[0], kernels[1]});
+    prim->set_out_channel(kernels[2]);
+    prim->set_in_channel(kernels[3]);
   } else {
-    attr->kernelH = -1;
-    attr->kernelW = -1;
-    attr->channelIn = -1;
-    attr->channelOut = -1;
+    prim->set_kernel_size({-1, -1});
+    prim->set_out_channel(-1);
+    prim->set_in_channel(-1);
     MS_LOG(WARNING) << "parsing of kernelH/W channelIn/Out is delayed";
   }
 
-  status = ParsePadMode(tf_op, &attr->padMode);
-  if (status != RET_OK) {
-    return status;
-  }
-
-  primitive->value.type = schema::PrimitiveType_DeConv2D;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_pad_mode(ParsePadMode(tf_op));
 
   *output_size = 1;
-  status = AddOpInput(tf_op, 2, inputs);
-  if (status != RET_OK) {
-    return status;
+  if (AddOpInput(tf_op, 2, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
-  status = AddOpInput(tf_op, 1, inputs);  // weights
-  return status;
+
+  return prim.release();
 }
 TFNodeRegistrar g_tf_deconv_parser("Conv2DBackpropInput", new TFDeconvParser());
 }  // namespace lite

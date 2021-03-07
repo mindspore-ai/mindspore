@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 #include "src/runtime/kernel/npu/slice_npu.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Slice;
+using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
 int SliceNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -49,5 +50,5 @@ SliceNPUKernel::~SliceNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Slice, NPUKernelCreator<SliceNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_SliceFusion, NPUKernelCreator<SliceNPUKernel>)
 }  // namespace mindspore::kernel

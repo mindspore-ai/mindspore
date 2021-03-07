@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class SoftmaxGradCPUKernel : public LiteKernel {
  public:
   explicit SoftmaxGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                const lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param = reinterpret_cast<SoftmaxParameter *>(parameter);
   }
   ~SoftmaxGradCPUKernel() override {}

@@ -17,51 +17,33 @@
 #include "tools/converter/parser/tflite/tflite_logical_parser.h"
 #include <vector>
 #include <memory>
-#include <string>
+#include "ops/logical_and.h"
+#include "ops/logical_not.h"
+#include "ops/logical_or.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteLogicalParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
-  auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
-  if (tflite_op_type == tflite::BuiltinOperator_LOGICAL_AND) {
-    MS_LOG(DEBUG) << "parse TfliteLogicalAndParser";
-    std::unique_ptr<schema::LogicalAndT> attr = std::make_unique<schema::LogicalAndT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return nullptr;
-    }
-    primitive->value.type = schema::PrimitiveType_LogicalAnd;
-    primitive->value.value = attr.release();
-  } else if (tflite_op_type == tflite::BuiltinOperator_LOGICAL_NOT) {
-    MS_LOG(DEBUG) << "parse TfliteLogicalNotParser";
-    std::unique_ptr<schema::LogicalNotT> attr = std::make_unique<schema::LogicalNotT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return nullptr;
-    }
-    primitive->value.type = schema::PrimitiveType_LogicalNot;
-    primitive->value.value = attr.release();
-  } else if (tflite_op_type == tflite::BuiltinOperator_LOGICAL_OR) {
-    MS_LOG(DEBUG) << "parse TfliteLogicalOrParser";
-    std::unique_ptr<schema::LogicalOrT> attr = std::make_unique<schema::LogicalOrT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return nullptr;
-    }
-    primitive->value.type = schema::PrimitiveType_LogicalOr;
-    primitive->value.value = attr.release();
-  }
-  return PrimitiveC::Create(primitive.release());
+
+ops::PrimitiveC *TfliteLogicalAndParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::LogicalAnd>();
+  return prim.release();
 }
 
-TfliteNodeRegister g_tfliteLogicalAndParser(tflite::BuiltinOperator_LOGICAL_AND, new TfliteLogicalParser());
-TfliteNodeRegister g_tfliteLogicalNotParser(tflite::BuiltinOperator_LOGICAL_NOT, new TfliteLogicalParser());
-TfliteNodeRegister g_tfliteLogicalOrParser(tflite::BuiltinOperator_LOGICAL_OR, new TfliteLogicalParser());
+ops::PrimitiveC *TfliteLogicalNotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::LogicalNot>();
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteLogicalOrParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::LogicalOr>();
+  return prim.release();
+}
+
+TfliteNodeRegister g_tfliteLogicalAndParser(tflite::BuiltinOperator_LOGICAL_AND, new TfliteLogicalAndParser());
+TfliteNodeRegister g_tfliteLogicalNotParser(tflite::BuiltinOperator_LOGICAL_NOT, new TfliteLogicalNotParser());
+TfliteNodeRegister g_tfliteLogicalOrParser(tflite::BuiltinOperator_LOGICAL_OR, new TfliteLogicalOrParser());
 }  // namespace lite
 }  // namespace mindspore

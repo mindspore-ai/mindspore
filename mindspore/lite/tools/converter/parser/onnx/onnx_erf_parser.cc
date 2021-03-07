@@ -15,26 +15,13 @@
  */
 #include "tools/converter/parser/onnx/onnx_erf_parser.h"
 #include <memory>
+#include "ops/erf.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxErfParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                    const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ErfParser";
-  auto attr = std::make_unique<schema::ErfT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Erf;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxErfParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Erf>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnx_erf_parser("Erf", new OnnxErfParser());

@@ -18,34 +18,25 @@
 #include "tools/converter/parser/tflite/tflite_space_to_depth_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/space_to_depth.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteSpaceToDepthParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteSpaceToDepthParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::SpaceToDepth>();
 
-  std::unique_ptr<schema::SpaceToDepthT> attr = std::make_unique<schema::SpaceToDepthT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+  prim->set_format(mindspore::Format::NHWC);
 
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsSpaceToDepthOptions();
   if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op space to depth attr failed";
+    MS_LOG(ERROR) << "get SpaceToDepth attr failed";
     return nullptr;
   }
-  attr->blockSize = tflite_attr->block_size;
-  attr->format = schema::Format::Format_NHWC;
+  prim->set_block_size(tflite_attr->block_size);
 
-  primitive->value.type = schema::PrimitiveType_SpaceToDepth;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSpaceToDepthParser(tflite::BuiltinOperator_SPACE_TO_DEPTH, new TfliteSpaceToDepthParser());

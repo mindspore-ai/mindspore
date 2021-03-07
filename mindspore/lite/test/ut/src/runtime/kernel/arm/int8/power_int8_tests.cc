@@ -34,7 +34,7 @@ TEST_F(TestPowerInt8, PowerInt8) {
   std::vector<lite::Tensor *> outputs_tensor;
 
   PowerParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_Power;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_PowFusion;
   op_param.power_ = 2;
   op_param.scale_ = 1;
   op_param.shift_ = 0;
@@ -68,12 +68,12 @@ TEST_F(TestPowerInt8, PowerInt8) {
 
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Power};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_PowFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx.get(), desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -90,7 +90,7 @@ TEST_F(TestPowerInt8, normal) {
   std::vector<lite::Tensor *> outputs_tensor;
 
   PowerParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_Power;
+  op_param.op_parameter_.type_ = schema::PrimitiveType_PowFusion;
   op_param.scale_ = 1;
   op_param.shift_ = 0;
 
@@ -137,12 +137,12 @@ TEST_F(TestPowerInt8, normal) {
 
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Power};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_PowFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx.get(), desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,38 +17,39 @@
 #include "mindspore/lite/tools/converter/quantizer/quant_cast.h"
 #include <memory>
 #include <vector>
-#include "src/ops/primitive_c.h"
+#include "ops/gather.h"
+#include "ops/quant_dtype_cast.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite::quant {
 ValueNodePtr NewQuantCastValueNode(int src_type, int dst_type, const std::vector<schema::QuantParamT> &quant_params) {
-  std::unique_ptr<schema::PrimitiveT> primitive = std::make_unique<schema::PrimitiveT>();
-  schema::QuantDTypeCastT quant_dtype_cast;
-  quant_dtype_cast.srcT = src_type;  // kNumberTypeInt8;
-  quant_dtype_cast.dstT = dst_type;  // kNumberTypeFloat32;
-  primitive->value.Set(quant_dtype_cast);
-  auto primTValue = std::make_shared<PrimitiveC>(primitive.release());
-  primTValue->set_quant_type(schema::QuantType_PostTraining);
+  auto prim_c = std::make_shared<ops::QuantDTypeCast>();
+  prim_c->Init(src_type, dst_type);
+  auto quant_params_holder = std::make_shared<QuantParamHolder>();
+  quant_params_holder->set_quant_type(schema::QuantType_PostTraining);
   for (auto &quant_param : quant_params) {
     std::vector<schema::QuantParamT> quant_params_in = {quant_param};
-    primTValue->AddInputQuantParam(quant_params_in);
-    primTValue->AddOutputQuantParam(quant_params_in);
+    quant_params_holder->AddInputQuantParam(quant_params_in);
+    quant_params_holder->AddOutputQuantParam(quant_params_in);
   }
-  return NewValueNode(primTValue);
+  prim_c->AddAttr("quant_params", quant_params_holder);
+  return NewValueNode(prim_c);
 }
 
 STATUS QuantCast::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto cnodes = graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
+    auto primitive_quant_param_holder = GetCNodeQuantHolder(primitive_c);
+    MS_ASSERT(primitive_quant_param_holder != nullptr);
     auto curnode_quant_type = schema::QuantType_QUANT_NONE;
     if (primitive_c == nullptr) {
       MS_LOG(WARNING) << "primitive_c is nullptr: " << cnode->fullname_with_scope();
     } else {
-      curnode_quant_type = primitive_c->quant_type();
+      curnode_quant_type = primitive_quant_param_holder->quant_type();
     }
-    auto op_type = (schema::PrimitiveType)primitive_c->Type();
-    if (op_type == schema::PrimitiveType_Gather) {
+    if (primitive_c->name() == ops::kNameGather) {
       continue;
     }
     for (size_t i = 1; i < cnode->inputs().size(); i++) {
@@ -59,32 +60,39 @@ STATUS QuantCast::Run(const FuncGraphPtr &graph) {
           is_graph_input = true;
         }
       }
-      if (!input_node->isa<CNode>() && !is_graph_input) {
+      if (!input_node->isa<mindspore::CNode>() && !is_graph_input) {
         continue;
       }
       auto input_cnode_quant_type = schema::QuantType_QUANT_NONE;
-      std::shared_ptr<PrimitiveC> input_cnode_primitive_c = nullptr;
+      std::shared_ptr<ops::PrimitiveC> input_cnode_primitive_c = nullptr;
       if (!is_graph_input) {
-        auto input_cnode = std::dynamic_pointer_cast<CNode>(input_node);
-        input_cnode_primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(input_cnode->input(0));
+        auto input_cnode = std::dynamic_pointer_cast<mindspore::CNode>(input_node);
+        input_cnode_primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(input_cnode->input(0));
         if (input_cnode_primitive_c == nullptr) {
           MS_LOG(DEBUG) << "input: " << i << " " << input_cnode->fullname_with_scope() << ": "
                         << " PrimitiveC is null";
           continue;
         }
-        input_cnode_quant_type = input_cnode_primitive_c->quant_type();
+        auto input_primitive_quant_holder = GetCNodeQuantHolder(input_cnode_primitive_c);
+        MS_ASSERT(input_primitive_quant_holder != nullptr);
+        input_cnode_quant_type = input_primitive_quant_holder->quant_type();
       }
 
       if (curnode_quant_type != input_cnode_quant_type) {
         ValueNodePtr value_node = nullptr;
         if (curnode_quant_type == schema::QuantType_PostTraining &&
             input_cnode_quant_type == schema::QuantType_QUANT_NONE) {
-          value_node =
-            NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8, primitive_c->input_quant_params()[i - 1]);
+          if (primitive_quant_param_holder->input_quant_params().size() < i) {
+            MS_LOG(ERROR) << "quant param is invalid.";
+            return RET_ERROR;
+          }
+          value_node = NewQuantCastValueNode(kNumberTypeFloat32, kNumberTypeInt8,
+                                             primitive_quant_param_holder->input_quant_params()[i - 1]);
         } else if (curnode_quant_type == schema::QuantType_QUANT_NONE &&
                    input_cnode_quant_type == schema::QuantType_PostTraining) {
+          auto input_primitive_quant_param_holder = GetCNodeQuantHolder(input_cnode_primitive_c);
           value_node = NewQuantCastValueNode(kNumberTypeInt8, kNumberTypeFloat32,
-                                             input_cnode_primitive_c->output_quant_params().front());
+                                             input_primitive_quant_param_holder->output_quant_params().front());
         }
         if (value_node == nullptr) {
           MS_LOG(WARNING) << "value_node is null! "

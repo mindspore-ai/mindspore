@@ -19,76 +19,55 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/resize.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
-                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                             std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ResizeParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::Resize>();
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::ResizeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
   tensorflow::AttrValue attr_value;
-  attr->format = schema::Format_NHWC;
+  prim->set_format(mindspore::Format::NHWC);
   if (!TensorFlowUtils::FindAttrValue(tf_op, "align_corners", &attr_value)) {
     MS_LOG(ERROR) << "The align_corners attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
   if (attr_value.b()) {
-    attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
+    prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
   } else {
-    attr->coordinateTransformMode = schema::CoordinateTransformMode_ASYMMETRIC;
+    prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   }
   if (tf_op.op() == "ResizeBilinear") {
-    attr->method = schema::ResizeMethod_LINEAR;
+    prim->set_method(mindspore::ResizeMethod::LINEAR);
   } else if (tf_op.op() == "ResizeNearestNeighbor") {
-    attr->method = schema::ResizeMethod_NEAREST;
+    prim->set_method(mindspore::ResizeMethod::NEAREST);
   } else if (tf_op.op() == "ResizeBicubic") {
-    attr->method = schema::ResizeMethod_CUBIC;
+    prim->set_method(mindspore::ResizeMethod::CUBIC);
   } else {
-    attr->method = schema::ResizeMethod_UNKNOWN;
+    prim->set_method(mindspore::ResizeMethod::UNKNOWN);
   }
   auto size_node = tf_node_map.at(tf_op.input(1));
   if (size_node == nullptr) {
     MS_LOG(ERROR) << "Find size input failed.";
-    return RET_ERROR;
+    return nullptr;
   }
   if (!TensorFlowUtils::FindAttrValue(tf_op, "value", &attr_value)) {
     MS_LOG(WARNING) << "The value attr should be specified";
   }
   auto tensor_proto = attr_value.tensor();
   auto size_ptr = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
-  attr->newHeight = size_ptr[0];
-  attr->newWidth = size_ptr[1];
-
-  primitive->value.type = schema::PrimitiveType_Resize;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_new_height(size_ptr[0]);
+  prim->set_new_width(size_ptr[1]);
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
-    return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "Add Op input failed.";
+    return nullptr;
   }
-  status = AddOpInput(tf_op, 1, inputs);
-  return status;
+
+  return prim.release();
 }
 TFNodeRegistrar g_tfResizeBilinearParser("ResizeBilinear", new TFResizeParser());
 TFNodeRegistrar g_tfResizeNearestNeighborParser("ResizeNearestNeighbor", new TFResizeParser());

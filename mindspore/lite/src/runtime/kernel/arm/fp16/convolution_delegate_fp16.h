@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
  public:
   ConvolutionDelegateFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                   const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateFP16CPUKernel() override {
     FreeCopiedData();
     if (fp16_conv_kernel_ != nullptr) {
@@ -60,9 +59,8 @@ class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
 
 kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                            const lite::InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                            void *origin_weight, void *origin_bias, TypeId origin_weight_data_type,
-                                            TypeId origin_bias_data_type);
+                                            const lite::InnerContext *ctx, void *origin_weight, void *origin_bias,
+                                            TypeId origin_weight_data_type, TypeId origin_bias_data_type);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DELEGATE_FP16_H_

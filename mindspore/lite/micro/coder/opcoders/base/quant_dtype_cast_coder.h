@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <memory>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 
 namespace mindspore::lite::micro {
@@ -36,10 +36,8 @@ class QuantDTypeCastCoder final : public OperatorCoder {
   int DoCode(CoderContext *const context) override;
 
  private:
-  QuantDTypeCastParameter *cast_param_{nullptr};
-  std::vector<Tensor *> inputs_;
-  std::vector<Tensor *> outputs_;
-  bool inverse_{false};
+  TypeId src_dtype{kTypeUnknown};
+  TypeId dst_dtype{kTypeUnknown};
   int thread_num_{0};
   int thread_n_num_{0};
   int thread_n_stride_{0};

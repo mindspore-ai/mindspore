@@ -15,15 +15,11 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/group_convolution_fp32.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/infer_manager.h"
 #include "include/errorcode.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
 int GroupConvolutionCPUKernel::Init() {
@@ -78,13 +74,14 @@ void GroupConvolutionCPUKernel::FreeSubKernel() {
 
 int GroupConvolutionCPUKernel::PreProcess() {
   if (!InferShapeDone()) {
-    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
-    if (ret != RET_OK) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
+    op_parameter_->infer_flag_ = true;
+
+    auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
+    if (ret != 0) {
+      op_parameter_->infer_flag_ = false;
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
 
     // if infershape func is called in runtime stage, we should malloc memory and set shape info for outputs of sub
     // kernels here.

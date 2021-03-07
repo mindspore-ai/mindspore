@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ std::string FlagParser::Usage(const Option<std::string> &usgMsg) const {
       ReplaceAll(&helpInfo, "\n\r", "\n");
       usageLine += thisLine + "\n";
     } else {
-      // breif help message
+      // brief help message
       helpLine = thisLine + " " + helpInfo + "\n";
     }
   }

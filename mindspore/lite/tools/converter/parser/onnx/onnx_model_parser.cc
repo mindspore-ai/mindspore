@@ -16,12 +16,20 @@
 
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include <algorithm>
+#include <memory>
 #include <set>
 #include <unordered_map>
 #include <utility>
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
+#include "ops/return.h"
+#include "ops/make_tuple.h"
+#include "ops/tensor_list_stack.h"
+#include "ops/tuple_get_item.h"
+#include "ir/func_graph.h"
+#include "src/param_value_lite.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace lite {
@@ -194,7 +202,9 @@ STATUS OnnxModelParser::ConvertNodes(const onnx::GraphProto &onnx_graph, const F
     if (status != RET_OK) {
       continue;
     }
-    auto primitive_c = node_parser->ParseLitePrimitive(onnx_graph, onnx_node);
+
+    MS_LOG(INFO) << "parse op:" << onnx_node.op_type();
+    auto primitive_c = node_parser->Parse(onnx_graph, onnx_node);
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed.";
       status = RET_ERROR;
@@ -333,9 +343,9 @@ STATUS OnnxModelParser::ConvertGraphOutputs(const onnx::GraphProto &onnx_graph, 
   std::vector<AnfNodePtr> return_inputs;
   if (onnx_graph.output_size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = GetMakeTuplePrim();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
-      MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
+      MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
     }
     for (const auto &graph_out : onnx_graph.output()) {
@@ -382,9 +392,9 @@ STATUS OnnxModelParser::BuildReturnNode(const FuncGraphPtr &anf_graph, const std
     MS_LOG(ERROR) << "parameter has null.";
     return RET_NULL_PTR;
   }
-  auto returnPrim = GetReturnPrim();
+  auto returnPrim = std::make_shared<ops::Return>();
   if (returnPrim == nullptr) {
-    MS_LOG(ERROR) << "GetReturnPrim return nullptr";
+    MS_LOG(ERROR) << "new Return failed";
     return RET_NULL_PTR;
   }
   auto returnCnode = anf_graph->NewCNode(returnPrim, return_inputs);
@@ -398,7 +408,7 @@ STATUS OnnxModelParser::BuildReturnNode(const FuncGraphPtr &anf_graph, const std
 }
 STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_graph,
                                    std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
-                                   std::vector<AnfNodePtr> *graph_inputs, lite::PrimitiveC *primitive_c,
+                                   std::vector<AnfNodePtr> *graph_inputs, ops::PrimitiveC *primitive_c,
                                    std::string loop_name) {
   if (primitive_c == nullptr || anf_graph == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr.";
@@ -477,7 +487,7 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
       }
     }
   }
-  auto new_cnode = anf_graph->NewCNode(std::shared_ptr<lite::PrimitiveC>(primitive_c), op_inputs);
+  auto new_cnode = anf_graph->NewCNode(std::shared_ptr<ops::PrimitiveC>(primitive_c), op_inputs);
   if (new_cnode == nullptr) {
     MS_LOG(ERROR) << "new cnode error";
     return RET_ERROR;
@@ -506,9 +516,9 @@ STATUS OnnxModelParser::BuildOpOutputs(const onnx::NodeProto &onnx_node, const F
       std::vector<int64_t> shape_vector;
       auto type_ptr = TypeIdToType(kNumberTypeFloat32);
       abstract_list.emplace_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
-      auto tuple_get_item_prim_ptr = GetTupleGetItemPrim();
+      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
-        MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
+        MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;
       }
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
@@ -529,7 +539,7 @@ STATUS OnnxModelParser::BuildOpOutputs(const onnx::NodeProto &onnx_node, const F
   return RET_OK;
 }
 
-STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c) {
+STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c) {
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
     return RET_NULL_PTR;
@@ -540,6 +550,7 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, l
     return RET_ERROR;
   }
   // set input tensors
+  auto quant_params_holder = std::make_shared<QuantParamHolder>();
   for (int i = 0; i < onnx_node.input_size(); ++i) {
     const auto &input_name = onnx_node.input(i);
     std::vector<schema::QuantParamT> quant_params;
@@ -548,7 +559,7 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, l
       MS_LOG(ERROR) << "set input tensor quant param failed.";
       return status;
     }
-    primitive_c->AddInputQuantParam(quant_params);
+    quant_params_holder->AddInputQuantParam(quant_params);
   }
   // set out tensors
   for (int i = 0; i < onnx_node.output_size(); ++i) {
@@ -559,8 +570,9 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, l
       MS_LOG(ERROR) << "set output tensor quant param failed.";
       return status;
     }
-    primitive_c->AddOutputQuantParam(quant_params);
+    quant_params_holder->AddOutputQuantParam(quant_params);
   }
+  primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
 
@@ -705,20 +717,19 @@ ParameterPtr CreateConstParamter(const FuncGraphPtr &anf_graph, int val) {
   return const_node;
 }
 
-ValueNodePtr CreateValueNode(void *attr, const PrimitiveType &op_type) {
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "attr is nullptr";
+ValueNodePtr CreateValueNode(const PrimitiveType &op_type) {
+  auto node_type = schema::EnumNamePrimitiveType(op_type);
+  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  if (op_primc_fns.find(node_type) == op_primc_fns.end()) {
+    MS_LOG(ERROR) << "have no func to create primitive.";
     return nullptr;
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = op_type;
-  primitive->value.value = attr;
-  auto primitive_c = PrimitiveC::Create(primitive.release());
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "create primitivec nullptr";
+  auto prim = op_primc_fns[node_type]();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "cannot create primitive.";
     return nullptr;
   }
-  return NewValueNode(std::shared_ptr<PrimitiveC>(primitive_c));
+  return NewValueNode(prim);
 }
 
 STATUS AddIterNumsUpdateEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodePtr> *return_new_inputs,
@@ -729,9 +740,11 @@ STATUS AddIterNumsUpdateEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodeP
     return RET_NULL_PTR;
   }
   // trip_cout need -1 after every iteration
-  auto attr = std::make_unique<schema::SubT>();
-  auto sub_value_node = CreateValueNode(attr.release(), schema::PrimitiveType_Sub);
-
+  auto sub_value_node = CreateValueNode(schema::PrimitiveType_SubFusion);
+  if (sub_value_node == nullptr) {
+    MS_LOG(ERROR) << "create sub failed.";
+    return RET_NULL_PTR;
+  }
   auto &trip_cout_paramter = anf_nodes_map.at(trip_cout_name);
   if (trip_cout_paramter == nullptr) {
     MS_LOG(ERROR) << "trip_cout_paramter found failed";
@@ -762,13 +775,13 @@ STATUS OnnxModelParser::AddTensorListStackNode(const AnfNodePtr &root_while_node
     auto output_size = onnx_node.output_size();
     auto &loop_output_name = onnx_node.output(output_size - act_outputs_num + j);
     auto &while_output_node = control_nodes_map_[loop_node_name]->at(loop_output_name);
-    auto stack_attr = std::make_unique<schema::TensorListStackT>();
-    if (stack_attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
+    auto tensor_list_stack_prim = std::make_shared<ops::TensorListStack>();
+    if (tensor_list_stack_prim == nullptr) {
+      MS_LOG(ERROR) << "create stack failed";
       return RET_ERROR;
     }
-    stack_attr->numElements = -1;
-    auto stack_value_node = CreateValueNode(stack_attr.release(), schema::PrimitiveType_TensorListStack);
+    tensor_list_stack_prim->set_num_elements(-1);
+    auto stack_value_node = NewValueNode(tensor_list_stack_prim);
     std::vector<AnfNodePtr> stack_inputs = {stack_value_node, while_output_node, stack_elem_node};
     auto tensorlist_stack_cnode = root_anf_graph->NewCNode(stack_inputs);
     if (tensorlist_stack_cnode == nullptr) {
@@ -811,8 +824,11 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
   item_index_parameter->set_abstract(root_item_index_parameter->abstract());
   body_graph_inputs->emplace_back(item_index_parameter);
   // item index++ edge
-  auto add_attr = std::make_unique<schema::AddT>();
-  auto add_value_node = CreateValueNode(add_attr.release(), schema::PrimitiveType_Add);
+  auto add_value_node = CreateValueNode(schema::PrimitiveType_AddFusion);
+  if (add_value_node == nullptr) {
+    MS_LOG(ERROR) << "create add failed.";
+    return RET_NULL_PTR;
+  }
   auto add_one_input = CreateConstParamter(anf_graph, 1);
   add_one_input->set_name(loop_node_name + "_const_placeholder_1");
   std::vector<AnfNodePtr> add_inputs = {add_value_node, item_index_parameter, add_one_input};
@@ -842,11 +858,14 @@ STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::v
     subgraph_tensor_array_input->set_name(loop_node_name + "_scan_outputs_tensorarray");
     subgraph_tensor_array_input->set_abstract(abstract_tensor);
     body_graph_inputs->emplace_back(subgraph_tensor_array_input);
-    auto set_item_attr = std::make_unique<schema::TensorListSetItemT>();
     // skip trip_count ,cond_out,loop_var,no_loop_var,place_holder, output
     auto loop_output_idx = return_new_inputs->size() - act_output_num + i;
     auto loop_output_node = (*return_new_inputs)[loop_output_idx];
-    auto set_item_value_node = CreateValueNode(set_item_attr.release(), schema::PrimitiveType_TensorListSetItem);
+    auto set_item_value_node = CreateValueNode(schema::PrimitiveType_TensorListSetItem);
+    if (set_item_value_node == nullptr) {
+      MS_LOG(ERROR) << "create tensor list set item failed.";
+      return RET_NULL_PTR;
+    }
     std::vector<AnfNodePtr> set_item_inputs = {set_item_value_node, subgraph_tensor_array_input, item_index_parameter,
                                                loop_output_node};
     auto tensorlist_setitem_cnode = anf_graph->NewCNode(set_item_inputs);
@@ -973,8 +992,7 @@ STATUS OnnxModelParser::BuildCondGraph(const FuncGraphPtr &cond_graph, const Anf
     if (i == 0) {
       auto zero_parameter = CreateConstParamter(cond_graph, 0);
       zero_parameter->set_name(root_while_node->fullname_with_scope() + "_const_0");
-      auto attr = std::make_unique<schema::LessT>();
-      auto less_value_node = CreateValueNode(attr.release(), schema::PrimitiveType_Less);
+      auto less_value_node = CreateValueNode(schema::PrimitiveType_Less);
       std::vector<AnfNodePtr> less_inputs = {less_value_node, zero_parameter, input_paramter};
       less_cnode = cond_graph->NewCNode(less_inputs);
       if (less_cnode == nullptr) {
@@ -986,8 +1004,7 @@ STATUS OnnxModelParser::BuildCondGraph(const FuncGraphPtr &cond_graph, const Anf
       less_cnode->set_fullname_with_scope(cond_graph_name + "_less_cnode");
     }
     if (i == 1) {
-      auto attr = std::make_unique<schema::LogicalAndT>();
-      auto and_value_node = CreateValueNode(attr.release(), schema::PrimitiveType_LogicalAnd);
+      auto and_value_node = CreateValueNode(schema::PrimitiveType_LogicalAnd);
       std::vector<AnfNodePtr> and_inputs = {and_value_node, less_cnode, input_paramter};
       auto and_cnode = cond_graph->NewCNode(and_inputs);
       if (and_cnode == nullptr) {
@@ -1008,7 +1025,7 @@ STATUS OnnxModelParser::BuildCondGraph(const FuncGraphPtr &cond_graph, const Anf
 
 STATUS OnnxModelParser::ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_graph,
                                                std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
-                                               lite::PrimitiveC *primitive_c) {
+                                               ops::PrimitiveC *primitive_c) {
   if (primitive_c == nullptr || anf_graph == nullptr) {
     MS_LOG(ERROR) << "imitive_c is nullptr.";
     return RET_NULL_PTR;
@@ -1026,7 +1043,7 @@ STATUS OnnxModelParser::ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node,
 
 STATUS OnnxModelParser::ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_graph,
                                             std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
-                                            lite::PrimitiveC *primitive_c) {
+                                            ops::PrimitiveC *primitive_c) {
   if (primitive_c == nullptr || anf_graph == nullptr) {
     MS_LOG(ERROR) << "parameter has nullptr.";
     return RET_NULL_PTR;
@@ -1054,7 +1071,7 @@ STATUS OnnxModelParser::ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, co
 
 STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_graph,
                                           std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map,
-                                          lite::PrimitiveC *primitive_c, const std::string &name) {
+                                          ops::PrimitiveC *primitive_c, const std::string &name) {
   if (primitive_c == nullptr || anf_graph == nullptr) {
     MS_LOG(ERROR) << "parameter has nullptr.";
     return RET_NULL_PTR;
@@ -1065,14 +1082,16 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, cons
     MS_LOG(ERROR) << "op parse failed.";
     return RET_NULL_PTR;
   }
-  auto prim_ptr = value->cast<std::shared_ptr<lite::PrimitiveC>>();
+  auto prim_ptr = value->cast<std::shared_ptr<ops::PrimitiveC>>();
   if (prim_ptr == nullptr) {
-    MS_LOG(ERROR) << "p parse failed.";
+    MS_LOG(ERROR) << "primitive parse failed.";
     return RET_NULL_PTR;
   }
   auto type_ptr = TypeIdToType(kTypeUnknown);
   std::vector<int64_t> shape_vector;
   std::vector<AnfNodePtr> op_inputs;
+  auto quant_params_holder = std::make_shared<QuantParamHolder>();
+  auto quant_params_holder_origin = primitive_c->GetAttr("quant_params")->cast<QuantParamHolderPtr>();
   if (name == "MatMul") {
     for (int i = 0; i < 2; ++i) {
       if (anf_nodes_map->find(onnx_node.input(i)) == anf_nodes_map->end()) {
@@ -1080,10 +1099,10 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, cons
         return RET_ERROR;
       } else {
         op_inputs.push_back(anf_nodes_map->at(onnx_node.input(i)));
-        prim_ptr->AddInputQuantParam(primitive_c->input_quant_params().at(i));
+        quant_params_holder->AddInputQuantParam(quant_params_holder_origin->input_quant_params().at(i));
       }
     }
-    prim_ptr->AddOutputQuantParam(std::vector<schema::QuantParamT>(1));
+    quant_params_holder->AddOutputQuantParam(std::vector<schema::QuantParamT>(1));
     auto new_cnode = anf_graph->NewCNode(prim_ptr, op_inputs);
     if (new_cnode == nullptr) {
       MS_LOG(ERROR) << "new cnode error";
@@ -1100,9 +1119,9 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, cons
     }
     op_inputs.push_back(anf_nodes_map->at("Gemm_MatMul_" + onnx_node.output(0)));
     op_inputs.push_back(anf_nodes_map->at(onnx_node.input(2)));
-    prim_ptr->AddInputQuantParam(std::vector<schema::QuantParamT>(1));
-    prim_ptr->AddInputQuantParam(primitive_c->input_quant_params().at(2));
-    prim_ptr->AddOutputQuantParam(primitive_c->output_quant_params().front());
+    quant_params_holder->AddInputQuantParam(std::vector<schema::QuantParamT>(1));
+    quant_params_holder->AddInputQuantParam(quant_params_holder_origin->input_quant_params().at(2));
+    quant_params_holder->AddOutputQuantParam(quant_params_holder_origin->output_quant_params().front());
     auto new_cnode = anf_graph->NewCNode(prim_ptr, op_inputs);
     if (new_cnode == nullptr) {
       MS_LOG(ERROR) << "new cnode error";

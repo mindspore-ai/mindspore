@@ -23,9 +23,8 @@ namespace mindspore::kernel {
 class GruCPUKernel : public LiteKernel {
  public:
   GruCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-               const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     gru_param_ = reinterpret_cast<GruParameter *>(op_parameter_);
   }
 

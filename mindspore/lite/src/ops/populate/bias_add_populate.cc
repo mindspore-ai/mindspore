@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/arithmetic.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateBiasAddParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateBiasAddParameter(const void *prim) {
   ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
   memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  arithmetic_param->op_parameter_.type_ = primitive->Type();
+  const schema::Primitive *primitive = static_cast<const schema::Primitive *>(prim);
+  arithmetic_param->op_parameter_.type_ = primitive->value_type();
 
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
-Registry BiasAddParameterRegistry(schema::PrimitiveType_BiasAdd, PopulateBiasAddParameter);
+}  // namespace
+Registry g_biasAddParameterRegistry(schema::PrimitiveType_BiasAdd, PopulateBiasAddParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,15 +99,14 @@ STATUS FormatTransFusionPass::DoFusion(schema::MetaGraphT *graph, const std::str
     MS_LOG(ERROR) << "srcPath or dstPath is failed to get";
     return RET_ERROR;
   }
-  auto srcNode = graph->nodes.at(srcPath->nodeIdx).get();
-  auto dstNode = graph->nodes.at(dstPath->nodeIdx).get();
+  auto &srcNode = graph->nodes.at(srcPath->nodeIdx);
+  auto &dstNode = graph->nodes.at(dstPath->nodeIdx);
   MS_ASSERT(srcNode != nullptr);
   MS_ASSERT(dstNode != nullptr);
-  MS_ASSERT(srcNode->primitive->value.AsTranspose() != nullptr);
-  bool isNc2NhAndNh2Nc = srcNode->primitive->value.AsTranspose()->perm == nchw2nhwc_perm &&
-                         dstNode->primitive->value.AsTranspose()->perm == nhwc2nchw_perm;
-  bool isNh2NcAndNc2Nh = srcNode->primitive->value.AsTranspose()->perm == nhwc2nchw_perm &&
-                         dstNode->primitive->value.AsTranspose()->perm == nchw2nhwc_perm;
+  auto src_perm = GetTransposePerm(graph, srcNode);
+  auto dst_perm = GetTransposePerm(graph, dstNode);
+  bool isNc2NhAndNh2Nc = src_perm == nchw2nhwc_perm && dst_perm == nhwc2nchw_perm;
+  bool isNh2NcAndNc2Nh = src_perm == nhwc2nchw_perm && dst_perm == nchw2nhwc_perm;
   if (isNc2NhAndNh2Nc || isNh2NcAndNc2Nh) {
     auto status = IsolateOneWayNode(graph, srcPath->nodeIdx);
     if (status != RET_OK) {

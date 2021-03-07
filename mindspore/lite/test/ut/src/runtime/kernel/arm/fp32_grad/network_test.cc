@@ -90,7 +90,7 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive->value.type = schema::PrimitiveType_Activation;
     auto primitive = new schema::ActivationT;
     ASSERT_NE(primitive, nullptr);
-    primitive->type = schema::ActivationType_RELU;
+    primitive->activation_type = schema::ActivationType_RELU;
     node->primitive->value.value = primitive;
     node->name = "ReLU";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -103,8 +103,8 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive->value.type = schema::PrimitiveType_MatMul;
     auto primitive = new schema::MatMulT;
     ASSERT_NE(primitive, nullptr);
-    primitive->transposeA = false;
-    primitive->transposeB = true;
+    primitive->transpose_a = false;
+    primitive->transpose_b = true;
     node->primitive->value.value = primitive;
     node->name = "MatMul1";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -117,7 +117,6 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive->value.type = schema::PrimitiveType_BiasAdd;
     auto primitive = new schema::BiasAddT;
     ASSERT_NE(primitive, nullptr);
-    primitive->axis.push_back(0);
     node->primitive->value.value = primitive;
     node->name = "BiasAdd";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -127,11 +126,11 @@ TEST_F(NetworkTest, tuning_layer) {
     node->inputIndex = {5, 6};
     node->outputIndex = {14, 7};
     node->primitive = std::make_unique<schema::PrimitiveT>();
-    node->primitive->value.type = schema::PrimitiveType_SoftmaxCrossEntropy;
-    auto primitive = new schema::SoftmaxCrossEntropyT;
+    node->primitive->value.type = schema::PrimitiveType_SoftmaxCrossEntropyWithLogits;
+    auto primitive = new schema::SoftmaxCrossEntropyWithLogitsT;
     ASSERT_NE(primitive, nullptr);
     node->primitive->value.value = primitive;
-    node->name = "SoftmaxCrossEntropy";
+    node->name = "SoftmaxCrossEntropyWithLogits";
     meta_graph->nodes.emplace_back(std::move(node));
   }
   {
@@ -139,8 +138,8 @@ TEST_F(NetworkTest, tuning_layer) {
     node->inputIndex = {7};
     node->outputIndex = {8};
     node->primitive = std::make_unique<schema::PrimitiveT>();
-    node->primitive->value.type = schema::PrimitiveType_BiasGrad;
-    auto primitive = new schema::BiasGradT;
+    node->primitive->value.type = schema::PrimitiveType_BiasAddGrad;
+    auto primitive = new schema::BiasAddGradT;
     ASSERT_NE(primitive, nullptr);
     node->primitive->value.value = primitive;
     node->name = "BiasGrad";
@@ -154,8 +153,8 @@ TEST_F(NetworkTest, tuning_layer) {
     node->primitive->value.type = schema::PrimitiveType_MatMul;
     auto primitive = new schema::MatMulT;
     ASSERT_NE(primitive, nullptr);
-    primitive->transposeA = true;
-    primitive->transposeB = false;
+    primitive->transpose_a = true;
+    primitive->transpose_b = false;
     node->primitive->value.value = primitive;
     node->name = "MatMul2";
     meta_graph->nodes.emplace_back(std::move(node));
@@ -393,7 +392,7 @@ TEST_F(NetworkTest, tuning_layer) {
 
   auto ret = session->RunGraph();
   ASSERT_EQ(lite::RET_OK, ret);
-  auto outputs = session->GetOutputsByNodeName("SoftmaxCrossEntropy");
+  auto outputs = session->GetOutputsByNodeName("SoftmaxCrossEntropyWithLogits");
   ASSERT_EQ(outputs.size(), 1);
   auto outTensor = (outputs.at(0));
   ASSERT_NE(nullptr, outTensor);

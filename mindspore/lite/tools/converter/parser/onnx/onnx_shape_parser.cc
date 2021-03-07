@@ -16,26 +16,13 @@
 
 #include "tools/converter/parser/onnx/onnx_shape_parser.h"
 #include <memory>
+#include "ops/shape.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxShapeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                      const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ShapeParser";
-  auto attr = std::make_unique<schema::ShapeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Shape;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxShapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Shape>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxShapeParser("Shape", new OnnxShapeParser());

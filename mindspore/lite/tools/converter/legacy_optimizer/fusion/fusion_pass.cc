@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
@@ -47,7 +46,7 @@ STATUS FusionPass::Run(schema::MetaGraphT *graph) {
     }
 
     if (!pattern->Check()) {
-      MS_LOG(ERROR) << "FusionPattern is invaild";
+      MS_LOG(ERROR) << "FusionPattern is invalid";
       return RET_PARAM_INVALID;
     }
   }
@@ -229,23 +228,12 @@ bool FusionPass::CheckMatch(schema::MetaGraphT *graph, const std::shared_ptr<Pat
 bool FusionPass::MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
                            std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes) {
   MS_ASSERT(graph != nullptr);
-  MS_ASSERT(nodeIdx < subGraph->nodes.size());
-  auto &scope = graph->nodes.at(nodeIdx);
-  MS_ASSERT(scope != nullptr);
-  // if target(except target is marked head) is nullptr, it means the preNode
-  // has no left or right, but scope is not nullptr
-  if (target == nullptr) {
+  MS_ASSERT(nodeIdx < graph->nodes.size());
+  // check the func params
+  if (!CheckMatchParams(graph, nodeIdx, target, sinkIdes, pathSinkIdes)) {
     return false;
   }
-  // if node is sinked and not in the pathSinkId, then return false
-  if (IsContain(sinkIdes, nodeIdx) && !IsContain(pathSinkIdes, nodeIdx)) {
-    return false;
-  }
-  // type not match
-  if (!target->isPlaceHold && !IsContain(target->types, scope->primitive->value.type)) {
-    return false;
-  }
-  // path is setted and not pointer to this node
+  // path is set and not pointer to this node
   if (target->pathSetted) {
     MS_ASSERT(target->path != nullptr);
     if (target->path->nodeIdx != static_cast<int>(nodeIdx)) {
@@ -267,27 +255,26 @@ bool FusionPass::MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std:
   for (auto preNodeIdx : preNodeIdxes) {
     MS_ASSERT(graph->nodes.size() > preNodeIdx);
     // Case of multiple outputs is not supported.
-    if (GetInputNodeIdx(*graph, preNodeIdx).size() > kDoubleNum ||
-        GetOutputNodeIdx(*graph, preNodeIdx).size() > kSingleNum) {
+    if (GetInputNodeIdx(*graph, preNodeIdx).size() > 2 || GetOutputNodeIdx(*graph, preNodeIdx).size() > 1) {
       sinkIdes.erase((sinkIdes.end() - 1));
       pathSinkIdes.erase((pathSinkIdes.end() - 1));
       target->UnSetPath();
       return false;
     }
-    // match left
-    if (MatchTree(graph, preNodeIdx, target->left, sinkIdes, pathSinkIdes)) {
-      // match right
-      if (preNodeIdxes.size() == 1 && target->right == nullptr) {
-        return true;
+    if (!MatchTree(graph, preNodeIdx, target->left, sinkIdes, pathSinkIdes)) {
+      continue;
+    }
+    // match left then match right
+    if (preNodeIdxes.size() == 1 && target->right == nullptr) {
+      return true;
+    }
+    for (auto preNodeIdxInner : preNodeIdxes) {
+      if (preNodeIdxInner == preNodeIdx) {
+        continue;
       }
-      for (auto preNodeIdxInner : preNodeIdxes) {
-        if (preNodeIdxInner == preNodeIdx) {
-          continue;
-        }
-        MS_ASSERT(subGraph->nodes.size() > preNodeIdxInner);
-        if (MatchTree(graph, preNodeIdxInner, target->right, sinkIdes, pathSinkIdes)) {
-          return true;  // ignore follow match, pick the first match
-        }
+      MS_ASSERT(subGraph->nodes.size() > preNodeIdxInner);
+      if (MatchTree(graph, preNodeIdxInner, target->right, sinkIdes, pathSinkIdes)) {
+        return true;  // ignore follow match, pick the first match
       }
     }
   }
@@ -295,6 +282,26 @@ bool FusionPass::MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std:
   pathSinkIdes.erase((pathSinkIdes.end() - 1));
   target->UnSetPath();
   return false;
+}
+
+bool FusionPass::CheckMatchParams(schema::MetaGraphT *graph, size_t nodeIdx, const std::shared_ptr<PatternOp> &target,
+                                  std::vector<size_t> &sinkIdes, std::vector<size_t> &pathSinkIdes) {
+  auto &scope = graph->nodes.at(nodeIdx);
+  MS_ASSERT(scope != nullptr);
+  // if target(except target is marked head) is nullptr, it means the preNode
+  // has no left or right, but scope is not nullptr
+  if (target == nullptr) {
+    return false;
+  }
+  // if node is sinked and not in the pathSinkId, then return false
+  if (IsContain(sinkIdes, nodeIdx) && !IsContain(pathSinkIdes, nodeIdx)) {
+    return false;
+  }
+  // type not match
+  if (!target->isPlaceHold && !IsContain(target->types, scope->primitive->value.type)) {
+    return false;
+  }
+  return true;
 }
 
 STATUS FusionPass::Fuse(schema::MetaGraphT *graph) {

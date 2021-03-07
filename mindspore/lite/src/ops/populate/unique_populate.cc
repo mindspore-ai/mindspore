@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/unique.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/unique_fp32.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateUniqueParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateUniqueParameter(const void *prim) {
   UniqueParameter *unique_param = reinterpret_cast<UniqueParameter *>(malloc(sizeof(UniqueParameter)));
   if (unique_param == nullptr) {
     MS_LOG(ERROR) << "malloc UniqueParameter failed.";
     return nullptr;
   }
   memset(unique_param, 0, sizeof(UniqueParameter));
-  unique_param->op_parameter_.type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  unique_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(unique_param);
 }
+}  // namespace
 
-Registry UniqueParameterRegistry(schema::PrimitiveType_Unique, PopulateUniqueParameter);
+Registry g_uniqueParameterRegistry(schema::PrimitiveType_Unique, PopulateUniqueParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

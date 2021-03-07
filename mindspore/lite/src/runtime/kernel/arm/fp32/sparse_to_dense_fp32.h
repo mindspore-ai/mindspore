@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class SparseToDenseCPUKernel : public LiteKernel {
  public:
   SparseToDenseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
+                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
     s2d_param = (reinterpret_cast<SparseToDenseParameter *>(op_parameter_));
     s2d_param->thread_num_ = thread_count_;
   }

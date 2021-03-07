@@ -43,11 +43,11 @@ int ReshapeOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() > 4) {
-    MS_LOG(ERROR) << "Reshape input size should in 0-4, actual: " << in_tensors_[0]->shape();
+    MS_LOG(ERROR) << "Reshape input size should in 0-4, actual: " << in_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   if (out_tensors_[0]->shape().size() > 4) {
-    MS_LOG(ERROR) << "Reshape output size should in 1-4, actual: " << out_tensors_[0]->shape();
+    MS_LOG(ERROR) << "Reshape output size should in 0-4, actual: " << out_tensors_[0]->shape().size();
     return RET_ERROR;
   }
   return RET_OK;

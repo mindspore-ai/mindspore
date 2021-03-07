@@ -36,9 +36,8 @@ namespace mindspore::kernel {
 class ConvolutionDepthwiseSWFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   ConvolutionDepthwiseSWFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                                      const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDepthwiseSWFp16CPUKernel() override;
 
   int Init() override;

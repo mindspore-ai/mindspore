@@ -20,7 +20,11 @@
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
 #include "src/common/log_adapter.h"
+#include "src/common/version_manager.h"
 #include "include/errorcode.h"
+#ifdef ENABLE_V0
+#include "schema/model_v0_generated.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -82,10 +86,17 @@ std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, const size_t 
   return post_node_idxes;
 }
 
-bool IsPackedOp(schema::PrimitiveType op_type) {
-  static std::vector<schema::PrimitiveType> packed_ops = {
-    schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DepthwiseConv2D,
-    schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_MatMul};
+bool IsPackedOp(int op_type) {
+#ifdef ENABLE_V0
+  static std::vector<int> v0_packed_ops = {
+    schema::v0::PrimitiveType_Conv2D, schema::v0::PrimitiveType_DeConv2D, schema::v0::PrimitiveType_DepthwiseConv2D,
+    schema::v0::PrimitiveType_DeDepthwiseConv2D, schema::v0::PrimitiveType_MatMul};
+  if (VersionManager::GetInstance()->CheckV0Schema()) {
+    return IsContain(v0_packed_ops, op_type);
+  }
+#endif
+  static std::vector<int> packed_ops = {schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
+                                        schema::PrimitiveType_MatMul};
   return IsContain(packed_ops, op_type);
 }
 }  // namespace lite

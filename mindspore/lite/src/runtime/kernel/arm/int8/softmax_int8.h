@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class SoftmaxInt8CPUKernel : public SoftmaxBaseCPUKernel {
  public:
   SoftmaxInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : SoftmaxBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~SoftmaxInt8CPUKernel() = default;
 
   int Init() override;

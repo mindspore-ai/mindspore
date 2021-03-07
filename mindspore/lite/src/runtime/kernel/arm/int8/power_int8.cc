@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Power;
+using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 int PowerInt8CPUKernel::Init() {
@@ -106,5 +106,5 @@ int PowerInt8CPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Power, LiteKernelCreator<PowerInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_PowFusion, LiteKernelCreator<PowerInt8CPUKernel>)
 }  // namespace mindspore::kernel

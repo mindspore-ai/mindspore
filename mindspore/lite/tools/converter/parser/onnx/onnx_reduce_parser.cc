@@ -16,56 +16,49 @@
 
 #include "tools/converter/parser/onnx/onnx_reduce_parser.h"
 #include <memory>
+#include <vector>
+#include "ops/fusion/reduce_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxReduceParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                       const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ReduceParser";
-  auto attr = std::make_unique<schema::ReduceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::ReduceFusion>();
 
-  attr->keepDims = 1;
+  prim->set_keep_dims(true);
+
+  std::vector<int32_t> axes = {};
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes") {
       const int &size = onnx_node_attr.ints_size();
       for (int i = 0; i < size; ++i) {
-        attr->axes.push_back(onnx_node_attr.ints(i));
+        axes.push_back(onnx_node_attr.ints(i));
       }
     } else if (attribute_name == "keepdims") {
-      attr->keepDims = static_cast<bool>(onnx_node_attr.i());
+      prim->set_keep_dims(static_cast<bool>(onnx_node_attr.i()));
     }
   }
+  prim->AddAttr("axes", MakeValue(axes));
+
   const auto &type = onnx_node.op_type();
   if (type == "ReduceMean") {
-    attr->mode = schema::ReduceMode_ReduceMean;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Mean);
   } else if (type == "ReduceMax") {
-    attr->mode = schema::ReduceMode_ReduceMax;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Max);
   } else if (type == "ReduceMin") {
-    attr->mode = schema::ReduceMode_ReduceMin;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Min);
   } else if (type == "ReduceSum") {
-    attr->mode = schema::ReduceMode_ReduceSum;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Sum);
   } else if (type == "ReduceProd") {
-    attr->mode = schema::ReduceMode_ReduceProd;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Prod);
   } else if (type == "ReduceSumSquare") {
-    attr->mode = schema::ReduceMode_ReduceSumSquare;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Sum_Square);
   } else {
-    MS_LOG(ERROR) << "unsupported type";
+    MS_LOG(ERROR) << "unsupported reduce type: " << type;
     return nullptr;
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Reduce;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxReduceMeanParser("ReduceMean", new OnnxReduceParser());

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,30 +71,28 @@ STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_
                            std::unique_ptr<schema::TensorT> tensor);
 
 NodeIter InsertNode(schema::MetaGraphT *graphT, uint32_t existNodeIdx, InsertPlace place, size_t inoutIndex,
-                    std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode,
+                    std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, int *insert_num,
                     const OpDefCopyer &opDefCopyer = GetSimpleOpCopyer());
 
 NodeIter InsertNode(schema::MetaGraphT *graphT, NodeIter existNodeIter, InsertPlace place, size_t inoutIndexIdx,
-                    std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode,
+                    std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, int *insert_num,
                     const OpDefCopyer &opDefCopyer = GetSimpleOpCopyer());
 
 NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, size_t inputIndexIdx,
-                          std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, const OpDefCopyer &opDefCopyer);
+                          std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, int *insert_num,
+                          const OpDefCopyer &opDefCopyer);
 
 NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, size_t outputIndexIdx,
-                         std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, const OpDefCopyer &opDefCopyer);
+                         std::unique_ptr<schema::CNodeT> toAddNode, STATUS *errorCode, int *insert_num,
+                         const OpDefCopyer &opDefCopyery);
 
 STATUS ValidateFileStr(const std::string &modelFile, const std::string &fileType);
-
-void TransformAttrByAxes(int *origin_attr, int *axes, int element_size);
-
-STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
-
-STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
 
 STATUS SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT);
 
 std::string GetModelName(const std::string &modelFile);
+
+std::vector<int> GetTransposePerm(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &cnode);
 }  // namespace lite
 }  // namespace mindspore
 

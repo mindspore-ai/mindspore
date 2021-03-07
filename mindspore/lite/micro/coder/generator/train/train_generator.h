@@ -19,7 +19,7 @@
 
 #include <utility>
 #include <memory>
-#include "micro/coder/generator/generator.h"
+#include "coder/generator/generator.h"
 
 namespace mindspore::lite::micro {
 class TrainGenerator : public Generator {

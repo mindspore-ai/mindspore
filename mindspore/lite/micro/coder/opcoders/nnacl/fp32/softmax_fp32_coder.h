@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_MICRO_CODER_SOFTMAX_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/base/softmax_base_coder.h"
+#include "coder/opcoders/base/softmax_base_coder.h"
 namespace mindspore::lite::micro::nnacl {
 
 class SoftMaxFP32Coder final : public SoftmaxBaseCoder {

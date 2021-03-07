@@ -29,6 +29,7 @@
 #include "src/train/optimizer_kernel.h"
 #include "src/sub_graph_kernel.h"
 #include "src/train/train_populate_parameter.h"
+#include "src/train/train_populate_parameter_v0.h"
 #include "src/runtime/runtime_api.h"
 #include "src/executor.h"
 #include "src/kernel_registry.h"
@@ -92,7 +93,16 @@ static kernel::LiteKernel *TSFindKernel(const std::vector<kernel::LiteKernel *> 
                          [&searchParameter](const kernel::LiteKernel *k) { return (k->name() == searchParameter); });
   return *it;
 }
-TrainSession::TrainSession() { kernel::PopulateTrainParameters(); }
+TrainSession::TrainSession() {
+#ifdef ENABLE_V0
+  if (VersionManager::GetInstance()->CheckV0Schema()) {
+    kernel::PopulateTrainV0Parameters();
+  }
+#endif
+  if (!VersionManager::GetInstance()->CheckV0Schema()) {
+    kernel::PopulateTrainParameters();
+  }
+}
 
 std::vector<CreatorOp> TrainSession::ReplaceOps() {
   const std::vector<CreatorOp> replace = {
@@ -443,7 +453,7 @@ int TrainSession::OptimizerStep() {
 }
 
 bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
-  return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropy ||
+  return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits ||
           kernel->Type() == schema::PrimitiveType_SparseSoftmaxCrossEntropy ||
           kernel->Type() == schema::PrimitiveType_SmoothL1Loss ||
           kernel->Type() == schema::PrimitiveType_SmoothL1LossGrad ||
@@ -457,7 +467,7 @@ bool TrainSession::IsGradKernel(const kernel::LiteKernel *kernel) const {
 }
 
 bool TrainSession::IsOptimizer(kernel::LiteKernel *kernel) const {
-  return ((kernel->Type() == schema::PrimitiveType_Adam) || (kernel->Type() == schema::PrimitiveType_Sgd) ||
+  return ((kernel->Type() == schema::PrimitiveType_Adam) || (kernel->Type() == schema::PrimitiveType_SGD) ||
           (kernel->Type() == schema::PrimitiveType_ApplyMomentum));
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_PAD_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_PAD_NPU_H_
 #include <vector>
-#include "include/graph/op/all_ops.h"
 #include "nnacl/pad_parameter.h"
-#include "src/ops/pad.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class PadNPUKernel : public NPUKernel {
  public:
   PadNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-               const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    pad_ = reinterpret_cast<const mindspore::lite::Pad *>(primitive);
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
+    param_ = reinterpret_cast<PadParameter *>(parameter);
   }
   ~PadNPUKernel() override;
 
@@ -40,7 +38,8 @@ class PadNPUKernel : public NPUKernel {
 
  private:
   hiai::op::PadV2 *op_ = nullptr;
-  const mindspore::lite::Pad *pad_;
+  PadParameter *param_;
+  std::vector<int> paddings_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_PAD_NPU_H_

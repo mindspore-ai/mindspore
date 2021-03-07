@@ -17,13 +17,13 @@
 #include "coder/opcoders/cmsis-nn/int8/add_int8_coder.h"
 #include <algorithm>
 #include <limits>
-#include "micro/coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/serializers/serializer.h"
 #include "nnacl/arithmetic.h"
 #include "nnacl/int8/quantize.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
 
-using mindspore::schema::PrimitiveType_Add;
+using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore::lite::micro::cmsis {
 
@@ -85,5 +85,5 @@ int AddInt8Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Add, CPUOpCoderCreator<AddInt8Coder>)
+REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_AddFusion, CPUOpCoderCreator<AddInt8Coder>)
 }  // namespace mindspore::lite::micro::cmsis

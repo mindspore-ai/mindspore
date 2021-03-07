@@ -20,7 +20,7 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_Power;
+using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -55,6 +55,6 @@ int PowerFP32Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Power, CPUOpCoderCreator<PowerFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_PowFusion, CPUOpCoderCreator<PowerFP32Coder>)
 
 }  // namespace mindspore::lite::micro::nnacl

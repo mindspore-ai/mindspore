@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "src/runtime/allocator.h"
 #include "src/executor.h"
 #include "src/common/utils.h"
+#include "src/common/prim_util.h"
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
@@ -52,7 +53,7 @@ static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor
   return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
     auto node = model->all_nodes_[post_node_idx];
     MS_ASSERT(node != nullptr);
-    return IsPackedOp(static_cast<schema::PrimitiveType>(node->primitive_->Type()));
+    return IsPackedOp(GetPrimitiveType(node->primitive_));
   });
 }
 

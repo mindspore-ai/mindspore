@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,83 +24,85 @@
 
 namespace mindspore {
 namespace lite {
-static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveType_Conv2DGradFilter,
-                                                              schema::PrimitiveType_Conv2DGradInput,
-                                                              schema::PrimitiveType_GroupConv2DGradInput,
-                                                              schema::PrimitiveType_PoolingGrad,
-                                                              schema::PrimitiveType_BiasGrad,
-                                                              schema::PrimitiveType_BNGrad,
+static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveType_Conv2DBackpropFilterFusion,
+                                                              schema::PrimitiveType_Conv2DBackpropInputFusion,
+                                                              schema::PrimitiveType_AvgPoolGrad,
+                                                              schema::PrimitiveType_MaxPoolGrad,
+                                                              schema::PrimitiveType_BiasAddGrad,
+                                                              schema::PrimitiveType_BatchNormGrad,
                                                               schema::PrimitiveType_ApplyMomentum,
-                                                              schema::PrimitiveType_Sgd,
+                                                              schema::PrimitiveType_SGD,
                                                               schema::PrimitiveType_Adam,
-                                                              schema::PrimitiveType_Conv2D,
-                                                              schema::PrimitiveType_DeConv2D,
-                                                              schema::PrimitiveType_DepthwiseConv2D,
-                                                              schema::PrimitiveType_DeDepthwiseConv2D,
-                                                              schema::PrimitiveType_Pooling,
-                                                              schema::PrimitiveType_LocalResponseNormalization,
+                                                              schema::PrimitiveType_AvgPoolFusion,
+                                                              schema::PrimitiveType_MaxPoolFusion,
+                                                              schema::PrimitiveType_Conv2DFusion,
+                                                              schema::PrimitiveType_Conv2dTransposeFusion,
+                                                              schema::PrimitiveType_LRN,
                                                               schema::PrimitiveType_Resize,
                                                               schema::PrimitiveType_BatchNorm,
                                                               schema::PrimitiveType_FusedBatchNorm,
-                                                              schema::PrimitiveType_PReLU,
+                                                              schema::PrimitiveType_PReLUFusion,
                                                               schema::PrimitiveType_BiasAdd,
                                                               schema::PrimitiveType_SpaceToDepth,
                                                               schema::PrimitiveType_DepthToSpace,
-                                                              schema::PrimitiveType_TopK};
+                                                              schema::PrimitiveType_TopKFusion,
+                                                              schema::PrimitiveType_BatchToSpace,
+                                                              schema::PrimitiveType_SpaceToBatch,
+                                                              schema::PrimitiveType_SpaceToBatchND};
 
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
-  schema::PrimitiveType_PoolingGrad, schema::PrimitiveType_ActivationGrad, schema::PrimitiveType_Conv2DGradFilter,
-  schema::PrimitiveType_BNGrad};
+  schema::PrimitiveType_AvgPoolGrad, schema::PrimitiveType_MaxPoolGrad, schema::PrimitiveType_ActivationGrad,
+  schema::PrimitiveType_Conv2DBackpropFilterFusion, schema::PrimitiveType_BatchNormGrad};
 
 // index {} mean all inputs need insert
 static std::unordered_map<schema::PrimitiveType, std::vector<int>> extNhwcInsertIndex = {
-  {schema::PrimitiveType_BNGrad, {0, 1}},
+  {schema::PrimitiveType_BatchNormGrad, {0, 1}},
+  {schema::PrimitiveType_Conv2DBackpropFilterFusion, {0, 1}},
   {schema::PrimitiveType_ApplyMomentum, {3}},
-  {schema::PrimitiveType_Sgd, {1}},
+  {schema::PrimitiveType_SGD, {1}},
   {schema::PrimitiveType_Adam, {9}}};
 
 static const std::vector<schema::PrimitiveType> fp32FullOpList = {
-  schema::PrimitiveType_Concat, schema::PrimitiveType_Add,
+  schema::PrimitiveType_Concat, schema::PrimitiveType_AddFusion,
   schema::PrimitiveType_Floor};  // fp32 ops support C4 and nhwc in fp32
 
 static const std::vector<schema::PrimitiveType> int8NeedNhwcOpList = {};
 
-static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveType_Conv2D,
-                                                              schema::PrimitiveType_DepthwiseConv2D,
-                                                              schema::PrimitiveType_Add,
+static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveType_Conv2DFusion,
+                                                              schema::PrimitiveType_Conv2dTransposeFusion,
+                                                              schema::PrimitiveType_AddFusion,
                                                               schema::PrimitiveType_Transpose,
-                                                              schema::PrimitiveType_Pooling,
+                                                              schema::PrimitiveType_AvgPoolFusion,
+                                                              schema::PrimitiveType_MaxPoolFusion,
                                                               schema::PrimitiveType_Concat,
-                                                              schema::PrimitiveType_SoftMax,
+                                                              schema::PrimitiveType_Softmax,
                                                               schema::PrimitiveType_Reshape,
                                                               schema::PrimitiveType_Activation,
                                                               schema::PrimitiveType_Resize,
                                                               schema::PrimitiveType_FullConnection,
-                                                              schema::PrimitiveType_ArgMax,
-                                                              schema::PrimitiveType_ArgMin,
+                                                              schema::PrimitiveType_ArgMaxFusion,
+                                                              schema::PrimitiveType_ArgMinFusion,
                                                               schema::PrimitiveType_BatchNorm,
                                                               schema::PrimitiveType_FusedBatchNorm,
                                                               schema::PrimitiveType_BiasAdd,
-                                                              schema::PrimitiveType_Div,
-                                                              schema::PrimitiveType_Mul,
-                                                              schema::PrimitiveType_Slice,
-                                                              schema::PrimitiveType_SoftMax,
+                                                              schema::PrimitiveType_DivFusion,
+                                                              schema::PrimitiveType_MulFusion,
+                                                              schema::PrimitiveType_SliceFusion,
                                                               schema::PrimitiveType_Split,
                                                               schema::PrimitiveType_Squeeze,
-                                                              schema::PrimitiveType_Sub,
+                                                              schema::PrimitiveType_SubFusion,
                                                               schema::PrimitiveType_StridedSlice,
-                                                              schema::PrimitiveType_TopK,
+                                                              schema::PrimitiveType_TopKFusion,
                                                               schema::PrimitiveType_Unsqueeze,
                                                               schema::PrimitiveType_MatMul,
-                                                              schema::PrimitiveType_Pad,
-                                                              schema::PrimitiveType_DeConv2D,
-                                                              schema::PrimitiveType_Scale,
+                                                              schema::PrimitiveType_PadFusion,
+                                                              schema::PrimitiveType_ScaleFusion,
                                                               schema::PrimitiveType_Cast,
                                                               schema::PrimitiveType_Shape,
                                                               schema::PrimitiveType_ExpandDims,
                                                               schema::PrimitiveType_BatchToSpace,
                                                               schema::PrimitiveType_BatchToSpaceND,
-                                                              schema::PrimitiveType_Reduce,
+                                                              schema::PrimitiveType_ReduceFusion,
                                                               schema::PrimitiveType_Round,
                                                               schema::PrimitiveType_Floor,
                                                               schema::PrimitiveType_Ceil,
@@ -115,9 +117,9 @@ static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_SpaceToBatch,
                                                               schema::PrimitiveType_SpaceToBatchND,
                                                               schema::PrimitiveType_DepthToSpace,
-                                                              schema::PrimitiveType_Power,
+                                                              schema::PrimitiveType_PowFusion,
                                                               schema::PrimitiveType_GatherNd,
-                                                              schema::PrimitiveType_LeakyReLU,
+                                                              schema::PrimitiveType_LeakyRelu,
                                                               schema::PrimitiveType_Gather,
                                                               schema::PrimitiveType_Equal,
                                                               schema::PrimitiveType_NotEqual,
@@ -125,19 +127,18 @@ static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_Greater,
                                                               schema::PrimitiveType_GreaterEqual,
                                                               schema::PrimitiveType_Eltwise,
-                                                              schema::PrimitiveType_DeDepthwiseConv2D,
                                                               schema::PrimitiveType_DetectionPostProcess,
                                                               schema::PrimitiveType_Crop,
                                                               schema::PrimitiveType_PriorBox,
                                                               schema::PrimitiveType_QuantDTypeCast,
-                                                              schema::PrimitiveType_LayerNorm,
-                                                              schema::PrimitiveType_L2Norm};
+                                                              schema::PrimitiveType_LayerNormFusion,
+                                                              schema::PrimitiveType_L2NormalizeFusion};
 
 static const std::vector<schema::PrimitiveType> needInsertOpList = {
-  schema::PrimitiveType_Eltwise, schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
-  schema::PrimitiveType_Power,   schema::PrimitiveType_StridedSlice, schema::PrimitiveType_Add,
-  schema::PrimitiveType_Split,   schema::PrimitiveType_Slice,        schema::PrimitiveType_Crop,
-  schema::PrimitiveType_Mul,     schema::PrimitiveType_Maximum,      schema::PrimitiveType_ActivationGrad};
+  schema::PrimitiveType_Eltwise,   schema::PrimitiveType_Activation,   schema::PrimitiveType_Concat,
+  schema::PrimitiveType_PowFusion, schema::PrimitiveType_StridedSlice, schema::PrimitiveType_AddFusion,
+  schema::PrimitiveType_Split,     schema::PrimitiveType_SliceFusion,  schema::PrimitiveType_Crop,
+  schema::PrimitiveType_MulFusion, schema::PrimitiveType_Maximum,      schema::PrimitiveType_ActivationGrad};
 
 static const std::unordered_map<int, int> nc2NhAxisMap = {{0, 0}, {1, -1}, {2, 1}, {3, 2}};
 
@@ -156,6 +157,13 @@ std::vector<schema::PrimitiveType> GetNhwcAllInputOpList() { return nhwcOpAllInp
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList() { return int8NeedNhwcOpList; }
 
 std::vector<schema::PrimitiveType> GetInt8OpList() { return int8OpList; }
+
+const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb) {
+  auto prim_offset = schema::CreatePrimitive(*fbb, primitive_t);
+  fbb->Finish(prim_offset);
+  auto prim_buf = fbb->GetBufferPointer();
+  return flatbuffers::GetRoot<schema::Primitive>(prim_buf);
+}
 
 STATUS NodeUtils::ConvertDims(mindspore::schema::Format src_format, const std::vector<int32_t> &src_dims,
                               mindspore::schema::Format dst_format, std::vector<int32_t> *dst_dims) {

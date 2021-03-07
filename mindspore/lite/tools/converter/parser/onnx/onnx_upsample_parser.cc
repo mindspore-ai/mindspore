@@ -15,39 +15,32 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_upsample_parser.h"
+#include <string>
+#include <vector>
 #include <memory>
+#include "ops/resize.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxUpsampleParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                         const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx UpsampleParser";
-  auto attr = std::make_unique<schema::ResizeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxUpsampleParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Resize>();
 
-  attr->method = schema::ResizeMethod_NEAREST;
+  prim->set_method(mindspore::ResizeMethod::NEAREST);  // use bilinear method
+
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "mode") {
       if (onnx_node_attr.s() != "nearest" && onnx_node_attr.s() != "linear") {
-        MS_LOG(ERROR) << "the upsample mode don't support now.";
+        MS_LOG(ERROR) << "the UpSample mode don't support now.";
         return nullptr;
       }
-      attr->method = onnx_node_attr.s() == "nearest" ? schema::ResizeMethod_NEAREST : schema::ResizeMethod_LINEAR;
+      prim->set_method(onnx_node_attr.s() == "nearest" ? mindspore::ResizeMethod::NEAREST
+                                                       : mindspore::ResizeMethod::LINEAR);
     }
   }
-  attr->coordinateTransformMode = schema::CoordinateTransformMode_ASYMMETRIC;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Resize;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxUpsampleParser("Upsample", new OnnxUpsampleParser());

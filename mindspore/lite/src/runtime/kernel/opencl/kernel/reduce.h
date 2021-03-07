@@ -43,6 +43,7 @@ class ReduceOpenCLKernel : public OpenCLKernel {
   bool use_local_{false};
   bool wc_reduce_{false};
   static const size_t LOCAL_CACHE_THREAD{16};
+  int axes_[MAX_SHAPE_SIZE];
 };
 }  // namespace mindspore::kernel
 

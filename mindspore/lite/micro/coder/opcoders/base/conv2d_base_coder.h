@@ -21,12 +21,10 @@
 #include <vector>
 #include <utility>
 #include <memory>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "nnacl/conv_parameter.h"
 namespace mindspore::lite::micro {
-
-using std::string;
 
 class Conv2DBaseCoder : public OperatorCoder {
  public:
@@ -47,10 +45,14 @@ class Conv2DBaseCoder : public OperatorCoder {
     free(conv_quant_arg_->input_quant_args_);
     free(conv_quant_arg_->filter_quant_args_);
     free(conv_quant_arg_->output_quant_args_);
+    conv_param_ = nullptr;
+    conv_quant_arg_ = nullptr;
+    filter_tensor_ = nullptr;
+    bias_tensor_ = nullptr;
   }
 
  protected:
-  int Init();
+  virtual int Init();
 
   int SetQuantParam();
 
@@ -62,19 +64,21 @@ class Conv2DBaseCoder : public OperatorCoder {
 
   int SetOutputTensorQuantParam();
 
+  void SetRoundingAndMultipilerMode();
+
   int SetQuantMultiplier();
 
-  int CheckResizeValid();
+  int CheckResizeValid() const;
 
   int SetIfPerChannel();
 
   int CheckLayout(lite::Tensor *input_tensor);
 
-  string LayoutTransformFp32(schema::Format src_format, schema::Format dst_format);
+  std::string LayoutTransformFp32(schema::Format src_format, schema::Format dst_format);
 
-  string LayoutTransformInt8(schema::Format src_format, schema::Format dst_format);
+  std::string LayoutTransformInt8(schema::Format src_format, schema::Format dst_format);
 
-  string LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format);
+  std::string LayoutTransform(TypeId data_type, schema::Format src_format, schema::Format dst_format);
 
   ConvParameter *conv_param_{nullptr};
 
@@ -84,7 +88,7 @@ class Conv2DBaseCoder : public OperatorCoder {
 
   Tensor *bias_tensor_{nullptr};
 
-  string convert_func_;
+  std::string convert_func_;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_BASE_CONV2D_BASE_CODER_H_

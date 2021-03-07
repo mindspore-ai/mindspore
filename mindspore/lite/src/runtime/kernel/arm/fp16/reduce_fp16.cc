@@ -28,7 +28,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Reduce;
+using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
@@ -142,5 +142,5 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, LiteKernelCreator<ReduceFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceFp16CPUKernel>)
 }  // namespace mindspore::kernel

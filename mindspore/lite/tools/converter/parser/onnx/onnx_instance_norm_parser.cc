@@ -16,32 +16,21 @@
 
 #include "tools/converter/parser/onnx/onnx_instance_norm_parser.h"
 #include <memory>
+#include "ops/instance_norm.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxInstanceNormParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                             const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx InstanceNormParser";
-  auto attr = std::make_unique<schema::InstanceNormT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxInstanceNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::InstanceNorm>();
 
   if (!onnx_node.attribute().empty()) {
     auto onnx_node_attr = onnx_node.attribute().at(0);
     if (onnx_node_attr.name() == "epsilon") {
-      attr->epsilon = onnx_node_attr.f();
+      prim->set_epsilon(onnx_node_attr.f());
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_InstanceNorm;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxInstanceNormParser("InstanceNormalization", new OnnxInstanceNormParser());
