@@ -153,16 +153,17 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=F
     Saves checkpoint info to a specified file.
 
     Args:
-        save_obj (nn.Cell or list): The cell object or data list(each element is a dictionary, like
-                                    [{"name": param_name, "data": param_data},...], the type of param_name would
-                                    be string, and the type of param_data would be parameter or tensor).
+        save_obj (Union[Cell, list]): The cell object or data list(each element is a dictionary, like
+                                      [{"name": param_name, "data": param_data},...], the type of
+                                      param_name would be string, and the type of param_data would
+                                      be parameter or `Tensor`).
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False
 
     Raises:
-        TypeError: If the parameter save_obj is not nn.Cell or list type.And if the parameter integrated_save and
-                   async_save are not bool type.
+        TypeError: If the parameter save_obj is not `nn.Cell` or list type. And if the parameter
+                   `integrated_save` and `async_save` are not bool type.
     """
 
     if not isinstance(save_obj, nn.Cell) and not isinstance(save_obj, list):
@@ -247,6 +248,8 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         ValueError: Checkpoint file is incorrect.
 
     Examples:
+        >>> from mindspore import load_checkpoint
+        >>>
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
     """
@@ -349,6 +352,8 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         TypeError: Argument is not a Cell, or parameter_dict is not a Parameter dictionary.
 
     Examples:
+        >>> from mindspore import load_checkpoint, load_param_into_net
+        >>>
         >>> net = Net()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = load_checkpoint(ckpt_file_name, filter_prefix="conv1")
@@ -531,7 +536,6 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         inputs (Tensor): Inputs of the `net`.
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
-
             - AIR: Ascend Intermediate Representation. An intermediate representation format of Ascend model.
               Recommended suffix for output file is '.air'.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
@@ -541,7 +545,6 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Recommended suffix for output file is '.mindir'.
 
         kwargs (dict): Configuration options dictionary.
-
             - quant_mode: The mode of quant.
             - mean: Input data mean. Default: 127.5.
             - std_dev: Input data variance. Default: 127.5.
@@ -928,11 +931,9 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
 
     Args:
         sliced_parameters (list[Parameter]): Parameter slices in order of rank_id.
-        strategy (dict): Parameter slice strategy, the default is None.
-            If strategy is None, just merge parameter slices in 0 axis order.
-
-            - key (str): Parameter name.
-            - value (<class 'node_strategy_pb2.ParallelLayouts'>): Slice strategy of this parameter.
+        strategy (Optional[dict]): Parameter slice strategy, whose key is parameter name and
+            value is slice strategy of this parameter. If strategy is None, just merge
+            parameter slices in 0 axis order. Default: None.
 
     Returns:
         Parameter, the merged parameter which has the whole data.
@@ -943,6 +944,9 @@ def merge_sliced_parameter(sliced_parameters, strategy=None):
         KeyError: The parameter name is not in keys of strategy.
 
     Examples:
+        >>> from mindspore.common.parameter import Parameter
+        >>> from mindspore.train import merge_sliced_parameter
+        >>>
         >>> sliced_parameters = [
         ...                      Parameter(Tensor(np.array([0.00023915, 0.00013939, -0.00098059])),
         ...                                "network.embedding_table"),
@@ -1010,10 +1014,13 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
 
     Args:
         network (Cell): Network for distributed predication.
-        checkpoint_filenames (list[str]): The name of Checkpoint files in order of rank id.
-        predict_strategy (dict): Strategy of predication process, whose key is parameter name, and value is a list or
-            a tuple that the first four elements are [dev_matrix, tensor_map, param_split_shape, field]. If None,
-            it means that the predication process just uses single device. Default: None.
+        checkpoint_filenames (list(str)): The name of Checkpoint files
+            in order of rank id.
+        predict_strategy (Optional(dict)): Strategy of predication process, whose key
+            is parameter name, and value is a list or a tuple that the first four
+            elements are [dev_matrix, tensor_map, param_split_shape, field]. If None,
+            it means that the predication process just uses single device.
+            Default: None.
 
     Raises:
         TypeError: The type of inputs do not match the requirements.
