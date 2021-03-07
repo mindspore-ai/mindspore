@@ -39,7 +39,7 @@ int TrainGenerator::CodeNetHFile() {
   MS_CHECK_TRUE(!ofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << net_include_file;
   ofs << g_hwLicense;
-  if (config_->code_mode() == CodeMode::Code_Inference) {
+  if (config_->code_mode() == CodeMode::Inference) {
     ofs << "#include \"src/runtime/thread_pool.h\"\n";
   }
   ofs << "#include \"microtensor.h\"\n\n";

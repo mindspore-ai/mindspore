@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/npu/resize_npu.h"
 #include <memory>
+#include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/agent/npu/npu_converter_utils.h"
 

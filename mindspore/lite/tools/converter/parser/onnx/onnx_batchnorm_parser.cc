@@ -16,35 +16,22 @@
 
 #include "tools/converter/parser/onnx/onnx_batchnorm_parser.h"
 #include <memory>
+#include "ops/fused_batch_norm.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxBatchNormParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                          const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx BatchNormParser";
-  auto attr = std::make_unique<schema::FusedBatchNormT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxBatchNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::FusedBatchNorm>();
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "epsilon") {
-      attr->epsilon = onnx_node_attr.f();
+      prim->set_epsilon(onnx_node_attr.f());
     } else if (onnx_node_attr.name() == "momentum") {
-      attr->momentum = onnx_node_attr.f();
-    } else if (onnx_node_attr.name() == "spatial") {
-      attr->spatial = static_cast<int32_t>(onnx_node_attr.i());
+      prim->set_momentum(onnx_node_attr.f());
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_FusedBatchNorm;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxBatchNormParser("BatchNormalization", new OnnxBatchNormParser());

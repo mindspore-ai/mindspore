@@ -43,13 +43,8 @@ int ReshapeInt8Coder::DoCode(CoderContext *const context) {
     INT8_MIN,
     INT8_MAX};
   code.CodeStruct("reshape_quant_arg", reshape_quant_arg);
+  code.CodeFunction("Int8Reshape", input, output, elements_num, "reshape_quant_arg");
 
-  if (thread_num_ > 1) {
-    code.CodeBaseStruct("ReshapeInt8Args", "args", input, output, elements_num, thread_num_s_, "reshape_quant_arg");
-    CODE_PARALLEL_FUNC("ReshapeInt8Run");
-  } else {
-    code.CodeFunction("Int8Reshape", input, output, elements_num, "reshape_quant_arg");
-  }
   context->AppendCode(code.str());
   return RET_OK;
 }

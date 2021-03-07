@@ -18,7 +18,7 @@
 #include <memory>
 #include "src/dequant.h"
 #include "src/huffman_decode.h"
-#include "src/ops/matmul.h"
+#include "nnacl/matmul_parameter.h"
 
 namespace mindspore::lite {
 float *DequantUtil::DequantWeight(lite::Tensor *input_tensor, bool channel_first) {
@@ -66,7 +66,7 @@ int DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_in
   return RET_OK;
 }
 
-std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(const mindspore::lite::PrimitiveC *primitive,
+std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(OpParameter *op_param,
                                                                          const std::vector<Tensor *> &in_tensors,
                                                                          TypeId data_type, bool need_restore) {
   std::map<Tensor *, std::pair<TypeId, void *>> tensor_origin_data;
@@ -76,13 +76,12 @@ std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(const m
       MS_ASSERT(weight_tensor != nullptr);
       input_i++;
       auto channel_first = true;
-      if ((schema::PrimitiveType)primitive->Type() == schema::PrimitiveType_MatMul &&
-          weight_tensor->shape().size() == 2) {
-        auto param = reinterpret_cast<mindspore::lite::MatMul *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+      if (op_param->type_ == schema::PrimitiveType_MatMul && weight_tensor->shape().size() == 2) {
+        auto param = reinterpret_cast<MatMulParameter *>(op_param);
         if (input_i == 1) {
-          channel_first = !param->GetTransposeA();
+          channel_first = !param->a_transpose_;
         } else if (input_i == 2) {
-          channel_first = param->GetTransposeB();
+          channel_first = param->b_transpose_;
         } else {
           MS_LOG(WARNING) << "unexpected input_i";
         }

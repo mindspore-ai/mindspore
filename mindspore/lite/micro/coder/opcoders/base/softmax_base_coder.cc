@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/base/softmax_base_coder.h"
+#include "coder/opcoders/base/softmax_base_coder.h"
 #include <vector>
 #include <type_traits>
 

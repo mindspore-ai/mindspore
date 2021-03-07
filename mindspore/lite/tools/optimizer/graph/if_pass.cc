@@ -16,36 +16,21 @@
 #include "tools/optimizer/graph/if_pass.h"
 #include <vector>
 #include <memory>
-#include <algorithm>
 #include "mindspore/lite/include/errorcode.h"
-#include "mindspore/lite/src/ops/primitive_c.h"
-#include "tools/anf_importer/import_from_meta_graphT.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "src/ops/primitive_c.h"
-#include "schema/inner/model_generated.h"
-#include "src/tensor.h"
 #include "src/common/log_adapter.h"
-#include "src/ops/switch.h"
-#include "src/ops/partial.h"
+#include "ops/switch.h"
 
 namespace mindspore::opt {
 
 ValueNodePtr IfPass::GetSwitchAnfPrim() {
-  std::unique_ptr<schema::PrimitiveT> switch_primitiveT(new (std::nothrow) schema::PrimitiveT);
-  if (switch_primitiveT == nullptr) {
-    MS_LOG(ERROR) << "new switch_primitiveT failed";
+  auto switch_prim = std::make_shared<ops::Switch>();
+  if (switch_prim == nullptr) {
+    MS_LOG(ERROR) << "new prim failed.";
     return nullptr;
   }
-  switch_primitiveT->value.type = schema::PrimitiveType_Switch;
-  switch_primitiveT->value.value = new (std::nothrow) schema::SwitchT;
-  if (switch_primitiveT->value.value == nullptr) {
-    MS_LOG(ERROR) << "new MakeTupleT failed";
-    return nullptr;
-  }
-
-  auto partial_prim = std::make_shared<lite::Partial>(switch_primitiveT.release());
-  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
-  return partial_anf_prim;
+  ValueNodePtr switch_anf_prim = NewValueNode(switch_prim);
+  return switch_anf_prim;
 }
 
 void IfPass::ReplaceInput(const std::vector<AnfNodePtr> &node_list, AnfNodePtr new_input_cnode, std::string para_name) {
@@ -71,7 +56,7 @@ bool IfPass::Run(const FuncGraphPtr &graph) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    if (opt::GetCNodeType(node) != schema::PrimitiveType_If) {
+    if (!CheckPrimitiveType(node, prim::kPrimIf)) {
       continue;
     }
     auto if_cnode = node->cast<CNodePtr>();

@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class LstmCPUKernel : public LiteKernel {
  public:
   LstmCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     lstm_param_ = reinterpret_cast<LstmParameter *>(op_parameter_);
   }
 
@@ -45,7 +44,7 @@ class LstmCPUKernel : public LiteKernel {
   int InitWeightBias();
 
   float *gate_buffer_ = nullptr;
-  float *state_buffer_ = nullptr;
+  float *state_buffer_[2];
   float *weight_i_ptr_ = nullptr;
   float *weight_h_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;

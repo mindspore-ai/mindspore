@@ -23,14 +23,24 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore::lite {
-class TflitePoolingParser : public TfliteNodeParser {
+namespace mindspore {
+namespace lite {
+class TfliteAvgPoolParser : public TfliteNodeParser {
  public:
-  TflitePoolingParser() : TfliteNodeParser("node_name") {}
+  TfliteAvgPoolParser() : TfliteNodeParser("avg_pool") {}
 
-  lite::PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                       const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
-}  // namespace mindspore::lite
+
+class TfliteMaxPoolParser : public TfliteNodeParser {
+ public:
+  TfliteMaxPoolParser() : TfliteNodeParser("max_pool") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+}  // namespace lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_POOLING_PARSER_H

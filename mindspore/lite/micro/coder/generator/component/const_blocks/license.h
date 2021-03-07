@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_GENERATOR_CONST_BLOCK_LICENSE_INFOS_H
-#define MICRO_GENERATOR_CONST_BLOCK_LICENSE_INFOS_H
+#ifndef MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_LICENSE_INFOS_H_
+#define MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_LICENSE_INFOS_H_
 
 namespace mindspore::lite::micro {
 
-const char g_hwLicense[] =
+static const char *g_hwLicense =
   "/**\n"
   " * Copyright 2021 Huawei Technologies Co., Ltd\n"
   " *\n"
@@ -37,4 +37,4 @@ const char g_hwLicense[] =
   " */\n\n";
 }  // namespace mindspore::lite::micro
 
-#endif  // MICRO_GENERATOR_CONST_BLOCK_LICENSE_INFOS_H
+#endif  // MINDSPORE_LITE_MICRO_GENERATOR_CONST_BLOCK_LICENSE_INFOS_H_

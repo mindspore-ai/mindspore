@@ -27,7 +27,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Adder;
+using mindspore::schema::PrimitiveType_AdderFusion;
 using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
@@ -132,5 +132,5 @@ int AdderCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Adder, LiteKernelCreator<AdderCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AdderFusion, LiteKernelCreator<AdderCPUKernel>)
 }  // namespace mindspore::kernel

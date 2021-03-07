@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ TEST_F(TestTfliteParserSplitV, OpType) {
 TEST_F(TestTfliteParserSplitV, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSplit(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsSplit();
-  ASSERT_EQ(val->splitDim, 0);
-  ASSERT_EQ(val->numberSplit, 2);
-  const std::vector<int> sizeSplits = {1, 3};
-  ASSERT_EQ(val->sizeSplits, sizeSplits);
+  ASSERT_EQ(val->axis, 0);
+  ASSERT_EQ(val->output_num, 2);
+  const std::vector<int64_t> sizeSplits = {1, 3};
+  ASSERT_EQ(val->size_splits, sizeSplits);
 }
 
 }  // namespace mindspore

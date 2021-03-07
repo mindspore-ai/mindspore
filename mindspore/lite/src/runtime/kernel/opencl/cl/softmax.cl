@@ -4,7 +4,7 @@
 #define divide_no_check(a, b) (a / b)
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void SoftMaxAxis3_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
+__kernel void SoftmaxAxis3_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
                                  const int4 input_shape) {
   int X = get_global_id(1);  // H
   int Y = get_global_id(0);  // W
@@ -47,7 +47,7 @@ __kernel void SoftMaxAxis3_NHWC4(__read_only image2d_t input, __write_only image
   WRITE_IMAGEOUT(output, (int2)(Y * C4 + C4 - 1, X), OUT_FLT4(result));
 }
 
-__kernel void SoftMaxAxis1_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
+__kernel void SoftmaxAxis1_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
                                  const int4 input_shape) {
   int X = get_global_id(1);  // W
   int Y = get_global_id(0);  // C4
@@ -69,7 +69,7 @@ __kernel void SoftMaxAxis1_NHWC4(__read_only image2d_t input, __write_only image
   }
 }
 
-__kernel void SoftMaxAxis2_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
+__kernel void SoftmaxAxis2_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
                                  const int4 input_shape) {
   int X = get_global_id(1);  // H
   int Y = get_global_id(0);  // C4
@@ -91,7 +91,7 @@ __kernel void SoftMaxAxis2_NHWC4(__read_only image2d_t input, __write_only image
   }
 }
 
-__kernel void SoftMax1x1_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
+__kernel void Softmax1x1_NHWC4(__read_only image2d_t input, __write_only image2d_t output, const float4 mask,
                                const int4 input_shape) {
   int tid = get_local_id(0);
   int C4 = input_shape.w;

@@ -26,7 +26,7 @@ namespace mindspore::lite::micro {
 void CodeSourceFileInclude(std::ofstream &ofs, const std::string &weight_file, const std::string &header) {
   ofs << g_hwLicense << "#include \"microtensor.h\"\n"
       << "#include \"" << weight_file << "\"\n"
-      << "#include \"" << header << "\"\n";
+      << "#include \"" << header << "\"\n\n";
 }
 
 void CodeInputAndOutputState(std::ofstream &ofs, const std::string &module_name) {
@@ -53,13 +53,13 @@ void PrintMicroTensors(std::ofstream &ofs, std::vector<Tensor *> tensors, const 
       MS_LOG(ERROR) << "nonexistent tensor";
       break;
     }
-    ofs << "  static int dim[] = {";
+    ofs << "  static int dim" << i << "[] = {";
     for (size_t j = 0; j < tensor->shape().size(); ++j) {
       ofs << tensor->shape()[j] << ", ";
     }
     ofs << "};\n"
         << "  " << name << "[" << i << "].ndim = " << tensor->shape().size() << ";\n"
-        << "  " << name << "[" << i << "].dim = dim;\n"
+        << "  " << name << "[" << i << "].dim = dim" << i << ";\n"
         << "  " << name << "[" << i << "].type = " << EnumMicroTensorDataType(tensor->data_type()) << ";\n"
         << "  " << name << "[" << i << "].format = " << std::to_string(tensor->format()) << ";\n"
         << "  " << name << "[" << i << "].data =" << item->second << ";\n";
@@ -69,7 +69,6 @@ void PrintMicroTensors(std::ofstream &ofs, std::vector<Tensor *> tensors, const 
 void CodeInputAndOutputImplement(std::ofstream &ofs, const std::string &module_name,
                                  const std::unique_ptr<CoderContext> &ctx) {
   // input tensors
-  ofs << "\n// input tensors\n";
   std::vector<Tensor *> inputs = ctx->graph_inputs();
   for (size_t i = 0; i < inputs.size(); ++i) {
     ofs << "static const unsigned char *" << ctx->input_name() + std::to_string(i) << " = 0;\n";
@@ -88,7 +87,6 @@ void CodeInputAndOutputImplement(std::ofstream &ofs, const std::string &module_n
   ofs << "  return RET_OK;\n}\n";
 
   // output tensors
-  ofs << "\n// output tensors\n";
   std::vector<Tensor *> outputs = ctx->graph_outputs();
   size_t output_num = outputs.size();
   std::string output_name = ctx->output_name();
@@ -158,7 +156,7 @@ void CodeManageResourceState(std::ofstream &ofs, const std::string &module_name)
 
 void CodeInitResourceImplement(std::ofstream &ofs, const std::string &module_name,
                                const std::unique_ptr<CoderContext> &ctx) {
-  ofs << "int " << module_name << "deconv_GetBufferSize() {\n"
+  ofs << "int " << module_name << "_GetBufferSize() {\n"
       << "  return " << ctx->total_buffer_size() << ";\n"
       << "}\n";
   ofs << "int " << module_name << "_SetBuffer( void *buffer) {\n";

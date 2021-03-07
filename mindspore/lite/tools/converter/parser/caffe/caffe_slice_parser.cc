@@ -16,23 +16,18 @@
 
 #include "tools/converter/parser/caffe/caffe_slice_parser.h"
 #include <memory>
+#include "ops/split.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeSliceParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                 const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::SplitT> attr = std::make_unique<schema::SplitT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *CaffeSliceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_unique<ops::Split>();
 
   const caffe::SliceParameter &slice_param = proto.slice_param();
-
-  attr->numberSplit = 2;
+  prim->set_output_num(2);
   if (!slice_param.slice_point().empty()) {
-    attr->numberSplit = slice_param.slice_point_size() + 1;
-    std::vector<int32_t> size_splits;
+    prim->set_output_num(slice_param.slice_point_size() + 1);
+    std::vector<int64_t> size_splits;
     for (int i = 0; i < slice_param.slice_point_size(); ++i) {
       if (i == 0) {
         size_splits.push_back(slice_param.slice_point(i));
@@ -41,18 +36,16 @@ PrimitiveC *CaffeSliceParser::ParseLitePrimitive(const caffe::LayerParameter &pr
       }
     }
     size_splits.push_back(-1);
-    attr->sizeSplits = size_splits;
+    prim->set_size_splits(size_splits);
   }
 
   if (slice_param.has_axis()) {
-    attr->splitDim = slice_param.axis();
+    prim->set_axis(slice_param.axis());
   } else if (slice_param.has_slice_dim()) {
-    attr->splitDim = slice_param.slice_dim();
+    prim->set_axis(slice_param.slice_dim());
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Split;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeSliceParser("Slice", new CaffeSliceParser());

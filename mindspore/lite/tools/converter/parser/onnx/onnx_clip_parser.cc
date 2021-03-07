@@ -16,35 +16,25 @@
 
 #include "tools/converter/parser/onnx/onnx_clip_parser.h"
 #include <memory>
+#include "ops/clip.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxClipParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                     const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ClipParser";
-  auto attr = std::make_unique<schema::ClipT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-  attr->max = -1;
-  attr->min = -1;
+ops::PrimitiveC *OnnxClipParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Clip>();
+
+  prim->set_min(-1);
+  prim->set_max(-1);
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "max") {
-      attr->max = onnx_node_attr.f();
+      prim->set_max(onnx_node_attr.f());
     } else if (attribute_name == "min") {
-      attr->min = onnx_node_attr.f();
+      prim->set_min(onnx_node_attr.f());
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Clip;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxClipParser("Clip", new OnnxClipParser());

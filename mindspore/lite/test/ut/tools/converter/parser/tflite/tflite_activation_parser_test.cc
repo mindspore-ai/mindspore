@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ TEST_F(TestTfliteParserRelu, OpType) {
 TEST_F(TestTfliteParserRelu, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
-  ASSERT_EQ(val->type, schema::ActivationType_RELU);
+  ASSERT_EQ(val->activation_type, schema::ActivationType_RELU);
 }
 
 class TestTfliteParserRelu6 : public TestTfliteParser {
@@ -52,7 +52,7 @@ TEST_F(TestTfliteParserRelu6, OpType) {
 TEST_F(TestTfliteParserRelu6, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
-  ASSERT_EQ(val->type, schema::ActivationType_RELU6);
+  ASSERT_EQ(val->activation_type, schema::ActivationType_RELU6);
 }
 
 class TestTfliteParserTanh : public TestTfliteParser {
@@ -70,7 +70,7 @@ TEST_F(TestTfliteParserTanh, OpType) {
 TEST_F(TestTfliteParserTanh, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
-  ASSERT_EQ(val->type, schema::ActivationType_TANH);
+  ASSERT_EQ(val->activation_type, schema::ActivationType_TANH);
 }
 
 class TestTfliteParserLogistic : public TestTfliteParser {
@@ -87,7 +87,7 @@ TEST_F(TestTfliteParserLogistic, OpType) {
 TEST_F(TestTfliteParserLogistic, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
-  ASSERT_EQ(val->type, schema::ActivationType_SIGMOID);
+  ASSERT_EQ(val->activation_type, schema::ActivationType_SIGMOID);
 }
 
 class TestTfliteParserHardSwish : public TestTfliteParser {
@@ -104,7 +104,7 @@ TEST_F(TestTfliteParserHardSwish, OpType) {
 TEST_F(TestTfliteParserHardSwish, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsActivation(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsActivation();
-  ASSERT_EQ(val->type, schema::ActivationType_SIGMOID);
+  ASSERT_EQ(val->activation_type, schema::ActivationType_SIGMOID);
 }
 
 class TestTfliteParserPrelu : public TestTfliteParser {
@@ -128,14 +128,14 @@ class TestTfliteParserLeakyRelu : public TestTfliteParser {
 TEST_F(TestTfliteParserLeakyRelu, OpType) {
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LeakyReLU) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LeakyRelu) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserLeakyRelu, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsLeakyReLU(), nullptr);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsLeakyRelu(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value;
-  ASSERT_EQ(val.AsLeakyReLU()->negativeSlope, 0.20000000298023224);
-  ASSERT_EQ(val.type, schema::PrimitiveType_LeakyReLU);
+  ASSERT_EQ(val.AsLeakyRelu()->negative_slope, 0.20000000298023224);
+  ASSERT_EQ(val.type, schema::PrimitiveType_LeakyRelu);
 }
 
 }  // namespace mindspore

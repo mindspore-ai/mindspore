@@ -20,11 +20,8 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DeConv2D;
-using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
-
 DeConvWinogradFp16CPUKernel::~DeConvWinogradFp16CPUKernel() {
   FreeResizeBuf();
   FreeDeconvParam();

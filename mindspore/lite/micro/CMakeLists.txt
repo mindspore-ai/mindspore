@@ -9,16 +9,10 @@ include_directories(${CMAKE_BINARY_DIR})
 include(${TOP_DIR}/cmake/utils.cmake)
 include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
+include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
-include(${TOP_DIR}/cmake/external_libs/cmsis.cmake)
 
-set(FBS_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/../schema/model.fbs
-        ${CMAKE_CURRENT_SOURCE_DIR}/../schema/ops.fbs
-        ${CMAKE_CURRENT_SOURCE_DIR}/../schema/model_v0.fbs
-        ${CMAKE_CURRENT_SOURCE_DIR}/../schema/ops_v0.fbs
-        )
-
+file(GLOB FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/../schema/*.fbs)
 ms_build_flatbuffers_lite(FBS_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/../schema/
         fbs_src
@@ -50,6 +44,6 @@ if(ENABLE_ASAN)
 endif()
 
 add_subdirectory(coder)
-if(${BUILD_TESTCASES})
+if(BUILD_TESTCASES)
   add_subdirectory(test)
 endif()

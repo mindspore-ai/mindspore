@@ -23,9 +23,8 @@ namespace mindspore::kernel {
 class BiasAddInt8CPUKernel : public QuantizedAddCPUKernel {
  public:
   BiasAddInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : QuantizedAddCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : QuantizedAddCPUKernel(parameter, inputs, outputs, ctx) {}
   ~BiasAddInt8CPUKernel() override = default;
 };
 }  // namespace mindspore::kernel

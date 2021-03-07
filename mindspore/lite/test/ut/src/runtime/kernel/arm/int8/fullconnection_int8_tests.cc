@@ -138,7 +138,7 @@ TEST_F(TestFcInt8, fctest1) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
 
   kernel::FullconnectionInt8CPUKernel *fc =
-    new kernel::FullconnectionInt8CPUKernel(reinterpret_cast<OpParameter *>(fc_param), inputs, outputs, ctx, nullptr);
+    new kernel::FullconnectionInt8CPUKernel(reinterpret_cast<OpParameter *>(fc_param), inputs, outputs, ctx);
 
   fc->Init();
   fc->Run();

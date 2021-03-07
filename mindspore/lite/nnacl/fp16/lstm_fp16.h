@@ -37,7 +37,7 @@ int ElementOptMulAccFp16(const float16_t *input0, const float16_t input1, float1
 
 void LstmFp16(float16_t *output, const float16_t *input, const float16_t *weight_i, const float16_t *weight_h,
               const float16_t *bias, float16_t *hidden_state, float16_t *cell_state, float16_t *gate_buffer,
-              float16_t *state_buffer, float16_t *matmul_buffer[2], const LstmParameter *lstm_param);
+              float16_t *state_buffer[2], float16_t *matmul_buffer[2], const LstmParameter *lstm_param);
 #ifdef __cplusplus
 }
 #endif

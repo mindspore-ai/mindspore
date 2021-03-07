@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ STATUS DropoutNodeRemovePass::Run(schema::MetaGraphT *graph) {
   for (size_t i = 0; i < graph->nodes.size(); i++) {
     auto &node = graph->nodes.at(i);
     if (node->primitive == nullptr) {
-      MS_LOG(ERROR) << "node->primitive is nullptr";
+      MS_LOG(ERROR) << "node->primitive is nullptr, node name: " << node->name;
       return RET_ERROR;
     }
     if (node->primitive->value.type == schema::PrimitiveType_Dropout) {

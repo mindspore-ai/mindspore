@@ -86,6 +86,15 @@ int TransposeInt8CPUKernel::ReSize() {
 
   transpose_param_->data_size_ = in_tensor->Size();
 
+  // get perm data
+  auto perm_tensor = in_tensors_.at(1);
+  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  MS_ASSERT(perm_data != nullptr);
+  transpose_param_->num_axes_ = perm_tensor->ElementsNum();
+  for (int i = 0; i < transpose_param_->num_axes_; ++i) {
+    transpose_param_->perm_[i] = perm_data[i];
+  }
+
   transpose_param_->strides_[transpose_param_->num_axes_ - 1] = 1;
   transpose_param_->out_strides_[transpose_param_->num_axes_ - 1] = 1;
   for (int i = transpose_param_->num_axes_ - 2; i >= 0; i--) {

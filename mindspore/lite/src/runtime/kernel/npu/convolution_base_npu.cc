@@ -91,7 +91,7 @@ int ConvolutionBaseNPUKernel::SetActivation(const ge::Operator *input, ActType a
   } else if (act_type == ActType_Relu6) {
     act_->set_attr_mode(14);
   } else {
-    MS_LOG(ERROR) << "Unsupport activation type for convolution.";
+    MS_LOG(ERROR) << "Unsupported activation type for convolution.";
     return RET_ERROR;
   }
   return RET_OK;

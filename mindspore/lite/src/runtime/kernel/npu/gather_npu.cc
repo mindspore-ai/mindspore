@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/npu/gather_npu.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Gather;
@@ -25,6 +26,12 @@ int GatherNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const 
                                OpParameter *opParameter) {
   if (inputs[1]->data_type() != kNumberTypeInt32) {
     MS_LOG(WARNING) << "Gather indices only support Int32";
+    return RET_ERROR;
+  }
+  if (inputs.size() >= 3 && inputs[2]->ElementsNum() == 1) {
+    axis_ = static_cast<int *>(inputs[2]->data_c())[0];
+  } else {
+    MS_LOG(WARNING) << "NPU axis is attribute.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -40,7 +47,7 @@ int GatherNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
 
   op_->set_input_x(*npu_inputs[0]);
   op_->set_input_indices(*npu_inputs[1]);
-  op_->set_attr_axis(gather_parameter_->axis_);
+  op_->set_attr_axis(axis_);
   return RET_OK;
 }
 

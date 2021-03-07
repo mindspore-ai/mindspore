@@ -38,8 +38,9 @@ int TensorListSetItemCPUKernel::Init() {
 }
 
 int TensorListSetItemCPUKernel::CheckParam() {
-  if (dtype_ != kTypeUnknown && dtype_ != input0_->tensors_data_type()) {
-    MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors[0] dtype:" << input0_->data_type();
+  if (dtype_ != kTypeUnknown && input0_->tensors_data_type() != kTypeUnknown &&
+      dtype_ != input0_->tensors_data_type()) {
+    MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors[0] dtype:" << input0_->tensors_data_type();
     return RET_ERROR;
   }
   if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {

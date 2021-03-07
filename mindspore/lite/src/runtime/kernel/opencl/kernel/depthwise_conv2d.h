@@ -28,9 +28,8 @@ namespace mindspore::kernel {
 class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
  public:
   DepthwiseConv2dOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                              const mindspore::lite::PrimitiveC *primitive)
-      : OpenCLKernel(parameter, inputs, outputs, ctx, primitive) {
+                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : OpenCLKernel(parameter, inputs, outputs, ctx) {
     bool is_adreno = ocl_runtime_->GetGpuInfo().type == lite::opencl::GpuType::ADRENO;
     filter_type_ = is_adreno ? MemType::IMG : MemType::BUF;
   }
@@ -42,6 +41,7 @@ class DepthwiseConv2dOpenCLKernel : public OpenCLKernel {
 
   int CheckSpecs() override;
   int InitWeights() override;
+  int InitBias();
   void SetConstArgs() override;
   void SetGlobalLocal() override;
 

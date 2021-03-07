@@ -74,7 +74,7 @@ void TestResizeNearestNeighborInt8::Prepare(const std::vector<int> &in_shape, co
 
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
-  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
 }
 
 void TestResizeNearestNeighborInt8::TearDown() {

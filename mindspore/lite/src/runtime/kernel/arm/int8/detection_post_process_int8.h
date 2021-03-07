@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class DetectionPostProcessInt8CPUKernel : public DetectionPostProcessBaseCPUKernel {
  public:
   DetectionPostProcessInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                    const mindspore::lite::PrimitiveC *primitive)
-      : DetectionPostProcessBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : DetectionPostProcessBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DetectionPostProcessInt8CPUKernel() = default;
 
   int8_t *data_int8_ = nullptr;

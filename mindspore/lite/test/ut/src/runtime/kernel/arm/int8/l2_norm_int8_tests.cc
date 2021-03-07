@@ -50,14 +50,14 @@ TEST_F(TestL2NormInt8, norm) {
   param_.epsilon_ = 1e-6;
   param_.act_type_ = ActType_No;
   param_.shape_ = nullptr;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_L2Norm};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_L2NormalizeFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx.get(), desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();
@@ -94,14 +94,14 @@ TEST_F(TestL2NormInt8, norm2) {
   param_.epsilon_ = 1e-6;
   param_.act_type_ = ActType_No;
   param_.shape_ = nullptr;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_L2Norm};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_L2NormalizeFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
 
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx.get(), desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();

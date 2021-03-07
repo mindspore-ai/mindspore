@@ -23,7 +23,7 @@ class TestOpenCL_LayerNorm : public CommonTest {};
 namespace {
 // PrimitiveType_Stack: src/ops/populate/stack_populate.cc
 OpParameter *CreateParameter(float epsilon, int begin_norm_axis_, int begin_param_axis_) {
-  auto *param = test::CreateParameter<LayerNormParameter>(schema::PrimitiveType_LayerNorm);
+  auto *param = test::CreateParameter<LayerNormParameter>(schema::PrimitiveType_LayerNormFusion);
   param->epsilon_ = epsilon;
   param->begin_norm_axis_ = begin_norm_axis_;
   param->begin_params_axis_ = begin_param_axis_;

@@ -26,7 +26,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Sgd;
+using mindspore::schema::PrimitiveType_SGD;
 
 namespace mindspore::kernel {
 
@@ -200,10 +200,9 @@ int SgdCPUKernel::OptimizerStep() {
 
 kernel::LiteKernel *CpuSgdFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                            const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                            const lite::PrimitiveC *primitive) {
-  MS_ASSERT(desc.type == schema::PrimitiveType_Sgd);
-  auto *kernel = new (std::nothrow) SgdCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+                                            const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(desc.type == schema::PrimitiveType_SGD);
+  auto *kernel = new (std::nothrow) SgdCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SgdCPUKernel failed!";
     free(opParameter);
@@ -221,5 +220,5 @@ kernel::LiteKernel *CpuSgdFp32KernelCreator(const std::vector<lite::Tensor *> &i
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sgd, CpuSgdFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SGD, CpuSgdFp32KernelCreator)
 }  // namespace mindspore::kernel

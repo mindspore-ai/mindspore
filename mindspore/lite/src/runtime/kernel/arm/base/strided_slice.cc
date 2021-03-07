@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/runtime/kernel/arm/base/strided_slice.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
-#include "src/ops/populate/strided_slice_populate.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -61,16 +59,6 @@ int StridedSliceCPUKernel::ReSize() {
   if (fast_run_) {
     InitFastRunParam();
   }
-  if (op_parameter_ != nullptr) {
-    free(op_parameter_);
-    op_parameter_ = nullptr;
-  }
-  op_parameter_ = PopulateStridedSliceParameter(primitive_);
-  if (op_parameter_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc parameter failed";
-    return RET_ERROR;
-  }
-  param_ = reinterpret_cast<StridedSliceParameter *>(op_parameter_);
   return RET_OK;
 }
 

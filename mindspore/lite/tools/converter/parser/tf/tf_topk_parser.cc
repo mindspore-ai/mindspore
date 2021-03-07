@@ -19,57 +19,29 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/fusion/topk_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFTopKParser::Parse(const tensorflow::NodeDef &tf_op,
-                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                           std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF TopKParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFTopKParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::TopKFusion>();
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::TopKT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-
-  // sorted
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "sorted", &attr_value)) {
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->sorted = attr_value.i();
-
-  primitive->value.type = schema::PrimitiveType_TopK;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_sorted(attr_value.b());
 
   *output_size = 2;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
     MS_LOG(ERROR) << "Add Op input failed.";
-    return status;
+    return nullptr;
   }
-  status = AddOpInput(tf_op, 1, inputs);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Add Op input failed.";
-    return status;
-  }
-  return status;
+
+  return prim.release();
 }
 TFNodeRegistrar g_tfTopKV2Parser("TopKV2", new TFTopKParser());
 }  // namespace lite

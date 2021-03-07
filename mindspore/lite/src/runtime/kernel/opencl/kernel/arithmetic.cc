@@ -35,6 +35,9 @@ using mindspore::lite::opencl::MemType;
 using mindspore::schema::ActivationType_NO_ACTIVATION;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::EltwiseMode_MAXIMUM;
+using mindspore::schema::EltwiseMode_PROD;
+using mindspore::schema::EltwiseMode_SUM;
 using mindspore::schema::PrimitiveType_BiasAdd;
 using mindspore::schema::PrimitiveType_Eltwise;
 
@@ -49,6 +52,13 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
   if (!IsArithmetic(Type())) {
     MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(Type());
     return RET_ERROR;
+  }
+  if (Type() == schema::PrimitiveType_Eltwise) {
+    auto mode = param->eltwise_mode_;
+    if (mode != EltwiseMode_PROD && mode != EltwiseMode_SUM && mode != EltwiseMode_MAXIMUM) {
+      MS_LOG(ERROR) << "Eltwise mode not support, mode:" << mode;
+      return RET_ERROR;
+    }
   }
   if (!(param->activation_type_ == ActivationType_NO_ACTIVATION || param->activation_type_ == ActivationType_RELU ||
         param->activation_type_ == ActivationType_RELU6)) {
@@ -130,7 +140,34 @@ int ArithmeticOpenCLKernel::Prepare() {
   }
   element_flag_ = !param->broadcasting_;
   kernel_name_ = param->broadcasting_ ? "BroadcastNHWC4" : "Element";
-  kernel_name_ += schema::EnumNamePrimitiveType(Type());
+  switch (Type()) {
+    case PrimitiveType_MulFusion:
+      kernel_name_ += "Mul";
+      break;
+    case PrimitiveType_AddFusion:
+      kernel_name_ += "Add";
+      break;
+    case PrimitiveType_SubFusion:
+      kernel_name_ += "Sub";
+      break;
+    case PrimitiveType_DivFusion:
+      kernel_name_ += "Div";
+      break;
+    case PrimitiveType_Eltwise: {
+      auto mode = param->eltwise_mode_;
+      if (mode == EltwiseMode_PROD) {
+        kernel_name_ += "Mul";
+      } else if (mode == EltwiseMode_SUM) {
+        kernel_name_ += "Add";
+      } else if (mode == EltwiseMode_MAXIMUM) {
+        kernel_name_ += "Maximum";
+      }
+      break;
+    }
+    default:
+      kernel_name_ += schema::EnumNamePrimitiveType(Type());
+  }
+
   if (param->activation_type_ == ActivationType_RELU) {
     activation_min_ = 0.f;
   } else if (param->activation_type_ == ActivationType_RELU6) {
@@ -169,10 +206,10 @@ int ArithmeticOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mul, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Add, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Sub, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Div, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MulFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_AddFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SubFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DivFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalAnd, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalOr, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Maximum, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
@@ -188,10 +225,10 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Greater, OpenCLKernelCreator<
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_GreaterEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Eltwise, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BiasAdd, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mul, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Add, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Sub, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Div, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MulFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_AddFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SubFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_DivFusion, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalAnd, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalOr, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Maximum, OpenCLKernelCreator<ArithmeticOpenCLKernel>)

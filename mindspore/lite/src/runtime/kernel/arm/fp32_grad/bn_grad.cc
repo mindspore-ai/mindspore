@@ -32,7 +32,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_BNGrad;
+using mindspore::schema::PrimitiveType_BatchNormGrad;
 
 namespace mindspore::kernel {
 int BNGradCPUKernel::ReSize() {
@@ -149,11 +149,10 @@ int BNGradCPUKernel::Run() {
 
 kernel::LiteKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const mindspore::lite::PrimitiveC *primitive) {
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_BNGrad);
-  auto *kernel = new (std::nothrow) BNGradCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  MS_ASSERT(desc.type == schema::PrimitiveType_BatchNormGrad);
+  auto *kernel = new (std::nothrow) BNGradCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new BNGradCPUKernel fail!";
     free(opParameter);
@@ -169,5 +168,5 @@ kernel::LiteKernel *CpuBNGradFp32KernelCreator(const std::vector<lite::Tensor *>
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BNGrad, CpuBNGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchNormGrad, CpuBNGradFp32KernelCreator)
 }  // namespace mindspore::kernel

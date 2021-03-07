@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,8 @@ class TfLstmCellFusion : public TfliteLstmCellFusion {
  private:
   AnfNodePtr GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const override;
   CNodePtr CreateLSTMNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, const EquivPtr &body_equiv,
-                          const std::string &base_name, const float smooth) const override;
+                          const std::string &base_name, const float zoneout_cell,
+                          const float zoneout_hidden) const override;
 
   lite::STATUS SplitWeights(const AnfNodePtr &weight, const ParameterPtr &weight_i, const ParameterPtr &weight_c,
                             int hidden_size) const;

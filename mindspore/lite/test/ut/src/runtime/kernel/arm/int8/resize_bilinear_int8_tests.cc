@@ -79,7 +79,7 @@ void TestResizeBilinearInt8::Prepare(const std::vector<int> &in_shape, const std
 
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
-  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
 }
 
 TEST_F(TestResizeBilinearInt8, Bilinear0) {

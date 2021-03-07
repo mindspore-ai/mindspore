@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/topk.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/topk_fp32.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateTopKParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateTopKParameter(const void *prim) {
   TopkParameter *topk_param = reinterpret_cast<TopkParameter *>(malloc(sizeof(TopkParameter)));
   if (topk_param == nullptr) {
     MS_LOG(ERROR) << "malloc TopkParameter failed.";
     return nullptr;
   }
   memset(topk_param, 0, sizeof(TopkParameter));
-  topk_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::TopK *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  topk_param->k_ = param->GetK();
-  topk_param->sorted_ = param->GetSorted();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  topk_param->op_parameter_.type_ = primitive->value_type();
+  auto param = primitive->value_as_TopKFusion();
+  topk_param->sorted_ = param->sorted();
   return reinterpret_cast<OpParameter *>(topk_param);
 }
-Registry TopKParameterRegistry(schema::PrimitiveType_TopK, PopulateTopKParameter);
+}  // namespace
+Registry g_topKParameterRegistry(schema::PrimitiveType_TopKFusion, PopulateTopKParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

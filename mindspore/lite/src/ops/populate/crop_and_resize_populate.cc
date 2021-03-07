@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/crop_and_resize.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/resize_parameter.h"
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateCropAndResizeParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateCropAndResizeParameter(const void *prim) {
   CropAndResizeParameter *crop_resize_param =
     reinterpret_cast<CropAndResizeParameter *>(malloc(sizeof(CropAndResizeParameter)));
   if (crop_resize_param == nullptr) {
@@ -28,13 +26,16 @@ OpParameter *PopulateCropAndResizeParameter(const mindspore::lite::PrimitiveC *p
     return nullptr;
   }
   memset(crop_resize_param, 0, sizeof(CropAndResizeParameter));
-  crop_resize_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::CropAndResize *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  crop_resize_param->method_ = static_cast<int>(param->GetMethod());
-  crop_resize_param->extrapolation_value_ = param->GetExtrapolationValue();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  crop_resize_param->op_parameter_.type_ = primitive->value_type();
+  auto param = primitive->value_as_CropAndResize();
+  crop_resize_param->method_ = static_cast<int>(param->method());
+  crop_resize_param->extrapolation_value_ = param->extrapolation_value();
   return reinterpret_cast<OpParameter *>(crop_resize_param);
 }
+}  // namespace
 
-Registry CropAndResizeParameterRegistry(schema::PrimitiveType_CropAndResize, PopulateCropAndResizeParameter);
+Registry g_cropAndResizeParameterRegistry(schema::PrimitiveType_CropAndResize, PopulateCropAndResizeParameter,
+                                          SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

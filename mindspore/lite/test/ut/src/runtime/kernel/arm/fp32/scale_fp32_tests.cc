@@ -48,7 +48,7 @@ class TestScaleFp32 : public mindspore::CommonTest {
   ScaleParameter param_;
   std::vector<lite::Tensor *> inputs_{&in_tensor_, &scale_tensor_, &offset_tensor_};
   std::vector<lite::Tensor *> outputs_{&out_tensor_};
-  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Scale};
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_ScaleFusion};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;
@@ -89,7 +89,7 @@ void TestScaleFp32::Prepare(const std::vector<int> &input_shape, const std::vect
   ctx_.Init();
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
   ASSERT_NE(creator_, nullptr);
-  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
   ASSERT_NE(kernel_, nullptr);
 }
 

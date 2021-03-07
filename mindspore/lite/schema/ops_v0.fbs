@@ -17,7 +17,7 @@
 namespace mindspore.schema.v0;
 
 enum ResizeMethod: byte {
-    UNKNOW = -1,
+    UNKNOWN = -1,
     LINEAR = 0,
     NEAREST = 1,
     CUBIC = 2
@@ -80,27 +80,9 @@ enum ActivationType : byte {
     HARD_TANH = 16,
     SIGN = 17,
     SWISH = 18,
-    UNKNOW = 19
+    UNKNOWN = 19
 }
-enum ActivationGradType : byte {
-    NO_ACTIVATION = 0,
-    RELU = 1,
-    SIGMOID = 2,
-    RELU6 = 3,
-    ELU = 4,
-    LEAKY_RELU = 5,
-    ABS = 6,
-    RELU1 = 7,
-    SOFTSIGN = 8,
-    SOFTPLUS = 9,
-    TANH = 10,
-    SELU = 11,
-    HSWISH = 12,
-    HSIGMOID = 13,
-    THRESHOLDRELU = 14,
-    LINEAR = 15,
-    UNKNOW = 16
-}
+
 enum ReduceType : byte {
     REDUCE_MAX = 0,
     REDUCE_MEAN = 1,
@@ -109,7 +91,7 @@ enum ReduceType : byte {
     REDUCE_LOG_SUM_EXP = 4,
     REDUCE_PROD = 5,
     REDUCE_SUM = 6,
-    UNKNOW = 7
+    UNKNOWN = 7
 }
 
 enum PoolMode : byte {
@@ -121,7 +103,7 @@ enum EltwiseMode : byte {
     PROD = 0,
     SUM = 1,
     MAXIMUM = 2,
-    UNKNOW = 3
+    UNKNOWN = 3
 }
 
 enum PadMode : byte {
@@ -1007,11 +989,6 @@ table OneHot {
 
 table Lstm{
     bidirection: bool = false;
-    smooth: float = 0.0;
-}
-
-table Gru{
-    bidirection: bool = false;
 }
 
 table PriorBox {
@@ -1156,9 +1133,6 @@ table While {
     bodySubgraphIndex : int;
 }
 
-table If {
-}
-
 table UnsortedSegmentSum {
     numSegments : int;
 }
@@ -1238,11 +1212,4 @@ table Reciprocal {
 }
 
 table Merge {
-}
-
-table GeLU {
-    approximate : bool = false;
-}
-
-table NonZero {
 }

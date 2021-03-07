@@ -24,7 +24,7 @@ namespace {
 // PrimitiveType_Reduce:    src/ops/populate/reduce_populate.cc
 // PrimitiveType_Mean:      src/ops/populate/mean_populate.cc
 OpParameter *CreateParameter(const std::vector<int> &axis, schema::ReduceMode mode, bool keep_dims) {
-  auto *param = test::CreateParameter<ReduceParameter>(schema::PrimitiveType_Reduce);
+  auto *param = test::CreateParameter<ReduceParameter>(schema::PrimitiveType_ReduceFusion);
   param->keep_dims_ = keep_dims;
   param->reduce_to_end_ = false;
   param->coeff = 0.f;

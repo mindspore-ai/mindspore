@@ -36,7 +36,6 @@ TEST_F(TestGatherInt8, GatherTest) {
   GatherParameter op_param;
   op_param.op_parameter_.type_ = schema::PrimitiveType_Gather;
   op_param.axis_ = 0;
-  op_param.batchDims_ = 1;
   std::vector<int> shape = {2, 1, 3, 2};
 
   lite::QuantArg input_quant_arg;
@@ -80,7 +79,7 @@ TEST_F(TestGatherInt8, GatherTest) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();

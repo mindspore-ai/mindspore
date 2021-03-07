@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,21 +28,13 @@ class OnnxInputAdjustOpPass : public Pass {
  public:
   OnnxInputAdjustOpPass() : Pass("onnx_input_adjust") {}
   ~OnnxInputAdjustOpPass() override = default;
-  bool CheckInputs(const CNodePtr &cnode);
-  ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const std::vector<int> &data,
-                                  const std::string &node_name);
-  ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                  const ParamValueLitePtr &param_value);
-  STATUS StridedSliceAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std::string &attr_name);
-  STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node);
-  STATUS AdjustPower(const CNodePtr &cnode);
-  STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS AdjustConvOrDeConv(const CNodePtr &cnode);
-  STATUS AdjustTile(const CNodePtr &cnode);
-  STATUS AdjustCast(const CNodePtr &cnode);
+  static STATUS ReplaceInt64ParameterNode(const FuncGraphPtr &func_graph, const ParameterPtr &param_node);
+  static STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  static STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  static STATUS AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
+                               const std::string &attr_name);
+  static STATUS AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS AdjustResize(const CNodePtr &cnode);
-  STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-  STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::opt

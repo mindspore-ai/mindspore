@@ -16,53 +16,51 @@
 
 #include "tools/converter/parser/onnx/onnx_constant_of_shape_parser.h"
 #include <memory>
+#include <vector>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
+#include "ops/constant_of_shape.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxConstantOfShapeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                                const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ConstantOfShapeParser";
-  auto attr = std::make_unique<schema::ConstantOfShapeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph,
+                                                  const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::ConstantOfShape>();
 
+  int data_type = 0;
+  std::vector<float> values;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "value") {
       switch (onnx_node_attr.type()) {
         case onnx::AttributeProto_AttributeType_FLOAT:
-          attr->dataType = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT);
-          attr->value.push_back(onnx_node_attr.f());
+          data_type = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_FLOAT);
+          values.push_back(onnx_node_attr.f());
           break;
         case onnx::AttributeProto_AttributeType_INT:
-          attr->dataType = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
-          attr->value.push_back(static_cast<float>(onnx_node_attr.i()));
+          data_type = OnnxModelParser::GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+          values.push_back(static_cast<float>(onnx_node_attr.i()));
           break;
         case onnx::AttributeProto_AttributeType_TENSOR: {
           const auto &tensor = onnx_node_attr.t();
-          auto ret = GetTensorDataFromOnnx(tensor, &attr->value, &attr->dataType);
+          auto ret = GetTensorDataFromOnnx(tensor, &values, &data_type);
           if (ret != RET_OK) {
             MS_LOG(ERROR) << "get data from tensor failed";
             return nullptr;
           }
         } break;
         default:
-          MS_LOG(ERROR) << "The data type is not supported.";
+          MS_LOG(ERROR) << "Datatype : " << onnx_node_attr.type() << " is not supported.";
           return nullptr;
       }
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
+  if (values.empty()) {
+    values = {0};
   }
-  primitive->value.type = schema::PrimitiveType_ConstantOfShape;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_value(values);
+  prim->set_data_type((int64_t)data_type);
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxConstantOfShapeParser("ConstantOfShape", new OnnxConstantOfShapeParser());

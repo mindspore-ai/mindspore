@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_NNACL_L2NORM_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 typedef struct L2NormParameter {
   // Primitive parameter

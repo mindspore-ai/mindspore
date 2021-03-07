@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BEN_DEBUG_UTILS_H_
-#define MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BEN_DEBUG_UTILS_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_DEBUG_UTILS_H_
+#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_DEBUG_UTILS_H_
 
-static const char debug_utils_h[] =
+const char *debug_utils_h =
   "/**\n"
   " * Copyright 2021 Huawei Technologies Co., Ltd\n"
   " *\n"
@@ -50,7 +50,7 @@ static const char debug_utils_h[] =
   "\n"
   "#endif  // MINDSPORE_LITE_MICRO_MICRODEBUGUTIL_H_\n";
 
-static const char debug_utils_c[] =
+const char *debug_utils_c =
   "/**\n"
   " * Copyright 2021 Huawei Technologies Co., Ltd\n"
   " *\n"
@@ -239,7 +239,7 @@ static const char debug_utils_c[] =
   "}\n"
   "\n"
   "void PrintTensor(MicroTensor *tensor, FILE *output_file, const char *is_input) {\n"
-  "  if (output_file != NULL) {\n"
+  "  if (output_file == NULL) {\n"
   "    MICRO_ERROR(\"output file is NULL\");\n"
   "    return;\n"
   "  }\n"
@@ -269,4 +269,4 @@ static const char debug_utils_c[] =
   "  return retval;\n"
   "}\n";
 
-#endif  // MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BEN_DEBUG_UTILS_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_DEBUG_UTILS_H_

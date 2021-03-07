@@ -22,6 +22,7 @@
 #include "src/common/file_utils.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/kernel/arm/fp32/fullconnection_fp32.h"
+#include "src/runtime/infer_manager.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;
@@ -67,6 +68,9 @@ int FcTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *
   matmal_param->a_transpose_ = false;
   matmal_param->has_bias_ = true;
   matmal_param->act_type_ = ActType_No;
+  matmal_param->op_parameter_.type_ = 67;
+  matmal_param->op_parameter_.infer_flag_ = true;
+  KernelInferShape(*inputs_, outputs_, reinterpret_cast<OpParameter *>(matmal_param));
   return out_t->ElementsNum();
 }
 
@@ -79,8 +83,7 @@ TEST_F(TestFcFp32, FcTest1) {
   auto *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *fc =
-    new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
+  auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
 
   fc->Init();
   fc->Run();
@@ -125,6 +128,9 @@ int FcTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tensor *
   matmal_param->a_transpose_ = false;
   matmal_param->has_bias_ = true;
   matmal_param->act_type_ = ActType_No;
+  matmal_param->op_parameter_.type_ = 67;
+  matmal_param->op_parameter_.infer_flag_ = true;
+  KernelInferShape(*inputs_, outputs_, reinterpret_cast<OpParameter *>(matmal_param));
   return out_t->ElementsNum();
 }
 
@@ -137,8 +143,7 @@ TEST_F(TestFcFp32, FcTest2) {
   auto *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *fc =
-    new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
+  auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
 
   fc->Init();
   fc->Run();
@@ -187,8 +192,7 @@ TEST_F(TestFcFp32, FcTest3) {
   auto *ctx = new lite::InnerContext;
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto *fc =
-    new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx, nullptr);
+  auto *fc = new kernel::FullconnectionCPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs_, outputs_, ctx);
 
   fc->Init();
   struct timeval start, end;

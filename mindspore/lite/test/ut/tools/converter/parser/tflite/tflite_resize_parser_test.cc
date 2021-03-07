@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,10 @@ TEST_F(TestTfliteParserResizeNN, OpType) {
 TEST_F(TestTfliteParserResizeNN, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsResize(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsResize();
-  ASSERT_EQ(val->alignCorners, false);
-  ASSERT_EQ(val->newHeight, 3);
-  ASSERT_EQ(val->newWidth, 100);
+  ASSERT_EQ(val->new_height, 3);
+  ASSERT_EQ(val->new_width, 100);
   ASSERT_EQ(val->format, schema::Format_NHWC);
-  ASSERT_EQ(val->preserveAspectRatio, false);
+  ASSERT_EQ(val->preserve_aspect_ratio, false);
   ASSERT_EQ(val->method, schema::ResizeMethod_NEAREST);
 }
 
@@ -59,11 +58,10 @@ TEST_F(TestTfliteParserResizeBilinear, OpType) {
 TEST_F(TestTfliteParserResizeBilinear, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsResize(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsResize();
-  ASSERT_EQ(val->alignCorners, false);
-  ASSERT_EQ(val->newHeight, 75);
-  ASSERT_EQ(val->newWidth, 4);
+  ASSERT_EQ(val->new_height, 75);
+  ASSERT_EQ(val->new_width, 4);
   ASSERT_EQ(val->format, schema::Format_NHWC);
-  ASSERT_EQ(val->preserveAspectRatio, false);
+  ASSERT_EQ(val->preserve_aspect_ratio, false);
   ASSERT_EQ(val->method, schema::ResizeMethod_LINEAR);
 }
 

@@ -20,10 +20,13 @@
 #include <string>
 #include "src/runtime/gpu/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
+#include "src/runtime/kernel/opencl/kernel/to_format.h"
 #include "include/errorcode.h"
 #include "src/common/utils.h"
+#include "src/common/prim_inner.h"
 
 namespace mindspore::kernel {
+using mindspore::lite::PRIM_TO_FORMAT;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
@@ -136,7 +139,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
     }
 
     out_tensors->emplace_back(new_tensor);
-    KernelKey desc{kGPU, kNumberTypeFloat32, schema::PrimitiveType_ToFormat};
+    KernelKey desc{kGPU, kNumberTypeFloat32, PRIM_TO_FORMAT};
     if (mem_type == MemType::IMG && ocl_runtime_->GetFp16Enable()) {
       desc.data_type = kNumberTypeFloat16;
       new_tensor->set_data_type(kNumberTypeFloat16);
@@ -149,18 +152,26 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       new_tensor = nullptr;
       return RET_ERROR;
     }
-    parameter->op_parameter.type_ = mindspore::schema::PrimitiveType_ToFormat;
+    parameter->op_parameter.type_ = PRIM_TO_FORMAT;
+    bool output_shape_setted = true;
+    for (auto output : *out_tensors) {
+      if (output->shape().empty() || output->ElementsNum() < 0) {
+        output_shape_setted = false;
+        break;
+      }
+    }
+    parameter->op_parameter.infer_flag_ = output_shape_setted;
     parameter->src_format = src_format;
     parameter->dst_format = dst_format;
     parameter->out_mem_type = mem_type;
     out_parameters->emplace_back(parameter);
     LiteKernel *in_convert_op = nullptr;
     if (mem_type == MemType::IMG) {
-      in_convert_op =
-        lite::GetOpenCLKernel({in_tensor}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), context_, desc);
+      in_convert_op = OpenCLKernelCreator<ToFormatOpenCLKernel>(
+        {in_tensor}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), context_, desc);
     } else {
-      in_convert_op =
-        lite::GetOpenCLKernel({new_tensor}, {in_tensor}, reinterpret_cast<OpParameter *>(parameter), context_, desc);
+      in_convert_op = OpenCLKernelCreator<ToFormatOpenCLKernel>(
+        {new_tensor}, {in_tensor}, reinterpret_cast<OpParameter *>(parameter), context_, desc);
     }
     MS_ASSERT(in_convert_op);
     if (in_convert_op == nullptr) {
@@ -252,10 +263,10 @@ int OpenCLSubGraph::UpdateTensorDataTypePass() {
       MS_ASSERT(iv);
       auto cur_outs = iv->out_tensors();
       // if softmax is last kernel, output fp32 tensor
-      if (iv->Type() == schema::PrimitiveType_SoftMax) {
+      if (iv->Type() == schema::PrimitiveType_Softmax) {
         bool last_kernel = true;
         for (auto k : iv->out_kernels()) {
-          if (k->Type() != schema::PrimitiveType_ToFormat) {
+          if (static_cast<int>(k->Type()) != lite::PRIM_TO_FORMAT) {
             last_kernel = false;
             break;
           }

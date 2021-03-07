@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_NEXTITERATION_H_
-#define LITE_MINDSPORE_LITE_C_OPS_NEXTITERATION_H_
+#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_NEXT_ITERATION_H_
+#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_NEXT_ITERATION_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
-#include "src/ops/primitive_c.h"
+#include "ops/primitive_c.h"
+
+using mindspore::ops::PrimitiveC;
 
 namespace mindspore {
 namespace lite {
-
+constexpr auto kNameNextIteration = "NextIteration";
 class NextIteration : public PrimitiveC {
  public:
-  NextIteration() { op_type_ = ConverterPrimitiveType_NextIteration; }
+  NextIteration() : PrimitiveC(kNameNextIteration) {}
   ~NextIteration() = default;
   MS_DECLARE_PARENT(NextIteration, PrimitiveC);
-  explicit NextIteration(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_NEXTITERATION_H_
+#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_NEXT_ITERATION_H_

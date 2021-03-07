@@ -17,58 +17,27 @@
 #include "tools/converter/parser/tflite/tflite_strided_slice_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteStridedSliceParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteStridedSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::StridedSlice>();
 
-  std::unique_ptr<schema::StridedSliceT> attr = std::make_unique<schema::StridedSliceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsStridedSliceOptions();
   if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op strideslice attr failed";
+    MS_LOG(ERROR) << "get strideslice attr failed";
     return nullptr;
   }
-  attr->beginMask = tflite_attr->begin_mask;
-  attr->endMask = tflite_attr->end_mask;
-  attr->ellipsisMask = tflite_attr->ellipsis_mask;
-  attr->newAxisMask = tflite_attr->new_axis_mask;
-  attr->shrinkAxisMask = tflite_attr->shrink_axis_mask;
+  prim->set_begin_mask(tflite_attr->begin_mask);
+  prim->set_end_mask(tflite_attr->end_mask);
+  prim->set_ellipsis_mask(tflite_attr->ellipsis_mask);
+  prim->set_new_axis_mask(tflite_attr->new_axis_mask);
+  prim->set_shrink_axis_mask(tflite_attr->shrink_axis_mask);
 
-  int status = GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->begin);
-  if (status != RET_OK && status != RET_NO_CHANGE) {
-    MS_LOG(ERROR) << "stridedSlice -> begin get failed";
-    return nullptr;
-  } else if (status == RET_OK) {
-    status = GetTfliteData(tflite_op->inputs[2], tflite_subgraph->tensors, tflite_model->buffers, attr->end);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "stridedSlice -> end get failed";
-      return nullptr;
-    } else if (status == RET_OK) {
-      status = GetTfliteData(tflite_op->inputs[3], tflite_subgraph->tensors, tflite_model->buffers, attr->stride);
-      if (status != RET_OK && status != RET_NO_CHANGE) {
-        MS_LOG(ERROR) << "stridedSlice -> stride get failed";
-        return nullptr;
-      }
-    }
-  }
-  attr->isScale.assign(tflite_subgraph->tensors[tflite_op->inputs[0]]->shape.begin(),
-                       tflite_subgraph->tensors[tflite_op->inputs[0]]->shape.end());
-
-  primitive->value.type = schema::PrimitiveType_StridedSlice;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteStridedSliceParser(tflite::BuiltinOperator_STRIDED_SLICE, new TfliteStridedSliceParser());

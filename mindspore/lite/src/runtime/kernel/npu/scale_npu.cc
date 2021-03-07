@@ -19,7 +19,7 @@
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Scale;
+using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
 int ScaleNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -59,5 +59,5 @@ ScaleNPUKernel::~ScaleNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Scale, NPUKernelCreator<ScaleNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_ScaleFusion, NPUKernelCreator<ScaleNPUKernel>)
 }  // namespace mindspore::kernel

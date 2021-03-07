@@ -16,30 +16,26 @@
 
 #include "tools/converter/parser/caffe/caffe_crop_parser.h"
 #include <memory>
+#include "ops/crop.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeCropParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::CropT> attr = std::make_unique<schema::CropT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *CaffeCropParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto prim = std::make_unique<ops::Crop>();
 
   if (!proto.has_crop_param()) {
-    attr->axis = 2;
+    prim->set_axis(2);
     std::vector<int64_t> offsets(2, 0);
-    attr->offsets = offsets;
+    prim->set_offsets(offsets);
   } else {
     const caffe::CropParameter &cropParam = proto.crop_param();
     if (cropParam.has_axis()) {
       if (cropParam.axis() == -1) {
         MS_LOG(WARNING) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
       }
-      attr->axis = cropParam.axis();
+      prim->set_axis(cropParam.axis());
     } else {
-      attr->axis = 2;
+      prim->set_axis(2);
     }
 
     if (cropParam.offset_size() != 0) {
@@ -48,13 +44,11 @@ PrimitiveC *CaffeCropParser::ParseLitePrimitive(const caffe::LayerParameter &pro
       for (int i = 0; i < cropParam.offset_size(); i++) {
         offsets.push_back(cropParam.offset(i));
       }
-      attr->offsets = offsets;
+      prim->set_offsets(offsets);
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Crop;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 CaffeNodeRegistrar g_caffeCropParser("Crop", new CaffeCropParser());

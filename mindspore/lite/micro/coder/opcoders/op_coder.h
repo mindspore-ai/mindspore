@@ -32,23 +32,21 @@
 namespace mindspore::lite::micro {
 constexpr int kPrecision = 19;
 
-#define CODE_PARALLEL_FUNC(func) code << "ParallelLaunch(THREAD_POOL_DEFAULT, " << func << ", &args, thread_num);\n"
-
 class OperatorCoder {
  public:
   OperatorCoder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                 const Model::Node *node, size_t node_index, Target target)
       : input_tensors_(in_tensors),
         output_tensors_(out_tensors),
-        node_(node),
         target_(target),
+        node_(node),
         node_index_(node_index) {
     allocator_ = MemoryAllocator::GetInstance();
     // vectors checked not empty in OpCoderBuilder::build
     input_tensor_ = input_tensors_.at(kInputIndex);
     output_tensor_ = output_tensors_.at(kOutputIndex);
   }
-  std::string ID() const { return node_->name_; }
+  std::string name() const { return node_->name_; }
 
   void set_input_tensor_indices(const std::vector<uint32_t> &input_indices);
   void set_output_tensor_indices(const std::vector<uint32_t> &output_indices);
@@ -67,7 +65,6 @@ class OperatorCoder {
   size_t node_index() const;
 
   void set_parameter(OpParameter *parameter);
-  const PrimitiveC *primitive() const { return node_->primitive_; }
 
   const Model::Node *node() const { return this->node_; }
 
@@ -87,8 +84,8 @@ class OperatorCoder {
  protected:
   std::vector<Tensor *> input_tensors_;
   std::vector<Tensor *> output_tensors_;
-  const Model::Node *node_{nullptr};
   Target target_{kTargetUnknown};
+  const Model::Node *node_{nullptr};
   Tensor *input_tensor_{nullptr};
   Tensor *output_tensor_{nullptr};
 
@@ -96,7 +93,7 @@ class OperatorCoder {
 
   MemoryAllocator *allocator_{nullptr};
 
-  std::string thread_num_s_{"1"};
+  bool support_parallel_{false};
   int thread_num_{1};
 
  private:
@@ -114,6 +111,10 @@ template <typename T>
 std::unique_ptr<OperatorCoder> CPUOpCoderCreator(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
                                                  size_t node_index, Target target) {
+  if (node == nullptr) {
+    MS_LOG(ERROR) << "node is null";
+    return nullptr;
+  }
   std::unique_ptr<T> coder = std::make_unique<T>(in_tensors, out_tensors, node, node_index, target);
   return coder;
 }

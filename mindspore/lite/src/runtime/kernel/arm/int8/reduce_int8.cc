@@ -26,7 +26,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Reduce;
+using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
 using mindspore::schema::ReduceMode_ReduceMin;
@@ -35,7 +35,6 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::schema::PrimitiveType_Reduce;
 
 namespace mindspore::kernel {
 void ReduceInt8CPUKernel::OneAxis() {
@@ -285,30 +284,36 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
   // quant_out = sum((quant_in - zp)^2) * scale_in^2 / scale_out + zp_out
   // scale_in * scale_in/scale_out
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSumSquare)) {
-    for (auto i = 0; i < num_axes_ - 1; i++) {
-      QuantMulArg *qm = new (std::nothrow) QuantMulArg;
-      if (qm == nullptr) {
-        MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
-        return RET_NULL_PTR;
-      }
-      double sumsquare_multiplier = quant_arg_.in_scale_;
-      QuantizeMultiplierSmallerThanOne(sumsquare_multiplier, &qm->multiplier_, &shift);
-      qm->left_shift_ = shift < 0 ? -shift : 0;
-      qm->right_shift_ = shift > 0 ? shift : 0;
-      sum_square_multipliers_.push_back(qm);
-    }
+    return CalculateQuantArgsReduceSumSquare();
+  }
+  return RET_OK;
+}
 
+int ReduceInt8CPUKernel::CalculateQuantArgsReduceSumSquare() {
+  int shift;
+  for (auto i = 0; i < num_axes_ - 1; i++) {
     QuantMulArg *qm = new (std::nothrow) QuantMulArg;
     if (qm == nullptr) {
       MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
       return RET_NULL_PTR;
     }
-    double sumsquare_multiplier = quant_arg_.in_scale_ * quant_arg_.in_scale_ / quant_arg_.out_scale_;
+    double sumsquare_multiplier = quant_arg_.in_scale_;
     QuantizeMultiplierSmallerThanOne(sumsquare_multiplier, &qm->multiplier_, &shift);
     qm->left_shift_ = shift < 0 ? -shift : 0;
     qm->right_shift_ = shift > 0 ? shift : 0;
     sum_square_multipliers_.push_back(qm);
   }
+
+  QuantMulArg *qm = new (std::nothrow) QuantMulArg;
+  if (qm == nullptr) {
+    MS_LOG(ERROR) << "ReduceProd new QuantMultiplier failed.";
+    return RET_NULL_PTR;
+  }
+  double sumsquare_multiplier = quant_arg_.in_scale_ * quant_arg_.in_scale_ / quant_arg_.out_scale_;
+  QuantizeMultiplierSmallerThanOne(sumsquare_multiplier, &qm->multiplier_, &shift);
+  qm->left_shift_ = shift < 0 ? -shift : 0;
+  qm->right_shift_ = shift > 0 ? shift : 0;
+  sum_square_multipliers_.push_back(qm);
   return RET_OK;
 }
 
@@ -532,5 +537,5 @@ int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Reduce, LiteKernelCreator<ReduceInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceInt8CPUKernel>)
 }  // namespace mindspore::kernel

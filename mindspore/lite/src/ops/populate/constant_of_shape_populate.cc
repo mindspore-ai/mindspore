@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/constant_of_shape.h"
-#include "src/common/log_adapter.h"
-#include "src/tensor.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/constant_of_shape.h"
 
 namespace mindspore::lite {
 namespace {
-OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto attr =
-    reinterpret_cast<mindspore::lite::ConstantOfShape *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+OpParameter *PopulateConstantOfShapeParameter(const void *prim) {
   ConstantOfShapeParameter *param =
     reinterpret_cast<ConstantOfShapeParameter *>(malloc(sizeof(ConstantOfShapeParameter)));
   if (param == nullptr) {
@@ -33,25 +26,28 @@ OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC 
     return nullptr;
   }
   memset(param, 0, sizeof(ConstantOfShapeParameter));
-  param->op_parameter_.type_ = primitive->Type();
-  param->data_type_ = attr->GetDataType();
-  auto value = attr->GetValue();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  param->op_parameter_.type_ = primitive->value_type();
+  auto attr = primitive->value_as_ConstantOfShape();
+  auto value = std::vector<float>(attr->value()->begin(), attr->value()->end());
+  param->data_type_ = static_cast<int>(attr->data_type());
   if (value.empty() || value.size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
   } else {
     switch (param->data_type_) {
       case kNumberTypeFloat32:
-        param->value_.f32_value_ = attr->GetValue().at(0);
+        param->value_.f32_value_ = *(attr->value()->begin());
         break;
       case kNumberTypeInt32:
-        param->value_.int32_value_ = attr->GetValue().at(0);
+        param->value_.int32_value_ = *(attr->value()->begin());
         break;
       default:
         MS_LOG(ERROR) << "The value of constant of shape is invalid";
     }
   }
   return reinterpret_cast<OpParameter *>(param);
-}
-Registry ConstantOfShapeParameterRegistry(schema::PrimitiveType_ConstantOfShape, PopulateConstantOfShapeParameter);
+}  // namespace
+Registry g_constantOfShapeParameterRegistry(schema::PrimitiveType_ConstantOfShape, PopulateConstantOfShapeParameter,
+                                            SCHEMA_CUR);
 }  // namespace
 }  // namespace mindspore::lite

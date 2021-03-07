@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/unsorted_segment_sum.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateUnsortedSegmentSumParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateUnsortedSegmentSumParameter(const void *prim) {
   OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc UnsortedSegmentSum Parameter failed.";
     return nullptr;
   }
   memset(param, 0, sizeof(OpParameter));
-  param->type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  param->type_ = primitive->value_type();
   return param;
 }
 
 Registry UnsortedSegmentSumParameterRegistry(schema::PrimitiveType_UnsortedSegmentSum,
-                                             PopulateUnsortedSegmentSumParameter);
+                                             PopulateUnsortedSegmentSumParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

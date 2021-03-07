@@ -17,40 +17,23 @@
 #include "tools/converter/parser/tflite/tflite_one_hot_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/one_hot.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteOneHotParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteOneHotParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::OneHot>();
 
-  std::unique_ptr<schema::OneHotT> attr = std::make_unique<schema::OneHotT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsOneHotOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op onehot attr failed";
     return nullptr;
   }
-  auto axis = tflite_attr->axis;
-  const auto &tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "tensor is null";
-    return nullptr;
-  }
-  attr->axis = axis;
+  prim->set_axis(tflite_attr->axis);
 
-  primitive->value.type = schema::PrimitiveType_OneHot;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteOneHotParser(tflite::BuiltinOperator_ONE_HOT, new TfliteOneHotParser());

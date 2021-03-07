@@ -18,26 +18,14 @@
 #include "tools/converter/parser/tflite/tflite_sparse_to_dense_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/sparse_to_dense.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteSparseToDenseParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
-
-  std::unique_ptr<schema::SparseToDenseT> attr = std::make_unique<schema::SparseToDenseT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  primitive->value.type = schema::PrimitiveType_SparseToDense;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *TfliteSparseToDenseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::SparseToDense>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSparseToDenseParser(tflite::BuiltinOperator_SPARSE_TO_DENSE,

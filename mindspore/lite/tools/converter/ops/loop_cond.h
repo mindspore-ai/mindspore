@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_LOOPCOND_H_
-#define LITE_MINDSPORE_LITE_C_OPS_LOOPCOND_H_
+#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_LOOP_COND_H_
+#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_LOOP_COND_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
-#include "src/ops/primitive_c.h"
+#include "ops/primitive_c.h"
+
+using mindspore::ops::PrimitiveC;
 
 namespace mindspore {
 namespace lite {
-
+constexpr auto kNameLoopCond = "LoopCond";
 class LoopCond : public PrimitiveC {
  public:
-  LoopCond() { op_type_ = ConverterPrimitiveType_LoopCond; }
+  LoopCond() : PrimitiveC(kNameLoopCond) {}
   ~LoopCond() = default;
   MS_DECLARE_PARENT(LoopCond, PrimitiveC);
-  explicit LoopCond(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_LOOPCOND_H_
+#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_LOOP_COND_H_

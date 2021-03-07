@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ TEST_F(TestTfliteParserUnstack, OpType) {
 TEST_F(TestTfliteParserUnstack, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnstack(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsUnstack();
-  ASSERT_EQ(val->num, 5);
   ASSERT_EQ(val->axis, 1);
 }
 }  // namespace mindspore

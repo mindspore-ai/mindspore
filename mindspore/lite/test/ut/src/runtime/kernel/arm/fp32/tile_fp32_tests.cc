@@ -46,14 +46,14 @@ TEST_F(TestTileFp32, Tile) {
   parameter.out_strides_[0] = 6;
   parameter.out_strides_[1] = 1;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Tile};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TileFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
 
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();
@@ -89,7 +89,7 @@ TEST_F(TestTileFp32, SimpleTile1) {
   parameter.out_strides_[0] = 2;
   parameter.out_strides_[1] = 1;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Tile};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TileFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -98,7 +98,7 @@ TEST_F(TestTileFp32, SimpleTile1) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto context = ctx.get();
   context->thread_num_ = 2;
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();
@@ -134,7 +134,7 @@ TEST_F(TestTileFp32, SimpleTile2) {
   parameter.out_strides_[0] = 4;
   parameter.out_strides_[1] = 1;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Tile};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TileFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -143,7 +143,7 @@ TEST_F(TestTileFp32, SimpleTile2) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   auto context = ctx.get();
   context->thread_num_ = 2;
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), context, desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();

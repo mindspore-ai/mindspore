@@ -21,6 +21,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/gather.h"
 #include "src/runtime/kernel/opencl/cl/gather.cl.inc"
+#include "src/runtime/kernel/opencl/utils.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -62,8 +63,10 @@ int GatherOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
 
-  auto *param = reinterpret_cast<GatherParameter *>(this->op_parameter_);
-  axis_ = param->axis_;
+  if (CheckParamLikeTensor("Gather", "axis", in_tensors_.at(2), kNumberTypeInt32, {1}) != RET_OK) {
+    return RET_ERROR;
+  }
+  axis_ = *reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
   if (axis_ < 0) {
     axis_ += input_ndim;
   }

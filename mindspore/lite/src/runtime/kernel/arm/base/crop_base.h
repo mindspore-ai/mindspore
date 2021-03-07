@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class CropBaseCPUKernel : public LiteKernel {
  public:
   CropBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
-                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                    const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
     crop_para_->thread_count_ = op_parameter_->thread_num_;
   }

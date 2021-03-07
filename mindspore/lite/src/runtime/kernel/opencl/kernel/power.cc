@@ -27,7 +27,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Power;
+using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 
@@ -139,6 +139,6 @@ int PowerOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Power, OpenCLKernelCreator<PowerOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Power, OpenCLKernelCreator<PowerOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_PowFusion, OpenCLKernelCreator<PowerOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_PowFusion, OpenCLKernelCreator<PowerOpenCLKernel>)
 }  // namespace mindspore::kernel

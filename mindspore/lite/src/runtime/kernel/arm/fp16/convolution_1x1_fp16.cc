@@ -19,17 +19,12 @@
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "src/runtime/kernel/arm/fp16/layout_transform_fp16.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
 int Convolution1x1FP16CPUKernel::InitMatmulParam() {

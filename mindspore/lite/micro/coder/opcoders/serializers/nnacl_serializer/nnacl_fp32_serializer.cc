@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "src/common/log_adapter.h"
-#include "micro/coder/log.h"
+#include "coder/log.h"
 #include "nnacl/pooling_parameter.h"
 
 namespace mindspore::lite::micro::nnacl {
@@ -56,7 +56,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SoftmaxParam
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParameter &conv_parameter) {
-  CodeBaseStruct("ConvParameter", name, conv_parameter.op_parameter_, "{NULL}", conv_parameter.kernel_h_,
+  CodeBaseStruct("ConvParameter", name, conv_parameter.op_parameter_, "{}", conv_parameter.kernel_h_,
                  conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_,
                  conv_parameter.dilation_h_, conv_parameter.dilation_w_, conv_parameter.pad_u_, conv_parameter.pad_d_,
                  conv_parameter.pad_l_, conv_parameter.pad_r_, conv_parameter.group_, conv_parameter.tile_num_,
@@ -101,4 +101,14 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const TransposePar
                  transpose_parameter.data_size_);
 }
 
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const DeQuantArg &de_quant_arg) {
+  // this clusters is meaningless which will be supported in future
+  CodeBaseStruct("DeQuantArg", name, de_quant_arg.scale, de_quant_arg.zeroPoint, de_quant_arg.var_corr,
+                 de_quant_arg.mean_corr, "NULL", de_quant_arg.clusters_nums, de_quant_arg.bitNum);
+}
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const SpliceParameter &splice_parameter) {
+  CodeArray("splice_context", splice_parameter.context_, splice_parameter.context_dim_, false);
+  CodeBaseStruct("SpliceParameter", name, splice_parameter.op_parameter_, splice_parameter.context_dim_,
+                 splice_parameter.forward_indexes_dim_, "splice_context", nullptr, splice_parameter.output_dim_);
+}
 }  // namespace mindspore::lite::micro::nnacl

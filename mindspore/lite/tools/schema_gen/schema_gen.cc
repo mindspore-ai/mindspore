@@ -47,13 +47,24 @@ int SchemaGen::Init() {
     MS_LOG(ERROR) << "Can not open file: " << path;
     return RET_ERROR;
   }
-  std::string ns = "namespace mindspore.schema;\n\n";
+  std::string ns =
+    "/**\n * Copyright 2019-2021 Huawei Technologies Co., Ltd\n *\n"
+    " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+    " * you may not use this file except in compliance with the License.\n"
+    " * You may obtain a copy of the License at\n"
+    " *\n"
+    " * http://www.apache.org/licenses/LICENSE-2.0\n"
+    " *\n"
+    " * Unless required by applicable law or agreed to in writing, software\n"
+    " * distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+    " * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+    " * See the License for the specific language governing permissions and\n"
+    " * limitations under the License.\n"
+    " */\n"
+    "include \"ops_types.fbs\";\n\nnamespace mindspore.schema;\n\n";
   output.write(ns.c_str(), ns.length());
-  for (auto &&func : instance->GetAllTypeDefCreateFuncs()) {
-    std::string &&str = func();
-    output.write(str.c_str(), str.length());
-  }
-
+  std::string prim_type = instance->GetPrimTypeGenFunc()();
+  output.write(prim_type.c_str(), prim_type.length());
   for (auto &&func : instance->GetAllOpDefCreateFuncs()) {
     std::string &&str = func();
     output.write(str.c_str(), str.length());

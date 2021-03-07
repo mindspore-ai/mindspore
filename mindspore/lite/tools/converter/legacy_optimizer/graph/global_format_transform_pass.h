@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,16 @@
 #include <utility>
 #include "tools/common/graph_util.h"
 #include "tools/converter/optimizer.h"
+#include "tools/converter/legacy_optimizer/graph/format_trans_pass.h"
 
 using mindspore::schema::TensorT;
 namespace mindspore {
 namespace lite {
-class GlobalFormatTransformPass : public GraphPass {
+class GlobalFormatTransformPass : public FormatTransPass {
  public:
   GlobalFormatTransformPass() = default;
 
-  ~GlobalFormatTransformPass() = default;
+  ~GlobalFormatTransformPass() override = default;
 
   STATUS Run(MetaGraphT *graph) override;
 

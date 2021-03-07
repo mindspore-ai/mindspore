@@ -18,60 +18,94 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include "ops/fusion/avg_pool_fusion.h"
+#include "ops/fusion/max_pool_fusion.h"
 
-namespace mindspore::lite {
-lite::PrimitiveC *TflitePoolingParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteAvgPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::AvgPoolFusion>();
+
+  prim->set_format(mindspore::Format::NHWC);
+  prim->set_round_mode(mindspore::RoundMode::FLOOR);
+  prim->set_global(false);
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
   const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
-  }
-
-  auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
-  if (tflite_op_type == tflite::BuiltinOperator_AVERAGE_POOL_2D) {
-    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
-  } else if (tflite_op_type == tflite::BuiltinOperator_MAX_POOL_2D) {
-    attr->poolingMode = schema::PoolMode_MAX_POOLING;
   }
   const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
   if (tflite_attr == nullptr) {
-    MS_LOG(ERROR) << "get op pooling attr failed";
+    MS_LOG(ERROR) << "get op: conv attr failed";
     return nullptr;
   }
-  attr->windowW = tflite_attr->filter_width;
-  attr->windowH = tflite_attr->filter_height;
-  attr->strideW = tflite_attr->stride_w;
-  attr->strideH = tflite_attr->stride_h;
-  attr->padMode = GetPadMode(tflite_attr->padding);
-  attr->format = schema::Format::Format_NHWC;
-
-  attr->global = false;
-  attr->roundMode = schema::RoundMode_FLOOR;
-  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
+  prim->set_kernel_size({tflite_attr->filter_height, tflite_attr->filter_width});
+  prim->set_strides({tflite_attr->stride_h, tflite_attr->stride_w});
+  auto padMode = GetPadMode(tflite_attr->padding);
+  prim->set_pad_mode(padMode);
+  prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
 
   // calculate pad params
-  auto data_index = tflite_op->inputs[0];
-  const auto &data_tensor = tflite_subgraph->tensors[data_index];
+  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
   std::vector<int64_t> params;
-  int status =
-    getPaddingParam(data_tensor, attr->padMode, attr->strideH, attr->strideW, attr->windowH, attr->windowW, &params);
+  int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
+                               tflite_attr->filter_height, tflite_attr->filter_width, &params);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "get padding params failed";
     return nullptr;
   } else if (status == RET_OK) {
-    attr->padUp = params.at(0);
-    attr->padDown = params.at(1);
-    attr->padLeft = params.at(2);
-    attr->padRight = params.at(3);
+    prim->set_pad(params);
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Pooling;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
-TfliteNodeRegister g_tfliteMeanPoolingParser(tflite::BuiltinOperator_AVERAGE_POOL_2D, new TflitePoolingParser());
-TfliteNodeRegister g_tfliteMaxPoolingParser(tflite::BuiltinOperator_MAX_POOL_2D, new TflitePoolingParser());
-}  // namespace mindspore::lite
+ops::PrimitiveC *TfliteMaxPoolParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::MaxPoolFusion>();
+
+  prim->set_format(mindspore::Format::NHWC);
+  prim->set_round_mode(mindspore::RoundMode::FLOOR);
+  prim->set_global(false);
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
+    return nullptr;
+  }
+  const auto &tflite_attr = tflite_op->builtin_options.AsPool2DOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op: conv attr failed";
+    return nullptr;
+  }
+  prim->set_kernel_size({tflite_attr->filter_height, tflite_attr->filter_width});
+  prim->set_strides({tflite_attr->stride_h, tflite_attr->stride_w});
+  auto padMode = GetPadMode(tflite_attr->padding);
+  prim->set_pad_mode(padMode);
+  prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
+
+  // calculate pad params
+  const auto &dataTensor = tflite_subgraph->tensors.at(tflite_op->inputs.at(0));
+  std::vector<int64_t> params;
+  int status = getPaddingParam(dataTensor, padMode, tflite_attr->stride_h, tflite_attr->stride_w,
+                               tflite_attr->filter_height, tflite_attr->filter_width, &params);
+  if (status != RET_OK && status != RET_NO_CHANGE) {
+    MS_LOG(ERROR) << "get padding params failed";
+    return nullptr;
+  } else if (status == RET_OK) {
+    prim->set_pad(params);
+  }
+
+  return prim.release();
+}
+
+TfliteNodeRegister g_tfliteMeanPoolingParser(tflite::BuiltinOperator_AVERAGE_POOL_2D, new TfliteAvgPoolParser());
+TfliteNodeRegister g_tfliteMaxPoolingParser(tflite::BuiltinOperator_MAX_POOL_2D, new TfliteMaxPoolParser());
+}  // namespace lite
+}  // namespace mindspore

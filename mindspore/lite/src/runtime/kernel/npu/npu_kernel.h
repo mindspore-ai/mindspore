@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_KERNEL_NPU_H_
 
 #include <vector>
-#include "include/graph/graph.h"
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
+#include "include/graph/graph.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::LiteKernel;
@@ -30,9 +30,8 @@ namespace mindspore::kernel {
 class NPUKernel : public LiteKernel {
  public:
   NPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-            const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~NPUKernel() override = default;
 
   int Run() override { return RET_ERROR; }
@@ -50,28 +49,27 @@ class NPUKernel : public LiteKernel {
 };
 template <class T>
 kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                     const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                     const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                     const mindspore::lite::PrimitiveC *primitive) {
-  if (!primitive->infer_flag()) {
+                                     const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                     const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  if (!op_parameter->infer_flag_) {
     MS_LOG(ERROR) << "NPU does not support runtime inference shape. Type is:"
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     return nullptr;
   }
   if (inputs[0]->shape().size() > 4) {
     MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
     return nullptr;
   }
-
-  auto *kernel = new (std::nothrow) T(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) T(op_parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
-    free(opParameter);
+    MS_LOG(ERROR) << "kernel " << op_parameter->name_ << "is nullptr.";
+    free(op_parameter);
     return nullptr;
   }
 
-  auto ret = kernel->IsSupport(inputs, outputs, opParameter);
+  auto ret = kernel->IsSupport(inputs, outputs, op_parameter);
   if (ret != RET_OK) {
+    delete kernel;
     return nullptr;
   }
   return kernel;

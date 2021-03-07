@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
-#include <memory>
 #include "mindspore/lite/include/errorcode.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore::opt {
 namespace {
 constexpr size_t InputDoubleNum = 2;
 constexpr size_t InputTripleNum = 3;
-constexpr auto kNameLoad = "Load";
-constexpr auto kNameUpdateState = "UpdateState";
 }  // namespace
 int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(DEBUG) << "anf node is node a cnode.";
     return lite::RET_NO_CHANGE;
   }
-  auto type = opt::GetCNodeType(anf_node);
   auto cnode = anf_node->cast<CNodePtr>();
-  if (type == schema::PrimitiveType_Identity) {
+  if (CheckPrimitiveType(anf_node, kPrimIdentity)) {
     if (cnode->size() != InputDoubleNum) {
       MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
       remove_cnode_.insert(anf_node);
@@ -52,8 +48,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     MS_LOG(DEBUG) << "anf node is node a cnode.";
     return lite::RET_NO_CHANGE;
   }
-  auto type = opt::GetCNodeType(anf_node);
-  if (type != schema::PrimitiveType_TupleGetItem) {
+  if (!CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
@@ -61,8 +56,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->inputs().size();
     return RET_ERROR;
   }
-  type = opt::GetCNodeType(cnode->input(1));
-  if (type != schema::PrimitiveType_Identity) {
+  if (!CheckPrimitiveType(cnode->input(1), kPrimIdentity)) {
     return lite::RET_NO_CHANGE;
   }
   auto get_item_input_cnode = cnode->input(1)->cast<CNodePtr>();
@@ -71,7 +65,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
     MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
     return lite::RET_ERROR;
   }
-  int index = lite::CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
+  int index = CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
   int input_cnode_inputs_size = get_item_input_cnode->inputs().size();
   if ((index + 1) >= input_cnode_inputs_size) {
     MS_LOG(ERROR) << "value node index is out of range.";
@@ -95,24 +89,23 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    auto type = opt::GetCNodeType(node);
-    if (type == schema::PrimitiveType_Identity) {
+    if (CheckPrimitiveType(node, kPrimIdentity)) {
       status = ReplaceOp(node, manager);
     }
-    if (CheckPrimitiveType(node, std::make_shared<Primitive>(kNameLoad))) {
+    if (CheckPrimitiveType(node, prim::kPrimLoad)) {
       status = ReplaceOp(node, manager);
     }
-    if (CheckPrimitiveType(node, std::make_shared<Primitive>(kNameUpdateState))) {
+    if (CheckPrimitiveType(node, prim::kPrimUpdateState)) {
       status = ReplaceOp(node, manager);
     }
-    if (type == schema::PrimitiveType_Depend ||
-        type == schema::PrimitiveType_ControlDepend) {  // ControlDepend delete next version.
+    if (CheckPrimitiveType(node, prim::kPrimDepend) ||
+        CheckPrimitiveType(node, prim::kPrimControlDepend)) {  // ControlDepend delete next version.
       status = ReplaceOp(node, manager);
     }
-    if (type == schema::PrimitiveType_TupleGetItem) {
+    if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
       status = ReplaceTupleGetItem(node, manager);
     }
-    if (type == schema::PrimitiveType_If || type == schema::PrimitiveType_While) {
+    if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(1));
       if (sub_func_graph == nullptr) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);

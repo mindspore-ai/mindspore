@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include <string>
 #include "src/common/log_adapter.h"
-#include "micro/coder/log.h"
+#include "coder/opcoders/parallel.h"
+#include "coder/log.h"
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -49,15 +50,15 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParamete
                  quant_arg_w, quant_arg_out, real_multiplier, left_shift, right_shift, quant_multiplier, out_act_min,
                  out_act_max, quant_arg.input_arg_num_, quant_arg.filter_arg_num_, quant_arg.output_arg_num_,
                  quant_arg.per_channel_);
-
-  CodeBaseStruct(
-    "ConvParameter", name, conv_parameter.op_parameter_, conv_quant_arg, conv_parameter.kernel_h_,
-    conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_, conv_parameter.dilation_h_,
-    conv_parameter.dilation_w_, conv_parameter.pad_u_, conv_parameter.pad_d_, conv_parameter.pad_l_,
-    conv_parameter.pad_r_, conv_parameter.group_, conv_parameter.tile_num_, conv_parameter.input_batch_,
-    conv_parameter.input_h_, conv_parameter.input_w_, conv_parameter.input_channel_, conv_parameter.output_batch_,
-    conv_parameter.output_h_, conv_parameter.output_w_, conv_parameter.output_channel_, conv_parameter.thread_num_,
-    conv_parameter.input_unit_, conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_);
+  code << "int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
+  CodeBaseStruct("ConvParameter", name, conv_parameter.op_parameter_, conv_quant_arg, conv_parameter.kernel_h_,
+                 conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_,
+                 conv_parameter.dilation_h_, conv_parameter.dilation_w_, conv_parameter.pad_u_, conv_parameter.pad_d_,
+                 conv_parameter.pad_l_, conv_parameter.pad_r_, conv_parameter.group_, conv_parameter.tile_num_,
+                 conv_parameter.input_batch_, conv_parameter.input_h_, conv_parameter.input_w_,
+                 conv_parameter.input_channel_, conv_parameter.output_batch_, conv_parameter.output_h_,
+                 conv_parameter.output_w_, conv_parameter.output_channel_, "thread_num", conv_parameter.input_unit_,
+                 conv_parameter.output_unit_, conv_parameter.pad_mode_, conv_parameter.act_type_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatMulParameter &matmul_parameter) {
@@ -107,19 +108,31 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const PoolingParam
        << " &" << out_quant_name << "};\n";
 
   CodeBaseStruct("PoolingParameter", name, pooling_parameter.op_parameter_, pooling_parameter.pool_mode_,
-                 pooling_parameter.round_mode_, pooling_parameter.act_type_, pooling_parameter.avg_mode_,
-                 pooling_parameter.global_, pooling_parameter.window_w_, pooling_parameter.window_h_,
-                 pooling_parameter.stride_w_, pooling_parameter.stride_h_, pooling_parameter.input_w_,
-                 pooling_parameter.input_h_, pooling_parameter.input_batch_, pooling_parameter.input_channel_,
-                 pooling_parameter.output_w_, pooling_parameter.output_h_, pooling_parameter.output_batch_,
-                 pooling_parameter.output_channel_, pooling_parameter.pad_u_, pooling_parameter.pad_d_,
-                 pooling_parameter.pad_l_, pooling_parameter.pad_r_, pooling_parameter.op_parameter_.thread_num_,
-                 quant_name, pooling_parameter.quantize_);
+                 pooling_parameter.round_mode_, pooling_parameter.pad_mode_, pooling_parameter.act_type_,
+                 pooling_parameter.avg_mode_, pooling_parameter.global_, pooling_parameter.window_w_,
+                 pooling_parameter.window_h_, pooling_parameter.stride_w_, pooling_parameter.stride_h_,
+                 pooling_parameter.input_w_, pooling_parameter.input_h_, pooling_parameter.input_batch_,
+                 pooling_parameter.input_channel_, pooling_parameter.output_w_, pooling_parameter.output_h_,
+                 pooling_parameter.output_batch_, pooling_parameter.output_channel_, pooling_parameter.pad_u_,
+                 pooling_parameter.pad_d_, pooling_parameter.pad_l_, pooling_parameter.pad_r_,
+                 pooling_parameter.op_parameter_.thread_num_, quant_name, pooling_parameter.quantize_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SoftmaxParameter &softmax_parameter) {
   CodeBaseStruct("SoftmaxParameter", name, softmax_parameter.op_parameter_, softmax_parameter.axis_,
                  ToString(softmax_parameter.input_shape_), softmax_parameter.element_size_, softmax_parameter.n_dim_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const SliceParameter &slice_parameter) {
+  CodeBaseStruct("SliceParameter", name, slice_parameter.op_parameter_, ToString(slice_parameter.shape_),
+                 ToString(slice_parameter.begin_), ToString(slice_parameter.end_), ToString(slice_parameter.size_),
+                 slice_parameter.quant_arg_, slice_parameter.param_length_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const BatchNormParameter &batchnorm_parameter) {
+  CodeBaseStruct("BatchNormParameter", name, batchnorm_parameter.op_parameter_, batchnorm_parameter.epsilon_,
+                 batchnorm_parameter.momentum_, batchnorm_parameter.unit_, batchnorm_parameter.units_,
+                 batchnorm_parameter.channel_, batchnorm_parameter.fused_);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SoftmaxQuantArg &softmax_quant_parameter) {
@@ -160,6 +173,14 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConcatParame
                  concat_parameter.after_axis_size, concat_parameter.count_unit_);
 }
 
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const ::QuantArg &quant_arg) {
+  CodeBaseStruct("QuantArg", name, quant_arg.scale_, quant_arg.zp_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const ::QuantMulArg &quant_mul_arg) {
+  CodeBaseStruct("QuantMulArg", name, quant_mul_arg.multiplier_, quant_mul_arg.left_shift_, quant_mul_arg.right_shift_);
+}
+
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReduceQuantArg &reduce_quant_arg) {
   CodeBaseStruct(
     "ReduceQuantArg", name, reduce_quant_arg.in_scale_, reduce_quant_arg.in_zp_, reduce_quant_arg.out_scale_,
@@ -178,6 +199,27 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatmulQuantA
   CodeBaseStruct("MatmulQuantArg", name, matmul_quant_arg.input, matmul_quant_arg.weight, matmul_quant_arg.output,
                  matmul_quant_arg.out_act_min, matmul_quant_arg.out_act_max, matmul_quant_arg.left_shift,
                  matmul_quant_arg.right_shift, matmul_quant_arg.quant_multiplier);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const SubQuantArg &sub_quant_arg) {
+  CodeBaseStruct("SubQuantArg", name, sub_quant_arg.in0_args_, sub_quant_arg.in1_args_, sub_quant_arg.out_args_,
+                 sub_quant_arg.output_activation_min_, sub_quant_arg.output_activation_max_,
+                 sub_quant_arg.input0_multiplier_, sub_quant_arg.input1_multiplier_, sub_quant_arg.output_multiplier_,
+                 sub_quant_arg.input0_shift_, sub_quant_arg.input1_shift_, sub_quant_arg.output_shift_,
+                 sub_quant_arg.left_shift_result0_, sub_quant_arg.left_shift_result1_, sub_quant_arg.right_shift0_,
+                 sub_quant_arg.right_shift1_, sub_quant_arg.left_shift_out_, sub_quant_arg.right_shift_out_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const DivQuantArg &div_quant_arg) {
+  CodeBaseStruct("DivQuantArg", name, div_quant_arg.in0_args_, div_quant_arg.in1_args_, div_quant_arg.out_args_,
+                 div_quant_arg.output_activation_min_, div_quant_arg.output_activation_max_,
+                 div_quant_arg.output_multiplier_, div_quant_arg.output_shift_);
+}
+
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReluXQuantArg &relu_quant_arg) {
+  CodeBaseStruct("ReluXQuantArg", name, relu_quant_arg.input_arg, relu_quant_arg.output_arg,
+                 relu_quant_arg.input_multiplier_, relu_quant_arg.left_shift_, relu_quant_arg.right_shift_,
+                 relu_quant_arg.quantized_output_min, relu_quant_arg.quantized_output_max);
 }
 
 }  // namespace mindspore::lite::micro::nnacl

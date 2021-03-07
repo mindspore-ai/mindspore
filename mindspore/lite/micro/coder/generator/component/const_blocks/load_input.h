@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BENCH_LOAD_INPUT_H_
-#define MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BENCH_LOAD_INPUT_H_
-static const char load_input_h[] =
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BENCH_LOAD_INPUT_H_
+#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BENCH_LOAD_INPUT_H_
+const char *load_input_h =
   "/**\n"
   " * Copyright 2021 Huawei Technologies Co., Ltd\n"
   " *\n"
@@ -43,7 +43,7 @@ static const char load_input_h[] =
   "\n"
   "#endif  // MICRO_EXAMPLE_LOAD_INPUT_LOAD_INPUT_H_\n";
 
-static const char load_input_c[] =
+const char *load_input_c =
   "/**\n"
   " * Copyright 2021 Huawei Technologies Co., Ltd\n"
   " *\n"
@@ -131,11 +131,11 @@ static const char load_input_c[] =
   "    int size = 0;\n"
   "    buffers[i] = ReadInputData(inputs_path[i], &size);\n"
   "    if (size != inputs_size[i] || buffers[i] == NULL) {\n"
-  "      printf(\"size mismatch, %s, %d, %d\\n\", inputs_path[i], size, inputs_size[i]);\n"
+  "      printf(\"size mismatch, %s, input: %d, needed: %d\\n\", inputs_path[i], size, inputs_size[i]);\n"
   "      return -1;\n"
   "    }\n"
   "  }\n"
   "  return 0;\n"
   "}\n";
 
-#endif  // MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BENCH_LOAD_INPUT_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_BENCH_LOAD_INPUT_H_

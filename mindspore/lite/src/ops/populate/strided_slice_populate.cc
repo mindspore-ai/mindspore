@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/ops/populate/strided_slice_populate.h"
-#include <limits>
-#include "src/ops/strided_slice.h"
-#include "src/ops/primitive_c.h"
-#include "src/ops/populate/populate_register.h"
-#include "nnacl/strided_slice_parameter.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateStridedSliceParameter(const void *prim) {
   StridedSliceParameter *strided_slice_param =
     reinterpret_cast<StridedSliceParameter *>(malloc(sizeof(StridedSliceParameter)));
   if (strided_slice_param == nullptr) {
@@ -31,42 +25,20 @@ OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *pr
     return nullptr;
   }
   memset(strided_slice_param, 0, sizeof(StridedSliceParameter));
-  strided_slice_param->op_parameter_.type_ = primitive->Type();
-  auto n_dims = ((lite::StridedSlice *)primitive)->NDims();
-  strided_slice_param->num_axes_ = n_dims;
-  auto begin = ((lite::StridedSlice *)primitive)->GetBegins();
-  if (begin.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of begin.size() is too big";
-    free(strided_slice_param);
-    return nullptr;
-  }
-  memcpy(strided_slice_param->begins_, (begin.data()), begin.size() * sizeof(int));
-  auto end = ((lite::StridedSlice *)primitive)->GetEnds();
-  if (end.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of end.size() is too big";
-    free(strided_slice_param);
-    return nullptr;
-  }
-  memcpy(strided_slice_param->ends_, (end.data()), end.size() * sizeof(int));
-  auto stride = ((lite::StridedSlice *)primitive)->GetStrides();
-  if (stride.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of stride.size() is too big";
-    free(strided_slice_param);
-    return nullptr;
-  }
-  memcpy(strided_slice_param->strides_, (stride.data()), stride.size() * sizeof(int));
-  auto in_shape = ((lite::StridedSlice *)primitive)->GetInShape();
-  if (in_shape.size() > std::numeric_limits<size_t>::max() / sizeof(int)) {
-    MS_LOG(ERROR) << "The value of in_shape.size() is too big";
-    free(strided_slice_param);
-    return nullptr;
-  }
-  memcpy(strided_slice_param->in_shape_, (in_shape.data()), in_shape.size() * sizeof(int));
-  strided_slice_param->in_shape_length_ = static_cast<int>(in_shape.size());
+
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_StridedSlice();
+  strided_slice_param->op_parameter_.type_ = primitive->value_type();
+
+  strided_slice_param->begins_mask_ = value->begin_mask();
+  strided_slice_param->ends_mask_ = value->end_mask();
+  strided_slice_param->ellipsisMask_ = value->ellipsis_mask();
+  strided_slice_param->newAxisMask_ = value->new_axis_mask();
+  strided_slice_param->shrinkAxisMask_ = value->shrink_axis_mask();
   return reinterpret_cast<OpParameter *>(strided_slice_param);
 }
 
-Registry StridedSliceParameterRegistry(schema::PrimitiveType_StridedSlice, PopulateStridedSliceParameter);
+Registry StridedSliceParameterRegistry(schema::PrimitiveType_StridedSlice, PopulateStridedSliceParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

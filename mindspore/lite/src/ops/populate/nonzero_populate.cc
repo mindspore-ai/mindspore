@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
+#include "src/ops/populate/default_populate.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateNonZeroParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto nonzero_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (nonzero_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc Where parameter failed.";
-    return nullptr;
-  }
-  memset(nonzero_parameter, 0, sizeof(OpParameter));
-  nonzero_parameter->type_ = primitive->Type();
-  return nonzero_parameter;
-}
-Registry NonZeroParameterRegistry(schema::PrimitiveType_NonZero, PopulateNonZeroParameter);
+Registry g_nonZeroParameterRegistry(schema::PrimitiveType_NonZero, DefaultPopulateParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

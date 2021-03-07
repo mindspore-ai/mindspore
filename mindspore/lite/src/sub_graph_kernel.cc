@@ -20,6 +20,8 @@
 #if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
+#include "src/common/version_manager.h"
+#include "src/runtime/infer_manager.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -107,9 +109,9 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
       MS_LOG(ERROR) << "all nodes in should be kernel";
       return RET_ERROR;
     }
-    auto primitive = const_cast<mindspore::lite::PrimitiveC *>(kernel->GetPrimitive());
-    if (primitive == nullptr) {
-      MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s primitive is nullptr!";
+    auto parameter = kernel->op_parameter();
+    if (parameter == nullptr) {
+      MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
       return RET_ERROR;
     }
     std::vector<lite::Tensor *> inputs = kernel->in_tensors();
@@ -117,17 +119,18 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
     for (auto &output : outputs) {
       output->FreeData();
     }
-    primitive->set_infer_flag(!is_interrupt);
-    auto ret = primitive->InferShape(inputs, outputs);
+    parameter->infer_flag_ = !is_interrupt;
+
+    auto ret = lite::KernelInferShape(inputs, &outputs, parameter);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, type:"
-                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()))
+                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->Type()))
                    << "flag set to false.";
-      primitive->set_infer_flag(false);
+      parameter->infer_flag_ = false;
       is_interrupt = true;
     } else if (ret != RET_OK) {
       MS_LOG(ERROR) << "InferShape failed, type: "
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(kernel->Type()));
       return RET_INFER_ERR;
     }
     if (!is_interrupt) {

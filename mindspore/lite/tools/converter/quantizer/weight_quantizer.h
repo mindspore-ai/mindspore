@@ -46,8 +46,7 @@ class WeightQuantizer : public Quantizer {
   STATUS DoLstmQuantize(CNodePtr cnode);
   STATUS DoGatherQuantize(CNodePtr cnode);
 
-  STATUS ProcessLstmWeightByIndex(const CNodePtr &cnode, const std::shared_ptr<PrimitiveC> &primitive_c,
-                                  const int &index);
+  STATUS ProcessLstmWeightByIndex(const CNodePtr &cnode, const PrimitivePtr &primitive, const int &index);
 
   int quant_max_{127};
   int quant_min_{-128};
@@ -63,7 +62,7 @@ class WeightQuantizer : public Quantizer {
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
 
   STATUS DoMixedQuant(FuncGraphPtr);
-  STATUS SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node, std::shared_ptr<PrimitiveC> primitive_c);
+  STATUS SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node, const PrimitivePtr &primitive);
   STATUS DoFixedQuant(FuncGraphPtr);
   STATUS RunFp32Graph(FuncGraphPtr);
 
@@ -72,7 +71,7 @@ class WeightQuantizer : public Quantizer {
   STATUS GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
                               ParameterPtr *param_node, ParamValueLitePtr *param_value);
   STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const ParamValueLitePtr &param_value,
-                  const std::shared_ptr<PrimitiveC> &primitive_c);
+                  const PrimitivePtr &primitive);
   STATUS DoQuantSearch(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::lite::quant

@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/int8/conv2d_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/conv2d_int8_coder.h"
 #include <memory>
 #include <string>
 #include <vector>
-#include <utility>
 #include "securec/include/securec.h"
-#include "micro/coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.h"
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/nnacl/int8/conv2d_1x1_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/int8/convolution_int8.h"
 #include "src/ops/populate/populate_register.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "src/common/version_manager.h"
+#include "coder/log.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
-using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -180,42 +181,32 @@ int Conv2DINT8Coder::Resize() {
 }
 
 int Conv2DINT8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/int8/conv_int8.h", "nnacl/common_func.h", "nnacl/kernel/int8/conv_init_int8.h"},
-          {"common_func.c", "pack.c", "conv_int8.c", "winograd_transform.c", "matmul_int8.c", "fixed_point.c",
-           "conv_init_int8_wrapper.c", "thread_pool.c"});
+  std::vector<std::string> asm_files;
+  if (target_ == kARM32A) {
+    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8Neon32.S"};
+  } else if (target_ == kARM64) {
+    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8Neon64.S"};
+  }
+  Collect(context, {"nnacl/int8/conv_int8.h", "nnacl/common_func.h", "wrapper/int8/convolution_int8_wrapper.h"},
+          {"common_func.c", "pack_int8.c", "conv_int8.c", "winograd_transform.c", "matmul_int8.c", "fixed_point.c",
+           "convolution_int8_wrapper.c", "conv_init_int8_wrapper.c", "thread_pool.c"},
+          asm_files);
   // call the op function
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);
   code.CodeFunction("memset", packed_input_, 0, packed_input_size_);
   code.CodeFunction("memset", input_sum_, 0, input_sum_size_);
   code.CodeFunction("memset", matmul_packed_input_, 0, matmul_packed_input_size_);
+  code.CodeStruct("conv_param", *conv_param_);
 
-  conv_param_->op_parameter_.thread_num_ = thread_num_;
-  conv_param_->thread_num_ = thread_num_;
-  code.CodeStruct("conv_param_", *conv_param_);
-
-  // code operator func
-  if (thread_num_ > 1) {
-    code.CodeFunction("memset", matmul_packed_input_, 0, matmul_packed_input_size_);
-    code.CodeBaseStruct("ConvOptInt8Args", "args", input_tensor_, packed_input_, matmul_packed_input_, packed_weight_,
-                        bias_data_, output_tensor_, input_sum_, thread_num_s_, "(ConvParameter *)&conv_param_",
-                        matmul_func_);
-    code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "ConvInt8Run", "&args", "thread_num");
+  code.CodeBaseStruct("ConvolutionInt8Args", kRunArgs, input_tensor_, packed_input_, matmul_packed_input_,
+                      packed_weight_, bias_data_, output_tensor_, filter_zp_ptr_, input_sum_,
+                      "(ConvParameter *)&conv_param", matmul_func_, support_optimize_);
+  code.CodeFunction("CheckSupportOptimize", kRunArgsAddr);
+  if (support_parallel_) {
+    code.CodeFunction(kParallelLaunch, gThreadPool, "ConvolutionInt8Run", kRunArgsAddr, gThreadNum);
   } else {
-    if (target_ == kARM64) {
-      code << "if (GetSupportOptFlag()) {\n";
-      code << "conv_param_.tile_num_ = " << 8 << ";\n";
-      code << "} else {\n";
-      code << "conv_param_.tile_num_ = " << 4 << ";\n";
-      code << "}\n";
-      code.CodeFunction("ConvInt8", input_tensor_, packed_input_, matmul_packed_input_, packed_weight_, bias_data_,
-                        output_tensor_, filter_zp_ptr_, input_sum_, 0, "(ConvParameter *)&conv_param_", matmul_func_,
-                        "GetSupportOptFlag()");
-    } else {
-      code.CodeFunction("ConvInt8", input_tensor_, packed_input_, matmul_packed_input_, packed_weight_, bias_data_,
-                        output_tensor_, filter_zp_ptr_, input_sum_, 0, "(ConvParameter *)&conv_param_", matmul_func_,
-                        support_optimize_);
-    }
+    code.CodeFunction("ConvolutionInt8Run", kRunArgsAddr, kDefaultTaskId);
   }
   context->AppendCode(code.str());
   return RET_OK;
@@ -224,31 +215,30 @@ int Conv2DINT8Coder::DoCode(CoderContext *const context) {
 std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tensor *> &in_tensors,
                                                          const std::vector<Tensor *> &out_tensors,
                                                          const Model::Node *node, size_t node_index, Target target) {
-  PrimitiveC *primitive_c = node->primitive_;
-  if (!primitive_c) {
+  const void *primitive = node->primitive_;
+  if (primitive == nullptr) {
     return nullptr;
   }
-  OpParameter *parameter =
-    PopulateRegistry::GetInstance()->GetParameterCreator((schema::PrimitiveType(primitive_c->Type())))(primitive_c);
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
-                  << schema::EnumNamePrimitiveType((schema::PrimitiveType)(primitive_c->Type()));
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  ParameterGen paramGen =
+    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node->primitive_), schema_version);
+  if (paramGen == nullptr) {
+    MS_LOG(ERROR) << "parameter generator is null";
     return nullptr;
   }
-
-  auto *conv_param = reinterpret_cast<ConvParameter *>(parameter);
+  auto conv_param = reinterpret_cast<ConvParameter *>(paramGen(node->primitive_));
   int kernel_h = conv_param->kernel_h_;
   int kernel_w = conv_param->kernel_w_;
   int stride_h = conv_param->stride_h_;
   int stride_w = conv_param->stride_w_;
   int dilation_h = conv_param->dilation_h_;
   int dilation_w = conv_param->dilation_w_;
-  free(parameter);
+  free(conv_param);
   std::unique_ptr<OperatorCoder> coder;
   if (kernel_h == 3 && kernel_w == 3 && stride_h == 1 && stride_w == 1 && dilation_h == 1 && dilation_w == 1) {
     coder = CPUOpCoderCreator<Conv2D3x3Int8Coder>(in_tensors, out_tensors, node, node_index, target);
   } else if (kernel_h == 1 && kernel_w == 1) {
-    coder = CPUOpCoderCreator<Conv2DINT8Coder>(in_tensors, out_tensors, node, node_index, target);
+    coder = CPUOpCoderCreator<Conv2D1x1Int8Coder>(in_tensors, out_tensors, node, node_index, target);
   } else {
     coder = CPUOpCoderCreator<Conv2DINT8Coder>(in_tensors, out_tensors, node, node_index, target);
   }
@@ -259,7 +249,7 @@ std::unique_ptr<OperatorCoder> CPUConv2DINT8CoderCreator(const std::vector<Tenso
   return coder;
 }
 
-REG_OPERATOR_CODER(kX86, kNumberTypeInt8, PrimitiveType_Conv2D, CPUConv2DINT8CoderCreator)
-REG_OPERATOR_CODER(kARM32A, kNumberTypeInt8, PrimitiveType_Conv2D, CPUConv2DINT8CoderCreator)
-REG_OPERATOR_CODER(kARM64, kNumberTypeInt8, PrimitiveType_Conv2D, CPUConv2DINT8CoderCreator)
+REG_OPERATOR_CODER(kX86, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DINT8CoderCreator)
+REG_OPERATOR_CODER(kARM32A, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DINT8CoderCreator)
+REG_OPERATOR_CODER(kARM64, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUConv2DINT8CoderCreator)
 }  // namespace mindspore::lite::micro::nnacl

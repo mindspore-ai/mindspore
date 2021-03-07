@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/base/full_connection_base_coder.h"
+#include "coder/opcoders/base/full_connection_base_coder.h"
 
 namespace mindspore::lite::micro {
-FullConnectionBaseCoder::~FullConnectionBaseCoder() { fc_param_ = nullptr; }
+FullConnectionBaseCoder::~FullConnectionBaseCoder() {
+  fc_param_ = nullptr;
+  filter_tensor_ = nullptr;
+  bias_tensor_ = nullptr;
+}
 
 int FullConnectionBaseCoder::Init() {
   this->fc_param_ = reinterpret_cast<MatMulParameter *>(parameter_);

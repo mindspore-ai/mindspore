@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ STATUS DTypeTransPass::DoModelOutputDTypeTrans(schema::MetaGraphT *graph) {
       continue;
     }
     int32_t tensorDataType = this->outputDataDType != TypeId::kTypeUnknown
-                               ? this->inputDataDType
+                               ? this->outputDataDType
                                : TensorDataType::GetInstance()->GetTensorType(graphOutIdx);
     for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
       auto nodeName = (*iter)->name;
@@ -200,8 +200,8 @@ NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIte
   transNode->primitive->value.value = quantDTypeCastParam;
   transNode->primitive->value.type = PrimitiveType_QuantDTypeCast;
   transNode->quantType = QuantType_AwareTraining;
-  quantDTypeCastParam->srcT = inputDataType;
-  quantDTypeCastParam->dstT = outputDataType;
+  quantDTypeCastParam->src_t = inputDataType;
+  quantDTypeCastParam->dst_t = outputDataType;
   if (inputDataType == TypeId::kNumberTypeInt8 && outputDataType == TypeId::kNumberTypeFloat32) {
     transNode->name = "int8toft32_" + tileName + std::to_string(id++);
   } else if (inputDataType == TypeId::kNumberTypeFloat32 && outputDataType == TypeId::kNumberTypeInt8) {
@@ -212,7 +212,8 @@ NodeIter DTypeTransPass::InsertDTypeTransNode(schema::MetaGraphT *graph, NodeIte
     transNode->name = "int8touint8_" + tileName + std::to_string(id++);
   }
   transNode->primitive->value.value = quantDTypeCastParam;
-  return InsertNode(graph, existNodeIter, place, inoutIdx, std::move(transNode), errorCode, castOpCopyer);
+  int insert_num = 0;
+  return InsertNode(graph, existNodeIter, place, inoutIdx, std::move(transNode), errorCode, &insert_num, castOpCopyer);
 }
 
 void DTypeTransPass::SetInputDataDType(TypeId dataType) { this->inputDataDType = dataType; }

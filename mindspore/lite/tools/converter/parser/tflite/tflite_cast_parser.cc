@@ -17,34 +17,32 @@
 #include "tools/converter/parser/tflite/tflite_cast_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/cast.h"
 
-namespace mindspore::lite {
-PrimitiveC *TfliteCastParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteCastParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Cast>();
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
-  if (in_tensor == nullptr) {
-    MS_LOG(ERROR) << "tensor is null";
-    return nullptr;
-  }
-  attr->srcT = GetTfliteDataType(in_tensor->type);
   const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs[0]];
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is null";
     return nullptr;
   }
-  attr->dstT = GetTfliteDataType(out_tensor->type);
-  primitive->value.type = schema::PrimitiveType_Cast;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  auto dstT = GetTfliteDataType(out_tensor->type);
+  prim->AddAttr("to", MakeValue(static_cast<int32_t>(dstT)));
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteCastParser(tflite::BuiltinOperator_CAST, new TfliteCastParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

@@ -24,8 +24,9 @@
 #include "coder/log.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/parallel.h"
 
-using mindspore::schema::PrimitiveType_SoftMax;
+using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::lite::micro::nnacl {
 int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
@@ -64,15 +65,10 @@ int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
 
 int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   int outter_size = 1;
-  int inner_size = 1;
   for (int i = 0; i < softmax_param_->axis_; i++) {
     outter_size *= softmax_param_->input_shape_[i];
   }
   MS_CHECK_TRUE(softmax_param_->n_dim_ < 5, "n_dim should be less than the length of maximum value of input_shape");
-  for (int i = softmax_param_->axis_; i < softmax_param_->n_dim_; i++) {
-    inner_size *= softmax_param_->input_shape_[i];
-  }
-
   Collect(context, {"nnacl/int8/softmax_int8.h"}, {"softmax_int8.c", "fixed_point.c"});
 
   NNaclInt8Serializer code;
@@ -84,22 +80,14 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   code.CodeFunction("memset", exp_data_, 0, exp_data_size_);
   code.CodeFunction("memset", sum_data_, 0, sum_data_size_);
 
-  if (thread_num_ > 1) {
-    code.CodeBaseStruct("SoftmaxInt8Args", "args", input_tensor_, output_tensor_, outter_size, inner_size, exp_data_,
-                        sum_data_, thread_num_s_, "quant_args", "(SoftmaxParameter *)&softmax_param");
-    code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "SoftmaxInt8Run", "&args", "thread_num");
-  } else {
-    int task_id = 0;
-    MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
-    int stride = UP_DIV(outter_size, thread_num_);
-    int count = MSMIN(stride, outter_size - stride * task_id);
-    code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "quant_args",
-                      "(SoftmaxParameter *)&softmax_parameter");
-  }
+  MS_CHECK_TRUE(thread_num_ > 0, "thread_num_ <= 0");
+  int stride = UP_DIV(outter_size, thread_num_);
+  int count = MSMIN(stride, outter_size - stride * kDefaultTaskId);
+  code.CodeFunction("SoftmaxInt8", input_tensor_, output_tensor_, count, exp_data_, sum_data_, "quant_args",
+                    "(SoftmaxParameter *)&softmax_parameter");
   context->AppendCode(code.str());
-
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_SoftMax, CPUOpCoderCreator<SoftMaxInt8Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Softmax, CPUOpCoderCreator<SoftMaxInt8Coder>)
 }  // namespace mindspore::lite::micro::nnacl

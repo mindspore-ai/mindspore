@@ -29,7 +29,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_PReLU;
+using mindspore::schema::PrimitiveType_PReLUFusion;
 
 namespace mindspore::kernel {
 
@@ -157,6 +157,6 @@ int PReluOpenCLKernel::Run() {
   return mindspore::lite::RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_PReLU, OpenCLKernelCreator<PReluOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_PReLU, OpenCLKernelCreator<PReluOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_PReLUFusion, OpenCLKernelCreator<PReluOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_PReLUFusion, OpenCLKernelCreator<PReluOpenCLKernel>)
 }  // namespace mindspore::kernel

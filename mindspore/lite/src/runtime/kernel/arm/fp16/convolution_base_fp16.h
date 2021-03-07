@@ -27,9 +27,8 @@ namespace mindspore::kernel {
 class ConvolutionBaseFP16CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionBaseFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                               const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionBaseFP16CPUKernel() override;
 
   int Init() override { return mindspore::lite::RET_OK; }

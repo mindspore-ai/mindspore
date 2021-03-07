@@ -31,7 +31,8 @@ using mindspore::lite::RET_INVALID_OP_NAME;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
-using mindspore::schema::PrimitiveType_Pooling;
+using mindspore::schema::PrimitiveType_AvgPoolFusion;
+using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore {
 namespace kernel {
@@ -120,7 +121,9 @@ int PoolingOpenCLKernel::Run() {
   return mindspore::lite::RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Pooling, OpenCLKernelCreator<PoolingOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Pooling, OpenCLKernelCreator<PoolingOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_AvgPoolFusion, OpenCLKernelCreator<PoolingOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_MaxPoolFusion, OpenCLKernelCreator<PoolingOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_AvgPoolFusion, OpenCLKernelCreator<PoolingOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_MaxPoolFusion, OpenCLKernelCreator<PoolingOpenCLKernel>)
 }  // namespace kernel
 }  // namespace mindspore

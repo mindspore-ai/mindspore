@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.h"
-#include <string>
+#include "coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.h"
 #include <vector>
 #include "securec/include/securec.h"
 #include "nnacl/int8/conv3x3_int8.h"
-#include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/log.h"
+#include "coder/opcoders/parallel.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
 void ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param) {
@@ -129,7 +127,7 @@ int Conv2D3x3Int8Coder::Prepare(CoderContext *const context) {
 }
 
 int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/int8/conv_int8.h"}, {"pack.c", "conv_int8.c", "fixed_point.c"});
+  Collect(context, {"nnacl/int8/conv_int8.h"}, {"pack_int8.c", "conv_int8.c", "fixed_point.c"});
   nnacl::NNaclInt8Serializer code;
   code.precision(kPrecision);
   // call the op function
@@ -145,9 +143,9 @@ int Conv2D3x3Int8Coder::DoCode(CoderContext *const context) {
   code.CodeFunction("PackInputToC8Int8", input_tensor_, c8_input_, "&conv_param_");
   // code operator func
   if (thread_num_ > 1) {
-    code.CodeBaseStruct("Conv3x3Int8Args", "args", c8_input_, transformed_filter_addr_, new_bias_addr_, output_tensor_,
-                        tile_buffer_, block_unit_buffer_, tmp_dst_buffer_, tmp_out_, "&conv_param_");
-    code.CodeFunction("ParallelLaunch", "THREAD_POOL_DEFAULT", "Conv3x3Int8Run", "&args", "thread_num");
+    code.CodeBaseStruct("Conv3x3Int8Args", kRunArgs, c8_input_, transformed_filter_addr_, new_bias_addr_,
+                        output_tensor_, tile_buffer_, block_unit_buffer_, tmp_dst_buffer_, tmp_out_, "&conv_param_");
+    code.CodeFunction(kParallelLaunch, "THREAD_POOL_DEFAULT", "Conv3x3Int8Run", kRunArgsAddr, "thread_num");
   } else {
     int task_id = 0;
     code.CodeFunction("Conv3x3Int8", c8_input_, transformed_filter_addr_, new_bias_addr_, output_tensor_, tile_buffer_,

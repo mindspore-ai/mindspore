@@ -24,8 +24,9 @@
 #include "coder/generator/component/const_blocks/cmake_lists.h"
 #include "coder/generator/component/const_blocks/debug_utils.h"
 #include "coder/generator/component/const_blocks/load_input.h"
+#include "coder/generator/component/const_blocks/thread_pool.h"
 #include "coder/generator/component/const_blocks/license.h"
-#include "micro/coder/log.h"
+#include "coder/log.h"
 
 namespace mindspore::lite::micro {
 int WriteContentToFile(const std::string &file, const std::string &content) {
@@ -61,11 +62,13 @@ Generator::~Generator() { (void)umask(origin_umask_); }
 void Generator::CodeNetRunFunc(std::ofstream &ofs) {
   // generate net inference code
   ofs << "void " << config_->module_name() << "_Inference() {\n";
-  if (config_->code_mode() == CodeMode::Code_Inference) {
-    ofs << "int thread_num = GetCurrentThreadNum(THREAD_POOL_DEFAULT);\n";
+  if (config_->support_parallel()) {
+    ofs << "  const int g_thread_num = GetCurrentThreadNum(g_thread_pool);\n";
+  } else {
+    ofs << "  const int g_thread_num = 1;\n";
   }
   for (const auto &block : ctx_->code_blocks()) {
-    ofs << "\t{\n" << block << "\t}\n";
+    ofs << "  {\n" << block << "  }\n";
   }
   ofs << "}\n";
 }
@@ -98,7 +101,7 @@ int Generator::CodeSourceCMakeFile() {
 }
 
 int Generator::CodeStaticContent() {
-  const std::vector<std::pair<std::string, std::string>> static_blocks = {
+  std::vector<std::pair<std::string, std::string>> static_blocks = {
     {net_inc_file_path_ + "microtensor.h", micro_tensor_h},
     {net_src_file_path_ + "CMakeLists.txt", src_cmake_lists_txt},
     {net_main_file_path_ + "debug_utils.h", debug_utils_h},
@@ -106,12 +109,13 @@ int Generator::CodeStaticContent() {
     {net_main_file_path_ + "load_input.h", load_input_h},
     {net_main_file_path_ + "load_input.c", load_input_c},
     {net_main_file_path_ + "CMakeLists.txt", bench_cmake_lists_txt}};
+  if (config_->support_parallel()) {
+    static_blocks.emplace_back(net_inc_file_path_ + "thread_pool.h", thread_pool_h);
+  }
   for (const auto &static_block : static_blocks) {
     std::string file_name = static_block.first;
     std::string content = static_block.second;
-    if (WriteContentToFile(file_name, content) != RET_OK) {
-      return RET_ERROR;
-    }
+    MS_CHECK_RET_CODE(WriteContentToFile(file_name, content), "write file failed");
   }
   return RET_OK;
 }

@@ -20,7 +20,8 @@
 #include "coder/opcoders/serializers/serializer.h"
 #include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_Pooling;
+using mindspore::schema::PrimitiveType_AvgPoolFusion;
+using mindspore::schema::PrimitiveType_MaxPoolFusion;
 
 namespace mindspore::lite::micro::cmsis {
 int PoolingInt8Coder::Prepare(CoderContext *const context) {
@@ -39,14 +40,12 @@ int PoolingInt8Coder::Prepare(CoderContext *const context) {
 
 int PoolingInt8Coder::DoCode(CoderContext *const context) {
   // init struct PoolingParameters
-  std::string buffer_str = "NULL";
   std::string pooling_func;
 
   std::vector<std::string> cFiles;
   if (pooling_parameter_->pool_mode_ == PoolMode_AvgPool) {
     cFiles = {"arm_avgpool_s8.c"};
     pooling_func = "arm_avgpool_s8";
-    buffer_str = allocator_->GetRuntimeAddr(buffer_);
   } else if (pooling_parameter_->pool_mode_ == PoolMode_MaxPool) {
     cFiles = {"arm_max_pool_s8.c"};
     pooling_func = "arm_max_pool_s8";
@@ -59,11 +58,9 @@ int PoolingInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
 
-  code.CodeFunction(pooling_func, "&nn_context", "&pool_params", "&input_dims", input_tensor_, "&filter_dims",
-                    "&output_dims", output_tensor_);
   code.CodeFunction(pooling_func, dim_src_height_, dim_src_width_, dim_dst_height_, dim_dst_width_, stride_height_,
                     stride_width_, dim_kernel_height_, dim_kernel_width_, padding_height_, padding_width_, act_min_,
-                    act_max_, ch_src_, input_tensor_, buffer_str, output_tensor_);
+                    act_max_, ch_src_, input_tensor_, buffer_, output_tensor_);
   context->AppendCode(code.str());
   return RET_OK;
 }
@@ -97,6 +94,7 @@ int PoolingInt8Coder::SetParameters() {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Pooling, CPUOpCoderCreator<PoolingInt8Coder>)
+REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_AvgPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
+REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_MaxPoolFusion, CPUOpCoderCreator<PoolingInt8Coder>)
 
 }  // namespace mindspore::lite::micro::cmsis

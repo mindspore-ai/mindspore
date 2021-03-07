@@ -17,34 +17,23 @@
 #include "tools/converter/parser/tflite/tflite_gather_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/gather.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteGatherParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteGatherParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Gather>();
 
-  std::unique_ptr<schema::GatherT> attr = std::make_unique<schema::GatherT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
+  MS_ASSERT(tfliteOp != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsGatherOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op gather attr failed";
     return nullptr;
   }
-  attr->axis = tflite_attr->axis;
-  attr->batchDims = 0;
+  prim->AddAttr("axis", MakeValue(static_cast<int32_t>(tflite_attr->axis)));
 
-  primitive->value.type = schema::PrimitiveType_Gather;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteGatherParser(tflite::BuiltinOperator_GATHER, new TfliteGatherParser());

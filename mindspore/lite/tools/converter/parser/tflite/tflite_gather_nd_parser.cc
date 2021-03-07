@@ -17,26 +17,15 @@
 #include "tools/converter/parser/tflite/tflite_gather_nd_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/gather_nd.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteGatherNdParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                     const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return nullptr;
-  }
 
-  std::unique_ptr<schema::GatherNdT> attr = std::make_unique<schema::GatherNdT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  primitive->value.type = schema::PrimitiveType_GatherNd;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *TfliteGatherNdParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::GatherNd>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteGatherNdParser(tflite::BuiltinOperator_GATHER_ND, new TfliteGatherNdParser());

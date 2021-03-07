@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_
 #include <vector>
 #include <string>
-#include "src/ops/primitive_c.h"
 #include "src/lite_kernel.h"
 namespace mindspore::lite {
 class NPUPassUtils {
@@ -53,9 +52,6 @@ class NPUPassUtils {
 
   static bool IsNchw2Nhwc(const kernel::LiteKernel *kernel);
   static kernel::LiteKernel *KernelInputFromKernel(const kernel::LiteKernel *kernel, size_t in_tensor_index);
-
- private:
-  static PrimitiveC *CreateTransposePrimitive();
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_

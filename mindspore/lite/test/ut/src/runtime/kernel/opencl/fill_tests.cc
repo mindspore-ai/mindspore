@@ -59,8 +59,8 @@ TEST_F(TestFillOpenCLCI, Fp32testfill) {
     return;
   }
 
-  auto *fill_kernel = new (std::nothrow)
-    kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr, nullptr);
+  auto *fill_kernel =
+    new (std::nothrow) kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
   if (fill_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;
@@ -115,8 +115,8 @@ TEST_F(TestFillOpenCLCI, Fp32testshape) {
     return;
   }
 
-  auto *fill_kernel = new (std::nothrow)
-    kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr, nullptr);
+  auto *fill_kernel =
+    new (std::nothrow) kernel::FillOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr);
   if (fill_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::FillOpenCLKernel failed ";
     delete param;

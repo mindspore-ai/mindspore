@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,36 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/transpose.h"
-#include <memory>
-#include "src/common/log_adapter.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/transpose.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateTransposeParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateTransposeParameter(const void *prim) {
   TransposeParameter *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
   if (transpose_param == nullptr) {
     MS_LOG(ERROR) << "malloc TransposeParameter failed.";
     return nullptr;
   }
   memset(transpose_param, 0, sizeof(TransposeParameter));
-  auto param = reinterpret_cast<mindspore::lite::Transpose *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  transpose_param->op_parameter_.type_ = primitive->Type();
-  auto perm_vector_ = param->GetPerm();
-  int i = 0;
-  for (auto iter = perm_vector_.begin(); iter != perm_vector_.end(); iter++) {
-    transpose_param->perm_[i++] = *iter;
-  }
-  transpose_param->num_axes_ = i;
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  transpose_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(transpose_param);
 }
+}  // namespace
 
-Registry TransposeParameterRegistry(schema::PrimitiveType_Transpose, PopulateTransposeParameter);
+Registry g_transposeParameterRegistry(schema::PrimitiveType_Transpose, PopulateTransposeParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

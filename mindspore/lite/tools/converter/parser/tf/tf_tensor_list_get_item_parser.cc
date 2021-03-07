@@ -19,58 +19,38 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/tensor_list_get_item.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFTensorListGetItemParser::Parse(const tensorflow::NodeDef &tf_op,
-                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                        PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF TensorListGetItemParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::TensorListGetItemT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFTensorListGetItemParser::Parse(const tensorflow::NodeDef &tf_op,
+                                                  const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                                  std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::TensorListGetItem>();
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "element_dtype", &attr_value)) {
     MS_LOG(ERROR) << "The element_dtype attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
   auto type = TensorFlowUtils::GetTFDataType(attr_value.type());
   if (type == kTypeUnknown) {
     MS_LOG(ERROR) << "tensor_list_get_item element_dtype must be known type";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->elementDType = type;
-
-  primitive->value.type = schema::PrimitiveType_TensorListGetItem;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_element_dtype((int64_t)(type));
 
   *output_size = 1;
   for (int i = 0; i < 3; ++i) {
-    auto status = AddOpInput(tf_op, i, inputs);
-    if (status != RET_OK) {
-      return status;
+    if (AddOpInput(tf_op, i, inputs) != RET_OK) {
+      MS_LOG(ERROR) << "add op input " << i << " failed";
+      return nullptr;
     }
   }
-  return RET_OK;
+
+  return prim.release();
 }
+
 TFNodeRegistrar g_tfTensorListGetItemParser("TensorListGetItem", new TFTensorListGetItemParser());
 }  // namespace lite
 }  // namespace mindspore

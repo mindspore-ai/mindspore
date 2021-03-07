@@ -20,13 +20,13 @@
 #include <tuple>
 #include <memory>
 #include <unordered_map>
-#include "src/ops/primitive_c.h"
 #include "include/train/train_loop.h"
 #include "include/train/metrics.h"
 #include "include/train_session.h"
-
+#include "include/errorcode.h"
 #include "include/datasets.h"
 #include "include/iterator.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {

@@ -17,45 +17,89 @@
 #include "tools/converter/parser/tflite/tflite_activation_parser.h"
 #include <memory>
 #include <vector>
-#include <string>
-#include "src/ops/activation.h"
-#include "src/ops/primitive_c.h"
 #include "tools/converter/parser/tflite/tflite_util.h"
+#include "ops/fusion/prelu_fusion.h"
+#include "ops/fusion/activation.h"
 
-namespace mindspore::lite {
-lite::PrimitiveC *TfliteActivationParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Activation>();
 
-  auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
-  auto ms_op_type = GetMSOpType(tflite_op_type);
-  if (kActivationTypeMap.find(ms_op_type) == kActivationTypeMap.end()) {
-    MS_LOG(ERROR) << ms_op_type << "is a not supported activation type";
-    return nullptr;
-  }
-  attr->type = kActivationTypeMap.find(GetMSOpType(tflite_op_type))->second;
-  if (attr->type == schema::ActivationType_LEAKY_RELU) {
-    const auto &tflite_attr = tflite_op->builtin_options.AsLeakyReluOptions();
-    if (tflite_attr == nullptr) {
-      MS_LOG(ERROR) << "get op: " << GetMSOpType(tflite_op_type) << " attr failed";
-      return nullptr;
-    }
-    attr->alpha = tflite_attr->alpha;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Activation;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_activation_type(mindspore::ActivationType::RELU);
+
+  return prim.release();
 }
 
-TfliteNodeRegister g_TfliteReluParser(tflite::BuiltinOperator_RELU, new TfliteActivationParser());
-TfliteNodeRegister g_TfliteRelu6Parser(tflite::BuiltinOperator_RELU6, new TfliteActivationParser());
-TfliteNodeRegister g_TfliteTanhParser(tflite::BuiltinOperator_TANH, new TfliteActivationParser());
-TfliteNodeRegister g_TfliteSwishParser(tflite::BuiltinOperator_HARD_SWISH, new TfliteActivationParser());
-TfliteNodeRegister g_tfliteLogisticParser(tflite::BuiltinOperator_LOGISTIC, new TfliteActivationParser());
-TfliteNodeRegister g_TfliteLeakyReluParser(tflite::BuiltinOperator_LEAKY_RELU, new TfliteActivationParser());
-}  // namespace mindspore::lite
+ops::PrimitiveC *TfliteRelu6Parser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Activation>();
+
+  prim->set_activation_type(mindspore::ActivationType::RELU6);
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteLeakyReluParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Activation>();
+
+  prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
+
+  MS_ASSERT(tflite_op != nullptr);
+  const auto &tflite_attr = tflite_op->builtin_options.AsLeakyReluOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get LeakyRelu attr failed";
+    return nullptr;
+  }
+  prim->set_alpha(tflite_attr->alpha);
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TflitePReLUParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::PReLUFusion>();
+
+  prim->set_channel_shared(true);
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteTanhParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Activation>();
+
+  prim->set_activation_type(mindspore::ActivationType::TANH);
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteHardSwishParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Activation>();
+
+  prim->set_activation_type(mindspore::ActivationType::HSWISH);
+
+  return prim.release();
+}
+
+ops::PrimitiveC *TfliteLogisticParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                             const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Activation>();
+
+  prim->set_activation_type(mindspore::ActivationType::SIGMOID);
+
+  return prim.release();
+}
+
+TfliteNodeRegister g_TfliteReluParser(tflite::BuiltinOperator_RELU, new TfliteReluParser());
+TfliteNodeRegister g_TfliteRelu6Parser(tflite::BuiltinOperator_RELU6, new TfliteRelu6Parser());
+TfliteNodeRegister g_TflitePReLUParser(tflite::BuiltinOperator_PRELU, new TflitePReLUParser());
+TfliteNodeRegister g_TfliteLeakyReluParser(tflite::BuiltinOperator_LEAKY_RELU, new TfliteLeakyReluParser());
+TfliteNodeRegister g_TfliteTanhParser(tflite::BuiltinOperator_TANH, new TfliteTanhParser());
+TfliteNodeRegister g_TfliteSwishParser(tflite::BuiltinOperator_HARD_SWISH, new TfliteHardSwishParser());
+TfliteNodeRegister g_tfliteLogisticParser(tflite::BuiltinOperator_LOGISTIC, new TfliteLogisticParser());
+}  // namespace lite
+}  // namespace mindspore

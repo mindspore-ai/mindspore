@@ -20,9 +20,11 @@
 #include <string>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "tools/anf_importer/import_from_meta_graphT.h"
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "tools/converter/converter_context.h"
+#include "tools/converter/converter_flags.h"
+#include "tools/converter/quant_param_holder.h"
 
 namespace mindspore::lite {
 using namespace schema;
@@ -33,38 +35,7 @@ class ModelParser {
   virtual ~ModelParser() = default;
 
   virtual FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
-                             const QuantType &quant_type) {
-    auto *meta_graph = ParseToFb(model_file, weight_file, quant_type);
-    if (meta_graph == nullptr) {
-      MS_LOG(ERROR) << "parse model to fb failed";
-      return nullptr;
-    }
-    auto func_graph = this->Fb2Anf(meta_graph);
-    delete (meta_graph);
-    return func_graph;
-  }
-
- protected:
-  virtual schema::MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                        const QuantType &quant_type = QuantType_QUANT_NONE) = 0;
-
- public:
-  static FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph) {
-    if (meta_graph == nullptr) {
-      MS_LOG(ERROR) << "meta_graph is null";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);
-      return nullptr;
-    }
-    auto func_graph = std::make_shared<FuncGraph>();
-    AnfImporterFromMetaGraphT importer(meta_graph, func_graph);
-    auto status = importer.Import();
-    if (RET_OK != status) {
-      MS_LOG(ERROR) << "Import anf_graph from meta_graphT failed, ret: " << status;
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return nullptr;
-    }
-    return func_graph;
-  }
+                             const QuantType &quant_type) = 0;
 };
 }  // namespace mindspore::lite
 

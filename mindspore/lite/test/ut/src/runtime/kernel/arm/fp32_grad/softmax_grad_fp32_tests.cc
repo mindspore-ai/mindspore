@@ -17,7 +17,6 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include "src/ops/primitive_c.h"
 #include "mindspore/lite/include/context.h"
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"

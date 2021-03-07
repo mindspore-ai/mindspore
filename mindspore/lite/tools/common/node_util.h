@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,8 @@ std::vector<schema::PrimitiveType> Getfp32FullOpList();
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList();
 
 std::vector<schema::PrimitiveType> GetInt8OpList();
+
+const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb);
 
 class NodeUtils {
  public:

@@ -18,25 +18,14 @@
 #include "tools/converter/parser/tflite/tflite_tile_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/fusion/tile_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteTileParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                 const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
-
-  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Tile;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *TfliteTileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::TileFusion>();
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteTileParser(tflite::BuiltinOperator_TILE, new TfliteTileParser());

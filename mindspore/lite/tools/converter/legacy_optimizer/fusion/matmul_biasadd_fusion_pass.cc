@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,13 +99,13 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
     MS_LOG(ERROR) << "new FullConnectionT node failed";
     return RET_ERROR;
   }
-  fcAttr->hasBias = true;
+  fcAttr->has_bias = true;
   fcAttr->axis = 1;
   MS_ASSERT(matMulNode->primitive != nullptr);
   MS_ASSERT(matMulNode->primitive->value != nullptr);
   MS_ASSERT(matMulNode->primitive->value.AsMatMul() != nullptr);
-  transA = matMulNode->primitive->value.AsMatMul()->transposeA;
-  transB = matMulNode->primitive->value.AsMatMul()->transposeB;
+  transA = matMulNode->primitive->value.AsMatMul()->transpose_a;
+  transB = matMulNode->primitive->value.AsMatMul()->transpose_b;
   matMulNode->primitive->value.type = schema::PrimitiveType_FullConnection;
   matMulNode->primitive->value.value = fcAttr.release();
 
@@ -142,6 +142,19 @@ STATUS MatMulBiasAddFusionPass::InsertTransposeNode(MetaGraphT *graph, const std
 
   auto matmulOpIter = graph->nodes.begin() + matMulPath->nodeIdx;
   STATUS errorCode = RET_OK;
+  auto perm_tensor = std::make_unique<schema::TensorT>();
+  perm_tensor->dataType = kNumberTypeInt32;
+  perm_tensor->dims = {2};
+  std::vector<int> perm{1, 0};
+  size_t bytes = perm.size() * sizeof(int);
+  perm_tensor->data.resize(bytes);
+  perm_tensor->name = "perm_" + std::to_string(id++);
+  if (memcpy_s(perm_tensor->data.data(), bytes, perm.data(), bytes) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    return RET_ERROR;
+  }
+  size_t index = graph->allTensors.size();
+  graph->allTensors.push_back(std::move(perm_tensor));
   for (auto needInsertIdx : insertNodeIdxList) {
     auto transNode = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
     if (transNode == nullptr) {
@@ -150,20 +163,18 @@ STATUS MatMulBiasAddFusionPass::InsertTransposeNode(MetaGraphT *graph, const std
     }
     transNode->name = "transpose" + std::to_string(id++);
     transNode->primitive->value.type = schema::PrimitiveType_Transpose;
-    std::unique_ptr<TransposeT> transposeParam(new (std::nothrow) TransposeT());
-    if (transposeParam == nullptr) {
-      MS_LOG(ERROR) << "new transposeParam failed";
-      return RET_ERROR;
-    }
-    transposeParam->perm = {1, 0};
-    transNode->primitive->value.value = transposeParam.release();
-    matmulOpIter =
-      InsertNode(graph, matmulOpIter, kBefore, needInsertIdx, std::move(transNode), &errorCode, TransposeOpCopyer);
+    int insert_num = 0;
+    matmulOpIter = InsertNode(graph, matmulOpIter, kBefore, needInsertIdx, std::move(transNode), &errorCode,
+                              &insert_num, TransposeOpCopyer);
     if (errorCode != RET_OK) {
       MS_LOG(ERROR) << "InsertNode failed: " << errorCode;
       return errorCode;
     }
+    for (int i = insert_num; i > 0; --i) {
+      (*(matmulOpIter - i))->inputIndex.push_back(index);
+    }
   }
+  graph->allTensors.at(index)->refCount = insertNodeIdxList.size();
   return RET_OK;
 }
 

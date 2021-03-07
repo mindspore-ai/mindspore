@@ -125,7 +125,7 @@ TEST_F(TestDetectionPostProcessFp32, Fast) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::DetectionPostProcessCPUKernel *op =
-    new kernel::DetectionPostProcessCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx, nullptr);
+    new kernel::DetectionPostProcessCPUKernel(reinterpret_cast<OpParameter *>(param), inputs_, outputs_, ctx);
   op->Init();
   op->Run();
 

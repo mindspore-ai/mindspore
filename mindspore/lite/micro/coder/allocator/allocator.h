@@ -73,7 +73,7 @@ class MemoryAllocator {
     if (type != kWorkspace) {
       return MallocWeightTensor(type_id, size, type);
     }
-    if (size == 0 && size >= UINT_MAX) {
+    if (size == 0 || size >= UINT_MAX) {
       return nullptr;
     }
 
@@ -94,12 +94,12 @@ class MemoryAllocator {
   template <typename T>
   std::string GetRuntimeAddr(T t, bool is_const = false) {
     if (!t) {
-      return "NULL";
+      return "";
     }
     std::string type_info = is_const ? "const " : "";
     std::string type_name;
     if (std::type_index(typeid(T)) == std::type_index(typeid(Tensor *))) {
-      type_name = GetTensorDataType(reinterpret_cast<Tensor *>(t)->data_type()) + " *";
+      type_name = GetTensorDataType(reinterpret_cast<Tensor *>(t)->data_type()) + "*";
     } else {
       type_name = GetVariableTypeName<T>();
     }

@@ -29,14 +29,14 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
 
-using mindspore::schema::PrimitiveType_Add;
+using mindspore::schema::PrimitiveType_AddFusion;
 using mindspore::schema::PrimitiveType_Eltwise;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_Greater;
 using mindspore::schema::PrimitiveType_GreaterEqual;
 using mindspore::schema::PrimitiveType_Less;
 using mindspore::schema::PrimitiveType_LessEqual;
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 using mindspore::schema::PrimitiveType_NotEqual;
 
 namespace mindspore::kernel {
@@ -162,16 +162,15 @@ int ArithmeticInt8CPUKernel::Run() {
 
 kernel::LiteKernel *CpuArithmeticInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                    const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                   const mindspore::lite::PrimitiveC *primitive) {
+                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   kernel::LiteKernel *kernel = nullptr;
-  if (desc.type == PrimitiveType_Eltwise && static_cast<schema::PrimitiveType>(parameter->type_) == PrimitiveType_Add) {
-    kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx, primitive);
-  } else if (desc.type == PrimitiveType_Eltwise &&
-             static_cast<schema::PrimitiveType>(parameter->type_) == PrimitiveType_Mul) {
-    kernel = new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
+  ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(parameter);
+  if (desc.type == PrimitiveType_Eltwise && param->eltwise_mode_ == static_cast<int>(schema::EltwiseMode_SUM)) {
+    kernel = new (std::nothrow) QuantizedAddCPUKernel(parameter, inputs, outputs, ctx);
+  } else if (desc.type == PrimitiveType_Eltwise && param->eltwise_mode_ == static_cast<int>(schema::EltwiseMode_PROD)) {
+    kernel = new (std::nothrow) MulInt8CPUKernel(parameter, inputs, outputs, ctx);
   } else {
-    kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
+    kernel = new (std::nothrow) ArithmeticInt8CPUKernel(parameter, inputs, outputs, ctx);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Create ArithmeticInt8CPUKernel failed, name: " << parameter->name_;

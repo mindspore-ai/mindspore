@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ TEST_F(TestTfliteParserAdd, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Add) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_AddFusion) << "wrong Op Type";
 }
 
 class TestTfliteParserSub : public TestTfliteParser {
@@ -42,7 +42,7 @@ TEST_F(TestTfliteParserSub, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Sub) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SubFusion) << "wrong Op Type";
 }
 
 class TestTfliteParserMul : public TestTfliteParser {
@@ -55,7 +55,7 @@ TEST_F(TestTfliteParserMul, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Mul) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_MulFusion) << "wrong Op Type";
 }
 
 class TestTfliteParserDiv : public TestTfliteParser {
@@ -68,7 +68,7 @@ TEST_F(TestTfliteParserDiv, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Div) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_DivFusion) << "wrong Op Type";
 }
 class TestTfliteParserFloorDiv : public TestTfliteParser {
  public:
@@ -106,7 +106,7 @@ TEST_F(TestTfliteParserRealDiv, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Div) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_DivFusion) << "wrong Op Type";
 }
 
 class TestTfliteParserSquaredDifference : public TestTfliteParser {
@@ -133,15 +133,14 @@ TEST_F(TestTfliteParserPow, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Power) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_PowFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserPow, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPower(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsPower();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPowFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsPowFusion();
   ASSERT_EQ(val->scale, 1.0);
   ASSERT_EQ(val->shift, 0.0);
-  ASSERT_EQ(val->power, 0.0);
 }
 
 class TestTfliteParserMaximum : public TestTfliteParser {
@@ -194,7 +193,7 @@ TEST_F(TestTfliteParserExp, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Exp) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ExpFusion) << "wrong Op Type";
 }
 
 class TestTfliteParserSqrt : public TestTfliteParser {

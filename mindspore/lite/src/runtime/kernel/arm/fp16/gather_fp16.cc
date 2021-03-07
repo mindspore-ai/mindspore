@@ -20,6 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "nnacl/fp16/cast_fp16.h"
+#include "src/runtime/infer_manager.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -40,10 +41,10 @@ int GatherFp16CPUKernel::ReSize() { return RET_OK; }
 
 int GatherFp16CPUKernel::PreProcess() {
   if (!InferShapeDone()) {
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
-    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+    op_parameter_->infer_flag_ = true;
+    auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
     if (ret != 0) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
+      op_parameter_->infer_flag_ = false;
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }

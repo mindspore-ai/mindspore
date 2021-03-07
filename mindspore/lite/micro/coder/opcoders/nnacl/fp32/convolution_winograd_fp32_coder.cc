@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.h"
 #include <array>
 #include "nnacl/base/minimal_filtering_generator.h"
-#include "micro/coder/log.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/log.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 namespace mindspore::lite::micro::nnacl {
 const std::array<std::string, 9> InputTransFuncList = {
@@ -222,10 +222,11 @@ int ConvolutionWinogradFP32Coder::DoCode(CoderContext *const context) {
     asmFiles = {"MatmulFp32.S",          "MatmulFp32Opt.S",      "PreSum4x16Int8Peroc.S",       "MatVecMulFp32.S",
                 "PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "IndirectGemmInt16to32_8x4.S", "MatmulInt8.S"};
   }
-  Collect(context, {"nnacl/fp32/conv.h", "nnacl/common_func.h"},
-          {"common_func.c", "conv_int8.c", "matmul_int8.c", "pack.c", "conv.c", "winograd_transform.c",
-           "common_func_fp32.c", "fixed_point.c", "winograd_utils.c", "minimal_filtering_generator.c"},
-          asmFiles);
+  Collect(
+    context, {"nnacl/fp32/conv_winograd_fp32.h", "nnacl/common_func.h"},
+    {"common_func.c", "conv_int8.c", "matmul_int8.c", "pack_fp32.c", "conv_winograd_fp32.c", "winograd_transform.c",
+     "common_func_fp32.c", "fixed_point.c", "winograd_utils.c", "minimal_filtering_generator.c"},
+    asmFiles);
 
   NNaclFp32Serializer code;
   // call the op function

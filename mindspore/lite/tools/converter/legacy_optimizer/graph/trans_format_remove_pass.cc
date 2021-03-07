@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@
 #include "include/errorcode.h"
 #include "tools/common/graph_util.h"
 #include "src/tensor.h"
-#include "src/ops/primitive_c.h"
 
-using mindspore::lite::PrimitiveC;
 using mindspore::lite::Tensor;
 namespace mindspore {
 namespace {
@@ -35,9 +33,8 @@ STATUS TransOpRemovePass::Run(MetaGraphT *graph) {
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     auto type = node->primitive->value.type;
-    if (type == schema::PrimitiveType_Transpose && node->primitive->value.AsTranspose() != nullptr &&
-        (node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm ||
-         node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm)) {
+    auto perm = GetTransposePerm(graph, node);
+    if (type == schema::PrimitiveType_Transpose && (perm == nchw2nhwc_perm || perm == nhwc2nchw_perm)) {
       auto &input_tensor = graph->allTensors.at(node->inputIndex.at(0));
       // less than 4 dims can delete
       if (!input_tensor->dims.empty() && input_tensor->dims.size() < 4) {

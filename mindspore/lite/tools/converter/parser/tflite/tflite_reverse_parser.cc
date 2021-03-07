@@ -17,32 +17,29 @@
 #include "tools/converter/parser/tflite/tflite_reverse_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/reverse_v2.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteReverseParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
+ops::PrimitiveC *TfliteReverseParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::ReverseV2>();
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  std::unique_ptr<schema::ReverseT> attr = std::make_unique<schema::ReverseT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->axis)) {
+  std::vector<int64_t> axis;
+  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, axis)) {
     MS_LOG(ERROR) << "get reverse -> axis failed";
     return nullptr;
   }
+  prim->set_axis(axis);
 
-  primitive->value.type = schema::PrimitiveType_Reverse;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteReverseParser(tflite::BuiltinOperator_REVERSE_V2, new TfliteReverseParser());

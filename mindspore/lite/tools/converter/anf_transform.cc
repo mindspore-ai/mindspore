@@ -32,14 +32,14 @@
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
 #include "tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.h"
+#include "tools/optimizer/graph/primitive_adjust_pass.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
-#include "tools/optimizer/graph/mindir_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/redundant_op_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
-#include "tools/optimizer/graph/tflite_inputs_order_exchange_pass.h"
+#include "tools/optimizer/graph/tflite_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
@@ -124,7 +124,6 @@ int AnfTransform::AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optim
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
-  graph_pm->AddPass(std::make_shared<opt::InputAdjustPass>());
   optimizer->AddPassManager(graph_pm);
   return RET_OK;
 }
@@ -135,7 +134,7 @@ int AnfTransform::AddConvertPass(const std::shared_ptr<opt::GraphOptimizer> &opt
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   if (config->fmk == lite::converter::FmkType_TFLITE) {
     convert_pm->AddPass(std::make_shared<opt::GroupDepthwiseOpConvertPass>());
-    convert_pm->AddPass(std::make_shared<opt::TfliteInputsOrderExchangePass>());
+    convert_pm->AddPass(std::make_shared<opt::TfliteInputsAdjustPass>());
   }
   optimizer->AddPassManager(convert_pm);
   return RET_OK;
@@ -153,6 +152,10 @@ int AnfTransform::AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &o
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
   update_conv2d_param_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(update_conv2d_param_pass);
+  auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
+  weight_format_hardcode_pass->SetFmkType(config->fmk);
+  weight_format_hardcode_pass->SetQuantType(config->quantType);
+  const_fold_pm->AddPass(weight_format_hardcode_pass);
   auto infershape_pass = std::make_shared<opt::InferShapePass>();
   infershape_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(infershape_pass);
@@ -161,9 +164,17 @@ int AnfTransform::AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &o
 }
 
 int AnfTransform::RunAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  if (config->fmk == converter::FmkType_MS) {
+    if (RunMindirAdjustPass(old_graph, config) != RET_OK) {
+      return RET_ERROR;
+    }
+  }
+  auto adjust_input = std::make_shared<opt::InputAdjustPass>();
+  if (!adjust_input->Run(old_graph)) {
+    MS_LOG(ERROR) << "adjust input failed.";
+    return RET_ERROR;
+  }
   switch (config->fmk) {
-    case converter::FmkType_MS:
-      return RunMindirAdjustPass(old_graph, config);
     case converter::FmkType_ONNX:
       return RunOnnxAdjustPass(old_graph, config);
     case converter::FmkType_TF:
@@ -174,18 +185,19 @@ int AnfTransform::RunAdjustPass(const FuncGraphPtr &old_graph, const converter::
 }
 
 int AnfTransform::RunMindirAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  auto primitive_adjust_pass = std::make_shared<opt::PrimitiveAdjustPass>();
+  primitive_adjust_pass->SetFmkType(config->fmk);
+  if (!primitive_adjust_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "primitive adjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return RET_ERROR;
+  }
   auto mindir_adjust_pass = std::make_shared<opt::MindirAdjustPass>();
   mindir_adjust_pass->SetFmkType(config->fmk);
   mindir_adjust_pass->SetQuantType(config->quantType);
   mindir_adjust_pass->SetTrainFlag(config->trainModel);
   if (!mindir_adjust_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "mindir adjust failed.";
-    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-    return RET_ERROR;
-  }
-  auto mindir_inputs_adjust_pass = std::make_shared<opt::MindirInputAdjustOpPass>();
-  if (!mindir_inputs_adjust_pass->Run(old_graph)) {
-    MS_LOG(ERROR) << "mindir inputs adjust failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return RET_ERROR;
   }
@@ -217,23 +229,23 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
                              const FuncGraphPtr &new_graph) {
   // quant
   if (config->quantType == schema::QuantType_PostTraining) {
-    this->mQuantizer = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, config->bitNum);
-    if (mQuantizer == nullptr) {
+    this->m_quantizer_ = std::make_unique<quant::PostTrainingQuantizer>(new_graph, config->configFile, config->bitNum);
+    if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New PostTrainingQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
   } else if (config->quantType == schema::QuantType_WeightQuant) {
-    this->mQuantizer = std::make_unique<quant::WeightQuantizer>(new_graph, *config);
-    if (mQuantizer == nullptr) {
+    this->m_quantizer_ = std::make_unique<quant::WeightQuantizer>(new_graph, *config);
+    if (m_quantizer_ == nullptr) {
       MS_LOG(ERROR) << "New WeightQuantizer failed";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_MEMORY_FAILED);
       return RET_ERROR;
     }
   }
-  if (mQuantizer != nullptr) {
-    mQuantizer->flags = *config;
-    auto status = mQuantizer->DoQuantize(new_graph);
+  if (m_quantizer_ != nullptr) {
+    m_quantizer_->flags = *config;
+    auto status = m_quantizer_->DoQuantize(new_graph);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Quant failed " << status;
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);

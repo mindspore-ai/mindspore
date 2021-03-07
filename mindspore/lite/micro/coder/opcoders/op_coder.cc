@@ -15,7 +15,9 @@
  */
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
+#include "coder/opcoders/parallel.h"
+
 namespace mindspore::lite::micro {
 
 OperatorCoder::~OperatorCoder() {
@@ -46,12 +48,7 @@ void OperatorCoder::set_parameter(OpParameter *parameter) { this->parameter_ = p
 size_t OperatorCoder::node_index() const { return node_index_; }
 
 void OperatorCoder::set_thread_num(int thread_num) {
-  if (thread_num == 4) {
-    this->thread_num_ = thread_num;
-    this->thread_num_s_ = "thread_num";
-    return;
-  } else {
-    return;
-  }
+  thread_num_ = thread_num;
+  support_parallel_ = thread_num_ == kMaxThreadNumSupported;
 }
 }  // namespace mindspore::lite::micro

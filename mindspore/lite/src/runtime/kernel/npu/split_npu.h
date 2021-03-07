@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SPLIT_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SPLIT_NPU_H_
 #include <vector>
-#include "include/graph/op/all_ops.h"
-#include "src/ops/split.h"
+#include "nnacl/split_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class SplitNPUKernel : public NPUKernel {
  public:
   SplitNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    split_ = reinterpret_cast<const mindspore::lite::Split *>(primitive);
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
+    param_ = reinterpret_cast<SplitParameter *>(parameter);
   }
   ~SplitNPUKernel() override;
 
@@ -39,7 +38,7 @@ class SplitNPUKernel : public NPUKernel {
 
  private:
   hiai::op::SplitV *op_ = nullptr;
-  const mindspore::lite::Split *split_;
+  SplitParameter *param_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SPLIT_NPU_H_

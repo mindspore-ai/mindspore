@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class DepthToSpaceCPUKernel : public DepthToSpaceBaseCPUKernel {
  public:
   DepthToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                        const mindspore::lite::PrimitiveC *primitive)
-      : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DepthToSpaceCPUKernel() = default;
 
   int Init() override;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,21 @@
 #include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Pad;
+using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore::kernel {
 int PadNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                             OpParameter *opParameter) {
-  if (pad_->GetPaddingMode() != schema::PaddingMode_CONSTANT) {
+  if (param_->pad_mode_ != schema::PaddingMode_CONSTANT) {
     MS_LOG(WARNING) << "NPU only support CONSTANT padding mode";
+    return RET_ERROR;
+  }
+  if (inputs.size() >= 2 && inputs[1]->data_c() != nullptr) {
+    for (int i = 0; i < inputs[1]->ElementsNum(); i++) {
+      paddings_.push_back(static_cast<int *>(inputs[1]->data_c())[i]);
+    }
+  } else {
+    MS_LOG(WARNING) << "NPU axis is attribute.";
     return RET_ERROR;
   }
   return RET_OK;
@@ -39,16 +47,16 @@ int PadNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const 
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  int size = static_cast<int>(pad_->GetPaddings().size() / 2);
+  int size = static_cast<int>(param_->padding_length / 2);
   ge::TensorDesc padding_tensor_desc(ge::Shape({size, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
-  padding_tensor->SetData(reinterpret_cast<uint8_t *>(pad_->GetPaddings().data()), 2 * size * sizeof(int));
+  padding_tensor->SetData(reinterpret_cast<uint8_t *>(paddings_.data()), 2 * size * sizeof(int));
   auto paddings = new hiai::op::Const(name_ + "paddings");
   paddings->set_attr_value(padding_tensor);
 
   ge::TensorDesc constant_values_tensor_desc(ge::Shape({1}), ge::FORMAT_NCHW, ge::DT_FLOAT);
   ge::TensorPtr constant_values_tensor = std::make_shared<hiai::Tensor>(constant_values_tensor_desc);
-  vector<float> constant_values_data_value = {pad_->GetConstantValue()};
+  vector<float> constant_values_data_value = {param_->constant_value_};
   constant_values_tensor->SetData(reinterpret_cast<uint8_t *>(constant_values_data_value.data()), 1 * sizeof(float));
   auto constant = new hiai::op::Const(name_ + "constant");
   constant->set_attr_value(constant_values_tensor);
@@ -69,5 +77,5 @@ PadNPUKernel::~PadNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Pad, NPUKernelCreator<PadNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_PadFusion, NPUKernelCreator<PadNPUKernel>)
 }  // namespace mindspore::kernel

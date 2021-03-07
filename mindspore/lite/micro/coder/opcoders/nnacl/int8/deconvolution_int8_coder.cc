@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/int8/deconvolution_int8_coder.h"
+#include "coder/opcoders/nnacl/int8/deconvolution_int8_coder.h"
 #include <vector>
 #include "nnacl/int8/deconv_int8.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
-using mindspore::schema::PrimitiveType_DeConv2D;
+using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore::lite::micro::nnacl {
 
@@ -123,7 +123,7 @@ int DeconvolutionInt8Coder::InitRunBuf(CoderContext *const context) {
 }
 
 int DeconvolutionInt8Coder::DoCode(CoderContext *const context) {
-  Collect(context, {"nnacl/int8/deconv.h"}, {"int8/deconv.c", "pack.c", "quantization/fixed_point.c"});
+  Collect(context, {"nnacl/int8/deconv.h"}, {"int8/deconv.c", "pack_int8.c", "quantization/fixed_point.c"});
 
   nnacl::NNaclInt8Serializer code;
   code.CodeFunction("memset", input_ptr_, 0, input_ptr_size_);
@@ -157,5 +157,6 @@ int DeconvolutionInt8Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_DeConv2D, CPUOpCoderCreator<DeconvolutionInt8Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Conv2dTransposeFusion,
+                   CPUOpCoderCreator<DeconvolutionInt8Coder>)
 }  // namespace mindspore::lite::micro::nnacl

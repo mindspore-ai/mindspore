@@ -70,10 +70,11 @@ TEST_F(TestSoftmaxCrossEntropyFp32, SoftmaxCrossEntropyFp32) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_SoftmaxCrossEntropy};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32,
+                            schema::PrimitiveType_SoftmaxCrossEntropyWithLogits};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(sce_param), &context, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(sce_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel_obj->workspace_size());
   kernel_obj->Run();

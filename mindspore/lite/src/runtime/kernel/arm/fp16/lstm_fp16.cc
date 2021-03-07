@@ -26,7 +26,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Lstm;
+using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore::kernel {
 void LstmFp16CPUKernel::FreeTmpBuffer() {
@@ -52,7 +52,9 @@ void LstmFp16CPUKernel::FreeTmpBuffer() {
 
 void LstmFp16CPUKernel::FreeRunBuffer() {
   context_->allocator->Free(gate_buffer_);
-  context_->allocator->Free(state_buffer_);
+  for (int i = 0; i < 2; i++) {
+    context_->allocator->Free(state_buffer_[i]);
+  }
   if (!is_vec_) {
     for (int i = 0; i < 2; i++) {
       context_->allocator->Free(matmul_buffer_[i]);
@@ -223,11 +225,21 @@ int LstmFp16CPUKernel::MallocRunBuffer() {
     MS_LOG(ERROR) << "LstmFp16CPUKernel malloc gate_buffer error.";
     return RET_ERROR;
   }
-  if (!(lstm_param_->smooth_ >= -FLT_EPSILON && lstm_param_->smooth_ <= FLT_EPSILON)) {
-    int buffer_size = 2 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
-    state_buffer_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(buffer_size));
-    if (state_buffer_ == nullptr) {
-      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer error.";
+  state_buffer_[0] = nullptr;
+  state_buffer_[1] = nullptr;
+  if (!(lstm_param_->zoneout_cell_ >= -FLT_EPSILON && lstm_param_->zoneout_cell_ <= FLT_EPSILON)) {
+    int buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
+    state_buffer_[0] = reinterpret_cast<float16_t *>(context_->allocator->Malloc(buffer_size));
+    if (state_buffer_[0] == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer for cell error.";
+      return RET_ERROR;
+    }
+  }
+  if (!(lstm_param_->zoneout_hidden_ >= -FLT_EPSILON && lstm_param_->zoneout_hidden_ <= FLT_EPSILON)) {
+    int buffer_size = lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
+    state_buffer_[1] = reinterpret_cast<float16_t *>(context_->allocator->Malloc(buffer_size));
+    if (state_buffer_[1] == nullptr) {
+      MS_LOG(ERROR) << "LstmFp16CPUKernel malloc state_buffer for hidden error.";
       return RET_ERROR;
     }
   }
@@ -270,5 +282,5 @@ int LstmFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Lstm, LiteKernelCreator<LstmFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LSTM, LiteKernelCreator<LstmFp16CPUKernel>)
 }  // namespace mindspore::kernel

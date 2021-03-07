@@ -19,7 +19,7 @@
 #include "coder/opcoders/serializers/serializer.h"
 #include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_SoftMax;
+using mindspore::schema::PrimitiveType_Softmax;
 namespace mindspore::lite::micro::cmsis {
 
 int SoftMaxInt8Coder::Prepare(CoderContext *const context) {
@@ -76,6 +76,6 @@ int SoftMaxInt8Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_SoftMax, CPUOpCoderCreator<SoftMaxInt8Coder>)
+REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Softmax, CPUOpCoderCreator<SoftMaxInt8Coder>)
 
 }  // namespace mindspore::lite::micro::cmsis

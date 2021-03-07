@@ -44,19 +44,27 @@ int NPUTransformPass::InsertPreNodes(kernel::LiteKernel *kernel, std::vector<ker
     std::vector<Tensor *> pre_trans_out_tensors = {tensor};
     all_tensors_->push_back(pre_trans_out_tensors[0]);
 
+    auto nh2nc_perm_tensor = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, Tensor::CONST_TENSOR);
+    auto nh2nc_data = nh2nc_perm_tensor->MutableData();
+    if (nh2nc_data == nullptr) {
+      return RET_ERROR;
+    }
+    std::vector<int> nh2nc_perm_vector = {0, 3, 1, 2};
+    memcpy(nh2nc_data, nh2nc_perm_vector.data(), 4 * sizeof(int));
+    all_tensors_->push_back(nh2nc_perm_tensor);
+
     // Create pre transform kernel: Nhwc2Nchw
-    auto *trans_kernel =
-      NPUPassUtils::CreateNhwc2NchwKernel({kernel->in_tensors()[0]}, pre_trans_out_tensors, context_, name);
+    auto *trans_kernel = NPUPassUtils::CreateNhwc2NchwKernel({kernel->in_tensors()[0], nh2nc_perm_tensor},
+                                                             pre_trans_out_tensors, context_, name);
 
     trans_kernels->push_back(trans_kernel);
-    insert_primitive_.push_back(trans_kernel->GetPrimitive());
 
     // Set in_kernels, out_kernels, in_tensors, out_tensors for transform kernel
     std::vector<kernel::LiteKernel *> pre_trans_in_kernels;
     if (!is_input_kernel) {
       pre_trans_in_kernels = {pre_kernel};
     }
-    NPUPassUtils::UpdateKernel(trans_kernel, pre_trans_in_kernels, {kernel}, {kernel->in_tensors()[0]},
+    NPUPassUtils::UpdateKernel(trans_kernel, pre_trans_in_kernels, {kernel}, trans_kernel->in_tensors(),
                                pre_trans_out_tensors);
 
     if (pre_kernel != nullptr) {
@@ -93,14 +101,23 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
     auto name = kernel->name() + "_post_trans" + "_Nchw2Nhwc" + std::to_string(total++);
     tensor->set_tensor_name(name + "/input0");
 
+    auto nc2nh_perm_tensor = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, Tensor::CONST_TENSOR);
+    auto nc2nh_data = nc2nh_perm_tensor->MutableData();
+    if (nc2nh_data == nullptr) {
+      return RET_ERROR;
+    }
+
+    std::vector<int> nc2nh_perm_vector = {0, 2, 3, 1};
+    memcpy(nc2nh_data, nc2nh_perm_vector.data(), 4 * sizeof(int));
+    all_tensors_->push_back(nc2nh_perm_tensor);
+
     // Create post transform kernel: Nchw2Nhwc
-    auto *post_trans_kernel =
-      NPUPassUtils::CreateNchw2NhwcKernel(post_trans_in_tensors, kernel->out_tensors(), context_, name);
+    auto *post_trans_kernel = NPUPassUtils::CreateNchw2NhwcKernel({post_trans_in_tensors[0], nc2nh_perm_tensor},
+                                                                  kernel->out_tensors(), context_, name);
 
     // Set in_kernels, out_kernels, in_tensors, out_tensors for transform kernel
-    NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, post_insert_kernels, post_trans_in_tensors,
+    NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, post_insert_kernels, post_trans_kernel->in_tensors(),
                                kernel->out_tensors());
-    insert_primitive_.push_back(post_trans_kernel->GetPrimitive());
     trans_kernels->push_back(post_trans_kernel);
 
     if (!is_output_kernel) {

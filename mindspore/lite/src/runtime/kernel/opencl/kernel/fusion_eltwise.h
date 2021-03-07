@@ -39,10 +39,10 @@ constexpr schema::PrimitiveType PrimitiveType_FusionEltwise = static_cast<schema
 
 enum EltwiseOperator {
   // Arithmetic Primitive
-  Operator_Mul = PrimitiveType_Mul,
-  Operator_Add = PrimitiveType_Add,
-  Operator_Sub = PrimitiveType_Sub,
-  Operator_Div = PrimitiveType_Div,
+  Operator_Mul = PrimitiveType_MulFusion,
+  Operator_Add = PrimitiveType_AddFusion,
+  Operator_Sub = PrimitiveType_SubFusion,
+  Operator_Div = PrimitiveType_DivFusion,
   Operator_LogicalAnd = PrimitiveType_LogicalAnd,
   Operator_LogicalOr = PrimitiveType_LogicalOr,
   Operator_Maximum = PrimitiveType_Maximum,
@@ -62,7 +62,7 @@ enum EltwiseOperator {
   Operator_Abs = PrimitiveType_Abs,
   Operator_Ceil = PrimitiveType_Ceil,
   Operator_Cos = PrimitiveType_Cos,
-  Operator_Exp = PrimitiveType_Exp,
+  Operator_Exp = PrimitiveType_ExpFusion,
   Operator_Floor = PrimitiveType_Floor,
   Operator_Log = PrimitiveType_Log,
   Operator_LogicalNot = PrimitiveType_LogicalNot,
@@ -74,7 +74,7 @@ enum EltwiseOperator {
   Operator_Square = PrimitiveType_Square,
 
   // Other Primitive
-  Operator_Scale = schema::PrimitiveType_Scale,
+  Operator_Scale = schema::PrimitiveType_ScaleFusion,
 
   // Activation
   Operator_Act_NO_ACTIVATION = schema::ActivationType_NO_ACTIVATION + PrimitiveType_MAX,
@@ -106,7 +106,7 @@ struct FusionEltwiseParameter {
     Node_(bool is_leaf, FusionEltwiseParameter *value, std::string value_name)
         : is_leaf_(is_leaf), value_(value), name_(std::move(value_name)) {}
   };
-  OpParameter op_parameter_{"FusionEltwiseParameter", PrimitiveType_FusionEltwise, 1};
+  OpParameter op_parameter_{"FusionEltwiseParameter", true, PrimitiveType_FusionEltwise, 1};
   EltwiseOperator operator_;
   std::string name_;
   std::vector<Node_> inputs_;

@@ -16,13 +16,12 @@
 #include "src/runtime/kernel/arm/base/slice_base.h"
 #include "src/kernel_registry.h"
 #include "nnacl/base/slice_base.h"
-#include "src/ops/slice.h"
 #include "src/tensor.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Slice;
+using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
 int SliceLaunch(void *cdata, int task_id) {
@@ -35,19 +34,26 @@ int SliceLaunch(void *cdata, int task_id) {
 }
 
 int SliceCPUKernel::ReSize() {
-  auto primitive_slice = reinterpret_cast<const mindspore::lite::Slice *>(primitive_);
-  auto begin = primitive_slice->GetPostProcessBegin();
-  auto size = primitive_slice->GetPostProcessSize();
+  auto in_tensor = in_tensors_[0];
+  auto begin_tensor = in_tensors_[1];
+  auto size_tensor = in_tensors_[2];
 
-  param_->param_length_ = in_tensors_.at(0)->shape().size();
+  MS_ASSERT(in_tensor->shape().size() == begin_tensor->ElementsNum());
+  MS_ASSERT(in_tensor->shape().size() == size_tensor->ElementsNum());
+  MS_ASSERT(in_tensor->shape().size() <= DIMENSION_4D);
+
+  auto begin = reinterpret_cast<int32_t *>(begin_tensor->data_c());
+  auto size = reinterpret_cast<int32_t *>(size_tensor->data_c());
+
+  param_->param_length_ = in_tensor->shape().size();
   if (param_->param_length_ > DIMENSION_4D) {
     MS_LOG(ERROR) << "input dimension num should <= " << DIMENSION_4D;
     return RET_ERROR;
   }
   for (int i = 0; i < param_->param_length_; ++i) {
-    param_->shape_[i] = in_tensors_.at(0)->DimensionSize(i);
-    param_->begin_[i] = begin.at(i);
-    param_->size_[i] = size.at(i) < 0 ? param_->shape_[i] - param_->begin_[i] : size.at(i);
+    param_->shape_[i] = in_tensor->DimensionSize(i);
+    param_->begin_[i] = begin[i];
+    param_->size_[i] = size[i] < 0 ? param_->shape_[i] - param_->begin_[i] : size[i];
     param_->end_[i] = param_->begin_[i] + param_->size_[i];
   }
   if (param_->param_length_ < DIMENSION_4D) {
@@ -89,7 +95,7 @@ int SliceCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Slice, LiteKernelCreator<SliceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Slice, LiteKernelCreator<SliceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Slice, LiteKernelCreator<SliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SliceFusion, LiteKernelCreator<SliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SliceFusion, LiteKernelCreator<SliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SliceFusion, LiteKernelCreator<SliceCPUKernel>)
 }  // namespace mindspore::kernel

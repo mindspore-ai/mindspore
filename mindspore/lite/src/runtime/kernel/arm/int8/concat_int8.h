@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class ConcatInt8CPUKernel : public LiteKernel {
  public:
   ConcatInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                      const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
   }
   ~ConcatInt8CPUKernel() override {

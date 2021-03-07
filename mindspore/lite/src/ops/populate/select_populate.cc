@@ -13,24 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/select.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
+#include "src/ops/populate/default_populate.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateSelectParameter(const mindspore::lite::PrimitiveC *primitive) {
-  OpParameter *select_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (select_parameter == nullptr) {
-    MS_LOG(ERROR) << "malloc SelectParameter failed.";
-    return nullptr;
-  }
-  memset(select_parameter, 0, sizeof(OpParameter));
-  select_parameter->type_ = primitive->Type();
-
-  return reinterpret_cast<OpParameter *>(select_parameter);
-}
-Registry SelectParameterRegistry(schema::PrimitiveType_Select, PopulateSelectParameter);
+Registry g_selectParameterRegistry(schema::PrimitiveType_Select, DefaultPopulateParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

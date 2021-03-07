@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,17 @@
 
 #include "tools/optimizer/fusion/conv_tuple_activation_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
-#include "src/ops/conv2d.h"
-#include "src/ops/depthwise_conv2d.h"
-#include "src/ops/activation.h"
-#include "schema/inner/model_generated.h"
+#include "ops/fusion/activation.h"
+#include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
 namespace {
 constexpr size_t kActivationInputsLength = 2;
 bool IsTupleGetItemNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_TupleGetItem;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem);
   }
   return false;
 }
@@ -56,12 +53,13 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
     return nullptr;
   }
 
-  auto primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(act_node->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Activation>>(primitivec));
-  auto act_primitivec = utils::cast<std::shared_ptr<mindspore::lite::Activation>>(primitivec);
-  MS_ASSERT(act_primitivec != nullptr);
-  if (act_primitivec->GetType() != schema::ActivationType_RELU &&
-      act_primitivec->GetType() != schema::ActivationType_RELU6) {
+  if (!CheckPrimitiveType(act_node, prim::kPrimActivation)) {
+    return nullptr;
+  }
+  auto act_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(act_node->input(0));
+  MS_ASSERT(act_prim != nullptr);
+  if (act_prim->GetAttr(ops::kActivationType) == nullptr ||
+      (act_prim->get_activation_type() != mindspore::RELU && act_prim->get_activation_type() != mindspore::RELU6)) {
     return nullptr;
   }
   AnfNodePtr tuple_node = act_node->input(1);
@@ -76,24 +74,11 @@ const AnfNodePtr ConvTupleActivationFusion::Process(const FuncGraphPtr &func_gra
       return nullptr;
     }
     auto conv_cnode = conv_node->cast<CNodePtr>();
-    auto node_type = GetCNodeType(conv_cnode);
-    auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv_cnode->input(0));
-    MS_ASSERT(primitive_c);
-    if (node_type == schema::PrimitiveType_Conv2D) {
-      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c));
-      auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive_c);
+    if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
+      auto primc = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DFusion>>(conv_cnode->input(0));
       MS_ASSERT(primc != nullptr);
-      if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(act_primitivec->GetType());
-        conv_node->set_abstract(act_node->abstract());
-        return conv_node;
-      }
-    } else if (node_type == schema::PrimitiveType_DepthwiseConv2D) {
-      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c));
-      auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c);
-      MS_ASSERT(primc != nullptr);
-      if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
-        primc->SetActivationType(act_primitivec->GetType());
+      if (primc->GetAttr(ops::kActivationType) == nullptr || primc->get_activation_type() == mindspore::NO_ACTIVATION) {
+        primc->set_activation_type(act_prim->get_activation_type());
         conv_node->set_abstract(act_node->abstract());
         return conv_node;
       }

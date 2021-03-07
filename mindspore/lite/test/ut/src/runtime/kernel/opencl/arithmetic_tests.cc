@@ -64,7 +64,7 @@ TEST_F(TestOpenCL_Arithmetic, ElementwiseAdd) {
   float output_data[] = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24};
 
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_Add, input0_shape, input1_shape);
+    auto *param = CreateParameter(schema::PrimitiveType_AddFusion, input0_shape, input1_shape);
     TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
              param, fp16_enable);
   }
@@ -78,7 +78,7 @@ TEST_F(TestOpenCL_Arithmetic, ScalarMul) {
   float input1_data[] = {2};
   float output_data[] = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_Mul, input0_shape, input1_shape);
+    auto *param = CreateParameter(schema::PrimitiveType_MulFusion, input0_shape, input1_shape);
     TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
              param, fp16_enable);
   }
@@ -92,7 +92,8 @@ TEST_F(TestOpenCL_Arithmetic, BroadcastSubReLU6) {
   float input1_data[] = {1, 2, 3};
   float output_data[] = {0, 0, 0, 3, 3, 3, 6, 6, 6, 6, 6, 6};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_Sub, input0_shape, input1_shape, schema::ActivationType_RELU6);
+    auto *param =
+      CreateParameter(schema::PrimitiveType_SubFusion, input0_shape, input1_shape, schema::ActivationType_RELU6);
     TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
              param, fp16_enable);
   }
@@ -106,7 +107,7 @@ TEST_F(TestOpenCL_Arithmetic, BroadcastSub2) {
   float input1_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   float output_data[] = {0, 0, 0, -3, -3, -3, -6, -6, -6, -9, -9, -9};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_Sub, input0_shape, input1_shape);
+    auto *param = CreateParameter(schema::PrimitiveType_SubFusion, input0_shape, input1_shape);
     TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
              param, fp16_enable);
   }
@@ -120,7 +121,7 @@ TEST_F(TestOpenCL_Arithmetic, BroadcastSub3) {
   float input1_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
   float output_data[] = {0, 0, 0, -3, -3, -3, -6, -6, -6, -9, -9, -9, 0, 0, 0, -3, -3, -3, -6, -6, -6, -9, -9, -9};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_Sub, input0_shape, input1_shape);
+    auto *param = CreateParameter(schema::PrimitiveType_SubFusion, input0_shape, input1_shape);
     TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
              param, fp16_enable);
   }
@@ -202,7 +203,7 @@ TEST_F(TestOpenCL_Arithmetic, ElementwiseDiv) {
   float input1_data[] = {1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2};
   float output_data[] = {1, 2, 3, 2, 2.5, 3, 7, 8, 9, 5, 5.5, 6};
   for (auto fp16_enable : {false, true}) {
-    auto *param = CreateParameter(schema::PrimitiveType_Div, input0_shape, input1_shape);
+    auto *param = CreateParameter(schema::PrimitiveType_DivFusion, input0_shape, input1_shape);
     TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
              param, fp16_enable);
   }

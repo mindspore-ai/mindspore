@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class MatmulFP16CPUKernel : public MatmulBaseFP16CPUKernel {
  public:
   explicit MatmulFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                               const mindspore::lite::PrimitiveC *primitive)
-      : MatmulBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : MatmulBaseFP16CPUKernel(parameter, inputs, outputs, ctx) {}
   ~MatmulFP16CPUKernel() override = default;
   int Init() override;
   int ReSize() override;

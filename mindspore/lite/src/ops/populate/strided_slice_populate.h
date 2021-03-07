@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_
 #define MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_
 
-#include "src/ops/arithmetic.h"
+#include "src/ops/populate/populate_register.h"
+#include "nnacl/strided_slice_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateStridedSliceParameter(const mindspore::lite::PrimitiveC *primitive);
-
+OpParameter *PopulateStridedSliceParameter(const void *prim);
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_SLICE_POPULATE_H_

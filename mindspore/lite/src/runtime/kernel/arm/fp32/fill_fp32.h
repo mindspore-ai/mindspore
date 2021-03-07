@@ -27,9 +27,8 @@ namespace mindspore::kernel {
 class FillCPUKernel : public LiteKernel {
  public:
   FillCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
+                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {}
   ~FillCPUKernel() override = default;
 
   int Init() override;

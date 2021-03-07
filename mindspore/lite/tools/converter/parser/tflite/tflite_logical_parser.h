@@ -23,14 +23,32 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore::lite {
-class TfliteLogicalParser : public TfliteNodeParser {
+namespace mindspore {
+namespace lite {
+class TfliteLogicalAndParser : public TfliteNodeParser {
  public:
-  TfliteLogicalParser() : TfliteNodeParser("node_name") {}
+  TfliteLogicalAndParser() : TfliteNodeParser("LogicalAnd") {}
 
-  PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
-}  // namespace mindspore::lite
+
+class TfliteLogicalNotParser : public TfliteNodeParser {
+ public:
+  TfliteLogicalNotParser() : TfliteNodeParser("LogicalNot") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+
+class TfliteLogicalOrParser : public TfliteNodeParser {
+ public:
+  TfliteLogicalOrParser() : TfliteNodeParser("LogicalOr") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+}  // namespace lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_LOGICAL_PARSER_H

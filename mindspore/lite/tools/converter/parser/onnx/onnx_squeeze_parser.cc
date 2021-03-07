@@ -16,35 +16,26 @@
 
 #include "tools/converter/parser/onnx/onnx_squeeze_parser.h"
 #include <memory>
+#include <vector>
+#include "ops/squeeze.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxSqueezeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                        const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx SqueezeParser";
-  auto attr = std::make_unique<schema::SqueezeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxSqueezeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Squeeze>();
 
+  std::vector<int64_t> axis;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes") {
       for (int i = 0; i < onnx_node_attr.ints().size(); ++i) {
-        attr->axis.emplace_back(onnx_node_attr.ints(i));
+        axis.emplace_back(onnx_node_attr.ints(i));
       }
+      prim->set_axis(axis);
     }
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Squeeze;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxSqueezeParser("Squeeze", new OnnxSqueezeParser());

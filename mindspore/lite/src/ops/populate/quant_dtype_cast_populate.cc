@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/quant_dtype_cast.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateQuantDTypeCastParameter(const void *prim) {
   QuantDTypeCastParameter *parameter =
     reinterpret_cast<QuantDTypeCastParameter *>(malloc(sizeof(QuantDTypeCastParameter)));
   if (parameter == nullptr) {
@@ -30,14 +27,15 @@ OpParameter *PopulateQuantDTypeCastParameter(const mindspore::lite::PrimitiveC *
     return nullptr;
   }
   memset(parameter, 0, sizeof(QuantDTypeCastParameter));
-  parameter->op_parameter_.type_ = primitive->Type();
-  auto quant_dtype_cast_param =
-    reinterpret_cast<mindspore::lite::QuantDTypeCast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  parameter->srcT = quant_dtype_cast_param->GetSrcT();
-  parameter->dstT = quant_dtype_cast_param->GetDstT();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_QuantDTypeCast();
+  parameter->op_parameter_.type_ = primitive->value_type();
+  parameter->srcT = value->src_t();
+  parameter->dstT = value->dst_t();
   return reinterpret_cast<OpParameter *>(parameter);
 }
-Registry QuantDTypeCastParameterRegistry(schema::PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter);
+Registry QuantDTypeCastParameterRegistry(schema::PrimitiveType_QuantDTypeCast, PopulateQuantDTypeCastParameter,
+                                         SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

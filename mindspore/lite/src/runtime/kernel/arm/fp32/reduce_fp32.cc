@@ -28,7 +28,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Reduce;
+using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceAll;
 using mindspore::schema::ReduceMode_ReduceASum;
@@ -237,7 +237,8 @@ void ReduceCPUKernel::FreeTmpBuffer() {
   data_buffers_.clear();
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reduce, LiteKernelCreator<ReduceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt, PrimitiveType_Reduce, LiteKernelCreator<ReduceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Reduce, LiteKernelCreator<ReduceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
 }  // namespace mindspore::kernel

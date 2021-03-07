@@ -20,83 +20,98 @@
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/converter/parser/tf/tf_util.h"
+#include "ops/fusion/avg_pool_fusion.h"
+#include "ops/fusion/max_pool_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFPoolParser::Parse(const tensorflow::NodeDef &tf_op,
-                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                           std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF PoolParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::PoolingT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  if (tf_op.op() == "MaxPool") {
-    attr->poolingMode = schema::PoolMode_MAX_POOLING;
-  } else if (tf_op.op() == "AvgPool") {
-    attr->poolingMode = schema::PoolMode_MEAN_POOLING;
-  }
+ops::PrimitiveC *TFMaxPoolParser::Parse(const tensorflow::NodeDef &tf_op,
+                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                        std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::MaxPoolFusion>();
 
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "padding", &attr_value)) {
     if (attr_value.s() == "VALID") {
-      attr->padMode = schema::PadMode_VALID;
+      prim->set_pad_mode(mindspore::PadMode::VALID);
     } else if (attr_value.s() == "SAME") {
-      attr->padMode = schema::PadMode_SAME_UPPER;
+      prim->set_pad_mode(mindspore::PadMode::SAME);
     }
   }
 
-  attr->format = TensorFlowUtils::ParseNodeFormat(tf_op);
+  auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
+  prim->set_format(format);
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
     const auto &stride_list = attr_value.list();
-    if (attr->format == schema::Format_NCHW) {
-      attr->strideH = (int32_t)stride_list.i(2);
-      attr->strideW = (int32_t)stride_list.i(3);
+    if (format == mindspore::Format::NCHW) {
+      prim->set_strides({stride_list.i(2), stride_list.i(3)});
     } else {
-      attr->strideH = (int32_t)stride_list.i(1);
-      attr->strideW = (int32_t)stride_list.i(2);
+      prim->set_strides({stride_list.i(1), stride_list.i(2)});
     }
   }
 
   if (TensorFlowUtils::FindAttrValue(tf_op, "ksize", &attr_value)) {
     const auto &kernel_list = attr_value.list();
-    if (attr->format == schema::Format_NCHW) {
-      attr->windowH = (int32_t)kernel_list.i(2);
-      attr->windowW = (int32_t)kernel_list.i(3);
+    if (format == mindspore::Format::NCHW) {
+      prim->set_kernel_size({kernel_list.i(2), kernel_list.i(3)});
     } else {
-      attr->windowH = (int32_t)kernel_list.i(1);
-      attr->windowW = (int32_t)kernel_list.i(2);
+      prim->set_kernel_size({kernel_list.i(1), kernel_list.i(2)});
     }
-  }
-
-  primitive->value.type = schema::PrimitiveType_Pooling;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
   }
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
-  return RET_OK;
+
+  return prim.release();
 }
-TFNodeRegistrar g_tfMaxPoolParser("MaxPool", new TFPoolParser());
-TFNodeRegistrar g_tfAvgPoolParser("AvgPool", new TFPoolParser());
+
+ops::PrimitiveC *TFAvgPoolParser::Parse(const tensorflow::NodeDef &tf_op,
+                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                        std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::AvgPoolFusion>();
+
+  tensorflow::AttrValue attr_value;
+  if (TensorFlowUtils::FindAttrValue(tf_op, "padding", &attr_value)) {
+    if (attr_value.s() == "VALID") {
+      prim->set_pad_mode(mindspore::PadMode::VALID);
+    } else if (attr_value.s() == "SAME") {
+      prim->set_pad_mode(mindspore::PadMode::SAME);
+    }
+  }
+
+  auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
+  prim->set_format(format);
+
+  if (TensorFlowUtils::FindAttrValue(tf_op, "strides", &attr_value)) {
+    const auto &stride_list = attr_value.list();
+    if (format == mindspore::Format::NCHW) {
+      prim->set_strides({stride_list.i(2), stride_list.i(3)});
+    } else {
+      prim->set_strides({stride_list.i(1), stride_list.i(2)});
+    }
+  }
+
+  if (TensorFlowUtils::FindAttrValue(tf_op, "ksize", &attr_value)) {
+    const auto &kernel_list = attr_value.list();
+    if (format == mindspore::Format::NCHW) {
+      prim->set_kernel_size({kernel_list.i(2), kernel_list.i(3)});
+    } else {
+      prim->set_kernel_size({kernel_list.i(1), kernel_list.i(2)});
+    }
+  }
+
+  *output_size = 1;
+  for (int i = 0; i < tf_op.input_size(); i++) {
+    inputs->emplace_back(tf_op.input(i));
+  }
+
+  return prim.release();
+}
+
+TFNodeRegistrar g_tfMaxPoolParser("MaxPool", new TFMaxPoolParser());
+TFNodeRegistrar g_tfAvgPoolParser("AvgPool", new TFAvgPoolParser());
 }  // namespace lite
 }  // namespace mindspore

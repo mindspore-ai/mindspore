@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class QuantDTypeCastFp16CPUKernel : public LiteKernel {
  public:
   QuantDTypeCastFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                              const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
+                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_num_(ctx->thread_num_) {}
   ~QuantDTypeCastFp16CPUKernel() override = default;
 
   int Init() override;

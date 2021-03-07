@@ -15,14 +15,13 @@
  */
 
 #include "coder/opcoders/cmsis-nn/int8/conv2d_int8_coder.h"
-#include <memory>
 #include <string>
 #include <vector>
-#include "coder/opcoders/cmsis-nn/int8/dwconv_int8_coder.h"
 #include "coder/opcoders/serializers/serializer.h"
 #include "coder/opcoders/file_collector.h"
+#include "src/common/prim_util.h"
 
-using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::PrimitiveType_Conv2DFusion;
 
 namespace mindspore::lite::micro::cmsis {
 
@@ -40,13 +39,11 @@ int Conv2DInt8Coder::Prepare(CoderContext *const context) {
 int Conv2DInt8Coder::DoCode(CoderContext *const context) {
   Serializer code;
   code.precision(kPrecision);
-  std::vector<string> h_files;
-  std::vector<string> c_files;
+  std::vector<std::string> h_files;
+  std::vector<std::string> c_files;
   h_files.emplace_back("CMSIS/NN/Include/arm_nnfunctions.h");
-  string buffer_str = "NULL";
   if (opt_ != Convolve_1x1_fast) {
-    buffer_str = allocator_->GetRuntimeAddr(buffer_);
-    code << "  memset(" << buffer_str << ", 0, " << buffer_size_ << ");\n";
+    code.CodeFunction("memset", buffer_, 0, buffer_size_);
   }
   code.CodeArray("output_shift", output_shift_, output_ch_);
   code.CodeArray("output_mult", output_mult_, output_ch_);
@@ -57,7 +54,7 @@ int Conv2DInt8Coder::DoCode(CoderContext *const context) {
       code.CodeFunction("arm_convolve_s8", input_tensor_, input_x_, input_y_, input_ch_, input_batches_, filter_tensor_,
                         output_ch_, kernel_x_, kernel_y_, pad_x_, pad_y_, stride_x_, stride_y_, bias_tensor_,
                         output_tensor_, "output_shift", "output_mult", out_offset_, input_offset_, out_activation_min_,
-                        out_activation_max_, output_x_, output_y_, buffer_str);
+                        out_activation_max_, output_x_, output_y_, buffer_);
       break;
     case Convolve_1_x_n:
       c_files = {"arm_convolve_1_x_n_s8.c", "arm_nn_mat_mul_core_1x_s8.c"};
@@ -65,7 +62,7 @@ int Conv2DInt8Coder::DoCode(CoderContext *const context) {
       code.CodeFunction("arm_convolve_1_x_n_s8", input_tensor_, input_x_, input_ch_, input_batches_, filter_tensor_,
                         output_ch_, kernel_x_, pad_x_, stride_x_, bias_tensor_, output_tensor_, "output_shift",
                         "output_mult", out_offset_, input_offset_, out_activation_min_, out_activation_max_, output_x_,
-                        buffer_str);
+                        buffer_);
       break;
     case Convolve_1x1_fast:
       c_files = {"arm_convolve_1x1_s8_fast.c", "arm_nn_mat_mult_nt_t_s8.c", "arm_nn_mat_mul_core_4x_s8.c",
@@ -74,7 +71,7 @@ int Conv2DInt8Coder::DoCode(CoderContext *const context) {
       code.CodeFunction("arm_convolve_1x1_s8_fast", input_tensor_, input_x_, input_y_, input_ch_, input_batches_,
                         filter_tensor_, output_ch_, pad_x_, pad_y_, stride_x_, stride_y_, bias_tensor_, output_tensor_,
                         "output_shift", "output_mult", out_offset_, input_offset_, out_activation_min_,
-                        out_activation_max_, output_x_, output_y_, buffer_str);
+                        out_activation_max_, output_x_, output_y_, buffer_);
       break;
     default:
       MS_LOG(ERROR) << "opt enum value is not defined";
@@ -159,5 +156,20 @@ int Conv2DInt8Coder::InitTmpBuffer() {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Conv2D, CPUOpCoderCreator<Conv2DInt8Coder>)
+std::unique_ptr<OperatorCoder> CmsisConv2DInt8OpCoderCreator(const std::vector<Tensor *> &in_tensors,
+                                                             const std::vector<Tensor *> &out_tensors,
+                                                             const Model::Node *node, size_t node_index,
+                                                             Target target) {
+  MS_CHECK_PTR_RET_NULL(node);
+  int pt = GetPrimitiveType(node->primitive_);
+  if (pt != schema::PrimitiveType::PrimitiveType_Conv2DFusion) {
+    MS_LOG(ERROR) << "unmatched primitive type " << PrimitiveTypeName(pt);
+    return nullptr;
+  }
+  std::unique_ptr<Conv2DInt8Coder> coder =
+    std::make_unique<Conv2DInt8Coder>(in_tensors, out_tensors, node, node_index, target);
+  return coder;
+}
+
+REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Conv2DFusion, CPUOpCoderCreator<Conv2DInt8Coder>)
 }  // namespace mindspore::lite::micro::cmsis

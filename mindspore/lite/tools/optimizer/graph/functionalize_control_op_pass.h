@@ -23,6 +23,10 @@
 #include <memory>
 #include "backend/optimizer/common/pass.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/ops/enter.h"
+#include "tools/converter/ops/exit.h"
+#include "tools/converter/ops/loop_cond.h"
+#include "tools/converter/ops/next_iteration.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 using mindspore::lite::converter::FmkType;
@@ -34,19 +38,19 @@ class FunctionalizeControlOpPass : public Pass {
   ~FunctionalizeControlOpPass() override = default;
   bool Run(const FuncGraphPtr &graph) override;
   static FuncGraphPtr NewFuncGraph(const std::string &subgraph_name, const FmkType &fmk_type);
-  static bool IsMerge(const AnfNodePtr &node) { return opt::GetCNodeType(node) == schema::PrimitiveType_Merge; }
+  static bool IsMerge(const AnfNodePtr &node) { return CheckPrimitiveType(node, prim::kPrimMerge); }
   static bool IsLoopCond(const AnfNodePtr &node) {
-    return static_cast<int>(opt::GetCNodeType(node)) == static_cast<int>(lite::ConverterPrimitiveType_LoopCond);
+    return CheckPrimitiveType(node, std::make_shared<Primitive>(lite::kNameLoopCond));
   }
   static bool IsEnter(const AnfNodePtr &node) {
-    return static_cast<int>(opt::GetCNodeType(node)) == static_cast<int>(lite::ConverterPrimitiveType_Enter);
+    return CheckPrimitiveType(node, std::make_shared<Primitive>(lite::kNameEnter));
   }
   static bool IsExit(const AnfNodePtr &node) {
-    return static_cast<int>(opt::GetCNodeType(node)) == static_cast<int>(lite::ConverterPrimitiveType_Exit);
+    return CheckPrimitiveType(node, std::make_shared<Primitive>(lite::kNameExit));
   }
-  static bool IsSwitch(const AnfNodePtr &node) { return opt::GetCNodeType(node) == schema::PrimitiveType_Switch; }
+  static bool IsSwitch(const AnfNodePtr &node) { return CheckPrimitiveType(node, prim::kPrimSwitch); }
   static bool IsNextIteration(const AnfNodePtr &node) {
-    return static_cast<int>(opt::GetCNodeType(node)) == static_cast<int>(lite::ConverterPrimitiveType_NextIteration);
+    return CheckPrimitiveType(node, std::make_shared<Primitive>(lite::kNameNextIteration));
   }
   static bool IsControlFlowOp(const AnfNodePtr &node) {
     return IsLoopCond(node) || IsEnter(node) || IsMerge(node) || IsSwitch(node) || IsExit(node) ||

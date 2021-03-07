@@ -22,27 +22,17 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TFLoopCondParser::Parse(const tensorflow::NodeDef &tf_op,
-                               const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF LoopCondParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  *primitiveC = new (std::nothrow) LoopCond();
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+ops::PrimitiveC *TFLoopCondParser::Parse(const tensorflow::NodeDef &tf_op,
+                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                         std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<LoopCond>();
 
   *output_size = tf_op.input_size();
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return RET_OK;
+  return prim.release();
 }
 TFNodeRegistrar g_tfLoopCondParser("LoopCond", new TFLoopCondParser());
 }  // namespace lite

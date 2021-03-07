@@ -59,6 +59,7 @@
 #define kNHWC_C 3
 #define kInputSize1 2
 #define kInputSize2 3
+#define MAX_AXIS_SIZE 6
 #define MAX_LEN 256
 
 typedef enum LiteDataType {
@@ -76,6 +77,7 @@ typedef enum DataOrder {
 
 typedef struct OpParameter {
   char name_[100];
+  bool infer_flag_;
   int type_;
   int thread_num_;
 } OpParameter;
@@ -92,7 +94,7 @@ typedef struct QuantMulArg {
 } QuantMulArg;
 
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
-typedef enum PadMode { Pad_No, Pad_Same, Pad_Valid } PadMode;
+typedef enum PadMode { Pad_pad, Pad_same, Pad_valid } PadMode;
 typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;
 typedef enum CalFixedMultiplierMode {
   Method_No,

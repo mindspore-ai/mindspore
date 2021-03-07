@@ -20,7 +20,7 @@
 #include "coder/log.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 
-using mindspore::schema::PrimitiveType_Reduce;
+using mindspore::schema::PrimitiveType_ReduceFusion;
 namespace mindspore::lite::micro::nnacl {
 int ReduceInt8Coder::CalculateQuantArgs() {
   QuantArg input_quant = input_tensor_->quant_params().at(0);
@@ -230,6 +230,6 @@ int ReduceInt8Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_Reduce, CPUOpCoderCreator<ReduceInt8Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceInt8Coder>)
 
 }  // namespace mindspore::lite::micro::nnacl

@@ -18,36 +18,35 @@
 #include "tools/converter/parser/tflite/tflite_space_to_batch_nd_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/space_to_batch_nd.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteSpaceToBatchNDParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
+ops::PrimitiveC *TfliteSpaceToBatchNDParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::SpaceToBatchND>();
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  std::unique_ptr<schema::SpaceToBatchNDT> attr = std::make_unique<schema::SpaceToBatchNDT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->blockShape)) {
+  std::vector<int64_t> blockShape;
+  if (GetTfliteData(tflite_op->inputs.at(1), tflite_subgraph->tensors, tflite_model->buffers, blockShape)) {
     MS_LOG(ERROR) << "get spaceToBatchND -> blockShape failed";
     return nullptr;
   }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_subgraph->tensors, tflite_model->buffers, attr->paddings)) {
+  prim->set_block_shape(blockShape);
+  std::vector<std::vector<int64_t>> paddings;
+  if (TransTfliteDataToVec2D(tflite_op->inputs.at(2), tflite_subgraph->tensors, tflite_model->buffers, paddings)) {
     MS_LOG(ERROR) << "get spaceToBatchND -> paddings failed";
     return nullptr;
   }
+  prim->set_paddings(paddings);
 
-  primitive->value.type = schema::PrimitiveType_SpaceToBatchND;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSpaceToBatchNDParser(tflite::BuiltinOperator_SPACE_TO_BATCH_ND,

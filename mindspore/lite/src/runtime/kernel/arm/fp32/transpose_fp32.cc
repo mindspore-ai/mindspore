@@ -24,8 +24,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_OP_EXECUTE_FAILURE;
-using mindspore::schema::PrimitiveType_Nchw2Nhwc;
-using mindspore::schema::PrimitiveType_Nhwc2Nchw;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
@@ -38,13 +36,19 @@ int TransposeCPUKernel::Init() {
 
 int TransposeCPUKernel::ReSize() {
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(op_parameter_);
-  if (in_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param->num_axes_) && in_tensors_.size() != 2) {
+  if (in_tensors_.size() == 2) {
+    param->num_axes_ = in_tensors_.at(1)->ElementsNum();
+  }
+  if (in_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param->num_axes_)) {
     return RET_OK;
   }
-  if (in_tensors_.size() == 2) {
-    auto input_perm = in_tensors_.at(1);
-    MS_ASSERT(input_perm != nullptr);
-    param->num_axes_ = input_perm->ElementsNum();
+  // get perm data
+  MS_ASSERT(in_tensors_.size() == 2);
+  auto perm_tensor = in_tensors_.at(1);
+  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  MS_ASSERT(perm_data != nullptr);
+  for (int i = 0; i < param->num_axes_; ++i) {
+    param->perm_[i] = perm_data[i];
   }
   auto &inTensor = in_tensors_.front();
   auto &outTensor = out_tensors_.front();
@@ -120,6 +124,10 @@ int TransposeCPUKernel::Run() {
   MS_ASSERT(out_data_);
 
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  if (in_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
+    memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
+    return RET_OK;
+  }
   if (in_tensors_.size() == 2) {
     auto input_perm = in_tensors_.at(1);
     MS_ASSERT(input_perm != nullptr);
@@ -131,10 +139,6 @@ int TransposeCPUKernel::Run() {
     for (int i = input_perm->ElementsNum(); i < MAX_SHAPE_SIZE; ++i) {
       param->perm_[i] = 0;
     }
-  }
-  if (in_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
-    memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
-    return RET_OK;
   }
   auto ret = NhNcTranspose(in_tensor, out_tensor, param);
   if (ret == RET_OK) {
@@ -180,8 +184,4 @@ int TransposeCPUKernel::Run() {
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nchw2Nhwc, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nhwc2Nchw, LiteKernelCreator<TransposeCPUKernel>)
 }  // namespace mindspore::kernel

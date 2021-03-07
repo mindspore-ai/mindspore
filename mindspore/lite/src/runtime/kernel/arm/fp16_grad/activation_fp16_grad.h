@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class ActivationGradCPUKernelFp16 : public LiteKernel {
  public:
   explicit ActivationGradCPUKernelFp16(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
-                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
+                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(param, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     param_act_grad_ = reinterpret_cast<ActivationGradParameterFp16 *>(param);
   }
   ~ActivationGradCPUKernelFp16() override = default;

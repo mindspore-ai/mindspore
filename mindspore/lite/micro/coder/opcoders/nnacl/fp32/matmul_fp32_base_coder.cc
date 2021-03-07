@@ -22,6 +22,7 @@
 #include "coder/opcoders/file_collector.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "wrapper/fp32/matmul_fp32_wrapper.h"
+#include "coder/opcoders/nnacl/dequant/de_quant.h"
 
 using mindspore::schema::PrimitiveType_MatMul;
 
@@ -31,6 +32,13 @@ int MatMulFP32BaseCoder::ReSize() {
   ResizeParameter();
   thread_count_ = MSMIN(thread_num_, UP_DIV(params_->col_align_, col_tile_));
   thread_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
+  // can not call Malloc in DoCode,so move this runtime init to final resize
+  if (!params_->a_const_) {
+    MS_CHECK_RET_CODE(InitBufferA(), "InitBufferA failed");
+  }
+  if (!params_->b_const_) {
+    MS_CHECK_RET_CODE(InitBufferB(), "InitBufferB failed");
+  }
   return RET_OK;
 }
 
@@ -45,17 +53,16 @@ int MatMulFP32BaseCoder::InitBiasData() {
 }
 
 void MatMulFP32BaseCoder::InitParameter() {
+  row_tile_ = C12NUM;
   if (target_ == kARM32A) {
-    row_tile_ = C12NUM;
     col_tile_ = C4NUM;
   } else {
-    row_tile_ = C12NUM;
     col_tile_ = C8NUM;
   }
 }
 
 void MatMulFP32BaseCoder::ResizeParameter() {
-  if (params_->row_ == 1 && !params_->b_const_) {
+  if (params_->row_ == 1) {
     vec_matmul_ = true;
   }
   params_->row_align_ = vec_matmul_ ? 1 : UP_ROUND(params_->row_, row_tile_);
@@ -66,12 +73,11 @@ int MatMulFP32BaseCoder::InitBufferA() {
   if (a_pack_ptr_ != nullptr) {
     return RET_OK;
   }
+  a_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float));
   if (params_->a_const_) {
     a_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   } else {
-    a_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->row_align_ * params_->deep_ * sizeof(float));
-    a_pack_ptr_ =
-      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, a_pack_ptr_size_, kOfflinePackWeight));
+    a_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, a_pack_ptr_size_, kWorkspace));
   }
   MS_CHECK_PTR(a_pack_ptr_);
   return RET_OK;
@@ -81,12 +87,11 @@ int MatMulFP32BaseCoder::InitBufferB() {
   if (b_pack_ptr_ != nullptr) {
     return RET_OK;
   }
+  b_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float));
   if (params_->b_const_) {
     b_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   } else {
-    b_pack_ptr_size_ = static_cast<size_t>(params_->batch * params_->col_align_ * params_->deep_ * sizeof(float));
-    b_pack_ptr_ =
-      reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, b_pack_ptr_size_, kOfflinePackWeight));
+    b_pack_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, b_pack_ptr_size_, kWorkspace));
   }
   MS_CHECK_PTR(b_pack_ptr_);
   return RET_OK;
@@ -108,12 +113,9 @@ int MatMulFP32BaseCoder::Init() {
   MS_CHECK_RET_CODE(InitBiasData(), "InitBiasData failed");
   if (params_->a_const_) {
     MS_CHECK_RET_CODE(InitBufferA(), "InitBufferA failed");
-    MS_CHECK_RET_CODE(InitMatrixA(reinterpret_cast<float *>(input_tensor_->data_c())), "InitMatrixA failed");
   }
-
   if (params_->b_const_) {
     MS_CHECK_RET_CODE(InitBufferB(), "InitBufferB failed");
-    MS_CHECK_RET_CODE(InitMatrixB(reinterpret_cast<float *>(filter_tensor_->data_c())), "InitMatrixB failed");
   }
   return RET_OK;
 }
@@ -124,12 +126,17 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   // generate code .h .c
   std::vector<std::string> asm_files;
   if (target_ == kARM32A) {
-    asm_files = {"MatmulFp32.S", "MatmulFp32Opt.S"};
+    asm_files = {"MatmulFp32.S", "MatmulFp32Opt.S", "MatmulFp32Opt12x4.S"};
   } else if (target_ == kARM64) {
-    asm_files = {"arm64/MatmulFp32.S", "MatmulFp32Opt.S", "arm64/MatVecMulFp32.S"};
+    asm_files = {"MatmulFp32.S", "MatmulFp32Opt.S", "MatVecMulFp32.S"};
   }
-  Collect(context, {"nnacl/fp32/matmul.h", "adapter/fp32/matmul_fp32_adapter.h"}, {"matmul.c", "matmul_fp32_adapter.c"},
-          asm_files);
+  std::vector<std::string> h_files = {"nnacl/fp32/matmul_fp32.h", "wrapper/fp32/matmul_fp32_wrapper.h"};
+  std::vector<std::string> c_files = {"matmul_fp32.c", "matmul_fp32_wrapper.c"};
+  if (de_quant_flag_) {
+    h_files.emplace_back("wrapper/fp32/dequant_int8_to_fp32_wrapper.h");
+    c_files.emplace_back("dequant_int8_to_fp32_wrapper.c");
+  }
+  Collect(context, h_files, c_files, asm_files);
   NNaclFp32Serializer code;
   NNaclFp32Serializer init_code;
   code.CodeStruct("mat_mul_parameter", *params_);
@@ -137,9 +144,12 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   // do bias packing to init
   if (bias_ptr_) {
     init_code.CodeMallocExpression(bias_ptr_, bias_pack_ptr_size_);
-    init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_->data_c(), bias_pack_ptr_size_);
+    init_code.CodeFunction("memcpy", bias_ptr_, bias_tensor_, bias_pack_ptr_size_);
   }
 
+  // Get Tensor Pointer
+  std::string a_str = allocator_->GetRuntimeAddr(input_tensor_);
+  std::string b_str = allocator_->GetRuntimeAddr(filter_tensor_);
   std::string c_str = allocator_->GetRuntimeAddr(output_tensor_);
   std::string a_pack_str = allocator_->GetRuntimeAddr(a_pack_ptr_);
   std::string b_pack_str = allocator_->GetRuntimeAddr(b_pack_ptr_);
@@ -147,12 +157,28 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   // do const value packing to init
   if (!params_->a_const_) {
     code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
+    init_code.CodeMallocExpression(b_pack_ptr_, b_pack_ptr_size_);
+    std::string b_src_str = b_str;
+    if (de_quant_flag_) {
+      // reuse to b_pack_str
+      b_src_str = Dequant::GetInstance()->de_quant_buffer_str();
+      std::string de_quant_function = Dequant::GetInstance()->GetMicroDeQuantFunction(filter_tensor_, b_str);
+      init_code << de_quant_function;
+    }
     // b_pack_str has been memset, no need to memset
-    init_code.CodeFunction("InitMatrixB", filter_tensor_, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
+    init_code.CodeFunction("InitMatrixB", b_src_str, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
   }
   if (!params_->b_const_) {
+    init_code.CodeMallocExpression(a_pack_str, a_pack_ptr_size_);
+    std::string a_src_str = a_str;
+    if (de_quant_flag_) {
+      // reuse to a_pack_str
+      a_src_str = Dequant::GetInstance()->de_quant_buffer_str();
+      std::string de_quant_function = Dequant::GetInstance()->GetMicroDeQuantFunction(input_tensor_, a_str);
+      init_code << de_quant_function;
+    }
     // a_pack_str has been memset, no need to memset
-    init_code.CodeFunction("InitMatrixA", input_tensor_, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
+    init_code.CodeFunction("InitMatrixA", a_src_str, a_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
     code.CodeFunction("InitMatrixB", filter_tensor_, b_pack_ptr_, "&mat_mul_parameter", vec_matmul_);
   }
 
@@ -165,13 +191,13 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   }
   code << "for (int i = 0; i < " << params_->batch << "; ++i) {\n";
   if (vec_matmul_) {
-    code << "\t\tbatch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
-    code << "\t\tbatch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n";
-    code << "\t\tbatch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
+    code << "\t\tfloat *batch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
+    code << "\t\tfloat *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n";
+    code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
   } else {
-    code << "\t\tbatch_a_ptr = " << a_pack_str << " + i * " << params_->row_align_ * params_->deep_ << ";\n";
-    code << "\t\tbatch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_ << ";\n";
-    code << "\tbatch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
+    code << "\t\tfloat *batch_a_ptr = " << a_pack_str << " + i * " << params_->row_align_ * params_->deep_ << ";\n";
+    code << "\t\tfloat *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_ << ";\n";
+    code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
   }
 
   if (vec_matmul_) {

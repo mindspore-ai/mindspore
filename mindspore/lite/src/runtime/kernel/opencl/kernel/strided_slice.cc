@@ -22,21 +22,27 @@
 #include "src/runtime/kernel/opencl/kernel/strided_slice.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/strided_slice.cl.inc"
-#include "nnacl/strided_slice_parameter.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Slice;
+using mindspore::schema::PrimitiveType_SliceFusion;
 using mindspore::schema::PrimitiveType_StridedSlice;
 
 namespace mindspore::kernel {
 
 int StridedSliceOpenCLKernel::CheckSpecs() {
-  if (Type() == PrimitiveType_Slice) {
+  if (Type() == PrimitiveType_SliceFusion) {
     if (in_tensors_.size() != 3) {
       MS_LOG(ERROR) << "Slice only supports 3 input Tensor.";
+      return RET_ERROR;
+    }
+    int in_ndim = in_tensors_.front()->shape().size();
+    if (CheckParamLikeTensor("Slice", "begin", in_tensors_.at(1), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+      return RET_ERROR;
+    }
+    if (CheckParamLikeTensor("Slice", "size", in_tensors_.at(2), kNumberTypeInt32, {in_ndim}) != RET_OK) {
       return RET_ERROR;
     }
   } else if (Type() == PrimitiveType_StridedSlice) {
@@ -44,11 +50,21 @@ int StridedSliceOpenCLKernel::CheckSpecs() {
       MS_LOG(ERROR) << "StridedSlice only supports 4 input Tensor.";
       return RET_ERROR;
     }
+    int in_ndim = in_tensors_.front()->shape().size();
+    if (CheckParamLikeTensor("StridedSlice", "begin", in_tensors_.at(1), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+      return RET_ERROR;
+    }
+    if (CheckParamLikeTensor("StridedSlice", "end", in_tensors_.at(2), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+      return RET_ERROR;
+    }
+    if (CheckParamLikeTensor("StridedSlice", "stride", in_tensors_.at(3), kNumberTypeInt32, {in_ndim}) != RET_OK) {
+      return RET_ERROR;
+    }
   } else {
     MS_LOG(ERROR) << "Type error.";
     return RET_ERROR;
   }
-  const std::string kernel_name = Type() == PrimitiveType_Slice ? "Slice" : "StridedSlice";
+  const std::string kernel_name = Type() == PrimitiveType_SliceFusion ? "Slice" : "StridedSlice";
   if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << kernel_name + " only supports 1 output Tensor.";
     return RET_ERROR;
@@ -88,11 +104,11 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
                    static_cast<cl_int>(output_info.W), static_cast<cl_int>(output_info.C)};
   io_slices_ = {static_cast<cl_int>(input_info.Slice), static_cast<cl_int>(output_info.Slice)};
 
-  if (Type() == PrimitiveType_Slice) {
-    auto param = reinterpret_cast<SliceParameter *>(op_parameter_);
-    MS_ASSERT(param);
-    Broadcast2GpuShape(begin_.s, param->begin_, param->param_length_, 0);
-    Broadcast2GpuShape(size_.s, param->size_, param->param_length_, -1);
+  if (Type() == PrimitiveType_SliceFusion) {
+    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+    auto *size = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+    Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
+    Broadcast2GpuShape(size_.s, size, input_info.NDim, -1);
     for (int i = 0; i < 4; ++i) {
       if (begin_.s[i] < 0) {
         begin_.s[i] += input_shape_.s[i];
@@ -111,12 +127,13 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
       }
     }
   } else {
-    auto param = reinterpret_cast<StridedSliceParameter *>(op_parameter_);
-    MS_ASSERT(param);
-    cl_int4 end = input_shape_;
-    Broadcast2GpuShape(begin_.s, param->begins_, param->num_axes_, 0);
-    Broadcast2GpuShape(stride_.s, param->strides_, param->num_axes_, 1);
-    Broadcast2GpuShape(end.s, param->ends_, param->num_axes_);
+    auto *begin = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
+    auto *end = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+    auto *stride = reinterpret_cast<int32_t *>(in_tensors_.at(3)->data_c());
+    cl_int4 end_ = input_shape_;
+    Broadcast2GpuShape(begin_.s, begin, input_info.NDim, 0);
+    Broadcast2GpuShape(end_.s, end, input_info.NDim);
+    Broadcast2GpuShape(stride_.s, stride, input_info.NDim, 1);
 
     for (int i = 0; i < 4; ++i) {
       // begin is negative
@@ -126,20 +143,20 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
       // avoid begin is out of range
       begin_.s[i] = std::clamp(begin_.s[i], 0, input_shape_.s[i] - 1);
       // end is negative
-      if (end.s[i] < 0) {
-        end.s[i] += input_shape_.s[i];
+      if (end_.s[i] < 0) {
+        end_.s[i] += input_shape_.s[i];
       }
       // avoid end is out of range
-      end.s[i] = std::clamp(end.s[i], -1, input_shape_.s[i]);
+      end_.s[i] = std::clamp(end_.s[i], -1, input_shape_.s[i]);
 
       // check stride begin end
       if (stride_.s[i] > 0) {
-        if (begin_.s[i] >= end.s[i]) {
+        if (begin_.s[i] >= end_.s[i]) {
           MS_LOG(ERROR) << "StridedSlice kernel only supports begin_<end when stride>0";
           return RET_ERROR;
         }
       } else if (stride_.s[i] < 0) {
-        if (begin_.s[i] <= end.s[i]) {
+        if (begin_.s[i] <= end_.s[i]) {
           MS_LOG(ERROR) << "StridedSlice kernel only supports begin_>end when stride<0";
           return RET_ERROR;
         }
@@ -147,7 +164,7 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
         MS_LOG(ERROR) << "StridedSlice kernel only supports stride!=0";
         return RET_ERROR;
       }
-      size_.s[i] = std::ceil(static_cast<float>(end.s[i] - begin_.s[i]) / static_cast<float>(stride_.s[i]));
+      size_.s[i] = std::ceil(static_cast<float>(end_.s[i] - begin_.s[i]) / static_cast<float>(stride_.s[i]));
     }
   }
 
@@ -197,8 +214,8 @@ int StridedSliceOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Slice, OpenCLKernelCreator<StridedSliceOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Slice, OpenCLKernelCreator<StridedSliceOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SliceFusion, OpenCLKernelCreator<StridedSliceOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SliceFusion, OpenCLKernelCreator<StridedSliceOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, OpenCLKernelCreator<StridedSliceOpenCLKernel>);
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_StridedSlice, OpenCLKernelCreator<StridedSliceOpenCLKernel>);
 }  // namespace mindspore::kernel

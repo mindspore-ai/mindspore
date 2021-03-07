@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "micro/coder/opcoders/nnacl/fp32/transpose_fp32_coder.h"
+#include "coder/opcoders/nnacl/fp32/transpose_fp32_coder.h"
 #include <vector>
 #include <string>
-#include "micro/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
-#include "micro/coder/opcoders/file_collector.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
+#include "coder/opcoders/file_collector.h"
 
 using mindspore::schema::PrimitiveType_Transpose;
 namespace mindspore::lite::micro::nnacl {
@@ -83,8 +83,8 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   NNaclFp32Serializer code;
   code.CodeStruct("transpose_parameter", *transpose_parameter_);
 
-  code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, in_shape_, out_shape_, "&transpose_parameter",
-                    task_id, num_unit_thread, dim_size_, position_);
+  code.CodeFunction("DoTransposeFp32", input_tensor_, output_tensor_, in_shape_, out_shape_,
+                    "(TransposeParameter *)&transpose_parameter", task_id, num_unit_thread, dim_size_, position_);
 
   context->AppendCode(code.str());
   return RET_OK;

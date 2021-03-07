@@ -17,7 +17,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DELEGATE_FP32_H_
 
 #include <vector>
-#include "src/ops/conv2d.h"
 #include "src/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
@@ -27,9 +26,8 @@ namespace mindspore::kernel {
 class ConvolutionDelegateCPUKernel : public LiteKernel {
  public:
   ConvolutionDelegateCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                               const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDelegateCPUKernel() override {
     FreeCopiedData();
     if (conv_kernel_ != nullptr) {
@@ -83,8 +81,7 @@ lite::Tensor *CreateOutputTensor(const std::vector<int> &out_shape, const std::v
 
 kernel::LiteKernel *CpuConvFp32KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                            const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                            float *origin_weight, float *origin_bias);
+                                            const InnerContext *ctx, float *origin_weight, float *origin_bias);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DELEGATE_FP32_H_

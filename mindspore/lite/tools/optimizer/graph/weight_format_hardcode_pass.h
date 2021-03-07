@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ class WeightFormatHardCodePass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  lite::STATUS HardCodeCAFFE(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeONNX(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeMS(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeTFLITE(const AnfNodePtr &node, const ParamValueLitePtr &param_value) const;
-  lite::STATUS HardCodeTF(const AnfNodePtr &conv_node, const ParamValueLitePtr &param_value) const;
+  lite::STATUS HardCodeCAFFE(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
+  lite::STATUS HardCodeONNX(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
+  lite::STATUS HardCodeMS(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
+  lite::STATUS HardCodeTFLITE(const CNodePtr &node, const ParamValueLitePtr &param_value) const;
+  lite::STATUS HardCodeTF(const CNodePtr &conv_node, const ParamValueLitePtr &param_value) const;
 
  private:
   QuantType quant_type = schema::QuantType_QUANT_NONE;

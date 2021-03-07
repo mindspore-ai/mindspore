@@ -20,8 +20,6 @@
 #include "coder/opcoders/file_collector.h"
 #include "coder/log.h"
 
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
-
 namespace mindspore::lite::micro::cmsis {
 
 int DWConvInt8Coder::Prepare(CoderContext *const context) {
@@ -152,7 +150,5 @@ int DWConvInt8Coder::InitTmpBuffer() {
   }
   return 0;
 }
-
-REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_DepthwiseConv2D, CPUOpCoderCreator<DWConvInt8Coder>)
 
 }  // namespace mindspore::lite::micro::cmsis

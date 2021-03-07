@@ -18,17 +18,19 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_
 #include <vector>
 #include "include/graph/op/all_ops.h"
-#include "src/ops/squeeze.h"
+#include "nnacl/squeeze_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 namespace mindspore::kernel {
 class SqueezeNPUKernel : public NPUKernel {
  public:
   SqueezeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                   const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto squeeze = reinterpret_cast<const mindspore::lite::Squeeze *>(primitive);
-    axes_ = squeeze->GetAxis();
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
+    param_ = reinterpret_cast<SqueezeParameter *>(parameter);
+    axes_.resize(param_->axis_size_);
+    for (int i = 0; i < param_->axis_size_; i++) {
+      axes_[i] = param_->axis_[i];
+    }
   }
   ~SqueezeNPUKernel() override;
 
@@ -40,7 +42,8 @@ class SqueezeNPUKernel : public NPUKernel {
 
  private:
   hiai::op::Squeeze *op_ = nullptr;
-  vector<int> axes_;
+  vector<int64_t> axes_;
+  SqueezeParameter *param_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_

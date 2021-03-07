@@ -22,7 +22,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 
 namespace mindspore::kernel {
 int MulInt8CPUKernel::Init() {
@@ -217,5 +217,5 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
   return lite::RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Mul, LiteKernelCreator<MulInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_MulFusion, LiteKernelCreator<MulInt8CPUKernel>)
 }  // namespace mindspore::kernel

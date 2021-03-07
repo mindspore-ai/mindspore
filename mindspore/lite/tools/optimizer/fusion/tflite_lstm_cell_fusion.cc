@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 #include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
+#include <algorithm>
 #include <memory>
 #include <functional>
-#include "src/ops/primitive_c.h"
+#include "ops/lstm.h"
+#include "ops/squeeze.h"
+#include "ops/tuple_get_item.h"
 #include "src/common/utils.h"
 #include "src/param_value_lite.h"
 #include "schema/inner/model_generated.h"
@@ -39,9 +42,10 @@ constexpr float EPSILON = 1e-5;
 
 bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
 
-bool IsOpType(const BaseRef &n, const schema::PrimitiveType &type) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    return opt::GetCNodeType(n) == type;
+bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim);
   }
   return false;
 }
@@ -98,10 +102,10 @@ TfliteLstmCellFusion::TfliteLstmCellFusion(const std::string &name, bool multigr
   for (size_t i = 0; i < this->while_input_var_num_; ++i) {
     while_input_vars_.emplace_back(std::make_shared<Var>());
   }
-  cell_smooth_old_ = std::make_shared<Var>();
-  cell_smooth_new_ = std::make_shared<Var>();
-  hidden_smooth_old_ = std::make_shared<Var>();
-  hidden_smooth_new_ = std::make_shared<Var>();
+  cell_zoneout_old_ = std::make_shared<Var>();
+  cell_zoneout_new_ = std::make_shared<Var>();
+  hidden_zoneout_old_ = std::make_shared<Var>();
+  hidden_zoneout_new_ = std::make_shared<Var>();
 }
 
 AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
@@ -109,10 +113,10 @@ AnfNodePtr TfliteLstmCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &p
   auto is_parameter2 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter3 = std::make_shared<CondVar>(IsParameterNode);
   auto is_parameter4 = std::make_shared<CondVar>(IsParameterNode);
-  auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Less));
-  auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Less));
-  auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_LogicalAnd));
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Return));
+  auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
+  auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLess));
+  auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimLogicalAnd));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
   VectorRef less1_ref = VectorRef({is_less1, is_parameter1, is_parameter2});
   VectorRef less2_ref = VectorRef({is_less2, is_parameter3, is_parameter4});
   VectorRef logicaland_ref = VectorRef({is_logical_and, less1_ref, less2_ref});
@@ -156,25 +160,25 @@ AnfNodePtr TfliteLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &p
   VectorRef cell_forgeted = VectorRef({std::make_shared<Var>("Mul"), forget_gate, placeholders[4]});
   VectorRef cell_new = VectorRef({std::make_shared<Var>("Add"), cell_forgeted, cell_input});
 
-  VectorRef smooth_cell_old = VectorRef({std::make_shared<Var>("Mul"), cell_smooth_old_, placeholders[4]});
-  VectorRef smooth_cell_new = VectorRef({std::make_shared<Var>("Mul"), cell_smooth_new_, cell_new});
-  VectorRef cell_output = VectorRef({std::make_shared<Var>("Add"), smooth_cell_new, smooth_cell_old});
+  VectorRef zoneout_cell_old = VectorRef({std::make_shared<Var>("Mul"), cell_zoneout_old_, placeholders[4]});
+  VectorRef zoneout_cell_new = VectorRef({std::make_shared<Var>("Mul"), cell_zoneout_new_, cell_new});
+  VectorRef cell_output = VectorRef({std::make_shared<Var>("Add"), zoneout_cell_new, zoneout_cell_old});
 
   VectorRef output_gate = VectorRef({std::make_shared<Var>("Sigmoid"), bias_output});
   VectorRef cell_to_output = VectorRef({std::make_shared<Var>("Tanh"), cell_new});
   VectorRef output = VectorRef({std::make_shared<Var>("Mul"), output_gate, cell_to_output});
 
-  VectorRef smooth_hidden_old = VectorRef({std::make_shared<Var>("Mul"), hidden_smooth_old_, placeholders[5]});
-  VectorRef smooth_hidden_new = VectorRef({std::make_shared<Var>("Mul"), hidden_smooth_new_, output});
-  VectorRef hidden_output = VectorRef({std::make_shared<Var>("Add"), smooth_hidden_new, smooth_hidden_old});
+  VectorRef zoneout_hidden_old = VectorRef({std::make_shared<Var>("Mul"), hidden_zoneout_old_, placeholders[5]});
+  VectorRef zoneout_hidden_new = VectorRef({std::make_shared<Var>("Mul"), hidden_zoneout_new_, output});
+  VectorRef hidden_output = VectorRef({std::make_shared<Var>("Add"), zoneout_hidden_new, zoneout_hidden_old});
 
   VectorRef set_item = VectorRef({std::make_shared<Var>("SetItem"), placeholders[3], placeholders[2], output});
 
-  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_MakeTuple));
+  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimMakeTuple));
   std::vector<BaseRef> outputs = {is_make_tuple, add3, placeholders[1], add2, set_item, cell_output, hidden_output};
   outputs.insert(outputs.end(), placeholders.begin() + 6, placeholders.end());
   VectorRef make_tuple_node = VectorRef(outputs);
-  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Return));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, kPrimReturn));
   VectorRef return_node = VectorRef({is_return, make_tuple_node});
 
   VarPtr fg = std::make_shared<Var>("RootG");
@@ -183,16 +187,16 @@ AnfNodePtr TfliteLstmCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &p
 }
 
 const BaseRef TfliteLstmCellFusion::DefinePattern() const {
-  auto is_while_node = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_While));
+  auto is_while_node = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimWhile));
   VectorRef while_node = VectorRef({is_while_node});
   auto while_inputs = while_input_vars_;
   while_inputs.insert(while_inputs.begin() + 4, while_input_vars_[2]);
   while_node.insert(while_node.end(), while_inputs.begin(), while_inputs.end());
 
-  auto is_tuple_get_item = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TupleGetItem));
+  auto is_tuple_get_item = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTupleGetItem));
   VectorRef while_output = VectorRef({is_tuple_get_item, while_node, std::make_shared<Var>()});
 
-  auto is_tensor_list_stack = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListStack));
+  auto is_tensor_list_stack = std::make_shared<CondVar>(std::bind(IsOpType, p1, prim::kPrimTensorListStack));
   auto is_parameter = std::make_shared<CondVar>(IsParameterNode);
   VectorRef tensor_list_stack_node = VectorRef({is_tensor_list_stack, while_output, is_parameter});
 
@@ -228,7 +232,7 @@ bool TfliteLstmCellFusion::CheckReferencedOutputs(const FuncGraphPtr &func_graph
       return false;
     }
     auto cnode = utils::cast<CNodePtr>(node_user.first);
-    if (GetCNodeType(cnode) != schema::PrimitiveType_TupleGetItem) {
+    if (!CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
       return false;
     }
     auto index = GetTupleGetItemOutIndex(cnode);
@@ -256,48 +260,51 @@ EquivPtr TfliteLstmCellFusion::CheckSubGraph(const FuncGraphPtr &func_graph, con
 }
 
 bool TfliteLstmCellFusion::CheckBodyGraph(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                          const CNodePtr &while_cnode, float *smooth) const {
+                                          const CNodePtr &while_cnode, float *zoneout_cell,
+                                          float *zoneout_hidden) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   MS_ASSERT(while_cnode != nullptr);
-  MS_ASSERT(smooth != nullptr);
+  MS_ASSERT(zoneout_cell != nullptr);
+  MS_ASSERT(zoneout_hidden != nullptr);
 
-  auto cell_smooth_old_node = utils::cast<AnfNodePtr>((*equiv)[cell_smooth_old_]);
-  MS_ASSERT(cell_smooth_old_node != nullptr);
-  auto cell_smooth_new_node = utils::cast<AnfNodePtr>((*equiv)[cell_smooth_new_]);
-  MS_ASSERT(cell_smooth_new_node != nullptr);
-  auto hidden_smooth_old_node = utils::cast<AnfNodePtr>((*equiv)[hidden_smooth_old_]);
-  MS_ASSERT(hidden_smooth_old_node != nullptr);
-  auto hidden_smooth_new_node = utils::cast<AnfNodePtr>((*equiv)[hidden_smooth_new_]);
-  MS_ASSERT(hidden_smooth_new_node != nullptr);
+  auto cell_zoneout_old_node = utils::cast<AnfNodePtr>((*equiv)[cell_zoneout_old_]);
+  MS_ASSERT(cell_zoneout_old_node != nullptr);
+  auto cell_zoneout_new_node = utils::cast<AnfNodePtr>((*equiv)[cell_zoneout_new_]);
+  MS_ASSERT(cell_zoneout_new_node != nullptr);
+  auto hidden_zoneout_old_node = utils::cast<AnfNodePtr>((*equiv)[hidden_zoneout_old_]);
+  MS_ASSERT(hidden_zoneout_old_node != nullptr);
+  auto hidden_zoneout_new_node = utils::cast<AnfNodePtr>((*equiv)[hidden_zoneout_new_]);
+  MS_ASSERT(hidden_zoneout_new_node != nullptr);
 
   float cell_old, cell_new, hidden_old, hidden_new;
-  if (GetFloatScalarFromParamValueLite(cell_smooth_old_node, &cell_old) != RET_OK) {
+  if (GetFloatScalarFromParamValueLite(cell_zoneout_old_node, &cell_old) != RET_OK) {
     return false;
   }
-  if (GetFloatScalarFromParamValueLite(cell_smooth_new_node, &cell_new) != RET_OK) {
+  if (GetFloatScalarFromParamValueLite(cell_zoneout_new_node, &cell_new) != RET_OK) {
     return false;
   }
-  if (GetFloatScalarFromParamValueLite(hidden_smooth_old_node, &hidden_old) != RET_OK) {
+  if (GetFloatScalarFromParamValueLite(hidden_zoneout_old_node, &hidden_old) != RET_OK) {
     return false;
   }
-  if (GetFloatScalarFromParamValueLite(hidden_smooth_new_node, &hidden_new) != RET_OK) {
+  if (GetFloatScalarFromParamValueLite(hidden_zoneout_new_node, &hidden_new) != RET_OK) {
     return false;
   }
   if (cell_old < 0.0f || cell_old > 1.0f || cell_new < 0.0f || cell_new > 1.0f) {
-    MS_LOG(DEBUG) << "cell smooth value illegal";
+    MS_LOG(DEBUG) << "cell zoneout value illegal";
     return false;
   }
   if (hidden_old < 0.0f || hidden_old > 1.0f || hidden_new < 0.0f || hidden_new > 1.0f) {
-    MS_LOG(DEBUG) << "hidden smooth value illegal";
+    MS_LOG(DEBUG) << "hidden zoneout value illegal";
     return false;
   }
   if (std::abs(cell_old + cell_new - 1.0f) > EPSILON || std::abs(hidden_old + hidden_new - 1.0f) > EPSILON ||
       std::abs(cell_old - hidden_old) > EPSILON) {
-    MS_LOG(DEBUG) << "smooth value illegal";
+    MS_LOG(DEBUG) << "zoneout value illegal";
     return false;
   }
-  *smooth = cell_old;
+  *zoneout_cell = cell_old;
+  *zoneout_hidden = hidden_old;
   return true;
 }
 
@@ -402,7 +409,7 @@ STATUS TfliteLstmCellFusion::GetConcatedParam(const std::vector<AnfNodePtr> &par
 
 CNodePtr TfliteLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                               const EquivPtr &body_equiv, const std::string &base_name,
-                                              const float smooth) const {
+                                              const float zoneout_cell, const float zoneout_hidden) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(equiv != nullptr);
   MS_ASSERT(body_equiv != nullptr);
@@ -411,14 +418,11 @@ CNodePtr TfliteLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, co
    * 0:cond_ 1:body_ 2:time_ 3:limit1_ 4:output_ 5:cell_ 6:hidden_ 7:limit2_ 8:input_
    * 9:i2i_  10:i2f_ 11:i2c_ 12:i2o_   13:c2i_   14:c2f_ 15:c2c_   16:c2o_   17:i_bias_ 18:f_bias_ 19:c_bias_ 20:o_bias_
    */
-  auto lstm_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::LstmT> attr = std::make_unique<schema::LstmT>();
-  attr->bidirection = false;
-  attr->smooth = smooth;
-  lstm_primitive->value.type = schema::PrimitiveType_Lstm;
-  lstm_primitive->value.value = attr.release();
-  auto lstm_cvalue = lite::PrimitiveC::Create(lstm_primitive.release());
-  auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(lstm_cvalue));
+  auto lstm_prim = std::make_shared<ops::LSTM>();
+  lstm_prim->set_bidirectional(false);
+  lstm_prim->set_zoneout_cell(zoneout_cell);
+  lstm_prim->set_zoneout_hidden(zoneout_hidden);
+  auto value_node = NewValueNode(lstm_prim);
 
   auto &vars = while_input_vars_;
 
@@ -485,7 +489,7 @@ CNodePtr TfliteLstmCellFusion::CreateLSTMNode(const FuncGraphPtr &func_graph, co
   }
   bias->set_name(base_name + "_bias");
 
-  if (!utils::isa<CNodePtr>(input) || GetCNodeType(input) != schema::PrimitiveType_TensorListFromTensor) {
+  if (!utils::isa<CNodePtr>(input) || !CheckPrimitiveType(input, prim::kPrimTensorListFromTensor)) {
     MS_LOG(DEBUG) << "input is not tensorlistfromtensor op";
     return nullptr;
   }
@@ -503,19 +507,13 @@ CNodePtr TfliteLstmCellFusion::CreateOutputGetItem(const FuncGraphPtr &func_grap
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
   MS_ASSERT(get_items != nullptr);
-  auto tuple_get_item_prim_ptr = lite::GetTupleGetItemPrim();
-  if (tuple_get_item_prim_ptr == nullptr) {
-    MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
-    return nullptr;
-  }
-  auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
+  auto tuple_get_item_prim = std::make_shared<ops::TupleGetItem>();
   auto get_item_value = NewValueNode(MakeValue<int>(item_index));
   if (tuple_get_item_prim == nullptr || get_item_value == nullptr) {
     MS_LOG(ERROR) << "NewValueNode is nullptr";
     return nullptr;
   }
-  std::vector<AnfNodePtr> inputs{tuple_get_item_prim, node, get_item_value};
-  CNodePtr get_item_cnode = func_graph->NewCNode(inputs);
+  CNodePtr get_item_cnode = func_graph->NewCNode(tuple_get_item_prim, {node, get_item_value});
   std::vector<int64_t> shape_vector;
   auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector);
   if (abstract_tensor == nullptr) {
@@ -547,7 +545,7 @@ STATUS TfliteLstmCellFusion::AdjustOtherGetItems(const FuncGraphPtr &func_graph,
       return RET_ERROR;
     }
     auto get_item = utils::cast<CNodePtr>(node_user.first);
-    if (GetCNodeType(get_item) != schema::PrimitiveType_TupleGetItem) {
+    if (!CheckPrimitiveType(get_item, prim::kPrimTupleGetItem)) {
       return RET_ERROR;
     }
     auto new_inputs = get_item->inputs();
@@ -615,26 +613,12 @@ STATUS TfliteLstmCellFusion::SetAbstractTuple(const CNodePtr &cnode, const int o
 CNodePtr TfliteLstmCellFusion::CreateSqueezeNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
                                                  const std::vector<int> &axis) const {
   MS_ASSERT(func_graph != nullptr);
-  std::unique_ptr<schema::SqueezeT> attr = std::make_unique<schema::SqueezeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new SqueezeT failed";
-    return nullptr;
-  }
-  attr->axis = axis;
-  auto new_primitive_t = std::make_unique<schema::PrimitiveT>();
-  if (new_primitive_t == nullptr) {
-    MS_LOG(ERROR) << "primitive_t is nullptr";
-    return nullptr;
-  }
-  new_primitive_t->value.type = schema::PrimitiveType_Squeeze;
-  new_primitive_t->value.value = attr.release();
-  auto new_primtive_c = std::shared_ptr<lite::PrimitiveC>(lite::PrimitiveC::Create(new_primitive_t.release()));
-  if (new_primtive_c == nullptr) {
-    MS_LOG(ERROR) << "primitive_c is nullptr";
-    return nullptr;
-  }
-  ValueNodePtr value_node = NewValueNode(new_primtive_c);
-  auto squeeze_cnode = func_graph->NewCNode({value_node, input_node});
+  auto squeeze_prim = std::make_shared<ops::Squeeze>();
+  std::vector<int64_t> axis_vec;
+  std::transform(axis.begin(), axis.end(), std::back_inserter(axis_vec),
+                 [](int val) { return static_cast<int64_t>(val); });
+  squeeze_prim->set_axis(axis_vec);
+  auto squeeze_cnode = func_graph->NewCNode(squeeze_prim, {input_node});
   squeeze_cnode->set_abstract(input_node->abstract()->Clone());
   squeeze_cnode->set_fullname_with_scope("squeeze_" + input_node->fullname_with_scope());
   return squeeze_cnode;
@@ -685,12 +669,13 @@ const AnfNodePtr TfliteLstmCellFusion::Process(const FuncGraphPtr &func_graph, c
   if (body_equiv == nullptr || body_equiv->empty()) {
     return nullptr;
   }
-  float smooth = 0.0f;
-  if (!CheckBodyGraph(func_graph, body_equiv, while_cnode, &smooth)) {
+  float zoneout_cell = 0.0f;
+  float zoneout_hidden = 0.0f;
+  if (!CheckBodyGraph(func_graph, body_equiv, while_cnode, &zoneout_cell, &zoneout_hidden)) {
     return nullptr;
   }
   const std::string lstm_name = "lstm_" + while_cnode->fullname_with_scope();
-  auto lstm_node = CreateLSTMNode(func_graph, equiv, body_equiv, lstm_name, smooth);
+  auto lstm_node = CreateLSTMNode(func_graph, equiv, body_equiv, lstm_name, zoneout_cell, zoneout_hidden);
   if (lstm_node == nullptr) {
     return nullptr;
   }

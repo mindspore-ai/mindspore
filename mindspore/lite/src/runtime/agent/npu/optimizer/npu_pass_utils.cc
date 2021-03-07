@@ -16,7 +16,6 @@
 
 #include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 #include "src/runtime/agent/npu/npu_manager.h"
-#include "src/ops/transpose.h"
 #include "nnacl/transpose.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
@@ -24,50 +23,26 @@
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
 using kernel::KERNEL_ARCH::kNPU;
-PrimitiveC *NPUPassUtils::CreateTransposePrimitive() {
-  flatbuffers::FlatBufferBuilder fbb(1024);
-  auto val_offset = schema::CreateNchw2Nhwc(fbb);
-  auto prim_offset = schema::CreatePrimitive(fbb, schema::PrimitiveType_Transpose, val_offset.o);
-  fbb.Finish(prim_offset);
-  auto buf = fbb.GetBufferPointer();
-  if (buf == nullptr) {
-    MS_LOG(ERROR) << "GetBufferPointer return nullptr";
-    fbb.Clear();
-    return nullptr;
-  }
-  auto primitive_buf = reinterpret_cast<char *>(malloc(fbb.GetSize()));
-  if (primitive_buf == nullptr) {
-    MS_LOG(ERROR) << "Malloc primitive buffer failed.";
-    fbb.Clear();
-    return nullptr;
-  }
-  memcpy(primitive_buf, buf, fbb.GetSize());
-  auto *primitive = PrimitiveC::NewPrimitiveC<Transpose>(flatbuffers::GetRoot<schema::Primitive>(primitive_buf));
-  free(primitive_buf);
-  fbb.Clear();
-  return primitive;
-}
 
 kernel::LiteKernel *NPUPassUtils::CreateNchw2NhwcKernel(const std::vector<Tensor *> &in_tensors,
                                                         const std::vector<Tensor *> &out_tensors,
                                                         const InnerContext *ctx, const std::string &name) {
   kernel::KernelKey key{kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
-  auto nchw2nhwc_primitive = CreateTransposePrimitive();
   auto *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
   if (transpose_param == nullptr) {
     MS_LOG(ERROR) << "malloc TransposeParameter failed.";
     return nullptr;
   }
   memset(transpose_param, 0, sizeof(TransposeParameter));
-  transpose_param->op_parameter_.type_ = nchw2nhwc_primitive->Type();
+  transpose_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   transpose_param->perm_[0] = 0;
   transpose_param->perm_[1] = 2;
   transpose_param->perm_[2] = 3;
   transpose_param->perm_[3] = 1;
   transpose_param->num_axes_ = 4;
 
-  auto kernel = new (std::nothrow) kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param),
-                                                              in_tensors, out_tensors, ctx, nchw2nhwc_primitive);
+  auto kernel = new (std::nothrow)
+    kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param), in_tensors, out_tensors, ctx);
   if (kernel != nullptr) {
     kernel->set_desc(key);
   } else {
@@ -83,22 +58,21 @@ kernel::LiteKernel *NPUPassUtils::CreateNhwc2NchwKernel(const std::vector<Tensor
                                                         const std::vector<Tensor *> &out_tensors,
                                                         const InnerContext *ctx, const std::string &name) {
   kernel::KernelKey key{kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
-  auto nhwc2nchw_primitive = CreateTransposePrimitive();
   auto *transpose_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
   if (transpose_param == nullptr) {
     MS_LOG(ERROR) << "malloc TransposeParameter failed.";
     return nullptr;
   }
   memset(transpose_param, 0, sizeof(TransposeParameter));
-  transpose_param->op_parameter_.type_ = nhwc2nchw_primitive->Type();
+  transpose_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   transpose_param->perm_[0] = 0;
   transpose_param->perm_[1] = 3;
   transpose_param->perm_[2] = 1;
   transpose_param->perm_[3] = 2;
   transpose_param->num_axes_ = 4;
 
-  auto kernel = new (std::nothrow) kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param),
-                                                              in_tensors, out_tensors, ctx, nhwc2nchw_primitive);
+  auto kernel = new (std::nothrow)
+    kernel::TransposeCPUKernel(reinterpret_cast<OpParameter *>(transpose_param), in_tensors, out_tensors, ctx);
   if (kernel != nullptr) {
     kernel->set_desc(key);
   } else {

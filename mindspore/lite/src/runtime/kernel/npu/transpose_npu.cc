@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 
 #include "src/runtime/kernel/npu/transpose_npu.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Nchw2Nhwc;
-using mindspore::schema::PrimitiveType_Nhwc2Nchw;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
@@ -29,6 +28,15 @@ int TransposeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, con
     MS_LOG(ERROR) << "Unsupported conjugate transpose.";
     return RET_ERROR;
   }
+  if (inputs.size() >= 2 && inputs[1]->data_c() != nullptr) {
+    for (int i = 0; i < inputs[1]->ElementsNum(); i++) {
+      perm_.push_back(static_cast<int *>(inputs[1]->data_c())[i]);
+    }
+  } else {
+    MS_LOG(WARNING) << "NPU perm is attribute.";
+    return RET_ERROR;
+  }
+
   return RET_ERROR;
 }
 

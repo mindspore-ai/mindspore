@@ -21,8 +21,8 @@ namespace mindspore::lite::opencl::test {
 class TestOpenCL_ArgMinMax : public CommonTest {};
 
 namespace {
-// PrimitiveType_ArgMin: src/ops/populate/argmin_populate.cc
-// PrimitiveType_ArgMax: src/ops/populate/argmax_populate.cc
+// PrimitiveType_ArgMinFusion: src/ops/populate/argmin_populate.cc
+// PrimitiveType_ArgMaxFusion: src/ops/populate/argmax_populate.cc
 OpParameter *CreateParameter(schema::PrimitiveType type, int axis, int topk, bool out_value, bool keep_dims = false,
                              int axis_type = 0) {
   auto *param = test::CreateParameter<ArgMinMaxParameter>(type);
@@ -36,7 +36,7 @@ OpParameter *CreateParameter(schema::PrimitiveType type, int axis, int topk, boo
 }  // namespace
 
 TEST_F(TestOpenCL_ArgMinMax, axis0topk2index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 0;
   int topk = 2;
   bool out_value = false;
@@ -51,7 +51,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis0topk2index) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis0topk2value) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 0;
   int topk = 2;
   bool out_value = true;
@@ -66,7 +66,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis0topk2value) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis1topk2index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 1;
   int topk = 2;
   bool out_value = false;
@@ -82,7 +82,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis1topk2index) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis1topk2value) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 1;
   int topk = 2;
   bool out_value = true;
@@ -99,7 +99,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis1topk2value) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis2topk1index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 2;
   int topk = 1;
   bool out_value = false;
@@ -116,7 +116,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis2topk1index) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis2topk2value) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 2;
   int topk = 2;
   bool out_value = true;
@@ -134,7 +134,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis2topk2value) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis2topk2index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 2;
   int topk = 2;
   bool out_value = false;
@@ -152,7 +152,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis2topk2index) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis3topk2index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 3;
   int topk = 2;
   bool out_value = false;
@@ -169,7 +169,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis3topk2index) {
 }
 
 TEST_F(TestOpenCL_ArgMinMax, axis3topk2value) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 3;
   int topk = 2;
   bool out_value = true;
@@ -186,7 +186,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis3topk2value) {
   }
 }
 TEST_F(TestOpenCL_ArgMinMax, dim32axis1topk1index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 1;
   int topk = 1;
   bool out_value = false;
@@ -201,7 +201,7 @@ TEST_F(TestOpenCL_ArgMinMax, dim32axis1topk1index) {
   }
 }
 TEST_F(TestOpenCL_ArgMinMax, dim43axis2topk1index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 2;
   int topk = 1;
   bool out_value = false;
@@ -220,7 +220,7 @@ TEST_F(TestOpenCL_ArgMinMax, dim43axis2topk1index) {
   }
 }
 TEST_F(TestOpenCL_ArgMinMax, dim21axis2topk1index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 0;
   int topk = 1;
   bool out_value = false;
@@ -235,7 +235,7 @@ TEST_F(TestOpenCL_ArgMinMax, dim21axis2topk1index) {
   }
 }
 TEST_F(TestOpenCL_ArgMinMax, dim10axis2topk1index) {
-  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMaxFusion;
   int axis = 0;
   int topk = 1;
   bool out_value = false;

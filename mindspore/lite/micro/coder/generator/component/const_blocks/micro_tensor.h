@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_MICRO_TENSOR_H_
-#define MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_MICRO_TENSOR_H_
+#ifndef MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_MICRO_TENSOR_H_
+#define MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_MICRO_TENSOR_H_
 
-static const char micro_tensor_h[] =
+const char *micro_tensor_h =
   "/**\n"
   " * Copyright 2021 Huawei Technologies Co., Ltd\n"
   " *\n"
@@ -42,20 +42,8 @@ static const char micro_tensor_h[] =
   "#include <stdbool.h>\n"
   "#include <stdint.h>\n"
   "\n"
-  "inline bool IsPrint() {\n"
-  "  char *env = getenv(\"GLOG_v\");\n"
-  "  if (env == NULL) {\n"
-  "    return false;\n"
-  "  }\n"
-  "  return strcmp(env, \"1\") == 0;\n"
-  "}\n"
-  "\n"
-  "#define MICRO_INFO(content, args...)                                        \\\n"
-  "  {                                                                         \\\n"
-  "    if (IsPrint()) {                                                        \\\n"
-  "      printf(\"[INFO] %s|%d: \" #content \"\\r\\n\", __func__, __LINE__, ##args); \\\n"
-  "    }                                                                       \\\n"
-  "  }\n"
+  "#define MICRO_INFO(content, args...) \\\n"
+  "  { printf(\"[INFO] %s|%d: \" #content \"\\r\\n\", __func__, __LINE__, ##args); }\n"
   "#define MICRO_ERROR(content, args...) \\\n"
   "  { printf(\"[ERROR] %s|%d: \" #content \"\\r\\n\", __func__, __LINE__, ##args); }\n"
   "\n"
@@ -115,4 +103,4 @@ static const char micro_tensor_h[] =
   "} GraphQuantArgs;\n"
   "\n"
   "#endif  // MSMICRO_TENSOR_H\n";
-#endif  // MICRO_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_MICRO_TENSOR_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_MICRO_TENSOR_H_

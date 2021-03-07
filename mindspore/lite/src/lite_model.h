@@ -19,15 +19,12 @@
 
 #include <string>
 #include <vector>
+#include "include/errorcode.h"
 #include "include/model.h"
-#include "src/ops/primitive_c.h"
 #include "include/version.h"
 #include "schema/model_generated.h"
 #include "src/common/common.h"
 #include "src/common/version_manager.h"
-#ifndef PRIMITIVE_WRITEABLE
-#include "src/ops/ops_register.h"
-#endif
 #ifdef ENABLE_V0
 #include "schema/model_v0_generated.h"
 #endif
@@ -48,9 +45,9 @@ class LiteModel : public Model {
 
  private:
 #ifdef ENABLE_V0
-  int ConvertAttrs(Model::Node *node, const schema::v0::Primitive *prim, std::vector<schema::Tensor *> *dst_tensor);
+  int ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor);
 
-  int ConvertAttrToTensors(const void *meta_graph);
+  int ConvertAttrToTensors();
 #endif
 
   template <typename T = schema::MetaGraph, typename U = schema::CNode>
@@ -66,31 +63,10 @@ class LiteModel : public Model {
         return false;
       }
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
-      MS_ASSERT(c_node != nullptr);
-      auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
-#ifdef PRIMITIVE_WRITEABLE
-      node->primitive_ = PrimitiveC::Create(const_cast<schema::Primitive *>(src_prim));
-#else
-      auto primitive = const_cast<schema::Primitive *>(src_prim);
-      auto func_pointer = OpsRegistry::GetInstance()->GetPrimitiveCreator(primitive->value_type());
-      if (func_pointer == nullptr) {
-        MS_LOG(ERROR) << "PrimitiveCreator function pointer is nullptr, type: "
-                      << schema::EnumNamePrimitiveType(primitive->value_type());
-        delete node;
-        return false;
-      }
-      node->primitive_ = func_pointer(primitive);
-#endif
-      if (node->primitive_ == nullptr) {
-        MS_LOG(ERROR) << "unpack primitive == nullptr!";
-        delete node;
-        return false;
-      }
-      node->primitive_->set_quant_type(static_cast<schema::QuantType>(c_node->quantType()));
-      MS_ASSERT(c_node->name() != nullptr);
+      node->primitive_ = c_node->primitive();
+      node->quant_type_ = c_node->quantType();
       node->name_ = c_node->name()->c_str();
       node->node_type_ = static_cast<NodeType>(c_node->nodeType());
-      MS_ASSERT(c_node->inputIndex() != nullptr);
       auto count = c_node->inputIndex()->size();
       for (uint32_t j = 0; j < count; ++j) {
         node->input_indices_.push_back(size_t(c_node->inputIndex()->template GetAs<uint32_t>(j)));
@@ -195,7 +171,7 @@ class LiteModel : public Model {
       }
     }
 #ifdef ENABLE_V0
-    if (ConvertAttrToTensors(&meta_graph) != RET_OK) {
+    if (ConvertAttrToTensors() != RET_OK) {
       MS_LOG(ERROR) << "fail to convert attr to tensor.";
       return RET_ERROR;
     }

@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_LITE_MICRO_CODER_OPCODERS_Conv2D_3X3_INT8_CODER_H_
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_Conv2D_3X3_INT8_CODER_H_
-#include "micro/coder/opcoders/base/conv2d_base_coder.h"
+#include "coder/opcoders/base/conv2d_base_coder.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,7 +33,10 @@ class Conv2D3x3Int8Coder final : public Conv2DBaseCoder {
 
   int DoCode(CoderContext *const context) override;
 
-  ~Conv2D3x3Int8Coder() override = default;
+  ~Conv2D3x3Int8Coder() override {
+    transformed_filter_addr_ = nullptr;
+    new_bias_addr_ = nullptr;
+  }
 
  private:
   int InitWeightBias();

@@ -17,26 +17,15 @@
 #include "tools/converter/parser/onnx/onnx_loop_parser.h"
 #include <memory>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
+#include "ops/while.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxLoopParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                     const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx LoopParser";
-  auto attr = std::make_unique<schema::WhileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_While;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxLoopParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::While>();
+  return prim.release();
 }
+
 OnnxNodeRegistrar g_onnxLoopParser("Loop", new OnnxLoopParser());
 }  // namespace lite
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,12 @@ using mindspore::schema::PrimitiveType_Cast;
 namespace mindspore::kernel {
 int CastNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                              OpParameter *opParameter) {
+  if (inputs.size() >= 2 && inputs[1]->ElementsNum() == 1) {
+    dst_type_ = static_cast<int *>(inputs[1]->data_c())[0];
+  } else {
+    MS_LOG(WARNING) << "NPU dst dtype is attribute.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -35,7 +41,7 @@ int CastNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const
     return RET_ERROR;
   }
   op_->set_input_x(*npu_inputs[0]);
-  op_->set_attr_dst_dtype(lite::ConverterToNPUDataType(static_cast<TypeId>(outputs[0]->data_type())));
+  op_->set_attr_dst_dtype(lite::ConverterToNPUDataType(static_cast<TypeId>(dst_type_)));
   op_->set_attr_src_dtype(lite::ConverterToNPUDataType(static_cast<TypeId>(inputs[0]->data_type())));
   return RET_OK;
 }

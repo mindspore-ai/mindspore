@@ -61,7 +61,7 @@ int ArithmeticFP32Coder::Init(CoderContext *const context) {
 
   if (arithmetic_parameter_->in_elements_num0_ == 1 || arithmetic_parameter_->in_elements_num1_ == 1) {
     switch (arithmetic_parameter_->op_parameter_.type_) {
-      case PrimitiveType_Mul:
+      case PrimitiveType_MulFusion:
         switch (arithmetic_parameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_parameter_->broadcasting_ = false;
@@ -80,7 +80,7 @@ int ArithmeticFP32Coder::Init(CoderContext *const context) {
             break;
         }
         break;
-      case PrimitiveType_Add:
+      case PrimitiveType_AddFusion:
         switch (arithmetic_parameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_parameter_->broadcasting_ = false;
@@ -99,7 +99,7 @@ int ArithmeticFP32Coder::Init(CoderContext *const context) {
             break;
         }
         break;
-      case PrimitiveType_Sub:
+      case PrimitiveType_SubFusion:
         switch (arithmetic_parameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmetic_parameter_->broadcasting_ = false;
@@ -157,7 +157,7 @@ int ArithmeticFP32Coder::Prepare(CoderContext *const context) {
   }
   arithmetic_parameter_ = reinterpret_cast<ArithmeticParameter *>(parameter_);
   std::map<int, std::function<void()>> type_setters = {
-    {PrimitiveType_Mul,
+    {PrimitiveType_MulFusion,
      [this]() {
        switch (arithmetic_parameter_->activation_type_) {
          case schema::ActivationType_RELU:
@@ -174,7 +174,7 @@ int ArithmeticFP32Coder::Prepare(CoderContext *const context) {
            break;
        }
      }},
-    {PrimitiveType_Add,
+    {PrimitiveType_AddFusion,
      [this]() {
        switch (arithmetic_parameter_->activation_type_) {
          case schema::ActivationType_RELU:
@@ -191,7 +191,7 @@ int ArithmeticFP32Coder::Prepare(CoderContext *const context) {
            break;
        }
      }},
-    {PrimitiveType_Sub,
+    {PrimitiveType_SubFusion,
      [this]() {
        switch (arithmetic_parameter_->activation_type_) {
          case schema::ActivationType_RELU:
@@ -205,7 +205,7 @@ int ArithmeticFP32Coder::Prepare(CoderContext *const context) {
            break;
        }
      }},
-    {PrimitiveType_Div,
+    {PrimitiveType_DivFusion,
      [this]() {
        switch (arithmetic_parameter_->activation_type_) {
          case schema::ActivationType_RELU:
@@ -275,15 +275,16 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
    * this solution is not suitable for micro, for the size of package.
    * */
   if (arithmetic_opt_run_ == "ElementOptSub" || arithmetic_run_ == "ElementSub") {
-    Collect(context, {"nnacl/kernel/fp32/sub.h"}, {"sub.c"});
+    Collect(context, {"nnacl/fp32/sub_fp32.h"}, {"sub_fp32.c"});
   } else if (arithmetic_opt_run_ == "ElementOptAdd" || arithmetic_run_ == "ElementAdd") {
-    Collect(context, {"nnacl/kernel/fp32/add_fp32_slim.h"}, {"add_fp32_slim.c"});
+    Collect(context, {"nnacl/fp32/add_fp32.h"}, {"add_fp32.c"});
   } else if (arithmetic_opt_run_ == "ElementOptMul" || arithmetic_run_ == "ElementMul") {
-    Collect(context, {"nnacl/kernel/fp32/mul.h"}, {"mul.c"});
+    Collect(context, {"nnacl/fp32/mul_fp32.h"}, {"mul_fp32.c"});
   } else if (arithmetic_run_ == "ElementAddRelu") {
-    Collect(context, {"nnacl/kernel/fp32/add_relu.h"}, {"add_relu.c"});
+    Collect(context, {"nnacl/fp32/add_relu_fp32.h"}, {"add_relu_fp32.c"});
   } else {
-    Collect(context, {"nnacl/arithmetic_common.h", "nnacl/fp32/arithmetic.h"}, {"arithmetic_common.c", "arithmetic.c"});
+    Collect(context, {"nnacl/arithmetic_common.h", "nnacl/fp32/arithmetic_fp32.h"},
+            {"arithmetic_common.c", "arithmetic_fp32.c"});
   }
 
   if (arithmetic_parameter_->broadcasting_) {
@@ -330,15 +331,15 @@ int ArithmeticFP32Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_Add, CPUOpCoderCreator<ArithmeticFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt32, PrimitiveType_AddFusion, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Mul, CPUOpCoderCreator<ArithmeticFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_MulFusion, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Add, CPUOpCoderCreator<ArithmeticFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_AddFusion, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Sub, CPUOpCoderCreator<ArithmeticFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_SubFusion, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Div, CPUOpCoderCreator<ArithmeticFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_DivFusion, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_LogicalAnd, CPUOpCoderCreator<ArithmeticFP32Coder>)
 

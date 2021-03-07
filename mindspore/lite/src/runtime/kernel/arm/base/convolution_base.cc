@@ -19,7 +19,6 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/ops/conv2d.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -78,11 +77,6 @@ void ConvolutionBaseCPUKernel::FreeQuantParam() {
 }
 
 int ConvolutionBaseCPUKernel::Init() {
-  auto conv2d_lite_primitive = (lite::Conv2D *)primitive_;
-  conv_param_->pad_u_ = conv2d_lite_primitive->PadUp();
-  conv_param_->pad_d_ = conv2d_lite_primitive->PadDown();
-  conv_param_->pad_l_ = conv2d_lite_primitive->PadLeft();
-  conv_param_->pad_r_ = conv2d_lite_primitive->PadRight();
   auto input = this->in_tensors_.front();
   auto output = this->out_tensors_.front();
   conv_param_->input_batch_ = input->Batch();

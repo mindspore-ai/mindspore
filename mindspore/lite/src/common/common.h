@@ -32,7 +32,7 @@ enum CHWK_SHAPE { CHWK_C = 0, CHWK_H = 1, CHWK_W = 2, CHWK_K = 3 };
 enum KHWC_SHAPE { KHWC_K = 0, KHWC_H = 1, KHWC_W = 2, KHWC_C = 3 };
 enum CHW_SHAPE { CHW_C = 0, CHW_H = 1, CHW_W = 2 };
 enum HWC_SHAPE { HWC_H = 0, HWC_W = 1, HWC_C = 2 };
-enum SCHEMA_VERSION { SCHEMA_INVALID = -1, SCHEMA_CUR = 0, SCHEMA_V0 = 1 };
+enum SCHEMA_VERSION : int { SCHEMA_INVALID = -1, SCHEMA_CUR = 0, SCHEMA_V0 = 1 };
 static constexpr int kNCHWDimNumber = 4;
 static constexpr int kNHWCDimNumber = 4;
 

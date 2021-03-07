@@ -17,52 +17,34 @@
 #include "tools/converter/parser/tflite/tflite_reshape_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/reshape.h"
 
-namespace mindspore::lite {
-lite::PrimitiveC *TfliteReshapeParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  const auto &tflite_subgraph = tflite_model->subgraphs.front();
-  std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteReshapeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tfliteOp,
+                                            const std::unique_ptr<tflite::ModelT> &tfliteModel) {
+  auto prim = std::make_unique<ops::Reshape>();
+
+  MS_ASSERT(tfliteOp != nullptr);
+  MS_ASSERT(tfliteModel != nullptr);
+  std::vector<int32_t> shape;
+  const auto &tflite_subgraph = tfliteModel->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  const auto &tflite_attr = tflite_op->builtin_options.AsReshapeOptions();
-  if (tflite_attr == nullptr) {
-    if (tflite_op->inputs.size() < 2) {
-      MS_LOG(ERROR) << "expected two input tensors, but got: " << tflite_op->inputs.size();
-      return nullptr;
-    }
-    auto shape_tensor_index = tflite_op->inputs[1];
-    const auto &shape_tensor = tflite_subgraph->tensors[shape_tensor_index];
-    if (shape_tensor == nullptr) {
-      MS_LOG(ERROR) << "shape_tensor is null";
-      return nullptr;
-    }
-    auto &buf_data = tflite_model->buffers[shape_tensor->buffer];
-    if (buf_data == nullptr) {
-      MS_LOG(ERROR) << "buf_data is null";
-      return nullptr;
-    }
-    if (!buf_data->data.empty()) {
-      if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->shape)) {
-        MS_LOG(ERROR) << "get reshape -> shape failed";
-        return nullptr;
-      }
-    }
-  } else {
-    attr->format = schema::Format::Format_NHWC;
-    attr->shape.resize(tflite_attr->new_shape.size());
+  const auto &tflite_attr = tfliteOp->builtin_options.AsReshapeOptions();
+  if (tflite_attr != nullptr) {
+    shape.resize(tflite_attr->new_shape.size());
     for (size_t i = 0; i < tflite_attr->new_shape.size(); ++i) {
-      attr->shape[i] = tflite_attr->new_shape[i];
+      shape[i] = tflite_attr->new_shape[i];
     }
+    prim->AddAttr("shape", MakeValue(shape));
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Reshape;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteReshapeParser(tflite::BuiltinOperator_RESHAPE, new TfliteReshapeParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

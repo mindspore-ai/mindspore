@@ -24,7 +24,6 @@ using mindspore::kernel::KernelKey;
 using mindspore::kernel::LiteKernel;
 using mindspore::lite::InnerContext;
 using mindspore::lite::LiteSession;
-using mindspore::lite::PrimitiveC;
 using mindspore::lite::Tensor;
 using mindspore::schema::PrimitiveType_Abs;
 using mindspore::TypeId::kNumberTypeFloat32;
@@ -45,8 +44,8 @@ TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
   split->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
   split->primitive->value.type = mindspore::schema::PrimitiveType_Split;
   auto primitive = new mindspore::schema::SplitT;
-  primitive->numberSplit = 2;
-  primitive->splitDim = 3;
+  primitive->output_num = 2;
+  primitive->axis = 3;
   split->primitive->value.value = primitive;
   split->name = "split";
 
@@ -64,7 +63,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
   cons1->outputIndex = {4};
   cons1->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
   cons1->primitive->value.type = mindspore::schema::PrimitiveType_Cos;
-  auto cons1_primitive = new mindspore::schema::AsinT;
+  auto cons1_primitive = new mindspore::schema::CosT;
   cons1->primitive->value.value = cons1_primitive;
   cons1->name = "cpu1";
 
@@ -82,7 +81,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsTwoBranch) {
   cons2->outputIndex = {6};
   cons2->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
   cons2->primitive->value.type = mindspore::schema::PrimitiveType_Cos;
-  auto cons2_primitive = new mindspore::schema::AsinT;
+  auto cons2_primitive = new mindspore::schema::CosT;
   cons2->primitive->value.value = cons2_primitive;
   cons2->name = "cpu2";
 
@@ -188,8 +187,8 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   split->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
   split->primitive->value.type = mindspore::schema::PrimitiveType_Split;
   auto primitive = new mindspore::schema::SplitT;
-  primitive->numberSplit = 3;
-  primitive->splitDim = 3;
+  primitive->output_num = 3;
+  primitive->axis = 3;
   split->primitive->value.value = primitive;
   split->name = "split";
 
@@ -216,7 +215,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   cons1->outputIndex = {6};
   cons1->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
   cons1->primitive->value.type = mindspore::schema::PrimitiveType_Cos;
-  auto cons1_primitive = new mindspore::schema::AsinT;
+  auto cons1_primitive = new mindspore::schema::CosT;
   cons1->primitive->value.value = cons1_primitive;
   cons1->name = "cpu1";
 
@@ -243,7 +242,7 @@ TEST_F(SchedulerTest, TestConstructSubGraphsThreeBranch) {
   cons2->outputIndex = {9};
   cons2->primitive = std::make_unique<mindspore::schema::PrimitiveT>();
   cons2->primitive->value.type = mindspore::schema::PrimitiveType_Cos;
-  auto cons2_primitive = new mindspore::schema::AsinT;
+  auto cons2_primitive = new mindspore::schema::CosT;
   cons2->primitive->value.value = cons2_primitive;
   cons2->name = "cpu2";
 

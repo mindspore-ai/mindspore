@@ -50,7 +50,6 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   ASSERT_NE(bn_param, nullptr);
 
   bn_param->epsilon_ = 1e-2;
-  bn_param->momentum_ = 0.1;
   const int batch = 2;
   const int channels = 3;
   const int height = 4;
@@ -82,10 +81,10 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   ctx.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BNGrad};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BatchNormGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &ctx, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &ctx, desc);
   ASSERT_NE(kernel_obj, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel_obj->workspace_size());
 
@@ -178,7 +177,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &context, desc, nullptr);
+  auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &context, desc);
   ASSERT_NE(kernel_obj, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel_obj->workspace_size());
   float *save_mean = reinterpret_cast<float *>(save_mean_tensor.MutableData());

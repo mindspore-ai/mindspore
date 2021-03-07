@@ -28,15 +28,15 @@
 namespace mindspore {
 namespace lite {
 bool NestedLoopExpandPass::IsNestedPartial(const std::unique_ptr<CNodeT> &node) {
-  if (node->primitive->value.type != PrimitiveType_Partial) {
+  if (node->primitive->value.type != PrimitiveType_PartialFusion) {
     return false;
   }
-  auto subgraph_idx = ((schema::PartialT *)(node->primitive->value.value))->subGraphIndex;
+  auto subgraph_idx = ((schema::PartialFusionT *)(node->primitive->value.value))->sub_graph_index;
   auto &this_subgraph = graph_->subGraph.at(subgraph_idx);
 
   for (auto &node_idx : this_subgraph->nodeIndices) {
     auto &cnode = graph_->nodes.at(node_idx);
-    if (cnode->primitive->value.type == PrimitiveType_Partial) {
+    if (cnode->primitive->value.type == PrimitiveType_PartialFusion) {
       return true;
     }
   }
@@ -52,7 +52,7 @@ void NestedLoopExpandPass::ReplacePartialNodeWithSubgraph(const std::unique_ptr<
       continue;
     }
     is_changed = true;
-    auto subgraph_idx = ((schema::PartialT *)(node->primitive->value.value))->subGraphIndex;
+    auto subgraph_idx = ((schema::PartialFusionT *)(node->primitive->value.value))->sub_graph_index;
     auto &this_subgraph = graph_->subGraph.at(subgraph_idx);
     subgraph_to_drop_.push_back(subgraph_idx);
     iter = main_graph->nodeIndices.erase(iter);
@@ -77,8 +77,8 @@ STATUS NestedLoopExpandPass::Run(schema::MetaGraphT *graph) {
 
   for (auto &node_idx : main_graph->nodeIndices) {
     auto &node = graph_->nodes.at(node_idx);
-    if (node->primitive->value.type == PrimitiveType_Partial) {
-      auto &subgraph_idx = ((schema::PartialT *)(node->primitive->value.value))->subGraphIndex;
+    if (node->primitive->value.type == PrimitiveType_PartialFusion) {
+      auto &subgraph_idx = ((schema::PartialFusionT *)(node->primitive->value.value))->sub_graph_index;
       if (graph_->subGraph.at(subgraph_idx) == nullptr) {
         node = nullptr;
         continue;

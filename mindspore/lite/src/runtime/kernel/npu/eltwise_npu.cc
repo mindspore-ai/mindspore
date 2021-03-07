@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/npu/eltwise_npu.h"
+#include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/agent/npu/npu_converter_utils.h"
 

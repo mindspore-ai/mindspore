@@ -23,7 +23,6 @@
 #include "src/sub_graph_kernel.h"
 #include "src/inner_context.h"
 #include "include/model.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore::lite {
 class Scheduler {
@@ -46,8 +45,7 @@ class Scheduler {
 
   // schedule a node to kernel according to context and kernels registered
   kernel::LiteKernel *FindBackendKernel(const std::vector<Tensor *> &in_tensors,
-                                        const std::vector<Tensor *> &out_tensors,
-                                        const mindspore::lite::PrimitiveC *primitive, const Model::Node *node);
+                                        const std::vector<Tensor *> &out_tensors, const Model::Node *node);
   // schedule a partial node to a subgraph_kernel
   kernel::LiteKernel *SchedulePartialToKernel(const lite::Model::Node *src_node);
   // schedule a node to a kernel
@@ -87,6 +85,7 @@ class Scheduler {
   Model *src_model_ = nullptr;
   std::vector<Tensor *> *src_tensors_;
   std::vector<size_t> graph_output_node_indexes_;
+  std::map<int, OpParameter *> op_parameters_;
 };
 }  // namespace mindspore::lite
 

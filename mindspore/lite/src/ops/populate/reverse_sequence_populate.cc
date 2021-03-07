@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/reverse_sequence.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "mindspore/lite/nnacl/fp32/reverse_sequence_fp32.h"
+#include "nnacl/reverse_sequence_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateReverseSequenceParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateReverseSequenceParameter(const void *prim) {
   ReverseSequenceParameter *reverse_sequence_param =
     reinterpret_cast<ReverseSequenceParameter *>(malloc(sizeof(ReverseSequenceParameter)));
   if (reverse_sequence_param == nullptr) {
@@ -30,14 +27,17 @@ OpParameter *PopulateReverseSequenceParameter(const mindspore::lite::PrimitiveC 
     return nullptr;
   }
   memset(reverse_sequence_param, 0, sizeof(ReverseSequenceParameter));
-  auto param =
-    reinterpret_cast<mindspore::lite::ReverseSequence *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  reverse_sequence_param->op_parameter_.type_ = primitive->Type();
-  reverse_sequence_param->seq_axis_ = param->GetSeqAxis();
-  reverse_sequence_param->batch_axis_ = param->GetBatchAxis();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto param = primitive->value_as_ReverseSequence();
+  reverse_sequence_param->op_parameter_.type_ = primitive->value_type();
+  reverse_sequence_param->seq_axis_ = static_cast<int>(param->seq_dim());
+  reverse_sequence_param->batch_axis_ = static_cast<int>(param->batch_dim());
   return reinterpret_cast<OpParameter *>(reverse_sequence_param);
 }
-Registry ReverseSequenceParameterRegistry(schema::PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter);
+}  // namespace
+
+Registry ReverseSequenceParameterRegistry(schema::PrimitiveType_ReverseSequence, PopulateReverseSequenceParameter,
+                                          SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

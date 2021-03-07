@@ -16,6 +16,7 @@
 
 #include "src/runtime/kernel/arm/fp16/deconvolution_fp16.h"
 #include "src/runtime/kernel/arm/fp16/deconvolution_winograd_fp16.h"
+#include "src/runtime/kernel/arm/fp16/deconvolution_depthwise_fp16.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -23,7 +24,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DeConv2D;
+using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore::kernel {
 DeConvolutionFp16CPUKernel::~DeConvolutionFp16CPUKernel() {
@@ -210,34 +211,42 @@ int DeConvolutionFp16CPUKernel::Run() {
 }
 
 kernel::LiteKernel *CpuDeConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(op_parameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
 
-  kernel::LiteKernel *kernel;
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
-      (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
-    kernel = new (std::nothrow) kernel::DeConvWinogradFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  kernel::LiteKernel *kernel = nullptr;
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+
+  if (conv_param->group_ == 1) {
+    if ((conv_param->stride_h_ != 1 || conv_param->stride_w_ != 1) &&
+        (conv_param->dilation_w_ == 1 && conv_param->dilation_h_ == 1)) {
+      kernel = new (std::nothrow) kernel::DeConvWinogradFp16CPUKernel(op_parameter, inputs, outputs, ctx);
+    } else {
+      kernel = new (std::nothrow) kernel::DeConvolutionFp16CPUKernel(op_parameter, inputs, outputs, ctx);
+    }
+  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
+    kernel = new (std::nothrow) DeconvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, ctx);
   } else {
-    kernel = new (std::nothrow) kernel::DeConvolutionFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+    MS_LOG(ERROR) << "deconv do not support group deconv!";
+    kernel = nullptr;
   }
 
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
-    free(opParameter);
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     delete kernel;
     return nullptr;
   }
   return kernel;
 }
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_DeConv2D, CpuDeConvFp16KernelCreator)
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Conv2dTransposeFusion, CpuDeConvFp16KernelCreator)
 }  // namespace mindspore::kernel

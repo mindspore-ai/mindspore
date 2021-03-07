@@ -15,17 +15,12 @@
  */
 
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_slidewindow_int8.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/int8/conv_depthwise_int8.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 ConvolutionDepthwiseSWInt8CPUKernel::~ConvolutionDepthwiseSWInt8CPUKernel() {
@@ -153,15 +148,11 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto channel = conv_param_->input_channel_;
   input_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
-  if (input_scale_ == nullptr) {
-    MS_LOG(ERROR) << "malloc input_sacle_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(input_scale_);
+
   input_zp_ = reinterpret_cast<int8_t *>(malloc(channel * sizeof(int8_t)));
-  if (input_zp_ == nullptr) {
-    MS_LOG(ERROR) << "malloc input_zp_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(input_zp_);
+
   if (input_tensor->quant_params().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {
       auto input_quant_arg = input_tensor->quant_params().front();
@@ -178,15 +169,11 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
 
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
-  if (output_scale_ == nullptr) {
-    MS_LOG(ERROR) << "malloc output_scale_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(output_scale_);
+
   output_zp_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
-  if (output_zp_ == nullptr) {
-    MS_LOG(ERROR) << "malloc output_zp_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(output_zp_);
+
   if (output_tensor->quant_params().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {
       auto output_quant_arg = output_tensor->quant_params().front();
@@ -202,41 +189,26 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
   }
 
   conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(channel * sizeof(double)));
-  if (conv_quant_arg_->real_multiplier_ == nullptr) {
-    MS_LOG(ERROR) << "malloc conv_quant_arg_->real_multiplier_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(conv_quant_arg_->real_multiplier_);
+
   conv_quant_arg_->left_shift_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
-  if (conv_quant_arg_->left_shift_ == nullptr) {
-    MS_LOG(ERROR) << "malloc conv_quant_arg_->left_shift_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(conv_quant_arg_->left_shift_);
+
   conv_quant_arg_->right_shift_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
-  if (conv_quant_arg_->right_shift_ == nullptr) {
-    MS_LOG(ERROR) << "malloc conv_quant_arg_->right_shift_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(conv_quant_arg_->right_shift_);
+
   conv_quant_arg_->quant_multiplier_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
-  if (conv_quant_arg_->quant_multiplier_ == nullptr) {
-    MS_LOG(ERROR) << "malloc conv_quant_arg_->quant_multiplier_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(conv_quant_arg_->quant_multiplier_);
+
   conv_quant_arg_->out_act_min_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
-  if (conv_quant_arg_->out_act_min_ == nullptr) {
-    MS_LOG(ERROR) << "malloc conv_quant_arg_->out_act_min_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(conv_quant_arg_->out_act_min_);
+
   conv_quant_arg_->out_act_max_ = reinterpret_cast<int32_t *>(malloc(channel * sizeof(int32_t)));
-  if (conv_quant_arg_->out_act_max_ == nullptr) {
-    MS_LOG(ERROR) << "malloc conv_quant_arg_->out_act_max_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(conv_quant_arg_->out_act_max_);
 
   weight_scale_ = reinterpret_cast<float *>(malloc(channel * sizeof(float)));
-  if (weight_scale_ == nullptr) {
-    MS_LOG(ERROR) << "malloc weight_scale_ failed.";
-    return RET_ERROR;
-  }
+  MSLITE_CHECK_PTR(weight_scale_);
+
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   if (weight_tensor->quant_params().size() == kPerTensor) {
     for (int i = 0; i < channel; i++) {

@@ -19,90 +19,53 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/fusion/reduce_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
-                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                             std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ReduceParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::ReduceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::ReduceFusion>();
 
   if (tf_op.op() == "Sum") {
-    attr->mode = schema::ReduceMode_ReduceSum;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Sum);
   } else if (tf_op.op() == "Max") {
-    attr->mode = schema::ReduceMode_ReduceMax;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Max);
   } else if (tf_op.op() == "Min") {
-    attr->mode = schema::ReduceMode_ReduceMin;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Min);
   } else if (tf_op.op() == "Mean") {
-    attr->mode = schema::ReduceMode_ReduceMean;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Mean);
   } else if (tf_op.op() == "Prod") {
-    attr->mode = schema::ReduceMode_ReduceProd;
+    prim->set_mode(mindspore::ReduceMode::Reduce_Prod);
   } else if (tf_op.op() == "All") {
-    attr->mode = schema::ReduceMode_ReduceAll;
+    prim->set_mode(mindspore::ReduceMode::Reduce_All);
   } else {
     MS_LOG(ERROR) << "unsupported reduce mode: " << tf_op.op();
-    return RET_ERROR;
+    return nullptr;
   }
+
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "keep_dims", &attr_value)) {
     MS_LOG(ERROR) << "The keep_dims attr should be specified";
-    return RET_ERROR;
+    return nullptr;
   }
+
   if (attr_value.value_case() != tensorflow::AttrValue::kB) {
     MS_LOG(ERROR) << "the keep_dims attr of reduce should be bool type";
-    return RET_ERROR;
+    return nullptr;
   }
-  attr->keepDims = attr_value.b();
-
-  auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(1));
-  if (axis_node == nullptr) {
-    MS_LOG(ERROR) << "Find Reduce input axis failed";
-    return RET_ERROR;
-  }
-  if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
-    MS_LOG(ERROR) << "The value attr should be specified";
-    return RET_ERROR;
-  }
-  auto tensor_proto = attr_value.tensor();
-  if (tensor_proto.int_val_size() > 0) {
-    for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
-      attr->axes.push_back(tensor_proto.int_val(i));
-    }
-  } else {
-    auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
-    auto data = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
-    for (size_t i = 0; i < data_num; ++i) {
-      attr->axes.push_back(data[i]);
-    }
-  }
-
-  primitive->value.type = schema::PrimitiveType_Reduce;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_keep_dims(attr_value.b());
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
+  }
+
+  return prim.release();
 }
+
 TFNodeRegistrar g_tfSumParser("Sum", new TFReduceParser());
 TFNodeRegistrar g_tfMaxParser("Max", new TFReduceParser());
 TFNodeRegistrar g_tfMinParser("Min", new TFReduceParser());

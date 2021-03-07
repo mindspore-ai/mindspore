@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,17 @@
  */
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
-#include "src/ops/activation.h"
+#include "ops/fusion/activation.h"
+#include "ops/op_utils.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
 namespace {
 bool IsMulNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Mul;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimMulFusion);
   }
   return false;
 }
@@ -50,12 +48,12 @@ const AnfNodePtr SigmoidMulFusion::Process(const FuncGraphPtr &func_graph, const
   auto activation_cnode = mul_cnode->input(2)->cast<CNodePtr>();
   MS_ASSERT(activation_cnode != nullptr);
   // activation must sigmoid
-  auto primitive = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(activation_cnode->input(0));
-  auto activation_prim = utils::cast<std::shared_ptr<mindspore::lite::Activation>>(primitive);
-  if (activation_prim->GetType() != schema::ActivationType_SIGMOID) {
+  auto activation_prim = GetValueNode<std::shared_ptr<mindspore::ops::Activation>>(activation_cnode->input(0));
+  if (activation_prim == nullptr || (activation_prim->GetAttr(ops::kActivationType) != nullptr &&
+                                     activation_prim->get_activation_type() != mindspore::SIGMOID)) {
     return nullptr;
   }
-  activation_prim->SetType(schema::ActivationType_SWISH);
+  activation_prim->set_activation_type(mindspore::SWISH);
   return activation_cnode;
 }
 }  // namespace mindspore::opt

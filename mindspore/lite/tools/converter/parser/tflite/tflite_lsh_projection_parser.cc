@@ -17,37 +17,32 @@
 #include "tools/converter/parser/tflite/tflite_lsh_projection_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/lsh_projection.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteLshProjectionParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
-    return nullptr;
-  }
+ops::PrimitiveC *TfliteLshProjectionParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::LshProjection>();
 
-  std::unique_ptr<schema::LshProjectionT> attr = std::make_unique<schema::LshProjectionT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsLSHProjectionOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get op LshProjection attr failed";
+    return nullptr;
+  }
   switch (tflite_attr->type) {
     case tflite::LSHProjectionType_SPARSE:
-      attr->type = schema::LshProjectionType_SPARSE;
+      prim->set_type(mindspore::LshProjectionType::SPARSE);
       break;
     case tflite::LSHProjectionType_DENSE:
-      attr->type = schema::LshProjectionType_DENSE;
+      prim->set_type(mindspore::LshProjectionType::DENSE);
       break;
     default:
-      attr->type = schema::LshProjectionType_UNKNOWN;
+      prim->set_type(mindspore::LshProjectionType::UNKNOWN);
   }
-  primitive->value.type = schema::PrimitiveType_LshProjection;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteLshProjectionParser(tflite::BuiltinOperator_LSH_PROJECTION, new TfliteLshProjectionParser());

@@ -30,9 +30,8 @@ namespace mindspore::kernel {
 class BatchnormCPUKernel : public LiteKernel {
  public:
   BatchnormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                     const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   virtual ~BatchnormCPUKernel() { FreeMeanAndVariance(); }
 
   int Init() override;

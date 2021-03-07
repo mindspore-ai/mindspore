@@ -23,13 +23,24 @@
 
 namespace mindspore {
 namespace lite {
-class TFPoolParser : public TFNodeParser {
+class TFMaxPoolParser : public TFNodeParser {
  public:
-  TFPoolParser() = default;
-  ~TFPoolParser() override = default;
+  TFMaxPoolParser() = default;
+  ~TFMaxPoolParser() override = default;
 
-  STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
+  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
+                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                         std::vector<std::string> *inputs, int *output_size) override;
+};
+
+class TFAvgPoolParser : public TFNodeParser {
+ public:
+  TFAvgPoolParser() = default;
+  ~TFAvgPoolParser() override = default;
+
+  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
+                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                         std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore

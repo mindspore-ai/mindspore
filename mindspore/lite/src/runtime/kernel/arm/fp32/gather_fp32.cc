@@ -28,6 +28,7 @@ using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
 int GatherCPUKernel::Init() {
+  axis_ = *(reinterpret_cast<int *>(in_tensors_.at(2)->data_c()));
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -44,15 +45,13 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
-  auto axis = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
-
-  const int limit = in_shape.at(axis);
+  const int limit = in_shape.at(axis_);
 
   int outer_size = 1, inner_size = 1;
-  for (int i = 0; i < axis; ++i) {
+  for (int i = 0; i < axis_; ++i) {
     outer_size *= in_shape.at(i);
   }
-  for (int i = axis + 1; i < in_rank; ++i) {
+  for (int i = axis_ + 1; i < in_rank; ++i) {
     inner_size *= in_shape.at(i);
   }
   int stride = UP_DIV(outer_size, op_parameter_->thread_num_);

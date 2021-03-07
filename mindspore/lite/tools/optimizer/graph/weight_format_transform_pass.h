@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_PASS_FUSION_WEIGHT_FORMAT_TRANSFORM_PASS_H_
 #define MINDSPORE_LITE_SRC_PASS_FUSION_WEIGHT_FORMAT_TRANSFORM_PASS_H_
 #include <string>
+#include <vector>
 #include "schema/inner/model_generated.h"
 #include "tools/converter/converter_flags.h"
 #include "backend/optimizer/common/pass.h"
@@ -35,6 +36,10 @@ class WeightFormatTransformPass : public Pass {
 
  private:
   lite::STATUS ConvWeightFormatTrans(const FuncGraphPtr &graph);
+  lite::STATUS TransposeInsertForWeightSharing(const FuncGraphPtr &graph, const ParameterPtr &weight_node,
+                                               std::vector<int> perm);
+  lite::STATUS HandleWeightSharing(const FuncGraphPtr &graph, const ParameterPtr &weight_node,
+                                   schema::Format src_format, schema::Format dst_format);
 
  private:
   QuantType quant_type = schema::QuantType_QUANT_NONE;

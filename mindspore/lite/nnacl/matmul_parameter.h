@@ -59,6 +59,8 @@ typedef struct MatMulParameter {
   bool a_const_;
   bool b_const_;
   ActType act_type_;
+  bool use_axis_;
+  int axis_;
 } MatMulParameter;
 
 typedef struct MatmulQuantParameter {

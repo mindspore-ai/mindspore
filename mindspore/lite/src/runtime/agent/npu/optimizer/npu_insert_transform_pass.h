@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_INSERT_TRANSFORM_PASS_H_
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/ops/primitive_c.h"
 #include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
 
 namespace mindspore::lite {
@@ -32,12 +31,6 @@ class NPUInsertTransformPass : public NPUBasePass {
     name_ = "NPUInsertTransformPass";
   }
 
-  ~NPUInsertTransformPass() override {
-    for (auto primitive : insert_primitive_) {
-      delete primitive;
-    }
-    insert_primitive_.clear();
-  }
   int Run() override;
 
  private:
@@ -58,7 +51,6 @@ class NPUInsertTransformPass : public NPUBasePass {
   const InnerContext *context_;
   std::vector<kernel::LiteKernel *> *all_kernels_;
   std::vector<Tensor *> *all_tensors_;
-  std::vector<const PrimitiveC *> insert_primitive_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_INSERT_TRANSFORM_PASS_H_

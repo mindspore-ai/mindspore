@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include "src/kernel_registry.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_SoftMax;
+using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
 int SoftmaxNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -52,5 +52,5 @@ SoftmaxNPUKernel::~SoftmaxNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_SoftMax, NPUKernelCreator<SoftmaxNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Softmax, NPUKernelCreator<SoftmaxNPUKernel>)
 }  // namespace mindspore::kernel

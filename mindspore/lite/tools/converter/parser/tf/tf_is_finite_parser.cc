@@ -19,40 +19,21 @@
 #include <string>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "tools/common/node_util.h"
+#include "ops/is_finite.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFIsFiniteParser::Parse(const tensorflow::NodeDef &tf_op,
-                               const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  int status = CreateOperator<schema::IsFiniteT>(primitive, schema::PrimitiveType_IsFinite);
-  if (status != RET_OK) {
-    return status;
-  }
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+ops::PrimitiveC *TFIsFiniteParser::Parse(const tensorflow::NodeDef &tf_op,
+                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                         std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::IsFinite>();
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
 
-  return RET_OK;
+  return prim.release();
 }
 TFNodeRegistrar g_tf_is_finite_parser("IsFinite", new TFIsFiniteParser());
 }  // namespace lite

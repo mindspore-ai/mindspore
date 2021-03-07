@@ -23,14 +23,24 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
 class TfliteConvParser : public TfliteNodeParser {
  public:
   TfliteConvParser() : TfliteNodeParser("Conv2D") {}
 
-  lite::PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                       const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
-}  // namespace mindspore::lite
+
+class TfliteDepthwiseConv2DParser : public TfliteNodeParser {
+ public:
+  TfliteDepthwiseConv2DParser() : TfliteNodeParser("DepthwiseConv2D") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+}  // namespace lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_CONV_PARSER_H

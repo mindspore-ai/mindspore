@@ -40,10 +40,11 @@ class KernelRegistry {
   const kernel::KernelCreator *GetCreatorArrays();
   int GetCreatorFuncIndex(kernel::KernelKey desc);
   void RegKernel(kernel::KernelKey desc, kernel::KernelCreator creator);
-  void RegKernel(kernel::KERNEL_ARCH arch, TypeId data_type, schema::PrimitiveType type, kernel::KernelCreator creator);
+  void RegKernel(kernel::KERNEL_ARCH arch, TypeId data_type, int type, kernel::KernelCreator creator);
   bool Merge(const std::unordered_map<kernel::KernelKey, kernel::KernelCreator> &newCreators);
-  kernel::LiteKernel *GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                                const PrimitiveC *primitive, const InnerContext *ctx, const kernel::KernelKey &key);
+  int GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *op_parameter,
+                kernel::LiteKernel **kernel);
 
  protected:
   static const int device_type_length_{kKernelArch_MAX - kKernelArch_MIN + 1};
@@ -63,7 +64,7 @@ class KernelRegistrar {
   }
   ~KernelRegistrar() = default;
 
-  KernelRegistrar(const kernel::KERNEL_ARCH arch, const TypeId data_type, const schema::PrimitiveType op_type,
+  KernelRegistrar(const kernel::KERNEL_ARCH arch, const TypeId data_type, const int op_type,
                   kernel::KernelCreator creator) {
     KernelRegistry::GetInstance()->RegKernel(arch, data_type, op_type, creator);
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,23 @@
 
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include <vector>
+#include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
-#include "src/ops/primitive_c.h"
+#include "src/common/prim_util.h"
+#include "src/ops/populate/populate_register.h"
+#include "src/runtime/infer_manager.h"
+#include "tools/common/node_util.h"
 
-using mindspore::lite::PrimitiveC;
 using mindspore::lite::Tensor;
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr int DEFAULT_DIM_VALUE = -1;
-}
-namespace {
+constexpr size_t INITIAL_SIZE = 1024;
+
 void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> output_tensors) {
   for (auto &tensor : input_tensors) {
     delete tensor;
@@ -112,6 +115,35 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
   }
   return lite_tensors;
 }
+
+STATUS NodeInferShpae(const std::unique_ptr<schema::CNodeT> &node, const std::vector<Tensor *> &inputs,
+                      std::vector<Tensor *> *outputs) {
+  flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
+  auto prim = ConvertToPrimitive(node->primitive.get(), &fbb);
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "get primitive failed.";
+    fbb.Clear();
+    return RET_ERROR;
+  }
+  auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), SCHEMA_CUR);
+  if (parameter_gen == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
+    return RET_ERROR;
+  }
+  auto parameter = parameter_gen(prim);
+  if (parameter == nullptr) {
+    fbb.Clear();
+    MS_LOG(ERROR) << "parameter is nullptr.";
+    return RET_ERROR;
+  }
+  parameter->infer_flag_ = true;
+  auto ret = KernelInferShape(inputs, outputs, parameter);
+  fbb.Clear();
+  free(parameter);
+  return ret;
+}
+
 void PrintTensorShape(const std::vector<Tensor *> &input_tensors, const std::vector<Tensor *> &output_tensors) {
   int i = 0;
   for (auto input_tensor : input_tensors) {
@@ -165,26 +197,14 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       FreeTensors(input_tensors, output_tensors);
       return RET_INFER_ERR;
     }
-    std::unique_ptr<PrimitiveT> primitiveT(new (std::nothrow) PrimitiveT(*node->primitive));
-    if (primitiveT == nullptr) {
-      MS_LOG(ERROR) << "copy primitiveT error";
-      FreeTensors(input_tensors, output_tensors);
-      return RET_ERROR;
-    }
-    auto primitiveC = std::shared_ptr<PrimitiveC>(PrimitiveC::Create(primitiveT.release()));
-    if (primitiveC == nullptr) {
-      MS_LOG(ERROR) << "unpack primitiveT error";
-      FreeTensors(input_tensors, output_tensors);
-      return RET_ERROR;
-    }
-    auto ret = primitiveC->InferShape(input_tensors, output_tensors);
+    auto status = NodeInferShpae(node, input_tensors, &output_tensors);
     MS_LOG(DEBUG) << "cur node:" << node->name;
-    if (ret == RET_INFER_INVALID) {
+    if (status == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name
                    << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type) << "flag set to false.";
       FreeTensors(input_tensors, output_tensors);
       return RET_INFER_INVALID;
-    } else if (ret != RET_OK) {
+    } else if (status != RET_OK) {
       MS_LOG(WARNING) << "InferShape failed, name: " << node->name
                       << ", type: " << schema::EnumNamePrimitiveType(node->primitive->value.type);
       FreeTensors(input_tensors, output_tensors);

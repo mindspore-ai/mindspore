@@ -22,7 +22,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Sub;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
 int SubInt8CPUKernel::Init() {
@@ -128,12 +128,12 @@ int SubInt8CPUKernel::Run() {
     }
     tile0_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
     if (tile0_data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc memroy fail!";
+      MS_LOG(ERROR) << "malloc memory fail!";
       return RET_ERROR;
     }
     tile1_data_ = static_cast<int8_t *>(context_->allocator->Malloc(out_tensors_.at(0)->Size()));
     if (tile1_data_ == nullptr) {
-      MS_LOG(ERROR) << "malloc memroy fail!";
+      MS_LOG(ERROR) << "malloc memory fail!";
       context_->allocator->Free(tile0_data_);
       return RET_ERROR;
     }
@@ -152,35 +152,5 @@ int SubInt8CPUKernel::Run() {
   return ret;
 }
 
-kernel::LiteKernel *CpuSubInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                            const lite::InnerContext *ctx, const KernelKey &desc,
-                                            const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "ctx is nullptr";
-    free(parameter);
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == PrimitiveType_Sub);
-  auto *kernel = new (std::nothrow) SubInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Sub, LiteKernelCreator<SubInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SubFusion, LiteKernelCreator<SubInt8CPUKernel>)
 }  // namespace mindspore::kernel

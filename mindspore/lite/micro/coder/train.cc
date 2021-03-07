@@ -17,10 +17,13 @@
 #include "coder/train.h"
 #include <memory>
 #include <set>
-#include <map>
+#include <array>
 #include <queue>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include "schema/ops_generated.h"
+#include "src/common/prim_util.h"
 
 namespace mindspore::lite::micro {
 
@@ -53,17 +56,17 @@ std::set<OperatorCoder *> FindInferenceOpcoders(OperatorCoder *edge) {
 }
 
 int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::unique_ptr<OperatorCoder>> &op_coders) {
-  const std::set<schema::PrimitiveType> loss_types = {schema::PrimitiveType_SoftmaxCrossEntropy,
-                                                      schema::PrimitiveType_SparseSoftmaxCrossEntropy,
-                                                      schema::PrimitiveType_BinaryCrossEntropy,
-                                                      schema::PrimitiveType_SmoothL1Loss,
-                                                      schema::PrimitiveType_SmoothL1LossGrad,
-                                                      schema::PrimitiveType_SigmoidCrossEntropyWithLogits,
-                                                      schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad};
+  const std::array<int, 6> loss_types = {schema::PrimitiveType_SparseSoftmaxCrossEntropy,
+                                         schema::PrimitiveType_BinaryCrossEntropy,
+                                         schema::PrimitiveType_SmoothL1Loss,
+                                         schema::PrimitiveType_SmoothL1LossGrad,
+                                         schema::PrimitiveType_SigmoidCrossEntropyWithLogits,
+                                         schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad};
   OperatorCoder *loss_op = nullptr;
   for (const auto &opcoder : op_coders) {
-    auto primitive_type = static_cast<schema::PrimitiveType>(opcoder->primitive()->Type());
-    auto item = loss_types.find(primitive_type);
+    const Model::Node *node = opcoder->node();
+    int primitive_type = GetPrimitiveType(node->primitive_);
+    auto item = std::find(loss_types.begin(), loss_types.end(), primitive_type);
     if (item != loss_types.end()) {
       loss_op = opcoder.get();
       break;

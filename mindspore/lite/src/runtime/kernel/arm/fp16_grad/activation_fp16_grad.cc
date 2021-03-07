@@ -52,13 +52,11 @@ int ActivationGradCPUKernelFp16::DoActivation(int task_id) {
 
   auto error_code = RET_OK;
 
-  if (param_act_grad_->type_ == schema::ActivationGradType_RELU) {
+  if (param_act_grad_->type_ == schema::ActivationType_RELU) {
     error_code = Fp16ReluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationGradType_SIGMOID) {
+  } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
     // Sigmoid gets the input tensors in reverse order!
     error_code = Fp16SigmoidGrad(input_addr + start, yt_addr + start, count, output_addr + start);
-  } else if (param_act_grad_->type_ == schema::ActivationGradType_LOG) {
-    error_code = Fp16LogGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;

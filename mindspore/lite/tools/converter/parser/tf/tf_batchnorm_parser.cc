@@ -19,46 +19,26 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/fused_batch_norm.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFBatchNormParser::Parse(const tensorflow::NodeDef &tf_op,
-                                const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF BatchNormParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFBatchNormParser::Parse(const tensorflow::NodeDef &tf_op,
+                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                          std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::FusedBatchNorm>();
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::FusedBatchNormT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
   tensorflow::AttrValue attr_value;
   TensorFlowUtils::FindAttrValue(tf_op, "epsilon", &attr_value);
-  attr->epsilon = attr_value.f();
-
-  primitive->value.type = schema::PrimitiveType_FusedBatchNorm;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_epsilon(attr_value.f());
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {
     inputs->emplace_back(tf_op.input(i));
   }
-  return RET_OK;
+  return prim.release();
 }
+
 TFNodeRegistrar g_tfBatchNormParser("FusedBatchNormV3", new TFBatchNormParser());
 TFNodeRegistrar g_tfFusedBatchNormParser("FusedBatchNorm", new TFBatchNormParser());
 }  // namespace lite

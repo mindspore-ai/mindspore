@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,15 @@ TEST_F(TestTfliteParserL2Norm, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_L2Norm) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_L2NormalizeFusion)
+    << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserL2Norm, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsL2Norm(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsL2Norm();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsL2NormalizeFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsL2NormalizeFusion();
   ASSERT_EQ(val->epsilon, 0.0);
-  std::vector<int32_t> axis = {0, 1, 2, 3};
+  std::vector<int64_t> axis = {0, 1, 2, 3};
   ASSERT_EQ(val->axis, axis);
 }
 

@@ -24,10 +24,9 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::string &module_name, con
                          Target target) {
   ofs << "include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/)\n";
   if (target == kARM32M) {
-    ofs << "include_directories(${OP_HEADER_PATH}/cmsis)\n"
-        << "include_directories(${OP_HEADER_PATH}/cmsis/CMSIS/NN/Include)\n"
-        << "include_directories(${OP_HEADER_PATH}/cmsis/CMSIS/DSP/Include)\n"
-        << "include_directories(${OP_HEADER_PATH}/cmsis/CMSIS/Core/Include)\n";
+    ofs << "include_directories(${OP_HEADER_PATH}/CMSIS/NN/Include)\n"
+        << "include_directories(${OP_HEADER_PATH}/CMSIS/DSP/Include)\n"
+        << "include_directories(${OP_HEADER_PATH}/CMSIS/Core/Include)\n";
   }
   ofs << "set(OP_SRC\n";
   for (const std::string &c_file : ctx->c_files()) {
@@ -38,7 +37,7 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::string &module_name, con
       << ")\n";
 
   std::set<std::string> kernel_cmake_asm_set_files = ctx->asm_files();
-  if (!kernel_cmake_asm_set_files.empty()) {
+  if (!kernel_cmake_asm_set_files.empty() && (target == kARM32A || target == kARM64)) {
     ofs << "set(ASSEMBLY_SRC\n";
     for (const std::string &asm_file : kernel_cmake_asm_set_files) {
       ofs << "    " << asm_file << ".o\n";

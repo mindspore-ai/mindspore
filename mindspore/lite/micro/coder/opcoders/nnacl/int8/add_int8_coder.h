@@ -18,17 +18,15 @@
 #define MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_ADD_INT8_CODER_H_
 
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/int8/add_int8.h"
 
-namespace mindspore::lite::micro {
-class AddInt8Coder : public OperatorCoder {
+namespace mindspore::lite::micro::nnacl {
+class AddInt8Coder final : public OperatorCoder {
  public:
   AddInt8Coder(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                const Model::Node *node, size_t node_index, Target target)
-      : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {
-    arith_para_ = reinterpret_cast<ArithmeticParameter *>(parameter_);
-  }
+      : OperatorCoder(in_tensors, out_tensors, node, node_index, target) {}
 
   ~AddInt8Coder() override = default;
 
@@ -49,5 +47,5 @@ class AddInt8Coder : public OperatorCoder {
   int elements_num_{0};
   bool support_opt_add_{false};
 };
-}  // namespace mindspore::lite::micro
+}  // namespace mindspore::lite::micro::nnacl
 #endif  // MINDSPORE_LITE_MICRO_CODER_OPCODERS_NNACL_ADD_INT8_CODER_H_

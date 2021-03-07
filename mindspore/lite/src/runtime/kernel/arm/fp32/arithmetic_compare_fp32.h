@@ -26,9 +26,8 @@ typedef int (*ArithmeticCompareIntFunc)(const int *input0, const int *input1, ui
 class ArithmeticCompareCPUKernel : public ArithmeticCPUKernel {
  public:
   explicit ArithmeticCompareCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                      const mindspore::lite::PrimitiveC *primitive)
-      : ArithmeticCPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ArithmeticCPUKernel(parameter, inputs, outputs, ctx) {
     switch (parameter->type_) {
       case PrimitiveType_Equal:
         func_fp32_ = ElementEqualFp32;

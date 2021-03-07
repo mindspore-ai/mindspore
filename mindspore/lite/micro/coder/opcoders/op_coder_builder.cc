@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "micro/coder/opcoders/op_coder_builder.h"
+#include "coder/opcoders/op_coder_builder.h"
 #include <vector>
 #include <memory>
 #include "micro/coder/allocator/allocator.h"
+#include "src/common/prim_util.h"
+#include "src/common/version_manager.h"
 #include "src/ops/populate/populate_register.h"
+#include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
 
-constexpr int kMAX_THREAD_NUM_SUPPORT = 4;
 std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
-  if (node_->primitive_ == nullptr) {
-    return nullptr;
-  }
-  auto primitive_type = static_cast<schema::PrimitiveType>(node_->primitive_->Type());
+  MS_CHECK_PTR_RET_NULL(node_->primitive_);
+  int primitive_type = GetPrimitiveType(node_->primitive_);
   CoderKey coder_key(target_, data_type_, primitive_type);
   CoderCreatorFunc creator_func = OpCoderFactory::GetInstance()->FindOpCoder(coder_key);
   if (creator_func == nullptr) {
@@ -52,16 +52,22 @@ std::unique_ptr<OperatorCoder> OpCoderBuilder::build() {
                   << " code_target: " << target_ << " data_type: " << EnumNameDataType(data_type_);
     return op_coder;
   }
-  OpParameter *parameter =
-    PopulateRegistry::GetInstance()->GetParameterCreator((schema::PrimitiveType(primitive_type)))(node_->primitive_);
+  int schema_version = VersionManager::GetInstance()->GetSchemaVersion();
+  ParameterGen paramGen =
+    PopulateRegistry::GetInstance()->GetParameterCreator(GetPrimitiveType(node_->primitive_), schema_version);
+  if (paramGen == nullptr) {
+    MS_LOG(ERROR) << "parameter generator is null";
+    return nullptr;
+  }
+  OpParameter *parameter = paramGen(node_->primitive_);
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
-                  << schema::EnumNamePrimitiveType((schema::PrimitiveType)(primitive_type));
+                  << PrimitiveTypeName(GetPrimitiveType(node_->primitive_));
     return nullptr;
   }
   op_coder->set_input_tensor_indices(input_indices_);
   op_coder->set_output_tensor_indices(output_indices_);
-  int thread_num = this->mode_ == CodeMode::Code_Inference ? kMAX_THREAD_NUM_SUPPORT : 1;
+  int thread_num = support_parallel_ ? kMaxThreadNumSupported : 1;
   op_coder->set_thread_num(thread_num);
   parameter->thread_num_ = thread_num;
   op_coder->set_parameter(parameter);
@@ -105,6 +111,11 @@ OpCoderBuilder &OpCoderBuilder::output_indices(const std::vector<uint32_t> &indi
 
 OpCoderBuilder &OpCoderBuilder::target(Target target) {
   this->target_ = target;
+  return *this;
+}
+
+OpCoderBuilder &OpCoderBuilder::support_parallel(bool parallel) {
+  support_parallel_ = parallel;
   return *this;
 }
 

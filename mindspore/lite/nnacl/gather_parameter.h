@@ -23,7 +23,7 @@ typedef struct GatherParameter {
   // Primitive parameter
   OpParameter op_parameter_;
   int axis_;
-  int batchDims_;
+  int quant_type_;
 } GatherParameter;
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_NNACL_GATHER_PARAMETER_H_

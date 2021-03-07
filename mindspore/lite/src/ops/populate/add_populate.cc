@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/add.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/arithmetic.h"
 #include "src/ops/populate/arithmetic_populate.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateAddParameter(const mindspore::lite::PrimitiveC *primitive) {
-  ArithmeticParameter *param = PopulateArithmeticCommonPara(primitive);
+namespace {
+OpParameter *PopulateAddParameter(const void *prim) {
+  ArithmeticParameter *param = PopulateArithmeticCommonPara(prim);
   if (param == nullptr) {
     MS_LOG(ERROR) << "PopulateArithmeticCommonPara failed.";
     return nullptr;
   }
-  param->activation_type_ = reinterpret_cast<const mindspore::lite::Add *>(primitive)->GetActivationType();
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  param->op_parameter_.type_ = primitive->value_type();
+  auto add_prim = primitive->value_as_AddFusion();
+  param->activation_type_ = add_prim->activation_type();
   return reinterpret_cast<OpParameter *>(param);
 }
-Registry AddParameterRegistry(schema::PrimitiveType_Add, PopulateAddParameter);
-
+}  // namespace
+Registry g_addParameterRegistry(schema::PrimitiveType_AddFusion, PopulateAddParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

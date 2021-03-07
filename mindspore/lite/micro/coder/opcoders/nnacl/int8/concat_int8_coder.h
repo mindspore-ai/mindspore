@@ -19,7 +19,7 @@
 
 #include <cstring>
 #include <vector>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "nnacl/int8/concat_int8.h"
 
 namespace mindspore::lite::micro::nnacl {

@@ -63,7 +63,7 @@ TEST_F(TestLshProjectionFp32, Dense1DInputs) {
   auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();
@@ -103,7 +103,7 @@ TEST_F(TestLshProjectionFp32, Sparse1DInputs) {
   auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();
@@ -147,7 +147,7 @@ TEST_F(TestLshProjectionFp32, Sparse3DInputs) {
   auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(&parameter), ctx.get(), desc);
   ASSERT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();

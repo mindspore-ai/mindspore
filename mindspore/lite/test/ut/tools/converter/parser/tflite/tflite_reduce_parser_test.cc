@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,14 @@ TEST_F(TestTfliteParserReduceMax, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reduce) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ReduceFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserReduceMax, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduceFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsReduceFusion();
   ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMax);
-  ASSERT_EQ(val->keepDims, false);
-  std::vector<int32_t> axes = {2};
-  ASSERT_EQ(val->axes, axes);
+  ASSERT_EQ(val->keep_dims, false);
 }
 
 class TestTfliteParserReduceMin : public TestTfliteParser {
@@ -50,16 +48,14 @@ TEST_F(TestTfliteParserReduceMin, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reduce) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ReduceFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserReduceMin, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduceFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsReduceFusion();
   ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMin);
-  ASSERT_EQ(val->keepDims, false);
-  std::vector<int32_t> axes = {2};
-  ASSERT_EQ(val->axes, axes);
+  ASSERT_EQ(val->keep_dims, false);
 }
 
 class TestTfliteParserReduceProd : public TestTfliteParser {
@@ -72,16 +68,14 @@ TEST_F(TestTfliteParserReduceProd, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reduce) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ReduceFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserReduceProd, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduceFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsReduceFusion();
   ASSERT_EQ(val->mode, schema::ReduceMode_ReduceProd);
-  ASSERT_EQ(val->keepDims, false);
-  std::vector<int32_t> axes = {2};
-  ASSERT_EQ(val->axes, axes);
+  ASSERT_EQ(val->keep_dims, false);
 }
 
 class TestTfliteParserSum : public TestTfliteParser {
@@ -95,16 +89,14 @@ TEST_F(TestTfliteParserSum, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reduce) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ReduceFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserSum, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduceFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsReduceFusion();
   ASSERT_EQ(val->mode, schema::ReduceMode_ReduceSum);
-  ASSERT_EQ(val->keepDims, false);
-  std::vector<int32_t> axes = {2};
-  ASSERT_EQ(val->axes, axes);
+  ASSERT_EQ(val->keep_dims, false);
 }
 
 class TestTfliteParserMean : public TestTfliteParser {
@@ -118,16 +110,14 @@ TEST_F(TestTfliteParserMean, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reduce) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ReduceFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserMean, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduce(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsReduce();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReduceFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsReduceFusion();
   ASSERT_EQ(val->mode, schema::ReduceMode_ReduceMean);
-  ASSERT_EQ(val->keepDims, true);
-  std::vector<int32_t> axes = {2, 3};
-  ASSERT_EQ(val->axes, axes);
+  ASSERT_EQ(val->keep_dims, true);
 }
 
 // reduceAny

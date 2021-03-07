@@ -24,12 +24,12 @@
 #include <queue>
 #include <map>
 #include <memory>
-#include <fstream>
-#include "src/common/log_adapter.h"
-#include "src/ops/primitive_c.h"
-#include "securec/include/securec.h"
-#include "src/param_value_lite.h"
 #include "ir/func_graph.h"
+#include "ir/primitive.h"
+#include "schema/inner/model_generated.h"
+#include "securec/include/securec.h"
+#include "src/common/log_adapter.h"
+#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
@@ -58,10 +58,8 @@ class HuffmanEncode {
 
   ~HuffmanEncode();
 
-  STATUS GetParamValueLitePtr(const std::shared_ptr<AnfNode> &input_node, ParamValueLitePtr *param_value);
-
-  STATUS DoHuffmanEncode(const ParamValueLitePtr &weight, const std::shared_ptr<PrimitiveC> &primitive_c,
-                         void *quant_datas, const size_t &bit_num);
+  STATUS DoHuffmanEncode(const ParamValueLitePtr &weight, const PrimitivePtr &primitive, void *quant_datas,
+                         const size_t &bit_num);
 
  private:
   std::map<int, std::string> huffman_table_;

@@ -17,23 +17,19 @@
 #include "tools/converter/parser/tflite/tflite_softmax_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/softmax.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteSoftmaxParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::Softmax>();
 
-PrimitiveC *TfliteSoftmaxParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  std::unique_ptr<schema::SoftMaxT> attr = std::make_unique<schema::SoftMaxT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
+  prim->set_axis({-1});
 
-  attr->axis = -1;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_SoftMax;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSoftmaxParser(tflite::BuiltinOperator_SOFTMAX, new TfliteSoftmaxParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

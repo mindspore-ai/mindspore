@@ -20,7 +20,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_LayerNorm;
+using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
 LayerNormInt8CPUKernel::~LayerNormInt8CPUKernel() {
@@ -131,5 +131,5 @@ int LayerNormInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LayerNorm, LiteKernelCreator<LayerNormInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LayerNormFusion, LiteKernelCreator<LayerNormInt8CPUKernel>)
 }  // namespace mindspore::kernel

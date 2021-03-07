@@ -14,25 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_ENTER_H_
-#define LITE_MINDSPORE_LITE_C_OPS_ENTER_H_
+#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_ENTER_H_
+#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_ENTER_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
-#include "src/ops/primitive_c.h"
+#include "ops/primitive_c.h"
+
+using mindspore::ops::PrimitiveC;
 
 namespace mindspore {
 namespace lite {
-
+constexpr auto kNameEnter = "Enter";
 class Enter : public PrimitiveC {
  public:
-  Enter() { op_type_ = ConverterPrimitiveType_Enter; }
+  Enter() : PrimitiveC(kNameEnter) {}
   ~Enter() = default;
   MS_DECLARE_PARENT(Enter, PrimitiveC);
-  explicit Enter(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_ENTER_H_
+#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_ENTER_H_

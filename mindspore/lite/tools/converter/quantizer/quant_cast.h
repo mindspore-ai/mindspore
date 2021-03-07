@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER__QUANT_CAST_H
 
-#include "mindspore/core/ir/anf.h"
-#include "mindspore/lite/include/errorcode.h"
+#include "include/errorcode.h"
+#include "ir/anf.h"
 #include "ir/dtype/type_id.h"
-#include "mindspore/core/ir/func_graph.h"
+#include "ir/func_graph.h"
 
 namespace mindspore::lite::quant {
 class QuantCast {

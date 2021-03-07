@@ -14,61 +14,72 @@
  * limitations under the License.
  */
 
-#include <string>
-#include "micro/coder/opcoders/op_coder.h"
-#include "micro/coder/opcoders/file_collector.h"
-#include "micro/coder/opcoders/base/quant_dtype_cast_coder.h"
-#include "micro/coder/opcoders/serializers/serializer.h"
+#include "coder/opcoders/op_coder.h"
+#include "coder/opcoders/file_collector.h"
+#include "coder/opcoders/base/quant_dtype_cast_coder.h"
+#include "coder/opcoders/serializers/serializer.h"
+#include "coder/utils/type_cast.h"
 
 using mindspore::schema::PrimitiveType_QuantDTypeCast;
 
 namespace mindspore::lite::micro {
-
 int QuantDTypeCastCoder::Prepare(CoderContext *const context) {
-  this->cast_param_ = reinterpret_cast<QuantDTypeCastParameter *>(parameter_);
-
-  if (cast_param_->srcT == kNumberTypeFloat32 && cast_param_->dstT == kNumberTypeInt8) {
-    if (input_tensor_->data_type() != kNumberTypeFloat32 || output_tensor_->data_type() != kNumberTypeInt8) {
-      MS_LOG(ERROR) << "cast_param_ data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-    inverse_ = false;
-  } else if (cast_param_->srcT == kNumberTypeInt8 && cast_param_->dstT == kNumberTypeFloat32) {
-    if (input_tensor_->data_type() != kNumberTypeInt8 || output_tensor_->data_type() != kNumberTypeFloat32) {
-      MS_LOG(ERROR) << "cast_param_ data type and tensor data type do not match.";
-      return RET_ERROR;
-    }
-    inverse_ = true;
-  } else {
-    MS_LOG(ERROR) << "cast_param_ data type not supported:"
-                  << " src: " << cast_param_->srcT << " dst: " << cast_param_->dstT;
-    return RET_PARAM_INVALID;
+  auto *param = reinterpret_cast<QuantDTypeCastParameter *>(parameter_);
+  if (input_tensor_->data_type() != static_cast<TypeId>(param->srcT) ||
+      output_tensor_->data_type() != static_cast<TypeId>(param->dstT)) {
+    MS_LOG(ERROR) << "param data type not supported:"
+                  << " src: " << param->srcT << " dst: " << param->dstT;
+    return RET_ERROR;
   }
+  src_dtype = static_cast<TypeId>(param->srcT);
+  dst_dtype = static_cast<TypeId>(param->dstT);
   return RET_OK;
 }
 
 int QuantDTypeCastCoder::DoCode(CoderContext *const context) {
-  // get quant params
-  QuantArg in_quant_arg = input_tensor_->quant_params().at(0);
-
-  // single thread for now
+  if (input_tensor_->quant_params().empty() && output_tensor_->quant_params().empty()) {
+    MS_LOG(ERROR) << "QuantDTypeCast need quantization parameters which is not found.";
+    return RET_ERROR;
+  }
+  auto quant_arg = (!output_tensor_->quant_params().empty() && output_tensor_->quant_params().at(0).inited)
+                     ? output_tensor_->quant_params().at(0)
+                     : input_tensor_->quant_params().at(0);
   int num_unit_thread = input_tensor_->ElementsNum();
 
-  // generate code .h .c
   Collect(context, {"nnacl/int8/quant_dtype_cast_int8.h"}, {"quant_dtype_cast_int8.c"});
-
   Serializer code;
   code.precision(kPrecision);
-  std::string function = inverse_ ? "DoDequantizeInt8ToFp32" : "DoQuantizeFp32ToInt8";
-  code.CodeFunction(function, input_tensor_, output_tensor_, in_quant_arg.scale, in_quant_arg.zeroPoint,
-                    num_unit_thread);
-
+  if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
+    code.CodeFunction("DoDequantizeInt8ToFp32", input_tensor_, output_tensor_, quant_arg.scale, quant_arg.zeroPoint,
+                      num_unit_thread);
+  } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeInt8) {
+    bool from_uint8_src = false;
+    if (quant_arg.dstDtype == TypeId::kNumberTypeUInt8) {
+      from_uint8_src = true;
+    }
+    code.CodeFunction("DoQuantizeFp32ToInt8", input_tensor_, output_tensor_, quant_arg.scale, quant_arg.zeroPoint,
+                      num_unit_thread, from_uint8_src);
+  } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
+    code.CodeFunction("Int8ToUInt8", input_tensor_, output_tensor_, num_unit_thread);
+  } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {
+    code.CodeFunction("DoDequantizeUInt8ToFp32", input_tensor_, output_tensor_, quant_arg.scale, quant_arg.zeroPoint,
+                      num_unit_thread);
+  } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeUInt8) {
+    code.CodeFunction("DoQuantizeFp32ToUInt8", input_tensor_, output_tensor_, quant_arg.scale, quant_arg.zeroPoint,
+                      num_unit_thread);
+  } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeInt8) {
+    code.CodeFunction("UInt8ToInt8", input_tensor_, output_tensor_, num_unit_thread);
+  } else {
+    MS_LOG(INFO) << "unsupported type cast, src: " << EnumNameDataType(src_dtype)
+                 << ", dst: " << EnumNameDataType(dst_dtype);
+    return RET_ERROR;
+  }
   context->AppendCode(code.str());
-
   return RET_OK;
 }
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_QuantDTypeCast,
                    CPUOpCoderCreator<QuantDTypeCastCoder>)
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeInt8, PrimitiveType_QuantDTypeCast, CPUOpCoderCreator<QuantDTypeCastCoder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeUInt8, PrimitiveType_QuantDTypeCast, CPUOpCoderCreator<QuantDTypeCastCoder>)
 }  // namespace mindspore::lite::micro

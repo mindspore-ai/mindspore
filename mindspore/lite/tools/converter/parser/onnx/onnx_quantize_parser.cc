@@ -16,35 +16,25 @@
 
 #include "tools/converter/parser/onnx/onnx_quantize_parser.h"
 #include <memory>
+#include "ops/quant_dtype_cast.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxQuantizeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                         const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx QuantizeDequantizeParser";
-  auto attr = std::make_unique<schema::QuantDTypeCastT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed.";
-    return nullptr;
-  }
+ops::PrimitiveC *OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::QuantDTypeCast>();
+
   if (onnx_node.op_type() == "Int8Quantize") {
-    attr->srcT = kNumberTypeFloat32;
-    attr->dstT = kNumberTypeUInt8;
+    prim->set_src_t(kNumberTypeFloat32);
+    prim->set_dst_t(kNumberTypeUInt8);
   } else if (onnx_node.op_type() == "Int8Dequantize") {
-    attr->srcT = kNumberTypeUInt8;
-    attr->dstT = kNumberTypeFloat32;
+    prim->set_src_t(kNumberTypeUInt8);
+    prim->set_dst_t(kNumberTypeFloat32);
   } else {
     MS_LOG(ERROR) << "Unsupported nodeType: " << onnx_node.op_type().c_str();
     return nullptr;
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxQuantizeParser());

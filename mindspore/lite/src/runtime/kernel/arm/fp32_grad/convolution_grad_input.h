@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class ConvolutionGradInputCPUKernel : public LiteKernel {
  public:
   explicit ConvolutionGradInputCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionGradInputCPUKernel() override {}
 
   int Init() override;

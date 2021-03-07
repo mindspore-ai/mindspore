@@ -19,14 +19,14 @@
 #include "include/lite_utils.h"
 
 namespace mindspore::lite {
-class PrimitiveC;
 struct MS_API Model {
   struct Node {
     String name_;
     NodeType node_type_;
-    PrimitiveC *primitive_;
+    const void *primitive_;
     Uint32Vector input_indices_;
     Uint32Vector output_indices_;
+    int quant_type_;
   };
   using NodePtrVector = std::vector<Node *>;
   struct SubGraph {
@@ -55,7 +55,7 @@ struct MS_API Model {
   /// \brief Free meta graph temporary buffer
   virtual void Free() = 0;
 
-  /// \brief Free all temporay buffer.EG: nodes in the model.
+  /// \brief Free all temporary buffer.EG: nodes in the model.
   virtual void Destroy() = 0;
 
   /// \brief Model destruct, free all memory

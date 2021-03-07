@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,25 +29,19 @@ TEST_F(TestTfliteParserMaxPooling, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Pooling) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_MaxPoolFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserMaxPooling, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPooling(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsPooling();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsMaxPoolFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsMaxPoolFusion();
   ASSERT_EQ(val->format, schema::Format_NHWC);
-  ASSERT_EQ(val->poolingMode, schema::PoolMode_MAX_POOLING);
   ASSERT_EQ(val->global, false);
-  ASSERT_EQ(val->windowW, 2);
-  ASSERT_EQ(val->windowH, 2);
-  ASSERT_EQ(val->strideW, 1);
-  ASSERT_EQ(val->strideH, 1);
-  ASSERT_EQ(val->padMode, schema::PadMode_VALID);
-  ASSERT_EQ(val->padUp, 0);
-  ASSERT_EQ(val->padDown, 0);
-  ASSERT_EQ(val->padLeft, 0);
-  ASSERT_EQ(val->padRight, 0);
-  ASSERT_EQ(val->roundMode, schema::RoundMode_FLOOR);
+  ASSERT_EQ(val->kernel_size, (std::vector<int64_t>{2, 2}));
+  ASSERT_EQ(val->strides, (std::vector<int64_t>{1, 1}));
+  ASSERT_EQ(val->pad_mode, schema::PadMode_VALID);
+  ASSERT_EQ(val->pad, (std::vector<int64_t>{0, 0, 0, 0}));
+  ASSERT_EQ(val->round_mode, schema::RoundMode_FLOOR);
 }
 
 class TestTfliteParserAvgPooling : public TestTfliteParser {
@@ -60,24 +54,18 @@ TEST_F(TestTfliteParserAvgPooling, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Pooling) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_AvgPoolFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserAvgPooling, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsPooling(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsPooling();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsAvgPoolFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsAvgPoolFusion();
   ASSERT_EQ(val->format, schema::Format_NHWC);
-  ASSERT_EQ(val->poolingMode, schema::PoolMode_MEAN_POOLING);
   ASSERT_EQ(val->global, false);
-  ASSERT_EQ(val->windowW, 2);
-  ASSERT_EQ(val->windowH, 2);
-  ASSERT_EQ(val->strideW, 1);
-  ASSERT_EQ(val->strideH, 1);
-  ASSERT_EQ(val->padMode, schema::PadMode_SAME_UPPER);
-  ASSERT_EQ(val->padUp, 0);
-  ASSERT_EQ(val->padDown, 1);
-  ASSERT_EQ(val->padLeft, 0);
-  ASSERT_EQ(val->padRight, 1);
-  ASSERT_EQ(val->roundMode, schema::RoundMode_FLOOR);
+  ASSERT_EQ(val->kernel_size, (std::vector<int64_t>{2, 2}));
+  ASSERT_EQ(val->strides, (std::vector<int64_t>{1, 1}));
+  ASSERT_EQ(val->pad, (std::vector<int64_t>{0, 1, 0, 1}));
+  ASSERT_EQ(val->pad_mode, schema::PadMode_SAME);
+  ASSERT_EQ(val->round_mode, schema::RoundMode_FLOOR);
 }
 }  // namespace mindspore

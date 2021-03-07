@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LITE_TFLITE_MODEL_PARSER_H
-#define LITE_TFLITE_MODEL_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H
 
 #include <string>
 #include <unordered_map>
@@ -24,7 +24,8 @@
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 #include "tools/common/tensor_util.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
 class TfliteModelParser : public ModelParser {
  public:
   TfliteModelParser() = default;
@@ -33,8 +34,6 @@ class TfliteModelParser : public ModelParser {
 
   FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
                      const QuantType &quant_type) override;
-  MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                        const QuantType &quant_type) override;
 
  private:
   std::unordered_map<int, AnfNodePtr> nodes_;
@@ -44,12 +43,13 @@ class TfliteModelParser : public ModelParser {
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
   STATUS ConvertConstTensor(const tflite::TensorT *tensor, Parameter *parameter, const std::string &tensor_name);
   STATUS ConvertOutputTensor(const tflite::OperatorT *op, const CNodePtr &dst_cnode);
-  STATUS ConvertOpQuantParams(const tflite::OperatorT *op, lite::PrimitiveC *primitive_c);
+  STATUS ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *primitive_c);
   STATUS ConvertOps();
   STATUS ConvertGraphInputs();
   STATUS ConvertGraphOutputs();
   static STATUS SetTensorQuantParam(const tflite::TensorT *tflite_tensor, std::vector<QuantParamT> *quant_params,
                                     int round_type = 1);
 };
-}  // namespace mindspore::lite
-#endif  // LITE_TFLITE_MODEL_PARSER_H
+}  // namespace lite
+}  // namespace mindspore
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_MODEL_PARSER_H

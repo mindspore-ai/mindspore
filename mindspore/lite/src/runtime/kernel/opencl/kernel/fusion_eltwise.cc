@@ -19,6 +19,7 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/scale.h"
+#include "src/common/prim_inner.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -61,14 +62,14 @@ std::pair<bool, FusionEltwiseParameter *> CheckSupportOrCreateParam(
       param = reinterpret_cast<FusionEltwiseParameter *>(eltwise->GetParameter());
       eltwise->ClearParameter();
     }
-  } else if (IsArithmetic(node_type) || node_type == schema::PrimitiveType_Scale) {
+  } else if (IsArithmetic(node_type) || node_type == schema::PrimitiveType_ScaleFusion) {
     auto *arith_param = reinterpret_cast<ArithmeticParameter *>(op_parameter);
     auto *scale_param = reinterpret_cast<ScaleParameter *>(op_parameter);
     auto act_type = static_cast<ActivationType>(
-      node_type == schema::PrimitiveType_Scale ? scale_param->activation_type_ : arith_param->activation_type_);
+      node_type == schema::PrimitiveType_ScaleFusion ? scale_param->activation_type_ : arith_param->activation_type_);
     EltwiseOperator act_operator = Activation2Operator(act_type);
     support = SupportedOperators.count(operator_) && SupportedOperators.count(act_operator);
-    if (node_type == schema::PrimitiveType_Scale) {
+    if (node_type == schema::PrimitiveType_ScaleFusion) {
       support = support && node->in_tensors().size() == 3 && scale_param->axis_ == -1;
     } else {
       support = support && (node->in_tensors().size() == 2);
@@ -415,7 +416,7 @@ int FusionEltwiseOpenCLKernel::GetTensorIdx(lite::Tensor *in_tensor) {
       MS_ASSERT(in_kernel);
       MS_ASSERT(in_kernel->in_tensors().size());
       MS_ASSERT(in_kernel->out_tensors().size());
-      if (in_kernel->Type() == schema::PrimitiveType_ToFormat) {
+      if (static_cast<int>(in_kernel->Type()) == lite::PRIM_TO_FORMAT) {
         if (in_tensor == in_kernel->in_tensors().front()) {
           return std::find(in_tensors_.begin(), in_tensors_.end(), in_kernel->out_tensors().front()) -
                  in_tensors_.begin();

@@ -20,7 +20,7 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_Tile;
+using mindspore::schema::PrimitiveType_TileFusion;
 
 namespace mindspore::lite::micro::nnacl {
 void TileFP32Coder::ComputeStrides(const int *shape, int *strides, int ndim) const {
@@ -63,6 +63,6 @@ int TileFP32Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_Tile, CPUOpCoderCreator<TileFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_TileFusion, CPUOpCoderCreator<TileFP32Coder>)
 
 }  // namespace mindspore::lite::micro::nnacl

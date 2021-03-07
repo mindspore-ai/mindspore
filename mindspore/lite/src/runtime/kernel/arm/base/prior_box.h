@@ -28,9 +28,8 @@ namespace mindspore::kernel {
 class PriorBoxCPUKernel : public LiteKernel {
  public:
   PriorBoxCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
+                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
     prior_box_param_ = reinterpret_cast<PriorBoxParameter *>(op_parameter_);
   }
   ~PriorBoxCPUKernel() = default;

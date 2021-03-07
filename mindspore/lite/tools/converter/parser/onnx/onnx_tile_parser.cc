@@ -15,27 +15,15 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_tile_parser.h"
-#include <memory>
 #include <vector>
+#include <memory>
+#include "ops/fusion/tile_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxTileParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                     const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx TileParser";
-  auto attr = std::make_unique<schema::TileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Tile;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxTileParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::TileFusion>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxTileParser("Tile", new OnnxTileParser());

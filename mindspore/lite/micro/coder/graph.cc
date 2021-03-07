@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "micro/coder/graph.h"
+#include "coder/graph.h"
 #include <queue>
 #include <deque>
 #include <string>
@@ -23,7 +23,6 @@
 #include <set>
 #include "coder/log.h"
 #include "schema/inner/model_generated.h"
-#include "src/ops/primitive_c.h"
 #include "securec/include/securec.h"
 
 namespace mindspore::lite::micro {
@@ -92,8 +91,15 @@ int CoderGraph::ConvertTensors() {
     if (quant_params != nullptr) {
       for (int j = 0; j < static_cast<int>(quant_params->size()); j++) {
         QuantArg quant_arg{};
+        quant_arg.bitNum = quant_params->Get(j)->numBits();
         quant_arg.scale = quant_params->Get(j)->scale();
         quant_arg.zeroPoint = quant_params->Get(j)->zeroPoint();
+        quant_arg.var_corr = quant_params->Get(j)->varCorr();
+        quant_arg.mean_corr = quant_params->Get(j)->meanCorr();
+        quant_arg.inited = quant_params->Get(j)->inited();
+        quant_arg.roundType = quant_params->Get(j)->roundType();
+        quant_arg.multiplier = quant_params->Get(j)->multiplier();
+        quant_arg.dstDtype = quant_params->Get(j)->dstDtype();
         dstTensor->AddQuantParam(quant_arg);
       }
     }

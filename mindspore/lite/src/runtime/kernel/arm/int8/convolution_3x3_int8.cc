@@ -16,16 +16,11 @@
 
 #include "src/runtime/kernel/arm/int8/convolution_3x3_int8.h"
 #include "nnacl/int8/conv3x3_int8.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
 int ProcessFilterUint8(int8_t *origin_weight, int16_t *dst_weight, ConvParameter *conv_param) {

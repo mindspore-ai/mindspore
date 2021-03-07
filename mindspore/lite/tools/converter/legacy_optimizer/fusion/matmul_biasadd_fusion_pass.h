@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,17 +66,6 @@ class MatMulBiasAddFusionPass : public FusionPass {
       return nullptr;
     }
     newOpDef->primitive->value.type = schema::PrimitiveType_Transpose;
-    auto transposeParam = new (std::nothrow) TransposeT;
-    if (transposeParam == nullptr) {
-      MS_LOG(ERROR) << "new transposeParam failed";
-      return nullptr;
-    }
-    auto inParam = inOpDef->primitive->value.AsTranspose();
-    MS_ASSERT(inParam != nullptr);
-    transposeParam->perm.resize(inParam->perm.size());
-    std::transform(inParam->perm.begin(), inParam->perm.end(), transposeParam->perm.begin(),
-                   [](const int32_t ele) { return ele; });
-    newOpDef->primitive->value.value = transposeParam;
     return newOpDef;
   };
 };

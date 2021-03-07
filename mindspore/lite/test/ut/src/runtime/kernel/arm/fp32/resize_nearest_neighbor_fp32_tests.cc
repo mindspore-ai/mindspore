@@ -64,7 +64,7 @@ void TestResizeNearestNeighborFp32::Prepare(const std::vector<int> &input_shape,
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator_, nullptr);
-  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc, nullptr);
+  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc);
   ASSERT_NE(kernel_, nullptr);
 }
 // 1*1 -> 1*1

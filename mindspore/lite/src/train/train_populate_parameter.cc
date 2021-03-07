@@ -13,318 +13,233 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "src/train/train_populate_parameter.h"
 #include <algorithm>
 #include "src/ops/populate/populate_register.h"
-#include "src/ops/pooling_grad.h"
+#include "src/ops/populate/default_populate.h"
+#include "src/ops/populate/strided_slice_populate.h"
 #include "nnacl/pooling_parameter.h"
-#include "src/ops/softmax_cross_entropy.h"
-#include "src/ops/sparse_softmax_cross_entropy.h"
 #include "nnacl/fp32_grad/softmax_grad.h"
-#include "src/ops/activation_grad.h"
 #include "nnacl/fp32/activation_fp32.h"
-#include "src/ops/conv2d_grad_filter.h"
-#include "src/ops/conv2d_grad_input.h"
-#include "src/ops/group_conv2d_grad_input.h"
 #include "nnacl/conv_parameter.h"
-#include "src/ops/power_grad.h"
 #include "nnacl/power_parameter.h"
-#include "src/ops/bias_grad.h"
 #include "nnacl/arithmetic.h"
 #include "nnacl/fp32_grad/optimizer.h"
-#include "src/ops/apply_momentum.h"
-#include "src/ops/sgd.h"
-#include "src/ops/bn_grad.h"
 #include "nnacl/fp32_grad/batch_norm.h"
-#include "src/ops/adam.h"
 #include "nnacl/fp32_grad/dropout_parameter.h"
-#include "src/ops/dropout.h"
-#include "src/ops/dropout_grad.h"
-#include "src/ops/arithmetic.h"
-#include "src/ops/oneslike.h"
-#include "src/ops/binary_cross_entropy.h"
-#include "src/ops/binary_cross_entropy_grad.h"
-#include "src/ops/smooth_l1_loss.h"
-#include "src/ops/smooth_l1_loss_grad.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
-#include "src/ops/arithmetic_grad.h"
-#include "src/ops/populate/strided_slice_populate.h"
+
 namespace mindspore::kernel {
-
-OpParameter *DefaultPopulateParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-
-  OpParameter *param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "malloc Param for primitive failed.";
-    return nullptr;
-  }
-
-  param->type_ = primitive->Type();
-  return param;
-}
-
-OpParameter *PopulateSmoothL1LossParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateSmoothL1LossParameter(const void *prim) {
   SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
   if (p == nullptr) {
     MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
     return nullptr;
   }
-  p->op_parameter_.type_ = primitive->Type();
-
-  auto smooth_l1_primitive =
-    reinterpret_cast<mindspore::lite::SmoothL1Loss *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-
-  p->beta_ = smooth_l1_primitive->GetBeta();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_SmoothL1Loss();
+  p->op_parameter_.type_ = primitive->value_type();
+  p->beta_ = value->beta();
   return reinterpret_cast<OpParameter *>(p);
 }
 
-OpParameter *PopulateSmoothL1LossGradParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateSmoothL1LossGradParameter(const void *prim) {
   SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
   if (p == nullptr) {
     MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
     return nullptr;
   }
-  p->op_parameter_.type_ = primitive->Type();
-
-  auto smooth_l1_primitive =
-    reinterpret_cast<mindspore::lite::SmoothL1LossGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-
-  p->beta_ = smooth_l1_primitive->GetBeta();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_SmoothL1LossGrad();
+  p->op_parameter_.type_ = primitive->value_type();
+  p->beta_ = value->beta();
   return reinterpret_cast<OpParameter *>(p);
 }
 
-OpParameter *PopulateApplyMomentumParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateApplyMomentumParameter(const void *prim) {
   ApplyMomentumParameter *p = reinterpret_cast<ApplyMomentumParameter *>(malloc(sizeof(ApplyMomentumParameter)));
   if (p == nullptr) {
     MS_LOG(ERROR) << "malloc ApplyMomentumParameter failed.";
     return nullptr;
   }
-  p->op_parameter_.type_ = primitive->Type();
-
-  auto apply_momentum_primitive =
-    reinterpret_cast<mindspore::lite::ApplyMomentum *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-
-  p->grad_scale_ = apply_momentum_primitive->GetGradientScale();
-  p->use_nesterov_ = apply_momentum_primitive->GetUseNesterov();
-
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_ApplyMomentum();
+  p->op_parameter_.type_ = primitive->value_type();
+  p->grad_scale_ = value->gradient_scale();
+  p->use_nesterov_ = value->use_nesterov();
   return reinterpret_cast<OpParameter *>(p);
 }
 
-OpParameter *PopulateBCEParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateBCEParameter(const void *prim) {
   int32_t *reduction = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
   if (reduction == nullptr) {
     MS_LOG(ERROR) << "malloc reduction failed.";
     return nullptr;
   }
-  auto param =
-    reinterpret_cast<mindspore::lite::BinaryCrossEntropy *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  *reduction = param->GetReduction();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_BinaryCrossEntropy();
+  *reduction = value->reduction();
   return reinterpret_cast<OpParameter *>(reduction);
 }
 
-OpParameter *PopulateBCEGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateBCEGradParameter(const void *prim) {
   int32_t *reduction = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t)));
   if (reduction == nullptr) {
     MS_LOG(ERROR) << "malloc reduction failed.";
     return nullptr;
   }
-  auto param =
-    reinterpret_cast<mindspore::lite::BinaryCrossEntropyGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  *reduction = param->GetReduction();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_BinaryCrossEntropyGrad();
+  *reduction = value->reduction();
   return reinterpret_cast<OpParameter *>(reduction);
 }
 
-OpParameter *PopulateAdamParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateAdamParameter(const void *prim) {
   AdamParameter *p = reinterpret_cast<AdamParameter *>(malloc(sizeof(AdamParameter)));
   if (p == nullptr) {
     MS_LOG(ERROR) << "new AdamParameter failed.";
     return nullptr;
   }
-  p->op_parameter_.type_ = primitive->Type();
-
-  auto apply_momentum_primitive =
-    reinterpret_cast<mindspore::lite::Adam *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  p->use_nesterov_ = apply_momentum_primitive->GetUseNesterov();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_Adam();
+  p->op_parameter_.type_ = primitive->value_type();
+  p->use_nesterov_ = value->use_nesterov();
   return reinterpret_cast<OpParameter *>(p);
 }
 
-OpParameter *PopulateSgdParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateSgdParameter(const void *prim) {
   SgdParameter *p = reinterpret_cast<SgdParameter *>(malloc(sizeof(SgdParameter)));
   if (p == nullptr) {
     MS_LOG(ERROR) << "malloc SgdParameter failed.";
     return nullptr;
   }
-  p->op_parameter_.type_ = primitive->Type();
-
-  auto sgd_primitive = reinterpret_cast<mindspore::lite::Sgd *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-
-  p->weight_decay_ = sgd_primitive->GetWeightDecay();
-  p->dampening_ = sgd_primitive->GetDampening();
-  p->use_nesterov_ = sgd_primitive->GetUseNesterov();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_SGD();
+  p->op_parameter_.type_ = primitive->value_type();
+  p->weight_decay_ = value->weight_decay();
+  p->dampening_ = value->dampening();
+  p->use_nesterov_ = value->nesterov();
 
   return reinterpret_cast<OpParameter *>(p);
 }
 
-OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const void *prim) {
   SoftmaxCrossEntropyParameter *sce_param =
     reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (sce_param == nullptr) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
-  auto sce_primitive = reinterpret_cast<mindspore::lite::SparseSoftmaxCrossEntropy *>(
-    const_cast<mindspore::lite::PrimitiveC *>(primitive));
-
-  sce_param->is_grad = sce_primitive->GetIsGrad();
-
-  sce_param->op_parameter_.type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_SparseSoftmaxCrossEntropy();
+  sce_param->op_parameter_.type_ = primitive->value_type();
+  sce_param->is_grad = value->grad();
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
-OpParameter *PopulateSoftmaxCrossEntropyParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateSoftmaxCrossEntropyParameter(const void *prim) {
   SoftmaxCrossEntropyParameter *sce_param =
     reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (sce_param == nullptr) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  sce_param->op_parameter_.type_ = primitive->value_type();
   sce_param->is_grad = 0;
-  sce_param->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
-OpParameter *PopulatePoolingGradParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
+OpParameter *PopulateMaxPoolGradParameter(const void *prim) {
   PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
   if (pooling_param == nullptr) {
     MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
-  pooling_param->op_parameter_.type_ = primitive->Type();
-  auto pooling_primitive =
-    reinterpret_cast<mindspore::lite::PoolingGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_MaxPoolGrad();
+  pooling_param->op_parameter_.type_ = primitive->value_type();
 
-  pooling_param->global_ = pooling_primitive->GetGlobal();
-  pooling_param->window_w_ = pooling_primitive->GetWindowW();
-  pooling_param->window_h_ = pooling_primitive->GetWindowH();
+  pooling_param->global_ = false;
+  pooling_param->window_w_ = static_cast<int>(value->kernel_size()->Get(1));
+  pooling_param->window_h_ = static_cast<int>(value->kernel_size()->Get(0));
 
-  pooling_param->pad_u_ = pooling_primitive->GetPadUp();
-  pooling_param->pad_d_ = pooling_primitive->GetPadDown();
-  pooling_param->pad_l_ = pooling_primitive->GetPadLeft();
-  pooling_param->pad_r_ = pooling_primitive->GetPadRight();
-  pooling_param->stride_w_ = pooling_primitive->GetStrideW();
-  pooling_param->stride_h_ = pooling_primitive->GetStrideH();
+  pooling_param->pad_u_ = 0;
+  pooling_param->pad_d_ = 0;
+  pooling_param->pad_l_ = 0;
+  pooling_param->pad_r_ = 0;
+  pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
+  pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
 
-  pooling_param->pool_mode_ = PoolMode_No;
   pooling_param->round_mode_ = RoundMode_No;
-
-  switch (pooling_primitive->GetPoolingMode()) {
-    case schema::PoolMode_MAX_POOLING:
-      pooling_param->pool_mode_ = PoolMode_MaxPool;
-      break;
-    case schema::PoolMode_MEAN_POOLING:
-      pooling_param->pool_mode_ = PoolMode_AvgPool;
-      break;
-    default:
-      break;
-  }
-
-  switch (pooling_primitive->GetRoundMode()) {
-    case schema::RoundMode_FLOOR:
-      pooling_param->round_mode_ = RoundMode_Floor;
-      break;
-    case schema::RoundMode_CEIL:
-      pooling_param->round_mode_ = RoundMode_Ceil;
-      break;
-    default:
-      break;
-  }
+  pooling_param->pool_mode_ = PoolMode_MaxPool;
   return reinterpret_cast<OpParameter *>(pooling_param);
 }
 
-OpParameter *PopulateActivationGradParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+OpParameter *PopulateAvgPoolGradParameter(const void *prim) {
+  PoolingParameter *pooling_param = reinterpret_cast<PoolingParameter *>(malloc(sizeof(PoolingParameter)));
+  if (pooling_param == nullptr) {
+    MS_LOG(ERROR) << "malloc PoolingParameter failed.";
     return nullptr;
   }
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_AvgPoolGrad();
+  pooling_param->op_parameter_.type_ = primitive->value_type();
 
+  pooling_param->global_ = false;
+  pooling_param->window_w_ = static_cast<int>(value->kernel_size()->Get(1));
+  pooling_param->window_h_ = static_cast<int>(value->kernel_size()->Get(0));
+
+  pooling_param->pad_u_ = 0;
+  pooling_param->pad_d_ = 0;
+  pooling_param->pad_l_ = 0;
+  pooling_param->pad_r_ = 0;
+  pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
+  pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
+
+  pooling_param->round_mode_ = RoundMode_No;
+  pooling_param->pool_mode_ = PoolMode_AvgPool;
+  return reinterpret_cast<OpParameter *>(pooling_param);
+}
+
+OpParameter *PopulateActivationGradParameter(const void *prim) {
   ActivationParameter *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
   if (act_param == nullptr) {
     MS_LOG(ERROR) << "malloc ActivationParameter failed.";
     return nullptr;
   }
-  act_param->op_parameter_.type_ = primitive->Type();
-  auto activation =
-    reinterpret_cast<mindspore::lite::ActivationGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  act_param->type_ = static_cast<int>(activation->GetType());
-  act_param->alpha_ = activation->GetAlpha();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_ActivationGrad();
+  act_param->op_parameter_.type_ = primitive->value_type();
+  act_param->type_ = static_cast<int>(value->activation_type());
+  act_param->alpha_ = value->alpha();
   return reinterpret_cast<OpParameter *>(act_param);
 }
 
-OpParameter *PopulateConvolutionGradFilterParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-
+OpParameter *PopulateConvolutionGradFilterParameter(const void *prim) {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
-  param->op_parameter_.type_ = primitive->Type();
+  memset(param, 0, sizeof(ConvParameter));
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_Conv2DBackpropFilterFusion();
+  param->op_parameter_.type_ = primitive->value_type();
 
-  auto convg_primitive =
-    reinterpret_cast<mindspore::lite::Conv2DGradFilter *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  param->kernel_h_ = convg_primitive->GetKernelH();
-  param->kernel_w_ = convg_primitive->GetKernelW();
-  param->stride_h_ = convg_primitive->GetStrideH();
-  param->stride_w_ = convg_primitive->GetStrideW();
-  param->dilation_h_ = convg_primitive->GetDilateH();
-  param->dilation_w_ = convg_primitive->GetDilateW();
-  param->pad_u_ = convg_primitive->GetPadUp();
-  param->pad_d_ = convg_primitive->GetPadDown();
-  param->pad_l_ = convg_primitive->GetPadLeft();
-  param->pad_r_ = convg_primitive->GetPadRight();
-  param->group_ = convg_primitive->GetGroup();
+  param->kernel_h_ = value->kernel_size()->Get(0);
+  param->kernel_w_ = value->kernel_size()->Get(1);
+  param->stride_h_ = value->stride()->Get(0);
+  param->stride_w_ = value->stride()->Get(1);
+  param->dilation_h_ = value->dilation()->Get(0);
+  param->dilation_w_ = value->dilation()->Get(1);
+  param->pad_u_ = value->pad_list()->Get(0);
+  param->pad_d_ = value->pad_list()->Get(1);
+  param->pad_l_ = value->pad_list()->Get(2);
+  param->pad_r_ = value->pad_list()->Get(3);
+  param->group_ = value->group();
   param->act_type_ = ActType_No;
-  switch (convg_primitive->GetActivationType()) {
+  switch (value->activation_type()) {
     case schema::ActivationType_RELU:
       param->act_type_ = ActType_Relu;
       break;
@@ -338,34 +253,29 @@ OpParameter *PopulateConvolutionGradFilterParameter(const mindspore::lite::Primi
   return reinterpret_cast<OpParameter *>(param);
 }
 
-OpParameter *PopulateConvolutionGradInputParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-
+OpParameter *PopulateConvolutionGradInputParameter(const void *prim) {
   ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (param == nullptr) {
     MS_LOG(ERROR) << "malloc Param for conv grad filter failed.";
     return nullptr;
   }
-  param->op_parameter_.type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_Conv2DBackpropInputFusion();
+  param->op_parameter_.type_ = primitive->value_type();
 
-  auto convg_primitive =
-    reinterpret_cast<mindspore::lite::Conv2DGradInput *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  param->kernel_h_ = convg_primitive->GetKernelH();
-  param->kernel_w_ = convg_primitive->GetKernelW();
-  param->stride_h_ = convg_primitive->GetStrideH();
-  param->stride_w_ = convg_primitive->GetStrideW();
-  param->dilation_h_ = convg_primitive->GetDilateH();
-  param->dilation_w_ = convg_primitive->GetDilateW();
-  param->pad_u_ = convg_primitive->GetPadUp();
-  param->pad_d_ = convg_primitive->GetPadDown();
-  param->pad_l_ = convg_primitive->GetPadLeft();
-  param->pad_r_ = convg_primitive->GetPadRight();
-  param->group_ = convg_primitive->GetGroup();
+  param->kernel_h_ = value->kernel_size()->Get(0);
+  param->kernel_w_ = value->kernel_size()->Get(1);
+  param->stride_h_ = value->stride()->Get(0);
+  param->stride_w_ = value->stride()->Get(1);
+  param->dilation_h_ = value->dilation()->Get(0);
+  param->dilation_w_ = value->dilation()->Get(1);
+  param->pad_u_ = value->pad_list()->Get(0);
+  param->pad_d_ = value->pad_list()->Get(1);
+  param->pad_l_ = value->pad_list()->Get(2);
+  param->pad_r_ = value->pad_list()->Get(3);
+  param->group_ = value->group();
   param->act_type_ = ActType_No;
-  switch (convg_primitive->GetActivationType()) {
+  switch (value->activation_type()) {
     case schema::ActivationType_RELU:
       param->act_type_ = ActType_Relu;
       break;
@@ -379,109 +289,56 @@ OpParameter *PopulateConvolutionGradInputParameter(const mindspore::lite::Primit
   return reinterpret_cast<OpParameter *>(param);
 }
 
-OpParameter *PopulateGroupConvolutionGradInputParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-
-  ConvParameter *param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "new Param for conv grad filter failed.";
-    return nullptr;
-  }
-  param->op_parameter_.type_ = primitive->Type();
-
-  auto convg_primitive =
-    reinterpret_cast<mindspore::lite::GroupConv2DGradInput *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  param->kernel_h_ = convg_primitive->GetKernelH();
-  param->kernel_w_ = convg_primitive->GetKernelW();
-  param->stride_h_ = convg_primitive->GetStrideH();
-  param->stride_w_ = convg_primitive->GetStrideW();
-  param->dilation_h_ = convg_primitive->GetDilateH();
-  param->dilation_w_ = convg_primitive->GetDilateW();
-  param->pad_u_ = convg_primitive->GetPadUp();
-  param->pad_d_ = convg_primitive->GetPadDown();
-  param->pad_l_ = convg_primitive->GetPadLeft();
-  param->pad_r_ = convg_primitive->GetPadRight();
-  param->group_ = convg_primitive->GetGroup();
-  param->act_type_ = ActType_No;
-  switch (convg_primitive->GetActivationType()) {
-    case schema::ActivationType_RELU:
-      param->act_type_ = ActType_Relu;
-      break;
-    case schema::ActivationType_RELU6:
-      param->act_type_ = ActType_Relu6;
-      break;
-    default:
-      break;
-  }
-
-  return reinterpret_cast<OpParameter *>(param);
-}
-
-OpParameter *PopulatePowerGradParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-
+OpParameter *PopulatePowerGradParameter(const void *prim) {
   PowerParameter *power_param = reinterpret_cast<PowerParameter *>(malloc(sizeof(PowerParameter)));
   if (power_param == nullptr) {
     MS_LOG(ERROR) << "malloc PowerParameter failed.";
     return nullptr;
   }
-  power_param->op_parameter_.type_ = primitive->Type();
-  auto power = reinterpret_cast<mindspore::lite::PowerGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  power_param->power_ = power->GetPower();
-  power_param->scale_ = power->GetScale();
-  power_param->shift_ = power->GetShift();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_PowerGrad();
+  power_param->op_parameter_.type_ = primitive->value_type();
+  power_param->power_ = value->power();
+  power_param->scale_ = value->scale();
+  power_param->shift_ = value->shift();
   return reinterpret_cast<OpParameter *>(power_param);
 }
 
-OpParameter *PopulateBiasGradParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-
+OpParameter *PopulateBiasGradParameter(const void *prim) {
   ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
-  arithmetic_param->op_parameter_.type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  arithmetic_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
-OpParameter *PopulateBNGradParameter(const mindspore::lite::PrimitiveC *primitive) {
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
-    return nullptr;
-  }
-
+OpParameter *PopulateBNGradParameter(const void *prim) {
   BNGradParameter *bnGrad_param = reinterpret_cast<BNGradParameter *>(malloc(sizeof(BNGradParameter)));
   if (bnGrad_param == nullptr) {
     MS_LOG(ERROR) << "malloc BNGradParameter failed.";
     return nullptr;
   }
-  bnGrad_param->op_parameter_.type_ = primitive->Type();
-  auto bngrad = reinterpret_cast<mindspore::lite::BNGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  bnGrad_param->epsilon_ = bngrad->GetEps();
-  bnGrad_param->momentum_ = bngrad->GetMomentum();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_BatchNormGrad();
+  bnGrad_param->op_parameter_.type_ = primitive->value_type();
+  bnGrad_param->epsilon_ = value->epsilon();
   return reinterpret_cast<OpParameter *>(bnGrad_param);
 }
 
-OpParameter *PopulateDropoutParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateDropoutParameter(const void *prim) {
   DropoutParameter *dropout_parameter = reinterpret_cast<DropoutParameter *>(malloc(sizeof(DropoutParameter)));
   if (dropout_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc Dropout Parameter failed.";
     return nullptr;
   }
   memset(dropout_parameter, 0, sizeof(DropoutParameter));
-  dropout_parameter->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Dropout *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  dropout_parameter->ratio_ = param->GetRatio();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_Dropout();
+  dropout_parameter->op_parameter_.type_ = primitive->value_type();
+  dropout_parameter->ratio_ = value->keep_prob();
   if (dropout_parameter->ratio_ < 0.f || dropout_parameter->ratio_ > 1.f) {
     MS_LOG(ERROR) << "Dropout ratio must be between 0 to 1, got " << dropout_parameter->ratio_;
     free(dropout_parameter);
@@ -490,89 +347,97 @@ OpParameter *PopulateDropoutParameter(const mindspore::lite::PrimitiveC *primiti
   return reinterpret_cast<OpParameter *>(dropout_parameter);
 }
 
-OpParameter *PopulateDropoutGradParameter(const mindspore::lite::PrimitiveC *primitive) {
-  DropoutParameter *dropoutGrad_parameter = reinterpret_cast<DropoutParameter *>(malloc(sizeof(DropoutParameter)));
-  if (dropoutGrad_parameter == nullptr) {
+OpParameter *PopulateDropoutGradParameter(const void *prim) {
+  DropoutParameter *dropoutgrad_parameter = reinterpret_cast<DropoutParameter *>(malloc(sizeof(DropoutParameter)));
+  if (dropoutgrad_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc Dropout Grad Parameter failed.";
     return nullptr;
   }
-  memset(dropoutGrad_parameter, 0, sizeof(DropoutParameter));
-  dropoutGrad_parameter->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::DropoutGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  dropoutGrad_parameter->ratio_ = param->GetRatio();
-  if (dropoutGrad_parameter->ratio_ < 0.f || dropoutGrad_parameter->ratio_ > 1.f) {
-    MS_LOG(ERROR) << "Dropout Grad ratio must be between 0 to 1, got " << dropoutGrad_parameter->ratio_;
-    free(dropoutGrad_parameter);
+  memset(dropoutgrad_parameter, 0, sizeof(DropoutParameter));
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_DropoutGrad();
+  dropoutgrad_parameter->op_parameter_.type_ = primitive->value_type();
+  dropoutgrad_parameter->ratio_ = value->keep_prob();
+  if (dropoutgrad_parameter->ratio_ < 0.f || dropoutgrad_parameter->ratio_ > 1.f) {
+    MS_LOG(ERROR) << "Dropout Grad ratio must be between 0 to 1, got " << dropoutgrad_parameter->ratio_;
+    free(dropoutgrad_parameter);
     return nullptr;
   }
-  return reinterpret_cast<OpParameter *>(dropoutGrad_parameter);
+  return reinterpret_cast<OpParameter *>(dropoutgrad_parameter);
 }
 
-OpParameter *PopulateArithmeticGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateArithmeticGradParameter(const void *prim) {
   ArithmeticParameter *arithmetic_param = reinterpret_cast<ArithmeticParameter *>(malloc(sizeof(ArithmeticParameter)));
   if (arithmetic_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArithmeticParameter failed.";
     return nullptr;
   }
   memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
-  arithmetic_param->op_parameter_.type_ = primitive->Type();
-  arithmetic_param->broadcasting_ = ((lite::ArithmeticGrad *)primitive)->Broadcasting();
-  arithmetic_param->ndim_ = ((lite::ArithmeticGrad *)primitive)->NDims();
-
-  auto shape = ((lite::ArithmeticGrad *)primitive)->x1Shape();
-  auto source = static_cast<int *>(shape.data());
-  std::copy(source, source + shape.size(), arithmetic_param->in_shape0_);
-  shape = ((lite::ArithmeticGrad *)primitive)->x2Shape();
-  source = static_cast<int *>(shape.data());
-  std::copy(source, source + shape.size(), arithmetic_param->in_shape1_);
-  shape = ((lite::ArithmeticGrad *)primitive)->dyShape();
-  source = static_cast<int *>(shape.data());
-  std::copy(source, source + shape.size(), arithmetic_param->out_shape_);
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  arithmetic_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
 void PopulateTrainParameters() {
-  lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter);
-  lite::Registry BiasGradParameterRegistry(schema::PrimitiveType_BiasGrad, PopulateBiasGradParameter);
-  lite::Registry SoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SoftmaxCrossEntropy,
-                                                      PopulateSoftmaxCrossEntropyParameter);
-  lite::Registry SparseSoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SparseSoftmaxCrossEntropy,
-                                                            PopulateSparseSoftmaxCrossEntropyParameter);
-  lite::Registry ActivationParameterRegistry(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter);
-  lite::Registry TupleGetItemParameterRegistry(schema::PrimitiveType_TupleGetItem, DefaultPopulateParameter);
-  lite::Registry DependParameterRegistry(schema::PrimitiveType_Depend, DefaultPopulateParameter);
-  lite::Registry Conv2DGradFilterParameterRegistry(schema::PrimitiveType_Conv2DGradFilter,
-                                                   PopulateConvolutionGradFilterParameter);
-  lite::Registry Conv2DGradInputParameterRegistry(schema::PrimitiveType_Conv2DGradInput,
-                                                  PopulateConvolutionGradInputParameter);
-  lite::Registry GroupConv2DGradInputParameterRegistry(schema::PrimitiveType_GroupConv2DGradInput,
-                                                       PopulateGroupConvolutionGradInputParameter);
-  lite::Registry PoolingParameterRegistry(schema::PrimitiveType_PoolingGrad, PopulatePoolingGradParameter);
-  lite::Registry PowerGradParameterRegistry(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter);
-  lite::Registry SgdParameterRegistry(schema::PrimitiveType_Sgd, PopulateSgdParameter);
-  lite::Registry BNGradParameterRegistry(schema::PrimitiveType_BNGrad, PopulateBNGradParameter);
-  lite::Registry AdamParameterRegistry(schema::PrimitiveType_Adam, PopulateAdamParameter);
-  lite::Registry AssignParameterRegistry(schema::PrimitiveType_Assign, DefaultPopulateParameter);
-  lite::Registry AssignAddParameterRegistry(schema::PrimitiveType_AssignAdd, DefaultPopulateParameter);
-  lite::Registry BinaryCrossEntropyParameterRegistry(schema::PrimitiveType_BinaryCrossEntropy, PopulateBCEParameter);
+  lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter,
+                                                lite::SCHEMA_CUR);
+  lite::Registry BiasGradParameterRegistry(schema::PrimitiveType_BiasAddGrad, PopulateBiasGradParameter,
+                                           lite::SCHEMA_CUR);
+  lite::Registry SoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SoftmaxCrossEntropyWithLogits,
+                                                      PopulateSoftmaxCrossEntropyParameter, lite::SCHEMA_CUR);
+  lite::Registry SparseSoftmaxCrossEntropyParameterRegistry(
+    schema::PrimitiveType_SparseSoftmaxCrossEntropy, PopulateSparseSoftmaxCrossEntropyParameter, lite::SCHEMA_CUR);
+  lite::Registry ActivationParameterRegistry(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter,
+                                             lite::SCHEMA_CUR);
+  lite::Registry DependParameterRegistry(schema::PrimitiveType_Depend, lite::DefaultPopulateParameter,
+                                         lite::SCHEMA_CUR);
+  lite::Registry Conv2DGradFilterParameterRegistry(schema::PrimitiveType_Conv2DBackpropFilterFusion,
+                                                   PopulateConvolutionGradFilterParameter, lite::SCHEMA_CUR);
+  lite::Registry Conv2DGradInputParameterRegistry(schema::PrimitiveType_Conv2DBackpropInputFusion,
+                                                  PopulateConvolutionGradInputParameter, lite::SCHEMA_CUR);
+  lite::Registry avgPoolParameterRegistry(schema::PrimitiveType_AvgPoolGrad, PopulateAvgPoolGradParameter,
+                                          lite::SCHEMA_CUR);
+  lite::Registry maxPoolParameterRegistry(schema::PrimitiveType_MaxPoolGrad, PopulateMaxPoolGradParameter,
+                                          lite::SCHEMA_CUR);
+  lite::Registry PowerGradParameterRegistry(schema::PrimitiveType_PowerGrad, PopulatePowerGradParameter,
+                                            lite::SCHEMA_CUR);
+  lite::Registry SgdParameterRegistry(schema::PrimitiveType_SGD, PopulateSgdParameter, lite::SCHEMA_CUR);
+  lite::Registry BNGradParameterRegistry(schema::PrimitiveType_BatchNormGrad, PopulateBNGradParameter,
+                                         lite::SCHEMA_CUR);
+  lite::Registry AdamParameterRegistry(schema::PrimitiveType_Adam, PopulateAdamParameter, lite::SCHEMA_CUR);
+  lite::Registry AssignParameterRegistry(schema::PrimitiveType_Assign, lite::DefaultPopulateParameter,
+                                         lite::SCHEMA_CUR);
+  lite::Registry AssignAddParameterRegistry(schema::PrimitiveType_AssignAdd, lite::DefaultPopulateParameter,
+                                            lite::SCHEMA_CUR);
+  lite::Registry BinaryCrossEntropyParameterRegistry(schema::PrimitiveType_BinaryCrossEntropy, PopulateBCEParameter,
+                                                     lite::SCHEMA_CUR);
   lite::Registry BinaryCrossEntropyGradParameterRegistry(schema::PrimitiveType_BinaryCrossEntropyGrad,
-                                                         PopulateBCEGradParameter);
-  lite::Registry OnesLikeParameterRegistry(schema::PrimitiveType_OnesLike, DefaultPopulateParameter);
+                                                         PopulateBCEGradParameter, lite::SCHEMA_CUR);
+  lite::Registry OnesLikeParameterRegistry(schema::PrimitiveType_OnesLike, lite::DefaultPopulateParameter,
+                                           lite::SCHEMA_CUR);
   lite::Registry UnsortedSegmentSumParameterRegistry(schema::PrimitiveType_UnsortedSegmentSum,
-                                                     DefaultPopulateParameter);
-  lite::Registry DropoutParameterRegistry(schema::PrimitiveType_Dropout, PopulateDropoutParameter);
-  lite::Registry DropGradParameterRegistry(schema::PrimitiveType_DropoutGrad, PopulateDropoutGradParameter);
-  lite::Registry MaximumGradParameterRegistry(schema::PrimitiveType_MaximumGrad, PopulateArithmeticGradParameter);
-  lite::Registry MinimumGradParameterRegistry(schema::PrimitiveType_MinimumGrad, PopulateArithmeticGradParameter);
-  lite::Registry SmoothL1LossRegistry(schema::PrimitiveType_SmoothL1Loss, PopulateSmoothL1LossParameter);
-  lite::Registry SmoothL1LossGradRegistry(schema::PrimitiveType_SmoothL1LossGrad, PopulateSmoothL1LossGradParameter);
+                                                     lite::DefaultPopulateParameter, lite::SCHEMA_CUR);
+  lite::Registry DropoutParameterRegistry(schema::PrimitiveType_Dropout, PopulateDropoutParameter, lite::SCHEMA_CUR);
+  lite::Registry DropGradParameterRegistry(schema::PrimitiveType_DropoutGrad, PopulateDropoutGradParameter,
+                                           lite::SCHEMA_CUR);
+  lite::Registry MaximumGradParameterRegistry(schema::PrimitiveType_MaximumGrad, PopulateArithmeticGradParameter,
+                                              lite::SCHEMA_CUR);
+  lite::Registry MinimumGradParameterRegistry(schema::PrimitiveType_MinimumGrad, PopulateArithmeticGradParameter,
+                                              lite::SCHEMA_CUR);
+  lite::Registry SmoothL1LossRegistry(schema::PrimitiveType_SmoothL1Loss, PopulateSmoothL1LossParameter,
+                                      lite::SCHEMA_CUR);
+  lite::Registry SmoothL1LossGradRegistry(schema::PrimitiveType_SmoothL1LossGrad, PopulateSmoothL1LossGradParameter,
+                                          lite::SCHEMA_CUR);
   lite::Registry SigmoidCrossEntropyWithLogitsRegistry(schema::PrimitiveType_SigmoidCrossEntropyWithLogits,
-                                                       DefaultPopulateParameter);
+                                                       lite::DefaultPopulateParameter, lite::SCHEMA_CUR);
   lite::Registry SigmoidCrossEntropyWithLogitsGradRegistry(schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad,
-                                                           DefaultPopulateParameter);
-  lite::Registry FlattenGradParameterRegistry(schema::PrimitiveType_FlattenGrad, DefaultPopulateParameter);
+                                                           lite::DefaultPopulateParameter, lite::SCHEMA_CUR);
+  lite::Registry FlattenGradParameterRegistry(schema::PrimitiveType_FlattenGrad, lite::DefaultPopulateParameter,
+                                              lite::SCHEMA_CUR);
   lite::Registry StridedSliceGradParameterRegistry(schema::PrimitiveType_StridedSliceGrad,
-                                                   mindspore::lite::PopulateStridedSliceParameter);
+                                                   lite::PopulateStridedSliceParameter, lite::SCHEMA_CUR);
+  lite::Registry AbsGradParameterRegistry(schema::PrimitiveType_AbsGrad, lite::DefaultPopulateParameter,
+                                          lite::SCHEMA_CUR);
 }
 
 }  // namespace mindspore::kernel

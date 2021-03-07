@@ -15,7 +15,7 @@
  */
 
 #include <string>
-#include "micro/coder/opcoders/op_coder.h"
+#include "coder/opcoders/op_coder.h"
 #include "micro/coder/opcoders/file_collector.h"
 #include "micro/coder/opcoders/base/dtype_cast_coder.h"
 #include "micro/coder/opcoders/serializers/serializer.h"

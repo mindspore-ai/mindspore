@@ -53,7 +53,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/weight_format_hardcode_pass.cc
         ../optimizer/graph/clip_convert_activation_pass.cc
         ../optimizer/graph/group_depthwise_op_convert_pass.cc
-        ../optimizer/graph/tflite_inputs_order_exchange_pass.cc
+        ../optimizer/graph/tflite_inputs_adjust_pass.cc
         ../optimizer/graph/update_conv2d_param_pass.cc
         ../optimizer/graph/unused_cast_node_remove_pass.cc
         ../optimizer/graph/unused_transpose_node_remove_pass.cc
@@ -64,13 +64,12 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/onnx_inputs_adjust_pass.cc
         ../optimizer/graph/while_pass.cc
         ../optimizer/graph/if_pass.cc
-        ../optimizer/graph/mindir_inputs_adjust_pass.cc
         ../optimizer/graph/functionalize_control_op_pass.cc
         ../optimizer/graph/functionalize_while.cc
         ../optimizer/graph/inputs_adjust_pass.cc
+        ../optimizer/graph/primitive_adjust_pass.cc
         )
 
-add_subdirectory(../anf_importer anf_importer)
 add_subdirectory(../anf_exporter anf_exporter)
 add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
@@ -84,9 +83,12 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(LITE_SRC
         ${SRC_DIR}/common/graph_util.cc
         ${SRC_DIR}/common/string_util.cc
+        ${SRC_DIR}/common/prim_util.cc
+        ${SRC_DIR}/common/tensor_util.cc
         ${SRC_DIR}/runtime/allocator.cc
         ${SRC_DIR}/runtime/runtime_api.cc
         ${SRC_DIR}/runtime/thread_pool.c
+        ${SRC_DIR}/runtime/infer_manager.cc
         ${SRC_DIR}/inner_context.cc
         ${SRC_DIR}/tensor.cc
         ${SRC_DIR}/tensorlist.cc
@@ -100,6 +102,9 @@ set(LITE_SRC
         ${SRC_DIR}/errorcode.cc
         ${SRC_DIR}/dequant.cc
         ${SRC_DIR}/huffman_decode.cc
+        ${SRC_DIR}/ops/ops_utils.cc
+        ${SRC_DIR}/ops/ops_def.cc
+        ${SRC_DIR}/train/train_populate_parameter.cc
         )
 
 set(ENABLE_MINDRT "off")
@@ -113,8 +118,10 @@ file(GLOB KERNEL_SRC
         ${ARM_DIR}/base/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/fp32/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/infer/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/int8/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/base/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/quantization/*.c
         ${ARM_DIR}/fp32/*.cc
         ${ARM_DIR}/int8/*.cc
         )
@@ -166,7 +173,6 @@ target_link_libraries(converter_lite PRIVATE
         tf_parser_mid
         caffe_parser_mid
         onnx_parser_mid
-        anf_importer_mid
         anf_exporter_mid
         graph_pass_mid
         fusion_mid
@@ -175,7 +181,7 @@ target_link_libraries(converter_lite PRIVATE
         ${SECUREC_LIBRARY}
         mindspore::json
         mindspore::eigen
-        mindspore_core
+        -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
         mindspore::glog
         mindspore::protobuf
         mindspore::flatbuffers

@@ -22,7 +22,7 @@
 #endif
 #include "nnacl/op_base.h"
 #include "nnacl/pooling_parameter.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {

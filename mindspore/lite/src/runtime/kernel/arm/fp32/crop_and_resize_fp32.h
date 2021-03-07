@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class CropAndResizeCPUKernel : public LiteKernel {
  public:
   CropAndResizeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<CropAndResizeParameter *>(op_parameter_);
   }
 

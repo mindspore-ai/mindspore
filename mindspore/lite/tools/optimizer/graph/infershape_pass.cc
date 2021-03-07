@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,16 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
-#include "mindspore/lite/include/errorcode.h"
-#include "mindspore/lite/src/ops/primitive_c.h"
-#include "tools/anf_importer/import_from_meta_graphT.h"
-
-using mindspore::lite::RET_INFER_INVALID;
+#include "include/errorcode.h"
+#include "tools/common/node_util.h"
+#include "src/common/common.h"
+#include "src/ops/populate/populate_register.h"
+#include "src/ops/ops_utils.h"
+#include "src/runtime/infer_manager.h"
 
 namespace mindspore::opt {
-
+namespace {
+constexpr size_t INITIAL_SIZE = 1024;
 ParamValueLitePtr NewParamValueLitePtr(lite::Tensor *tensor) {
   auto para_value_lite = std::make_shared<ParamValueLite>();
   if (para_value_lite == nullptr) {
@@ -37,14 +39,15 @@ ParamValueLitePtr NewParamValueLitePtr(lite::Tensor *tensor) {
   return para_value_lite;
 }
 
-bool IsSpecialType(schema::PrimitiveType type) {
-  if ((type == schema::PrimitiveType_TupleGetItem) || (type == schema::PrimitiveType_Depend) ||
-      (type == schema::PrimitiveType_ControlDepend) ||
-      (type == schema::PrimitiveType_MakeTuple || type == schema::PrimitiveType_Return)) {
+bool IsSpecialType(const CNodePtr &cnode) {
+  if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || CheckPrimitiveType(cnode, prim::kPrimDepend) ||
+      CheckPrimitiveType(cnode, prim::kPrimControlDepend) || CheckPrimitiveType(cnode, kPrimMakeTuple) ||
+      CheckPrimitiveType(cnode, kPrimReturn)) {
     return true;
   }
   return false;
 }
+}  // namespace
 
 abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(lite::Tensor *tensor) {
   MS_ASSERT(nullptr != tensor);
@@ -160,7 +163,7 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
     }
 
     if (utils::isa<ValueNodePtr>(cnode->input(i))) {
-      MS_LOG(WARNING) << cnode->fullname_with_scope() << "'s input[" << i << "] is value node";
+      MS_LOG(DEBUG) << cnode->fullname_with_scope() << "'s input[" << i << "] is value node";
       continue;
     }
 
@@ -355,7 +358,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();
-    auto origin_primc = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(cnode->input(0));
+    auto origin_primc = GetValueNode<PrimitiveCPtr>(cnode->input(0));
     if (origin_primc == nullptr) {
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
       if (sub_func_graph == nullptr) {
@@ -363,16 +366,10 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
         return false;
       } else {
         MS_LOG(WARNING) << "subgraph infer shape invalid.";
-        return RET_INFER_INVALID;
+        return lite::RET_INFER_INVALID;
       }
     }
-    auto origin_primt = origin_primc->primitiveT();
-    if (origin_primt == nullptr) {
-      MS_LOG(ERROR) << "origin_primt is nullptr";
-      return false;
-    }
-    auto type = GetCNodeType(cnode);
-    if (IsSpecialType(type)) {
+    if (IsSpecialType(cnode)) {
       continue;
     }
     std::vector<lite::Tensor *> input_tensors;
@@ -389,22 +386,42 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       FreeTensors(&output_tensors);
       continue;
     }
-    auto primt = std::make_unique<schema::PrimitiveT>();
-    if (primt == nullptr) {
-      MS_LOG(ERROR) << "primt is nullptr";
+    auto prim_t = lite::GetPrimitiveT(cnode->input(0));
+    if (prim_t == nullptr) {
+      MS_LOG(ERROR) << "prim_t is nullptr";
       FreeTensors(&input_tensors);
       FreeTensors(&output_tensors);
       return false;
     }
-    *primt = *origin_primt;
-    auto primc = std::shared_ptr<lite::PrimitiveC>(lite::PrimitiveC::Create(primt.release()));
-    if (primc == nullptr) {
-      MS_LOG(ERROR) << "primc is nullptr";
+
+    flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
+    auto prim = lite::ConvertToPrimitive(prim_t, &fbb);
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "get primitive failed.";
       FreeTensors(&input_tensors);
       FreeTensors(&output_tensors);
+      fbb.Clear();
       return false;
     }
-    status = primc->InferShape(input_tensors, output_tensors);
+    auto parameter_gen =
+      lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), lite::SCHEMA_CUR);
+    if (parameter_gen == nullptr) {
+      MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
+      FreeTensors(&input_tensors);
+      FreeTensors(&output_tensors);
+      fbb.Clear();
+      return false;
+    }
+    auto parameter = parameter_gen(prim);
+    if (parameter == nullptr) {
+      MS_LOG(ERROR) << "parameter is nullptr.";
+      FreeTensors(&input_tensors);
+      FreeTensors(&output_tensors);
+      fbb.Clear();
+      return false;
+    }
+    parameter->infer_flag_ = true;
+    status = KernelInferShape(input_tensors, &output_tensors, parameter);
     if (status == RET_OK) {
       status = SetCNodeAbstract(output_tensors, cnode);
       if (status != RET_OK) {
@@ -413,6 +430,8 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     }
     FreeTensors(&input_tensors);
     FreeTensors(&output_tensors);
+    free(parameter);
+    fbb.Clear();
   }
   return true;
 }

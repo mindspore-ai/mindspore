@@ -21,7 +21,7 @@
 #endif
 #include <math.h>
 #include "nnacl/op_base.h"
-#include "mindspore/lite/nnacl/int8/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 typedef struct ActivationGradParameterFp16 {
   OpParameter op_parameter;
@@ -34,7 +34,6 @@ extern "C" {
 
 int Fp16ReluGrad(const float16_t *src0, const float16_t *src1, size_t length, float16_t *dst);
 int Fp16SigmoidGrad(const float16_t *src0, const float16_t *src1, size_t length, float16_t *dst);
-int Fp16LogGrad(const float16_t *src0, const float16_t *src1, size_t length, float16_t *dst);
 
 #ifdef __cplusplus
 }

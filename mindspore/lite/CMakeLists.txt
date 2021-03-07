@@ -72,6 +72,7 @@ add_compile_definitions(NO_DLIB)
 add_compile_options(-fPIC)
 
 if(SUPPORT_TRAIN)
+    set(BUILD_MINDDATA "full")
     if(PLATFORM_ARM64)
         set(RUNTIME_COMPONENT_NAME train-android-aarch64)
     elseif(PLATFORM_ARM32)

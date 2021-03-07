@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/dedepthwise_conv2d.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
+/*
 OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primitive) {
   ConvParameter *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
   if (conv_param == nullptr) {
@@ -59,7 +56,6 @@ OpParameter *PopulateDeconvDwParameter(const mindspore::lite::PrimitiveC *primit
   return reinterpret_cast<OpParameter *>(conv_param);
 }
 
-Registry DeDepthwiseConv2DParameterRegistry(schema::PrimitiveType_DeDepthwiseConv2D, PopulateDeconvDwParameter);
-
+*/
 }  // namespace lite
 }  // namespace mindspore

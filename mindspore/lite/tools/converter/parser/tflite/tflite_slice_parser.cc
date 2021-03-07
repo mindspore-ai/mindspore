@@ -17,43 +17,33 @@
 #include "tools/converter/parser/tflite/tflite_slice_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/fusion/slice_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteSliceParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                  const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
+ops::PrimitiveC *TfliteSliceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::SliceFusion>();
+
+  MS_ASSERT(tflite_op != nullptr);
+  MS_ASSERT(tflite_model != nullptr);
+  const auto &tflite_subgraph = tflite_model->subgraphs.front();
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
-
-  std::unique_ptr<schema::SliceT> attr = std::make_unique<schema::SliceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  attr->format = schema::Format::Format_NHWC;
-
-  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->begin)) {
+  std::vector<int64_t> begin;
+  if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, begin)) {
     MS_LOG(ERROR) << "get slice -> begin failed";
     return nullptr;
   }
-  if (GetTfliteData(tflite_op->inputs[2], tflite_subgraph->tensors, tflite_model->buffers, attr->size)) {
-    MS_LOG(ERROR) << "get slice -> size failed";
-    return nullptr;
-  }
-  std::vector<int> axes;
-  axes.clear();
-  for (size_t i = 0; i < attr->begin.size(); ++i) {
+  std::vector<int64_t> axes;
+  for (size_t i = 0; i < begin.size(); ++i) {
     axes.push_back(i);
   }
-  attr->axes = axes;
-  primitive->value.type = schema::PrimitiveType_Slice;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_axes(axes);
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteSliceParser(tflite::BuiltinOperator_SLICE, new TfliteSliceParser());

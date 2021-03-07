@@ -33,8 +33,7 @@ class CoderKey {
  public:
   CoderKey() = delete;
 
-  CoderKey(Target target, TypeId data_type, schema::PrimitiveType op_type)
-      : target_(target), data_type_(data_type), op_type_(op_type) {}
+  CoderKey(Target target, TypeId data_type, int op_type) : target_(target), data_type_(data_type), op_type_(op_type) {}
 
   CoderKey AllKey() const {
     CoderKey key(kAllTargets, data_type_, op_type_);
@@ -48,7 +47,7 @@ class CoderKey {
  private:
   Target target_ = kTargetUnknown;
   TypeId data_type_ = kTypeUnknown;
-  schema::PrimitiveType op_type_ = schema::PrimitiveType_NONE;
+  int op_type_ = schema::PrimitiveType_NONE;
 };
 
 class OpCoderFactory {

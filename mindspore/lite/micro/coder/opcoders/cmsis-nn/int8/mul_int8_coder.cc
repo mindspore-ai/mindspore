@@ -20,7 +20,7 @@
 #include "nnacl/int8/quantize.h"
 #include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 
 namespace mindspore::lite::micro::cmsis {
 
@@ -69,5 +69,5 @@ int MulInt8Coder::DoCode(CoderContext *const context) {
   context->AppendCode(code.str());
   return RET_OK;
 }
-REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_Mul, CPUOpCoderCreator<MulInt8Coder>)
+REG_OPERATOR_CODER(kARM32M, kNumberTypeInt8, PrimitiveType_MulFusion, CPUOpCoderCreator<MulInt8Coder>)
 }  // namespace mindspore::lite::micro::cmsis

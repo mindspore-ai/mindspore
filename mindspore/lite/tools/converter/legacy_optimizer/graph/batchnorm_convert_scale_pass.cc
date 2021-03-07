@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@
 #include "tools/converter/converter_flags.h"
 #include "third_party/securec/include/securec.h"
 #include "src/common/log_adapter.h"
-#include "src/common/common.h"
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
@@ -74,8 +73,8 @@ STATUS BatchNormConvertScalePass::Run(MetaGraphT *graph) {
 STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(bnNode != nullptr);
-  bnNode->primitive->value.type = schema::PrimitiveType_Scale;
-  std::unique_ptr<ScaleT> scaleParam(new (std::nothrow) ScaleT());
+  bnNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
+  std::unique_ptr<ScaleFusionT> scaleParam(new (std::nothrow) ScaleFusionT());
   if (scaleParam == nullptr) {
     MS_LOG(ERROR) << "new scaleParam failed";
     return RET_ERROR;

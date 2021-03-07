@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class FullconnectionNPUKernel : public ConvolutionBaseNPUKernel {
  public:
   FullconnectionNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseNPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionBaseNPUKernel(parameter, inputs, outputs, ctx) {
     fc_param_ = reinterpret_cast<MatMulParameter *>(parameter);
   }
   ~FullconnectionNPUKernel() override;

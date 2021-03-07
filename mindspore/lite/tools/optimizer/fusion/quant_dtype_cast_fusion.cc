@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,6 @@
  */
 #include "tools/optimizer/fusion/quant_dtype_cast_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
-#include "src/ops/conv2d.h"
-#include "src/ops/depthwise_conv2d.h"
-#include "src/ops/activation.h"
-#include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
 namespace mindspore::opt {
 namespace {

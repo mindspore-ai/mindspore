@@ -33,7 +33,7 @@ class DequantUtil {
 
   static int UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
 
-  static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(const mindspore::lite::PrimitiveC *primitive,
+  static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(OpParameter *op_param,
                                                                      const std::vector<Tensor *> &in_tensors,
                                                                      TypeId data_type, bool need_restore = true);
 

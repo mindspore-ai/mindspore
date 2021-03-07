@@ -5,6 +5,9 @@ set(CODER_SRC
         ${MICRO_DIR}/coder/graph.cc
         ${MICRO_DIR}/coder/session.cc
         ${MICRO_DIR}/coder/train.cc
+        ${MICRO_DIR}/coder/utils/coder_utils.cc
+        ${MICRO_DIR}/coder/utils/dir_utils.cc
+        ${MICRO_DIR}/coder/utils/type_cast.cc
         )
 
 set(CODER_ALLOCATOR_SRC
@@ -21,6 +24,11 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/weight_component.cc
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
         ${MICRO_DIR}/coder/generator/component/train_component.cc
+        ${MICRO_DIR}/coder/generator/component/parallel_component.cc
+        )
+
+set(MINDSPORE_CORE
+        ${TOP_DIR}/mindspore/core/gvar/logging_level.cc
         )
 
 set(CODER_OPCODERS_SRC
@@ -28,16 +36,20 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/op_coder.cc
         ${MICRO_DIR}/coder/opcoders/op_coder_builder.cc
         ${MICRO_DIR}/coder/opcoders/op_coder_register.cc
+        ${MICRO_DIR}/coder/opcoders/parallel.cc
         #### serializer
         ${MICRO_DIR}/coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.cc
         ${MICRO_DIR}/coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.cc
+        ${MICRO_DIR}/coder/opcoders/serializers/nnacl_serializer/nnacl_stream_utils.cc
         #### base coder
         ${MICRO_DIR}/coder/opcoders/base/conv2d_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/dtype_cast_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/full_connection_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/quant_dtype_cast_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/reduce_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/base/resize_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/base/softmax_base_coder.cc
+        ${MICRO_DIR}/coder/opcoders/base/detection_post_process_base_coder.cc
         #### cmsis int8 coder
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/add_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/cmsis-nn/int8/conv2d_base_coder.cc
@@ -55,6 +67,7 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/arithmetic_self_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/assign_add_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/batchnorm_fp32_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/biasadd_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/concat_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/convolution_winograd_fp32_coder.cc
@@ -64,21 +77,20 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/gather_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/matmul_fp32_base_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/matmul_fp32_coder.cc
-        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/nchw2nhwc_fp32_coder.cc
-        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/nhwc2nchw_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/pad_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/pooling_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/power_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/reduce_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/reshape_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/scale_fp32_coder.cc
-        ${MICRO_DIR}/coder/opcoders/nnacl/fp32/slice_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/softmax_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/squeeze_dims_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/tile_fp32_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/fp32/transpose_fp32_coder.cc
         #### nnacl int8 coder
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/activation_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/add_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/batchnorm_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/concat_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/fullconnection_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/matmul_int8_coder.cc
@@ -87,40 +99,69 @@ set(CODER_OPCODERS_SRC
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/conv2d_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/deconvolution_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/pooling_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/resize_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/reduce_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/reshape_int8_coder.cc
         ${MICRO_DIR}/coder/opcoders/nnacl/int8/softmax_int8_coder.cc
-        )
-
-set(CODER_UTILS_SRC
-        ${MICRO_DIR}/coder/utils/coder_utils.cc
-        ${MICRO_DIR}/coder/utils/dir_utils.cc
-        ${MICRO_DIR}/coder/utils/type_cast.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/sub_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/detection_post_process_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/sigmoid_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/relux_int8_coder.cc
+        ${MICRO_DIR}/coder/opcoders/nnacl/int8/div_int8_coder.cc
+        #### nnacl dequant coder
+        ${MICRO_DIR}/coder/opcoders/nnacl/dequant/de_quant.cc
         )
 
 set(LITE_SRC
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/graph_util.cc
         ${LITE_DIR}/src/common/string_util.cc
+        ${LITE_DIR}/src/common/prim_util.cc
+        ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/runtime/allocator.cc
+        ${LITE_DIR}/src/runtime/infer_manager.cc
+        ${LITE_DIR}/src/runtime/runtime_api.cc
         ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/tensor.cc
+        ${LITE_DIR}/src/scheduler.cc
+        ${LITE_DIR}/src/inner_context.cc
+        ${LITE_DIR}/src/dequant.cc
+        ${LITE_DIR}/src/kernel_registry.cc
+        ${LITE_DIR}/src/lite_kernel.cc
+        ${LITE_DIR}/src/sub_graph_kernel.cc
+        ${LITE_DIR}/src/huffman_decode.cc
+        ${LITE_DIR}/src/executor.cc
         ${LITE_DIR}/src/common/log_adapter.cc
-        ### src/ops for parameter and infer shape
-        ${LITE_DIR}/src/ops/batch_norm.cc
-        ${LITE_DIR}/src/ops/conv2d.cc
-        ${LITE_DIR}/src/ops/primitive_c.cc
-        ${LITE_DIR}/src/ops/slice.cc
-        ${LITE_DIR}/src/ops/while.cc
+        ${LITE_DIR}/src/common/utils.cc
         ### populate operator parameter
         ${LITE_DIR}/src/ops/populate/conv2d_populate.cc
+        ${LITE_DIR}/src/ops/populate/arithmetic_populate.cc
+        ${LITE_DIR}/src/ops/populate/add_populate.cc
+        ${LITE_DIR}/src/ops/populate/concat_populate.cc
+        ${LITE_DIR}/src/ops/populate/conv2d_populate.cc
+        ${LITE_DIR}/src/ops/populate/detection_post_process_populate.cc
+        ${LITE_DIR}/src/ops/populate/depthwise_conv2d_populate.cc
+        ${LITE_DIR}/src/ops/populate/full_connection_populate.cc
+        ${LITE_DIR}/src/ops/populate/pooling_populate.cc
+        ${LITE_DIR}/src/ops/populate/quant_dtype_cast_populate.cc
+        ${LITE_DIR}/src/ops/populate/resize_populate.cc
+        ${LITE_DIR}/src/ops/populate/reshape_populate.cc
+        ${LITE_DIR}/src/ops/populate/batch_norm_populate.cc
+        ${LITE_DIR}/src/ops/populate/slice_populate.cc
+        ${LITE_DIR}/src/ops/populate/while_populate.cc
+        ${LITE_DIR}/src/ops/populate/matmul_populate.cc
+        ${LITE_DIR}/src/ops/populate/bias_add_populate.cc
+        ${LITE_DIR}/src/ops/populate/activation_populate.cc
         ### tools
         ${LITE_DIR}/tools/common/flag_parser.cc
         )
 set(LITE_KERNEL_SRC
         ### nnacl
+        ${LITE_DIR}/nnacl/common_func.c
         ${LITE_DIR}/nnacl/base/minimal_filtering_generator.c
+        ${LITE_DIR}/nnacl/base/arithmetic_base.c
+        ${LITE_DIR}/nnacl/base/slice_base.c
         ${LITE_DIR}/nnacl/fp32/winograd_utils.c
         ${LITE_DIR}/nnacl/fp32/pack_fp32.c
         ${LITE_DIR}/nnacl/int8/quantize.c
@@ -128,13 +169,138 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/int8/matmul_int8.c
         ${LITE_DIR}/nnacl/int8/fixed_point.c
         ${LITE_DIR}/nnacl/fp32/matmul_fp32.c
+        ${LITE_DIR}/nnacl/int8/arithmetic_int8.c
+        ${LITE_DIR}/nnacl/int8/add_int8.c
+        ${LITE_DIR}/nnacl/int8/concat_int8.c
+        ${LITE_DIR}/nnacl/int8/conv_int8.c
         ${LITE_DIR}/nnacl/int8/conv3x3_int8.c
         ${LITE_DIR}/nnacl/int8/conv1x1_int8.c
         ${LITE_DIR}/nnacl/base/conv1x1_base.c
+        ${LITE_DIR}/nnacl/int8/conv_depthwise_int8.c
         ${LITE_DIR}/nnacl/int8/deconv_int8.c
         ${LITE_DIR}/nnacl/int8/common_func_int8.c
+        ${LITE_DIR}/nnacl/int8/slice_int8.c
+        ${LITE_DIR}/nnacl/int8/batchnorm_int8.c
+        ${LITE_DIR}/nnacl/int8/sub_int8.c
+        ${LITE_DIR}/nnacl/int8/quant_dtype_cast_int8.c
+        ${LITE_DIR}/nnacl/int8/sigmoid_int8.c
+        ${LITE_DIR}/nnacl/int8/resize_int8.c
+        ### infer
+        ${LITE_DIR}/nnacl/infer/adam_infer.c
+        ${LITE_DIR}/nnacl/infer/add_sub_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/addn_infer.c
+        ${LITE_DIR}/nnacl/infer/apply_momentum_infer.c
+        ${LITE_DIR}/nnacl/infer/argmin_max_infer.c
+        ${LITE_DIR}/nnacl/infer/arithmetic_compare_infer.c
+        ${LITE_DIR}/nnacl/infer/arithmetic_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/arithmetic_infer.c
+        ${LITE_DIR}/nnacl/infer/assert_op_infer.c
+        ${LITE_DIR}/nnacl/infer/assign_add_infer.c
+        ${LITE_DIR}/nnacl/infer/assign_infer.c
+        ${LITE_DIR}/nnacl/infer/audio_spectrogram_infer.c
+        ${LITE_DIR}/nnacl/infer/batch_to_space_infer.c
+        ${LITE_DIR}/nnacl/infer/bias_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/binary_cross_entropy_infer.c
+        ${LITE_DIR}/nnacl/infer/bn_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/broadcast_to_infer.c
+        ${LITE_DIR}/nnacl/infer/cast_infer.c
+        ${LITE_DIR}/nnacl/infer/common_infer.c
+        ${LITE_DIR}/nnacl/infer/concat_infer.c
+        ${LITE_DIR}/nnacl/infer/constant_of_shape_infer.c
+        ${LITE_DIR}/nnacl/infer/conv2d_grad_filter_infer.c
+        ${LITE_DIR}/nnacl/infer/conv2d_grad_input_infer.c
+        ${LITE_DIR}/nnacl/infer/conv2d_infer.c
+        ${LITE_DIR}/nnacl/infer/crop_and_resize_infer.c
+        ${LITE_DIR}/nnacl/infer/crop_infer.c
+        ${LITE_DIR}/nnacl/infer/custom_extract_features_infer.c
+        ${LITE_DIR}/nnacl/infer/custom_normalize_infer.c
+        ${LITE_DIR}/nnacl/infer/custom_predict_infer.c
+        ${LITE_DIR}/nnacl/infer/deconv2d_infer.c
+        ${LITE_DIR}/nnacl/infer/dedepthwise_conv2d_infer.c
+        ${LITE_DIR}/nnacl/infer/depth_to_space_infer.c
+        ${LITE_DIR}/nnacl/infer/depthwise_conv2d_infer.c
+        ${LITE_DIR}/nnacl/infer/detection_post_process_infer.c
+        ${LITE_DIR}/nnacl/infer/dropout_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/dropout_infer.c
+        ${LITE_DIR}/nnacl/infer/embedding_lookup_infer.c
+        ${LITE_DIR}/nnacl/infer/expand_dims_infer.c
+        ${LITE_DIR}/nnacl/infer/fft_imag_infer.c
+        ${LITE_DIR}/nnacl/infer/fft_real_infer.c
+        ${LITE_DIR}/nnacl/infer/fill_infer.c
+        ${LITE_DIR}/nnacl/infer/flatten_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/flatten_infer.c
+        ${LITE_DIR}/nnacl/infer/full_connection_infer.c
+        ${LITE_DIR}/nnacl/infer/fused_batchnorm_infer.c
+        ${LITE_DIR}/nnacl/infer/gather_infer.c
+        ${LITE_DIR}/nnacl/infer/gather_nd_infer.c
+        ${LITE_DIR}/nnacl/infer/group_conv2d_grad_input_infer.c
+        ${LITE_DIR}/nnacl/infer/gru_infer.c
+        ${LITE_DIR}/nnacl/infer/hashtable_lookup_infer.c
+        ${LITE_DIR}/nnacl/infer/invert_permutation_infer.c
+        ${LITE_DIR}/nnacl/infer/layer_norm_infer.c
+        ${LITE_DIR}/nnacl/infer/lin_space_infer.c
+        ${LITE_DIR}/nnacl/infer/lsh_projection_infer.c
+        ${LITE_DIR}/nnacl/infer/lstm_infer.c
+        ${LITE_DIR}/nnacl/infer/matmul_infer.c
+        ${LITE_DIR}/nnacl/infer/maximum_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/mean_infer.c
+        ${LITE_DIR}/nnacl/infer/merge_infer.c
+        ${LITE_DIR}/nnacl/infer/mfcc_infer.c
+        ${LITE_DIR}/nnacl/infer/non_max_suppression_infer.c
+        ${LITE_DIR}/nnacl/infer/one_hot_infer.c
+        ${LITE_DIR}/nnacl/infer/pad_infer.c
+        ${LITE_DIR}/nnacl/infer/partial_infer.c
+        ${LITE_DIR}/nnacl/infer/pooling_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/pooling_infer.c
+        ${LITE_DIR}/nnacl/infer/power_infer.c
+        ${LITE_DIR}/nnacl/infer/prior_box_infer.c
+        ${LITE_DIR}/nnacl/infer/quant_dtype_cast_infer.c
+        ${LITE_DIR}/nnacl/infer/random_standard_normal_infer.c
+        ${LITE_DIR}/nnacl/infer/range_infer.c
+        ${LITE_DIR}/nnacl/infer/rank_infer.c
+        ${LITE_DIR}/nnacl/infer/reduce_infer.c
+        ${LITE_DIR}/nnacl/infer/reshape_infer.c
+        ${LITE_DIR}/nnacl/infer/resize_infer.c
+        ${LITE_DIR}/nnacl/infer/rfft_infer.c
+        ${LITE_DIR}/nnacl/infer/roi_pooling_infer.c
+        ${LITE_DIR}/nnacl/infer/scatter_nd_infer.c
+        ${LITE_DIR}/nnacl/infer/select_infer.c
+        ${LITE_DIR}/nnacl/infer/sgd_infer.c
+        ${LITE_DIR}/nnacl/infer/shape_infer.c
+        ${LITE_DIR}/nnacl/infer/size_infer.c
+        ${LITE_DIR}/nnacl/infer/skip_gram_infer.c
+        ${LITE_DIR}/nnacl/infer/slice_infer.c
+        ${LITE_DIR}/nnacl/infer/softmax_cross_entropy_infer.c
+        ${LITE_DIR}/nnacl/infer/softmax_infer.c
+        ${LITE_DIR}/nnacl/infer/space_to_batch_infer.c
+        ${LITE_DIR}/nnacl/infer/space_to_batch_nd_infer.c
+        ${LITE_DIR}/nnacl/infer/space_to_depth_infer.c
+        ${LITE_DIR}/nnacl/infer/sparse_softmax_cross_entropy_infer.c
+        ${LITE_DIR}/nnacl/infer/sparse_to_dense_infer.c
+        ${LITE_DIR}/nnacl/infer/split_infer.c
+        ${LITE_DIR}/nnacl/infer/squeeze_infer.c
+        ${LITE_DIR}/nnacl/infer/stack_infer.c
+        ${LITE_DIR}/nnacl/infer/strided_slice_grad_infer.c
+        ${LITE_DIR}/nnacl/infer/strided_slice_infer.c
+        ${LITE_DIR}/nnacl/infer/switch_infer.c
+        ${LITE_DIR}/nnacl/infer/tensorlist_fromtensor_infer.c
+        ${LITE_DIR}/nnacl/infer/tensorlist_getitem_infer.c
+        ${LITE_DIR}/nnacl/infer/tensorlist_reserve_infer.c
+        ${LITE_DIR}/nnacl/infer/tensorlist_setitem_infer.c
+        ${LITE_DIR}/nnacl/infer/tensorlist_stack_infer.c
+        ${LITE_DIR}/nnacl/infer/tile_infer.c
+        ${LITE_DIR}/nnacl/infer/topk_infer.c
+        ${LITE_DIR}/nnacl/infer/transpose_infer.c
+        ${LITE_DIR}/nnacl/infer/uniform_real_infer.c
+        ${LITE_DIR}/nnacl/infer/unique_infer.c
+        ${LITE_DIR}/nnacl/infer/unsorted_segment_sum_infer.c
+        ${LITE_DIR}/nnacl/infer/unsqueeze_infer.c
+        ${LITE_DIR}/nnacl/infer/unstack_infer.c
+        ${LITE_DIR}/nnacl/infer/where_infer.c
+        ${LITE_DIR}/nnacl/infer/while_infer.c
+        ${LITE_DIR}/nnacl/infer/splice_infer.c
         )
 
-list(APPEND FILE_SET ${CODER_SRC} ${CODER_UTILS_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
-        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${LITE_KERNEL_SRC})
+list(APPEND FILE_SET ${CODER_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
+        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${LITE_KERNEL_SRC} ${MINDSPORE_CORE})
 

@@ -83,13 +83,12 @@ int ArithmeticSelfGradCPUKernel::Run() {
 kernel::LiteKernel *CpuArithmeticSelfGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                            const std::vector<lite::Tensor *> &outputs,
                                                            OpParameter *param, const lite::InnerContext *ctx,
-                                                           const kernel::KernelKey &desc,
-                                                           const mindspore::lite::PrimitiveC *primitive) {
+                                                           const kernel::KernelKey &desc) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr!";
     return nullptr;
   }
-  auto *kernel = new (std::nothrow) ArithmeticSelfGradCPUKernel(param, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) ArithmeticSelfGradCPUKernel(param, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new ArithmeticSelfGradCPUKernel fail!";
     free(param);

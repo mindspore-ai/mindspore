@@ -23,7 +23,7 @@ class TestOpenCL_Slice : public CommonTest {};
 namespace {
 // PrimitiveType_Slice: src/ops/populate/slice_populate.cc
 OpParameter *CreateParameter(const std::vector<int> &begin, const std::vector<int> &size) {
-  auto *param = test::CreateParameter<SliceParameter>(schema::PrimitiveType_Slice);
+  auto *param = test::CreateParameter<SliceParameter>(schema::PrimitiveType_SliceFusion);
   param->param_length_ = begin.size();
   for (int i = 0; i < begin.size(); ++i) {
     param->begin_[i] = begin[i];

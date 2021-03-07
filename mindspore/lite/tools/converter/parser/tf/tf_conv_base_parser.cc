@@ -22,49 +22,7 @@
 #include "schema/inner/model_generated.h"
 namespace mindspore {
 namespace lite {
-namespace {
-const uint32_t STRIDE_DEFAULT_VALUE = 1;
-const uint32_t DILATION_DEFAULT_VALUE = 1;
-}  // namespace
-STATUS TFConvBaseParser::ParseStrides(const tensorflow::NodeDef &node_def, const schema::Format &format,
-                                      std::vector<int64_t> *strides) {
-  tensorflow::AttrValue attr_value;
-  if (!TensorFlowUtils::FindAttrValue(node_def, "strides", &attr_value)) {
-    strides->at(0) = STRIDE_DEFAULT_VALUE;
-    strides->at(1) = STRIDE_DEFAULT_VALUE;
-  } else {
-    auto stride_list = attr_value.list();
-    if (format == schema::Format_NHWC) {
-      strides->at(0) = stride_list.i(1);
-      strides->at(1) = stride_list.i(2);
-    } else {
-      strides->at(0) = stride_list.i(2);
-      strides->at(1) = stride_list.i(3);
-    }
-  }
-  return RET_OK;
-}
-
-STATUS TFConvBaseParser::ParseDilations(const tensorflow::NodeDef &node_def, const schema::Format &format,
-                                        std::vector<int64_t> *dilations) {
-  tensorflow::AttrValue attr_value;
-  if (!TensorFlowUtils::FindAttrValue(node_def, "dilations", &attr_value)) {
-    dilations->at(0) = DILATION_DEFAULT_VALUE;
-    dilations->at(1) = DILATION_DEFAULT_VALUE;
-  } else {
-    auto dilation_list = attr_value.list();
-    if (format == schema::Format_NHWC) {
-      dilations->at(0) = dilation_list.i(1);
-      dilations->at(1) = dilation_list.i(2);
-    } else {
-      dilations->at(0) = dilation_list.i(2);
-      dilations->at(1) = dilation_list.i(3);
-    }
-  }
-  return RET_OK;
-}
-
-STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const schema::Format &format,
+STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
                                       std::vector<int64_t> *kernel) {
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(node_def, "value", &attr_value)) {
@@ -83,20 +41,54 @@ STATUS TFConvBaseParser::ParseKernels(const tensorflow::NodeDef &node_def, const
   return RET_OK;
 }
 
-STATUS TFConvBaseParser::ParsePadMode(const tensorflow::NodeDef &node_def, schema::PadMode *pad_mode) {
+STATUS TFConvBaseParser::ParseStrides(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
+                                      std::vector<int64_t> *strides) {
+  tensorflow::AttrValue attr_value;
+  if (!TensorFlowUtils::FindAttrValue(node_def, "strides", &attr_value)) {
+    strides->at(0) = 1;
+    strides->at(1) = 1;
+  } else {
+    auto stride_list = attr_value.list();
+    if (format == mindspore::NHWC) {
+      strides->at(0) = stride_list.i(1);
+      strides->at(1) = stride_list.i(2);
+    } else {
+      strides->at(0) = stride_list.i(2);
+      strides->at(1) = stride_list.i(3);
+    }
+  }
+  return RET_OK;
+}
+
+STATUS TFConvBaseParser::ParseDilations(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
+                                        std::vector<int64_t> *dilations) {
+  tensorflow::AttrValue attr_value;
+  if (!TensorFlowUtils::FindAttrValue(node_def, "dilations", &attr_value)) {
+    dilations->at(0) = 1;
+    dilations->at(1) = 1;
+  } else {
+    auto dilation_list = attr_value.list();
+    if (format == mindspore::NHWC) {
+      dilations->at(0) = dilation_list.i(1);
+      dilations->at(1) = dilation_list.i(2);
+    } else {
+      dilations->at(0) = dilation_list.i(2);
+      dilations->at(1) = dilation_list.i(3);
+    }
+  }
+  return RET_OK;
+}
+
+mindspore::PadMode TFConvBaseParser::ParsePadMode(const tensorflow::NodeDef &node_def) {
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(node_def, "padding", &attr_value)) {
     MS_LOG(ERROR) << "The attr padding should be specified";
-    return RET_PARAM_INVALID;
+    return mindspore::PadMode::VALID;
   }
-  if (attr_value.s() == "VALID") {
-    *pad_mode = schema::PadMode_VALID;
-  } else if (attr_value.s() == "SAME") {
-    *pad_mode = schema::PadMode_SAME_UPPER;
-  } else {
-    *pad_mode = schema::PadMode_NOTSET;
+  if (attr_value.s() == "SAME") {
+    return mindspore::PadMode::SAME;
   }
-  return RET_OK;
+  return mindspore::PadMode::VALID;
 }
 }  // namespace lite
 }  // namespace mindspore

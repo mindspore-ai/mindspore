@@ -18,29 +18,26 @@
 #include "tools/converter/parser/tflite/tflite_l2norm_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/fusion/l2_normalize_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteL2NormParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                   const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  std::unique_ptr<schema::L2NormT> attr = std::make_unique<schema::L2NormT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-  const auto &tflite_attr = tflite_op->builtin_options.AsL2NormOptions();
-  attr->axis = {-1};
-  attr->epsilon = 1e-6f;
-  attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
+ops::PrimitiveC *TfliteL2NormParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = std::make_unique<ops::L2NormalizeFusion>();
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
+  prim->set_axis({-1});
+  prim->set_epsilon(1e-6f);
+
+  MS_ASSERT(tflite_op != nullptr);
+  const auto &tflite_attr = tflite_op->builtin_options.AsL2NormOptions();
+  if (tflite_attr == nullptr) {
+    MS_LOG(ERROR) << "get L2NormalizeFusion attr failed";
     return nullptr;
   }
-  primitive->value.type = schema::PrimitiveType_L2Norm;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  prim->set_activation_type(GetActivationFunctionType(tflite_attr->fused_activation_function));
+
+  return prim.release();
 }
 
 TfliteNodeRegister g_tfliteL2NormParser(tflite::BuiltinOperator_L2_NORMALIZATION, new TfliteL2NormParser());

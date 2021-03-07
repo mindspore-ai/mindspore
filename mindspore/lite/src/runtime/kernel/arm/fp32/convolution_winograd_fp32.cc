@@ -17,17 +17,12 @@
 #include "src/runtime/kernel/arm/fp32/convolution_winograd_fp32.h"
 #include "nnacl/fp32/conv_winograd_fp32.h"
 #include "nnacl/pack.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
 int ConvolutionWinogradCPUKernel::WinogradFilterTransform(const float *weight_data, float *matrix_g, float *matrix_gt,

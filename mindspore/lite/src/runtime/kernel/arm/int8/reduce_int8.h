@@ -37,9 +37,8 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
 
  public:
   ReduceInt8CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
-      : ReduceBaseCPUKernel(param, inputs, outputs, ctx, primitive), ctx_(ctx) {}
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ReduceBaseCPUKernel(param, inputs, outputs, ctx), ctx_(ctx) {}
   ~ReduceInt8CPUKernel() {
     for (auto qm : mean_multipliers_) {
       delete qm;
@@ -77,6 +76,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   void ThreeAxes();
   void ReduceMean4DCalQuantParam();
   int CalculateQuantArgs();
+  int CalculateQuantArgsReduceSumSquare();
   void GetQuantArgs(size_t i);
 
  private:

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_NNACL_CROP_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "mindspore/lite/nnacl/int8/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 typedef struct CropParameter {
   OpParameter op_parameter_;

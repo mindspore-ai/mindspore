@@ -25,6 +25,7 @@ typedef struct TransposeParameter {
   // primitive parameter
   OpParameter op_parameter_;
   int perm_[MAX_SHAPE_SIZE];
+  size_t perm_size_;
   bool conjugate_;
 
   // shape correlative

@@ -35,6 +35,7 @@ typedef struct SliceParameter {
   int32_t begin_[COMM_SHAPE_SIZE];
   int32_t end_[COMM_SHAPE_SIZE];
   int32_t size_[COMM_SHAPE_SIZE];
+  int32_t axis_[COMM_SHAPE_SIZE];
 
   // other parameter
   SliceQuantArg quant_arg_;

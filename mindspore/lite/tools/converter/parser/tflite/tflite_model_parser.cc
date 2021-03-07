@@ -19,11 +19,16 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include "tools/converter/converter_flags.h"
 #include "src/param_value_lite.h"
 #include "src/common/file_utils.h"
+#include "ops/return.h"
+#include "ops/make_tuple.h"
+#include "ops/tuple_get_item.h"
+#include "ops/primitive_c.h"
+#include "ir/func_graph.h"
 
 namespace mindspore::lite {
-
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *model_path) {
   size_t size = 0;
   tflite_model_buf_ = ReadFile(model_path, &size);
@@ -106,21 +111,24 @@ STATUS TfliteModelParser::ConvertOps() {
     auto op_name = op_type + "-" + std::to_string(op_idx);
     op_idx++;
     // parse primitive
+    MS_LOG(INFO) << "parse node :" << op_name;
     auto node_parser = TfliteNodeParserRegistry::GetInstance()->GetNodeParser(tflite_op_type);
     if (node_parser == nullptr) {
       NoSupportOp::GetInstance()->InsertOp(op_type);
       status = (status == RET_OK ? RET_NOT_FIND_OP : status);
       continue;
     }
-
     if (status != RET_OK) {
       continue;
     }
 
-    auto primitiveC = node_parser->ParseLitePrimitive(op, tflite_model_);
-    if (primitiveC == nullptr) {
-      MS_LOG(ERROR) << "parse node " << op_name << " parser failed";
-      continue;
+    std::vector<AnfNodePtr> op_inputs;
+    auto primitiveC = node_parser->Parse(op, tflite_model_);
+    if (primitiveC != nullptr) {
+      op_inputs = {NewValueNode(std::shared_ptr<ops::PrimitiveC>(primitiveC))};
+    } else {
+      MS_LOG(ERROR) << "parse failed for node: " << op_name;
+      return RET_ERROR;
     }
 
     status = ConvertOpQuantParams(op.get(), primitiveC);
@@ -129,7 +137,6 @@ STATUS TfliteModelParser::ConvertOps() {
       continue;
     }
 
-    std::vector<AnfNodePtr> op_inputs = {NewValueNode(std::shared_ptr<lite::PrimitiveC>(primitiveC))};
     // parse inputs
     for (int i = 0; i < static_cast<int>(op->inputs.size()); i++) {
       auto input_idx = op->inputs.at(i);
@@ -194,7 +201,7 @@ STATUS TfliteModelParser::SetTensorQuantParam(const tflite::TensorT *tflite_tens
   for (size_t i = 0; i < tflite_tensor->quantization->scale.size(); i++) {
     std::unique_ptr<schema::QuantParamT> quant_param = std::make_unique<QuantParamT>();
     if (quant_param == nullptr) {
-      MS_LOG(ERROR) << "quant_param is null";
+      MS_LOG(ERROR) << "new quant_param failed";
       return RET_NULL_PTR;
     }
 
@@ -221,7 +228,7 @@ STATUS TfliteModelParser::SetTensorQuantParam(const tflite::TensorT *tflite_tens
   return RET_OK;
 }
 
-STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, lite::PrimitiveC *primitive_c) {
+STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, ops::PrimitiveC *primitive_c) {
   if (op == nullptr) {
     MS_LOG(ERROR) << "tflite op is null, get quant params failed.";
     return RET_NULL_PTR;
@@ -233,10 +240,11 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, lite
   }
 
   int round_type = 1;
-  if (primitive_c->primitiveT()->value.type == PrimitiveType_Conv2D) {
+  if (primitive_c->name() == "Conv2D" || primitive_c->name() == "Conv2DFusion") {
     round_type = 2;
   }
   const auto &tflite_subgraph = tflite_model_->subgraphs.front();
+  auto quant_params_holder = std::make_shared<QuantParamHolder>();
   for (auto input_idx : op->inputs) {
     if (input_idx < 0) {
       input_idx += tflite_subgraph->tensors.size();
@@ -248,7 +256,7 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, lite
       MS_LOG(ERROR) << "set input tensor quant param failed.";
       return status;
     }
-    primitive_c->AddInputQuantParam(quant_params);
+    quant_params_holder->AddInputQuantParam(quant_params);
   }
   for (auto output_idx : op->outputs) {
     if (output_idx < 0) {
@@ -261,8 +269,9 @@ STATUS TfliteModelParser::ConvertOpQuantParams(const tflite::OperatorT *op, lite
       MS_LOG(ERROR) << "set output tensor quant param failed.";
       return status;
     }
-    primitive_c->AddOutputQuantParam(quant_params);
+    quant_params_holder->AddOutputQuantParam(quant_params);
   }
+  primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
 
@@ -290,9 +299,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
   const auto &tflite_subgraph = tflite_model_->subgraphs.front();
   if (tflite_subgraph->outputs.size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = GetMakeTuplePrim();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
-      MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
+      MS_LOG(ERROR) << "new MakeTuple failed";
       return RET_NULL_PTR;
     }
     auto make_tuple_prim = NewValueNode(make_tuple_prim_ptr);
@@ -310,9 +319,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     make_tuple_cnode->set_fullname_with_scope("return tuple");
 
     std::vector<AnfNodePtr> op_inputs;
-    auto return_prim_ptr = GetReturnPrim();
+    auto return_prim_ptr = std::make_shared<ops::Return>();
     if (return_prim_ptr == nullptr) {
-      MS_LOG(ERROR) << "GetReturnPrim return nullptr";
+      MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
     auto value_node = NewValueNode(return_prim_ptr);
@@ -322,9 +331,9 @@ STATUS TfliteModelParser::ConvertGraphOutputs() {
     cnode->set_fullname_with_scope("Return");
     func_graph_->set_return(cnode);
   } else {
-    auto returnPrim = GetReturnPrim();
+    auto returnPrim = std::make_shared<ops::Return>();
     if (returnPrim == nullptr) {
-      MS_LOG(ERROR) << "GetReturnPrim return nullptr";
+      MS_LOG(ERROR) << "new Return failed";
       return RET_NULL_PTR;
     }
     int outputNode = tflite_subgraph->outputs.front() < 0
@@ -420,9 +429,9 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
                            [](const int32_t &value) { return static_cast<int64_t>(value); });
       auto type_ptr = TypeIdToType(GetTfliteDataType(tensor->type));
       abstract_list.emplace_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
-      auto tuple_get_item_prim_ptr = GetTupleGetItemPrim();
+      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
-        MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
+        MS_LOG(ERROR) << "new TupleGetItem failed";
         return RET_NULL_PTR;
       }
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
@@ -436,10 +445,5 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
     dst_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   }
   return RET_OK;
-}
-
-MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                         const QuantType &quant_type) {
-  return nullptr;
 }
 }  // namespace mindspore::lite

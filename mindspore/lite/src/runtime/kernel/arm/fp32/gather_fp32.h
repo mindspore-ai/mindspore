@@ -27,9 +27,8 @@ namespace mindspore::kernel {
 class GatherCPUKernel : public LiteKernel {
  public:
   GatherCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                  const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~GatherCPUKernel() = default;
 
   int Init() override;
@@ -39,6 +38,7 @@ class GatherCPUKernel : public LiteKernel {
 
  private:
   int *indices_data_ = nullptr;
+  int axis_ = 0;
   int AssignIndicesData(bool isIndicesInt32, int indices_num, lite::Tensor *indices_tensor);
 };
 }  // namespace mindspore::kernel

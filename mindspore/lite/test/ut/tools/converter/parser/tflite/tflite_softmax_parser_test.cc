@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,13 @@ TEST_F(TestTfliteParserSoftmax, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_SoftMax) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Softmax) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserSoftmax, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSoftMax(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsSoftMax();
-  ASSERT_EQ(val->axis, -1);
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSoftmax(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsSoftmax();
+  ASSERT_EQ(val->axis[0], -1);
 }
 
 }  // namespace mindspore

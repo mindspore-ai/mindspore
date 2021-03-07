@@ -15,28 +15,15 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_identity_parser.h"
-#include <memory>
 #include <vector>
+#include <memory>
+#include "ops/identity.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxIdentityParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                         const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx IdentityParser";
-  auto attr = std::make_unique<schema::IdentityT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Identity;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxIdentityParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::Identity>();
+  return prim.release();
 }
 
 OnnxNodeRegistrar g_onnxIdentityParser("Identity", new OnnxIdentityParser());

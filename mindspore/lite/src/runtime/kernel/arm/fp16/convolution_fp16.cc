@@ -17,8 +17,6 @@
 #include "src/runtime/kernel/arm/fp16/convolution_fp16.h"
 #include <vector>
 #include "include/errorcode.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "nnacl/fp16/conv_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
@@ -26,12 +24,8 @@
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/winograd_utils_fp16.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
-using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
 int ConvolutionFP16CPUKernel::InitWeightBias() {

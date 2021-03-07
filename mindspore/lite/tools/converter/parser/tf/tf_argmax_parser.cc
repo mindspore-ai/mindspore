@@ -19,49 +19,32 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/fusion/arg_max_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFArgMaxParser::Parse(const tensorflow::NodeDef &tf_op,
-                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                             std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(DEBUG) << "TF ArgMaxParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::ArgMaxT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFArgMaxParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::ArgMaxFusion>();
+
   tensorflow::AttrValue attr_value;
   auto axis_node = tf_node_map.at(tf_op.input(tf_op.input_size() - 1));
   if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The attr value should be specified.";
-    return RET_ERROR;
+    return nullptr;
   }
   auto &axis_tensor = attr_value.tensor();
-  attr->axis = axis_tensor.int_val(0);
-  attr->outMaxValue = false;
-  primitive->value.type = schema::PrimitiveType_ArgMax;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  prim->set_axis(axis_tensor.int_val(0));
+  prim->set_out_max_value(false);
+
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
-    return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
-  return RET_OK;
+
+  return prim.release();
 }
 TFNodeRegistrar g_tfArgMaxParser("ArgMax", new TFArgMaxParser());
 }  // namespace lite

@@ -29,7 +29,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/model_parser.h"
-#include "mindspore/lite/src/param_value_lite.h"
+#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
@@ -40,26 +40,25 @@ class TFModelParser : public ModelParser {
 
   FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
 
- protected:
-  schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                                const QuantType &quantType = QuantType_QUANT_NONE) override;
-
  private:
-  STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, const ParamValueLitePtr &param_value);
+  static STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, const ParamValueLitePtr &param_value);
   STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
                             const TypeId &type, const ParameterPtr &parameter, std::vector<int64_t> *shape_vector);
+  static STATUS GetValueFromType(const tensorflow::TensorProto &tensor_proto,
+                                 const tensorflow::TensorShapeProto &tensor_shape, ParamValueLitePtr param_value,
+                                 const TypeId &type, int shape_size);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
                           std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
   STATUS ConvertGraphInputsAndConsts(const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes,
                                      const FuncGraphPtr &anf_graph,
                                      std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
-  STATUS ConvertInputNodes(const tensorflow::NodeDef &node_def, const std::vector<std::string> &input_names,
-                           const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
-                           const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
-                           std::vector<AnfNodePtr> *inputs, std::vector<std::string> *input_name_not_found);
-  STATUS ConvertOutputTensor(const tensorflow::NodeDef &op, const CNodePtr &anf_node,
-                             std::unordered_map<std::string, AnfNodePtr> *anf_node_map, const FuncGraphPtr &anf_graph,
-                             int output_size);
+  static STATUS ConvertInputNodes(const tensorflow::NodeDef &node_def, const std::vector<std::string> &input_names,
+                                  const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
+                                  const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
+                                  std::vector<AnfNodePtr> *inputs, std::vector<std::string> *input_name_not_found);
+  static STATUS ConvertOutputTensor(const tensorflow::NodeDef &op, const CNodePtr &anf_node,
+                                    std::unordered_map<std::string, AnfNodePtr> *anf_node_map,
+                                    const FuncGraphPtr &anf_graph, int output_size);
   STATUS ConvertOps(const tensorflow::NodeDef &node_def,
                     const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                     const FuncGraphPtr &func_graph_ptr, std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
@@ -67,10 +66,19 @@ class TFModelParser : public ModelParser {
 
   STATUS ConvertSubgraph();
 
+  STATUS ConvertSubgraphInputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
+                               std::unordered_map<std::string, AnfNodePtr> *anf_sub_node_map,
+                               const tensorflow::FunctionDef &tf_sub_fuction, CNodePtr cnode,
+                               FuncGraphPtr sub_func_graph);
+
+  static STATUS ConvertSubgraphOutputs(std::map<std::string, const tensorflow::NodeDef *> *tf_sub_node_map,
+                                       const std::unordered_map<std::string, AnfNodePtr> &anf_sub_node_map,
+                                       const tensorflow::FunctionDef &tf_sub_fuction, FuncGraphPtr sub_func_graph);
+
   STATUS ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGraphPtr> &first_func_map,
                                     const std::map<CNodePtr, FuncGraphPtr> &second_func_map);
 
-  STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
+  static STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
 
   STATUS RecordNullInput(const CNodePtr &node, const std::vector<std::string> &input_name_not_found);
 

@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class LstmFp16CPUKernel : public LiteKernel {
  public:
   LstmFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     lstm_param_ = reinterpret_cast<LstmParameter *>(op_parameter_);
   }
 
@@ -46,7 +45,7 @@ class LstmFp16CPUKernel : public LiteKernel {
   int MallocRunBuffer();
 
   float16_t *gate_buffer_ = nullptr;
-  float16_t *state_buffer_ = nullptr;
+  float16_t *state_buffer_[2];
   float16_t *weight_i_ptr_ = nullptr;
   float16_t *weight_h_ptr_ = nullptr;
   float16_t *bias_ptr_ = nullptr;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #include "tools/optimizer/fusion/pooling_activation_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
 #include "src/ops/pooling.h"
 #include "src/ops/activation.h"
 #include "schema/inner/model_generated.h"
@@ -27,7 +26,7 @@ namespace {
 constexpr size_t kActivationInputsLength = 2;
 }
 const BaseRef PoolingActivationFusion::DefinePattern() const {
-  auto pooling_var = std::make_shared<CondVar>(IsPoolingNode)();
+  auto pooling_var = std::make_shared<CondVar>(IsPoolingNode);
   auto prim = new (std::nothrow) schema::PrimitiveT();
   if (prim == nullptr) {
     MS_LOG(ERROR) << "new primitiveT failed";

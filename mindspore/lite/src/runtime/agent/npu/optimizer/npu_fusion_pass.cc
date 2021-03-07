@@ -267,7 +267,7 @@ int NPUFusionPass::Run() {
           i -= kernel->in_kernels().size();
           ConcatFusion(kernel);
           continue;
-        case schema::PrimitiveType_Add:
+        case schema::PrimitiveType_AddFusion:
         case schema::PrimitiveType_Activation:
         case schema::PrimitiveType_Eltwise:
           i -= kernel->in_kernels().size();

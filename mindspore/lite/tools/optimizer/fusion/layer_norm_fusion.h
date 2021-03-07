@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ class LayerNormFusion : public PatternProcessPass {
       : PatternProcessPass(name, multigraph) {
     input_ = std::make_shared<Var>();
     mean1_ = std::make_shared<Var>();
+    mean1_axes_ = std::make_shared<Var>();
     mean2_ = std::make_shared<Var>();
+    mean2_axes_ = std::make_shared<Var>();
     gamma_ = std::make_shared<Var>();
     beta_ = std::make_shared<Var>();
     epsilon_ = std::make_shared<Var>();
@@ -50,7 +52,9 @@ class LayerNormFusion : public PatternProcessPass {
                                int begin_norm_axis, int begin_params_axis) const;
   VarPtr input_ = nullptr;
   VarPtr mean1_ = nullptr;
+  VarPtr mean1_axes_ = nullptr;
   VarPtr mean2_ = nullptr;
+  VarPtr mean2_axes_ = nullptr;
   VarPtr gamma_ = nullptr;
   VarPtr beta_ = nullptr;
   VarPtr epsilon_ = nullptr;

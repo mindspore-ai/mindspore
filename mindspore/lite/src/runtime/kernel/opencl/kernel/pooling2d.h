@@ -27,10 +27,8 @@ namespace mindspore::kernel {
 class PoolingOpenCLKernel : public OpenCLKernel {
  public:
   PoolingOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
-      : OpenCLKernel(parameter, inputs, outputs, ctx, primitive),
-        parameter_(reinterpret_cast<PoolingParameter *>(parameter)) {}
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : OpenCLKernel(parameter, inputs, outputs, ctx), parameter_(reinterpret_cast<PoolingParameter *>(parameter)) {}
   ~PoolingOpenCLKernel() override = default;
 
   int Run() override;

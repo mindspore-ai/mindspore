@@ -21,7 +21,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_L2Norm;
+using mindspore::schema::PrimitiveType_L2NormalizeFusion;
 
 namespace mindspore::kernel {
 int L2NormInt8CPUKernel::Init() {
@@ -70,5 +70,5 @@ int L2NormInt8CPUKernel::DoExecute(int task_id) {
   return L2NormalizationInt8(input_data, output_data, l2_norm_param_, &quant_param_, begin, end);
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_L2Norm, LiteKernelCreator<L2NormInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_L2NormalizeFusion, LiteKernelCreator<L2NormInt8CPUKernel>)
 }  // namespace mindspore::kernel

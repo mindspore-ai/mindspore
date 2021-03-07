@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 #include "backend/optimizer/common/node_pass.h"
-
 #include <unordered_set>
 #include <deque>
 #include <algorithm>
-
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/manager.h"

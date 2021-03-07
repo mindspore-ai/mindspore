@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include "tools/converter/model_parser.h"
 #include "proto/caffe.pb.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore::lite {
 class CaffeModelParser : public ModelParser {
@@ -34,9 +35,6 @@ class CaffeModelParser : public ModelParser {
   FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
                      const QuantType &quant_type) override;
 
-  MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                        const QuantType &quant_type) override;
-
  private:
   STATUS InitOriginModel(const std::string &model_file, const std::string &weight_file);
 
@@ -46,8 +44,8 @@ class CaffeModelParser : public ModelParser {
 
   STATUS ConvertLayers();
 
-  STATUS ConvertLayerQuantParams(const caffe::LayerParameter &layer, const caffe::LayerParameter &weight,
-                                 lite::PrimitiveC *primitive_c);
+  static STATUS ConvertLayerQuantParams(const caffe::LayerParameter &layer, const caffe::LayerParameter &weight,
+                                        ops::PrimitiveC *primitive_c);
 
   STATUS ConvertBlobs(const caffe::LayerParameter &layer, std::vector<ParameterPtr> *const_parameters);
 

@@ -22,7 +22,7 @@ function Run_Converter() {
     # Convert tf models:
     while read line; do
         tf_line_info=${line}
-        if [[ $model_name == \#* ]]; then
+        if [[ $tf_line_info == \#* ]]; then
           continue
         fi
         model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
@@ -371,7 +371,7 @@ function Run_x86() {
         length=${#model_name_and_input_num}
         input_shapes=${line:length+1}
         tf_line_info=${model_name_and_input_num}
-        if [[ $model_name == \#* ]]; then
+        if [[ $tf_line_info == \#* ]]; then
           continue
         fi
         model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
@@ -457,6 +457,45 @@ function Run_x86() {
         fi
     done < ${models_onnx_config}
 
+    # Run mindspore converted models:
+    while read line; do
+        mindspore_line_info=${line}
+        if [[ $mindspore_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
+        echo "---------------------------------------------------------" >> "${run_x86_log_file}"
+        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "${run_x86_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_config}
+
+    # Run mindspore converted train models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}'_train' >> "${run_x86_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "${run_x86_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_train_config}
+
     # Run tflite post training quantization converted models:
     while read line; do
         posttraining_line_info=${line}
@@ -525,45 +564,6 @@ function Run_x86() {
             run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_awaretraining_config}
-
-    # Run mindspore converted train models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name}'_train' >> "${run_x86_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "${run_x86_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_train_config}
-
-    # Run mindspore converted models:
-    while read line; do
-        mindspore_line_info=${line}
-        if [[ $mindspore_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
-        echo "---------------------------------------------------------" >> "${run_x86_log_file}"
-        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "${run_x86_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_config}
 
     # Run tflite weight quantization converted models:
     while read line; do
@@ -750,6 +750,45 @@ function Run_x86_sse() {
         fi
     done < ${models_onnx_config}
 
+    # Run mindspore converted models:
+    while read line; do
+        mindspore_line_info=${line}
+        if [[ $mindspore_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
+        echo "---------------------------------------------------------" >> "${run_x86_sse_log_file}"
+        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_sse_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "${run_x86_sse_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_sse: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_config}
+
+    # Run mindspore converted train models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}'_train' >> "${run_x86_sse_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "${run_x86_sse_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_sse_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_sse_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_sse: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_sse: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_train_config}
+
     # Run tflite post training quantization converted models:
     while read line; do
         posttraining_line_info=${line}
@@ -818,45 +857,6 @@ function Run_x86_sse() {
             run_result='x86_sse: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_awaretraining_config}
-
-    # Run mindspore converted train models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name}'_train' >> "${run_x86_sse_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "${run_x86_sse_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_sse_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_sse_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86_sse: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86_sse: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_train_config}
-
-    # Run mindspore converted models:
-    while read line; do
-        mindspore_line_info=${line}
-        if [[ $mindspore_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
-        echo "---------------------------------------------------------" >> "${run_x86_sse_log_file}"
-        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_sse_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "${run_x86_sse_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_sse_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_sse_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86_sse: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_config}
 
     # Run tflite weight quantization converted models:
     while read line; do
@@ -1042,6 +1042,45 @@ function Run_x86_avx() {
         fi
     done < ${models_onnx_config}
 
+    # Run mindspore converted models:
+    while read line; do
+        mindspore_line_info=${line}
+        if [[ $mindspore_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
+        echo "---------------------------------------------------------" >> "${run_x86_avx_log_file}"
+        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_avx_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "${run_x86_avx_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_avx: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_config}
+
+    # Run mindspore converted train models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}'_train' >> "${run_x86_avx_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "${run_x86_avx_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_avx_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_avx_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86_avx: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86_avx: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_train_config}
+
     # Run tflite post training quantization converted models:
     while read line; do
         posttraining_line_info=${line}
@@ -1110,45 +1149,6 @@ function Run_x86_avx() {
             run_result='x86_avx: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
     done < ${models_tflite_awaretraining_config}
-
-    # Run mindspore converted train models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name}'_train' >> "${run_x86_avx_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "${run_x86_avx_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.train.ms.out' >> "${run_x86_avx_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}'_train'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.train.ms.out --accuracyThreshold=1.5 >> "${run_x86_avx_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86_avx: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86_avx: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_train_config}
-
-    # Run mindspore converted models:
-    while read line; do
-        mindspore_line_info=${line}
-        if [[ $mindspore_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
-        echo "---------------------------------------------------------" >> "${run_x86_avx_log_file}"
-        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_x86_avx_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "${run_x86_avx_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_avx_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/${model_name}.ms.bin --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out --accuracyThreshold=${accuracy_limit} >> "${run_x86_avx_log_file}"
-        if [ $? = 0 ]; then
-            run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='x86_avx: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_config}
 
     # Run tflite weight quantization converted models:
     while read line; do
@@ -1343,7 +1343,7 @@ function Run_arm64() {
         length=${#model_name_and_input_num}
         input_shapes=${line:length+1}
         tf_line_info=${model_name_and_input_num}
-        if [[ $model_name == \#* ]]; then
+        if [[ $tf_line_info == \#* ]]; then
           continue
         fi
         model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
@@ -1432,6 +1432,97 @@ function Run_arm64() {
         fi
     done < ${models_caffe_config}
 
+    # Run onnx converted models:
+    while read line; do
+        model_name=${line%;*}
+        length=${#model_name}
+        input_shapes=${line:length+1}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name} >> "${run_arm64_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_arm64_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_onnx_config}
+
+    # Run mindir converted models:
+    while read line; do
+        mindspore_line_info=${line}
+        if [[ $mindspore_line_info == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
+        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_arm64_log_file}"
+        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_config}
+
+    # Run mindir converted train models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        echo ${model_name}'_train' >> "${run_arm64_log_file}"
+        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.train.ms.out --accuracyThreshold=1.5' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.train.ms.out --accuracyThreshold=1.5' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+        # run benchmark test without clib data
+        echo ${model_name} >> "${run_arm64_log_file}"
+        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_mindspore_train_config}
+
     # Run tflite post training quantization converted models:
     while read line; do
         posttraining_line_info=${line}
@@ -1500,18 +1591,16 @@ function Run_arm64() {
         fi
     done < ${models_caffe_posttraining_config}
 
-    # Run onnx converted models:
+    # Run tflite aware training quantization converted models:
     while read line; do
-        model_name=${line%;*}
-        length=${#model_name}
-        input_shapes=${line:length+1}
+        model_name=${line}
         if [[ $model_name == \#* ]]; then
           continue
         fi
         echo ${model_name} >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --inputShapes='${input_shapes}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -1521,15 +1610,15 @@ function Run_arm64() {
         # run benchmark test without clib data
         echo ${model_name} >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inputShapes='${input_shapes}' --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='arm64_awq: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='arm64_awq: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-    done < ${models_onnx_config}
+    done < ${models_tflite_awaretraining_config}
 
     # Run fp16 converted models:
     while read line; do
@@ -1607,35 +1696,6 @@ function Run_arm64() {
         fi
     done < ${models_tflite_fp16_config}
 
-    # Run tflite aware training quantization converted models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name} >> "${run_arm64_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-        # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_awq: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_awq: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_tflite_awaretraining_config}
-
     # Run gpu tflite converted models:
     while read line; do
         model_name=${line}
@@ -1692,66 +1752,6 @@ function Run_arm64() {
     #sleep 1
     done < ${models_gpu_weightquant_config}
 
-    # Run mindir converted models:
-    while read line; do
-        mindspore_line_info=${line}
-        if [[ $mindspore_line_info == \#* ]]; then
-          continue
-        fi
-        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
-        echo "mindspore run: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-        # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
-        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_config}
-
-    # Run mindir converted train models:
-    while read line; do
-        model_name=${line}
-        if [[ $model_name == \#* ]]; then
-          continue
-        fi
-        echo ${model_name}'_train' >> "${run_arm64_log_file}"
-        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.train.ms.out --accuracyThreshold=1.5' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.train.ms.out --accuracyThreshold=1.5' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-        # run benchmark test without clib data
-        echo ${model_name} >> "${run_arm64_log_file}"
-        echo 'cd /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --warmUpLoopCount=1 --loopCount=2' >> "{run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'_train.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_mindspore_train_config}
-
     # Run mindir weightquant converted train models:
     while read line; do
         weight_quant_line_info=${line}
@@ -1774,6 +1774,10 @@ function Run_arm64() {
 
     # Run npu converted models:
     while read line; do
+        model_line_info=${line}
+        if [[ $model_line_info == \#* ]]; then
+          continue
+        fi
         model_name=`echo ${line}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${line}|awk -F ' ' '{print $2}'`
         input_num=`echo ${line}|awk -F ' ' '{print $3}'`

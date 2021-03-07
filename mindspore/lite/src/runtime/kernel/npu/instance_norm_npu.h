@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class InstanceNormNPUKernel : public NPUKernel {
  public:
   InstanceNormNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                        const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
     instance_norm_param_ = reinterpret_cast<InstanceNormParameter *>(parameter);
   }
   ~InstanceNormNPUKernel() override;

@@ -18,30 +18,22 @@
 #include <memory>
 #include <deque>
 #include "tools/optimizer/graph/functionalize_while.h"
-#include "mindspore/lite/include/errorcode.h"
-#include "src/ops/primitive_c.h"
-#include "src/ops/while.h"
+#include "include/errorcode.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
+#include "ops/tuple_get_item.h"
+#include "ops/while.h"
 
 namespace {
 mindspore::ValueNodePtr GetWhileAnfPrim() {
-  auto while_primitiveT = new (std::nothrow) mindspore::schema::PrimitiveT;
-  if (while_primitiveT == nullptr) {
-    MS_LOG(ERROR) << "new while_primitiveT failed";
+  auto while_primc = std::make_shared<mindspore::ops::While>();
+  if (while_primc == nullptr) {
+    MS_LOG(ERROR) << "new while_primitive failed";
     return nullptr;
   }
-  while_primitiveT->value.type = mindspore::schema::PrimitiveType_While;
-  auto whileT = new (std::nothrow) mindspore::schema::WhileT;
-  whileT->condSubgraphIndex = mindspore::opt::FunctionalizeControlOpPass::GetSubgraphIndex();
-  whileT->bodySubgraphIndex = mindspore::opt::FunctionalizeControlOpPass::GetSubgraphIndex();
-  while_primitiveT->value.value = whileT;
-  if (while_primitiveT->value.value == nullptr) {
-    MS_LOG(ERROR) << "new WhileT failed";
-    delete (while_primitiveT);
-    return nullptr;
-  }
-
-  auto while_prim = std::make_shared<mindspore::lite::While>(while_primitiveT);
-  mindspore::ValueNodePtr partial_anf_prim = NewValueNode(while_prim);
+  while_primc->set_cond_subgraph_index(mindspore::opt::FunctionalizeControlOpPass::GetSubgraphIndex());
+  while_primc->set_body_subgraph_index(mindspore::opt::FunctionalizeControlOpPass::GetSubgraphIndex());
+  mindspore::ValueNodePtr partial_anf_prim = NewValueNode(while_primc);
   return partial_anf_prim;
 }
 }  // namespace
@@ -221,7 +213,7 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
         AbstractBasePtrList abstractList;
         std::vector<int64_t> shape_vector;
         abstractList.emplace_back(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector));
-        auto tuple_get_item_prim_ptr = lite::GetTupleGetItemPrim();
+        auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
         if (tuple_get_item_prim_ptr == nullptr) {
           MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
           return RET_NULL_PTR;
@@ -349,7 +341,7 @@ STATUS FunctionalizeWhile::IdentifyCondSubgraphInput() {
 }
 
 STATUS FunctionalizeWhile::IdentifyCondSubgraphOutput() {
-  auto return_prim_ptr = lite::GetReturnPrim();
+  auto return_prim_ptr = std::make_shared<ops::Return>();
   if (return_prim_ptr == nullptr) {
     MS_LOG(ERROR) << "GetReturnPrim return nullptr";
     return RET_NULL_PTR;
@@ -494,7 +486,7 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
                                                                 "_cnode");
   }
 
-  auto return_prim_ptr = lite::GetReturnPrim();
+  auto return_prim_ptr = std::make_shared<ops::Return>();
   if (return_prim_ptr == nullptr) {
     MS_LOG(ERROR) << "GetReturnPrim return nullptr";
     return RET_NULL_PTR;
@@ -509,7 +501,7 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
     return_cnode->add_input(tmp_output[0]);
   } else {
     std::vector<AnfNodePtr> make_tuple_inputs = tmp_output;
-    auto make_tuple_prim_ptr = lite::GetMakeTuplePrim();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
       MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
       return RET_NULL_PTR;

@@ -13,30 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/ops/gru.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/gru_fp32.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateGruParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateGruParameter(const void *prim) {
   GruParameter *gru_param = reinterpret_cast<GruParameter *>(malloc(sizeof(GruParameter)));
   if (gru_param == nullptr) {
     MS_LOG(ERROR) << "malloc GruParameter failed.";
     return nullptr;
   }
   memset(gru_param, 0, sizeof(GruParameter));
-  gru_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::Gru *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  gru_param->op_parameter_.type_ = primitive->value_type();
+  auto param = primitive->value_as_GRU();
   if (param == nullptr) {
     free(gru_param);
     MS_LOG(ERROR) << "get Gru param nullptr.";
     return nullptr;
   }
-  gru_param->bidirectional_ = param->GetBidirection();
+  gru_param->bidirectional_ = param->bidirectional();
   return reinterpret_cast<OpParameter *>(gru_param);
 }
-Registry GruParameterRegistry(schema::PrimitiveType_Gru, PopulateGruParameter);
+}  // namespace
+
+Registry g_gruParameterRegistry(schema::PrimitiveType_GRU, PopulateGruParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

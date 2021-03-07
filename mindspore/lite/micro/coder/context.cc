@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "micro/coder/context.h"
-#include "micro/coder/coder_config.h"
-#include "micro/coder/allocator/allocator.h"
+#include "coder/context.h"
+#include "coder/coder_config.h"
+#include "coder/allocator/allocator.h"
 
 namespace mindspore::lite::micro {
 CoderContext::CoderContext() {

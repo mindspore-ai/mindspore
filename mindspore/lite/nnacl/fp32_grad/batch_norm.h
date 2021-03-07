@@ -22,7 +22,6 @@
 typedef struct BNGradParameter {
   OpParameter op_parameter_;
   float epsilon_;
-  float momentum_;
 } BNGradParameter;
 
 #ifdef __cplusplus

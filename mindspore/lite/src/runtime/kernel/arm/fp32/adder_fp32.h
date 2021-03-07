@@ -26,9 +26,8 @@ namespace mindspore::kernel {
 class AdderCPUKernel : public ConvolutionCPUKernel {
  public:
   AdderCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionCPUKernel(parameter, inputs, outputs, ctx, primitive, nullptr, nullptr) {}
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionCPUKernel(parameter, inputs, outputs, ctx, nullptr, nullptr) {}
   ~AdderCPUKernel() override = default;
 
   int InitWeightBias() override;

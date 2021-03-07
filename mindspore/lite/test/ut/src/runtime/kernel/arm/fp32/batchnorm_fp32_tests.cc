@@ -59,7 +59,7 @@ TEST_F(TestBatchnormFp32, BNTest) {
   ctx.thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -116,7 +116,7 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   ctx.thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
 
@@ -167,7 +167,7 @@ TEST_F(TestBatchnormFp32, easyTest) {
   ctx.thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   kernel->Run();
 

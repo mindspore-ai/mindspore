@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_FP32_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_FP32_H_
 
+#include <limits>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
@@ -26,9 +27,8 @@ namespace mindspore::kernel {
 class ConvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionDepthwiseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ConvolutionDepthwiseCPUKernel() override;
 
   int Init() override;
