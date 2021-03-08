@@ -56,8 +56,8 @@ class MockEliminate5To4And4To5KernelSelect : public KernelSelect {
   ~MockEliminate5To4And4To5KernelSelect() override = default;
   void SelectKernel(const CNodePtr &cnode) override {
     KernelBuildInfoBuilder builder;
-    builder.SetInputsReshapeType({{}});
-    builder.SetOutputsReshapeType({{}});
+    builder.SetInputsReshapeType({""});
+    builder.SetOutputsReshapeType({""});
     builder.SetInputsFormat({"NCHW"});
     builder.SetInputsDeviceType({kFloat16->type_id()});
     builder.SetOutputsFormat({"NC1HWC0"});
@@ -104,8 +104,8 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_5to4_4to5) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
-  builder.SetInputsReshapeType({{}, {}});
-  builder.SetOutputsReshapeType({{}});
+  builder.SetInputsReshapeType({"", ""});
+  builder.SetOutputsReshapeType({""});
   sub->set_kernel_info(std::make_shared<device::KernelInfo>());
   add->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), sub.get());
@@ -171,8 +171,8 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_cast) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
-  builder.SetInputsReshapeType({{}, {}});
-  builder.SetOutputsReshapeType({{}, {}});
+  builder.SetInputsReshapeType({"", ""});
+  builder.SetOutputsReshapeType({"", ""});
   sub->set_kernel_info(std::make_shared<device::KernelInfo>());
   add->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), sub.get());
@@ -248,8 +248,8 @@ TEST_F(TestHWEliminateRedundantOp, test_eliminate_cast_depend_cast) {
   builder.SetOutputsFormat({"NC1HWC0"});
   builder.SetInputsDeviceType({kFloat16->type_id(), kFloat16->type_id()});
   builder.SetOutputsDeviceType({kFloat16->type_id()});
-  builder.SetInputsReshapeType({{}, {}});
-  builder.SetOutputsReshapeType({{}});
+  builder.SetInputsReshapeType({"", ""});
+  builder.SetOutputsReshapeType({""});
   sub->set_kernel_info(std::make_shared<device::KernelInfo>());
   add->set_kernel_info(std::make_shared<device::KernelInfo>());
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), sub.get());

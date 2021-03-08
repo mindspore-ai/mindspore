@@ -122,7 +122,7 @@ class AnfRuntimeAlgorithm {
   // get output format from prev node,input_index is the input index of current node related to prev node
   static std::string GetPrevNodeOutputFormat(const AnfNodePtr &node, size_t input_idx);
   // get reshape_type of from the output of input node.
-  static std::vector<Axis> GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx);
+  static std::string GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // get output shapes inferred by ME from input nodes.
   static std::vector<size_t> GetOutputInferShape(const AnfNodePtr &node, size_t output_idx);
   // get input shapes inferred by ME from input nodes.
@@ -132,9 +132,9 @@ class AnfRuntimeAlgorithm {
   // get input shapes which will built and run in device
   static std::vector<size_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
   // Get Input Padding Axis
-  static std::vector<Axis> GetInputReshapeType(const AnfNodePtr &node, size_t output_idx);
+  static std::string GetInputReshapeType(const AnfNodePtr &node, size_t output_idx);
   // Get Output Padding Axis
-  static std::vector<Axis> GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx);
+  static std::string GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx);
   // get output data type inferred by ME of anf node
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
   // get output original data type from prev node,input_index is the input index of current node related to prev node

@@ -187,8 +187,8 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   AnfNodePtr input_node = is_insert_input ? AnfAlgo::GetInputNode(node->cast<CNodePtr>(), insert_index) : node;
   std::string input_format = is_insert_input ? default_format : AnfAlgo::GetOutputFormat(node, insert_index);
   std::string dst_format = is_insert_input ? AnfAlgo::GetInputFormat(node, insert_index) : default_format;
-  std::vector<Axis> padding_axis = is_insert_input ? AnfAlgo::GetInputReshapeType(node, insert_index)
-                                                   : AnfAlgo::GetOutputReshapeType(node, insert_index);
+  std::string padding_axis = is_insert_input ? AnfAlgo::GetInputReshapeType(node, insert_index)
+                                             : AnfAlgo::GetOutputReshapeType(node, insert_index);
   auto input_node_out_shape = is_insert_input ? AnfAlgo::GetPrevNodeOutputInferShape(node, insert_index)
                                               : AnfAlgo::GetOutputInferShape(input_node, insert_index);
   bool need_padding = is_insert_input ? trans::IsNeedPadding(dst_format, input_node_out_shape.size())
@@ -200,8 +200,8 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
   } else if (is_insert_input) {
     // if need padding & is input need insert a transdata
     // reshape[padding shape] -> transdata[padding shape] -> node
-    auto padding_shape =
-      trans::PaddingShapeTo4d(input_node_out_shape, AnfAlgo::GetInputReshapeType(node, insert_index));
+    auto padding_shape = trans::PaddingShape(input_node_out_shape, AnfAlgo::GetInputFormat(node, insert_index),
+                                             AnfAlgo::GetInputReshapeType(node, insert_index));
     auto reshape_node = CreateReshapeNode(func_graph, input_node, kernel_select, padding_shape);
     trans_data = NewTransOpNode(func_graph, reshape_node, kernel_select, need_padding, prim::KPrimTransData->name());
     trans_node = trans_data;
@@ -222,8 +222,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
 }
 
 void RefreshKernelBuildInfo(const std::string &input_format, const std::string &output_format,
-                            const AnfNodePtr &trans_data, const std::vector<Axis> &reshape_type,
-                            const TypeId &type_id) {
+                            const AnfNodePtr &trans_data, const std::string &reshape_type, const TypeId &type_id) {
   MS_EXCEPTION_IF_NULL(trans_data);
   auto ori_build_info = AnfAlgo::GetSelectKernelBuildInfo(trans_data);
   MS_EXCEPTION_IF_NULL(ori_build_info);
@@ -249,9 +248,10 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   if (need_padding) {
     // if need padding we should set the transdata node's shape to the padding shape
     auto padding_axis = AnfAlgo::GetOutputReshapeType(input, 0);
-    AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input, 0)},
-                                        {trans::PaddingShapeTo4d(AnfAlgo::GetOutputInferShape(input, 0), padding_axis)},
-                                        trans_node.get());
+    AnfAlgo::SetOutputInferTypeAndShape(
+      {AnfAlgo::GetOutputInferDataType(input, 0)},
+      {trans::PaddingShape(AnfAlgo::GetOutputInferShape(input, 0), AnfAlgo::GetOutputFormat(input, 0), padding_axis)},
+      trans_node.get());
   } else {
     AnfAlgo::SetOutputInferTypeAndShape({AnfAlgo::GetOutputInferDataType(input, 0)},
                                         {AnfAlgo::GetOutputInferShape(input, 0)}, trans_node.get());
@@ -273,7 +273,7 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
 CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                               const TypeId &input_type, const TypeId &output_type,
                               const std::vector<size_t> &origin_shape, const TypeId &origin_type,
-                              const std::vector<Axis> &reshape_type) {
+                              const std::string &reshape_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::string input_format = format;
   std::string output_format = format;

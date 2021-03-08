@@ -66,7 +66,7 @@ size_t KernelBuildInfo::GetInputNum() const { return inputs_format_.size(); }
 
 size_t KernelBuildInfo::GetOutputNum() const { return outputs_format_.size(); }
 
-std::vector<Axis> KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
+std::string KernelBuildInfo::GetInputReshapeType(size_t input_index) const {
   if (input_reshape_type_.empty()) {
     return {};
   }
@@ -77,7 +77,7 @@ std::vector<Axis> KernelBuildInfo::GetInputReshapeType(size_t input_index) const
   return input_reshape_type_[input_index];
 }
 
-std::vector<Axis> KernelBuildInfo::GetOutputReshapeType(size_t output_index) const {
+std::string KernelBuildInfo::GetOutputReshapeType(size_t output_index) const {
   if (output_reshape_type_.empty()) {
     return {};
   }
@@ -175,14 +175,13 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetProcessor(Processor processor) 
 
 std::shared_ptr<KernelBuildInfo> KernelBuildInfo::KernelBuildInfoBuilder::Build() { return kernel_build_info_; }
 
-void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsReshapeType(
-  const std::vector<std::vector<Axis>> &input_reshape_type) {
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputsReshapeType(const std::vector<std::string> &input_reshape_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->input_reshape_type_ = input_reshape_type;
 }
 
 void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputsReshapeType(
-  const std::vector<std::vector<Axis>> &output_reshape_type) {
+  const std::vector<std::string> &output_reshape_type) {
   MS_EXCEPTION_IF_NULL(kernel_build_info_);
   kernel_build_info_->output_reshape_type_ = output_reshape_type;
 }
@@ -206,8 +205,7 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputFormat(const std::string 
   }
   kernel_build_info_->outputs_format_[index] = format;
 }
-void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::vector<Axis> &input_reshape_type,
-                                                                  size_t index) {
+void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::string &input_reshape_type, size_t index) {
   if (index >= kernel_build_info_->input_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "index outof range!";
   }
@@ -215,7 +213,7 @@ void KernelBuildInfo::KernelBuildInfoBuilder::SetInputReshapeType(const std::vec
             std::back_inserter(kernel_build_info_->input_reshape_type_[index]));
 }
 
-void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(const std::vector<Axis> &output_reshape_type,
+void KernelBuildInfo::KernelBuildInfoBuilder::SetOutputReshapeType(const std::string &output_reshape_type,
                                                                    size_t index) {
   if (index >= kernel_build_info_->output_reshape_type_.size()) {
     MS_LOG(EXCEPTION) << "index outof range!";

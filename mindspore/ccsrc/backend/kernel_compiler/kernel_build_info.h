@@ -57,13 +57,13 @@ class KernelBuildInfo {
 
   TypeId GetOutputDeviceType(size_t output_index) const;
 
-  std::vector<Axis> GetInputReshapeType(size_t input_index) const;
+  std::string GetInputReshapeType(size_t input_index) const;
 
   bool IsInputDefaultPadding() const;
 
   bool IsOutputDefaultPadding() const;
 
-  std::vector<Axis> GetOutputReshapeType(size_t input_index) const;
+  std::string GetOutputReshapeType(size_t input_index) const;
 
   const std::string &GetOriginDataFormat() const;
 
@@ -75,9 +75,9 @@ class KernelBuildInfo {
 
   const std::vector<TypeId> &GetAllOutputDeviceTypes() const;
 
-  std::vector<std::vector<Axis>> GetAllOutputReshapeType() const;
+  std::vector<std::string> GetAllOutputReshapeType() const;
 
-  std::vector<std::vector<Axis>> GetAllInputReshapeType() const;
+  std::vector<std::string> GetAllInputReshapeType() const;
 
   OpPattern op_pattern() const { return op_pattern_; }
 
@@ -106,8 +106,8 @@ class KernelBuildInfo {
   std::vector<std::string> inputs_format_;
   OpPattern op_pattern_;
   std::vector<std::string> outputs_format_;
-  std::vector<std::vector<Axis>> input_reshape_type_;
-  std::vector<std::vector<Axis>> output_reshape_type_;
+  std::vector<std::string> input_reshape_type_;
+  std::vector<std::string> output_reshape_type_;
   std::vector<TypeId> inputs_device_type_;
   std::vector<TypeId> outputs_device_type_;
   FusionType fusion_type_;
@@ -151,9 +151,9 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
 
   void SetOutputsDeviceType(const std::vector<TypeId> &outputs_device_type);
 
-  void SetInputsReshapeType(const std::vector<std::vector<Axis>> &input_reshape_type);
+  void SetInputsReshapeType(const std::vector<std::string> &input_reshape_type);
 
-  void SetOutputsReshapeType(const std::vector<std::vector<Axis>> &output_reshape_type);
+  void SetOutputsReshapeType(const std::vector<std::string> &output_reshape_type);
 
   void SetFusionType(FusionType fusion_type);
 
@@ -165,9 +165,9 @@ class KernelBuildInfo::KernelBuildInfoBuilder {
 
   void SetOutputFormat(const std::string &format, size_t index);
 
-  void SetInputReshapeType(const std::vector<Axis> &input_reshape_type, size_t index);
+  void SetInputReshapeType(const std::string &input_reshape_type, size_t index);
 
-  void SetOutputReshapeType(const std::vector<Axis> &output_reshape_type, size_t index);
+  void SetOutputReshapeType(const std::string &output_reshape_type, size_t index);
 
   void SetInputDeviceType(const TypeId &input_device_type, size_t index);
 

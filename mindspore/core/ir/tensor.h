@@ -285,8 +285,8 @@ class Tensor : public MetaTensor {
 
   DeviceSyncPtr device_address() const { return device_sync_; }
   void set_device_address(const DeviceSyncPtr &device_sync) { device_sync_ = device_sync; }
-  void set_padding_type(std::vector<Axis> padding_type) { padding_type_ = padding_type; }
-  std::vector<Axis> padding_type() const { return padding_type_; }
+  void set_padding_type(const std::string padding_type) { padding_type_ = padding_type; }
+  std::string padding_type() const { return padding_type_; }
 
   std::string id() const { return id_; }
   TypePtr cast_dtype() { return cast_dtype_; }
@@ -366,7 +366,7 @@ class Tensor : public MetaTensor {
   bool cache_enable_{false};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};
   std::shared_ptr<Tensor> hashmap_tensor_ptr_{nullptr};
-  std::vector<Axis> padding_type_;
+  std::string padding_type_{""};
   TypePtr cast_dtype_{nullptr};
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
 };

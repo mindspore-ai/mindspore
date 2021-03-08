@@ -586,7 +586,7 @@ std::string AnfRuntimeAlgorithm::GetPrevNodeOutputFormat(const AnfNodePtr &anf_n
   return AnfRuntimeAlgorithm::GetOutputFormat(kernel_with_index.first, kernel_with_index.second);
 }
 
-std::vector<Axis> AnfRuntimeAlgorithm::GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx) {
+std::string AnfRuntimeAlgorithm::GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx) {
   KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
   return GetOutputReshapeType(kernel_with_index.first, kernel_with_index.second);
 }
@@ -642,7 +642,7 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &
   }
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
-    infer_shape = trans::PaddingShapeTo4d(infer_shape, GetOutputReshapeType(node, output_idx));
+    infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx));
   }
   return trans::TransShapeToDevice(infer_shape, format);
 }
@@ -655,12 +655,12 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &n
   }
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
-    infer_shape = trans::PaddingShapeTo4d(infer_shape, GetInputReshapeType(node, input_idx));
+    infer_shape = trans::PaddingShape(infer_shape, format, GetInputReshapeType(node, input_idx));
   }
   return trans::TransShapeToDevice(infer_shape, format);
 }
 
-std::vector<Axis> AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, size_t input_idx) {
+std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, size_t input_idx) {
   MS_EXCEPTION_IF_NULL(node);
   if (input_idx > GetInputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index:" << input_idx
@@ -681,7 +681,7 @@ std::vector<Axis> AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &nod
   return build_info->GetInputReshapeType(input_idx);
 }
 
-std::vector<Axis> AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx) {
+std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   if (output_idx > GetOutputTensorNum(node)) {
     MS_LOG(EXCEPTION) << "The index [" << output_idx << "] is out of range of the node's output size [ "
