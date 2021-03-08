@@ -19,7 +19,7 @@
 
 #include "nnacl/op_base.h"
 
-#define MAX_TRANSPOSE_DIM_SIZE 5
+#define MAX_TRANSPOSE_DIM_SIZE 6
 
 typedef struct TransposeParameter {
   // primitive parameter

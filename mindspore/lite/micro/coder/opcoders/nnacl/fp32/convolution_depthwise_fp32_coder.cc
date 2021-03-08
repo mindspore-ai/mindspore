@@ -39,7 +39,8 @@ int ConvolutionDepthwiseFP32Coder::InitWeightBias() {
   MS_CHECK_PTR(packed_weight_);
   MS_CHECK_RET_CODE(memset_s(packed_weight_, packed_weight_data_size, 0, packed_weight_data_size),
                     "memset packed weight failed!");
-  PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, filter_tensor_->Height() * filter_tensor_->Width(), channel);
+  PackNCHWToNHWCFp32(origin_weight, packed_weight_, 1, filter_tensor_->Height() * filter_tensor_->Width(), channel, 0,
+                     0);
 
   auto channel_size = static_cast<size_t>(channel);
   auto bias_size = static_cast<size_t>(channel_size * sizeof(float));

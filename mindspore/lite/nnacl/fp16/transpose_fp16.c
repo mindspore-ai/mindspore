@@ -127,6 +127,52 @@ void Fp16TransposeDim5(const float16_t *in_data, float16_t *out_data, int *strid
   }
 }
 
+void Fp16TransposeDim6(const float16_t *in_data, float16_t *out_data, int *strides, int *out_strides, int *perm,
+                       const int *output_shape) {
+  const int stride0 = strides[perm[0]];
+  const int stride1 = strides[perm[1]];
+  const int stride2 = strides[perm[2]];
+  const int stride3 = strides[perm[3]];
+  const int stride4 = strides[perm[4]];
+  const int stride5 = strides[perm[5]];
+  const int out_stride0 = out_strides[0];
+  const int out_stride1 = out_strides[1];
+  const int out_stride2 = out_strides[2];
+  const int out_stride3 = out_strides[3];
+  const int out_stride4 = out_strides[4];
+  const int output0 = output_shape[0];
+  const int output1 = output_shape[1];
+  const int output2 = output_shape[2];
+  const int output3 = output_shape[3];
+  const int output4 = output_shape[4];
+  const int output5 = output_shape[5];
+
+  for (int i = 0; i < output0; ++i) {
+    int out_stride0_i = i * out_stride0;
+    int stride0_i = i * stride0;
+    for (int j = 0; j < output1; ++j) {
+      int out_stride1_j = j * out_stride1;
+      int stride1_j = j * stride1;
+      for (int k = 0; k < output2; ++k) {
+        int out_stride2_k = k * out_stride2;
+        int stride2_k = k * stride2;
+        for (int m = 0; m < output3; ++m) {
+          int out_stride3_m = m * out_stride3;
+          int stride3_m = m * stride3;
+          for (int n = 0; n < output4; ++n) {
+            int out_stride4_n = n * out_stride4;
+            int stride4_n = n * stride4;
+            for (int g = 0; g < output5; ++g) {
+              out_data[out_stride0_i + out_stride1_j + out_stride2_k + out_stride3_m + out_stride4_n + g] =
+                in_data[stride0_i + stride1_j + stride2_k + stride3_m + stride4_n + g * stride5];
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 void TransposeDimsFp16(const float16_t *in_data, float16_t *out_data, const int *strides, const int *out_strides,
                        const int *perm, const int *output_shape, int dims, int *size, int *position) {
   *(size + dims - 1) = 1;
@@ -190,6 +236,8 @@ int Fp16DoTranspose(const float16_t *in_data, float16_t *out_data, const int *ou
     Fp16TransposeDim4(in_data, out_data, strides, out_strides, perm, output_shape);
   } else if (num_axes == 5) {
     Fp16TransposeDim5(in_data, out_data, strides, out_strides, perm, output_shape);
+  } else if (num_axes == 6) {
+    Fp16TransposeDim6(in_data, out_data, strides, out_strides, perm, output_shape);
   } else {
     TransposeDimsFp16(in_data, out_data, strides, out_strides, perm, output_shape, num_axes, size, position);
   }

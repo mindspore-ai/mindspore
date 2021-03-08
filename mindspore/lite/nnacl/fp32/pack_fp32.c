@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #include "nnacl/fp32/pack_fp32.h"
 
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel) {
-  return PackNCHWToNHWCFp32(src, dst, 1, plane, channel);
+  return PackNCHWToNHWCFp32(src, dst, 1, plane, channel, 0, 0);
 }
 
 void PackHWCToWHC(const float *src, float *dst, int height, int width, int channel) {
@@ -286,166 +286,45 @@ void PackDepthwiseIndirectWeightC8Fp32(const void *src, void *dst, int height, i
   }
 }
 
-#ifndef ENABLE_SSE
-void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel) {
-  int hw8 = plane / C8NUM * C8NUM;
+void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel, int task_id,
+                        int thread_count) {
+#ifdef ENABLE_ARM64
+  Transpose8X8Fp32Func Transpose8X8Fp32Func_ = Transpose8X8Fp32Arm64;
+#elif defined(ENABLE_ARM32)
+  Transpose8X8Fp32Func Transpose8X8Fp32Func_ = Transpose8X8Fp32Arm32;
+#elif defined(ENABLE_AVX)
+  Transpose8X8Fp32Func Transpose8X8Fp32Func_ = Transpose8X8Fp32Avx;
+#elif defined(ENABLE_SSE) && !defined(ENABLE_AVX)
+  Transpose8X8Fp32Func Transpose8X8Fp32Func_ = Transpose8X8Fp32Sse;
+#endif
+  int hw8 = plane / C8NUM;
+  int task_start = 0;
+  int task_end = plane;
+  if (thread_count > 0) {
+    int offset_hw = UP_DIV(hw8, thread_count) * C8NUM;
+    task_start = offset_hw * task_id;
+    int count = plane - task_start;
+    if (count <= 0) {
+      return;
+    }
+    task_end = (task_id + 1) == thread_count ? plane : MSMIN(plane, task_start + offset_hw);
+    hw8 = task_start + (task_end - task_start) > offset_hw ? offset_hw : 0;
+  } else {
+    hw8 *= C8NUM;
+  }
   int c8 = channel / C8NUM * C8NUM;
   int batch = plane * channel;
   for (int n = 0; n < batches; n++) {
     const float *src_batch = (const float *)src + n * batch;
     float *dst_batch = (float *)dst + n * batch;
-    int hw = 0;
+    int hw = task_start;
     for (; hw < hw8; hw += C8NUM) {
       int c = 0;
       for (; c < c8; c += C8NUM) {
         const float *src_ptr = src_batch + hw * channel + c;
         float *dst_ptr = dst_batch + c * plane + hw;
-#ifdef ENABLE_ARM64
-        size_t srcStride = channel * sizeof(float);
-        size_t dstStride = plane * sizeof(float);
-        asm volatile(
-          "mov x10, %[src_ptr]\n"
-          "mov x11, %[dst_ptr]\n"
-
-          "ld1 {v0.4s, v1.4s}, [x10], %[srcStride]\n"
-          "ld1 {v2.4s, v3.4s}, [x10], %[srcStride]\n"
-
-          "zip1 v8.4s, v0.4s, v2.4s\n"
-          "zip2 v9.4s, v0.4s, v2.4s\n"
-          "zip1 v12.4s, v1.4s, v3.4s\n"
-          "zip2 v13.4s, v1.4s, v3.4s\n"
-
-          "ld1 {v4.4s, v5.4s}, [x10], %[srcStride]\n"
-          "ld1 {v6.4s, v7.4s}, [x10], %[srcStride]\n"
-
-          "zip1 v10.4s, v4.4s, v6.4s\n"
-          "zip2 v11.4s, v4.4s, v6.4s\n"
-          "zip1 v14.4s, v5.4s, v7.4s\n"
-          "zip2 v15.4s, v5.4s, v7.4s\n"
-
-          "ld1 {v0.4s, v1.4s}, [x10], %[srcStride]\n"
-          "ld1 {v2.4s, v3.4s}, [x10], %[srcStride]\n"
-
-          "trn1 v16.2d, v8.2d, v10.2d\n"
-          "trn2 v18.2d, v8.2d, v10.2d\n"
-          "trn1 v20.2d, v9.2d, v11.2d\n"
-          "trn2 v22.2d, v9.2d, v11.2d\n"
-
-          "ld1 {v4.4s, v5.4s}, [x10], %[srcStride]\n"
-          "ld1 {v6.4s, v7.4s}, [x10], %[srcStride]\n"
-
-          "trn1 v24.2d, v12.2d, v14.2d\n"
-          "trn2 v26.2d, v12.2d, v14.2d\n"
-          "trn1 v28.2d, v13.2d, v15.2d\n"
-          "trn2 v30.2d, v13.2d, v15.2d\n"
-
-          "zip1 v8.4s, v0.4s, v2.4s\n"
-          "zip2 v9.4s, v0.4s, v2.4s\n"
-          "zip1 v12.4s, v1.4s, v3.4s\n"
-          "zip2 v13.4s, v1.4s, v3.4s\n"
-
-          "zip1 v10.4s, v4.4s, v6.4s\n"
-          "zip2 v11.4s, v4.4s, v6.4s\n"
-          "zip1 v14.4s, v5.4s, v7.4s\n"
-          "zip2 v15.4s, v5.4s, v7.4s\n"
-
-          "trn1 v17.2d, v8.2d, v10.2d\n"
-          "trn2 v19.2d, v8.2d, v10.2d\n"
-          "trn1 v21.2d, v9.2d, v11.2d\n"
-          "trn2 v23.2d, v9.2d, v11.2d\n"
-
-          "trn1 v25.2d, v12.2d, v14.2d\n"
-          "trn2 v27.2d, v12.2d, v14.2d\n"
-          "trn1 v29.2d, v13.2d, v15.2d\n"
-          "trn2 v31.2d, v13.2d, v15.2d\n"
-
-          "st1 {v16.4s, v17.4s}, [x11], %[dstStride]\n"
-          "st1 {v18.4s, v19.4s}, [x11], %[dstStride]\n"
-          "st1 {v20.4s, v21.4s}, [x11], %[dstStride]\n"
-          "st1 {v22.4s, v23.4s}, [x11], %[dstStride]\n"
-          "st1 {v24.4s, v25.4s}, [x11], %[dstStride]\n"
-          "st1 {v26.4s, v27.4s}, [x11], %[dstStride]\n"
-          "st1 {v28.4s, v29.4s}, [x11], %[dstStride]\n"
-          "st1 {v30.4s, v31.4s}, [x11], %[dstStride]\n"
-
-          :
-          :
-          [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
-          : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
-            "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29",
-            "v30", "v31");
-#elif ENABLE_ARM32
-        size_t srcStride = channel * sizeof(float);
-        size_t dstStride = plane * sizeof(float);
-        asm volatile(
-          "mov r10, %[src_ptr]\n"
-          "mov r12, %[dst_ptr]\n"
-
-          "vld1.32 {q0, q1}, [r10], %[srcStride]\n"
-          "vld1.32 {q2, q3}, [r10], %[srcStride]\n"
-
-          "vtrn.32 d0, d4\n"
-          "vtrn.32 d1, d5\n"
-          "vtrn.32 d2, d6\n"
-          "vtrn.32 d3, d7\n"
-
-          "vld1.32 {q4, q5}, [r10], %[srcStride]\n"
-          "vld1.32 {q6, q7}, [r10], %[srcStride]\n"
-
-          "vtrn.32 d8, d12\n"
-          "vtrn.32 d9, d13\n"
-          "vtrn.32 d10, d14\n"
-          "vtrn.32 d11, d15\n"
-
-          "vld1.32 {q8, q9}, [r10], %[srcStride]\n"
-          "vld1.32 {q10, q11}, [r10], %[srcStride]\n"
-
-          "vswp d1, d8\n"
-          "vswp d3, d10\n"
-          "vswp d5, d12\n"
-          "vswp d7, d14\n"
-
-          "vtrn.32 d16, d20\n"
-          "vtrn.32 d17, d21\n"
-          "vtrn.32 d18, d22\n"
-          "vtrn.32 d19, d23\n"
-
-          "vld1.32 {q12, q13}, [r10], %[srcStride]\n"
-          "vld1.32 {q14, q15}, [r10], %[srcStride]\n"
-
-          "vtrn.32 d24, d28\n"
-          "vtrn.32 d25, d29\n"
-          "vtrn.32 d26, d30\n"
-          "vtrn.32 d27, d31\n"
-
-          "vswp d17, d24\n"
-          "vswp d19, d26\n"
-          "vswp d21, d28\n"
-          "vswp d23, d30\n"
-
-          "add r10, r12, #16\n"
-          "vst1.32 {q0}, [r12], %[dstStride]\n"
-          "vst1.32 {q8}, [r10], %[dstStride]\n"
-          "vst1.32 {q2}, [r12], %[dstStride]\n"
-          "vst1.32 {q10}, [r10], %[dstStride]\n"
-          "vst1.32 {q4}, [r12], %[dstStride]\n"
-          "vst1.32 {q12}, [r10], %[dstStride]\n"
-          "vst1.32 {q6}, [r12], %[dstStride]\n"
-          "vst1.32 {q14}, [r10], %[dstStride]\n"
-          "vst1.32 {q1}, [r12], %[dstStride]\n"
-          "vst1.32 {q9}, [r10], %[dstStride]\n"
-          "vst1.32 {q3}, [r12], %[dstStride]\n"
-          "vst1.32 {q11}, [r10], %[dstStride]\n"
-          "vst1.32 {q5}, [r12], %[dstStride]\n"
-          "vst1.32 {q13}, [r10], %[dstStride]\n"
-          "vst1.32 {q7}, [r12], %[dstStride]\n"
-          "vst1.32 {q15}, [r10], %[dstStride]\n"
-
-          :
-          :
-          [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
-          : "r10", "r12", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14",
-            "q15");
+#if defined(ENABLE_ARM64) || defined(ENABLE_AVX) || defined(ENABLE_SSE) || defined(ENABLE_ARM32)
+        Transpose8X8Fp32Func_(src_ptr, dst_ptr, channel, plane);
 #else
         for (int tr = 0; tr < C8NUM; tr++) {
           for (int tc = 0; tc < C8NUM; tc++) {
@@ -462,7 +341,7 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
         }
       }
     }
-    for (; hw < plane; hw++) {
+    for (; hw < task_end; hw++) {
       const float *src_ptr = src_batch + hw * channel;
       float *dst_ptr = dst_batch + hw;
       for (size_t i = 0; i < channel; i++) {
@@ -470,10 +349,286 @@ void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int 
       }
     }
   }
-  return;
+}
+
+void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel, int task_id, int thread_count) {
+  return PackNHWCToNCHWFp32(src, dst, batch, channel, plane, task_id, thread_count);
+}
+
+#ifdef ENABLE_ARM64
+inline void Transpose8X8Fp32Arm64(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride) {
+  size_t srcStride = src_stride * sizeof(float);
+  size_t dstStride = dst_stride * sizeof(float);
+  asm volatile(
+    "mov x10, %[src_ptr]\n"
+    "mov x11, %[dst_ptr]\n"
+
+    "ld1 {v0.4s, v1.4s}, [x10], %[srcStride]\n"
+    "ld1 {v2.4s, v3.4s}, [x10], %[srcStride]\n"
+
+    "zip1 v8.4s, v0.4s, v2.4s\n"
+    "zip2 v9.4s, v0.4s, v2.4s\n"
+    "zip1 v12.4s, v1.4s, v3.4s\n"
+    "zip2 v13.4s, v1.4s, v3.4s\n"
+
+    "ld1 {v4.4s, v5.4s}, [x10], %[srcStride]\n"
+    "ld1 {v6.4s, v7.4s}, [x10], %[srcStride]\n"
+
+    "zip1 v10.4s, v4.4s, v6.4s\n"
+    "zip2 v11.4s, v4.4s, v6.4s\n"
+    "zip1 v14.4s, v5.4s, v7.4s\n"
+    "zip2 v15.4s, v5.4s, v7.4s\n"
+
+    "ld1 {v0.4s, v1.4s}, [x10], %[srcStride]\n"
+    "ld1 {v2.4s, v3.4s}, [x10], %[srcStride]\n"
+
+    "trn1 v16.2d, v8.2d, v10.2d\n"
+    "trn2 v18.2d, v8.2d, v10.2d\n"
+    "trn1 v20.2d, v9.2d, v11.2d\n"
+    "trn2 v22.2d, v9.2d, v11.2d\n"
+
+    "ld1 {v4.4s, v5.4s}, [x10], %[srcStride]\n"
+    "ld1 {v6.4s, v7.4s}, [x10], %[srcStride]\n"
+
+    "trn1 v24.2d, v12.2d, v14.2d\n"
+    "trn2 v26.2d, v12.2d, v14.2d\n"
+    "trn1 v28.2d, v13.2d, v15.2d\n"
+    "trn2 v30.2d, v13.2d, v15.2d\n"
+
+    "zip1 v8.4s, v0.4s, v2.4s\n"
+    "zip2 v9.4s, v0.4s, v2.4s\n"
+    "zip1 v12.4s, v1.4s, v3.4s\n"
+    "zip2 v13.4s, v1.4s, v3.4s\n"
+
+    "zip1 v10.4s, v4.4s, v6.4s\n"
+    "zip2 v11.4s, v4.4s, v6.4s\n"
+    "zip1 v14.4s, v5.4s, v7.4s\n"
+    "zip2 v15.4s, v5.4s, v7.4s\n"
+
+    "trn1 v17.2d, v8.2d, v10.2d\n"
+    "trn2 v19.2d, v8.2d, v10.2d\n"
+    "trn1 v21.2d, v9.2d, v11.2d\n"
+    "trn2 v23.2d, v9.2d, v11.2d\n"
+
+    "trn1 v25.2d, v12.2d, v14.2d\n"
+    "trn2 v27.2d, v12.2d, v14.2d\n"
+    "trn1 v29.2d, v13.2d, v15.2d\n"
+    "trn2 v31.2d, v13.2d, v15.2d\n"
+
+    "st1 {v16.4s, v17.4s}, [x11], %[dstStride]\n"
+    "st1 {v18.4s, v19.4s}, [x11], %[dstStride]\n"
+    "st1 {v20.4s, v21.4s}, [x11], %[dstStride]\n"
+    "st1 {v22.4s, v23.4s}, [x11], %[dstStride]\n"
+    "st1 {v24.4s, v25.4s}, [x11], %[dstStride]\n"
+    "st1 {v26.4s, v27.4s}, [x11], %[dstStride]\n"
+    "st1 {v28.4s, v29.4s}, [x11], %[dstStride]\n"
+    "st1 {v30.4s, v31.4s}, [x11], %[dstStride]\n"
+
+    :
+    : [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
+    : "x10", "x11", "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13", "v14",
+      "v15", "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "v28", "v29", "v30",
+      "v31");
 }
 #endif
 
-void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
-  return PackNHWCToNCHWFp32(src, dst, batch, channel, plane);
+#ifdef ENABLE_ARM32
+inline void Transpose8X8Fp32Arm32(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride) {
+  size_t srcStride = src_stride * sizeof(float);
+  size_t dstStride = dst_stride * sizeof(float);
+  asm volatile(
+    "mov r10, %[src_ptr]\n"
+    "mov r12, %[dst_ptr]\n"
+
+    "vld1.32 {q0, q1}, [r10], %[srcStride]\n"
+    "vld1.32 {q2, q3}, [r10], %[srcStride]\n"
+
+    "vtrn.32 d0, d4\n"
+    "vtrn.32 d1, d5\n"
+    "vtrn.32 d2, d6\n"
+    "vtrn.32 d3, d7\n"
+
+    "vld1.32 {q4, q5}, [r10], %[srcStride]\n"
+    "vld1.32 {q6, q7}, [r10], %[srcStride]\n"
+
+    "vtrn.32 d8, d12\n"
+    "vtrn.32 d9, d13\n"
+    "vtrn.32 d10, d14\n"
+    "vtrn.32 d11, d15\n"
+
+    "vld1.32 {q8, q9}, [r10], %[srcStride]\n"
+    "vld1.32 {q10, q11}, [r10], %[srcStride]\n"
+
+    "vswp d1, d8\n"
+    "vswp d3, d10\n"
+    "vswp d5, d12\n"
+    "vswp d7, d14\n"
+
+    "vtrn.32 d16, d20\n"
+    "vtrn.32 d17, d21\n"
+    "vtrn.32 d18, d22\n"
+    "vtrn.32 d19, d23\n"
+
+    "vld1.32 {q12, q13}, [r10], %[srcStride]\n"
+    "vld1.32 {q14, q15}, [r10], %[srcStride]\n"
+
+    "vtrn.32 d24, d28\n"
+    "vtrn.32 d25, d29\n"
+    "vtrn.32 d26, d30\n"
+    "vtrn.32 d27, d31\n"
+
+    "vswp d17, d24\n"
+    "vswp d19, d26\n"
+    "vswp d21, d28\n"
+    "vswp d23, d30\n"
+
+    "add r10, r12, #16\n"
+    "vst1.32 {q0}, [r12], %[dstStride]\n"
+    "vst1.32 {q8}, [r10], %[dstStride]\n"
+    "vst1.32 {q2}, [r12], %[dstStride]\n"
+    "vst1.32 {q10}, [r10], %[dstStride]\n"
+    "vst1.32 {q4}, [r12], %[dstStride]\n"
+    "vst1.32 {q12}, [r10], %[dstStride]\n"
+    "vst1.32 {q6}, [r12], %[dstStride]\n"
+    "vst1.32 {q14}, [r10], %[dstStride]\n"
+    "vst1.32 {q1}, [r12], %[dstStride]\n"
+    "vst1.32 {q9}, [r10], %[dstStride]\n"
+    "vst1.32 {q3}, [r12], %[dstStride]\n"
+    "vst1.32 {q11}, [r10], %[dstStride]\n"
+    "vst1.32 {q5}, [r12], %[dstStride]\n"
+    "vst1.32 {q13}, [r10], %[dstStride]\n"
+    "vst1.32 {q7}, [r12], %[dstStride]\n"
+    "vst1.32 {q15}, [r10], %[dstStride]\n"
+
+    :
+    : [ dst_ptr ] "r"(dst_ptr), [ src_ptr ] "r"(src_ptr), [ srcStride ] "r"(srcStride), [ dstStride ] "r"(dstStride)
+    : "r10", "r12", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10", "q11", "q12", "q13", "q14",
+      "q15");
 }
+#endif
+
+#ifdef ENABLE_AVX
+inline void Transpose8X8Fp32Avx(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride) {
+  LOAD256X8_F32(src, src_ptr, src_stride)
+  __m256 r1 = _mm256_unpacklo_ps(src1, src2);
+  __m256 r2 = _mm256_unpackhi_ps(src1, src2);
+  __m256 r3 = _mm256_unpacklo_ps(src3, src4);
+  __m256 r4 = _mm256_unpackhi_ps(src3, src4);
+  __m256 r5 = _mm256_unpacklo_ps(src5, src6);
+  __m256 r6 = _mm256_unpackhi_ps(src5, src6);
+  __m256 r7 = _mm256_unpacklo_ps(src7, src8);
+  __m256 r8 = _mm256_unpackhi_ps(src7, src8);
+
+  __m256 v;
+  v = _mm256_shuffle_ps(r1, r3, 0x4E);
+  src1 = _mm256_blend_ps(r1, v, 0xCC);
+  src2 = _mm256_blend_ps(r3, v, 0x33);
+
+  v = _mm256_shuffle_ps(r2, r4, 0x4E);
+  src3 = _mm256_blend_ps(r2, v, 0xCC);
+  src4 = _mm256_blend_ps(r4, v, 0x33);
+
+  v = _mm256_shuffle_ps(r5, r7, 0x4E);
+  src5 = _mm256_blend_ps(r5, v, 0xCC);
+  src6 = _mm256_blend_ps(r7, v, 0x33);
+
+  v = _mm256_shuffle_ps(r6, r8, 0x4E);
+  src7 = _mm256_blend_ps(r6, v, 0xCC);
+  src8 = _mm256_blend_ps(r8, v, 0x33);
+
+  r1 = _mm256_permute2f128_ps(src1, src5, 0x20);
+  r2 = _mm256_permute2f128_ps(src2, src6, 0x20);
+  r3 = _mm256_permute2f128_ps(src3, src7, 0x20);
+  r4 = _mm256_permute2f128_ps(src4, src8, 0x20);
+  r5 = _mm256_permute2f128_ps(src1, src5, 0x31);
+  r6 = _mm256_permute2f128_ps(src2, src6, 0x31);
+  r7 = _mm256_permute2f128_ps(src3, src7, 0x31);
+  r8 = _mm256_permute2f128_ps(src4, src8, 0x31);
+
+  STORE256X8_F32(dst_ptr, dst_stride, r);
+}
+#endif
+
+#if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
+inline void Transpose8X8Fp32Sse(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride) {
+  __m128 v0_ma = _mm_loadu_ps(src_ptr);
+  __m128 v1_ma = _mm_loadu_ps(src_ptr + src_stride);
+  __m128 v2_ma = _mm_loadu_ps(src_ptr + 2 * src_stride);
+  __m128 v3_ma = _mm_loadu_ps(src_ptr + 3 * src_stride);
+
+  __m128 v4_ma = _mm_unpacklo_ps(v0_ma, v1_ma);
+  __m128 v5_ma = _mm_unpackhi_ps(v0_ma, v1_ma);
+  __m128 v6_ma = _mm_unpacklo_ps(v2_ma, v3_ma);
+  __m128 v7_ma = _mm_unpackhi_ps(v2_ma, v3_ma);
+
+  __m128 v8_ma = _mm_movelh_ps(v4_ma, v6_ma);
+  __m128 v9_ma = _mm_movehl_ps(v6_ma, v4_ma);
+  __m128 v10_ma = _mm_movelh_ps(v5_ma, v7_ma);
+  __m128 v11_ma = _mm_movehl_ps(v7_ma, v5_ma);
+
+  _mm_storeu_ps(dst_ptr, v8_ma);
+  _mm_storeu_ps(dst_ptr + dst_stride, v9_ma);
+  _mm_storeu_ps(dst_ptr + 2 * dst_stride, v10_ma);
+  _mm_storeu_ps(dst_ptr + 3 * dst_stride, v11_ma);
+
+  v0_ma = _mm_loadu_ps(src_ptr + C4NUM);
+  v1_ma = _mm_loadu_ps(src_ptr + src_stride + C4NUM);
+  v2_ma = _mm_loadu_ps(src_ptr + 2 * src_stride + C4NUM);
+  v3_ma = _mm_loadu_ps(src_ptr + 3 * src_stride + C4NUM);
+
+  v4_ma = _mm_unpacklo_ps(v0_ma, v1_ma);
+  v5_ma = _mm_unpackhi_ps(v0_ma, v1_ma);
+  v6_ma = _mm_unpacklo_ps(v2_ma, v3_ma);
+  v7_ma = _mm_unpackhi_ps(v2_ma, v3_ma);
+
+  v8_ma = _mm_movelh_ps(v4_ma, v6_ma);
+  v9_ma = _mm_movehl_ps(v6_ma, v4_ma);
+  v10_ma = _mm_movelh_ps(v5_ma, v7_ma);
+  v11_ma = _mm_movehl_ps(v7_ma, v5_ma);
+
+  _mm_storeu_ps(dst_ptr + C4NUM * dst_stride, v8_ma);
+  _mm_storeu_ps(dst_ptr + (C4NUM + 1) * dst_stride, v9_ma);
+  _mm_storeu_ps(dst_ptr + (C4NUM + 2) * dst_stride, v10_ma);
+  _mm_storeu_ps(dst_ptr + (C4NUM + 3) * dst_stride, v11_ma);
+
+  v0_ma = _mm_loadu_ps(src_ptr + C4NUM * src_stride);
+  v1_ma = _mm_loadu_ps(src_ptr + (C4NUM + 1) * src_stride);
+  v2_ma = _mm_loadu_ps(src_ptr + (C4NUM + 2) * src_stride);
+  v3_ma = _mm_loadu_ps(src_ptr + (C4NUM + 3) * src_stride);
+
+  v4_ma = _mm_unpacklo_ps(v0_ma, v1_ma);
+  v5_ma = _mm_unpackhi_ps(v0_ma, v1_ma);
+  v6_ma = _mm_unpacklo_ps(v2_ma, v3_ma);
+  v7_ma = _mm_unpackhi_ps(v2_ma, v3_ma);
+
+  v8_ma = _mm_movelh_ps(v4_ma, v6_ma);
+  v9_ma = _mm_movehl_ps(v6_ma, v4_ma);
+  v10_ma = _mm_movelh_ps(v5_ma, v7_ma);
+  v11_ma = _mm_movehl_ps(v7_ma, v5_ma);
+
+  _mm_storeu_ps(dst_ptr + C4NUM, v8_ma);
+  _mm_storeu_ps(dst_ptr + dst_stride + C4NUM, v9_ma);
+  _mm_storeu_ps(dst_ptr + 2 * dst_stride + C4NUM, v10_ma);
+  _mm_storeu_ps(dst_ptr + 3 * dst_stride + C4NUM, v11_ma);
+
+  v0_ma = _mm_loadu_ps(src_ptr + C4NUM * src_stride + C4NUM);
+  v1_ma = _mm_loadu_ps(src_ptr + (C4NUM + 1) * src_stride + C4NUM);
+  v2_ma = _mm_loadu_ps(src_ptr + (C4NUM + 2) * src_stride + C4NUM);
+  v3_ma = _mm_loadu_ps(src_ptr + (C4NUM + 3) * src_stride + C4NUM);
+
+  v4_ma = _mm_unpacklo_ps(v0_ma, v1_ma);
+  v5_ma = _mm_unpackhi_ps(v0_ma, v1_ma);
+  v6_ma = _mm_unpacklo_ps(v2_ma, v3_ma);
+  v7_ma = _mm_unpackhi_ps(v2_ma, v3_ma);
+
+  v8_ma = _mm_movelh_ps(v4_ma, v6_ma);
+  v9_ma = _mm_movehl_ps(v6_ma, v4_ma);
+  v10_ma = _mm_movelh_ps(v5_ma, v7_ma);
+  v11_ma = _mm_movehl_ps(v7_ma, v5_ma);
+
+  _mm_storeu_ps(dst_ptr + C4NUM * dst_stride + C4NUM, v8_ma);
+  _mm_storeu_ps(dst_ptr + (C4NUM + 1) * dst_stride + C4NUM, v9_ma);
+  _mm_storeu_ps(dst_ptr + (C4NUM + 2) * dst_stride + C4NUM, v10_ma);
+  _mm_storeu_ps(dst_ptr + (C4NUM + 3) * dst_stride + C4NUM, v11_ma);
+}
+#endif

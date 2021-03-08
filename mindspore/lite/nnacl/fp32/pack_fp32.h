@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ void PackNHWCToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int 
 void PackNCHWToNC4HW4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNHWCToNHWC8Fp32(const void *src, void *dst, int batch, int plane, int channel);
-void PackNHWCToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel);
-void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
+// Note: If not multithreaded, please set task_id = 0 and thread_count = 0;
+void PackNHWCToNCHWFp32(const void *src, void *dst, int batch, int plane, int channel, int task_id, int thread_count);
+void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel, int task_id, int thread_count);
 void PackNHWC4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNC4HW4ToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int channel);
 void PackNC4HW4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
@@ -42,6 +43,21 @@ void PackDepthwiseIndirectWeightC4Fp32(const void *src, void *dst, int height, i
 void PackDepthwiseIndirectWeightC8Fp32(const void *src, void *dst, int height, int width, int channel);
 void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param, float *packed_input, int real_cal_num,
                         int block_index);
+
+// Transpose 8X8 Fp32 block data
+typedef void (*Transpose8X8Fp32Func)(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
+#ifdef ENABLE_ARM64
+void Transpose8X8Fp32Arm64(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
+#endif
+#ifdef ENABLE_ARM32
+void Transpose8X8Fp32Arm32(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
+#endif
+#ifdef ENABLE_AVX
+void Transpose8X8Fp32Avx(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
+#endif
+#if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
+void Transpose8X8Fp32Sse(const float *src_ptr, float *dst_ptr, int src_stride, int dst_stride);
+#endif
 
 #ifdef __cplusplus
 }
