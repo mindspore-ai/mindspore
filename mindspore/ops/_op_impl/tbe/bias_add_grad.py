@@ -30,17 +30,17 @@ bias_add_grad_op_info = TBERegOp("BiasAddGrad") \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_FracNZ, DataType.F32_Default) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F32_NHWC) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_NHWC) \
     .dtype_format(DataType.F32_FracNZ, DataType.F32_NHWC) \
-    .dtype_format(DataType.F16_Default, DataType.F32_NHWC) \
+    .dtype_format(DataType.F16_Default, DataType.F16_NHWC) \
     .dtype_format(DataType.F32_Default, DataType.F32_NHWC) \
-    .dtype_format(DataType.F16_NDC1HWC0, DataType.F32_Default) \
+    .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_Default) \
     .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_Default) \
-    .dtype_format(DataType.F16_NDC1HWC0, DataType.F32_NHWC) \
+    .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_NHWC) \
     .dtype_format(DataType.F32_NDC1HWC0, DataType.F32_NHWC) \
-    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F32_Default) \
+    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F16_Default) \
     .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_Default) \
-    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F32_NHWC) \
+    .dtype_format(DataType.F16_FRACTAL_Z_3D, DataType.F16_NHWC) \
     .dtype_format(DataType.F32_FRACTAL_Z_3D, DataType.F32_NHWC) \
     .get_op_info()
 
