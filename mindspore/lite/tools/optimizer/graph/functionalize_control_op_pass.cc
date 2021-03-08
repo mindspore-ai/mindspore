@@ -48,6 +48,9 @@ std::string FunctionalizeControlOpPass::NodeClusterName(const AnfNodePtr &node) 
 
 void FunctionalizeControlOpPass::InitNodeClusters(const FuncGraphPtr &func_graph) {
   for (auto &node : func_graph->nodes()) {
+    if (!utils::isa<CNodePtr>(node)) {
+      continue;
+    }
     auto cluster_name = NodeClusterName(node);
     auto cluster_pos = WhichCluster(cluster_name);
     if (cluster_pos == node_clusters_.size()) {
@@ -90,6 +93,7 @@ STATUS FunctionalizeControlOpPass::BuildWhileSubgraph(const FuncGraphPtr &func_g
           MS_LOG(ERROR) << "run functionalize while failed, ret: " << ret;
           return ret;
         }
+        break;
       }
     }
   }
