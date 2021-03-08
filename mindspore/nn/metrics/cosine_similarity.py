@@ -62,7 +62,7 @@ class CosineSimilarity(Metric):
         Updates the internal evaluation result with 'input1'.
 
         Args:
-            inputs: input_data `input1`. The input_data is a `Tensor`or an array.
+            inputs: input_data `input1`. The input_data is a `Tensor` or an array.
         """
         input_data = self._convert_data(inputs[0])
 

@@ -199,7 +199,7 @@ def test_multi_class_dice_loss_init_activation():
 
 def test_multi_class_dice_loss_init_activation2():
     """ test_multi_class_dice_loss """
-    with pytest.raises(KeyError):
+    with pytest.raises(ValueError):
         loss = nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation='www')
         y_pred = Tensor(np.array([[0.2, 0.5], [0.3, 0.1], [0.9, 0.6]]), mstype.float32)
         y = Tensor(np.array([[1, 0], [0, 1]]), mstype.float32)

@@ -103,9 +103,9 @@ class ROC(Metric):
         Update state with predictions and targets.
         Args:
             inputs: Input `y_pred` and `y`. `y_pred` and `y` are Tensor, list or numpy.ndarray.
-                    In most cases (not strictly), y_pred is a list of floating numbers in range :math:`[0, 1]`
-                    and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
-                    is the number of categories. y contains values of integers.
+                In most cases (not strictly), y_pred is a list of floating numbers in range :math:`[0, 1]`
+                and the shape is :math:`(N, C)`, where :math:`N` is the number of cases and :math:`C`
+                is the number of categories. y contains values of integers.
         """
         if len(inputs) != 2:
             raise ValueError('ROC need 2 inputs (y_pred, y), but got {}'.format(len(inputs)))

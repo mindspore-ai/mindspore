@@ -70,7 +70,7 @@ class OcclusionSensitivity(Metric):
     def __init__(self, pad_val=0.0, margin=2, n_batch=128, b_box=None):
         super().__init__()
         self.pad_val = validator.check_value_type("pad_val", pad_val, [float])
-        self.margin = validator.check_value_type("margin", margin, [int, Sequence])
+        self.margin = validator.check_value_type("margin", margin, [int, list])
         self.n_batch = validator.check_value_type("n_batch", n_batch, [int])
         self.b_box = b_box if b_box is None else validator.check_value_type("b_box", b_box, [list])
         self.clear()
