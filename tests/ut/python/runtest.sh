@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-CURRPATH=$(cd $(dirname $0); pwd)
+CURRPATH=$(cd "$(dirname $0)"; pwd)
 IGNORE_EXEC="--ignore=$CURRPATH/exec"
 PROJECT_PATH=$(cd ${CURRPATH}/../../..; pwd)
 
@@ -36,7 +36,7 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
 
     elif [ $1 == "stage2" ]; then
         echo "run python parallel\train\ops ut"
-        pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train
+        pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train  --ignore=$CURRPATH/train/summary
         RET=$?
         if [ ${RET} -ne 0 ]; then
             exit ${RET}
@@ -53,6 +53,16 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
         fi
 
         pytest $CURRPATH/pynative_mode
+        RET=$?
+        if [ ${RET} -ne 0 ]; then
+            exit ${RET}
+        fi
+
+        pytest -v $CURRPATH/train/summary
+        RET=$?
+        if [ ${RET} -ne 0 ]; then
+            exit ${RET}
+        fi
     fi
 else
     echo "run all python ut"
@@ -62,7 +72,7 @@ else
         exit ${RET}
     fi
 
-    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train
+    pytest -n 4 --dist=loadfile -v $CURRPATH/parallel $CURRPATH/train --ignore=$CURRPATH/train/summary
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
@@ -81,6 +91,16 @@ else
     fi
 
     pytest $CURRPATH/pynative_mode
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
+
+    pytest -v $CURRPATH/train/summary
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
 fi
 
 RET=$?
