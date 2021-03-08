@@ -1596,7 +1596,7 @@ def ix_(*args):
         Boolean masks are not supported.
 
     Args:
-        *args (Tensor): 1-D, each sequence should be of integer type.
+        *args (Tensor): 1-D sequences.
 
     Returns:
         Tuple of Tensor, `N` arrays with `N` dimensions each, with `N` the

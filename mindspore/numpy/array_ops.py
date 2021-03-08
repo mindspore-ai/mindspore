@@ -1898,15 +1898,17 @@ def repeat(a, repeats, axis=None):
         [3 4]]
     """
     _check_input_tensor(a)
+    if not isinstance(repeats, (tuple, list)):
+        repeats = (repeats,)
+    _check_element_int(repeats)
     if axis is None:
         a = ravel(a)
         axis = 0
     ndim = F.rank(a)
     _check_axis_in_range(axis, ndim)
     axis = axis + ndim if axis < 0 else axis
-    if isinstance(repeats, (tuple, list)) and len(repeats) == 1:
+    if len(repeats) == 1:
         repeats = repeats[0]
-    if isinstance(repeats, int):
         if repeats == 0:
             return _empty(F.dtype(a), (0,))
         return C.repeat_elements(a, repeats, axis)

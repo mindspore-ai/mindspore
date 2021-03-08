@@ -17,7 +17,9 @@
 
 from .math_ops import _apply_tensor_op
 from ..ops import functional as F
+from ..ops.primitive import constexpr
 from ..common import dtype as mstype
+from ..common import Tensor
 from .._c_expression import typing
 
 from .array_creations import zeros, ones
@@ -530,6 +532,13 @@ def isneginf(x):
     return _is_sign_inf(x, F.tensor_lt)
 
 
+@constexpr
+def _isscalar(x):
+    """Returns True if x is a scalar type"""
+    return isinstance(x, (typing.Number, typing.Int, typing.UInt, typing.Float,
+                          typing.Bool, typing.String))
+
+
 def isscalar(element):
     """
     Returns True if the type of element is a scalar type.
@@ -565,5 +574,5 @@ def isscalar(element):
         >>> print(output)
         True
     """
-    return isinstance(F.typeof(element), (typing.Number, typing.Int, typing.UInt,
-                                          typing.Float, typing.Bool, typing.String))
+    obj_type = F.typeof(element)
+    return not isinstance(obj_type, Tensor) and _isscalar(obj_type)
