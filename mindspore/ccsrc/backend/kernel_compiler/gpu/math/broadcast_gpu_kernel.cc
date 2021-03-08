@@ -42,6 +42,10 @@ MS_REG_GPU_KERNEL_ONE(
   AbsGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
   BroadcastOpGpuKernel, double)
+MS_REG_GPU_KERNEL_ONE(
+  RealDiv,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+  BroadcastOpGpuKernel, double)
 
 // fp32
 MS_REG_GPU_KERNEL_ONE(
