@@ -270,7 +270,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
                              const std::string &cell_id, const py::args &args);
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args, py::object *forward_args,
                             py::object *sens = nullptr);
-  void ClearDynamicTopRes(const std::string &cell_id);
+  void ClearDynamicTopRes(const std::string &cell_id, const FuncGraphPtr &df_builder);
   void GradNetInner(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,
                     const py::args &args);
   std::string GetCellId(const py::object &obj, const py::args &args);
