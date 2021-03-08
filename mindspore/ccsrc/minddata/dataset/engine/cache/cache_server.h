@@ -106,7 +106,7 @@ class CacheServer : public Service {
           << "Tcp/ip port: " << GetPort() << "\n"
           << "Shared memory size (in GB): " << GetSharedMemorySzInGb() << "\n"
           << "Memory cap ratio: " << GetMemoryCapRatio() << "\n"
-          << "Log level: " << GetLogLevel();
+          << "Log level: " << std::to_string(GetLogLevel());
     }
 
     friend std::ostream &operator<<(std::ostream &out, const Builder &bld) {
@@ -115,12 +115,34 @@ class CacheServer : public Service {
     }
 
     Status Build() {
+      // Get information of numa architecture and adjust num_workers_ based on numa count
+      hw_info_ = std::make_shared<CacheServerHW>();
+      RETURN_IF_NOT_OK(hw_info_->GetNumaNodeInfo());
+      std::string warning_string;
+      if (num_workers_ == -1) {
+        // if the user did not provide a value for num_workers, set it to half of num_cpu as default and adjust it if
+        // the default is not the optimal.
+        int32_t dft_num_workers = std::thread::hardware_concurrency() > 2 ? std::thread::hardware_concurrency() / 2 : 1;
+        num_workers_ = AdjustNumWorkers(dft_num_workers);
+      } else {
+        // if the users have given their own value, adjust it and provide a warning if it got changed.
+        int32_t num_workers_new = AdjustNumWorkers(num_workers_);
+        if (num_workers_ != num_workers_new) {
+          warning_string =
+            "The configuration of workers on the cache server is dependent on the NUMA architecture of the server. "
+            "The current setting is not the optimal for the NUMA architecture. Re-adjusting the number of workers "
+            "to optimal setting of " +
+            std::to_string(num_workers_new) + ".\n";
+          MS_LOG(INFO) << warning_string;
+        }
+        num_workers_ = num_workers_new;
+      }
       RETURN_IF_NOT_OK(SanityCheck());
       // We need to bring up the Task Manager by bringing up the Services singleton.
       RETURN_IF_NOT_OK(Services::CreateInstance());
-      RETURN_IF_NOT_OK(
-        CacheServer::CreateInstance(top_, num_workers_, port_, shared_memory_sz_in_gb_, memory_cap_ratio_, log_level_));
-      return Status::OK();
+      RETURN_IF_NOT_OK(CacheServer::CreateInstance(top_, num_workers_, port_, shared_memory_sz_in_gb_,
+                                                   memory_cap_ratio_, log_level_, std::move(hw_info_)));
+      return Status(StatusCode::kSuccess, warning_string);
     }
 
    private:
@@ -130,10 +152,14 @@ class CacheServer : public Service {
     int32_t shared_memory_sz_in_gb_;
     float memory_cap_ratio_;
     int8_t log_level_;
+    std::shared_ptr<CacheServerHW> hw_info_;
 
     /// \brief Sanity checks on the shared memory.
     /// \return Status object
     Status IpcResourceCleanup();
+
+    /// \brief Adjust the value of num_workers if it's not the optimal to NUMA architecture.
+    int32_t AdjustNumWorkers(int32_t num_workers);
   };
 
   CacheServer(const CacheServer &) = delete;
@@ -145,11 +171,12 @@ class CacheServer : public Service {
   ~CacheServer() override { (void)ServiceStop(); }
 
   static Status CreateInstance(const std::string &spill_path, int32_t num_workers, int32_t port,
-                               int32_t shared_memory_sz, float memory_cap_ratio, int8_t log_level) {
+                               int32_t shared_memory_sz, float memory_cap_ratio, int8_t log_level,
+                               std::shared_ptr<CacheServerHW> hw_info) {
     std::call_once(init_instance_flag_, [&]() -> Status {
       auto &SvcManager = Services::GetInstance();
-      RETURN_IF_NOT_OK(
-        SvcManager.AddHook(&instance_, spill_path, num_workers, port, shared_memory_sz, memory_cap_ratio, log_level));
+      RETURN_IF_NOT_OK(SvcManager.AddHook(&instance_, spill_path, num_workers, port, shared_memory_sz, memory_cap_ratio,
+                                          log_level, hw_info));
       return Status::OK();
     });
     return Status::OK();
@@ -274,7 +301,7 @@ class CacheServer : public Service {
   /// \param spill_path Top directory for spilling buffers to.
   /// \param num_workers Number of threads for handling requests.
   explicit CacheServer(const std::string &spill_path, int32_t num_workers, int32_t port, int32_t share_memory_sz_in_gb,
-                       float memory_cap_ratio, int8_t log_level);
+                       float memory_cap_ratio, int8_t log_level, std::shared_ptr<CacheServerHW> hw_info);
 
   /// \brief Locate a cache service from connection id.
   /// \return Pointer to cache service. Null if not found
