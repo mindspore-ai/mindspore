@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_SSE
+#if defined(ENABLE_SSE) && !defined(ENABLE_AVX)
 #include <x86intrin.h>
 #include "nnacl/fp32/common_func_fp32.h"
 

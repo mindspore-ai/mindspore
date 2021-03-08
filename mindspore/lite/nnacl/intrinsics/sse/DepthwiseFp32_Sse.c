@@ -19,6 +19,7 @@
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 #include "nnacl/intrinsics/sse/sse_common.h"
 
+#ifndef ENABLE_AVX
 void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t in_kh_step, size_t in_kw_step, size_t kernel_w_step, size_t relu, size_t relu6) {
   in_kh_step /= sizeof(float);
@@ -104,6 +105,7 @@ void ConvDwFp32Border(float *dst, const float *src, const float *weight, const f
   }
   _mm_storeu_ps(dst, dst_ma);
 }
+#endif
 
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
