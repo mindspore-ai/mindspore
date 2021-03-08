@@ -59,7 +59,7 @@ class Tensor(Tensor_):
         >>> assert isinstance(t1, Tensor)
         >>> assert t1.shape == (1, 2, 3)
         >>> assert t1.dtype == mindspore.float32
-        ...
+        >>>
         >>> # initialize a tensor with a float scalar
         >>> t2 = Tensor(0.1)
         >>> assert isinstance(t2, Tensor)
@@ -113,7 +113,7 @@ class Tensor(Tensor_):
     def __deepcopy__(self, memodict):
         new_obj = Tensor(self)
         new_obj.init = self.init
-        new_obj._virtual_flag = self._virtual_flag # pylint:disable=w0212
+        new_obj._virtual_flag = self._virtual_flag  # pylint:disable=w0212
         return new_obj
 
     def __repr__(self):
@@ -127,7 +127,7 @@ class Tensor(Tensor_):
     def __eq__(self, other):
         if not isinstance(other, (int, float, Tensor)):
             return False
-        #  bool type is not supported for `Equal` operator in backend.
+        # bool type is not supported for `Equal` operator in backend.
         if self.dtype == mstype.bool_ or (isinstance(other, Tensor) and other.dtype == mstype.bool_):
             if isinstance(other, Tensor):
                 return Tensor(np.array(self.asnumpy() == other.asnumpy()))
@@ -248,7 +248,6 @@ class Tensor(Tensor_):
             return out[0]
         raise TypeError("Not support len of a 0-D tensor")
 
-
     def __mod__(self, other):
         return tensor_operator_registry.get('__mod__')(self, other)
 
@@ -353,10 +352,8 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int)): Dimensions of reduction,
-                when axis is None or empty tuple, reduce all dimensions.
-                Default: (), reduce all dimensions.
-            keep_dims (bool): Whether to keep the reduced dimensions.
-                Default : False, don't keep these reduced dimensions.
+                when axis is None or empty tuple, reduce all dimensions. Default: ().
+            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
             Tensor, has the same data type as x.
@@ -373,10 +370,8 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int)): Dimensions of reduction,
-                when axis is None or empty tuple, reduce all dimensions.
-                Default: (), reduce all dimensions.
-            keep_dims (bool): Whether to keep the reduced dimensions.
-                Default : False, don't keep these reduced dimensions.
+                when axis is None or empty tuple, reduce all dimensions. Default: ().
+            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
             Tensor, has the same data type as x.
@@ -392,7 +387,7 @@ class Tensor(Tensor_):
         Reshape the tensor according to the input shape.
 
         Args:
-            shape (Union(tuple[int], \*int)): Dimension of the output tensor.
+            shape (Union[tuple(int), int]): Dimension of the output tensor.
 
         Returns:
             Tensor, has the same dimension as the input shape.
@@ -411,7 +406,7 @@ class Tensor(Tensor_):
         Expand the dimension of target tensor to the dimension of input tensor.
 
         Args:
-            shape (Tensor): The input tensor. The shape of input tensor must obey
+            x (Tensor): The input tensor. The shape of input tensor must obey
                 the broadcasting rule.
 
         Returns:
@@ -436,10 +431,8 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
-                when axis is None or empty tuple, reduce all dimensions.
-                Default: (), reduce all dimensions.
-            keep_dims (bool): Whether to keep the reduced dimensions.
-                Default : False, don't keep these reduced dimensions.
+                when axis is None or empty tuple, reduce all dimensions. Default: ().
+            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
 
         Returns:
             Tensor, has the same data type as x.
@@ -460,10 +453,10 @@ class Tensor(Tensor_):
         then tensor.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
 
         Args:
-            axes(Union[None, tuple(int), list(int), \*int], optional): If axes is None or
+            axes(Union[None, tuple(int), list(int), int], optional): If axes is None or
                 blank, tensor.transpose() will reverse the order of the axes. If axes is tuple(int)
                 or list(int), tensor.transpose() will transpose the tensor to the new axes order.
-                If axes is \*int, this form is simply intended as a convenience alternative to the
+                If axes is int, this form is simply intended as a convenience alternative to the
                 tuple/list form.
 
         Returns:
@@ -502,13 +495,13 @@ class Tensor(Tensor_):
         return reshape_op(self, (-1,))
 
     def flatten(self, order='C'):
-        """
+        r"""
         Returns a copy of the tensor collapsed into one dimension.
 
         Args:
-            order (str, optional): Can choose between \'C\' and \'F\'. \'C\' means to
-                flatten in row-major (C-style) order. \'F\' means to flatten in column-major
-                (Fortran- style) order. Only \'C\' and \'F\' are supported.
+            order (str, optional): Can choose between 'C' and 'F'. 'C' means to
+                flatten in row-major (C-style) order. 'F' means to flatten in column-major
+                (Fortran-style) order. Only 'C' and 'F' are supported. Default: 'C'.
 
         Returns:
             Tensor, has the same data type as input.
@@ -559,7 +552,7 @@ class Tensor(Tensor_):
         Removes single-dimensional entries from the shape of a tensor.
 
         Args:
-            axis (Union[None, int, list(int), tuple(list)], optional): Default is None.
+            axis (Union[None, int, list(int), tuple(int)], optional): Default is None.
 
         Returns:
             Tensor, with all or a subset of the dimensions of length 1 removed.
@@ -576,11 +569,11 @@ class Tensor(Tensor_):
 
         Args:
             dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format
-                of :class:`mindspore.dtype.float32` or \'float32\'. Default is :class:`mindspore.dtype.float32`
-
+                of :class:`mindspore.dtype.float32` or `float32`.
+                Default: :class:`mindspore.dtype.float32`.
             copy (bool, optional): By default, astype always returns a newly allocated
                 tensor. If this is set to false, the input tensor is returned instead
-                of a copy if possible.
+                of a copy if possible. Default: True.
 
         Returns:
             Tensor, with the designated dtype.
@@ -590,7 +583,6 @@ class Tensor(Tensor_):
         if not copy and dtype == self.dtype:
             return self
         return tensor_operator_registry.get('cast')(self, dtype)
-
 
     def init_check(self):
         if self.has_init:
@@ -606,7 +598,7 @@ class Tensor(Tensor_):
             slice_index (int): Slice index of a parameter's slices.
                 It is used when initialize a slice of a parameter, it guarantees that devices
                 using the same slice can generate the same tensor.
-            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
+            shape (list(int)): Shape of the slice, it is used when initialize a slice of the parameter.
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
                 to get one shard of a parameter's slice.
         """
@@ -655,7 +647,6 @@ class Tensor(Tensor_):
         self.assign_value(Tensor(data, dtype=self.dtype))
         return self
 
-
     def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):
         """Return init_data()."""
         logger.warning("WARN_DEPRECATED: The usage of to_tensor is deprecated."
@@ -683,7 +674,7 @@ class RowTensor:
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0].
         values (Tensor): A Tensor of any dtype of shape [D0, D1, ..., Dn].
-        dense_shape (tuple): An integer tuple which contains the shape
+        dense_shape (tuple(int)): An integer tuple which contains the shape
             of the corresponding dense tensor.
 
     Returns:
@@ -743,11 +734,11 @@ class SparseTensor:
 
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
-            where N and ndims are the number of values and number of dimensions in
+            where N and ndims are the number of `values` and number of dimensions in
             the SparseTensor, respectively.
         values (Tensor): A 1-D tensor of any type and shape `[N]`, which
-            supplies the values for each element in indices.
-        dense_shape (tuple): A integer tuple of size `ndims`,
+            supplies the values for each element in `indices`.
+        dense_shape (tuple(int)): A integer tuple of size `ndims`,
             which specifies the dense_shape of the sparse tensor.
 
     Returns:
