@@ -33,7 +33,7 @@ class BiasAddCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  uint8_t data_shape_{0};
+  size_t data_shape_{0};
   std::vector<size_t> input_shape_;
   std::vector<size_t> bias_shape_;
 };
