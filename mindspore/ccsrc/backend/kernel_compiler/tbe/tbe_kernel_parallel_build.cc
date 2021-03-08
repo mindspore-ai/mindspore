@@ -36,7 +36,7 @@ using mindspore::kernel::tbe::TbeUtils;
 bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
   auto build_manger = std::make_shared<ParallelBuildManager>();
   MS_EXCEPTION_IF_NULL(build_manger);
-  set<std::string> processed_kernel;
+  static set<std::string> processed_kernel;
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
@@ -201,6 +201,19 @@ void ParallelBuildManager::SaveSameOpInfo(const mindspore::AnfNodePtr &anf_node,
   same_op_list_.push_back(task_info);
 }
 
+void ParallelBuildManager::SaveSameFusionOpInfo(const int64_t scope_id, const std::string &json_name,
+                                                const std::string &processor,
+                                                const std::vector<size_t> &input_size_list,
+                                                const std::vector<size_t> &output_size_list) {
+  struct KernelBuildTaskInfo task_info;
+  task_info.scope_id = scope_id;
+  task_info.json_name = json_name;
+  task_info.processor = processor;
+  task_info.input_size_list.assign(input_size_list.begin(), input_size_list.end());
+  task_info.output_size_list.assign(output_size_list.begin(), output_size_list.end());
+  same_op_list_.push_back(task_info);
+}
+
 bool ParallelBuildManager::GenSameOpKernelMod() const {
   for (const auto &task_info : same_op_list_) {
     bool ret = SearchInCache(task_info.json_name, task_info.processor, task_info.input_size_list,
@@ -211,6 +224,24 @@ bool ParallelBuildManager::GenSameOpKernelMod() const {
     }
   }
   return true;
+}
+
+bool ParallelBuildManager::GenSameFusionOpKernelMod(std::map<int64_t, KernelModPtr> *kernel_mode_ret) const {
+  bool ret = true;
+  for (const auto &task_info : same_op_list_) {
+    auto kernel_pack = TbeUtils::SearchCache(task_info.json_name, tbe::kProcessorAiCore);
+    if (kernel_pack != nullptr) {
+      auto kernel_mode = GenKernelMod(task_info.json_name, tbe::kProcessorAiCore, task_info.input_size_list,
+                                      task_info.output_size_list, kernel_pack);
+      if (kernel_mode != nullptr) {
+        (*kernel_mode_ret)[task_info.scope_id] = kernel_mode;
+        continue;
+      }
+    }
+    MS_LOG(INFO) << "can't find " << task_info.json_name << " in cache.";
+    ret = false;
+  }
+  return ret;
 }
 
 bool ParallelBuildManager::SearchInCache(const std::string &json_name, const std::string &processor,

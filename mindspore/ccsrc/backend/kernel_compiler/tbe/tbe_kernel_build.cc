@@ -150,12 +150,18 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
     static int32_t dynamic_index = 0;
     op_info_json[kJDynamicIndex] = dynamic_index++;
   }
-  std::string json_str = op_info_json.dump();
-  size_t hash_id = std::hash<std::string>()(json_str);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   auto tune_mode = context_ptr->get_param<std::string>(MS_CTX_TUNE_MODE);
+  // generate soc info json
+  nlohmann::json soc_info_json;
+  TbeUtils::GenSocInfo(&soc_info_json);
+  soc_info_json[kAutoTilingMode] = tune_mode;
+
+  std::string json_str = op_info_json.dump() + soc_info_json.dump();
+  size_t hash_id = std::hash<std::string>()(json_str);
+  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+
   op_info_json[kJFullName] = anf_node->fullname_with_scope();
   json_name_ = op_name + "_" + std::to_string(hash_id) + "_" + std::to_string(device_id);
   json_info_ = json_str;
@@ -175,10 +181,7 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
     op_info_json[kJAttrDesc] = attr_desc;
   }
 
-  // generate soc info json
-  nlohmann::json soc_info_json;
-  TbeUtils::GenSocInfo(&soc_info_json);
-  soc_info_json[kAutoTilingMode] = tune_mode;
+  // merge json
   soc_info_json[kJSocVersion] = soc_version;
   (*kernel_json)[kJSocInfo] = soc_info_json;
   (*kernel_json)[kJOpInfo] = op_info_json;
