@@ -78,7 +78,7 @@ function infer()
 
 function cal_acc()
 {
-    python3.7 ../postprocess.py --result_path=./result_Files --img_path=$data_path &> acc.log &
+    python3.7 ../postprocess.py --result_path=./result_Files --img_path=$data_path --drop &> acc.log &
 }
 
 compile_app
