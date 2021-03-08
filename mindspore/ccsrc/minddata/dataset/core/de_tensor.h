@@ -22,7 +22,7 @@
 #include "include/api/status.h"
 #include "include/api/types.h"
 #include "mindspore/core/ir/api_tensor_impl.h"
-#include "minddata/dataset/include/tensor.h"
+#include "minddata/dataset/core/tensor.h"
 
 namespace mindspore {
 namespace dataset {
