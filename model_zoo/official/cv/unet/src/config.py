@@ -32,6 +32,8 @@ cfg_unet_medical = {
 
     'resume': False,
     'resume_ckpt': './',
+    'transfer_training': False,
+    'filter_weight': ['outc.weight', 'outc.bias']
 }
 
 cfg_unet_nested = {
@@ -56,6 +58,8 @@ cfg_unet_nested = {
 
     'resume': False,
     'resume_ckpt': './',
+    'transfer_training': False,
+    'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']
 }
 
 cfg_unet_nested_cell = {
@@ -81,6 +85,8 @@ cfg_unet_nested_cell = {
 
     'resume': False,
     'resume_ckpt': './',
+    'transfer_training': False,
+    'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']
 }
 
 cfg_unet_simple = {
@@ -102,6 +108,8 @@ cfg_unet_simple = {
 
     'resume': False,
     'resume_ckpt': './',
+    'transfer_training': False,
+    'filter_weight': ["final.weight"]
 }
 
 cfg_unet = cfg_unet_medical
