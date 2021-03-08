@@ -146,3 +146,13 @@ class CTPN(nn.Cell):
     def get_anchors(self, featmap_size):
         anchors = self.anchor_generator.grid_anchors(featmap_size)
         return Tensor(anchors, mstype.float16)
+
+class CTPN_Infer(nn.Cell):
+    def __init__(self, config):
+        super(CTPN_Infer, self).__init__()
+        self.network = CTPN(config, is_training=False)
+        self.network.set_train(False)
+
+    def construct(self, img_data):
+        output = self.network(img_data, None, None, None, None)
+        return output

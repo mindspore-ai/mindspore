@@ -55,6 +55,7 @@ You can download the dataset and put the directory in structure as follows:
   ├── scripts
   │   ├──run_train.sh              # shell script for training
   │   ├──run_eval.sh               # shell script for evaluation
+  │   ├──run_infer_310.sh          # shell script for 310 inference
   ├── src
   │   ├──option.py                 # parse args
   │   ├──callback.py               # callback file
@@ -62,9 +63,11 @@ You can download the dataset and put the directory in structure as follows:
   │   ├──naml.py                   # NAML architecture
   │   ├──config.py                 # config file
   │   ├──utils.py                  # utils to load ckpt_file for fine tune or incremental learn
+  ├──ascend310_infer               #application for 310 inference
   ├── train.py                     # training script
   ├── eval.py                      # evaluation script
   ├── export.py                    # export mindir script
+  └──postprogress.py               # post process for 310 inference
 ```
 
 ## [Training process](#contents)
@@ -95,7 +98,7 @@ bash run_eval.sh [PLATFORM] [DEVICE_ID] [DATASET] [DATASET_PATH] [CHECKPOINT_PAT
 python export.py --platform [PLATFORM] --checkpoint_path [CHECKPOINT_PATH] --file_format [EXPORT_FORMAT] --batch_size [BATCH_SIZE]
 ```
 
-- `EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
+- `EXPORT_FORMAT` should be in ["AIR", "MINDIR"]
 
 # [Model Description](#contents)
 
@@ -129,6 +132,19 @@ python export.py --platform [PLATFORM] --checkpoint_path [CHECKPOINT_PATH] --fil
 | batch_size          | 64                          |
 | outputs             | probability                 |
 | Accuracy            | AUC: 0.66                   |
+
+### Inference on Ascend310 Performance
+
+| Parameters          | Ascend                      |
+| ------------------- | --------------------------- |
+| Model Version       | NAML                        |
+| Resource            | Ascend 310                  |
+| Uploaded Date       | 03/13/2021 (month/day/year) |
+| MindSpore Version   | 1.2.0                       |  
+| Dataset             | MINDlarge                   |
+| batch_size          | 64                          |
+| outputs             | probability                 |
+| Accuracy            | AUC: 0.667                   |
 
 # [Description of Random Situation](#contents)
 

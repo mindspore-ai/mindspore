@@ -72,11 +72,13 @@ Here we used 6 datasets for training, and 1 datasets for Evaluation.
 .
 └─ctpn
   ├── README.md                             # network readme
+  ├──ascend310_infer                        #application for 310 inference
   ├── eval.py                               # eval net
   ├── scripts
   │   ├── eval_res.sh                       # calculate precision and recall
   │   ├── run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
   │   ├── run_eval_ascend.sh                # launch evaluating with ascend platform
+  │   ├──run_infer_310.sh                   # shell script for 310 inference
   │   └── run_standalone_train_ascend.sh    # launch standalone training with ascend platform(1p)
   ├── src
   │   ├── CTPN
@@ -102,6 +104,8 @@ Here we used 6 datasets for training, and 1 datasets for Evaluation.
   │       ├── detector.py                   # detect box
   │       ├── get_successions.py            # get succession proposal
   │       └── utils.py                      # some functions which is commonly used
+  ├──postprogress.py                        # post process for 310 inference
+  ├──export.py                              # script to export AIR,MINDIR model
   └── train.py                              # train net
 
 ```
@@ -237,6 +241,49 @@ Evaluation result will be stored in the example path, you can find result like t
 
 ```text
 {"precision": 0.90791, "recall": 0.86118, "hmean": 0.88393}
+```
+
+## Model Export
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` should be in ["AIR",  "MINDIR"]
+
+## [Inference process](#contents)
+
+### Usage
+
+Before performing inference, the air file must bu exported by export script on the Ascend910 environment.
+
+```shell
+# Ascend310 inference
+bash run_infer_310.sh [MODEL_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]]
+```
+
+After inference, you can get a archive file named submit.zip.To evalulate it, you can use the scripts provided by the ICDAR2013 network, you can download the Deteval scripts from the [link](https://rrc.cvc.uab.es/?com=downloads&action=download&ch=2&f=aHR0cHM6Ly9ycmMuY3ZjLnVhYi5lcy9zdGFuZGFsb25lcy9zY3JpcHRfdGVzdF9jaDJfdDFfZTItMTU3Nzk4MzA2Ny56aXA=)
+After download the scripts, unzip it and put it under ctpn/scripts and use eval_res.sh to get the result.You will get files as below:
+
+```text
+gt.zip
+readme.txt
+rrc_evalulation_funcs_1_1.py
+script.py
+```
+
+Then you can run the scripts/eval_res.sh to calculate the evalulation result.
+
+```base
+bash eval_res.sh
+```
+
+### Result
+
+Evaluation result will be stored in the example path, you can find result like the followings in `log`.
+
+```text
+{"precision": 0.88913, "recall": 0.86082, "hmean": 0.87475}
 ```
 
 # [Model description](#contents)
