@@ -19,6 +19,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
 #include "include/api/types.h"
 #include "include/api/dual_abi_helper.h"
 
@@ -68,6 +69,13 @@ struct MS_API ModelContext : public Context {
   static inline void SetInputShape(const std::shared_ptr<Context> &context, const std::string &shape);
   static inline std::string GetInputShape(const std::shared_ptr<Context> &context);
 
+  static void SetInputShapeMap(const std::shared_ptr<Context> &context, const std::map<int, std::vector<int>> &shape);
+  static std::map<int, std::vector<int>> GetInputShapeMap(const std::shared_ptr<Context> &context);
+
+  static void SetDynamicBatchSize(const std::shared_ptr<Context> &context,
+                                  const std::vector<size_t> &dynamic_batch_size);
+  static inline std::string GetDynamicBatchSize(const std::shared_ptr<Context> &context);
+
   static void SetOutputType(const std::shared_ptr<Context> &context, enum DataType output_type);
   static enum DataType GetOutputType(const std::shared_ptr<Context> &context);
 
@@ -107,6 +115,7 @@ struct MS_API ModelContext : public Context {
 
   static void SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::vector<char> &gpu_trt_infer_mode);
   static std::vector<char> GetGpuTrtInferModeChar(const std::shared_ptr<Context> &context);
+  static std::vector<char> GetDynamicBatchSizeChar(const std::shared_ptr<Context> &context);
 };
 
 void GlobalContext::SetGlobalDeviceTarget(const std::string &device_target) {
@@ -160,6 +169,10 @@ void ModelContext::SetFusionSwitchConfigPath(const std::shared_ptr<Context> &con
 }
 std::string ModelContext::GetFusionSwitchConfigPath(const std::shared_ptr<Context> &context) {
   return CharToString(GetFusionSwitchConfigPathChar(context));
+}
+
+std::string ModelContext::GetDynamicBatchSize(const std::shared_ptr<Context> &context) {
+  return CharToString(GetDynamicBatchSizeChar(context));
 }
 
 void ModelContext::SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::string &gpu_trt_infer_mode) {

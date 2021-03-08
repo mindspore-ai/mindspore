@@ -27,10 +27,9 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   if (context == nullptr) {
     return;
   }
-  insert_op_cfg_path = ModelContext::GetInsertOpConfigPath(context);
-  input_format = ModelContext::GetInputFormat(context);
-  input_shape = ModelContext::GetInputShape(context);
-
+  insert_op_cfg_path_ = ModelContext::GetInsertOpConfigPath(context);
+  input_format_ = ModelContext::GetInputFormat(context);
+  input_shape_map_ = ModelContext::GetInputShapeMap(context);
   auto out_type = ModelContext::GetOutputType(context);
   auto iter = kSupportedDtypeOptionMap.find(out_type);
   if (out_type == DataType::kTypeUnknown) {
@@ -38,26 +37,46 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   } else if (iter == kSupportedDtypeOptionMap.end()) {
     MS_LOG(WARNING) << "Unsupported output type " << out_type << ", use FP32 as default.";
   } else {
-    output_type = iter->second;
+    output_type_ = iter->second;
   }
+  dynamic_batch_size_ = ModelContext::GetDynamicBatchSize(context);
+  precision_mode_ = ModelContext::GetPrecisionMode(context);
+  op_select_impl_mode_ = ModelContext::GetOpSelectImplMode(context);
+  fusion_switch_cfg_path_ = ModelContext::GetFusionSwitchConfigPath(context);
+}
 
-  precision_mode = ModelContext::GetPrecisionMode(context);
-  op_select_impl_mode = ModelContext::GetOpSelectImplMode(context);
-  fusion_switch_cfg_path = ModelContext::GetFusionSwitchConfigPath(context);
+void AclModelOptions::RenameInput(const std::vector<std::string> &input_names) {
+  if (input_names.size() != input_shape_map_.size()) {
+    MS_LOG(INFO) << "Inputs count not match";
+    return;
+  }
+  input_shape_ = "";
+  for (size_t i = 0; i < input_shape_map_.size(); i++) {
+    std::string s;
+    for (size_t j = 0; j < input_shape_map_[i].size(); j++) {
+      s += std::to_string(input_shape_map_[i][j]) + ",";
+    }
+    input_shape_ += input_names[i] + ":" + s.substr(0, s.size() - 1) + ";";
+  }
+  input_shape_ = input_shape_.substr(0, input_shape_.size() - 1);
+  MS_LOG(INFO) << "input name is " << input_shape_;
 }
 
 std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> AclModelOptions::GenAclOptions()
   const {
   const std::map<std::string const *, std::string> init_options_map = {
-    {&op_select_impl_mode, ge::ir_option::OP_SELECT_IMPL_MODE},
-    {&soc_version, ge::ir_option::SOC_VERSION},
-    {&fusion_switch_cfg_path, ge::ir_option::FUSION_SWITCH_FILE}};
+    {&op_select_impl_mode_, ge::ir_option::OP_SELECT_IMPL_MODE},
+    {&soc_version_, ge::ir_option::SOC_VERSION},
+    {&fusion_switch_cfg_path_, ge::ir_option::FUSION_SWITCH_FILE}};
 
   const std::map<std::string const *, std::string> build_options_map = {
-    {&insert_op_cfg_path, ge::ir_option::INSERT_OP_FILE}, {&input_format, ge::ir_option::INPUT_FORMAT},
-    {&input_shape, ge::ir_option::INPUT_SHAPE},           {&output_type, ge::ir_option::OUTPUT_TYPE},
-    {&precision_mode, ge::ir_option::PRECISION_MODE},
-  };
+    {&insert_op_cfg_path_, ge::ir_option::INSERT_OP_FILE},
+    {&input_format_, ge::ir_option::INPUT_FORMAT},
+    {&input_shape_, ge::ir_option::INPUT_SHAPE},
+    {&output_type_, ge::ir_option::OUTPUT_TYPE},
+    {&precision_mode_, ge::ir_option::PRECISION_MODE},
+    {&dynamic_batch_size_, ge::ir_option::DYNAMIC_BATCH_SIZE},
+    {&dynamic_image_size_, ge::ir_option::DYNAMIC_IMAGE_SIZE}};
 
   std::map<std::string, std::string> init_options;
   std::map<std::string, std::string> build_options;
