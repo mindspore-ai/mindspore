@@ -46,7 +46,9 @@ class MemAddressRecorder : public BaseRecorder {
   MemAddressRecorder &operator=(const MemAddressRecorder &recorder);
 
   mutable std::mutex mtx_;
-  std::string mem_info_str_;
+
+  std::string mem_info_append_str_;
+  std::vector<std::string> mem_infos_;
 };
 using MemAddressRecorderPtr = std::shared_ptr<MemAddressRecorder>;
 }  // namespace mindspore

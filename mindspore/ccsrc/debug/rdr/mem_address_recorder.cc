@@ -25,7 +25,9 @@ std::string MemInfo2String(const std::string &label, const AddressPtrList &info)
   std::ostringstream ss;
   ss << label << " " << info.size() << std::endl;
   for (size_t i = 0; i < info.size(); i++) {
-    ss << "&" << info[i]->addr << " #" << info[i]->size << std::endl;
+    if (info[i] != nullptr) {
+      ss << "&" << info[i]->addr << " #" << info[i]->size << std::endl;
+    }
   }
   return ss.str();
 }
@@ -46,7 +48,15 @@ void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMemInf
   auto outputs = mem_info.outputs_;
   mem_info_stream << MemInfo2String("kernel_outputs", *outputs);
   mem_info_stream << std::endl;
-  mem_info_str_ += mem_info_stream.str();
+  std::string mem_info_str = mem_info_stream.str();
+  size_t length = mem_info_append_str_.size() + mem_info_str.size();
+  // set maximum length of one memory info recorder is 10 percent of string::max_size
+  if (length < 0.1 * mem_info_str.max_size()) {
+    mem_info_append_str_ += mem_info_str;
+  } else {
+    mem_infos_.push_back(mem_info_append_str_);
+    mem_info_append_str_ = mem_info_str;
+  }
 }
 
 void MemAddressRecorder::Export() {
@@ -62,7 +72,10 @@ void MemAddressRecorder::Export() {
     MS_LOG(WARNING) << "Open file for saving gpu memory information failed. File path: '" << file_path << "'.";
     return;
   }
-  fout << mem_info_str_;
+  for (auto &info : mem_infos_) {
+    fout << info;
+  }
+  fout << mem_info_append_str_;
   fout.close();
   ChangeFileMode(file_path, S_IRUSR);
 }
