@@ -43,7 +43,7 @@ OpParameter *PopulateConvDwParameter(const void *prim) {
   conv_param->pad_d_ = depthwise_conv2d_prim->padDown();
   conv_param->pad_l_ = depthwise_conv2d_prim->padLeft();
   conv_param->pad_r_ = depthwise_conv2d_prim->padRight();
-  conv_param->input_channel_ = depthwise_conv2d_prim->channelIn();
+  conv_param->output_channel_ = conv_param->input_channel_ = depthwise_conv2d_prim->channelIn();
   conv_param->dilation_h_ = depthwise_conv2d_prim->dilateH();
   conv_param->dilation_w_ = depthwise_conv2d_prim->dilateW();
 
