@@ -81,14 +81,14 @@ class CheckpointConfig:
 
     Args:
         save_checkpoint_steps (int): Steps to save checkpoint. Default: 1.
-        save_checkpoint_seconds (int): Seconds to save checkpoint. Default: 0.
-            Can't be used with save_checkpoint_steps at the same time.
+        save_checkpoint_seconds (int): Seconds to save checkpoint.
+            Can't be used with save_checkpoint_steps at the same time. Default: 0.
         keep_checkpoint_max (int): Maximum number of checkpoint files can be saved. Default: 5.
-        keep_checkpoint_per_n_minutes (int): Keep one checkpoint every n minutes. Default: 0.
-            Can't be used with keep_checkpoint_max at the same time.
+        keep_checkpoint_per_n_minutes (int): Keep one checkpoint every n minutes.
+            Can't be used with keep_checkpoint_max at the same time. Default: 0.
         integrated_save (bool): Whether to perform integrated save function in automatic model parallel scene.
-            Default: True. Integrated save function is only supported in automatic parallel scene, not supported
-            in manual parallel.
+            Integrated save function is only supported in automatic parallel scene, not supported
+            in manual parallel. Default: True.
         async_save (bool): Whether asynchronous execution saves the checkpoint to a file. Default: False.
         saved_network (Cell): Network to be saved in checkpoint file. If the saved_network has no relation
             with the network in training, the initial value of saved_network will be saved. Default: None.
@@ -128,6 +128,7 @@ class CheckpointConfig:
         >>> ckpoint_cb = ModelCheckpoint(prefix='LeNet5', directory='./checkpoint', config=config)
         >>> model.train(10, dataset, callbacks=ckpoint_cb)
     """
+
     def __init__(self,
                  save_checkpoint_steps=1,
                  save_checkpoint_seconds=0,
@@ -231,6 +232,7 @@ class ModelCheckpoint(Callback):
         ValueError: If the prefix is invalid.
         TypeError: If the config is not CheckpointConfig type.
     """
+
     def __init__(self, prefix='CKP', directory=None, config=None):
         super(ModelCheckpoint, self).__init__()
         self._latest_ckpt_file_name = ""
@@ -310,7 +312,7 @@ class ModelCheckpoint(Callback):
         """Check whether save checkpoint files or not."""
         if self._config.save_checkpoint_steps and self._config.save_checkpoint_steps > 0:
             if cb_params.cur_step_num >= self._last_triggered_step + self._config.save_checkpoint_steps \
-                 or force_to_save is True:
+                    or force_to_save is True:
                 return True
         elif self._config.save_checkpoint_seconds and self._config.save_checkpoint_seconds > 0:
             self._cur_time = time.time()
@@ -333,7 +335,7 @@ class ModelCheckpoint(Callback):
 
         if save_ckpt:
             cur_ckpoint_file = self._prefix + "-" + str(cb_params.cur_epoch_num) + "_" \
-                               + str(step_num_in_epoch) + ".ckpt"
+                + str(step_num_in_epoch) + ".ckpt"
             # update checkpoint file list.
             self._manager.update_ckpoint_filelist(self._directory, self._prefix)
             # keep checkpoint files number equal max number.
@@ -378,6 +380,7 @@ class ModelCheckpoint(Callback):
 
 class CheckpointManager:
     """Manage checkpoint files according to train_config of checkpoint."""
+
     def __init__(self):
         self._ckpoint_filelist = []
 
