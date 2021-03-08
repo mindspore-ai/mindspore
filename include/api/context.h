@@ -81,6 +81,9 @@ struct MS_API ModelContext : public Context {
   static inline void SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::string &cfg_path);
   static inline std::string GetFusionSwitchConfigPath(const std::shared_ptr<Context> &context);
 
+  static inline void SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::string &gpu_trt_infer_mode);
+  static inline std::string GetGpuTrtInferMode(const std::shared_ptr<Context> &context);
+
  private:
   // api without std::string
   static void SetInsertOpConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path);
@@ -101,6 +104,9 @@ struct MS_API ModelContext : public Context {
 
   static void SetFusionSwitchConfigPath(const std::shared_ptr<Context> &context, const std::vector<char> &cfg_path);
   static std::vector<char> GetFusionSwitchConfigPathChar(const std::shared_ptr<Context> &context);
+
+  static void SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::vector<char> &gpu_trt_infer_mode);
+  static std::vector<char> GetGpuTrtInferModeChar(const std::shared_ptr<Context> &context);
 };
 
 void GlobalContext::SetGlobalDeviceTarget(const std::string &device_target) {
@@ -154,6 +160,13 @@ void ModelContext::SetFusionSwitchConfigPath(const std::shared_ptr<Context> &con
 }
 std::string ModelContext::GetFusionSwitchConfigPath(const std::shared_ptr<Context> &context) {
   return CharToString(GetFusionSwitchConfigPathChar(context));
+}
+
+void ModelContext::SetGpuTrtInferMode(const std::shared_ptr<Context> &context, const std::string &gpu_trt_infer_mode) {
+  SetGpuTrtInferMode(context, StringToChar(gpu_trt_infer_mode));
+}
+std::string ModelContext::GetGpuTrtInferMode(const std::shared_ptr<Context> &context) {
+  return CharToString(GetGpuTrtInferModeChar(context));
 }
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CONTEXT_H

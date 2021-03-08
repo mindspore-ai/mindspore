@@ -31,6 +31,8 @@ constexpr auto kModelOptionPrecisionMode = "mindspore.option.precision_mode";
 // "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
 constexpr auto kModelOptionOpSelectImplMode = "mindspore.option.op_select_impl_mode";
 constexpr auto KModelOptionFusionSwitchCfgPath = "mindspore.option.fusion_switch_config_file_path";
+// "False": Inference with native backend, "True": Inference with Tensor-RT engine, default as "False"
+constexpr auto kModelOptionGpuTrtInferMode = "mindspore.option.gpu_trt_infer_mode";
 
 namespace mindspore {
 struct Context::Data {
@@ -215,6 +217,22 @@ void ModelContext::SetFusionSwitchConfigPath(const std::shared_ptr<Context> &con
 std::vector<char> ModelContext::GetFusionSwitchConfigPathChar(const std::shared_ptr<Context> &context) {
   MS_EXCEPTION_IF_NULL(context);
   const std::string &ref = GetValue<std::string>(context, KModelOptionFusionSwitchCfgPath);
+  return StringToChar(ref);
+}
+
+void ModelContext::SetGpuTrtInferMode(const std::shared_ptr<Context> &context,
+                                      const std::vector<char> &gpu_trt_infer_mode) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->data == nullptr) {
+    context->data = std::make_shared<Data>();
+    MS_EXCEPTION_IF_NULL(context->data);
+  }
+  context->data->params[kModelOptionGpuTrtInferMode] = CharToString(gpu_trt_infer_mode);
+}
+
+std::vector<char> ModelContext::GetGpuTrtInferModeChar(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const std::string &ref = GetValue<std::string>(context, kModelOptionGpuTrtInferMode);
   return StringToChar(ref);
 }
 }  // namespace mindspore
