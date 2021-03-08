@@ -3151,7 +3151,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         ValueError: If length of shape of `input` is not equal to 4.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> tensor = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
