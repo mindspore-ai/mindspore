@@ -344,7 +344,7 @@ class ResNet(nn.Cell):
         num_classes (int): The number of classes that the training images are belonging to.
         use_se (bool): Enable SE-ResNet50 net. Default: False.
         se_block(bool): Use se block in SE-ResNet50 net in layer 3 and layer 4. Default: False.
-        res_base (bool): Enable parameter setting of resnet18. Default: True.
+        res_base (bool): Enable parameter setting of resnet18. Default: False.
 
     Returns:
         Tensor, output tensor.
