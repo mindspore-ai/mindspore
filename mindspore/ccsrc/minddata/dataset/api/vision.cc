@@ -813,7 +813,7 @@ UniformAugment::UniformAugment(const std::vector<TensorTransform *> &transforms,
     : data_(std::make_shared<Data>()) {
   (void)std::transform(
     transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op ? op->Parse() : nullptr; });
+    [](TensorTransform *const op) -> std::shared_ptr<TensorOperation> { return op ? op->Parse() : nullptr; });
   data_->num_ops_ = num_ops;
 }
 

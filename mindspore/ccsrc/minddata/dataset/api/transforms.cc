@@ -35,9 +35,10 @@ struct Compose::Data {
 };
 
 Compose::Compose(const std::vector<TensorTransform *> &transforms) : data_(std::make_shared<Data>()) {
-  (void)std::transform(
-    transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
+                       [](TensorTransform *const op) -> std::shared_ptr<TensorOperation> {
+                         return op != nullptr ? op->Parse() : nullptr;
+                       });
 }
 
 Compose::Compose(const std::vector<std::shared_ptr<TensorTransform>> &transforms) : data_(std::make_shared<Data>()) {
@@ -78,9 +79,10 @@ struct RandomApply::Data {
 
 RandomApply::RandomApply(const std::vector<TensorTransform *> &transforms, double prob)
     : data_(std::make_shared<Data>()) {
-  (void)std::transform(
-    transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
+                       [](TensorTransform *const op) -> std::shared_ptr<TensorOperation> {
+                         return op != nullptr ? op->Parse() : nullptr;
+                       });
   data_->prob_ = prob;
 }
 
@@ -110,9 +112,10 @@ struct RandomChoice::Data {
 };
 
 RandomChoice::RandomChoice(const std::vector<TensorTransform *> &transforms) : data_(std::make_shared<Data>()) {
-  (void)std::transform(
-    transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-    [](TensorTransform *op) -> std::shared_ptr<TensorOperation> { return op != nullptr ? op->Parse() : nullptr; });
+  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
+                       [](TensorTransform *const op) -> std::shared_ptr<TensorOperation> {
+                         return op != nullptr ? op->Parse() : nullptr;
+                       });
 }
 
 RandomChoice::RandomChoice(const std::vector<std::shared_ptr<TensorTransform>> &transforms)
