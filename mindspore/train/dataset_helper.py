@@ -53,17 +53,19 @@ def connect_network_with_dataset(network, dataset_helper):
 
     Args:
         network (Cell): The training network for dataset.
-        dataset_helper(DatasetHelper): A class to process the MindData dataset, it provides the type, shape and queue
+        dataset_helper (DatasetHelper): A class to process the MindData dataset, it provides the type, shape and queue
             name of the dataset to wrap the `GetNext`.
 
-    Outputs:
+    Returns:
         Cell, a new network wrapped with 'GetNext' in the case of running the task on Ascend in graph mode, otherwise
         it is the input network.
 
     Examples:
+        >>> from mindspore import DatasetHelper
+        >>>
         >>> # call create_dataset function to create a regular dataset, refer to mindspore.dataset
         >>> train_dataset = create_custom_dataset()
-        >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
+        >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> net = Net()
         >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
     """
@@ -145,14 +147,18 @@ class DatasetHelper:
         The iteration of DatasetHelper will provide one epoch data.
 
     Args:
-        dataset (DataSet): The training dataset iterator.
-        dataset_sink_mode (bool): If true use GetNext to fetch the data, or else feed the data from host. Default: True.
+        dataset (Dataset): The training dataset iterator.
+        dataset_sink_mode (bool): If true use GetNext to fetch the data, or else feed the data
+                                  from host. Default: True.
         sink_size (int): Control the amount of data in each sink.
-                             If sink_size=-1, sink the complete dataset for each epoch.
-                             If sink_size>0, sink sink_size data for each epoch. Default: -1.
+                          If sink_size=-1, sink the complete dataset for each epoch.
+                          If sink_size>0, sink sink_size data for each epoch.
+                          Default: -1.
         epoch_num (int): Control the number of epoch data to send. Default: 1.
 
     Examples:
+        >>> from mindspore import nn, DatasetHelper
+        >>>
         >>> network = Net()
         >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         >>> network = nn.WithLossCell(network, net_loss)
@@ -373,6 +379,7 @@ class _DatasetIterPSServer(_DatasetIter):
 
         self.op = op
 
+
 class _DatasetIterPSWork(_DatasetIter):
     """Iter for context on MS_WORKER"""
 
@@ -387,6 +394,7 @@ class _DatasetIterPSWork(_DatasetIter):
             return tuple()
 
         self.op = op
+
 
 class _DatasetIterNormal:
     """Iter for normal(non sink) mode, feed the data from host."""

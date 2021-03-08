@@ -76,7 +76,6 @@ class Model:
                              to other metric. Default: None.
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
             precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
-
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
             - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
@@ -93,6 +92,8 @@ class Model:
             will be overwritten. Default: True.
 
     Examples:
+        >>> from mindspore import Model, nn
+        >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, num_class=10, num_channel=1):
         ...         super(Net, self).__init__()
@@ -118,7 +119,8 @@ class Model:
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-        >>> # For details about how to build the dataset, please refer to the tutorial document on the official website.
+        >>> # For details about how to build the dataset, please refer to the tutorial
+        >>> # document on the official website.
         >>> dataset = create_custom_dataset()
         >>> model.train(2, dataset)
     """
@@ -565,23 +567,29 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            callbacks (list, object): List of callback objects or callback object, which should be executed
-                                      while training. Default: None.
+            callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object,
+                                                            which should be executed while training.
+                                                            Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
                                       Configure pynative mode or CPU, the training process will be performed with
-                                      dataset not sink.
+                                      dataset not sink. Default: True.
             sink_size (int): Control the amount of data in each sink.
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
-                             If dataset_sink_mode is False, set sink_size as invalid. Default: -1.
+                             If dataset_sink_mode is False, set sink_size as invalid.
+                             Default: -1.
 
         Examples:
+            >>> from mindspore import Model, nn
             >>> from mindspore.train.loss_scale_manager import FixedLossScaleManager
+            >>>
+            >>> # For details about how to build the dataset, please refer to the tutorial
+            >>> # document on the official website.
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> loss_scale_manager = FixedLossScaleManager()
-            >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+            >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
@@ -690,13 +698,19 @@ class Model:
 
         Args:
             valid_dataset (Dataset): Dataset to evaluate the model.
-            callbacks (list): List of callback objects which should be executed while training. Default: None.
-            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
+            callbacks (Optional[list(Callback)]): List of callback objects which should be executed
+                while training. Default: None.
+            dataset_sink_mode (bool): Determines whether to pass the data through dataset channel.
+                Default: True.
 
         Returns:
             Dict, which returns the loss value and metrics values for the model in the test mode.
 
         Examples:
+            >>> from mindspore import Model, nn
+            >>>
+            >>> # For details about how to build the dataset, please refer to the tutorial
+            >>> # document on the official website.
             >>> dataset = create_custom_dataset()
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
@@ -739,14 +753,17 @@ class Model:
             Batch data should be put together in one tensor.
 
         Args:
-           predict_data: The predict data, can be bool, int, float, str, None, tensor,
+           predict_data (Tensor): The predict data, can be bool, int, float, str, None, tensor,
                          or tuple, list and dict that store these types.
 
         Returns:
             Tensor, array(s) of predictions.
 
         Examples:
-            >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), mindspore.float32)
+            >>> import mindspore as ms
+            >>> from mindspore import Model, Tensor
+            >>>
+            >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
             >>> model = Model(Net())
             >>> result = model.predict(input_data)
         """
@@ -771,12 +788,16 @@ class Model:
             predict_data (Tensor): One tensor or multiple tensors of predict data.
 
         Returns:
-            parameter_layout_dict (dict): Parameter layout dictionary used for load distributed checkpoint
+            Dict, Parameter layout dictionary used for load distributed checkpoint
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import Model, context, Tensor
+            >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
             >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-            >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
+            >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), ms.float32)
             >>> model = Model(Net())
             >>> model.infer_predict_layout(input_data)
         """
@@ -801,5 +822,6 @@ class Model:
         for param in params:
             if param.cache_enable:
                 Tensor(param).flush_from_cache()
+
 
 __all__ = ["Model"]
