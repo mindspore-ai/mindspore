@@ -91,8 +91,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
       param_->in_elements_num1_ != param_->out_elements_num_) {
     return RET_OK;
   }
-  if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) &&
-      (arithmetic_opt_run_ != nullptr && arithmetic_opt_run_int_ != nullptr)) {
+  if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) && arithmetic_opt_run_ != nullptr) {
     /* run opt function
      * one of input is scalar */
     return RET_OK;
@@ -327,8 +326,7 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
   }
   int offset = stride * task_id * data_type_len_;
   /* run opt function, one of input is scalar */
-  if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) &&
-      (arithmetic_opt_run_ != nullptr && arithmetic_opt_run_int_ != nullptr)) {
+  if ((param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) && arithmetic_opt_run_ != nullptr) {
     if (param_->in_elements_num0_ == 1) {
       return Execute(input0_ptr_, static_cast<uint8_t *>(input1_ptr_) + offset,
                      static_cast<uint8_t *>(output_ptr_) + offset, count, true);
