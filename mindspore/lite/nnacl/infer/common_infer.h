@@ -137,12 +137,12 @@ typedef struct TensorListC {
   int data_type_;
   int format_;
 
-  TensorC **tensors_;
-  size_t element_num_;
   int tensors_data_type_;  // element_data_type_, keep same as c++
-  int element_shape_[MAX_SHAPE_SIZE];
-  size_t element_shape_size_;
   int max_elements_num_;
+  int element_shape_[8];
+  size_t element_num_;
+  size_t element_shape_size_;
+  TensorC *tensors_;
 } TensorListC;
 
 typedef struct VectorC {

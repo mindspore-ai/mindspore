@@ -42,7 +42,7 @@ int MergeInfer(const TensorC *const *inputs, size_t inputs_size, TensorC **outpu
 
       output_tensorlist->element_num_ = input_tensorlist->element_num_;
       for (size_t j = 0; j < output_tensorlist->element_num_; j++) {
-        memcpy(output_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
+        memcpy(&output_tensorlist->tensors_[j], &input_tensorlist->tensors_[j], sizeof(TensorC));
       }
     } else {
       SetShapeTensor(outputs[i], inputs[i]);
