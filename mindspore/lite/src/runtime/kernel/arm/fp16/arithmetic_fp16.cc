@@ -119,10 +119,6 @@ void ArithmeticFP16CPUKernel::TileConstTensor(const void *in_data, void *out_dat
 
 int ArithmeticFP16CPUKernel::Execute(const void *input0, const void *input1, void *output, int size, bool is_opt) {
   int ret = RET_OK;
-  if (in_tensors_[0]->data_type() != kNumberTypeFloat16) {
-    MS_LOG(ERROR) << "data type is not fp16";
-    return RET_ERROR;
-  }
   if (is_opt) {
     CHECK_NULL_RETURN(arithmetic_opt_func_, RET_ERROR);
     ret = arithmetic_opt_func_(reinterpret_cast<const float16_t *>(input0), reinterpret_cast<const float16_t *>(input1),

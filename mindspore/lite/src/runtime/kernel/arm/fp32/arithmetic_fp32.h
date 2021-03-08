@@ -108,9 +108,12 @@ class ArithmeticCPUKernel : public LiteKernel {
   int data_type_len_ = sizeof(float);
 
  private:
-  bool CanBatchScalar();
   int BatchScalarCalc(int task_id);
+  int BiasCalc(int task_id);
   void FreeConstTileBuff();
+  bool isScalarClac();
+  bool isBatchScalarCalc();
+  bool isBiasCalc();
   ArithmeticRun arithmetic_run_ = nullptr;
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
   ArithmeticIntRun arithmetic_run_int_ = nullptr;
