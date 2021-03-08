@@ -185,6 +185,7 @@ class DfGraphConvertor {
   void SetTupleOpInput(const OpAdapterPtr &adpt, const CNodePtr &node, const AnfNodePtr &pred, const OperatorPtr &src,
                        int index);
   void UpdateTupleOutCache(void);
+  AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};
