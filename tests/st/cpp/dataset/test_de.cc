@@ -67,7 +67,8 @@ TEST_F(TestDE, TestDvpp) {
 #ifdef ENABLE_ACL
   // Read images from target directory
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
+  Status rc = mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
+  ASSERT_TRUE(rc.IsOk());
   auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define dvpp transform
@@ -77,13 +78,13 @@ TEST_F(TestDE, TestDvpp) {
   mindspore::dataset::Execute Transform(decode_resize_crop, MapTargetDevice::kAscend310);
 
   // Apply transform on images
-  Status rc = Transform(image, &image);
+  rc = Transform(image, &image);
   std::string aipp_cfg = Transform.AippCfgGenerator();
   ASSERT_EQ(aipp_cfg, "./aipp.cfg");
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(image.Shape().size(), 3);
+  ASSERT_EQ(image.Shape().size(), 2);
   int32_t real_h = 0;
   int32_t real_w = 0;
   int32_t remainder = crop_paras[crop_paras.size() - 1] % 16;
@@ -94,15 +95,21 @@ TEST_F(TestDE, TestDvpp) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
-  /* TODO Use in the future after compute college finish their job
+
   ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
   ASSERT_EQ(image.Shape()[1], real_w);
   ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
-   */
+
+  ASSERT_TRUE(image.Data().get() != nullptr);
+  ASSERT_EQ(image.DataType(), mindspore::DataType::kNumberTypeUInt8);
+  ASSERT_EQ(image.IsDevice(), true);
+
+  /* This is the criterion for previous method(Without pop)
   ASSERT_EQ(image.Shape()[0], 1.5 * real_h * real_w);  // For image in YUV format, each pixel takes 1.5 byte
   ASSERT_EQ(image.Shape()[1], 1);
   ASSERT_EQ(image.Shape()[2], 1);
   ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
+  */
 #endif
 }
 
@@ -110,7 +117,8 @@ TEST_F(TestDE, TestDvppSinkMode) {
 #ifdef ENABLE_ACL
   // Read images from target directory
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
+  Status rc = mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
+  ASSERT_TRUE(rc.IsOk());
   auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define dvpp transform
@@ -123,11 +131,11 @@ TEST_F(TestDE, TestDvppSinkMode) {
   mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310);
 
   // Apply transform on images
-  Status rc = Transform(image, &image);
+  rc = Transform(image, &image);
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(image.Shape().size(), 3);
+  ASSERT_EQ(image.Shape().size(), 2);
   int32_t real_h = 0;
   int32_t real_w = 0;
   int32_t remainder = crop_paras[crop_paras.size() - 1] % 16;
@@ -138,10 +146,13 @@ TEST_F(TestDE, TestDvppSinkMode) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
-  ASSERT_EQ(image.Shape()[0], 1.5 * real_h * real_w);  // For image in YUV format, each pixel takes 1.5 byte
-  ASSERT_EQ(image.Shape()[1], 1);
-  ASSERT_EQ(image.Shape()[2], 1);
+  ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
+  ASSERT_EQ(image.Shape()[1], real_w);
   ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
+
+  ASSERT_TRUE(image.Data().get() != nullptr);
+  ASSERT_EQ(image.DataType(), mindspore::DataType::kNumberTypeUInt8);
+  ASSERT_EQ(image.IsDevice(), true);
   Transform.DeviceMemoryRelease();
 #endif
 }
@@ -149,7 +160,8 @@ TEST_F(TestDE, TestDvppSinkMode) {
 TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
 #ifdef ENABLE_ACL
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
+  Status rc = mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
+  ASSERT_TRUE(rc.IsOk());
   auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
   // Define dvpp transform
@@ -170,11 +182,11 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
   ASSERT_EQ(aipp_cfg, "./aipp.cfg");
 
   // Apply transform on images
-  Status rc = Transform(image, &image);
+  rc = Transform(image, &image);
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_EQ(image.Shape().size(), 3);
+  ASSERT_EQ(image.Shape().size(), 2);
   int32_t real_h = 0;
   int32_t real_w = 0;
   int32_t remainder = crop_paras[crop_paras.size() - 1] % 16;
@@ -185,10 +197,14 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
     real_h = (crop_paras[0] % 2 == 0) ? crop_paras[0] : crop_paras[0] + 1;
     real_w = (remainder == 0) ? crop_paras[1] : crop_paras[1] + 16 - remainder;
   }
-  ASSERT_EQ(image.Shape()[0], 1.5 * real_h * real_w);  // For image in YUV format, each pixel takes 1.5 byte
-  ASSERT_EQ(image.Shape()[1], 1);
-  ASSERT_EQ(image.Shape()[2], 1);
+
+  ASSERT_EQ(image.Shape()[0], real_h);  // For image in YUV format, each pixel takes 1.5 byte
+  ASSERT_EQ(image.Shape()[1], real_w);
   ASSERT_EQ(image.DataSize(), real_h * real_w * 1.5);
+
+  ASSERT_TRUE(image.Data().get() != nullptr);
+  ASSERT_EQ(image.DataType(), mindspore::DataType::kNumberTypeUInt8);
+  ASSERT_EQ(image.IsDevice(), true);
   Transform.DeviceMemoryRelease();
 #endif
 }

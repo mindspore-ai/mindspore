@@ -16,6 +16,9 @@
 
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/core/device_tensor.h"
+#ifdef ENABLE_ACL
+#include "minddata/dataset/kernels/image/dvpp/utils/MDAclProcess.h"
+#endif
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -25,6 +28,7 @@ DeviceTensor::DeviceTensor(const TensorShape &shape, const DataType &type) : Ten
   std::shared_ptr<MemoryPool> global_pool = GlobalContext::Instance()->mem_pool();
   data_allocator_ = std::make_unique<Allocator<unsigned char>>(global_pool);
   device_data_type_ = type;
+  host_data_tensor_ = nullptr;
 }
 
 Status DeviceTensor::CreateEmpty(const TensorShape &shape, const DataType &type, std::shared_ptr<DeviceTensor> *out) {
@@ -80,6 +84,20 @@ Status DeviceTensor::CreateFromDeviceMemory(const TensorShape &shape, const Data
   return Status::OK();
 }
 
+const unsigned char *DeviceTensor::GetHostBuffer() {
+#ifdef ENABLE_ACL
+  Status rc = DataPop_(&host_data_tensor_);
+  if (!rc.IsOk()) {
+    MS_LOG(ERROR) << "Pop device data onto host fail, a nullptr will be returned";
+    return nullptr;
+  }
+#endif
+  if (!host_data_tensor_) {
+    return nullptr;
+  }
+  return host_data_tensor_->GetBuffer();
+}
+
 uint8_t *DeviceTensor::GetDeviceBuffer() { return device_data_; }
 
 uint8_t *DeviceTensor::GetDeviceMutableBuffer() { return device_data_; }
@@ -109,5 +127,42 @@ Status DeviceTensor::SetSize_(const uint32_t &new_size) {
   size_ = new_size;
   return Status::OK();
 }
+
+#ifdef ENABLE_ACL
+Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
+  void *resHostBuf = nullptr;
+  APP_ERROR ret = aclrtMallocHost(&resHostBuf, this->DeviceDataSize());
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
+    return Status(StatusCode::kMDNoSpace);
+  }
+  std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
+  auto processedInfo_ = outBuf;
+  // Memcpy the output data from device to host
+  ret = aclrtMemcpy(outBuf.get(), this->DeviceDataSize(), this->GetDeviceBuffer(), this->DeviceDataSize(),
+                    ACL_MEMCPY_DEVICE_TO_HOST);
+  if (ret != APP_ERR_OK) {
+    MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
+    return Status(StatusCode::kMDOutOfMemory);
+  }
+  auto data = std::static_pointer_cast<unsigned char>(processedInfo_);
+  unsigned char *ret_ptr = data.get();
+
+  mindspore::dataset::dsize_t dvppDataSize = this->DeviceDataSize();
+  const mindspore::dataset::TensorShape dvpp_shape({dvppDataSize, 1, 1});
+  uint32_t _output_width_ = this->GetYuvStrideShape()[0];
+  uint32_t _output_widthStride_ = this->GetYuvStrideShape()[1];
+  uint32_t _output_height_ = this->GetYuvStrideShape()[2];
+  uint32_t _output_heightStride_ = this->GetYuvStrideShape()[3];
+  const mindspore::dataset::DataType dvpp_data_type(mindspore::dataset::DataType::DE_UINT8);
+  mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, host_tensor);
+  (*host_tensor)->SetYuvShape(_output_width_, _output_widthStride_, _output_height_, _output_heightStride_);
+  if (!(*host_tensor)->HasData()) {
+    return Status(StatusCode::kMCDeviceError);
+  }
+  MS_LOG(INFO) << "Successfully pop DeviceTensor data onto host";
+  return Status::OK();
+}
+#endif
 }  // namespace dataset
 }  // namespace mindspore
