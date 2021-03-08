@@ -34,9 +34,8 @@ log.setLevel(level=logging.ERROR)
 
 def make_image_tensor(shape, dtype=float):
     """ make_image_tensor """
-    # pylint: disable=unused-argument
-    numel = np.prod(shape)
-    x = (np.arange(numel, dtype=float)).reshape(shape)
+    number = np.prod(shape)
+    x = (np.arange(number, dtype=dtype)).reshape(shape)
     return x
 
 

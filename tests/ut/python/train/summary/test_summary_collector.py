@@ -294,11 +294,11 @@ class TestSummaryCollector:
     def test_collect_input_data_with_train_dataset_element_invalid(self):
         """Test the param 'train_dataset_element' in cb_params is invalid."""
         cb_params = _InternalCallbackParam()
-        for invalid in (), [], None, [None]:
+        for invalid in (), [], None:
             cb_params.train_dataset_element = invalid
-            with SummaryCollector(tempfile.mkdtemp(dir=self.base_summary_dir)) as summary_collector:
-                summary_collector._collect_input_data(cb_params)
-                assert not summary_collector._collect_specified_data['collect_input_data']
+            summary_collector = SummaryCollector(tempfile.mkdtemp(dir=self.base_summary_dir))
+            summary_collector._collect_input_data(cb_params)
+            assert not summary_collector._collect_specified_data['collect_input_data']
 
     @mock.patch.object(SummaryRecord, 'add_value')
     def test_collect_input_data_success(self, mock_add_value):
@@ -342,8 +342,12 @@ class TestSummaryCollector:
         cb_params = _InternalCallbackParam()
         cb_params.net_outputs = net_output
         summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
+        summary_collector._get_loss(cb_params)
 
-        assert summary_collector._is_parse_loss_success
+        if expected_loss is None:
+            assert not summary_collector._is_parse_loss_success
+        else:
+            assert summary_collector._is_parse_loss_success
 
     def test_get_optimizer_from_cb_params_success(self):
         """Test get optimizer success from cb params."""
@@ -395,20 +399,18 @@ class TestSummaryCollector:
         assert optimizer is None
         assert summary_collector._temp_optimizer == 'Failed'
 
-    @pytest.mark.parametrize("histogram_regular, expected_names, expected_values", [
+    @pytest.mark.parametrize("histogram_regular, expected_names", [
         (
             'conv1|conv2',
-            ['conv1.weight1/auto', 'conv2.weight2/auto', 'conv1.bias1/auto'],
-            [1, 2, 3]
+            ['conv1.weight1/auto', 'conv2.weight2/auto', 'conv1.bias1/auto']
         ),
         (
             None,
-            ['conv1.weight1/auto', 'conv2.weight2/auto', 'conv1.bias1/auto', 'conv3.bias/auto', 'conv5.bias/auto'],
-            [1, 2, 3, 4, 5]
+            ['conv1.weight1/auto', 'conv2.weight2/auto', 'conv1.bias1/auto', 'conv3.bias/auto', 'conv5.bias/auto']
         )
     ])
     @mock.patch.object(SummaryRecord, 'add_value')
-    def test_collect_histogram_from_regular(self, mock_add_value, histogram_regular, expected_names, expected_values):
+    def test_collect_histogram_from_regular(self, mock_add_value, histogram_regular, expected_names):
         """Test collect histogram from regular success."""
         mock_add_value.side_effect = add_value
         cb_params = _InternalCallbackParam()

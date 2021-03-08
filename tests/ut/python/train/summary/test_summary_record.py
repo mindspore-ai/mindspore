@@ -72,7 +72,7 @@ class TestSummaryRecord:
 
         assert "raise_exception" in str(exc.value)
 
-    @pytest.mark.parametrize("step", [False, 2.0, (1, 3), [2, 3], "str"])
+    @pytest.mark.parametrize("step", ["str"])
     def test_step_of_record_with_type_error(self, step):
         summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
         with pytest.raises(TypeError):
