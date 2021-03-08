@@ -516,7 +516,8 @@ const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat
 const std::set<std::string> kComputeDepend = {kUniqueOpName, kComputeAccidentalHitsOpName, kSubAndFilterOpName,
                                               kPadAndShiftOpName, kCTCGreedyDecoderOpName};
 
-const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
+const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D,
+                                            kOpFormat_NDHWC, kOpFormat_DHWCN,    kOpFormat_DHWNC};
 
 const std::set<std::string> DynamicShapeConstInputToAttr = {
   kCastOpName,      kExpandDimsOpName, kReshapeOpName,   kEmbeddingLookupOpName, kTransposeOpName, kReduceSumOpName,
