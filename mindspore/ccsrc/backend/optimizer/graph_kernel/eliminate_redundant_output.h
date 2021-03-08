@@ -20,17 +20,54 @@
 
 namespace mindspore {
 namespace opt {
+/* Eliminate the output without external user
+ *   %1 = call @graph_kernel(p1, p2)
+ *   %2 = tuple_getitem(%1, 0)   // the getitem(1) does not exist.
+ *   %3 = op(%2)
+ *   graph_kernel:
+ *      %1 = TensorAdd(p1, p2)
+ *      %2 = Sub(p1, p2)
+ *      return make_tuple(%1, %2)
+ *   --->
+ *   %1 = call @graph_kernel(p1, p2)
+ *   %3 = op(%1)                 // if only one output remains, the getitem is not used
+ *   graph_kernel:
+ *      %1 = TensorAdd(p1, p2)
+ *      return %1                // the Sub was eliminated
+ */
+class EliminateHangingOutput : public Pass {
+ public:
+  bool Run(const FuncGraphPtr &func_graph) override;
+
+ private:
+  // update the GetItem(node, i) to GetItem(node, i - offset)
+  void UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset);
+  AnfNodePtr ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems);
+};
+
+// Remove the output without user or with virtual user (like UpdateState)
 class EliminateRedundantOutput : public Pass {
  public:
   EliminateRedundantOutput() : Pass("eliminate_redundant_output") {}
   ~EliminateRedundantOutput() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
-
- private:
-  bool Process(const FuncGraphPtr &func_graph);
-  void UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset);
-  AnfNodePtr ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems);
 };
+
+bool IsSideEffectNode(const AnfNodePtr &node);
+AnfNodePtrList FindGraphKernelsWithMultiOutput(const FuncGraphPtr &func_graph);
+
+/**
+ * @brief Get the GraphKernel's user getitems
+ *
+ * @param mng FuncGraphManagerPtr for the main func_graph
+ * @param node The cnode that indicates the GraphKernel
+ * @param getitem_list The user getitem list.
+ * @param merge_repeated_getitem If true, getitems with same index will be merged,
+ *                               otherwise, only one getitem will be outputted.
+ * @return If the graph was changed, returns true, otherwise returns false.
+ */
+bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, AnfNodePtrList *getitem_list,
+                               bool merge_repeated_getitem = false);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ELIMINATE_REDUNDANT_OUTPUT_H_

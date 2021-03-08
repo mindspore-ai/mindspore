@@ -28,6 +28,7 @@
 #include "debug/anf_ir_dump.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
+#include "backend/optimizer/graph_kernel/update_state_formatter.h"
 
 namespace mindspore {
 namespace opt {
@@ -50,9 +51,10 @@ void SetIndex(const AnfNodePtr &getitem_node, size_t index) {
   idx_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   getitem->set_input(kInputNodeOutputIndexInTupleGetItem, idx_node);
 }
+}  // namespace
 
 bool GetGraphKernelGetitemList(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, AnfNodePtrList *getitem_list,
-                               bool merge_repeated_getitem = false) {
+                               bool merge_repeated_getitem) {
   MS_EXCEPTION_IF_NULL(mng);
   MS_EXCEPTION_IF_NULL(getitem_list);
   auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
@@ -194,121 +196,6 @@ class UnifyRepeatedGetitem : public Pass {
   }
 };
 
-/* Merge the get_item nodes that have same index.
- *   subgraph graph_kernel(%para1, %para2)
- *     %1 = TensorAdd(%para1, %para2)
- *     %2 = Neg(%1)
- *     %3 = make_tuple(%1, %2)
- *     return (%3)
- *   %1 = call @graph_kernel(%p1, %p2)
- *   %2 = tuple_getitem(%1, 0)
- *   %3 = tuple_getitem(%1, 1)
- *   %4 = ControlDepend(%0, %2)
- *   %5 = other_user(%3)
- *   --->
- *   subgraph graph_kernel(%para1, %para2)
- *     %1 = TensorAdd(%para1, %para2)
- *     %2 = Neg(%1)
- *     %3 = make_tuple(%1, %2)
- *     return (%3)
- *   %1 = call @graph_kernel(%p1, %p2)
- *   %3 = tuple_getitem(%1, 1)
- *   %4 = ControlDepend(%0, %3)
- *   %5 = other_user(%3)
- *
- * Then the output 0 can be eliminate in the later pass.
- */
-class EliminateGetitemForControlDepend : public Pass {
- public:
-  bool Run(const FuncGraphPtr &func_graph) {
-    auto todos = FindGraphKernelsWithMultiOutput(func_graph);
-    auto mng = func_graph->manager();
-    MS_EXCEPTION_IF_NULL(mng);
-    bool changed = false;
-    for (const auto &node : todos) {
-      getitems_.clear();
-      GetGraphKernelGetitemList(mng, node, &getitems_, false);
-      if (getitems_.empty()) continue;
-      indexes_.clear();
-      GetIndexesToControlDepend(mng);
-      FilterRedundantOutputs(node);
-      if (indexes_.empty()) continue;
-      size_t index = GetFinalIndex(node);
-      changed = ReplaceGetitems(mng, index) || changed;
-    }
-    return changed;
-  }
-
- private:
-  AnfNodePtrList getitems_;      // Users of GraphKernel node with multiple outputs.
-  std::vector<size_t> indexes_;  // Indexes of MakeTuple to be eliminated.
-
-  bool ReplaceGetitems(const FuncGraphManagerPtr &mng, size_t index) {
-    MS_EXCEPTION_IF_NULL(getitems_[index]);
-    bool changed = false;
-    for (auto i : indexes_) {
-      if (i != index) {
-        MS_EXCEPTION_IF_NULL(getitems_[i]);
-        mng->Replace(getitems_[i], getitems_[index]);
-        changed = true;
-      }
-    }
-    return changed;
-  }
-
-  // Find the redundant output index.
-  // the real output should have multiple users.
-  void FilterRedundantOutputs(const AnfNodePtr &node) {
-    auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
-    auto mng = func_graph->manager();
-    if (mng == nullptr) {
-      mng = Manage(func_graph, true);
-      func_graph->set_manager(mng);
-    }
-    auto &users = mng->node_users();
-    auto maketuple = func_graph->output()->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(maketuple);
-    std::vector<size_t> result;
-    for (auto i : indexes_) {
-      auto real_output = maketuple->input(i + 1);
-      if (users[real_output].size() > 1) {
-        result.push_back(i);
-      }
-    }
-    indexes_ = std::move(result);
-  }
-
-  // Get the nodes that only have ControlDepend users.
-  void GetIndexesToControlDepend(const FuncGraphManagerPtr &mng) {
-    for (size_t i = 0; i < getitems_.size(); ++i) {
-      const AnfNodePtr &getitem = getitems_[i];
-      if (getitem == nullptr) {
-        continue;
-      }
-      const auto &getitem_user = mng->node_users()[getitem];
-      if (std::all_of(getitem_user.begin(), getitem_user.end(), [](const std::pair<AnfNodePtr, int> &user) {
-            return IsPrimitiveCNode(user.first, prim::kPrimControlDepend);
-          })) {
-        indexes_.push_back(i);
-      }
-    }
-  }
-
-  size_t GetFinalIndex(const AnfNodePtr &node) {
-    auto is_redundant_index = [this](size_t i) {
-      return std::find(indexes_.begin(), indexes_.end(), i) != indexes_.end();
-    };
-    for (size_t i = 0; i < getitems_.size(); ++i) {
-      if (getitems_[i] != nullptr && !is_redundant_index(i)) {
-        return i;
-      }
-    }
-    return indexes_[0];
-  }
-};
-}  // namespace
-
-// Remove the output without user or with virtual user (like ControlDepend)
 bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   if (mng == nullptr) {
@@ -319,13 +206,11 @@ bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
   changed = std::make_shared<UnifyRepeatedGetitem>()->Run(func_graph) || changed;
   changed = std::make_shared<UnifyRepeatedOutput>()->Run(func_graph) || changed;
   changed = std::make_shared<UnifyRepeatedGetitem>()->Run(func_graph) || changed;
-  changed = std::make_shared<EliminateGetitemForControlDepend>()->Run(func_graph) || changed;
-  changed = Process(func_graph) || changed;
+  changed = std::make_shared<EliminateHangingOutput>()->Run(func_graph) || changed;
   return changed;
 }
 
-// update the GetItem(node, i) to GetItem(node, i - offset)
-void EliminateRedundantOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) {
+void EliminateHangingOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) {
   if (offset == 0) return;
   MS_EXCEPTION_IF_NULL(getitem);
   auto index = GetIndex(getitem);
@@ -336,7 +221,7 @@ void EliminateRedundantOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, siz
   SetIndex(getitem, index);
 }
 
-AnfNodePtr EliminateRedundantOutput::ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems) {
+AnfNodePtr EliminateHangingOutput::ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems) {
   auto func_graph = AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto old_maketuple = func_graph->output()->cast<CNodePtr>();
@@ -379,7 +264,7 @@ AnfNodePtr EliminateRedundantOutput::ReplaceMakeTuple(const AnfNodePtr &node, co
   return graph_kernel_node;
 }
 
-bool EliminateRedundantOutput::Process(const FuncGraphPtr &func_graph) {
+bool EliminateHangingOutput::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   auto todos = FindGraphKernelsWithMultiOutput(func_graph);

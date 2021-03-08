@@ -40,6 +40,7 @@
 #include "backend/optimizer/graph_kernel/optimize_assign.h"
 #include "backend/optimizer/graph_kernel/split_assign.h"
 #include "backend/optimizer/graph_kernel/reorder_ops.h"
+#include "backend/optimizer/graph_kernel/update_state_formatter.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 
 namespace mindspore {
@@ -56,6 +57,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() {
   if (is_ascend) {
     pm->AddPass(std::make_shared<ReorderOps>());
   }
+
+  // Spread the MakeTuple input of UpdateState
+  pm->AddPass(std::make_shared<SpreadUpdateState>());
   return pm;
 }
 
@@ -99,6 +103,8 @@ PassManagerPtr GraphKernelOptimizer::Split() {
   // Make certain nodes redundant so that they are used by only one user,
   // which can avoid unnecessary input-output and get better performance.
   if (is_gpu) {
+    // preprocess for ShapeOpsSplitter
+    pm->AddPass(std::make_shared<ExtendOutputForUpdateState>());
     std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
     pm->AddPass(std::make_shared<ShapeOpsSplitter>(duplicated_ops));
   }
@@ -106,15 +112,16 @@ PassManagerPtr GraphKernelOptimizer::Split() {
   // Split kernel according to costmodel
   pm->AddPass(std::make_shared<GraphKernelSplitter>());
 
-  // Eliminate the redundant node that is copied above but not handled by GraphKernelSplitter
-  if (is_gpu) {
-    pm->AddPass(std::make_shared<GraphKernelCSE>());
-    pm->AddPass(std::make_shared<EliminateRedundantOutput>());
-  }
-
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
   pm->AddPass(std::make_shared<GetitemTuple>());
+
+  // Eliminate the redundant node that is copied above but not handled by GraphKernelSplitter
+  if (is_gpu) {
+    pm->AddPass(std::make_shared<MergeOutputForUpdateState>());
+    pm->AddPass(std::make_shared<GraphKernelCSE>());
+    pm->AddPass(std::make_shared<EliminateRedundantOutput>());
+  }
   return pm;
 }
 
@@ -146,6 +153,9 @@ PassManagerPtr GraphKernelOptimizer::PostProcess() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage7_postprocess");
   // Add the new tensors to the kernel_graph
   pm->AddPass(std::make_shared<BindValueToGraph>());
+
+  // Make Tuple for the inputs of UpdateState. (the reverse of SpreadUpdateState)
+  pm->AddPass(std::make_shared<ShrinkUpdateState>());
   return pm;
 }
 
@@ -163,6 +173,12 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   optimizer->AddPassManager(HighLevelOpt2());
   optimizer->AddPassManager(Combine());
   optimizer->AddPassManager(PostProcess());
+
+  auto mng = kernel_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(kernel_graph, true);
+    kernel_graph->set_manager(mng);
+  }
   (void)optimizer->Optimize(kernel_graph);
 }
 
