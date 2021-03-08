@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class ArgmaxCPUKernel : public CPUKernel {
  public:
   ArgmaxCPUKernel() = default;
@@ -33,12 +34,16 @@ class ArgmaxCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  size_t class_num_{0};
-  size_t batch_size_{0};
+  std::vector<size_t> shape_;
+  size_t num_before_axis_;
+  size_t num_after_axis_;
+  size_t dim_axis_;
 };
 
-MS_REG_CPU_KERNEL(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                  ArgmaxCPUKernel);
+MS_REG_CPU_KERNEL_T(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+                    ArgmaxCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+                    ArgmaxCPUKernel, float16);
 }  // namespace kernel
 }  // namespace mindspore
 

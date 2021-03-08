@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+import random
+from functools import reduce
 import numpy as np
 import pytest
 
@@ -20,33 +22,59 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.initializer import initializer
-from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
+import mindspore.ops as ops
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class NetArgmax(nn.Cell):
-    def __init__(self):
+    def __init__(self, axis=0):
         super(NetArgmax, self).__init__()
-        self.argmax = P.Argmax(output_type=mstype.int32)
-        x = Tensor(np.array([[1., 20., 5.],
-                             [67., 8., 9.],
-                             [130., 24., 15.]]).astype(np.float32))
-        self.x = Parameter(initializer(x, x.shape), name='x')
+        self.argmax = ops.Argmax(axis=axis, output_type=mstype.int32)
 
-    def construct(self):
-        return self.argmax(self.x)
+    def construct(self, x):
+        return self.argmax(x)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_argmax():
-    Argmax = NetArgmax()
-    output = Argmax()
-    print("================================")
-    expect = np.array([1, 0, 0]).astype(np.float32)
-    print(output)
+def test_argmax_1d():
+    x = Tensor(np.array([1., 20., 5.]).astype(np.float32))
+    Argmax = NetArgmax(axis=0)
+    output = Argmax(x)
+    expect = np.array([1]).astype(np.float32)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmax_2d():
+    x = Tensor(np.array([[1., 20., 5.],
+                         [67., 8., 9.],
+                         [130., 24., 15.]]).astype(np.float32))
+    Argmax_axis_0 = NetArgmax(axis=0)
+    output = Argmax_axis_0(x)
+    expect = np.array([2, 2, 2]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
+    Argmax_axis_1 = NetArgmax(axis=1)
+    output = Argmax_axis_1(x)
+    expect = np.array([1, 0, 0]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_argmax_high_dims():
+    for dim in range(3, 10):
+        shape = np.random.randint(1, 10, size=dim)
+        x = np.random.randn(reduce(lambda x, y: x * y, shape)).astype(np.float32)
+        x = x.reshape(shape)
+
+        rnd_axis = random.randint(-dim + 1, dim - 1)
+        Argmax = NetArgmax(axis=rnd_axis)
+        ms_output = Argmax(Tensor(x))
+        np_output = np.argmax(x, axis=rnd_axis)
+        assert (ms_output.asnumpy() == np_output).all()

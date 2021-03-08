@@ -17,72 +17,36 @@
 #include "argmax_impl.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 #include "include/cuda_fp16.h"
-template <typename T>
-__global__ void Argmax1D(const T *input, const int channel_size, int *output) {
-  int max_index = 0;
-  T max = input[0];
-  for (int pos = 1; pos < channel_size; pos++) {
-    if (max < input[pos]) {
-      max = input[pos];
-      max_index = pos;
+template <typename T, typename S>
+__global__ void Argmax(const T *input, const S bound, const size_t outer_size,
+                       const size_t inner_size, S *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < outer_size * inner_size;
+       pos += gridDim.x * blockDim.x) {
+    size_t x = pos / inner_size % outer_size;
+    size_t y = pos % inner_size;
+    S idx = 0;
+    size_t input_offset = x * bound * inner_size + 0 * inner_size + y;
+    T max_data = input[input_offset];
+    for (S i = 1; i < bound; i++) {
+      input_offset = x * bound * inner_size + i * inner_size + y;
+      auto input_data = input[input_offset];
+      idx = input_data > max_data ? i : idx;
+      max_data = input_data > max_data ? input_data : max_data;
     }
-  }
-  output[0] = max_index;
-  return;
-}
-template <typename T>
-__global__ void ArgmaxDefault2D(const T *input, const int batch_size, const int channel_size, int *output) {
-  int pos;
-  int max_index;
-  T max;
-  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < batch_size; i += blockDim.x * gridDim.x) {
-    max = input[i * channel_size];
-    max_index = 0;
-    for (int j = 1; j < channel_size; j++) {
-      pos = i * channel_size + j;
-      if (max < input[pos]) {
-        max = input[pos];
-        max_index = j;
-      }
-    }
-
-    output[i] = max_index;
-  }
-  return;
-}
-template <typename T>
-__global__ void ArgmaxAxis2D(const T *input, const int batch_size, const int channel_size, int *output) {
-  int pos;
-  int max_index;
-  T max;
-  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < channel_size; i += blockDim.x * gridDim.x) {
-    max = input[i];
-    max_index = 0;
-    for (int j = 1; j < batch_size; j++) {
-      pos = j * channel_size + i;
-      if (max < input[pos]) {
-        max = input[pos];
-        max_index = j;
-      }
-    }
-    output[i] = max_index;
-  }
-  return;
-}
-template <typename T>
-void CalArgmax(const T *input, const int batch_size, const int channel_size, const int64_t axis, int *output,
-               cudaStream_t cuda_stream) {
-  if (batch_size == 0) {
-    Argmax1D<<<1, 1, 0, cuda_stream>>>(input, channel_size, output);
-  } else if (axis == 1) {
-    ArgmaxDefault2D<<<GET_BLOCKS(batch_size), GET_THREADS, 0, cuda_stream>>>(input, batch_size, channel_size, output);
-  } else {
-    ArgmaxAxis2D<<<GET_BLOCKS(channel_size), GET_THREADS, 0, cuda_stream>>>(input, batch_size, channel_size, output);
+    output[pos] = idx;
   }
   return;
 }
 
-template void CalArgmax<float>(const float *input, const int batch_size, const int channel_size, const int64_t axis,
-                               int *output, cudaStream_t cuda_stream);
-template void CalArgmax<half>(const half *input, const int batch_size, const int channel_size, const int64_t axis,
-                              int *output, cudaStream_t cuda_stream);
+template <typename T, typename S>
+void CalArgmax(const T *input, const S bound, const size_t outer_size, const size_t inner_size,
+               S *output, cudaStream_t cuda_stream) {
+  Argmax<<<GET_BLOCKS(outer_size), GET_THREADS, 0, cuda_stream>>>(input, bound, outer_size, inner_size,
+                                                                  output);
+  return;
+}
+
+template void CalArgmax<float, int>(const float *input, const int bound, const size_t outer_size,
+                                    const size_t inner_size, int *output, cudaStream_t cuda_stream);
+template void CalArgmax<half, int>(const half *input, const int bound, const size_t outer_size,
+                                   const size_t inner_size, int *output, cudaStream_t cuda_stream);
