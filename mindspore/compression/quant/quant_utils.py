@@ -133,6 +133,7 @@ def weight2int(data, scale, zero_point, data_type, num_bits=8, narrow_range=Fals
     weight_int[weight_int < quant_min] = quant_min
     return weight_int
 
+
 def scale_zp_max_min_from_fake_quant_cell(cell, data_type):
     """Get calculate quantization params for scale, zero point, max and min from `FakeQuantWithMinMax`."""
     minq = cell.minq.data.asnumpy()
@@ -271,31 +272,31 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
     Load fp32 model parameters into quantization model.
 
     Args:
-        quant_model: quantization model.
-        params_dict: parameter dict that stores fp32 parameters.
-        quant_new_params: parameters that exist in quantitative network but not in unquantitative network.
+        quant_model(Cell): quantization model.
+        params_dict(dict): parameter dict that stores fp32 parameters.
+        quant_new_params(list): parameters that exist in quantitative network but not in unquantitative network.
 
     Returns:
         None
     """
     iterable_dict = {
-        'weight': iter([item for item in params_dict.items() if item[0].endswith('weight')]),
-        'bias': iter([item for item in params_dict.items() if item[0].endswith('bias')]),
-        'gamma': iter([item for item in params_dict.items() if item[0].endswith('gamma')]),
-        'beta': iter([item for item in params_dict.items() if item[0].endswith('beta')]),
-        'moving_mean': iter([item for item in params_dict.items() if item[0].endswith('moving_mean')]),
-        'moving_variance': iter(
-            [item for item in params_dict.items() if item[0].endswith('moving_variance')]),
-        'minq': iter([item for item in params_dict.items() if item[0].endswith('minq')]),
-        'maxq': iter([item for item in params_dict.items() if item[0].endswith('maxq')])
+        'weight': iter(list(filter(lambda item: item[0].endswith('weight'), params_dict.items()))),
+        'bias': iter(list(filter(lambda item: item[0].endswith('bias'), params_dict.items()))),
+        'gamma': iter(list(filter(lambda item: item[0].endswith('gamma'), params_dict.items()))),
+        'beta': iter(list(filter(lambda item: item[0].endswith('beta'), params_dict.items()))),
+        'moving_mean': iter(list(filter(lambda item: item[0].endswith('moving_mean'), params_dict.items()))),
+        'moving_variance': iter(list(filter(lambda item: item[0].endswith('moving_variance'), params_dict.items()))),
+        'minq': iter(list(filter(lambda item: item[0].endswith('minq'), params_dict.items()))),
+        'maxq': iter(list(filter(lambda item: item[0].endswith('maxq'), params_dict.items())))
     }
+
     for name, param in quant_model.parameters_and_names():
         key_name = name.split(".")[-1]
         if key_name not in iterable_dict.keys():
-            if quant_new_params is not None and key_name in quant_new_params:
-                continue
-            raise ValueError(f"Can't find match parameter in ckpt,param name = {name}")
+            if key_name not in quant_new_params:
+                raise ValueError(f"Can't find match parameter in ckpt,param name = {name}")
+            continue
         value_param = next(iterable_dict[key_name], None)
-        if value_param is not None:
+        if value_param:
             param.set_data(value_param[1].data)
             print(f'init model param {name} with checkpoint param {value_param[0]}')

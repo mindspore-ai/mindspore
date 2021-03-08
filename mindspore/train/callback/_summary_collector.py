@@ -79,15 +79,15 @@ class SummaryCollector(Callback):
         summary_dir (str): The collected data will be persisted to this directory.
             If the directory does not exist, it will be created automatically.
         collect_freq (int): Set the frequency of data collection, it should be greater then zero,
-            and the unit is `step`. Default: 10. If a frequency is set, we will collect data
+            and the unit is `step`. If a frequency is set, we will collect data
             when (current steps % freq) equals to 0, and the first step will be collected at any time.
             It is important to note that if the data sink mode is used, the unit will become the `epoch`.
-            It is not recommended to collect data too frequently, which can affect performance.
-        collect_specified_data (Union[None, dict]): Perform custom operations on the collected data. Default: None.
+            It is not recommended to collect data too frequently, which can affect performance. Default: 10.
+        collect_specified_data (Union[None, dict]): Perform custom operations on the collected data.
             By default, if set to None, all data is collected as the default behavior.
             You can customize the collected data with a dictionary.
             For example, you can set {'collect_metric': False} to control not collecting metrics.
-            The data that supports control is shown below.
+            The data that supports control is shown below. Default: None.
 
             - collect_metric (bool): Whether to collect training metrics, currently only the loss is collected.
               The first output will be treated as the loss and it will be averaged.
@@ -106,14 +106,13 @@ class SummaryCollector(Callback):
               Optional: True/False. Default: True.
             - histogram_regular (Union[str, None]): Collect weight and bias for parameter distribution page
               and displayed in MindInsight. This field allows regular strings to control which parameters to collect.
-              Default: None, it means only the first five parameters are collected.
               It is not recommended to collect too many parameters at once, as it can affect performance.
               Note that if you collect too many parameters and run out of memory, the training will fail.
+              Default: None, it means only the first five parameters are collected.
         keep_default_action (bool): This field affects the collection behavior of the 'collect_specified_data' field.
-            Optional: True/False, Default: True.
             True: it means that after specified data is set, non-specified data is collected as the default behavior.
             False: it means that after specified data is set, only the specified data is collected,
-            and the others are not collected.
+            and the others are not collected. Optional: True/False, Default: True.
         custom_lineage_data (Union[dict, None]): Allows you to customize the data and present it on the MingInsight
             lineage page. In the custom data, the type of the key supports str, and the type of value supports str, int
             and float. Default: None, it means there is no custom data.
@@ -121,19 +120,20 @@ class SummaryCollector(Callback):
             Because TensorSummary data is too large to be compared with other summary data, this parameter is used to
             reduce its collection. By default, The maximum number of steps for collecting TensorSummary data is 20,
             but it will not exceed the number of steps for collecting other summary data.
-            Default: None, which means to follow the behavior as described above. For example, given `collect_freq=10`,
-            when the total steps is 600, TensorSummary will be collected 20 steps, while other summary data 61 steps,
+            For example, given `collect_freq=10`, when the total steps is 600, TensorSummary will be collected 20 steps,
+            while other summary data 61 steps,
             but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
             Also note that when in parallel mode, the total steps will be split evenly, which will
             affect the number of steps TensorSummary will be collected.
+            Default: None, which means to follow the behavior as described above.
         max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
-            Default: None, which means no limit. For example, to write not larger than 4GB,
-            specify `max_file_size=4 * 1024**3`.
+            For example, to write not larger than 4GB, specify `max_file_size=4*1024**3`.
+            Default: None, which means no limit.
         export_options (Union[None, dict]): Perform custom operations on the export data.
-            Default: None, it means that the data is not exported.
             Note that the size of export files is not limited by the max_file_size.
             You can customize the export data with a dictionary. For example, you can set {'tensor_format': 'npy'}
             to export tensor as npy file. The data that supports control is shown below.
+            Default: None, it means that the data is not exported.
 
             - tensor_format (Union[str, None]): Customize the export tensor format. Supports ["npy", None].
               Default: None, it means that the tensor is not exported.

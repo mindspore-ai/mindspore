@@ -645,8 +645,8 @@ def set_context(**kwargs):
         >>> context.set_context(mode=context.GRAPH_MODE,
         ...                     device_target="Ascend",device_id=0, save_graphs=True,
         ...                     save_graphs_path="/mindspore")
-        >>> context.set_context(enable_profiling=True, \
-                                profiling_options='{"output":"/home/data/output","training_trace":"on"}')
+        >>> context.set_context(enable_profiling=True,
+        ...                     profiling_options='{"output":"/home/data/output","training_trace":"on"}')
         >>> context.set_context(max_device_memory="3.5GB")
         >>> context.set_context(print_file_path="print.pb")
         >>> context.set_context(max_call_depth=80)
@@ -734,16 +734,14 @@ def set_ps_context(**kwargs):
         Some other environment variables should also be set for parameter server training mode.
         These environment variables are listed below:
 
-        .. code-block::
-
-            MS_SERVER_NUM  # Server number
-            MS_WORKER_NUM  # Worker number
-            MS_SCHED_HOST  # Scheduler IP address
-            MS_SCHED_PORT  # Scheduler port
-            MS_ROLE        # The role of this process:
-                           # MS_SCHED represents the scheduler,
-                           # MS_WORKER represents the worker,
-                           # MS_PSERVER represents the Server
+        MS_SERVER_NUM  # Server number
+        MS_WORKER_NUM  # Worker number
+        MS_SCHED_HOST  # Scheduler IP address
+        MS_SCHED_PORT  # Scheduler port
+        MS_ROLE        # The role of this process:
+        MS_SCHED       #represents the scheduler,
+        MS_WORKER      #represents the worker,
+        MS_PSERVER     #represents the Server
 
 
     Args:
