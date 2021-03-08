@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_
 
-#include "nnacl/constant_of_shape.h"
+#include "nnacl/op_base.h"
 
-int ConstantOfShapeInt32(int32_t *output, int start, int end, int32_t value) {
-  for (int i = start; i < end; i++) {
-    output[i] = value;
-  }
-  return NNACL_OK;
-}
+typedef struct ConstantOfShapeParameter {
+  OpParameter op_parameter_;
+  union value_ {
+    float f32_value_;
+    int32_t int32_value_;
+  } value_;
+  int data_type_;
+  int element_size_;
+} ConstantOfShapeParameter;
 
-int ConstantOfShapeFp32(float *output, int start, int end, float value) {
-  for (int i = start; i < end; i++) {
-    output[i] = value;
-  }
-  return NNACL_OK;
-}
+#endif  // MINDSPORE_LITE_NNACL_CONSTANT_OF_SHAPE_PARAMETER_H_

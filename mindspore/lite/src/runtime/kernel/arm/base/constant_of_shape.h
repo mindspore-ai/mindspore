@@ -20,7 +20,9 @@
 #include "include/errorcode.h"
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/constant_of_shape.h"
+#include "nnacl/constant_of_shape_parameter.h"
+#include "nnacl/fp32/constant_of_shape_fp32.h"
+#include "nnacl/fp16/constant_of_shape_fp16.h"
 
 namespace mindspore::kernel {
 class ConstantOfShapeCPUKernel : public LiteKernel {

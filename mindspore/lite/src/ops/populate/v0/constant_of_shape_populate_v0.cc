@@ -16,7 +16,7 @@
 
 #include "schema/model_v0_generated.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/constant_of_shape.h"
+#include "nnacl/constant_of_shape_parameter.h"
 
 namespace mindspore::lite {
 namespace {
