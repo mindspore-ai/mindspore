@@ -309,7 +309,7 @@ class TbeProcess:
             task_future = self.__pool.apply_async(func=run_compiler, args=(op_json,))
             self.__running_tasks.append((task_id, task_future))
         else:
-            log.info("start_compile_op: op json:\n {}".format(op_json))
+            log.info("start_compile_op: task id: {} op json:\n {}".format(task_id, op_json))
             if self.__tuner is None:
                 log.error("Please confirm that the mode isn't NO_TUNE and auto_tune already initialized.")
                 return task_id
@@ -376,6 +376,7 @@ class TbeProcess:
                         len(self.__running_tune_tasks),
                         len(self.__all_tune_tasks), len(self.__failed_tune_task)))
                 else:
+                    log.info("get finish tasks:[{}]".format(ret))
                     for item in ret:
                         task_id = item['task_id']
                         status_code = item['status_code']
