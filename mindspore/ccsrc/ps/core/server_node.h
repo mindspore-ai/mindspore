@@ -46,7 +46,7 @@ class ServerNode : public AbstractNode {
                                             DataPtr data, size_t size)>;
 
   void set_handler(const RequestHandler &handler);
-  void Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, DataPtr data, size_t size);
+  void Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta, void *data, size_t size);
 
  private:
   void CreateTcpServer();
