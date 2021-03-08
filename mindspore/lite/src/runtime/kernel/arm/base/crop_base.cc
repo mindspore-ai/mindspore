@@ -32,26 +32,11 @@ int CropBaseCPUKernel::Init() { return RET_OK; }
 int CropBaseCPUKernel::ReSize() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto *out_tensor = out_tensors_.at(kOutputIndex);
-  auto input_shape = input_tensor->shape();
-  auto output_shape = out_tensor->shape();
-  size_t input_dim = input_shape.size();
-  size_t output_dim = output_shape.size();
-  FreeTmpBuffer();
-
-  crop_para_->in_shape_ = reinterpret_cast<int *>(malloc(input_dim * sizeof(int)));
-  if (crop_para_->in_shape_ == nullptr) {
-    MS_LOG(ERROR) << "in_shape_ is nullptr";
-    return RET_ERROR;
-  }
-  memcpy(crop_para_->in_shape_, input_shape.data(), sizeof(int) * input_dim);
-
-  crop_para_->out_shape_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
-  if (crop_para_->out_shape_ == nullptr) {
-    MS_LOG(ERROR) << "out_shape_ is nullptr";
-    return RET_ERROR;
-  }
-  memcpy(crop_para_->out_shape_, output_shape.data(), sizeof(int) * output_dim);
-
+  input_shape_ = input_tensor->shape();
+  output_shape_ = out_tensor->shape();
+  size_t input_dim = input_shape_.size();
+  crop_para_->in_shape_ = input_shape_.data();
+  crop_para_->out_shape_ = output_shape_.data();
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
   crop_para_->input_dim_ = input_dim;
   PadOffset(input_dim, crop_para_);
@@ -75,17 +60,6 @@ void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) {
       }
     }
     crop_para->in_offset_[i] = crop_offset;
-  }
-}
-
-void CropBaseCPUKernel::FreeTmpBuffer() {
-  if (crop_para_->in_shape_ != nullptr) {
-    free(crop_para_->in_shape_);
-    crop_para_->in_shape_ = nullptr;
-  }
-  if (crop_para_->out_shape_ != nullptr) {
-    free(crop_para_->out_shape_);
-    crop_para_->out_shape_ = nullptr;
   }
 }
 }  // namespace mindspore::kernel

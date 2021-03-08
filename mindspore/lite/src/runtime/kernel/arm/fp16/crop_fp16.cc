@@ -57,7 +57,6 @@ int CropFp16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed: " << ret;
   }
-  FreeTmpBuffer();
   return ret;
 }
 

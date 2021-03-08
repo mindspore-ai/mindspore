@@ -35,9 +35,10 @@ class CropBaseCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override { return 0; }
-  void FreeTmpBuffer();
 
  protected:
+  std::vector<int> input_shape_;
+  std::vector<int> output_shape_;
   CropParameter *crop_para_;
   void PadOffset(int input_dim, CropParameter *crop_para);
 };
