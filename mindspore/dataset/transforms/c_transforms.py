@@ -106,14 +106,15 @@ class TypeCast(cde.TypeCastOp):
     Examples:
         >>> import numpy as np
         >>> import mindspore.common.dtype as mstype
-        >>> from mindspore.dataset import GeneratorDataset
+        >>>
         >>> # Generate 1d int numpy array from 0 - 63
         >>> def generator_1d():
-        >>>     for i in range(64):
+        ...     for i in range(64):
         ...         yield (np.array([i]),)
-        >>> generator_dataset = GeneratorDataset(generator_1d,column_names='col')
+        >>>
+        >>> dataset = ds.GeneratorDataset(generator_1d, column_names='col')
         >>> type_cast_op = c_transforms.TypeCast(mstype.int32)
-        >>> generator_dataset = generator_dataset.map(operations=type_cast_op)
+        >>> dataset = dataset.map(operations=type_cast_op)
     """
 
     @check_de_type

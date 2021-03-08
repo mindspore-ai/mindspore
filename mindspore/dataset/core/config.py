@@ -340,8 +340,7 @@ def load(file):
         RuntimeError: If file is invalid and parsing fails.
 
     Examples:
-        >>> # Set new default configuration values according to values in the configuration file.
-        >>> ds.config.load("/path/to/config_directory/config.cfg")
+        >>> # Set new default configuration according to values in the configuration file.
         >>> # example config file:
         >>> # {
         >>> #     "logFilePath": "/tmp",
@@ -349,5 +348,7 @@ def load(file):
         >>> #     "seed": 5489,
         >>> #     "monitorSamplingInterval": 30
         >>> # }
+        >>> config_file = "/path/to/config/file"
+        >>> ds.config.load(config_file)
     """
     _config.load(file)
