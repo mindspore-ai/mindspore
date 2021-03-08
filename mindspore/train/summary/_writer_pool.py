@@ -14,7 +14,6 @@
 # ============================================================================
 """Write events to disk in a base directory."""
 import os
-import sys
 import time
 import signal
 from collections import deque
@@ -101,7 +100,9 @@ class WriterPool(ctx.Process):
         with ctx.Pool(min(ctx.cpu_count(), 32)) as pool:
             deq = deque()
             while True:
-                self._check_heartbeat()
+                if self._check_heartbeat():
+                    self._close()
+                    return
 
                 while deq and deq[0].ready():
                     for plugin, data in deq.popleft().get():
@@ -195,6 +196,4 @@ class WriterPool(ctx.Process):
                            "so SummaryRecord will not record data.")
             is_exit = True
 
-        if is_exit:
-            self._close()
-            sys.exit(1)
+        return is_exit
