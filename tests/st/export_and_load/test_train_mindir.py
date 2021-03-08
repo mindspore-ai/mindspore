@@ -22,7 +22,7 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
-from mindspore.train.serialization import export
+from mindspore.train.serialization import export, load
 
 
 def weight_variable():
@@ -112,3 +112,26 @@ def test_export_lenet_grad_mindir():
     export(net, predict, label, file_name="lenet_grad", file_format='MINDIR')
     verify_name = "lenet_grad.mindir"
     assert os.path.exists(verify_name)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.env_onecard
+def test_load_mindir_and_run():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    network = LeNet5()
+    network.set_train()
+
+    inputs0 = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
+    outputs0 = network(inputs0)
+
+    inputs = Tensor(np.zeros([32, 1, 32, 32]).astype(np.float32))
+    export(network, inputs, file_name="test_lenet_load", file_format='MINDIR')
+    mindir_name = "test_lenet_load.mindir"
+    assert os.path.exists(mindir_name)
+
+    graph = load(mindir_name)
+    loaded_net = nn.GraphCell(graph)
+    outputs_after_load = loaded_net(inputs0)
+    assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())

@@ -91,6 +91,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   new_node->set_forward(old_node->forward().first, old_node->forward().second);
   new_node->set_inputs_value(old_node->inputs_value());
   new_node->set_attrs(old_node->attrs());
+  new_node->set_load_flag(old_node->get_load_flag());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
   new_node->CloneUserData(old_node);

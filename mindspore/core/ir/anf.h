@@ -273,6 +273,9 @@ class CNode : public AnfNode, public EffectInfoHolder {
   void set_in_forward_flag(bool flag) { in_forward_flag_ = flag; }
   bool in_forward_flag() const { return in_forward_flag_; }
 
+  void set_load_flag(bool is_load) { is_load_ = is_load; }
+  bool get_load_flag() { return is_load_; }
+
   VarPtr func_graph_as_var() const { return func_graph_as_var_; }
 
   const std::unordered_map<std::string, ValuePtr> &attrs() const { return attrs_; }
@@ -304,6 +307,7 @@ class CNode : public AnfNode, public EffectInfoHolder {
   bool stop_gradient_;
   bool in_forward_flag_ = false;
   bool effect_handled_ = false;
+  bool is_load_ = false;
   // inputs_value_ store cnode input value and id in pynative mode
   // output_value_ store cnode value and id in pynative mode
   std::vector<std::pair<ValuePtr, std::string>> inputs_value_;

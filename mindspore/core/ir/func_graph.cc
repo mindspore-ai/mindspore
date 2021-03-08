@@ -68,6 +68,18 @@ AnfNodePtr FuncGraph::output() const {
   }
 }
 
+const std::vector<AnfNodePtr> FuncGraph::get_inputs() const {
+  std::vector<AnfNodePtr> input_params;
+  for (auto const &node : parameters_) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto parameter = dyn_cast<Parameter>(node);
+    if (!parameter->has_default()) {
+      input_params.push_back(parameter);
+    }
+  }
+  return input_params;
+}
+
 ParameterPtr FuncGraph::add_parameter() {
   FuncGraphPtr this_func_graph = shared_from_base<FuncGraph>();
   ParameterPtr p = std::make_shared<Parameter>(this_func_graph);

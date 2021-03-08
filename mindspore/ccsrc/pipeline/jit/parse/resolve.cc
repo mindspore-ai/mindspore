@@ -113,6 +113,49 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   return para_node;
 }
 
+void BroadenCNodeAbstract(const FuncGraphPtr &func_graph) {
+  std::vector<AnfNodePtr> nodes = TopoSort(func_graph->get_return(), SuccIncoming, AlwaysInclude);
+  for (const AnfNodePtr &node : nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    auto abstract = node->abstract();
+    if (abstract != nullptr) {
+      node->set_abstract(abstract->Broaden());
+    }
+  }
+}
+
+void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
+  if (!value->isa<FuncGraph>()) {
+    return;
+  }
+  auto resolved_graph = value->cast<FuncGraphPtr>();
+  MS_EXCEPTION_IF_NULL(resolved_graph);
+  if (!resolved_graph->has_attr("is_load")) {
+    return;
+  }
+  auto top_graph = Parser::GetTopFuncGraph();
+  std::vector<AnfNodePtr> input_params;
+  for (auto const &param : resolved_graph->parameters()) {
+    auto param_ptr = dyn_cast<Parameter>(param);
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    if (param_ptr->has_default()) {
+      param_ptr->set_func_graph(top_graph);
+      func_graph->add_used_global_parameters(param_ptr);
+
+      // update top_graph
+      top_graph->add_parameter(param_ptr);
+      size_t hyper_param_count = top_graph->hyper_param_count();
+      top_graph->set_hyper_param_count(hyper_param_count + 1);
+    } else {
+      input_params.push_back(param_ptr);
+    }
+  }
+  resolved_graph->set_parameters(input_params);
+  BroadenCNodeAbstract(resolved_graph);
+}
+
 bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, AnfNodePtr *const node) {
   AnfNodePtr output = nullptr;
   if (py::hasattr(obj, "__parameter__") && py::isinstance<tensor::MetaTensor>(obj)) {
@@ -146,6 +189,7 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
       return false;
     }
     MS_EXCEPTION_IF_NULL(convert_result);
+    ConvertLoadedGraph(func_graph, convert_result);
     output = NewValueNode(convert_result);
     if (convert_result->isa<tensor::Tensor>()) {
       output = GetMixedPrecisionCastHelp(func_graph, output);

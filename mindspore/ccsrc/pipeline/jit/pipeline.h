@@ -140,6 +140,7 @@ void ClearResAtexit();
 void ReleaseGeTsd();
 
 void ExportGraph(const std::string &file_name, const std::string &, const std::string &phase);
+FuncGraphPtr LoadMindIR(const std::string &file_name);
 
 // init and exec dataset sub graph
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,

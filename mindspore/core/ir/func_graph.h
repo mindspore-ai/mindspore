@@ -160,6 +160,8 @@ class FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   abstract::AbstractFunctionPtr abstract();
   abstract::AbstractBasePtr ToAbstract() override;
 
+  // get function graph inputs, but parameters
+  const std::vector<AnfNodePtr> get_inputs() const;
   // Return the graph's output, or nullptr if not yet deduced.
   AnfNodePtr output() const;
   void set_output(const AnfNodePtr &value, bool force_new_ret = false);

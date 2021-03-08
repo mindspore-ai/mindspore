@@ -141,9 +141,21 @@ class Model:
         self._global_rank = _get_global_rank()
         self._parameter_broadcast = _get_parameter_broadcast()
 
+        self._check_for_graph_cell(kwargs)
         self._train_network = self._build_train_network()
         self._build_eval_network(metrics, eval_network, eval_indexes)
         self._build_predict_network()
+
+    def _check_for_graph_cell(self, kwargs):
+        if not isinstance(self._network, nn.GraphCell):
+            return
+        if self._amp_level != "O0":
+            logger.warning("amp_level will not work when network is a GraphCell.")
+
+        if self._loss_fn is not None or self._optimizer is not None:
+            raise ValueError("Currently loss_fn and optimizer should be None when network is a GraphCell. ")
+        if kwargs:
+            raise ValueError("Currently kwargs should be empty when network is a GraphCell. ")
 
     def _process_amp_args(self, kwargs):
         if self._amp_level in ["O0", "O3"]:
@@ -594,6 +606,8 @@ class Model:
             >>> model.train(2, dataset)
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
+        if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode is True:
+            raise ValueError("Sink mode is currently not supported when training with a GraphCell.")
         Validator.check_is_int(sink_size)
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size == 0:
@@ -718,9 +732,12 @@ class Model:
             >>> acc = model.eval(dataset, dataset_sink_mode=False)
         """
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
+
         _device_number_check(self._parallel_mode, self._device_number)
         if not self._metric_fns:
             raise ValueError("metric fn can not be None or empty.")
+        if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode is True:
+            raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")
 
         cb_params = _InternalCallbackParam()
         cb_params.eval_network = self._eval_network
