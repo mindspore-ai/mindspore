@@ -1,4 +1,4 @@
-# InceptionV4 for Ascend
+# InceptionV4 for Ascend/GPU
 
 - [InceptionV4 Description](#InceptionV4-description)
 - [Model Architecture](#model-architecture)
@@ -12,7 +12,7 @@
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
 - [Model Description](#model-description)
-    - [Performance](#performance)  
+    - [Performance](#performance)
         - [Training Performance](#evaluation-performance)
         - [Inference Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
@@ -50,8 +50,9 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+- Hardware（Ascend/GPU）
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - or prepare GPU processor.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -67,6 +68,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 └─Inception-v4
   ├─README.md
   ├─scripts
+    ├─run_distribute_train_gpu.sh       # launch distributed training with gpu platform(8p)
+    ├─run_eval_gpu.sh                   # launch evaluating with gpu platform
     ├─run_standalone_train_ascend.sh    # launch standalone training with ascend platform(1p)
     ├─run_distribute_train_ascend.sh    # launch distributed training with ascend platform(8p)
     └─run_eval_ascend.sh                # launch evaluating with ascend platform
@@ -125,6 +128,13 @@ sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
 >
 > This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
 
+- GPU:
+
+```bash
+# distribute training example(8p)
+sh scripts/run_distribute_train_gpu.sh DATA_PATH
+```
+
 ### Launch
 
 ```bash
@@ -135,11 +145,16 @@ sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
       sh scripts/run_distribute_train_ascend.sh RANK_TABLE_FILE DATA_PATH DATA_DIR
       # standalone training
       sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
+      GPU:
+      # distribute training example(8p)
+      sh scripts/run_distribute_train_gpu.sh DATA_PATH
 ```
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `ckpt_path` by default, and training log  will be redirected to `./log.txt` like following.
+Training result will be stored in the example path. Checkpoints will be stored at `ckpt_path` by default, and training log  will be redirected to `./log.txt` like followings.
+
+- Ascend
 
 ```python
 epoch: 1 step: 1251, loss is 5.4833196
@@ -148,6 +163,17 @@ epoch: 2 step: 1251, loss is 4.093194
 Epoch time: 288520.628, per step time: 230.632
 epoch: 3 step: 1251, loss is 3.6242008
 Epoch time: 288507.506, per step time: 230.622
+```
+
+- GPU
+
+```python
+epoch: 1 step: 1251, loss is 6.49775
+Epoch time: 1487493.604, per step time: 1189.044
+epoch: 2 step: 1251, loss is 5.6884665
+Epoch time: 1421838.433, per step time: 1136.561
+epoch: 3 step: 1251, loss is 5.5168786
+Epoch time: 1423009.501, per step time: 1137.498
 ```
 
 ## [Eval process](#contents)
@@ -162,6 +188,12 @@ You can start training using python or shell scripts. The usage of shell scripts
   sh scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
 ```
 
+- GPU
+
+```bash
+  sh scripts/run_eval_gpu.sh DATA_DIR CHECKPOINT_PATH
+```
+
 ### Launch
 
 ```bash
@@ -169,16 +201,26 @@ You can start training using python or shell scripts. The usage of shell scripts
   shell:
       Ascend:
             sh scripts/run_eval_ascend.sh DEVICE_ID DATA_DIR CHECKPOINT_PATH
+      GPU:
+            sh scripts/run_eval_gpu.sh DATA_DIR CHECKPOINT_PATH
 ```
 
 > checkpoint can be produced in training process.
 
 ### Result
 
-Evaluation result will be stored in the example path, you can find result like the following in `eval.log`.
+Evaluation result will be stored in the example path, you can find result like the followings in `eval.log`.
+
+- Ascend
 
 ```python
 metric: {'Loss': 0.9849, 'Top1-Acc':0.7985, 'Top5-Acc':0.9460}
+```
+
+- GPU(8p)
+
+```python
+metric: {'Loss': 0.8144, 'Top1-Acc': 0.8009, 'Top5-Acc': 0.9457}
 ```
 
 # [Model description](#contents)
@@ -187,39 +229,39 @@ metric: {'Loss': 0.9849, 'Top1-Acc':0.7985, 'Top5-Acc':0.9460}
 
 ### Training Performance
 
-| Parameters                 | Ascend                                                       |
-| -------------------------- | ------------------------------------------------------------ |
-| Model Version              | InceptionV4                                                  |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G                |
-| uploaded Date              | 11/04/2020                                                   |
-| MindSpore Version          | 1.0.0                                                        |
-| Dataset                    | 1200k images                                                 |
-| Batch_size                 | 128                                                          |
-| Training Parameters        | src/config.py                                                |
-| Optimizer                  | RMSProp                                                      |
-| Loss Function              | SoftmaxCrossEntropyWithLogits                                |
-| Outputs                    | probability                                                  |
-| Loss                       | 0.98486                                                      |
-| Accuracy (8p)              | ACC1[79.85%] ACC5[94.60%]                                    |
-| Total time (8p)            | 20h                                                          |
-| Params (M)                 | 153M                                                         |
-| Checkpoint for Fine tuning | 2135M                                                        |
-| Scripts                    | [inceptionv4 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv4) |
+| Parameters                 | Ascend                                        | GPU                              |
+| -------------------------- | --------------------------------------------- | -------------------------------- |
+| Model Version              | InceptionV4                                   | InceptionV4                      |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G | NV SMX2 V100-32G                 |
+| uploaded Date              | 11/04/2020                                    | 03/05/2021                       |
+| MindSpore Version          | 1.0.0                                         | 1.0.0                            |
+| Dataset                    | 1200k images                                  | 1200K images                     |
+| Batch_size                 | 128                                           | 128                              |
+| Training Parameters        | src/config.py (Ascend)                        | src/config.py (GPU)              |
+| Optimizer                  | RMSProp                                       | RMSProp                          |
+| Loss Function              | SoftmaxCrossEntropyWithLogits                 | SoftmaxCrossEntropyWithLogits    |
+| Outputs                    | probability                                   | probability                      |
+| Loss                       | 0.98486                                       | 0.8144                           |
+| Accuracy (8p)              | ACC1[79.85%] ACC5[94.60%]                     | ACC1[80.09%] ACC5[94.57%]        |
+| Total time (8p)            | 20h                                           | 95h                              |
+| Params (M)                 | 153M                                          | 153M                             |
+| Checkpoint for Fine tuning | 2135M                                         | 489M                             |
+| Scripts                    | [inceptionv4 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv4) | [inceptionv4 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv4) |
 
 #### Inference Performance
 
-| Parameters          | Ascend                 |
-| ------------------- | --------------------------- |
-| Model Version       | InceptionV4                 |
-| Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G         |
-| Uploaded Date       | 11/04/2020                 |
-| MindSpore Version   | 1.0.0              |
-| Dataset             | 50k images                  |
-| Batch_size          | 128                         |
-| Outputs             | probability                 |
-| Accuracy            | ACC1[79.85%] ACC5[94.60%] |
-| Total time          | 2mins                      |
-| Model for inference | 2135M (.ckpt file)   |
+| Parameters          | Ascend                                        | GPU                                |
+| ------------------- | --------------------------------------------- | ---------------------------------- |
+| Model Version       | InceptionV4                                   | InceptionV4                        |
+| Resource            | Ascend 910, cpu:2.60GHz 192cores, memory:755G | NV SMX2 V100-32G                   |
+| Uploaded Date       | 11/04/2020                                    | 03/05/2021                         |
+| MindSpore Version   | 1.0.0                                         | 1.0.0                              |
+| Dataset             | 50k images                                    | 50K images                         |
+| Batch_size          | 128                                           | 128                                |
+| Outputs             | probability                                   | probability                        |
+| Accuracy            | ACC1[79.85%] ACC5[94.60%]                     | ACC1[80.09%] ACC5[94.57%]          |
+| Total time          | 2mins                                         | 2mins                              |
+| Model for inference | 2135M (.ckpt file)                            | 489M (.ckpt file)                  |
 
 #### Training performance results
 
@@ -229,7 +271,11 @@ metric: {'Loss': 0.9849, 'Top1-Acc':0.7985, 'Top5-Acc':0.9460}
 
 | **Ascend** | train performance |
 | :--------: | :---------------: |
-|     8p     |     4430 img/s     |
+|     8p     |     4430 img/s    |
+
+| **GPU**    | train performance |
+| :--------: | :---------------: |
+|     8p     |     906 img/s    |
 
 # [Description of Random Situation](#contents)
 

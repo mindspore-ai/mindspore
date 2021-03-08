@@ -24,7 +24,7 @@ from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 
 from src.dataset import create_dataset
 from src.inceptionv4 import Inceptionv4
-from src.config import config_ascend as config
+from src.config import config
 
 def parse_args():
     '''parse_args'''
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     if args.platform == 'Ascend':
-        device_id = int(os.getenv('DEVICE_ID'))
+        device_id = int(os.getenv('DEVICE_ID', '0'))
         context.set_context(device_id=device_id)
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.platform)

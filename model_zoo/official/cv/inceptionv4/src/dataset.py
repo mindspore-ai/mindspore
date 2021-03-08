@@ -18,14 +18,14 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset as de
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
-from src.config import config_ascend as config
+from src.config import config
 
 
-device_id = int(os.getenv('DEVICE_ID'))
-device_num = int(os.getenv('RANK_SIZE'))
+device_id = int(os.getenv('DEVICE_ID', '0'))
+device_num = int(os.getenv('RANK_SIZE', '1'))
 
 
-def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
+def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, shard_id=0):
     """
     Create a train or eval dataset.
 
@@ -45,7 +45,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
         ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=do_shuffle)
     else:
         ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums,
-                                   shuffle=do_shuffle, num_shards=device_num, shard_id=device_id)
+                                   shuffle=do_shuffle, num_shards=device_num, shard_id=shard_id)
 
     image_length = 299
     if do_train:

@@ -286,7 +286,6 @@ class Inceptionv4(nn.Cell):
         self.avgpool = P.ReduceMean(keep_dims=False)
         self.softmax = nn.DenseBnAct(
             1536, classes, weight_init="XavierUniform", has_bias=True, has_bn=True, activation="logsoftmax")
-
         if is_train:
             self.dropout = nn.Dropout(0.20)
         else:

@@ -14,16 +14,18 @@
 # limitations under the License.
 # ============================================================================
 
-export RANK_SIZE=1
-export DEVICE_ID=$1
-DATA_DIR=$2
+rm -rf evaluation
+mkdir evaluation
+cp ./*.py ./evaluation
+cp -r ./src ./evaluation
+cd ./evaluation
 
-rm -rf train_standalone
-mkdir ./train_standalone
-cd ./train_standalone || exit
-echo  "start training for device id $DEVICE_ID"
-env > env.log
-python -u ../train.py \
-    --device_id=$1 \
-    --dataset_path=$DATA_DIR > log.txt 2>&1 &
-cd ../
+export DEVICE_ID=0
+export RANK_SIZE=1
+
+DATA_DIR=$1
+CKPT_DIR=$2
+
+echo "start evaluation"
+
+python eval.py --dataset_path=$DATA_DIR --checkpoint_path=$CKPT_DIR --platform='GPU'  > eval.log 2>&1 &

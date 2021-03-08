@@ -17,7 +17,7 @@ network config setting, will be used in main.py
 """
 from easydict import EasyDict as edict
 
-config_ascend = edict({
+config = edict({
     'is_save_on_master': False,
 
     'batch_size': 128,
