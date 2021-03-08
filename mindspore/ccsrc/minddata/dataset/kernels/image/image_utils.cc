@@ -72,6 +72,10 @@ bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel)
 Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int flip_code) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
 
+  if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
+    RETURN_STATUS_UNEXPECTED("Flip: input tensor is not in shape of <H,W,C> or <H,W>.");
+  }
+
   std::shared_ptr<CVTensor> output_cv;
   RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
 
@@ -583,9 +587,13 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("Rotate: load image failed.");
     }
+    if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
+      RETURN_STATUS_UNEXPECTED("Rotate: input tensor is not in shape of <H,W,C> or <H,W>.");
+    }
+
     cv::Mat input_img = input_cv->mat();
     if (input_img.cols > (MAX_INT_PRECISION * 2) || input_img.rows > (MAX_INT_PRECISION * 2)) {
-      RETURN_STATUS_UNEXPECTED("Rotate: image is too large and center not precise");
+      RETURN_STATUS_UNEXPECTED("Rotate: image is too large and center is not precise.");
     }
     // default to center of image
     if (fx == -1 && fy == -1) {
@@ -728,7 +736,7 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     }
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != 3 || num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("AdjustBrightness: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("AdjustBrightness: image shape is not <H,W,C> or channel is not 3.");
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -749,7 +757,7 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     }
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != 3 || num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3.");
     }
     cv::Mat gray, output_img;
     cv::cvtColor(input_img, gray, CV_RGB2GRAY);
@@ -854,7 +862,7 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     }
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != 3 || num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("AdjustSaturation: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("AdjustSaturation: image shape is not <H,W,C> or channel is not 3.");
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -882,7 +890,7 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     }
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != 3 || num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C>.");
+      RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3.");
     }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
@@ -956,7 +964,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       RETURN_STATUS_UNEXPECTED("CutOut: load image failed.");
     }
     if (input_cv->Rank() != 3 || num_channels != 3) {
-      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C> or <H,W>.");
+      RETURN_STATUS_UNEXPECTED("CutOut: image shape is not <H,W,C> or channel is not 3.");
     }
     cv::Mat input_img = input_cv->mat();
     int32_t image_h = input_cv->shape()[0];
@@ -1016,6 +1024,12 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   try {
     // input image
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+
+    // validate rank
+    if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
+      RETURN_STATUS_UNEXPECTED("Pad: input tensor is not in shape of <H,W,C> or <H,W>.");
+    }
+
     // get the border type in openCV
     auto b_type = GetCVBorderType(border_types);
     // output image
@@ -1106,6 +1120,10 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
+      RETURN_STATUS_UNEXPECTED("Affine: image shape is not <H,W,C> or channel is not 3.");
+    }
+
     cv::Mat affine_mat(mat);
     affine_mat = affine_mat.reshape(1, {2, 3});
 

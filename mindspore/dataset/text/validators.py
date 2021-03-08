@@ -216,6 +216,20 @@ def check_wordpiece_tokenizer(method):
     return new_method
 
 
+def check_regex_replace(method):
+    """Wrapper method to check the parameter of RegexReplace."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [pattern, replace, replace_all], _ = parse_user_args(method, *args, **kwargs)
+        type_check(pattern, (str,), "pattern")
+        type_check(replace, (str,), "replace")
+        type_check(replace_all, (bool,), "replace_all")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_regex_tokenizer(method):
     """Wrapper method to check the parameter of RegexTokenizer."""
 

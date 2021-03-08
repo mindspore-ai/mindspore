@@ -133,9 +133,9 @@ class _SliceOption(cde.SliceOption):
             1.  :py:obj:`int`: Slice this index only along the dimension. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices along the dimension. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object along the dimension.
-            4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
-            5.  :py:obj:`Ellipsis`: Slice the whole dimension. Similar to `:` in Python indexing.
-            6.  :py:obj:`boolean`: Slice the whole dimension. Similar to `:` in Python indexing.
+            4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`:` in Python indexing.
+            5.  :py:obj:`Ellipsis`: Slice the whole dimension. Similar to :py:obj:`:` in Python indexing.
+            6.  :py:obj:`boolean`: Slice the whole dimension. Similar to :py:obj:`:` in Python indexing.
     """
 
     @check_slice_option
@@ -165,8 +165,8 @@ class Slice(cde.SliceOp):
             2.  :py:obj:`list(int)`: Slice these indices along the first dimension. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object along the first dimension.
                 Similar to start:stop:step.
-            4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
-            5.  :py:obj:`Ellipsis`: Slice the whole dimension. Similar to `:` in Python indexing.
+            4.  :py:obj:`None`: Slice the whole dimension. Similar to :py:obj:`:` in Python indexing.
+            5.  :py:obj:`Ellipsis`: Slice the whole dimension, same result with `None`.
 
     Examples:
         >>> # Data before

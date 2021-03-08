@@ -39,16 +39,6 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
       RETURN_STATUS_UNEXPECTED("Solarize: load image failed.");
     }
 
-    if (input_cv->Rank() != 2 && input_cv->Rank() != 3) {
-      RETURN_STATUS_UNEXPECTED("Solarize: image shape is not <H,W,C> or <H,W>.");
-    }
-    if (input_cv->Rank() == 3) {
-      int num_channels = input_cv->shape()[2];
-      if (num_channels != 3 && num_channels != 1) {
-        RETURN_STATUS_UNEXPECTED("Solarize: image shape is not <H,W,C>.");
-      }
-    }
-
     std::shared_ptr<CVTensor> mask_mat_tensor;
     std::shared_ptr<CVTensor> output_cv_tensor;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_cv->mat(), &mask_mat_tensor));

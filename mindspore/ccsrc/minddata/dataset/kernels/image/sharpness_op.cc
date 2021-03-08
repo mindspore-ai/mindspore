@@ -34,8 +34,8 @@ Status SharpnessOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_pt
       RETURN_STATUS_UNEXPECTED("Sharpness: load image failed.");
     }
 
-    if (input_cv->Rank() != 3 && input_cv->Rank() != 2) {
-      RETURN_STATUS_UNEXPECTED("Sharpness: image shape is not <H,W,C> or <H,W>");
+    if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
+      RETURN_STATUS_UNEXPECTED("Sharpness: input tensor is not in shape of <H,W,C> or <H,W>.");
     }
 
     /// creating a smoothing filter. 1, 1, 1,

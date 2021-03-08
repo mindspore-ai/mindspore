@@ -21,7 +21,7 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
-    check_tensor_op, UINT8_MAX, check_value_normalize_std
+    check_c_tensor_op, UINT8_MAX, check_value_normalize_std
 from .utils import Inter, Border, ImageBatchFormat
 
 
@@ -727,7 +727,7 @@ def check_random_select_subpolicy_op(method):
                 raise ValueError("policy[{0}] can not be empty.".format(sub_ind))
             for op_ind, tp in enumerate(sub):
                 check_2tuple(tp, "policy[{0}][{1}]".format(sub_ind, op_ind))
-                check_tensor_op(tp[0], "op of (op, prob) in policy[{0}][{1}]".format(sub_ind, op_ind))
+                check_c_tensor_op(tp[0], "op of (op, prob) in policy[{0}][{1}]".format(sub_ind, op_ind))
                 check_value(tp[1], (0, 1), "prob of (op, prob) policy[{0}][{1}]".format(sub_ind, op_ind))
 
         return method(self, *args, **kwargs)

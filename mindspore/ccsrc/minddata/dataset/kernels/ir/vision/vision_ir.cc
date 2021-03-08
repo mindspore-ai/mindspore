@@ -187,7 +187,7 @@ BoundingBoxAugmentOperation::BoundingBoxAugmentOperation(std::shared_ptr<TensorO
 
 Status BoundingBoxAugmentOperation::ValidateParams() {
   RETURN_IF_NOT_OK(ValidateVectorTransforms("BoundingBoxAugment", {transform_}));
-  RETURN_IF_NOT_OK(ValidateProbability("BoundingBoxAugment", ratio_));
+  RETURN_IF_NOT_OK(ValidateScalar("BoundingBoxAugment", "ratio", ratio_, {0.0, 1.0}, false, false));
   return Status::OK();
 }
 
@@ -1566,7 +1566,8 @@ Status UniformAugOperation::ValidateParams() {
   // transforms
   RETURN_IF_NOT_OK(ValidateVectorTransforms("UniformAug", transforms_));
   if (num_ops_ > transforms_.size()) {
-    std::string err_msg = "UniformAug: num_ops is greater than transforms size, but got: " + std::to_string(num_ops_);
+    std::string err_msg =
+      "UniformAug: num_ops must be less than or equal to transforms size, but got: " + std::to_string(num_ops_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

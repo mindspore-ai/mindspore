@@ -271,7 +271,7 @@ class Decode(ImageTensorOperation):
             img (NumPy), Decoded image.
         """
         if not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
-            raise TypeError("Input should be an encoded image with 1-D NumPy type, got {}.".format(type(img)))
+            raise TypeError("Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
         return super().__call__(img)
 
     def parse(self):
@@ -763,6 +763,14 @@ class RandomCropDecodeResize(ImageTensorOperation):
                                                    DE_C_INTER_MODE[self.interpolation],
                                                    self.max_attempts)
 
+    def __call__(self, img):
+        if not isinstance(img, np.ndarray):
+            raise TypeError("Input should be an encoded image in 1-D NumPy format, got {}.".format(type(img)))
+        if img.ndim != 1 or img.dtype.type is not np.uint8:
+            raise TypeError("Input should be an encoded image with uint8 type in 1-D NumPy format, " +
+                            "got format:{}, dtype:{}.".format(type(img), img.dtype.type))
+        super().__call__(img=img)
+
 
 class RandomCropWithBBox(ImageTensorOperation):
     """
@@ -1164,8 +1172,8 @@ class RandomSharpness(ImageTensorOperation):
     degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
 
     Args:
-        degrees (tuple, optional): Range of random sharpness adjustment degrees. It should be in (min, max) format.
-            If min=max, then it is a single fixed magnitude operation (default = (0.1, 1.9)).
+        degrees (Union[list, tuple], optional): Range of random sharpness adjustment degrees. It should be in
+            (min, max) format. If min=max, then it is a single fixed magnitude operation (default = (0.1, 1.9)).
 
     Raises:
         TypeError : If degrees is not a list or tuple.
