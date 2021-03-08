@@ -1345,10 +1345,17 @@ void SessionBasic::GetSingleOpRunInfo(const CNodePtr cnode, OpRunInfo *run_info)
   auto primitive = AnfAlgo::GetCNodePrimitive(cnode);
   run_info->primitive = primitive;
   run_info->op_name = primitive->name();
-  if (cnode->abstract() == nullptr) {
+  const auto &abstract = cnode->abstract();
+  if (abstract == nullptr) {
     MS_LOG(EXCEPTION) << "Abstract is nullptr, node = " << cnode->DebugString();
   }
-  run_info->abstract = cnode->abstract();
+  run_info->abstract = abstract;
+  const auto &shape = abstract->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  const auto &shape_info = shape->ToString();
+  if (shape_info.find("-1") != string::npos) {
+    run_info->is_dynamic_shape = true;
+  }
 }
 
 TensorPtr SessionBasic::GetValueNodeOutputTensor(const AnfNodePtr &node, size_t output_index) {
