@@ -383,7 +383,8 @@ if(ENABLE_GPU)
                           ${CUDNN_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcudart.so
                           ${CUDA_PATH}/lib64/stubs/libcuda.so
-                          ${CUDA_PATH}/lib64/libcusolver.so)
+                          ${CUDA_PATH}/lib64/libcusolver.so
+                          ${CUDA_PATH}/lib64/libcufft.so)
     if(ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
     endif()

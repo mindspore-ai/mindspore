@@ -100,8 +100,13 @@ from ._embedding_cache_ops import (CacheSwapHashmap, SearchCacheIdx, CacheSwapTa
                                    MapUniform, DynamicAssign, PadAndShift)
 from .quantum_ops import PQC, Evolution
 from .sponge_ops import (BondForce, BondEnergy, BondAtomEnergy, BondForceWithAtomEnergy, BondForceWithAtomVirial,
-                         DihedralForce, DihedralEnergy, DihedralAtomEnergy, DihedralForceWithAtomEnergy,
-                         AngleForce, AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy)
+                         DihedralForce, DihedralEnergy, DihedralAtomEnergy, DihedralForceWithAtomEnergy, AngleForce,
+                         AngleEnergy, AngleAtomEnergy, AngleForceWithAtomEnergy, PMEReciprocalForce,
+                         LJForce, LJEnergy, LJForceWithPMEDirectForce, PMEExcludedForce, PMEEnergy, Dihedral14LJForce,
+                         Dihedral14LJForceWithDirectCF, Dihedral14LJEnergy, Dihedral14LJCFForceWithAtomEnergy,
+                         Dihedral14LJAtomEnergy, Dihedral14CFEnergy, Dihedral14CFAtomEnergy, MDIterationLeapFrog,
+                         GetCenterOfGeometry, MDTemperature, NeighborListUpdate)
+
 
 __all__ = [
     'Unique',
@@ -438,6 +443,24 @@ __all__ = [
     "AngleEnergy",
     "AngleAtomEnergy",
     "AngleForceWithAtomEnergy",
+    'PMEReciprocalForce',
+    'LJForce',
+    'LJForceWithPMEDirectForce',
+    'LJEnergy',
+    'PMEExcludedForce',
+    'PMEEnergy',
+    "Dihedral14LJForce",
+    "Dihedral14LJEnergy",
+    "Dihedral14LJForceWithDirectCF",
+    "Dihedral14LJCFForceWithAtomEnergy",
+    "Dihedral14LJAtomEnergy",
+    "Dihedral14CFEnergy",
+    "MDIterationLeapFrog",
+    "Dihedral14CFAtomEnergy",
+    "GetCenterOfGeometry",
+    "MDTemperature",
+    "NeighborListUpdate",
+
 ]
 
 __all__.sort()

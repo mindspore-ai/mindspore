@@ -31,7 +31,6 @@ __global__ void DihedralForceKernel(int dihedral_numbers, const UNSIGNED_INT_VEC
 
     int temp_ipn = ipn[dihedral_i];
 
-    float temp_pk = pk[dihedral_i];
     float temp_pn = pn[dihedral_i];
     float temp_gamc = gamc[dihedral_i];
     float temp_gams = gams[dihedral_i];
