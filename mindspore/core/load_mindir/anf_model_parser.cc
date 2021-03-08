@@ -228,10 +228,12 @@ tensor::TensorPtr MSANFModelParser::BuildTensorInfoForFuncGraph(const mind_ir::T
   }
 
   if (!tensor_proto.has_data_type()) {
-    MS_LOG(EXCEPTION) << "mind_ir TensorProto has no data_type or name!";
+    MS_LOG(ERROR) << "mind_ir build tensor: " << tensor_proto.name() << " failed";
+    MS_LOG(EXCEPTION) << "mind_ir TensorProto has no data_type.";
   }
   if (kDefaultValueSwitchMap.find(tensor_proto.data_type()) == kDefaultValueSwitchMap.end()) {
-    MS_LOG(EXCEPTION) << "mind_ir TensorProto data_type is not support yet!";
+    MS_LOG(ERROR) << "mind_ir build tensor: " << tensor_proto.name() << " failed";
+    MS_LOG(EXCEPTION) << "mind_ir TensorProto data_type: " << tensor_proto.data_type() << " is not support yet!";
   }
 
   tensor::TensorPtr tensor_info =
