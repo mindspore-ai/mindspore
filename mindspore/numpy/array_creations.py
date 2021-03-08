@@ -27,12 +27,12 @@ from .._c_expression import Tensor as Tensor_
 from .._c_expression.typing import Float
 
 from .utils import _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, \
-    _expand, _broadcast_to_shape, _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar
+    _broadcast_to_shape, _check_input_tensor, _convert_64_to_32, _get_dtype_from_scalar
 from .utils_const import _raise_value_error, _empty, _check_axis_valid, _max, _min, \
     _check_same_type, _is_shape_empty, _check_shape, _check_dtype, _tile_size, _abs, \
     _raise_type_error, _expanded_shape, _check_is_float, _iota, \
     _type_convert, _canonicalize_axis, _list_comprehensions, _ceil
-from .array_ops import transpose, ravel, concatenate, broadcast_arrays, reshape
+from .array_ops import transpose, ravel, concatenate, broadcast_arrays, reshape, broadcast_to
 from .dtypes import nan
 
 # According to official numpy reference, the dimension of a numpy array must be less
@@ -355,9 +355,7 @@ def full(shape, fill_value, dtype=None):
             return F.fill(dtype, shape, fill_value)
         if isinstance(fill_value, (list, tuple)):
             fill_value = asarray_const(fill_value)
-        if isinstance(fill_value, Tensor):
-            fill_value = _expand(fill_value, len(shape))
-        return F.tile(fill_value, _tile_size(fill_value.shape, shape, len(shape)))
+        return broadcast_to(fill_value, shape)
     # if shape contains zero, use c.Tensor()
     return _convert_64_to_32(empty_compile(dtype, shape))
 
@@ -365,9 +363,6 @@ def full(shape, fill_value, dtype=None):
 def arange(start, stop=None, step=None, dtype=None):
     """
     Returns evenly spaced values within a given interval.
-
-    Returns `num` evenly spaced samples, calculated over the interval :math:`[start, stop]`.
-    The endpoint of the interval can optionally be excluded.
 
     Args:
         start(Union[int, float]): Start of interval. The interval includes this value.

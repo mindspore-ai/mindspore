@@ -92,7 +92,7 @@ def expand_dims(a, axis):
             the new axis is placed,
 
     Returns:
-        View of `a` with the number of dimensions increased.
+        Tensor, with the number of dimensions increased at specified axis.
 
     Raises:
         TypeError: If input arguments have types not specified above.
@@ -822,7 +822,7 @@ def atleast_1d(*arys):
 
 def atleast_2d(*arys):
     """
-    Views inputs as arrays with at least two dimensions.
+    Reshapes inputs as arrays with at least two dimensions.
 
     Note:
         In graph mode, returns a tuple of tensor instead of a list of
@@ -859,7 +859,7 @@ def atleast_2d(*arys):
 
 def atleast_3d(*arys):
     """
-    Views inputs as arrays with at least three dimensions.
+    Reshapes inputs as arrays with at least three dimensions.
 
     Note:
         In graph mode, returns a tuple of tensor instead of a list of
@@ -870,8 +870,8 @@ def atleast_3d(*arys):
 
     Returns:
         Tensor, or list of tensors, each with ``a.ndim >= 3``. For example,
-        a 1-D array of shape `(N,)` becomes a view of shape `(1, N, 1)`, and
-        a 2-D array of shape `(M, N)` becomes a view of shape `(M, N, 1)`.
+        a 1-D array of shape `(N,)` becomes a tensor of shape `(1, N, 1)`, and
+        a 2-D array of shape `(M, N)` becomes a tensor of shape `(M, N, 1)`.
 
     Raises:
         TypeError: if the input is not a tensor.
@@ -1591,7 +1591,7 @@ def flip(m, axis=None):
             all of the axes specified in the tuple.
 
     Returns:
-        Tensor, a view of `m` with the entries of `axis` reversed.
+        Tensor, with the entries of `axis` reversed.
 
     Raises:
         TypeError: if the input is not a tensor.

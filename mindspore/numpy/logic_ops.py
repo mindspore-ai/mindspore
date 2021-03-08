@@ -97,7 +97,7 @@ def less_equal(x1, x2, out=None, where=True, dtype=None):
 
     Returns:
        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
+       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
     Raises:
@@ -144,7 +144,7 @@ def less(x1, x2, out=None, where=True, dtype=None):
 
     Returns:
        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
+       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
     Raises:
@@ -190,7 +190,7 @@ def greater_equal(x1, x2, out=None, where=True, dtype=None):
 
     Returns:
        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
+       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
     Raises:
@@ -236,7 +236,7 @@ def greater(x1, x2, out=None, where=True, dtype=None):
 
     Returns:
        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
+       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
     Raises:
@@ -282,7 +282,7 @@ def equal(x1, x2, out=None, where=True, dtype=None):
 
     Returns:
        Tensor or scalar, element-wise comparison of `x1` and `x2`. Typically of type
-       bool, unless ``dtype=object`` is passed. This is a scalar if both `x1` and `x2` are
+       bool, unless `dtype` is passed. This is a scalar if both `x1` and `x2` are
        scalars.
 
     Raises:

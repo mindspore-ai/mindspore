@@ -58,7 +58,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
           Tensor, number of nonzero element. The data type is dtype.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
@@ -77,7 +77,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     reduce_sum = P.ReduceSum(keep_dims)
     nonzero_bool = not_equal(x, 0)
     # ReduceSum only support float16 or float32 tensor.
-    nonzero_val = cast(nonzero_bool, mstype.float16)
+    nonzero_val = cast(nonzero_bool, mstype.float32)
     nonzero_num = cast(reduce_sum(nonzero_val, axis), dtype)
 
     return nonzero_num

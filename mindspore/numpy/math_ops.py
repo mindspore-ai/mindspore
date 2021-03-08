@@ -1692,7 +1692,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         a (Tensor): Input data.
         axis (None or int or tuple of ints, optional): defaults to None. Axis or
             axes along which to operate. By default, flattened input is used. If
-            this is a tuple of ints, the maximum is selected over multiple axes,
+            this is a tuple of ints, the minimum is selected over multiple axes,
             instead of a single axis or all the axes as before.
         keepdims (boolean, optional): defaults to False.
             If this is set to True, the axes which are reduced are left in the
