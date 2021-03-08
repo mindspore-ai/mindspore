@@ -22,7 +22,6 @@
 #include "include/api/status.h"
 #include "include/api/types.h"
 #include "include/api/graph.h"
-#include "include/api/context.h"
 
 namespace mindspore {
 class InputAndOutput;
@@ -98,7 +97,6 @@ class MS_API GraphCell final : public Cell<GraphCell> {
   explicit GraphCell(Graph &&);
   explicit GraphCell(const std::shared_ptr<Graph> &);
 
-  void SetContext(const std::shared_ptr<Context> &context);
   const std::shared_ptr<Graph> &GetGraph() const { return graph_; }
   Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
   std::vector<MSTensor> GetInputs();

@@ -70,7 +70,6 @@ std::shared_ptr<GraphCell> MsModel::GenerateGraphCell(const std::vector<std::vec
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
-  graph_cell->SetContext(model_context_);
   auto ret = ModelImpl::Load(graph_cell);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";
@@ -96,7 +95,6 @@ Status MsModel::Build() {
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
-  graph_cell->SetContext(model_context_);
   auto ret = ModelImpl::Load(graph_cell);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";

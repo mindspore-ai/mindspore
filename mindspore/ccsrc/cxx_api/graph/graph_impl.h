@@ -29,12 +29,11 @@
 namespace mindspore {
 class GraphCell::GraphImpl {
  public:
-  GraphImpl() : graph_(nullptr), graph_context_(nullptr) {}
+  GraphImpl() : graph_(nullptr) {}
   virtual ~GraphImpl() = default;
 
   std::shared_ptr<Graph::GraphData> &MutableGraphData() const { return graph_->graph_data_; }
   void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
-  void SetContext(const std::shared_ptr<Context> &context) { graph_context_ = context; }
 
   virtual Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
   virtual Status Load() = 0;
@@ -44,7 +43,6 @@ class GraphCell::GraphImpl {
 
  protected:
   std::shared_ptr<Graph> graph_;
-  std::shared_ptr<Context> graph_context_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_GRAPH_IMPL_H
