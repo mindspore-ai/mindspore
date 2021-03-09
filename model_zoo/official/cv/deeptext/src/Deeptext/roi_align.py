@@ -25,7 +25,7 @@ from mindspore.common.tensor import Tensor
 
 class ROIAlign(nn.Cell):
     """
-    Extract RoI features from mulitple feature map.
+    Extract RoI features from multiple feature map.
 
     Args:
         out_size_h (int) - RoI height.
@@ -61,7 +61,7 @@ class SingleRoIExtractor(nn.Cell):
     """
     Extract RoI features from a single level feature map.
 
-    If there are mulitple input feature levels, each RoI is mapped to a level
+    If there are multiple input feature levels, each RoI is mapped to a level
     according to its scale.
 
     Args:
@@ -101,8 +101,8 @@ class SingleRoIExtractor(nn.Cell):
         self.select = P.Select()
 
         _mode_16 = False
-        self.dtype = np.float16 if _mode_16 else np.float32
-        self.ms_dtype = mstype.float16 if _mode_16 else mstype.float32
+        self.dtype = np.float32 if _mode_16 else np.float32
+        self.ms_dtype = mstype.float32 if _mode_16 else mstype.float32
         self.set_train_local(cfg, training=True)
 
     def set_train_local(self, config, training=True):

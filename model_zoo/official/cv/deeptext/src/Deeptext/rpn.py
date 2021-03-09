@@ -28,8 +28,8 @@ def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mod
     shp_weight_conv = (out_channels, in_channels, kernel_size, kernel_size)
 
     shp_bias_conv = (out_channels,)
-    weights = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float16).to_tensor()
-    bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float16).to_tensor()
+    weights = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float32).to_tensor()
+    bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float32).to_tensor()
 
     layers = []
     layers += [nn.Conv2d(in_channels, out_channels,
@@ -141,7 +141,7 @@ class RPN(nn.Cell):
         self.batch_size = batch_size
         self.test_batch_size = cfg_rpn.test_batch_size
         self.num_layers = 1
-        self.real_ratio = Tensor(np.ones((1, 1)).astype(np.float16))
+        self.real_ratio = Tensor(np.ones((1, 1)).astype(np.float32))
 
         self.rpn_convs_list = nn.layer.CellList(self._make_rpn_layer(self.num_layers, in_channels, feat_channels,
                                                                      num_anchors, cls_out_channels))
@@ -150,15 +150,15 @@ class RPN(nn.Cell):
         self.reshape = P.Reshape()
         self.concat = P.Concat(axis=0)
         self.fill = P.Fill()
-        self.placeh1 = Tensor(np.ones((1,)).astype(np.float16))
+        self.placeh1 = Tensor(np.ones((1,)).astype(np.float32))
 
         self.trans_shape = (0, 2, 3, 1)
 
         self.reshape_shape_reg = (-1, 4)
         self.reshape_shape_cls = (-1,)
-        self.rpn_loss_reg_weight = Tensor(np.array(cfg_rpn.rpn_loss_reg_weight).astype(np.float16))
-        self.rpn_loss_cls_weight = Tensor(np.array(cfg_rpn.rpn_loss_cls_weight).astype(np.float16))
-        self.num_expected_total = Tensor(np.array(cfg_rpn.num_expected_neg * self.batch_size).astype(np.float16))
+        self.rpn_loss_reg_weight = Tensor(np.array(cfg_rpn.rpn_loss_reg_weight).astype(np.float32))
+        self.rpn_loss_cls_weight = Tensor(np.array(cfg_rpn.rpn_loss_cls_weight).astype(np.float32))
+        self.num_expected_total = Tensor(np.array(cfg_rpn.num_expected_neg * self.batch_size).astype(np.float32))
         self.num_bboxes = cfg_rpn.num_bboxes
         self.get_targets = BboxAssignSample(cfg_rpn, self.batch_size, self.num_bboxes, False)
         self.CheckValid = P.CheckValid()
@@ -169,9 +169,9 @@ class RPN(nn.Cell):
         self.cast = P.Cast()
         self.tile = P.Tile()
         self.zeros_like = P.ZerosLike()
-        self.loss = Tensor(np.zeros((1,)).astype(np.float16))
-        self.clsloss = Tensor(np.zeros((1,)).astype(np.float16))
-        self.regloss = Tensor(np.zeros((1,)).astype(np.float16))
+        self.loss = Tensor(np.zeros((1,)).astype(np.float32))
+        self.clsloss = Tensor(np.zeros((1,)).astype(np.float32))
+        self.regloss = Tensor(np.zeros((1,)).astype(np.float32))
 
     def _make_rpn_layer(self, num_layers, in_channels, feat_channels, num_anchors, cls_out_channels):
         """
@@ -191,18 +191,18 @@ class RPN(nn.Cell):
 
         shp_weight_conv = (feat_channels, in_channels, 3, 3)
         shp_bias_conv = (feat_channels,)
-        weight_conv = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float16).to_tensor()
-        bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float16).to_tensor()
+        weight_conv = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float32).to_tensor()
+        bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float32).to_tensor()
 
         shp_weight_cls = (num_anchors * cls_out_channels, feat_channels, 1, 1)
         shp_bias_cls = (num_anchors * cls_out_channels,)
-        weight_cls = initializer('Normal', shape=shp_weight_cls, dtype=mstype.float16).to_tensor()
-        bias_cls = initializer(0, shape=shp_bias_cls, dtype=mstype.float16).to_tensor()
+        weight_cls = initializer('Normal', shape=shp_weight_cls, dtype=mstype.float32).to_tensor()
+        bias_cls = initializer(0, shape=shp_bias_cls, dtype=mstype.float32).to_tensor()
 
         shp_weight_reg = (num_anchors * 4, feat_channels, 1, 1)
         shp_bias_reg = (num_anchors * 4,)
-        weight_reg = initializer('Normal', shape=shp_weight_reg, dtype=mstype.float16).to_tensor()
-        bias_reg = initializer(0, shape=shp_bias_reg, dtype=mstype.float16).to_tensor()
+        weight_reg = initializer('Normal', shape=shp_weight_reg, dtype=mstype.float32).to_tensor()
+        bias_reg = initializer(0, shape=shp_bias_reg, dtype=mstype.float32).to_tensor()
 
         rpn_layer.append(RpnRegClsBlock(in_channels, feat_channels, num_anchors, cls_out_channels, \
                                         weight_conv, bias_conv, weight_cls, \
@@ -271,9 +271,9 @@ class RPN(nn.Cell):
                                                                                            mstype.bool_),
                                                                                  anchor_using_list, gt_valids_i)
 
-                bbox_weight = self.cast(bbox_weight, mstype.float16)
-                label = self.cast(label, mstype.float16)
-                label_weight = self.cast(label_weight, mstype.float16)
+                bbox_weight = self.cast(bbox_weight, mstype.float32)
+                label = self.cast(label, mstype.float32)
+                label_weight = self.cast(label_weight, mstype.float32)
 
                 begin = self.slice_index[0]
                 end = self.slice_index[0 + 1]
