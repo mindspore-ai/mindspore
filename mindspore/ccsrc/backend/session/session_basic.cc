@@ -2515,7 +2515,7 @@ void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
       if (AnfAlgo::GetCNodeName(node) == kEmbeddingLookupOpName) {
         size_t embedding_table_idx = 0;
         auto embedding_table = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), embedding_table_idx);
-        size_t key = ps::worker.SetParamKey(embedding_table->fullname_with_scope());
+        size_t key = ps::Worker::GetInstance().SetParamKey(embedding_table->fullname_with_scope());
         AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), node);
       } else if (AnfAlgo::GetCNodeName(node) == kPushOpName) {
         auto pull_node = FindPullNode(node, node_list);
@@ -2526,12 +2526,12 @@ void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
         // Second input of Pull node is the trainable parameter.
         size_t parameter_index = 1;
         auto parameter_node = AnfAlgo::GetInputNode(pull_node->cast<CNodePtr>(), parameter_index);
-        size_t key = ps::worker.SetParamKey(parameter_node->fullname_with_scope());
+        size_t key = ps::Worker::GetInstance().SetParamKey(parameter_node->fullname_with_scope());
         AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), node);
         AnfAlgo::SetNodeAttr(kAttrPsKey, MakeValue(key), pull_node);
 
         std::string optimizer_name = AnfAlgo::GetNodeAttr<std::string>(node, kAttrOptimizerType);
-        ps::worker.SetKeyOptimId(key, optimizer_name);
+        ps::Worker::GetInstance().SetKeyOptimId(key, optimizer_name);
       }
     }
   }
@@ -2553,7 +2553,7 @@ void SessionBasic::InitPSParamAndOptim(const KernelGraphPtr &kernel_graph,
     auto input_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(input_node);
     if (input_node->isa<Parameter>() && AnfAlgo::OutputAddrExist(input_node, 0)) {
-      ps::worker.InitPSParamAndOptim(input_node, tensor);
+      ps::Worker::GetInstance().InitPSParamAndOptim(input_node, tensor);
     }
   }
 }

@@ -188,7 +188,7 @@ bool AscendPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
   MS_ERROR_IF_NULL(src);
   auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_HOST_TO_DEVICE, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtMemcpyAsync failed";
+    MS_LOG(ERROR) << "rtMemcpyAsync failed, the error num is:" << ret;
     return false;
   }
   return true;
@@ -199,7 +199,7 @@ bool AscendPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
   MS_ERROR_IF_NULL(src);
   auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_DEVICE_TO_HOST, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(ERROR) << "rtMemcpyAsync failed";
+    MS_LOG(ERROR) << "rtMemcpyAsync failed, the error num is:" << ret;
     return false;
   }
   return true;

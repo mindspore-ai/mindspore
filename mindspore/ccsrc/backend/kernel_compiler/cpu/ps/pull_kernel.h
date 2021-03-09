@@ -36,10 +36,10 @@ class PullKernel : public CPUKernel {
     if (inputs.size() != 2) {
       MS_LOG(EXCEPTION) << "Inputs size is " << inputs.size() << ", but PullKernel needs 2.";
     }
-    bool init_in_server = mindspore::ps::worker.GetParamInitInServer(param_name_);
+    bool init_in_server = mindspore::ps::Worker::GetInstance().GetParamInitInServer(param_name_);
     // If init_in_server, forward kernel should run in server too.
     if (!init_in_server) {
-      mindspore::ps::worker.Pull(key_, inputs[1]->addr, inputs[1]->size);
+      mindspore::ps::Worker::GetInstance().Pull(key_, inputs[1]->addr, inputs[1]->size);
     }
     return true;
   }

@@ -52,9 +52,9 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int64_t> lens{SizeToLong(input_shape.size()), SizeToLong(indices_shape.size()),
                             SizeToLong(output_shape.size())};
   if (mindspore::ps::PSContext::instance()->is_worker()) {
-    mindspore::ps::worker.AddEmbeddingTable(key_, input_shape[axis]);
+    mindspore::ps::Worker::GetInstance().AddEmbeddingTable(key_, input_shape[axis]);
     mindspore::ps::ParamInitInfoMessage info;
-    mindspore::ps::worker.InitPSEmbeddingTable(key_, input_shape, indices_shape, output_shape, info);
+    mindspore::ps::Worker::GetInstance().InitPSEmbeddingTable(key_, input_shape, indices_shape, output_shape, info);
   }
 }
 
@@ -81,7 +81,8 @@ bool EmbeddingLookUpProxyKernel::Launch(const std::vector<kernel::AddressPtr> &i
     MS_LOG(EXCEPTION) << "Lookup id memcpy failed.";
     return false;
   }
-  mindspore::ps::worker.DoPSEmbeddingLookup(key_, lookup_ids, &lookup_result, mindspore::ps::kEmbeddingLookupCmd);
+  mindspore::ps::Worker::GetInstance().DoPSEmbeddingLookup(key_, lookup_ids, &lookup_result,
+                                                           mindspore::ps::kEmbeddingLookupCmd);
 
   auto ret2 = memcpy_s(output_addr, outputs[0]->size, lookup_result.data(), output_size);
   if (ret2 != EOK) {

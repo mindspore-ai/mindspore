@@ -148,8 +148,6 @@ class Worker {
 
   std::unordered_map<Key, std::shared_ptr<std::vector<EmbeddingTableShardMetadata>>> embedding_table_ranges_;
 };
-
-static Worker &worker = Worker::GetInstance();
 }  // namespace ps
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PS_WORKER_H_
