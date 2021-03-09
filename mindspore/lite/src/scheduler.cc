@@ -387,6 +387,38 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
   return RET_OK;
 }
 
+bool Scheduler::KernelFitCurrentSubGraph(const kernel::SubGraphType subgraph_type, const kernel::LiteKernel &kernel) {
+  switch (subgraph_type) {
+    case kernel::SubGraphType::kNotSubGraph:
+    case kernel::SubGraphType::kApuSubGraph:
+      return false;
+    case kernel::SubGraphType::kGpuSubGraph:
+      return kernel.desc().arch == kGPU;
+    case kernel::SubGraphType::kNpuSubGraph:
+      return kernel.desc().arch == kNPU;
+    case kernel::SubGraphType::kCpuFP16SubGraph: {
+      auto desc = kernel.desc();
+      if (desc.arch != kCPU) {
+        return false;
+      }
+      return (desc.data_type == kNumberTypeFloat16 || desc.data_type == kNumberTypeInt32 ||
+              desc.data_type == kNumberTypeInt || desc.data_type == kNumberTypeBool);
+    }
+    case kernel::SubGraphType::kCpuFP32SubGraph: {
+      auto desc = kernel.desc();
+      if (desc.arch != kCPU) {
+        return false;
+      }
+      return (desc.data_type == kNumberTypeFloat32 || desc.data_type == kNumberTypeFloat ||
+              desc.data_type == kNumberTypeInt8 || desc.data_type == kNumberTypeInt ||
+              desc.data_type == kNumberTypeInt32 || desc.data_type == kNumberTypeInt64 ||
+              desc.data_type == kNumberTypeUInt8 || desc.data_type == kNumberTypeBool);
+    }
+    default:
+      return false;
+  }
+}
+
 std::vector<kernel::LiteKernel *> Scheduler::FindAllSubGraphKernels(
   kernel::LiteKernel *head_kernel, std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map) {
   MS_ASSERT(head_kernel != nullptr);

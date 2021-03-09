@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/constant_of_shape.h"
+#include "nnacl/constant_of_shape_parameter.h"
 
 namespace mindspore::lite {
 namespace {

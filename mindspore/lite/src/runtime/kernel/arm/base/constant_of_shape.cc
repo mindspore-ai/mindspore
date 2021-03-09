@@ -52,6 +52,12 @@ int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
       ConstantOfShapeInt32(reinterpret_cast<int32_t *>(output_ptr_), start, start + current_stride,
                            param_->value_.int32_value_);
       break;
+#ifdef ENABLE_NEON
+    case kNumberTypeFloat16:
+      ConstantOfShapeFp16(reinterpret_cast<float16_t *>(output_ptr_), start, start + current_stride,
+                          param_->value_.f32_value_);
+      break;
+#endif
     default:
       MS_LOG(ERROR) << "Invalid datatype in ConstantOfShapeRun";
       return RET_ERROR;
