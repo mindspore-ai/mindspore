@@ -1041,6 +1041,9 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
 AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();
+  if (args_spec_list.size() == 1) {
+    return args_spec_list[0]->Broaden();
+  }
   CheckArgsSize(op_name, args_spec_list, 3);
   AbstractTensorPtr range_start = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   AbstractTensorPtr range_end = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);

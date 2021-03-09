@@ -31,8 +31,6 @@ AbstractBasePtr AvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto element = tensor_type->element();
   return std::make_shared<abstract::AbstractTensor>(element, origin_input_shape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(AvgPoolGrad, prim::kPrimAvgPoolGrad, AvgPoolGradInfer);
 REGISTER_PRIMITIVE_C(kNameAvgPoolGrad, AvgPoolGrad);
 }  // namespace ops
 }  // namespace mindspore

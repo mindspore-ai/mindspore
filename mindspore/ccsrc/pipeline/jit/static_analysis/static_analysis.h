@@ -331,8 +331,6 @@ AbstractBasePtr FromValue(const T &value, bool broaden = false) {
 }
 
 EvalResultPtr EvalOnePrim(const PrimitivePtr &p, const AbstractBasePtrList &arg_specs);
-
-AbstractBasePtr CppInferShape(const PrimitivePtr &prim, const AbstractBasePtrList &args_spec_list);
 }  // namespace abstract
 }  // namespace mindspore
 

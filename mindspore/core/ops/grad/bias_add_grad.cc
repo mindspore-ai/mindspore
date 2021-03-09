@@ -58,8 +58,6 @@ AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const Prim
 
   return std::make_shared<abstract::AbstractTensor>(intype, inshape);
 }
-
-REGISTER_PRIMITIVE_EVAL_IMPL(BiasAddGrad, prim::kPrimBiasAddGrad, BiasAddGradInfer);
 REGISTER_PRIMITIVE_C(kNameBiasAddGrad, BiasAddGrad);
 }  // namespace ops
 }  // namespace mindspore

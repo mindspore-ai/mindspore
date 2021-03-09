@@ -1534,6 +1534,18 @@ bool AnfRuntimeAlgorithm::GetBooleanAttr(const AnfNodePtr &node, const std::stri
   return AnfAlgo::GetNodeAttr<bool>(node, attr);
 }
 
+bool AnfRuntimeAlgorithm::HasDynamicShapeFlag(const PrimitivePtr &prim) {
+  auto get_bool_attr = [](const PrimitivePtr &primitive, const std::string &attr_name) -> bool {
+    MS_EXCEPTION_IF_NULL(primitive);
+    if (!primitive->HasAttr(attr_name)) {
+      return false;
+    }
+    return GetValue<bool>(primitive->GetAttr(attr_name));
+  };
+  return get_bool_attr(prim, kAttrInputIsDynamicShape) || get_bool_attr(prim, kAttrOutputIsDynamicShape) ||
+         get_bool_attr(prim, kAttrIsDynamicShape);
+}
+
 bool AnfRuntimeAlgorithm::IsDynamicShape(const AnfNodePtr &node) {
   return GetBooleanAttr(node, kAttrInputIsDynamicShape) || GetBooleanAttr(node, kAttrOutputIsDynamicShape) ||
          GetBooleanAttr(node, kAttrIsDynamicShape);
@@ -1805,7 +1817,7 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
       args_spec_list.emplace_back(real_input->abstract());
     }
   }
-  auto eval_result = abstract::CppInferShape(primitive, args_spec_list);
+  auto eval_result = opt::CppInferShape(primitive, args_spec_list);
   node->set_abstract(eval_result);
 }
 }  // namespace session

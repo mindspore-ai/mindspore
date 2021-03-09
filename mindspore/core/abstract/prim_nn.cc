@@ -292,24 +292,6 @@ AbstractBasePtr InferImplFusedBatchNormEx(const AnalysisEnginePtr &, const Primi
   return std::make_shared<AbstractTuple>(rets);
 }
 
-AbstractBasePtr InferImplBatchNormGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_spec_list) {
-  // Inputs: five tensors(y_backprop, x, scale, save_mean, save_inv_variance).
-  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[2]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[3]);
-
-  CheckArgsSize(primitive->name(), args_spec_list, 5);
-  auto dx = args_spec_list[1]->Broaden();
-  auto dscale = args_spec_list[2]->Broaden();
-  auto dbias = args_spec_list[3]->Broaden();
-  auto reserve_1 = args_spec_list[4]->Broaden();
-  auto reserve_2 = args_spec_list[5]->Broaden();
-
-  AbstractBasePtrList rets = {dx, dscale, dbias, reserve_1, reserve_2};
-  return std::make_shared<AbstractTuple>(rets);
-}
-
 AbstractBasePtr InferImplReluGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors(y_backprop, x).
@@ -466,20 +448,6 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   }
   ShapePtr output_shape_ptr = std::make_shared<Shape>(output_shape, output_shape_min, output_shape_max);
   return std::make_shared<AbstractTensor>(x_type, output_shape_ptr);
-}
-
-AbstractBasePtr InferImplConv2DBackpropInput(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const AbstractBasePtrList &args_spec_list) {
-  // Inputs: three tensors(doutput, input, filters).
-  CheckRequiredArgsSize(primitive->name(), args_spec_list, 3);
-  return args_spec_list[1]->Broaden();
-}
-
-AbstractBasePtr InferImplConv2DBackpropFilter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const AbstractBasePtrList &args_spec_list) {
-  // Inputs: three tensors(inputs, filter, doutput).
-  CheckArgsSize(primitive->name(), args_spec_list, 3);
-  return args_spec_list[2]->Broaden();
 }
 
 AbstractBasePtr InferImplBiasAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -44,7 +44,7 @@
 #include "pipeline/jit/static_analysis/prim.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
 #include "backend/session/session_factory.h"
-#include "backend/optimizer/pass/const_input_to_attr_registry.h"
+#include "backend/optimizer/common/const_input_to_attr_registry.h"
 #include "backend/optimizer/common/helper.h"
 #include "pipeline/jit/action.h"
 
@@ -807,21 +807,13 @@ void PynativeExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
     }
   }
   // get output dynamic shape info
-  auto py_abstract = op_exec_info->abstract;
-  MS_EXCEPTION_IF_NULL(py_abstract);
-  auto py_shape = py_abstract->BuildShape();
-  MS_EXCEPTION_IF_NULL(py_shape);
-  auto py_shape_info = py_shape->ToString();
-  if (py_shape_info.find("-1") != string::npos) {
-    auto c_abstract = abstract::CppInferShape(prim, args_spec_list);
-    MS_EXCEPTION_IF_NULL(c_abstract);
-    auto c_shape = c_abstract->BuildShape();
-    MS_EXCEPTION_IF_NULL(c_shape);
-    auto c_shape_info = c_shape->ToString();
-    MS_LOG(DEBUG) << "Final infer output shape: " << c_shape_info;
-    if (c_shape_info.find("-1") != string::npos) {
-      op_exec_info->is_dynamic_shape = true;
-    }
+  auto abstract = op_exec_info->abstract;
+  MS_EXCEPTION_IF_NULL(abstract);
+  auto shape = abstract->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape);
+  auto shape_info = shape->ToString();
+  if (shape_info.find("-1") != string::npos) {
+    op_exec_info->is_dynamic_shape = true;
   }
 }
 

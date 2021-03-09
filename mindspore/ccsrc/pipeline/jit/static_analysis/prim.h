@@ -112,7 +112,6 @@ class MixedPrecisionCastEvaluator : public Evaluator {
 };
 
 bool IsInWhiteList(const PrimitivePtr &primitive);
-StandardPrimitiveEvalImpl GetPrimitiveInferImpl(const PrimitivePtr &primitive);
 
 using ValuePtrList = std::vector<ValuePtr>;
 using PrimitiveImpl = ValuePtr (*)(const ValuePtrList &);
