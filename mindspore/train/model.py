@@ -812,6 +812,7 @@ class Model:
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore import Model, context, Tensor
+            >>> from mindspore.context import ParallelMode
             >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
             >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
