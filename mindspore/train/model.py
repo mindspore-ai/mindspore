@@ -76,6 +76,7 @@ class Model:
                              to other metric. Default: None.
         amp_level (str): Option for argument `level` in `mindspore.amp.build_train_network`, level for mixed
             precision training. Supports ["O0", "O2", "O3", "auto"]. Default: "O0".
+
             - O0: Do not change.
             - O2: Cast network to float16, keep batchnorm run in float32, using dynamic loss scale.
             - O3: Cast network to float16, with additional property 'keep_batchnorm_fp32=False'.
