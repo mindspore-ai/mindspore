@@ -98,10 +98,6 @@ bool RemoveRedundantOpPass::Run(const FuncGraphPtr &func_graph) {
     if (CheckPrimitiveType(node, prim::kPrimUpdateState)) {
       status = ReplaceOp(node, manager);
     }
-    if (CheckPrimitiveType(node, prim::kPrimDepend) ||
-        CheckPrimitiveType(node, prim::kPrimControlDepend)) {  // ControlDepend delete next version.
-      status = ReplaceOp(node, manager);
-    }
     if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
       status = ReplaceTupleGetItem(node, manager);
     }

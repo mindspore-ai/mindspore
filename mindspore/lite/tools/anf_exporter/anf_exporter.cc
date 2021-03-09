@@ -770,6 +770,9 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
   } else if (value->isa<FuncGraph>()) {
     MS_LOG(INFO) << "op name:" << input_anode->fullname_with_scope() << " input is func_graph";
     return RET_OK;
+  } else if (value->isa<Monad>()) {
+    MS_LOG(INFO) << "value is a monad.";
+    return RET_OK;
   } else {
     MS_LOG(ERROR) << "Not support value type , need add support.";
     return RET_ERROR;
