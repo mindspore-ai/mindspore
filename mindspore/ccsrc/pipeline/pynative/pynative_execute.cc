@@ -2537,7 +2537,7 @@ void PynativeExecutor::GradNetInner(const GradOperationPtr &grad, const py::obje
 }
 
 void PynativeExecutor::ClearDynamicTopRes(const std::string &cell_id, const FuncGraphPtr &df_builder) {
-  if (IsTopestGraph(cell_id)) {
+  if (df_builder == nullptr && IsTopestGraph(cell_id)) {
     op_index_map_.clear();
   }
   // Delete unused top cell resource
