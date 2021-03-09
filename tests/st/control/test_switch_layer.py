@@ -24,11 +24,12 @@ from mindspore.common import dtype as mstype
 class CaseNet(nn.Cell):
     def __init__(self):
         super(CaseNet, self).__init__()
-        self.conv = nn.Conv2d(1, 3, 3)
+        self.conv = nn.Conv2d(1, 1, 3)
         self.relu = nn.ReLU()
+        self.relu1 = nn.ReLU()
         self.softmax = nn.Softmax()
         self.layers1 = (self.relu, self.softmax)
-        self.layers2 = (self.conv, self.relu)
+        self.layers2 = (self.conv, self.relu1)
 
     def construct(self, x, index1, index2):
         x = self.layers1[index1](x)
@@ -50,7 +51,3 @@ def test_switch_layer():
     true_value = relu(data)
     ret = np.allclose(value.asnumpy(), true_value.asnumpy())
     assert ret
-
-    idx3 = Tensor(3, mstype.int32)
-    with pytest.raises(IndexError):
-        value = net(data, idx3, idx2)
