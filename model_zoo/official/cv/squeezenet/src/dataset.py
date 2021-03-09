@@ -42,6 +42,8 @@ def create_dataset_cifar(dataset_path,
     """
     if target == "Ascend":
         device_num, rank_id = _get_rank_info()
+    elif target == "CPU":
+        device_num = 1
     else:
         init()
         rank_id = get_rank()

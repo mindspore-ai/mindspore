@@ -144,9 +144,10 @@ if __name__ == '__main__':
                       amp_level="O2",
                       keep_batchnorm_fp32=False)
     else:
-        # GPU target
-        print("Squeezenet training on GPU performs badly now, and it is still in research..."
-              "See model_zoo/research/cv/squeezenet to get up-to-date details.")
+        if target == "GPU":
+            # GPU target
+            print("Squeezenet training on GPU performs badly now, and it is still in research..."
+                  "See model_zoo/research/cv/squeezenet to get up-to-date details.")
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()),
                        lr,
                        config.momentum,

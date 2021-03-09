@@ -54,7 +54,8 @@ if __name__ == '__main__':
     target = args_opt.device_target
 
     # init context
-    device_id = int(os.getenv('DEVICE_ID'))
+    device_id = os.getenv('DEVICE_ID')
+    device_id = int(device_id) if device_id else 0
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=target,
                         device_id=device_id)
