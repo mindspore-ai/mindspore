@@ -81,7 +81,8 @@ AlbumOp::AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir
       row_cnt_(0),
       buf_cnt_(0),
       sampler_ind_(0),
-      dirname_offset_(0) {
+      dirname_offset_(0),
+      sample_ids_(nullptr) {
   // Set the column name map (base class field)
   for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
     column_name_id_map_[data_schema_->column(i).name()] = i;
@@ -598,6 +599,26 @@ Status AlbumOp::ComputeColMap() {
   } else {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
+  return Status::OK();
+}
+
+Status AlbumOp::GetNextRow(TensorRow *row) {
+  if (image_rows_.empty()) PrescanEntry();
+  if (sample_ids_ == nullptr) {
+    RETURN_IF_NOT_OK(this->InitSampler());
+    std::unique_ptr<DataBuffer> sample_buffer;
+    TensorRow sample_row;
+    RETURN_IF_NOT_OK(sampler_->GetNextSample(&sample_buffer));
+    RETURN_IF_NOT_OK(sample_buffer->PopRow(&sample_row));
+    sample_ids_ = sample_row[0];
+  }
+  if (row_cnt_ + 1 > sample_ids_->Size()) {
+    return Status::OK();
+  }
+  int64_t key;
+  sample_ids_->GetItemAt(&key, {row_cnt_});
+  RETURN_IF_NOT_OK(LoadTensorRow(key, image_rows_[key], row));
+  row_cnt_++;
   return Status::OK();
 }
 }  // namespace dataset

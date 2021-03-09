@@ -259,6 +259,8 @@ class BatchOp : public ParallelOp {
   // @return Status The status code returned
   Status LaunchThreadsAndInitOp();
 
+  Status GetNextRow(TensorRow *row) override;
+
 #ifdef ENABLE_PYTHON
   // Invoke batch size function with current BatchInfo to generate batch size.
   // @return Status The status code returned
@@ -278,6 +280,8 @@ class BatchOp : public ParallelOp {
   std::unique_ptr<ChildIterator> child_iterator_;       // child iterator for fetching TensorRows 1 by 1
   std::unordered_map<std::string, int32_t> child_map_;  // col_name_id_map of the child node
   QueueList<std::pair<std::unique_ptr<TensorQTable>, CBatchInfo>> worker_queues_;  // internal queue for syncing worker
+  int64_t batch_num_;
+  int64_t batch_cnt_;
 #ifdef ENABLE_PYTHON
   py::function batch_size_func_;  // Function pointer of batch size function
   py::function batch_map_func_;   // Function pointer of per batch map function

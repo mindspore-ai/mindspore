@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/core/client.h"
+#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/runtime_context.h"
 #include "minddata/dataset/include/datasets.h"
@@ -65,9 +66,11 @@ Status Iterator::GetNextRow(MSTensorVec *row) {
 
 // Shut down the data pipeline.
 void Iterator::Stop() {
-  Status rc = runtime_context_->Terminate();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << rc.ToString();
+  if (runtime_context_ != nullptr) {
+    Status rc = runtime_context_->Terminate();
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << rc.ToString();
+    }
   }
 }
 
@@ -79,6 +82,55 @@ Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epo
   consumer_ = consumer.get();
   RETURN_IF_NOT_OK(consumer->Init(ds->IRNode()));
   runtime_context_->AssignConsumer(std::move(consumer));
+  return Status::OK();
+}
+
+PullIterator::PullIterator() : pull_consumer_(nullptr) {}
+// Get the next row from the data pipeline.
+Status PullIterator::GetRows(int32_t num_rows, std::vector<MSTensorVec> *row) {
+  for (int i = 0; i < num_rows; i++) {
+    std::vector<std::shared_ptr<dataset::Tensor>> md_row;
+    Status rc = pull_consumer_->GetNextAsVector(&md_row);
+
+    if (rc.IsError()) {
+      row->clear();
+      MS_LOG(ERROR) << "GetNextRow: Failed to get next row. Error status: " << rc;
+      return rc;
+    }
+
+    MSTensorVec ms_row = {};
+    for (auto de_tensor : md_row) {
+      CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(), "Apply transform failed, output tensor has no data");
+      ms_row.push_back(mindspore::MSTensor(std::make_shared<DETensor>(de_tensor)));
+    }
+    row->push_back(ms_row);
+  }
+  return Status::OK();
+}
+
+Status PullIterator::GetNextRow(MSTensorVec *row) {
+  CHECK_FAIL_RETURN_UNEXPECTED(pull_consumer_ != nullptr, "Consumer is nullptr.");
+  std::vector<std::shared_ptr<dataset::Tensor>> md_row;
+  Status rc = pull_consumer_->GetNextAsVector(&md_row);
+  if (rc.IsError()) {
+    row->clear();
+    MS_LOG(ERROR) << "GetNextRow: Failed to get next row. Error status: " << rc;
+    return rc;
+  }
+
+  for (auto de_tensor : md_row) {
+    CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(), "Apply transform failed, output tensor has no data");
+    row->push_back(mindspore::MSTensor(std::make_shared<DETensor>(de_tensor)));
+  }
+  return Status::OK();
+}
+
+// Function to build and launch the execution tree. This function kicks off a different type of consumer
+// for the tree, the reason why this is the case is due to the fact that PullBasedIterator does not need
+// to instantiate threads for each op. As such, the call to the consumer will by pass the execution tree.
+Status PullIterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
+  if (pull_consumer_ == nullptr) pull_consumer_ = std::make_unique<PullBasedIteratorConsumer>();
+  RETURN_IF_NOT_OK(pull_consumer_->Init(std::move(ds->IRNode())));
   return Status::OK();
 }
 

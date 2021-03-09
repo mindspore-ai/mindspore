@@ -101,6 +101,8 @@ class ProjectOp : public PipelineOp {
   // @return Status The status code returned
   Status EofReceived(int32_t worker_id) override;
 
+  Status GetNextRow(TensorRow *row) override;
+
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return kProjectOp; }

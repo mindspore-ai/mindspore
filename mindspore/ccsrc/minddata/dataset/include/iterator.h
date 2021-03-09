@@ -37,6 +37,7 @@ class Tensor;
 
 class NativeRuntimeContext;
 class IteratorConsumer;
+class PullBasedIteratorConsumer;
 
 class Dataset;
 
@@ -80,7 +81,7 @@ class Iterator {
   /// \note Type of return data is a vector(without column name).
   /// \param[out] row - the output tensor row.
   /// \return - a Status error code, returns OK if no error encountered.
-  Status GetNextRow(MSTensorVec *row);
+  virtual Status GetNextRow(MSTensorVec *row);
 
   /// \brief Function to shut down the data pipeline.
   void Stop();
@@ -130,6 +131,35 @@ class Iterator {
  private:
   std::unique_ptr<NativeRuntimeContext> runtime_context_;
   IteratorConsumer *consumer_;
+};
+
+class PullIterator : public Iterator {
+ public:
+  /// \brief Constructor
+  PullIterator();
+
+  /// \brief Function to get next row from the data pipeline.
+  /// \note Type of return data is a vector(without column name).
+  /// \param[out] row - the output tensor row.
+  /// \return Returns true if no error encountered else false.
+  Status GetNextRow(MSTensorVec *row) override;
+
+  /// \brief Function to get specified rows from the data pipeline.
+  /// \note Type of return data is a vector(without column name).
+  /// \note This behavior is subject to change
+  /// \param[in] num_rows - the number of rows to fetch.
+  /// \param[out] row - the output tensor row.
+  /// \return Returns true if no error encountered else false.
+  Status GetRows(int32_t num_rows, std::vector<MSTensorVec> *row);
+
+  /// \brief Method for building and launching the pipeline.
+  /// \note Consider making this function protected.
+  /// \param[in] ds - The root node that calls the function
+  /// \return - a Status error code, returns OK if no error encountered.
+  Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds);
+
+ private:
+  std::unique_ptr<PullBasedIteratorConsumer> pull_consumer_;
 };
 }  // namespace dataset
 }  // namespace mindspore

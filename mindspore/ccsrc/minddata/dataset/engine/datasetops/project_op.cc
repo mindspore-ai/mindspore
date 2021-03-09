@@ -151,5 +151,17 @@ Status ProjectOp::ComputeColMap() {
   }
   return Status::OK();
 }
+
+Status ProjectOp::GetNextRow(TensorRow *row) {
+  ComputeColMap();
+  TensorRow new_row;
+  RETURN_IF_NOT_OK(child_[0]->GetNextRow(&new_row));
+  (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(), std::back_inserter(*row),
+                       [&new_row](uint32_t x) { return new_row[x]; });
+  // Now if columns changed after map, we don't know which column we should keep,
+  // so temporarily we don't support print file_path after ProjectOp.
+  new_row.setPath({});
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

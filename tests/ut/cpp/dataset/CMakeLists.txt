@@ -30,6 +30,7 @@ SET(DE_UT_SRCS
         c_api_dataset_voc_test.cc
         c_api_datasets_test.cc
         c_api_epoch_ctrl_test.cc
+        c_api_pull_based_test.cc
         c_api_repeat_test.cc
         c_api_samplers_test.cc
         c_api_text_sentence_piece_vocab_test.cc

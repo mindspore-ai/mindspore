@@ -125,6 +125,8 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/core/tensor.cc
         ${MINDDATA_DIR}/core/global_context.cc
         ${MINDDATA_DIR}/core/client.cc
+        ${MINDDATA_DIR}/engine/tree_adapter_lite.cc
+        ${MINDDATA_DIR}/engine/consumers/pull_based_tree_consumer.cc
         ${MINDDATA_DIR}/engine/consumers/tree_consumer.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/dataset_node.cc
         ${MINDDATA_DIR}/engine/ir/datasetops/epoch_ctrl_node.cc

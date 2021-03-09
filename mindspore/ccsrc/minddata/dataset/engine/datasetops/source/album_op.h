@@ -291,6 +291,8 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \return Status The status code returned
   Status Reset() override;
 
+  Status GetNextRow(TensorRow *row) override;
+
   // Private function for computing the assignment of the column name map.
   // @return Status The status code returned
   Status ComputeColMap() override;
@@ -306,6 +308,7 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   int64_t sampler_ind_;
   int64_t dirname_offset_;
   std::vector<std::string> image_rows_;
+  TensorPtr sample_ids_;
 };
 }  // namespace dataset
 }  // namespace mindspore
