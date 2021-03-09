@@ -60,6 +60,7 @@ constexpr auto kFusedBatchNormGradExWithAddAndActivation = "FusedBatchNormGradEx
 constexpr auto kClearZeroOpName = "ClearZero";
 constexpr auto kAtomicAddrCleanOpName = "AtomicAddrClean";
 constexpr auto kGetNextOpName = "GetNext";
+constexpr auto kInitDatasetQueueOpName = "InitDataSetQueue";
 constexpr auto kEndOfSequence = "EndOfSequence";
 constexpr auto kAllReduceOpName = "AllReduce";
 constexpr auto kAllGatherOpName = "AllGather";
@@ -505,7 +506,8 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
 
 const std::set<std::string> kPosteriorOperatorSet = {kPullOpName};
 
-const std::set<std::string> kOpCacheAllowList = {kUniformCandidateSamplerOpName};
+const std::set<std::string> kOpCacheAllowList = {kUniformCandidateSamplerOpName, kInitDatasetQueueOpName,
+                                                 kGetNextOpName};
 
 const std::set<std::string> kHWSpecialFormatSet = {
   kOpFormat_FRACTAL_Z_3D, kOpFormat_NC1KHKWHWC0,   kOpFormat_NC1HWC0,         kOpFormat_FRAC_NZ,  kOpFormat_C1HWNCoC0,
