@@ -47,8 +47,13 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_REDUCE_PRECISION, true);
   auto env_device = common::GetEnv("DEVICE_ID");
   if (!env_device.empty()) {
-    uint32_t device_id = UlongToUint(std::stoul(env_device.c_str()));
-    set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+    try {
+      uint32_t device_id = UlongToUint(std::stoul(env_device));
+      set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
+    } catch (std::invalid_argument &e) {
+      MS_LOG(WARNING) << "Invalid DEVICE_ID env:" << env_device << ". Please set DEVICE_ID to 0-7";
+      set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
+    }
   } else {
     set_param<uint32_t>(MS_CTX_DEVICE_ID, 0);
   }
