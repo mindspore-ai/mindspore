@@ -25,7 +25,7 @@ include(${MICRO_DIR}/cmake/file_list.cmake)
 include(${MICRO_DIR}/cmake/package_wrapper.cmake)
 add_subdirectory(operator_library)
 
-if(NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
+if(ENABLE_CONVERTER)
     add_executable(codegen main.cc ${FILE_SET})
     add_dependencies(codegen fbs_src)
     add_dependencies(codegen fbs_inner_src)
