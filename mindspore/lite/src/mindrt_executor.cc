@@ -75,7 +75,7 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
     }
   }
 
-  return MindrtRun<Tensor>(inputData_, &outputData_);
+  return MindrtRun<Tensor>(inputData_, &outputData_, &before, &after);
 }
 
 }  // namespace mindspore::lite

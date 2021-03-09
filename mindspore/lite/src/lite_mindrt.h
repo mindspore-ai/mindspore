@@ -25,6 +25,7 @@
 #include "actor/actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"
+#include "src/sub_graph_kernel.h"
 
 namespace mindspore {
 namespace lite {
@@ -36,18 +37,20 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {}
   virtual ~LiteOpActor() = default;
   virtual void OpRun(OpDataPtr<Tensor> inputs, OpContext<Tensor> *context = nullptr) {
-    input_op_datas_[context->sequential_num_].push_back(inputs);
-    if (input_op_datas_[context->sequential_num_].size() < kernel_->in_tensors().size()) {
+    auto op_uuid = context->sequential_num_;
+    input_op_datas_[op_uuid].push_back(inputs);
+    if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {
       return;
     }
-    auto ret = RunKernel();
+    auto ret = RunKernel(*(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_before_)),
+                         *(reinterpret_cast<const KernelCallBack *>(context->kernel_call_back_after_)));
     if (ret != RET_OK) {
+      input_op_datas_.erase(op_uuid);
       context->SetFailed(ret);
-      input_op_datas_.erase(context->sequential_num_);
       return;
     }
+    input_op_datas_.erase(op_uuid);
     SetOutputData(context);
-    input_op_datas_.erase(context->sequential_num_);
   }
   void Init() {
     auto ret = CompileArrow();
@@ -57,14 +60,14 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     }
   }
   int CompileArrow();
-  int RunKernel() {
+  int RunKernel(const KernelCallBack &before, const KernelCallBack &after) {
     int ret;
     ret = kernel_->PreProcess();
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel_->name();
       return ret;
     }
-    ret = kernel_->Run();
+    ret = kernel_->Run(before, after);
     if (RET_OK != ret) {
       MS_LOG(ERROR) << "run kernel failed, name: " << kernel_->name();
       return ret;

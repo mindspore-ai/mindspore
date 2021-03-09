@@ -208,7 +208,10 @@ if(WIN32)
     add_compile_definitions(LITE_EXPORTS)
     add_compile_definitions(BUILDING_DLL)
 endif()
-add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
+
+if(ENABLE_MINDRT)
+    include_directories(${CORE_DIR}/mindrt/include)
+endif()
 
 if(ENABLE_CONVERTER)
     if(PLATFORM_ARM)
@@ -222,9 +225,9 @@ if(ENABLE_CONVERTER)
 endif()
 
 if(ENABLE_MINDRT)
-    include_directories(${CORE_DIR}/mindrt/include)
     add_compile_definitions(ENABLE_MINDRT)
 endif()
+
 
 if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     if(NOT DEFINED ENV{ANDROID_NDK})

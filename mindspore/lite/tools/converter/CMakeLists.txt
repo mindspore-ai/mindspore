@@ -109,8 +109,22 @@ set(LITE_SRC
 
 set(ENABLE_MINDRT "off")
 if(ENABLE_MINDRT)
-    set(LITE_SRC ${LITE_SRC} ${SRC_DIR}/lite_mindrt.cc ${SRC_DIR}/mindrt_executor.cc)
-    include_directories(${CORE_DIR}/mindrt/include)
+    include_directories(${CORE_DIR}/mindrt/)
+    include_directories(${CORE_DIR}/mindrt/src/)
+    set(MINDRT_SRC
+        ${SRC_DIR}/lite_mindrt.cc
+        ${SRC_DIR}/mindrt_executor.cc
+        ${CORE_DIR}/mindrt/src/litebus.cc
+        ${CORE_DIR}/mindrt/src/actor/actor.cc
+        ${CORE_DIR}/mindrt/src/actor/actormgr.cc
+        ${CORE_DIR}/mindrt/src/actor/actorpolicy.cc
+        ${CORE_DIR}/mindrt/src/actor/actorthread.cc
+        ${CORE_DIR}/mindrt/src/actor/aid.cc
+        ${CORE_DIR}/mindrt/src/async/async.cc
+        ${CORE_DIR}/mindrt/src/async/future.cc
+        ${CORE_DIR}/mindrt/src/async/uuid_base.cc
+        ${CORE_DIR}/mindrt/src/async/uuid_generator.cc
+        )
 endif()
 
 set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
@@ -153,6 +167,7 @@ set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=minds
 set_property(SOURCE ${OPS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${KERNEL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+set_property(SOURCE ${MINDRT_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_executable(converter_lite
         main.cc
         ${CCSRC_SRC}
@@ -160,13 +175,10 @@ add_executable(converter_lite
         ${OPS_SRC}
         ${KERNEL_SRC}
         ${LITE_SRC}
+        ${MINDRT_SRC}
         )
 add_dependencies(converter_lite fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
-
-if(ENABLE_MINDRT)
-    target_link_libraries(converter_lite PRIVATE mindrt_mid)
-endif()
 
 target_link_libraries(converter_lite PRIVATE
         tflite_parser_mid
