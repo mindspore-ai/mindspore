@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace profiler {
 namespace cpu {
-const float kTimeUnit = 1000;
+const float kNanosecondToMillisecond = 1000000;
 
 class CPUProfiler : public Profiler {
  public:

@@ -72,7 +72,7 @@ void CPUProfiler::OpDataProducerBegin(const std::string op_name, const uint32_t 
 void CPUProfiler::OpDataProducerEnd() {
   float op_time_elapsed = 0;
   op_time_stop_ = GetHostMonoTimeStamp();
-  op_time_elapsed = (op_time_stop_ - op_time_start_) / kTimeUnit;
+  op_time_elapsed = (op_time_stop_ - op_time_start_) / kNanosecondToMillisecond;
   MS_LOG(DEBUG) << "Host Time Elapsed(us)," << op_name_ << "," << op_time_elapsed;
   Profiler::SetRunTimeData(op_name_, op_time_elapsed);
   Profiler::SetRunTimeData(op_name_, op_time_mono_start_, op_time_elapsed);

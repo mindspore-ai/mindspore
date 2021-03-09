@@ -41,7 +41,6 @@ uint64_t Profiler::GetHostMonoTimeStamp() {
 void Profiler::SetRunTimeData(const std::string &op_name, const float time_elapsed) {
   auto iter = op_info_map_.find(op_name);
   if (iter != op_info_map_.end()) {
-    // The time unit is ms, convert to us
     iter->second.op_host_cost_time += time_elapsed;
   }
 }
