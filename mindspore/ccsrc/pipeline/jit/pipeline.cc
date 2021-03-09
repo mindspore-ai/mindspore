@@ -724,12 +724,14 @@ void Pipeline::Run() {
       if (!result) {
         MS_LOG(EXCEPTION) << "Pipeline running to end, failed in step:" << action.first;
       }
+
+      FuncGraphPtr graph = resource_->func_graph();
 #ifdef ENABLE_DUMP_IR
       if (mindspore::RecorderManager::Instance().RdrEnable()) {
         MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
         std::string tag = GetBaseNameForIR(i, action.first);
-        if (resource_->func_graph() != nullptr) {
-          auto graph_clone = BasicClone(resource_->func_graph());
+        if (graph != nullptr) {
+          auto graph_clone = BasicClone(graph);
           if (graph_clone != nullptr) {
             mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, tag, graph_clone, false, ".ir");
           } else {
@@ -741,23 +743,21 @@ void Pipeline::Run() {
         MS_LOG(INFO) << "Recording FuncGraph in pipeline end.";
       }
 #endif
-      if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && resource_->func_graph() != nullptr) {
-        auto graph = resource_->func_graph();
-        if (graph != nullptr) {
-          user_graph = graph;
-          std::string base_name = GetBaseNameForIR(i, action.first);
 
-          // generate IR file in dot format, which can be converted to svg file using graphviz dot command
-          draw::Draw(base_name + ".dot", graph);
-          // generate IR file in human readable format
-          if (i == actions_.size() - 1) {
-            DumpIR(base_name + ".ir", graph, false, kWholeStack);
-          } else {
-            DumpIR(base_name + ".ir", graph, false, kTopStack);
-          }
-          // generate IR file in a heavily commented format, which can also be reloaded
-          ExportIR(base_name + ".dat", std::to_string(i), graph);
+      if (MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG) && graph != nullptr) {
+        user_graph = graph;
+        std::string base_name = GetBaseNameForIR(i, action.first);
+
+        // generate IR file in dot format, which can be converted to svg file using graphviz dot command
+        draw::Draw(base_name + ".dot", graph);
+        // generate IR file in human readable format
+        if (i == actions_.size() - 1) {
+          DumpIR(base_name + ".ir", graph, false, kWholeStack);
+        } else {
+          DumpIR(base_name + ".ir", graph, false, kTopStack);
         }
+        // generate IR file in a heavily commented format, which can also be reloaded
+        ExportIR(base_name + ".dat", std::to_string(i), graph);
       }
       i++;
 #ifdef ENABLE_TIMELINE

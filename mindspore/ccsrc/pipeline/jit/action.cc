@@ -452,7 +452,21 @@ static bool IsCtrlSink() {
   return true;
 }
 
+bool CheckGraphOutputConstOrParameter(const FuncGraphPtr &func_graph) {
+  if (func_graph != nullptr) {
+    AnfNodePtr output = func_graph->output();
+    if (output != nullptr && (output->isa<ValueNode>() || output->isa<Parameter>())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool TaskEmitAction(const ResourcePtr &res) {
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
+      CheckGraphOutputConstOrParameter(res->func_graph())) {
+    return true;
+  }
   if (res->func_graph() == nullptr) {
     MS_LOG(EXCEPTION) << "TaskEmit args error";
   }
@@ -487,6 +501,10 @@ bool TaskEmitAction(const ResourcePtr &res) {
 }
 
 bool ExecuteAction(const ResourcePtr &res) {
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
+      CheckGraphOutputConstOrParameter(res->func_graph())) {
+    return true;
+  }
   if (res->results().count(kOutput) == 0) {
     MS_LOG(EXCEPTION) << "Execute args error";
   }
