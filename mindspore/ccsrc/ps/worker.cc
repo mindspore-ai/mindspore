@@ -306,6 +306,7 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
   int64_t single_id_len = SizeToLong(lookup_result->size() / lookup_ids.size());
   std::unordered_map<Key, std::shared_ptr<std::pair<float *, int64_t>>> id_addr_map;
   std::shared_ptr<std::vector<float>> values = std::make_shared<std::vector<float>>();
+  std::shared_ptr<std::vector<Key>> keys = std::make_shared<std::vector<Key>>();
   int64_t value_offset = 0;
   for (size_t i = 0; i < resp.size(); ++i) {
     KVMessage message;
@@ -315,10 +316,15 @@ void Worker::DoPSEmbeddingLookup(const Key &key, const std::vector<int> &lookup_
     }
     for (auto k = 0; k < message.keys_size(); k++) {
       const Key &key = message.keys(k);
-      float *addr = values->data() + value_offset;
-      value_offset += single_id_len;
-      id_addr_map[key] = std::make_shared<std::pair<float *, int64_t>>(std::make_pair(addr, single_id_len));
+      keys->push_back(key);
     }
+  }
+
+  for (size_t i = 0; i < keys->size(); i++) {
+    const Key &key = keys->at(i);
+    float *addr = values->data() + value_offset;
+    value_offset += single_id_len;
+    id_addr_map[key] = std::make_shared<std::pair<float *, int64_t>>(std::make_pair(addr, single_id_len));
   }
 
   float *result_addr = lookup_result->data();
