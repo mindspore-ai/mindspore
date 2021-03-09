@@ -32,6 +32,7 @@
 #endif
 #ifdef ENABLE_ACL
 #include "minddata/dataset/core/ascend_resource.h"
+#include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/kernels/ir/vision/ascend_vision_ir.h"
 #endif
 
@@ -42,6 +43,15 @@ using json = nlohmann::json;
 struct Execute::ExtraInfo {
   std::multimap<std::string, std::vector<uint32_t>> aipp_cfg_;
   bool init_with_shared_ptr_ = true;  // Initial execute object with shared_ptr as default
+#ifdef ENABLE_ACL
+  std::multimap<std::string, std::string> op2para_map_ = {{vision::kDvppCropJpegOperation, "size"},
+                                                          {vision::kDvppDecodeResizeOperation, "size"},
+                                                          {vision::kDvppDecodeResizeCropOperation, "crop_size"},
+                                                          {vision::kDvppDecodeResizeCropOperation, "resize_size"},
+                                                          {vision::kDvppNormalizeOperation, "mean"},
+                                                          {vision::kDvppNormalizeOperation, "std"},
+                                                          {vision::kDvppResizeJpegOperation, "size"}};
+#endif
 };
 
 // FIXME - Temporarily overload Execute to support both TensorOperation and TensorTransform
@@ -221,6 +231,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
   // Parse TensorTransform transforms_ into TensorOperation ops_
   if (info_->init_with_shared_ptr_) {
     RETURN_IF_NOT_OK(ParseTransforms_());
+    info_->init_with_shared_ptr_ = false;
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
 
@@ -285,11 +296,13 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
       device_input = std::move(device_output);
     }
     CHECK_FAIL_RETURN_UNEXPECTED(device_input->HasDeviceData(), "Apply transform failed, output tensor has no data");
-    std::shared_ptr<mindspore::dataset::Tensor> host_output;
+
     // TODO(lizhenglong) waiting for computing department development, hence we pop data onto host temporarily.
-    RETURN_IF_NOT_OK(device_resource_->Pop(device_input, &host_output));
-    *output = mindspore::MSTensor(std::make_shared<DETensor>(host_output));
-    // *output = mindspore::MSTensor(std::make_shared<DETensor>(device_input, true)); Use in the future
+    // std::shared_ptr<mindspore::dataset::Tensor> host_output;
+    // RETURN_IF_NOT_OK(device_resource_->Pop(device_input, &host_output));
+    // *output = mindspore::MSTensor(std::make_shared<DETensor>(host_output));
+
+    *output = mindspore::MSTensor(std::make_shared<DETensor>(device_input, true));
 #endif
   }
   return Status::OK();
@@ -306,6 +319,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
   // Parse TensorTransform transforms_ into TensorOperation ops_
   if (info_->init_with_shared_ptr_) {
     RETURN_IF_NOT_OK(ParseTransforms_());
+    info_->init_with_shared_ptr_ = false;
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
 
@@ -386,6 +400,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
 
 std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, const std::vector<uint32_t> &crop_para) {
   std::vector<uint32_t> aipp_size;
+
   // Special condition where (no Crop and no Resize) or (no Crop and resize with fixed ratio) will lead to dynamic input
   if ((resize_para.size() == 0 || resize_para.size() == 1) && crop_para.size() == 0) {
     aipp_size = {0, 0};
@@ -408,6 +423,11 @@ std::vector<uint32_t> AippSizeFilter(const std::vector<uint32_t> &resize_para, c
           : crop_para;
     }
   }
+
+#ifdef ENABLE_ACL
+  aipp_size[0] = DVPP_ALIGN_UP(aipp_size[0], VPC_HEIGHT_ALIGN);  // H
+  aipp_size[1] = DVPP_ALIGN_UP(aipp_size[1], VPC_WIDTH_ALIGN);   // W
+#endif
   return aipp_size;
 }
 
@@ -489,6 +509,7 @@ std::string Execute::AippCfgGenerator() {
 #ifdef ENABLE_ACL
   if (info_->init_with_shared_ptr_) {
     ParseTransforms_();
+    info_->init_with_shared_ptr_ = false;
   }
   std::vector<uint32_t> paras;  // Record the parameters value of each Ascend operators
   for (int32_t i = 0; i < ops_.size(); i++) {
@@ -501,15 +522,9 @@ std::string Execute::AippCfgGenerator() {
 
     // Define map between operator name and parameter name
     ops_[i]->to_json(&ir_info);
-    std::multimap<std::string, std::string> op_list = {{vision::kDvppCropJpegOperation, "size"},
-                                                       {vision::kDvppDecodeResizeOperation, "size"},
-                                                       {vision::kDvppDecodeResizeCropOperation, "crop_size"},
-                                                       {vision::kDvppDecodeResizeCropOperation, "resize_size"},
-                                                       {vision::kDvppNormalizeOperation, "mean"},
-                                                       {vision::kDvppNormalizeOperation, "std"},
-                                                       {vision::kDvppResizeJpegOperation, "size"}};
+
     // Collect the information of operators
-    for (auto pos = op_list.equal_range(ops_[i]->Name()); pos.first != pos.second; ++pos.first) {
+    for (auto pos = info_->op2para_map_.equal_range(ops_[i]->Name()); pos.first != pos.second; ++pos.first) {
       auto paras_key_word = pos.first->second;
       paras = ir_info[paras_key_word].get<std::vector<uint32_t>>();
       info_->aipp_cfg_.insert(std::make_pair(ops_[i]->Name(), paras));
@@ -578,6 +593,11 @@ std::string Execute::AippCfgGenerator() {
     }
     outfile << "}";
     outfile.close();
+  } else {  // For case GPU or CPU
+    outfile << "aipp_op {" << std::endl << "}";
+    outfile.close();
+    MS_LOG(WARNING) << "Your runtime environment is not Ascend310, this config file will lead to undefined behavior on "
+                       "computing result. Please check that.";
   }
 #endif
   return config_location;
@@ -608,8 +628,9 @@ Status Execute::ParseTransforms_() {
 }
 
 Status Execute::validate_device_() {
-  if (device_type_ != MapTargetDevice::kCpu && device_type_ != MapTargetDevice::kAscend310) {
-    std::string err_msg = "Your input device is not supported. (Option: CPU or Ascend310)";
+  if (device_type_ != MapTargetDevice::kCpu && device_type_ != MapTargetDevice::kAscend310 &&
+      device_type_ != MapTargetDevice::kGpu) {
+    std::string err_msg = "Your input device is not supported. (Option: CPU or GPU or Ascend310)";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_UNEXPECTED(err_msg);
   }

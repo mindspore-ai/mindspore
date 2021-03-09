@@ -18,6 +18,7 @@
 #include "include/api/types.h"
 #include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/core/ascend_resource.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 
 namespace mindspore {
 namespace dataset {
@@ -59,6 +60,10 @@ Status AscendResource::Sink(const mindspore::MSTensor &host_input, std::shared_p
                                                 MSTypeToDEType(static_cast<TypeId>(host_input.DataType())),
                                                 (const uchar *)(host_input.Data().get()), &de_input);
   RETURN_IF_NOT_OK(rc);
+  if (!IsNonEmptyJPEG(de_input)) {
+    RETURN_STATUS_UNEXPECTED("Dvpp operators can only support processing JPEG image");
+  }
+
   APP_ERROR ret = processor_->H2D_Sink(de_input, *device_input);
   if (ret != APP_ERR_OK) {
     ascend_resource_->Release();

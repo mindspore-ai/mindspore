@@ -87,8 +87,8 @@ const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
 std::shared_ptr<const void> DETensor::Data() const {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
-    MS_LOG(ERROR) << "Data() always return the data on the host.";
-    return nullptr;
+    ASSERT_NULL(device_tensor_impl_);
+    return std::shared_ptr<const void>(device_tensor_impl_->GetHostBuffer(), [](const void *) {});
   }
 #endif
   return std::shared_ptr<const void>(tensor_impl_->GetBuffer(), [](const void *) {});

@@ -43,6 +43,8 @@ class DeviceTensor : public Tensor {
                                        const uint32_t &dataSize, const std::vector<uint32_t> &attributes,
                                        std::shared_ptr<DeviceTensor> *out);
 
+  const unsigned char *GetHostBuffer();
+
   uint8_t *GetDeviceBuffer();
 
   uint8_t *GetDeviceMutableBuffer();
@@ -61,6 +63,10 @@ class DeviceTensor : public Tensor {
   Status SetYuvStrideShape_(const uint32_t &width, const uint32_t &widthStride, const uint32_t &height,
                             const uint32_t &heightStride);
 
+#ifdef ENABLE_ACL
+  Status DataPop_(std::shared_ptr<Tensor> *host_tensor);
+#endif
+
   std::vector<uint32_t> YUV_shape_;  // YUV_shape_ = {width, widthStride, height, heightStride}
 
   uint8_t *device_data_;
@@ -68,6 +74,9 @@ class DeviceTensor : public Tensor {
   uint32_t size_;
 
   DataType device_data_type_;
+
+  // We use this Tensor to store device_data when DeviceTensor pop onto host
+  std::shared_ptr<Tensor> host_data_tensor_;
 };
 
 }  // namespace dataset
