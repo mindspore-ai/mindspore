@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -250,9 +250,9 @@ def summation(inputs: Tensor, axis: _Axis = (), keep_dims: bool = False) -> Tens
 
 
 def stack(inputs: List[Tensor], axis: int) -> Tensor:
-    """Packs a list of tensors in specified axis."""
-    pack_op = op.Pack(axis)
-    outputs = pack_op(inputs)
+    """Stacks a list of tensors in specified axis."""
+    stack_op = op.Stack(axis)
+    outputs = stack_op(inputs)
     return outputs
 
 

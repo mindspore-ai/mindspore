@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -419,16 +419,20 @@ class Faithfulness(LabelSensitiveMetric):
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore.explainer.explanation import Gradient
-            >>> # init an explainer with a trained network, e.g., resnet50
-            >>> gradient = Gradient(network)
-            >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+            >>>
+            >>>
+            >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
+            >>> net = LeNet5(10, num_channel=3)
+            >>> gradient = Gradient(net)
+            >>> inputs = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
             >>> targets = 5
             >>> # usage 1: input the explainer and the data to be explained,
-            >>> # calculate the faithfulness with the specified metric
+            >>> # faithfulness is a Faithfulness instance
             >>> res = faithfulness.evaluate(gradient, inputs, targets)
             >>> # usage 2: input the generated saliency map
             >>> saliency = gradient(inputs, targets)
             >>> res = faithfulness.evaluate(gradient, inputs, targets, saliency)
+            >>> print(res)
         """
 
         self._check_evaluate_param(explainer, inputs, targets, saliency)

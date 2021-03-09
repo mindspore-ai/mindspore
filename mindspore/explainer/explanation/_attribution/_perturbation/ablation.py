@@ -130,7 +130,7 @@ class AblationWithSaliency(Ablation):
         Generate mask for perturbations based on given saliency ranks.
 
         Args:
-            saliency (np.ndarray): Perturbing masks will be generated based on the given saliency map. The shape of
+            saliency (numpy.array): Perturbing masks will be generated based on the given saliency map. The shape of
                 saliency is expected to be: [batch_size, optional(num_channels), *spatial_size]. If multi-channel
                 saliency is provided, an averaged saliency will be taken to calculate pixel order in spatial dimension.
             num_channels (optional[int]): Number of channels of the input data. In order to match the shape of inputs,
@@ -139,7 +139,7 @@ class AblationWithSaliency(Ablation):
                 no channel dimension. Default: None.
 
         Return:
-            mask (np.ndarray): boolen mask for generate perturbations.
+            numpy.array, boolean masks for perturbation generation.
         """
 
         batch_size = saliency.shape[0]
