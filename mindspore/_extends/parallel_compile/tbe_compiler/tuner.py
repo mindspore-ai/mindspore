@@ -195,12 +195,16 @@ class TbeTuner:
             os.environ["TE_LOGLEVEL"] = TE_LOG_LEVEL[2]
             global_loglevel = 3
         else:
-            if te_log_level > len(TE_LOG_LEVEL):
-                log.error("Invalid environment TE_LOGLEVEL:{}".format(te_log_level))
-                te_log_level = 2
-            os.environ["TE_LOGLEVEL"] = TE_LOG_LEVEL[int(te_log_level)]
-            global_loglevel = int(te_log_level)
-
+            # pylint: disable=no-else-return
+            if te_log_level.isdigit() and int(te_log_level) >= len(TE_LOG_LEVEL):
+                log.error(f"Invalid environment TE_LOGLEVEL, the value should be in [0, 4) if it is a digit, but got : "
+                          f"{te_log_level}")
+                return False
+            elif te_log_level.upper() not in TE_LOG_LEVEL:
+                log.error(f"Invalid environment TE_LOGLEVEL, the value should be one of [DEBUG, INFO, WARNING, ERROR] "
+                          f"if it is a string, but got :{te_log_level}")
+                return False
+            global_loglevel = int(te_log_level) if te_log_level.isdigit() else TE_LOG_LEVEL.index(te_log_level.upper())
         ret = init_multi_process_env(embedding, soc_info, tune_mode, global_loglevel, enable_event, pid_ts)
         if ret is None:
             log.error("Init multiprocess env failed")
