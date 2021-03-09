@@ -212,12 +212,6 @@ FuncGraphPtr Parser::ParseFuncGraph() {
     return nullptr;
   }
 
-  // Add unused variables as isolate nodes.
-  for (auto &block : func_block_list_) {
-    // Find unused variables.
-    block->FindIsolatedNodes();
-  }
-
   RemoveUnnecessaryPhis();
 
   MS_EXCEPTION_IF_NULL(pFnBlock);
@@ -338,6 +332,16 @@ FunctionBlockPtr Parser::ParseFunction(const py::object &node, const FunctionBlo
   py::object funcObj = python_adapter::GetPyObjAttr(node, "body");
   (void)ParseStatements(pFunBlock, funcObj);
 
+  // Add unused variables as isolate nodes.
+  for (auto &func_block : func_block_list_) {
+    if (func_block->func_graph()->get_return() != nullptr) {
+      // Find unused variables.
+      func_block->FindIsolatedNodes();
+      // Attach all isolated nodes.
+      func_block->AttachIsolatedNodesBeforeReturn();
+    }
+  }
+
   if (current_fg->get_return() == nullptr) {
     py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
     py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, node, ret[0], ret[1]);
@@ -356,8 +360,6 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr block, const py::objec
     block = ParseStatement(block, node);
     // Insert appropriate depended items for the function block if it has a return node
     if (block->func_graph()->get_return() != nullptr) {
-      // Attach all isolated nodes.
-      block->AttachIsolatedNodesBeforeReturn();
       // Skip statements after 'return' (or 'break', 'continue').
       break;
     }
@@ -436,7 +438,10 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
       // e.g.: print(x)
       // We save it as an isolated node.
       auto &no_return_node = call_node;
-      MS_LOG(INFO) << "Isolated node found(NoReturn), no_return_node: " << no_return_node->DebugString(2);
+      MS_LOG(INFO) << "Isolated node found(NoReturn), no_return_node: " << no_return_node->DebugString(2)
+                   << ", block: " << block << "/"
+                   << (block->func_graph() ? block->func_graph()->ToString() : "FG(Null)")
+                   << ", Line: " << trace::GetDebugInfo(no_return_node->debug_info(), "", kSourceLineTipDiscard);
       block->AddIsolatedNode(no_return_node);
     } else {
       // Expand the assign statement,
