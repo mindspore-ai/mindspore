@@ -40,7 +40,7 @@ int LiteOpActor::CompileArrow() {
         MS_LOG(ERROR) << "create OpArrow failed, out kernel: " << out->name();
         return RET_ERROR;
       }
-      output_op_arrow_.emplace_back(std::move(arrow));
+      output_op_arrows_.emplace_back(std::move(arrow));
       break;
     }
   }

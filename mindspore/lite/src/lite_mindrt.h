@@ -36,7 +36,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  public:
   explicit LiteOpActor(kernel::LiteKernel *kernel) : OpActor<lite::Tensor>(kernel->name()), kernel_(kernel) {}
   virtual ~LiteOpActor() = default;
-  virtual void OpRun(OpDataPtr<Tensor> inputs, OpContext<Tensor> *context = nullptr) {
+  virtual void RunOpData(OpDataPtr<Tensor> inputs, OpContext<Tensor> *context = nullptr) {
     auto op_uuid = context->sequential_num_;
     input_op_datas_[op_uuid].push_back(inputs);
     if (input_op_datas_[op_uuid].size() < kernel_->in_tensors().size()) {

@@ -68,6 +68,11 @@ class DeviceAddress : public mindspore::DeviceSync {
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
   virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
+  void set_ref_count(size_t ref_count) { ref_count_ = ref_count; }
+  void IncreaseRefCount() { ref_count_++; }
+  void DecreaseRefCountUsed() { ref_count_dynamic_used_--; }
+  void ResetRefCountUsed() { ref_count_dynamic_used_ = ref_count_; }
+  size_t ref_count_dynamic_used() const { return ref_count_dynamic_used_; }
   virtual bool DumpMemToFile(bool dump_mode, const std::string &filepath, const std::string &host_fmt,
                              const ShapeVector &host_shape, TypeId host_type) const {
     return true;
@@ -85,7 +90,9 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_ptr(void *ptr) { ptr_ = ptr; }
   void *ptr_{nullptr};
   size_t size_{0};
-  size_t ref_count_{0};
+  size_t ref_count_{1};
+  // It will be decreased in the running, and reset by ref_count_ when it is zero.
+  size_t ref_count_dynamic_used_{1};
   string format_{"DefaultFormat"};
   TypeId type_id_{kNumberTypeFloat16};
   bool from_mem_pool_{false};
