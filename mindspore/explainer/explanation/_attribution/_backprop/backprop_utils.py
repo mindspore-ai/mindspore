@@ -24,15 +24,15 @@ def get_bp_weights(model, inputs, targets=None, weights=None):
     Compute the gradient of output w.r.t input.
 
     Args:
-        model (`ms.nn.Cell`): Differentiable black-box model.
-        inputs (`ms.Tensor`): Input to calculate gradient and explanation.
+        model (Cell): Differentiable black-box model.
+        inputs (Tensor): Input to calculate gradient and explanation.
         targets (int, optional): Target label id specifying which category to compute gradient. Default: None.
-        weights (`ms.Tensor`, optional): Custom weights for computing gradients. The shape of weights should match the
-            model outputs. If None is provided, an one-hot weights with one in targets positions will be used instead.
+        weights (Tensor, optional): Custom weights for computing gradients. The shape of weights should match the model
+            outputs. If None is provided, an one-hot weights with one in targets positions will be used instead.
             Default: None.
 
     Returns:
-        saliency map (ms.Tensor): Gradient back-propagated to the input.
+        Tensor, signal to be back-propagated to the input.
     """
     inputs = unify_inputs(inputs)
     if targets is None and weights is None:

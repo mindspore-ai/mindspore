@@ -69,7 +69,7 @@ class AttributionMetric:
         if self._explainer is None:
             self._explainer = explainer
         elif self._explainer is not explainer:
-            logger.info('Provided explainer is not the same as previously evaluted one. Please reset the evaluated '
+            logger.info('Provided explainer is not the same as previously evaluated one. Please reset the evaluated '
                         'results. Previous explainer: %s, current explainer: %s', self._explainer, explainer)
             self._explainer = explainer
 
@@ -107,7 +107,7 @@ class LabelAgnosticMetric(AttributionMetric):
             raise TypeError('result should have type of float, ms.Tensor or np.ndarray, but receive %s' % type(result))
 
     def get_results(self):
-        """Return the gloabl results."""
+        """Return the global results."""
         return self._global_results.copy()
 
     def reset(self):

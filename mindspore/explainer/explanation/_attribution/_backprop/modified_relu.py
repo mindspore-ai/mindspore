@@ -109,16 +109,14 @@ class Deconvolution(ModifiedReLU):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import Deconvolution
-        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
-        >>> # init Deconvolution with a trained network.
-        >>> net = resnet50(10)  # please refer to model_zoo
-        >>> param_dict = load_checkpoint("resnet50.ckpt")
-        >>> load_param_into_net(net, param_dict)
+        >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
+        >>> net = LeNet5(10, num_channel=3)
         >>> deconvolution = Deconvolution(net)
         >>> # parse data and the target label to be explained and get the saliency map
-        >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+        >>> inputs = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
         >>> label = 5
         >>> saliency = deconvolution(inputs, label)
+        >>> print(saliency.shape)
     """
 
     def __init__(self, network):
@@ -154,17 +152,15 @@ class GuidedBackprop(ModifiedReLU):
     Examples:
         >>> import numpy as np
         >>> import mindspore as ms
-        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
         >>> from mindspore.explainer.explanation import GuidedBackprop
-        >>> # init GuidedBackprop with a trained network.
-        >>> net = resnet50(10)  # please refer to model_zoo
-        >>> param_dict = load_checkpoint("resnet50.ckpt")
-        >>> load_param_into_net(net, param_dict)
+        >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
+        >>> net = LeNet5(10, num_channel=3)
         >>> gbp = GuidedBackprop(net)
-        >>> # parse data and the target label to be explained and get the saliency map
-        >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+        >>> # feed data and the target label to be explained and get the saliency map
+        >>> inputs = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
         >>> label = 5
         >>> saliency = gbp(inputs, label)
+        >>> print(saliency.shape)
     """
 
     def __init__(self, network):

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -71,17 +71,15 @@ class Occlusion(PerturbationAttribution):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import Occlusion
-        >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
-        >>> # prepare your network and load the trained checkpoint file, e.g., resnet50.
-        >>> network = resnet50(10)
-        >>> param_dict = load_checkpoint("resnet50.ckpt")
-        >>> load_param_into_net(network, param_dict)
+        >>> # The detail of LeNet5 is shown in model_zoo.official.cv.lenet.src.lenet.py
+        >>> net = LeNet5(10, num_channel=3)
         >>> # initialize Occlusion explainer with the pretrained model and activation function
         >>> activation_fn = ms.nn.Softmax() # softmax layer is applied to transform logits to probabilities
-        >>> occlusion = Occlusion(network, activation_fn=activation_fn)
-        >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+        >>> occlusion = Occlusion(net, activation_fn=activation_fn)
+        >>> input_x = ms.Tensor(np.random.rand(1, 3, 32, 32), ms.float32)
         >>> label = ms.Tensor([1], ms.int32)
         >>> saliency = occlusion(input_x, label)
+        >>> print(saliency.shape)
     """
 
     def __init__(self, network, activation_fn, perturbation_per_eval=32):
