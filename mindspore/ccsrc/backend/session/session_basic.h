@@ -148,7 +148,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, std::vector<AnfNodePtr> *cnode_inputs,
                          std::unordered_map<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
   std::vector<AnfNodePtr> CreateCallSwitchLayerInputs(const CNodePtr &cnode, KernelGraph *graph);
-  void CreateCallNodeReturnFunction(const CNodePtr &cnode, const std::vector<AnfNodePtr> &real_inputs);
+  void CreateCallNodeReturnFunction(const CNodePtr &cnode, KernelGraph *graph,
+                                    const std::vector<AnfNodePtr> &real_inputs);
 
  protected:
   friend class Executor;
