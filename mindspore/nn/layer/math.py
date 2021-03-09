@@ -18,6 +18,7 @@ import numpy as np
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.tensor import Tensor
+from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
 from ..cell import Cell
@@ -866,6 +867,7 @@ class MatMul(Cell):
         (3, 2, 4)
     """
 
+    @deprecated('1.2', 'ops.matmul', False)
     def __init__(self, transpose_x1=False, transpose_x2=False):
         super(MatMul, self).__init__()
 
