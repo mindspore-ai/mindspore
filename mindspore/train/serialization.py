@@ -580,6 +580,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         inputs (Tensor): Inputs of the `net`.
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
+
             - AIR: Ascend Intermediate Representation. An intermediate representation format of Ascend model.
               Recommended suffix for output file is '.air'.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
@@ -589,6 +590,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Recommended suffix for output file is '.mindir'.
 
         kwargs (dict): Configuration options dictionary.
+
             - quant_mode: The mode of quant.
             - mean: Input data mean. Default: 127.5.
             - std_dev: Input data variance. Default: 127.5.
