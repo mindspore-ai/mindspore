@@ -1058,6 +1058,8 @@ def std(x, axis=None, ddof=0, keepdims=False):
 
     if not isinstance(ddof, int):
         _raise_type_error("integer argument expected, but got ", ddof)
+    if not isinstance(keepdims, int):
+        _raise_type_error("integer argument expected, but got ", keepdims)
     if axis is None:
         axis = ()
     else:
@@ -1179,7 +1181,7 @@ def average(x, axis=None, weights=None, returned=False):
         axis (Union[None, int, tuple(int)]): Axis along which to average `x`. Default: `None`.
             If the axis is `None`, it will average over all of the elements of the tensor `x`.
             If the axis is negative, it counts from the last to the first axis.
-        weights (Tensor): Weights associated with the values in `x`. Default: `None`.
+        weights (Union[None, Tensor]): Weights associated with the values in `x`. Default: `None`.
             If `weights` is `None`, all the data in `x` are assumed to have a weight equal to one.
             If `weights` is 1-D tensor, the length must be the same as the given axis.
             Otherwise, `weights` should have the same shape as `x`.
@@ -1201,6 +1203,7 @@ def average(x, axis=None, weights=None, returned=False):
         (Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e+00,  3.33333325e+00]),
          Tensor(shape=[2], dtype=Float32, value= [ 4.00000000e+00,  6.00000000e+00]))
     """
+    _check_input_tensor(x)
     if axis is None:
         axis = ()
     else:
@@ -1225,6 +1228,7 @@ def average(x, axis=None, weights=None, returned=False):
                     fill_value *= x.shape[ax]
             sum_of_weights = full_like(x_avg, fill_value, F.dtype(x))
     else:
+        _check_input_tensor(weights)
         if x.shape == weights.shape:
             x_avg, sum_of_weights = comput_avg(x, axis, weights)
         elif F.rank(weights) == 1:
