@@ -16,8 +16,6 @@
 
 package com.mindspore.lite;
 
-import android.util.Log;
-
 import java.nio.ByteBuffer;
 
 public class MSTensor {

@@ -17,10 +17,11 @@
 #ifndef MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H
 #define MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H
 
+#define TAG "MS_LITE"
+
+#ifdef PLATFORM_ARM
 #include <android/log.h>
 #include <unistd.h>
-
-#define TAG "MS_LITE"
 
 #define MS_LOGD(fmt, args...) \
   { __android_log_print(ANDROID_LOG_DEBUG, TAG, "|%d|%s[%d]|: " fmt, getpid(), __func__, __LINE__, ##args); }
@@ -30,5 +31,15 @@
 
 #define MS_LOGI(fmt, args...) \
   { __android_log_print(ANDROID_LOG_INFO, TAG, "|%d|%s[%d]|: " fmt, getpid(), __func__, __LINE__, ##args); }
+#else
+#define MS_LOGD(fmt, args...) \
+  { printf("[DEBUG] %s|%s|%s[%d]|: " #fmt "\r\n", TAG, __FILE__, __func__, __LINE__, ##args); }
+
+#define MS_LOGE(fmt, args...) \
+  { printf("[ERROR] %s|%s|%s[%d]|: " #fmt "\r\n", TAG, __FILE__, __func__, __LINE__, ##args); }
+
+#define MS_LOGI(fmt, args...) \
+  { printf("[INFO] %s|%s|%s[%d]|: " #fmt "\r\n", TAG, __FILE__, __func__, __LINE__, ##args); }
+#endif
 
 #endif  // MINDSPORE_LITE_JAVA_SRC_COMMON_MS_LOG_H

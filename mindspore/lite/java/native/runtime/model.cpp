@@ -21,7 +21,6 @@
 #include "include/model.h"
 
 extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEnv *env, jobject thiz, jobject buffer) {
-  MS_LOGD("Start getting buffer from java");
   if (buffer == nullptr) {
     MS_LOGE("Buffer from java is nullptr");
     return reinterpret_cast<jlong>(nullptr);
@@ -29,7 +28,6 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModel(JNIEn
   jlong buffer_len = env->GetDirectBufferCapacity(buffer);
   auto *model_buffer = static_cast<char *>(env->GetDirectBufferAddress(buffer));
 
-  MS_LOGD("Start Loading model");
   auto model = mindspore::lite::Model::Import(model_buffer, buffer_len);
   if (model == nullptr) {
     MS_LOGE("Import model failed");
@@ -69,7 +67,6 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_Model_loadModelByPath
   ifs.read(buf.get(), size);
   ifs.close();
   delete[](model_path_char);
-  MS_LOGD("Start Loading model");
   auto model = mindspore::lite::Model::Import(buf.get(), size);
   if (model == nullptr) {
     MS_LOGE("Import model failed");

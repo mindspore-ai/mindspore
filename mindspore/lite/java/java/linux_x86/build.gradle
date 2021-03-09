@@ -1,0 +1,16 @@
+apply plugin: 'java'
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+}
+
+archivesBaseName = 'mindspore-lite-java'
+
+task releaseJar(type: Jar) {
+    from('build/classes/java/main')
+    from('../common/build/classes/java/main')
+    destinationDirectory = file('build/lib/jar')
+}
+
+releaseJar.dependsOn(build)
+
