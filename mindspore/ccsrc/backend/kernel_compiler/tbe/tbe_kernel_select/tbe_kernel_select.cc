@@ -241,8 +241,8 @@ bool TbeKernelSelect::IsShapeMatchFormat(const std::vector<size_t> &shape, const
     return true;
   }
   // not support format:
-  // 1 NCDHW with shape size != 5
-  if (format == kOpFormat_NCDHW && shape.size() != kShape5dDims) {
+  // 1 3d formats with shape size > 5
+  if (k3DFormatSet.find(format) != k3DFormatSet.end() && shape.size() > kShape5dDims) {
     return false;
   }
   return true;
