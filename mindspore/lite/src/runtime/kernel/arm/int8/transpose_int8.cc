@@ -141,6 +141,25 @@ int TransposeInt8CPUKernel::DoTranspose(int task_id) {
   return RET_OK;
 }
 
+void TransposeInt8CPUKernel::GetNHNCTransposeFunc(lite::Tensor *in_tensor, lite::Tensor *out_tensor,
+                                                  TransposeParameter *param) {
+  auto out_shape = out_tensor->shape();
+  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
+      param->perm_[3] == 1) {
+    nhnc_param_[0] = out_shape[0];
+    nhnc_param_[1] = out_shape[1] * out_shape[2];
+    nhnc_param_[2] = out_shape[3];
+    NHNCTransposeFunc_ = PackNCHWToNHWCInt8;
+  }
+  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
+      param->perm_[3] == 2) {
+    nhnc_param_[0] = out_shape[0];
+    nhnc_param_[1] = out_shape[2] * out_shape[3];
+    nhnc_param_[2] = out_shape[1];
+    NHNCTransposeFunc_ = PackNHWCToNCHWInt8;
+  }
+}
+
 int TransposeInt8CPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
   auto out_tensor = out_tensors_.front();
@@ -150,7 +169,11 @@ int TransposeInt8CPUKernel::Run() {
 
   in_ptr_ = reinterpret_cast<int8_t *>(in_tensor->data_c());
   out_ptr_ = reinterpret_cast<int8_t *>(out_tensor->data_c());
-
+  GetNHNCTransposeFunc(in_tensor, out_tensor, transpose_param_);
+  if (NHNCTransposeFunc_ != nullptr) {
+    NHNCTransposeFunc_(in_ptr_, out_ptr_, nhnc_param_[0], nhnc_param_[1], nhnc_param_[2]);
+    return RET_OK;
+  }
   memcpy(in_shape_, in_dims.data(), in_dims.size() * sizeof(int));
   memcpy(out_shape_, out_dims.data(), out_dims.size() * sizeof(int));
 

@@ -335,7 +335,8 @@ int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
     0.2642501,  0.29840338,  0.38820496,  0.37829784, 0.105839334, 0.07713295, 0.45629853, 0.9290373,   0.56323594,
     0.59976774, 0.48325357,  0.102543674, 0.35449505, 0.3158472,   0.02927611, 0.44739273, 0.0516185,   0.12340133,
     0.13908496, 0.54970616,  0.74672216,  0.673308,   0.6400629,   0.26790652, 0.98673576}; /* nhwc */
-  PackNCHWToNHWCFp32(in_nchw, in_t->MutableData(), in_t->Batch(), in_t->Width() * in_t->Height(), in_t->Channel());
+  PackNCHWToNHWCFp32(in_nchw, in_t->MutableData(), in_t->Batch(), in_t->Width() * in_t->Height(), in_t->Channel(), 0,
+                     0);
   inputs_->push_back(in_t);
 
   std::vector<int> weight_dims_nhwc = {2, 3, 3, 6};
@@ -358,7 +359,7 @@ int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
     0.06060236,   0.10848369,   -0.4512424,  0.023834296,  0.1643943,   -0.25290534,  0.066953085,  -0.11685201,
     -0.4159784,   0.37839416,   -0.11141268, -0.15986018}; /* nhwc */
   PackNCHWToNHWCFp32(weight_nchw, weight_t->MutableData(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
-                     weight_t->Channel());
+                     weight_t->Channel(), 0, 0);
   inputs_->push_back(weight_t);
 
   auto *bias_t = new lite::Tensor(kNumberTypeFloat, {6}, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
@@ -463,7 +464,7 @@ int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
     0.8622399,    0.47823763,  0.8856161,    0.6762785,    0.73437214,    0.3766058,   0.764144,      0.60693324,
     0.89371794,   0.92908806,  0.7702812,    0.79492164,   0.58807003,    0.678272,    0.4573259,     0.7444603,
     0.49847388,   0.84439206,  0.51984715,   0.9452883,    0.7511028,     0.81281227};
-  PackNCHWToNHWCFp32(nchw_co, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel());
+  PackNCHWToNHWCFp32(nchw_co, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel(), 0, 0);
 
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
@@ -531,7 +532,7 @@ int DeConvTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
                      -11.827093, -12.340071,  -2.6368382,  -14.432123, -8.483799,  -12.28651,  0.80561405,
                      11.332421,  -0.43688506, -3.476327,   -4.587028,  -1.9491882, -3.3619316, -15.831648,
                      -10.517606, -9.204161,   -0.15148449, 1.5822954,  -10.122691, -4.7448387, 3.99177};
-  PackNCHWToNHWCFp32(nchw_co, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel());
+  PackNCHWToNHWCFp32(nchw_co, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel(), 0, 0);
 
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 2;
@@ -571,7 +572,7 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
                      0.26498786, 0.6701024,  0.9744634,  0.49075702, 0.03877404, 0.48646277,
                      0.5473929,  0.32438126, 0.87553847, 0.75820315, 0.86666644, 0.4852329};
   PackNCHWToNHWCFp32(in_nchw, reinterpret_cast<float *>(in_t->MutableData()), in_t->Batch(),
-                     in_t->Width() * in_t->Height(), in_t->Channel());
+                     in_t->Width() * in_t->Height(), in_t->Channel(), 0, 0);
   inputs_->push_back(in_t);
 
   std::vector<int> w_dims_nhwc = {2, 2, 2, 2};
@@ -582,7 +583,7 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
                     -0.34362152,  0.7557833,   0.16503833, 0.2418737,  -0.26612744, 0.5072577,
                     -0.4284475,   0.2215941,   0.9273913,  0.34634787};
   PackNCHWToNHWCFp32(w_nchw, weight_t->MutableData(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
-                     weight_t->Channel());
+                     weight_t->Channel(), 0, 0);
   inputs_->push_back(weight_t);
 
   std::vector<int> out_dims_nhwc = {1, 9, 9, 2};
@@ -609,7 +610,7 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
                      -0.026721025, 0.0, 0.24602996,  0.38258934,   0.0, 0.38933694,   0.88844025,   0.0, 0.3944222,
                      0.0,          0.0, 0.0,         0.0,          0.0, 0.0,          0.0,          0.0, 0.0,
                      0.6120955,    0.0, 0.46287543,  0.57347727,   0.0, 0.80662024,   0.11515418,   0.0, 0.90454257};
-  PackNCHWToNHWCFp32(nchw_co, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel());
+  PackNCHWToNHWCFp32(nchw_co, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel(), 0, 0);
 
   conv_param->kernel_h_ = conv_param->kernel_w_ = 2;
   conv_param->stride_h_ = conv_param->stride_w_ = 3;
@@ -658,7 +659,7 @@ int DeConvTestInit4(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   std::string weight_path = "./deconv/deconv_fp32_nchw_weight1.bin";
   auto weight_nchw = reinterpret_cast<float *>(mindspore::lite::ReadFile(weight_path.c_str(), &buffer_size));
   PackNCHWToNHWCFp32(weight_nchw, weight_t->MutableData(), weight_t->Batch(), weight_t->Width() * weight_t->Height(),
-                     weight_t->Channel());
+                     weight_t->Channel(), 0, 0);
   inputs_->push_back(weight_t);
 
   auto *bias_t = new lite::Tensor(kNumberTypeFloat, {40}, schema::Format_NHWC, lite::Tensor::Category::CONST_TENSOR);
@@ -676,7 +677,7 @@ int DeConvTestInit4(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   std::string out_path = "./deconv/deconv_fp32_nchw_output1.bin";
   auto out_nchw = mindspore::lite::ReadFile(out_path.c_str(), &buffer_size);
   *correct = reinterpret_cast<float *>(malloc(buffer_size));
-  PackNCHWToNHWCFp32(out_nchw, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel());
+  PackNCHWToNHWCFp32(out_nchw, *correct, out_t->Batch(), out_t->Width() * out_t->Height(), out_t->Channel(), 0, 0);
 
   conv_param->kernel_h_ = conv_param->kernel_w_ = 3;
   conv_param->stride_h_ = conv_param->stride_w_ = 1;
