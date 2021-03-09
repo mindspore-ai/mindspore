@@ -408,6 +408,7 @@ constexpr auto kAttrParallelTypeInfo = "parallel_type_info";
 constexpr auto kAttrCompositeType = "composite_type";
 constexpr auto kAttrStitch = "stitch";
 constexpr auto kAttrTopoSortRhsFirst = "topo_sort_rhs_first";
+constexpr auto kAttrIgnoreSideEffect = "ignore_side_effect";
 constexpr auto kAttrSwitchLayer = "switch_layer";
 constexpr auto kAttrReturn = "return";
 
