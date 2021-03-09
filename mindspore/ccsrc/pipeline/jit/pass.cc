@@ -33,6 +33,7 @@
 #include "frontend/optimizer/clean.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/graph_transform.h"
+#include "frontend/optimizer/auto_monad_eliminate.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/cache_embedding/cache_embedding.h"
@@ -183,6 +184,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
                          {"auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper)},
+                         {"auto_monad_eliminator", opt::OptPassConfig(opt::AutoMonadEliminator())},
                          {"cse", opt::OptPassConfig(opt::CSEPass(false))},
                          {"a_3", a_3}});
 
