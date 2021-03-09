@@ -44,10 +44,8 @@ class Conv2DINT8Coder final : public Conv2DBaseCoder {
   }
 
  private:
-  int InitWeightBias(CoderContext *ctx);
-
   void CheckSupportOptimize();
-
+  int InitWeightBias(CoderContext *ctx);
   int InitTmpBuffer(CoderContext *ctx);
 
   int Resize();
@@ -70,7 +68,7 @@ class Conv2DINT8Coder final : public Conv2DBaseCoder {
   int32_t *input_sum_{nullptr};
   int8_t *matmul_packed_input_{nullptr};
 
-  std::string matmul_func_;
+  std::string matmul_func_{"NULL"};
 
   std::function<int(nnacl::NNaclInt8Serializer &, const std::string &, const std::string &)> pack_weight_init_{nullptr};
 };

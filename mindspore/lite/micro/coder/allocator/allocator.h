@@ -92,19 +92,17 @@ class MemoryAllocator {
    * including tensor, workspace
    */
   template <typename T>
-  std::string GetRuntimeAddr(T t, bool is_const = false) {
+  std::string GetRuntimeAddr(T t, bool immutable = false) {
     if (!t) {
       return "";
     }
-    std::string type_info = is_const ? "const " : "";
     std::string type_name;
     if (std::type_index(typeid(T)) == std::type_index(typeid(Tensor *))) {
       type_name = GetTensorDataType(reinterpret_cast<Tensor *>(t)->data_type()) + "*";
     } else {
       type_name = GetVariableTypeName<T>();
     }
-    type_info = wrap(type_info + type_name);
-
+    std::string type_info = wrap(type_name);
     void *variable = reinterpret_cast<void *>(t);
     auto item = inputs_addr_.find(variable);
     if (item != inputs_addr_.end()) {
@@ -133,6 +131,9 @@ class MemoryAllocator {
                         [&variable](const std::pair<Tensor *, std::string> &a) { return variable == a.first; });
     if (iter != origin_weights_addr_.end()) {
       saved_weights_addr_.insert(std::make_pair(iter->second, reinterpret_cast<Tensor *>(variable)));
+      if (immutable) {
+        malloc_weights_addr_.insert({reinterpret_cast<Tensor *>(variable), iter->second});
+      }
       return iter->second;
     }
     MS_LOG(ERROR) << "uninitialized memory";

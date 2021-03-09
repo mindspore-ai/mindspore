@@ -34,7 +34,7 @@
 #define LOG_HDR_FILE_REL_PATH "mindspore/core/utils/log_adapter.h"
 
 // Get start index of file relative path in __FILE__
-static constexpr int GetRelPathPos() noexcept {
+static constexpr size_t GetRelPathPos() noexcept {
   return sizeof(__FILE__) > sizeof(LOG_HDR_FILE_REL_PATH) ? sizeof(__FILE__) - sizeof(LOG_HDR_FILE_REL_PATH) : 0;
 }
 

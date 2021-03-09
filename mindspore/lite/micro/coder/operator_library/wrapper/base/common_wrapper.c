@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-#include "wrapper/int8/convolution_int8_wrapper.h"
+#include "wrapper/base/common_wrapper.h"
+#ifdef __ANDROID__
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#endif
 
-int ConvolutionInt8Run(void *cdata, int task_id) {
-  ConvolutionInt8Args *args = (ConvolutionInt8Args *)cdata;
-  ConvInt8(args->input_data_, args->packed_input_, args->matmul_input_, args->packed_weight_, args->bias_data_,
-           args->output_data_, args->filter_zp_, args->input_sum_, task_id, args->conv_param_, args->matmul_func_,
-           args->is_optimize_);
-  return NNACL_OK;
+bool GetSupportOptFlag() {
+  bool status = false;
+#ifdef ENABLE_ARM64
+  int hwcap_type = 16;
+  // getHwCap
+  uint32_t hwcap = getauxval(hwcap_type);
+  if (hwcap & HWCAP_ASIMDDP) {
+    status = true;
+  } else {
+    status = false;
+  }
+#endif
+  return status;
 }

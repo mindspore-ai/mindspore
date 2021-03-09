@@ -134,7 +134,7 @@ void CodeBenchmarkInference(std::ofstream &ofs, const std::string &module_name) 
       << "    uint64_t timeAvg = 0;\n"
       << "    int loop_count = atoi(argv[3]);\n"
       << "    printf(\"======Inference Start======\\n\");\n"
-      << "    printf(\"cycles: %d\", loop_count);\n"
+      << "    printf(\"cycles: %d\\n\", loop_count);\n"
       << "    for (int i = 0; i < loop_count; i++) {\n"
       << "      uint64_t runBegin = GetTimeUs();\n"
       << "      " << module_name << "_Inference();\n"

@@ -19,9 +19,8 @@
 
 const char *bench_cmake_lists_txt =
   "cmake_minimum_required(VERSION 3.14)\n"
-  "project(${PROJ_NAME})\n"
+  "project(benchmark)\n"
   "\n"
-  "message(\"project name: ${PROJ_NAME}\")\n"
   "message(\"project name: ${MODEL_LIB_PATH}\")\n"
   "message(\"architecture cmake file path: ${ARCH_CMAKE_PATH}\")\n"
   "\n"
@@ -54,14 +53,13 @@ const char *bench_cmake_lists_txt =
   "endif ()\n"
   "link_directories(${MODEL_LIB_PATH})\n"
   "include(benchmark.cmake)\n"
-  "add_executable(${PROJ_NAME}_bench ${SRC_FILES})\n"
-  "target_link_libraries(${PROJ_NAME}_bench ${MODEL_LIB_NAME} -lm -pthread)\n";
+  "add_executable(benchmark ${SRC_FILES})\n"
+  "target_link_libraries(benchmark ${MODEL_LIB_NAME} -lm -pthread)\n";
 
 const char *src_cmake_lists_txt =
   "cmake_minimum_required(VERSION 3.14)\n"
-  "project(${PROJ_NAME})\n"
+  "project(net)\n"
   "\n"
-  "message(\"project name: ${PROJ_NAME}\")\n"
   "message(\"architecture cmake file path: ${ARCH_CMAKE_PATH}\")\n"
   "message(\"operator lib path: ${OP_LIB}\")\n"
   "message(\"operator header path: ${OP_HEADER_PATH}\")\n"
@@ -83,10 +81,11 @@ const char *src_cmake_lists_txt =
   "else()\n"
   "    set(CMAKE_C_FLAGS \"-fPIC -fPIE -O3 -Werror -fstack-protector-strong -fomit-frame-pointer ${CMAKE_C_FLAGS}\")\n"
   "    set(CMAKE_C_FLAGS_Release \"${CMAKE_C_FLAGS_Release} -O3 -ffunction-sections -Werror -fdata-sections\")\n"
+  "    string(REPLACE \"-g\" \"\" CMAKE_C_FLAGS \"${CMAKE_C_FLAGS}\")\n"
   "endif()\n"
   "\n"
   "function(create_library)\n"
-  "    add_custom_command(TARGET ${PROJ_NAME}\n"
+  "    add_custom_command(TARGET net\n"
   "            POST_BUILD\n"
   "            COMMAND rm -rf tmp\n"
   "            COMMAND mkdir tmp\n"
@@ -97,9 +96,9 @@ const char *src_cmake_lists_txt =
   "            COMMENT \"unzip raw static library ${library_name}\"\n"
   "            )\n"
   "    foreach (object_file ${OP_SRC})\n"
-  "        add_custom_command(TARGET ${PROJ_NAME} POST_BUILD COMMAND mv ./tmp/${object_file} .)\n"
+  "        add_custom_command(TARGET net POST_BUILD COMMAND mv ./tmp/${object_file} .)\n"
   "    endforeach ()\n"
-  "    add_custom_command(TARGET ${PROJ_NAME}\n"
+  "    add_custom_command(TARGET net\n"
   "            POST_BUILD\n"
   "            COMMAND ar cr ${library_name} *.o\n"
   "            COMMAND ranlib ${library_name}\n"
@@ -109,7 +108,7 @@ const char *src_cmake_lists_txt =
   "            COMMENT \"generate specified static library ${library_name}\"\n"
   "            )\n"
   "endfunction(create_library)\n"
-  "string(CONCAT library_name \"lib\" ${PROJ_NAME} \".a\")\n"
+  "string(CONCAT library_name \"lib\" net \".a\")\n"
   "create_library()\n";
 
 #endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_CONST_BLOCKS_CMAKE_LISTS_CODE_H_

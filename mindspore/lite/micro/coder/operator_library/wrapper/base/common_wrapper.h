@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "wrapper/int8/convolution_int8_wrapper.h"
+#ifndef MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_COMMON_WRAPPER_H_
+#define MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_COMMON_WRAPPER_H_
 
-int ConvolutionInt8Run(void *cdata, int task_id) {
-  ConvolutionInt8Args *args = (ConvolutionInt8Args *)cdata;
-  ConvInt8(args->input_data_, args->packed_input_, args->matmul_input_, args->packed_weight_, args->bias_data_,
-           args->output_data_, args->filter_zp_, args->input_sum_, task_id, args->conv_param_, args->matmul_func_,
-           args->is_optimize_);
-  return NNACL_OK;
-}
+#include "nnacl/op_base.h"
+
+bool GetSupportOptFlag();
+
+#endif  // MINDSPORE_LITE_MICRO_CODER_OPERATOR_LIBRARY_COMMON_WRAPPER_H_

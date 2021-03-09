@@ -36,8 +36,6 @@ typedef struct {
   bool is_optimize_;
 } ConvolutionInt8Args;
 
-void CheckSupportOptimize(const ConvolutionInt8Args *args);
-
 int ConvolutionInt8Run(void *cdata, int task_id);
 
 #endif  // MINDSPORE_LITE_MICRO_INT8_CONVOLUTION_WRAPPER_INT8_WRAPPER_H_

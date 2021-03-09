@@ -36,7 +36,7 @@ void CodeCreateThreadPool(std::ofstream &ofs, const std::string &module_name) {
          "    MICRO_ERROR(\"set global thread pool failed\");\n"
          "    return RET_ERROR;\n"
          "  }\n"
-         "  MICRO_INFO(\"config: ThreadNum: %d, BindMode: %d\", thread_num, bind_mode);\n";
+         "  printf(\"config: ThreadNum: %d, BindMode: %d\\n\", thread_num, bind_mode);\n";
 }
 
 void CodeDestroyThreadPool(std::ofstream &ofs) { ofs << "  DestroyThreadPool(thread_pool);\n"; }

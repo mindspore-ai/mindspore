@@ -48,7 +48,7 @@ void CodeCMakeNetLibrary(std::ofstream &ofs, const std::string &module_name, con
   }
 
   ofs << "file(GLOB NET_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.c)\n"
-      << "add_library(${PROJ_NAME} STATIC ${NET_SRC})\n";
+      << "add_library(net STATIC ${NET_SRC})\n";
 }
 
 }  // namespace mindspore::lite::micro
