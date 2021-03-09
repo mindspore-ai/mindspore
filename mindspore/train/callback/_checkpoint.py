@@ -221,7 +221,11 @@ class ModelCheckpoint(Callback):
     """
     The checkpoint callback class.
 
-    It is called to combine with train process and save the model and network parameters after traning.
+    It is called to combine with train process and save the model and network parameters after training.
+
+    Note:
+        In the distributed training scenario, please specify different directories for each training process
+        to save the checkpoint file. Otherwise, the training may fail.
 
     Args:
         prefix (str): The prefix name of checkpoint files. Default: "CKP".
