@@ -42,7 +42,7 @@ ProfilingManager &ProfilingManager::GetInstance() {
   return inst;
 }
 
-ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}) {}
+ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}), hccl_enabled_bef_profiling_enabled_(false) {}
 
 uint64_t ProfilingManager::GetJobId() const {
   const char *job_id = std::getenv("JOB_ID");
@@ -139,6 +139,14 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
     return true;
   }
+
+  if (hccl_enabled_bef_profiling_enabled_) {
+    MS_LOG(ERROR)
+      << "Please check the Profiler object initialized before mindspore.context.set_auto_parallel_context() "
+         "and mindspore.communication.management.init(). Profiler should be initialized before these code.";
+    return false;
+  }
+
   device_id_ = device_id;
 
   struct MsprofGeOptions prof_conf = {0};

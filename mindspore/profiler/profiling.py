@@ -256,8 +256,9 @@ class Profiler:
         """Collect and analyse gpu performance data"""
         if context.get_auto_parallel_context('device_num') > 1 and self._dev_id != str(get_rank()):
             self._dev_id = str(get_rank())
-            logger.error('Please check the Profiler object initialized after set_auto_parallel_context() '
-                         'and init(). Profiler should be initialized after these code. ')
+            logger.error('Please check the Profiler object initialized after mindspore.context.set_auto_parallel_'
+                         'context() and mindspore.communication.management.init(). Profiler should be initialized'
+                         ' after these code.')
         self._gpu_profiler.stop()
         timeline_generator = self._generate_timeline()
 
