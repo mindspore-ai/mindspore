@@ -48,7 +48,7 @@ bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
   }
 
   if (recorder == nullptr) {
-    MS_LOG(ERROR) << "register recorder module with nullptr.";
+    MS_LOG(ERROR) << "Register recorder module with nullptr.";
     return false;
   }
   std::string module = recorder->GetModule();

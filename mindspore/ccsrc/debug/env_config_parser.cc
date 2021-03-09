@@ -66,7 +66,7 @@ void EnvConfigParser::Parse() {
   MS_EXCEPTION_IF_NULL(context);
   auto config_file = context->get_param<std::string>(MS_CTX_ENV_CONFIG_PATH);
   if (config_file.empty()) {
-    MS_LOG(INFO) << "Get env config file failed. Please check the 'env_config_path' set in context.";
+    MS_LOG(INFO) << "The 'env_config_path' in 'mindspore.context.set_context(env_config_path={path})' is empty.";
     return;
   }
   config_file_ = config_file;
