@@ -23,6 +23,39 @@
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/resize_base.h"
 
+struct ResizeCoordinate {
+  int *x_lefts_;
+  int *x_rights_;
+  int *y_tops_;
+  int *y_bottoms_;
+
+  ResizeCoordinate() {
+    x_lefts_ = nullptr;
+    x_rights_ = nullptr;
+    y_tops_ = nullptr;
+    y_bottoms_ = nullptr;
+  }
+
+  void FreeData() {
+    if (x_lefts_ != nullptr) {
+      free(x_lefts_);
+      x_lefts_ = nullptr;
+    }
+    if (x_rights_ != nullptr) {
+      free(x_rights_);
+      x_rights_ = nullptr;
+    }
+    if (y_tops_ != nullptr) {
+      free(y_tops_);
+      y_tops_ = nullptr;
+    }
+    if (y_bottoms_ != nullptr) {
+      free(y_bottoms_);
+      y_bottoms_ = nullptr;
+    }
+  }
+};
+
 namespace mindspore::kernel {
 class ResizeCPUKernel : public ResizeBaseCPUKernel {
  public:
@@ -30,22 +63,22 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : ResizeBaseCPUKernel(parameter, inputs, outputs, ctx) {}
 
-  ~ResizeCPUKernel() { FreeTmpBuffer(); }
+  ~ResizeCPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   virtual int RunImpl(int task_id);
+  int SelectCalculatorFunc();
+  int ResizePrepare();
+  void CalTmpBufferLen(int *x_len, int *y_len, int *x_weight_len, int *y_weight_len);
   int MallocTmpBuffer();
   void FreeTmpBuffer();
 
  protected:
-  int *y_tops_ = nullptr;
-  int *y_bottoms_ = nullptr;
-  int *x_lefts_ = nullptr;
-  int *x_rights_ = nullptr;
-  float *y_bottom_weights_ = nullptr;
-  float *x_left_weights_ = nullptr;
+  ResizeCoordinate coordinate_;
+  float *y_weights_ = nullptr;
+  float *x_weights_ = nullptr;
   float *line_buffer_ = nullptr;
   CalculateOriginalCoordinate calculate_ = nullptr;
 };

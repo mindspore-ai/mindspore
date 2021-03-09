@@ -38,6 +38,8 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
     MS_LOG(ERROR) << "tflite_subgraph is nullptr";
     return nullptr;
   }
+  prim->set_cubic_coeff(-0.75f);
+  prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
   if (tflite_op_type == tflite::BuiltinOperator_RESIZE_BILINEAR) {
     MS_LOG(DEBUG) << "parse TfliteResizeBilinearParser";
@@ -50,8 +52,8 @@ ops::PrimitiveC *TfliteResizeParser::Parse(const std::unique_ptr<tflite::Operato
       prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
     }
     if (tfliteAttr->half_pixel_centers) {
-      MS_LOG(ERROR) << "Does not support half pixel centers";
-      return nullptr;
+      prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::HALF_PIXEL);
+      prim->set_cubic_coeff(-0.5f);
     }
     prim->set_method(mindspore::ResizeMethod::LINEAR);
   } else if (tflite_op_type == tflite::BuiltinOperator_RESIZE_NEAREST_NEIGHBOR) {

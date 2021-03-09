@@ -30,15 +30,20 @@ ops::PrimitiveC *TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
 
   tensorflow::AttrValue attr_value;
   prim->set_format(mindspore::Format::NHWC);
+  prim->set_cubic_coeff(-0.75f);
   if (!TensorFlowUtils::FindAttrValue(tf_op, "align_corners", &attr_value)) {
     MS_LOG(ERROR) << "The align_corners attr should be specified";
     return nullptr;
   }
   if (attr_value.b()) {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
+  } else if (TensorFlowUtils::FindAttrValue(tf_op, "half_pixel_centers", &attr_value) && attr_value.b()) {
+    prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::HALF_PIXEL);
+    prim->set_cubic_coeff(-0.5f);
   } else {
     prim->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ASYMMETRIC);
   }
+
   if (tf_op.op() == "ResizeBilinear") {
     prim->set_method(mindspore::ResizeMethod::LINEAR);
   } else if (tf_op.op() == "ResizeNearestNeighbor") {
