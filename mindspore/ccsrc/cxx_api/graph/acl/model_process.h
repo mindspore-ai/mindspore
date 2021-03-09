@@ -61,10 +61,13 @@ class ModelProcess {
  private:
   Status CreateDataBuffer(void **data_mem_buffer, size_t buffer_size, aclmdlDataset *dataset);
   Status CheckAndInitInput(const std::vector<MSTensor> &inputs);
-  Status ConstructTensors(const std::vector<AclTensorInfo> &acl_tensor_list, std::vector<MSTensor> *tensor_list);
+  Status ConstructTensors(const std::vector<AclTensorInfo> &acl_tensor_list, std::vector<MSTensor> *tensor_list,
+                          const std::vector<size_t> &mem_sizes);
   Status BuildOutputs(std::vector<MSTensor> *outputs);
+  Status SetBatchSize(const std::vector<MSTensor> &inputs);
   Status InitInputsBuffer();
   Status InitOutputsBuffer();
+  Status ResetOutputSize();
 
   void DestroyInputsDataset();
   void DestroyInputsDataMem();
@@ -81,6 +84,9 @@ class ModelProcess {
   std::vector<AclTensorInfo> output_infos_;
   std::vector<MSTensor> input_tensors_;
   std::vector<MSTensor> output_tensors_;
+  std::vector<size_t> output_size_;
+  std::vector<size_t> input_size_;
+  size_t GetDynamicDims(const std::vector<AclTensorInfo> &);
 };
 }  // namespace mindspore
 

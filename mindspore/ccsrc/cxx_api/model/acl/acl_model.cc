@@ -47,6 +47,20 @@ Status AclModel::Build() {
     graph = iter->second;
   } else {
     auto func_graph = ModelImpl::GetFuncGraph();
+    auto inputs = func_graph->parameters();
+    std::vector<std::string> input_names;
+    for (auto node : inputs) {
+      auto para = node->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(para);
+      std::string name = para->name();
+      for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
+        name = name.substr(0, pos) + "_" + name.substr(pos + 1);
+        MS_LOG(INFO) << name;
+      }
+      para->set_name(name);
+      input_names.push_back(name);
+    }
+    options->RenameInput(input_names);
     MS_EXCEPTION_IF_NULL(func_graph);
     model_converter_.set_options(options.get());
     auto om_data = model_converter_.LoadMindIR(func_graph);

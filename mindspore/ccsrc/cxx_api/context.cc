@@ -24,6 +24,7 @@ constexpr auto kGlobalContextDeviceID = "mindspore.ascend.globalcontext.device_i
 constexpr auto kGlobalContextDumpCfgPath = "mindspore.ascend.globalcontext.dump_config_file_path";
 constexpr auto kModelOptionInsertOpCfgPath = "mindspore.option.insert_op_config_file_path";  // aipp config file
 constexpr auto kModelOptionInputFormat = "mindspore.option.input_format";                    // nchw or nhwc
+constexpr auto kModelOptionInputShapeMap = "mindspore.option.input_shape_map";
 constexpr auto kModelOptionInputShape = "mindspore.option.input_shape";
 // Mandatory while dynamic batch: e.g. "input_op_name1: n1,c2,h3,w4;input_op_name2: n4,c3,h2,w1"
 constexpr auto kModelOptionOutputType = "mindspore.option.output_type";  // "FP32", "UINT8" or "FP16", default as "FP32"
@@ -33,6 +34,8 @@ constexpr auto kModelOptionOpSelectImplMode = "mindspore.option.op_select_impl_m
 constexpr auto KModelOptionFusionSwitchCfgPath = "mindspore.option.fusion_switch_config_file_path";
 // "False": Inference with native backend, "True": Inference with Tensor-RT engine, default as "False"
 constexpr auto kModelOptionGpuTrtInferMode = "mindspore.option.gpu_trt_infer_mode";
+constexpr auto kModelOptionDynamicBatchSize = "mindspore.option.dynamic_batch_size";
+constexpr auto kModelOptionDynamicImageSize = "mindspore.option.dynamic_image_size";
 
 namespace mindspore {
 struct Context::Data {
@@ -159,6 +162,17 @@ std::vector<char> ModelContext::GetInputShapeChar(const std::shared_ptr<Context>
   return StringToChar(ref);
 }
 
+void ModelContext::SetInputShapeMap(const std::shared_ptr<Context> &context,
+                                    const std::map<int, std::vector<int>> &shape) {
+  MS_EXCEPTION_IF_NULL(context);
+  context->data->params[kModelOptionInputShapeMap] = shape;
+}
+
+std::map<int, std::vector<int>> ModelContext::GetInputShapeMap(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  return GetValue<std::map<int, std::vector<int>>>(context, kModelOptionInputShapeMap);
+}
+
 void ModelContext::SetOutputType(const std::shared_ptr<Context> &context, enum DataType output_type) {
   MS_EXCEPTION_IF_NULL(context);
   if (context->data == nullptr) {
@@ -233,6 +247,25 @@ void ModelContext::SetGpuTrtInferMode(const std::shared_ptr<Context> &context,
 std::vector<char> ModelContext::GetGpuTrtInferModeChar(const std::shared_ptr<Context> &context) {
   MS_EXCEPTION_IF_NULL(context);
   const std::string &ref = GetValue<std::string>(context, kModelOptionGpuTrtInferMode);
+  return StringToChar(ref);
+}
+
+void ModelContext::SetDynamicBatchSize(const std::shared_ptr<Context> &context, const std::vector<size_t> &batch_size) {
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->data == nullptr) {
+    context->data = std::make_shared<Data>();
+    MS_EXCEPTION_IF_NULL(context->data);
+  }
+  std::string batchs = "";
+  for (auto bs : batch_size) {
+    batchs += std::to_string(bs) + ",";
+  }
+  context->data->params[kModelOptionDynamicBatchSize] = batchs;
+}
+
+std::vector<char> ModelContext::GetDynamicBatchSizeChar(const std::shared_ptr<Context> &context) {
+  MS_EXCEPTION_IF_NULL(context);
+  const std::string &ref = GetValue<std::string>(context, kModelOptionDynamicBatchSize);
   return StringToChar(ref);
 }
 }  // namespace mindspore

@@ -72,19 +72,6 @@ bool CreateSessionAndGraphRunner() {
 }  // namespace
 
 transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) {
-  for (auto &anf_node : anf_graph->parameters()) {
-    MS_EXCEPTION_IF_NULL(anf_node);
-    auto para = anf_node->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(para);
-    // normalize name
-    std::string name = para->name();
-    for (auto pos = name.find(':'); pos != std::string::npos; pos = name.find(':')) {
-      name = name.substr(0, pos) + "_" + name.substr(pos + 1);
-      MS_LOG(INFO) << name;
-    }
-    para->set_name(name);
-  }
-
   transform::DfGraphConvertor converter(anf_graph);
   std::string net_id = "0";
   std::string init_graph = "init_subgraph." + net_id;
