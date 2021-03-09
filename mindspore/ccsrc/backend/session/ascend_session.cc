@@ -735,6 +735,10 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     // Get OpRunInfo and GraphInfo
     OpRunInfo op_run_info;
     GetSingleOpRunInfo(kernel, &op_run_info);
+    if (op_run_info.is_dynamic_shape) {
+      MS_LOG(INFO) << "BuildOpsInGraph stop, op " << op_run_info.op_name << " is dynamic shape.";
+      break;
+    }
     const GraphInfo &graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
     const auto &single_op_graph_iter = run_op_graphs_.find(graph_info);
     if (single_op_graph_iter != run_op_graphs_.end()) {
