@@ -19,127 +19,118 @@
 #include <algorithm>
 #include <iostream>
 
-using mindspore::api::Tensor;
-using mindspore::api::Buffer;
-using mindspore::api::DataType;
+using mindspore::MSTensor;
+using mindspore::DataType;
 
 std::vector<std::string> GetAllFiles(std::string_view dirName) {
-    struct dirent *filename;
-    DIR *dir = OpenDir(dirName);
-    if (dir == nullptr) {
-        return {};
-    }
+  struct dirent *filename;
+  DIR *dir = OpenDir(dirName);
+  if (dir == nullptr) {
+    return {};
+  }
 
-    std::vector<std::string> res;
-    while ((filename = readdir(dir)) != nullptr) {
-        std::string dName = std::string(filename->d_name);
-        if (dName == "." ||
-            dName == ".." ||
-            filename->d_type != DT_REG)
-            continue;
-        res.emplace_back(std::string(dirName) + "/" + filename->d_name);
-    }
+  std::vector<std::string> res;
+  while ((filename = readdir(dir)) != nullptr) {
+    std::string dName = std::string(filename->d_name);
+    if (dName == "." ||
+        dName == ".." ||
+        filename->d_type != DT_REG)
+      continue;
+    res.emplace_back(std::string(dirName) + "/" + filename->d_name);
+  }
 
-    std::sort(res.begin(), res.end());
-    for (auto &f : res) {
-        std::cout << "image file: " << f << std::endl;
-    }
-    return res;
+  std::sort(res.begin(), res.end());
+  for (auto &f : res) {
+    std::cout << "image file: " << f << std::endl;
+  }
+  return res;
 }
 
-int WriteResult(const std::string& imageFile, const std::vector<Buffer> &outputs) {
-    std::string homePath = "./result_Files";
-    for (size_t i = 0; i < outputs.size(); ++i) {
-        size_t outputSize;
-        const void * netOutput;
-        netOutput = outputs[i].Data();
-        outputSize = outputs[i].DataSize();
+int WriteResult(const std::string& imageFile, const std::vector<MSTensor> &outputs) {
+  std::string homePath = "./result_Files";
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    size_t outputSize;
+    std::shared_ptr<const void> netOutput;
+    netOutput = outputs[i].Data();
+    outputSize = outputs[i].DataSize();
 
-        int pos = imageFile.rfind('/');
-        std::string fileName(imageFile, pos + 1);
-        fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
-        std::string outFileName = homePath + "/" + fileName;
-        FILE * outputFile = fopen(outFileName.c_str(), "wb");
-        fwrite(netOutput, outputSize, sizeof(char), outputFile);
+    int pos = imageFile.rfind('/');
+    std::string fileName(imageFile, pos + 1);
+    fileName.replace(fileName.find('.'), fileName.size() - fileName.find('.'), '_' + std::to_string(i) + ".bin");
+    std::string outFileName = homePath + "/" + fileName;
+    FILE * outputFile = fopen(outFileName.c_str(), "wb");
+    fwrite(netOutput.get(), outputSize, sizeof(char), outputFile);
 
-        fclose(outputFile);
-        outputFile = nullptr;
-    }
-    return 0;
+    fclose(outputFile);
+    outputFile = nullptr;
+  }
+  return 0;
 }
 
-std::shared_ptr<Tensor>  ReadFileToTensor(const std::string &file) {
-    auto buffer = std::make_shared<Tensor>();
-    if (file.empty()) {
-      std::cout << "Pointer file is nullptr" << std::endl;
-      return buffer;
-    }
+MSTensor  ReadFileToTensor(const std::string &file) {
+  if (file.empty()) {
+    std::cout << "Pointer file is nullptr" << std::endl;
+    return MSTensor();
+  }
 
-    std::ifstream ifs(file);
-    if (!ifs.good()) {
-      std::cout << "File: " << file << " is not exist" << std::endl;
-      return buffer;
-    }
+  std::ifstream ifs(file);
+  if (!ifs.good()) {
+    std::cout << "File: " << file << " is not exist" << std::endl;
+    return MSTensor();
+  }
 
-    if (!ifs.is_open()) {
-      std::cout << "File: " << file << "open failed" << std::endl;
-      return buffer;
-    }
+  if (!ifs.is_open()) {
+    std::cout << "File: " << file << "open failed" << std::endl;
+    return MSTensor();
+  }
 
-    ifs.seekg(0, std::ios::end);
-    size_t size = ifs.tellg();
-    buffer->ResizeData(size);
-    if (buffer->DataSize() != size) {
-        std::cout << "Malloc buf failed, file: " << file << std::endl;
-        ifs.close();
-        return buffer;
-    }
+  ifs.seekg(0, std::ios::end);
+  size_t size = ifs.tellg();
+  MSTensor buffer(file, DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
 
-    ifs.seekg(0, std::ios::beg);
-    ifs.read(reinterpret_cast<char *>(buffer->MutableData()), size);
-    ifs.close();
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(reinterpret_cast<char *>(buffer.MutableData()), size);
+  ifs.close();
 
-    buffer->SetDataType(DataType::kMsUint8);
-    buffer->SetShape({static_cast<int64_t>(size)});
-    return buffer;
+  return buffer;
 }
 
 DIR *OpenDir(std::string_view dirName) {
-    if (dirName.empty()) {
-        std::cout << " dirName is null ! " << std::endl;
-        return nullptr;
-    }
+  if (dirName.empty()) {
+    std::cout << " dirName is null ! " << std::endl;
+    return nullptr;
+  }
 
-    std::string realPath = RealPath(dirName);
+  std::string realPath = RealPath(dirName);
 
-    struct stat s;
-    lstat(realPath.c_str(), &s);
-    if (!S_ISDIR(s.st_mode)) {
-        std::cout << "dirName is not a valid directory !" << std::endl;
-        return nullptr;
-    }
+  struct stat s;
+  lstat(realPath.c_str(), &s);
+  if (!S_ISDIR(s.st_mode)) {
+    std::cout << "dirName is not a valid directory !" << std::endl;
+    return nullptr;
+  }
 
-    DIR *dir;
-    dir = opendir(realPath.c_str());
-    if (dir == nullptr) {
-        std::cout << "Can not open dir " << dirName << std::endl;
-        return nullptr;
-    }
-    std::cout << "Successfully opened the dir " << dirName << std::endl;
-    return dir;
+  DIR *dir;
+  dir = opendir(realPath.c_str());
+  if (dir == nullptr) {
+    std::cout << "Can not open dir " << dirName << std::endl;
+    return nullptr;
+  }
+  std::cout << "Successfully opened the dir " << dirName << std::endl;
+  return dir;
 }
 
 std::string RealPath(std::string_view path) {
-    char real_path_mem[PATH_MAX] = {0};
-    char *real_path_ret = nullptr;
-    real_path_ret = realpath(path.data(), real_path_mem);
+  char real_path_mem[PATH_MAX] = {0};
+  char *real_path_ret = nullptr;
+  real_path_ret = realpath(path.data(), real_path_mem);
 
-    if (real_path_ret == nullptr) {
-        std::cout << "File: " << path << " is not exist.";
-        return "";
-    }
+  if (real_path_ret == nullptr) {
+    std::cout << "File: " << path << " is not exist.";
+    return "";
+  }
 
-    std::string real_path(real_path_mem);
-    std::cout << path << " realpath is: " << real_path << std::endl;
-    return real_path;
+  std::string real_path(real_path_mem);
+  std::cout << path << " realpath is: " << real_path << std::endl;
+  return real_path;
 }
