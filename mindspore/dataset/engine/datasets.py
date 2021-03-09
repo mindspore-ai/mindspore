@@ -507,7 +507,7 @@ class Dataset:
 
         Examples:
             >>> # use NumpySliceDataset as an example
-            >>> dataset = ds.NumpySliceDataset([[0, 1], [2, 3]])
+            >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]])
             >>>
             >>> def flat_map_func(array):
             ...     # create a NumpySliceDataset with the array
@@ -638,7 +638,7 @@ class Dataset:
             >>>
             >>> # Rename the column outputted by random_jitter_op to "image_mapped".
             >>> # Specifying column order works in the same way as examples in 1).
-            >>> dataset = dataset.map(operation=[decode_op, random_jitter_op], input_columns=["image"],
+            >>> dataset = dataset.map(operations=[decode_op, random_jitter_op], input_columns=["image"],
             ...                       output_columns=["image_mapped"])
             >>>
             >>> # Map with multiple operations using pyfunc. Renaming columns and specifying column order
@@ -2878,16 +2878,18 @@ class ImageFolderDataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
+        >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
+        >>>
         >>> # 1) Read all samples (image files) in image_folder_dataset_dir with 8 threads
-        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
         ...                                 num_parallel_workers=8)
         >>>
         >>> # 2) Read all samples (image files) from folder cat and folder dog with label 0 and 1
-        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
         ...                                 class_indexing={"cat":0, "dog":1})
         >>>
         >>> # 3) Read all samples (image files) in image_folder_dataset_dir with extensions .JPEG and .png (case sensitive)
-        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        >>> dataset = ds.ImageFolderDataset(dataset_dir=image_folder_dataset_dir,
         ...                                 extensions=[".JPEG", ".png"])
     """
 
@@ -2985,8 +2987,11 @@ class MnistDataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
+        >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
+        >>>
         >>> # Read 3 samples from MNIST dataset
         >>> dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir, num_samples=3)
+        >>>
         >>> # Note: In mnist_dataset dataset, each dictionary has keys "image" and "label"
     """
 
@@ -3034,6 +3039,10 @@ class MindDataset(MappableDataset):
     Raises:
         ValueError: If num_shards is specified but shard_id is None.
         ValueError: If shard_id is specified but num_shards is None.
+
+    Examples:
+        >>> mind_dataset_dir = ["/path/to/mind_dataset_file"] # contains 1 or multiple MindRecord files
+        >>> dataset = ds.MindDataset(dataset_file=mind_dataset_dir)
     """
 
     def parse(self, children=None):
@@ -3425,14 +3434,14 @@ class GeneratorDataset(MappableDataset):
         ...     for i in range(64):
         ...         yield (np.array([[i, i + 1], [i + 2, i + 3]]),)
         >>>
-        >>> dataset = ds.GeneratorDataset(generator_multidimensional, ["multi_dimensional_data"])
+        >>> dataset = ds.GeneratorDataset(source=generator_multidimensional, column_names=["multi_dimensional_data"])
         >>>
         >>> # 2) Multi-column generator function as callable input.
         >>> def generator_multi_column():
         ...     for i in range(64):
-        ...         yield (np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]])
+        ...         yield np.array([i]), np.array([[i, i + 1], [i + 2, i + 3]])
         >>>
-        >>> dataset = ds.GeneratorDataset(generator_multi_column, ["col1", "col2"])
+        >>> dataset = ds.GeneratorDataset(source=generator_multi_column, column_names=["col1", "col2"])
         >>>
         >>> # 3) Iterable dataset as iterable input.
         >>> class MyIterable:
@@ -3450,12 +3459,13 @@ class GeneratorDataset(MappableDataset):
         ...             return item
         ...
         ...     def __iter__(self):
+        ...         self._index = 0
         ...         return self
         ...
         ...     def __len__(self):
         ...         return len(self._data)
         >>>
-        >>> dataset = ds.GeneratorDataset(MyIterable(), ["data", "label"])
+        >>> dataset = ds.GeneratorDataset(source=MyIterable(), column_names=["data", "label"])
         >>>
         >>> # 4) Random accessible dataset as random accessible input.
         >>> class MyAccessible:
@@ -3469,10 +3479,10 @@ class GeneratorDataset(MappableDataset):
         ...     def __len__(self):
         ...         return len(self._data)
         >>>
-        >>> dataset = ds.GeneratorDataset(MyAccessible(), ["data", "label"])
+        >>> dataset = ds.GeneratorDataset(source=MyAccessible(), column_names=["data", "label"])
         >>>
         >>> # list, dict, tuple of Python is also random accessible
-        >>> dataset = ds.GeneratorDataset([(np.array(0),), (np.array(1),), (np.array(2),)], ["col"])
+        >>> dataset = ds.GeneratorDataset(source=[(np.array(0),), (np.array(1),), (np.array(2),)], column_names=["col"])
     """
 
     @check_generatordataset
@@ -3590,17 +3600,17 @@ class TFRecordDataset(SourceDataset):
     Examples:
         >>> import mindspore.common.dtype as mstype
         >>>
-        >>> tfrecord_dataset_dir = ["/path/to/tfrecord_dataset_file"] # contains 1 or multiple tf data files
+        >>> tfrecord_dataset_dir = ["/path/to/tfrecord_dataset_file"] # contains 1 or multiple TFRecord files
         >>> tfrecord_schema_file = "/path/to/tfrecord_schema_file"
         >>>
         >>> # 1) Get all rows from tfrecord_dataset_dir with no explicit schema.
         >>> # The meta-data in the first row will be used as a schema.
-        >>> dataset = ds.TFRecordDataset(tfrecord_dataset_dir)
+        >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir)
         >>>
         >>> # 2) Get all rows from tfrecord_dataset_dir with user-defined schema.
         >>> schema = ds.Schema()
-        >>> schema.add_column('col_1d', de_type=mstype.int64, shape=[2])
-        >>> dataset = ds.TFRecordDataset(tfrecord_dataset_dir, schema=schema)
+        >>> schema.add_column(name='col_1d', de_type=mstype.int64, shape=[2])
+        >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=schema)
         >>>
         >>> # 3) Get all rows from tfrecord_dataset_dir with schema file.
         >>> dataset = ds.TFRecordDataset(dataset_files=tfrecord_dataset_dir, schema=tfrecord_schema_file)
@@ -3697,13 +3707,13 @@ class ManifestDataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
-        >>> # 1) Read all samples specified in manifest_dataset_dir dataset with 8 threads for training
-        >>> dataset = ds.ManifestDataset(manifest_dataset_dir, usage="train", num_parallel_workers=8)
+        >>> manifest_dataset_dir = "/path/to/manifest_dataset_file"
         >>>
-        >>> # 2) Read samples (specified in manifest_file.manifest) for shard 0
-        >>> # in a 2-way distributed training setup
-        >>> dataset = ds.ManifestDataset(manifest_dataset_dir, num_shards=2, shard_id=0)
-
+        >>> # 1) Read all samples specified in manifest_dataset_dir dataset with 8 threads for training
+        >>> dataset = ds.ManifestDataset(dataset_file=manifest_dataset_dir, usage="train", num_parallel_workers=8)
+        >>>
+        >>> # 2) Read samples (specified in manifest_file.manifest) for shard 0 in a 2-way distributed training setup
+        >>> dataset = ds.ManifestDataset(dataset_file=manifest_dataset_dir, num_shards=2, shard_id=0)
     """
 
     @check_manifestdataset
@@ -3815,6 +3825,8 @@ class Cifar10Dataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
+        >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
+        >>>
         >>> # 1) Get all samples from CIFAR10 dataset in sequence
         >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir, shuffle=False)
         >>>
@@ -3920,6 +3932,8 @@ class Cifar100Dataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
+        >>> cifar100_dataset_dir = "/path/to/cifar100_dataset_directory"
+        >>>
         >>> # 1) Get all samples from CIFAR100 dataset in sequence
         >>> dataset = ds.Cifar100Dataset(dataset_dir=cifar100_dataset_dir, shuffle=False)
         >>>
@@ -3999,7 +4013,7 @@ class Schema:
         >>>
         >>> # Create schema; specify column name, mindspore.dtype and shape of the column
         >>> schema = ds.Schema()
-        >>> schema.add_column('col1', de_type=mstype.int64, shape=[2])
+        >>> schema.add_column(name='col1', de_type=mstype.int64, shape=[2])
     """
 
     @check_schema
@@ -4190,17 +4204,21 @@ class VOCDataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
+        >>> voc_dataset_dir = "/path/to/voc_dataset_directory"
+        >>>
         >>> # 1) Read VOC data for segmentatation training
-        >>> dataset = ds.VOCDataset(voc_dataset_dir, task="Segmentation", usage="train")
+        >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir, task="Segmentation", usage="train")
         >>>
         >>> # 2) Read VOC data for detection training
-        >>> dataset = ds.VOCDataset(voc_dataset_dir, task="Detection", usage="train")
+        >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir, task="Detection", usage="train")
         >>>
         >>> # 3) Read all VOC dataset samples in voc_dataset_dir with 8 threads in random order
-        >>> dataset = ds.VOCDataset(voc_dataset_dir, task="Detection", usage="train", num_parallel_workers=8)
+        >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir, task="Detection", usage="train",
+        ...                         num_parallel_workers=8)
         >>>
         >>> # 4) Read then decode all VOC dataset samples in voc_dataset_dir in sequence
-        >>> dataset = ds.VOCDataset(voc_dataset_dir, task="Detection", usage="train", decode=True, shuffle=False)
+        >>> dataset = ds.VOCDataset(dataset_dir=voc_dataset_dir, task="Detection", usage="train",
+        ...                         decode=True, shuffle=False)
         >>>
         >>> # In VOC dataset, if task='Segmentation', each dictionary has keys "image" and "target"
         >>> # In VOC dataset, if task='Detection', each dictionary has keys "image" and "annotation"
@@ -4344,17 +4362,28 @@ class CocoDataset(MappableDataset):
         ValueError: If shard_id is invalid (< 0 or >= num_shards).
 
     Examples:
+        >>> coco_dataset_dir = "/path/to/coco_dataset_directory/images"
+        >>> coco_annotation_file = "/path/to/coco_dataset_directory/annotation_file"
+        >>>
         >>> # 1) Read COCO data for Detection task
-        >>> dataset = ds.CocoDataset(coco_dataset_dir, annotation_file=coco_annotation_file, task='Detection')
+        >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
+        ...                          annotation_file=coco_annotation_file,
+        ...                          task='Detection')
         >>>
         >>> # 2) Read COCO data for Stuff task
-        >>> dataset = ds.CocoDataset(coco_dataset_dir, annotation_file=coco_annotation_file, task='Stuff')
+        >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
+        ...                          annotation_file=coco_annotation_file,
+        ...                          task='Stuff')
         >>>
         >>> # 3) Read COCO data for Panoptic task
-        >>> dataset = ds.CocoDataset(coco_dataset_dir, annotation_file=coco_annotation_file, task='Panoptic')
+        >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
+        ...                          annotation_file=coco_annotation_file,
+        ...                          task='Panoptic')
         >>>
         >>> # 4) Read COCO data for Keypoint task
-        >>> dataset = ds.CocoDataset(coco_dataset_dir, annotation_file=coco_annotation_file, task='Keypoint')
+        >>> dataset = ds.CocoDataset(dataset_dir=coco_dataset_dir,
+        ...                          annotation_file=coco_annotation_file,
+        ...                          task='Keypoint')
         >>>
         >>> # In COCO dataset, each dictionary has keys "image" and "annotation"
     """
@@ -4445,6 +4474,7 @@ class CelebADataset(MappableDataset):
             (default=None, which means no cache is used).
 
     Examples:
+        >>> celeba_dataset_dir = "/path/to/celeba_dataset_directory"
         >>> dataset = ds.CelebADataset(dataset_dir=celeba_dataset_dir, usage='train')
     """
 
@@ -4519,7 +4549,7 @@ class CLUEDataset(SourceDataset):
             (default=None, which means no cache is used).
 
     Examples:
-        >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple text files
+        >>> clue_dataset_dir = ["/path/to/clue_dataset_file"] # contains 1 or multiple clue files
         >>> dataset = ds.CLUEDataset(dataset_files=clue_dataset_dir, task='AFQMC', usage='train')
     """
 
@@ -4647,7 +4677,7 @@ class CSVDataset(SourceDataset):
 
 
     Examples:
-        >>> csv_dataset_dir = ["/path/to/csv_dataset_file"]
+        >>> csv_dataset_dir = ["/path/to/csv_dataset_file"] # contains 1 or multiple csv files
         >>> dataset = ds.CSVDataset(dataset_files=csv_dataset_dir, column_names=['col1', 'col2', 'col3', 'col4'])
     """
 
@@ -4696,7 +4726,7 @@ class TextFileDataset(SourceDataset):
             (default=None, which means no cache is used).
 
     Examples:
-        >>> # contains 1 or multiple text files
+        >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
         >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir)
     """
 
@@ -4833,20 +4863,20 @@ class NumpySlicesDataset(GeneratorDataset):
     Examples:
         >>> # 1) Input data can be a list
         >>> data = [1, 2, 3]
-        >>> dataset = ds.NumpySlicesDataset(data, column_names=["column_1"])
+        >>> dataset = ds.NumpySlicesDataset(data=data, column_names=["column_1"])
         >>>
         >>> # 2) Input data can be a dictionary, and column_names will be its keys
         >>> data = {"a": [1, 2], "b": [3, 4]}
-        >>> dataset = ds.NumpySlicesDataset(data)
+        >>> dataset = ds.NumpySlicesDataset(data=data)
         >>>
         >>> # 3) Input data can be a tuple of lists (or NumPy arrays), each tuple element refers to data in each column
         >>> data = ([1, 2], [3, 4], [5, 6])
-        >>> dataset = ds.NumpySlicesDataset(data, column_names=["column_1", "column_2", "column_3"])
+        >>> dataset = ds.NumpySlicesDataset(data=data, column_names=["column_1", "column_2", "column_3"])
         >>>
         >>> # 4) Load data from CSV file
         >>> import pandas as pd
-        >>> df = pd.read_csv(csv_dataset_dir[0])
-        >>> dataset = ds.NumpySlicesDataset(dict(df), shuffle=False)
+        >>> df = pd.read_csv(filepath_or_buffer=csv_dataset_dir[0])
+        >>> dataset = ds.NumpySlicesDataset(data=dict(df), shuffle=False)
     """
 
     @check_numpyslicesdataset
@@ -4893,7 +4923,7 @@ class PaddedDataset(GeneratorDataset):
     Examples:
         >>> import numpy as np
         >>> data = [{'image': np.zeros(1, np.uint8)}, {'image': np.zeros(2, np.uint8)}]
-        >>> dataset = ds.PaddedDataset(data)
+        >>> dataset = ds.PaddedDataset(padded_samples=data)
     """
 
     @check_paddeddataset

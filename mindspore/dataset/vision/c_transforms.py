@@ -62,6 +62,7 @@ class ImageTensorOperation(TensorOperation):
     """
     Base class of Image Tensor Ops
     """
+
     def __call__(self, *input_tensor_list):
         for tensor in input_tensor_list:
             if not isinstance(tensor, (np.ndarray, Image.Image)):
@@ -1142,8 +1143,8 @@ class RandomSelectSubpolicy(ImageTensorOperation):
         ...            (c_vision.RandomColorAdjust(), 0.8)],
         ...           [(c_vision.RandomRotation((90, 90)), 1),
         ...            (c_vision.RandomColorAdjust(), 0.2)]]
-        >>> image_folder_dataset_1 = image_folder_dataset.map(operations=c_vision.RandomSelectSubpolicy(policy),
-        ...                                                   input_columns=["image"])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=c_vision.RandomSelectSubpolicy(policy),
+        ...                                                 input_columns=["image"])
     """
 
     @check_random_select_subpolicy_op

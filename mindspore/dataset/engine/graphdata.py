@@ -72,9 +72,10 @@ class GraphData:
             the server automatically exits (default=True).
 
     Examples:
-        >>> graph_dataset = ds.GraphData(graph_dataset_dir, 2)
-        >>> nodes = graph_dataset.get_all_nodes(1)
-        >>> features = graph_dataset.get_node_feature(nodes, [1])
+        >>> graph_dataset_dir = "/path/to/graph_dataset_file"
+        >>> graph_dataset = ds.GraphData(dataset_file=graph_dataset_dir, num_parallel_workers=2)
+        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+        >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[1])
     """
 
     @check_gnn_graphdata
@@ -114,7 +115,7 @@ class GraphData:
             numpy.ndarray, array of nodes.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(1)
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
 
         Raises:
             TypeError: If `node_type` is not integer.
@@ -135,7 +136,7 @@ class GraphData:
             numpy.ndarray, array of edges.
 
         Examples:
-            >>> edges = graph_dataset.get_all_edges(0)
+            >>> edges = graph_dataset.get_all_edges(edge_type=0)
 
         Raises:
             TypeError: If `edge_type` is not integer.
@@ -175,8 +176,8 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(1)
-            >>> neighbors = graph_dataset.get_all_neighbors(nodes, 2)
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -211,8 +212,9 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(1)
-            >>> neighbors = graph_dataset.get_sampled_neighbors(nodes, [2, 2], [2, 1])
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> neighbors = graph_dataset.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
+            ...                                                 neighbor_types=[2, 1])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -240,8 +242,9 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(1)
-            >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(nodes, 5, 2)
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
+            ...                                                         neg_neighbor_type=2)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -266,8 +269,8 @@ class GraphData:
             numpy.ndarray, array of features.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(1)
-            >>> features = graph_dataset.get_node_feature(nodes, [2, 3])
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[2, 3])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -295,8 +298,8 @@ class GraphData:
             numpy.ndarray, array of features.
 
         Examples:
-            >>> edges = graph_dataset.get_all_edges(0)
-            >>> features = graph_dataset.get_edge_feature(edges, [1])
+            >>> edges = graph_dataset.get_all_edges(edge_type=0)
+            >>> features = graph_dataset.get_edge_feature(edge_list=edges, feature_types=[1])
 
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
@@ -325,13 +328,7 @@ class GraphData:
         return self._graph_data.graph_info()
 
     @check_gnn_random_walk
-    def random_walk(
-            self,
-            target_nodes,
-            meta_path,
-            step_home_param=1.0,
-            step_away_param=1.0,
-            default_node=-1):
+    def random_walk(self, target_nodes, meta_path, step_home_param=1.0, step_away_param=1.0, default_node=-1):
         """
         Random walk in nodes.
 
@@ -347,7 +344,8 @@ class GraphData:
             numpy.ndarray, array of nodes.
 
         Examples:
-            >>> nodes = graph_dataset.random_walk([1, 2], [1, 2, 1, 2, 1])
+            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> walks = graph_dataset.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])
 
         Raises:
             TypeError: If `target_nodes` is not list or ndarray.
