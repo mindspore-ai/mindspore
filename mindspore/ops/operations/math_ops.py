@@ -791,7 +791,7 @@ class MatMul(PrimitiveWithInfer):
 
 
 class BatchMatMul(MatMul):
-    """
+    r"""
     Computes matrix multiplication between two tensors by batch.
 
     .. math::
