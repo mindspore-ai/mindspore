@@ -410,10 +410,11 @@ Current batch_Size can only be set to 1. The precision calculation process needs
 
 ```shell
 # Ascend310 inference
-bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+bash run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
 ```
 
-`DEVICE_ID` is optional, default value is 0.
+- `DVPP` is mandatory, and must choose from ["DVPP", "CPU"], it's case-insensitive. Note that the image shape of ssd_vgg16 inference is [300, 300], The DVPP hardware restricts width 16-alignment and height even-alignment. Therefore, the network needs to use the CPU operator to process images.
+- `DEVICE_ID` is optional, default value is 0.
 
 ### result
 

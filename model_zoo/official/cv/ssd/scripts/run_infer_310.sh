@@ -14,8 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [[ $# -lt 2 || $# -gt 3 ]]; then
-    echo "Usage: sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID]
+if [[ $# -lt 3 || $# -gt 4 ]]; then
+    echo "Usage: sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DVPP] [DEVICE_ID]
+    DVPP is mandatory, and must choose from [DVPP|CPU], it's case-insensitive
     DEVICE_ID is optional, it can be set by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
@@ -29,14 +30,16 @@ get_real_path(){
 }
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
+DVPP=${3^^}
 
 device_id=0
-if [ $# == 3 ]; then    
-    device_id=$3
+if [ $# == 4 ]; then
+    device_id=$4
 fi
 
 echo "mindir name: "$model
 echo "dataset path: "$data_path
+echo "image process mode: "$DVPP
 echo "device id: "$device_id
 
 export ASCEND_HOME=/usr/local/Ascend/
@@ -56,10 +59,7 @@ fi
 function compile_app()
 {
     cd ../ascend310_infer
-    if [ -f "Makefile" ]; then
-        make clean
-    fi
-    sh build.sh &> build.log    
+    sh build.sh &> build.log
 }
 
 function infer()
@@ -73,7 +73,14 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_path --device_id=$device_id --aipp_path ../src/aipp.cfg &> infer.log
+    if [ "$DVPP" == "DVPP" ];then
+      ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_path --device_id=$device_id --cpu_dvpp=$DVPP --aipp_path=../ascend310_infer/aipp.cfg --image_height=640 --image_width=640 &> infer.log
+    elif [ "$DVPP" == "CPU"  ]; then
+      ../ascend310_infer/out/main --mindir_path=$model --dataset_path=$data_path --cpu_dvpp=$DVPP --device_id=$device_id --image_height=300 --image_width=300 &> infer.log
+    else
+      echo "image process mode must be in [DVPP|CPU]"
+      exit 1
+    fi
 }
 
 function cal_acc()

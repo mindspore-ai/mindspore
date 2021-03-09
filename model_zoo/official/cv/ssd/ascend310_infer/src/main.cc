@@ -29,7 +29,7 @@
 #include "include/api/serialization.h"
 #include "include/minddata/dataset/include/vision_ascend.h"
 #include "include/minddata/dataset/include/execute.h"
-
+#include "include/minddata/dataset/include/vision.h"
 #include "inc/utils.h"
 
 using mindspore::GlobalContext;
@@ -42,13 +42,20 @@ using mindspore::GraphCell;
 using mindspore::kSuccess;
 using mindspore::MSTensor;
 using mindspore::dataset::Execute;
+using mindspore::dataset::TensorTransform;
 using mindspore::dataset::vision::DvppDecodeResizeJpeg;
-
+using mindspore::dataset::vision::Resize;
+using mindspore::dataset::vision::HWC2CHW;
+using mindspore::dataset::vision::Normalize;
+using mindspore::dataset::vision::Decode;
 
 DEFINE_string(mindir_path, "", "mindir path");
 DEFINE_string(dataset_path, ".", "dataset path");
 DEFINE_int32(device_id, 0, "device id");
 DEFINE_string(aipp_path, "./aipp.cfg", "aipp path");
+DEFINE_string(cpu_dvpp, "DVPP", "cpu or dvpp process");
+DEFINE_int32(image_height, 640, "image height");
+DEFINE_int32(image_width, 640, "image width");
 
 int main(int argc, char **argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -56,17 +63,18 @@ int main(int argc, char **argv) {
     std::cout << "Invalid mindir" << std::endl;
     return 1;
   }
-  if (RealPath(FLAGS_aipp_path).empty()) {
-    std::cout << "Invalid aipp path" << std::endl;
-    return 1;
-  }
 
   GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
   GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
   auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
   auto model_context = std::make_shared<mindspore::ModelContext>();
-  if (!FLAGS_aipp_path.empty()) {
-    ModelContext::SetInsertOpConfigPath(model_context, FLAGS_aipp_path);
+  if (FLAGS_cpu_dvpp == "DVPP") {
+    if (RealPath(FLAGS_aipp_path).empty()) {
+      std::cout << "Invalid aipp path" << std::endl;
+      return 1;
+    } else {
+      ModelContext::SetInsertOpConfigPath(model_context, FLAGS_aipp_path);
+    }
   }
 
   Model model(GraphCell(graph), model_context);
@@ -84,7 +92,7 @@ int main(int argc, char **argv) {
 
   std::map<double, double> costTime_map;
   size_t size = all_files.size();
-  Execute resize_op(std::shared_ptr<DvppDecodeResizeJpeg>(new DvppDecodeResizeJpeg({640, 640})));
+
   for (size_t i = 0; i < size; ++i) {
     struct timeval start = {0};
     struct timeval end = {0};
@@ -93,11 +101,33 @@ int main(int argc, char **argv) {
     std::vector<MSTensor> inputs;
     std::vector<MSTensor> outputs;
     std::cout << "Start predict input files:" << all_files[i] << std::endl;
-    auto imgDvpp = std::make_shared<MSTensor>();
-    resize_op(ReadFileToTensor(all_files[i]), imgDvpp.get());
-
-    inputs.emplace_back(imgDvpp->Name(), imgDvpp->DataType(), imgDvpp->Shape(),
+    if (FLAGS_cpu_dvpp == "DVPP") {
+      auto resizeShape = {static_cast <uint32_t>(FLAGS_image_height), static_cast <uint32_t>(FLAGS_image_width)};
+      Execute resize_op(std::shared_ptr<DvppDecodeResizeJpeg>(new DvppDecodeResizeJpeg(resizeShape)));
+      auto imgDvpp = std::make_shared<MSTensor>();
+      resize_op(ReadFileToTensor(all_files[i]), imgDvpp.get());
+      inputs.emplace_back(imgDvpp->Name(), imgDvpp->DataType(), imgDvpp->Shape(),
                         imgDvpp->Data().get(), imgDvpp->DataSize());
+    } else {
+      std::shared_ptr<TensorTransform> decode(new Decode());
+      std::shared_ptr<TensorTransform> hwc2chw(new HWC2CHW());
+      std::shared_ptr<TensorTransform> normalize(
+      new Normalize({123.675, 116.28, 103.53}, {58.395, 57.120, 57.375}));
+      auto resizeShape = {FLAGS_image_height, FLAGS_image_width};
+      std::shared_ptr<TensorTransform> resize(new Resize(resizeShape));
+      Execute composeDecode({decode, resize, normalize, hwc2chw});
+      auto img = MSTensor();
+      auto image = ReadFileToTensor(all_files[i]);
+      composeDecode(image, &img);
+      std::vector<MSTensor> model_inputs = model.GetInputs();
+      if (model_inputs.empty()) {
+        std::cout << "Invalid model, inputs is empty." << std::endl;
+        return 1;
+      }
+      inputs.emplace_back(model_inputs[0].Name(), model_inputs[0].DataType(), model_inputs[0].Shape(),
+                       img.Data().get(), img.DataSize());
+    }
+
     gettimeofday(&start, nullptr);
     ret = model.Predict(inputs, &outputs);
     gettimeofday(&end, nullptr);

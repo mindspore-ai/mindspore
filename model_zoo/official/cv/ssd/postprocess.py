@@ -22,7 +22,7 @@ from src.config import config
 from src.eval_utils import metrics
 
 batch_size = 1
-parser = argparse.ArgumentParser(description="ssd_mobilenet_v1_fpn inference")
+parser = argparse.ArgumentParser(description="ssd acc calculation")
 parser.add_argument("--result_path", type=str, required=True, help="result files path.")
 parser.add_argument("--img_path", type=str, required=True, help="image file path.")
 parser.add_argument("--drop", action="store_true", help="drop iscrowd images or not.")
@@ -73,9 +73,8 @@ def get_result(result_path, img_id_file_path):
         image_shape = np.array([img_size[1], img_size[0]])
         result_path_0 = os.path.join(result_path, img_ids_name + "_0.bin")
         result_path_1 = os.path.join(result_path, img_ids_name + "_1.bin")
-
-        boxes = np.fromfile(result_path_0, dtype=np.float32).reshape(51150, 4)
-        box_scores = np.fromfile(result_path_1, dtype=np.float32).reshape(51150, 81)
+        boxes = np.fromfile(result_path_0, dtype=np.float32).reshape(config.num_ssd_boxes, 4)
+        box_scores = np.fromfile(result_path_1, dtype=np.float32).reshape(config.num_ssd_boxes, config.num_classes)
 
         pred_data.append({
             "boxes": boxes,

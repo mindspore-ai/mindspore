@@ -508,7 +508,6 @@ python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [
 
 ### 用法
 
-在执行推理前，air文件必须在910上通过export.py文件导出。
 目前仅可处理batch_Size为1。
 
 ```shell
