@@ -38,6 +38,7 @@ class ExecNode {
   ExecNode(const size_t index, const std::string &node_name, const uint32_t &logic_id, const uint32_t &stream_id,
            const std::string &node_info)
       : index_(index), node_name_(node_name), logic_id_(logic_id), stream_id_(stream_id), node_info_(node_info) {}
+  ~ExecNode() {}
   void SetEventId(const uint32_t &event_id) { event_id_ = event_id; }
   void SetLabelId(const uint32_t &label_id) { label_ids_.push_back(label_id); }
   void SetActiveStreamId(const uint32_t &active_stream_id) { active_stream_ids_.push_back(active_stream_id); }
@@ -98,6 +99,7 @@ class StreamExecOrderRecorder : public BaseRecorder {
       exec_order_.push_back(std::move(exec_node_ptr));
     }
   }
+  ~StreamExecOrderRecorder() {}
   virtual void Export();
 
  private:
