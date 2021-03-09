@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
+from mindspore.ops.operations import _inner_ops as inner
 
 class Net(nn.Cell):
     def __init__(self):
@@ -29,6 +29,18 @@ class Net(nn.Cell):
 
     def construct(self, x, y):
         return self.sub(x, y)
+
+class NetDynamic(nn.Cell):
+    def __init__(self):
+        super(NetDynamic, self).__init__()
+        self.d = inner.GpuConvertToDynamicShape()
+        self.sub = P.Sub()
+
+    def construct(self, x, y):
+        x = self.d(x)
+        y = self.d(y)
+        out = self.sub(x, y)
+        return out
 
 
 def sub(nptype):
@@ -109,6 +121,19 @@ def sub(nptype):
     diff4 = output4.asnumpy() - expect4
     assert np.all(diff4 < error4)
     assert output4.shape == expect4.shape
+
+    #dynamic shape
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    d_sub_net = NetDynamic()
+    output3 = d_sub_net(x3, y3)
+    output0 = d_sub_net(x0, y0)
+    diff3 = output3.asnumpy() - expect3
+    assert np.all(diff3 < error3)
+    assert output3.shape == expect3.shape
+    diff0 = output0.asnumpy() - expect0
+    assert np.all(diff0 < error0)
+    assert output0.shape == expect0.shape
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
