@@ -360,7 +360,7 @@ class TbeTuner:
         converted_json = single_to_fusion(json.dumps(json_info), tune_mode="GA")
         graph_id = 0
         l1size = 0
-        kernel_name = json_info["fusion_op_name"]
+        kernel_name = json.loads(converted_json)["fusion_op_name"]
         dispatch_autotune_task(graph_id, task_id, l1size, converted_json, [], kernel_name)
 
     def get_finish_tasks(self):
