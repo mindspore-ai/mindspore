@@ -38,7 +38,7 @@ void Worker::Run() {
   worker_node_.set_event_callback([&](const core::NodeEvent &event) {
     if ((event == core::NodeEvent::CLUSTER_TIMEOUT) ||
         (event == core::NodeEvent::SCHEDULER_TIMEOUT || (event == core::NodeEvent::NODE_TIMEOUT))) {
-      MS_LOG(ERROR) << "Trigger timeout event:" << event << " begin to exit the system!";
+      MS_LOG(WARNING) << "Trigger timeout event:" << event << " begin to exit the system!";
       Finalize();
       exit(0);
     }
