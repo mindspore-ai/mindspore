@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "backend/kernel_compiler/gpu/cuda_impl/pad_impl.cuh"
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -28,6 +29,8 @@
 
 namespace mindspore {
 namespace kernel {
+const std::map<std::string, size_t> kFormatIndexMap = {{"NCHW", 2}, {"HWCN", 0}, {"NHWC", 1}};
+
 template <typename T>
 class ConvGradInputGpuBkwKernel : public GpuKernel {
  public:
@@ -339,7 +342,16 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
   void SetStrideAndDilation(const CNodePtr &kernel_node) {
     std::vector<int64_t> stride_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "stride");
     std::vector<int64_t> dilation_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "dilation");
-    (void)std::transform(stride_me.begin(), stride_me.end(), std::back_inserter(stride_),
+    std::string format_me = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "format");
+    auto iter = kFormatIndexMap.find(format_me);
+    if (iter == kFormatIndexMap.end()) {
+      MS_LOG(EXCEPTION) << "OriFormat is " << format_me << ", Please confirm that in {NCHW, HWCN, NHWC}.";
+    }
+    size_t h_index = iter->second;
+    if (stride_me.size() < h_index + 2) {
+      MS_LOG(EXCEPTION) << "Strides should greater than " << h_index + 1 << ", but got " << stride_me.size();
+    }
+    (void)std::transform(stride_me.begin() + h_index, stride_me.begin() + h_index + 2, std::back_inserter(stride_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
