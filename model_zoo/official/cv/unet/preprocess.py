@@ -20,7 +20,8 @@ from src.config import cfg_unet
 
 def preprocess_dataset(data_dir, result_path, cross_valid_ind=1, cfg=None):
 
-    _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False)
+    _, valid_dataset = create_dataset(data_dir, 1, 1, False, cross_valid_ind, False, do_crop=cfg['crop'],
+                                      img_size=cfg['img_size'])
 
     for i, data in enumerate(valid_dataset):
         file_name = "ISBI_test_bs_1_" + str(i) + ".bin"
