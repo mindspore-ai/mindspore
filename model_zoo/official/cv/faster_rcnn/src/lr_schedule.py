@@ -28,7 +28,7 @@ def a_cosine_learning_rate(current_step, base_lr, warmup_steps, decay_steps):
 def dynamic_lr(config, steps_per_epoch):
     """dynamic learning rate generator"""
     base_lr = config.base_lr
-    total_steps = steps_per_epoch * config.epoch_size
+    total_steps = steps_per_epoch * (config.epoch_size + 1)
     warmup_steps = int(config.warmup_step)
     lr = []
     for i in range(total_steps):
