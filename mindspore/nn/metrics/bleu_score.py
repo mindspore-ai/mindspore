@@ -84,8 +84,8 @@ class BleuScore(Metric):
 
         Args:
             inputs: Input `candidate_corpus` and ``reference_corpus`. `candidate_corpus` and `reference_corpus` are a
-                    list. The `candidate_corpus` is an iterable of machine translated corpus. The `reference_corpus` is
-                    an iterable of iterables of reference corpus.
+                list. The `candidate_corpus` is an iterable of machine translated corpus. The `reference_corpus` is
+                an iterable of iterables of reference corpus.
 
         Raises:
             ValueError: If the number of input is not 2.
