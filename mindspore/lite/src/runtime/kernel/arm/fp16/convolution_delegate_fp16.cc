@@ -69,17 +69,13 @@ int ConvolutionDelegateFP16CPUKernel::Init() {
     if (in_tensors_.size() == 3) {
       origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
       need_free_ = need_free_ | BIAS_NEED_FREE;
-      origin_bias_data_type_ = in_tensors_.at(kBiasIndex)->data_type();
     }
-    origin_weight_data_type_ = in_tensors_.at(kWeightIndex)->data_type();
     return RET_OK;
   }
   origin_weight_ = in_tensors_.at(kWeightIndex)->data_c();
   if (in_tensors_.size() == 3) {
     origin_bias_ = in_tensors_.at(kBiasIndex)->data_c();
-    origin_bias_data_type_ = in_tensors_.at(kBiasIndex)->data_type();
   }
-  origin_weight_data_type_ = in_tensors_.at(kWeightIndex)->data_type();
   return ReSize();
 }
 
@@ -110,6 +106,28 @@ ConvParameter *CreateNewConvParameterFp16(ConvParameter *parameter) {
   return conv_parameter;
 }
 
+kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                               const InnerContext *ctx, void *origin_weight, void *origin_bias,
+                                               TypeId origin_weight_data_type, TypeId origin_bias_data_type) {
+  MS_ASSERT(opParameter != nullptr);
+  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  kernel::LiteKernel *kernel;
+  if (conv_param->input_channel_ < 32) {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWFp16CPUKernel(
+      opParameter, inputs, outputs, ctx, origin_weight, origin_bias, origin_weight_data_type, origin_bias_data_type);
+  } else {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseFp16CPUKernel(
+      opParameter, inputs, outputs, ctx, origin_weight, origin_bias, origin_weight_data_type, origin_bias_data_type);
+  }
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    free(opParameter);
+    return nullptr;
+  }
+  return kernel;
+}
+
 kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                             const lite::InnerContext *ctx, void *origin_weight, void *origin_bias,
@@ -119,12 +137,17 @@ kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &i
   int out_unit;
   CheckIfUseWinogradFp16(&use_winograd, &out_unit, conv_param);
   kernel::LiteKernel *kernel = nullptr;
-  if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
+
+  if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
+    kernel = CpuConvDwFp16KernelCreator(inputs, outputs, op_parameter, ctx, origin_weight, origin_bias,
+                                        origin_weight_data_type, origin_bias_data_type);
+  } else if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
     kernel = new (std::nothrow) kernel::Convolution1x1FP16CPUKernel(
       op_parameter, inputs, outputs, ctx, origin_weight, origin_bias, origin_weight_data_type, origin_bias_data_type);
   } else if (use_winograd) {
-    kernel = new (std::nothrow) kernel::ConvolutionWinogradFP16CPUKernel(
-      op_parameter, inputs, outputs, ctx, out_unit, origin_weight, origin_bias, origin_bias_data_type);
+    kernel = new (std::nothrow)
+      kernel::ConvolutionWinogradFP16CPUKernel(op_parameter, inputs, outputs, ctx, out_unit, origin_weight, origin_bias,
+                                               origin_weight_data_type, origin_bias_data_type);
   } else {
     kernel = new (std::nothrow) kernel::ConvolutionFP16CPUKernel(
       op_parameter, inputs, outputs, ctx, origin_weight, origin_bias, origin_weight_data_type, origin_bias_data_type);
@@ -211,7 +234,13 @@ static lite::Tensor *CreateOutputTensorFp16(const std::vector<int> &out_shape,
 kernel::LiteKernel *CreateDelegateConvFp16(const std::vector<lite::Tensor *> &inputs,
                                            const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                            const InnerContext *ctx) {
-  return new (std::nothrow) kernel::ConvolutionDelegateFP16CPUKernel(op_parameter, inputs, outputs, ctx);
+  auto weight_data_type = inputs.at(1)->data_type();
+  TypeId bias_data_type = kTypeUnknown;
+  if (inputs.size() == 3) {
+    bias_data_type = inputs.at(2)->data_type();
+  }
+  return new (std::nothrow)
+    kernel::ConvolutionDelegateFP16CPUKernel(op_parameter, inputs, outputs, ctx, weight_data_type, bias_data_type);
 }
 
 kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -302,33 +331,6 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
     GroupConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, group_convs, conv_param->group_);
 }
 
-kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const InnerContext *ctx, const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  kernel::LiteKernel *kernel;
-  if (conv_param->input_channel_ < 32) {
-    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWFp16CPUKernel(opParameter, inputs, outputs, ctx);
-  } else {
-    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseFp16CPUKernel(opParameter, inputs, outputs, ctx);
-  }
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
 kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                              const InnerContext *ctx, const kernel::KernelKey &desc) {
@@ -337,12 +339,13 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
 
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
-  if (conv_param->group_ == 1) {
-    kernel = CreateDelegateConvFp16(inputs, outputs, opParameter, ctx);
-  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
-    kernel = CpuConvDwFp16KernelCreator(inputs, outputs, opParameter, ctx, desc);
-  } else {
+  bool is_depthwise =
+    (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_);
+
+  if (conv_param->group_ > 1 && !is_depthwise) {
     kernel = CpuGroupConvFp16KernelCreator(inputs, outputs, opParameter, ctx);
+  } else {
+    kernel = CreateDelegateConvFp16(inputs, outputs, opParameter, ctx);
   }
 
   if (kernel == nullptr) {

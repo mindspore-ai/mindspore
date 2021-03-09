@@ -28,8 +28,9 @@ namespace mindspore::kernel {
 class DeConvWinogradFp16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   DeConvWinogradFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx) {}
+                              const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                              TypeId origin_weight_data_type, TypeId origin_bias_data_type)
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, origin_weight_data_type, origin_bias_data_type) {}
   ~DeConvWinogradFp16CPUKernel() override;
   int Init() override;
   int Run() override;

@@ -61,7 +61,6 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int OC8 = UP_DIV(weight_tensor->Batch(), C8NUM);
-  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
   int pack_weight_size = C8NUM * OC8 * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float16_t *>(malloc(pack_weight_size * sizeof(float16_t)));
@@ -69,8 +68,8 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  PackNCHWFp32ToNC8HW8Fp16(origin_weight, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
-                           weight_tensor->Batch());
+  PackNCHWFp32ToNC8HW8Fp16(reinterpret_cast<float *>(origin_weight_), packed_weight_, 1,
+                           weight_tensor->Height() * weight_tensor->Width(), weight_tensor->Batch());
 
   bias_data_ = reinterpret_cast<float16_t *>(malloc(C8NUM * OC8 * sizeof(float16_t)));
   if (bias_data_ == nullptr) {
@@ -81,8 +80,8 @@ int ConvolutionDepthwiseSWFp16CPUKernel::InitWeightBias() {
   auto bias_fp16 = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
-    MS_ASSERT(ori_bias);
+    MS_ASSERT(origin_bias_);
+    auto ori_bias = reinterpret_cast<float *>(origin_bias_);
     for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
       bias_fp16[i] = (float16_t)ori_bias[i];
     }

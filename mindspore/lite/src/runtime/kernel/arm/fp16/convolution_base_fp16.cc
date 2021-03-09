@@ -39,9 +39,8 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteTensor() {
 }
 
 int ConvolutionBaseFP16CPUKernel::GetExecuteFilter(lite::Tensor *weight_tensor, void *origin_data) {
-  auto weight_data_type = weight_tensor->data_type();
-  MS_ASSERT(weight_data_type == kNumberTypeFloat32 || weight_data_type == kNumberTypeFloat16);
-  if (weight_data_type == kNumberTypeFloat32) {
+  MS_ASSERT(origin_weight_data_type_ == kNumberTypeFloat32 || origin_weight_data_type_ == kNumberTypeFloat16);
+  if (origin_weight_data_type_ == kNumberTypeFloat32) {
     float *origin_weight = reinterpret_cast<float *>(origin_data);
     size_t fp16_weight_size = weight_tensor->Channel() * weight_tensor->Batch() * weight_tensor->Height() *
                               weight_tensor->Width() * sizeof(float16_t);

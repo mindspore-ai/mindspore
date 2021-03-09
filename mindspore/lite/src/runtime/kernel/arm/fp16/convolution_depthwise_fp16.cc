@@ -42,7 +42,7 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter(weight_tensor, weight_tensor->data_c());
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter(weight_tensor, origin_weight_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "get execute filter data failed.";
     return ret;
@@ -63,8 +63,8 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   auto bias_fp16 = reinterpret_cast<float16_t *>(bias_data_);
   if (in_tensors_.size() == kInputSize2) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
-    auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
-    MS_ASSERT(ori_bias);
+    MS_ASSERT(origin_bias_);
+    auto ori_bias = reinterpret_cast<float *>(origin_bias_);
     for (int i = 0; i < bias_tensor->ElementsNum(); i++) {
       bias_fp16[i] = (float16_t)ori_bias[i];
     }
