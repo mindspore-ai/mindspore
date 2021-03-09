@@ -41,35 +41,29 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
   int *ele_shape_ptr = (int *)(input1->data_);
   TensorListC *output = (TensorListC *)(outputs[0]);
 
-  vvector *tensor_shape = (vvector *)malloc(sizeof(vvector));
-  if (tensor_shape == NULL) {
+  vvector tensor_shape;
+  tensor_shape.size_ = dim0;
+  tensor_shape.shape_ = (int **)malloc(tensor_shape.size_ * sizeof(int *));
+  if (tensor_shape.shape_ == NULL) {
     return NNACL_NULL_PTR;
   }
-  tensor_shape->size_ = dim0;
-  tensor_shape->shape_ = (int **)malloc(tensor_shape->size_ * sizeof(int *));
-  if (tensor_shape->shape_ == NULL) {
-    free(tensor_shape);
-    return NNACL_NULL_PTR;
-  }
-  tensor_shape->shape_size_ = (int *)malloc(tensor_shape->size_ * sizeof(int));
-  if (tensor_shape->shape_size_ == NULL) {
-    free(tensor_shape->shape_);
-    free(tensor_shape);
+  tensor_shape.shape_size_ = (int *)malloc(tensor_shape.size_ * sizeof(int));
+  if (tensor_shape.shape_size_ == NULL) {
+    free(tensor_shape.shape_);
     return NNACL_NULL_PTR;
   }
 
   for (size_t i = 0; i < dim0; i++) {
-    tensor_shape->shape_[i] = (int *)(input0->shape_ + 1);
-    tensor_shape->shape_size_[i] = input0->shape_size_ - 1;
+    tensor_shape.shape_[i] = (int *)(input0->shape_ + 1);
+    tensor_shape.shape_size_[i] = input0->shape_size_ - 1;
   }
 
   ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, GetElementNum(input1));
   output->element_num_ = dim0;
   output->data_type_ = kObjectTypeTensorType;
   output->format_ = Format_NHWC;
-  MallocTensorListData(output, input0->data_type_, tensor_shape);
-  free(tensor_shape->shape_);
-  free(tensor_shape->shape_size_);
-  free(tensor_shape);
+  MallocTensorListData(output, input0->data_type_, &tensor_shape);
+  free(tensor_shape.shape_);
+  free(tensor_shape.shape_size_);
   return NNACL_OK;
 }

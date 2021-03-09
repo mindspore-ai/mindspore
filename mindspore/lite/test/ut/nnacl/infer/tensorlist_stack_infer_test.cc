@@ -29,28 +29,26 @@ TEST_F(TensorlistStackInferTest, TensorlistStackInferTest0) {
   std::vector<TensorC *> inputs(inputs_size, NULL);
   TensorListC *input0 = new TensorListC;
   input0->element_num_ = 3;
-  input0->tensors_ = reinterpret_cast<TensorC **>(malloc(input0->element_num_ * sizeof(TensorC *)));
+  input0->tensors_ = reinterpret_cast<TensorC *>(malloc(input0->element_num_ * sizeof(TensorC)));
   input0->element_shape_size_ = 2;
   input0->element_shape_[0] = 2;
   input0->element_shape_[1] = 4;
   input0->tensors_data_type_ = kNumberTypeInt32;
-  input0->tensors_[0] = new TensorC;
-  input0->tensors_[0]->shape_size_ = 2;
-  input0->tensors_[0]->shape_[0] = 2;
-  input0->tensors_[0]->shape_[1] = 4;
-  input0->tensors_[0]->data_type_ = kNumberTypeInt32;
-  // input0->tensors_[0]->format_ = Format_NHWC;
-  input0->tensors_[1] = new TensorC;
-  input0->tensors_[1]->shape_size_ = 2;
-  input0->tensors_[1]->shape_[0] = 2;
-  input0->tensors_[1]->shape_[1] = 4;
-  input0->tensors_[1]->data_type_ = kNumberTypeInt32;
-  // input0->tensors_[1]->format_ = Format_NHWC;
-  input0->tensors_[2] = new TensorC;
-  input0->tensors_[2]->shape_size_ = 2;
-  input0->tensors_[2]->shape_[0] = 2;
-  input0->tensors_[2]->shape_[1] = 4;
-  input0->tensors_[2]->data_type_ = kNumberTypeInt32;
+
+  input0->tensors_[0].shape_size_ = 2;
+  input0->tensors_[0].shape_[0] = 2;
+  input0->tensors_[0].shape_[1] = 4;
+  input0->tensors_[0].data_type_ = kNumberTypeInt32;
+
+  input0->tensors_[1].shape_size_ = 2;
+  input0->tensors_[1].shape_[0] = 2;
+  input0->tensors_[1].shape_[1] = 4;
+  input0->tensors_[1].data_type_ = kNumberTypeInt32;
+
+  input0->tensors_[2].shape_size_ = 2;
+  input0->tensors_[2].shape_[0] = 2;
+  input0->tensors_[2].shape_[1] = 4;
+  input0->tensors_[2].data_type_ = kNumberTypeInt32;
   // input0->tensors_[2]->format_ = Format_NHWC;
   inputs[0] = reinterpret_cast<TensorC *>(input0);
   inputs[0]->data_type_ = kObjectTypeTensorType;

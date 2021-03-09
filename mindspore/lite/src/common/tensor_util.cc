@@ -87,10 +87,6 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
 }
 
 void FreeTensorListC(TensorListC *tensorlist_c) {
-  for (size_t i = 0; i < tensorlist_c->element_num_; i++) {
-    free(tensorlist_c->tensors_[i]);
-    tensorlist_c->tensors_[i] = nullptr;
-  }
   if (tensorlist_c->tensors_ != nullptr) {
     free(tensorlist_c->tensors_);
     tensorlist_c->tensors_ = nullptr;
@@ -132,18 +128,13 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
   dst->format_ = src->format();
   dst->element_num_ = src->shape().empty() ? 0 : src->tensors().size();
 
-  dst->tensors_ = reinterpret_cast<TensorC **>(malloc(dst->element_num_ * sizeof(TensorC *)));
+  dst->tensors_ = reinterpret_cast<TensorC *>(malloc(dst->element_num_ * sizeof(TensorC)));
   if (dst->tensors_ == nullptr) {
     return RET_ERROR;
   }
-  memset(dst->tensors_, 0, dst->element_num_ * sizeof(TensorC *));
+  memset(dst->tensors_, 0, dst->element_num_ * sizeof(TensorC));
   for (size_t i = 0; i < dst->element_num_; i++) {
-    dst->tensors_[i] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-    if (dst->tensors_[i] == nullptr) {
-      return NNACL_ERR;
-    }
-    memset(dst->tensors_[i], 0, sizeof(TensorC));
-    Tensor2TensorC(src->tensors().at(i), dst->tensors_[i]);
+    Tensor2TensorC(src->tensors().at(i), &dst->tensors_[i]);
   }
 
   dst->tensors_data_type_ = src->tensors_data_type();
@@ -163,7 +154,7 @@ void TensorListC2TensorList(TensorListC *src, TensorList *dst) {
 
   // Set Tensors
   for (size_t i = 0; i < src->element_num_; i++) {
-    TensorC2Tensor(src->tensors_[i], dst->GetTensor(i));
+    TensorC2Tensor(&src->tensors_[i], dst->GetTensor(i));
   }
 
   dst->set_element_shape(std::vector<int>(src->element_shape_, src->element_shape_ + src->element_shape_size_));
@@ -183,28 +174,13 @@ int GenerateMergeOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vect
       output_tensorlist->element_num_ = inputs[i]->shape().empty() ? 0 : inputs[i]->shape().at(0);
       if (output_tensorlist->element_num_ != 0) {
         output_tensorlist->tensors_ =
-          reinterpret_cast<TensorC **>(malloc(output_tensorlist->element_num_ * sizeof(TensorC *)));
+          reinterpret_cast<TensorC *>(malloc(output_tensorlist->element_num_ * sizeof(TensorC)));
         if (output_tensorlist->tensors_ == nullptr) {
           free(output_tensorlist);
           output_tensorlist = nullptr;
           return RET_ERROR;
         }
-        memset(output_tensorlist->tensors_, 0, output_tensorlist->element_num_ * sizeof(TensorC *));
-        for (size_t j = 0; j < output_tensorlist->element_num_; j++) {
-          output_tensorlist->tensors_[j] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-          if (output_tensorlist->tensors_[j] == nullptr) {
-            for (size_t k = 0; k < j; k++) {
-              free(output_tensorlist->tensors_[k]);
-              output_tensorlist->tensors_[k] = nullptr;
-            }
-            free(output_tensorlist->tensors_);
-            output_tensorlist->tensors_ = nullptr;
-            free(output_tensorlist);
-            output_tensorlist = nullptr;
-            return RET_ERROR;
-          }
-          memset(output_tensorlist->tensors_[j], 0, sizeof(TensorC));
-        }
+        memset(output_tensorlist->tensors_, 0, output_tensorlist->element_num_ * sizeof(TensorC));
       }
 
       out_tensor_c->push_back(reinterpret_cast<TensorC *const>(output_tensorlist));
@@ -239,26 +215,13 @@ int GenerateSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vec
       output_tensorlist1->element_num_ = inputs[i + 1]->shape().empty() ? 0 : inputs[i + 1]->shape().at(0);
       if (output_tensorlist1->element_num_ != 0) {
         output_tensorlist1->tensors_ =
-          reinterpret_cast<TensorC **>(malloc(output_tensorlist1->element_num_ * sizeof(TensorC *)));
+          reinterpret_cast<TensorC *>(malloc(output_tensorlist1->element_num_ * sizeof(TensorC)));
         if (output_tensorlist1->tensors_ == nullptr) {
           free(output_tensorlist1);
           output_tensorlist1 = nullptr;
           return RET_ERROR;
         }
-        memset(output_tensorlist1->tensors_, 0, output_tensorlist1->element_num_ * sizeof(TensorC *));
-        for (size_t j = 0; j < output_tensorlist1->element_num_; j++) {
-          output_tensorlist1->tensors_[j] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-          if (output_tensorlist1->tensors_[j] == nullptr) {
-            for (size_t k = 0; k < j; k++) {
-              free(output_tensorlist1->tensors_[k]);
-              output_tensorlist1->tensors_[k] = nullptr;
-            }
-            free(output_tensorlist1->tensors_);
-            output_tensorlist1->tensors_ = nullptr;
-            return RET_ERROR;
-          }
-          memset(output_tensorlist1->tensors_[j], 0, sizeof(TensorC));
-        }
+        memset(output_tensorlist1->tensors_, 0, output_tensorlist1->element_num_ * sizeof(TensorC));
       }
 
       out_tensor_c->at(i) = reinterpret_cast<TensorC *const>(output_tensorlist1);
@@ -271,28 +234,13 @@ int GenerateSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vec
       output_tensorlist2->element_num_ = inputs[i + 1]->shape().empty() ? 0 : inputs[i + 1]->shape().at(0);
       if (output_tensorlist2->element_num_ != 0) {
         output_tensorlist2->tensors_ =
-          reinterpret_cast<TensorC **>(malloc(output_tensorlist2->element_num_ * sizeof(TensorC *)));
+          reinterpret_cast<TensorC *>(malloc(output_tensorlist2->element_num_ * sizeof(TensorC)));
         if (output_tensorlist2->tensors_ == nullptr) {
           free(output_tensorlist2);
           output_tensorlist2 = nullptr;
           return RET_ERROR;
         }
-        memset(output_tensorlist2->tensors_, 0, output_tensorlist2->element_num_ * sizeof(TensorC *));
-        for (size_t j = 0; j < output_tensorlist2->element_num_; j++) {
-          output_tensorlist2->tensors_[j] = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
-          if (output_tensorlist2->tensors_[j] == nullptr) {
-            for (size_t k = 0; k < j; k++) {
-              free(output_tensorlist2->tensors_[k]);
-              output_tensorlist2->tensors_[k] = nullptr;
-            }
-            free(output_tensorlist2->tensors_);
-            output_tensorlist2->tensors_ = nullptr;
-            free(output_tensorlist2);
-            output_tensorlist2 = nullptr;
-            return RET_ERROR;
-          }
-          memset(output_tensorlist2->tensors_[j], 0, sizeof(TensorC));
-        }
+        memset(output_tensorlist2->tensors_, 0, output_tensorlist2->element_num_ * sizeof(TensorC));
       }
 
       out_tensor_c->at(i + outputs->size() / 2) = reinterpret_cast<TensorC *const>(output_tensorlist2);

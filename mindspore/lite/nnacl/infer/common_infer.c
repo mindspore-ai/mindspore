@@ -17,17 +17,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int FreeTensorListData(TensorListC *tensor_list) {
-  // del each tensor in tensors_ and clear tensors_
-  if (tensor_list->element_num_ == 0) {
-    return NNACL_OK;
-  }
-  for (int i = 0; i < tensor_list->element_num_; ++i) {
-    tensor_list->tensors_[i] = NULL;
-  }
-  return NNACL_OK;
-}
-
 int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, vvector *tensor_shape) {
   // This function will create a new tensors_
   // Your must to set shape(param2: tensor_shape) and data_type_(tensors_data_type_ = param1: dtype) of each tensor in
@@ -40,21 +29,16 @@ int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, vvector *tenso
     return NNACL_ERR;
   }
   tensor_list->tensors_data_type_ = dtype;
-  tensor_list->tensors_ = (TensorC **)malloc(tensor_list->element_num_ * sizeof(TensorC *));  // free in infer_manager
+  tensor_list->tensors_ = (TensorC *)malloc(tensor_list->element_num_ * sizeof(TensorC));  // free in infer_manager
   if (tensor_list->tensors_ == NULL) {
     return NNACL_NULL_PTR;
   }
-  memset(tensor_list->tensors_, 0, tensor_list->element_num_ * sizeof(TensorC *));
+  memset(tensor_list->tensors_, 0, tensor_list->element_num_ * sizeof(TensorC));
   for (int i = 0; i < tensor_list->element_num_; ++i) {
-    TensorC *tensor_ptr = (TensorC *)malloc(sizeof(TensorC));
-    if (tensor_ptr == NULL) {
-      return NNACL_ERR;
-    }
-    memset(tensor_ptr, 0, sizeof(TensorC));
-    tensor_ptr->format_ = Format_NHWC;
-    tensor_ptr->data_type_ = dtype;
-    ShapeSet(tensor_ptr->shape_, &(tensor_ptr->shape_size_), tensor_shape->shape_[i], tensor_shape->shape_size_[i]);
-    tensor_list->tensors_[i] = tensor_ptr;
+    tensor_list->tensors_[i].format_ = Format_NHWC;
+    tensor_list->tensors_[i].data_type_ = dtype;
+    ShapeSet(tensor_list->tensors_[i].shape_, &(tensor_list->tensors_[i].shape_size_), tensor_shape->shape_[i],
+             tensor_shape->shape_size_[i]);
   }
   return NNACL_OK;
 }

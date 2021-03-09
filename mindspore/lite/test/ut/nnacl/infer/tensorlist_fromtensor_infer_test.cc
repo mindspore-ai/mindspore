@@ -58,9 +58,9 @@ TEST_F(TensorlistFromtensorInferTest, TensorlistFromtensorInferTest0) {
   ASSERT_EQ(out->tensors_data_type_, kNumberTypeInt32);
   // ASSERT_EQ(outputs[0]->format_, Format_NHWC);
   for (size_t i = 0; i < out->element_num_; i++) {
-    ASSERT_EQ(out->tensors_[i]->shape_size_, 2);
-    ASSERT_EQ(out->tensors_[i]->shape_[0], 6);
-    ASSERT_EQ(out->tensors_[i]->shape_[1], 5);
+    ASSERT_EQ(out->tensors_[i].shape_size_, 2);
+    ASSERT_EQ(out->tensors_[i].shape_[0], 6);
+    ASSERT_EQ(out->tensors_[i].shape_[1], 5);
   }
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {

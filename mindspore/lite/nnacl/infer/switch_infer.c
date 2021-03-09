@@ -51,8 +51,8 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
       // note: need delete below?
       for (size_t j = 0; j < output_false_tensorlist->element_num_; j++) {
-        memcpy(output_true_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
-        memcpy(output_false_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
+        memcpy(&output_true_tensorlist->tensors_[j], &input_tensorlist->tensors_[j], sizeof(TensorC));
+        memcpy(&output_false_tensorlist->tensors_[j], &input_tensorlist->tensors_[j], sizeof(TensorC));
       }
 
     } else {
@@ -89,8 +89,8 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
       output_true_tensorlist->element_num_ = input_tensorlist->element_num_;
 
       for (size_t j = 0; j < output_false_tensorlist->element_num_; j++) {
-        memcpy(output_true_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
-        memcpy(output_false_tensorlist->tensors_[j], input_tensorlist->tensors_[j], sizeof(TensorC));
+        memcpy(&output_true_tensorlist->tensors_[j], &input_tensorlist->tensors_[j], sizeof(TensorC));
+        memcpy(&output_false_tensorlist->tensors_[j], &input_tensorlist->tensors_[j], sizeof(TensorC));
       }
 
     } else {

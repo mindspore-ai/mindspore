@@ -57,7 +57,7 @@ TEST_F(TensorlistReserveInferTest, TensorlistReserveInferTest0) {
   ASSERT_EQ(out->tensors_data_type_, kTypeUnknown);
   // ASSERT_EQ(outputs[0]->format_, Format_NHWC);
   for (size_t i = 0; i < out->element_num_; i++) {
-    ASSERT_EQ(out->tensors_[i]->shape_size_, 0);
+    ASSERT_EQ(out->tensors_[i].shape_size_, 0);
   }
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {

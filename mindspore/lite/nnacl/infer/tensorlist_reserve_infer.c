@@ -50,30 +50,24 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
   ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, GetElementNum(input0));
   output->element_num_ = num_elements;
 
-  vvector *tmp_shape = (vvector *)malloc(sizeof(vvector));
-  if (tmp_shape == NULL) {
+  vvector tmp_shape;
+  tmp_shape.size_ = num_elements;
+  tmp_shape.shape_ = (int **)malloc(tmp_shape.size_ * sizeof(int *));
+  if (tmp_shape.shape_ == NULL) {
     return NNACL_NULL_PTR;
   }
-  tmp_shape->size_ = num_elements;
-  tmp_shape->shape_ = (int **)malloc(tmp_shape->size_ * sizeof(int *));
-  if (tmp_shape->shape_ == NULL) {
-    free(tmp_shape);
-    return NNACL_NULL_PTR;
-  }
-  tmp_shape->shape_size_ = (int *)malloc(tmp_shape->size_ * sizeof(int));
-  if (tmp_shape->shape_size_ == NULL) {
-    free(tmp_shape->shape_);
-    free(tmp_shape);
+  tmp_shape.shape_size_ = (int *)malloc(tmp_shape.size_ * sizeof(int));
+  if (tmp_shape.shape_size_ == NULL) {
+    free(tmp_shape.shape_);
     return NNACL_NULL_PTR;
   }
 
   for (size_t i = 0; i < num_elements; i++) {
-    tmp_shape->shape_size_[i] = 0;
-    tmp_shape->shape_[i] = NULL;
+    tmp_shape.shape_size_[i] = 0;
+    tmp_shape.shape_[i] = NULL;
   }
-  MallocTensorListData(output, kTypeUnknown, tmp_shape);
-  free(tmp_shape->shape_size_);
-  free(tmp_shape->shape_);
-  free(tmp_shape);
+  MallocTensorListData(output, kTypeUnknown, &tmp_shape);
+  free(tmp_shape.shape_size_);
+  free(tmp_shape.shape_);
   return NNACL_OK;
 }
