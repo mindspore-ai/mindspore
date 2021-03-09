@@ -293,6 +293,12 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 /// \return Status code
 Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
 
+/// \brief Take in a 3 channel image in RBG to GRAY
+/// \param[in] input The input image
+/// \param[out] output The output image
+/// \return Status code
+Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
 /// \brief Get jpeg image width and height
 /// \param input: CVTensor containing the not decoded image 1D bytes
 /// \param img_width: the jpeg image width

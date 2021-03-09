@@ -74,6 +74,7 @@ constexpr char kResizeOperation[] = "Resize";
 constexpr char kResizeWithBBoxOperation[] = "ResizeWithBBox";
 constexpr char kRgbaToBgrOperation[] = "RgbaToBgr";
 constexpr char kRgbaToRgbOperation[] = "RgbaToRgb";
+constexpr char kRgbToGrayOperation[] = "RgbToGray";
 constexpr char kRotateOperation[] = "Rotate";
 constexpr char kSoftDvppDecodeRandomCropResizeJpegOperation[] = "SoftDvppDecodeRandomCropResizeJpeg";
 constexpr char kSoftDvppDecodeResizeJpegOperation[] = "SoftDvppDecodeResizeJpeg";
@@ -161,6 +162,19 @@ class CenterCropOperation : public TensorOperation {
 
  private:
   std::vector<int32_t> size_;
+};
+
+class RgbToGrayOperation : public TensorOperation {
+ public:
+  RgbToGrayOperation() = default;
+
+  ~RgbToGrayOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kRgbToGrayOperation; }
 };
 
 class CropOperation : public TensorOperation {

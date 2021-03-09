@@ -72,6 +72,7 @@
 #include "minddata/dataset/kernels/image/rgba_to_bgr_op.h"
 #include "minddata/dataset/kernels/image/rgba_to_rgb_op.h"
 #endif
+#include "minddata/dataset/kernels/image/rgb_to_gray_op.h"
 #include "minddata/dataset/kernels/image/rotate_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/soft_dvpp/soft_dvpp_decode_random_crop_resize_jpeg_op.h"
@@ -231,6 +232,11 @@ Status CenterCropOperation::to_json(nlohmann::json *out_json) {
   (*out_json)["size"] = size_;
   return Status::OK();
 }
+
+// RGB2GRAYOperation
+Status RgbToGrayOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> RgbToGrayOperation::Build() { return std::make_shared<RgbToGrayOp>(); }
 
 // CropOperation.
 CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)

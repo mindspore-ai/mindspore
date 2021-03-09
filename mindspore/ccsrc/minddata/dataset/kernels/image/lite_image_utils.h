@@ -95,6 +95,12 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               int32_t output_width, double fx = 0.0, double fy = 0.0,
               InterpolationMode mode = InterpolationMode::kLinear);
 
+/// \brief Take in a 3 channel image in RBG to GRAY
+/// \param[in] input The input image
+/// \param[out] output The output image
+/// \return Status code
+Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output);
+
 /// \brief Pads the input image and puts the padded image in the output
 /// \param[in] input: input Tensor
 /// \param[out] output: padded Tensor
