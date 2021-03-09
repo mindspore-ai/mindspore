@@ -17,7 +17,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
-#include "src/runtime/kernel/arm/fp16/bias_fp16.h"
+#include "src/runtime/kernel/arm/fp16/biasadd_fp16.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
 
-int BiasCPUFp16Kernel::ReSize() {
+int BiasAddCPUFp16Kernel::ReSize() {
   auto dims = in_tensors_.at(0)->shape();
   bias_param_->ndim_ = dims.size();
   if (bias_param_->ndim_ < 1 || bias_param_->ndim_ > 5) {
@@ -45,13 +45,20 @@ int BiasCPUFp16Kernel::ReSize() {
   return RET_OK;
 }
 
-int BiasCPUFp16Kernel::Run() {
+int BiasAddCPUFp16Kernel::Run() {
+  if (bias_data_ == nullptr) {
+    auto ret = GetBiasData();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetBiasData is error in run!";
+      return ret;
+    }
+  }
   auto in = reinterpret_cast<float16_t *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float16_t *>(out_tensors_.at(0)->MutableData());
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   MS_ASSERT(context_->allocator != nullptr);
-  auto *tile_in = reinterpret_cast<float16_t *>(context_->allocator->Malloc(data_size * sizeof(float16_t)));
-  auto *tile_bias = reinterpret_cast<float16_t *>(context_->allocator->Malloc(data_size * sizeof(float16_t)));
+  auto tile_in = reinterpret_cast<float16_t *>(context_->allocator->Malloc(data_size * sizeof(float16_t)));
+  auto tile_bias = reinterpret_cast<float16_t *>(context_->allocator->Malloc(data_size * sizeof(float16_t)));
   if (tile_in == nullptr || tile_bias == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     context_->allocator->Free(tile_in);
@@ -64,36 +71,47 @@ int BiasCPUFp16Kernel::Run() {
   return RET_OK;
 }
 
-BiasCPUFp16Kernel::~BiasCPUFp16Kernel() {
+BiasAddCPUFp16Kernel::~BiasAddCPUFp16Kernel() {
   if ((bias_data_type_ == kNumberTypeFloat || bias_data_type_ == kNumberTypeFloat32) && bias_data_ != nullptr) {
     free(bias_data_);
     bias_data_ = nullptr;
   }
 }
 
-int BiasCPUFp16Kernel::Init() {
-  auto bias_tensor = in_tensors_.at(1);
-  MS_ASSERT(bias_tensor != nullptr);
-  bias_data_type_ = bias_tensor->data_type();
+int BiasAddCPUFp16Kernel::GetBiasData() {
+  bias_data_type_ = bias_tensor_->data_type();
   if (bias_data_type_ == kNumberTypeFloat || bias_data_type_ == kNumberTypeFloat32) {
-    bias_data_ = reinterpret_cast<float16_t *>(malloc(bias_tensor->ElementsNum() * sizeof(float16_t)));
+    bias_data_ = reinterpret_cast<float16_t *>(malloc(bias_tensor_->ElementsNum() * sizeof(float16_t)));
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "bias_data_ is nullptr";
       return RET_NULL_PTR;
     }
-    auto *bias = reinterpret_cast<float *>(bias_tensor->MutableData());
+    auto bias = reinterpret_cast<float *>(bias_tensor_->MutableData());
     if (bias == nullptr) {
       MS_LOG(ERROR) << "bias is nullptr!";
       return RET_NULL_PTR;
     }
-    for (int i = 0; i < bias_tensor->ElementsNum(); ++i) {
+    for (int i = 0; i < bias_tensor_->ElementsNum(); ++i) {
       bias_data_[i] = (float16_t)(bias[i]);
     }
   } else {
-    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor->MutableData());
+    bias_data_ = reinterpret_cast<float16_t *>(bias_tensor_->MutableData());
     if (bias_data_ == nullptr) {
       MS_LOG(ERROR) << "bias_data_ is nullptr";
       return RET_NULL_PTR;
+    }
+  }
+  return RET_OK;
+}
+
+int BiasAddCPUFp16Kernel::Init() {
+  bias_tensor_ = in_tensors_.at(1);
+  MS_ASSERT(bias_tensor_ != nullptr);
+  if (bias_tensor_->IsConst()) {
+    auto ret = GetBiasData();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "GetBiasData is error in Init()!";
+      return ret;
     }
   }
   if (!InferShapeDone()) {
@@ -102,5 +120,5 @@ int BiasCPUFp16Kernel::Init() {
   return ReSize();
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BiasAdd, LiteKernelCreator<BiasCPUFp16Kernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BiasAdd, LiteKernelCreator<BiasAddCPUFp16Kernel>)
 }  // namespace mindspore::kernel
