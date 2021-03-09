@@ -1159,7 +1159,7 @@ void ClearResAtexit() {
       ps::ps_cache_instance.Finalize();
     }
     MS_LOG(INFO) << "ps::worker.Finalize";
-    ps::worker.Finalize();
+    ps::Worker::GetInstance().Finalize();
   }
 #endif
   ad::g_k_prims.clear();

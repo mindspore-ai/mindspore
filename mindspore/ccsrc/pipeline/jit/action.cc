@@ -544,7 +544,7 @@ bool ExecuteAction(const ResourcePtr &res) {
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 bool StartPSWorkerAction(const ResourcePtr &res) {
-  ps::worker.Run();
+  ps::Worker::GetInstance().Run();
   return true;
 }
 
