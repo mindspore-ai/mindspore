@@ -498,6 +498,9 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
     UpdateOutputAbstract(kernel_graph, op_run_info);
   }
   RunOpClearMemory(kernel_graph.get());
+  if (kOpCacheAllowList.find(op_run_info->op_name) != kOpCacheAllowList.end()) {
+    run_op_graphs_.erase(graph_info);
+  }
 }
 
 void GPUSession::Dump(const std::shared_ptr<KernelGraph> &kernel_graph) const {
