@@ -459,8 +459,8 @@ class UnicodeCharTokenizer(TextTensorOperation):
         >>> #                                                   ["offsets_limit", dtype=uint32]}
         >>> tokenizer_op = text.UnicodeCharTokenizer(with_offsets=True)
         >>> text_file_dataset = text_file_dataset.map(operations=tokenizer_op, input_columns=["text"],
-        >>>                                           output_columns=["token", "offsets_start", "offsets_limit"],
-        >>>                                           column_order=["token", "offsets_start", "offsets_limit"])
+        ...                                           output_columns=["token", "offsets_start", "offsets_limit"],
+        ...                                           column_order=["token", "offsets_start", "offsets_limit"])
     """
 
     @check_with_offsets
