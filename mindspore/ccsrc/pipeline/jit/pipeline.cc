@@ -1071,8 +1071,7 @@ void InitHccl() {
     runtime_instance->PreInit();
     (void)context::OpenTsd(ms_context);
     if (!runtime_instance->Init()) {
-      MS_LOG(ERROR) << "Kernel runtime init error.";
-      return;
+      MS_LOG(EXCEPTION) << "Runtime init failed.";
     }
   } else {
     (void)context::OpenTsd(ms_context);
