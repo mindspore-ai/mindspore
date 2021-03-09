@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,22 @@
 """kernel build server"""
 import os
 from mindspore import log as logger
+from mindspore._extends.parallel_compile.akg_compiler.akg_process import create_akg_parallel_process
+
+class AkgBuilder:
+    """Akg building wrapper"""
+
+    def __init__(self):
+        pass
+
+    def create(self, process_num, waitime, platform=""):
+        self.akg_builder = create_akg_parallel_process(process_num, waitime, platform)
+
+    def accept_json(self, json):
+        return self.akg_builder.accept_json(json)
+
+    def compile(self):
+        return self.akg_builder.compile()
 
 class Messager:
     '''Messager'''

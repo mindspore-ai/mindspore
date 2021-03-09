@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,8 @@ static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
     }
   }
   bool tbe_ret = kernel::TbeOpParallelBuild(tbe_nodes);
-  bool akg_ret = kernel::AkgAscendKernelParallelBuild(akg_nodes);
+  kernel::AkgAscendKernelBuilder akg_ascend_kernel_builder;
+  bool akg_ret = akg_ascend_kernel_builder.AkgKernelParallelBuild(akg_nodes);
   auto bin_map = kernel::tbe::KernelMeta::GetInstance();
   (void)bin_map->ReadIndex(kernel::kCceKernelMeta);
   for (const auto &anf_node : other_nodes) {

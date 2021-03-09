@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,22 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_GPU_AKG_GPU_KERNEL_BUILD_H_
 #include <string>
-#include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
+#include "backend/kernel_compiler/akg/akg_kernel_build.h"
 #include "base/base.h"
 
 namespace mindspore {
 namespace kernel {
-class AkgGpuKernelBuilder {
+class AkgGpuKernelBuilder : public AkgKernelBuilder {
  public:
   AkgGpuKernelBuilder() = default;
   ~AkgGpuKernelBuilder() = default;
 
+  kernel::KernelBuildClient *GetClient() override { return &(kernel::GpuKernelBuildClient::Instance()); }
+  KernelPackPtr AkgSearchCache(const std::string &kernel_name, const std::string &processor) override;
+  KernelPackPtr AkgInsertCache(const std::string &kernel_name, const std::string &processor) override;
+  void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const AkgKernelJsonGenerator &json_generator,
+                       const AnfNodePtr &anf_node) override;
+  void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
   KernelModPtr BuildByJson(const AnfNodePtr &anf_node);
   KernelModPtr FuseByJson(const AnfNodePtr &anf_node);
 

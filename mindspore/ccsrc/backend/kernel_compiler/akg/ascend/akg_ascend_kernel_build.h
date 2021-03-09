@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,28 +22,22 @@
 #include <vector>
 #include <map>
 #include "ir/anf.h"
-#include "backend/kernel_compiler/kernel.h"
-#include "backend/kernel_compiler/akg/akg_kernel_json_generator.h"
+#include "backend/kernel_compiler/akg/akg_kernel_build.h"
 
 namespace mindspore {
 namespace kernel {
-using JsonNodePair = std::pair<AkgKernelJsonGenerator, AnfNodePtr>;
-
-class AkgAscendKernelBuilder {
+class AkgAscendKernelBuilder : public AkgKernelBuilder {
  public:
   AkgAscendKernelBuilder() = default;
   ~AkgAscendKernelBuilder() = default;
-  bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
 
- private:
-  std::vector<std::string> GetNotCachedKernelJsons(const std::vector<JsonNodePair> &build_args);
-  bool InsertToCache(const std::vector<JsonNodePair> &build_args);
-  bool HandleRepeatNodes();
-
-  std::vector<JsonNodePair> repeat_nodes_;
+  kernel::KernelBuildClient *GetClient() override { return &(kernel::AscendKernelBuildClient::Instance()); }
+  KernelPackPtr AkgSearchCache(const std::string &kernel_name, const std::string &processor) override;
+  KernelPackPtr AkgInsertCache(const std::string &kernel_name, const std::string &processor) override;
+  void AkgSetKernelMod(const KernelPackPtr &kernel_pack, const AkgKernelJsonGenerator &json_generator,
+                       const AnfNodePtr &anf_node) override;
+  void AkgSaveJsonInfo(const string &kernel_name, const string &kernel_json) override;
 };
-
-bool AkgAscendKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
 }  // namespace kernel
 }  // namespace mindspore
 
