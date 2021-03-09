@@ -19,7 +19,7 @@
             android:drawablePadding="5dp"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:text="Pet Classification"
+            android:text="@string/app_name"
             android:textColor="#ffffff"
             android:textSize="20sp" />
     </androidx.appcompat.widget.Toolbar>
@@ -53,7 +53,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginTop="20dp"
-        android:text="Choose an image"
+        android:text="@string/app_choose_an_image"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="20sp" />
@@ -73,7 +73,7 @@
             android:background="@color/gray_btn"
             android:gravity="center"
             android:onClick="onClickPhoto"
-            android:text="PHOTO"
+            android:text="@string/app_photo"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -87,7 +87,7 @@
             android:background="@color/gray_btn"
             android:gravity="center"
             android:onClick="onClickCamera"
-            android:text="CAMERA"
+            android:text="@string/app_camera"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -101,12 +101,10 @@
             android:background="@color/gray_btn"
             android:gravity="center"
             android:onClick="onClickScene"
-            android:text="SCAN"
+            android:text="@string/app_scan"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="12sp" />
-
-
     </LinearLayout>
 
     <TextView
@@ -114,7 +112,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginTop="20dp"
-        android:text="Choose a sample"
+        android:text="@string/app_choose_a_sample"
         android:textColor="@color/white"
         android:textSize="20sp" />
 

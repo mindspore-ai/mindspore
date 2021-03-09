@@ -57,11 +57,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         view.setTag(IMAGES[position]);
         view.setOnClickListener(view1 -> {
             if (mListener != null) {
-//                if (IMAGES.length - 1 == position) {
-//                    mListener.onImageAdd(holder.getImageView());
-//                } else {
-                    mListener.onBackImageSelected(position);
-//                }
+                mListener.onBackImageSelected(position);
             }
         });
     }
