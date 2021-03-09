@@ -91,7 +91,7 @@ inline void BitSet(uint32_t *bits, uint32_t bitMask) { *bits |= bitMask; }
 
 inline void BitClear(uint32_t *bits, uint32_t bitMask) { *bits &= (~bitMask); }
 
-constexpr int32_t kDeMaxDim = std::numeric_limits<int32_t>::max();  // 2147483647 or 2^32 -1
+constexpr int64_t kDeMaxDim = std::numeric_limits<int64_t>::max();
 constexpr int32_t kDeMaxRank = std::numeric_limits<int32_t>::max();
 constexpr int64_t kDeMaxFreq = std::numeric_limits<int64_t>::max();  // 9223372036854775807 or 2^(64-1)
 constexpr int64_t kDeMaxTopk = std::numeric_limits<int64_t>::max();

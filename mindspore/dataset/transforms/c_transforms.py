@@ -22,7 +22,7 @@ import mindspore.common.dtype as mstype
 import mindspore._c_dataengine as cde
 
 from .validators import check_num_classes, check_ms_type, check_fill_value, check_slice_option, check_slice_op, \
-    check_mask_op, check_pad_end, check_concat_type, check_random_transform_ops
+    check_mask_op, check_pad_end, check_concat_type, check_random_transform_ops, check_plugin
 from ..core.datatypes import mstype_to_detype
 
 
@@ -30,6 +30,7 @@ class TensorOperation:
     """
     Base class Tensor Ops
     """
+
     def __call__(self, *input_tensor_list):
         tensor_row = []
         for tensor in input_tensor_list:
@@ -37,7 +38,7 @@ class TensorOperation:
                 tensor_row.append(cde.Tensor(np.asarray(tensor)))
             except RuntimeError:
                 raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
-                      .format(type(tensor), tensor))
+                                .format(type(tensor), tensor))
         callable_op = cde.Execute(self.parse())
         output_tensor_list = callable_op(tensor_row)
         for i, element in enumerate(output_tensor_list):
@@ -392,6 +393,7 @@ class Unique(TensorOperation):
         >>> # +---------+-----------------+---------+
 
     """
+
     def parse(self):
         return cde.UniqueOperation()
 
@@ -474,3 +476,27 @@ class RandomChoice(TensorOperation):
             else:
                 operations.append(op)
         return cde.RandomChoiceOperation(operations)
+
+
+class Plugin(TensorOperation):
+    """
+    Plugin support for MindData. Use this class to dynamically load a .so file (shared library) and execute its symbols.
+
+    Args:
+        lib_path (str): Path to .so file which is compiled to support MindData plugin.
+        func_name (str): Name of the function to load from the .so file.
+        user_args (str, optional): Serialized args to pass to the plugin. Only needed if "func_name" requires one.
+
+    Examples:
+        >>> plugin = c_transforms.Plugin("pluginlib.so", "PluginDecode")
+        >>> image_folder_dataset = image_folder_dataset.map(operations=plugin)
+    """
+
+    @check_plugin
+    def __init__(self, lib_path, func_name, user_args=None):
+        self.lib_path = lib_path
+        self.func_name = func_name
+        self.user_args = str() if (user_args is None) else user_args
+
+    def parse(self):
+        return cde.PluginOperation(self.lib_path, self.func_name, self.user_args)

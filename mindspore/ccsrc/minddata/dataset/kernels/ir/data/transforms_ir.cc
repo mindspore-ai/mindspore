@@ -39,8 +39,10 @@
 #include "minddata/dataset/kernels/data/slice_op.h"
 #endif
 #include "minddata/dataset/kernels/data/type_cast_op.h"
+
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/data/unique_op.h"
+#include "minddata/dataset/kernels/plugin_op.h"
 #endif
 
 #include "minddata/dataset/kernels/ir/validators.h"
@@ -271,6 +273,18 @@ Status TypeCastOperation::to_json(nlohmann::json *out_json) {
 Status UniqueOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> UniqueOperation::Build() { return std::make_shared<UniqueOp>(); }
+Status PluginOperation::ValidateParams() {
+  std::string err_msg;
+  err_msg += lib_path_.empty() ? "lib_path is empty, please specify a path to .so file. " : "";
+  err_msg += func_name_.empty() ? "func_name_ is empty, please specify function name to load." : "";
+  if (!err_msg.empty()) {
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+std::shared_ptr<TensorOp> PluginOperation::Build() {
+  return std::make_shared<PluginOp>(lib_path_, func_name_, user_args_);
+}
 #endif
 }  // namespace transforms
 }  // namespace dataset

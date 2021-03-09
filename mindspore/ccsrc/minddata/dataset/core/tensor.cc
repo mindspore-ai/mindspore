@@ -154,7 +154,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
   }
 
   RETURN_IF_NOT_OK((*out)->AllocateBuffer(length));
-  int ret_code = memcpy_s((*out)->data_, length, src, length);
+  int ret_code = memcpy_ss((*out)->data_, length, src, length);
   CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
 
   return Status::OK();

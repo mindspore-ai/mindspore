@@ -75,6 +75,7 @@ add_subdirectory(engine)
 add_subdirectory(api)
 add_subdirectory(text)
 add_subdirectory(callback)
+add_subdirectory(plugin)
 ######################################################################
 add_dependencies(utils core)
 add_dependencies(kernels-image core)
@@ -102,6 +103,7 @@ add_dependencies(engine-ir-cache core)
 add_dependencies(kernels-ir core)
 add_dependencies(kernels-ir-data core)
 add_dependencies(kernels-ir-vision core)
+
 
 if(ENABLE_ACL)
     add_dependencies(kernels-dvpp-image core dvpp-utils)
@@ -156,6 +158,7 @@ set(submodules
         $<TARGET_OBJECTS:kernels-ir>
         $<TARGET_OBJECTS:kernels-ir-data>
         $<TARGET_OBJECTS:kernels-ir-vision>
+        $<TARGET_OBJECTS:md_plugin>
         )
 
 if(ENABLE_ACL)

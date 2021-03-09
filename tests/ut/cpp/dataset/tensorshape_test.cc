@@ -27,15 +27,14 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
+using mindspore::ExceptionType::NoExceptionType;
+using mindspore::MsLogLevel::INFO;
 
 class MindDataTestTensorShape : public UT::Common {
  public:
-    MindDataTestTensorShape() = default;
+  MindDataTestTensorShape() = default;
 };
-
 
 TEST_F(MindDataTestTensorShape, TestBasics) {
   std::vector<dsize_t> vec = {4, 5, 6};
@@ -111,7 +110,7 @@ TEST_F(MindDataTestTensorShape, TestUnknown) {
 
 // Test materializing a TensorShape by calling method on a given column descriptor
 TEST_F(MindDataTestTensorShape, TestColDescriptor) {
-  int32_t rank = 0; // not used
+  int32_t rank = 0;  // not used
   int32_t num_elements = 0;
 
   // Has no shape
@@ -121,7 +120,7 @@ TEST_F(MindDataTestTensorShape, TestColDescriptor) {
   Status rc = c1.MaterializeTensorShape(num_elements, &generated_shape1);
   ASSERT_TRUE(rc.IsOk());
   MS_LOG(INFO) << "generated_shape1: " << common::SafeCStr(generated_shape1.ToString()) << ".";
-  ASSERT_EQ(TensorShape({4}),generated_shape1);
+  ASSERT_EQ(TensorShape({4}), generated_shape1);
 
   // Has shape <DIM_UNKNOWN> i.e. <*>
   TensorShape requested_shape2({TensorShape::kDimUnknown});
@@ -131,7 +130,7 @@ TEST_F(MindDataTestTensorShape, TestColDescriptor) {
   rc = c2.MaterializeTensorShape(num_elements, &generated_shape2);
   ASSERT_TRUE(rc.IsOk());
   MS_LOG(INFO) << "generated_shape2: " << common::SafeCStr(generated_shape2.ToString()) << ".";
-  ASSERT_EQ(TensorShape({5}),generated_shape2);
+  ASSERT_EQ(TensorShape({5}), generated_shape2);
 
   // Compute unknown dimension <*,4>
   TensorShape requested_shape3({TensorShape::kDimUnknown, 4});
@@ -141,7 +140,7 @@ TEST_F(MindDataTestTensorShape, TestColDescriptor) {
   rc = c3.MaterializeTensorShape(num_elements, &generated_shape3);
   ASSERT_TRUE(rc.IsOk());
   MS_LOG(INFO) << "generated_shape3: " << common::SafeCStr(generated_shape3.ToString()) << ".";
-  ASSERT_EQ(TensorShape({3,4}),generated_shape3);
+  ASSERT_EQ(TensorShape({3, 4}), generated_shape3);
 
   // Compute unknown dimension <3,*,4>
   TensorShape requested_shape4({3, TensorShape::kDimUnknown, 4});
@@ -151,7 +150,7 @@ TEST_F(MindDataTestTensorShape, TestColDescriptor) {
   rc = c4.MaterializeTensorShape(num_elements, &generated_shape4);
   ASSERT_TRUE(rc.IsOk());
   MS_LOG(INFO) << "generated_shape4: " << common::SafeCStr(generated_shape4.ToString()) << ".";
-  ASSERT_EQ(TensorShape({3,2,4}),generated_shape4);
+  ASSERT_EQ(TensorShape({3, 2, 4}), generated_shape4);
 
   // requested and generated should be the same! <2,3,4>
   TensorShape requested_shape5({2, 3, 4});
@@ -161,7 +160,7 @@ TEST_F(MindDataTestTensorShape, TestColDescriptor) {
   rc = c5.MaterializeTensorShape(num_elements, &generated_shape5);
   ASSERT_TRUE(rc.IsOk());
   MS_LOG(INFO) << "generated_shape5: " << common::SafeCStr(generated_shape5.ToString()) << ".";
-  ASSERT_EQ(requested_shape5,generated_shape5);
+  ASSERT_EQ(requested_shape5, generated_shape5);
 
   // expect fail due to multiple unknown dimensions
   TensorShape requested_shape6({2, TensorShape::kDimUnknown, TensorShape::kDimUnknown});
@@ -181,6 +180,5 @@ TEST_F(MindDataTestTensorShape, TestColDescriptor) {
 }
 
 TEST_F(MindDataTestTensorShape, TestInvalid) {
-  ASSERT_EQ(TensorShape({2147483648}), TensorShape::CreateUnknownRankShape());
   ASSERT_EQ(TensorShape({kDeMaxDim - 1, kDeMaxDim - 1, kDeMaxDim - 1}), TensorShape::CreateUnknownRankShape());
 }

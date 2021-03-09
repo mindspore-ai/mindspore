@@ -64,7 +64,7 @@ void Task::operator()() {
       if (rc_.StatusCode() == StatusCode::kMDNetWorkError) {
         MS_LOG(WARNING) << rc_;
       } else {
-        MS_LOG(ERROR) << rc_;
+        MS_LOG(ERROR) << "Task: " << my_name_ << " is terminated with err msg: " << rc_;
       }
       ShutdownGroup();
     }
