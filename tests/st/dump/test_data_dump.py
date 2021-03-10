@@ -102,6 +102,20 @@ class ReluReduceMeanDenseRelu(Cell):
         x_ = self.relu(x_)
         return x_
 
+
+def search_path(path, keyword):
+    content = os.listdir(path)
+    for each in content:
+        each_path = path + os.sep + each
+        if keyword in each:
+            return each_path
+        read_write = os.access(each_path, os.W_OK) and os.access(each_path, os.R_OK)
+        if not read_write:
+            continue
+        if os.path.isdir(each_path):
+            search_path(each_path, keyword)
+    return None
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -136,13 +150,16 @@ def test_async_dump_net_multi_layer_mode1():
     if os.path.exists(npy_path):
         shutil.rmtree(npy_path)
     os.mkdir(npy_path)
-    cmd = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/msaccucmp.pyc " \
-        "convert -d {0} -out {1}".format(dump_file_full_path, npy_path)
-    os.system(cmd)
-    npy_file_list = os.listdir(npy_path)
-    dump_result = {}
-    for file in npy_file_list:
-        if "output.0.npy" in file:
-            dump_result["output0"] = np.load(os.path.join(npy_path, file))
-    for index, value in enumerate(net_dict):
-        assert value.asnumpy() == dump_result["output0"][index]
+    tool_path = search_path('/usr/local/Ascend', 'msaccucmp.pyc')
+    if tool_path:
+        cmd = "python {0} convert -d {1} -out {2}".format(tool_path, dump_file_full_path, npy_path)
+        os.system(cmd)
+        npy_file_list = os.listdir(npy_path)
+        dump_result = {}
+        for file in npy_file_list:
+            if "output.0.npy" in file:
+                dump_result["output0"] = np.load(os.path.join(npy_path, file))
+        for index, value in enumerate(net_dict):
+            assert value.asnumpy() == dump_result["output0"][index]
+    else:
+        print('not find convert tools msaccucmp.pyc')
