@@ -57,6 +57,10 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
   }
+  ret = memcpy_s(outputs[0]->addr, max_size, inputs[1]->addr, total_size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
+  }
   return true;
 }
 }  // namespace kernel
