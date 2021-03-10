@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,7 +7,6 @@
     android:orientation="vertical"
     android:theme="@style/ThemeOverlay.MindSpore.FullscreenContainer"
     tools:context=".ui.experience.ExperienceFragment">
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -27,19 +25,18 @@
             android:textStyle="bold" />
 
         <TextView
-            android:gravity="center"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginTop="22dp"
+            android:gravity="center"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
             android:text="@string/experience_head_subtitle"
             android:textColor="@color/white"
             android:textSize="13sp" />
 
         <Button
-            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -47,25 +44,9 @@
             android:background="@drawable/btn_head_experience"
             android:text="@string/experience_head_button"
             android:textColor="@color/white"
-            android:textSize="18sp" />
+            android:textSize="18sp"
+            android:visibility="gone" />
     </LinearLayout>
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_layout"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:background="@color/white"
-        app:tabBackground="@color/transparent"
-        app:tabGravity="fill"
-        app:tabIndicatorFullWidth="false"
-        app:tabMaxWidth="0dp"
-        app:tabIndicatorHeight="2dp"
-        app:tabIndicator="@color/black"
-        app:tabRippleColor="@color/transparent"
-        app:tabSelectedTextColor="@color/black"
-        app:tabIndicatorColor="@color/main_tab_text_checked"
-        app:tabTextColor="@color/black">
-    </com.google.android.material.tabs.TabLayout>
 
 
     <androidx.viewpager.widget.ViewPager

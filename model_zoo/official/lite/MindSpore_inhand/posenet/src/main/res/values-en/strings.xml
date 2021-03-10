@@ -2,4 +2,5 @@
 <resources>
     <string name="posenet_score">Score:</string>
     <string name="posenet_time">Inference Time:</string>
+    <string name="posenet_exit">This training model is not supported by this device</string>
 </resources>

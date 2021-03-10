@@ -15,7 +15,6 @@
  */
 package com.mindspore.himindspore.ui.main;
 
-
 import com.mindspore.customview.tablayout.listener.CustomTabEntity;
 import com.mindspore.himindspore.net.FileDownLoadObserver;
 import com.mindspore.himindspore.net.UpdateInfoBean;

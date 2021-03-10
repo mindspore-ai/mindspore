@@ -25,7 +25,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
-import com.google.android.material.tabs.TabLayout;
 import com.mindspore.common.base.adapter.BasePagerAdapter;
 import com.mindspore.himindspore.R;
 import com.mindspore.himindspore.comment.FragmentFactory;
@@ -37,7 +36,6 @@ import java.util.List;
 
 public class ExperienceFragment extends Fragment {
 
-    private TabLayout tabLayout;
     private ViewPager vpContent;
 
     @Override
@@ -54,7 +52,6 @@ public class ExperienceFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        tabLayout = view.findViewById(R.id.tab_layout);
         vpContent = view.findViewById(R.id.vp_content);
     }
 
@@ -72,8 +69,6 @@ public class ExperienceFragment extends Fragment {
 
         BasePagerAdapter adapter = new BasePagerAdapter(getChildFragmentManager(), fragmentList, Arrays.asList(categoryName));
         vpContent.setAdapter(adapter);
-        tabLayout.setupWithViewPager(vpContent);
-        tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
         vpContent.setOffscreenPageLimit(categoryName.length);
     }
 }

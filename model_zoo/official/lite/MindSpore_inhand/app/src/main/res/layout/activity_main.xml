@@ -1,23 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.viewpager.widget.ViewPager
-        android:id="@+id/vp_home"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:background="@color/white" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1px"
-        android:background="@color/divider_gray" />
 
     <com.mindspore.customview.tablayout.CommonTabLayout
+        android:layout_alignParentBottom="true"
         android:id="@+id/ctl_table"
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -32,4 +22,22 @@
         app:tl_underline_color="#DDDDDD"
         app:tl_underline_height="1dp" />
 
-</LinearLayout>
+    <View
+        android:id="@+id/lineView"
+        android:layout_above="@+id/ctl_table"
+        android:layout_width="match_parent"
+        android:layout_height="1px"
+        android:background="@color/divider_gray" />
+
+    <androidx.viewpager.widget.ViewPager
+        android:layout_above="@+id/lineView"
+        android:id="@+id/vp_home"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white" />
+
+
+
+
+
+</RelativeLayout>

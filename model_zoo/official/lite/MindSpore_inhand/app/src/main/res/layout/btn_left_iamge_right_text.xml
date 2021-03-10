@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/btn"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:src="@drawable/btn_intelligent_poetry" />
+
+    <TextView
+        android:id="@+id/text_poetry"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginLeft="5dp"
+        android:layout_toRightOf="@id/btn"
+        android:gravity="center_vertical"
+        android:text="@string/title_intelligent_poetry"
+        android:textColor="@color/text_black"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/text_new"
+        android:layout_width="18dp"
+        android:layout_height="36dp"
+        android:layout_marginLeft="3dp"
+        android:layout_toRightOf="@id/text_poetry"
+        android:gravity="center_vertical"
+        android:text="@string/title_intelligent_poetry_new"
+        android:textColor="@color/text_red"
+        android:textSize="7sp"
+        android:textStyle="italic" />
+
+</RelativeLayout>

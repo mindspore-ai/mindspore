@@ -12,6 +12,8 @@
     <string name="app_update_lastest">"请升级新版本"</string>
     <string name="title_image">Image Classification</string>
     <string name="title_image_garbage">Garbage Classification</string>
+    <string name="title_intelligent_poetry">Intelligent poetry</string>
+    <string name="title_intelligent_poetry_new">NEW</string>
     <string name="title_object">Photo Detection</string>
     <string name="title_object_camera">Camera Detection</string>
     <string name="title_pose_net">PoseNet</string>
@@ -26,7 +28,6 @@
     <string name="title_share">Share</string>
     <string name="title_share_commend">MindSpore掌中宝：AI爱好者的一站式协同学习、演示、体验平台\t</string>
     <string name="title_splash_welcome">AI爱好者的一站式协同学习、演示、体验平台</string>
-
     <string name="splash_count_down">秒</string>
 
     <string name="main_tab_title_one">体验</string>
@@ -34,6 +35,7 @@
     <string name="main_tab_title_three">我的</string>
 
     <string name="tab_experience_one">视觉图像技术</string>
+    <string name="tab_speech_two">语音语义技术</string>
 
     <string name="experience_head_title">体验中心</string>
     <string name="experience_head_subtitle">新一代全场景AI计算框架，邀您马上体验</string>
@@ -47,7 +49,14 @@
     <string name="me_official_code_title">官方代码仓</string>
     <string name="me_qa_title">问题反馈</string>
     <string name="me_version_title">版本号</string>
-
+    <string name="me_agree">同意</string>
+    <string name="me_disagree_and_exit">不同意并退出</string>
+    <string name="me_user_agreement">《用户协议和隐私政策》</string>
+    <string name="me_user_agreements">用户协议和隐私政策</string>
+    <string name="me_privacy">MindSpore 掌中宝尊重并保护所有使用服务用户的个人隐私权。为了给你提供更准确、更有个
+        性化的服务，我们会按照《用户协议和隐私政策》规定使用和披露您的个人信息。但我们将以高度的勤勉、审慎义务对待这些信息。除本隐私
+        政策另有规定外，在未征得您实现许可的情况下，我们不会将这些信息对外披露或向第三方提供。我们会不时更新本隐私政策。您在同意我们
+        服务使用协议之时，即视为您已经同意本隐私政策全部内容。本隐私政策属于我们服务使用协议不可分割的一部分。</string>
     <string name="college_summary_title">MindSpore简介</string>
     <string name="college_cloud_title">1小时体验端云协同全流程开发</string>
     <string name="college_quick_title">快速入门</string>
