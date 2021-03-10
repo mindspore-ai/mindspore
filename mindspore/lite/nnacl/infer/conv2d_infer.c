@@ -64,6 +64,7 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (param->group_ == 0) {
     param->group_ = weight_tensor->shape_[0];
   }
+  param->output_channel_ = weight_tensor->shape_[0];
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
