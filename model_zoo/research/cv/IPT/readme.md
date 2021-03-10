@@ -18,7 +18,7 @@ If you find our work useful in your research or publication, please cite our wor
 
 ## Model architecture
 ### The overall network architecture of IPT is shown as below:
-![architecture](./ipt.png)
+![architecture](./image/ipt.png)
 
 ## Dataset
 
