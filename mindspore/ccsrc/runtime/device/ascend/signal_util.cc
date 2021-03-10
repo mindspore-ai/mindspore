@@ -46,6 +46,8 @@ void SignalGuard::RegisterHandlers() {
 
 void SignalGuard::IntHandler(int, siginfo_t *, void *) {
   kernel::AscendKernelBuildClient::Instance().Close();
-  MS_LOG_EXCEPTION << "KeyboardInterrupt";
+  int this_pid = getpid();
+  MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
+  (void)kill(this_pid, SIGTERM);
 }
 }  // namespace mindspore
