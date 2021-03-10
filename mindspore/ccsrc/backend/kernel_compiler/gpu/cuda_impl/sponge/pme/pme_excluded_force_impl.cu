@@ -86,6 +86,7 @@ __global__ void PME_Excluded_Force_Correction(const int atom_numbers, const UNSI
 void PMEExcludedForce(const int atom_numbers, const float pme_beta, const int *uint_crd_f, const float *sacler_f,
                       const float *charge, const int *excluded_list_start, const int *excluded_list,
                       const int *excluded_atom_numbers, float *frc_f, cudaStream_t stream) {
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, frc_f, 0.);
   UNSIGNED_INT_VECTOR *uint_crd =
     const_cast<UNSIGNED_INT_VECTOR *>(reinterpret_cast<const UNSIGNED_INT_VECTOR *>(uint_crd_f));
   VECTOR *frc = reinterpret_cast<VECTOR *>(frc_f);

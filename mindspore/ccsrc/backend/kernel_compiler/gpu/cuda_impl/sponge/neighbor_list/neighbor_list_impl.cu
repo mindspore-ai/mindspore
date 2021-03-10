@@ -330,6 +330,17 @@ void Construct_Neighbor_List(int atom_numbers, int max_neighbor_numbers, int *nl
     atom_numbers, max_neighbor_numbers, nl_atom_numbers, nl_atom_serial, nl);
 }
 
+__global__ void copy_neighbor_list_atom_number(int atom_numbers, NEIGHBOR_LIST *nl, int *nl_atom_numbers) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < atom_numbers; i += gridDim.x * blockDim.x) {
+    nl_atom_numbers[i] = nl[i].atom_numbers;
+  }
+}
+
+void CopyNeighborListAtomNumber(int atom_numbers, NEIGHBOR_LIST *nl, int *nl_atom_numbers, cudaStream_t stream) {
+  copy_neighbor_list_atom_number<<<ceilf(static_cast<float>(atom_numbers) / 128), 128, 0, stream>>>(atom_numbers, nl,
+                                                                                                    nl_atom_numbers);
+}
+
 void Refresh_Neighbor_List_No_Check(int grid_numbers, int atom_numbers, float skin, int Nxy, float cutoff_skin_square,
                                     int *grid_N, float *box_length, int *atom_numbers_in_grid_bucket,
                                     float *grid_length_inverse, int *atom_in_grid_serial, GRID_BUCKET *bucket,

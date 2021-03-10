@@ -69,8 +69,8 @@ class AngleAtomEnergyGpuKernel : public GpuKernel {
     auto angle_theta0 = GetDeviceAddress<T>(inputs, 6);
 
     auto ene = GetDeviceAddress<T>(outputs, 0);
-    AngleAtomEnergy(angle_numbers, uint_crd_f, scaler_f, atom_a, atom_b, atom_c, angle_k, angle_theta0, ene,
-                    reinterpret_cast<cudaStream_t>(stream_ptr));
+    AngleAtomEnergy(angle_numbers, ele_uint_crd, uint_crd_f, scaler_f, atom_a, atom_b, atom_c, angle_k, angle_theta0,
+                    ene, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 

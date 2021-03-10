@@ -49,9 +49,11 @@ __global__ void BondForceWithAtomEnergyKernel(int bond_numbers, const UNSIGNED_I
   }
 }
 
-void BondForceWithAtomEnergy(int bond_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                             const int *atom_b, const float *bond_k, const float *bond_r0, float *frc_f, float *atom_e,
-                             cudaStream_t stream) {
+void BondForceWithAtomEnergy(int bond_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                             const int *atom_a, const int *atom_b, const float *bond_k, const float *bond_r0,
+                             float *frc_f, float *atom_e, cudaStream_t stream) {
+  Reset_List<<<ceilf(static_cast<float>(3. * atom_numbers) / 128), 128>>>(3 * atom_numbers, frc_f, 0.);
+  Reset_List<<<ceilf(static_cast<float>(atom_numbers) / 128), 128>>>(atom_numbers, atom_e, 0.);
   size_t thread_per_block = 128;
   size_t block_per_grid = ceilf(static_cast<float>(bond_numbers) / 128);
   UNSIGNED_INT_VECTOR *uint_crd =
@@ -62,6 +64,6 @@ void BondForceWithAtomEnergy(int bond_numbers, const int *uint_crd_f, const floa
                                                                                  atom_b, bond_k, bond_r0, frc, atom_e);
   return;
 }
-void BondForceWithAtomEnergy(int bond_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                             const int *atom_b, const float *bond_k, const float *bond_r0, float *frc_f, float *atom_e,
-                             cudaStream_t stream);
+void BondForceWithAtomEnergy(int bond_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                             const int *atom_a, const int *atom_b, const float *bond_k, const float *bond_r0,
+                             float *frc_f, float *atom_e, cudaStream_t stream);

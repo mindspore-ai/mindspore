@@ -63,9 +63,11 @@ __global__ void DihedralAtomEnergyKernel(int dihedral_numbers, const UNSIGNED_IN
   }
 }
 
-void DihedralAtomEnergy(int dihedral_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                        const int *atom_b, const int *atom_c, const int *atom_d, const int *ipn, const float *pk,
-                        const float *gamc, const float *gams, const float *pn, float *ene, cudaStream_t stream) {
+void DihedralAtomEnergy(int dihedral_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                        const int *atom_a, const int *atom_b, const int *atom_c, const int *atom_d, const int *ipn,
+                        const float *pk, const float *gamc, const float *gams, const float *pn, float *ene,
+                        cudaStream_t stream) {
+  Reset_List<<<ceilf(static_cast<float>(atom_numbers) / 128), 128>>>(atom_numbers, ene, 0.);
   size_t thread_per_block = 128;
   size_t block_per_grid = ceilf(static_cast<float>(dihedral_numbers) / 128);
   UNSIGNED_INT_VECTOR *uint_crd =
@@ -76,6 +78,7 @@ void DihedralAtomEnergy(int dihedral_numbers, const int *uint_crd_f, const float
     dihedral_numbers, uint_crd, scaler, atom_a, atom_b, atom_c, atom_d, ipn, pk, gamc, gams, pn, ene);
   return;
 }
-void DihedralAtomEnergy(int dihedral_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                        const int *atom_b, const int *atom_c, const int *atom_d, const int *ipn, const float *pk,
-                        const float *gamc, const float *gams, const float *pn, float *ene, cudaStream_t stream);
+void DihedralAtomEnergy(int dihedral_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                        const int *atom_a, const int *atom_b, const int *atom_c, const int *atom_d, const int *ipn,
+                        const float *pk, const float *gamc, const float *gams, const float *pn, float *ene,
+                        cudaStream_t stream);

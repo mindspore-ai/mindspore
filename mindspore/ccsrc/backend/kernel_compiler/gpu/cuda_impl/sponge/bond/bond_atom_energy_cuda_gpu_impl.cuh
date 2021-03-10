@@ -20,7 +20,7 @@
 #include <curand_kernel.h>
 #include "runtime/device/gpu/cuda_common.h"
 
-void BondAtomEnergy(int bond_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
+void BondAtomEnergy(int bond_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
                     const int *atom_b, const float *bond_k, const float *bond_r0, float *atom_ene, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_BOND_ATOM_ENERGY_GPU_IMPL_H_
