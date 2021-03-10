@@ -71,7 +71,7 @@ class MindDataTestGNNGraph : public UT::Common {
   }
 
   void CheckNeighborsRatio(const NumNeighborsMap &number_neighbors, const std::vector<WeightType> &weights,
-                           float deviation_ratio = 0.1) {
+                           float deviation_ratio = 0.2) {
     EXPECT_EQ(number_neighbors.size(), weights.size());
     int index = 0;
     uint32_t pre_num = 0;
