@@ -45,7 +45,7 @@ class DeviceTensor : public Tensor {
 
   const unsigned char *GetHostBuffer();
 
-  uint8_t *GetDeviceBuffer();
+  const uint8_t *GetDeviceBuffer();
 
   uint8_t *GetDeviceMutableBuffer();
 

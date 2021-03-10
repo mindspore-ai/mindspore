@@ -23,10 +23,10 @@
 #include "utils/hashing.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
-#define ASSERT_NULL(ptr) MS_EXCEPTION_IF_NULL(ptr)
+#define EXCEPTION_IF_NULL(ptr) MS_EXCEPTION_IF_NULL(ptr)
 #else
 #include "mindspore/lite/src/common/log_adapter.h"
-#define ASSERT_NULL(ptr) MS_ASSERT((ptr) != nullptr)
+#define EXCEPTION_IF_NULL(ptr) MS_ASSERT((ptr) != nullptr)
 #endif
 
 namespace mindspore {
@@ -63,22 +63,22 @@ const std::string &DETensor::Name() const { return name_; }
 enum mindspore::DataType DETensor::DataType() const {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
-    ASSERT_NULL(device_tensor_impl_);
+    EXCEPTION_IF_NULL(device_tensor_impl_);
     return static_cast<mindspore::DataType>(DETypeToMSType(device_tensor_impl_->DeviceDataType()));
   }
 #endif
-  ASSERT_NULL(tensor_impl_);
+  EXCEPTION_IF_NULL(tensor_impl_);
   return static_cast<mindspore::DataType>(DETypeToMSType(tensor_impl_->type()));
 }
 
 size_t DETensor::DataSize() const {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
-    ASSERT_NULL(device_tensor_impl_);
+    EXCEPTION_IF_NULL(device_tensor_impl_);
     return device_tensor_impl_->DeviceDataSize();
   }
 #endif
-  ASSERT_NULL(tensor_impl_);
+  EXCEPTION_IF_NULL(tensor_impl_);
   return tensor_impl_->SizeInBytes();
 }
 
@@ -87,7 +87,7 @@ const std::vector<int64_t> &DETensor::Shape() const { return shape_; }
 std::shared_ptr<const void> DETensor::Data() const {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
-    ASSERT_NULL(device_tensor_impl_);
+    EXCEPTION_IF_NULL(device_tensor_impl_);
     return std::shared_ptr<const void>(device_tensor_impl_->GetHostBuffer(), [](const void *) {});
   }
 #endif
@@ -97,11 +97,11 @@ std::shared_ptr<const void> DETensor::Data() const {
 void *DETensor::MutableData() {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
-    ASSERT_NULL(device_tensor_impl_);
+    EXCEPTION_IF_NULL(device_tensor_impl_);
     return static_cast<void *>(device_tensor_impl_->GetDeviceMutableBuffer());
   }
 #endif
-  ASSERT_NULL(tensor_impl_);
+  EXCEPTION_IF_NULL(tensor_impl_);
   return static_cast<void *>(tensor_impl_->GetMutableBuffer());
 }
 
@@ -110,7 +110,7 @@ bool DETensor::IsDevice() const { return is_device_; }
 std::shared_ptr<mindspore::MSTensor::Impl> DETensor::Clone() const {
 #ifndef ENABLE_ANDROID
   if (is_device_) {
-    ASSERT_NULL(device_tensor_impl_);
+    EXCEPTION_IF_NULL(device_tensor_impl_);
     return std::make_shared<DETensor>(device_tensor_impl_, is_device_);
   }
 #endif

@@ -55,6 +55,7 @@ Status DvppDecodeJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std
   }
   return Status::OK();
 }
+
 // Compute() will be called when context=="CPU"
 Status DvppDecodeJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);

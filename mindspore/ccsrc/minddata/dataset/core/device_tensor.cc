@@ -98,7 +98,7 @@ const unsigned char *DeviceTensor::GetHostBuffer() {
   return host_data_tensor_->GetBuffer();
 }
 
-uint8_t *DeviceTensor::GetDeviceBuffer() { return device_data_; }
+const uint8_t *DeviceTensor::GetDeviceBuffer() { return device_data_; }
 
 uint8_t *DeviceTensor::GetDeviceMutableBuffer() { return device_data_; }
 
@@ -136,6 +136,7 @@ Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
     MS_LOG(ERROR) << "Failed to allocate memory from host ret = " << ret;
     return Status(StatusCode::kMDNoSpace);
   }
+
   std::shared_ptr<void> outBuf(resHostBuf, aclrtFreeHost);
   auto processedInfo_ = outBuf;
   // Memcpy the output data from device to host
@@ -145,6 +146,7 @@ Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return Status(StatusCode::kMDOutOfMemory);
   }
+
   auto data = std::static_pointer_cast<unsigned char>(processedInfo_);
   unsigned char *ret_ptr = data.get();
 
@@ -155,11 +157,14 @@ Status DeviceTensor::DataPop_(std::shared_ptr<Tensor> *host_tensor) {
   uint32_t _output_height_ = this->GetYuvStrideShape()[2];
   uint32_t _output_heightStride_ = this->GetYuvStrideShape()[3];
   const mindspore::dataset::DataType dvpp_data_type(mindspore::dataset::DataType::DE_UINT8);
+
   mindspore::dataset::Tensor::CreateFromMemory(dvpp_shape, dvpp_data_type, ret_ptr, host_tensor);
+
   (*host_tensor)->SetYuvShape(_output_width_, _output_widthStride_, _output_height_, _output_heightStride_);
   if (!(*host_tensor)->HasData()) {
     return Status(StatusCode::kMCDeviceError);
   }
+
   MS_LOG(INFO) << "Successfully pop DeviceTensor data onto host";
   return Status::OK();
 }

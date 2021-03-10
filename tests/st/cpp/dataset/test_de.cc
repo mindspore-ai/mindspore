@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <iostream>
 #include <string>
 #include <vector>
 #include "common/common_test.h"
@@ -37,11 +38,35 @@ class TestDE : public ST::Common {
   TestDE() {}
 };
 
+mindspore::MSTensor ReadFileToTensor(const std::string &file) {
+  if (file.empty()) {
+    std::cout << "[ERROR]Pointer file is nullptr, return an empty Tensor." << std::endl;
+    return mindspore::MSTensor();
+  }
+  std::ifstream ifs(file);
+  if (!ifs.good()) {
+    std::cout << "[ERROR]File: " << file << " does not exist, return an empty Tensor." << std::endl;
+    return mindspore::MSTensor();
+  }
+  if (!ifs.is_open()) {
+    std::cout << "[ERROR]File: " << file << "open failed, return an empty Tensor." << std::endl;
+    return mindspore::MSTensor();
+  }
+
+  ifs.seekg(0, std::ios::end);
+  size_t size = ifs.tellg();
+  mindspore::MSTensor buf("file", mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
+
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(reinterpret_cast<char *>(buf.MutableData()), size);
+  ifs.close();
+
+  return buf;
+}
+
 TEST_F(TestDE, TestResNetPreprocess) {
   // Read images
-  std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
-  auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
   // Define transform operations
   std::shared_ptr<TensorTransform> decode(new vision::Decode());
@@ -66,10 +91,15 @@ TEST_F(TestDE, TestResNetPreprocess) {
 TEST_F(TestDE, TestDvpp) {
 #ifdef ENABLE_ACL
   // Read images from target directory
+
+  /* Old internal method, we deprecate it
   std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
   Status rc = mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
   ASSERT_TRUE(rc.IsOk());
   auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  */
+
+  auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
   // Define dvpp transform
   std::vector<uint32_t> crop_paras = {224, 224};
@@ -78,7 +108,7 @@ TEST_F(TestDE, TestDvpp) {
   mindspore::dataset::Execute Transform(decode_resize_crop, MapTargetDevice::kAscend310);
 
   // Apply transform on images
-  rc = Transform(image, &image);
+  Status rc = Transform(image, &image);
   std::string aipp_cfg = Transform.AippCfgGenerator();
   ASSERT_EQ(aipp_cfg, "./aipp.cfg");
 
@@ -116,10 +146,7 @@ TEST_F(TestDE, TestDvpp) {
 TEST_F(TestDE, TestDvppSinkMode) {
 #ifdef ENABLE_ACL
   // Read images from target directory
-  std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  Status rc = mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
-  ASSERT_TRUE(rc.IsOk());
-  auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
   // Define dvpp transform
   std::vector<int32_t> crop_paras = {224, 224};
@@ -131,7 +158,7 @@ TEST_F(TestDE, TestDvppSinkMode) {
   mindspore::dataset::Execute Transform(trans_list, MapTargetDevice::kAscend310);
 
   // Apply transform on images
-  rc = Transform(image, &image);
+  Status rc = Transform(image, &image);
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());
@@ -159,10 +186,7 @@ TEST_F(TestDE, TestDvppSinkMode) {
 
 TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
 #ifdef ENABLE_ACL
-  std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
-  Status rc = mindspore::dataset::Tensor::CreateFromFile("./data/dataset/apple.jpg", &de_tensor);
-  ASSERT_TRUE(rc.IsOk());
-  auto image = MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
+  auto image = ReadFileToTensor("./data/dataset/apple.jpg");
 
   // Define dvpp transform
   std::vector<int32_t> crop_paras = {416};
@@ -182,7 +206,7 @@ TEST_F(TestDE, TestDvppDecodeResizeCropNormalize) {
   ASSERT_EQ(aipp_cfg, "./aipp.cfg");
 
   // Apply transform on images
-  rc = Transform(image, &image);
+  Status rc = Transform(image, &image);
 
   // Check image info
   ASSERT_TRUE(rc.IsOk());

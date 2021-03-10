@@ -61,7 +61,9 @@ Status AscendResource::Sink(const mindspore::MSTensor &host_input, std::shared_p
                                                 (const uchar *)(host_input.Data().get()), &de_input);
   RETURN_IF_NOT_OK(rc);
   if (!IsNonEmptyJPEG(de_input)) {
-    RETURN_STATUS_UNEXPECTED("Dvpp operators can only support processing JPEG image");
+    std::string err_msg = "Dvpp operators can only support processing JPEG image";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   APP_ERROR ret = processor_->H2D_Sink(de_input, *device_input);
