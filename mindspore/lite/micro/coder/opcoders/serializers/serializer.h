@@ -168,9 +168,13 @@ class Serializer {
    *    "int pointer_gen[4] = {1 ,3, 2, 42};\n
    *    const Foo foo_gen = {{1, 2, 3}, pointer_gen, 4};\n"
    */
-  template <typename... PARAMETERS>
+  template <bool immutable = true, typename... PARAMETERS>
   void CodeBaseStruct(const std::string &type, const std::string &name, PARAMETERS... parameters) {
-    code << "const " << type << " " << name << " = {";
+    if constexpr (immutable) {
+      code << "const " << type << " " << name << " = {";
+    } else {
+      code << type << " " << name << " = {";
+    }
     GenCode(parameters...);
     code << "};\n";
   }

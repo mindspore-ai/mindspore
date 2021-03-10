@@ -183,13 +183,15 @@ int Conv2DINT8Coder::Resize() {
 int Conv2DINT8Coder::DoCode(CoderContext *const context) {
   std::vector<std::string> asm_files;
   if (target_ == kARM32A) {
-    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8Neon32.S"};
+    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8.S"};
   } else if (target_ == kARM64) {
-    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8Neon64.S"};
+    asm_files = {"PreSum4x16Int8Peroc.S", "PreSum4x16Int8Pert.S", "MatmulInt8.S", "MatmulDpInt8.S"};
   }
-  Collect(context, {"nnacl/int8/conv_int8.h", "nnacl/common_func.h", "wrapper/int8/convolution_int8_wrapper.h"},
+  Collect(context,
+          {"nnacl/int8/conv_int8.h", "nnacl/common_func.h", "wrapper/int8/convolution_int8_wrapper.h",
+           "wrapper/base/common_wrapper.h", "wrapper/base/optimize_handler_wrapper.h"},
           {"common_func.c", "pack_int8.c", "conv_int8.c", "winograd_transform.c", "matmul_int8.c", "fixed_point.c",
-           "convolution_int8_wrapper.c", "conv_init_int8_wrapper.c", "thread_pool.c"},
+           "convolution_int8_wrapper.c", "conv_init_int8_wrapper.c", "common_wrapper.c", "optimize_handler_wrapper.c"},
           asm_files);
   // call the op function
   nnacl::NNaclInt8Serializer code;
@@ -202,7 +204,6 @@ int Conv2DINT8Coder::DoCode(CoderContext *const context) {
   code.CodeBaseStruct("ConvolutionInt8Args", kRunArgs, input_tensor_, packed_input_, matmul_packed_input_,
                       packed_weight_, bias_data_, output_tensor_, filter_zp_ptr_, input_sum_,
                       "(ConvParameter *)&conv_param", matmul_func_, support_optimize_);
-  code.CodeFunction("CheckSupportOptimize", kRunArgsAddr);
   if (support_parallel_) {
     code.CodeFunction(kParallelLaunch, gThreadPool, "ConvolutionInt8Run", kRunArgsAddr, gThreadNum);
   } else {

@@ -82,9 +82,9 @@ int DetectionPostProcessBaseCoder::AllocateBuffer() {
   MS_CHECK_PTR(params_->decoded_boxes_);
   params_->nms_candidate_ = allocator_->Malloc(kNumberTypeUInt8, num_boxes_ * sizeof(uint8_t), kWorkspace);
   MS_CHECK_PTR(params_->nms_candidate_);
-  params_->selected_ = allocator_->Malloc(kNumberTypeInt, num_boxes_ * sizeof(int), kWorkspace);
+  params_->selected_ = allocator_->Malloc(kNumberTypeInt32, num_boxes_ * sizeof(int), kWorkspace);
   MS_CHECK_PTR(params_->selected_);
-  params_->single_class_indexes_ = allocator_->Malloc(kNumberTypeInt, num_boxes_ * sizeof(int), kWorkspace);
+  params_->single_class_indexes_ = allocator_->Malloc(kNumberTypeInt32, num_boxes_ * sizeof(int), kWorkspace);
   MS_CHECK_PTR(params_->single_class_indexes_);
 
   if (params_->use_regular_nms_) {
@@ -92,13 +92,13 @@ int DetectionPostProcessBaseCoder::AllocateBuffer() {
       allocator_->Malloc(kNumberTypeFloat, (num_boxes_ + params_->max_detections_) * sizeof(float), kWorkspace);
     MS_CHECK_PTR(params_->scores_);
     params_->indexes_ =
-      allocator_->Malloc(kNumberTypeInt, (num_boxes_ + params_->max_detections_) * sizeof(int), kWorkspace);
+      allocator_->Malloc(kNumberTypeInt32, (num_boxes_ + params_->max_detections_) * sizeof(int), kWorkspace);
     MS_CHECK_PTR(params_->indexes_);
     params_->all_class_scores_ =
       allocator_->Malloc(kNumberTypeFloat, (num_boxes_ + params_->max_detections_) * sizeof(float), kWorkspace);
     MS_CHECK_PTR(params_->all_class_scores_);
     params_->all_class_indexes_ =
-      allocator_->Malloc(kNumberTypeInt, (num_boxes_ + params_->max_detections_) * sizeof(int), kWorkspace);
+      allocator_->Malloc(kNumberTypeInt32, (num_boxes_ + params_->max_detections_) * sizeof(int), kWorkspace);
     MS_CHECK_PTR(params_->all_class_indexes_);
   } else {
     params_->scores_ = allocator_->Malloc(kNumberTypeFloat, num_boxes_ * sizeof(float), kWorkspace);

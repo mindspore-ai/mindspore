@@ -22,21 +22,12 @@ void InitMatrixA(const float *src_ptr, float *dst_ptr, const MatMulParameter *pa
   }
   for (int i = 0; i < params_->batch; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->row_;
-#ifdef ENABLE_ARM32
-    float *dst = dst_ptr + i * params_->deep_ * params_->row_4_;
-    if (params_->a_transpose_) {
-      RowMajor2Row4Major(src, dst, params_->deep_, params_->row_);
-    } else {
-      RowMajor2Col4Major(src, dst, params_->row_, params_->deep_);
-    }
-#else
-    float *dst = dst_ptr + i * params_->deep_ * params_->row_12_;
+    float *dst = dst_ptr + i * params_->deep_ * params_->row_align_;
     if (params_->a_transpose_) {
       RowMajor2Row12Major(src, dst, params_->deep_, params_->row_);
     } else {
       RowMajor2Col12Major(src, dst, params_->row_, params_->deep_);
     }
-#endif
   }
 }
 
@@ -55,11 +46,19 @@ void InitMatrixB(const float *src_ptr, float *dst_ptr, const MatMulParameter *pa
   }
   for (int i = 0; i < params_->batch; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;
-    float *dst = dst_ptr + i * params_->deep_ * params_->col_8_;
+    float *dst = dst_ptr + i * params_->deep_ * params_->col_align_;
+#ifdef ENABLE_ARM32
+    if (params_->b_transpose_) {
+      RowMajor2Col4Major(src, dst, params_->col_, params_->deep_);
+    } else {
+      RowMajor2Row4Major(src, dst, params_->deep_, params_->col_);
+    }
+#else
     if (params_->b_transpose_) {
       RowMajor2Col8Major(src, dst, params_->col_, params_->deep_);
     } else {
       RowMajor2Row8Major(src, dst, params_->deep_, params_->col_);
     }
+#endif
   }
 }

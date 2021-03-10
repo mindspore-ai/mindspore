@@ -301,6 +301,30 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/splice_infer.c
         )
 
+#### sse
+if("${X86_64_SIMD}" STREQUAL "sse")
+    set(SSE_SRC
+            ${LITE_DIR}/nnacl/intrinsics/sse/sse_common.c
+            ${LITE_DIR}/nnacl/intrinsics/sse/PackNHWCToNCHWFp32.c
+            ${LITE_DIR}/nnacl/intrinsics/sse/MatMul_Sse.c
+            )
+    set_property(SOURCE ${SSE_SRC} PROPERTY LANGUAGE C)
+endif()
+
+#### avx
+if("${X86_64_SIMD}" STREQUAL "avx")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
+    set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
+    set(AVX_SRC
+            ${LITE_DIR}/nnacl/intrinsics/avx/common_utils.c
+            ${LITE_DIR}/nnacl/intrinsics/sse/sse_common.c
+            ${LITE_DIR}/nnacl/intrinsics/sse/MatMul_Sse.c
+            ${LITE_DIR}/nnacl/intrinsics/sse/PackNHWCToNCHWFp32.c
+            ${LITE_DIR}/nnacl/assembly/avx/MatmulAvx.S
+            )
+    set_property(SOURCE ${AVX_SRC} PROPERTY LANGUAGE C)
+endif()
+
 list(APPEND FILE_SET ${CODER_SRC} ${CODER_OPCODERS_SRC} ${CODER_GENERATOR_SRC}
-        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${LITE_KERNEL_SRC} ${MINDSPORE_CORE})
+        ${CODER_ALLOCATOR_SRC} ${LITE_SRC} ${LITE_KERNEL_SRC} ${MINDSPORE_CORE} ${SSE_SRC} ${AVX_SRC})
 

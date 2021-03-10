@@ -17,9 +17,9 @@
 #include "coder/generator/component/weight_component.h"
 #include <memory>
 #include <utility>
-#include <algorithm>
 #include "coder/generator/component/const_blocks/license.h"
 #include "coder/utils/coder_utils.h"
+#include "coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {
 void CodeWeightFileHeader(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
@@ -89,7 +89,7 @@ void CodeWeightInitFunc(std::ofstream &ofs, const std::string &module_name, cons
       << "  if (weight_buffer == NULL) {\n"
       << "    return RET_ERROR;\n"
       << "  }\n";
-
+  ofs << "  int " << gThreadNum << " = 1;\n\n";
   ofs << "  struct ModelParameter {\n"
       << "    void *addr;\n"
       << "    size_t size;\n"
