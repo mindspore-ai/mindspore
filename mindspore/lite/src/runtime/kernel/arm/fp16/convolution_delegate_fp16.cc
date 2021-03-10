@@ -112,7 +112,7 @@ kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *>
                                                TypeId origin_weight_data_type, TypeId origin_bias_data_type) {
   MS_ASSERT(opParameter != nullptr);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  kernel::LiteKernel *kernel;
+  kernel::LiteKernel *kernel = nullptr;
   if (conv_param->input_channel_ < 32) {
     kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWFp16CPUKernel(
       opParameter, inputs, outputs, ctx, origin_weight, origin_bias, origin_weight_data_type, origin_bias_data_type);
