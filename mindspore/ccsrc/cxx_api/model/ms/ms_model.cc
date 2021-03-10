@@ -21,8 +21,12 @@
 #include "cxx_api/factory.h"
 
 namespace mindspore {
+// mindspore-serving check current package for version check with ModelImpl factory.
+#if ENABLE_D
 API_FACTORY_REG(ModelImpl, Ascend910, MsModel);
+#elif ENABLE_GPU
 API_FACTORY_REG(ModelImpl, GPU, MsModel);
+#endif
 
 static std::string GenerateShapeKey(const std::vector<std::vector<int64_t>> &dims) {
   std::string shape_key;
