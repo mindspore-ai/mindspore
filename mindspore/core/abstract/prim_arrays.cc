@@ -661,7 +661,6 @@ AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const Primitiv
 AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
   auto params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto params_shp = params->shape();
   MS_EXCEPTION_IF_NULL(params);
@@ -673,8 +672,10 @@ AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(indices_shp);
   auto indices_shape = indices_shp->shape();
   auto indices_max_shape = indices_shp->max_shape();
+  auto indices_min_shape = indices_shp->min_shape();
   ShapeVector shape;
   ShapeVector max_shape;
+  ShapeVector min_shape;
   shape.insert(shape.end(), indices_shape.begin(), indices_shape.end());
   shape.insert(shape.end(), params_shape.begin() + 1, params_shape.end());
   if (!indices_max_shape.empty()) {
@@ -683,9 +684,11 @@ AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const Primit
   } else {
     max_shape = shape;
   }
-  ShapeVector min_shape;
-  for (size_t i = 0; i < max_shape.size(); ++i) {
-    min_shape.emplace_back(1);
+  if (!indices_min_shape.empty()) {
+    min_shape.insert(min_shape.end(), indices_min_shape.begin(), indices_min_shape.end());
+    min_shape.insert(min_shape.end(), params_shape.begin() + 1, params_shape.end());
+  } else {
+    min_shape = shape;
   }
 
   AbstractTensorPtr ret =

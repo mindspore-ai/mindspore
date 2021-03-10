@@ -362,7 +362,7 @@ void CreateTupleGetItems(const FuncGraphPtr &func_graph, const AnfNodePtr &input
 
 AnfNodePtr CreateEmbeddingLookup(const FuncGraphPtr &graph, AnfNodePtr params, AnfNodePtr indices) {
   MS_EXCEPTION_IF_NULL(graph);
-  PrimitivePtr emb_lookup_primitive = prim::kPrimEmbeddingLookup;
+  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
   emb_lookup_primitive->set_attr(kAttrPrimitiveTarget, MakeValue("CPU"));
   emb_lookup_primitive->set_attr(kAttrOffset, MakeValue<int64_t>(0));
   std::vector<AnfNodePtr> emb_lookup_nodes{NewValueNode(emb_lookup_primitive), params, indices};
@@ -373,7 +373,7 @@ AnfNodePtr CreateEmbeddingLookup(const FuncGraphPtr &graph, AnfNodePtr params, A
 AnfNodePtr CreateCacheSwapTable(const FuncGraphPtr &graph, ParameterPtr cache_table, AnfNodePtr swap_cache_idx,
                                 AnfNodePtr miss_value) {
   MS_EXCEPTION_IF_NULL(graph);
-  PrimitivePtr cache_swap_table_primitive = prim::kPrimCacheSwapTable;
+  PrimitivePtr cache_swap_table_primitive = std::make_shared<Primitive>(kCacheSwapTableOpName);
   std::vector<AnfNodePtr> cache_swap_table_nodes{NewValueNode(cache_swap_table_primitive), cache_table, swap_cache_idx,
                                                  miss_value};
   auto cache_swap_table = graph->NewCNode(cache_swap_table_nodes);
@@ -383,7 +383,7 @@ AnfNodePtr CreateCacheSwapTable(const FuncGraphPtr &graph, ParameterPtr cache_ta
 AnfNodePtr CreateUpdateCache(const FuncGraphPtr &graph, ParameterPtr params, AnfNodePtr old_emb_idx,
                              AnfNodePtr old_value) {
   MS_EXCEPTION_IF_NULL(graph);
-  PrimitivePtr update_cache_primitive = prim::kPrimUpdateCache;
+  PrimitivePtr update_cache_primitive = std::make_shared<Primitive>(kUpdateCacheOpName);
   update_cache_primitive->set_attr(kAttrPrimitiveTarget, MakeValue("CPU"));
 
   auto params_ori_shp = params->Shape();
