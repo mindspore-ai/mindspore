@@ -129,16 +129,17 @@ class SummaryRecord:
         TypeError: If the parameter type is incorrect.
 
     Examples:
-        >>> # use in with statement to auto close
         >>> from mindspore.train.summary import SummaryRecord
-        >>> with SummaryRecord(log_dir="./summary_dir") as summary_record:
-        ...     pass
-        >>>
-        >>> # use in try .. finally .. to ensure closing
-        >>> try:
-        ...     summary_record = SummaryRecord(log_dir="./summary_dir")
-        ... finally:
-        ...     summary_record.close()
+        >>> if __name__ == '__main__':
+        ...     # use in with statement to auto close
+        ...     with SummaryRecord(log_dir="./summary_dir") as summary_record:
+        ...         pass
+        ...
+        ...     # use in try .. finally .. to ensure closing
+        ...     try:
+        ...         summary_record = SummaryRecord(log_dir="./summary_dir")
+        ...     finally:
+        ...         summary_record.close()
     """
 
     def __init__(self, log_dir, file_prefix="events", file_suffix="_MS",
@@ -212,8 +213,10 @@ class SummaryRecord:
             ValueError: When the mode is not recognized.
 
         Examples:
-            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            ...     summary_record.set_mode('eval')
+            >>> from mindspore.train.summary import SummaryRecord
+            >>> if __name__ == '__main__':
+            ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
+            ...         summary_record.set_mode('eval')
         """
         mode_spec = 'train', 'eval'
         if mode not in mode_spec:
@@ -249,8 +252,11 @@ class SummaryRecord:
             TypeError: If the parameter type is error.
 
         Examples:
-            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            ...     summary_record.add_value('scalar', 'loss', Tensor(0.1))
+            >>> from mindspore import Tensor
+            >>> from mindspore.train.summary import SummaryRecord
+            >>> if __name__ == '__main__':
+            ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
+            ...         summary_record.add_value('scalar', 'loss', Tensor(0.1))
         """
         if plugin in ('tensor', 'scalar', 'image', 'histogram'):
             if not name or not isinstance(name, str):
@@ -297,8 +303,10 @@ class SummaryRecord:
             RuntimeError: If the disk space is insufficient.
 
         Examples:
-            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            ...     summary_record.record(step=2)
+            >>> from mindspore.train.summary import SummaryRecord
+            >>> if __name__ == '__main__':
+            ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
+            ...         summary_record.record(step=2)
             ...
             True
         """
@@ -364,8 +372,10 @@ class SummaryRecord:
             str, the full path of log file.
 
         Examples:
-            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            ...     log_dir = summary_record.log_dir
+            >>> from mindspore.train.summary import SummaryRecord
+            >>> if __name__ == '__main__':
+            ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
+            ...         log_dir = summary_record.log_dir
         """
         return self.full_file_name
 
@@ -376,8 +386,10 @@ class SummaryRecord:
         Call it to make sure that all pending events have been written to disk.
 
         Examples:
-            >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
-            ...     summary_record.flush()
+            >>> from mindspore.train.summary import SummaryRecord
+            >>> if __name__ == '__main__':
+            ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
+            ...         summary_record.flush()
         """
         if self._closed:
             logger.error("The record writer is closed and can not flush.")
@@ -389,10 +401,12 @@ class SummaryRecord:
         Flush all events and close summary records. Please use the statement to autoclose.
 
         Examples:
-            >>> try:
-            ...     summary_record = SummaryRecord(log_dir="./summary_dir")
-            ... finally:
-            ...     summary_record.close()
+            >>> from mindspore.train.summary import SummaryRecord
+            >>> if __name__ == '__main__':
+            ...     try:
+            ...         summary_record = SummaryRecord(log_dir="./summary_dir")
+            ...     finally:
+            ...         summary_record.close()
         """
         if not self._closed and self._event_writer:
             # event writer flush and close

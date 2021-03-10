@@ -62,6 +62,10 @@ class ScalarSummary(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops as ops
+        >>>
+        >>>
         >>> class SummaryDemo(nn.Cell):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
@@ -105,6 +109,11 @@ class ImageSummary(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops as ops
+        >>>
+        >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
@@ -147,6 +156,10 @@ class TensorSummary(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops as ops
+        >>>
+        >>>
         >>> class SummaryDemo(nn.Cell):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
@@ -190,6 +203,10 @@ class HistogramSummary(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.nn as nn
+        >>> import mindspore.ops as ops
+        >>>
+        >>>
         >>> class SummaryDemo(nn.Cell):
         ...     def __init__(self,):
         ...         super(SummaryDemo, self).__init__()
