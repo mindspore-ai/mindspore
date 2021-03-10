@@ -241,7 +241,8 @@ int CudaDriver::device_count() {
 bool CudaDriver::set_current_device(int index) {
   auto ret = cudaSetDevice(index);
   if (ret != cudaSuccess) {
-    MS_LOG(ERROR) << "cudaSetDevice failed, ret[" << static_cast<int>(ret) << "], " << cudaGetErrorString(ret);
+    MS_LOG(ERROR) << "cudaSetDevice " << index << " failed, ret[" << static_cast<int>(ret) << "], "
+                  << cudaGetErrorString(ret);
     return false;
   }
   return true;
