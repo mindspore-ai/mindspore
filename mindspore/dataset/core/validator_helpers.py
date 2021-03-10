@@ -44,6 +44,21 @@ valid_detype = [
     "uint32", "uint64", "float16", "float32", "float64", "string"
 ]
 
+def is_iterable(obj):
+    """
+    Helper function to check if object is iterable.
+
+    Args:
+        obj (any): object to check if iterable
+
+    Returns:
+        bool, true if object iteratable
+    """
+    try:
+        iter(obj)
+    except TypeError:
+        return False
+    return True
 
 def pad_arg_name(arg_name):
     if arg_name != "":

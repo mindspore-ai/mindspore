@@ -141,9 +141,23 @@ def test_python_sampler():
             assert data[0].asnumpy() == (np.array(i),)
             i = i - 1
 
+    # This 2nd case is the one that exhibits the same behavior as the case above without inheritance
+    def test_generator_iter_sampler():
+        class MySampler():
+            def __iter__(self):
+                for i in range(99, -1, -1):
+                    yield i
+
+        data1 = ds.GeneratorDataset([(np.array(i),) for i in range(100)], ["data"], sampler=MySampler())
+        i = 99
+        for data in data1:
+            assert data[0].asnumpy() == (np.array(i),)
+            i = i - 1
+
     assert test_config(2, Sp1(5)) == [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
     assert test_config(6, Sp2(2)) == [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0]
     test_generator()
+    test_generator_iter_sampler()
 
 
 def test_sequential_sampler2():
