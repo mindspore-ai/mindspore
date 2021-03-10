@@ -2028,8 +2028,8 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
             [dout_shape[0], dout_shape[2], dout_shape[3], dout_shape[1]]
         kernel_h = self.kernel_size[0]
         kernel_w = self.kernel_size[1]
-        stride_h = self.stride[0]
-        stride_w = self.stride[1]
+        stride_h = self.stride[2]
+        stride_w = self.stride[3]
         dilation_h = self.dilation[2]
         dilation_w = self.dilation[3]
         # default pad mode is valid
