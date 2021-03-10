@@ -25,6 +25,12 @@ set(CODER_GENERATOR_SRC
         ${MICRO_DIR}/coder/generator/component/cmake_component.cc
         ${MICRO_DIR}/coder/generator/component/train_component.cc
         ${MICRO_DIR}/coder/generator/component/parallel_component.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/cmake_lists.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/debug_utils.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/license.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/load_input.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/micro_tensor.cc
+        ${MICRO_DIR}/coder/generator/component/const_blocks/thread_pool.cc
         )
 
 set(MINDSPORE_CORE
@@ -305,7 +311,6 @@ set(LITE_KERNEL_SRC
 if("${X86_64_SIMD}" STREQUAL "sse")
     set(SSE_SRC
             ${LITE_DIR}/nnacl/intrinsics/sse/sse_common.c
-            ${LITE_DIR}/nnacl/intrinsics/sse/PackNHWCToNCHWFp32.c
             ${LITE_DIR}/nnacl/intrinsics/sse/MatMul_Sse.c
             )
     set_property(SOURCE ${SSE_SRC} PROPERTY LANGUAGE C)
@@ -319,7 +324,6 @@ if("${X86_64_SIMD}" STREQUAL "avx")
             ${LITE_DIR}/nnacl/intrinsics/avx/common_utils.c
             ${LITE_DIR}/nnacl/intrinsics/sse/sse_common.c
             ${LITE_DIR}/nnacl/intrinsics/sse/MatMul_Sse.c
-            ${LITE_DIR}/nnacl/intrinsics/sse/PackNHWCToNCHWFp32.c
             ${LITE_DIR}/nnacl/assembly/avx/MatmulAvx.S
             )
     set_property(SOURCE ${AVX_SRC} PROPERTY LANGUAGE C)

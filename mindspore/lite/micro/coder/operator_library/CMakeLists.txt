@@ -26,16 +26,18 @@ set(HEADER_PATH "${OPERATOR_LIBRARY_PATH}/include")
 message("===========>start to pack operators' head file")
 file(REMOVE_RECURSE ${OPERATOR_LIBRARY_PATH})
 file(MAKE_DIRECTORY ${OPERATOR_LIBRARY_PATH})
-file(INSTALL ${LITE_DIR}/nnacl DESTINATION ${HEADER_PATH} FILES_MATCHING PATTERN "*.h")
-file(INSTALL ${MICRO_DIR}/coder/operator_library/wrapper DESTINATION ${HEADER_PATH} FILES_MATCHING PATTERN "*.h")
-file(INSTALL ${CMAKE_BINARY_DIR}/cmsis/CMSIS/Core/Include DESTINATION ${HEADER_PATH}/CMSIS/Core)
-file(INSTALL ${CMAKE_BINARY_DIR}/cmsis/CMSIS/DSP/Include DESTINATION ${HEADER_PATH}/CMSIS/DSP)
-file(INSTALL ${CMAKE_BINARY_DIR}/cmsis/CMSIS/NN/Include DESTINATION ${HEADER_PATH}/CMSIS/NN)
-file(REMOVE_RECURSE ${HEADER_PATH}/nnacl/assembly)
-file(REMOVE_RECURSE ${HEADER_PATH}/nnacl/fp16)
-file(REMOVE_RECURSE ${HEADER_PATH}/nnacl/fp16_grad)
-file(REMOVE_RECURSE ${HEADER_PATH}/nnacl/fp32_grad)
-file(REMOVE_RECURSE ${HEADER_PATH}/nnacl/optimize)
+file(GLOB NNACL_FILES GLOB ${LITE_DIR}/nnacl/*.h)
+file(COPY ${NNACL_FILES} DESTINATION ${HEADER_PATH}/nnacl/)
+file(COPY ${LITE_DIR}/nnacl/base
+        ${LITE_DIR}/nnacl/int8
+        ${LITE_DIR}/nnacl/fp32
+        ${LITE_DIR}/nnacl/intrinsics
+        DESTINATION ${HEADER_PATH}/nnacl FILES_MATCHING PATTERN "*.h")
+file(COPY ${MICRO_DIR}/coder/operator_library/wrapper DESTINATION ${HEADER_PATH} FILES_MATCHING PATTERN "*.h")
+file(COPY ${CMAKE_BINARY_DIR}/cmsis/CMSIS/Core/Include
+        ${CMAKE_BINARY_DIR}/cmsis/CMSIS/DSP/Include
+        ${CMAKE_BINARY_DIR}/cmsis/CMSIS/NN/Include
+        DESTINATION ${HEADER_PATH}/CMSIS/Core)
 
 if(PLATFORM_ARM64)
     set(MICRO_BUILD_ARM64 ON)
