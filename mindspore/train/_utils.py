@@ -24,8 +24,8 @@ from mindspore.common import dtype as mstype
 from mindspore import log as logger
 from mindspore.common.api import _executor
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
-from mindspore.train.anf_ir_pb2 import ModelProto as anf_model
 from mindspore.train.checkpoint_pb2 import Checkpoint
+from mindspore.train.node_strategy_pb2 import ParallelStrategyMap as ckpt_strategy
 
 from .lineage_pb2 import DatasetGraph, TrainLineage, EvaluationLineage, UserDefinedInfo
 
@@ -215,7 +215,7 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
 
     Args:
         file_name (str): File name.
-        proto_format (str): Proto format {MINDIR, ANF, CKPT}.  Default: MINDIR.
+        proto_format (str): Proto format {MINDIR, CKPT, CKPT_STRATEGY}.  Default: MINDIR.
         display_data (bool): Whether display data. Default: False.
 
     Returns:
@@ -224,10 +224,10 @@ def read_proto(file_name, proto_format="MINDIR", display_data=False):
 
     if proto_format == "MINDIR":
         model = mindir_model()
-    elif proto_format == "ANF":
-        model = anf_model()
     elif proto_format == "CKPT":
         model = Checkpoint()
+    elif proto_format == "CKPT_STRATEGY":
+        model = ckpt_strategy()
     else:
         raise ValueError("Unsupported proto format.")
 
