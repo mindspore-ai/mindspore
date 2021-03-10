@@ -57,7 +57,7 @@ struct OpExecInfo {
 
   py::list op_inputs;
   py::dict op_attrs;
-  std::vector<bool> inputs_mask;
+  std::vector<int64_t> inputs_mask;
   bool is_dynamic_shape = false;
   std::string next_op_name = "";
   bool is_mixed_precision_cast = false;

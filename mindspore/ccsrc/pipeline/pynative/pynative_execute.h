@@ -208,9 +208,9 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
                                     PynativeStatusCode *const status);
   AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
   AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
-  void GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks, std::vector<AnfNodePtr> *inputs,
+  void GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks, std::vector<AnfNodePtr> *inputs,
                    abstract::AbstractBasePtrList *args_spec_list);
-  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<bool> *op_masks,
+  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
                        abstract::AbstractBasePtrList *args_spec_list);
   abstract::AbstractBasePtr CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
                                             const abstract::AbstractBasePtr &abs, const std::string &id, size_t index);
