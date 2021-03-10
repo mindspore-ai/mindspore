@@ -164,16 +164,43 @@ def rescale_column(img, img_shape, gt_bboxes, gt_label, gt_num):
     """rescale operation for image"""
     img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
     if img_data.shape[0] > config.img_height:
-        img_data, scale_factor2 = mmcv.imrescale(img_data, (config.img_height, config.img_width), return_scale=True)
-        scale_factor = scale_factor * scale_factor2
-    img_shape = np.append(img_shape, scale_factor)
-    img_shape = np.asarray(img_shape, dtype=np.float32)
+        img_data, scale_factor2 = mmcv.imrescale(img_data, (config.img_height, config.img_height), return_scale=True)
+        scale_factor = scale_factor*scale_factor2
+
     gt_bboxes = gt_bboxes * scale_factor
+    gt_bboxes[:, 0::2] = np.clip(gt_bboxes[:, 0::2], 0, img_data.shape[1] - 1)
+    gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_data.shape[0] - 1)
 
-    gt_bboxes[:, 0::2] = np.clip(gt_bboxes[:, 0::2], 0, img_shape[1] - 1)
-    gt_bboxes[:, 1::2] = np.clip(gt_bboxes[:, 1::2], 0, img_shape[0] - 1)
+    pad_h = config.img_height - img_data.shape[0]
+    pad_w = config.img_width - img_data.shape[1]
+    assert ((pad_h >= 0) and (pad_w >= 0))
 
-    return (img_data, img_shape, gt_bboxes, gt_label, gt_num)
+    pad_img_data = np.zeros((config.img_height, config.img_width, 3)).astype(img_data.dtype)
+    pad_img_data[0:img_data.shape[0], 0:img_data.shape[1], :] = img_data
+
+    img_shape = (config.img_height, config.img_width, 1.0)
+    img_shape = np.asarray(img_shape, dtype=np.float32)
+
+    return  (pad_img_data, img_shape, gt_bboxes, gt_label, gt_num)
+
+def rescale_column_test(img, img_shape, gt_bboxes, gt_label, gt_num):
+    """rescale operation for image of eval"""
+    img_data, scale_factor = mmcv.imrescale(img, (config.img_width, config.img_height), return_scale=True)
+    if img_data.shape[0] > config.img_height:
+        img_data, scale_factor2 = mmcv.imrescale(img_data, (config.img_height, config.img_height), return_scale=True)
+        scale_factor = scale_factor*scale_factor2
+
+    pad_h = config.img_height - img_data.shape[0]
+    pad_w = config.img_width - img_data.shape[1]
+    assert ((pad_h >= 0) and (pad_w >= 0))
+
+    pad_img_data = np.zeros((config.img_height, config.img_width, 3)).astype(img_data.dtype)
+    pad_img_data[0:img_data.shape[0], 0:img_data.shape[1], :] = img_data
+
+    img_shape = np.append(img_shape, (scale_factor, scale_factor))
+    img_shape = np.asarray(img_shape, dtype=np.float32)
+
+    return  (pad_img_data, img_shape, gt_bboxes, gt_label, gt_num)
 
 
 def resize_column(img, img_shape, gt_bboxes, gt_label, gt_num):
@@ -274,7 +301,7 @@ def preprocess_fn(image, box, is_training):
         input_data = image_bgr, image_shape, gt_box_new, gt_label_new, gt_iscrowd_new_revert
 
         if config.keep_ratio:
-            input_data = rescale_column(*input_data)
+            input_data = rescale_column_test(*input_data)
         else:
             input_data = resize_column_test(*input_data)
         input_data = imnormalize_column(*input_data)
