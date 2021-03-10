@@ -20,7 +20,6 @@
 #include "coder/log.h"
 
 namespace mindspore::lite::micro::nnacl {
-
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParameter &conv_parameter) {
   const ConvQuantArg &quant_arg = conv_parameter.conv_quant_arg_;
   std::string quant_arg_in = name + "_quant_arg_in";
@@ -195,10 +194,11 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ReshapeQuant
                  reshape_quant_arg.output_activation_min_, reshape_quant_arg.output_activation_max_);
 }
 
-void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatmulQuantArg &matmul_quant_arg) {
-  CodeBaseStruct("MatmulQuantArg", name, matmul_quant_arg.input, matmul_quant_arg.weight, matmul_quant_arg.output,
-                 matmul_quant_arg.out_act_min, matmul_quant_arg.out_act_max, matmul_quant_arg.left_shift,
-                 matmul_quant_arg.right_shift, matmul_quant_arg.quant_multiplier);
+void NNaclInt8Serializer::CodeStruct(const std::string &name, const MatmulQuantParameter &matmul_quant_arg) {
+  CodeBaseStruct("MatmulQuantParameter", name, matmul_quant_arg.input_, matmul_quant_arg.weight_,
+                 matmul_quant_arg.output_, matmul_quant_arg.out_act_min_, matmul_quant_arg.out_act_max_,
+                 matmul_quant_arg.left_shift_[0], matmul_quant_arg.right_shift_[0],
+                 matmul_quant_arg.quant_multiplier_[0]);
 }
 
 void NNaclInt8Serializer::CodeStruct(const std::string &name, const SubQuantArg &sub_quant_arg) {
