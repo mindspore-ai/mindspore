@@ -27,6 +27,7 @@
 
 namespace mindspore {
 struct AclTensorInfo {
+  void *cur_device_data;
   void *device_data;
   size_t buffer_size;
   aclDataType data_type;
