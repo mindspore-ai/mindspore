@@ -1157,6 +1157,8 @@ class Cell(Cell_):
         Args:
             mode (bool): Specifies whether the cell is recomputed. Default: True.
         """
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            raise TypeError("Recompute is not supported in pynative mode currently.")
         Validator.check_bool(mode)
         self._set_recompute_scope(mode)
         for cell in self.cells():
