@@ -114,7 +114,8 @@ if(ENABLE_GPU)
                           ${CUDNN_LIBRARY_PATH}
                           ${CUDA_PATH}/lib64/libcudart.so
                           ${CUDA_PATH}/lib64/stubs/libcuda.so
-                          ${CUDA_PATH}/lib64/libcusolver.so)
+                          ${CUDA_PATH}/lib64/libcusolver.so
+                          ${CUDA_PATH}/lib64/libcufft.so)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")

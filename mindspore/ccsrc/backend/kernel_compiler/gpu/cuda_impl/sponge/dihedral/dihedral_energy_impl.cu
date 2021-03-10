@@ -29,8 +29,6 @@ __global__ void DihedralEnergyKernel(int dihedral_numbers, const UNSIGNED_INT_VE
     int atom_k = atom_c[dihedral_i];
     int atom_l = atom_d[dihedral_i];
 
-    int temp_ipn = ipn[dihedral_i];
-
     float temp_pk = pk[dihedral_i];
     float temp_pn = pn[dihedral_i];
     float temp_gamc = gamc[dihedral_i];
