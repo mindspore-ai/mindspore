@@ -29,15 +29,18 @@ class DenseNoTranpose(nn.Cell):
     def __init__(self, input_channels, output_channels, weight_init):
         super(DenseNoTranpose, self).__init__()
 
-        self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float16),
+        self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float32),
                                 name="weight")
-        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16).to_tensor(), name="bias")
+        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float32).to_tensor(), name="bias")
 
         self.matmul = P.MatMul(transpose_b=False)
         self.bias_add = P.BiasAdd()
+        self.cast = P.Cast()
 
     def construct(self, x):
-        output = self.bias_add(self.matmul(x, self.weight), self.bias)
+        x = self.cast(x, mstype.float16)
+        weight = self.cast(self.weight, mstype.float16)
+        output = self.bias_add(self.cast(self.matmul(x, weight), mstype.float32), self.bias)
         return output
 
 
@@ -71,8 +74,8 @@ class Rcnn(nn.Cell):
                  ):
         super(Rcnn, self).__init__()
         cfg = config
-        self.rcnn_loss_cls_weight = Tensor(np.array(cfg.rcnn_loss_cls_weight).astype(np.float16))
-        self.rcnn_loss_reg_weight = Tensor(np.array(cfg.rcnn_loss_reg_weight).astype(np.float16))
+        self.rcnn_loss_cls_weight = Tensor(np.array(cfg.rcnn_loss_cls_weight).astype(np.float32))
+        self.rcnn_loss_reg_weight = Tensor(np.array(cfg.rcnn_loss_reg_weight).astype(np.float32))
         self.rcnn_fc_out_channels = cfg.rcnn_fc_out_channels
         self.target_means = target_means
         self.target_stds = target_stds
@@ -83,16 +86,16 @@ class Rcnn(nn.Cell):
         self.use_ambigous_sample = cfg.use_ambigous_sample
 
         shape_0 = (self.rcnn_fc_out_channels, representation_size)
-        weights_0 = initializer("XavierUniform", shape=shape_0[::-1], dtype=mstype.float16).to_tensor()
+        weights_0 = initializer("XavierUniform", shape=shape_0[::-1], dtype=mstype.float32).to_tensor()
         shape_1 = (self.rcnn_fc_out_channels, self.rcnn_fc_out_channels)
-        weights_1 = initializer("XavierUniform", shape=shape_1[::-1], dtype=mstype.float16).to_tensor()
+        weights_1 = initializer("XavierUniform", shape=shape_1[::-1], dtype=mstype.float32).to_tensor()
         self.shared_fc_0 = DenseNoTranpose(representation_size, self.rcnn_fc_out_channels, weights_0)
         self.shared_fc_1 = DenseNoTranpose(self.rcnn_fc_out_channels, self.rcnn_fc_out_channels, weights_1)
 
         cls_weight = initializer('Normal', shape=[num_classes, self.rcnn_fc_out_channels][::-1],
-                                 dtype=mstype.float16).to_tensor()
+                                 dtype=mstype.float32).to_tensor()
         reg_weight = initializer('Normal', shape=[num_classes * 4, self.rcnn_fc_out_channels][::-1],
-                                 dtype=mstype.float16).to_tensor()
+                                 dtype=mstype.float32).to_tensor()
         self.cls_scores = DenseNoTranpose(self.rcnn_fc_out_channels, num_classes, cls_weight)
         self.reg_scores = DenseNoTranpose(self.rcnn_fc_out_channels, num_classes * 4, reg_weight)
 
@@ -115,7 +118,7 @@ class Rcnn(nn.Cell):
 
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
-        self.value = Tensor(1.0, mstype.float16)
+        self.value = Tensor(1.0, mstype.float32)
 
         self.num_bboxes = (cfg.num_expected_pos_stage2 + cfg.num_expected_neg_stage2) * batch_size
         if self.use_ambigous_sample:
@@ -124,7 +127,7 @@ class Rcnn(nn.Cell):
 
         rmv_first = np.ones((self.num_bboxes, self.num_classes))
         rmv_first[:, 0] = np.zeros((self.num_bboxes,))
-        self.rmv_first_tensor = Tensor(rmv_first.astype(np.float16))
+        self.rmv_first_tensor = Tensor(rmv_first.astype(np.float32))
 
         self.num_bboxes_test = cfg.rpn_max_num * cfg.test_batch_size
 
@@ -145,7 +148,7 @@ class Rcnn(nn.Cell):
             bbox_weights = self.cast(self.logicaland(self.greater(labels, 0), mask), mstype.int32) * labels
             if self.use_ambigous_sample:
                 bbox_weights = self.cast(self.logicaland(self.equal(labels, 1), mask), mstype.int32) * labels
-            labels = self.cast(self.onehot(labels, self.num_classes, self.on_value, self.off_value), mstype.float16)
+            labels = self.cast(self.onehot(labels, self.num_classes, self.on_value, self.off_value), mstype.float32)
             bbox_targets = self.tile(self.expandims(bbox_targets, 1), (1, self.num_classes, 1))
 
             loss, loss_cls, loss_reg, loss_print = self.loss(x_cls, x_reg, bbox_targets, bbox_weights, labels, mask)
@@ -160,12 +163,12 @@ class Rcnn(nn.Cell):
         loss_print = ()
         loss_cls, _ = self.loss_cls(cls_score, labels)
 
-        weights = self.cast(weights, mstype.float16)
+        weights = self.cast(weights, mstype.float32)
         loss_cls = loss_cls * weights
         loss_cls = self.sum_loss(loss_cls, (0,)) / self.sum_loss(weights, (0,))
 
         bbox_weights = self.cast(self.onehot(bbox_weights, self.num_classes, self.on_value, self.off_value),
-                                 mstype.float16)
+                                 mstype.float32)
         if not self.use_ambigous_sample:
             bbox_weights = bbox_weights * self.rmv_first_tensor
         pos_bbox_pred = self.reshape(bbox_pred, (self.num_bboxes, -1, 4))
