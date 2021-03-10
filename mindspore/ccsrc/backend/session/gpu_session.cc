@@ -403,6 +403,8 @@ GraphId GPUSession::CompileGraphImpl(KernelGraphPtr graph) {
     AllocateMemory(graph.get());
   }
 
+  DumpGraph(graph);
+
 #ifdef ENABLE_DEBUGGER
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     debugger_->LoadGraphs(graph);

@@ -40,6 +40,7 @@
 #include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/base.h"
+#include "debug/common.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -189,6 +190,14 @@ std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGrap
   return oss.str();
 }
 
+inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
+  return meta_func_graph->isa<prim::Tail>() || meta_func_graph->isa<prim::MakeTupleGradient>() ||
+         meta_func_graph->isa<prim::MakeListGradient>() || meta_func_graph->isa<prim::TupleAdd>() ||
+         meta_func_graph->isa<prim::TupleSlice>() || meta_func_graph->isa<prim::UnpackCall>() ||
+         meta_func_graph->isa<prim::ZipOperation>() || meta_func_graph->isa<prim::ListAppend>() ||
+         meta_func_graph->isa<prim::DoSignatureMetaFuncGraph>();
+}
+
 /* inherit relation of MetaFuncGraph
  *
  * MetaGraph
@@ -239,23 +248,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
     prim::GradOperationPtr grad_op = meta_func_graph->cast<prim::GradOperationPtr>();
     oss << "{get_all=" << grad_op->get_all_ << ", get_by_list=" << grad_op->get_by_list_
         << ", sens_param=" << grad_op->sens_param_ << "}";
-  } else if (meta_func_graph->isa<prim::Tail>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::MakeTupleGradient>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::MakeListGradient>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::TupleAdd>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::TupleSlice>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::UnpackCall>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::ZipOperation>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::ListAppend>()) {
-    // do nothing
-  } else if (meta_func_graph->isa<prim::DoSignatureMetaFuncGraph>()) {
+  } else if (Skip(meta_func_graph)) {
     // do nothing
   } else {
     MS_LOG(EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
@@ -711,7 +704,7 @@ void ExportIR(const std::string &filename, const std::string &id, const FuncGrap
     return;
   }
 
-  auto real_filename = pipeline::GetSaveGraphsPathName(filename);
+  auto real_filename = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
   AnfExporter exporter(id);
   ChangeFileMode(real_filename, S_IRWXU);
   exporter.ExportFuncGraph(real_filename, func_graph);
@@ -720,7 +713,7 @@ void ExportIR(const std::string &filename, const std::string &id, const FuncGrap
 }
 
 void ExportIR(const std::string &filename, const std::vector<TaggedGraph> &graphs) {
-  auto real_filename = pipeline::GetSaveGraphsPathName(filename);
+  auto real_filename = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".dat"));
   AnfExporter exporter("", false);
   ChangeFileMode(real_filename, S_IRWXU);
   exporter.ExportFuncGraph(real_filename, graphs);

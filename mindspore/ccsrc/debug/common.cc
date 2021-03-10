@@ -17,6 +17,7 @@
 #include "debug/common.h"
 
 #include <memory>
+#include <iomanip>
 #include <optional>
 #include "utils/ms_context.h"
 #include "utils/system/env.h"
@@ -270,5 +271,23 @@ bool Common::IsFilenameValid(const std::string &filename, const int &length_limi
     return false;
   }
   return true;
+}
+
+std::string Common::AddId(const std::string &filename, const std::string &suffix) {
+  static size_t g_id = 0;
+  std::ostringstream s;
+  auto i = filename.rfind(suffix);
+  if (i >= filename.size()) {
+    s << filename;
+    s << "_" << std::setfill('0') << std::setw(4) << g_id;
+  } else {
+    s << filename.substr(0, i);
+    s << "_" << std::setfill('0') << std::setw(4) << g_id;
+    if (i + 1 < filename.size()) {
+      s << filename.substr(i);
+    }
+  }
+  g_id++;
+  return s.str();
 }
 }  // namespace mindspore
