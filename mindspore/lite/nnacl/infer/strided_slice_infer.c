@@ -131,6 +131,7 @@ int HandleAxesInputExist(const TensorC *const *inputs, int *ndim_, int *in_shape
 // note: begin, end, stride length are equal, but may less than rank of input
 int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                            OpParameter *parameter) {
+#ifdef Debug
   if (outputs_size != kStridedSliceOutputNum) {
     return NNACL_PARAM_INVALID;
   }
@@ -141,6 +142,8 @@ int StridedSliceInferShape(const TensorC *const *inputs, size_t inputs_size, Ten
   if (parameter == NULL || outputs[0] == NULL || inputs[0] == NULL) {
     return NNACL_NULL_PTR;
   }
+#endif
+
   const TensorC *input = inputs[0];
   SetDataTypeFormat(outputs[0], inputs[0]);
 

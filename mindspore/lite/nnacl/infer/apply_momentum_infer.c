@@ -18,13 +18,12 @@
 
 int ApplyMomentumInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+#ifdef Debug
+  int check_ret = CheckAugmentNullInputSize(inputs, inputs_size, outputs, outputs_size, parameter, 5);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  if (inputs_size != 5) {
-    return NNACL_INPUT_TENSOR_ERROR;
-  }
+#endif
 
   if (GetElementNum(inputs[0]) != GetElementNum(inputs[1]) || GetElementNum(inputs[0]) != GetElementNum(inputs[3]) ||
       GetElementNum(inputs[2]) != 1 || GetElementNum(inputs[4]) != 1) {

@@ -50,10 +50,13 @@ void ConvInferShape(int input_h, int input_w, int *output_h, int *output_w, Conv
 
 int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 2, 3, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
+#endif
+
   const TensorC *input_tensor = inputs[0];
   const TensorC *weight_tensor = inputs[1];
   TensorC *out_tensor = outputs[0];

@@ -18,11 +18,16 @@
 
 int ArgMinMaxInferShape(const TensorC *const *inputs, const size_t inputs_size, TensorC **outputs,
                         const size_t outputs_size, OpParameter *parameter) {
-  int check_ret_1 = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
-  int check_ret_2 = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 2);
-  if (check_ret_1 != NNACL_OK && check_ret_2 != NNACL_OK) {
+#ifdef Debug
+  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+  if (check_ret != NNACL_OK) {
+    return check_ret;
+  }
+  if (inputs_size != 1 || outputs_size > 2) {
     return NNACL_ERR;
   }
+#endif
+
   ArgMinMaxParameter *param = (ArgMinMaxParameter *)parameter;
   const TensorC *input = inputs[0];
   TensorC *output_1 = NULL;

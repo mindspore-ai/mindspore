@@ -45,8 +45,8 @@ typedef enum FormatC {
   Format_HW4 = 10,
   Format_NC = 11,
   Format_NC4 = 12,
-  Format_NC4HW4 = 100,
-  Format_NUM_OF_FORMAT = 101,
+  Format_NC4HW4 = 13,
+  Format_NUM_OF_FORMAT = 14,
   Format_MIN = Format_NCHW,
   Format_MAX = Format_NUM_OF_FORMAT
 } FormatC;

@@ -18,6 +18,7 @@
 
 int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
@@ -25,6 +26,8 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
   if (inputs_size < 2 || outputs_size != 1) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
+#endif
+
   const TensorC *params_ = inputs[0];
   const TensorC *ids = inputs[inputs_size - 1];
   TensorC *output = outputs[0];

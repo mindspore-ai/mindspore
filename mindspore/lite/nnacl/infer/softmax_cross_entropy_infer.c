@@ -18,6 +18,7 @@
 
 int SoftmaxCrossEntropyInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                   size_t outputs_size, OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
@@ -25,6 +26,8 @@ int SoftmaxCrossEntropyInferShape(const TensorC *const *inputs, size_t inputs_si
   if (1 > outputs_size) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
+#endif
+
   const TensorC *in0 = inputs[0];
   TensorC *out = outputs[0];
 
