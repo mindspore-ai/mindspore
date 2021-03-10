@@ -34,6 +34,7 @@ const char KERNEL_SIZE[] = "kernel_size";
 const char STRIDE[] = "stride";
 const char STRIDES[] = "strides";
 const char DILATION[] = "dilation";
+const char FORMAT[] = "format";
 const char PAD[] = "pad";
 const char PAD_LIST[] = "pad_list";
 const char PAD_MODE[] = "pad_mode";
