@@ -492,6 +492,5 @@ PYBIND_REGISTER(
         return uniform_aug;
       }));
   }));
-
 }  // namespace dataset
 }  // namespace mindspore

@@ -52,9 +52,10 @@ def test_to_number_eager():
 
     # test input invalid tensor
     invalid_input = [["1", "2", "3"], ["4", "5"]]
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(TypeError) as info:
         _ = op(invalid_input)
-    assert "Invalid data type." in str(info.value)
+    assert "Invalid user input. Got <class 'list'>: [['1', '2', '3'], ['4', '5']], cannot be converted into tensor" in \
+           str(info.value)
 
 
 def test_to_number_typical_case_integral():

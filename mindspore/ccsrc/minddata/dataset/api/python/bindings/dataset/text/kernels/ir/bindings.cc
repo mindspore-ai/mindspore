@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 #ifdef ENABLE_ICU4C
 
 PYBIND_REGISTER(
@@ -262,6 +261,5 @@ PYBIND_REGISTER(SPieceTokenizerOutType, 0, ([](const py::module *m) {
                     .value("DE_SPIECE_TOKENIZER_OUTTYPE_KINT", SPieceTokenizerOutType::kInt)
                     .export_values();
                 }));
-
 }  // namespace dataset
 }  // namespace mindspore

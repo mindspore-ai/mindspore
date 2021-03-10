@@ -31,7 +31,13 @@ class TensorOperation:
     Base class Tensor Ops
     """
     def __call__(self, *input_tensor_list):
-        tensor_row = [cde.Tensor(np.asarray(tensor)) for tensor in input_tensor_list]
+        tensor_row = []
+        for tensor in input_tensor_list:
+            try:
+                tensor_row.append(cde.Tensor(np.asarray(tensor)))
+            except RuntimeError:
+                raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
+                      .format(type(tensor), tensor))
         callable_op = cde.Execute(self.parse())
         output_tensor_list = callable_op(tensor_row)
         for i, element in enumerate(output_tensor_list):

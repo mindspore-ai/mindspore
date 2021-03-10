@@ -1197,12 +1197,13 @@ class RandomSharpness(ImageTensorOperation):
 
 class RandomSolarize(ImageTensorOperation):
     """
-    Invert all pixel values with given range.
+    Randomly invert the pixel values of input image within given range.
 
     Args:
-        threshold (tuple, optional): Range of random solarize threshold. Threshold values should always be
-            in the range (0, 255), include at least one integer value in the given range and be in
-            (min, max) format. If min=max, then invert all pixel values above min(max) (default=(0, 255)).
+        threshold (tuple, optional): Range of random solarize threshold (default=(0, 255)).
+            Threshold values should always be in (min, max) format,
+            where min <= max, min and max are integers in the range (0, 255).
+            If min=max, then invert all pixel values above min(max).
 
     Examples:
         >>> transforms_list = [c_vision.Decode(), c_vision.RandomSolarize(threshold=(10,100))]
