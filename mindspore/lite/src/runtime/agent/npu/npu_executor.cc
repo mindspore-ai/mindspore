@@ -108,11 +108,11 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
         }
         break;
       }
-      if (index == in_tensors.size()) {
-        MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of " << i << " input tensor for npu executor "
-                      << model_name_;
-        return RET_ERROR;
-      }
+    }
+    if (index == in_tensors.size()) {
+      MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of " << i << " input tensor for npu executor "
+                    << model_name_;
+      return RET_ERROR;
     }
   }
   context.AddPara("model_name", model_name_);

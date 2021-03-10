@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 #include "src/runtime/agent/npu/optimizer/npu_transform_pass.h"
+#include <set>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kNPU;
+
+static std::set<mindspore::schema::PrimitiveType> npu_trans_nodes = {
+  schema::PrimitiveType_Conv2DFusion,  schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Resize,
+  schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion,         schema::PrimitiveType_ScaleFusion};
+
 int NPUTransformPass::InsertPreNodes(kernel::LiteKernel *kernel, std::vector<kernel::LiteKernel *> *trans_kernels) {
   bool is_input_kernel = kernel->in_kernels().empty();
   // single input
@@ -80,57 +86,93 @@ int NPUTransformPass::InsertPostNodes(kernel::LiteKernel *kernel, std::vector<ke
   // Get the post kernel that need insert trans kernel.
   // If no need for inserting trans kernel, the post kernel must be npu and in trans_nodes.
   std::vector<kernel::LiteKernel *> post_insert_kernels;
+  std::vector<kernel::LiteKernel *> post_non_insert_kernels;
   for (int i = 0; i < kernel->out_kernels().size(); i++) {
     auto post_kernel = kernel->out_kernels()[i];
     if (post_kernel->desc().arch != kNPU || npu_trans_nodes.find(post_kernel->Type()) == npu_trans_nodes.end()) {
       post_insert_kernels.push_back(post_kernel);
+    } else {
+      post_non_insert_kernels.push_back(post_kernel);
     }
   }
   if (is_output_kernel || !post_insert_kernels.empty()) {
     // Create post transform kernel's in tensor.
     auto nhwc_shape = kernel->out_tensors()[0]->shape();
     std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
-    auto tensor =
+    auto nc2nh_tensor =
       new (std::nothrow) Tensor(kernel->out_tensors()[0]->data_type(), nchw_shape, schema::Format_NCHW, Tensor::VAR);
-    if (tensor == nullptr) {
+    if (nc2nh_tensor == nullptr) {
       MS_LOG(ERROR) << "New nchw tensor failed when inserting post nchw2nhwc kernel.";
       return RET_ERROR;
     }
-    std::vector<Tensor *> post_trans_in_tensors = {tensor};
-    all_tensors_->push_back(tensor);
+    all_tensors_->push_back(nc2nh_tensor);
     auto name = kernel->name() + "_post_trans" + "_Nchw2Nhwc" + std::to_string(total++);
-    tensor->set_tensor_name(name + "/input0");
+    nc2nh_tensor->set_tensor_name(name + "/input0");
 
-    auto nc2nh_perm_tensor = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, Tensor::CONST_TENSOR);
-    auto nc2nh_data = nc2nh_perm_tensor->MutableData();
-    if (nc2nh_data == nullptr) {
-      return RET_ERROR;
-    }
-
-    std::vector<int> nc2nh_perm_vector = {0, 2, 3, 1};
-    memcpy(nc2nh_data, nc2nh_perm_vector.data(), 4 * sizeof(int));
-    all_tensors_->push_back(nc2nh_perm_tensor);
-
-    // Create post transform kernel: Nchw2Nhwc
-    auto *post_trans_kernel = NPUPassUtils::CreateNchw2NhwcKernel({post_trans_in_tensors[0], nc2nh_perm_tensor},
-                                                                  kernel->out_tensors(), context_, name);
-
-    // Set in_kernels, out_kernels, in_tensors, out_tensors for transform kernel
-    NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, post_insert_kernels, post_trans_kernel->in_tensors(),
-                               kernel->out_tensors());
-    trans_kernels->push_back(post_trans_kernel);
-
-    if (!is_output_kernel) {
-      for (int i = 0; i < kernel->out_kernels().size(); i++) {
-        auto post_kernel = kernel->out_kernels()[i];
-        if (find(post_insert_kernels.begin(), post_insert_kernels.end(), post_kernel) != post_insert_kernels.end()) {
-          NPUPassUtils::UpdateNC2NHTransNodePostKernel(kernel, post_trans_kernel, post_kernel);
-        } else {
-          NPUPassUtils::UpdateNC2NHPostKernelInTensors(kernel, post_trans_kernel, post_kernel);
-        }
+    if (is_output_kernel) {
+      // perm tensor
+      auto nc2nh_perm_tensor = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, Tensor::CONST_TENSOR);
+      auto nc2nh_data = nc2nh_perm_tensor->MutableData();
+      if (nc2nh_data == nullptr) {
+        return RET_ERROR;
       }
+      std::vector<int> nc2nh_perm_vector = {0, 2, 3, 1};
+      memcpy(nc2nh_data, nc2nh_perm_vector.data(), 4 * sizeof(int));
+      all_tensors_->push_back(nc2nh_perm_tensor);
+      std::vector<lite::Tensor *> nc2nh_out_tensors{kernel->out_tensors().at(0)};
+      // Create post transform kernel: Nchw2Nhwc
+      auto *post_trans_kernel =
+        NPUPassUtils::CreateNchw2NhwcKernel({nc2nh_tensor, nc2nh_perm_tensor}, nc2nh_out_tensors, context_, name);
+      // Set in_kernels, out_kernels, in_tensors, out_tensors for transform kernel
+      NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, {}, post_trans_kernel->in_tensors(),
+                                 post_trans_kernel->out_tensors());
+      trans_kernels->push_back(post_trans_kernel);
     }
-    NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel, post_trans_kernel, post_insert_kernels);
+    // for each to-be-insert out kernel, create one transpose kernel, one perm tensor, one out tensor
+    // but using same one in_tensor.
+    for (auto i = 0; i < post_insert_kernels.size(); ++i) {
+      auto post_insert_kernel = post_insert_kernels.at(i);
+      // perm tensor
+      auto nc2nh_perm_tensor = new Tensor(kNumberTypeInt32, {4}, schema::Format_NHWC, Tensor::CONST_TENSOR);
+      auto nc2nh_data = nc2nh_perm_tensor->MutableData();
+      if (nc2nh_data == nullptr) {
+        return RET_ERROR;
+      }
+      std::vector<int> nc2nh_perm_vector = {0, 2, 3, 1};
+      memcpy(nc2nh_data, nc2nh_perm_vector.data(), 4 * sizeof(int));
+      all_tensors_->push_back(nc2nh_perm_tensor);
+      // nc2nh kernel out tensor: 1st kernel uses original out_tensor, remaining kernels use newly created out tensor.
+      std::vector<lite::Tensor *> nc2nh_out_tensors{nullptr};
+
+      auto origin_out_tensor = kernel->out_tensors().at(0);
+      auto out_tensor = lite::Tensor::CopyTensor(*origin_out_tensor, false);
+      if (out_tensor == nullptr) {
+        MS_LOG(ERROR) << "New nhwc tensor failed when inserting post nchw2nhwc kernel.";
+        return RET_ERROR;
+      }
+      all_tensors_->push_back(out_tensor);
+      auto out_tensor_name = kernel->name() + "_post_trans" + "_Nchw2Nhwc_" + std::to_string(i) + "_out_tensor";
+      out_tensor->set_tensor_name(out_tensor_name);
+      nc2nh_out_tensors[0] = out_tensor;
+
+      // Create post transform kernel: Nchw2Nhwc
+      auto *post_trans_kernel =
+        NPUPassUtils::CreateNchw2NhwcKernel({nc2nh_tensor, nc2nh_perm_tensor}, nc2nh_out_tensors, context_, name);
+      // Set in_kernels, out_kernels, in_tensors, out_tensors for transform kernel
+      NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, {post_insert_kernel}, post_trans_kernel->in_tensors(),
+                                 post_trans_kernel->out_tensors());
+      trans_kernels->push_back(post_trans_kernel);
+      // update post kernel in_tensors in_kernels
+      NPUPassUtils::UpdateNC2NHTransNodePostKernel(kernel, post_trans_kernel, post_insert_kernel);
+    }
+    // for those non-insert post kernels, update their in_tensor
+    for (auto non_insert_kernel : post_non_insert_kernels) {
+      auto in_tensors = non_insert_kernel->in_tensors();
+      std::replace(in_tensors.begin(), in_tensors.end(), kernel->out_tensors().at(0), nc2nh_tensor);
+      non_insert_kernel->set_in_tensors(in_tensors);
+    }
+    // update origin kernel's out tensor and out kernel
+    NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel, *trans_kernels, post_insert_kernels);
   }
   return RET_OK;
 }
@@ -139,6 +181,10 @@ int NPUTransformPass::Run() {
   for (size_t i = 0; i < all_kernels_->size();) {
     auto kernel = (*all_kernels_)[i];
     if (kernel->desc().arch != kNPU || npu_trans_nodes.find(kernel->Type()) == npu_trans_nodes.end()) {
+      i++;
+      continue;
+    }
+    if (kernel->Type() == schema::PrimitiveType_ScaleFusion && !NPUPassUtils::Scale4dCase(kernel)) {
       i++;
       continue;
     }

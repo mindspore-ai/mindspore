@@ -33,6 +33,10 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
+static std::set<mindspore::schema::PrimitiveType> npu_specific_weight_nodes = {
+  schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_ScaleFusion,
+  schema::PrimitiveType_BatchNorm,    schema::PrimitiveType_FullConnection,        schema::PrimitiveType_InstanceNorm};
+
 SubGraphNpuKernel::~SubGraphNpuKernel() {
   subgraph_input_op_.clear();
   subgraph_output_op_.clear();
@@ -125,7 +129,7 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
 
       // weight tensor
       if (is_weight_tensor) {
-        if (lite::npu_trans_nodes.find(node->Type()) == lite::npu_trans_nodes.end()) {
+        if (npu_specific_weight_nodes.find(node->Type()) == npu_specific_weight_nodes.end()) {
           auto name = node->name() + "_" + std::to_string(count++);
           auto weight_const = new (std::nothrow) hiai::op::Const(node->name() + "_" + std::to_string(count++));
           if (weight_const == nullptr) {

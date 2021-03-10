@@ -117,7 +117,7 @@ int NPUInsertTransformPass::InsertNode(kernel::LiteKernel *kernel, kernel::LiteK
   std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
 
   auto nh2nc_name = kernel_name + "_nh2nc_" + std::to_string(total++);
-  auto nh2nc_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), nchw_shape, schema::Format_NHWC, Tensor::VAR);
+  auto nh2nc_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), nchw_shape, schema::Format_NCHW, Tensor::VAR);
   if (nh2nc_tensor == nullptr) {
     MS_LOG(ERROR) << "New nchw tensor failed when inserting nchw2nhwc kernel.";
     return RET_ERROR;
@@ -127,7 +127,7 @@ int NPUInsertTransformPass::InsertNode(kernel::LiteKernel *kernel, kernel::LiteK
   all_tensors_->push_back(nh2nc_tensors[0]);
 
   auto nc2nh_name = kernel_name + "_nc2nh_" + std::to_string(total++);
-  auto nc2nh_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), nhwc_shape, schema::Format_NCHW, Tensor::VAR);
+  auto nc2nh_tensor = new (std::nothrow) Tensor(in_tensor->data_type(), nhwc_shape, schema::Format_NHWC, Tensor::VAR);
   if (nc2nh_tensor == nullptr) {
     MS_LOG(ERROR) << "New nhwc tensor failed when inserting nhwc2nchw kernel.";
     return RET_ERROR;

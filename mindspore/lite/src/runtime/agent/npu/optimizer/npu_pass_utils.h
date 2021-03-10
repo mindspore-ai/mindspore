@@ -37,8 +37,9 @@ class NPUPassUtils {
   static void UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
                                             kernel::LiteKernel *kernel);
 
-  static void UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
-                                            std::vector<kernel::LiteKernel *> kernels);
+  static void UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel,
+                                            const std::vector<kernel::LiteKernel *> &trans_kernels,
+                                            const std::vector<kernel::LiteKernel *> &kernels);
 
   static void UpdateNH2NCTransNodePostKernel(kernel::LiteKernel *trans_kernel, kernel::LiteKernel *post_kernel);
 
@@ -52,6 +53,7 @@ class NPUPassUtils {
 
   static bool IsNchw2Nhwc(const kernel::LiteKernel *kernel);
   static kernel::LiteKernel *KernelInputFromKernel(const kernel::LiteKernel *kernel, size_t in_tensor_index);
+  static bool Scale4dCase(const kernel::LiteKernel *kernel);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_

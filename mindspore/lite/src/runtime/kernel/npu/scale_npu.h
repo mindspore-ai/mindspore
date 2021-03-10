@@ -19,6 +19,7 @@
 #include <vector>
 #include "nnacl/scale.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
+#include "include/graph/op/all_ops.h"
 #include "include/graph/op/nn_defs.h"
 namespace mindspore::kernel {
 class ScaleNPUKernel : public NPUKernel {
@@ -36,8 +37,14 @@ class ScaleNPUKernel : public NPUKernel {
                    const std::vector<ge::Operator *> &npu_inputs) override;
   ge::Operator *GetNPUOp() override;
 
+ protected:
+  int SetActivation(const ge::Operator *input, int act_type);
+
  private:
   hiai::op::Scale *op_ = nullptr;
+  hiai::op::Const *scale_ = nullptr;
+  hiai::op::Const *bias_ = nullptr;
+  hiai::op::Activation *act_ = nullptr;
   ScaleParameter *scale_parameter_;
 };
 }  // namespace mindspore::kernel
