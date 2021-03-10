@@ -60,8 +60,9 @@ KernelPackPtr AkgGpuKernelBuilder::OpBuild(const AkgKernelJsonGenerator &json_ge
     return cached_kernel_pack;
   }
 
-  (void)alarm(AUTODIFF_COMPILE_OVERTIME);
   auto kernel_json = json_generator.kernel_json_str();
+  kernel::SaveJsonInfo(kernel_name, kernel_json, kernel::KernelMeta::GetInstance()->kernel_meta_path());
+  (void)alarm(AUTODIFF_COMPILE_OVERTIME);
   auto res = GpuKernelBuildClient::Instance().AkgCompileSingle(kernel_json);
   (void)alarm(0);
   if (!res) {
@@ -70,7 +71,6 @@ KernelPackPtr AkgGpuKernelBuilder::OpBuild(const AkgKernelJsonGenerator &json_ge
   }
 
   auto new_kernel_pack = InsertCache(kernel_name, processor);
-  kernel::SaveJsonInfo(kernel_name, kernel_json, kernel::KernelMeta::GetInstance()->kernel_meta_path());
   if (new_kernel_pack == nullptr) {
     MS_LOG(ERROR) << "Insert to cache failed, kernel_name[" << kernel_name << "], fullname_with_scope["
                   << anf_node->fullname_with_scope() << "].";
