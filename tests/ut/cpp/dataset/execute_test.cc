@@ -173,7 +173,6 @@ TEST_F(MindDataTestExecute, TestTransformInput3) {
 TEST_F(MindDataTestExecute, TestTransformInputSequential) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestTransformInputSequential.";
   // Test Execute with transform op input using API constructors, with auto pointers;
-  // Note that with auto and new, we have to explicitly delete the allocated object as shown below.
   // Apply 2 transformations sequentially, including single non-vector Transform op input
 
   // Read image, construct MSTensor from dataset tensor

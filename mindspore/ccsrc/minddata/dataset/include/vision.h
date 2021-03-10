@@ -38,7 +38,7 @@ class TensorOperation;
 namespace vision {
 /// \brief AutoContrast TensorTransform.
 /// \notes Apply automatic contrast on input image.
-class AutoContrast : public TensorTransform {
+class AutoContrast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 100.
@@ -60,7 +60,7 @@ class AutoContrast : public TensorTransform {
 
 /// \brief BoundingBoxAugment TensorTransform.
 /// \notes  Apply a given image transform on a random selection of bounding box regions of a given image.
-class BoundingBoxAugment : public TensorTransform {
+class BoundingBoxAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transform Raw pointer to a TensorTransform operation.
@@ -93,7 +93,7 @@ class BoundingBoxAugment : public TensorTransform {
 /// \brief Constructor to apply CutMix on a batch of images
 /// \notes Masks a random section of each image with the corresponding part of another randomly
 ///     selected image in that batch
-class CutMixBatch : public TensorTransform {
+class CutMixBatch final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] image_batch_format The format of the batch
@@ -116,7 +116,7 @@ class CutMixBatch : public TensorTransform {
 
 /// \brief CutOut TensorOp
 /// \notes Randomly cut (mask) out a given number of square patches from the input image
-class CutOut : public TensorTransform {
+class CutOut final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] length Integer representing the side length of each square patch
@@ -138,7 +138,7 @@ class CutOut : public TensorTransform {
 
 /// \brief Equalize TensorTransform.
 /// \notes Apply histogram equalization on input image.
-class Equalize : public TensorTransform {
+class Equalize final : public TensorTransform {
  public:
   /// \brief Constructor.
   Equalize();
@@ -154,7 +154,7 @@ class Equalize : public TensorTransform {
 
 /// \brief HwcToChw TensorTransform.
 /// \notes Transpose the input image; shape (H, W, C) to shape (C, H, W).
-class HWC2CHW : public TensorTransform {
+class HWC2CHW final : public TensorTransform {
  public:
   /// \brief Constructor.
   HWC2CHW();
@@ -170,7 +170,7 @@ class HWC2CHW : public TensorTransform {
 
 /// \brief Invert TensorTransform.
 /// \notes Apply invert on input image in RGB mode.
-class Invert : public TensorTransform {
+class Invert final : public TensorTransform {
  public:
   /// \brief Constructor.
   Invert();
@@ -187,7 +187,7 @@ class Invert : public TensorTransform {
 /// \brief MixUpBatch TensorTransform.
 /// \notes Apply MixUp transformation on an input batch of images and labels. The labels must be in
 ///     one-hot format and Batch must be called before calling this function.
-class MixUpBatch : public TensorTransform {
+class MixUpBatch final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] alpha hyperparameter of beta distribution (default = 1.0)
@@ -209,7 +209,7 @@ class MixUpBatch : public TensorTransform {
 /// \brief NormalizePad TensorTransform.
 /// \notes Normalize the input image with respect to mean and standard deviation and pad an extra
 ///     channel with value zero.
-class NormalizePad : public TensorTransform {
+class NormalizePad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
@@ -239,7 +239,7 @@ class NormalizePad : public TensorTransform {
 
 /// \brief Pad TensorOp
 /// \notes Pads the image according to padding parameters
-class Pad : public TensorTransform {
+class Pad final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] padding A vector representing the number of pixels to pad the image
@@ -277,7 +277,7 @@ class Pad : public TensorTransform {
 /// \brief Blends an image with its grayscale version with random weights
 ///        t and 1 - t generated from a given range. If the range is trivial
 ///        then the weights are determinate and t equals the bound of the interval
-class RandomColor : public TensorTransform {
+class RandomColor final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] t_lb Lower bound on the range of random weights
@@ -299,7 +299,7 @@ class RandomColor : public TensorTransform {
 
 /// \brief RandomColorAdjust TensorTransform.
 /// \brief Randomly adjust the brightness, contrast, saturation, and hue of the input image
-class RandomColorAdjust : public TensorTransform {
+class RandomColorAdjust final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] brightness Brightness adjustment factor. Must be a vector of one or two values
@@ -329,7 +329,7 @@ class RandomColorAdjust : public TensorTransform {
 
 /// \brief RandomCrop TensorTransform.
 /// \notes Crop the input image at a random location.
-class RandomCrop : public TensorTransform {
+class RandomCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -365,7 +365,7 @@ class RandomCrop : public TensorTransform {
 
 /// \brief RandomCropDecodeResize TensorTransform.
 /// \notes Equivalent to RandomResizedCrop, but crops before decodes.
-class RandomCropDecodeResize : public TensorTransform {
+class RandomCropDecodeResize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -398,7 +398,7 @@ class RandomCropDecodeResize : public TensorTransform {
 
 /// \brief RandomCropWithBBox TensorTransform.
 /// \notes Crop the input image at a random location and adjust bounding boxes accordingly.
-class RandomCropWithBBox : public TensorTransform {
+class RandomCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -436,7 +436,7 @@ class RandomCropWithBBox : public TensorTransform {
 
 /// \brief RandomHorizontalFlip TensorTransform.
 /// \notes Tensor operation to perform random horizontal flip.
-class RandomHorizontalFlip : public TensorTransform {
+class RandomHorizontalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -457,7 +457,7 @@ class RandomHorizontalFlip : public TensorTransform {
 
 /// \brief RandomHorizontalFlipWithBBox TensorTransform.
 /// \notes Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
-class RandomHorizontalFlipWithBBox : public TensorTransform {
+class RandomHorizontalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -478,7 +478,7 @@ class RandomHorizontalFlipWithBBox : public TensorTransform {
 
 /// \brief RandomPosterize TensorTransform.
 /// \notes Tensor operation to perform random posterize.
-class RandomPosterize : public TensorTransform {
+class RandomPosterize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] bit_range - uint8_t vector representing the minimum and maximum bit in range. (Default={4, 8})
@@ -500,7 +500,7 @@ class RandomPosterize : public TensorTransform {
 /// \brief RandomResize TensorTransform.
 /// \notes Resize the input image using a randomly selected interpolation mode.
 //      the same image aspect ratio. If size has 2 values, it should be (height, width).
-class RandomResize : public TensorTransform {
+class RandomResize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -523,7 +523,7 @@ class RandomResize : public TensorTransform {
 /// \brief RandomResizeWithBBox TensorTransform.
 /// \notes Resize the input image using a randomly selected interpolation mode and adjust
 ///     bounding boxes accordingly.
-class RandomResizeWithBBox : public TensorTransform {
+class RandomResizeWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -546,7 +546,7 @@ class RandomResizeWithBBox : public TensorTransform {
 
 /// \brief RandomResizedCrop TensorTransform.
 /// \notes Crop the input image to a random size and aspect ratio.
-class RandomResizedCrop : public TensorTransform {
+class RandomResizedCrop final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -578,7 +578,7 @@ class RandomResizedCrop : public TensorTransform {
 
 /// \brief RandomResizedCropWithBBox TensorTransform.
 /// \notes Crop the input image to a random size and aspect ratio.
-class RandomResizedCropWithBBox : public TensorTransform {
+class RandomResizedCropWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the cropped image.
@@ -610,7 +610,7 @@ class RandomResizedCropWithBBox : public TensorTransform {
 
 /// \brief RandomRotation TensorOp
 /// \notes Rotates the image according to parameters
-class RandomRotation : public TensorTransform {
+class RandomRotation final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size, representing the starting and ending degree
@@ -642,7 +642,7 @@ class RandomRotation : public TensorTransform {
 ///     (op, prob), where op is a TensorTransform operation and prob is the probability that this op will be applied.
 ///     Once a sub-policy is selected, each op within the sub-policy with be applied in sequence according to its
 ///     probability.
-class RandomSelectSubpolicy : public TensorTransform {
+class RandomSelectSubpolicy final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are raw pointers
@@ -672,7 +672,7 @@ class RandomSelectSubpolicy : public TensorTransform {
 
 /// \brief RandomSharpness TensorTransform.
 /// \notes Tensor operation to perform random sharpness.
-class RandomSharpness : public TensorTransform {
+class RandomSharpness final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] degrees A float vector of size 2, representing the starting and ending degree to uniformly
@@ -695,7 +695,7 @@ class RandomSharpness : public TensorTransform {
 /// \brief RandomSolarize TensorTransform.
 /// \notes Invert pixels randomly within specified range. If min=max, it is a single fixed magnitude operation
 ///     to inverts all pixel above that threshold
-class RandomSolarize : public TensorTransform {
+class RandomSolarize final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] threshold A vector with two elements specifying the pixel range to invert.
@@ -716,7 +716,7 @@ class RandomSolarize : public TensorTransform {
 
 /// \brief RandomVerticalFlip TensorTransform.
 /// \notes Tensor operation to perform random vertical flip.
-class RandomVerticalFlip : public TensorTransform {
+class RandomVerticalFlip final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -737,7 +737,7 @@ class RandomVerticalFlip : public TensorTransform {
 
 /// \brief RandomVerticalFlipWithBBox TensorTransform.
 /// \notes Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
-class RandomVerticalFlipWithBBox : public TensorTransform {
+class RandomVerticalFlipWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] prob A float representing the probability of flip.
@@ -758,7 +758,7 @@ class RandomVerticalFlipWithBBox : public TensorTransform {
 
 /// \brief RescaleOperation TensorTransform.
 /// \notes Tensor operation to rescale the input image.
-class Rescale : public TensorTransform {
+class Rescale final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] rescale Rescale factor.
@@ -780,7 +780,7 @@ class Rescale : public TensorTransform {
 
 /// \brief ResizeWithBBox TensorTransform.
 /// \notes Resize the input image to the given size and adjust bounding boxes accordingly.
-class ResizeWithBBox : public TensorTransform {
+class ResizeWithBBox final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size The output size of the resized image.
@@ -804,7 +804,7 @@ class ResizeWithBBox : public TensorTransform {
 
 /// \brief RgbaToBgr TensorTransform.
 /// \notes Changes the input 4 channel RGBA tensor to 3 channel BGR.
-class RGBA2BGR : public TensorTransform {
+class RGBA2BGR final : public TensorTransform {
  public:
   /// \brief Constructor.
   RGBA2BGR();
@@ -820,7 +820,7 @@ class RGBA2BGR : public TensorTransform {
 
 /// \brief RgbaToRgb TensorTransform.
 /// \notes Changes the input 4 channel RGBA tensor to 3 channel RGB.
-class RGBA2RGB : public TensorTransform {
+class RGBA2RGB final : public TensorTransform {
  public:
   /// \brief Constructor.
   RGBA2RGB();
@@ -840,7 +840,7 @@ class RGBA2RGB : public TensorTransform {
 ///     The input image size should be in range [32*32, 8192*8192].
 ///     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
 ///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-class SoftDvppDecodeRandomCropResizeJpeg : public TensorTransform {
+class SoftDvppDecodeRandomCropResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -877,7 +877,7 @@ class SoftDvppDecodeRandomCropResizeJpeg : public TensorTransform {
 ///     and the input image size should be in range [32*32, 8192*8192].
 ///     The zoom-out and zoom-in multiples of the image length and width should in the range [1/32, 16].
 ///     Only images with an even resolution can be output. The output of odd resolution is not supported.
-class SoftDvppDecodeResizeJpeg : public TensorTransform {
+class SoftDvppDecodeResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] size A vector representing the output size of the resized image.
@@ -900,7 +900,7 @@ class SoftDvppDecodeResizeJpeg : public TensorTransform {
 
 /// \brief SwapRedBlue TensorOp
 /// \notes Swaps the red and blue channels in image
-class SwapRedBlue : public TensorTransform {
+class SwapRedBlue final : public TensorTransform {
  public:
   /// \brief Constructor.
   SwapRedBlue();
@@ -916,7 +916,7 @@ class SwapRedBlue : public TensorTransform {
 
 /// \brief UniformAugment TensorTransform.
 /// \notes Tensor operation to perform randomly selected augmentation.
-class UniformAugment : public TensorTransform {
+class UniformAugment final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms Raw pointer to vector of TensorTransform operations.
