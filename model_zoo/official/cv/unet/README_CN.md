@@ -33,7 +33,11 @@
 
 U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)。在2015年ISBI细胞跟踪竞赛中，U-Net获得了许多最佳奖项。论文中提出了一种用于医学图像分割的网络模型和数据增强方法，有效利用标注数据来解决医学领域标注数据不足的问题。U型网络结构也用于提取上下文和位置信息。
 
-[论文](https://arxiv.org/abs/1505.04597)：  Olaf Ronneberger, Philipp Fischer, Thomas Brox. "U-Net: Convolutional Networks for Biomedical Image Segmentation." *conditionally accepted at MICCAI 2015*. 2015.
+UNet++是U-Net的增强版本，使用了新的跨层链接方式和深层监督，可以用于语义分割和实例分割。
+
+[U-Net 论文](https://arxiv.org/abs/1505.04597): Olaf Ronneberger, Philipp Fischer, Thomas Brox. "U-Net: Convolutional Networks for Biomedical Image Segmentation." *conditionally accepted at MICCAI 2015*. 2015.
+
+[UNet++ 论文](https://arxiv.org/abs/1912.05074): Z. Zhou, M. M. R. Siddiquee, N. Tajbakhsh and J. Liang, "UNet++: Redesigning Skip Connections to Exploit Multiscale Features in Image Segmentation," in IEEE Transactions on Medical Imaging, vol. 39, no. 6, pp. 1856-1867, June 2020, doi: 10.1109/TMI.2019.2959609.
 
 ## 模型架构
 
@@ -53,6 +57,8 @@ U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolu
 - 数据格式：二进制文件（TIF）
     - 注意：数据在src/data_loader.py中处理
 
+我们也支持一个在 [Unet++](https://arxiv.org/abs/1912.05074) 原论文中使用的数据集 `Cell_nuclei`。可以通过修改`src/config.py`中`'dataset': 'Cell_nuclei'`配置使用.
+
 ## 环境要求
 
 - 硬件（Ascend）
@@ -66,6 +72,10 @@ U-Net医学模型基于二维图像分割。实现方式见论文[UNet：Convolu
 ## 快速入门
 
 通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
+
+- 选择模型及数据集
+
+我们在`src/config.py`预备了一些网络及数据集的参数配置用于快速体验。也可以通过设置`'model'` 为 `'unet_medical'`,`'unet_nested'` 或者 `'unet_simple'` 来选择使用什么网络结构。我们支持`ISBI` 和 `Cell_nuclei`两种数据集处理，默认使用`ISBI`，可以设置`'dataset'` 为 `'Cell_nuclei'`使用`Cell_nuclei`数据集。
 
 - Ascend处理器环境运行
 
@@ -108,24 +118,35 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 
 ```path
 ├── model_zoo
-    ├── README.md                           // 所有模型相关说明
+    ├── README.md                           // 模型描述
     ├── unet
-        ├── README.md                       // U-Net相关说明
+        ├── README.md                       // Unet描述
+        ├── ascend310_infer                 // Ascend 310 推理代码
         ├── scripts
-        │   ├──run_standalone_train.sh      // Ascend分布式shell脚本
-        │   ├──run_standalone_eval.sh       // Ascend评估shell脚本
+        │   ├──docker_start.sh              // docker 脚本
+        │   ├──run_disribute_train.sh       // Ascend 上分布式训练脚本
+        │   ├──run_infer_310.sh             // Ascend 310 推理脚本
+        │   ├──run_standalone_train.sh      // Ascend 上单卡训练脚本
+        │   ├──run_standalone_eval.sh       // Ascend 上推理脚本
         ├── src
         │   ├──config.py                    // 参数配置
-        │   ├──data_loader.py               // 创建数据集
-        │   ├──loss.py                      // 损失
+        │   ├──data_loader.py               // 数据处理
+        │   ├──loss.py                      // 损失函数
         │   ├──utils.py                     // 通用组件（回调函数）
-        │   ├──unet.py                      // U-Net架构
-                ├──__init__.py              // 初始化文件
-                ├──unet_model.py            // U-Net模型
-                ├──unet_parts.py            // U-Net部分
+        │   ├──unet_medical                 // 医学图像处理Unet结构
+                ├──__init__.py
+                ├──unet_model.py            // Unet 网络结构
+                ├──unet_parts.py            // Unet 子网
+        │   ├──unet_nested                  // Unet++
+                ├──__init__.py
+                ├──unet_model.py            // Unet++ 网络结构
+                ├──unet_parts.py            // Unet++ 子网
         ├── train.py                        // 训练脚本
-        ├──launch_8p.py                     // 训练8P脚本
-        ├── eval.py                         // 评估脚本
+        ├── eval.py                         // 推理脚本
+        ├── export.py                       // 导出脚本
+        ├── mindspore_hub_conf.py           // hub 配置脚本
+        ├── postprocess.py                  // 310 推理后处理脚本
+        ├── preprocess.py                   // 310 推理前处理脚本
 ```
 
 ### 脚本参数
@@ -143,12 +164,37 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
   'cross_valid_ind': 1,               # 交叉验证指标
   'num_classes': 2,                   # 数据集类数
   'num_channels': 1,                  # 通道数
-  'keep_checkpoint_max': 10,          # 只保留最后一个keep_checkpoint_max检查点
+  'keep_checkpoint_max': 10,          # 保留checkpoint检查个数
   'weight_decay': 0.0005,             # 权重衰减值
   'loss_scale': 1024.0,               # 损失放大
   'FixedLossScaleManager': 1024.0,    # 固定损失放大
   'resume': False,                    # 是否使用预训练模型训练
   'resume_ckpt': './',                # 预训练模型路径
+  ```
+
+- Unet++配置, cell nuclei数据集
+
+  ```python
+  'model': 'unet_nested',             # 模型名称
+  'dataset': 'Cell_nuclei',           # 数据集名称
+  'img_size': [96, 96],               # 输入图像大小
+  'lr': 3e-4,                         # 学习率
+  'epochs': 200,                      # 运行1p时的总训练轮次
+  'distribute_epochs': 1600,          # 运行8p时的总训练轮次
+  'batchsize': 16,                    # 训练批次大小
+  'num_classes': 2,                   # 数据集类数
+  'num_channels': 3,                  # 输入图像通道数
+  'keep_checkpoint_max': 10,          # 保留checkpoint检查个数
+  'weight_decay': 0.0005,             # 权重衰减值
+  'loss_scale': 1024.0,               # 损失放大
+  'FixedLossScaleManager': 1024.0,    # 损失放大
+  'use_bn': True,                     # 是否使用BN
+  'use_ds': True,                     # 是否使用深层监督
+  'use_deconv': True,                 # 是否使用反卷积
+  'resume': False,                    # 是否使用预训练模型训练
+  'resume_ckpt': './',                # 预训练模型路径
+  'transfer_training': False          # 是否使用迁移学习
+  'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']  # 迁移学习过滤参数名
   ```
 
 ## 训练过程
