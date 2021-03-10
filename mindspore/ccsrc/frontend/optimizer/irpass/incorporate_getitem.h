@@ -375,7 +375,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     }
     auto tuple_getitem = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(tuple_getitem);
-    if (MultipleUseOfSwitch(tuple_getitem->input(1), fg)) {
+    if (MultipleUseOfSwitch(tuple_getitem->input(1), fg) && !ExistEnvNode(fg)) {
       return nullptr;
     }
     auto new_g1 = getitem_transform_(g1_, idx_);
@@ -444,6 +444,14 @@ class IncorporateGetitemSwitch : public AnfVisitor {
       return IsPrimitiveCNode(user.first, prim::kPrimTupleGetItem);
     });
     return tuple_getitem_num > 1;
+  }
+
+  static bool inline ExistEnvNode(const FuncGraphPtr &fg) {
+    MS_EXCEPTION_IF_NULL(fg);
+    auto &nodes = fg->value_nodes();
+    return std::any_of(nodes.begin(), nodes.end(), [](const auto &node) {
+      return IsPrimitive(node.first, prim::kPrimEnvSetItem) || IsPrimitive(node.first, prim::kPrimEnvGetItem);
+    });
   }
 
   int64_t idx_{-1};
