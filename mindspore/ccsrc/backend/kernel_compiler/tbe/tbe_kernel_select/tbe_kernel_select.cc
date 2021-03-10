@@ -99,7 +99,7 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     SetTbeBuildCommonInfo(op_info, &builder);
     std::vector<std::string> inputs_format;
     std::vector<TypeId> inputs_device_type;
-    std::vector<std::vector<Axis>> inputs_reshape_type;
+    std::vector<std::string> inputs_reshape_type;
     // input
     if (!GenBuilderItem(true, kernel_build_info_index, real_input_tensor_num, inputs_info, dyn_input_sizes,
                         &inputs_format, &inputs_device_type, &inputs_reshape_type)) {
@@ -111,7 +111,7 @@ void TbeKernelSelect::GetCommonPatternKernelInfo(const OpInfo &op_info) {
     // output
     std::vector<std::string> outputs_format;
     std::vector<TypeId> outputs_device_type;
-    std::vector<std::vector<Axis>> outputs_reshape_type;
+    std::vector<std::string> outputs_reshape_type;
     if (!GenBuilderItem(false, kernel_build_info_index, real_output_tensor_num, outputs_info, dyn_input_sizes,
                         &outputs_format, &outputs_device_type, &outputs_reshape_type)) {
       break;
@@ -290,7 +290,7 @@ std::vector<int64_t> TbeKernelSelect::GetNodeDynamicInputs() {
 bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_index, size_t real_io_tensor_num,
                                      const std::vector<std::shared_ptr<OpIOInfo>> &ios_info,
                                      const std::vector<int64_t> &dyn_input_sizes, std::vector<std::string> *formats,
-                                     std::vector<TypeId> *device_types, std::vector<std::vector<Axis>> *reshape_types) {
+                                     std::vector<TypeId> *device_types, std::vector<std::string> *reshape_types) {
   MS_EXCEPTION_IF_NULL(formats);
   MS_EXCEPTION_IF_NULL(device_types);
   MS_EXCEPTION_IF_NULL(reshape_types);
@@ -306,8 +306,7 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
       kernel_build_info_format = io_info_item->formats()[kernel_build_info_index];
     }
     const std::string &io_param_type = io_info_item->param_type();
-    std::vector<Axis> reshape_type;
-    StringToAxisVector(io_info_item->reshape_type(), &reshape_type);
+    auto reshape_type = io_info_item->reshape_type();
     if (io_param_type == kParamTypeDynamic) {
       // dynamic io
       if (is_input) {
@@ -353,28 +352,6 @@ bool TbeKernelSelect::GenBuilderItem(bool is_input, size_t kernel_build_info_ind
     return false;
   }
   return true;
-}
-
-void TbeKernelSelect::StringToAxisVector(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec) {
-  MS_EXCEPTION_IF_NULL(reshape_type_vec);
-  for (const auto &c : reshape_type_str) {
-    switch (c) {
-      case 'N':
-        reshape_type_vec->push_back(N);
-        break;
-      case 'C':
-        reshape_type_vec->push_back(C);
-        break;
-      case 'H':
-        reshape_type_vec->push_back(H);
-        break;
-      case 'W':
-        reshape_type_vec->push_back(W);
-        break;
-      default:
-        MS_LOG(EXCEPTION) << "Unknown axis " << c << "in reshape type.";
-    }
-  }
 }
 
 void TbeKernelSelect::CreateNewOpIOInfo(const mindspore::kernel::OpIOInfo &op_io_info,

@@ -30,6 +30,13 @@
 
 namespace mindspore {
 namespace trans {
+enum Axis5D : int {
+  N_ncdhw = 0,
+  C_ncdhw,
+  D_ncdhw,
+  H_ncdhw,
+  W_ncdhw,
+};
 struct TypeIdArgs {
   const void *data;
   size_t host_shape_size;  // Multiply each dimension elements. [a, b, c, d] => a*b*c*d
@@ -50,7 +57,13 @@ struct FormatArgs {
 
 size_t CubeSizeByType(const TypeId data_type);
 
-std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::vector<Axis> &padding_axis = {});
+std::vector<size_t> PaddingShape(const std::vector<size_t> &shape, const std::string &format,
+                                 const std::string &pad_index = {""});
+std::vector<size_t> PaddingShapeTo4d(const std::vector<size_t> &shape, const std::string &padding_axis = {""});
+std::vector<size_t> PaddingShapeTo5d(const std::vector<size_t> &shape, const std::string &padding_axis = {""});
+std::vector<size_t> PaddingShapeTo5dDefault(const std::vector<size_t> &shape);
+void StringToAxisVector4D(const std::string &reshape_type_str, std::vector<Axis> *reshape_type_vec);
+void StringToAxisVector5D(const std::string &reshape_type_str, std::vector<Axis5D> *reshape_type_vec);
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index);
 bool IsNeedPadding(const std::string &format, const size_t shape_size);
 std::vector<size_t> TransShapeToDevice(const std::vector<size_t> &shape, const std::string &format);

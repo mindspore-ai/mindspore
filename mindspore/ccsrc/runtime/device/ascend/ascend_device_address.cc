@@ -475,7 +475,7 @@ std::vector<size_t> AscendDeviceAddress::GetDeviceShape(std::vector<size_t> *hos
     device_shape = trans::TransShapeToDevice(*host_shape, format_);
   } else {
     if (host_shape_.empty()) {
-      *host_shape = trans::PaddingShapeTo4d(*host_shape);
+      *host_shape = trans::PaddingShape(*host_shape, format_);
     } else {
       host_shape->clear();
       (void)std::transform(host_shape_.begin(), host_shape_.end(), std::back_inserter(*host_shape), LongToSize);
@@ -595,11 +595,10 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
     host_shape.emplace_back(1);
   }
   std::vector<size_t> device_shape;
-  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW || format_ == kOpFormat_NDC1HWC0 ||
-      format_ == kOpFormat_FRACTAL_Z_3D) {
+  if (format_ == kOpFormat_FRAC_NZ) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
-    host_shape = trans::PaddingShapeTo4d(host_shape);
+    host_shape = trans::PaddingShape(host_shape, format_);
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   }
   if (type_id_ != type) {
