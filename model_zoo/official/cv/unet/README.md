@@ -30,7 +30,11 @@
 
 Unet Medical model for 2D image segmentation. This implementation is as described  in the original paper [UNet: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597). Unet, in the 2015 ISBI cell tracking competition, many of the best are obtained. In this paper, a network model for medical image segmentation is proposed, and a data enhancement method is proposed to effectively use the annotation data to solve the problem of insufficient annotation data in the medical field. A U-shaped network structure is also used to extract the context and location information.
 
-[Paper](https://arxiv.org/abs/1505.04597):  Olaf Ronneberger, Philipp Fischer, Thomas Brox. "U-Net: Convolutional Networks for Biomedical Image Segmentation." *conditionally accepted at MICCAI 2015*. 2015.
+UNet++ is a neural architecture for semantic and instance segmentation with re-designed skip pathways and  deep supervision.
+
+[U-Net Paper](https://arxiv.org/abs/1505.04597):  Olaf Ronneberger, Philipp Fischer, Thomas Brox. "U-Net: Convolutional Networks for Biomedical Image Segmentation." *conditionally accepted at MICCAI 2015*. 2015.
+
+[UNet++ Paper](https://arxiv.org/abs/1912.05074): Z. Zhou, M. M. R. Siddiquee, N. Tajbakhsh and J. Liang, "UNet++: Redesigning Skip Connections to Exploit Multiscale Features in Image Segmentation," in IEEE Transactions on Medical Imaging, vol. 39, no. 6, pp. 1856-1867, June 2020, doi: 10.1109/TMI.2019.2959609.
 
 ## [Model Architecture](#contents)
 
@@ -49,6 +53,8 @@ Dataset used: [ISBI Challenge](http://brainiac2.mit.edu/isbi_challenge/home)
 - Data format：binary files(TIF file)
     - Note：Data will be processed in src/data_loader.py
 
+We also support cell nuclei dataset which is used in [Unet++ original paper](https://arxiv.org/abs/1912.05074). If you want to use the dataset, please add `'dataset': 'Cell_nuclei'` in `src/config.py`.
+
 ## [Environment Requirements](#contents)
 
 - Hardware（Ascend）
@@ -62,6 +68,10 @@ Dataset used: [ISBI Challenge](http://brainiac2.mit.edu/isbi_challenge/home)
 ## [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
+
+- Select the network and dataset to use
+
+Refer to `src/config.py`. We support some parameter configurations for quick start. You can set `'model'` to `'unet_medical'`,`'unet_nested'` or `'unet_simple'` to select which net to use. We support `ISBI` and `Cell_nuclei` two dataset, you can set `'dataset'` to `'Cell_nuclei'` to use `Cell_nuclei` dataset, default is `ISBI`.
 
 - Run on Ascend
 
@@ -107,21 +117,32 @@ Then you can run everything just like on ascend.
     ├── README.md                           // descriptions about all the models
     ├── unet
         ├── README.md                       // descriptions about Unet
+        ├── ascend310_infer                 // code of infer on ascend 310
         ├── scripts
-        │   ├──run_standalone_train.sh      // shell script for distributed on Ascend
+        │   ├──docker_start.sh              // shell script for quick docker start
+        │   ├──run_disribute_train.sh       // shell script for distributed on Ascend
+        │   ├──run_infer_310.sh             // shell script for infer on ascend 310
+        │   ├──run_standalone_train.sh      // shell script for standalone on Ascend
         │   ├──run_standalone_eval.sh       // shell script for evaluation on Ascend
         ├── src
         │   ├──config.py                    // parameter configuration
         │   ├──data_loader.py               // creating dataset
         │   ├──loss.py                      // loss
         │   ├──utils.py                     // General components (callback function)
-        │   ├──unet.py                      // Unet architecture
+        │   ├──unet_medical                 // Unet medical architecture
+                ├──__init__.py              // init file
+                ├──unet_model.py            // unet model
+                ├──unet_parts.py            // unet part
+        │   ├──unet_nested                  // Unet++ architecture
                 ├──__init__.py              // init file
                 ├──unet_model.py            // unet model
                 ├──unet_parts.py            // unet part
         ├── train.py                        // training script
-        ├──launch_8p.py                     // training 8P script
-        ├── eval.py                         //  evaluation script
+        ├── eval.py                         // evaluation script
+        ├── export.py                       // export script
+        ├── mindspore_hub_conf.py           // hub config file
+        ├── postprocess.py                  // unet 310 infer postprocess.
+        ├── preprocess.py                   // unet 310 infer preprocess dataset
 ```
 
 ### [Script Parameters](#contents)
@@ -147,6 +168,31 @@ Parameters for both training and evaluation can be set in config.py
   'resume_ckpt': './',                # pretrain model path
   'transfer_training': False          # whether do transfer training
   'filter_weight': ["final.weight"]   # weight name to filter while doing transfer training
+  ```
+
+- config for Unet++, cell nuclei dataset
+
+  ```python
+  'model': 'unet_nested',             # model name
+  'dataset': 'Cell_nuclei',           # dataset name
+  'img_size': [96, 96],               # image size
+  'lr': 3e-4,                         # learning rate
+  'epochs': 200,                      # total training epochs when run 1p
+  'distribute_epochs': 1600,          # total training epochs when run 8p
+  'batchsize': 16,                    # batch size
+  'num_classes': 2,                   # the number of classes in the dataset
+  'num_channels': 3,                  # the number of input image channels
+  'keep_checkpoint_max': 10,          # only keep the last keep_checkpoint_max checkpoint
+  'weight_decay': 0.0005,             # weight decay value
+  'loss_scale': 1024.0,               # loss scale
+  'FixedLossScaleManager': 1024.0,    # loss scale
+  'use_bn': True,                     # whether to use BN
+  'use_ds': True,                     # whether to use deep supervisio
+  'use_deconv': True,                 # whether to use Conv2dTranspose
+  'resume': False,                    # whether training with pretrain model
+  'resume_ckpt': './',                # pretrain model path
+  'transfer_training': False          # whether do transfer training
+  'filter_weight': ['final1.weight', 'final2.weight', 'final3.weight', 'final4.weight']  # weight name to filter while doing transfer training
   ```
 
 ## [Training Process](#contents)
@@ -283,10 +329,10 @@ Cross valid dice coeff is: 0.9054352151297033
 Set options `resume` to True in `config.py`, and set `resume_ckpt` to the path of your checkpoint. e.g.
 
 ```python
-    'resume': True,
-    'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
-    'transfer_training': False,
-    'filter_weight': ["final.weight"]
+  'resume': True,
+  'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+  'transfer_training': False,
+  'filter_weight': ["final.weight"]
 ```
 
 #### Transfer training
@@ -294,10 +340,10 @@ Set options `resume` to True in `config.py`, and set `resume_ckpt` to the path o
 Do the same thing as resuming traing above. In addition, set `transfer_training` to True. The `filter_weight` shows the weights which will be filtered for different dataset. Usually, the default value of `filter_weight` don't need to be changed. The default values includes the weights which depends on the class number. e.g.
 
 ```python
-    'resume': True,
-    'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
-    'transfer_training': True,
-    'filter_weight': ["final.weight"]
+  'resume': True,
+  'resume_ckpt': 'ckpt_0/ckpt_unet_medical_adam_1-1_600.ckpt',
+  'transfer_training': True,
+  'filter_weight': ["final.weight"]
 ```
 
 ## [Description of Random Situation](#contents)
