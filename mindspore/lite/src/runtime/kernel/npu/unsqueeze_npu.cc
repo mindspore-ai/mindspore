@@ -43,11 +43,11 @@ int UnsqueezeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
   ge::TensorDesc desc(ge::Shape({size}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr tensor = std::make_shared<hiai::Tensor>(desc);
   tensor->SetData(reinterpret_cast<uint8_t *>(axis_.data()), size * sizeof(int));
-  auto axis = new hiai::op::Const(name_ + "_axis");
-  axis->set_attr_value(tensor);
+  axis_const_ = new hiai::op::Const(name_ + "_axis");
+  axis_const_->set_attr_value(tensor);
 
   op_->set_input_x(*npu_inputs[0]);
-  op_->set_input_axis(*axis);
+  op_->set_input_axis(*axis_const_);
 
   return RET_OK;
 }
@@ -58,6 +58,10 @@ UnsqueezeNPUKernel::~UnsqueezeNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
+  }
+  if (axis_const_ != nullptr) {
+    delete axis_const_;
+    axis_const_ = nullptr;
   }
 }
 

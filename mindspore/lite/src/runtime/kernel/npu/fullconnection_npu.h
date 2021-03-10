@@ -40,6 +40,7 @@ class FullconnectionNPUKernel : public ConvolutionBaseNPUKernel {
   hiai::op::Reshape *reshape_ = nullptr;
   hiai::op::MatMul *fc_ = nullptr;
   hiai::op::BiasAdd *biasadd_ = nullptr;
+  hiai::op::Const *reshape_op_ = nullptr;
   MatMulParameter *fc_param_;
 };
 }  // namespace mindspore::kernel

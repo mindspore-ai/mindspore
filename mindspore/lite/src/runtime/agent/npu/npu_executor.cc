@@ -21,12 +21,19 @@
 namespace mindspore::lite {
 NPUExecutor::~NPUExecutor() {
   client_.reset();
+  for (auto t : npu_input_tensors_) {
+    t.reset();
+  }
   npu_input_tensors_.clear();
+  for (auto t : npu_output_tensors_) {
+    t.reset();
+  }
   npu_output_tensors_.clear();
 }
 
 int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
-  this->client_ = mindspore::lite::NPUManager::GetInstance()->GetClient(model_name_);
+  MS_ASSERT(npu_manager_ != nullptr);
+  this->client_ = npu_manager_->GetClient(model_name_);
   if (this->client_ == nullptr) {
     MS_LOG(ERROR) << "client is nullptr.";
     return RET_ERROR;

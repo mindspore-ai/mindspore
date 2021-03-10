@@ -39,6 +39,7 @@ class UnsqueezeNPUKernel : public NPUKernel {
 
  private:
   hiai::op::ExpandDims *op_ = nullptr;
+  hiai::op::Const *axis_const_ = nullptr;
   vector<int> axis_;
 };
 }  // namespace mindspore::kernel

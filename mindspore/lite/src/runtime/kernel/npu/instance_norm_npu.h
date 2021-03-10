@@ -38,6 +38,8 @@ class InstanceNormNPUKernel : public NPUKernel {
 
  private:
   hiai::op::InstanceNorm *op_ = nullptr;
+  hiai::op::Const *gamma_ = nullptr;
+  hiai::op::Const *beta_ = nullptr;
   InstanceNormParameter *instance_norm_param_;
 };
 }  // namespace mindspore::kernel

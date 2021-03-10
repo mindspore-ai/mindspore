@@ -23,11 +23,15 @@
 #include "src/executor.h"
 #include "include/errorcode.h"
 #include "include/HiAiModelManagerService.h"
+#ifdef SUPPORT_NPU
+#include "src/runtime/agent/npu/npu_manager.h"
+#endif
 
 namespace mindspore::lite {
 class NPUExecutor : public Executor {
  public:
-  explicit NPUExecutor(const std::string &model_name) { this->model_name_ = model_name; }
+  explicit NPUExecutor(const std::string &model_name, NPUManager *npu_manager = nullptr)
+      : model_name_(model_name), npu_manager_(npu_manager) {}
   ~NPUExecutor() override;
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override;
 
@@ -45,6 +49,7 @@ class NPUExecutor : public Executor {
 
  private:
   std::string model_name_;
+  NPUManager *npu_manager_ = nullptr;
   std::shared_ptr<hiai::AiModelMngerClient> client_ = nullptr;
   std::vector<std::shared_ptr<hiai::AiTensor>> npu_input_tensors_;
   std::vector<std::shared_ptr<hiai::AiTensor>> npu_output_tensors_;

@@ -31,6 +31,18 @@ InnerContext::InnerContext(const Context *context) {
   }
 }
 
+#if SUPPORT_NPU
+InnerContext::InnerContext(const Context *context, NPUManager *npu_manager) {
+  this->allocator = context->allocator;
+  this->thread_num_ = context->thread_num_;
+  this->device_list_.clear();
+  for (auto &device_ctx : context->device_list_) {
+    this->device_list_.push_back(device_ctx);
+  }
+  this->npu_manager_ = npu_manager;
+}
+#endif
+
 int InnerContext::Init() {
   if (RET_OK != this->IsValid()) {
     MS_LOG(ERROR) << "Context is not valid";
@@ -120,10 +132,11 @@ bool InnerContext::IsGpuEnabled() const {
 
 bool InnerContext::IsNpuEnabled() const {
 #ifdef SUPPORT_NPU
+  MS_ASSERT(npu_manager_ != nullptr);
   return this->device_list_.end() !=
            std::find_if(this->device_list_.begin(), this->device_list_.end(),
                         [](const DeviceContext &device) { return device.device_type_ == DT_NPU; }) &&
-         mindspore::lite::NPUManager::GetInstance()->IsSupportNPU();
+         npu_manager_->IsSupportNPU();
 #else
   return false;
 #endif

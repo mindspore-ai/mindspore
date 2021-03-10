@@ -42,13 +42,13 @@ int FullconnectionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inp
   for (int i = 1; i < input_shape.size(); i++) {
     col *= input_shape[i];
   }
-  auto reshape_op = new (std::nothrow) hiai::op::Const(name_ + "_reshape_data");
+  reshape_op_ = new (std::nothrow) hiai::op::Const(name_ + "_reshape_data");
   vector<int> reshape_data = {input_shape[0], col};
   ge::TensorDesc reshape_tensor_desc(ge::Shape({2}), ge::FORMAT_NCHW, ge::DT_FLOAT);
   ge::TensorPtr reshape_tensor = std::make_shared<hiai::Tensor>(reshape_tensor_desc);
   reshape_tensor->SetData(reinterpret_cast<uint8_t *>(reshape_data.data()), 2 * sizeof(float));
-  reshape_op->set_attr_value(reshape_tensor);
-  reshape_->set_input_shape(*reshape_op);
+  reshape_op_->set_attr_value(reshape_tensor);
+  reshape_->set_input_shape(*reshape_op_);
 
   fc_ = new (std::nothrow) hiai::op::MatMul(name_);
   if (fc_ == nullptr) {
@@ -116,6 +116,10 @@ FullconnectionNPUKernel::~FullconnectionNPUKernel() {
   if (biasadd_ != nullptr) {
     delete biasadd_;
     biasadd_ = nullptr;
+  }
+  if (reshape_op_ != nullptr) {
+    delete reshape_op_;
+    reshape_op_ = nullptr;
   }
 }
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_FullConnection, NPUKernelCreator<FullconnectionNPUKernel>)

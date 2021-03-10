@@ -28,6 +28,10 @@ set(API_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/tensor_impl.cc
 )
 
+if(SUPPORT_NPU)
+    include_directories(${DDK_PATH})
+endif()
+
 set(LITE_SRC
         ${API_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
@@ -157,7 +161,6 @@ else()
 endif()
 if(SUPPORT_NPU)
     add_subdirectory(runtime/agent/npu)
-    include_directories(${DDK_PATH})
     target_link_libraries(mindspore-lite npu_kernel_mid)
     target_link_libraries(mindspore-lite_static npu_kernel_mid)
 endif()

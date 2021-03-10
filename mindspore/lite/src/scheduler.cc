@@ -571,8 +571,8 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   }
   if (type == kernel::kNpuSubGraph) {
 #if SUPPORT_NPU
-    auto sub_kernel = new (std::nothrow)
-      kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    auto sub_kernel = new (std::nothrow) kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels,
+                                                                   output_kernels, kernels, context_, npu_manager_);
     if (sub_kernel == nullptr) {
       MS_LOG(ERROR) << "NPU subgraph new failed.";
       return nullptr;
@@ -685,13 +685,14 @@ int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return RET_OK;
   }
   auto transform_pass = new NPUTransformPass(context_, dst_kernels, src_tensors_);
-  mindspore::lite::NPUPassManager::GetInstance()->AddPass(transform_pass);
+  MS_ASSERT(npu_pass_manager_ != nullptr);
+  npu_pass_manager_->AddPass(transform_pass);
   auto concat_format_pass = new NPUInsertTransformPass(context_, dst_kernels, src_tensors_);
-  mindspore::lite::NPUPassManager::GetInstance()->AddPass(concat_format_pass);
+  npu_pass_manager_->AddPass(concat_format_pass);
   auto fusion_pass = new NPUFusionPass(dst_kernels);
-  mindspore::lite::NPUPassManager::GetInstance()->AddPass(fusion_pass);
+  npu_pass_manager_->AddPass(fusion_pass);
 
-  ret = mindspore::lite::NPUPassManager::GetInstance()->Run();
+  ret = npu_pass_manager_->Run();
 #endif
   return ret;
 }
