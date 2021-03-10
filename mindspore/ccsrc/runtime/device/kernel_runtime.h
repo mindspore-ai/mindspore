@@ -108,6 +108,7 @@ class KernelRuntime {
   virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
   void AddBufferPtr(std::shared_ptr<char[]> ptr) { buffer_ptrs_.push_back(ptr); }
   void FreeAndClearBufferPtrs() { buffer_ptrs_.clear(); }
+  virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
 

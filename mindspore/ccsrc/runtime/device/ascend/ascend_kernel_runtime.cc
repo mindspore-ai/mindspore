@@ -321,15 +321,6 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
   return true;
 }
 
-bool AscendKernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
-  if (AnfAlgo::OutputAddrExist(kernel, index)) {
-    auto address = AnfAlgo::GetOutputAddr(kernel, index);
-    MS_EXCEPTION_IF_NULL(address);
-    return address->DeviceType() == DeviceAddressType::kAscend;
-  }
-  return false;
-}
-
 bool AscendKernelRuntime::KernelMemNotReuse(const AnfNodePtr &node) {
   bool need_dump = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();

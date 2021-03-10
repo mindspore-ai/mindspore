@@ -49,7 +49,9 @@ bool KernelRuntime::LoadData(session::KernelGraph *graph) { return false; }
 bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel);
   if (AnfAlgo::OutputAddrExist(kernel, index)) {
-    return true;
+    const auto &address = AnfAlgo::GetOutputAddr(kernel, index);
+    MS_EXCEPTION_IF_NULL(address);
+    return address->DeviceType() == GetTargetDeviceAddressType();
   }
   return false;
 }
@@ -173,7 +175,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       MS_EXCEPTION_IF_NULL(input_tensors[input_index]);
       auto output_address =
         std::dynamic_pointer_cast<device::DeviceAddress>(input_tensors[input_index]->device_address());
-      if (output_address != nullptr) {
+      if (output_address != nullptr && output_address->DeviceType() == GetTargetDeviceAddressType()) {
         AnfAlgo::SetOutputAddr(output_address, index, item.get());
         continue;
       }
@@ -637,7 +639,8 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
       MS_LOG(WARNING) << "Tensor is null";
       return;
     }
-    if (tensor->device_address() != nullptr) {
+    auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+    if (output_address != nullptr && output_address->DeviceType() == GetTargetDeviceAddressType()) {
       AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
                              value_node.get());
       continue;
