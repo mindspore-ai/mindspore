@@ -973,7 +973,7 @@ class BCEWithLogitsLoss(_Loss):
         >>> predict = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
         >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
         >>> loss = nn.BCEWithLogitsLoss()
-        >>> output = loss(inputs, labels)
+        >>> output = loss(predict, target)
         >>> print(output)
         0.3463612
     """

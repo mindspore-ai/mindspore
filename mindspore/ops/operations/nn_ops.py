@@ -1885,7 +1885,7 @@ class MaxPool3D(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
+        >>> input = Tensor(np.arange(1 * 2 * 2 * 2 * 3).reshape((1, 2, 2, 2, 3)), mindspore.float32)
         >>> max_pool3d = ops.MaxPool3D(kernel_size=2, strides=1, pad_mode="valid")
         >>> output = max_pool3d(input)
         >>> print(output)
@@ -7094,7 +7094,22 @@ class BasicLSTMCell(PrimitiveWithInfer):
 
 class DynamicRNN(PrimitiveWithInfer):
     r"""
-    DynamicRNN Operator.
+    Applies a recurrent neural network to the input.
+    Only long short-term memory (LSTM) currently supported.
+
+    .. math::
+        \begin{array}{ll} \\
+            i_t = \sigma(W_{ix} x_t + b_{ix} + W_{ih} h_{(t-1)} + b_{ih}) \\
+            f_t = \sigma(W_{fx} x_t + b_{fx} + W_{fh} h_{(t-1)} + b_{fh}) \\
+            \tilde{c}_t = \tanh(W_{cx} x_t + b_{cx} + W_{ch} h_{(t-1)} + b_{ch}) \\
+            o_t = \sigma(W_{ox} x_t + b_{ox} + W_{oh} h_{(t-1)} + b_{oh}) \\
+            c_t = f_t * c_{(t-1)} + i_t * \tilde{c}_t \\
+            h_t = o_t * \tanh(c_t) \\
+        \end{array}
+
+    Here :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product. :math:`W, b`
+    are learnable weights between the output and the input in the formula. For instance,
+    :math:`W_{ix}, b_{ix}` are the weight and bias used to transform from input :math:`x` to :math:`i`.
 
     Args:
         cell_type (str): A string identifying the cell type in the op. Default: 'LSTM'.
