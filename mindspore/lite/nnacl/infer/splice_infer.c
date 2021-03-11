@@ -18,16 +18,13 @@
 
 int SpliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+#ifdef Debug
+  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 1);
   if (check_ret == NNACL_NULL_PTR) {
     return NNACL_NULL_PTR;
   }
-  if (inputs_size != 1) {
-    return NNACL_ERR;
-  }
-  if (outputs_size != 1) {
-    return NNACL_ERR;
-  }
+#endif
+
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);

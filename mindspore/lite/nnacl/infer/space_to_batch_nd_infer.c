@@ -96,9 +96,12 @@ int SpaceSetOutputShapeFromInput(const TensorC *const *inputs, size_t inputs_siz
 
 int SpaceToBatchNdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
-  if (outputs_size != 1 || (inputs_size != 1 && inputs_size != 3)) {
-    return 1;
+#ifdef Debug
+  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, 3, 1);
+  if (check_ret != NNACL_OK) {
+    return check_ret;
   }
+#endif
 
   const TensorC *input = inputs[0];
   if (input->format_ != Format_NHWC) {

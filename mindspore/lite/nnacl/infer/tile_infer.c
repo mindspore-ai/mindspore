@@ -34,10 +34,13 @@ void TileParamCaffe2Tflite(TileParameter *param, size_t out_shape_size) {
 
 int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
+#endif
+
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
 

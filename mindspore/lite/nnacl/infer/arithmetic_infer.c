@@ -18,10 +18,12 @@
 
 int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
+#endif
 
   ArithmeticParameter *param = (ArithmeticParameter *)parameter;
   param->broadcasting_ = false;

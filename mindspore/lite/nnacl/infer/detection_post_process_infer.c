@@ -18,10 +18,13 @@
 
 int DetectionPostProcessInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                    size_t outputs_size, OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 3, 4);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
+#endif
+
   const TensorC *boxes = inputs[0];
   const TensorC *scores = inputs[1];
   const TensorC *anchors = inputs[2];

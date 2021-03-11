@@ -35,10 +35,13 @@ int PreJudge(const TensorC *get_index, TensorListC *input0, const TensorC *value
 
 int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
+#endif
+
   TensorListC *input0 = (TensorListC *)(inputs[0]);
   const TensorC *get_index = inputs[1];
   const TensorC *value_tensor = inputs[2];

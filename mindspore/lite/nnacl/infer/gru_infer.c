@@ -18,13 +18,13 @@
 
 int GruInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   OpParameter *parameter) {
-  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
+#ifdef Debug
+  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 5, 6, 2);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  if ((inputs_size != 5 && inputs_size != 6) || outputs_size != 2) {
-    return NNACL_INPUT_TENSOR_ERROR;
-  }
+#endif
+
   const TensorC *input = inputs[0];
   const TensorC *weight_gate = inputs[1];
   const TensorC *weight_recurrence = inputs[2];

@@ -18,6 +18,7 @@
 
 int OneHotInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
@@ -25,6 +26,7 @@ int OneHotInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   if (inputs_size != 4 && inputs_size != 3) {
     return NNACL_INPUT_TENSOR_ERROR;
   }
+#endif
 
   const TensorC *input = inputs[0];
   const TensorC *depth_tensor = inputs[1];

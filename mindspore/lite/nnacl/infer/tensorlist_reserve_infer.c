@@ -18,10 +18,13 @@
 
 int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
+#ifdef Debug
   int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
+#endif
+
   const TensorC *input0 = inputs[0];
   int ele_shape_type = input0->data_type_;
   if (ele_shape_type != kNumberTypeInt && ele_shape_type != kNumberTypeInt32) {

@@ -18,13 +18,13 @@
 
 int ReduceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-  int check_ret = CheckAugmentNullOutputSize(inputs, inputs_size, outputs, outputs_size, parameter, 1);
+#ifdef Debug
+  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
-  if (inputs_size < 1) {
-    return NNACL_INPUT_TENSOR_ERROR;
-  }
+#endif
+
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
