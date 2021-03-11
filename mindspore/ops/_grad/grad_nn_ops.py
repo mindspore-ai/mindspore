@@ -249,6 +249,55 @@ def get_bprop_max_pool_grad(self):
     return bprop
 
 
+@bprop_getters.register(P.MaxPool3D)
+def get_bprop_max_pool3d_grad(self):
+    """Grad definition for `MaxPool3D` operation."""
+    max_pool3d_grad = G.MaxPool3DGrad(
+        kernel_size=self.kernel_size,
+        strides=self.strides,
+        pad_mode=self.pad_mode,
+        data_format=self.data_format)
+
+    def bprop(x, out, dout):
+        dx = max_pool3d_grad(x, out, dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(G.MaxPool3DGrad)
+def get_bprop_max_pool3d_grad_grad(self):
+    """Grad definition for `MaxPool3Grad` operation."""
+    max_pool3d_grad_grad = G.MaxPool3DGradGrad(
+        kernel_size=self.kernel_size,
+        strides=self.strides,
+        pad_mode=self.pad_mode,
+        data_format=self.data_format)
+
+    def bprop(x, y, grad, out, dout):
+        dgrad = max_pool3d_grad_grad(x, y, dout)
+        return zeros_like(x), zeros_like(y), dgrad
+
+    return bprop
+
+
+@bprop_getters.register(G.MaxPool3DGradGrad)
+def get_bprop_max_pool3d_grad_grad_grad(self):
+    """Grad definition for `MaxPool3GradGrad` operation."""
+
+    max_pool3d_grad = G.MaxPool3DGrad(
+        kernel_size=self.kernel_size,
+        strides=self.strides,
+        pad_mode=self.pad_mode,
+        data_format=self.data_format)
+
+    def bprop(x, y, grad, out, dout):
+        dgrad = max_pool3d_grad(x, y, dout)
+        return zeros_like(x), zeros_like(y), dgrad
+
+    return bprop
+
+
 @bprop_getters.register(P.AvgPool)
 def get_bprop_avg_pool_grad(self):
     """Grad definition for `AvgPool` operation."""

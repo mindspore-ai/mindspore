@@ -65,6 +65,9 @@ from .max_pool import _max_pool_tbe
 from .max_pool_grad import _max_pool_grad_tbe
 from .max_pool_grad_with_argmax import _max_pool_grad_with_argmax_tbe
 from .max_pool_with_argmax import _max_pool_with_argmax_tbe
+from .max_pool3d import _max_pool_3d_tbe
+from .max_pool3d_grad import _max_pool_3d_grad_tbe
+from .max_pool3d_grad_grad import _max_pool_3d_grad_grad_tbe
 from .mul import _mul_tbe
 from .mul_ds import _mul_ds_tbe
 from .real_div import _real_div_tbe
