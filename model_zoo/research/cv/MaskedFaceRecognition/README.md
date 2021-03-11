@@ -1,5 +1,3 @@
-# Masked Face Recognition with Latent Part Detection
-
 # Contents
 
 - [Masked Face Recognition Description](#masked-face-recognition-description)
@@ -10,7 +8,7 @@
 - [Evaluation](#evaluation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-# [Masked Face Recognition Description](#contents)
+## [Masked Face Recognition Description](#contents)
 
 <p align="center">
  <img src="./img/overview.png">
@@ -22,11 +20,11 @@ This is a **MindSpore** implementation of [Masked Face Recognition with Latent P
 
 *Latent Part Detection* (LPD) is a differentiable module that can locate the latent facial part which is robust to mask wearing, and the latent part is further used to extract discriminative features. The proposed LPD model is trained in an end-to-end manner and only utilizes the original and synthetic training data.
 
-# [Dataset](#contents)
+## [Dataset](#contents)
 
 ## Training Dataset
 
-We use [CASIA-WebFace Dataset](http://www.cbsr.ia.ac.cn/english/CASIA-WebFace-Database.html) as the training dataset. After downloading CASIA-WebFace, we first detect faces and facial landmarks using `MTCNN` and align faces to a canonical pose using similarity transformation. (see: [MTCNN - face detection & alignment](https://github.com/kpzhang93/MTCNN_face_detection_alignment)).
+We use [CASIA-WebFace Dataset](http://www.cbsr.ia.ac.cn/english/casia-webFace/casia-webfAce_AgreEmeNtS.pdf) as the training dataset. After downloading CASIA-WebFace, we first detect faces and facial landmarks using `MTCNN` and align faces to a canonical pose using similarity transformation. (see: [MTCNN - face detection & alignment](https://github.com/kpzhang93/MTCNN_face_detection_alignment)).
 
 Collecting and labeling realistic masked facial data requires a great deal of human labor. To address this issue, we generate masked face images based on CASIA-WebFace. We generate 8 kinds of synthetic masked face images to augment training data based on 8 different styles of masks, such as surgical masks, N95 respirators and activated carbon masks. We mix the original face images with the synthetic masked images as the training data.
 
@@ -65,7 +63,7 @@ The directory structure is as follows:
     ...
 ```
 
-# [Environment Requirements](#contents)
+## [Environment Requirements](#contents)
 
 - Hardware（Ascend）
     - Prepare hardware environment with Ascend processor. If you want to get Ascend , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
@@ -75,7 +73,7 @@ The directory structure is as follows:
     - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
-# [Script Description](#contents)
+## [Script Description](#contents)
 
 The entire code structure is as following:
 
@@ -102,7 +100,7 @@ The entire code structure is as following:
   ├─ test.py                                // evaluation scripts
 ```
 
-# [Training](#contents)
+## [Training](#contents)
 
 ```bash
 sh scripts/run_train.sh [USE_DEVICE_ID]
@@ -123,7 +121,7 @@ epoch[8], iter[27500], loss:(Tensor(shape=[], dtype=Float32, value= 2.08594), Te
 epoch[8], iter[27600], loss:(Tensor(shape=[], dtype=Float32, value= 2.38706), Tensor(shape=[], dtype=Bool, value= False), Tensor(shape=[], dtype=Float32, value= 65536)), cur_lr:0.004000, mean_fps:4430.37 imgs/sec
 ```
 
-# [Evaluation](#contents)
+## [Evaluation](#contents)
 
 ```bash
 sh scripts/run_eval.sh [USE_DEVICE_ID]
@@ -138,6 +136,6 @@ You will get the result as following in "./scripts/log_inference/outputs/models/
 | MG       | 36.55 | 94.12 | 98.01 | 98.66 |
 | LPD      | 42.14 | 96.22 | 98.11 | 98.75 |
 
-# [ModelZoo Homepage](#contents)
+## [ModelZoo Homepage](#contents)
 
 Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
