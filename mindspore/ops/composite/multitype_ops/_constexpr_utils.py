@@ -152,20 +152,6 @@ def judge_index_type(index_type, target_type):
 
 
 @constexpr
-def check_type_valid(dtype, target_type, op_name):
-    if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
-        raise TypeError(
-            f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
-
-
-@constexpr
-def check_index_type_valid(dtype, target_type, op_name):
-    if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
-        raise IndexError(
-            f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
-
-
-@constexpr
 def judge_indexes_types(dtypes, target_type):
     """Check a tuple of tensor data type."""
     for dtype in dtypes:
@@ -175,37 +161,45 @@ def judge_indexes_types(dtypes, target_type):
 
 
 @constexpr
-def check_indexes_types_valid(dtypes, target_type, op_name):
+def check_type_valid(dtype, target_type, op_name):
+    if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
+        if op_name in (TENSOR_GETITEM, TENSOR_SETITEM):
+            raise IndexError(
+                f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
+        raise TypeError(
+            f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
+
+
+@constexpr
+def check_types_valid(dtypes, target_type, op_name):
     """Check a tuple of tensor data type."""
     for dtype in dtypes:
-        if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
-            raise IndexError(f"For '{op_name}', the all index tensor data types should be in {target_type}, "
-                             f"but got {dtype}.")
+        check_type_valid(dtype, target_type, op_name)
 
 
 @constexpr
 def get_pos_of_indexes_types(indexes_types, op_name):
     """Separate the position information of tensor and slice and ellipsis from the mixed tensors index."""
     slice_positions, ellipsis_positions, none_positions, int_positions, bool_positions, tensor_positions, \
-        sequence_positions = [], [], [], [], [], [], []
+        sequence_positions = (), (), (), (), (), (), ()
     for i, index_type in enumerate(indexes_types):
         if isinstance(index_type, mstype.Slice):
-            slice_positions.append(i)
+            slice_positions += (i,)
         elif isinstance(index_type, mstype.Ellipsis_):
-            ellipsis_positions.append(i)
+            ellipsis_positions += (i,)
         elif isinstance(index_type, mstype.none_type):
-            none_positions.append(i)
+            none_positions += (i,)
         elif isinstance(index_type, mstype.Int):
-            int_positions.append(i)
+            int_positions += (i,)
         elif isinstance(index_type, mstype.Bool):
-            bool_positions.append(i)
+            bool_positions += (i,)
         elif isinstance(index_type, mstype.tensor_type):
-            tensor_positions.append(i)
+            tensor_positions += (i,)
         elif isinstance(index_type, (list, tuple)):
-            sequence_positions.append(i)
+            sequence_positions += (i,)
         else:
-            raise IndexError(f"For '{op_name}', the index elements only support "
-                             f"'Tensor', 'int32', 'int64', 'Slice', 'Ellipsis', but got {index_type}.")
+            raise IndexError(f"For '{op_name}', the index elements only support 'Slice', 'Ellipsis', 'None', "
+                             f"'Tensor', 'int',  'List', 'Tuple', 'bool' but got {index_type}.")
     if len(ellipsis_positions) > 1:
         raise IndexError(
             f"For '{op_name}, an index can only have a single ellipsis('...')")
@@ -394,8 +388,6 @@ def check_value_elements(data_dtype, types):
     raise TypeError(
         f"For '{TENSOR_SETITEM}', the value does not support scalar and tensor mixing, but got {types}.")
 
-# TODO to del
-
 
 @constexpr
 def get_index_tensor_dtype(dtype):
@@ -408,28 +400,6 @@ def get_index_tensor_dtype(dtype):
         f"For '{TENSOR_SETITEM}', the index tensor data type '{dtype}' is not supported.")
 
 
-# TODO to del
-@constexpr
-def check_index_tensors_dtype(indexes_types, op_name):
-    """Check a tuple of tensor data type."""
-    for index_type in indexes_types:
-        if not index_type in (mstype.int32, mstype.int64):
-            raise IndexError(f"For '{op_name}', the all index tensor data types should be "
-                             f"mstype.int32, but got {index_type}.")
-    return True
-
-
-# TODO to del
-@constexpr
-def check_index_tensor_dtype(index_type, op_name):
-    """Check a tensor data type."""
-    if index_type in (mstype.int32, mstype.int64):
-        return True
-    raise IndexError(f"For '{op_name}', the index tensor data type should be mstype.int32, "
-                     f"but got {index_type}.")
-
-
-# TODO to del
 @constexpr
 def check_tensors_dtype_same(data_dtype, value_dtype, op_name):
     """Check tensors data type same."""
@@ -527,31 +497,18 @@ def transform_sequence_index(sequence_index, shape, op_name):
 
 
 @constexpr
-def convert_slice_to_tensor(slice_number, final_shape, indexes_shapes_info, op_name):
+def convert_slice_to_tensor(index, final_shape, slice_cnt, broadcast_shape, slice_shapes, fancy_position):
     """Convert a slice to a tensor."""
-    shape = []
-    count = 0
-    array = None
-    for ele in indexes_shapes_info:
-        if isinstance(ele, list):
-            if count == slice_number:
-                array = np.array(ele, np.int32)
-                shape.append(len(ele))
-            else:
-                # When the slice is not the slice looking for, the shape is filled with 1.
-                shape.append(1)
-            count += 1
-        elif isinstance(ele, tuple):
-            shape.extend([1] * len(ele))
-        else:
-            shape.append(1)
-    if array is None:
-        raise ValueError(
-            f"For '{op_name}', generate tensor from 'slice' failed.")
+
+    shape = [1] * len(slice_shapes)
+    shape[slice_cnt] = slice_shapes[slice_cnt]
+    shape = shape[:fancy_position] + [1] * len(broadcast_shape) + shape[fancy_position:]
+
+    array = np.array(index, np.int64)
     array = np.reshape(array, shape)
     reps = compute_multiples(shape, final_shape)
-    tensor = Tensor(np.tile(array, reps), mstype.int64)
-    return tensor
+    slice_index_tensor = Tensor(np.tile(array, reps), mstype.int64)
+    return slice_index_tensor
 
 
 @constexpr
@@ -600,6 +557,15 @@ def generate_updates_shape(data_shape, index_shape, op_type):
 
 
 @constexpr
+def transform_slice_to_ele_list(slice_index, dim_len):
+    slice_obj = slice(slice_index.start, slice_index.stop, slice_index.step)
+    slice_ele_list = list(range(dim_len))[slice_obj]
+    if not slice_ele_list:
+        raise IndexError(f"An empty slice is not supported, got {slice_obj}")
+    return slice_ele_list
+
+
+@constexpr
 def check_tuple_index_len(data_rank, tuple_index_len, op_name):
     """Check if the number of index tensor exceeds the dimension of the operated tensor."""
     if tuple_index_len <= data_rank:
@@ -609,89 +575,36 @@ def check_tuple_index_len(data_rank, tuple_index_len, op_name):
 
 
 @constexpr
-def generate_index_info_from_tuple_of_mixed_tensors(data_shape, indexes_types, tensor_indexes_shapes,
-                                                    tensor_indexes_dtypes, slice_indexes, op_name):
+def generate_index_info_from_tuple_of_mixed_tensors(tensor_positions, tensor_indexes_shapes,
+                                                    slice_shapes, op_name):
     """
     Generate index info which contain broadcast shape, final shape,
     indexes shapes info, ellipsis size from a tuple of mixed tensors.
     """
-    check_index_tensors_dtype(tensor_indexes_dtypes, op_name)
-    data_rank = len(data_shape)
-    indexes_size = len(indexes_types)
-    if indexes_size > data_rank:
-        raise IndexError(f"For '{op_name}', the number {indexes_size} of index elements "
-                         f"is greater than the dimension  {len(data_shape)} of the operated tensor.")
-    indexes_info, index_tensors_info = {}, {}
-    tensor_count, slice_count = 0, 0
-    for pos, index_type in enumerate(indexes_types):
-        if isinstance(index_type, mstype.tensor_type):
-            indexes_info[pos] = tensor_indexes_shapes[tensor_count]
-            index_tensors_info[pos] = tensor_indexes_shapes[tensor_count]
-            tensor_count += 1
-        elif isinstance(index_type, mstype.Slice):
-            slice_obj = slice(slice_indexes[slice_count].start,
-                              slice_indexes[slice_count].stop,
-                              slice_indexes[slice_count].step)
-            # Use list to represent slicing result.
-            indexes_info[pos] = list(range(data_shape[pos]))[slice_obj]
-            if not indexes_info[pos]:
-                raise IndexError("An empty slice is not supported, got {}:{}:{}".format(
-                    slice_indexes[slice_count].start,
-                    slice_indexes[slice_count].stop,
-                    slice_indexes[slice_count].step))
-            slice_count += 1
-        else:
-            raise IndexError(f"For '{op_name}', the index elements only support "
-                             f"'Tensor', 'int', 'Slice', 'Ellipsis', but got {index_type}.")
-    broadcast_shape, final_shape, indexes_shapes_info = _derive_result_shape_info_from_tuple_of_mixed_tensors(
-        indexes_info, index_tensors_info, op_name)
-    return broadcast_shape, final_shape, indexes_shapes_info
+    tensor_positions = tuple(sorted(tensor_positions))
+    tensor_index_continue_tag = _judge_order_continuous(tensor_positions)
+    fancy_position = tensor_positions[0] if tensor_index_continue_tag else 0
+    broadcast_shape = generate_broadcast_shape(tensor_indexes_shapes, op_name)
+    index_tensor_new_shape, final_shape = [], []
 
+    if tensor_index_continue_tag:
+        final_shape = slice_shapes[:fancy_position] + broadcast_shape + slice_shapes[fancy_position:]
+        index_tensor_new_shape = (1,) * len(slice_shapes[:fancy_position]) + \
+            broadcast_shape + (1,) * len(slice_shapes[fancy_position:])
 
-def _judge_tuple_of_mixed_tensors_continuous(index_tensor_info_key: list):
-    """Determine whether the tensor in the index appears continuously."""
-    for i in range(len(index_tensor_info_key) - 1):
-        if index_tensor_info_key[i + 1] != index_tensor_info_key[i] + 1:
+    else:
+        final_shape = broadcast_shape + slice_shapes
+        index_tensor_new_shape = broadcast_shape + (1,) * len(slice_shapes)
+
+    return broadcast_shape, index_tensor_new_shape, final_shape, fancy_position
+
+def _judge_order_continuous(order_sequence):
+    if not order_sequence:
+        return False
+    for idx1, idx2 in zip(order_sequence[:-1], order_sequence[1:]):
+        if idx1 + 1 != idx2:
             return False
     return True
-
-
-def _derive_result_shape_info_from_tuple_of_mixed_tensors(indexes_info, index_tensors_info, op_name):
-    """Derive the resulting shape information from the a tuple index of mixed tensors."""
-    index_tensor_info_key = list(index_tensors_info.keys())
-    index_tensor_info_value = list(index_tensors_info.values())
-    broadcast_shape = generate_broadcast_shape(
-        index_tensor_info_value, op_name)
-    final_shape, indexes_shapes_info = [], []
-    mixed_tensors_continuous = _judge_tuple_of_mixed_tensors_continuous(
-        index_tensor_info_key)
-    if mixed_tensors_continuous:
-        tensor_shape_dealt = False
-        for ele in indexes_info.values():
-            if isinstance(ele, list):
-                final_shape.append(len(ele))
-                indexes_shapes_info.append(ele)
-            elif isinstance(ele, tuple):
-                if not tensor_shape_dealt:
-                    final_shape.extend(broadcast_shape)
-                    indexes_shapes_info.append(broadcast_shape)
-                    tensor_shape_dealt = True
-            else:
-                raise IndexError(f"For '{op_name}', the index elements only support "
-                                 f"'Tensor', 'int', 'Slice', 'Ellipsis', but got {type(ele).__name__}.")
-    else:
-        final_shape.extend(broadcast_shape)
-        indexes_shapes_info.append(broadcast_shape)
-        for ele in indexes_info.values():
-            if isinstance(ele, list):
-                final_shape.append(len(ele))
-                indexes_shapes_info.append(ele)
-            elif isinstance(ele, tuple):
-                continue
-            else:
-                raise IndexError(f"For '{op_name}', the index elements only support "
-                                 f"'Tensor', 'int', 'Slice', 'Ellipsis', but got {type(ele).__name__}.")
-    return broadcast_shape, tuple(final_shape), tuple(indexes_shapes_info)
 
 
 @constexpr
@@ -724,20 +637,6 @@ def check_number_index_type(number):
         return INT_
     raise IndexError("Only support integers, slices(`:`), ellipsis(`...`), None and bool, got {0} type is {1} "
                      .format(number, type(number)))
-
-
-@constexpr
-def get_stride_info_from_slice(data_shape, slice_index):
-    """Get stride info from a python slice"""
-    begin, end, step = get_slice_stride(data_shape[0], slice_index)
-    begin_strides = [begin]
-    end_strides = [end]
-    step_strides = [step]
-    for end in data_shape[1:]:
-        begin_strides.append(0)
-        end_strides.append(end)
-        step_strides.append(1)
-    return tuple(begin_strides), tuple(end_strides), tuple(step_strides)
 
 
 @constexpr
