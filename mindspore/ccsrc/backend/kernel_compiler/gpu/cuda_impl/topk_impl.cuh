@@ -21,7 +21,7 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T, typename S>
-void FastTopK(const int outer, const int inner, const T *input_addr, const S *k, T *output, S *indices, const T initK,
+void FastTopK(const int outer, const int inner, const T *input_addr, S k_cut, T *output, S *indices, const T initK,
               cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_TOPK_IMPL_CUH_
