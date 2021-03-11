@@ -99,8 +99,11 @@ class MeanSurfaceDistance(Metric):
         y = self._convert_data(inputs[1])
         label_idx = inputs[2]
 
-        if not isinstance(label_idx, int):
-            raise TypeError("The data type of label_idx must be int, but got {}.".format(type(label_idx)))
+        if not isinstance(label_idx, (int, float)):
+            raise TypeError("The data type of label_idx must be int or float, but got {}.".format(type(label_idx)))
+
+        if label_idx not in y_pred and label_idx not in y:
+            raise ValueError("The label_idx should be in y_pred or y, but {} is not.".format(label_idx))
 
         if y_pred.size == 0 or y_pred.shape != y.shape:
             raise ValueError("y_pred and y should have same shape, but got {}, {}.".format(y_pred.shape, y.shape))

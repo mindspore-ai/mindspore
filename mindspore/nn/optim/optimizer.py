@@ -52,7 +52,7 @@ class Optimizer(Cell):
 
         When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
         but the gradient centralization can only be applied to the parameters of the convolution layer.
-        If the parameters of the non convolution layer are set to True, an error will be reported. Default: False.
+        If the parameters of the non convolution layer are set to True, an error will be reported.
 
         To improve parameter groups performance, the customized order of parameters can be supported.
 
@@ -80,8 +80,9 @@ class Optimizer(Cell):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' must be in one of group parameters.
 
-            - grad_centralization: Optional. If "grad_centralization" is in the keys, the set value will be used.
-              If not, the `grad_centralization` is False by default.
+            - grad_centralization: Optional. The data type of "grad_centralization" is Bool. If "grad_centralization"
+              is in the keys, the set value will be used. If not, the `grad_centralization` is False by default.
+              This parameter only works on the convolution layer.
 
         weight_decay (float): A floating point value for the weight decay. It must be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.

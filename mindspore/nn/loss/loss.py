@@ -178,11 +178,12 @@ class RMSELoss(_Loss):
     RMSELoss creates a standard to measure the root mean square error between :math:`x` and :math:`y`
     element-wise, where :math:`x` is the input and :math:`y` is the target.
 
-    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
+    For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`M` and :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
 
     .. math::
-        loss = \sqrt{\frac{1}{M}\sum_{m=1}^{M}{(x_m-y_m)^2}}
+        loss =  \begin{cases} \sqrt{\frac{1}{M}\sum_{m=1,n=1}^{M,N}{(x_m-y_n)^2}}, & \text {if  M > N }
+        \\\\ \sqrt{\frac{1}{N}\sum_{m=1,n=1}^{M,N}{(x_m-y_n)^2}}, &\text{if  M < N } \end{cases}
 
 
     Inputs:
@@ -249,9 +250,12 @@ class MAELoss(_Loss):
         >>> print(output)
         0.33333334
     """
+    def __init__(self, reduction='mean'):
+        super(MAELoss, self).__init__(reduction)
+        self.abs = P.Abs()
 
     def construct(self, logits, label):
-        x = F.absolute(logits - label)
+        x = self.abs(logits - label)
         return self.get_loss(x)
 
 
@@ -484,10 +488,10 @@ class MultiClassDiceLoss(_Loss):
             Default: 'softmax'. Choose from: ['softmax', 'logsoftmax', 'relu', 'relu6', 'tanh','Sigmoid']
 
     Inputs:
-        - **y_pred** (Tensor) - Tensor of shape (N, C, ...). y_pred dimension should be greater than 1.
-            The data type must be float16 or float32.
-        - **y** (Tensor) - Tensor of shape (N, C, ...). y dimension should be greater than 1.
-            The data type must be float16 or float32.
+        - **y_pred** (Tensor) - Tensor of shape (N, C, ...). y_pred dimension should be greater than 1. The data type
+            must be float16 or float32.
+        - **y** (Tensor) - Tensor of shape (N, C, ...). y dimension should be greater than 1. The data type must be
+            float16 or float32.
 
     Outputs:
         Tensor, a tensor of shape with the per-example sampled MultiClass Dice Losses.
@@ -1002,21 +1006,25 @@ class BCEWithLogitsLoss(_Loss):
 
 @constexpr
 def _check_ndim(predict_nidm, target_ndim):
+    if predict_nidm < 2 or predict_nidm > 4:
+        raise ValueError("The dimensions of predict and target should be between 2 and 4, but got"
+                         "predict dim {}.".format(predict_nidm))
+    if target_ndim < 2 or target_ndim > 4:
+        raise ValueError("The dimensions of target and target should be between 2 and 4, but got"
+                         "target dim {}.".format(target_ndim))
     if predict_nidm != target_ndim:
         raise ValueError("The dim of the predicted value and the dim of the target value must be equal, but got"
                          "predict dim {} and target dim {}.".format(predict_nidm, target_ndim))
 
 
 @constexpr
-def _check_channel_and_shape(target, predict):
-    if target not in (predict, 1):
-        raise ValueError("The target must have a channel or the same shape as predict.")
-
-
-@constexpr
-def _check_predict_channel(predict):
+def _check_channel_and_shape(predict, target):
     if predict == 1:
         raise ValueError("Single channel prediction is not supported.")
+    if target not in (1, predict):
+        raise ValueError("The target must have a channel or the same shape as predict."
+                         "If it has a channel, it should be the range [0, C-1], where C is the number of classes "
+                         f"inferred from 'predict': C={predict}.")
 
 
 class FocalLoss(_Loss):
@@ -1027,20 +1035,22 @@ class FocalLoss(_Loss):
 
     Args:
         gamma (float): Gamma is used to adjust the steepness of weight curve in focal loss. Default: 2.0.
-        weight (Union[Tensor, None]): A rescaling weight applied to the loss of each batch element. If None, no weights
-                                     are applied. Default: None.
+        weight (Union[Tensor, None]): A rescaling weight applied to the loss of each batch element. The dimension of
+                                      weight should be 1. If None, no weights are applied. Default: None.
         reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
                          If "none", do not perform reduction. Default: "mean".
 
     Inputs:
-        - **predict** (Tensor) - Input logits. Tensor of shape should be BCH[WD]. Where C is the number of classes.
-                                 Its value is greater than 1.
-        - **target** (Tensor) - Tensor of shape should be B1H[WD] or BCH[WD]. If the target shape is B1H[WD], the
-                                expected target of this loss should be the class index within the range of [0, C-1],
-                                where C is the number of classes.
+        - **predict** (Tensor) - Tensor of shape should be (B, C) or (B, C, H) or (B, C, H, W). Where C is the number
+            of classes. Its value is greater than 1. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
+            and W should be the same as target.
+        - **target** (Tensor) - Tensor of shape should be (B, C) or (B, C, H) or (B, C, H, W). The value of C is 1 or
+            it needs to be the same as predict's C. If C is not 1, the shape of target should be the same as that of
+            predict, where C is the number of classes. If the shape is (B, C, H, W) or (B, C, H), the H or product of H
+            and W should be the same as predict.
 
     Outputs:
-        Tensor, a tensor of shape with the per-example sampled Focal losses.
+        Tensor, it's a tensor with the same shape and type as input `predict`.
 
     Raises:
         TypeError: If the data type of ``gamma`` is not float..
@@ -1056,9 +1066,9 @@ class FocalLoss(_Loss):
         >>> predict = Tensor([[0.8, 1.4], [0.5, 0.9], [1.2, 0.9]], mstype.float32)
         >>> target = Tensor([[1], [1], [0]], mstype.int32)
         >>> focalloss = nn.FocalLoss(weight=Tensor([1, 2]), gamma=2.0, reduction='mean')
-        >>> output = focalloss(inputs, labels)
+        >>> output = focalloss(predict, target)
         >>> print(output)
-        0.33365273
+        1.6610543
     """
 
     def __init__(self, weight=None, gamma=2.0, reduction='mean'):
@@ -1067,6 +1077,8 @@ class FocalLoss(_Loss):
         self.gamma = validator.check_value_type("gamma", gamma, [float])
         if weight is not None and not isinstance(weight, Tensor):
             raise TypeError("The type of weight should be Tensor, but got {}.".format(type(weight)))
+        if isinstance(weight, Tensor) and weight.ndim != 1:
+            raise ValueError("The dimension of weight should be 1, but got {}.".format(weight.ndim))
         self.weight = weight
         self.expand_dims = P.ExpandDims()
         self.gather_d = P.GatherD()
@@ -1077,8 +1089,7 @@ class FocalLoss(_Loss):
     def construct(self, predict, target):
         targets = target
         _check_ndim(predict.ndim, targets.ndim)
-        _check_channel_and_shape(targets.shape[1], predict.shape[1])
-        _check_predict_channel(predict.shape[1])
+        _check_channel_and_shape(predict.shape[1], targets.shape[1])
 
         if predict.ndim > 2:
             predict = predict.view(predict.shape[0], predict.shape[1], -1)

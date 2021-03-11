@@ -57,9 +57,9 @@ class SGD(Optimizer):
     Here : where p, v and u denote the parameters, accum, and momentum respectively.
 
     Note:
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
-        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
+        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
+        but the gradient centralization can only be applied to the parameters of the convolution layer.
+        If the parameters of the non convolution layer are set to True, an error will be reported.
 
         To improve parameter groups performance, the customized order of parameters can be supported.
 
@@ -73,15 +73,13 @@ class SGD(Optimizer):
             - lr: Optional. If "lr" in the keys, the value of corresponding learning rate will be used.
               If not, the `learning_rate` in the API will be used.
 
-            - weight_decay: Optional. If "weight_decay" in the keys, the value of corresponding weight decay
-              will be used. If not, the `weight_decay` in the API will be used.
-
             - order_params: Optional. If "order_params" in the keys, the value must be the order of parameters and
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' must be in one of group parameters.
 
-            - grad_centralization: Optional. If "grad_centralization" is in the keys, the set value will be used.
-              If not, the `grad_centralization` is False by default. This parameter only works on the convolution layer.
+            - grad_centralization: Optional. The data type of "grad_centralization" is Bool. If "grad_centralization"
+              is in the keys, the set value will be used. If not, the `grad_centralization` is False by default.
+              This parameter only works on the convolution layer.
 
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
             When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then
@@ -119,11 +117,11 @@ class SGD(Optimizer):
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))
-        >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
+        >>> group_params = [{'params': conv_params,'grad_centralization':True},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
         >>> optim = nn.SGD(group_params, learning_rate=0.1, weight_decay=0.0)
-        >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
+        >>> # The conv_params's parameters will use default learning rate of 0.1 default weight decay of 0.0 and grad
         >>> # centralization of True.
         >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad
         >>> # centralization of False.
