@@ -37,6 +37,7 @@
 #include "ops/ceil.h"
 #include "ops/fusion/exp_fusion.h"
 #include "ops/floor.h"
+#include "ops/floor_div.h"
 #include "ops/floor_mod.h"
 #include "ops/log.h"
 #include "ops/sqrt.h"
@@ -299,6 +300,20 @@ ops::PrimitiveC *TFFloorParser::Parse(const tensorflow::NodeDef &tf_op,
   return prim.release();
 }
 
+ops::PrimitiveC *TFFloorDivParser::Parse(const tensorflow::NodeDef &tf_op,
+                                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                         std::vector<std::string> *inputs, int *output_size) {
+  auto prim = std::make_unique<ops::FloorDiv>();
+
+  *output_size = 1;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
+  }
+
+  return prim.release();
+}
+
 ops::PrimitiveC *TFFloorModParser::Parse(const tensorflow::NodeDef &tf_op,
                                          const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                          std::vector<std::string> *inputs, int *output_size) {
@@ -435,6 +450,7 @@ TFNodeRegistrar g_tfSquareParser("Square", new TFSquareParser());
 TFNodeRegistrar g_tfCeilParser("Ceil", new TFCeilParser());
 TFNodeRegistrar g_tfExpParser("Exp", new TFExpParser());
 TFNodeRegistrar g_tfFloorParser("Floor", new TFFloorParser());
+TFNodeRegistrar g_tfFloorDivParser("FloorDiv", new TFFloorDivParser());
 TFNodeRegistrar g_tfFloorModParser("FloorMod", new TFFloorModParser());
 TFNodeRegistrar g_tfLogParser("Log", new TFLogParser());
 TFNodeRegistrar g_tfSqrtParser("Sqrt", new TFSqrtParser());

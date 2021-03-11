@@ -204,6 +204,16 @@ class TFFloorParser : public TFNodeParser {
                          std::vector<std::string> *inputs, int *output_size) override;
 };
 
+class TFFloorDivParser : public TFNodeParser {
+ public:
+  TFFloorDivParser() = default;
+  ~TFFloorDivParser() override = default;
+
+  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
+                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                         std::vector<std::string> *inputs, int *output_size) override;
+};
+
 class TFFloorModParser : public TFNodeParser {
  public:
   TFFloorModParser() = default;
