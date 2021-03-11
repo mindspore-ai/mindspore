@@ -14,12 +14,14 @@
 # ============================================================================
 """normalization"""
 import itertools
+import numbers
 
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer
+from mindspore.common.initializer import initializer, Initializer
+from mindspore.common.tensor import Tensor
 from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import constexpr
 import mindspore.context as context
@@ -868,6 +870,18 @@ class InstanceNorm2d(Cell):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
+    \gamma and \beta are learnable parameter vectors of size num_features if affine is True. The standard-deviation
+    is calculated via the biased estimator.
+
+    By default, this layer uses instance statistics computed from input data in both training and evaluation modes.
+
+    If use_batch_statistics is set to True, it means training phases, and this layer keeps running estimates of its
+    computed mean and variance, which are then used for normalization during evaluation. The running estimates are
+    kept with a default momentum of 0.1.
+
+    InstanceNorm2d and BatchNorm2d are very similar, but have some differences. InstanceNorm2d is applied on each
+    channel of channeled data like RGB images, but BatchNorm2d is usually applied on each batch of batched data.
+
     Note:
         Note that the formula for updating the running_mean and running_var is
         :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
@@ -880,17 +894,13 @@ class InstanceNorm2d(Cell):
             running_mean and running_var computation. Default: 0.1.
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
             use the mean value and variance value of specified value. Default: True.
 
@@ -905,7 +915,16 @@ class InstanceNorm2d(Cell):
         ``GPU``
 
     Raise:
-        ValueError: If num_features is less than 1 or momentum not in (0, 1).
+        TypeError: If `num_features` is not an int.
+        TypeError: If `eps` is not a float.
+        TypeError: If `momentum` is not a float.
+        TypeError: If `affine` is not a bool.
+        TypeError: If the type of `gamma_init`/`beta_init`/`moving_mean_init`/`moving_var_init` is not same, or if
+            the initialized element type is not float32.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+        KeyError: If any of `gamma_init`/`beta_init`/`moving_mean_init`/`moving_var_init` is str and the homonymous
+            class inheriting from `Initializer` not exists.
 
     Examples:
         >>> net = nn.InstanceNorm2d(3)
@@ -926,9 +945,15 @@ class InstanceNorm2d(Cell):
                  beta_init='zeros',
                  moving_mean_init='zeros',
                  moving_var_init='ones',
-                 use_batch_statistics=True,
-                 input_dims='2d'):
+                 use_batch_statistics=True):
         super(InstanceNorm2d, self).__init__()
+        validator.check_value_type('num_features', num_features, [int], self.cls_name)
+        validator.check_value_type('eps', eps, [float], self.cls_name)
+        validator.check_value_type('momentum', momentum, [float], self.cls_name)
+        validator.check_value_type('affine', affine, [bool], self.cls_name)
+        args_input = {"gamma_init": gamma_init, "beta_init": beta_init,
+                      "moving_mean_init": moving_mean_init, "moving_var_init": moving_var_init}
+        self.check_types_valid(args_input, 'InstanceNorm2d')
         if num_features < 1:
             raise ValueError("num_features must be at least 1")
 
@@ -937,7 +962,7 @@ class InstanceNorm2d(Cell):
         self.use_batch_statistics = use_batch_statistics
         self.num_features = num_features
         self.eps = eps
-        self.input_dims = input_dims
+        self.input_dims = '2d'
         self.moving_mean = Parameter(initializer(
             moving_mean_init, num_features), name="mean", requires_grad=False)
         self.moving_variance = Parameter(initializer(
@@ -967,6 +992,15 @@ class InstanceNorm2d(Cell):
     def extend_repr(self):
         return 'num_features={}, eps={}, momentum={}, gamma={}, beta={}, moving_mean={}, moving_variance={}'.format(
             self.num_features, self.eps, self.momentum, self.gamma, self.beta, self.moving_mean, self.moving_variance)
+
+    def check_types_valid(self, args_dict, name):
+        for key, _ in args_dict.items():
+            val = args_dict[key]
+            if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
+                raise TypeError(f"[{name}]Supported type for arg {key} is [Tensor, numbers.Number, str, Initializer],"
+                                f"but got {type(val)}")
+            if isinstance(val, Tensor) and val.dtype is not float:
+                raise TypeError(f"[{name}]The type of arg {key} should be float32, but got {val.dtype}")
 
 
 class GroupNorm(Cell):

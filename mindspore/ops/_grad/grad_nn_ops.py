@@ -693,8 +693,7 @@ def get_bprop_fused_batch_norm_ex(self):
 @bprop_getters.register(P.InstanceNorm)
 def get_bprop_instance_norm(self):
     """Grad definition for `InstanceNorm` operation."""
-    is_training = self.is_training
-    input_grad = G.InstanceNormGrad(is_training, self.epsilon, self.momentum)
+    input_grad = G.InstanceNormGrad(self.epsilon, self.momentum)
 
     def bprop(x, gamma, beta, mean, variance, out, dout):
         saved_mean = out[1]
