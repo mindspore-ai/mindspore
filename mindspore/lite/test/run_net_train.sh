@@ -37,13 +37,13 @@ function Run_Converter() {
     cd ${x86_path} || exit 1
     tar -zxf mindspore-lite-${version}-train-linux-x64.tar.gz || exit 1
 
-    tar -zxf mindspore-lite-${version}-train-converter-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-train-converter-linux-x64 || exit 1
+    tar -zxf mindspore-lite-${version}-converter-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-converter-linux-x64 || exit 1
     cp converter/converter_lite ./ || exit 1
     
 
     # Convert the models
-    cd ${x86_path}/mindspore-lite-${version}-train-converter-linux-x64 || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-converter-linux-x64 || exit 1
 
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
