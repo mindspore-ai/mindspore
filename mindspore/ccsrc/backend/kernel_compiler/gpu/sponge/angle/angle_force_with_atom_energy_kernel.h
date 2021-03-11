@@ -70,8 +70,8 @@ class AngleForceWithAtomEnergyGpuKernel : public GpuKernel {
 
     auto frc_f = GetDeviceAddress<T>(outputs, 0);
     auto ene = GetDeviceAddress<T>(outputs, 1);
-    AngleForceWithAtomEnergy(angle_numbers, uint_crd_f, scaler_f, atom_a, atom_b, atom_c, angle_k, angle_theta0, frc_f,
-                             ene, reinterpret_cast<cudaStream_t>(stream_ptr));
+    AngleForceWithAtomEnergy(angle_numbers, ele_uint_crd, uint_crd_f, scaler_f, atom_a, atom_b, atom_c, angle_k,
+                             angle_theta0, frc_f, ene, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 

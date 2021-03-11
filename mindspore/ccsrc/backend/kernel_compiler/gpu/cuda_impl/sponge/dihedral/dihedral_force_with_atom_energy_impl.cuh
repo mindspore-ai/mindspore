@@ -20,8 +20,8 @@
 #include <curand_kernel.h>
 #include "runtime/device/gpu/cuda_common.h"
 
-void DihedralForceWithAtomEnergy(int dihedral_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                                 const int *atom_b, const int *atom_c, const int *atom_d, const int *ipn,
-                                 const float *pk, const float *gamc, const float *gams, const float *pn, float *frc_f,
-                                 float *ene, cudaStream_t stream);
+void DihedralForceWithAtomEnergy(int dihedral_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                                 const int *atom_a, const int *atom_b, const int *atom_c, const int *atom_d,
+                                 const int *ipn, const float *pk, const float *gamc, const float *gams, const float *pn,
+                                 float *frc_f, float *ene, cudaStream_t stream);
 #endif

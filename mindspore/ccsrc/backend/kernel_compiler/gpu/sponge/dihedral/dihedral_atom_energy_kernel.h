@@ -81,8 +81,8 @@ class DihedralAtomEnergyGpuKernel : public GpuKernel {
     auto pn = GetDeviceAddress<T>(inputs, 10);
 
     auto ene = GetDeviceAddress<T>(outputs, 0);
-    DihedralAtomEnergy(dihedral_numbers, uint_crd_f, scaler_f, atom_a, atom_b, atom_c, atom_d, ipn, pk, gamc, gams, pn,
-                       ene, reinterpret_cast<cudaStream_t>(stream_ptr));
+    DihedralAtomEnergy(dihedral_numbers, ele_uint_crd, uint_crd_f, scaler_f, atom_a, atom_b, atom_c, atom_d, ipn, pk,
+                       gamc, gams, pn, ene, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 

@@ -20,7 +20,7 @@
 #include <curand_kernel.h>
 #include "runtime/device/gpu/cuda_common.h"
 
-void BondForceWithAtomVirial(int bond_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                             const int *atom_b, const float *bond_k, const float *bond_r0, float *frc_f, float *atom_v,
-                             cudaStream_t stream);
+void BondForceWithAtomVirial(int bond_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                             const int *atom_a, const int *atom_b, const float *bond_k, const float *bond_r0,
+                             float *frc_f, float *atom_v, cudaStream_t stream);
 #endif

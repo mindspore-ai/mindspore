@@ -40,6 +40,7 @@ class BondForceWithAtomVirialGpuKernel : public GpuKernel {
     // get bond_numbers
     kernel_node_ = kernel_node;
     bond_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "bond_numbers"));
+    atom_numbers = static_cast<int>(GetAttr<int64_t>(kernel_node, "atom_numbers"));
     auto shape_uint_crd = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape_scaler = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto shape_atom_a = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
@@ -72,8 +73,8 @@ class BondForceWithAtomVirialGpuKernel : public GpuKernel {
 
     auto frc_f = GetDeviceAddress<T>(outputs, 0);
     auto atom_v = GetDeviceAddress<T>(outputs, 1);
-    BondForceWithAtomVirial(bond_numbers, uint_crd_f, scaler_f, atom_a, atom_b, bond_k, bond_r0, frc_f, atom_v,
-                            reinterpret_cast<cudaStream_t>(stream_ptr));
+    BondForceWithAtomVirial(bond_numbers, atom_numbers, uint_crd_f, scaler_f, atom_a, atom_b, bond_k, bond_r0, frc_f,
+                            atom_v, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -86,8 +87,8 @@ class BondForceWithAtomVirialGpuKernel : public GpuKernel {
     input_size_list_.push_back(ele_bond_k * sizeof(T));
     input_size_list_.push_back(ele_bond_r0 * sizeof(T));
 
-    output_size_list_.push_back(bond_numbers * 3 * sizeof(T));
-    output_size_list_.push_back(bond_numbers * sizeof(T));
+    output_size_list_.push_back(atom_numbers * 3 * sizeof(T));
+    output_size_list_.push_back(atom_numbers * sizeof(T));
   }
 
  private:
@@ -102,6 +103,7 @@ class BondForceWithAtomVirialGpuKernel : public GpuKernel {
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
   int bond_numbers;
+  int atom_numbers;
 };
 }  // namespace kernel
 }  // namespace mindspore

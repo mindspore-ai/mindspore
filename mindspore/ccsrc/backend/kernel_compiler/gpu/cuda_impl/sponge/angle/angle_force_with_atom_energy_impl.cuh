@@ -20,7 +20,7 @@
 #include <curand_kernel.h>
 #include "runtime/device/gpu/cuda_common.h"
 
-void AngleForceWithAtomEnergy(int angle_numbers, const int *uint_crd_f, const float *scaler_f, const int *atom_a,
-                              const int *atom_b, const int *atom_c, const float *angle_k, const float *angle_theta0,
-                              float *frc_f, float *ene, cudaStream_t stream);
+void AngleForceWithAtomEnergy(int angle_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                              const int *atom_a, const int *atom_b, const int *atom_c, const float *angle_k,
+                              const float *angle_theta0, float *frc_f, float *ene, cudaStream_t stream);
 #endif
