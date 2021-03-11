@@ -11,7 +11,7 @@ if(BUILD_LITE)
                 -DANDROID_NDK=$ENV{ANDROID_NDK}
                 -DANDROID_ABI=arm64-v8a
                 -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
-                -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DANDROID_STL=c++_shared
                 ${CMAKE_OPTION})
     endif()
     if(PLATFORM_ARM32)
@@ -20,7 +20,7 @@ if(BUILD_LITE)
                 -DANDROID_NDK=$ENV{ANDROID_NDK}
                 -DANDROID_ABI=armeabi-v7a
                 -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang
-                -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DANDROID_STL=c++_shared
                 ${CMAKE_OPTION})
     endif()
 else()

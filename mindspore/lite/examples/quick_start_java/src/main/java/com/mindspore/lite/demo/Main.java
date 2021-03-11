@@ -37,8 +37,8 @@ public class Main {
     }
 
     private static boolean compile() {
-        MSConfig msConfig = new MSConfig(DeviceType.DT_CPU, 2);
-        boolean ret = msConfig.init();
+        MSConfig msConfig = new MSConfig();
+        boolean ret = msConfig.init(DeviceType.DT_CPU, 2);
         if (!ret) {
             System.err.println("Init context failed");
             return false;
