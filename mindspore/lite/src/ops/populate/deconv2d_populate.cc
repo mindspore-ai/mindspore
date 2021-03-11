@@ -35,6 +35,8 @@ OpParameter *PopulateDeconvParameter(const void *prim) {
   conv_param->group_ = static_cast<int>(conv_primitive->group());
   conv_param->stride_h_ = static_cast<int>(*(conv_primitive->stride()->begin()));
   conv_param->stride_w_ = static_cast<int>(*(conv_primitive->stride()->begin() + 1));
+  conv_param->output_padding_h_ = static_cast<int>(*(conv_primitive->output_paddings()->begin()));
+  conv_param->output_padding_w_ = static_cast<int>(*(conv_primitive->output_paddings()->begin() + 1));
   switch (conv_primitive->pad_mode()) {
     case schema::PadMode_SAME:
       conv_param->pad_mode_ = Pad_same;

@@ -28,7 +28,7 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
 
   prim->set_pad({0, 0, 0, 0});
   mindspore::PadMode pad_mode = mindspore::PadMode::PAD;
-  std::vector<int64_t> kernel, dilate, stride, pads, output_padding_h, output_padding_w;
+  std::vector<int64_t> kernel, dilate, stride, pads, output_paddings;
   int64_t group = 1;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "group") {
@@ -40,10 +40,9 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
       return nullptr;
     }
     if (onnx_node_attr.name() == "output_padding") {
-      output_padding_h.push_back(static_cast<int32_t>(onnx_node_attr.ints(0)));
-      output_padding_w.push_back(static_cast<int32_t>(onnx_node_attr.ints(1)));
-      prim->set_output_padding_h(output_padding_h);
-      prim->set_output_padding_w(output_padding_w);
+      output_paddings.push_back(static_cast<int32_t>(onnx_node_attr.ints(0)));
+      output_paddings.push_back(static_cast<int32_t>(onnx_node_attr.ints(1)));
+      prim->set_output_paddings(output_paddings);
     }
   }
   prim->set_format(mindspore::Format::NCHW);
@@ -64,6 +63,9 @@ ops::PrimitiveC *OnnxDeConvParser::Parse(const onnx::GraphProto &onnx_graph, con
   }
   if (!stride.empty()) {
     prim->set_stride(stride);
+  }
+  if (output_paddings.empty()) {
+    prim->set_output_paddings({0, 0});
   }
 
   const auto &onnx_conv_weight = onnx_node.input(1);

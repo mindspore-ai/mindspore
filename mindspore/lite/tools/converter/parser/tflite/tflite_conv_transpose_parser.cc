@@ -30,6 +30,7 @@ ops::PrimitiveC *TfliteDeConvParser::Parse(const std::unique_ptr<tflite::Operato
   prim->set_format(mindspore::Format::NHWC);
   prim->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);
   prim->set_dilation({1, 1});
+  prim->set_output_paddings({0, 0});
 
   MS_ASSERT(tflite_op != nullptr);
   MS_ASSERT(tflite_model != nullptr);

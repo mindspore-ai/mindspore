@@ -52,8 +52,8 @@ typedef struct ConvParameter {
   PadMode pad_mode_;
   ActType act_type_;
   int channel_multiplie_;
-  int output_padding_w;
-  int output_padding_h;
+  int output_padding_w_;
+  int output_padding_h_;
 } ConvParameter;
 
 typedef struct SlidingWindowParam {
