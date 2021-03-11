@@ -202,3 +202,15 @@ def load_yolov4_params(args, network):
         args.logger.info('resume finished')
         load_param_into_net(network, param_dict_new)
         args.logger.info('load_model {} success'.format(args.resume_yolov4))
+
+    if args.filter_weight:
+        if args.pretrained_checkpoint:
+            param_dict = load_checkpoint(args.pretrained_checkpoint)
+            for key in list(param_dict.keys()):
+                if key in args.checkpoint_filter_list:
+                    args.logger.info('filter {}'.format(key))
+                    del param_dict[key]
+            load_param_into_net(network, param_dict)
+            args.logger.info('load_model {} success'.format(args.pretrained_checkpoint))
+        else:
+            args.logger.warning('Set filter_weight, but not load pretrained_checkpoint, please be careful')

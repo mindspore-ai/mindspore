@@ -375,6 +375,14 @@ python ${train_code_path}/train.py --data_file=/PATH/TO/MINDRECORD_NAME  \
                     --keep_checkpoint_max=200 >log 2>&1 &
 ```
 
+#### 迁移训练
+
+用户可以根据预训练好的checkpoint进行迁移学习， 步骤如下：
+
+1. 将数据集格式转换为上述VOC数据集格式，或者自行添加数据处理代码。
+2. 运行`train.py`时设置 `filter_weight` 为 `True`, `ckpt_pre_trained` 为预训练模型路径，`num_classes` 为数据集匹配的类别数目, 加载checkpoint中参数时过滤掉最后的卷积的权重。
+3. 重写启动脚本。
+
 ### 结果
 
 #### Ascend处理器环境运行

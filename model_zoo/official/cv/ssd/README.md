@@ -315,7 +315,7 @@ epoch time: 150753.701, per step time: 329.157
 
 You can train your own model based on either pretrained classification model or pretrained detection model. You can perform transfer training by following steps.
 
-1. Convert your own dataset to COCO or VOC style. Otherwise you havet to add your own data preprocess code.
+1. Convert your own dataset to COCO or VOC style. Otherwise you have to add your own data preprocess code.
 2. Change config.py according to your own dataset, especially the `num_classes`.
 3. Set argument `filter_weight` to `True` while calling `train.py`, this will filter the final detection box weight from the pretrained model.
 4. Build your own bash scripts using new config and arguments for further convenient.

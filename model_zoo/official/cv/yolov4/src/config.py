@@ -67,3 +67,9 @@ class ConfigYOLOV4CspDarkNet53:
 
     # test_param
     test_img_shape = [608, 608]
+
+    # transfer training
+    checkpoint_filter_list = ['feature_map.backblock0.conv6.weight', 'feature_map.backblock0.conv6.bias',
+                              'feature_map.backblock1.conv6.weight', 'feature_map.backblock1.conv6.bias',
+                              'feature_map.backblock2.conv6.weight', 'feature_map.backblock2.conv6.bias',
+                              'feature_map.backblock3.conv6.weight', 'feature_map.backblock3.conv6.bias']
