@@ -80,6 +80,7 @@ typedef struct OpParameter {
   bool infer_flag_;
   int type_;
   int thread_num_;
+  int quant_type_;
 } OpParameter;
 
 typedef struct QuantArg {
