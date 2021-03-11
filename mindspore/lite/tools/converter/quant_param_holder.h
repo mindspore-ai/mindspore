@@ -81,7 +81,7 @@ class QuantParamHolder : public Value {
   }
 
   void set_input_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param) {
-    if (index > this->input_quant_param_.size()) {
+    if (index >= this->input_quant_param_.size()) {
       std::vector<schema::QuantParamT> place_quant(1);
       this->input_quant_param_.insert(this->input_quant_param_.end(), index + 1 - input_quant_param_.size(),
                                       place_quant);
@@ -94,7 +94,7 @@ class QuantParamHolder : public Value {
   }
 
   void set_output_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &output_quant_param) {
-    if (index > this->output_quant_param_.size()) {
+    if (index >= this->output_quant_param_.size()) {
       std::vector<schema::QuantParamT> place_quant(1);
       this->output_quant_param_.insert(this->output_quant_param_.end(), index + 1 - output_quant_param_.size(),
                                        place_quant);

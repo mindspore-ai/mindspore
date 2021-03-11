@@ -135,6 +135,8 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node, bool *infer_shape_i
     MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << PrimitiveTypeName(GetPrimitiveType(primitive));
     return RET_ERROR;
   }
+  parameter->quant_type_ = node->quant_type_;
+
   op_parameters_[node->output_indices_.at(0)] = parameter;
   parameter->infer_flag_ = !(*infer_shape_interrupt);
   auto ret = KernelInferShape(inputs, &outputs, parameter);

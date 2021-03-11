@@ -49,7 +49,7 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
 
       for (size_t j = 0; j < outTensorSize; j++) {
         auto data =
-          std::make_shared<OpData<Tensor>>(opActors_[i]->GetAID(), kernels[i]->in_tensors()[j], static_cast<int>(j));
+          std::make_shared<OpData<Tensor>>(opActors_[i]->GetAID(), kernels[i]->out_tensors()[j], static_cast<int>(j));
         outputData_.emplace_back(data);
       }
     }
