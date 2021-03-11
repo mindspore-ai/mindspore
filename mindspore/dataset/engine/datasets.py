@@ -506,12 +506,12 @@ class Dataset:
             Dataset, dataset applied by the function.
 
         Examples:
-            >>> # use NumpySliceDataset as an example
+            >>> # use NumpySlicesDataset as an example
             >>> dataset = ds.NumpySlicesDataset([[0, 1], [2, 3]])
             >>>
             >>> def flat_map_func(array):
-            ...     # create a NumpySliceDataset with the array
-            ...     dataset = ds.NumpySliceDataset(array)
+            ...     # create a NumpySlicesDataset with the array
+            ...     dataset = ds.NumpySlicesDataset(array)
             ...     # repeat the dataset twice
             ...     dataset = dataset.repeat(2)
             ...     return dataset
@@ -3429,6 +3429,8 @@ class GeneratorDataset(MappableDataset):
             option could be beneficial if the Python operation is computational heavy (default=True).
 
     Examples:
+        >>> import numpy as np
+        >>>
         >>> # 1) Multidimensional generator function as callable input.
         >>> def generator_multidimensional():
         ...     for i in range(64):

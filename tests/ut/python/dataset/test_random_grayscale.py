@@ -188,7 +188,7 @@ def test_random_grayscale_invalid_param():
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
 
 
 if __name__ == "__main__":

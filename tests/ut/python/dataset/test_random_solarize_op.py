@@ -110,7 +110,7 @@ def test_random_solarize_errors():
 
     with pytest.raises(ValueError) as error_info:
         vision.RandomSolarize((12, 1000))
-    assert "Input is not within the required interval of (0 to 255)." in str(error_info.value)
+    assert "Input is not within the required interval of [0, 255]." in str(error_info.value)
 
     with pytest.raises(TypeError) as error_info:
         vision.RandomSolarize((122.1, 140))

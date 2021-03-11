@@ -125,10 +125,12 @@ def check_degrees(degrees):
     """Check if the degrees is legal."""
     type_check(degrees, (numbers.Number, list, tuple), "degrees")
     if isinstance(degrees, numbers.Number):
-        check_value(degrees, (0, float("inf")), "degrees")
+        check_pos_float32(degrees, "degrees")
     elif isinstance(degrees, (list, tuple)):
         if len(degrees) == 2:
             type_check_list(degrees, (numbers.Number,), "degrees")
+            for value in degrees:
+                check_float32(value, "degrees")
             if degrees[0] > degrees[1]:
                 raise ValueError("degrees should be in (min,max) format. Got (max,min).")
         else:

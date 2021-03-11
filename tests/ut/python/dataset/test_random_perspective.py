@@ -24,7 +24,6 @@ from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
-
 GENERATE_GOLDEN = False
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -82,7 +81,7 @@ def skip_test_random_perspective_md5():
         py_vision.Decode(),
         py_vision.RandomPerspective(distortion_scale=0.3, prob=0.7,
                                     interpolation=Inter.BILINEAR),
-        py_vision.Resize(1450), # resize to a smaller size to prevent round-off error
+        py_vision.Resize(1450),  # resize to a smaller size to prevent round-off error
         py_vision.ToTensor()
     ]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
@@ -109,7 +108,7 @@ def test_random_perspective_exception_distortion_scale_range():
         _ = py_vision.RandomPerspective(distortion_scale=1.5)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input distortion_scale is not within the required interval of (0.0 to 1.0)."
+        assert str(e) == "Input distortion_scale is not within the required interval of [0.0, 1.0]."
 
 
 def test_random_perspective_exception_prob_range():
@@ -121,7 +120,7 @@ def test_random_perspective_exception_prob_range():
         _ = py_vision.RandomPerspective(prob=1.2)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input prob is not within the required interval of (0.0 to 1.0)."
+        assert str(e) == "Input prob is not within the required interval of [0.0, 1.0]."
 
 
 if __name__ == "__main__":

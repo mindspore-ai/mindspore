@@ -44,6 +44,7 @@ valid_detype = [
     "uint32", "uint64", "float16", "float32", "float64", "string"
 ]
 
+
 def is_iterable(obj):
     """
     Helper function to check if object is iterable.
@@ -60,6 +61,7 @@ def is_iterable(obj):
         return False
     return True
 
+
 def pad_arg_name(arg_name):
     if arg_name != "":
         arg_name = arg_name + " "
@@ -70,8 +72,8 @@ def check_value(value, valid_range, arg_name=""):
     arg_name = pad_arg_name(arg_name)
     if value < valid_range[0] or value > valid_range[1]:
         raise ValueError(
-            "Input {0}is not within the required interval of ({1} to {2}).".format(arg_name, valid_range[0],
-                                                                                   valid_range[1]))
+            "Input {0}is not within the required interval of [{1}, {2}].".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
 
 
 def check_value_cutoff(value, valid_range, arg_name=""):
@@ -86,16 +88,16 @@ def check_value_normalize_std(value, valid_range, arg_name=""):
     arg_name = pad_arg_name(arg_name)
     if value <= valid_range[0] or value > valid_range[1]:
         raise ValueError(
-            "Input {0}is not within the required interval of ({1} to {2}).".format(arg_name, valid_range[0],
-                                                                                   valid_range[1]))
+            "Input {0}is not within the required interval of ({1}, {2}].".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
 
 
 def check_range(values, valid_range, arg_name=""):
     arg_name = pad_arg_name(arg_name)
     if not valid_range[0] <= values[0] <= values[1] <= valid_range[1]:
         raise ValueError(
-            "Input {0}is not within the required interval of ({1} to {2}).".format(arg_name, valid_range[0],
-                                                                                   valid_range[1]))
+            "Input {0}is not within the required interval of [{1}, {2}].".format(arg_name, valid_range[0],
+                                                                                 valid_range[1]))
 
 
 def check_positive(value, arg_name=""):

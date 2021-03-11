@@ -211,7 +211,7 @@ def test_random_affine_exception_negative_degrees():
         _ = py_vision.RandomAffine(degrees=-15)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input degrees is not within the required interval of (0 to inf)."
+        assert str(e) == "Input degrees is not within the required interval of [0, 16777216]."
 
 
 def test_random_affine_exception_translation_range():
@@ -223,13 +223,13 @@ def test_random_affine_exception_translation_range():
         _ = c_vision.RandomAffine(degrees=15, translate=(0.1, 1.5))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input translate at 1 is not within the required interval of (-1.0 to 1.0)."
+        assert str(e) == "Input translate at 1 is not within the required interval of [-1.0, 1.0]."
     logger.info("test_random_affine_exception_translation_range")
     try:
         _ = c_vision.RandomAffine(degrees=15, translate=(-2, 1.5))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input translate at 0 is not within the required interval of (-1.0 to 1.0)."
+        assert str(e) == "Input translate at 0 is not within the required interval of [-1.0, 1.0]."
 
 
 def test_random_affine_exception_scale_value():

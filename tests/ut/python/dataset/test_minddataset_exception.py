@@ -201,7 +201,7 @@ def test_minddataset_invalidate_num_shards():
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
-        assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info.value)
+        assert 'Input shard_id is not within the required interval of [0, 0].' in str(error_info.value)
     except Exception as error:
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))
@@ -221,7 +221,7 @@ def test_minddataset_invalidate_shard_id():
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
-        assert 'Input shard_id is not within the required interval of (0 to 0).' in str(error_info.value)
+        assert 'Input shard_id is not within the required interval of [0, 0].' in str(error_info.value)
     except Exception as error:
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))
@@ -241,7 +241,7 @@ def test_minddataset_shard_id_bigger_than_num_shard():
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
-        assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info.value)
+        assert 'Input shard_id is not within the required interval of [0, 1].' in str(error_info.value)
     except Exception as error:
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))
@@ -253,7 +253,7 @@ def test_minddataset_shard_id_bigger_than_num_shard():
         for _ in data_set.create_dict_iterator(num_epochs=1):
             num_iter += 1
     try:
-        assert 'Input shard_id is not within the required interval of (0 to 1).' in str(error_info.value)
+        assert 'Input shard_id is not within the required interval of [0, 1].' in str(error_info.value)
     except Exception as error:
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))
@@ -277,6 +277,7 @@ def test_cv_minddataset_partition_num_samples_equals_0():
             num_iter = 0
             for _ in data_set.create_dict_iterator(num_epochs=1):
                 num_iter += 1
+
     with pytest.raises(ValueError) as error_info:
         partitions(5)
     try:
@@ -289,8 +290,10 @@ def test_cv_minddataset_partition_num_samples_equals_0():
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))
 
+
 def test_mindrecord_exception():
     """tutorial for exception scenario of minderdataset + map would print error info."""
+
     def exception_func(item):
         raise Exception("Error occur!")
 

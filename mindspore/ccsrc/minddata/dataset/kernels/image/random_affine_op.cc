@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <algorithm>
+#include <cmath>
 #include <random>
 #include <utility>
 #include <vector>
@@ -72,7 +73,7 @@ Status RandomAffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
   float_t shear_y = 0.0;
   RETURN_IF_NOT_OK(GenerateRealNumber(shear_ranges_[2], shear_ranges_[3], &rnd_, &shear_y));
   // assign to base class variables
-  degrees_ = degrees;
+  degrees_ = fmod(degrees, 360.0);
   scale_ = scale;
   translation_[0] = translation_x;
   translation_[1] = translation_y;

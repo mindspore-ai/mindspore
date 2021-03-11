@@ -33,7 +33,7 @@ def normalizepad_np(image, mean, std):
     """
     Apply the normalize+pad
     """
-    #  DE decodes the image in RGB by deafult, hence
+    #  DE decodes the image in RGB by default, hence
     #  the values here are in RGB
     image = np.array(image, np.float32)
     image = image - np.array(mean)
@@ -198,4 +198,4 @@ def test_normalizepad_exception_invalid_range_py():
         _ = py_vision.NormalizePad([0.75, 1.25, 0.5], [0.1, 0.18, 1.32])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input mean_value is not within the required interval of (0.0 to 1.0)." in str(e)
+        assert "Input mean_value is not within the required interval of [0.0, 1.0]." in str(e)
