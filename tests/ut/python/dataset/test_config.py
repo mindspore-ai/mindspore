@@ -44,7 +44,7 @@ def test_basic():
     ds.config.load('../data/dataset/declient.cfg')
 
     # assert ds.config.get_rows_per_buffer() == 32
-    assert ds.config.get_num_parallel_workers() == 4
+    assert ds.config.get_num_parallel_workers() == 8
     # assert ds.config.get_worker_connector_size() == 16
     assert ds.config.get_prefetch_size() == 16
     assert ds.config.get_seed() == 5489
@@ -348,7 +348,7 @@ def test_deterministic_python_seed_multi_thread():
     try:
         np.testing.assert_equal(data1_output, data2_output)
     except Exception as e:
-        # expect output to not match during multi-threaded excution
+        # expect output to not match during multi-threaded execution
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Array" in str(e)
 

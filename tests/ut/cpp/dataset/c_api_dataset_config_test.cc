@@ -42,7 +42,7 @@ TEST_F(MindDataTestPipeline, TestConfigSetting) {
   EXPECT_EQ(load_status, true);
 
   // Test configuration loaded
-  EXPECT_EQ(config::get_num_parallel_workers(), 4);
+  EXPECT_EQ(config::get_num_parallel_workers(), 8);
   EXPECT_EQ(config::get_prefetch_size(), 16);
   EXPECT_EQ(config::get_seed(), 5489);
   EXPECT_EQ(config::get_monitor_sampling_interval(), 15);

@@ -33,7 +33,13 @@ ParallelOp::ParallelOp(int32_t num_workers, int32_t op_connector_size, std::shar
       worker_connector_size_(1),
       worker_connector_(nullptr),
       num_workers_paused_(0),
-      epoch_sync_flag_(false) {}
+      epoch_sync_flag_(false) {
+  // reduce excessive memory usage with high parallelism
+  // when num_workers > 4, reduce op_connector_size to have similar total size if there were only 4 workers
+  if (num_workers_ > 4) {
+    oc_queue_size_ = std::max(1, op_connector_size * 4 / num_workers_);
+  }
+}
 
 // Creates the internal worker connector for the parallel op if the derived class wants to use it
 Status ParallelOp::CreateWorkerConnector(int32_t worker_connector_size) {

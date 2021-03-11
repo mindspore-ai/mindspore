@@ -87,7 +87,7 @@ constexpr int64_t kDeMaxFreq = std::numeric_limits<int64_t>::max();  // 92233720
 constexpr int64_t kDeMaxTopk = std::numeric_limits<int64_t>::max();
 
 constexpr uint32_t kCfgRowsPerBuffer = 1;
-constexpr uint32_t kCfgParallelWorkers = 4;
+constexpr uint32_t kCfgParallelWorkers = 8;
 constexpr uint32_t kCfgWorkerConnectorSize = 16;
 constexpr uint32_t kCfgOpConnectorSize = 16;
 constexpr int32_t kCfgDefaultRankId = -1;

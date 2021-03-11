@@ -77,7 +77,15 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
       pad_info_(pad_map),
       batch_num_(0),
       batch_cnt_(0) {
-  worker_queues_.Init(num_workers, op_queue_size);
+  // Adjust connector queue size.  After batch each row is batch_size times larger
+  int32_t queue_size;
+  queue_size = std::max(1, op_queue_size / start_batch_size_);
+  if (num_workers == 1) {
+    // ensure there is at least 2 queue slots for whole operation..  If only 1 worker, incrase it to 2
+    queue_size = std::max(2, queue_size);
+  }
+
+  worker_queues_.Init(num_workers, queue_size);
 }
 // if PYTHON is disabled. per_batch_map can't be used
 #else
@@ -88,8 +96,16 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
       drop_(drop),
       pad_(pad),
       in_col_names_(cols_to_map),
-      pad_info_(pad_map) {
-  worker_queues_.Init(num_workers, op_queue_size);
+      pad_info_(pad_map),
+      batch_num_(0),
+      batch_cnt_(0) {
+  int32_t queue_size;
+  queue_size = std::max(1, op_queue_size / start_batch_size_);
+  if (num_workers == 1) {
+    // ensure there is at least 2 queue slots for whole operation..  If only 1 worker, incrase it to 2
+    queue_size = std::max(2, queue_size);
+  }
+  worker_queues_.Init(num_workers, queue_size);
 }
 #endif
 
