@@ -16,6 +16,7 @@
 Testing BertTokenizer op in DE
 """
 import numpy as np
+import pytest
 import mindspore.dataset as ds
 from mindspore import log as logger
 import mindspore.dataset.text as text
@@ -127,7 +128,7 @@ test_paras = [
         preserve_unused_token=True,
         vocab_list=vocab_bert
     ),
-    # test non-default parms
+    # test non-default params
     dict(
         first=8,
         last=8,
@@ -242,6 +243,19 @@ def test_bert_tokenizer_with_offsets():
         check_bert_tokenizer_with_offsets(**paras)
 
 
+def test_bert_tokenizer_callable_invalid_input():
+    """
+    Test WordpieceTokenizer in eager mode with invalid input
+    """
+    data = {'张三': 18, '王五': 20}
+    vocab = text.Vocab.from_list(vocab_bert)
+    tokenizer_op = text.BertTokenizer(vocab=vocab)
+
+    with pytest.raises(TypeError) as info:
+        _ = tokenizer_op(data)
+    assert "Invalid user input. Got <class 'dict'>: {'张三': 18, '王五': 20}, cannot be converted into tensor." in str(info)
+
 if __name__ == '__main__':
+    test_bert_tokenizer_callable_invalid_input()
     test_bert_tokenizer_default()
     test_bert_tokenizer_with_offsets()

@@ -13,12 +13,20 @@
 # limitations under the License.
 # ==============================================================================
 import copy
+import numpy as np
 import mindspore.dataset.text as text
 import mindspore.dataset as ds
 from mindspore.dataset.text import SentencePieceModel, to_str, SPieceTokenizerOutType
 
 VOCAB_FILE = "../data/dataset/test_sentencepiece/botchan.txt"
 DATA_FILE = "../data/dataset/testTokenizerData/sentencepiece_tokenizer.txt"
+
+
+def test_sentence_piece_tokenizer_callable():
+    vocab = text.SentencePieceVocab.from_file([VOCAB_FILE], 5000, 0.9995, SentencePieceModel.UNIGRAM, {})
+    tokenizer = text.SentencePieceTokenizer(vocab, out_type=SPieceTokenizerOutType.STRING)
+    data = '123'
+    assert np.array_equal(tokenizer(data), ['▁', '12', '3'])
 
 
 def test_from_vocab_to_str_UNIGRAM():
@@ -160,6 +168,7 @@ def test_with_zip_concat():
 
 
 if __name__ == "__main__":
+    test_sentence_piece_tokenizer_callable()
     test_from_vocab_to_str_UNIGRAM()
     test_from_vocab_to_str_BPE()
     test_from_vocab_to_str_CHAR()
