@@ -80,7 +80,7 @@ namespace transforms {
 
 /// \brief Compose Op.
 /// \notes Compose a list of transforms into a single transform.
-class Compose : public TensorTransform {
+class Compose final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
@@ -108,7 +108,7 @@ class Compose : public TensorTransform {
 /// \brief Duplicate Op.
 /// \notes Duplicate the input tensor to a new output tensor.
 ///     The input tensor is carried over to the output list.
-class Duplicate : public TensorTransform {
+class Duplicate final : public TensorTransform {
  public:
   /// \brief Constructor.
   Duplicate();
@@ -124,7 +124,7 @@ class Duplicate : public TensorTransform {
 
 /// \brief OneHot Op.
 /// \notes Convert the labels into OneHot format.
-class OneHot : public TensorTransform {
+class OneHot final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_classes number of classes.
@@ -145,7 +145,7 @@ class OneHot : public TensorTransform {
 
 /// \brief RandomApply Op.
 /// \notes Randomly perform a series of transforms with a given probability.
-class RandomApply : public TensorTransform {
+class RandomApply final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
@@ -175,7 +175,7 @@ class RandomApply : public TensorTransform {
 
 /// \brief RandomChoice Op.
 /// \notes Randomly selects one transform from a list of transforms to perform operation.
-class RandomChoice : public TensorTransform {
+class RandomChoice final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] transforms A vector of raw pointers to TensorTransform objects to be applied.
@@ -202,7 +202,7 @@ class RandomChoice : public TensorTransform {
 
 /// \brief TypeCast Op.
 /// \notes Tensor operation to cast to a given MindSpore data type.
-class TypeCast : public TensorTransform {
+class TypeCast final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] data_type mindspore.dtype to be cast to.
@@ -226,7 +226,7 @@ class TypeCast : public TensorTransform {
 /// \brief Unique Op.
 /// \notes Return an output tensor containing all the unique elements of the input tensor in
 ///     the same order that they occur in the input tensor.
-class Unique : public TensorTransform {
+class Unique final : public TensorTransform {
  public:
   /// \brief Constructor.
   Unique();

@@ -34,7 +34,7 @@ namespace vision {
 
 /* ##################################### API class ###########################################*/
 
-class DvppDecodeResizeJpeg : public TensorTransform {
+class DvppDecodeResizeJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] resize A vector of int value for each dimension, w.r.t H,W order.
@@ -55,7 +55,7 @@ class DvppDecodeResizeJpeg : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-class DvppDecodeResizeCropJpeg : public TensorTransform {
+class DvppDecodeResizeCropJpeg final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] crop A vector of int value for each dimension after final crop, w.r.t H,W order.
@@ -77,7 +77,7 @@ class DvppDecodeResizeCropJpeg : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-class DvppDecodePng : public TensorTransform {
+class DvppDecodePng final : public TensorTransform {
  public:
   /// \brief Constructor.
   DvppDecodePng();

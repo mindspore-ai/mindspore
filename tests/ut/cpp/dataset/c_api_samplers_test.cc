@@ -149,7 +149,7 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess2) {
   // Test basic setting of distributed_sampler
 
   // num_shards=4, shard_id=0, shuffle=false, num_samplers=0, seed=0, offset=-1, even_dist=true
-  Sampler *sampler = new DistributedSampler(4, 0, false, 0, 0, -1, true);
+  auto sampler(new DistributedSampler(4, 0, false, 0, 0, -1, true));
   // Note that with new, we have to explicitly delete the allocated object as shown below.
   // Note: No need to check for output after calling API class constructor
 
@@ -232,7 +232,7 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerFail2) {
 
   // num_shards=4, shard_id=0, shuffle=false, num_samplers=0, seed=0, offset=5, even_dist=true
   // offset=5 which is greater than num_shards=4 --> will fail later
-  Sampler *sampler = new DistributedSampler(4, 0, false, 0, 0, 5, false);
+  auto sampler(new DistributedSampler(4, 0, false, 0, 0, 5, false));
   // Note that with new, we have to explicitly delete the allocated object as shown below.
   // Note: No need to check for output after calling API class constructor
 
