@@ -50,7 +50,7 @@ class CacheLookupNode : public DatasetNode, public SamplerObj {
   /// \brief a base class override function to convert a SamplerObj class into a runtime sampler object
   /// \param[out] out Shared pointer to the newly created Sampler
   /// \return The Status code of the function. It returns OK status if sampler is created successfully.
-  Status SamplerBuild(std::shared_ptr<SamplerRT> *out) override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *const out) override;
 
   /// \brief a base class override function to copy a SamplerObj class
   /// \return Shared pointers to the newly copied SamplerObj

@@ -65,7 +65,7 @@ class SamplerObj {
   /// \return the Status code returned
   Status AddChildSampler(std::shared_ptr<SamplerObj> child);
 
-  virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
+  virtual Status to_json(nlohmann::json *const out_json) { return Status::OK(); }
 
   std::vector<std::shared_ptr<SamplerObj>> GetChild() { return children_; }
 
@@ -80,7 +80,7 @@ class SamplerObj {
   /// \brief A function that calls build on the children of this sampler
   /// \param[in] sampler The samplerRT object built from this sampler
   /// \return the Status code returned
-  Status BuildChildren(std::shared_ptr<SamplerRT> *sampler);
+  Status BuildChildren(std::shared_ptr<SamplerRT> *const sampler);
 
   std::vector<std::shared_ptr<SamplerObj>> children_;
 };
@@ -111,7 +111,7 @@ class DistributedSamplerObj : public SamplerObj {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
   Status ValidateParams() override;
 
@@ -152,7 +152,7 @@ class PKSamplerObj : public SamplerObj {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
   Status ValidateParams() override;
 
@@ -171,7 +171,7 @@ class PreBuiltSamplerObj : public SamplerObj {
 
   ~PreBuiltSamplerObj() = default;
 
-  Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
+  Status SamplerBuild(std::shared_ptr<SamplerRT> *const sampler) override;
 
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
@@ -181,7 +181,7 @@ class PreBuiltSamplerObj : public SamplerObj {
 
   Status ValidateParams() override;
 
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
  private:
   std::shared_ptr<SamplerRT> sp_;
@@ -213,7 +213,7 @@ class RandomSamplerObj : public SamplerObj {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
   Status ValidateParams() override;
 
@@ -246,7 +246,7 @@ class SequentialSamplerObj : public SamplerObj {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
   Status ValidateParams() override;
 
@@ -278,7 +278,7 @@ class SubsetSamplerObj : public SamplerObj {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
   Status ValidateParams() override;
 
@@ -293,7 +293,7 @@ class SubsetRandomSamplerObj : public SubsetSamplerObj {
 
   ~SubsetRandomSamplerObj() = default;
 
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
   Status SamplerBuild(std::shared_ptr<SamplerRT> *sampler) override;
 
@@ -331,7 +331,7 @@ class WeightedRandomSamplerObj : public SamplerObj {
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
-  Status to_json(nlohmann::json *out_json) override;
+  Status to_json(nlohmann::json *const out_json) override;
 
   Status ValidateParams() override;
 

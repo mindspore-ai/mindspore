@@ -74,7 +74,7 @@ std::shared_ptr<SamplerObj> CacheLookupNode::SamplerCopy() {
   return std::static_pointer_cast<SamplerObj>(lookup_node_copy_);
 }
 
-Status CacheLookupNode::SamplerBuild(std::shared_ptr<SamplerRT> *out) {
+Status CacheLookupNode::SamplerBuild(std::shared_ptr<SamplerRT> *const out) {
   // Runtime cache lookup op should already been built, so we just return it here
   auto lookup_op = std::dynamic_pointer_cast<CacheLookupOp>(lookup_op_);
   *out = std::shared_ptr<SamplerRT>(lookup_op);
