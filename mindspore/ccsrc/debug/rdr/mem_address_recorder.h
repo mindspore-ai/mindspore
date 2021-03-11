@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_DEBUG_RDR_MEM_ADDRESS_RECORDER_H_
 #include <vector>
 #include <string>
+#include <map>
 #include <memory>
 #include <mutex>
 
@@ -48,8 +49,7 @@ class MemAddressRecorder : public BaseRecorder {
 
   mutable std::mutex mtx_;
 
-  std::string mem_info_append_str_;
-  std::vector<std::string> mem_infos_;
+  std::map<std::string, std::string> mem_info_container_;
 };
 using MemAddressRecorderPtr = std::shared_ptr<MemAddressRecorder>;
 }  // namespace mindspore
