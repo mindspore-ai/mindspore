@@ -34,7 +34,6 @@ class ArithmeticSelfCPUKernel : public CPUKernel {
 
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
   template <typename T>
   void LaunchKernelLogic(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 

@@ -29,7 +29,7 @@ class AdamCPUKernel : public CPUKernel {
   ~AdamCPUKernel() override = default;
   template <typename T>
   void LaunchAdam(T *var, T *m, T *v, float lr, float beta1, float beta2, float epsilon, const T *gradient,
-                  size_t start, size_t end);
+                  size_t size);
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

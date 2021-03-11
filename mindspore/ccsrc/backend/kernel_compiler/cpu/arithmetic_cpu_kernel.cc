@@ -15,7 +15,6 @@
  */
 #include <cmath>
 #include <string>
-#include <thread>
 #include <map>
 #include "backend/kernel_compiler/cpu/arithmetic_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
@@ -23,227 +22,285 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-void ArithmeticCPUKernel::AssignAdd(T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    out[i] = input1[i] + input2[i];
-    input1[i] = out[i];
-  }
+void ArithmeticCPUKernel::AssignAdd(T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = input1[i] + input2[i];
+      input1[i] = out[i];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Add(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] + input2[idx[1]];
-  }
+void ArithmeticCPUKernel::Add(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] + input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Sub(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] - input2[idx[1]];
-  }
+void ArithmeticCPUKernel::Sub(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] - input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Mul(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] * input2[idx[1]];
-  }
+void ArithmeticCPUKernel::Mul(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] * input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::RealDiv(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    auto dividend = input1[idx[0]];
-    auto divisor = input2[idx[1]];
-    if (divisor == 0) {
-      if (dividend == 0) {
-        out[i] = std::numeric_limits<T>::quiet_NaN();
+void ArithmeticCPUKernel::RealDiv(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      auto dividend = input1[idx[0]];
+      auto divisor = input2[idx[1]];
+      if (divisor == 0) {
+        if (dividend == 0) {
+          out[i] = std::numeric_limits<T>::quiet_NaN();
+          continue;
+        }
+        if (std::numeric_limits<T>::has_infinity) {
+          out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+        } else {
+          out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+        }
         continue;
       }
-      if (std::numeric_limits<T>::has_infinity) {
-        out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-      } else {
-        out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-      }
-      continue;
+      out[i] = dividend / divisor;
     }
-    out[i] = dividend / divisor;
-  }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Div(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    auto dividend = input1[idx[0]];
-    auto divisor = input2[idx[1]];
-    if (divisor == 0) {
-      if (dividend == 0) {
-        out[i] = std::numeric_limits<T>::quiet_NaN();
+void ArithmeticCPUKernel::Div(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      auto dividend = input1[idx[0]];
+      auto divisor = input2[idx[1]];
+      if (divisor == 0) {
+        if (dividend == 0) {
+          out[i] = std::numeric_limits<T>::quiet_NaN();
+          continue;
+        }
+        if (std::numeric_limits<T>::has_infinity) {
+          out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+        } else {
+          out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+        }
         continue;
       }
-      if (std::numeric_limits<T>::has_infinity) {
-        out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-      } else {
-        out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-      }
-      continue;
+      out[i] = dividend / divisor;
     }
-    out[i] = dividend / divisor;
-  }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::FloorDiv(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    auto dividend = input1[idx[0]];
-    auto divisor = input2[idx[1]];
-    if (divisor == 0) {
-      if (dividend == 0) {
-        out[i] = std::numeric_limits<T>::quiet_NaN();
+void ArithmeticCPUKernel::FloorDiv(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      auto dividend = input1[idx[0]];
+      auto divisor = input2[idx[1]];
+      if (divisor == 0) {
+        if (dividend == 0) {
+          out[i] = std::numeric_limits<T>::quiet_NaN();
+          continue;
+        }
+        if (std::numeric_limits<T>::has_infinity) {
+          out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+        } else {
+          out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+        }
         continue;
       }
-      if (std::numeric_limits<T>::has_infinity) {
-        out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-      } else {
-        out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-      }
-      continue;
+      out[i] = floor(dividend / divisor);
     }
-    out[i] = floor(dividend / divisor);
-  }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Mod(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    auto x = static_cast<double>(input1[idx[0]]);
-    auto y = static_cast<double>(input2[idx[1]]);
-    auto data_div = x / y;
-    auto data_div_min = data_div < 0.0 ? data_div : 0.0;
-    auto data_div_max = data_div > 0.0 ? data_div : 0.0;
-    auto data_div_max_floor = floor(data_div_max);
-    auto data_div_min_ceil = ceil(data_div_min);
-    auto data_div_res = data_div_max_floor + data_div_min_ceil;
-    out[i] = static_cast<T>(x - data_div_res * y);
-  }
+void ArithmeticCPUKernel::Mod(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      auto x = static_cast<double>(input1[idx[0]]);
+      auto y = static_cast<double>(input2[idx[1]]);
+      auto data_div = x / y;
+      auto data_div_min = data_div < 0.0 ? data_div : 0.0;
+      auto data_div_max = data_div > 0.0 ? data_div : 0.0;
+      auto data_div_max_floor = floor(data_div_max);
+      auto data_div_min_ceil = ceil(data_div_min);
+      auto data_div_res = data_div_max_floor + data_div_min_ceil;
+      out[i] = static_cast<T>(x - data_div_res * y);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Pow(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    auto x = static_cast<double>(input1[idx[0]]);
-    auto y = static_cast<double>(input2[idx[1]]);
-    out[i] = static_cast<T>(std::pow(x, y));
-  }
+void ArithmeticCPUKernel::Pow(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      auto x = static_cast<double>(input1[idx[0]]);
+      auto y = static_cast<double>(input2[idx[1]]);
+      out[i] = static_cast<T>(std::pow(x, y));
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Less(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] < input2[idx[1]];
-  }
+void ArithmeticCPUKernel::Less(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] < input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Equal(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] == input2[idx[1]];
-  }
+void ArithmeticCPUKernel::Equal(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] == input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::NotEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] != input2[idx[1]];
-  }
+void ArithmeticCPUKernel::NotEqual(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] != input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::LogicalAnd(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] && input2[idx[1]];
-  }
+void ArithmeticCPUKernel::LogicalAnd(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] && input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::LogicalOr(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] || input2[idx[1]];
-  }
+void ArithmeticCPUKernel::LogicalOr(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] || input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::SquaredDifference(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    T diff = input1[idx[0]] - input2[idx[1]];
-    out[i] = diff * diff;
-  }
+void ArithmeticCPUKernel::SquaredDifference(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      T diff = input1[idx[0]] - input2[idx[1]];
+      out[i] = diff * diff;
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Greater(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] > input2[idx[1]];
-  }
+void ArithmeticCPUKernel::Greater(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] > input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::GreaterEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] >= input2[idx[1]];
-  }
+void ArithmeticCPUKernel::GreaterEqual(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] >= input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::LessEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = input1[idx[0]] <= input2[idx[1]];
-  }
+void ArithmeticCPUKernel::LessEqual(const T *input1, const T *input2, bool *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = input1[idx[0]] <= input2[idx[1]];
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
 
 template <typename T>
-void ArithmeticCPUKernel::Atan2(const T *input1, const T *input2, T *out, size_t start, size_t end) {
-  for (size_t i = start; i < end; i++) {
-    std::vector<size_t> idx;
-    GenIndex(i, &idx);
-    out[i] = atan2(input1[idx[0]], input2[idx[1]]);
-  }
+void ArithmeticCPUKernel::Atan2(const T *input1, const T *input2, T *out, size_t size) {
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      std::vector<size_t> idx;
+      GenIndex(i, &idx);
+      out[i] = atan2(input1[idx[0]], input2[idx[1]]);
+    }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
 }
+
 static const std::map<std::string, OperateType> kArithmeticBinOpTypeMap = {
   {prim::kPrimGreater->name(), GREATER},
   {prim::kPrimAdd->name(), ADD},
@@ -352,49 +409,25 @@ void ArithmeticCPUKernel::LaunchKernelLogic(const std::vector<AddressPtr> &input
   T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
-
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(bool)) : 1;
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
-  std::vector<std::thread> threads;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return;
-  }
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return;
-  }
-  while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    if (operate_type_ == LESS) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Less<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == EQUAL) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Equal<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == NOTEQUAL) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::NotEqual<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == GREATER) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Greater<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == GREATEREQUAL) {
-      threads.emplace_back(
-        std::thread(&ArithmeticCPUKernel::GreaterEqual<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == LESSEQUAL) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::LessEqual<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == LOGICALAND) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::LogicalAnd<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == LOGICALOR) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::LogicalOr<T>, this, input1, input2, output, start, end));
-    } else {
-      MS_LOG(EXCEPTION) << "Not support " << operate_type_;
-    }
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
+  if (operate_type_ == LESS) {
+    Less<T>(input1, input2, output, lens);
+  } else if (operate_type_ == EQUAL) {
+    Equal<T>(input1, input2, output, lens);
+  } else if (operate_type_ == NOTEQUAL) {
+    NotEqual<T>(input1, input2, output, lens);
+  } else if (operate_type_ == GREATER) {
+    Greater<T>(input1, input2, output, lens);
+  } else if (operate_type_ == GREATEREQUAL) {
+    GreaterEqual<T>(input1, input2, output, lens);
+  } else if (operate_type_ == LESSEQUAL) {
+    LessEqual<T>(input1, input2, output, lens);
+  } else if (operate_type_ == LOGICALAND) {
+    LogicalAnd<T>(input1, input2, output, lens);
+  } else if (operate_type_ == LOGICALOR) {
+    LogicalOr<T>(input1, input2, output, lens);
+  } else {
+    MS_LOG(EXCEPTION) << "Not support " << operate_type_;
   }
 }
 
@@ -409,53 +442,30 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
 
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-  auto max_thread_num = std::thread::hardware_concurrency();
-  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
-  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
-  std::vector<std::thread> threads;
-  if (thread_num < 1) {
-    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
-    return;
-  }
-  threads.reserve(thread_num);
-  size_t start = 0;
-  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
-  if (once_compute_size < 1) {
-    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
-    return;
-  }
-  while (start < lens) {
-    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    if (operate_type_ == ADD) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Add<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == SUB) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Sub<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == MUL) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Mul<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == REALDIV) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::RealDiv<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == DIV) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Div<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == FLOORDIV) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::FloorDiv<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == MOD) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Mod<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == POW) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Pow<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == ASSIGNADD) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::AssignAdd<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == ATAN2) {
-      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Atan2<T>, this, input1, input2, output, start, end));
-    } else if (operate_type_ == SQUAREDDIFFERENCE) {
-      threads.emplace_back(
-        std::thread(&ArithmeticCPUKernel::SquaredDifference<T>, this, input1, input2, output, start, end));
-    } else {
-      MS_LOG(EXCEPTION) << "Not support " << operate_type_;
-    }
-    start += once_compute_size;
-  }
-  for (size_t i = 0; i < threads.size(); ++i) {
-    threads[i].join();
+  if (operate_type_ == ADD) {
+    Add<T>(input1, input2, output, lens);
+  } else if (operate_type_ == SUB) {
+    Sub<T>(input1, input2, output, lens);
+  } else if (operate_type_ == MUL) {
+    Mul<T>(input1, input2, output, lens);
+  } else if (operate_type_ == REALDIV) {
+    RealDiv<T>(input1, input2, output, lens);
+  } else if (operate_type_ == DIV) {
+    Div<T>(input1, input2, output, lens);
+  } else if (operate_type_ == FLOORDIV) {
+    FloorDiv<T>(input1, input2, output, lens);
+  } else if (operate_type_ == MOD) {
+    Mod<T>(input1, input2, output, lens);
+  } else if (operate_type_ == POW) {
+    Pow<T>(input1, input2, output, lens);
+  } else if (operate_type_ == ASSIGNADD) {
+    AssignAdd<T>(input1, input2, output, lens);
+  } else if (operate_type_ == ATAN2) {
+    Atan2<T>(input1, input2, output, lens);
+  } else if (operate_type_ == SQUAREDDIFFERENCE) {
+    SquaredDifference<T>(input1, input2, output, lens);
+  } else {
+    MS_LOG(EXCEPTION) << "Not support " << operate_type_;
   }
 }
 }  // namespace kernel
