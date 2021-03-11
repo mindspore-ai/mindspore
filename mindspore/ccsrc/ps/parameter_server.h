@@ -112,6 +112,7 @@ class ParameterServer {
     ParameterServer *ps_;
     typedef void (ServerHandler::*RequestHandler)(DataPtr data, size_t size, VectorPtr res);
     std::unordered_map<int, RequestHandler> handlers_;
+    std::unordered_map<int, std::string> commands_;
     std::unordered_map<Key, bool> init_weights_;
     std::unordered_map<Key, bool> init_weight_to_optim_;
     std::unordered_map<Key, bool> init_optim_info_;

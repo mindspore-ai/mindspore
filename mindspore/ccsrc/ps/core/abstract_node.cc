@@ -392,8 +392,8 @@ bool AbstractNode::Disconnect(const std::shared_ptr<TcpClient> &client, const ui
 
   if (!SendMessageSync(client, meta, Protos::PROTOBUF, finish_message.SerializeAsString().data(),
                        finish_message.ByteSizeLong())) {
-    MS_LOG(ERROR) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                  << " the node id:" << node_info_.node_id_ << " send Finish Message timeout!";
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " send Finish Message timeout!";
   }
   return WaitForDisconnect(timeout);
 }
