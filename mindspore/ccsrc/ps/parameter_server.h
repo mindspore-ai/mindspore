@@ -77,7 +77,6 @@ class ParameterServer {
   ParameterServer()
       : pserver_num_(0),
         worker_num_(0),
-        rank_id_(0),
         grad_accum_count_(0),
         handler_(nullptr),
         func_graph_(nullptr),
@@ -145,7 +144,6 @@ class ParameterServer {
 
   size_t pserver_num_;
   size_t worker_num_;
-  size_t rank_id_;
   size_t grad_accum_count_;
   std::unique_ptr<ServerHandler> handler_;
   FuncGraphPtr func_graph_;
