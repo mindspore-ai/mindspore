@@ -531,7 +531,8 @@ class PythonTokenizer:
         self.random = False
 
     def __call__(self, in_array):
-        in_array = to_str(in_array)
+        if not isinstance(in_array, str):
+            in_array = to_str(in_array)
         tokens = self.tokenizer(in_array)
         return tokens
 

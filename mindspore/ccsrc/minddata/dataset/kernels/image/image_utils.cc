@@ -1137,8 +1137,8 @@ Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    if (input_cv->Rank() != 3 || input_cv->shape()[2] != 3) {
-      RETURN_STATUS_UNEXPECTED("Affine: image shape is not <H,W,C> or channel is not 3.");
+    if (input_cv->Rank() == 1 || input_cv->Rank() > 3) {
+      RETURN_STATUS_UNEXPECTED("Affine: image shape is not <H,W,C> or <H,W>.");
     }
 
     cv::Mat affine_mat(mat);
