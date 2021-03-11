@@ -143,11 +143,11 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
         outputs_visited[index] = true;
         break;
       }
-      if (index == out_tensors.size()) {
-        MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of " << i << " output tensor for npu executor "
-                      << model_name_;
-        return RET_ERROR;
-      }
+    }
+    if (index == out_tensors.size()) {
+      MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of " << i << " output tensor for npu executor "
+                    << model_name_;
+      return RET_ERROR;
     }
   }
   return RET_OK;
