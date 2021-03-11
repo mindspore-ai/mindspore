@@ -24,7 +24,7 @@ one_hot_op_info = TBERegOp("OneHot") \
     .kernel_name("one_hot_d") \
     .partial_flag(True) \
     .attr("depth", "required", "int", "all") \
-    .attr("axis", "required", "int", "all") \
+    .attr("axis", "required", "int", "all", "-1") \
     .input(0, "x", False, "required", "all") \
     .input(1, "on_value", False, "required", "all") \
     .input(2, "off_value", False, "required", "all") \

@@ -26,7 +26,7 @@ matmul_op_info = TBERegOp("MatMul") \
     .need_check_supported(True) \
     .attr("transpose_x1", "required", "bool", "all") \
     .attr("transpose_x2", "required", "bool", "all") \
-    .attr("offset_x", "optional", "int", "all") \
+    .attr("offset_x", "optional", "int", "all", "0") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .input(2, "bias", False, "optional", "all") \
