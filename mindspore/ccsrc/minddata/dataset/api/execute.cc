@@ -297,11 +297,6 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     }
     CHECK_FAIL_RETURN_UNEXPECTED(device_input->HasDeviceData(), "Apply transform failed, output tensor has no data");
 
-    // TODO(lizhenglong) waiting for computing department development, hence we pop data onto host temporarily.
-    // std::shared_ptr<mindspore::dataset::Tensor> host_output;
-    // RETURN_IF_NOT_OK(device_resource_->Pop(device_input, &host_output));
-    // *output = mindspore::MSTensor(std::make_shared<DETensor>(host_output));
-
     *output = mindspore::MSTensor(std::make_shared<DETensor>(device_input, true));
 #endif
   }

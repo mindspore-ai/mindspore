@@ -61,6 +61,9 @@ Status DvppCropJpegOp::Compute(const std::shared_ptr<DeviceTensor> &input, std::
 
 Status DvppCropJpegOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  if (!IsNonEmptyJPEG(input)) {
+    RETURN_STATUS_UNEXPECTED("DvppCropJpegOp only support process jpeg image.");
+  }
   try {
     CHECK_FAIL_RETURN_UNEXPECTED(input->GetBuffer() != nullptr, "The input image buffer is empty.");
     unsigned char *buffer = const_cast<unsigned char *>(input->GetBuffer());

@@ -24,8 +24,8 @@ Status DvppNormalizeOp::Compute(const std::shared_ptr<DeviceTensor> &input, std:
   const DataType dvpp_data_type(DataType::DE_UINT8);
   mindspore::dataset::DeviceTensor::CreateEmpty(dvpp_shape, dvpp_data_type, output);
   std::vector<uint32_t> yuv_shape = input->GetYuvStrideShape();
-  (*output)->SetAttributes(input->GetDeviceBuffer(), input->DeviceDataSize(), yuv_shape[0], yuv_shape[1], yuv_shape[2],
-                           yuv_shape[3]);
+  (*output)->SetAttributes(input->GetDeviceMutableBuffer(), input->DeviceDataSize(), yuv_shape[0], yuv_shape[1],
+                           yuv_shape[2], yuv_shape[3]);
   if (!((*output)->HasDeviceData())) {
     std::string error = "[ERROR] Fail to get the output result from device memory!";
     RETURN_STATUS_UNEXPECTED(error);
