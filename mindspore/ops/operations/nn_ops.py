@@ -1326,18 +1326,20 @@ class BatchNorm(PrimitiveWithInfer):
         validator.check_value_type('is_training', is_training, (bool,), self.name)
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.format = validator.check_string(data_format, ['NCHW', 'NHWC', "NCDHW"], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
+        if context.get_context("device_target") != "Ascend" and self.format == "NCDHW":
+            raise ValueError("NCDHW format only support in Ascend target.")
         self.add_prim_attr('data_format', self.format)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
-        input_shape_norm = input_x if self.format == "NCHW" else (input_x[0], input_x[3], input_x[1], input_x[2])
+        input_x_channel = input_x[-1] if self.format == "NHWC" else input_x[1]
         validator.check_equal_int(len(scale), 1, "scale rank", self.name)
         validator.check("scale shape", scale, "bias shape", bias, Rel.EQ, self.name)
-        validator.check("scale shape[0]", scale[0], "input_x channel", input_shape_norm[1], Rel.EQ, self.name)
+        validator.check("scale shape[0]", scale[0], "input_x channel", input_x_channel, Rel.EQ, self.name)
         if not self.is_training:
             validator.check_equal_int(len(mean), 1, "mean rank", self.name)
             validator.check("mean shape", mean, "variance shape", variance, Rel.EQ, self.name)

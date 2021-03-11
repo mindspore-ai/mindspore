@@ -48,6 +48,8 @@ from .assign_sub import _assign_sub_tbe
 from .batch_matmul import _batch_matmul_tbe
 from .batchnorm import _batch_norm_tbe
 from .batchnorm_grad import _batch_norm_grad_tbe
+from .batchnorm3d import _batch_norm3d_tbe
+from .batchnorm3d_grad import _batch_norm3d_grad_tbe
 from .bias_add import _bias_add_tbe
 from .bias_add_grad import _bias_add_grad_tbe
 from .cast import _cast_tbe

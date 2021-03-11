@@ -31,7 +31,8 @@ from mindspore.communication import management
 from mindspore.ops import _selected_ops
 from ..cell import Cell
 
-__all__ = ['BatchNorm1d', 'BatchNorm2d', 'LayerNorm', 'GroupNorm', 'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm2d']
+__all__ = ['BatchNorm1d', 'BatchNorm2d', 'BatchNorm3d', 'LayerNorm', 'GroupNorm',
+           'GlobalBatchNorm', 'SyncBatchNorm', 'InstanceNorm2d']
 
 SYNC_BN_GROUP_NAME = ""
 
@@ -60,13 +61,16 @@ class _BatchNorm(Cell):
 
         if momentum < 0 or momentum > 1:
             raise ValueError("momentum should be a number in range [0, 1], but got {}".format(momentum))
-        self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
+        self.input_dims = input_dims
+        if self.input_dims == "3d":
+            self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.cls_name)
+        else:
+            self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
         self.use_batch_statistics = use_batch_statistics
         self.num_features = num_features
         self.eps = eps
-        self.input_dims = input_dims
         self.moving_mean = Parameter(initializer(
             moving_mean_init, num_features), name="mean", requires_grad=False)
         self.moving_variance = Parameter(initializer(
@@ -134,7 +138,8 @@ class _BatchNorm(Cell):
         if self._target == "Ascend":
             self.bn_train = P.BatchNorm(is_training=True,
                                         epsilon=self.eps,
-                                        momentum=self.momentum)
+                                        momentum=self.momentum,
+                                        data_format=self.format)
         if self._target == "GPU":
             self.bn_train = P.FusedBatchNormEx(mode=1,
                                                epsilon=self.eps,
@@ -220,11 +225,14 @@ def _shape_check(in_shape):
 
 @constexpr
 def _shape_check_bn(in_shape, in_dims):
+    """check input dims of batch norm."""
     dim = len(in_shape)
     if in_dims == '1d' and dim != 2:
         raise ValueError("The input must has 2 dims.")
     if in_dims == '2d' and dim != 4:
         raise ValueError("The input must has 4 dims.")
+    if in_dims == '3d' and dim != 5:
+        raise ValueError("The input must has 5 dims.")
     if in_dims == 'both' and dim != 2 and dim != 4:
         raise ValueError("The input must has 2 dims or 4 dims.")
 
@@ -445,7 +453,7 @@ def _check_3d_shape(input_shape):
         raise ValueError("For BatchNorm3d, input data must be 5-dimensional.")
 
 
-class BatchNorm3d(Cell):
+class BatchNorm3d(_BatchNorm):
     r"""
     Batch normalization layer over a 5D input.
 
@@ -489,8 +497,15 @@ class BatchNorm3d(Cell):
     Outputs:
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, D_{out},H_{out}, W_{out})`.
 
+    Raises:
+        TypeError: If `num_features` is not an int.
+        TypeError: If `eps` is not a float.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+        ValueError: If `data_format` is not 'NCDHW'.
+
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> net = nn.BatchNorm3d(num_features=3)
@@ -512,27 +527,21 @@ class BatchNorm3d(Cell):
                  moving_var_init='ones',
                  use_batch_statistics=None,
                  data_format='NCDHW'):
-        super(BatchNorm3d, self).__init__()
-        self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.cls_name)
-        self.reshape = P.Reshape()
-        self.bn2d = BatchNorm2d(num_features=num_features,
-                                eps=eps,
-                                momentum=momentum,
-                                affine=affine,
-                                gamma_init=gamma_init,
-                                beta_init=beta_init,
-                                moving_mean_init=moving_mean_init,
-                                moving_var_init=moving_var_init,
-                                use_batch_statistics=use_batch_statistics,
-                                data_format="NCHW")
+        super(BatchNorm3d, self).__init__(num_features,
+                                          eps,
+                                          momentum,
+                                          affine,
+                                          gamma_init,
+                                          beta_init,
+                                          moving_mean_init,
+                                          moving_var_init,
+                                          use_batch_statistics,
+                                          input_dims='3d',
+                                          data_format=data_format)
 
-    def construct(self, input_x):
-        x_shape = F.shape(input_x)
-        _check_3d_shape(x_shape)
-        input_x = self.reshape(input_x, (x_shape[0], x_shape[1], x_shape[2]*x_shape[3], x_shape[4]))
-        bn2d_out = self.bn2d(input_x)
-        bn3d_out = self.reshape(bn2d_out, x_shape)
-        return bn3d_out
+    def _check_data_dim(self, x):
+        if x.ndim != 5:
+            pass
 
 
 class GlobalBatchNorm(_BatchNorm):
