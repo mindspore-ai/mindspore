@@ -119,19 +119,14 @@ class CTPN(nn.Cell):
                                                 config.activate_num_classes,
                                                 config.use_sigmoid_cls)
         self.proposal_generator_test.set_train_local(config, False)
-    def construct(self, img_data, img_metas, gt_bboxes, gt_labels, gt_valids):
-        # (1,3,600,900)
+    def construct(self, img_data, gt_bboxes, gt_labels, gt_valids, img_metas=None):
         x = self.vgg16_feature_extractor(img_data)
         x = self.conv(x)
         x = self.cast(x, mstype.float16)
-        # (1, 512, 38, 57)
         x = self.transpose(x, (0, 2, 1, 3))
         x = self.reshape(x, (-1, self.input_size, self.num_step))
         x = self.transpose(x, (2, 0, 1))
-        # (57, 38, 512)
         x = self.rnn(x)
-        # (57, 38, 256)
-        #x = self.cast(x, mstype.float32)
         rpn_loss, cls_score, bbox_pred, rpn_cls_loss, rpn_reg_loss = self.rpn_with_loss(x,
                                                                                         img_metas,
                                                                                         self.anchor_list,

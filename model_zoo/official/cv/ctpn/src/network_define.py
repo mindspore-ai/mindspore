@@ -99,8 +99,8 @@ class WithLossCell(nn.Cell):
         self._backbone = backbone
         self._loss_fn = loss_fn
 
-    def construct(self, x, img_shape, gt_bboxe, gt_label, gt_num):
-        rpn_loss, _, _, rpn_cls_loss, rpn_reg_loss = self._backbone(x, img_shape, gt_bboxe, gt_label, gt_num)
+    def construct(self, x, gt_bbox, gt_label, gt_num, img_shape=None):
+        rpn_loss, _, _, rpn_cls_loss, rpn_reg_loss = self._backbone(x, gt_bbox, gt_label, gt_num, img_shape)
         return self._loss_fn(rpn_loss, rpn_cls_loss, rpn_reg_loss)
 
     @property
@@ -144,10 +144,10 @@ class TrainOneStepCell(nn.Cell):
         if reduce_flag:
             self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
 
-    def construct(self, x, img_shape, gt_bboxe, gt_label, gt_num):
+    def construct(self, x, gt_bbox, gt_label, gt_num, img_shape=None):
         weights = self.weights
-        rpn_loss, _, _, rpn_cls_loss, rpn_reg_loss = self.backbone(x, img_shape, gt_bboxe, gt_label, gt_num)
-        grads = self.grad(self.network, weights)(x, img_shape, gt_bboxe, gt_label, gt_num, self.sens)
+        rpn_loss, _, _, rpn_cls_loss, rpn_reg_loss = self.backbone(x, gt_bbox, gt_label, gt_num, img_shape)
+        grads = self.grad(self.network, weights)(x, gt_bbox, gt_label, gt_num, img_shape, self.sens)
         if self.reduce_flag:
             grads = self.grad_reducer(grads)
         return F.depend(rpn_loss, self.optimizer(grads)), rpn_cls_loss, rpn_reg_loss
