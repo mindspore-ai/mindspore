@@ -488,7 +488,7 @@ bool IsPhaseExportAir(const std::string &phase_s) {
   return phase_s.rfind(phase_to_export) != std::string::npos;
 }
 
-std::vector<ActionItem> GetPipline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
+std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::string &phase_s, bool use_vm) {
   bool is_air = IsPhaseExportAir(phase_s);
 
   std::string backend = MsContext::GetInstance()->backend_policy();
@@ -536,7 +536,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
   MS_LOG(INFO) << "ExecutorPy compile phase:" << phase_s << "!";
   ResourcePtr resource = std::make_shared<Resource>(obj);
 
-  auto p_actions = GetPipline(resource, phase_s, use_vm);
+  auto p_actions = GetPipeline(resource, phase_s, use_vm);
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(p_actions, phase_s));
 
   // get the parameters items and add the value to args_spec
