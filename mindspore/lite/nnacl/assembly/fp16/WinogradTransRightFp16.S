@@ -1,3 +1,4 @@
+#include "nnacl/assembly_global.h"
 
   .text
   .align 5
@@ -6,7 +7,7 @@
   .type WinogradTransRightFp16, %function
 #endif
 
-WinogradTransRightFp16:
+asm_function WinogradTransRightFp16
 
 mov x8, #8 // 4 * sizeof(float16)
 mul x8, x6, x8

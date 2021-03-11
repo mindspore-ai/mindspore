@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -12,7 +13,7 @@
 // x0: dst, x1: buffer, x2: num_pixels, x3: output_zp, x4: out_multiplier,
 // x5: left_shift, x6: right_shift, x7: acc_min, x8: acc_max
 
-ConvDwInt8PostAlign4:
+asm_function ConvDwInt8PostAlign4
     // registers v8 ~ v15 must be preserved by a callee across subroutine calls, according to
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved

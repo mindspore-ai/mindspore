@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -11,7 +12,7 @@
 //                       size_t in_kh_step, size_t in_kw_step, size_t kernel_w, size_t relu, size_t relu6)
 // r0: dst, r1: src, r2: weight, r3: bias, r4: height, r5: width, r6: in_kh_step, r7: in_kw_step,
 // r8: kernel_w, r9: relu, r10: relu6
-ConvDwFp32Border:
+asm_function ConvDwFp32Border
     // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
     push {r4-r12, lr}
     vpush {q4-q7}

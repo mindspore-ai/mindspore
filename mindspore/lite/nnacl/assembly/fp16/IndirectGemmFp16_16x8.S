@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -12,7 +13,7 @@
 // x0: output, x1: input, x2: weight, x3: bias, x4: step, x5: ic4, x6: oc8, x7: offset, 
 // x8:mode, x9: writeC4, x10:relu, x11: relu6
 // compute 8 channel for 16 outputs
-IndirectGemmFp16_16x8:
+asm_function IndirectGemmFp16_16x8
 
     .macro INIT_BIAS
         dup v16.4s, wzr
@@ -41,7 +42,7 @@ IndirectGemmFp16_16x8:
     // x19 ~ r29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
     sub sp, sp, #128
-    // performance between storing 4 registers at the same time and seperatly storing them on in-order cores
+    // performance between storing 4 registers at the same time and separately storing them on in-order cores
     // is not tested yet
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64
@@ -86,7 +87,7 @@ IndirectGemmStart:
             fmla v19.8h, v9.8h, v1.h[5]
             // load input  for output 9-16
             // input cache should be refreshed after loading
-            // ATTENTION: advance is prefered, but advancing too much may lead to invalid prefetching 
+            // ATTENTION: advance is preferred, but advancing too much may lead to invalid prefetching
             ld1 {v4.8h, v5.8h, v6.8h, v7.8h}, [x12], #64
             //  last 2 steps for output 1 and 3
             fmla v16.8h, v10.8h, v0.h[2]
@@ -295,7 +296,7 @@ IndirectGemmStart:
                 cmp x6, #7
                 beq Write7
                 b Write8
-                // prefetching is not prefered while writing results in spite of cache missings
+                // prefetching is not preferred while writing results in spite of cache missing
                 // you could try prfm pstl2strm
                 // there are almost no benefits observed though
             Write1:

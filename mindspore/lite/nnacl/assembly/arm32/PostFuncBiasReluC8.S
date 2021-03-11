@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -21,7 +22,7 @@
 // lr  oc8 loop control
 // r8  hw  loop control
 
-PostFuncBiasReluC8:
+asm_function PostFuncBiasReluC8
   push {r4-r8, r10, r11, lr}
   add sp, sp, #32
 

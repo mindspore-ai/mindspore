@@ -1,5 +1,6 @@
 #ifdef __arm__
 #ifndef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -13,7 +14,7 @@
 // r0: output_ptr, r1: input_ptr, r2: weight_ptr, r3: num_pixels,
 // r4: output_channel, r5: input_step, r6: input_zp,
 
-ConvDwInt8Row:
+asm_function ConvDwInt8Row
     // at return, clang generates "push {lr}, pop {pc}"" while gcc will generate "bx lr"
     // according to https://stackoverflow.com/questions/53625807
     // even if we jump to link register instead of saving it, we still have to save it in subroutine calls anyway

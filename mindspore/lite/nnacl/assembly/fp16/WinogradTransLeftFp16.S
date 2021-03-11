@@ -1,3 +1,4 @@
+#include "nnacl/assembly_global.h"
 
   .text
   .align 5
@@ -6,7 +7,7 @@
   .type WinogradTransLeftFp16, %function
 #endif
 
-WinogradTransLeftFp16:
+asm_function WinogradTransLeftFp16
 
 sub sp, sp, #32
 stp x19, x20, [sp], #32

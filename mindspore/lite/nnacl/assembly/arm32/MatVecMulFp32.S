@@ -1,5 +1,6 @@
 #ifdef __arm__
 #ifndef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -17,7 +18,7 @@
 // r5: depth
 // r6: col
 
-MatVecMulFp32:
+asm_function MatVecMulFp32
   // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
   push {r0-r8, r10, r11, lr}
   add sp, sp, #48

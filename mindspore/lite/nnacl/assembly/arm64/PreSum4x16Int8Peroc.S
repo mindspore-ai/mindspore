@@ -1,5 +1,6 @@
-
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
+
     .text
     .align 5
     //.p2align 5,,15
@@ -20,7 +21,7 @@
 // w6 oc_res4
 // w7 stride
 
-PreSum4x16Int8Peroc:
+asm_function PreSum4x16Int8Peroc
  mov w8, #0
 
 RowLoop:

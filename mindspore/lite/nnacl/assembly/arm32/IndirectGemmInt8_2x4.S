@@ -1,5 +1,6 @@
 #ifdef __arm__
 #ifndef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -13,7 +14,7 @@
 // int32_t *shift_before, int32_t *shift_after, size_t asymmetric, size_t per_channel, size_t per_channel_offset);
 // r0: output, r1: input, r2: weight, r3: bias, r4: kSize, r5: ic4, r6: oc, r7: offset
 // r8: input_sum, r10: act_min, r11: act_max, r10: out_zp, r11: out_multiplier, r10: shift_before, r11: shift_after
-IndirectGemmInt8_2x4:
+asm_function IndirectGemmInt8_2x4
 
     .macro INIT_BIAS
         veor q10, q10, q10
@@ -221,7 +222,7 @@ IndirectGemmInt8_2x4:
                 vqmovn.s32 d31, q12
                 vqmovn.s16 d0, q15
 
-            // prefetching is not prefered while writing results in spite of cache missings
+            // prefetching is not preferred while writing results in spite of cache missing
             // you could try prfm pstl2strm
             WriteStart:
                 cmp r6, #1

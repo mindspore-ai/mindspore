@@ -1,3 +1,4 @@
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -7,7 +8,7 @@
 .type PostFuncBiasReluC4, %function
 #endif
 
-PostFuncBiasReluC4:
+asm_function PostFuncBiasReluC4
   push {r4-r8, r10, r11, lr}
   add sp, sp, #32
 

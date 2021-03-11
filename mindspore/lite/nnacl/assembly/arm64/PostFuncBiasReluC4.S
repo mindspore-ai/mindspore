@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
     .text
     .align 5
@@ -23,7 +24,7 @@
 // w13  hw  loop control
 
 
-PostFuncBiasReluC4:
+asm_function PostFuncBiasReluC4
 
   movi v26.4s, #6
   scvtf v26.4s, v26.4s

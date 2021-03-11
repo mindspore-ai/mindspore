@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -10,7 +11,7 @@
 // MatrixMultiplyWinograd(float *matix_a, float *matrix_b, float *matrix_c, int m, int k, int n, int in_channel, int c4_channel)
     // r0: matrix_a, r1: matrix_b, r2: matrix_c, r3: m, r4: k, r5: n, r6: in_channel, r7: c4_channel * 4
     // #-56: matrix_a, #-52: matrix_b, #-48: matrix_c, #-44: m, #0: k, #4: n, #8: in_channel, #12: c4_channel * 4
-MatrixMultiplyWinograd:
+asm_function MatrixMultiplyWinograd
     // at return, clang generates "push {lr}, pop {pc}"" while gcc will generate "bx lr"
     // according to https://stackoverflow.com/questions/53625807
     // even if we jump to link register instead of saving it, we still have to save it in subroutine calls anyway

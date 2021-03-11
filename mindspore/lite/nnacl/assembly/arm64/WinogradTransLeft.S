@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
     .text
     .align 5
@@ -7,7 +8,7 @@
     .type WinogradTransLeft, %function
 #endif
 
-WinogradTransLeft:
+asm_function WinogradTransLeft
 //void WinogradTransLeft(const float* S, const float* B, float* M, size_t w, size_t h, size_t k, size_t length);
 //x0: S
 //x1: B

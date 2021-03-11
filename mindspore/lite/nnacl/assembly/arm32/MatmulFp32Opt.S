@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
     .text
     .align 5
     .global MatmulFloatNeon32Opt
@@ -19,7 +20,7 @@
 // r8: stride
 // lr: writeNhwc/writeWino
 
-MatmulFloatNeon32Opt:
+asm_function MatmulFloatNeon32Opt
     // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
     push {r0-r8, r10, r11, lr}
     add sp, sp, #48
