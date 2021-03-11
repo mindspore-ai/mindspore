@@ -90,7 +90,7 @@ class _MultiCompatibleRotatingFileHandler(RotatingFileHandler):
             self.stream.close()
             self.stream = None
 
-        # Attain an exclusive lock with bloking mode by `fcntl` module.
+        # Attain an exclusive lock with blocking mode by `fcntl` module.
         with open(self.baseFilename, 'a') as file_pointer:
             if platform.system() != "Windows":
                 fcntl.lockf(file_pointer.fileno(), fcntl.LOCK_EX)
@@ -367,7 +367,7 @@ def get_log_config():
         >>> import os
         >>> os.environ['GLOG_v'] = '1'
         >>> os.environ['GLOG_logtostderr'] = '0'
-        >>> os.environ['GLOG_log_dir'] = '/var/log/mindspore'
+        >>> os.environ['GLOG_log_dir'] = '/var/log'
         >>> os.environ['logger_maxBytes'] = '5242880'
         >>> os.environ['logger_backupCount'] = '10'
         >>> from mindspore import log as logger
@@ -430,13 +430,13 @@ def _find_caller(stack_info=False, stacklevel=1):
 
 def _get_stack_info(frame):
     """
-    Get the stack informations.
+    Get the stack information.
 
     Args:
-        frame(frame): the frame requiring informations.
+        frame(frame): the frame requiring information.
 
     Returns:
-        str, the string of the stack informations.
+        str, the string of the stack information.
     """
     sinfo = None
     stack_prefix = 'Stack (most recent call last):\n'

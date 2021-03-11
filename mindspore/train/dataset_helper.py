@@ -125,8 +125,8 @@ def connect_network_with_dataset(network, dataset_helper):
 
         return network
 
-    if not hasattr(dataset, '__me_inited__') and (context.get_context("device_target") == "Ascend" or \
-            context.get_context("device_target") == "GPU") and not context.get_context("enable_ge"):
+    if not hasattr(dataset, '__me_inited__') and context.get_context("device_target") in ("Ascend", "GPU")\
+        and not context.get_context("enable_ge"):
         dataset.__me_inited__ = True
 
         dataset_types, dataset_shapes = dataset_helper.types_shapes()
