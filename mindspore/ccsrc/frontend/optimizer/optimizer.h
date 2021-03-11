@@ -43,10 +43,10 @@ using OptimizeGraphFunc = std::function<bool(const FuncGraphPtr &func_graph, con
 class OptPassConfig {
  public:
   explicit OptPassConfig(const OptimizeGraphFunc &func) : func_(func) {}
-  explicit OptPassConfig(const std::vector<SubstitutionPtr> &list, bool is_once = false)
-      : list_(list), is_once_(is_once) {}
-  OptPassConfig(const std::initializer_list<SubstitutionPtr> &list, bool is_once = false)
-      : list_(list), is_once_(is_once) {}
+  explicit OptPassConfig(const std::vector<SubstitutionPtr> &list, bool is_once = false, bool global_sensitive = false)
+      : list_(list), is_once_(is_once), global_sensitive_(global_sensitive) {}
+  OptPassConfig(const std::initializer_list<SubstitutionPtr> &list, bool is_once = false, bool global_sensitive = false)
+      : list_(list), is_once_(is_once), global_sensitive_(global_sensitive) {}
   ~OptPassConfig() = default;
 
   const std::vector<SubstitutionPtr> &list() const { return list_; }
@@ -57,6 +57,8 @@ class OptPassConfig {
 
   const bool is_once() const { return is_once_; }
 
+  const bool global_sensitive() const { return global_sensitive_; }
+
  private:
   OptPassConfig() : is_renormalize_(true) {}
 
@@ -64,6 +66,7 @@ class OptPassConfig {
   std::vector<SubstitutionPtr> list_;
   bool is_renormalize_{false};
   bool is_once_{false};
+  bool global_sensitive_{false};
 };
 
 class OptPass {
@@ -115,7 +118,7 @@ class Optimizer : public std::enable_shared_from_this<Optimizer> {
       }
 
       if (config.list().size() > 0) {
-        OptimizeGraphFunc func = SubstitutionList(config.list(), config.is_once());
+        OptimizeGraphFunc func = SubstitutionList(config.list(), config.is_once(), config.global_sensitive());
         passes_.push_back(OptPass(func));
         continue;
       }

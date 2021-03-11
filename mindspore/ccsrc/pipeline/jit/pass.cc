@@ -136,19 +136,21 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.stopgrad_eliminater_,
     irpass.sparse_tensor_eliminate_,
   });
-  opt::OptPassConfig a_2 = opt::OptPassConfig({
-    irpass.merge_addn_,
-    irpass.float_tuple_getitem_switch_,
-    irpass.float_env_getitem_switch_,
-    irpass.incorporate_getitem_set_,
-    irpass.incorporate_call_,
-    irpass.incorporate_call_switch_,
-    irpass.incorporate_env_getitem_bypass_recursive_,
-    irpass.incorporate_env_getitem_switch_,
-    irpass.new_env_get_item_,
-    irpass.depend_value_elim_,
-    irpass.all_reduce_const_elim_,
-  });
+  opt::OptPassConfig a_2 = opt::OptPassConfig(
+    {
+      irpass.merge_addn_,
+      irpass.float_tuple_getitem_switch_,
+      irpass.float_env_getitem_switch_,
+      irpass.incorporate_getitem_set_,
+      irpass.incorporate_call_,
+      irpass.incorporate_call_switch_,
+      irpass.incorporate_env_getitem_bypass_recursive_,
+      irpass.incorporate_env_getitem_switch_,
+      irpass.new_env_get_item_,
+      irpass.depend_value_elim_,
+      irpass.all_reduce_const_elim_,
+    },
+    false, true);
   opt::OptPassConfig a_after_grad = opt::OptPassConfig({
     irpass.inline_without_move_,
   });
@@ -229,7 +231,8 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
      irpass.reset_defer_inline_, irpass.inline_, irpass.updatestate_eliminater_, irpass.load_eliminater_,
      irpass.stopgrad_eliminater_, irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_,
      irpass.incorporate_env_getitem_, irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
-     irpass.incorporate_env_getitem_switch_layer_, irpass.value_based_eliminate_, irpass.receive_eliminate_});
+     irpass.incorporate_env_getitem_switch_layer_, irpass.value_based_eliminate_, irpass.receive_eliminate_},
+    false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
     irpass.replace_refkey_by_param_,
     irpass.make_ref_eliminate_,

@@ -63,8 +63,9 @@ enum OptTraverseSubstitutionsMode { kOptTraverseFromIRToSubstitutions = 0, kOptT
 
 class SubstitutionList {
  public:
-  explicit SubstitutionList(const std::vector<SubstitutionPtr> &patterns, bool is_once = false)
-      : list_(patterns), is_once_(is_once) {}
+  explicit SubstitutionList(const std::vector<SubstitutionPtr> &patterns, bool is_once = false,
+                            bool global_sensitive = false)
+      : list_(patterns), is_once_(is_once), global_sensitive_(global_sensitive) {}
   ~SubstitutionList() = default;
 
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) const;
@@ -77,6 +78,7 @@ class SubstitutionList {
   std::vector<SubstitutionPtr> list_;
   // a flag to mark this list of Substitution can only be executed only once
   bool is_once_;
+  bool global_sensitive_;
 };
 }  // namespace opt
 }  // namespace mindspore
