@@ -6,6 +6,7 @@ import com.mindspore.lite.Model;
 import com.mindspore.lite.DataType;
 import com.mindspore.lite.Version;
 import com.mindspore.lite.config.MSConfig;
+import com.mindspore.lite.config.DeviceType;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

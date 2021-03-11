@@ -74,6 +74,10 @@ public class MSTensor {
         this.tensorPtr = 0;
     }
 
+    public String tensorName() {
+        return this.tensorName(this.tensorPtr);
+    }
+
     protected long getMSTensorPtr() {
         return tensorPtr;
     }
@@ -99,4 +103,6 @@ public class MSTensor {
     private native int elementsNum(long tensorPtr);
 
     private native void free(long tensorPtr);
+
+    private native String tensorName(long tensorPtr);
 }
