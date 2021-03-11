@@ -294,7 +294,7 @@ TEST_F(TestPrim, test_J_2) {
 
 // tail half
 TEST_F(TestPrim, test_switch1) {
-  PrimitivePtr switch_ = std::make_shared<Primitive>("switch");
+  PrimitivePtr switch_ = std::make_shared<Primitive>("Switch");
   FuncGraphPtr func_graph = MakeFuncGraph(switch_, 3);
 
   AbstractBasePtr arg0 = FromValue(true, false);
@@ -307,7 +307,7 @@ TEST_F(TestPrim, test_switch1) {
 }
 
 TEST_F(TestPrim, test_switch2) {
-  PrimitivePtr switch_ = std::make_shared<Primitive>("switch");
+  PrimitivePtr switch_ = std::make_shared<Primitive>("Switch");
   FuncGraphPtr func_graph = MakeFuncGraph(switch_, 3);
 
   AbstractBasePtr arg0 = FromValue(false, false);

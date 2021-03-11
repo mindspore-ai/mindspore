@@ -310,7 +310,7 @@ TEST_F(TestOps, Col2ImV1Test) {
 
 // Statements
 TEST_F(TestOps, SwitchTest) {
-  auto prim = std::make_shared<Primitive>("switch");
+  auto prim = std::make_shared<Primitive>("Switch");
   ASSERT_EQ(prim->name(), kPrimSwitch->name());
 }
 

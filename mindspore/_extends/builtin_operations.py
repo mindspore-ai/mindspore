@@ -92,7 +92,7 @@ def zeros_like_tensor(x):
     return value
 
 
-def switch(c, x, y):
+def Switch(c, x, y):
     """Implement `switch`."""
     return x if c else y
 

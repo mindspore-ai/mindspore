@@ -267,7 +267,7 @@ def bprop_control_depend(x, y, out, dout):
     return C.zeros_like(x), C.zeros_like(y)
 
 
-@bprops.register("switch")
+@bprops.register("Switch")
 def bprop_switch(cond, tb, fb, out, dout):
     """Backpropagator for primitive `switch`."""
     return C.zeros_like(cond), F.switch(cond, dout, C.zeros_like(tb)), \

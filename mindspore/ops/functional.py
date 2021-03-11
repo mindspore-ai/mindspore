@@ -181,7 +181,7 @@ env_setitem = Primitive('env_setitem')
 env_getitem = Primitive('env_getitem')
 env_add = Primitive('env_add')
 J = Primitive('J')
-switch = Primitive('switch')
+switch = Primitive('Switch')
 switch_layer = Primitive('switch_layer')
 # for sum bprop
 reduced_shape = Primitive("reduced_shape")

@@ -47,7 +47,7 @@ namespace abstract {
 using mindspore::parse::PyObjectWrapper;
 
 std::unordered_set<std::string> prims_to_skip_undetermined_infer{
-  "MakeTuple", "make_list", "switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
+  "MakeTuple", "make_list", "Switch", "env_setitem", "env_getitem", "Load", "UpdateState"};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         AnfNodeConfigPtr out_conf) {
