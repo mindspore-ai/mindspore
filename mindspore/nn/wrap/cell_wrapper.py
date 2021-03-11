@@ -18,6 +18,7 @@ from types import FunctionType, MethodType
 from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean,
                                        _get_parallel_mode)
 from mindspore.context import ParallelMode
+from mindspore._checkparam import Validator as validator
 from ...common import dtype as mstype
 from ...common.parameter import Parameter, ParameterTuple
 from ...ops import composite as C
@@ -80,6 +81,9 @@ class WithLossCell(Cell):
     Outputs:
         Tensor, a scalar tensor with shape :math:`()`.
 
+    Raises:
+        TypeError: If dtype of `data` or `label` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -138,6 +142,9 @@ class WithGradCell(Cell):
 
     Outputs:
         list, a list of Tensors with identical shapes as trainable weights.
+
+    Raises:
+        TypeError: If `sens` is not one of None, Tensor, Scalar or Tuple.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -293,6 +300,9 @@ class TrainOneStepCell(Cell):
 
     Outputs:
         Tensor, a scalar Tensor with shape :math:`()`.
+
+    Raises:
+        TypeError: If `sens` is not a number.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -468,6 +478,9 @@ class WithEvalCell(Cell):
         Tuple, containing a scalar loss Tensor, a network output Tensor of shape :math:`(N, \ldots)`
         and a label Tensor of shape :math:`(N, \ldots)`.
 
+    Raises:
+        TypeError: If `add_cast_fp32` is not a bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -482,7 +495,7 @@ class WithEvalCell(Cell):
         super(WithEvalCell, self).__init__(auto_prefix=False)
         self._network = network
         self._loss_fn = loss_fn
-        self.add_cast_fp32 = add_cast_fp32
+        self.add_cast_fp32 = validator.check_value_type("add_cast_fp32", add_cast_fp32, [bool], self.cls_name)
 
     def construct(self, data, label):
         outputs = self._network(data)

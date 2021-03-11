@@ -286,6 +286,15 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
     Outputs:
         Tensor, with the same type and shape as the `input`.
 
+    Raises:
+        TypeError: If `min_init` or `max_init` is neither int nor float.
+        TypeError: If `quant_delay` is not an int.
+        TypeError: If `min_init` is not less than `max_init`.
+        TypeError: If `quant_delay` is not greater than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> fake_quant = nn.FakeQuantWithMinMaxObserver()
         >>> input = Tensor(np.array([[1, 2, 1], [-2, 0, -1]]), mindspore.float32)
@@ -432,10 +441,19 @@ class Conv2dBnFoldQuantOneConv(Cell):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Raises:
+        TypeError: If `in_channels`, `out_channels`, `stride`, `padding` or `dilation` is not an int.
+        TypeError: If `has_bias` is not a bool.
+        ValueError: If `in_channels` or `out_channels` `stride`, `padding` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
-        >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        ...                                      quant_config=qconfig)
+        >>> conv2d_bnfold = nn.Conv2dBnFoldQuantOneConv(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
+        ...                                             quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
         >>> result = conv2d_bnfold(input)
         >>> output = result.shape
@@ -633,6 +651,12 @@ class Conv2dBnFoldQuant(Cell):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `in_channels`, `out_channels`, `stride`, `padding` or `dilation` is not an int.
+        TypeError: If `has_bias` is not a bool.
+        ValueError: If `in_channels` or `out_channels` `stride`, `padding` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -926,6 +950,12 @@ class Conv2dQuant(Cell):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Raises:
+        TypeError: If `in_channels`, `out_channels`, `stride`, `padding` or `dilation` is not an int.
+        TypeError: If `has_bias` is not a bool.
+        ValueError: If `in_channels` or `out_channels` `stride`, `padding` or `dilation` is less than 1.
+        ValueError: If `pad_mode` is not one of 'same', 'valid', 'pad'.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -1032,6 +1062,11 @@ class DenseQuant(Cell):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `in_channels`, `out_channels` is not an int.
+        TypeError: If `has_bias` is not a bool.
+        ValueError: If `in_channels` or `out_channels` is less than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -1145,6 +1180,10 @@ class ActQuant(_QuantActivation):
     Outputs:
         Tensor, with the same type and shape as the `input`.
 
+    Raises:
+        TypeError: If `activation` is not an instance of Cell.
+        TypeError: If `fake_before` is not a bool.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -1212,6 +1251,9 @@ class TensorAddQuant(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_x1`.
 
+    Raises:
+        TypeError: If `ema_decay` is not a float.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -1264,6 +1306,9 @@ class MulQuant(Cell):
 
     Outputs:
         Tensor, with the same type and shape as the `input_x1`.
+
+    Raises:
+        TypeError: If `ema_decay` is not a float.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

@@ -428,7 +428,7 @@ class Broadcast(PrimitiveWithInfer):
         TypeError: If root_rank is not a integer or group is not a string.
 
     Supported Platforms:
-        ``Ascend``, ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> # This example should be run with multiple processes.

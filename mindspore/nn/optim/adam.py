@@ -267,6 +267,16 @@ class Adam(Optimizer):
     Outputs:
         Tensor[bool], the value is True.
 
+    Raises:
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
+        TypeError: If `weight_decay` is neither float nor int.
+        TypeError: If `use_locking` or `use_nesterov` is not a bool.
+        ValueError: If `loss_scale` or `eps` is less than or equal to 0.
+        ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
+        ValueError: If `weight_decay` is less than 0.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -414,6 +424,15 @@ class AdamWeightDecay(Optimizer):
     Outputs:
         tuple[bool], all elements are True.
 
+    Raises:
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `beta1`, `beta2` or `eps` is not a float.
+        TypeError: If `weight_decay` is neither float nor int.
+        ValueError: If `eps` is less than or equal to 0.
+        ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
+        ValueError: If `weight_decay` is less than 0.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -544,6 +563,16 @@ class AdamOffload(Optimizer):
 
     Outputs:
         Tensor[bool], the value is True.
+
+    Raises:
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
+        TypeError: If `weight_decay` is neither float nor int.
+        TypeError: If `use_locking` or `use_nesterov` is not a bool.
+        ValueError: If `loss_scale` or `eps` is less than or equal to 0.
+        ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
+        ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

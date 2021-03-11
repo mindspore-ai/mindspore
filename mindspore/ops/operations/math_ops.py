@@ -747,6 +747,12 @@ class MatMul(PrimitiveWithCheck):
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N, M)`.
 
+    Raises:
+        TypeError: If `transpose_a` or `transpose_b` is not a bool.
+        ValueError: If the column of matrix dimensions of `input_x` is not equal to
+                    the row of matrix dimensions of `input_y`.
+        ValueError: If length of shape of `input_x` or `input_y` is not equal to 2.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -827,7 +833,8 @@ class BatchMatMul(MatMul):
 
     Raises:
         TypeError: If `transpose_a` or `transpose_b` is not a bool.
-        ValueError: If length of shape of `input_x` is less than 3 or not equal to length of shape of `input_y`.
+        ValueError: If length of shape of `input_x` is not equal to length of shape of `input_y` or
+                    length of shape of `input_x` is less than 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -82,6 +82,15 @@ class ExponentialDecayLR(LearningRateSchedule):
     Outputs:
         Tensor. The learning rate value for the current step.
 
+    Raises:
+        TypeError: If `learning_rate` or `decay_rate` is not a float.
+        TypeError: If `decay_steps` is not an int or `is_stair` is not a bool.
+        ValueError: If `decay_steps` is less than 1.
+        ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
@@ -139,6 +148,15 @@ class NaturalExpDecayLR(LearningRateSchedule):
 
     Outputs:
         Tensor. The learning rate value for the current step.
+
+    Raises:
+        TypeError: If `learning_rate` or `decay_rate` is not a float.
+        TypeError: If `decay_steps` is not an int or `is_stair` is not a bool.
+        ValueError: If `decay_steps` is less than 1.
+        ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> learning_rate = 0.1
@@ -199,6 +217,15 @@ class InverseDecayLR(LearningRateSchedule):
     Outputs:
         Tensor. The learning rate value for the current step.
 
+    Raises:
+        TypeError: If `learning_rate` or `decay_rate` is not a float.
+        TypeError: If `decay_steps` is not an int or `is_stair` is not a bool.
+        ValueError: If `decay_steps` is less than 1.
+        ValueError: If `learning_rate` or `decay_rate` is less than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> learning_rate = 0.1
         >>> decay_rate = 0.9
@@ -246,6 +273,15 @@ class CosineDecayLR(LearningRateSchedule):
 
     Outputs:
         Tensor. The learning rate value for the current step.
+
+    Raises:
+        TypeError: If `min_lr` or `max_lr` is not a float.
+        TypeError: If `decay_steps` is not an int.
+        ValueError: If `min_lr` is less than 0 or `decay_steps` is less than 1.
+        ValueError: If `max_lr` is less than or equal to 0.
+
+        Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> min_lr = 0.01
@@ -313,6 +349,15 @@ class PolynomialDecayLR(LearningRateSchedule):
 
     Outputs:
         Tensor. The learning rate value for the current step.
+
+    Raises:
+        TypeError: If `learning_rate`, `end_learning_rate` or `power` is not a float.
+        TypeError: If `decay_steps` is not an int or `update_decay_steps` is not a bool.
+        ValueError: If `end_learning_rate` is less than 0 or `decay_steps` is less than 1.
+        ValueError: If `learning_rate` or `power` is less than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> learning_rate = 0.1
@@ -383,6 +428,15 @@ class WarmUpLR(LearningRateSchedule):
 
     Outputs:
         Tensor. The learning rate value for the current step.
+
+    Raises:
+        TypeError: If `learning_rate` is not a float.
+        TypeError: If `warmup_steps` is not an int.
+        ValueError: If `warmup_steps` is less than 1.
+        ValueError: If `learning_rate` is less than or equal to 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> learning_rate = 0.1

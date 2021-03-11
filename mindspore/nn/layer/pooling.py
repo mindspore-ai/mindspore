@@ -104,6 +104,13 @@ class MaxPool2d(_PoolNd):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If length of shape of `input` is not equal to 4.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -164,8 +171,15 @@ class MaxPool1d(_PoolNd):
     Outputs:
         Tensor of shape :math:`(N, C, L_{out}))`.
 
+    Raises:
+        TypeError: If `kernel_size` or `strides` is not an int.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If length of shape of `input` is not equal to 4.
+
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> max_pool = nn.MaxPool1d(kernel_size=3, stride=1)
@@ -246,6 +260,13 @@ class AvgPool2d(_PoolNd):
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If length of shape of `input` is not equal to 4.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -310,6 +331,12 @@ class AvgPool1d(_PoolNd):
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, L_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size` or `stride` is not an int.
+        ValueError: If `pad_mode` is neither 'same' nor 'valid' with not case sensitive.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If length of shape of `input` is not equal to 3.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

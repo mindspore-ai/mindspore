@@ -1720,7 +1720,7 @@ class MaxPool(_Pool):
             represent height and width of movement respectively. Default: 1.
         pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
-        format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
+        data_format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -1736,6 +1736,13 @@ class MaxPool(_Pool):
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If length of shape of `input` is not equal to 4.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1970,6 +1977,13 @@ class AvgPool(_Pool):
 
     Outputs:
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NCHW' nor 'NHWC'.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If length of shape of `input` is not equal to 4.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3094,7 +3108,7 @@ class L2Normalize(PrimitiveWithInfer):
         Tensor, with the same type and shape as the input.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> l2_normalize = ops.L2Normalize()
@@ -4234,6 +4248,10 @@ class Adam(PrimitiveWithInfer):
         - **var** (Tensor) - The same shape and data type as `var`.
         - **m** (Tensor) - The same shape and data type as `m`.
         - **v** (Tensor) - The same shape and data type as `v`.
+
+    Raises:
+        TypeError: If `use_locking` or `use_nesterov` is not a bool.
+        ValueError: If shape of `var`, `m` and `v` is not the same.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

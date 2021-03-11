@@ -96,7 +96,7 @@ class Momentum(Optimizer):
         momentum (float): Hyperparameter of type float, means momentum for the moving average.
             It must be at least 0.0.
         weight_decay (int, float): Weight decay (L2 penalty). It must be equal to or greater than 0.0. Default: 0.0.
-        loss_scale (int, float): A floating point value for the loss scale. It must be greater than 0.0. Default: 1.0.
+        loss_scale (float): A floating point value for the loss scale. It must be greater than 0.0. Default: 1.0.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
 
     Inputs:
@@ -106,8 +106,13 @@ class Momentum(Optimizer):
         tuple[bool], all elements are True.
 
     Raises:
-        ValueError: If the momentum is less than 0.0.
-        TypeError: If the momentum is not a float or use_nesterov is not a bool.
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `loss_scale` or `momentum` is not a float.
+        TypeError: If `weight_decay` is neither float nor int.
+        TypeError: If `use_nesterov` is not a bool.
+        ValueError: If `loss_scale` is less than or equal to 0.
+        ValueError: If `weight_decay` or `momentum` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
