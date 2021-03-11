@@ -88,14 +88,6 @@ class TestOptLib : public UT::Common {
   irpass::OptimizeIRPassLib irpass;
 };
 
-TEST_F(TestOptLib, test_expendJ) {
-  FuncGraphPtr before = getPyFun("test_expendJ");
-
-  ASSERT_TRUE(nullptr != before);
-
-  FuncGraphPtr after = RunSubs(before, std::vector<SubstitutionPtr>({irpass.expand_jprim_}));
-}
-
 TEST_F(TestOptLib, test_simplify_always_true_false) {
   FuncGraphPtr before1 = getPyFun.CallAndParseRet("test_simplify_always_true_false", "before_1");
   FuncGraphPtr before2 = getPyFun.CallAndParseRet("test_simplify_always_true_false", "before_2");

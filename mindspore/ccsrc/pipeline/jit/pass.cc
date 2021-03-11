@@ -41,6 +41,7 @@
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/jit/static_analysis/auto_monad.h"
+#include "frontend/optimizer/irpass/gradient_eliminate.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -166,7 +167,6 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.mini_step_allgather_replace_,
   });
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
-  opt::OptPassConfig grad = opt::OptPassConfig({irpass.expand_jprim_}, true);
   opt::irpass::ResolveIRPassLib resolve_irpass;
 
   opt::OptPassConfig resolve_pass =
@@ -180,7 +180,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"parallel", opt::OptPassConfig(parallel::StepParallel)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"virtual_dataset", virtual_dataset},
-                         {"grad", grad},
+                         {"grad", opt::OptPassConfig(opt::irpass::ExpandJPrim())},
                          {"resolve", resolve_pass},
                          {"a_after_grad", a_after_grad},
                          {"renormalize", opt::OptPassConfig::Renormalize()},
