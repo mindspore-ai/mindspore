@@ -1490,7 +1490,11 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
                                     op_exec_info->next_input_index};
 #endif
   VectorRef outputs;
-  session->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
+  {
+    // Release GIL before calling into (potentially long-running) C++ code
+    py::gil_scoped_release release;
+    session->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
+  }
   if (op_exec_info->is_dynamic_shape) {
     op_exec_info->abstract = op_run_info.abstract;
   }
