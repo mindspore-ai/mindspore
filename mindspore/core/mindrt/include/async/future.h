@@ -44,7 +44,7 @@ class Option;
 template <typename T>
 class Future : public FutureBase {
  public:
-  typedef Status WaitForStatus;
+  typedef MindrtStatus WaitForStatus;
   typedef typename FutureData<T>::CompleteCallback CompleteCallback;
   typedef typename FutureData<T>::AbandonedCallback AbandonedCallback;
   typedef FutureData<T> Data;
@@ -57,21 +57,23 @@ class Future : public FutureBase {
 
   Future(Future<T> &&f) : data(std::move(f.data)) {}
 
-  Future(const T &t) : data(new (std::nothrow) Data()) {
+  explicit Future(const T &t) : data(new (std::nothrow) Data()) {
     BUS_OOM_EXIT(data);
     SetValue(std::move(t));
   }
 
   template <typename V>
-  Future(const V &value) : data(new (std::nothrow) Data()) {
+  explicit Future(const V &value) : data(new (std::nothrow) Data()) {
     BUS_OOM_EXIT(data);
     SetValue(value);
   }
 
-  Future(const Status &s) : data(new (std::nothrow) Data()) {
+  explicit Future(const MindrtStatus &s) : data(new (std::nothrow) Data()) {
     BUS_OOM_EXIT(data);
     SetFailed(s.GetCode());
   }
+
+  explicit Future(const std::shared_ptr<Data> &t) : data(t) {}
 
   ~Future() override {}
 
@@ -123,10 +125,10 @@ class Future : public FutureBase {
 
   bool IsError() const { return data->status.IsError(); }
 
-  Status GetStatus() const { return data->status; }
+  MindrtStatus GetStatus() const { return data->status; }
 
   int32_t GetErrorCode() const {
-    const Status &status_ = data->status;
+    const MindrtStatus &status_ = data->status;
     if (status_.IsError()) {
       return status_.GetCode();
     }
@@ -211,7 +213,7 @@ class Future : public FutureBase {
   }
 
   void SetFailed(int32_t errCode) const {
-    BUS_ASSERT(errCode != Status::KINIT && errCode != Status::KOK);
+    BUS_ASSERT(errCode != MindrtStatus::KINIT && errCode != MindrtStatus::KOK);
 
     bool call = false;
 
@@ -381,8 +383,6 @@ class Future : public FutureBase {
   template <typename V>
   friend class Future;
   friend class Promise<T>;
-
-  Future(const std::shared_ptr<Data> &t) : data(t) {}
 
   std::shared_ptr<Data> data;
 };

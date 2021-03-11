@@ -60,7 +60,7 @@ struct FutureData {
   typedef std::function<void(const Future<T> &)> AbandonedCallback;
 
   FutureData()
-      : status(Status::KINIT),
+      : status(MindrtStatus::KINIT),
         associated(false),
         abandoned(false),
         gotten(false),
@@ -83,7 +83,7 @@ struct FutureData {
 
   // status of future
   SpinLock lock;
-  Status status;
+  MindrtStatus status;
 
   bool associated;
   bool abandoned;
