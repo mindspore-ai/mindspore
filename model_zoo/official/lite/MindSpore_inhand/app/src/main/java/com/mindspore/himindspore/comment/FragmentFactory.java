@@ -32,8 +32,6 @@ public class FragmentFactory {
     private FragmentFactory() {
     }
 
-
-
     public static FragmentFactory getInstance() {
         if (mInstance == null) {
             synchronized (FragmentFactory.class) {
@@ -45,7 +43,6 @@ public class FragmentFactory {
         return mInstance;
     }
 
-
     public ExperienceFragment getExperienceFragment() {
         if (mExperienceFragment == null) {
             synchronized (FragmentFactory.class) {
@@ -56,7 +53,6 @@ public class FragmentFactory {
         }
         return mExperienceFragment;
     }
-
 
     public CollegeFragment getCollegeFragment() {
         if (mCollegeFragment == null) {

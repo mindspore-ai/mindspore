@@ -24,6 +24,9 @@
         android:theme="@style/AppTheme"
         tools:replace="android:label">
         <activity
+            android:name=".ui.main.PrivacyPolicyActivity"
+            android:screenOrientation="portrait"></activity>
+        <activity
             android:name=".ui.main.MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar" />

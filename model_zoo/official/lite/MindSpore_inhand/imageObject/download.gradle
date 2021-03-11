@@ -85,6 +85,9 @@ task unzipMindSporeIncludeAAR(type: Copy, dependsOn: ['cleanUnusedmindsporeFiles
 }
 
 task cleanUnusedmindsporeAARFiles(type: Delete, dependsOn: ['unzipMindSporeIncludeAAR']) {
+    delete fileTree("${targetMindSporeInclude}").matching {
+        include "*.zip"
+    }
     delete fileTree("${cleantargetMindSporeIncludeAAR}").matching {
         include "*.zip"
     }
@@ -110,7 +113,6 @@ if (file("src/main/assets/model/mobilenetv2.ms").exists()) {
 if (file("src/main/assets/model/ssd.ms").exists()) {
     downloadObjectModelFile.enabled = false
 }
-
 
 if (file("../mindsporelibrary/mindspore/mindspore-lite/1.1.0/mindspore-lite-1.1.0.aar").exists()) {
     downloadMindSporeLibrary.enabled = false

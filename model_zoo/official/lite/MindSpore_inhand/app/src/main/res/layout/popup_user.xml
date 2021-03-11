@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="32dp"
+    android:layout_marginTop="85dp"
+    android:layout_marginRight="32dp"
+    android:layout_marginBottom="106dp"
+    android:background="@drawable/user_protocol_white"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp">
+
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="27dp"
+        android:gravity="center"
+        android:text="@string/me_user_agreements"
+        android:textColor="@color/text_black"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tv_protocol"
+        android:layout_width="252dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:lineSpacingExtra="10dp"
+        android:text="@string/me_privacy"
+        android:textColor="@color/text_gray"
+        android:textSize="12sp" />
+
+    <Button
+        android:id="@+id/pop_agree"
+        android:layout_width="255dp"
+        android:layout_height="33dp"
+        android:layout_below="@id/tv_protocol"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="64dp"
+        android:background="@drawable/user_protocol_blue"
+        android:text="@string/me_agree"
+        android:textColor="@color/white"
+        android:textSize="13sp" />
+
+    <Button
+        android:id="@+id/pop_Disagree"
+        android:layout_width="255dp"
+        android:layout_height="33dp"
+        android:layout_below="@id/pop_agree"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="13dp"
+        android:layout_marginBottom="34dp"
+        android:background="@drawable/user_protocol_no"
+        android:text="@string/me_disagree_and_exit"
+        android:textAllCaps="false"
+        android:textColor="@color/text_light_gray" />
+
+
+</RelativeLayout>

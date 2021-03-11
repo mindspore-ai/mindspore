@@ -11,7 +11,8 @@ public class MSLinkUtils {
     public static final String HELP_STYLE_TRANSFER = BASE_DOC_URL + "/style_transfer_lite.html";
     public static final String HELP_IMAGE_SEGMENTATION = BASE_DOC_URL + "/image_segmentation_lite.html";
     public static final String HELP_SCENE_DETECTION = BASE_DOC_URL + "/scene_detection_lite.html";
-
+    public static final String HELP_INTELLIGENT_POETRY = BASE_URL + "/resources/tech/nlp/poetry";
+    public static final String USER_PRIVACY_RULES = "file:///android_asset/privacy.html";
     public static final String COLLEGE_MAIN_CLOUD = BASE_URL + "/news/newschildren?id=354";
     public static final String COLLEGE_QUICK_TRAIN = BASE_URL + "/tutorial/training/zh-CN/master/quick_start/quick_start.html";
     public static final String COLLEGE_QUICK_EXECUTE = BASE_URL + "/tutorial/inference/zh-CN/master/multi_platform_inference.html";

@@ -46,6 +46,7 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -73,7 +74,7 @@ import static com.mindspore.posenet.Posenet.BodyPart.RIGHT_WRIST;
 
 /**
  * A simple {@link Fragment} subclass.
- * create an instance of this fragment.
+ * create an instance of this fragment.g
  */
 public class PoseNetFragment extends Fragment {
 
@@ -101,6 +102,7 @@ public class PoseNetFragment extends Fragment {
     private CaptureRequest previewRequest;
     private Semaphore cameraOpenCloseLock = new Semaphore(1);//使用信号量 Semaphore 进行多线程任务调度
     private boolean flashSupported;
+    private boolean isPreBackgroundThreadPause;
 
     /**
      * Model input shape for images.
@@ -128,7 +130,6 @@ public class PoseNetFragment extends Fragment {
         @Override
         public void onDisconnected(@NonNull CameraDevice cameraDevice) {
             cameraOpenCloseLock.release();
-            cameraDevice.close();
             closeCamera();
             PoseNetFragment.this.cameraDevice = null;
         }
@@ -194,8 +195,8 @@ public class PoseNetFragment extends Fragment {
     }
 
     public void onPause() {
-        this.closeCamera();
         this.stopBackgroundThread();
+        this.closeCamera();
         super.onPause();
     }
 
@@ -236,6 +237,7 @@ public class PoseNetFragment extends Fragment {
     }
 
     private void closeCamera() {
+        Log.e("AAA", "closeCamera");
         try {
             cameraOpenCloseLock.acquire();
             if (captureSession != null) {
@@ -261,6 +263,8 @@ public class PoseNetFragment extends Fragment {
      * Starts a background thread and its [Handler].
      */
     private void startBackgroundThread() {
+        Log.e("AAA", "startBackgroundThread");
+
         backgroundThread = new HandlerThread("imageAvailableListener");
         backgroundThread.start();
         backgroundHandler = new Handler(backgroundThread.getLooper());
@@ -270,21 +274,19 @@ public class PoseNetFragment extends Fragment {
      * Stops the background thread and its [Handler].
      */
     private void stopBackgroundThread() {
+        Log.e("AAA", "stopBackgroundThread");
+        isPreBackgroundThreadPause = true;
         backgroundThread.quitSafely();
-        try {
-            backgroundThread.join();
-            backgroundThread = null;
-            backgroundHandler = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        backgroundThread.interrupt();
+        backgroundThread = null;
+        backgroundHandler = null;
+
     }
 
-    private final ImageReader.OnImageAvailableListener imageAvailableListener = new ImageReader.OnImageAvailableListener() {
-        @Override
-        public void onImageAvailable(ImageReader imageReader) {
-            if (imageReader != null) {
-                Image image = imageReader.acquireLatestImage();
+    private final ImageReader.OnImageAvailableListener imageAvailableListener = (ImageReader mImageReader) -> {
+        if (backgroundHandler != null && backgroundThread != null && !isPreBackgroundThreadPause) {
+            if (mImageReader != null) {
+                Image image = mImageReader.acquireLatestImage();
                 if (image == null || image.getPlanes() == null) {
                     return;
                 }
@@ -316,6 +318,7 @@ public class PoseNetFragment extends Fragment {
             }
         }
     };
+
 
     /**
      * Creates a new [CameraCaptureSession] for camera preview.
@@ -505,8 +508,21 @@ public class PoseNetFragment extends Fragment {
         Bitmap scaledBitmap = Bitmap.createScaledBitmap(croppedBitmap, MODEL_WIDTH, MODEL_HEIGHT, true);
         // Perform inference.
         Posenet.Person person = posenet.estimateSinglePose(scaledBitmap);
-        Canvas canvas = surfaceView.getHolder().lockCanvas();
-        draw(canvas, person, scaledBitmap);
+        if (null == person) {
+            isPreBackgroundThreadPause = true;
+            Toast.makeText(getActivity(), R.string.posenet_exit, Toast.LENGTH_LONG).show();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    getActivity().finish();
+                }
+            });
+
+        } else {
+            isPreBackgroundThreadPause = false;
+            Canvas canvas = surfaceView.getHolder().lockCanvas();
+            draw(canvas, person, scaledBitmap);
+        }
     }
 
 

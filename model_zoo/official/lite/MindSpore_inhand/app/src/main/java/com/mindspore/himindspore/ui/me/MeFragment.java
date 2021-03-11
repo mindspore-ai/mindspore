@@ -31,6 +31,7 @@ import androidx.fragment.app.Fragment;
 import com.mindspore.common.config.MSLinkUtils;
 import com.mindspore.common.utils.Utils;
 import com.mindspore.himindspore.R;
+import com.mindspore.himindspore.ui.main.PrivacyPolicyActivity;
 
 public class MeFragment extends Fragment implements View.OnClickListener {
 
@@ -55,6 +56,7 @@ public class MeFragment extends Fragment implements View.OnClickListener {
         view.findViewById(R.id.rl_me_official_code).setOnClickListener(this);
         view.findViewById(R.id.rl_me_qa).setOnClickListener(this);
         view.findViewById(R.id.rl_me_version).setOnClickListener(this);
+        view.findViewById(R.id.me_user_protocol).setOnClickListener(this);
         showPackageInfo();
     }
 
@@ -96,6 +98,9 @@ public class MeFragment extends Fragment implements View.OnClickListener {
                 break;
             case R.id.rl_me_qa:
                 Utils.openBrowser(getActivity(), MSLinkUtils.ME_HELP_URL);
+                break;
+            case R.id.me_user_protocol:
+                startActivity(new Intent(getContext(), PrivacyPolicyActivity.class));
                 break;
         }
     }

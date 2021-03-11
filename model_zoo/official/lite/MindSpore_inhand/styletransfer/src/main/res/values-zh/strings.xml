@@ -6,7 +6,7 @@
 
     <string name="toast_original">请先选择原始图片</string>
     <string name="toast_model_run">先前的模型仍在运行</string>
-    <string name="title_choose_image">选择图片</string>
+    <string name="title_choose_image">点击下方图片或相机选择照片</string>
     <string name="btn_photo">图片</string>
     <string name="btn_camera">相机</string>
     <string name="btn_recovery">恢复</string>

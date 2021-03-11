@@ -201,6 +201,10 @@ public class Posenet {
         float[][][][] heatmaps = runConv2Dfor27();
         float[][][][] offsets = runConv2Dfor28();
 
+        if (heatmaps == null || offsets ==null){
+            return null;
+        }
+
         int height = ((Object[]) heatmaps[0]).length;  //9
         int width = ((Object[]) heatmaps[0][0]).length; //9
         int numKeypoints = heatmaps[0][0][0].length; //17
@@ -271,6 +275,10 @@ public class Posenet {
         float[] heatmaps_results = heatmaps_tensors.getFloatData();
         int[] heatmapsShape = heatmaps_tensors.getShape(); //1, 9, 9 ,17
 
+        if (heatmapsShape[0] < 0 || heatmapsShape[1] < 0 || heatmapsShape[2] < 0 || heatmapsShape[3] < 0) {
+            return null;
+        }
+
         float[][][][] heatmaps = new float[heatmapsShape[0]][][][];
         for (int x = 0; x < heatmapsShape[0]; x++) {  // heatmapsShape[0] =1
             float[][][] arrayThree = new float[heatmapsShape[1]][][];
@@ -301,6 +309,9 @@ public class Posenet {
         float[] offsets_results = offsets_tensors.getFloatData();
         int[] offsetsShapes = offsets_tensors.getShape();
 
+        if (offsetsShapes[0] < 0 || offsetsShapes[1] < 0 || offsetsShapes[2] < 0 || offsetsShapes[3] < 0) {
+            return null;
+        }
         float[][][][] offsets = new float[offsetsShapes[0]][][][];
         for (int x = 0; x < offsetsShapes[0]; x++) {
             float[][][] offsets_arrayThree = new float[offsetsShapes[1]][][];

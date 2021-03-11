@@ -9,21 +9,48 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-       >
+        tools:ignore="MissingConstraints">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="30dp"
-            android:layout_marginBottom="30dp"
+            android:paddingTop="30dp"
+            android:paddingBottom="30dp"
             android:orientation="vertical">
+
+            <View
+                android:id="@+id/title_vertical_line_one"
+                android:layout_width="3dp"
+                android:layout_height="12dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="18dp"
+                android:layout_marginBottom="3dp"
+                android:background="@color/main_tab_text_checked"
+                app:layout_constraintBottom_toBottomOf="@id/title_vision"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <TextView
+                android:id="@+id/title_vision"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="16dp"
+                android:gravity="center_vertical"
+                android:text="@string/tab_experience_one"
+                android:textColor="@color/text_black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                tools:ignore="MissingConstraints" />
+
 
             <Button
                 android:id="@+id/btn_object"
                 android:layout_width="0dp"
                 android:layout_height="50dp"
                 android:layout_marginStart="18dp"
-                android:layout_marginTop="17dp"
+                android:layout_marginTop="13dp"
                 android:background="@drawable/btn_vision_item"
                 android:drawableStart="@drawable/btn_test"
                 android:drawablePadding="5dp"
@@ -36,6 +63,7 @@
                 android:textColor="@color/text_black"
                 android:textSize="12sp"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/title_vertical_line_one"
                 app:layout_constraintWidth_percent="0.44"
                 tools:ignore="MissingConstraints" />
 
@@ -178,6 +206,55 @@
                 android:textSize="12sp"
                 app:layout_constraintBottom_toBottomOf="@+id/btn_image_garbage"
                 app:layout_constraintEnd_toEndOf="@+id/btn_image"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <View
+                android:id="@+id/title_vertical_line_two"
+                android:layout_width="3dp"
+                android:layout_height="12dp"
+                android:layout_gravity="center"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="23dp"
+                android:layout_marginEnd="14dp"
+                android:background="@color/main_tab_text_checked"
+                android:gravity="center_vertical"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_image_garbage"
+                app:layout_constraintWidth_percent="0.44" />
+
+            <TextView
+                android:id="@+id/title_voice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="28dp"
+                android:layout_marginTop="20dp"
+                android:gravity="center_vertical"
+                android:text="@string/tab_speech_two"
+                android:textColor="@color/text_black"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_image_garbage"
+                app:layout_constraintWidth_percent="0.44" />
+
+
+            <com.mindspore.himindspore.ui.view.LeftImageRightTextButton
+                android:id="@+id/btn_image_Intelligent_poetry"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="13dp"
+                android:background="@drawable/btn_vision_item"
+                android:maxLines="1"
+                android:onClick="onClickIntelligentPoetry"
+                android:paddingStart="4dp"
+                android:text="@string/title_intelligent_poetry"
+                android:textAllCaps="false"
+                android:textColor="@color/text_black"
+                android:textSize="12sp"
+                app:layout_constraintStart_toStartOf="@+id/title_vertical_line_two"
+                app:layout_constraintTop_toBottomOf="@+id/title_vertical_line_two"
                 app:layout_constraintWidth_percent="0.44" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

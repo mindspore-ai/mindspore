@@ -27,6 +27,8 @@ import androidx.fragment.app.Fragment;
 
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.alibaba.android.arouter.launcher.ARouter;
+import com.mindspore.common.config.MSLinkUtils;
+import com.mindspore.common.utils.Utils;
 import com.mindspore.himindspore.R;
 
 /**
@@ -70,6 +72,7 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
         view.findViewById(R.id.btn_image).setOnClickListener(this);  //onClickImage
         view.findViewById(R.id.btn_image_garbage).setOnClickListener(this);  //onClickGarbage
         view.findViewById(R.id.btn_scene).setOnClickListener(this);  //onClickSceneDetection
+        view.findViewById(R.id.btn_image_Intelligent_poetry).setOnClickListener(this);  //onClickIntelligentPoetry
 
     }
 
@@ -103,6 +106,9 @@ public class VisionFragment extends Fragment implements View.OnClickListener {
             case R.id.btn_scene:
                 ARouter.getInstance().build("/imageobject/ImageCameraActivity")
                         .withInt("OPEN_TYPE", 3).navigation();
+                break;
+            case R.id.btn_image_Intelligent_poetry:
+                Utils.openBrowser(getActivity(), MSLinkUtils.HELP_INTELLIGENT_POETRY);
                 break;
 
         }
