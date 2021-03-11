@@ -184,9 +184,6 @@ bool SubstitutionList::ApplyIRToSubstitutions(const OptimizerPtr &optimizer, con
     for (auto &substitution : list_) {
       auto res = DoTransform(optimizer, node, substitution);
       if (res != nullptr) {
-        if (is_once_) {
-          return true;
-        }
         change = true;
         changes = true;
         node = res;
@@ -228,9 +225,6 @@ bool SubstitutionList::ApplySubstitutionToIR(const OptimizerPtr &optimizer, cons
     bool change = false;
     auto res = DoTransform(optimizer, node, substitution);
     if (res != nullptr) {
-      if (is_once_) {
-        return true;
-      }
       change = true;
       changes = true;
       node = res;
@@ -316,9 +310,13 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
                                                               : kOptTraverseFromSubstitutionsToIR);
   if (traverse_mode == kOptTraverseFromIRToSubstitutions &&
       MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
-      optimizer->traverse_nodes_first()) {
+      optimizer->traverse_nodes_first() && !is_once_ && !global_sensitive_) {
+    MS_LOG(DEBUG) << "IR >> SUB, " << optimizer->name() << "(r" << optimizer->CurPass_.counter << ")_"
+                  << optimizer->CurPass_.name;
     changes = ApplyIRToSubstitutions(optimizer, func_graph);
   } else {
+    MS_LOG(DEBUG) << "SUB >> IR, " << optimizer->name() << "(r" << optimizer->CurPass_.counter << ")_"
+                  << optimizer->CurPass_.name;
     changes = ApplySubstitutionsToIR(optimizer, func_graph);
   }
   return changes;
