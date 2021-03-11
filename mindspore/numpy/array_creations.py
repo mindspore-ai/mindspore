@@ -688,6 +688,7 @@ def empty(shape, dtype=mstype.float32):
         >>> import mindspore.numpy as np
         >>> output = np.empty((2, 3))
         >>> print(output)
+        # result may vary
         Tensor(shape=[2, 3], dtype=Float32, value=
         <uninitialized>)
     """
@@ -756,9 +757,10 @@ def empty_like(prototype, dtype=None, shape=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = [[(1, 2)], onp.ones((1, 2)), [[2, 3]], onp.ones((1, 2))]
+        >>> a = [[(1, 2)], np.ones((1, 2)), [[2, 3]], np.ones((1, 2))]
         >>> output = np.empty_like(a)
         >>> print(output)
+        # result may vary
         Tensor(shape=[4, 1, 2], dtype=Float32, value=
         <uninitialized>)
     """
@@ -869,7 +871,7 @@ def full_like(a, fill_value, dtype=None, shape=None):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = [[(1, 2)], onp.ones((1, 2)), [[2, 3]], onp.ones((1, 2))]
+        >>> a = [[(1, 2)], np.ones((1, 2)), [[2, 3]], np.ones((1, 2))]
         >>> output = np.full_like(a, 0.5)
         >>> print(output)
         [[[0.5 0.5]]
@@ -1028,6 +1030,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.arange(4).reshape(2,2)
         >>> print(a)
         [[0 1]
@@ -1136,6 +1139,7 @@ def trace(a, offset=0, axis1=0, axis2=1, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.trace(np.eye(3))
         >>> print(output)
         3.0
@@ -1216,6 +1220,7 @@ def meshgrid(*xi, sparse=False, indexing='xy'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.linspace(0, 1, 3)
         >>> y = np.linspace(0, 1, 2)
         >>> xv, yv = np.meshgrid(x, y)
@@ -1439,6 +1444,7 @@ def diag(v, k=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.arange(9).reshape((3,3))
         >>> print(x)
         [[0 1 2]
@@ -1505,6 +1511,7 @@ def diagflat(v, k=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.diagflat(np.asarray([[1,2], [3,4]]))
         >>> print(output)
         [[1 0 0 0]
@@ -1564,6 +1571,7 @@ def diag_indices(n, ndim=2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.diag_indices(5, 3)
         >>> print(output)
         (Tensor(shape=[5], dtype=Int32, value= [0, 1, 2, 3, 4]),
@@ -1605,6 +1613,7 @@ def ix_(*args):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> ixgrid = np.ix_(np.array([0, 1]), np.array([2, 4]))
         >>> print(ixgrid)
         [Tensor(shape=[2, 1], dtype=Int32, value=

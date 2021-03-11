@@ -107,6 +107,7 @@ def less_equal(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.less_equal(np.array([4, 2, 1]), np.array([2, 2, 2]))
         >>> print(output)
         [False  True  True]
@@ -154,6 +155,7 @@ def less(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.less(np.array([1, 2]), np.array([2, 2]))
         >>> print(output)
         [ True False]
@@ -200,6 +202,7 @@ def greater_equal(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.greater_equal(np.array([4, 2, 1]), np.array([2, 2, 2]))
         >>> print(output)
         [ True  True False]
@@ -246,6 +249,7 @@ def greater(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.greater(np.array([4, 2]), np.array([2, 2]))
         >>> print(output)
         [ True False]
@@ -292,6 +296,7 @@ def equal(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.equal(np.array([0, 1, 3]), np.arange(3))
         >>> print(output)
         [ True  True False]
@@ -338,6 +343,7 @@ def isfinite(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.isfinite(np.array([np.inf, 1., np.nan]).astype('float32'))
         >>> print(output)
         [False  True False]
@@ -390,6 +396,7 @@ def isnan(x, out=None, where=True, dtype=None):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.isnan(np.array(np.nan, np.float32))
         >>> print(output)
         True
@@ -451,6 +458,7 @@ def isinf(x, out=None, where=True, dtype=None):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.isinf(np.array(np.inf, np.float32))
         >>> print(output)
         True
@@ -495,6 +503,7 @@ def isposinf(x):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.isposinf(np.array([-np.inf, 0., np.inf], np.float32))
         >>> print(output)
         [False False  True]
@@ -525,6 +534,7 @@ def isneginf(x):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.isneginf(np.array([-np.inf, 0., np.inf], np.float32))
         >>> print(output)
         [ True False False]
@@ -561,6 +571,7 @@ def isscalar(element):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.isscalar(3.1)
         >>> print(output)
         True
