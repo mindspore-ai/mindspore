@@ -281,7 +281,7 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/space_to_batch_infer.c
         ${LITE_DIR}/nnacl/infer/space_to_batch_nd_infer.c
         ${LITE_DIR}/nnacl/infer/space_to_depth_infer.c
-        ${LITE_DIR}/nnacl/infer/sparse_softmax_cross_entropy_infer.c
+        ${LITE_DIR}/nnacl/infer/sparse_softmax_cross_entropy_with_logits_infer.c
         ${LITE_DIR}/nnacl/infer/sparse_to_dense_infer.c
         ${LITE_DIR}/nnacl/infer/split_infer.c
         ${LITE_DIR}/nnacl/infer/squeeze_infer.c

@@ -19,25 +19,26 @@
 #include <string>
 #include <vector>
 
-#include "ops/sparse_softmax_cross_entropy.h"
+#include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
-void SparseSoftmaxCrossEntropy::Init(const bool grad) { this->set_grad(grad); }
+void SparseSoftmaxCrossEntropyWithLogits::Init(const bool grad) { this->set_grad(grad); }
 
-void SparseSoftmaxCrossEntropy::set_grad(const bool grad) { this->AddAttr(kGrad, MakeValue(grad)); }
+void SparseSoftmaxCrossEntropyWithLogits::set_grad(const bool grad) { this->AddAttr(kGrad, MakeValue(grad)); }
 
-bool SparseSoftmaxCrossEntropy::get_grad() const {
+bool SparseSoftmaxCrossEntropyWithLogits::get_grad() const {
   auto value_ptr = GetAttr(kGrad);
   return GetValue<bool>(value_ptr);
 }
 
-AbstractBasePtr SparseSoftmaxCrossEntropyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto sparse_softmax_cross_entropy_prim = primitive->cast<PrimSparseSoftmaxCrossEntropyPtr>();
+  auto sparse_softmax_cross_entropy_prim = primitive->cast<PrimSparseSoftmaxCrossEntropyWithLogitsPtr>();
   MS_EXCEPTION_IF_NULL(sparse_softmax_cross_entropy_prim);
   auto prim_name = sparse_softmax_cross_entropy_prim->name();
   CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 2, prim_name);
@@ -57,6 +58,6 @@ AbstractBasePtr SparseSoftmaxCrossEntropyInfer(const abstract::AnalysisEnginePtr
   auto output_type = input_args[0]->BuildType()->cast<TensorTypePtr>()->element();
   return std::make_shared<abstract::AbstractTensor>(output_type, output_shape);
 }
-REGISTER_PRIMITIVE_C(kNameSparseSoftmaxCrossEntropy, SparseSoftmaxCrossEntropy);
+REGISTER_PRIMITIVE_C(kNameSparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogits);
 }  // namespace ops
 }  // namespace mindspore

@@ -149,7 +149,7 @@
 #include "ops/space_to_batch.h"
 #include "ops/space_to_batch_nd.h"
 #include "ops/space_to_depth.h"
-#include "ops/sparse_softmax_cross_entropy.h"
+#include "ops/sparse_softmax_cross_entropy_with_logits.h"
 #include "ops/sparse_to_dense.h"
 #include "ops/split.h"
 #include "ops/square.h"
@@ -405,7 +405,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(SoftmaxCrossEntropyWithLogits);
 FUNC_MSOP2SCHEMAOP_DECLARE(SpaceToBatch);
 FUNC_MSOP2SCHEMAOP_DECLARE(SpaceToBatchND);
 FUNC_MSOP2SCHEMAOP_DECLARE(SpaceToDepth);
-FUNC_MSOP2SCHEMAOP_DECLARE(SparseSoftmaxCrossEntropy);
+FUNC_MSOP2SCHEMAOP_DECLARE(SparseSoftmaxCrossEntropyWithLogits);
 FUNC_MSOP2SCHEMAOP_DECLARE(SparseToDense);
 FUNC_MSOP2SCHEMAOP_DECLARE(Split);
 FUNC_MSOP2SCHEMAOP_DECLARE(Sqrt);

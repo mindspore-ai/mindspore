@@ -25,7 +25,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropy;
+using mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits;
 
 namespace mindspore::kernel {
 
@@ -93,7 +93,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   std::fill(losses_, losses_ + data_size, 0.f);
   std::fill(sum_data_, sum_data_ + sm_params_.input_shape_[0], 0.f);
   Softmax(ins, losses_, sum_data_, &sm_params_);
-  if (sce_param->is_grad) {
+  if (sce_param->is_grad_) {
     GradPostExecute(labels, losses_, out);
   } else {
     ForwardPostExecute(labels, losses_, out);
@@ -101,20 +101,21 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   return RET_OK;
 }
 
-int SparseSoftmaxCrossEntropyRun(void *cdata, int task_id) {
+int SparseSoftmaxCrossEntropyWithLogitsRun(void *cdata, int task_id) {
   auto sparse_kernel = reinterpret_cast<SparseSoftmaxCrossEntropyWithLogitsCPUKernel *>(cdata);
   auto error_code = sparse_kernel->Execute(task_id);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogitsRun error task_id[" << task_id << "] error_code[" << error_code
+                  << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SparseSoftmaxCrossEntropyRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, SparseSoftmaxCrossEntropyWithLogitsRun, this, 1);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "SparseSoftmaxCrossEntropy function error error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "SparseSoftmaxCrossEntropyWithLogits function error error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
@@ -145,13 +146,13 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSparseSoftmaxCrossEntropyFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                                  const std::vector<lite::Tensor *> &outputs,
-                                                                  OpParameter *opParameter,
-                                                                  const lite::InnerContext *ctx,
-                                                                  const kernel::KernelKey &desc) {
+kernel::LiteKernel *CpuSparseSoftmaxCrossEntropyWithLogitsFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                                            const std::vector<lite::Tensor *> &outputs,
+                                                                            OpParameter *opParameter,
+                                                                            const lite::InnerContext *ctx,
+                                                                            const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_SparseSoftmaxCrossEntropy);
+  MS_ASSERT(desc.type == schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits);
   auto *kernel = new (std::nothrow) SparseSoftmaxCrossEntropyWithLogitsCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new SparseSoftmaxCrossEntropyWithLogitsCPUKernel failed!";
@@ -167,6 +168,6 @@ kernel::LiteKernel *CpuSparseSoftmaxCrossEntropyFp32KernelCreator(const std::vec
   }
   return kernel;
 }
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseSoftmaxCrossEntropy,
-           CpuSparseSoftmaxCrossEntropyFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SparseSoftmaxCrossEntropyWithLogits,
+           CpuSparseSoftmaxCrossEntropyWithLogitsFp32KernelCreator)
 }  // namespace mindspore::kernel

@@ -120,7 +120,7 @@
 #include "nnacl/infer/merge_infer.h"
 #include "nnacl/infer/switch_infer.h"
 #include "nnacl/infer/assert_op_infer.h"
-#include "nnacl/infer/sparse_softmax_cross_entropy_infer.h"
+#include "nnacl/infer/sparse_softmax_cross_entropy_with_logits_infer.h"
 #include "nnacl/infer/dropout_infer.h"
 #include "nnacl/infer/prior_box_infer.h"
 
@@ -394,7 +394,7 @@ static RegistryInferShape g_MergeInferShape(mindspore::schema::PrimitiveType_Mer
 static RegistryInferShape g_SwitchInferShape(mindspore::schema::PrimitiveType_Switch, SwitchInferShape);
 static RegistryInferShape g_AssertOpInferShape(mindspore::schema::PrimitiveType_Assert, AssertOpInferShape);
 static RegistryInferShape g_SparseSoftmaxCrossEntropyInferShape(
-  mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropy, SparseSoftmaxCrossEntropyInferShape);
+  mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogitsInferShape);
 static RegistryInferShape g_DropoutInferShape(mindspore::schema::PrimitiveType_Dropout, DropoutInferShape);
 static RegistryInferShape g_PriorBoxInferShape(mindspore::schema::PrimitiveType_PriorBox, PriorBoxInferShape);
 static RegistryInferShape g_MinimumGradInferShape(mindspore::schema::PrimitiveType_MinimumGrad, MaximumGradInferShape);

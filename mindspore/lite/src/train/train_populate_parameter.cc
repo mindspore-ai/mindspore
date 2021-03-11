@@ -123,7 +123,7 @@ OpParameter *PopulateSgdParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(p);
 }
 
-OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const void *prim) {
+OpParameter *PopulateSparseSoftmaxCrossEntropyWithLogitsParameter(const void *prim) {
   SoftmaxCrossEntropyParameter *sce_param =
     reinterpret_cast<SoftmaxCrossEntropyParameter *>(malloc(sizeof(SoftmaxCrossEntropyParameter)));
   if (sce_param == nullptr) {
@@ -131,9 +131,9 @@ OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const void *prim) {
     return nullptr;
   }
   auto primitive = static_cast<const schema::Primitive *>(prim);
-  auto value = primitive->value_as_SparseSoftmaxCrossEntropy();
+  auto value = primitive->value_as_SparseSoftmaxCrossEntropyWithLogits();
   sce_param->op_parameter_.type_ = primitive->value_type();
-  sce_param->is_grad = value->grad();
+  sce_param->is_grad_ = value->grad();
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
@@ -146,7 +146,7 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const void *prim) {
   }
   auto primitive = static_cast<const schema::Primitive *>(prim);
   sce_param->op_parameter_.type_ = primitive->value_type();
-  sce_param->is_grad = 0;
+  sce_param->is_grad_ = 0;
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
@@ -385,8 +385,9 @@ void PopulateTrainParameters() {
                                            lite::SCHEMA_CUR);
   lite::Registry SoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SoftmaxCrossEntropyWithLogits,
                                                       PopulateSoftmaxCrossEntropyParameter, lite::SCHEMA_CUR);
-  lite::Registry SparseSoftmaxCrossEntropyParameterRegistry(
-    schema::PrimitiveType_SparseSoftmaxCrossEntropy, PopulateSparseSoftmaxCrossEntropyParameter, lite::SCHEMA_CUR);
+  lite::Registry SparseSoftmaxCrossEntropyParameterRegistry(schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits,
+                                                            PopulateSparseSoftmaxCrossEntropyWithLogitsParameter,
+                                                            lite::SCHEMA_CUR);
   lite::Registry ActivationParameterRegistry(schema::PrimitiveType_ActivationGrad, PopulateActivationGradParameter,
                                              lite::SCHEMA_CUR);
   lite::Registry DependParameterRegistry(schema::PrimitiveType_Depend, lite::DefaultPopulateParameter,

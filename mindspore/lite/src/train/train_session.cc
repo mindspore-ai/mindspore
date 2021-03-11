@@ -454,7 +454,7 @@ int TrainSession::OptimizerStep() {
 
 bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
   return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits ||
-          kernel->Type() == schema::PrimitiveType_SparseSoftmaxCrossEntropy ||
+          kernel->Type() == schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits ||
           kernel->Type() == schema::PrimitiveType_SmoothL1Loss ||
           kernel->Type() == schema::PrimitiveType_SmoothL1LossGrad ||
           kernel->Type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogits ||
