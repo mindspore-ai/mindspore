@@ -382,7 +382,9 @@ void IrExportBuilder::SetShapeToNodeProto(const CNodePtr &node, mind_ir::NodePro
   // 3. save tuple string in ref_attr_name
   MS_EXCEPTION_IF_NULL(node);
   auto type = node->Type();
+  MS_EXCEPTION_IF_NULL(type);
   auto shape = node->Shape();
+  MS_EXCEPTION_IF_NULL(shape);
   ResetTupleIndex();
   std::string seq_string = "shape:";
   mind_ir::AttributeProto *attr_proto = node_proto->add_attribute();

@@ -327,6 +327,10 @@ void EliminateUselessNodesForUpdateStates(const std::vector<CNodePtr> &update_st
   // If all users are Depend CNode.
   if (depend_nodes.size() == us_users.size()) {
     end = 1;
+    // Set abstract value for reserved Depend node.
+    auto &reserved_depend_node = depend_nodes[0];
+    auto &primary_node = reserved_depend_node->cast<CNodePtr>()->input(kInputIndex);
+    reserved_depend_node->set_abstract(primary_node->abstract());
   }
   for (ssize_t i = depend_nodes.size() - 1; i >= end; i--) {
     const auto &depend_node = depend_nodes[i];

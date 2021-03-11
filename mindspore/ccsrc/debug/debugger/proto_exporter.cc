@@ -579,7 +579,7 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
   ChangeFileMode(file_path, S_IRUSR);
 }
 #else
-void DumpIRProtoWithSrcInfo(const FuncGraphPtr &, const std::string &, const std::string &) {
+void DumpIRProtoWithSrcInfo(const FuncGraphPtr &, const std::string &, const std::string &, LocDebugDumpMode) {
   static bool already_printed = false;
   if (already_printed) {
     return;
