@@ -396,8 +396,6 @@ void FunctionBlock::FindIsolatedNodes() {
     }
     auto &var_name = var.first;
     if (used.find(node) == used.end() && CanBeIsolatedNode(var_name, node)) {
-      // We don't call AddIsolatedNode(node) anymore.
-      // If need, to call FindIsolatedNodes() in appropriate place.
       MS_LOG(INFO) << "Isolated node found(NoUse), node: " << node->DebugString(2) << ", var_name: " << var_name
                    << ", block: " << this << "/" << (func_graph() ? func_graph()->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(node->debug_info(), "", kSourceLineTipDiscard);
@@ -417,13 +415,21 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   states.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   for (auto &node : isolated_nodes_) {
     MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
-    states.emplace_back(node);
+    if (node->func_graph() == func_graph()) {
+      states.emplace_back(node);
+    } else {
+      MS_LOG(INFO) << "Ignored FV dependency, node: " << node->DebugString(2) << " in " << func_graph()->ToString();
+    }
   }
+  isolated_nodes_.clear();
 
   AnfNodePtr state = nullptr;
-  // If there are only make_tuple and another node in states(the states size is 2),
-  // do not need to make_tuple, just use the node.
-  if (states.size() == 2) {
+  if (states.size() == 1) {
+    // Only MakeTuple, no state left.
+    return;
+  } else if (states.size() == 2) {
+    // If there are only MakeTuple and another node in states(the states size is 2),
+    // do not need to MakeTuple, just use the node.
     state = states[1];
   } else {
     state = func_graph()->NewCNode(states);
