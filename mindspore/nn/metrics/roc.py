@@ -25,10 +25,10 @@ class ROC(Metric):
 
     Args:
         class_num (int): Integer with the number of classes. For the problem of binary classification, it is not
-                         necessary to provide this argument. Default: None.
+            necessary to provide this argument. Default: None.
         pos_label (int): Determine the integer of positive class. Default: None. For binary problems, it is translated
-                         to 1. For multiclass problems, this argument should not be set, as it is iteratively changed
-                         in the range [0,num_classes-1]. Default: None.
+            to 1. For multiclass problems, this argument should not be set, as it is iteratively changed in the
+            range [0,num_classes-1]. Default: None.
 
     Examples:
         >>> 1) binary classification example
@@ -163,10 +163,10 @@ class ROC(Metric):
             A tuple, composed of `fpr`, `tpr`, and `thresholds`.
 
             - **fpr** (np.array) - np.array with false positive rates. If multiclass, this is a list of such np.array,
-                                   one for each class.
+                one for each class.
             - **tps** (np.array) - np.array with true positive rates. If multiclass, this is a list of such np.array,
-                                   one for each class.
-            - **thresholds** (np.array) - thresholds used for computing false- and true postive rates.
+                one for each class.
+            - **thresholds** (np.array) - thresholds used for computing false- and true positive rates.
         """
         if self._is_update is False:
             raise RuntimeError('Call the update method before calling eval.')

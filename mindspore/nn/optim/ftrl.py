@@ -129,8 +129,7 @@ class FTRL(Optimizer):
               in the value of 'order_params' must be in one of group parameters.
 
             - grad_centralization: Optional. If "grad_centralization" is in the keys, the set value will be used.
-              If not, the `grad_centralization` in the base class will be used.This parameter only works on the
-              convolution layer.
+              If not, the `grad_centralization` is False by default. This parameter only works on the convolution layer.
 
         initial_accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
         learning_rate (float): The learning rate value, must be zero or positive, dynamic learning rate is currently

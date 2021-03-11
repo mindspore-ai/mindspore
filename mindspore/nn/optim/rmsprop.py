@@ -106,8 +106,7 @@ class RMSProp(Optimizer):
               in the value of 'order_params' must be in one of group parameters.
 
             - grad_centralization: Optional. If "grad_centralization" is in the keys, the set value will be used.
-              If not, the `grad_centralization` in the base class will be used. This parameter only works on the
-              convolution layer.
+              If not, the `grad_centralization` is False by default. This parameter only works on the convolution layer.
 
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.
             When the learning_rate is an Iterable or a Tensor in a 1D dimension, use dynamic learning rate, then

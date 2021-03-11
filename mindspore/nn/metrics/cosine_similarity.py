@@ -57,14 +57,14 @@ class CosineSimilarity(Metric):
         self.sqr_mtx_res = 0
         self._is_update = False
 
-    def update(self, *inputs):
+    def update(self, inputs):
         """
         Updates the internal evaluation result with 'input1'.
 
         Args:
             inputs: input_data `input1`. The input_data is a `Tensor` or an array.
         """
-        input_data = self._convert_data(inputs[0])
+        input_data = self._convert_data(inputs)
 
         if self.similarity == 'cosine':
             data = np.linalg.norm(input_data, ord=2, axis=1)
