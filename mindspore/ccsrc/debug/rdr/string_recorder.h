@@ -24,11 +24,8 @@ namespace mindspore {
 class StringRecorder : public BaseRecorder {
  public:
   StringRecorder() : BaseRecorder() {}
-  StringRecorder(const std::string &module, const std::string &tag, const std::string &data,
-                 const std::string &filename)
-      : BaseRecorder(module, tag), data_(data) {
-    SetFilename(filename);
-  }
+  StringRecorder(const std::string &module, const std::string &name, const std::string &data)
+      : BaseRecorder(module, name), data_(data) {}
   ~StringRecorder() {}
   virtual void Export();
 

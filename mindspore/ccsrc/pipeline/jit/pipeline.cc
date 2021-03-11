@@ -737,11 +737,11 @@ void Pipeline::Run() {
 #ifdef ENABLE_DUMP_IR
       if (mindspore::RecorderManager::Instance().RdrEnable()) {
         MS_LOG(INFO) << "Recording FuncGraph in pipeline using RDR.";
-        std::string tag = GetBaseNameForIR(i, action.first);
+        std::string name = GetBaseNameForIR(i, action.first);
         if (graph != nullptr) {
           auto graph_clone = BasicClone(graph);
           if (graph_clone != nullptr) {
-            mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, tag, graph_clone, false, ".ir");
+            mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph_clone, false, ".ir");
           } else {
             MS_LOG(WARNING) << "Clone FuncGraph failed in pipeline, no FuncGraph recording in RDR.";
           }

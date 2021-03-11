@@ -22,11 +22,36 @@
 #include <unordered_map>
 #include <memory>
 #include <mutex>
+#include <utility>
 
 namespace mindspore {
+template <typename T>
+inline void hash_combine(std::size_t *seed, const T &val) {
+  // The number is the reciprocal of the golden ratio.
+  unsigned int magic_constant = 0x9e3779b9;
+
+  int shift_left = 6;
+  int shift_right = 2;
+  *seed ^= std::hash<T>()(val) + magic_constant + (*seed << shift_left) + (*seed >> shift_right);
+}
+
+template <typename T1, typename T2>
+inline std::size_t hash_seed(const T1 &val1, const T2 &val2) {
+  std::size_t seed = 0;
+  hash_combine(&seed, val1);
+  hash_combine(&seed, val2);
+  return seed;
+}
+
+struct pair_hash {
+  template <class T1, class T2>
+  std::size_t operator()(const std::pair<T1, T2> &p) const {
+    return hash_seed(p.first, p.second);
+  }
+};
+
 class BaseRecorder;
 using BaseRecorderPtr = std::shared_ptr<BaseRecorder>;
-using BaseRecorderPtrList = std::vector<BaseRecorderPtr>;
 class RecorderManager {
  public:
   static RecorderManager &Instance() {
@@ -37,7 +62,7 @@ class RecorderManager {
 
   void UpdateRdrEnable();
   bool RdrEnable() const { return rdr_enable_; }
-  bool RecordObject(const BaseRecorderPtr &recorder);
+  bool RecordObject(const BaseRecorderPtr &recorder, const bool &replace = true);
   void TriggerAll();
   void ClearAll();
 
@@ -48,8 +73,8 @@ class RecorderManager {
   bool rdr_enable_{false};
 
   mutable std::mutex mtx_;
-  // module, BaserRecorderPtrList
-  std::unordered_map<std::string, BaseRecorderPtrList> recorder_container_;
+  // <module, name>, BaserRecorderPtr
+  std::unordered_map<std::pair<std::string, std::string>, BaseRecorderPtr, pair_hash> recorder_container_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_RECORDER_MANAGER_H_

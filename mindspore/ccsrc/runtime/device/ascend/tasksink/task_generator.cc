@@ -40,8 +40,8 @@ bool TaskGenerator::GenTasks(const std::vector<CNodePtr> &anf_node_list, std::ve
   }
   MS_LOG(INFO) << "GenTasks end...";
 #ifdef ENABLE_DUMP_IR
-  string task_info_tag = "task_info_graph";
-  mindspore::RDR::RecordTaskDebugInfo(SUBMODULE_ID, task_info_tag, task_debug_info_list_, graph_id);
+  string task_info_name = "task_info_graph." + std::to_string(graph_id);
+  mindspore::RDR::RecordTaskDebugInfo(SUBMODULE_ID, task_info_name, task_debug_info_list_);
 #endif
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);

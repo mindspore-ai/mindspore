@@ -49,8 +49,7 @@ json ExecNode::ExecNode2Json() {
 }
 
 void StreamExecOrderRecorder::Export() {
-  std::string file_suffix = std::to_string(graph_id_);
-  auto realpath = GetFileRealPath(file_suffix);
+  auto realpath = GetFileRealPath();
   if (!realpath.has_value()) {
     return;
   }

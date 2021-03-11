@@ -44,19 +44,17 @@ using TaskDebugInfoPtr = std::shared_ptr<device::ascend::tasksink::TaskDebugInfo
 #endif  // ENABLE_D
 
 namespace RDR {
-bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
+bool RecordAnfGraph(const SubModuleId module, const std::string &name, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type = ".ir;.pb;.dat");
-bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
-                          const std::vector<CNodePtr> &final_exec_order, int graph_id = 0);
-bool RecordString(SubModuleId module, const std::string &tag, const std::string &data,
-                  const std::string &filename = "");
-bool RecordStreamExecOrder(const SubModuleId module, const std::string &tag, const int &graph_id,
-                           const std::vector<CNodePtr> &exec_order);
-bool RecordMemAddressInfo(const SubModuleId module, const std::string &tag, const std::string &op_name,
+bool RecordGraphExecOrder(const SubModuleId module, const std::string &name,
+                          const std::vector<CNodePtr> &final_exec_order);
+bool RecordString(SubModuleId module, const std::string &name, const std::string &data);
+bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, const std::vector<CNodePtr> &exec_order);
+bool RecordMemAddressInfo(const SubModuleId module, const std::string &name, const std::string &op_name,
                           const GPUMemInfo &mem_info);
 #ifdef ENABLE_D
-bool RecordTaskDebugInfo(SubModuleId module, const std::string &tag,
-                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list, int graph_id = 0);
+bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
+                         const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 #endif  // ENABLE_D
 void TriggerAll();
 void ClearAll();

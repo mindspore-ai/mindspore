@@ -49,7 +49,7 @@ bool DumpGraphExeOrder(const std::string &filename, const std::vector<CNodePtr> 
 }  // namespace
 
 void GraphExecOrderRecorder::Export() {
-  auto realpath = GetFileRealPath(std::to_string(graph_id_));
+  auto realpath = GetFileRealPath();
   if (!realpath.has_value()) {
     return;
   }

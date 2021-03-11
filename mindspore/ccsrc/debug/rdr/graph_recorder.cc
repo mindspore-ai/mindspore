@@ -58,13 +58,7 @@ void DumpIRProto(const std::string &, const FuncGraphPtr &) {
 
 void GraphRecorder::Export() {
   bool save_flag = false;
-  int graph_id = -1;
-  if (func_graph_->isa<session::KernelGraph>()) {
-    auto kernel_graph = func_graph_->cast<KernelGraphPtr>();
-    graph_id = kernel_graph->graph_id();
-  }
-  std::string suffix = graph_id >= 0 ? std::to_string(graph_id) : "";
-  auto tmp_realpath = GetFileRealPath(suffix);
+  auto tmp_realpath = GetFileRealPath();
   if (!tmp_realpath.has_value()) {
     return;
   }

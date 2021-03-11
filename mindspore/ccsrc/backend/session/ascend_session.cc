@@ -1010,8 +1010,8 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   uint32_t device_id = kernel_runtime->device_id();
   for (auto &graph : all_graphs) {
     MS_EXCEPTION_IF_NULL(graph);
-    std::string tag = "graph_build";
-    mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, tag, graph, true, ".ir;.pb");
+    std::string name = "graph_build." + std::to_string(graph->graph_id());
+    mindspore::RDR::RecordAnfGraph(SUBMODULE_ID, name, graph, true, ".ir;.pb");
     if (save_graphs) {
       std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
       DumpIR(file_name, graph, true, kWholeStack);

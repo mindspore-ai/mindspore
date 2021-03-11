@@ -42,7 +42,7 @@ void RecorderManager::UpdateRdrEnable() {
   updated = true;
 }
 
-bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
+bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder, const bool &replace) {
   if (!rdr_enable_) {
     return false;
   }
@@ -52,8 +52,20 @@ bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
     return false;
   }
   std::string module = recorder->GetModule();
+  std::string name = recorder->GetName();
+  std::pair<std::string, std::string> recorder_key(module, name);
   std::lock_guard<std::mutex> lock(mtx_);
-  recorder_container_[module].push_back(std::move(recorder));
+  if (replace) {
+    recorder_container_[recorder_key] = recorder;
+    return true;
+  }
+  std::unordered_map<std::pair<std::string, std::string>, BaseRecorderPtr, pair_hash>::iterator item =
+    recorder_container_.find(recorder_key);
+  if (item == recorder_container_.end()) {
+    recorder_container_[recorder_key] = recorder;
+  } else {
+    recorder_container_[recorder_key]->UpdateInfo(*recorder);
+  }
   return true;
 }
 
@@ -65,10 +77,8 @@ void RecorderManager::TriggerAll() {
   bool trigger = false;
   std::lock_guard<std::mutex> lock(mtx_);
   for (auto iter = recorder_container_.begin(); iter != recorder_container_.end(); ++iter) {
-    for (auto &recorder : iter->second) {
-      recorder->Export();
-      trigger = true;
-    }
+    iter->second->Export();
+    trigger = true;
   }
   if (!trigger) {
     MS_LOG(WARNING) << "There is no recorder to export.";

@@ -229,9 +229,9 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     MS_LOG(INFO) << "After finish stream assign";
 #ifdef ENABLE_DUMP_IR
     SubModuleId module = SubModuleId::SM_SESSION;
-    std::string tag = "assign_stream";
+    std::string name = "assign_stream." + std::to_string(graph_ptr->graph_id());
     const std::vector<CNodePtr> &exec_order = graph_ptr->execution_order();
-    mindspore::RDR::RecordStreamExecOrder(module, tag, graph_ptr->graph_id(), exec_order);
+    mindspore::RDR::RecordStreamExecOrder(module, name, exec_order);
 #endif
     graph_ptr->PrintGraphExecuteOrder();
 
