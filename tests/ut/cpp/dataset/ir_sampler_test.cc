@@ -36,7 +36,7 @@ TEST_F(MindDataTestIrSampler, TestCalculateNumSamples) {
   sampl = std::make_shared<PKSamplerObj>(3, false, 0);
   EXPECT_NE(sampl, nullptr);
   sampl->SamplerBuild(&sampler_rt);
-  EXPECT_EQ(sampler_rt->CalculateNumSamples(num_rows), 30);
+  EXPECT_EQ(sampler_rt->CalculateNumSamples(num_rows), -1);
 
   sampl = std::make_shared<RandomSamplerObj>(false, 12);
   EXPECT_NE(sampl, nullptr);
@@ -98,7 +98,7 @@ TEST_F(MindDataTestIrSampler, TestCalculateNumSamples) {
   std::shared_ptr<SamplerRT> sampler_rt6;
   sampl6->SamplerBuild(&sampler_rt6);
   sampler_rt6->AddChild(sampler_rt5);
-  EXPECT_EQ(sampler_rt6->CalculateNumSamples(num_rows), 7);
+  EXPECT_EQ(sampler_rt6->CalculateNumSamples(num_rows), -1);
 }
 
 TEST_F(MindDataTestIrSampler, TestSamplersMoveParameters) {

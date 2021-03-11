@@ -108,7 +108,7 @@ class SamplerRT {
 
   // Calculate num samples. Unlike GetNumSamples, it is not a getter and doesn't necessarily return the value of
   // num_samples_
-  // @return number of samples
+  // @return number of samples, return -1 if sampler cannot determine this value (e.g. PKSampler)
   virtual int64_t CalculateNumSamples(int64_t num_rows);
 
   // setter for num or records in the dataset

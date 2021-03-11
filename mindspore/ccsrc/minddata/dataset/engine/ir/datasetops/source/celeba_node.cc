@@ -144,6 +144,9 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   std::shared_ptr<SamplerRT> sampler_rt = nullptr;
   RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt));
   sample_size = sampler_rt->CalculateNumSamples(num_rows);
+  if (sample_size == -1) {
+    RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), &sample_size));
+  }
   *dataset_size = sample_size;
   return Status::OK();
 }
