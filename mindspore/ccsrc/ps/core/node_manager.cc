@@ -95,7 +95,7 @@ void NodeManager::UpdateClusterState() {
   timeout_nodes_info_.clear();
   for (auto it = heartbeats_.begin(); it != heartbeats_.end(); ++it) {
     if (it->second.tv_sec + ClusterMetadata::instance()->heartbeat_timeout() < current_time.tv_sec) {
-      MS_LOG(ERROR) << "The node id:" << it->first << " is timeout!";
+      MS_LOG(WARNING) << "The node id:" << it->first << " is timeout!";
       timeout_nodes_info_[it->first] = nodes_info_[it->first];
     }
   }

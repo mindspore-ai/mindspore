@@ -493,15 +493,26 @@ void ParameterServer::ServerHandler::Init() {
   handlers_[kFinalizeCmd] = &ServerHandler::HandleFinalize;
   handlers_[kPushCmd] = &ServerHandler::HandlePushReq;
   handlers_[kPullCmd] = &ServerHandler::HandlePullReq;
+  commands_[kInitWeightsCmd] = "kInitWeightsCmd";
+  commands_[kInitWeightToOptimIdCmd] = "kInitWeightToOptimIdCmd";
+  commands_[kInitOptimInputsShapeCmd] = "kInitOptimInputsShapeCmd";
+  commands_[kInitEmbeddingsCmd] = "kInitEmbeddingsCmd";
+  commands_[kCheckReadyForPushCmd] = "kCheckReadyForPushCmd";
+  commands_[kCheckReadyForPullCmd] = "kCheckReadyForPullCmd";
+  commands_[kEmbeddingLookupCmd] = "kEmbeddingLookupCmd";
+  commands_[kUpdateEmbeddingsCmd] = "kUpdateEmbeddingsCmd";
+  commands_[kFinalizeCmd] = "kFinalizeCmd";
+  commands_[kPushCmd] = "kPushCmd";
+  commands_[kPullCmd] = "kPullCmd";
 }
 
 void ParameterServer::ServerHandler::operator()(std::shared_ptr<core::TcpConnection> conn,
                                                 std::shared_ptr<core::MessageMeta> meta, DataPtr data, size_t size) {
   auto output = std::make_shared<std::vector<unsigned char>>();
-  MS_LOG(INFO) << "The command is:" << meta->user_cmd();
-  if (handlers_.count(meta->user_cmd()) == 0) {
+  if (commands_.count(meta->user_cmd()) == 0) {
     MS_LOG(EXCEPTION) << "The command:" << meta->user_cmd() << " is not supported!";
   }
+  MS_LOG(INFO) << "The command is:" << commands_[meta->user_cmd()];
 
   auto &handler_ptr = handlers_[meta->user_cmd()];
   (this->*handler_ptr)(data, size, output);
