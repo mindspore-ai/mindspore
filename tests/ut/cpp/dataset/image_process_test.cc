@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 #include "common/common.h"
 #include "lite_cv/lite_mat.h"
 #include "lite_cv/image_process.h"
@@ -1713,4 +1713,26 @@ TEST_F(MindDataImageProcess, TestSobelFlag) {
   }
   distance_x = sqrt(distance_x / total_size);
   EXPECT_EQ(distance_x, 0.0f);
+}
+
+TEST_F(MindDataImageProcess, testConvertRgbToGray) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat rgb_mat;
+  cv::Mat rgb_mat1;
+
+  cv::cvtColor(image, rgb_mat, CV_BGR2GRAY);
+  cv::imwrite("./opencv_image.jpg", rgb_mat);
+
+  cv::cvtColor(image, rgb_mat1, CV_BGR2RGB);
+
+  LiteMat lite_mat_rgb;
+  lite_mat_rgb.Init(rgb_mat1.cols, rgb_mat1.rows, rgb_mat1.channels(), rgb_mat1.data, LDataType::UINT8);
+  LiteMat lite_mat_gray;
+  bool ret = ConvertRgbToGray(lite_mat_rgb, LDataType::UINT8, image.cols, image.rows, lite_mat_gray);
+  ASSERT_TRUE(ret == true);
+
+  cv::Mat dst_image(lite_mat_gray.height_, lite_mat_gray.width_, CV_8UC1, lite_mat_gray.data_ptr_);
+  cv::imwrite("./mindspore_image.jpg", dst_image);
+  CompareMat(rgb_mat, lite_mat_gray);
 }

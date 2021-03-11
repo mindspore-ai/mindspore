@@ -88,6 +88,22 @@ class CenterCrop : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief RGB2GRAY TensorTransform.
+/// \notes Convert RGB image or color image to grayscale image
+class RGB2GRAY : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  RGB2GRAY() = default;
+
+  /// \brief Destructor.
+  ~RGB2GRAY() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+};
+
 /// \brief Crop TensorTransform.
 /// \notes Crop an image based on location and crop size
 class Crop : public TensorTransform {

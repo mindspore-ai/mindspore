@@ -421,6 +421,40 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   return Status::OK();
 }
 
+Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  if (input->Rank() != 3) {
+    RETURN_STATUS_UNEXPECTED("RgbToGray: input image is not in shape of <H,W,C>");
+  }
+  if (input->type() != DataType::DE_UINT8) {
+    RETURN_STATUS_UNEXPECTED("RgbToGray: image datatype is not uint8.");
+  }
+
+  try {
+    int output_height = input->shape()[0];
+    int output_width = input->shape()[1];
+
+    LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
+                         const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
+                         GetLiteCVDataType(input->type()));
+    LiteMat lite_mat_convert;
+    std::shared_ptr<Tensor> output_tensor;
+    TensorShape new_shape = TensorShape({output_height, output_width, 1});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    lite_mat_convert.Init(output_width, output_height, 1, reinterpret_cast<void *>(buffer),
+                          GetLiteCVDataType(input->type()));
+
+    bool ret =
+      ConvertRgbToGray(lite_mat_rgb, GetLiteCVDataType(input->type()), output_width, output_height, lite_mat_convert);
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "RgbToGray: RGBToGRAY failed.");
+
+    *output = output_tensor;
+  } catch (std::runtime_error &e) {
+    RETURN_STATUS_UNEXPECTED("RgbToGray: " + std::string(e.what()));
+  }
+  return Status::OK();
+}
+
 Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const int32_t &pad_top,
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {

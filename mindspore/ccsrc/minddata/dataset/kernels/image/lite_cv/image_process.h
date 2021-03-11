@@ -137,6 +137,9 @@ bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMa
 /// \brief Filter the image by a Sobel kernel
 bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, PaddBorderType pad_type);
 
+/// \brief Convert RGB image or color image to grayscale image
+bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat);
+
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // IMAGE_PROCESS_H_

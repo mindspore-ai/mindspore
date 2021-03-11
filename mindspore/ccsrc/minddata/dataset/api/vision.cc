@@ -134,6 +134,9 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
   return std::make_shared<CenterCropOperation>(data_->size_);
 }
 
+// RGB2GRAY Transform Operation.
+std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
+
 // Crop Transform Operation.
 struct Crop::Data {
   Data(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size)

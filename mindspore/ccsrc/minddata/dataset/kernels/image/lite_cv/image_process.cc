@@ -1672,5 +1672,25 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
   return true;
 }
 
+bool ConvertRgbToGray(const LiteMat &src, LDataType data_type, int w, int h, LiteMat &mat) {
+  if (data_type == LDataType::UINT8) {
+    if (mat.IsEmpty()) {
+      mat.Init(w, h, 1, LDataType::UINT8);
+    }
+    unsigned char *ptr = mat;
+    const unsigned char *data_ptr = src;
+    for (int y = 0; y < h; y++) {
+      for (int x = 0; x < w; x++) {
+        *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY + GRAYSHIFT_DELTA) >> GRAYSHIFT;
+        ptr++;
+        data_ptr += 3;
+      }
+    }
+  } else {
+    return false;
+  }
+  return true;
+}
+
 }  // namespace dataset
 }  // namespace mindspore

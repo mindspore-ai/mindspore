@@ -191,13 +191,14 @@ if(BUILD_MINDDATA STREQUAL "full")
         ${MINDDATA_DIR}/util/cond_var.cc
         ${MINDDATA_DIR}/engine/data_schema.cc
         ${MINDDATA_DIR}/kernels/tensor_op.cc
+        ${MINDDATA_DIR}/kernels/image/affine_op.cc
         ${MINDDATA_DIR}/kernels/image/lite_image_utils.cc
         ${MINDDATA_DIR}/kernels/image/center_crop_op.cc
         ${MINDDATA_DIR}/kernels/image/crop_op.cc
         ${MINDDATA_DIR}/kernels/image/decode_op.cc
         ${MINDDATA_DIR}/kernels/image/normalize_op.cc
-        ${MINDDATA_DIR}/kernels/image/affine_op.cc
         ${MINDDATA_DIR}/kernels/image/resize_op.cc
+        ${MINDDATA_DIR}/kernels/image/rgb_to_gray_op.cc
         ${MINDDATA_DIR}/kernels/image/rotate_op.cc
         ${MINDDATA_DIR}/kernels/image/random_affine_op.cc
         ${MINDDATA_DIR}/kernels/image/math_utils.cc
@@ -279,6 +280,7 @@ elseif(BUILD_MINDDATA STREQUAL "wrapper")
             ${MINDDATA_DIR}/kernels/image/crop_op.cc
             ${MINDDATA_DIR}/kernels/image/normalize_op.cc
             ${MINDDATA_DIR}/kernels/image/resize_op.cc
+            ${MINDDATA_DIR}/kernels/image/rgb_to_gray_op.cc
             ${MINDDATA_DIR}/kernels/image/rotate_op.cc
             ${MINDDATA_DIR}/kernels/data/compose_op.cc
             ${MINDDATA_DIR}/kernels/data/duplicate_op.cc
@@ -377,6 +379,7 @@ elseif(BUILD_MINDDATA STREQUAL "lite")
         "${MINDDATA_DIR}/kernels/image/random_vertical_flip_with_bbox_op.cc"
         "${MINDDATA_DIR}/kernels/image/random_sharpness_op.cc"
         "${MINDDATA_DIR}/kernels/image/rescale_op.cc"
+        "${MINDDATA_DIR}/kernels/image/rgb_to_gray_op.cc"
         "${MINDDATA_DIR}/kernels/image/rgba_to_bgr_op.cc"
         "${MINDDATA_DIR}/kernels/image/rgba_to_rgb_op.cc"
         "${MINDDATA_DIR}/kernels/image/sharpness_op.cc"
