@@ -19,7 +19,7 @@
 
 namespace mindspore {
 
-class Status {
+class MindrtStatus {
  public:
   typedef int32_t Code;
 
@@ -28,11 +28,11 @@ class Status {
   static const Code KERROR = -1;
 
   // Create a success status.
-  Status(int32_t c) : code(c) {}
+  explicit MindrtStatus(int32_t c) : code(c) {}
 
-  Status() : code(KINIT) {}
+  MindrtStatus() : code(KINIT) {}
 
-  virtual ~Status() {}
+  virtual ~MindrtStatus() {}
 
   // Returns true iff the status indicates success.
   bool IsInit() const { return (code == KINIT); }
@@ -42,9 +42,9 @@ class Status {
   bool IsError() const { return (code != KINIT && code != KOK); }
 
   // Return a success status.
-  Status OK() const { return Status(KOK); }
+  MindrtStatus OK() const { return MindrtStatus(KOK); }
 
-  Status Error() const { return Status(KERROR); }
+  MindrtStatus Error() const { return MindrtStatus(KERROR); }
 
   void SetError() {
     code = KERROR;
