@@ -911,7 +911,7 @@ void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kerne
   MS_EXCEPTION_IF_NULL(kernel_graph);
   const auto &kernels = kernel_graph->execution_order();
   auto iter = std::find_if(kernels.begin(), kernels.end(), [](const CNodePtr &kernel) {
-    return AnfAlgo::GetKernelType(kernel) == AICPU_KERNEL && AnfAlgo::GetBooleanAttr(kernel, kAttrOutputIsDynamicShape);
+    return AnfAlgo::GetBooleanAttr(kernel, kAttrOutputIsDynamicShape);
   });
   if (iter == kernels.end()) {
     return;
