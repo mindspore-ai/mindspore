@@ -112,10 +112,15 @@ def set_prefetch_size(size):
     Set the number of rows to be prefetched.
 
     Args:
-        size (int): Total number of rows to be prefetched.
+        size (int): Total number of rows to be prefetched per operator per parallel worker.
 
     Raises:
         ValueError: If prefetch_size is invalid (<= 0 or > MAX_INT_32).
+
+    Note:
+        Since total memory used for prefetch can grow very large with high number of workers,
+        when number of workers is > 4, the per worker prefetch size will be reduced. The actual
+        prefetch size at runtime per worker will be prefetchsize * (4 / num_parallel_workers).
 
     Examples:
         >>> # Set a new global configuration value for the prefetch size.
