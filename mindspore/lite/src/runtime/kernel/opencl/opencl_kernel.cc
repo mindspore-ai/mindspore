@@ -406,6 +406,13 @@ int OpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   }
+  if (in_tensors_.size() > 0) {
+    if (in_tensors_[0]->data_type() != kNumberTypeFloat32 && in_tensors_[0]->data_type() != kNumberTypeFloat16 &&
+        in_tensors_[0]->data_type() != kNumberTypeInt32) {
+      MS_LOG(WARNING) << "Unsupported data type: " << in_tensors_[0]->data_type();
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

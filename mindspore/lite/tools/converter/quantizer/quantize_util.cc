@@ -940,7 +940,7 @@ STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int 
   return RET_OK;
 }
 
-void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, float *raw_datas,
+void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                          bool channel_at_first, float *desired_max, float *desired_min) {
   float min = FLT_MAX;
   float max = -FLT_MAX;

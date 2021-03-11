@@ -506,12 +506,10 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
 
   // case 3: common conv2d
   kernel::OpenCLKernel *kernel;
-  OpParameter *real_param;
   bool infer_shape_done = opParameter->infer_flag_;
   if (infer_shape_done && UseFcReplaceConv(inputs, outputs, conv_param)) {
     auto *fc_param = CreateFcParam(conv_param, inputs);
     kernel = new (std::nothrow) FullConnectionOpenCLKernel(fc_param, inputs, outputs, ctx);
-    real_param = fc_param;
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "Create FullConnection kernel failed.";
       free(fc_param);
@@ -529,7 +527,6 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
     } else {
       kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx);
     }
-    real_param = reinterpret_cast<OpParameter *>(conv_param);
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "Create Convolution kernel failed.";
       free(conv_param);
@@ -540,11 +537,9 @@ kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &input
     MS_LOG(WARNING) << "kernel don't infer shape yet!";
     return kernel;
   }
-  int ret = kernel->CheckSpecs();
-  if (ret != mindspore::lite::RET_OK) {
+  if (kernel->CheckSpecs() != RET_OK || kernel->OpenCLKernel::CheckSpecs() != RET_OK) {
     MS_LOG(ERROR) << "Init Convolution kernel failed.";
     delete kernel;
-    free(real_param);
     return nullptr;
   }
   return kernel;

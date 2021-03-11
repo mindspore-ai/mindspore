@@ -49,18 +49,6 @@ int CropInt8CPUKernel::Init() {
   return ReSize();
 }
 
-CropInt8CPUKernel::~CropInt8CPUKernel() {
-  if (crop_para_->in_shape_ != nullptr) {
-    free(const_cast<int *>(crop_para_->in_shape_));
-    crop_para_->in_shape_ = nullptr;
-  }
-
-  if (crop_para_->out_shape_ != nullptr) {
-    free(const_cast<int *>(crop_para_->out_shape_));
-    crop_para_->out_shape_ = nullptr;
-  }
-}
-
 int CropInt8CPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
 
 int CropInt8CPUKernel::Run() {

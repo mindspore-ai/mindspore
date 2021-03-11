@@ -45,6 +45,7 @@ class Rescaler : public mindspore::session::TrainLoopCallBack {
   explicit Rescaler(float scale) : scale_(scale) {
     if (scale_ == 0) scale_ = 1.0;
   }
+  ~Rescaler() override = default;
   void StepBegin(const mindspore::session::TrainLoopCallBackData &cb_data) override {
     auto inputs = cb_data.session_->GetInputs();
     auto *input_data = reinterpret_cast<float *>(inputs.at(0)->MutableData());

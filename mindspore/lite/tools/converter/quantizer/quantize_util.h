@@ -110,7 +110,7 @@ std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epoc
 
 STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int new_size);
 
-void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, float *raw_datas,
+void GetMaxMinPerchannel(int channels, int one_filter_size, int i, int elem_count, const float *raw_datas,
                          bool channel_at_first, float *desired_max, float *desired_min);
 
 template <typename T>

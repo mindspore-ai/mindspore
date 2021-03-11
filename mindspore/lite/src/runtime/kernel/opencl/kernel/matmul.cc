@@ -243,8 +243,7 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> 
     MS_LOG(WARNING) << "kernel don't infer shape yet!";
     return kernel;
   }
-  auto ret = kernel->CheckSpecs();
-  if (ret != RET_OK) {
+  if (kernel->CheckSpecs() != RET_OK || kernel->OpenCLKernel::CheckSpecs() != RET_OK) {
     MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
     delete kernel;
     return nullptr;

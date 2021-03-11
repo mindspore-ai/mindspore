@@ -30,7 +30,7 @@ Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const schema::For
     : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
 Tensor::Tensor(const std::string &name, enum TypeId type, const std::vector<int32_t> &shape, const void *data)
-    : tensor_name_(name), data_type_(type), shape_(std::move(shape)) {
+    : tensor_name_(name), data_type_(type), shape_(std::move(shape)), category_(VAR) {
   data_ = const_cast<void *>(data);
 }
 

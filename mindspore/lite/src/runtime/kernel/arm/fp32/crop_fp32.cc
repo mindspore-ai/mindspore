@@ -67,7 +67,6 @@ int CropCPUKernel::Run() {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;
     return RET_ERROR;
   }
-  FreeTmpBuffer();
   return RET_OK;
 }
 

@@ -226,7 +226,7 @@ void ConvTransformFusion::GenNewConvTensor(const FuncGraphPtr &func_graph, const
     MS_LOG(ERROR) << "memcpy_s error:" << ret;
     return;
   }
-  new_weight_tensor->set_tensor_addr(temp_weight_data);
+  new_weight_tensor->SetTensorData(temp_weight_data, new_weight_tensor->tensor_size());
   CalNewWeightTensor(conv_node, new_weight_tensor, kernel_num, trans_scale);
   float *bias_data = nullptr;
   // conv has bias,bias_flag true
