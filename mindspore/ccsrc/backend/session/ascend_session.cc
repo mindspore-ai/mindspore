@@ -65,6 +65,7 @@
 #include "toolchain/adx_datadump_server.h"
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
+#include "debug/rdr/recorder_manager.h"
 #include "runtime/device/ascend/ascend_bucket.h"
 #endif
 #if ENABLE_CPU && ENABLE_D
@@ -1000,7 +1001,8 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
-  if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled()) {
+  if (!save_graphs && !json_parser.e2e_dump_enabled() && !json_parser.async_dump_enabled() &&
+      !mindspore::RecorderManager::Instance().RdrEnable()) {
     return;
   }
   auto kernel_runtime = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
