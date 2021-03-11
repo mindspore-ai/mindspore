@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -12,7 +13,7 @@
 // x0: output_ptr, x1: input_ptr, x2: filter_ptr, x3: num_pixels,
 // x4: input_channel, x5: input_step
 //
-ConvDwFp16Row:
+asm_function ConvDwFp16Row
     // registers v8 ~ v15 must be preserved by a callee across subroutine calls, according to
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved

@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
     .text
     .align 5
     .global MatmulFloatNeon32Opt12x4
@@ -19,7 +20,7 @@
 // r8: stride
 // lr: OutType_C8 = 0, OutType_Nhwc = 1, OutType_TileC8 = 2
 
-MatmulFloatNeon32Opt12x4:
+asm_function MatmulFloatNeon32Opt12x4
     // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
     push {r0-r8, r10, r11, lr}
     vpush {q4-q7}

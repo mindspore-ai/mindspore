@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
     .text
     .align 5
@@ -7,7 +8,7 @@
     .type TiledC4MatmulFp32, %function
 #endif
 
-TiledC4MatmulFp32:
+asm_function TiledC4MatmulFp32
 //void TiledC4MatmulFp32(float* dst, const float* src, const float* weight, size_t ic4, size_t cal_num, size_t oc4)
 //x0: dst
 //x1: src

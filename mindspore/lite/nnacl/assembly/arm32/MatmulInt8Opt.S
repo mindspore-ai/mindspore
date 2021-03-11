@@ -1,5 +1,6 @@
 #ifdef __arm__
 #ifndef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -16,7 +17,7 @@
 // #0: col, #4: deep16, #8: input_sums, #12: weight_bias, #16: act_min, #20: act_max, #24: out_zp
 // #28: multiplier, #32: left_shift, #36: right_shift, #40: stride, #44: per_channel, #48: filter_zp
 
-MatmulInt8Opt:
+asm_function MatmulInt8Opt
     push {r0-r8, r10, r11, lr}
     vpush {q4-q7}
     add sp, sp, #112

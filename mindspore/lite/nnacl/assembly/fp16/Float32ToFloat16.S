@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -9,7 +10,7 @@
 
 // void Float32ToFloat16(const float *input, float16_t output, int number);
 // x0: input, x1: output, x2: number
-Float32ToFloat16:
+asm_function Float32ToFloat16
     // registers v8 ~ v15 must be preserved by a callee across subroutine calls, according to
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved

@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -31,7 +32,7 @@
 // w15: acc_max
 // w16: per_channel
 
-ConvDw3x3Int8Stride2:
+asm_function ConvDw3x3Int8Stride2
     sub sp, sp, #176
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64

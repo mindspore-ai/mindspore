@@ -1,3 +1,4 @@
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -6,7 +7,7 @@
 .type TiledC4MatmulFp16, %function
 #endif
 
-TiledC4MatmulFp16:
+asm_function TiledC4MatmulFp16
 
 sub sp, sp, #128
 st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64

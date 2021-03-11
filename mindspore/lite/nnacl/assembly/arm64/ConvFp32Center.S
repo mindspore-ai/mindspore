@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -13,7 +14,7 @@
 // x0: dst, x1: src, x2: weight, x3: bias, x4: height, x5: width, x6: kernel_h, x7: kernel_w,
 // x8: out_h_step, x9: block_channel, x10: ic4, x11: in_sh_step, x12: in_sw_step, x13: in_kh_step, x14: in_kw_step
 // x26: relu, x16: relu6
-ConvSwFp32Center:
+asm_function ConvSwFp32Center
     // registers v8 ~ v15 must be preserved by a callee across subroutine calls, according to
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved

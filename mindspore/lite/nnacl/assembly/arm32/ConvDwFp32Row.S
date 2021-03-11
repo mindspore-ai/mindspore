@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -11,7 +12,7 @@
 //                   size_t num_pixels, size_t input_channel, size_t input_step)
 // r0: output_ptr, r1: input_ptr, r2: filter_ptr, r3: num_pixels,
 // r4: input_channel, r5: input_step
-ConvDwFp32Row:
+asm_function ConvDwFp32Row
     // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
 
     push {r4-r6, r8, r10, r11}

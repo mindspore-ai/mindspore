@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -11,7 +12,7 @@
 //                            size_t input_stride, size_t relu, size_t relu6)
 // x0: output, x1: input, x2: weights, x3: bias, x4: channels, x5: output_width, x6: input_stride, x7: relu, x8: relu6
 
-ConvDwFp32Indirect3x3:
+asm_function ConvDwFp32Indirect3x3
     sub sp, sp, #16
     stp x19, x20, [sp], #16
 

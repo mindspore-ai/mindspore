@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
     .text
     .align 5
     .global MatVecMulFp16Neon64
@@ -15,7 +16,7 @@
 // w5: depth
 // w6: col
 
-MatVecMulFp16Neon64:
+asm_function MatVecMulFp16Neon64
   sub sp, sp, #128
   st1 {v8.8h, v9.8h, v10.8h, v11.8h}, [sp], #64
   st1 {v12.8h, v13.8h, v14.8h, v15.8h}, [sp], #64

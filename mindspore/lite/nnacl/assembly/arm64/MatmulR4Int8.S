@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
     .text
     .align 5
     .global MatMulR4Int8Neon64
@@ -18,7 +19,7 @@
 // x6: a_sums
 // x7: bias
 
-MatMulR4Int8Neon64:
+asm_function MatMulR4Int8Neon64
   sub sp, sp, #128
   st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
   st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64

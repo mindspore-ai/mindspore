@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -13,7 +14,7 @@
 // x0: dst, x1: output_buffer, x2: bias, x3: block_channel, x4: pixel_nums, x5: out_multiplier
 // x6: left_shift, x7: right_shift, x8: out_zp, x9: acc_min, x10: acc_max
 
-DeconvDwInt8Post:
+asm_function DeconvDwInt8Post
     // registers v8 ~ v15 must be preserved by a callee across subroutine calls, according to
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved

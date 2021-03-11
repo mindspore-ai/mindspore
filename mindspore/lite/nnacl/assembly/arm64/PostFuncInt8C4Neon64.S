@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
     .text
     .align 5
@@ -42,7 +43,7 @@
 // w15  oc4 loop control
 // w16  hw  loop control
 
-PostFuncInt8C4Neon64:
+asm_function PostFuncInt8C4Neon64
 
   ldr w8, [sp]
   ldr w9, [sp, #8]

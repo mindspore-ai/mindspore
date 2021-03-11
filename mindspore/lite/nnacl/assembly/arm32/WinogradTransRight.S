@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
 
     .text
     .align 5
@@ -15,7 +16,7 @@
 //x4: h
 //x5: k
 //x6: length
-WinogradTransRight:
+asm_function WinogradTransRight
     push {r4-r11, lr}
     ldr r4, [sp, #36]
     ldr r5, [sp, #40]

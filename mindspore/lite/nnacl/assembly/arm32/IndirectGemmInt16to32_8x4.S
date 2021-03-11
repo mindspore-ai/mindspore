@@ -1,4 +1,5 @@
 #ifdef ENABLE_ARM32
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -9,7 +10,7 @@
 
 // void IndirectGemmInt16to32_8x4(int *output, short *input, short *weight, size_t kszie, size_t ic8, size_t oc4, size_t offset);
 // r0: output, r1: input, r2: weight, r3: kszie, r4: ic8, r5: oc4, r6: offset
-IndirectGemmInt16to32_8x4:
+asm_function IndirectGemmInt16to32_8x4
 
     .macro INIT_ZERO
         // we could also use "vmov.s32 q12, #0" to initialize q12 by 0

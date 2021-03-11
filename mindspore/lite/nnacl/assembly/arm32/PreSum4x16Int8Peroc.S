@@ -1,3 +1,4 @@
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -19,7 +20,7 @@
 // r6 oc_res2
 // r7 stride
 
-PreSum4x16Int8Peroc:
+asm_function PreSum4x16Int8Peroc
   push {r4-r11, lr}
   vpush {q4-q7}
   add sp, sp, #100

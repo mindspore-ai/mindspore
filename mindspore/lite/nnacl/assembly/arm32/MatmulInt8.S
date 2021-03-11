@@ -1,5 +1,6 @@
 #ifdef __arm__
 #ifndef __aarch64__
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -15,7 +16,7 @@
 // #0: col, #4: deep16, #8: input_sums, #12: weight_bias, #16: act_min, #20: act_max, #24: out_zp
 // #28: multiplier, #32: left_shift, #36: right_shift, #40: stride, #44: per_channel
 
-MatmulInt8Neon32:
+asm_function MatmulInt8Neon32
   push {r0-r11, lr}
   vpush {q4-q7}
   add sp, sp, #116
@@ -117,7 +118,7 @@ End3:
   bgt PerChannel 
 
 PerTensor:
-  // Substract input_sums
+  // Subtract input_sums
   vld1.32 {d24, d25}, [r6]!
   vdup.32 d20, d24[0]
   vdup.32 d21, d24[1]
@@ -157,7 +158,7 @@ PerTensor:
   b AddDstZP
 
 PerChannel:
-  // Substract input_sums
+  // Subtract input_sums
   vld1.32 {d24, d25, d26, d27}, [r6]!
   vsub.s32 d28, d28, d24
   vsub.s32 d29, d29, d25

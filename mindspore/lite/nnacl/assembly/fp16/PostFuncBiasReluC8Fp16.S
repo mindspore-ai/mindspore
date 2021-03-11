@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
 
     .text
     .align 5
@@ -21,7 +22,7 @@
 // w10  oc8 loop control
 // w13  hw  loop control
 
-PostFuncBiasReluC8Fp16:
+asm_function PostFuncBiasReluC8Fp16
   movi v26.8h, #0x46, lsl #8
   dup v27.8h, wzr
   mov w10, #0

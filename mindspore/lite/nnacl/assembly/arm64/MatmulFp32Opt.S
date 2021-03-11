@@ -1,4 +1,5 @@
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
     .text
     .align 5
     .global MatmulFloatNeon64Opt
@@ -19,7 +20,7 @@
 // x8: stride
 // x9: writeMode
 
-MatmulFloatNeon64Opt:
+asm_function MatmulFloatNeon64Opt
     sub sp, sp, #144
     st1 {v8.4s, v9.4s, v10.4s, v11.4s}, [sp], #64
     st1 {v12.4s, v13.4s, v14.4s, v15.4s}, [sp], #64

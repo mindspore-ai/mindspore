@@ -1,5 +1,5 @@
-
 #ifdef __aarch64__
+#include "nnacl/assembly_global.h"
     .text
     .align 5
     //.p2align 5,,15
@@ -16,7 +16,7 @@
 // w3 co16
 // w4 filter_zp
 
-PreSum4x16Int8Pert:
+asm_function PreSum4x16Int8Pert
   dup v17.4s, w4
   mov w5, #0
 

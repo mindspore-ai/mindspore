@@ -1,3 +1,4 @@
+#include "nnacl/assembly_global.h"
 
 .text
 .align 5
@@ -15,7 +16,7 @@
 // r3 co16
 // r4 filter_zp
 
-PreSum4x16Int8Pert:
+asm_function PreSum4x16Int8Pert
   push {r4-r8, r10, r11, lr}
   vpush {q4-q7}
   add sp, sp, #96

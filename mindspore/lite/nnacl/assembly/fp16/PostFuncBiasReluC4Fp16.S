@@ -1,3 +1,4 @@
+#include "nnacl/assembly_global.h"
 
     .text
     .align 5
@@ -13,7 +14,7 @@
 // w3 oc4div        w4 oc4mod        w5 plane_size
 // x6 plane_stride  x7 relu_type
 
-PostFuncBiasReluC4Fp16:
+asm_function PostFuncBiasReluC4Fp16
 
   movi v26.4h, #6
   scvtf v26.4h, v26.4h
