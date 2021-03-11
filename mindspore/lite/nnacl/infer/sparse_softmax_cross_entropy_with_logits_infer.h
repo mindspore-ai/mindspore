@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_SPARSE_SOFTMAX_CROSS_ENTROPY_INFER_H
-#define MINDSPORE_LITE_NNACL_SPARSE_SOFTMAX_CROSS_ENTROPY_INFER_H
+#ifndef MINDSPORE_LITE_NNACL_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_INFER_H
+#define MINDSPORE_LITE_NNACL_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/softmax_parameter.h"
+#include "nnacl/fp32_grad/softmax_grad.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct SparseSoftmaxCrossEntropyParameter {
-  OpParameter op_parameter_;
-  bool is_grad_;
-} SparseSoftmaxCrossEntropyParameter;
-
-int SparseSoftmaxCrossEntropyInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
-                                        size_t outputs_size, OpParameter *parameter);
+int SparseSoftmaxCrossEntropyWithLogitsInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
+                                                  size_t outputs_size, OpParameter *parameter);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_LITE_NNACL_SPARSE_SOFTMAX_CROSS_ENTROPY_INFER_H
+#endif  // MINDSPORE_LITE_NNACL_SPARSE_SOFTMAX_CROSS_ENTROPY_WITH_LOGITS_INFER_H

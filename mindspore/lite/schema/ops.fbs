@@ -160,7 +160,7 @@ union PrimitiveType {
     SpaceToBatch,
     SpaceToBatchND,
     SpaceToDepth,
-    SparseSoftmaxCrossEntropy,
+    SparseSoftmaxCrossEntropyWithLogits,
     SparseToDense,
     Split,
     Sqrt,
@@ -904,7 +904,7 @@ table SpaceToDepth {
     format: Format;
 }
 
-table SparseSoftmaxCrossEntropy {
+table SparseSoftmaxCrossEntropyWithLogits {
     grad: bool;
 }
 

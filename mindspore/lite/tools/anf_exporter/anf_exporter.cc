@@ -356,11 +356,9 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
     }
 
     RemoveIfMakeTuple(cnode);
-    if (train_flag) {
-      RemoveIfDepend(cnode);
-      if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameControlDepend) {
-        continue;
-      }
+    RemoveIfDepend(cnode);
+    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameControlDepend) {
+      continue;
     }
 
     if (prim->name() == mindspore::ops::kNameTupleGetItem || prim->name() == mindspore::ops::kNameMakeTuple) {

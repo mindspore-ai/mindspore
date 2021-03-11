@@ -612,8 +612,8 @@ schema::PrimitiveT *SpaceToDepthPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SpaceToDepth>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
-schema::PrimitiveT *SparseSoftmaxCrossEntropyPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SparseSoftmaxCrossEntropy>>(node);
+schema::PrimitiveT *SparseSoftmaxCrossEntropyWithLogitsPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::SparseSoftmaxCrossEntropyWithLogits>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 schema::PrimitiveT *SparseToDensePrimitiveCreator(const AnfNodePtr &node) {
@@ -886,8 +886,8 @@ RegistryMSOps g_softmaxCrossEntropyWithLogitsPrimitiveCreatorRegistry("SoftmaxCr
 RegistryMSOps g_spaceToBatchPrimitiveCreatorRegistry("SpaceToBatch", SpaceToBatchPrimitiveCreator);
 RegistryMSOps g_spaceToBatchNDPrimitiveCreatorRegistry("SpaceToBatchND", SpaceToBatchNDPrimitiveCreator);
 RegistryMSOps g_spaceToDepthPrimitiveCreatorRegistry("SpaceToDepth", SpaceToDepthPrimitiveCreator);
-RegistryMSOps g_sparseSoftmaxCrossEntropyPrimitiveCreatorRegistry("SparseSoftmaxCrossEntropyWithLogits",
-                                                                  SparseSoftmaxCrossEntropyPrimitiveCreator);
+RegistryMSOps g_sparseSoftmaxCrossEntropyWithLogitsPrimitiveCreatorRegistry(
+  "SparseSoftmaxCrossEntropyWithLogits", SparseSoftmaxCrossEntropyWithLogitsPrimitiveCreator);
 RegistryMSOps g_sparseToDensePrimitiveCreatorRegistry("SparseToDense", SparseToDensePrimitiveCreator);
 RegistryMSOps g_splitPrimitiveCreatorRegistry("Split", SplitPrimitiveCreator);
 RegistryMSOps g_sqrtPrimitiveCreatorRegistry("Sqrt", SqrtPrimitiveCreator);

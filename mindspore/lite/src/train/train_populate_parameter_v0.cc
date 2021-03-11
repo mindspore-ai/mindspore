@@ -229,9 +229,9 @@ OpParameter *PopulateSparseSoftmaxCrossEntropyParameter(const void *primitive) {
   }
   auto sparseSoftmaxCrossEntropy_prim = prim->value_as_SparseSoftmaxCrossEntropy();
 
-  sce_param->is_grad = sparseSoftmaxCrossEntropy_prim->isGrad();
+  sce_param->is_grad_ = sparseSoftmaxCrossEntropy_prim->isGrad();
 
-  sce_param->op_parameter_.type_ = schema::PrimitiveType_SparseSoftmaxCrossEntropy;
+  sce_param->op_parameter_.type_ = schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits;
   return reinterpret_cast<OpParameter *>(sce_param);
 }
 
@@ -246,7 +246,7 @@ OpParameter *PopulateSoftmaxCrossEntropyParameter(const void *primitive) {
     MS_LOG(ERROR) << "malloc SoftmaxCrossEntropyParameter failed.";
     return nullptr;
   }
-  sce_param->is_grad = 0;
+  sce_param->is_grad_ = 0;
   sce_param->op_parameter_.type_ = schema::PrimitiveType_SoftmaxCrossEntropyWithLogits;
   return reinterpret_cast<OpParameter *>(sce_param);
 }

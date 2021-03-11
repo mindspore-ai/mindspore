@@ -52,6 +52,7 @@ enum Format : int {
     NC,
     NC4,
     NC4HW4,
+    NCDHW,
     NUM_OF_FORMAT
 }
 

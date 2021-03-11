@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "nnacl/infer/sparse_softmax_cross_entropy_infer.h"
+#include "nnacl/infer/sparse_softmax_cross_entropy_with_logits_infer.h"
 
-int SparseSoftmaxCrossEntropyInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
-                                        size_t outputs_size, OpParameter *parameter) {
+int SparseSoftmaxCrossEntropyWithLogitsInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
+                                                  size_t outputs_size, OpParameter *parameter) {
 #ifdef Debug
   int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 2, 1);
   if (check_ret != NNACL_OK) {
@@ -28,7 +28,7 @@ int SparseSoftmaxCrossEntropyInferShape(const TensorC *const *inputs, size_t inp
   const TensorC *in0 = inputs[0];
   TensorC *out = outputs[0];
 
-  SparseSoftmaxCrossEntropyParameter *param = (SparseSoftmaxCrossEntropyParameter *)parameter;
+  SoftmaxCrossEntropyParameter *param = (SoftmaxCrossEntropyParameter *)parameter;
   if (param->is_grad_ != 0) {
     SetShapeTensor(out, in0);
     SetDataTypeFormat(out, in0);
