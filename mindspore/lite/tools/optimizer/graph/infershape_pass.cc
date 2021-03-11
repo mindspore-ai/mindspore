@@ -388,7 +388,7 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     }
     auto prim_t = lite::GetPrimitiveT(cnode->input(0));
     if (prim_t == nullptr) {
-      MS_LOG(ERROR) << "prim_t is nullptr";
+      MS_LOG(DEBUG) << "prim_t is nullptr";
       FreeTensors(&input_tensors);
       FreeTensors(&output_tensors);
       return false;
