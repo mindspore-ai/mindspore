@@ -95,36 +95,6 @@ static int GetSlogLevel(MsLogLevel level) {
 }
 #endif
 
-static std::string ExceptionTypeToString(ExceptionType type) {
-#define _TO_STRING(x) #x
-  // clang-format off
-  static const char *const type_names[] = {
-      _TO_STRING(NoExceptionType),
-      _TO_STRING(UnknownError),
-      _TO_STRING(ArgumentError),
-      _TO_STRING(NotSupportError),
-      _TO_STRING(NotExistsError),
-      _TO_STRING(AlreadyExistsError),
-      _TO_STRING(UnavailableError),
-      _TO_STRING(DeviceProcessError),
-      _TO_STRING(AbortedError),
-      _TO_STRING(TimeOutError),
-      _TO_STRING(ResourceUnavailable),
-      _TO_STRING(NoPermissionError),
-      _TO_STRING(IndexError),
-      _TO_STRING(ValueError),
-      _TO_STRING(TypeError),
-      _TO_STRING(KeyError),
-      _TO_STRING(AttributeError),
-  };
-  // clang-format on
-#undef _TO_STRING
-  if (type < UnknownError || type > AttributeError) {
-    type = UnknownError;
-  }
-  return std::string(type_names[type]);
-}
-
 static const char *GetSubModuleName(SubModuleId module_id) {
   static const char *sub_module_names[NUM_SUBMODUES] = {
     "UNKNOWN",     // SM_UNKNOWN
@@ -185,10 +155,6 @@ void LogWriter::operator^(const LogStream &stream) const {
 
   std::ostringstream oss;
   oss << location_.file_ << ":" << location_.line_ << " " << location_.func_ << "] ";
-  if (exception_type_ != NoExceptionType && exception_type_ != IndexError && exception_type_ != TypeError &&
-      exception_type_ != ValueError && exception_type_ != KeyError && exception_type_ != AttributeError) {
-    oss << ExceptionTypeToString(exception_type_) << " ";
-  }
   oss << msg.str();
 
   if (trace_provider_ != nullptr) {

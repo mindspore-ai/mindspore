@@ -60,8 +60,7 @@ bool SymbolResolver::Resolve() {
   py::object obj = namespace_->obj();
   std::string symbol = symbol_->symbol();
   if (py::isinstance<py::none>(obj)) {
-    MS_LOG(ERROR) << "Unresolved symbol: " << symbol;
-    return false;
+    MS_EXCEPTION(NameError) << "The name \'" << symbol << "\' is not defined.";
   }
   result_ = python_adapter::CallPyModFn(mod, PYTHON_MOD_RESOLVE_FUNCTION, obj, common::SafeCStr(symbol));
   return true;
@@ -294,10 +293,7 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
   }
   SymbolResolver symbol_resolver(name_space, symbol, node);
-  if (!symbol_resolver.Resolve()) {
-    MS_EXCEPTION(TypeError) << "Parse Resolve node failed NodeInfo.";
-  }
-
+  symbol_resolver.Resolve();
   py::object obj = symbol_resolver.result();
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
   TraceManager::ClearParseOrResolveDebugInfo();

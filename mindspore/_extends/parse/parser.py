@@ -347,6 +347,30 @@ def get_object_description(obj, fname, fline):
     return str(obj)
 
 
+def expand_expr_statement(node):
+    """
+    Process the expr statement and expand it.
+
+    Returns:
+        tuple, (True, expr.value, x)/(False, None, None).
+    """
+    if isinstance(node, ast.Expr):
+        expr_value = node.value
+        if isinstance(expr_value, ast.Call):
+            func = expr_value.func
+            if isinstance(func, ast.Attribute) and \
+                    hasattr(func, "attr") and \
+                    hasattr(func, "value"):
+                method = func.attr
+                target = func.value
+                if method in parse_expr_statement_white_list:
+                    logger.debug("Expand expr, target:%s, method:%s", target, method)
+                    return True, expr_value, target
+        if not isinstance(expr_value, ast.Str):
+            return True, expr_value
+    return (False,)
+
+
 class Parser:
     """
     Parser python code to ast tree.
@@ -548,25 +572,3 @@ class Parser:
             else:
                 ret = ret + [0, 0, 0, 0]
         return ret
-
-    def expand_expr_statement(self, node):
-        """
-        Process the expr statement and expand it.
-
-        Returns:
-            tuple, (True, expr.value, x)/(False, None, None).
-        """
-        if isinstance(node, ast.Expr) and hasattr(node, "value"):
-            expr_value = node.value
-            if isinstance(expr_value, ast.Call):
-                func = expr_value.func
-                if isinstance(func, ast.Attribute) and \
-                        hasattr(func, "attr") and \
-                        hasattr(func, "value"):
-                    method = func.attr
-                    target = func.value
-                    if method in parse_expr_statement_white_list:
-                        logger.debug("Expand expr, target:%s, method:%s", target, method)
-                        return True, expr_value, target
-                return True, expr_value
-        return False, None, None

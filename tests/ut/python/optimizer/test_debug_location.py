@@ -162,7 +162,7 @@ def test_sequential_resolve_error():
     input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
     input_me = Tensor(input_np)
     net = SequenceNet()
-    with pytest.raises(TypeError):
+    with pytest.raises(NameError):
         net(input_me)
 
 

@@ -418,7 +418,7 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
 FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Expr";
   // Expr only have value, no target
-  py::tuple expand_info = ast_->CallParserObjMethod(PYTHON_PARSE_EXPAND_EXPR_STATEMENT, node);
+  py::tuple expand_info = ast_->CallParseModFunction(PYTHON_PARSE_EXPAND_EXPR_STATEMENT, node);
 
   // Refer python function expand_expr_statement, expand_info is one of the following:
   // True, expr.value, x
