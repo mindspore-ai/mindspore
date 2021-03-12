@@ -326,16 +326,16 @@ class TbeProcess:
             self.__running_tune_tasks.append(task_id)
 
             if tune_mode == RL_TUNE:
-                ret, job_type = self.__tuner.rl_tune(task_id, op_json)
+                ret, job_type, compile_info = self.__tuner.rl_tune(task_id, op_json)
                 if job_type is RL_OFFLINE or job_type is RL_ONLINE:
                     if not ret:
                         # offline and online hit will return false
-                        res = task_id, "Success", "Success"
+                        res = task_id, "Success", compile_info
                         self.__finish_tune_task.append(res)
                         self.__running_tune_tasks.remove(task_id)
                 elif job_type is RL_COMPILE:
                     if not ret:
-                        res = task_id, "Fail", "Fail"
+                        res = task_id, "Fail", compile_info
                         self.__finish_tune_task.append(res)
                         self.__running_tune_tasks.remove(task_id)
             elif tune_mode == GA_TUNE:
@@ -384,13 +384,14 @@ class TbeProcess:
                     for item in ret:
                         task_id = item['task_id']
                         status_code = item['status_code']
+                        compile_info = item["op_res"] if "op_res" in item else "{}"
                         res = None
                         if status_code == 0:
-                            res = task_id, "Success", "Success"
+                            res = task_id, "Success", compile_info
                         else:
                             self.__failed_tune_task.append(task_id)
                             log.info("task_id:{}, json:{}".format(task_id, self.__task_info[task_id]))
-                            res = task_id, "Failed", "Failed"
+                            res = task_id, "Failed", compile_info
                         self.__finish_tune_task.append(res)
                         self.__running_tune_tasks.remove(task_id)
                     ret = self.__finish_tune_task.pop()

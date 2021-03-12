@@ -19,6 +19,8 @@ import sys
 from te.platform.cce_conf import te_set_version
 from te.platform.fusion_util import fusion_op
 import te
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+# pylint: disable=wrong-import-position
 from tbe_common import check_kernel_info, get_args, get_built_in_impl_path
 
 build_in_impl_path = get_built_in_impl_path()
@@ -50,13 +52,14 @@ def _replace_range(args):
                     range_item[index] = None
 
 
-def build_op(build_type, json_str):
+def build_op(build_type, json_str, tune_mode=None):
     """
     call op functions with function name and input args json_str
 
     Args:
         build_type : op function name
         json_str (str): op function input args
+        tune_mode (str): if use auto_tune
 
     Raises:
         Exception: If specific keyword is not found.
@@ -93,8 +96,10 @@ def build_op(build_type, json_str):
         else:
             if is_dynamic_shape:
                 op_module = __import__("impl.dynamic." + op_name, globals(), locals(), [op_name], 0)
+                op_module_name = "impl.dynamic." + op_name
             else:
                 op_module = __import__("impl." + op_name, globals(), locals(), [op_name], 0)
+                op_module_name = "impl." + op_name
         # get function
         if build_type == op_build:
             if custom_flag:
@@ -111,9 +116,14 @@ def build_op(build_type, json_str):
         if is_dynamic_shape:
             with te.op.dynamic():
                 op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+                if tune_mode is not None:
+                    return (te.op.get_compile_info()), (inputs_args, outputs_args, attrs_args), op_module_name
                 return te.op.get_compile_info()
         else:
-            return op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+            res = op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+            if tune_mode is not None:
+                return res, (inputs_args, outputs_args, attrs_args), op_module_name
+            return res
 
     except Exception as e:
         raise RuntimeError(e)
@@ -149,7 +159,7 @@ def compile_with_json(json_str):
     if "fusion_op" in json_info:
         ret = compile_fusion_op(json_str)
     else:
-        ret = build_op(op_build, json_str)
+        ret = build_op(op_build, json_str, None)
     return ret
 
 

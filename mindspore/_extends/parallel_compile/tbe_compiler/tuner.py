@@ -27,13 +27,14 @@ import auto_tune
 from schedule_search.rl_online_tune import rl_tune_init, dispatch_fusion_tune_task, dispatch_single_tune_task, \
     rl_tune_deinit
 from mindspore import log
-from .tbe_common import get_args
+from .compiler import build_op
 from .re_construct_json import single_to_fusion, fusion_to_fusion
 
 TE_LOG_LEVEL = ["DEBUG", "INFO", "WARNING", "ERROR"]
 RL_COMPILE = "RL_COMPILE"
 RL_OFFLINE = "RL_OFFLINE"
 RL_ONLINE = "RL_ONLINE"
+OP_BUILD = "compile"
 
 PLATFORM_FLAG = ["ascend310", "ascend910", "Hi3796CV300ES", "ascend710", "ascend610", "Hi3796CV300CS", "SD3403"]
 
@@ -285,27 +286,20 @@ class TbeTuner:
             converted_json = single_to_fusion(json.dumps(json_info), tune_mode="RL")
         op_type = json_info['op_info']['name']
         kernel_name = json_info['op_info']['kernel_name']
-        op_module = __import__("impl." + op_type, globals(), locals(), [op_type], 0)
-        op_module_name = "impl." + op_type
-        py_fn_name = json_info['op_info']['name']
-        op_func = getattr(op_module, py_fn_name, None)
-
+        tune_mode = "RL"
         set_current_op_name(kernel_name)
-        inputs_args = get_args(json_info['op_info'], 'inputs')
-        outputs_args = get_args(json_info['op_info'], 'outputs')
-        attrs_args = get_args(json_info['op_info'], 'attrs')
-        op_args = inputs_args, outputs_args, attrs_args
         # todo build with build_single_op_from_c
         base_kernel = './kernel_meta/' + kernel_name + '.o'
         job_type = RL_COMPILE
+        compile_info = "{}"
         try:
-            op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
+            compile_info, op_args, op_module_name = build_op(OP_BUILD, json.dumps(json_info), tune_mode)
         # pylint: disable=broad-except
         except Exception:
             exc_type, exc_value, _ = sys.exc_info()
             log.error(
                 "exc_type:{}, exc_value:{}, exc_traceback:{}".format(exc_type, exc_value, traceback.format_exc()))
-            return False, job_type
+            return False, job_type, compile_info
         if self.offline_tune:
             job_type = RL_OFFLINE
             dump_fusion_json(converted_json, self.offline_dump_path)
@@ -318,7 +312,7 @@ class TbeTuner:
 
         self.module_list[op_module_name] = 1
         self.fusion_need_sync += 1
-        return ret, job_type
+        return ret, job_type, json.dumps(compile_info)
 
     def get_op_module_names(self, json_info):
         """
