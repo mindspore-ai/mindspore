@@ -34,6 +34,8 @@ void CalSelect(const size_t size, const bool* cond, const T* input_x, const T* i
   return;
 }
 
+template void CalSelect<double>(const size_t size, const bool* cond, const double* input_X, const double* input_y,
+                                double* output, cudaStream_t cuda_stream);
 template void CalSelect<float>(const size_t size, const bool* cond, const float* input_X, const float* input_y,
                                float* output, cudaStream_t cuda_stream);
 template void CalSelect<int>(const size_t size, const bool* cond, const int* input_X, const int* input_y, int* output,
