@@ -712,7 +712,7 @@ def get_bprop_instance_norm(self):
 def get_bprop_batch_norm(self):
     """Grad definition for `BatchNorm` operation."""
     is_training = self.is_training
-    input_grad = G.BatchNormGrad(is_training, self.epsilon)
+    input_grad = G.BatchNormGrad(is_training, self.epsilon, self.data_format)
 
     def bprop(x, scale, b, mean, variance, out, dout):
         if is_training:
