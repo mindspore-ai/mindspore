@@ -175,7 +175,7 @@ void PQCCPUKernel::InitKernel(const CNodePtr &kernel_node) {
 
   hams_ = mindquantum::transformer::HamiltoniansTransfor(hams_pauli_coeff_, hams_pauli_word_, hams_pauli_qubit_);
 
-  n_threads_user_ = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  n_threads_user_ = std::min(n_threads_user_, common::ThreadPool::GetInstance().GetSyncRunThreadNum());
   if (n_samples_ < n_threads_user_) {
     n_threads_user_ = n_samples_;
   }
