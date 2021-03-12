@@ -61,6 +61,13 @@ void LiteOpActor::SetOutputData(OpContext<Tensor> *context) {
 
 int MindrtInit() { return mindspore::Initialize("tcp://127.0.0.1:8080", "", "", "", 1); }
 
+void MindrtTerminate(std::vector<std::shared_ptr<LiteOpActor>> actor_list) {
+  for (auto actor : actor_list) {
+    mindspore::Terminate(actor->GetAID());
+  }
+  return;
+}
+
 std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel::LiteKernel *> &kernels) {
   std::vector<std::shared_ptr<LiteOpActor>> actors;
   for (auto kernel : kernels) {
