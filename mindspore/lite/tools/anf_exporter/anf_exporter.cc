@@ -98,7 +98,8 @@ void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
       MS_LOG(ERROR) << "value node is invalid.";
       return;
     }
-    if (value_node->value() != nullptr && opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTuple)) {
+    if (value_node->value() != nullptr && (opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTuple) ||
+                                           opt::CheckPrimitiveType(make_tuple_node, opt::kPrimMakeTupleV2))) {
       has_make_tuple = true;
       for (size_t j = 1; j < make_tuple_node->inputs().size(); ++j) {
         inputs.emplace_back(make_tuple_node->input(j));
@@ -358,6 +359,9 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
     RemoveIfMakeTuple(cnode);
     RemoveIfDepend(cnode);
     if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameControlDepend) {
+      continue;
+    }
+    if (prim->name() == "make_tuple") {
       continue;
     }
 
@@ -769,7 +773,7 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     MS_LOG(INFO) << "op name:" << input_anode->fullname_with_scope() << " input is func_graph";
     return RET_OK;
   } else if (value->isa<Monad>()) {
-    MS_LOG(INFO) << "value is a monad.";
+    MS_LOG(INFO) << "op name:" << input_anode->fullname_with_scope() << " input is Monad";
     return RET_OK;
   } else {
     MS_LOG(ERROR) << "Not support value type , need add support.";

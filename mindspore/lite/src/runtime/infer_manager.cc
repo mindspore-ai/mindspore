@@ -63,6 +63,7 @@
 #include "nnacl/infer/group_conv2d_grad_input_infer.h"
 #include "nnacl/infer/hashtable_lookup_infer.h"
 #include "nnacl/infer/layer_norm_infer.h"
+#include "nnacl/infer/layer_norm_grad_infer.h"
 #include "nnacl/infer/lsh_projection_infer.h"
 #include "nnacl/infer/lstm_infer.h"
 #include "nnacl/infer/matmul_infer.h"
@@ -214,9 +215,9 @@ static RegistryInferShape g_Deconv2dInferShape(mindspore::schema::PrimitiveType_
 static RegistryInferShape g_SquaredDifferenceInferShape(mindspore::schema::PrimitiveType_SquaredDifference,
                                                         ArithmeticInferShape);
 static RegistryInferShape g_AddInferShape(mindspore::schema::PrimitiveType_AddFusion, ArithmeticInferShape);
-static RegistryInferShape g_AddSubInferShape(mindspore::schema::PrimitiveType_AddGrad, AddSubGradInferShape);
+static RegistryInferShape g_AddSubInferShape(mindspore::schema::PrimitiveType_AddGrad, MaximumGradInferShape);
 static RegistryInferShape g_SubInferShape(mindspore::schema::PrimitiveType_SubFusion, ArithmeticInferShape);
-static RegistryInferShape g_SubGradInferShape(mindspore::schema::PrimitiveType_SubGrad, AddSubGradInferShape);
+static RegistryInferShape g_SubGradInferShape(mindspore::schema::PrimitiveType_SubGrad, MaximumGradInferShape);
 static RegistryInferShape g_DivInferShape(mindspore::schema::PrimitiveType_DivFusion, ArithmeticInferShape);
 static RegistryInferShape g_DivGradInferShape(mindspore::schema::PrimitiveType_DivGrad, ArithmeticGradInferShape);
 static RegistryInferShape g_MulInferShape(mindspore::schema::PrimitiveType_MulFusion, ArithmeticInferShape);
@@ -275,6 +276,8 @@ static RegistryInferShape g_QuantDtypeCastInferShape(mindspore::schema::Primitiv
 static RegistryInferShape g_MfccInferShape(mindspore::schema::PrimitiveType_Mfcc, MfccInferShape);
 static RegistryInferShape g_AssignAddInferShape(mindspore::schema::PrimitiveType_AssignAdd, AssignAddInferShape);
 static RegistryInferShape g_LayerNormInferShape(mindspore::schema::PrimitiveType_LayerNormFusion, LayerNormInferShape);
+static RegistryInferShape g_LayerNormGradInferShape(mindspore::schema::PrimitiveType_LayerNormGrad,
+                                                    LayerNormGradInferShape);
 static RegistryInferShape g_UnsortedSegmentSumInferShape(mindspore::schema::PrimitiveType_UnsortedSegmentSum,
                                                          UnsortedSegmentSumInferShape);
 static RegistryInferShape g_AddnInferShape(mindspore::schema::PrimitiveType_AddN, AddnInferShape);
@@ -316,6 +319,7 @@ static RegistryInferShape g_ReverseSequenceInferShape(mindspore::schema::Primiti
                                                       CommonInferShape);
 static RegistryInferShape g_ZerosLikeInferShape(mindspore::schema::PrimitiveType_ZerosLike, CommonInferShape);
 
+static RegistryInferShape g_AbsGradInferShape(mindspore::schema::PrimitiveType_AbsGrad, CommonInferShape);
 static RegistryInferShape g_AbsInferShape(mindspore::schema::PrimitiveType_Abs, CommonInferShape);
 static RegistryInferShape g_ActivationGradInferShape(mindspore::schema::PrimitiveType_ActivationGrad, CommonInferShape);
 static RegistryInferShape g_ActivationInferShape(mindspore::schema::PrimitiveType_Activation, CommonInferShape);
@@ -345,8 +349,10 @@ static RegistryInferShape g_PowerGradInferShape(mindspore::schema::PrimitiveType
 static RegistryInferShape g_PReLUInferShape(mindspore::schema::PrimitiveType_PReLUFusion, CommonInferShape);
 static RegistryInferShape g_ReverseInferShape(mindspore::schema::PrimitiveType_ReverseV2, CommonInferShape);
 static RegistryInferShape g_RoundInferShape(mindspore::schema::PrimitiveType_Round, CommonInferShape);
+static RegistryInferShape g_RsqrtGradInferShape(mindspore::schema::PrimitiveType_RsqrtGrad, CommonInferShape);
 static RegistryInferShape g_RsqrtInferShape(mindspore::schema::PrimitiveType_Rsqrt, CommonInferShape);
 static RegistryInferShape g_ScaleInferShape(mindspore::schema::PrimitiveType_ScaleFusion, CommonInferShape);
+static RegistryInferShape g_SqrtGradInferShape(mindspore::schema::PrimitiveType_SqrtGrad, CommonInferShape);
 static RegistryInferShape g_SqrtInferShape(mindspore::schema::PrimitiveType_Sqrt, CommonInferShape);
 static RegistryInferShape g_SquareInferShape(mindspore::schema::PrimitiveType_Square, CommonInferShape);
 
@@ -426,7 +432,6 @@ static RegistryInferShape g_StridedSliceGradInferShape(mindspore::schema::Primit
 static RegistryInferShape g_IsFiniteInferShape(mindspore::schema::PrimitiveType_IsFinite, CommonInferShape);
 static RegistryInferShape g_LinSpaceInferShape(mindspore::schema::PrimitiveType_LinSpace, LinSpaceInferShape);
 static RegistryInferShape g_UniformRealInferShape(mindspore::schema::PrimitiveType_UniformReal, UniformRealInferShape);
-static RegistryInferShape g_AbsGradInferShape(mindspore::schema::PrimitiveType_AbsGrad, CommonInferShape);
 
 }  // namespace lite
 }  // namespace mindspore

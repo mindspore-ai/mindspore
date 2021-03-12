@@ -79,7 +79,6 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
 
   // init bias
   size_t new_bias_size = UP_ROUND(out_channel, C4NUM) * sizeof(float);
-  bias_data_ = malloc(new_bias_size);
   if (bias_data_ == nullptr) {
     bias_data_ = reinterpret_cast<float *>(malloc(new_bias_size));
     if (bias_data_ == nullptr) {

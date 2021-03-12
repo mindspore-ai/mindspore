@@ -303,3 +303,18 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setLe
   auto ret = train_session_ptr->SetLearningRate(learning_rate);
   return (jboolean)(ret == mindspore::lite::RET_OK);
 }
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_TrainSession_setupVirtualBatch(JNIEnv *env, jobject thiz,
+                                                                                           jlong session_ptr,
+                                                                                           jint virtualBatchMultiplier,
+                                                                                           jfloat learningRate,
+                                                                                           jfloat momentum) {
+  auto *session_pointer = reinterpret_cast<void *>(session_ptr);
+  if (session_pointer == nullptr) {
+    MS_LOGE("Session pointer from java is nullptr");
+    return (jboolean) false;
+  }
+  auto *train_session_ptr = static_cast<mindspore::session::TrainSession *>(session_pointer);
+  auto ret = train_session_ptr->SetupVirtualBatch(virtualBatchMultiplier, learningRate, momentum);
+  return (jboolean)(ret == mindspore::lite::RET_OK);
+}

@@ -172,6 +172,11 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       }
     } else if (IsContain(GetNhwcAllInputOpList(), opType)) {
       auto input_size = node->inputIndex.size();
+      if (GetCNodeTType(**iter) == schema::PrimitiveType_ResizeGrad) {
+        if ((**iter).primitive->value.AsResizeGrad()->method == schema::ResizeMethod_NEAREST) {
+          input_size = 1;
+        }
+      }
       for (size_t i = 0; i < input_size; i++) {
         iter = InsertFormatTransNode(graph, iter, kBefore, i, beforeNodeType, &status);
         if (status != RET_OK) {

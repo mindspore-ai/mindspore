@@ -28,6 +28,8 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_AbsGrad;
 using mindspore::schema::PrimitiveType_LogGrad;
+using mindspore::schema::PrimitiveType_RsqrtGrad;
+using mindspore::schema::PrimitiveType_SqrtGrad;
 
 namespace mindspore::kernel {
 namespace {
@@ -47,6 +49,12 @@ int ArithmeticSelfGradCPUKernel::Init() {
     case PrimitiveType_AbsGrad:
       self_grad_operation_ = ElementAbsGrad;
       break;
+    case PrimitiveType_SqrtGrad:
+      self_grad_operation_ = ElementSqrtGrad;
+      break;
+    case PrimitiveType_RsqrtGrad:
+      self_grad_operation_ = ElementRsqrtGrad;
+      break;
     default:
       MS_LOG(ERROR) << "Unsupported type: " << type;
       return RET_ERROR;
@@ -58,11 +66,11 @@ int ArithmeticSelfGradCPUKernel::DoArithmeticSelfGrad(int task_id) {
   auto dy = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto in_x = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dx = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(0)->ElementsNum();
 
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
-  size_t start = stride * task_id;
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
+  int start = stride * task_id;
 
   (*self_grad_operation_)(dy + start, in_x + start, dx + start, count);
   return RET_OK;
@@ -107,4 +115,6 @@ kernel::LiteKernel *CpuArithmeticSelfGradFp32KernelCreator(const std::vector<lit
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LogGrad, CpuArithmeticSelfGradFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AbsGrad, CpuArithmeticSelfGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SqrtGrad, CpuArithmeticSelfGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_RsqrtGrad, CpuArithmeticSelfGradFp32KernelCreator)
 }  // namespace mindspore::kernel

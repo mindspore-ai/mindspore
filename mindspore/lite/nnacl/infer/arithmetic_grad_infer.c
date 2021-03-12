@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/arithmetic_grad_infer.h"
+#include "nnacl/arithmetic.h"
 
 /*
  * the Arithmetic Grad op include AddGrad, SubGrad, MulGrad, DivGrad, MaximumGrad, MinimumGrad
@@ -38,8 +39,6 @@ int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, T
   TensorC *dx1 = outputs[0];
   TensorC *dx2 = outputs[1];
 
-  ArithmeticGradParameter *param = (ArithmeticGradParameter *)parameter;
-
   int in_shape0[MAX_SHAPE_SIZE];
   size_t in_shape0_size = 0;
   ShapeSet(in_shape0, &in_shape0_size, x1->shape_, x1->shape_size_);
@@ -50,45 +49,47 @@ int ArithmeticGradInferShape(const TensorC *const *inputs, size_t inputs_size, T
   size_t out_shape_size = 0;
   ShapeSet(out_shape, &out_shape_size, dy->shape_, dy->shape_size_);
 
+  ArithmeticParameter *param = (ArithmeticParameter *)parameter;
+
   if (GetElementNum(dx1) < GetElementNum(dx2)) {
     param->ndim_ = in_shape1_size;
-    param->x1_shape_size_ = param->ndim_;
-    param->x2_shape_size_ = param->ndim_;
-    param->dy_shape_size_ = param->ndim_;
+    param->in_elements_num0_ = param->ndim_;
+    param->in_elements_num1_ = param->ndim_;
+    param->out_elements_num_ = param->ndim_;
     int fill_dim_num = in_shape1_size - in_shape0_size;  // This will not work for batch!
     int j = 0;
     for (unsigned int i = 0; i < in_shape1_size; i++) {
       if (i < fill_dim_num) {
-        param->x2_shape_[i] = 1;
+        param->in_shape1_[i] = 1;
       } else {
-        param->x2_shape_[i] = in_shape0[j++];
+        param->in_shape1_[i] = in_shape0[j++];
       }
-      param->x1_shape_[i] = in_shape1[i];
-      param->dy_shape_[i] = out_shape[i];
+      param->in_shape0_[i] = in_shape1[i];
+      param->out_shape_[i] = out_shape[i];
     }
   } else if (GetElementNum(dx2) < GetElementNum(dx1)) {
     param->ndim_ = in_shape0_size;
-    param->x1_shape_size_ = param->ndim_;
-    param->x2_shape_size_ = param->ndim_;
-    param->dy_shape_size_ = param->ndim_;
+    param->in_elements_num0_ = param->ndim_;
+    param->in_elements_num1_ = param->ndim_;
+    param->out_elements_num_ = param->ndim_;
     param->broadcasting_ = true;
     int j = 0;
     int fill_dim_num = in_shape0_size - in_shape1_size;
     for (unsigned int i = 0; i < in_shape0_size; i++) {
       if (i < fill_dim_num) {
-        param->x2_shape_[i] = 1;
+        param->in_shape1_[i] = 1;
       } else {
-        param->x2_shape_[i] = in_shape1[j++];
+        param->in_shape1_[i] = in_shape1[j++];
       }
-      param->x1_shape_[i] = in_shape0[i];
-      param->dy_shape_[i] = out_shape[i];
+      param->in_shape0_[i] = in_shape0[i];
+      param->out_shape_[i] = out_shape[i];
     }
   } else {
     param->broadcasting_ = false;
     for (unsigned int i = 0; i < in_shape0_size; i++) {
-      param->x2_shape_[i] = in_shape1[i];
-      param->x1_shape_[i] = in_shape0[i];
-      param->dy_shape_[i] = out_shape[i];
+      param->in_shape1_[i] = in_shape1[i];
+      param->in_shape0_[i] = in_shape0[i];
+      param->out_shape_[i] = out_shape[i];
     }
   }
 

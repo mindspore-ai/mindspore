@@ -62,14 +62,13 @@ int DropoutGradCPUKernel::Execute(int task_id) {
   auto mask_ptr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   auto length = in_tensors_.at(kInputIndex)->ElementsNum();
-
   int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
-
-  DropoutGrad(&(yt_ptr[start]), &(mask_ptr[start]), &(output_ptr[start]), count, scale_);
-
+  if (count > 0) {
+    int start = stride * task_id;
+    DropoutGrad(&(yt_ptr[start]), &(mask_ptr[start]), &(output_ptr[start]), count, scale_);
+  }
   return RET_OK;
 }
 

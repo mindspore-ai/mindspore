@@ -201,6 +201,10 @@ union PrimitiveType {
     LinSpace,
     UniformReal,
     AbsGrad,
+    RsqrtGrad,
+    SqrtGrad,
+    LayerNormGrad,
+    ResizeGrad,
 }
 
 table Abs {
@@ -1066,3 +1070,20 @@ table UniformReal {
 
 table AbsGrad {
 }
+
+table RsqrtGrad {
+}
+
+table SqrtGrad {
+}
+
+table LayerNormGrad {
+    begin_norm_axis: long;
+    begin_params_axis: long;
+}
+
+table ResizeGrad {
+    method: ResizeMethod;
+    align_corners: bool;
+}
+

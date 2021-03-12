@@ -73,13 +73,13 @@ int AdamCPUKernel::Execute(int task_id) {
   auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
   auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
   auto gradient = reinterpret_cast<float *>(in_tensors_.at(9)->MutableData());
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(0)->ElementsNum();
 
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
-  size_t end = start + count;
+  int start = stride * task_id;
+  int end = start + count;
 
   return DoAdam(m, v, gradient, weight, beta1, beta2, beta1_power, beta2_power, eps, learning_rate,
                 adam_param_->use_nesterov_, start, end);

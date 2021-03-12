@@ -125,7 +125,8 @@ int NetTrain::ReadInputFile() {
     return RET_ERROR;
   } else {
     if (ms_inputs_.size() > flags_->input_data_list_.size()) {
-      MS_LOG(ERROR) << "missing input files";
+      MS_LOG(ERROR) << "missing input files expecting " << ms_inputs_.size() << ",got "
+                    << flags_->input_data_list_.size();
       return RET_ERROR;
     }
     for (size_t i = 0; i < ms_inputs_.size(); i++) {
@@ -327,8 +328,8 @@ int NetTrain::RunExportedNet() {
   context->thread_num_ = flags_->num_threads_;
   session_ = session::TrainSession::CreateSession(flags_->export_file_.c_str(), context.get());
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
-    std::cout << "CreateSession failed while running ", model_name.c_str();
+    MS_LOG(ERROR) << "ExportedFile CreateSession failed while running " << model_name.c_str();
+    std::cout << "CreateSession failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
   ms_inputs_ = session_->GetInputs();
@@ -341,13 +342,6 @@ int NetTrain::RunExportedNet() {
   auto status = LoadInput();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Generate input data error";
-    return status;
-  }
-
-  status = session_->RunGraph();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Inference error " << status;
-    std::cerr << "Inference error " << status << std::endl;
     return status;
   }
 
@@ -391,11 +385,13 @@ int NetTrain::RunNetTrain() {
   } else {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
   }
+
+  layer_checksum_ = flags_->layer_checksum_;
   context->thread_num_ = flags_->num_threads_;
   session_ = session::TrainSession::CreateSession(flags_->model_file_.c_str(), context.get());
   if (session_ == nullptr) {
-    MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
-    std::cout << "CreateSession failed while running ", model_name.c_str();
+    MS_LOG(ERROR) << "RunNetTrain CreateSession failed while running " << model_name.c_str();
+    std::cout << "RunNetTrain CreateSession failed while running " << model_name.c_str() << std::endl;
     return RET_ERROR;
   }
 
@@ -501,7 +497,6 @@ int NetTrain::InitCallbackParameter() {
     if (op_times_by_name_.find(callParam.node_name) == op_times_by_name_.end()) {
       op_times_by_name_.insert(std::make_pair(callParam.node_name, std::make_pair(0, 0.0f)));
     }
-
     op_call_times_total_++;
     op_begin_ = GetTimeUs();
     return true;
@@ -526,9 +521,14 @@ int NetTrain::InitCallbackParameter() {
     op_times_by_type_[call_param.node_type].second += cost;
     op_times_by_name_[call_param.node_name].first++;
     op_times_by_name_[call_param.node_name].second += cost;
+    if (layer_checksum_) {
+      float *output = reinterpret_cast<float *>(after_outputs.at(0)->MutableData());
+      float sum = 0;
+      for (int i = 0; i < after_outputs.at(0)->ElementsNum(); i++) sum += output[i];
+      std::cout << call_param.node_type << " shape= " << after_outputs.at(0)->shape() << " sum=" << sum << "\n";
+    }
     return true;
   };
-
   return RET_OK;
 }
 

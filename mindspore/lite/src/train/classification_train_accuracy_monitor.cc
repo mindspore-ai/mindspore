@@ -18,9 +18,12 @@
 #include <sys/stat.h>
 #include <vector>
 #include "include/errorcode.h"
+#include "src/common/log_adapter.h"
 #include "include/train_session.h"
 #include "src/common/utils.h"
 #include "src/train/train_utils.h"
+
+using mindspore::WARNING;
 
 namespace mindspore {
 namespace lite {

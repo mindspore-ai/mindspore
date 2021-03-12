@@ -34,12 +34,12 @@ int AssignCPUKernel::ReSize() { return RET_OK; }
 int AssignCPUKernel::Execute(int task_id) {
   auto x = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto y = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(0)->ElementsNum();
 
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
+  int start = stride * task_id;
 
   memcpy(&(x[start]), &(y[start]), count * sizeof(float));
   return RET_OK;

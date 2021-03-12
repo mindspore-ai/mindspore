@@ -47,7 +47,8 @@ logs_path=${basepath}/logs_train
 rm -rf ${logs_path}
 mkdir -p ${logs_path}
 
-docker_image=mindspore/mindspore-gpu:1.1.0
+docker_image=mindspore_build:210301
+#docker_image=mindspore/mindspore-gpu:1.1.1
 # Export models
 echo "Start Exporting models ..."
 # Set log files
@@ -65,12 +66,15 @@ if [[ -z "${CLOUD_MODEL_ZOO}" ]]; then
 fi  
 
 # Export mindspore train models:
+fail=0
 while read line; do
-    model_name=${line}
+    LFS=" " read -r -a line_array <<< ${line}
+    model_name=${line_array[0]}
     if [[ $model_name == \#* ]]; then
         continue
     fi
     echo ${model_name}'_train_export.py' >> "${export_log_file}"
+    rm -f ${models_path}/${model_name}_train.mindir
     echo 'exporting' ${model_name}
     echo 'docker run --user '"$(id -u):$(id -g)"' --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true '${docker_image}' python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
     docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true "${docker_image}" python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
@@ -78,8 +82,10 @@ while read line; do
         export_result='export mindspore '${model_name}'_train_export pass';echo ${export_result} >> ${export_result_file}
     else
         export_result='export mindspore '${model_name}'_train_export failed';echo ${export_result} >> ${export_result_file}
+        fail=1
     fi
 done < ${models_mindspore_train_config}
 
 Print_Result ${export_result_file}
+exit $fail
  

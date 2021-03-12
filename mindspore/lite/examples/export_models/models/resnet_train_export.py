@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""mobilenetv2_train_export."""
+"""resnet_train_export"""
 
 import sys
 import numpy as np

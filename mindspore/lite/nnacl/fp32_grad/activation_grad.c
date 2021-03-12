@@ -95,3 +95,18 @@ int HSigmoidGrad(float *src0, float *src1, size_t length, float *dst) {
   }
   return NNACL_OK;
 }
+
+int EluGrad(float *src0, float *src1, size_t length, float *dst, float alpha) {
+  for (size_t i = 0; i < length; ++i) {
+    dst[i] = (src1[i] > 0.0f ? src0[i] : alpha * expm1(src1[i]) * src0[i]);
+  }
+  return NNACL_OK;
+}
+
+int GeluGrad(float *src0, float *src1, size_t length, float *dst) {
+  for (size_t i = 0; i < length; ++i) {
+    dst[i] = src0[i] * ((0.5 * (1.0 + erf(src1[i] / 1.4142135623730951))) +
+                        (src1[i] * exp(-0.5 * src1[i] * src1[i]) / 2.5066282746));
+  }
+  return NNACL_OK;
+}

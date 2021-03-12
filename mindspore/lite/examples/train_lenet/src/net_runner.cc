@@ -96,7 +96,8 @@ void NetRunner::InitAndFigureInputs() {
   context.device_list_[0].device_type_ = mindspore::lite::DT_CPU;
   context.thread_num_ = 2;
 
-  loop_ = mindspore::session::TrainLoop::CreateTrainLoop(ms_file_, &context);
+  auto session = mindspore::session::TrainSession::CreateSession(ms_file_, &context);
+  loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session, &context);
   session_ = loop_->train_session();
   MS_ASSERT(nullptr != session_);
 

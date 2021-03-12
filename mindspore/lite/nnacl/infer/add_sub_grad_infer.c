@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/infer/add_sub_grad_infer.h"
-#include "nnacl/infer/arithmetic_grad_infer.h"
+#include "nnacl/arithmetic.h"
 
 int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
@@ -32,35 +32,29 @@ int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   TensorC *dx1 = outputs[0];
   TensorC *dx2 = outputs[1];
 
-  ArithmeticGradParameter *param = (ArithmeticGradParameter *)parameter;
+  if (!parameter->infer_flag_) {
+    return NNACL_INFER_INVALID;
+  }
 
-  int in_shape0[MAX_SHAPE_SIZE];
-  size_t in_shape0_size = 0;
-  ShapeSet(in_shape0, &in_shape0_size, x1->shape_, x1->shape_size_);
-  int in_shape1[MAX_SHAPE_SIZE];
-  size_t in_shape1_size = 0;
-  ShapeSet(in_shape1, &in_shape1_size, x2->shape_, x2->shape_size_);
-  int outShape[MAX_SHAPE_SIZE];
-  size_t outShape_size = 0;
-  ShapeSet(outShape, &outShape_size, dy->shape_, dy->shape_size_);
+  ArithmeticParameter *param = (ArithmeticParameter *)parameter;
 
-  param->ndim_ = outShape_size;
-  param->x1_shape_size_ = param->ndim_;
-  param->x2_shape_size_ = param->ndim_;
-  param->dy_shape_size_ = param->ndim_;
-  int fill_dim_num0 = outShape_size - in_shape0_size;
-  int fill_dim_num1 = outShape_size - in_shape1_size;
+  param->ndim_ = dy->shape_size_;
+  param->in_elements_num0_ = param->ndim_;
+  param->in_elements_num1_ = param->ndim_;
+  param->out_elements_num_ = param->ndim_;
+  int fillDimNum0 = dy->shape_size_ - x1->shape_size_;
+  int fillDimNum1 = dy->shape_size_ - x2->shape_size_;
   int j0 = 0;
   int j1 = 0;
-  for (unsigned int i = 0; i < outShape_size; i++) {
-    param->x1_shape_[i] = (i < fill_dim_num0) ? 1 : in_shape0[j0++];
-    param->x2_shape_[i] = (i < fill_dim_num1) ? 1 : in_shape1[j1++];
-    param->dy_shape_[i] = outShape[i];
+  for (unsigned int i = 0; i < dy->shape_size_; i++) {
+    param->in_shape0_[i] = (i < fillDimNum0) ? 1 : x1->shape_[j0++];
+    param->in_shape1_[i] = (i < fillDimNum1) ? 1 : x2->shape_[j1++];
+    param->out_shape_[i] = dy->shape_[i];
   }
 
   SetShapeTensor(dx1, x1);
   SetShapeTensor(dx2, x2);
-  dx1->data_type_ = dy->data_type_;
-  dx2->data_type_ = dy->data_type_;
+  SetDataTypeFormat(dx1, dy);
+  SetDataTypeFormat(dx2, dy);
   return NNACL_OK;
 }

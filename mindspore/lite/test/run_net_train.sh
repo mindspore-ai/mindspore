@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run Export on x86 platform and create output test files:
-docker_image=
+docker_image=mindspore_build:210301
 function Run_Export(){
     cd $models_path || exit 1
     if [[ -z "${CLOUD_MODEL_ZOO}" ]]; then
@@ -10,7 +10,8 @@ function Run_Export(){
     fi    
     # Export mindspore train models:
     while read line; do
-        model_name=${line}
+        LFS=" " read -r -a line_array <<< ${line}
+        model_name=${line_array[0]}
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -47,10 +48,11 @@ function Run_Converter() {
 
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
-
+    fail=0
     # Convert mindspore train models:
     while read line; do
-        model_name=${line}
+        LFS=" " read -r -a line_array <<< ${line}
+        model_name=${line_array[0]}
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -64,8 +66,10 @@ function Run_Converter() {
             converter_result='converter mindspore '${model_name}'_train pass';echo ${converter_result} >> ${run_converter_result_file}
         else
             converter_result='converter mindspore '${model_name}'_train failed';echo ${converter_result} >> ${run_converter_result_file}
+            fail=1
         fi
     done < ${models_mindspore_train_config}
+    return ${fail}
 }
 
 # Run on x86 platform:
@@ -73,7 +77,8 @@ function Run_x86() {
     # Run mindspore converted train models:
     fail=0
     while read line; do
-        model_name=${line}
+        LFS=" " read -r -a line_array <<< ${line}
+        model_name=${line_array[0]}
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -81,7 +86,7 @@ function Run_x86() {
         echo ${model_name}'_train' >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-train-linux-x64' >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
-        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib ./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output'  >> "${run_x86_log_file}"
+        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib ./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
         echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
         LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib:./minddata/lib:./minddata/third_party/libjpeg-turbo/lib \
         ${run_valgrind}./benchmark_train/benchmark_train \
@@ -159,10 +164,16 @@ function Run_arm() {
     fail=0
     # Run mindir converted train models:
     while read line; do
-        model_name=${line}
+        LFS=" " read -r -a line_array <<< ${line}
+        model_name=${line_array[0]}
         if [[ $model_name == \#* ]]; then
           continue
         fi
+    if [[ "${line_array[1]}" == "noarm32" ]] && [[ "$1" == arm32 ]]; then
+          run_result=$1': '${model_name}'_train irrelevant'; echo ${run_result} >> ${run_benchmark_train_result_file}
+          continue
+    fi
+  
 
         # run benchmark_train test without clib data
         echo ${model_name}'_train' >> "${run_arm_log_file}"
@@ -339,7 +350,7 @@ START=$(date +%s.%N)
 
 # Run converter
 echo "start run converter ..."
-Run_Converter
+Run_Converter &
 Run_converter_PID=$!
 sleep 1
 

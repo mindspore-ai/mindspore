@@ -200,6 +200,10 @@ OP_TYPE(IsFinite)
 OP_TYPE(LinSpace)
 OP_TYPE(UniformReal)
 OP_TYPE(AbsGrad)
+OP_TYPE(RsqrtGrad)
+OP_TYPE(SqrtGrad)
+OP_TYPE(LayerNormGrad)
+OP_TYPE(ResizeGrad)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1065,3 +1069,19 @@ OP_SCHEMA_DEF_END(UniformReal)
 
 OP_SCHEMA_DEF(AbsGrad)
 OP_SCHEMA_DEF_END(AbsGrad)
+
+OP_SCHEMA_DEF(RsqrtGrad)
+OP_SCHEMA_DEF_END(RsqrtGrad)
+
+OP_SCHEMA_DEF(SqrtGrad)
+OP_SCHEMA_DEF_END(SqrtGrad)
+
+OP_SCHEMA_DEF(LayerNormGrad)
+OP_ATTR(begin_norm_axis, long)
+OP_ATTR(begin_params_axis, long)
+OP_SCHEMA_DEF_END(LayerNormGrad)
+
+OP_SCHEMA_DEF(ResizeGrad)
+OP_ATTR_ENUM(method, ResizeMethod)
+OP_ATTR(align_corners, bool)
+OP_SCHEMA_DEF_END(ResizeGrad)

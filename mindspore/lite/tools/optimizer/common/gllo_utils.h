@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
-#define MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_
 
 #include <memory>
 #include <string>
@@ -37,6 +37,7 @@ namespace mindspore {
 namespace opt {
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("Return");
 inline const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>("MakeTuple");
+inline const PrimitivePtr kPrimMakeTupleV2 = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("Identity");
 std::vector<int> CastToInt(const ValuePtr &value);
 
@@ -146,4 +147,4 @@ ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const 
                                           const std::string &node_name);
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_PASS_COMMON_GLLO_UTILS_H_
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_COMMON_GLLO_UTILS_H_

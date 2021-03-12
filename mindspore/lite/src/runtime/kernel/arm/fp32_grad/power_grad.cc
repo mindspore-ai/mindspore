@@ -46,19 +46,19 @@ int PowerGradCPUKernel::Execute(int task_id) {
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(0)->ElementsNum();
 
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
-  size_t end = start + count;
+  int start = stride * task_id;
+  int end = start + count;
 
   float exp = power_ - 1;
   Power(&(x_addr[start]), &exp, &(dx_addr[start]), count, scale_, shift_, true);
   ElementMul(&(dx_addr[start]), &(dy_addr[start]), &(dx_addr[start]), count);
   float scale = scale_ * power_;
-  for (size_t i = start; i < end; i++) {
+  for (int i = start; i < end; i++) {
     dx_addr[i] *= scale;
   }
 

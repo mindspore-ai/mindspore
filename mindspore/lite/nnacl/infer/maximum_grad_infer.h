@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_MAXIMUM_GRAD_INFER_H
-#define MINDSPORE_LITE_NNACL_MAXIMUM_GRAD_INFER_H
+#ifndef MINDSPORE_LITE_NNACL_INFER_MAXIMUM_GRAD_INFER_H_
+#define MINDSPORE_LITE_NNACL_INFER_MAXIMUM_GRAD_INFER_H_
 
 #include "nnacl/infer/common_infer.h"
 
@@ -22,21 +22,10 @@
 extern "C" {
 #endif
 
-typedef struct MaximumGradParameter {
-  OpParameter op_parameter_;
-  int ndim_;
-  int x1_shape_[MAX_SHAPE_SIZE];
-  size_t x1_shape_size_;
-  int x2_shape_[MAX_SHAPE_SIZE];
-  size_t x2_shape_size_;
-  int dy_shape_[MAX_SHAPE_SIZE];
-  size_t dy_shape_size_;
-} MaximumGradParameter;
-
 int MaximumGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_LITE_NNACL_MAXIMUM_GRAD_INFER_H
+#endif  // MINDSPORE_LITE_NNACL_INFER_MAXIMUM_GRAD_INFER_H_

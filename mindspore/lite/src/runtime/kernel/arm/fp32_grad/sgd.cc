@@ -76,13 +76,13 @@ int SgdCPUKernel::Execute(int task_id) {
   float learning_rate = lr_;
   auto gradient = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(0)->ElementsNum();
 
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
-  size_t end = start + count;
+  int start = stride * task_id;
+  int end = start + count;
 
   DoSgd(weight, accumulate, gradient, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_, start,
         end);

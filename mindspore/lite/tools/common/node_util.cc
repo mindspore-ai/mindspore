@@ -33,6 +33,7 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_ApplyMomentum,
                                                               schema::PrimitiveType_SGD,
                                                               schema::PrimitiveType_Adam,
+                                                              schema::PrimitiveType_ResizeGrad,
                                                               schema::PrimitiveType_AvgPoolFusion,
                                                               schema::PrimitiveType_MaxPoolFusion,
                                                               schema::PrimitiveType_Conv2DFusion,
@@ -51,8 +52,9 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_SpaceToBatchND};
 
 static const std::vector<schema::PrimitiveType> nhwcOpAllInputList = {
-  schema::PrimitiveType_AvgPoolGrad, schema::PrimitiveType_MaxPoolGrad, schema::PrimitiveType_ActivationGrad,
-  schema::PrimitiveType_Conv2DBackpropFilterFusion, schema::PrimitiveType_BatchNormGrad};
+  schema::PrimitiveType_AvgPoolGrad,    schema::PrimitiveType_MaxPoolGrad,
+  schema::PrimitiveType_ActivationGrad, schema::PrimitiveType_Conv2DBackpropFilterFusion,
+  schema::PrimitiveType_BatchNormGrad,  schema::PrimitiveType_ResizeGrad};
 
 // index {} mean all inputs need insert
 static std::unordered_map<schema::PrimitiveType, std::vector<int>> extNhwcInsertIndex = {

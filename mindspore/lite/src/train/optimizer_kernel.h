@@ -69,23 +69,24 @@ class OptimizerKernel : public LiteKernel {
       std::fill(grad_sum_, grad_sum_ + elem_num, 0);
     } else {
       if (grad_sum_ != nullptr) {
+        OptimizerStep();
         context_->allocator->Free(grad_sum_);
         grad_sum_ = nullptr;
       }
     }
+    weightUpdateMod_ = WeightUpdateMode::VIRTUAL_BATCH;
     return RET_OK;
   }
 
   int ExecuteVirtualBatch(int task_id) {
     auto gradient = reinterpret_cast<float *>(in_tensors_.at(grad_idx_)->MutableData());
-    size_t length = in_tensors_.at(grad_idx_)->ElementsNum();
+    int length = in_tensors_.at(grad_idx_)->ElementsNum();
 
-    size_t stride = UP_DIV(length, context_->thread_num_);
-    size_t count = MSMIN(stride, length - stride * task_id);
-    size_t start = stride * task_id;
-    size_t end = start + count;
-
-    for (size_t i = start; i < end; ++i) {
+    int stride = UP_DIV(length, context_->thread_num_);
+    int count = MSMIN(stride, length - stride * task_id);
+    int start = stride * task_id;
+    int end = start + count;
+    for (int i = start; i < end; ++i) {
       grad_sum_[i] += gradient[i];
     }
     valid_grad_sum_ = true;
@@ -97,7 +98,10 @@ class OptimizerKernel : public LiteKernel {
     return RET_OK;
   }
 
-  int Eval() override { return OptimizerStep(); }
+  int Eval() override {
+    OptimizerStep();
+    return LiteKernel::Eval();
+  }
 
  protected:
   float default_lr_ = 0.0f;
