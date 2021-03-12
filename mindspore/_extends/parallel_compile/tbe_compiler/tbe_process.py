@@ -133,6 +133,7 @@ class TbeProcess:
         self.auto_tune_op_list = None
         self.tune_ops_name = os.getenv("TUNE_OPS_NAME")
         self.selected_tune_ops = self.tune_ops_name.split(",") if self.tune_ops_name is not None else None
+        log.info("Selected to tune ops list:{}".format(self.selected_tune_ops))
 
     def __del__(self):
         if self.__pool is not None:
@@ -183,6 +184,7 @@ class TbeProcess:
             import auto_tune_main
             import schedule_search  # pylint: disable=unused-import
             self.auto_tune_op_list = auto_tune_main.enable_auto_tune_support()
+            log.info("auto tune GA support ops list:{}".format(self.auto_tune_op_list))
         except ImportError:
             res = "TBEException", \
                   "No module named `auto_tune` or `schedule_search`. If you want tune your op's performance," \
@@ -298,6 +300,7 @@ class TbeProcess:
             int, task id(>0). -1 if error
         """
         task_id = self.__next_task_id
+        error_id = -1
         self.__next_task_id = self.__next_task_id + 1
         tune_mode = self.select_tune_mode(op_json)
         self.__task_info[task_id] = op_json
@@ -312,12 +315,12 @@ class TbeProcess:
             log.info("start_compile_op: task id: {} op json:\n {}".format(task_id, op_json))
             if self.__tuner is None:
                 log.error("Please confirm that the mode isn't NO_TUNE and auto_tune already initialized.")
-                return task_id
+                return error_id
             if not self.__tuner.tune_init:
                 status = self.__tuner.init_tune_interface(op_json, self.tune_process_num)
                 if not status:
                     log.error("Auto tune init failed!")
-                    return task_id
+                    return error_id
                 self.__tuner.tune_init = True
             self.__all_tune_tasks.append(task_id)
             self.__running_tune_tasks.append(task_id)
@@ -339,6 +342,7 @@ class TbeProcess:
                 self.__tuner.ga_tune(task_id, op_json)
             else:
                 log.error("Unsupported Tune Mode!")
+                return error_id
 
         return task_id
 
@@ -385,7 +389,7 @@ class TbeProcess:
                             res = task_id, "Success", "Success"
                         else:
                             self.__failed_tune_task.append(task_id)
-                            log.error("task_id:{}, json:{}".format(task_id, self.__task_info[task_id]))
+                            log.info("task_id:{}, json:{}".format(task_id, self.__task_info[task_id]))
                             res = task_id, "Failed", "Failed"
                         self.__finish_tune_task.append(res)
                         self.__running_tune_tasks.remove(task_id)
