@@ -40,6 +40,8 @@ class Common {
                               const std::string &error_message = "");
   static bool CreateNotExistDirs(const std::string &path);
 
+  static std::string AddId(const std::string &filename, const std::string &suffix);
+
  private:
   static bool IsEveryFilenameValid(const std::string &path, const int &length_limit, const std::string &error_message);
 };

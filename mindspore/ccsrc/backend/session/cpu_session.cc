@@ -28,6 +28,8 @@
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/common/pass_manager.h"
 #include "backend/optimizer/pass/replace_node_by_proxy.h"
+#include "debug/anf_ir_dump.h"
+#include "debug/dump_proto.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
 #include "ps/ps_context.h"
@@ -98,6 +100,8 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
 
   MS_LOG(INFO) << "Assign kernel address";
   runtime_.AssignKernelAddress(graph.get());
+
+  DumpGraph(graph);
   return graph_id;
 }
 

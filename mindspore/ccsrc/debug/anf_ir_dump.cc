@@ -527,24 +527,6 @@ void DumpSubgraph(const OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>
   }
 }
 
-std::string AddGlobalId(const std::string &filename) {
-  static size_t g_id = 0;
-  std::ostringstream s;
-  auto i = filename.rfind(".ir");
-  if (i >= filename.size()) {
-    s << filename;
-    s << "_" << std::setfill('0') << std::setw(4) << g_id;
-  } else {
-    s << filename.substr(0, i);
-    s << "_" << std::setfill('0') << std::setw(4) << g_id;
-    if (i + 1 < filename.size()) {
-      s << filename.substr(i);
-    }
-  }
-  ++g_id;
-  return s.str();
-}
-
 void GetEnvDumpIrLineLevel(LocDumpMode *dump_location) {
   static std::unordered_map<std::string, enum LocDumpMode> dump_level_map = {
     {std::to_string(kOff), kOff}, {std::to_string(kTopStack), kTopStack}, {std::to_string(kWholeStack), kWholeStack}};
@@ -564,7 +546,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   if (graph == nullptr) {
     return;
   }
-  auto path = pipeline::GetSaveGraphsPathName(AddGlobalId(filename));
+  auto path = pipeline::GetSaveGraphsPathName(Common::AddId(filename, ".ir"));
   if (!target_file.empty()) {
     path = target_file;
   }
@@ -609,7 +591,7 @@ void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool d
   if (graph == nullptr) {
     return;
   }
-  auto path = AddGlobalId(filename);
+  auto path = Common::AddId(filename, ".ir");
   auto realpath = Common::GetRealPath(path);
   if (!realpath.has_value()) {
     MS_LOG(ERROR) << "Get real path failed. path=" << path;

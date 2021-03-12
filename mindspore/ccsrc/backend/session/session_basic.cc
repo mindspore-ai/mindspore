@@ -38,6 +38,7 @@
 #include "ir/func_graph_cloner.h"
 #include "utils/utils.h"
 #include "debug/anf_ir_dump.h"
+#include "debug/dump_proto.h"
 #include "debug/common.h"
 #include "utils/trace_base.h"
 #include "frontend/parallel/context.h"
@@ -2449,6 +2450,19 @@ void SessionBasic::ClearAllBucket(const GraphId &graph_id) {
   if (free_iter != free_bucket_id_map_.end()) {
     free_iter->second = 0;
   }
+}
+
+void SessionBasic::DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph) {
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    DumpIR("graph_build_" + std::to_string(kernel_graph->graph_id()) + ".ir", kernel_graph, true, kWholeStack);
+    DumpIRProto(kernel_graph, "vm_build_" + std::to_string(kernel_graph->graph_id()));
+    DumpIR("trace_code_graph", kernel_graph, true, kWholeStack);
+  }
+#endif
 }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))

@@ -230,6 +230,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void ClearAllBucket(const GraphId &graph_id);
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
+  void DumpGraph(const std::shared_ptr<KernelGraph> &kernel_graph);
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
   void GetBatchElements(const AnfNodePtr &kernel_node) const;
