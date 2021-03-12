@@ -33,7 +33,7 @@ set_seed(1)
 
 if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
-    env = gym.make('CartPole-v0')
+    env = gym.make('CartPole-v1')
     cfg.state_space_dim = env.observation_space.shape[0]
     cfg.action_space_dim = env.action_space.n
     agent = Agent(**cfg)
