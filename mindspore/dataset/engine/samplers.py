@@ -242,6 +242,7 @@ class Sampler(BuiltinSampler):
 
     # Indices fetcher
     # Do not override this method!
+    # pylint: disable=missing-docstring
     def _get_indices(self):
         sampler_iter = iter(self)
         ret = []
@@ -251,7 +252,10 @@ class Sampler(BuiltinSampler):
                 ret.append(idx)
             except StopIteration:
                 break
-        return np.array(ret)
+        indices = np.array(ret)
+        if indices.dtype == object:
+            raise RuntimeError("Fetched indices can not be converted to a valid ndarray.")
+        return indices
 
     # Instance fetcher
     # Do not override this method!
