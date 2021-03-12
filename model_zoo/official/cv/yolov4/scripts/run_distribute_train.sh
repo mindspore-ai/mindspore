@@ -56,6 +56,7 @@ fi
 export DEVICE_NUM=8
 export RANK_SIZE=8
 export RANK_TABLE_FILE=$RANK_TABLE_FILE
+export MINDSPORE_HCCL_CONFIG_PATH=$RANK_TABLE_FILE
 
 for((i=0; i<${DEVICE_NUM}; i++))
 do

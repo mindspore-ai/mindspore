@@ -46,15 +46,14 @@ Annotation support: [MS COCO] or annotation as the same format as MS COCO
                 ├── annotations
                 │   ├─ train.json
                 │   └─ val.json
-                ├─  ├─train
-                    │    ├─picture1.jpg
-                    │    ├─ ...
-                    │    └─picturen.jpg
-                    └─ val
-                        ├─picture1.jpg
-                        ├─ ...
-                        └─picturen.jpg
-                
+                ├─train
+                │   ├─picture1.jpg
+                │   ├─ ...
+                │   └─picturen.jpg
+                ├─ val
+                    ├─picture1.jpg
+                    ├─ ...
+                    └─picturen.jpg
     ```
 
 we suggest user to use MS COCO dataset to experience our model,
@@ -75,8 +74,8 @@ other datasets need to use the same format as MS COCO.
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
 ```text
-# The cspdarknet53_backbone.ckpt in the follow script is got from cspdarknet53 training like paper. 
-# The parameter of training_shape define image shape for network, default is 
+# The cspdarknet53_backbone.ckpt in the follow script is got from cspdarknet53 training like paper.
+# The parameter of training_shape define image shape for network, default is
                    [416, 416],
                    [448, 448],
                    [480, 480],
@@ -156,7 +155,7 @@ sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
     ├─yolo.py                         # yolov4 network
     ├─yolo_dataset.py                 # create dataset for YOLOV4
 
-  ├─eval.py                           # evaluate val results 
+  ├─eval.py                           # evaluate val results
   ├─test.py#                          # evaluate test results
   └─train.py                          # train net
 ```
@@ -331,7 +330,7 @@ python eval.py \
     --pretrained=yolov4.ckpt \
     --testing_shape=608 > log.txt 2>&1 &
 OR
-sh run_eval.sh dataset/coco2017 checkpoint/yolov4.ckpt 
+sh run_eval.sh dataset/coco2017 checkpoint/yolov4.ckpt
 ```
 
 The above python command will run in the background. You can view the results through the file "log.txt". The mAP of the test dataset will be as follows:
@@ -361,7 +360,7 @@ python test.py \
     --pretrained=yolov4.ckpt \
     --testing_shape=608 > log.txt 2>&1 &
 OR
-sh run_test.sh dataset/coco2017 checkpoint/yolov4.ckpt 
+sh run_test.sh dataset/coco2017 checkpoint/yolov4.ckpt
 ```
 
 The predict_xxx.json will be found in test/outputs/%Y-%m-%d_time_%H_%M_%S/.
@@ -392,7 +391,7 @@ overall performance
 If you want to infer the network on Ascend 310, you should convert the model to MINDIR:
 
 ```python
-python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT] 
+python export.py --ckpt_file [CKPT_PATH] --file_name [FILE_NAME] --file_format [FILE_FORMAT]
 ```
 
 The ckpt_file parameter is required,
@@ -409,6 +408,7 @@ Current batch_Size can only be set to 1. The precision calculation process needs
 # Ascend310 inference
 sh run_infer_310.sh [MINDIR_PATH] [DATA_PATH] [DEVICE_ID] [ANN_FILE]
 ```
+
 `DEVICE_ID` is optional, default value is 0.
 
 ### result
