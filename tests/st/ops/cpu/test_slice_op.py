@@ -160,6 +160,31 @@ def test_slice6():
     assert (output[2].asnumpy() == inputx[-10:10:1, :, -10:10:1]).all()
 
 
+class StridedSlice(nn.Cell):
+    def __init__(self, begin, end, stride):
+        super(StridedSlice, self).__init__()
+        self.begin = begin
+        self.end = end
+        self.stride = stride
+        self.stride_slice = P.StridedSlice()
+
+    def construct(self, x):
+        return self.stride_slice(x, self.begin, self.end, self.stride)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_strided_slice_bool_type():
+    input_x = Tensor([[[False, False, True], [False, True, False]], [[False, True, False], [True, False, False]],
+                      [[False, True, True], [True, False, True]]], mstype.bool_)
+    begin = (1, 0, 0)
+    end = (2, 1, 3)
+    stride = (1, 1, 1)
+    slice_op = StridedSlice(begin, end, stride)
+    output = slice_op(input_x)
+    expected_output = np.array([False, True, False])
+    assert (output.asnumpy() == expected_output).all()
+
 if __name__ == '__main__':
     test_slice()
     test_slice2()
@@ -167,3 +192,4 @@ if __name__ == '__main__':
     test_slice4()
     test_slice5()
     test_slice6()
+    test_strided_slice_bool_type()

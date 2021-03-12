@@ -33,12 +33,15 @@ class SliceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void ExpandAllMemberDims();
-  bool CanCopyMemoryOnAxis(size_t dim) const;
-  int SignOfStride(size_t axis) const;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T>
   void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
                         const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,
                         int id) const;
+  void ExpandAllMemberDims();
+  bool CanCopyMemoryOnAxis(size_t dim) const;
+  int SignOfStride(size_t axis) const;
   void CheckParam(const CNodePtr &kernel_node) const;
   void TransArg();
   void ClipBegin();
@@ -49,6 +52,7 @@ class SliceCPUKernel : public CPUKernel {
   std::vector<size_t> input_element_num_;
   std::vector<size_t> output_shape_;
   std::vector<size_t> output_element_num_;
+  TypeId dtype_{kTypeUnknown};
 };
 
 MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -57,6 +61,8 @@ MS_REG_CPU_KERNEL(Slice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAt
 MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   SliceCPUKernel);
 MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                  SliceCPUKernel);
+MS_REG_CPU_KERNEL(StridedSlice, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                   SliceCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

@@ -23,6 +23,7 @@ constexpr int MAX_DIMS = 8;
 void SliceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
   input_shape_ = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   std::vector<int64_t> begin_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
   (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
                        [](const int64_t &value) { return static_cast<int>(value); });
@@ -94,8 +95,25 @@ void SliceCPUKernel::ExpandAllMemberDims() {
 bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                             const std::vector<kernel::AddressPtr> & /*workspace*/,
                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  bool ret{true};
+  if (dtype_ == kNumberTypeInt32) {
+    ret = LaunchKernel<int>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat32) {
+    ret = LaunchKernel<float>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeBool) {
+    ret = LaunchKernel<bool>(inputs, outputs);
+  } else {
+    MS_LOG(ERROR) << "Slice op only support input_x int32 and float32";
+    return false;
+  }
+  return ret;
+}
+
+template <typename T>
+bool SliceCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                  const std::vector<kernel::AddressPtr> &outputs) {
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   bool can_copy_memory[3] = {CanCopyMemoryOnAxis(0), CanCopyMemoryOnAxis(1), CanCopyMemoryOnAxis(2)};
   int signstride[4] = {SignOfStride(0), SignOfStride(1), SignOfStride(2), SignOfStride(3)};
   size_t in_start_offset[3] = {begin_[0] * input_element_num_[0], begin_[1] * input_element_num_[1],
@@ -108,7 +126,7 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   for (int i = begin_[0]; signstride[0] * i < signstride[0] * end_[0];
        i += strides_[0], in_n_offset += in_step_size[0], out_n_offset += output_element_num_[0]) {
     if (can_copy_memory[0]) {
-      CopyDataToOutput(inputs, in_n_offset, outputs, out_n_offset, input_element_num_[0], 0);
+      CopyDataToOutput<T>(inputs, in_n_offset, outputs, out_n_offset, input_element_num_[0], 0);
       continue;
     }
     auto in_c_offset = in_start_offset[1];
@@ -116,8 +134,8 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     for (int j = begin_[1]; signstride[1] * j < signstride[1] * end_[1];
          j += strides_[1], in_c_offset += in_step_size[1], out_c_offset += output_element_num_[1]) {
       if (can_copy_memory[1]) {
-        CopyDataToOutput(inputs, in_n_offset + in_c_offset, outputs, out_n_offset + out_c_offset, input_element_num_[1],
-                         1);
+        CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset, outputs, out_n_offset + out_c_offset,
+                            input_element_num_[1], 1);
         continue;
       }
       auto in_h_offset = in_start_offset[2];
@@ -125,8 +143,8 @@ bool SliceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
       for (int k = begin_[2]; signstride[2] * k < signstride[2] * end_[2];
            k += strides_[2], in_h_offset += in_step_size[2], out_h_offset += output_element_num_[2]) {
         if (can_copy_memory[2]) {
-          CopyDataToOutput(inputs, in_n_offset + in_c_offset + in_h_offset, outputs,
-                           out_n_offset + out_c_offset + out_h_offset, input_element_num_[2], 2);
+          CopyDataToOutput<T>(inputs, in_n_offset + in_c_offset + in_h_offset, outputs,
+                              out_n_offset + out_c_offset + out_h_offset, input_element_num_[2], 2);
           continue;
         }
         for (int m = begin_[3]; signstride[3] * m < signstride[3] * end_[3]; m += strides_[3]) {
@@ -154,23 +172,25 @@ int SliceCPUKernel::SignOfStride(size_t axis) const {
   }
   return -1;
 }
+
+template <typename T>
 void SliceCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t in_offset,
                                       const std::vector<kernel::AddressPtr> &outputs, size_t out_offset,
                                       size_t copy_num, int id) const {
-  auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
+  T *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto in_buff_size = inputs[0]->size;
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+  T *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto out_buff_size = outputs[0]->size;
 
-  if ((in_offset + copy_num) * sizeof(float) > in_buff_size) {
+  if ((in_offset + copy_num) * sizeof(T) > in_buff_size) {
     MS_LOG(EXCEPTION) << "input memory out of bounds.";
   }
-  if ((out_offset + copy_num) * sizeof(float) > out_buff_size) {
+  if ((out_offset + copy_num) * sizeof(T) > out_buff_size) {
     MS_LOG(EXCEPTION) << id << " output memory out of bounds.";
   }
 
-  auto ret = memcpy_s(output_addr + out_offset, out_buff_size - out_offset * sizeof(float), input_addr + in_offset,
-                      copy_num * sizeof(float));
+  auto ret = memcpy_s(output_addr + out_offset, out_buff_size - out_offset * sizeof(T), input_addr + in_offset,
+                      copy_num * sizeof(T));
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "memcpy failed. ret:" << ret;
   }
