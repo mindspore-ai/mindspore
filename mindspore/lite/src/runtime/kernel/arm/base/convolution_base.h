@@ -23,7 +23,9 @@
 #include <limits>
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
+#if defined(__ANDROID__) || defined(ANDROID)
 #include <android/log.h>
+#endif
 #endif
 #include "src/lite_kernel.h"
 #include "include/context.h"

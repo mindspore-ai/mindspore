@@ -20,7 +20,9 @@
 #include "src/common/prim_util.h"
 #include "nnacl/pooling_parameter.h"
 #ifdef ENABLE_ARM64
+#if defined(__ANDROID__)
 #include <asm/hwcap.h>
+#endif
 #include "common/utils.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"

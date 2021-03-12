@@ -12,6 +12,10 @@ set_property(SOURCE ${SDOT_SRC} PROPERTY LANGUAGE C)
 set_property(SOURCE ${FP16_C_SRC} PROPERTY LANGUAGE C)
 set_property(SOURCE ${FP16_NEON_SRC} PROPERTY LANGUAGE C)
 
+if(APPLE)
+    set_source_files_properties(${SDOT_SRC} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
+    set_source_files_properties(${FP16_NEON_SRC} PROPERTIES COMPILE_FLAGS "-x assembler-with-cpp")
+endif()
 ########################### share library build ########################
 list(APPEND SDOT_FILES ${SDOT_SRC})
 list(APPEND FP16_FILES ${FP16_C_SRC})

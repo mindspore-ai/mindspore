@@ -138,6 +138,7 @@ uint32_t getHwCap(int hwcap_type) {
 bool IsSupportSDot() {
   bool status = false;
 #ifdef ENABLE_ARM64
+#if defined(__ANDROID__)
   int hwcap_type = 16;
   uint32_t hwcap = getHwCap(hwcap_type);
   if (hwcap & HWCAP_ASIMDDP) {
@@ -148,12 +149,14 @@ bool IsSupportSDot() {
     status = false;
   }
 #endif
+#endif
   return status;
 }
 
 bool IsSupportFloat16() {
   bool status = false;
 #ifdef ENABLE_ARM64
+#if defined(__ANDROID__)
   int hwcap_type = 16;
   uint32_t hwcap = getHwCap(hwcap_type);
   if (hwcap & HWCAP_FPHP) {
@@ -163,6 +166,7 @@ bool IsSupportFloat16() {
     MS_LOG(DEBUG) << "Hw cap NOT support FP16, hwcap: 0x" << hwcap;
     status = false;
   }
+#endif
 #endif
   return status;
 }

@@ -40,7 +40,7 @@ int RandomStandardNormalCPUKernel::Run() {
   } else {
     random_seed = static_cast<size_t>(clock());
   }
-  std::default_random_engine engine{random_seed};
+  std::default_random_engine engine{static_cast<unsigned int>(random_seed)};
   std::normal_distribution<double> nums(0, 1.0);
   auto all_data_nums = out_tensors_[0]->ElementsNum();
   auto out_data = out_tensors_[0]->data_c();

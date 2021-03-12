@@ -16,6 +16,7 @@
 
 #include "nnacl/fp16/lstm_fp16.h"
 #include <string.h>
+#include <float.h>
 #include "nnacl/fp16/activation_fp16.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
