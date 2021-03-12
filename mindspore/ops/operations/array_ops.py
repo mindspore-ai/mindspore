@@ -3324,7 +3324,7 @@ class ScatterNdUpdate(_ScatterNdOp):
         - **indices** (Tensor) - The index of input tensor, with int32 data type.
           The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
         - **updates** (Tensor) - The tensor to be updated to the input tensor, has the same type as input.
-          the shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
+          The shape is `indices_shape[:-1] + x_shape[indices_shape[-1]:]`.
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.

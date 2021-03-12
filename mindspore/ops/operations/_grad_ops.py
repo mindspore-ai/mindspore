@@ -986,12 +986,12 @@ class MaxPoolGradGrad(_PoolGrad):
         super(MaxPoolGradGrad, self).__init__(kernel_size, strides, pad_mode)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
-        return x1_shape
+        return x2_shape
 
     def infer_dtype(self, x1_dtype, x2_dtype, grad_dtype):
         args = {'x1_dtype': x1_dtype, 'x2_dtype': x2_dtype, 'grad_dtype': grad_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16], self.name)
-        return x1_dtype
+        return x2_dtype
 
 
 class MaximumGrad(Primitive):
