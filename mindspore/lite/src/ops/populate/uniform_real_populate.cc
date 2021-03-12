@@ -15,9 +15,25 @@
  */
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/populate/default_populate.h"
+#include "nnacl/random_parameter.h"
 
 namespace mindspore {
 namespace lite {
+OpParameter *PopulateRandomStandardNormalParameter(const void *prim) {
+  auto *random_parameter = reinterpret_cast<RandomParam *>(malloc(sizeof(RandomParam)));
+  if (random_parameter == nullptr) {
+    MS_LOG(ERROR) << "malloc Random parameter failed.";
+    return nullptr;
+  }
+  memset(random_parameter, 0, sizeof(RandomParam));
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  random_parameter->op_parameter_.type_ = primitive->value_type();
+  auto param = primitive->value_as_RandomStandardNormal();
+  random_parameter->seed_ = param->seed();
+  random_parameter->seed2_ = param->seed2();
+  return reinterpret_cast<OpParameter *>(random_parameter);
+}
+
 Registry g_uniformRealParameterRegistry(schema::PrimitiveType_UniformReal, DefaultPopulateParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

@@ -65,11 +65,6 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_com_mindspore_lite_MSTensor_getByte
     return env->NewByteArray(0);
   }
 
-  if (ms_tensor_ptr->data_type() != mindspore::kNumberTypeUInt8) {
-    MS_LOGE("data type is error : %d", ms_tensor_ptr->data_type());
-    return env->NewByteArray(0);
-  }
-
   auto local_element_num = ms_tensor_ptr->ElementsNum();
   auto ret = env->NewByteArray(local_element_num);
   env->SetByteArrayRegion(ret, 0, local_element_num, local_data);
@@ -183,7 +178,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_lite_MSTensor_setByteBu
                                                                                          jlong tensor_ptr,
                                                                                          jobject buffer) {
   auto *p_data = reinterpret_cast<jbyte *>(env->GetDirectBufferAddress(buffer));  // get buffer pointer
-  jlong data_len = env->GetDirectBufferCapacity(buffer);                           // get buffer capacity
+  jlong data_len = env->GetDirectBufferCapacity(buffer);                          // get buffer capacity
   if (p_data == nullptr) {
     MS_LOGE("GetDirectBufferAddress return null");
     return false;
@@ -238,4 +233,16 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_lite_MSTensor_free(JNIEnv *
   }
   auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
   delete (ms_tensor_ptr);
+}
+
+extern "C" JNIEXPORT jstring JNICALL Java_com_mindspore_lite_MSTensor_tensorName(JNIEnv *env, jobject thiz,
+                                                                                 jlong tensor_ptr) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Tensor pointer from java is nullptr");
+    return nullptr;
+  }
+  auto *ms_tensor_ptr = static_cast<mindspore::tensor::MSTensor *>(pointer);
+
+  return env->NewStringUTF(ms_tensor_ptr->tensor_name().c_str());
 }

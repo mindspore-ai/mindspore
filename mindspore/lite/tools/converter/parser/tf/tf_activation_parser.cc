@@ -39,6 +39,8 @@ ops::PrimitiveC *TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
     prim->set_activation_type(mindspore::ActivationType::TANH);
   } else if (tf_op.op() == "Selu") {
     prim->set_activation_type(mindspore::ActivationType::SELU);
+  } else if (tf_op.op() == "Softplus") {
+    prim->set_activation_type(mindspore::ActivationType::SOFTPLUS);
   } else {
     MS_LOG(ERROR) << "unsupported activation type:" << tf_op.op();
     return nullptr;
@@ -80,5 +82,6 @@ TFNodeRegistrar g_tfSigmoidParser("Sigmoid", new TFActivationParser());
 TFNodeRegistrar g_tfTanhParser("Tanh", new TFActivationParser());
 TFNodeRegistrar g_tfSeLUParser("Selu", new TFActivationParser());
 TFNodeRegistrar g_tfLeakyReluParser("LeakyRelu", new TFLeakyReluParser());
+TFNodeRegistrar g_tfSoftplusParser("Softplus", new TFActivationParser());
 }  // namespace lite
 }  // namespace mindspore
