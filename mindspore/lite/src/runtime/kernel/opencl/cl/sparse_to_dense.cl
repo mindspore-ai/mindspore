@@ -10,16 +10,17 @@ __kernel void SparseToDenseScalar(__read_only image2d_t input, __global float *o
     return;
   }
   FLT4 index_input = READ_IMAGE(input, smp_zero, (int2)(Y, X));
+  int4 index_input_int = *((int4 *)&index_input);
   int index = 0;
   if (inshapeindex1_dim == 1) {
-    index = ((int)index_input.x) * stride_w;
+    index = (index_input_int.x) * stride_w;
   } else if (inshapeindex1_dim == 2) {
-    index = ((int)index_input.x) * stride_w + ((int)index_input.y);
+    index = (index_input_int.x) * stride_w + (index_input_int.y);
   } else if (inshapeindex1_dim == 3) {
-    index = ((int)index_input.x) * stride_w + ((int)index_input.y) * outputshape.w * C4NUM + ((int)index_input.z);
+    index = (index_input_int.x) * stride_w + (index_input_int.y) * outputshape.w * C4NUM + (index_input_int.z);
   } else {
-    index = ((int)index_input.x) * outputshape.y * stride_w + ((int)index_input.y) * stride_w +
-            ((int)index_input.z) * outputshape.w * C4NUM + (int)index_input.w;
+    index = (index_input_int.x) * outputshape.y * stride_w + (index_input_int.y) * stride_w +
+            (index_input_int.z) * outputshape.w * C4NUM + index_input_int.w;
   }
   output[index] = weight;
 }
@@ -33,16 +34,17 @@ __kernel void SparseToDenseVector(__read_only image2d_t input, __global float *o
     return;
   }
   FLT4 index_input = READ_IMAGE(input, smp_zero, (int2)(Y, X));
+  int4 index_input_int = *((int4 *)&index_input);
   int index = 0;
   if (inshapeindex1_dim == 1) {
-    index = ((int)index_input.x) * stride_w;
+    index = (index_input_int.x) * stride_w;
   } else if (inshapeindex1_dim == 2) {
-    index = ((int)index_input.x) * stride_w + (int)index_input.y;
+    index = (index_input_int.x) * stride_w + index_input_int.y;
   } else if (inshapeindex1_dim == 3) {
-    index = ((int)index_input.x) * stride_w + ((int)index_input.y) * outputshape.w * C4NUM + (int)index_input.z;
+    index = (index_input_int.x) * stride_w + (index_input_int.y) * outputshape.w * C4NUM + index_input_int.z;
   } else {
-    index = ((int)index_input.x) * outputshape.y * stride_w + ((int)index_input.y) * stride_w +
-            ((int)index_input.z) * outputshape.w * C4NUM + (int)index_input.w;
+    index = (index_input_int.x) * outputshape.y * stride_w + (index_input_int.y) * stride_w +
+            (index_input_int.z) * outputshape.w * C4NUM + index_input_int.w;
   }
   output[index] = weight_vector[X];
 }

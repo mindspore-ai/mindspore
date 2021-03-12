@@ -45,16 +45,18 @@ int CastOpenCLKernel::CheckSpecs() {
   auto input_dtype = in_tensors_.front()->data_type();
   if (input_dtype != kNumberTypeFloat32 && input_dtype != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "input dtype must be float32/float16";
+    return RET_ERROR;
   }
   auto output_dtype = out_tensors_.front()->data_type();
   if (output_dtype != kNumberTypeFloat32 && output_dtype != kNumberTypeFloat16) {
     MS_LOG(ERROR) << "output dtype must be float32/float16";
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
 void CastOpenCLKernel::SetConstArgs() {
-  cl_int4 shape = {static_cast<int>(shape_.width), static_cast<int>(shape_.height)};
+  cl_int2 shape = {static_cast<int>(shape_.width), static_cast<int>(shape_.height)};
   ocl_runtime_->SetKernelArg(kernel_, 2, shape);
 }
 
