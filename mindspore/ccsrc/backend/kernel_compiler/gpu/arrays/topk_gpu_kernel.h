@@ -42,8 +42,13 @@ class TopKGpuKernel : public GpuKernel {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     S *indices = GetDeviceAddress<S>(outputs, 1);
     const T init_k = std::numeric_limits<T>::lowest();
-
-    FastTopK(outer_size_, inner_size_, input_addr, k, output_addr, indices, init_k,
+    S k_cut = 0;
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
+      cudaMemcpyAsync(&k_cut, k, sizeof(S), cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      "cudaMemcpyAsync k_cut failed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed - TopK");
+    FastTopK(outer_size_, inner_size_, input_addr, k_cut, output_addr, indices, init_k,
              reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
