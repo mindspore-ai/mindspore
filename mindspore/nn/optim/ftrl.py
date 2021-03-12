@@ -140,7 +140,8 @@ class FTRL(Optimizer):
         l2 (float): l2 regularization strength, must be greater than or equal to zero. Default: 0.0.
         use_locking (bool): If true, use locks for updating operation. Default: False.
         loss_scale (float): Value for the loss scale. It must be equal to or greater than 1.0. Default: 1.0.
-        weight_decay (float): Weight decay value to multiply weight, must be zero or positive value. Default: 0.0.
+        weight_decay (Union[float, int]): Weight decay value to multiply weight, must be zero or positive value.
+            Default: 0.0.
 
     Inputs:
         - **grads** (tuple[Tensor]) - The gradients of `params` in the optimizer, the shape is the same as the `params`
@@ -148,6 +149,15 @@ class FTRL(Optimizer):
 
     Outputs:
         tuple[Parameter], the updated parameters, the shape is the same as `params`.
+
+    Raises:
+        TypeError: If `initial_accum`, `learning_rate`, `lr_power`, `l1`, `l2` or `loss_scale` is not a float.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `weight_decay` is neither float nor int.
+        TypeError: If `use_nesterov` is not a bool.
+        ValueError: If `lr_power` is greater than 0.
+        ValueError: If `loss_scale` is less than or equal to 0.
+        ValueError: If `initial_accum`, `l1` or `l2` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

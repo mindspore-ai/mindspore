@@ -125,13 +125,22 @@ class RMSProp(Optimizer):
                              updated. Default: False.
         centered (bool): If true, gradients are normalized by the estimated variance of the gradient. Default: False.
         loss_scale (float): A floating point value for the loss scale. Should be greater than 0. Default: 1.0.
-        weight_decay (float): Weight decay (L2 penalty). Should be equal to or greater than 0. Default: 0.0.
+        weight_decay (Union[float, int]): Weight decay (L2 penalty). Should be equal to or greater than 0. Default: 0.0.
 
     Inputs:
         - **gradients** (tuple[Tensor]) - The gradients of `params`, the shape is the same as `params`.
 
     Outputs:
         Tensor[bool], the value is True.
+
+    Raises:
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If `decay`, `momentum`, `epsilon` or `loss_scale` is not a float.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `weight_decay` is neither float nor int.
+        TypeError: If `use_locking` or `centered` is not a bool.
+        ValueError: If `epsilon` is less than or equal to 0.
+        ValueError: If `decay` or `momentum` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

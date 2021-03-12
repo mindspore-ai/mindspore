@@ -177,7 +177,7 @@ class LazyAdam(Optimizer):
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
             If false, update the gradients without using NAG. Default: False.
-        weight_decay (float): Weight decay (L2 penalty). Default: 0.0.
+        weight_decay (Union[float, int]): Weight decay (L2 penalty). Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. Should be equal to or greater than 1. Default:
                             1.0.
 
@@ -186,6 +186,16 @@ class LazyAdam(Optimizer):
 
     Outputs:
         Tensor[bool], the value is True.
+
+    Raises:
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
+        TypeError: If `weight_decay` is neither float nor int.
+        TypeError: If `use_locking` or `use_nesterov` is not a bool.
+        ValueError: If `loss_scale` or `eps` is less than or equal to 0.
+        ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
+        ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

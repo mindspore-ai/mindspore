@@ -75,6 +75,11 @@ class ReduceLogSumExp(Cell):
         - If axis is tuple(int), set as (2, 3), and keep_dims is False,
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
+    Raises:
+        TypeError: If `axis` is not one of int, list, tuple.
+        TypeError: If `keep_dims` is not bool.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -205,7 +210,7 @@ class LGamma(Cell):
         Tensor, has the same shape and dtype as the `x`.
 
     Raises:
-        TypeError: If dtype of input x is not float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -323,7 +328,7 @@ class DiGamma(Cell):
         Tensor, has the same shape and dtype as the `x`.
 
     Raises:
-        TypeError: If dtype of input x is not float16 nor float32.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -679,8 +684,8 @@ class LBeta(Cell):
         Tensor, has the same dtype as `x` and `y`.
 
     Raises:
-        TypeError: If dtype of input x and a is not float16 nor float32,
-                   or if x has different dtype with a.
+        TypeError: If dtype of `x` or `y` is neither float16 nor float32,
+                   or if `x` has different dtype with `y`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -857,6 +862,11 @@ class MatMul(Cell):
     Outputs:
         Tensor, the shape of the output tensor depends on the dimension of input tensors.
 
+    Raises:
+        TypeError: If `transpose_x1` or `transpose_x2` is not a bool.
+        ValueError: If the column of matrix dimensions of `input_x1` is not equal to
+                    the row of matrix dimensions of `input_x2`.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -933,6 +943,11 @@ class Moments(Cell):
         - **mean** (Tensor) - The mean of input x, with the same date type as input x.
         - **variance** (Tensor) - The variance of input x, with the same date type as input x.
 
+    Raises:
+        TypeError: If `axis` is not one of int, tuple, None.
+        TypeError: If `keep_dims` is neither bool nor None.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -993,7 +1008,7 @@ class MatInverse(Cell):
         Tensor, has the same dtype as the `a`.
 
     Raises:
-        TypeError: If dtype of input x is not float16 nor float32.
+        TypeError: If dtype of `a` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``
@@ -1033,7 +1048,7 @@ class MatDet(Cell):
         Tensor, has the same dtype as the `a`.
 
     Raises:
-        TypeError: If dtype of input x is not float16 nor float32.
+        TypeError: If dtype of `a` is neither float16 nor float32.
 
     Supported Platforms:
         ``GPU``

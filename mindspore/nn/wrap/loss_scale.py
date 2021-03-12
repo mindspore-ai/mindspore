@@ -50,6 +50,7 @@ def _tensor_grad_overflow(grad):
 def _tensor_grad_overflow_row_tensor(grad):
     return grad_overflow(grad.values)
 
+
 class DynamicLossScaleUpdateCell(Cell):
     r"""
     Dynamic Loss scale update cell.
@@ -72,6 +73,9 @@ class DynamicLossScaleUpdateCell(Cell):
 
     Outputs:
         Tensor, a scalar Tensor with shape :math:`()`.
+
+    Raises:
+        TypeError: If dtype of `inputs` or `label` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -226,6 +230,10 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         - **loss** (Tensor) -  Tensor with shape :math:`()`.
         - **overflow** (Tensor) -  Tensor with shape :math:`()`, type is bool.
         - **loss scaling value** (Tensor) -  Tensor with shape :math:`()`
+
+    Raises:
+        TypeError: If `scale_sense` is neither Cell nor Tensor.
+        ValueError: If shape of `scale_sense` is neither (1,) nor ().
 
     Supported Platforms:
         ``Ascend`` ``GPU``

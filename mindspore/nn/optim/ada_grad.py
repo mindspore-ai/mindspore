@@ -81,7 +81,8 @@ class Adagrad(Optimizer):
             Default: 0.001.
         update_slots (bool): If true, update accumulation. Default: True.
         loss_scale (float): Value for the loss scale. It must be greater than 0.0. Default: 1.0.
-        weight_decay (float): Weight decay value to multiply weight, must be zero or positive value. Default: 0.0.
+        weight_decay (Union[float, int]): Weight decay value to multiply weight, must be zero or positive value.
+            Default: 0.0.
 
     Inputs:
         - **grads** (tuple[Tensor]) - The gradients of `params` in the optimizer, the shape is the same as the `params`
@@ -89,6 +90,15 @@ class Adagrad(Optimizer):
 
     Outputs:
         Tensor[bool], the value is True.
+
+    Raises:
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `accum` or `loss_scale` is not a float.
+        TypeError: If `update_slots` is not a bool.
+        TypeError: If `weight_decay` is neither float nor int.
+        ValueError: If `loss_scale` is less than or equal to 0.
+        ValueError: If `accum` or `weight_decay` is less than 0.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``

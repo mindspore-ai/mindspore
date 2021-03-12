@@ -83,14 +83,20 @@ class Optimizer(Cell):
             - grad_centralization: Optional. If "grad_centralization" is in the keys, the set value will be used.
               If not, the `grad_centralization` is False by default.
 
-        weight_decay (float): A floating point value for the weight decay. It must be equal to or greater than 0.
+        weight_decay (Union[float, int]): An int or a floating point value for the weight decay.
+            It must be equal to or greater than 0.
             If the type of `weight_decay` input is int, it will be converted to float. Default: 0.0.
         loss_scale (float): A floating point value for the loss scale. It must be greater than 0. If the
             type of `loss_scale` input is int, it will be converted to float. Default: 1.0.
 
     Raises:
-        ValueError: If the learning_rate is a Tensor, but the dimension of tensor is greater than 1.
-        TypeError: If the learning_rate is not any of the three types: float, Tensor, nor Iterable.
+        TypeError: If `learning_rate` is not one of int, float, Tensor, Iterable, LearningRateSchedule.
+        TypeError: If element of `parameters` is neither Parameter nor dict.
+        TypeError: If `loss_scale` is not a float.
+        TypeError: If `weight_decay` is neither float nor int.
+        ValueError: If `loss_scale` is less than or equal to 0.
+        ValueError: If `weight_decay` is less than 0.
+        ValueError: If `learning_rate` is a Tensor, but the dimension of tensor is greater than 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

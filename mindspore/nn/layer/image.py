@@ -29,6 +29,7 @@ from ..cell import Cell
 
 __all__ = ['ImageGradients', 'SSIM', 'MSSSIM', 'PSNR', 'CentralCrop']
 
+
 class ImageGradients(Cell):
     r"""
     Returns two tensors, the first is along the height dimension and the second is along the width dimension.
@@ -49,6 +50,9 @@ class ImageGradients(Cell):
     Outputs:
         - **dy** (Tensor) - vertical image gradients, the same type and shape as input.
         - **dx** (Tensor) - horizontal image gradients, the same type and shape as input.
+
+    Raises:
+        ValueError: If length of shape of `images` is not equal to 4.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -89,7 +93,7 @@ class ImageGradients(Cell):
 
 def _convert_img_dtype_to_float32(img, max_val):
     """convert img dtype to float32"""
-    # Ususally max_val is 1.0 or 255, we will do the scaling if max_val > 1.
+    # Usually max_val is 1.0 or 255, we will do the scaling if max_val > 1.
     # We will scale img pixel value if max_val > 1. and just cast otherwise.
     ret = F.cast(img, mstype.float32)
     max_val = F.scalar_cast(max_val, mstype.float32)
@@ -214,6 +218,13 @@ class SSIM(Cell):
     Outputs:
         Tensor, has the same dtype as img1. It is a 1-D tensor with shape N, where N is the batch num of img1.
 
+    Raises:
+        TypeError: If `max_val` is neither int nor float.
+        TypeError: If `k1`, `k2` or `filter_sigma` is not a float.
+        TypeError: If `filter_size` is not an int.
+        ValueError: If `max_val` or `filter_sigma` is less than or equal to 0.
+        ValueError: If `filter_size` is less than 0.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -295,6 +306,15 @@ class MSSSIM(Cell):
 
     Outputs:
         Tensor, the value is in range [0, 1]. It is a 1-D tensor with shape N, where N is the batch num of img1.
+
+    Raises:
+        TypeError: If `max_val` is neither int nor float.
+        TypeError: If `power_factors` is neither tuple nor list.
+        TypeError: If `k1`, `k2` or `filter_sigma` is not a float.
+        TypeError: If `filter_size` is not an int.
+        ValueError: If `max_val` or `filter_sigma` is less than or equal to 0.
+        ValueError: If `filter_size` is less than 0.
+        ValueError: If length of shape of `img1` or `img2` is not equal to 4.
 
     Supported Platforms:
         ``Ascend``
@@ -391,6 +411,11 @@ class PSNR(Cell):
     Outputs:
         Tensor, with dtype mindspore.float32. It is a 1-D tensor with shape N, where N is the batch num of img1.
 
+    Raises:
+        TypeError: If `max_val` is neither int nor float.
+        ValueError: If `max_val` is less than or equal to 0.
+        ValueError: If length of shape of `img1` or `img2` is not equal to 4.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -451,6 +476,7 @@ def _get_bbox(rank, shape, central_fraction):
 
     return bbox_begin, bbox_size
 
+
 class CentralCrop(Cell):
     """
     Crop the centeral region of the images with the central_fraction.
@@ -463,6 +489,10 @@ class CentralCrop(Cell):
 
     Outputs:
         Tensor, 3-D or 4-D float tensor, according to the input.
+
+    Raises:
+        TypeError: If `central_fraction` is not a float.
+        ValueError: If `central_fraction` is not in range (0, 1.0].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
