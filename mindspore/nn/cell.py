@@ -348,15 +348,9 @@ class Cell(Cell_):
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
-        origin_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
-            _pynative_exec.new_graph(self, *inputs, **kwargs)
-            for cell in self.cells():
-                origin_grad.append(cell.requires_grad)
-                cell.set_grad(True)
-        else:
-            _pynative_exec.set_grad_flag(False)
+        _pynative_exec.new_graph(self, *inputs, **kwargs)
         cast_inputs = list()
         if hasattr(self, "_mindspore_flags"):
             if self._mindspore_flags.get('fp16'):
@@ -368,10 +362,7 @@ class Cell(Cell_):
         output = self.run_construct(cast_inputs, kwargs)
         if isinstance(output, Parameter):
             output = output.data
-        if self.requires_grad is True:
-            _pynative_exec.end_graph(self, output, *inputs, **kwargs)
-            for i, cell in enumerate(self.cells()):
-                cell.set_grad(origin_grad[i])
+        _pynative_exec.end_graph(self, output, *inputs, **kwargs)
         return output
 
     def _add_attr(self, name, value):

@@ -788,7 +788,12 @@ void ForwardExecutor::GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector
     if (grad()->need_construct_graph()) {
       AnfNodePtr input_node = nullptr;
       if (!grad()->top_cell_list().empty()) {
-        input_node = grad()->GetInput(obj, op_mask);
+        bool requires_grad = true;
+        if (op_mask) {
+          auto requires_grad_attr = parse::python_adapter::GetPyObjAttr(obj, "requires_grad");
+          requires_grad = requires_grad_attr.cast<bool>();
+        }
+        input_node = grad()->GetInput(obj, op_mask & requires_grad);
       }
       // update abstract
       if (input_node != nullptr) {
@@ -829,7 +834,7 @@ AnfNodePtr ForwardExecutor::MakeCNode(const OpExecInfoPtr &op_exec_info, std::ve
   if (op_exec_info->op_name != prim::kPrimCast->name()) {
     RunParameterAutoMixPrecisionCast(op_exec_info);
   }
-  MS_LOG(DEBUG) << "Get op " << op_exec_info->op_name << " grad_flag_ " << grad()->grad_flag();
+  MS_LOG(DEBUG) << "Get op " << op_exec_info->op_name << " grad_flag " << grad()->grad_flag();
   GetArgsSpec(op_exec_info, op_masks, &inputs, args_spec_list);
 
   CNodePtr cnode = nullptr;
@@ -951,13 +956,12 @@ py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::obj
         cast_struct->op_inputs[0] = obj;
         auto grad = this->grad();
         MS_EXCEPTION_IF_NULL(grad);
-        if (grad->grad_flag()) {
-          // Get forward op index
-          if (!grad->cell_op_info_stack().empty()) {
-            std::string &cell_op_info = grad->cell_op_info_stack().top();
-            cell_op_info += cast_struct->op_index;
-          }
-          grad->op_index_map()[cast_struct->op_name]++;
+        if (grad->need_construct_graph()) {
+          size_t curr_op_num = grad->top_cell()->op_num();
+          cast_struct->op_info = cast_struct->op_name + "_" + std::to_string(curr_op_num);
+          std::string curr_op_info = grad->top_cell()->all_op_info() + "_" + cast_struct->op_info;
+          grad->top_cell()->set_all_op_info(curr_op_info);
+          grad->top_cell()->set_op_num(curr_op_num + 1);
         }
         py::object ret = py::none();
         RunOpInner(&ret, cast_struct);
@@ -1844,6 +1848,10 @@ void GradExecutor::EndGraphInner(py::object *ret, const py::object &cell, const 
   if (IsNestedGrad() && (cell_stack_.size() == cell_nums())) {
     set_top_cell(*(std::prev(top_cell_list().end(), 2)));
   }
+
+  if (cell_stack_.empty() && cell_id == top_cell()->cell_id()) {
+    set_grad_flag(false);
+  }
 }
 
 void GradExecutor::UpdateBpropCellGraph(const py::object &cell, const std::string &cell_id) {
@@ -2229,7 +2237,9 @@ ForwardExecutorPtr PynativeExecutor::forward_executor() {
   return forward_executor_;
 }
 
-void PynativeExecutor::set_grad_flag(bool flag) { grad_executor()->set_grad_flag(flag); }
+void PynativeExecutor::set_grad_flag(bool flag) {
+  grad_executor()->set_grad_flag(flag);
+}
 
 bool PynativeExecutor::GetIsDynamicCell() {
   if (grad_executor_ == nullptr) {
@@ -2277,11 +2287,19 @@ void PynativeExecutor::ClearRes() {
 }
 
 void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
+  if (!grad_executor()->grad_flag()) {
+    MS_LOG(DEBUG) << "Grad flag is false";
+    return;
+  }
   py::object *ret = nullptr;
   PynativeExecutorTry(grad_executor()->InitGraph, ret, cell, args);
 }
 
 void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, const py::args &args) {
+  if (!grad_executor()->grad_flag()) {
+    MS_LOG(DEBUG) << "Grad flag is false";
+    return;
+  }
   MS_LOG(DEBUG) << "Enter end graph process.";
   py::object *ret = nullptr;
   PynativeExecutorTry(grad_executor()->LinkGraph, ret, cell, out, args);
