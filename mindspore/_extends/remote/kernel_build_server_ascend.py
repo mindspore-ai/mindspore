@@ -14,6 +14,7 @@
 # ============================================================================
 """kernel build server for ascend"""
 import sys
+import warnings
 from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
 from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import create_tbe_parallel_process, op_select_format
 from mindspore._extends.parallel_compile.tbe_compiler.tbe_process import check_supported
@@ -140,6 +141,7 @@ class AscendMessager(Messager):
         exit()
 
 if __name__ == '__main__':
+    warnings.simplefilter("ignore")
     if len(sys.argv) != 3:
         raise Exception('Incorrect argv: {}'.format(sys.argv))
     get_logger().debug(f"[TRACE] argv: {str(sys.argv)}")
