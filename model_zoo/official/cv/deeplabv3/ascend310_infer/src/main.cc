@@ -52,6 +52,7 @@ using mindspore::dataset::vision::Decode;
 
 DEFINE_string(mindir_path, "", "mindir path");
 DEFINE_string(dataset_path, ".", "dataset path");
+DEFINE_string(fusion_switch_path, ".", "fusion switch path");
 DEFINE_int32(device_id, 0, "device id");
 
 int PadImage(const MSTensor &input, MSTensor *output) {
@@ -122,11 +123,17 @@ int main(int argc, char **argv) {
     std::cout << "Invalid mindir" << std::endl;
     return 1;
   }
-
+  if (RealPath(FLAGS_fusion_switch_path).empty()) {
+    std::cout << "Invalid fusion switch path" << std::endl;
+    return 1;
+  }
   GlobalContext::SetGlobalDeviceTarget(mindspore::kDeviceTypeAscend310);
   GlobalContext::SetGlobalDeviceID(FLAGS_device_id);
   auto graph = Serialization::LoadModel(FLAGS_mindir_path, ModelType::kMindIR);
   auto model_context = std::make_shared<mindspore::Context>();
+  if (!FLAGS_fusion_switch_path.empty()) {
+    ModelContext::SetFusionSwitchConfigPath(model_context, FLAGS_fusion_switch_path);
+  }
   Model model(GraphCell(graph), model_context);
   Status ret = model.Build();
   if (ret != kSuccess) {

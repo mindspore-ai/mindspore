@@ -75,6 +75,8 @@ def eval_batch_scales(args, eval_net, img_lst, scales,
 
 def acc_cal():
     args = parse_args()
+    args.image_mean = [103.53, 116.28, 123.675]
+    args.image_std = [57.375, 57.120, 58.395]
     # data list
     with open(args.data_lst) as f:
         img_lst = f.readlines()
