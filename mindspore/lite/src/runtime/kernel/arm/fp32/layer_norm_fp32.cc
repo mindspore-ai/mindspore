@@ -61,7 +61,7 @@ int LayerNormCPUKernel::ReSize() {
 }
 
 int LayerNormCPUKernel::DoLayerNorm(int thread_id) {
-  int ret = LayerNorm(src_data_, gamma_data_, beta_data_, dst_data_, param_, thread_id);
+  int ret = LayerNorm(src_data_, gamma_data_, beta_data_, dst_data_, param_, mean_data_, var_data_, thread_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLayerNorm error error_code[" << ret << "]";
     return ret;
@@ -80,17 +80,17 @@ int LayerNormRun(void *cdata, int task_id) {
 }
 
 int LayerNormCPUKernel::Run() {
+  int ret = RET_OK;
   src_data_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->data_c());
   dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
-
-  auto ret = ParallelLaunch(this->context_->thread_pool_, LayerNormRun, this, op_parameter_->thread_num_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LayerNormRun error error_code[" << ret << "]";
-    return ret;
+  if (out_tensors_.size() >= 3) {
+    mean_data_ = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
+    var_data_ = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
   }
-  return RET_OK;
+  ret = ParallelLaunch(this->context_->thread_pool_, LayerNormRun, this, op_parameter_->thread_num_);
+  return ret;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LayerNormFusion, LiteKernelCreator<LayerNormCPUKernel>)

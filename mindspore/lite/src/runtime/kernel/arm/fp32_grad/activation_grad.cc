@@ -25,6 +25,8 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::ActivationType_ELU;
+using mindspore::schema::ActivationType_GELU;
 using mindspore::schema::ActivationType_HSWISH;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
@@ -69,6 +71,10 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
     error_code = HSwishGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
     error_code = HSigmoidGrad(yt_addr + start, input_addr + start, count, output_addr + start);
+  } else if (param_act_grad_->type_ == schema::ActivationType_ELU) {
+    error_code = EluGrad(yt_addr + start, input_addr + start, count, output_addr + start, param_act_grad_->alpha_);
+  } else if (param_act_grad_->type_ == schema::ActivationType_GELU) {
+    error_code = GeluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;
@@ -99,27 +105,5 @@ int ActivationGradCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuActivationGradFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                       const std::vector<lite::Tensor *> &outputs,
-                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                       const kernel::KernelKey &desc) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_ActivationGrad);
-  auto *kernel = new (std::nothrow) ActivationGradCPUKernel(opParameter, inputs, outputs, ctx);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new ActivationGradCPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ActivationGrad, CpuActivationGradFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ActivationGrad, LiteKernelCreator<ActivationGradCPUKernel>)
 }  // namespace mindspore::kernel

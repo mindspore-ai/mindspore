@@ -42,12 +42,12 @@ int NegGradCPUKernel::Init() { return RET_OK; }
 int NegGradCPUKernel::DoNegGrad(int task_id) {
   auto dy = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto dx = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  size_t length = in_tensors_.at(0)->ElementsNum();
+  int length = in_tensors_.at(0)->ElementsNum();
 
-  size_t stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
 
-  size_t start = stride * task_id;
+  int start = stride * task_id;
 
   ElementNegative(dy + start, dx + start, count);
   return RET_OK;

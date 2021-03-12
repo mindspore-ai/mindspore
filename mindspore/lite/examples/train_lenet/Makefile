@@ -2,8 +2,12 @@ BASE_DIR=$(realpath ../../../../)
 APP:=bin/net_runner
 MSLIB:=mindspore-lite
 LMDLIB:=-lminddata-lite -ljpeg 
-LHIAILIB:=-lhiai_ir_build  -lhiai_ir -lhiai
 MSDIR:=$(realpath package-$(TARGET)/lib)
+ifneq ("$(wildcard $(MSDIR)/libhiai.so)","")
+  LHIAILIB:=-lhiai_ir_build  -lhiai_ir -lhiai
+else
+  LHIAILIB:=
+endif
 
 SRC:=src/net_runner.cc
 OBJ:=$(SRC:.cc=.o)

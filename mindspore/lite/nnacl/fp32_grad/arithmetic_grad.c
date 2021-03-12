@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32_grad/arithmetic_grad.h"
 #include <string.h>
+#include <math.h>
 #include "nnacl/fp32_grad/utils.h"
 #include "nnacl/errorcode.h"
 
@@ -136,4 +137,18 @@ void MinimumByAxes(const float *input0, const float *input1, const float *dy, co
       output1[offset1] += input1[offset1] <= input0[offset0] ? dy[yt_offset] : 0.;
     } while (NextIndex(num_dims, dy_dims, input_iter));
   }
+}
+
+int ElementSqrtGrad(const float *in1, const float *in2, float *out, const int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    out[i] = 0.5f * in2[i] / in1[i];
+  }
+  return NNACL_OK;
+}
+
+int ElementRsqrtGrad(const float *in1, const float *in2, float *out, const int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    out[i] = -0.5f * in2[i] * in1[i] * in1[1] * in1[i];
+  }
+  return NNACL_OK;
 }

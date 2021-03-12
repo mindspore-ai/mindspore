@@ -131,7 +131,12 @@ constexpr auto kNameHSwishGrad = "HSwishGrad";
 constexpr auto kNameReluGrad = "ReluGrad";
 constexpr auto kNameReLU6Grad = "ReLU6Grad";
 constexpr auto kNameSigmoidGrad = "SigmoidGrad";
+constexpr auto kNameEluGrad = "EluGrad";
+constexpr auto kNameGeluGrad = "GeluGrad";
 constexpr auto kNameSlice = "Slice";
+constexpr auto kNameAvgPoolGradGpu = "AvgPoolGradGpu";
+constexpr auto kNameAvgPoolGradCpu = "AvgPoolGradCpu";
+
 std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameElu, mindspore::ELU},
                                                                    {ops::kNameGeLU, mindspore::GELU},
                                                                    {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
@@ -145,7 +150,9 @@ std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameEl
                                                                    {kNameHSwishGrad, mindspore::HSWISH},
                                                                    {kNameReluGrad, mindspore::RELU},
                                                                    {kNameReLU6Grad, mindspore::RELU6},
-                                                                   {kNameSigmoidGrad, mindspore::SIGMOID}};
+                                                                   {kNameSigmoidGrad, mindspore::SIGMOID},
+                                                                   {kNameEluGrad, mindspore::ELU},
+                                                                   {kNameGeluGrad, mindspore::GELU}};
 
 std::map<std::string, mindspore::ReduceMode> reduce_map = {
   {ops::kNameReduceAll, mindspore::Reduce_All}, {ops::kNameReduceASum, mindspore::Reduce_ASum},
@@ -351,16 +358,29 @@ int MoveAttrPoolGrad(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "value node is invalid.";
     return lite::RET_ERROR;
   }
-  auto status = AttrAdjust(src_prim, ops::kKernelSize, {2, 3});
+  PrimitivePtr dst_prim;
+  if (src_prim->name() == kNameAvgPoolGrad || src_prim->name() == kNameAvgPoolGradGpu ||
+      src_prim->name() == kNameAvgPoolGradCpu) {
+    dst_prim = std::make_shared<ops::AvgPoolGrad>();
+  } else if (src_prim->name() == kNameMaxPoolGrad) {
+    dst_prim = std::make_shared<ops::MaxPoolGrad>();
+  } else {
+    MS_LOG(ERROR) << "unsupported pooling type.";
+    return lite::RET_ERROR;
+  }
+  MS_ASSERT(dst_prim != nullptr);
+  dst_prim->SetAttrs(src_prim->attrs());
+  auto status = AttrAdjust(dst_prim, ops::kKernelSize, {2, 3});
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "adjust ksize failed.";
     return status;
   }
-  status = AttrAdjust(src_prim, ops::kStrides, {2, 3});
+  status = AttrAdjust(dst_prim, ops::kStrides, {2, 3});
   if (status != lite::RET_OK) {
     MS_LOG(ERROR) << "adjust strides failed.";
     return status;
   }
+  value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
 
@@ -510,6 +530,8 @@ REGIST_PRIMITIVE_ADJUST(kNameArgMin, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameArgMinWithValue, MoveAttrMapCommon<ops::ArgMinFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPool, MoveAttrPool)
 REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGrad, MoveAttrPoolGrad)
+REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradGpu, MoveAttrPoolGrad)
+REGIST_PRIMITIVE_ADJUST(kNameAvgPoolGradCpu, MoveAttrPoolGrad)
 REGIST_PRIMITIVE_ADJUST(kNameBatchMatMul, MoveAttrMapCommon<ops::MatMul>)
 REGIST_PRIMITIVE_ADJUST(kNameBatchNorm, MoveAttrMapCommon<ops::FusedBatchNorm>)
 REGIST_PRIMITIVE_ADJUST(kNameConv2DBackpropFilter, MoveAttrMapCommon<ops::Conv2DBackpropFilterFusion>)
@@ -519,10 +541,12 @@ REGIST_PRIMITIVE_ADJUST(kNameDepthWiseConv2D, MoveAttrMapConv2D)
 REGIST_PRIMITIVE_ADJUST(kNameConv2dTranspose, MoveAttrMapCommon<ops::Conv2dTransposeFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameDiv, MoveAttrMapCommon<ops::DivFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameEluGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameExp, MoveAttrMapCommon<ops::ExpFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormEx, MoveAttrMapCommon<ops::FusedBatchNorm>)
 REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradEx, MoveAttrMapCommon<ops::BatchNormGrad>)
 REGIST_PRIMITIVE_ADJUST(kNameGeLU, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameGeluGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameHSigmoid, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameHSigmoidGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameHSwish, MoveAttrMapActivation)

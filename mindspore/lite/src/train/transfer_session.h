@@ -72,6 +72,8 @@ class TransferSession : public lite::TrainSession {
   bool is_valid_;
 
  private:
+  bool CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask);
+  bool nchw2nhwc_ = false;
 };
 }  // namespace lite
 }  // namespace mindspore

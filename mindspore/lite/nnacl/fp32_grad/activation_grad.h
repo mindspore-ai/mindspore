@@ -37,6 +37,8 @@ int SigmoidGrad(float *src0, float *src1, size_t length, float *dst);
 int TanhGrad(float *src0, float *src1, size_t length, float *dst);
 int HSwishGrad(float *src0, float *src1, size_t length, float *dst);
 int HSigmoidGrad(float *src0, float *src1, size_t length, float *dst);
+int EluGrad(float *src0, float *src1, size_t length, float *dst, float alpha);
+int GeluGrad(float *src0, float *src1, size_t length, float *dst);
 
 #ifdef __cplusplus
 }

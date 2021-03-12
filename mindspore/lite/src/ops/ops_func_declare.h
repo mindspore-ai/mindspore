@@ -188,6 +188,7 @@
 #include "ops/grad/dropout_grad.h"
 #include "ops/grad/flatten_grad.h"
 #include "ops/grad/group_conv2d_grad_input.h"
+#include "ops/grad/layer_norm_grad.h"
 #include "ops/grad/log_grad.h"
 #include "ops/grad/max_pool_grad.h"
 #include "ops/grad/maximum_grad.h"
@@ -196,8 +197,11 @@
 #include "ops/grad/neg_grad.h"
 #include "ops/grad/pooling_grad.h"
 #include "ops/grad/power_grad.h"
+#include "ops/grad/resize_grad.h"
+#include "ops/grad/rsqrt_grad.h"
 #include "ops/grad/sigmoid_cross_entropy_with_logits_grad.h"
 #include "ops/grad/smooth_l1_loss_grad.h"
+#include "ops/grad/sqrt_grad.h"
 #include "ops/grad/sub_grad.h"
 #include "ops/fusion/activation.h"
 #include "ops/fusion/add_fusion.h"
@@ -449,5 +453,9 @@ FUNC_MSOP2SCHEMAOP_DECLARE(IsFinite);
 FUNC_MSOP2SCHEMAOP_DECLARE(LinSpace);
 FUNC_MSOP2SCHEMAOP_DECLARE(UniformReal);
 FUNC_MSOP2SCHEMAOP_DECLARE(AbsGrad);
+FUNC_MSOP2SCHEMAOP_DECLARE(RsqrtGrad);
+FUNC_MSOP2SCHEMAOP_DECLARE(SqrtGrad);
+FUNC_MSOP2SCHEMAOP_DECLARE(LayerNormGrad);
+FUNC_MSOP2SCHEMAOP_DECLARE(ResizeGrad);
 #endif
 #endif  // MINDSPORE_LITE_SRC_OPS_OPS_FUNC_DECLARE_H_

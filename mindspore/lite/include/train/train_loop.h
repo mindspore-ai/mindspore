@@ -40,11 +40,11 @@ class TrainLoop {
  public:
   /// \brief Static method to create a TrainLoop object
   ///
-  /// \param[in] filename Filename to read flatbuffer from
+  /// \param[in] train_session Train session object as return from CreateSession\CreateTransferSession API
   /// \param[in] context Defines the context of the session to be created
   ///
   /// \return Pointer of MindSpore Lite TrainLoop
-  static TrainLoop *CreateTrainLoop(const std::string &model_filename, lite::Context *context, int batch_size = -1);
+  static TrainLoop *CreateTrainLoop(session::TrainSession *train_session, lite::Context *context, int batch_size = -1);
 
   /// \brief Class destructor
   virtual ~TrainLoop() = default;

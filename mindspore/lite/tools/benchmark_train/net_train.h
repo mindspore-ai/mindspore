@@ -29,6 +29,7 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
+#include <algorithm>
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
@@ -64,6 +65,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::data_file_, "expectedDataFile", "Expected results data file path", "");
     AddFlag(&NetTrainFlags::export_file_, "exportFile", "MS File to export trained model into", "");
     AddFlag(&NetTrainFlags::accuracy_threshold_, "accuracyThreshold", "Threshold of accuracy", 0.5);
+    AddFlag(&NetTrainFlags::layer_checksum_, "layerCheckSum", "layer output checksum print (debug)", false);
   }
 
   ~NetTrainFlags() override = default;
@@ -92,6 +94,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   // Resize
   std::string export_file_ = "";
   std::string resize_dims_in_ = "";
+  bool layer_checksum_ = false;
   std::vector<std::vector<int64_t>> resize_dims_;
 };
 
@@ -142,11 +145,16 @@ class MS_API NetTrain {
     size_t errorCount = 0;
     float meanError = 0;
     std::cout << "Data of model output: ";
+    for (int j = 0; j < std::min(50, size); j++) {
+      std::cout << static_cast<float>(msTensorData[j]) << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "Data of Ref output  : ";
+    for (int j = 0; j < std::min(50, size); j++) {
+      std::cout << refOutput[j] << " ";
+    }
     for (int j = 0; j < size; j++) {
-      if (j < 50) {
-        std::cout << static_cast<float>(msTensorData[j]) << " ";
-      }
-
+      std::cout << std::endl;
       if (std::isnan(msTensorData[j]) || std::isinf(msTensorData[j])) {
         std::cerr << "Output tensor has nan or inf data, compare fail" << std::endl;
         MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
@@ -205,6 +213,7 @@ class MS_API NetTrain {
 
   mindspore::KernelCallBack before_call_back_;
   mindspore::KernelCallBack after_call_back_;
+  bool layer_checksum_ = false;
 };
 
 int MS_API RunNetTrain(int argc, const char **argv);

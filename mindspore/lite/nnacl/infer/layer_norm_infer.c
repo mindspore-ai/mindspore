@@ -19,7 +19,10 @@
 int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
 #ifdef Debug
-  int check_ret = CheckAugmentNullSizeInputTwo(inputs, inputs_size, outputs, outputs_size, parameter, 1, 3, 1);
+  if ((inputs_size != 1 && inputs_size != 3) || (outputs_size != 1 && outputs_size != 3)) {
+    return NNACL_INPUT_TENSOR_ERROR;
+  }
+  int check_ret = CheckAugmentNull(inputs, inputs_size, outputs, outputs_size, parameter);
   if (check_ret != NNACL_OK) {
     return check_ret;
   }
@@ -28,11 +31,27 @@ int LayerNormInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   const TensorC *input = inputs[0];
   TensorC *output = outputs[0];
   SetDataTypeFormat(output, input);
+
   LayerNormParameter *param = (LayerNormParameter *)parameter;
   if (!param->op_parameter_.infer_flag_) {
     return NNACL_INFER_INVALID;
   }
-
   SetShapeTensor(output, input);
+  // take care of other outputs
+  if (outputs_size == 3) {
+    TensorC *output_mean = outputs[1];
+    TensorC *output_var = outputs[2];
+    SetDataTypeFormat(output_mean, input);
+    SetDataTypeFormat(output_var, input);
+    int size = 0;
+    for (int i = param->begin_norm_axis_; i < input->shape_size_; i++) {
+      output_mean->shape_[size] = input->shape_[i];
+      output_var->shape_[size] = input->shape_[i];
+      size++;
+    }
+    output_mean->shape_size_ = size;
+    output_var->shape_size_ = size;
+  }
+
   return NNACL_OK;
 }

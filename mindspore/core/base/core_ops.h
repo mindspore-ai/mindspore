@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPERATOR_OPS_H_
-#define MINDSPORE_CORE_OPERATOR_OPS_H_
+#ifndef MINDSPORE_CORE_BASE_CORE_OPS_H_
+#define MINDSPORE_CORE_BASE_CORE_OPS_H_
 
 #include <iostream>
 #include <string>
@@ -182,6 +182,7 @@ inline const PrimitivePtr kPrimReverseV2 = std::make_shared<Primitive>("ReverseV
 inline const PrimitivePtr kPrimReverseSequence = std::make_shared<Primitive>("ReverseSequence");
 inline const PrimitivePtr kPrimRank = std::make_shared<Primitive>("Rank");
 inline const PrimitivePtr kPrimResizeBilinear = std::make_shared<Primitive>("ResizeBilinear");
+inline const PrimitivePtr kPrimResizeGrad = std::make_shared<Primitive>("ResizeGrad");
 
 // NN
 inline const PrimitivePtr kPrimAdam = std::make_shared<Primitive>("Adam");
@@ -245,7 +246,6 @@ inline const PrimitivePtr kPrimDepthwiseConv2dNativeBackpropInput =
   std::make_shared<Primitive>("DepthwiseConv2dNativeBackpropInput");
 inline const PrimitivePtr kPrimDetectionPostProcess = std::make_shared<Primitive>("DetectionPostProcess");
 inline const PrimitivePtr kPrimBiasAdd = std::make_shared<Primitive>("BiasAdd");
-inline const PrimitivePtr kPrimBiasGrad = std::make_shared<Primitive>("BiasGrad");
 inline const PrimitivePtr kPrimBiasAddGrad = std::make_shared<Primitive>("BiasAddGrad");
 inline const PrimitivePtr kPrimBiasSubGrad = std::make_shared<Primitive>("BiasSubGrad");
 inline const PrimitivePtr kPrimBinaryCrossEntropy = std::make_shared<Primitive>("BinaryCrossEntropy");
@@ -390,6 +390,7 @@ inline const PrimitivePtr kPrimRound = std::make_shared<Primitive>("Round");
 inline const PrimitivePtr kPrimExp = std::make_shared<Primitive>("Exp");
 inline const PrimitivePtr kPrimLog = std::make_shared<Primitive>("Log");
 inline const PrimitivePtr kPrimRsqrt = std::make_shared<Primitive>("Rsqrt");
+inline const PrimitivePtr kPrimRsqrtGrad = std::make_shared<Primitive>("RsqrtGrad");
 inline const PrimitivePtr kPrimSplitV = std::make_shared<Primitive>("SplitV");
 inline const PrimitivePtr kPrimLinSpace = std::make_shared<Primitive>("LinSpace");
 inline const PrimitivePtr kPrimNonMaxSuppression = std::make_shared<Primitive>("NonMaxSuppression");
@@ -551,4 +552,4 @@ using DoSignaturePrimitivePtr = std::shared_ptr<DoSignaturePrimitive>;
 }  // namespace prim
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPERATOR_OPS_H_
+#endif  // MINDSPORE_CORE_BASE_CORE_OPS_H_

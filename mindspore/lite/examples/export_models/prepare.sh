@@ -2,10 +2,9 @@
 
 display_usage()
 {
-  echo "Usage: prepare.sh [-d mindspore_docker] [-r release.tar.gz] [-i]"
+  echo "Usage: prepare.sh [-d mindspore_docker] [-i]"
   echo "Options:"
   echo "    -d docker where mindspore is installed. If no docker is provided script will use local python"
-  echo "    -r release tarball"
   echo "    -i create input and output files"
 
 }
@@ -19,9 +18,6 @@ checkopts()
     case "${opt}" in
       d)
         DOCKER=$OPTARG
-        ;;
-      r)
-        TARBALL=$OPTARG
         ;;
       i)
         TRAIN_IO="train_io/"
@@ -55,16 +51,6 @@ echo ' ' > ${export_result_file}
 CLOUD_MODEL_ZOO=../../../../model_zoo/
 
 checkopts "$@"
-if [ "$TARBALL" == "" ]; then
-  file=$(ls ../../../../output/mindspore-lite-*-train-linux-x64.tar.gz)
-  if [ -f ${file} ]; then
-    TARBALL=${file}
-  else
-    echo "release.tar.gz was not found"
-    display_usage
-    exit 1
-  fi
-fi
 
 if [ -z "${DOCKER}" ]; then
     echo "MindSpore docker was not provided, attempting to run locally"
@@ -76,13 +62,14 @@ if [ ! -z "${TRAIN_IO}" ]; then
 fi
 
 while read line; do
-    model_name=${line}
+    LFS=" " read -r -a line_array <<< ${line}
+    model_name=${line_array[0]}
     if [[ $model_name == \#* ]]; then
-        continue
+      continue
     fi
     echo 'exporting' ${model_name}
     if [ ! -z "${DOCKER}" ]; then
-        docker run -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER --privileged=true ${DOCKER} /bin/bash -c "PYTHONPATH=${CLOUD_MODEL_ZOO} python models/${model_name}_train_export.py ${TRAIN_IO} && chmod 444 mindir/${model_name}_train.mindir"
+        docker run -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER --privileged=true ${DOCKER} /bin/bash -c "CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} PYTHONPATH=${CLOUD_MODEL_ZOO} python models/${model_name}_train_export.py ${TRAIN_IO} && chmod 444 mindir/${model_name}_train.mindir"
     else
         PYTHONPATH=${CLOUD_MODEL_ZOO} python models/${model_name}_train_export.py ${TRAIN_IO}
     fi

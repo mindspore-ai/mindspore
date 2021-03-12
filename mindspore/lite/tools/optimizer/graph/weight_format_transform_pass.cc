@@ -70,7 +70,9 @@ lite::STATUS WeightFormatTransformPass::TransposeInsertForWeightSharing(const Fu
       continue;
     }
     if (CheckPrimitiveType(node, prim::kPrimConv2DFusion) || CheckPrimitiveType(node, kPrimConv2DBackpropInputFusion) ||
-        CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
+        CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion) ||
+        CheckPrimitiveType(node, prim::kPrimApplyMomentum) || CheckPrimitiveType(node, prim::kPrimSGD) ||
+        CheckPrimitiveType(node, prim::kPrimAdam)) {
       continue;
     }
     auto cnode = node->cast<CNodePtr>();

@@ -15,6 +15,7 @@
  */
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/infer/maximum_grad_infer.h"
+#include "mindspore/lite/nnacl/arithmetic.h"
 
 namespace mindspore {
 
@@ -44,7 +45,7 @@ TEST_F(MaximumGradInferTest, MaximumGradInferTest0) {
   std::vector<TensorC *> outputs(2, NULL);
   outputs[0] = new TensorC;
   outputs[1] = new TensorC;
-  MaximumGradParameter *parameter = new MaximumGradParameter;
+  ArithmeticParameter *parameter = new ArithmeticParameter;
   parameter->op_parameter_.infer_flag_ = true;
   int ret = MaximumGradInferShape((const TensorC **)inputs.data(), inputs.size(), outputs.data(), outputs.size(),
                                   reinterpret_cast<OpParameter *>(parameter));
@@ -60,18 +61,18 @@ TEST_F(MaximumGradInferTest, MaximumGradInferTest0) {
   ASSERT_EQ(outputs[1]->data_type_, kNumberTypeInt32);
   ASSERT_EQ(outputs[1]->format_, Format_NHWC);
   ASSERT_EQ(parameter->ndim_, 3);
-  ASSERT_EQ(parameter->dy_shape_size_, 3);
-  ASSERT_EQ(parameter->dy_shape_[0], 7);
-  ASSERT_EQ(parameter->dy_shape_[1], 8);
-  ASSERT_EQ(parameter->dy_shape_[2], 9);
-  ASSERT_EQ(parameter->x1_shape_size_, 3);
-  ASSERT_EQ(parameter->x1_shape_[0], 1);
-  ASSERT_EQ(parameter->x1_shape_[1], 4);
-  ASSERT_EQ(parameter->x1_shape_[2], 3);
-  ASSERT_EQ(parameter->x2_shape_size_, 3);
-  ASSERT_EQ(parameter->x2_shape_[0], 1);
-  ASSERT_EQ(parameter->x2_shape_[1], 5);
-  ASSERT_EQ(parameter->x2_shape_[2], 6);
+  ASSERT_EQ(parameter->out_elements_num_, 3);
+  ASSERT_EQ(parameter->out_shape_[0], 7);
+  ASSERT_EQ(parameter->out_shape_[1], 8);
+  ASSERT_EQ(parameter->out_shape_[2], 9);
+  ASSERT_EQ(parameter->in_elements_num0_, 3);
+  ASSERT_EQ(parameter->in_shape0_[0], 1);
+  ASSERT_EQ(parameter->in_shape0_[1], 4);
+  ASSERT_EQ(parameter->in_shape0_[2], 3);
+  ASSERT_EQ(parameter->in_elements_num1_, 3);
+  ASSERT_EQ(parameter->in_shape1_[0], 1);
+  ASSERT_EQ(parameter->in_shape1_[1], 5);
+  ASSERT_EQ(parameter->in_shape1_[2], 6);
   delete parameter;
   for (size_t i = 0; i < inputs_size; i++) {
     delete inputs[i];

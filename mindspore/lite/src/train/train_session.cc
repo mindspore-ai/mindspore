@@ -272,7 +272,7 @@ void TrainSession::CompileEvalOutputs() {
   eval_output_node_map_.clear();
   eval_output_tensor_map_.clear();
   for (auto kernel : this->train_kernels_) {
-    if (IsLossKernel(kernel)) {
+    if (IsLossKernel(kernel) && !(IsGradKernel(kernel))) {
       for (auto in_kernel : kernel->in_kernels()) {
         if (IsLossKernel(in_kernel) || IsGradKernel(in_kernel)) continue;
         // insert if not already in

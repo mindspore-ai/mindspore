@@ -66,21 +66,23 @@ int PoolingGradCPUKernel::Execute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-
   int stride = UP_DIV(pool_param->output_batch_, thread_num_);
   int count = MSMIN(stride, pool_param->output_batch_ - stride * task_id);
-  int in_batch_size = pool_param->input_h_ * pool_param->input_w_ * pool_param->input_channel_;
-  int out_batch_size = pool_param->output_h_ * pool_param->output_w_ * pool_param->input_channel_;
-  std::fill(output_ptr + task_id * stride * in_batch_size, output_ptr + ((task_id * stride) + count) * in_batch_size,
-            0.f);
-  if (pool_param->pool_mode_ == PoolMode_MaxPool) {
-    auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
-    MaxPoolingGrad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
-                   output_ptr + task_id * stride * in_batch_size, count, pool_param);
-  } else {
-    input_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
-    AvgPoolingGrad(input_ptr + task_id * stride * out_batch_size, output_ptr + task_id * stride * in_batch_size, count,
-                   pool_param);
+
+  if (count > 0) {
+    int in_batch_size = pool_param->input_h_ * pool_param->input_w_ * pool_param->input_channel_;
+    int out_batch_size = pool_param->output_h_ * pool_param->output_w_ * pool_param->input_channel_;
+    std::fill(output_ptr + task_id * stride * in_batch_size, output_ptr + ((task_id * stride) + count) * in_batch_size,
+              0.f);
+    if (pool_param->pool_mode_ == PoolMode_MaxPool) {
+      auto dy_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+      MaxPoolingGrad(input_ptr + task_id * stride * in_batch_size, dy_ptr + task_id * stride * out_batch_size,
+                     output_ptr + task_id * stride * in_batch_size, count, pool_param);
+    } else {
+      input_ptr = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+      AvgPoolingGrad(input_ptr + task_id * stride * out_batch_size, output_ptr + task_id * stride * in_batch_size,
+                     count, pool_param);
+    }
   }
   return RET_OK;
 }

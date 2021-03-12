@@ -244,6 +244,7 @@ set(LITE_KERNEL_SRC
         ${LITE_DIR}/nnacl/infer/hashtable_lookup_infer.c
         ${LITE_DIR}/nnacl/infer/invert_permutation_infer.c
         ${LITE_DIR}/nnacl/infer/layer_norm_infer.c
+        ${LITE_DIR}/nnacl/infer/layer_norm_grad_infer.c
         ${LITE_DIR}/nnacl/infer/lin_space_infer.c
         ${LITE_DIR}/nnacl/infer/lsh_projection_infer.c
         ${LITE_DIR}/nnacl/infer/lstm_infer.c

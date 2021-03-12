@@ -142,6 +142,14 @@ public class TrainSession {
         return this.setLearningRate(this.sessionPtr, learning_rate);
     }
 
+    public boolean setupVirtualBatch(int virtualBatchMultiplier, float learningRate, float momentum) {
+        return this.setupVirtualBatch(this.sessionPtr, virtualBatchMultiplier, learningRate, momentum);
+    }
+
+    public boolean setupVirtualBatch(int virtualBatchMultiplier) {
+        return this.setupVirtualBatch(this.sessionPtr, virtualBatchMultiplier, -1.0f, -1.0f);
+    }
+
     private native long createSession(String modelFilename, long msConfigPtr);
 
     private native void bindThread(long sessionPtr, boolean if_bind);
@@ -175,4 +183,6 @@ public class TrainSession {
     private native boolean isEval(long sessionPtr);
 
     private native boolean setLearningRate(long sessionPtr, float learning_rate);
+
+    private native boolean setupVirtualBatch(long sessionPtr, int virtualBatchMultiplier, float learningRate, float momentum);
 }

@@ -22,6 +22,7 @@
 #include "include/errorcode.h"
 #include "include/train_session.h"
 #include "include/iterator.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
@@ -167,11 +168,9 @@ int TrainLoop::LoadPartialData(std::vector<tensor::MSTensor *> inputs, dataset::
 
 }  // namespace lite
 
-session::TrainLoop *session::TrainLoop::CreateTrainLoop(const std::string &model_filename, lite::Context *context,
+session::TrainLoop *session::TrainLoop::CreateTrainLoop(session::TrainSession *train_session, lite::Context *context,
                                                         int batch_size) {
-  auto train_session = session::TrainSession::CreateSession(model_filename, context);
   auto loop = new (std::nothrow) lite::TrainLoop(train_session);
-
   return loop;
 }
 

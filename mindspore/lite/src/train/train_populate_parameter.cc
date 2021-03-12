@@ -28,8 +28,10 @@
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "nnacl/fp32_grad/dropout_parameter.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
+#include "nnacl/fp32_grad/resize_grad.h"
+namespace mindspore {
+namespace kernel {
 
-namespace mindspore::kernel {
 OpParameter *PopulateSmoothL1LossParameter(const void *prim) {
   SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
   if (p == nullptr) {
@@ -170,9 +172,20 @@ OpParameter *PopulateMaxPoolGradParameter(const void *prim) {
   pooling_param->pad_r_ = 0;
   pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
   pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
-
   pooling_param->round_mode_ = RoundMode_No;
   pooling_param->pool_mode_ = PoolMode_MaxPool;
+  switch (value->pad_mode()) {
+    case schema::PadMode_SAME:
+      pooling_param->pad_mode_ = Pad_same;
+      break;
+    case schema::PadMode_VALID:
+      pooling_param->pad_mode_ = Pad_valid;
+      break;
+    default:
+      pooling_param->pad_mode_ = Pad_pad;
+      break;
+  }
+
   return reinterpret_cast<OpParameter *>(pooling_param);
 }
 
@@ -197,8 +210,30 @@ OpParameter *PopulateAvgPoolGradParameter(const void *prim) {
   pooling_param->stride_w_ = static_cast<int>(value->strides()->Get(1));
   pooling_param->stride_h_ = static_cast<int>(value->strides()->Get(0));
 
+  switch (value->pad_mode()) {
+    case schema::PadMode_SAME:
+      pooling_param->pad_mode_ = Pad_same;
+      break;
+    case schema::PadMode_VALID:
+      pooling_param->pad_mode_ = Pad_valid;
+      break;
+    default:
+      pooling_param->pad_mode_ = Pad_pad;
+      break;
+  }
   pooling_param->round_mode_ = RoundMode_No;
   pooling_param->pool_mode_ = PoolMode_AvgPool;
+  switch (value->pad_mode()) {
+    case schema::PadMode_SAME:
+      pooling_param->pad_mode_ = Pad_same;
+      break;
+    case schema::PadMode_VALID:
+      pooling_param->pad_mode_ = Pad_valid;
+      break;
+    default:
+      pooling_param->pad_mode_ = Pad_pad;
+      break;
+  }
   return reinterpret_cast<OpParameter *>(pooling_param);
 }
 
@@ -378,6 +413,23 @@ OpParameter *PopulateArithmeticGradParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 
+OpParameter *PopulateResizeGradParameter(const void *prim) {
+  ResizeGradParameter *resize_grad_param = reinterpret_cast<ResizeGradParameter *>(malloc(sizeof(ResizeGradParameter)));
+  if (resize_grad_param == nullptr) {
+    MS_LOG(ERROR) << "malloc resize grad parameter failed.";
+    return nullptr;
+  }
+  memset(resize_grad_param, 0, sizeof(ResizeGradParameter));
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  resize_grad_param->op_parameter_.type_ = primitive->value_type();
+  auto param = primitive->value_as_ResizeGrad();
+
+  resize_grad_param->method = static_cast<int>(param->method());
+  resize_grad_param->align_corners_ = param->align_corners();
+
+  return reinterpret_cast<OpParameter *>(resize_grad_param);
+}
+
 void PopulateTrainParameters() {
   lite::Registry ApplyMomentumParameterRegistry(schema::PrimitiveType_ApplyMomentum, PopulateApplyMomentumParameter,
                                                 lite::SCHEMA_CUR);
@@ -437,8 +489,14 @@ void PopulateTrainParameters() {
                                               lite::SCHEMA_CUR);
   lite::Registry StridedSliceGradParameterRegistry(schema::PrimitiveType_StridedSliceGrad,
                                                    lite::PopulateStridedSliceParameter, lite::SCHEMA_CUR);
+  lite::Registry SqrtGradParameterRegistry(schema::PrimitiveType_SqrtGrad, lite::DefaultPopulateParameter,
+                                           lite::SCHEMA_CUR);
+  lite::Registry RsqrtGradParameterRegistry(schema::PrimitiveType_RsqrtGrad, lite::DefaultPopulateParameter,
+                                            lite::SCHEMA_CUR);
+  lite::Registry ResizeGradParameterRegistry(schema::PrimitiveType_ResizeGrad, PopulateResizeGradParameter,
+                                             lite::SCHEMA_CUR);
   lite::Registry AbsGradParameterRegistry(schema::PrimitiveType_AbsGrad, lite::DefaultPopulateParameter,
                                           lite::SCHEMA_CUR);
 }
-
-}  // namespace mindspore::kernel
+}  // namespace kernel
+}  // namespace mindspore

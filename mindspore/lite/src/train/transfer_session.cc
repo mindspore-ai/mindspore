@@ -33,6 +33,7 @@
 #include "src/executor.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/fp32_grad/convolution.h"
+#include "nnacl/fp32/pack_fp32.h"
 
 namespace mindspore {
 namespace lite {
@@ -54,10 +55,20 @@ TransferSession::TransferSession(const char *model_buf_backbone, size_t size_bac
 
 std::vector<tensor::MSTensor *> TransferSession::GetInputs() const { return combined_inputs_; }
 
+bool TransferSession::CompileFormatTransform(tensor::MSTensor *out, tensor::MSTensor *in, int *mask) {
+  for (std::size_t dim = 0; dim != out->shape().size(); ++dim) {
+    if (in->shape().at(mask[dim]) != out->shape().at(dim)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 int TransferSession::CompileTransferGraph() {
   combined_inputs_ = backbone_session_->GetInputs();
   auto outputs_backbone = backbone_session_->GetOutputs();
   auto inputs_head = lite::TrainSession::GetInputs();
+
   int ret = RET_OK;
   for (auto input : inputs_head) {
     bool match = false;
@@ -71,6 +82,11 @@ int TransferSession::CompileTransferGraph() {
             match = false;
             break;
           }
+        }
+        if (match == false && input->shape().size() == 4) {
+          int nchw2nhwc_mask[4] = {0, 3, 1, 2};
+          nchw2nhwc_ = CompileFormatTransform(output, input, nchw2nhwc_mask);
+          match = nchw2nhwc_;
         }
         if (true == match) {
           break;
@@ -124,7 +140,14 @@ int TransferSession::RunGraph(const KernelCallBack &before, const KernelCallBack
     auto output = backbone_head_pair.second;
     char *input_data = reinterpret_cast<char *>(input->MutableData());
     char *output_data = reinterpret_cast<char *>(output->MutableData());
-    std::copy(output_data, output_data + output->Size(), input_data);
+    if (nchw2nhwc_) {
+      int plane = input->shape().at(1) * input->shape().at(2);
+      int batch = input->shape().at(0);
+      int channel = input->shape().at(3);
+      PackNCHWToNHWCFp32(output_data, input_data, batch, plane, channel, 0, 1);
+    } else {
+      std::copy(output_data, output_data + output->Size(), input_data);
+    }
   }
   ret = lite::TrainSession::RunGraph(before, after);
   return ret;

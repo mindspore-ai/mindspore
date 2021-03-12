@@ -128,6 +128,7 @@ int RunConverter(int argc, const char **argv) {
     oss << "CONVERT RESULT FAILED:" << status << " " << GetErrorInfo(status);
     MS_LOG(ERROR) << oss.str();
     std::cout << oss.str() << std::endl;
+    status = RET_ERROR;
     return status;
   }
 

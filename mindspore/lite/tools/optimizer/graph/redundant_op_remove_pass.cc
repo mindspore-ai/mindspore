@@ -35,6 +35,21 @@ int RemoveRedundantOpPass::ReplaceOp(const AnfNodePtr &anf_node, const FuncGraph
       return lite::RET_NO_CHANGE;
     }
   }
+  if (CheckPrimitiveType(anf_node, prim::kPrimDepend)) {
+    if (cnode->size() != InputDoubleNum) {
+      MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
+      remove_cnode_.insert(anf_node);
+      return lite::RET_NO_CHANGE;
+    }
+  }
+  if (CheckPrimitiveType(anf_node, prim::kPrimControlDepend)) {
+    if (cnode->size() != InputDoubleNum) {
+      MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
+      remove_cnode_.insert(anf_node);
+      return lite::RET_NO_CHANGE;
+    }
+  }
+
   bool replace_succ = manager->Replace(anf_node, cnode->input(1));
   if (!replace_succ) {
     MS_LOG(ERROR) << "replace redundant op failed.";
