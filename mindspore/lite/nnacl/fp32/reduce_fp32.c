@@ -44,6 +44,49 @@ int ReduceMean(int outer_size, int inner_size, int axis_size, const float *src_d
   }
   return NNACL_OK;
 }
+
+int IntReduceMean(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+                  int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  int i, j;
+#ifdef ENABLE_NEON
+  int block_mod = inner_size % C4NUM;
+  int block_c4 = inner_size - block_mod;
+#endif
+  for (j = tid; j < outer_size; j += thread_num) {
+    const int *outer_src = src_data + j * axis_size * inner_size;
+    int *outer_dst = dst_data + j * inner_size;
+    int k = 0;
+#ifdef ENABLE_NEON
+    for (; k < block_c4; k += C4NUM) {
+      const int *inner_src = outer_src + k;
+      int *inner_dst = outer_dst + k;
+      int32x4_t tmp = {0, 0, 0, 0};
+      for (i = 0; i < axis_size; i++) {
+        tmp = vaddq_s32(tmp, vld1q_s32(inner_src + i * inner_size));
+      }
+      tmp[0] /= axis_size;
+      tmp[1] /= axis_size;
+      tmp[2] /= axis_size;
+      tmp[3] /= axis_size;
+      vst1q_s32(inner_dst, tmp);
+    }
+#endif
+    for (; k < inner_size; k++) {
+      const int *inner_src = outer_src + k;
+      int *inner_dst = outer_dst + k;
+      int tmp = 0;
+      for (i = 0; i < axis_size; i++) {
+        tmp += inner_src[i * inner_size];
+      }
+      *inner_dst = tmp / axis_size;
+    }
+  }
+  return NNACL_OK;
+}
+
 int ReduceSum(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
               int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
@@ -81,6 +124,7 @@ int ReduceSum(int outer_size, int inner_size, int axis_size, const float *src_da
   }
   return NNACL_OK;
 }
+
 int IntReduceSum(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
                  int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
@@ -118,6 +162,7 @@ int IntReduceSum(int outer_size, int inner_size, int axis_size, const int *src_d
   }
   return NNACL_OK;
 }
+
 int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
               int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
@@ -139,6 +184,7 @@ int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_da
   }
   return NNACL_OK;
 }
+
 int IntReduceMax(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
                  int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
@@ -160,6 +206,7 @@ int IntReduceMax(int outer_size, int inner_size, int axis_size, const int *src_d
   }
   return NNACL_OK;
 }
+
 int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
               int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
@@ -181,6 +228,7 @@ int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_da
   }
   return NNACL_OK;
 }
+
 int IntReduceMin(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
                  int thread_num) {
   if (src_data == NULL || dst_data == NULL) {
@@ -271,6 +319,7 @@ int IntReduceProd(int outer_size, int inner_size, int axis_size, const int *src_
   }
   return NNACL_OK;
 }
+
 int ReduceSumSquare(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
                     int thread_num) {
   if (src_data == NULL || dst_data == NULL) {

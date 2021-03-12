@@ -40,54 +40,13 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 namespace mindspore::kernel {
-
 int ReduceCPUKernel::Init() {
   auto ret = ReduceBaseCPUKernel::Init();
   if (ret != RET_OK) {
     return ret;
   }
 
-  switch (mode_) {
-    case static_cast<int>(ReduceMode_ReduceSum): {
-      reducer_ = ReduceSum;
-      int_reducer_ = IntReduceSum;
-      break;
-    }
-    case static_cast<int>(ReduceMode_ReduceMean): {
-      reducer_ = ReduceMean;
-      break;
-    }
-    case static_cast<int>(ReduceMode_ReduceMax): {
-      reducer_ = ReduceMax;
-      int_reducer_ = IntReduceMax;
-      break;
-    }
-    case static_cast<int>(ReduceMode_ReduceMin): {
-      reducer_ = ReduceMin;
-      int_reducer_ = IntReduceMin;
-      break;
-    }
-    case static_cast<int>(ReduceMode_ReduceProd): {
-      reducer_ = ReduceProd;
-      int_reducer_ = IntReduceProd;
-      break;
-    }
-    case static_cast<int>(ReduceMode_ReduceSumSquare): {
-      reducer_ = ReduceSum;
-      break;
-    }
-    case static_cast<int>(ReduceMode_ReduceASum): {
-      reducer_ = ReduceSum;
-      break;
-    }
-    case static_cast<int>(ReduceMode_ReduceAll): {
-      bool_reducer_ = ReduceAll;
-      break;
-    }
-    default:
-      MS_LOG(ERROR) << "Reduce unsupported reduce mode: " << mode_;
-      return RET_ERROR;
-  }
+  InitialKernelList();
 
   if (!InferShapeDone()) {
     return RET_OK;
@@ -98,19 +57,29 @@ int ReduceCPUKernel::Init() {
 int ReduceCPUKernel::ReSize() { return ReduceBaseCPUKernel::ReSize(); }
 
 int ReduceCPUKernel::CallReduceUnit(int task_id) {
-  int ret;
   if (data_type_ == kDataTypeFloat) {
-    ret = reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
-                   static_cast<float *>(dst_data_), task_id, context_->thread_num_);
+    if (!reducer_) {
+      MS_LOG(ERROR) << "function reducer_ is null.";
+      return RET_NULL_PTR;
+    }
+    reducer_(outer_size_, inner_size_, axis_size_, static_cast<const float *>(src_data_),
+             static_cast<float *>(dst_data_), task_id, context_->thread_num_);
   } else if (data_type_ == KDataTypeBool) {
-    ret = bool_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const bool *>(src_data_),
-                        static_cast<bool *>(dst_data_), task_id, context_->thread_num_);
+    if (!bool_reducer_) {
+      MS_LOG(ERROR) << "function bool_reducer_ is null.";
+      return RET_NULL_PTR;
+    }
+    bool_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const bool *>(src_data_),
+                  static_cast<bool *>(dst_data_), task_id, context_->thread_num_);
   } else {
-    ret = int_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const int *>(src_data_),
-                       static_cast<int *>(dst_data_), task_id, context_->thread_num_);
+    if (!int_reducer_) {
+      MS_LOG(ERROR) << "function int_reducer_ is null.";
+      return RET_NULL_PTR;
+    }
+    int_reducer_(outer_size_, inner_size_, axis_size_, static_cast<const int *>(src_data_),
+                 static_cast<int *>(dst_data_), task_id, context_->thread_num_);
   }
-
-  return ret;
+  return RET_OK;
 }
 
 int ReduceImpl(void *cdata, int task_id) {
@@ -143,7 +112,7 @@ int ReduceCPUKernel::Run() {
     if (i != static_cast<size_t>(num_axes_ - 1)) {
       dst_data_ = data_buffers_.at(i);
     } else {
-      dst_data_ = out_tensors_.at(0)->MutableData();
+      dst_data_ = out_tensors_.at(0)->data_c();
     }
     outer_size_ = outer_sizes_.at(i);
     inner_size_ = inner_sizes_.at(i);
@@ -173,7 +142,7 @@ void ReduceCPUKernel::HandleASumAndSumSquare() {
     return;
   }
   int num = in_tensors_.at(0)->ElementsNum();
-  float *data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto *data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
   if (data == nullptr) {
     return;
   }
@@ -197,7 +166,7 @@ int ReduceCPUKernel::CalculateCoeffOutput() {
   if (data_type_ != kDataTypeFloat) {
     return RET_ERROR;
   }
-  float *out_data = reinterpret_cast<float *>(out_tensor->MutableData());
+  auto *out_data = reinterpret_cast<float *>(out_tensor->data_c());
   if (out_data == nullptr) {
     return RET_NULL_PTR;
   }
@@ -235,6 +204,26 @@ void ReduceCPUKernel::FreeTmpBuffer() {
     }
   }
   data_buffers_.clear();
+}
+
+void ReduceCPUKernel::InitialKernelList() {
+  ReduceKernelList func_list[] = {{ReduceMode_ReduceSum, ReduceSum, IntReduceSum, nullptr},
+                                  {ReduceMode_ReduceMean, ReduceMean, IntReduceMean, nullptr},
+                                  {ReduceMode_ReduceMax, ReduceMax, IntReduceMax, nullptr},
+                                  {ReduceMode_ReduceMin, ReduceMin, IntReduceMin, nullptr},
+                                  {ReduceMode_ReduceProd, ReduceProd, IntReduceProd, nullptr},
+                                  {ReduceMode_ReduceSumSquare, ReduceSum, IntReduceSum, nullptr},
+                                  {ReduceMode_ReduceASum, ReduceSum, IntReduceSum, nullptr},
+                                  {ReduceMode_ReduceAll, nullptr, nullptr, ReduceAll}};
+  int list_len = sizeof(func_list) / sizeof(ReduceKernelList);
+  for (int i = 0; i < list_len; ++i) {
+    if (mode_ == func_list[i].type_) {
+      reducer_ = func_list[i].float_func_;
+      int_reducer_ = func_list[i].int_func_;
+      bool_reducer_ = func_list[i].bool_func_;
+      break;
+    }
+  }
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceCPUKernel>)
