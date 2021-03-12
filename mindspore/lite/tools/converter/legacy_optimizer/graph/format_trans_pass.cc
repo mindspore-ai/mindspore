@@ -282,7 +282,7 @@ STATUS FormatTransPass::ChangeOpAxis(schema::MetaGraphT *graph, const std::uniqu
         return RET_NOT_SUPPORT;
       }
     } else {
-      MS_LOG(ERROR) << "change op axis only support 4 dims";
+      MS_LOG(DEBUG) << "change op axis only support 4 dims";
       return RET_NOT_SUPPORT;
     }
   }

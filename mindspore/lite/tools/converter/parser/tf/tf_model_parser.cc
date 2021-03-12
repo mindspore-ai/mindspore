@@ -184,7 +184,7 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_
   }
   auto &variant = tensor_proto.variant_val(0);
   if (variant.type_name() != "tensorflow::TensorList" || variant.tensors_size() <= 0) {
-    MS_LOG(ERROR) << "Only nonempty TensorList type is supported now";
+    MS_LOG(DEBUG) << "Only nonempty TensorList type is supported now";
   }
   auto descriptor = variant.GetMetadata().descriptor;
   auto reflection = variant.GetMetadata().reflection;
