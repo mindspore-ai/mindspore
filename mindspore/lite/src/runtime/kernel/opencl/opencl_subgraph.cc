@@ -50,6 +50,7 @@ void OpenCLSubGraph::ReplaceOutTensorAndKernelToNull(const std::vector<lite::Ten
         kernels.begin(), kernels.end(),
         [this, &in_tensors, &i](kernel::LiteKernel *kv) {
           MS_ASSERT(kv);
+          if (kv == nullptr) return false;
           return std::find_if(kv->in_tensors().begin(), kv->in_tensors().end(),
                               [&in_tensors, &i](lite::Tensor *xv) { return xv == in_tensors.at(i); }) !=
                    kv->in_tensors().end() &&

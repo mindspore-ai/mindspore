@@ -102,5 +102,32 @@ TEST_F(TestOpenCL_Conv2dTranspose, test1) {
              {output_shape, output_data}, param, fp16_enable);
   }
 }
+TEST_F(TestOpenCL_Conv2dTranspose, test2) {
+  int n = 1;
+  int h = 2;
+  int w = 2;
+  int oh = 5;
+  int ow = 5;
+  int ci = 2;
+  int co = 1;
+  int kh = 3;
+  int kw = 3;
+  std::vector<int> pad = {0, 0, 0, 0};
+  float input_data[] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0};
+  float weight_data[] = {0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0,
+                         1.0, 3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0};
+  float bias_data[] = {0.5};
+  float output_data[] = {1.5,   3.5,   8.5,  13.5, 23.5,  7.5,   9.5,   44.5,  43.5,  53.5,  18.5,  38.5, 128.5,
+                         106.5, 142.5, 59.5, 77.5, 180.5, 111.5, 137.5, 113.5, 131.5, 312.5, 189.5, 215.5};
 
+  for (auto fp16_enable : {false, true}) {
+    std::vector<int> input_shape, weight_shape, bias_shape, output_shape;
+    auto *param =
+      CreateParameter(n, h, w, ci, co, kh, kw, pad, oh, ow, &input_shape, &weight_shape, &bias_shape, &output_shape);
+    TestMain({{input_shape, input_data, VAR},
+              {weight_shape, weight_data, CONST_TENSOR},
+              {bias_shape, bias_data, CONST_TENSOR}},
+             {output_shape, output_data}, param, fp16_enable);
+  }
+}
 }  // namespace mindspore::lite::opencl::test

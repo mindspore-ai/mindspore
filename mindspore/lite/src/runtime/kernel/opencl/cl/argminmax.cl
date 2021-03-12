@@ -16,15 +16,17 @@ __kernel void argminmax(__global FLT *src_data, __global FLT *dst_data, __global
   if (X >= src_size.x || Y >= src_size.y) {
     return;
   }
-  int offset = X + Y * src_size.z;
-  int align_c4 = (flags.z != 3) ? (X / shape.w) * (C4NUM - shape.w & 0x00000003) : 0;
-  int align_in = 0;
-  int align_out = 0;
   bool keep_dims = cus_size.y;
   int width = shape.z * shape.w;
+  int offset = X + Y * src_size.z;
+  int align_c4_in = (flags.z != 3) ? (X / shape.w) * (C4NUM - shape.w & 0x00000003) : 0;
+  int align_c4_out =
+    (flags.z == 3 && flags.w == 1 && !keep_dims) ? (Y / shape.z) * (C4NUM - shape.z & 0x00000003) : align_c4_in;
+  int align_in = 0;
+  int align_out = 0;
   if (flags.z == 3) {
     align_in = (Y / shape.z) * cus_size.z;
-    align_out = (Y / shape.z) * cus_size.w;
+    align_out = (Y / ((flags.w > 1 || keep_dims) ? shape.z : shape.z * shape.y)) * cus_size.w;
   }
   if (flags.z == 0) {
     align_in = X / (width)*cus_size.z;
@@ -34,7 +36,7 @@ __kernel void argminmax(__global FLT *src_data, __global FLT *dst_data, __global
     align_out = (Y / shape.y) * cus_size.w;
   }
   for (int k = 0; k < src_size.w; ++k) {
-    int idx0 = (X + k * strides.x) + Y * strides.y + (align_c4 + align_in);
+    int idx0 = (X + k * strides.x) + Y * strides.y + (align_c4_in + align_in);
     int idx1 = offset + k * src_size.x;
     ids[idx1] = k;
     buf[idx1] = src_data[idx0];
@@ -66,7 +68,7 @@ __kernel void argminmax(__global FLT *src_data, __global FLT *dst_data, __global
     }
   }
   for (int k = 0; k < flags.w; ++k) {
-    int idx0 = (X + k * strides.z) + Y * strides.w + (align_c4 + align_out);
+    int idx0 = (X + k * strides.z) + Y * strides.w + (align_c4_out + align_out);
     int idx1 = flags.y ? (offset + (src_size.w - k - 1) * src_size.x) : (offset + k * src_size.x);
     if (flags.x) {
       dst_data[idx0] = buf[idx1];

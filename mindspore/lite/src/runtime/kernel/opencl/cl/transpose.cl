@@ -259,6 +259,6 @@ __kernel void transpose_general_NHWC4(__read_only image2d_t src_data, __write_on
       result_tmp.c_array[i] = src_tmp.c_array[out_index[de_perm.w] % 4];
     }
   }
-  int CO4_SIZE = UP_DIV(in_shape.w, 4);
+  int CO4_SIZE = UP_DIV(out_shape.w, 4);
   WRITE_IMAGE(dst_data, (int2)(Y * CO4_SIZE + Z, X), result_tmp.vector);
 }

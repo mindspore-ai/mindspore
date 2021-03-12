@@ -86,7 +86,7 @@ void Conv2dTransposeOpenCLKernel::SetGlobalLocal() {
   int oh = out_tensors_[0]->shape()[1];
   int ow = out_tensors_[0]->shape()[2];
   local_size_ = {16, 1, 16};
-  global_size_ = {(size_t)UP_ROUND(oh / 2, stride_h), (size_t)UP_ROUND(ow / 2, stride_w), (size_t)co4};
+  global_size_ = {(size_t)UP_ROUND(UP_DIV(oh, 2), stride_h), (size_t)UP_ROUND(UP_DIV(ow, 2), stride_w), (size_t)co4};
   AlignGlobalLocal(global_size_, local_size_);
 }
 
