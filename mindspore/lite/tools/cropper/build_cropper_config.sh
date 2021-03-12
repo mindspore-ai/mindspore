@@ -163,12 +163,10 @@ getCommonFile() {
 # automatically generate operator list
 generateOpsList() {
   echo "start generate operator list"
-  ops=()
-  while IFS='' read -r line; do ops+=("$line"); done < <(egrep "PrimitiveType_.* = " "${MINDSPORE_HOME}/mindspore/lite/build/schema/model_generated.h" | awk -F '_' '{print $2}' | awk -F ' ' '{print $1}')
-  ops_num=$((${#ops[@]} - 3))
-  echo "ops nums:${ops_num}"
   ops_list=()
-  mapfile -t ops_list <<< "${ops[*]:1:$ops_num}"
+  while IFS='' read -r line; do ops_list+=("$line"); done < <(grep -Rn "^table" "${MINDSPORE_HOME}/mindspore/lite/schema/ops.fbs" | awk -F ' ' '{print $2}')
+  ops_num=$((${#ops_list[@]}))
+  echo "ops nums:${ops_num}"
 }
 echo "Start getting all file associations."
 generateOpsList
