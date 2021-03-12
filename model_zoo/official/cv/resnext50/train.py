@@ -161,7 +161,7 @@ def parse_args(cloud_args=None):
     if args.is_dynamic_loss_scale == 1:
         args.loss_scale = 1  # for dynamic loss scale can not set loss scale in momentum opt
 
-    # select for master rank save ckpt or all rank save, compatiable for model parallel
+    # select for master rank save ckpt or all rank save, compatible for model parallel
     args.rank_save_ckpt_flag = 0
     if args.is_save_on_master:
         if args.rank == 0:

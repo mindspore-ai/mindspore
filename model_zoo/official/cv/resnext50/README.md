@@ -76,20 +76,20 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     └─run_eval.sh                     # launch evaluating
   ├─src
     ├─backbone
-      ├─_init_.py                     # initalize
+      ├─_init_.py                     # initialize
       ├─resnet.py                     # resnext50 backbone
     ├─utils
-      ├─_init_.py                     # initalize
+      ├─_init_.py                     # initialize
       ├─cunstom_op.py                 # network operation
       ├─logging.py                    # print log
       ├─optimizers_init_.py           # get parameters
       ├─sampler.py                    # distributed sampler
       ├─var_init_.py                  # calculate gain value
-    ├─_init_.py                       # initalize
+    ├─_init_.py                       # initialize
     ├─config.py                       # parameter configuration
     ├─crossentropy.py                 # CrossEntropy loss function
     ├─dataset.py                      # data preprocessing
-    ├─head.py                         # commom head
+    ├─head.py                         # common head
     ├─image_classification.py         # get resnet
     ├─linear_warmup.py                # linear warmup learning rate
     ├─warmup_cosine_annealing.py      # learning rate each step
@@ -140,7 +140,7 @@ You can start training by python script:
 python train.py --data_dir ~/imagenet/train/ --platform Ascend --is_distributed 0
 ```
 
-or shell stript:
+or shell script:
 
 ```script
 Ascend:
@@ -181,7 +181,7 @@ You can start training by python script:
 python eval.py --data_dir ~/imagenet/val/ --platform Ascend --pretrained resnext.ckpt
 ```
 
-or shell stript:
+or shell script:
 
 ```script
 # Evaluation

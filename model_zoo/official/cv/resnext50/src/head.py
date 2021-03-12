@@ -22,7 +22,7 @@ __all__ = ['CommonHead']
 
 class CommonHead(nn.Cell):
     """
-    commom architecture definition.
+    common architecture definition.
 
     Args:
         num_classes (int): Number of classes.
