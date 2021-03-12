@@ -30,7 +30,7 @@ from mindspore.ops.operations import _grad_ops as G
 scalar_add = Primitive(Constants.kScalarAdd)
 scalar_mul = Primitive(Constants.kScalarMul)
 tuple_getitem = Primitive(Constants.kTupleGetItem)
-switch = Primitive('switch')
+switch = Primitive('Switch')
 
 
 def test_sexp_conversion():
