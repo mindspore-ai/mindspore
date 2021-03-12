@@ -41,6 +41,7 @@
 #include "backend/optimizer/graph_kernel/split_assign.h"
 #include "backend/optimizer/graph_kernel/reorder_ops.h"
 #include "backend/optimizer/graph_kernel/update_state_formatter.h"
+#include "backend/optimizer/graph_kernel/axis_normalizer.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 
 namespace mindspore {
@@ -78,6 +79,9 @@ PassManagerPtr GraphKernelOptimizer::Cluster() {
 
 PassManagerPtr GraphKernelOptimizer::HighLevelOpt1() {
   auto pm = std::make_shared<PassManager>("graphkernel_stage3_highlevelopt1");
+  // normalize the Reduce axis
+  pm->AddPass(std::make_shared<AxisNormalizer>());
+
   // Replace Assign with InplaceAssign, and replace original output with overridden parameters
   pm->AddPass(std::make_shared<OptimizeAssign>());
   pm->AddPass(std::make_shared<EliminateRedundantOutput>());
