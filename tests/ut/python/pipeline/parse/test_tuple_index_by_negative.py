@@ -20,8 +20,9 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_tuple_index_by_negative_number():
@@ -37,12 +38,24 @@ def test_tuple_index_by_negative_number():
             ret[-1] = 100
             return ret
 
+    class GradNet(nn.Cell):
+        def __init__(self, net, get_all):
+            super(GradNet, self).__init__()
+            self.forward_net = net
+            self.sens = Tensor(np.ones((2, 2), np.float32) * 5)
+            self.grad_all = C.GradOperation(get_all=get_all)
+
+        def construct(self, x):
+            return self.grad_all(self.forward_net)(x)
+
     net = Net()
+    grad_net = GradNet(net, True)
     x = Tensor(np.ones((4, 2, 3)))
     net(x)
+    grad_net(x)
 
 
-def Ttest_tuple_index_by_negative_number_out_bound():
+def test_tuple_index_by_negative_number_out_bound():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()

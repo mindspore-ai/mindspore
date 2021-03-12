@@ -47,8 +47,11 @@ class ConvertItemIndexToPositive : public AnfVisitor {
     AnfVisitor::Match(prim::kPrimTupleSetItem, {IsCNode, IsVNode, IsNode})(node);
     AnfVisitor::Match(prim::kPrimListSetItem, {IsCNode, IsVNode, IsNode})(node);
 
-    if (is_match_) {
-      node->cast<CNodePtr>()->set_input(2, NewValueNode(id_));
+    FuncGraphPtr fg = node->func_graph();
+    if (is_match_ && fg != nullptr) {
+      auto inputs = node->cast<CNodePtr>()->inputs();
+      inputs[2] = NewValueNode(id_);
+      return fg->NewCNode(inputs);
     }
     return nullptr;
   }
