@@ -61,9 +61,9 @@ class MemoryUsageParser:
         file_path = validate_and_normalize_path(file_path)
 
         if not os.path.exists(file_path):
-            msg = 'The memory file does not exist!'
-            logger.error(msg)
-            raise ProfilerFileNotFoundException(msg=msg)
+            logger.warning('The memory file does not exist! Please ignore the warning '
+                           'if you are running heterogeneous training.')
+            raise ProfilerFileNotFoundException(msg=file_path)
 
         return file_path
 
