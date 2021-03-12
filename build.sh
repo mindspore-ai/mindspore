@@ -670,9 +670,14 @@ build_lite_java_arm64() {
     tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/native/libs/arm64-v8a/
-    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
+    if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
+      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
+    else
+      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/arm64-v8a/
+    fi
     [ -n "${VERSION_STR}" ] && rm -rf ${JTARBALL}
 }
 
@@ -691,9 +696,14 @@ build_lite_java_arm32() {
     tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/native/libs/armeabi-v7a/
-    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
+    if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
+      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+      cp ${BASEPATH}/output/${JTARBALL}/train/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
+    else
+      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+      cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/armeabi-v7a/
+    fi
     [ -n "${VERSION_STR}" ] && rm -rf ${JTARBALL}
 }
 
@@ -709,9 +719,9 @@ build_lite_java_x86() {
     tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/linux_x86/libs/
     mkdir -p ${JAVA_PATH}/java/linux_x86/libs/
-    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/java/linux_x86/libs/
     mkdir -p ${JAVA_PATH}/native/libs/linux_x86/
-    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/linux_x86/
+    cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/java/linux_x86/libs/
+    cp ${BASEPATH}/output/${JTARBALL}/inference/lib/libmindspore-lite.so ${JAVA_PATH}/native/libs/linux_x86/
 }
 
 build_jni_arm64() {

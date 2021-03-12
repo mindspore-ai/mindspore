@@ -7,7 +7,7 @@ function Run_Export(){
     if [[ -z "${CLOUD_MODEL_ZOO}" ]]; then
         echo "CLOUD_MODEL_ZOO is not defined - exiting export models"
         exit 1
-    fi    
+    fi
     # Export mindspore train models:
     while read line; do
         LFS=" " read -r -a line_array <<< ${line}
@@ -34,17 +34,12 @@ function Run_Export(){
 
 # Run converter on x86 platform:
 function Run_Converter() {
-    # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
     tar -zxf mindspore-lite-${version}-train-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-train-linux-x64/ || exit 1
 
-    tar -zxf mindspore-lite-${version}-converter-linux-x64.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-converter-linux-x64 || exit 1
-    cp converter/converter_lite ./ || exit 1
-    
-
-    # Convert the models
-    cd ${x86_path}/mindspore-lite-${version}-converter-linux-x64 || exit 1
+    cp tools/converter/converter/converter_lite ./ || exit 1
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./tools/converter/lib/:./tools/converter/third_party/glog/lib
 
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
@@ -58,10 +53,7 @@ function Run_Converter() {
         fi
         echo ${model_name}'_train' >> "${run_converter_log_file}"
         echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_name}'_train.mindir --outputFile='${ms_models_path}'/'${model_name}'_train  --trainModel=true' >> "${run_converter_log_file}"
-        LD_LIBRARY_PATH=./lib/:./third_party/protobuf/lib:./third_party/flatbuffers/lib:./third_party/glog/lib \
-         ./converter_lite  --fmk=MINDIR --modelFile=${models_path}/${model_name}_train.mindir \
-         --outputFile=${ms_models_path}/${model_name}'_train' \
-         --trainModel=true
+        ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_name}_train.mindir --outputFile=${ms_models_path}/${model_name}'_train' --trainModel=true
         if [ $? = 0 ]; then
             converter_result='converter mindspore '${model_name}'_train pass';echo ${converter_result} >> ${run_converter_result_file}
         else
@@ -74,6 +66,8 @@ function Run_Converter() {
 
 # Run on x86 platform:
 function Run_x86() {
+    cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
+    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./train/lib:./train/minddata/lib:./train/minddata/third_party/libjpeg-turbo/lib
     # Run mindspore converted train models:
     fail=0
     while read line; do
@@ -84,12 +78,7 @@ function Run_x86() {
         fi
         
         echo ${model_name}'_train' >> "${run_x86_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-train-linux-x64' >> "${run_x86_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
-        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib ./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_output --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
-        echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
-        LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib:./minddata/lib:./minddata/third_party/libjpeg-turbo/lib \
-        ${run_valgrind}./benchmark_train/benchmark_train \
+        ${run_valgrind}./tools/benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}_train.ms \
         --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
         --expectedDataFile=${train_io_path}/${model_name}_output >> "${run_x86_log_file}" \
@@ -135,23 +124,19 @@ function Run_arm() {
 
     # If build with minddata, copy the minddata related libs
     cd ${benchmark_train_test_path} || exit 1
-    if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/lib/libminddata-lite.so ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_train_test_path}/libjpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_train_test_path}/libturbojpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/minddata/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/minddata/lib/libminddata-lite.so ]; then
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/minddata/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_train_test_path}/libjpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/minddata/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_train_test_path}/libturbojpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/minddata/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
     fi
     if [ "$1" == arm64 ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai.so ${benchmark_train_test_path}/libhiai.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_train_test_path}/libhiai_ir.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_train_test_path}/libhiai_ir_build.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai.so ${benchmark_train_test_path}/libhiai.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_train_test_path}/libhiai_ir.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_train_test_path}/libhiai_ir_build.so || exit 1
     fi
 
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libmindspore-lite.so ${benchmark_train_test_path}/libmindspore-lite.so || exit 1
-#    if [ "$1" == arm64 ]; then
-#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-fp16.so ${benchmark_train_test_path}/libmindspore-lite-fp16.so || exit 1
-#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-optimize.so ${benchmark_train_test_path}/libmindspore-lite-optimize.so || exit 1
-#    fi
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/benchmark_train/benchmark_train ${benchmark_train_test_path}/benchmark_train || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/train/lib/libmindspore-lite.so ${benchmark_train_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/tools/benchmark_train/benchmark_train ${benchmark_train_test_path}/benchmark_train || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${benchmark_train_test_path} /data/local/tmp/ > ${adb_push_log_file}

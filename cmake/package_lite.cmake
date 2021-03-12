@@ -1,21 +1,28 @@
 include(CMakePackageConfigHelpers)
 
 set(RUNTIME_PKG_NAME ${MAIN_DIR}-${RUNTIME_COMPONENT_NAME})
-set(CONVERTER_PKG_NAME ${MAIN_DIR}-${CONVERTER_COMPONENT_NAME})
-set(CODEGEN_PKG_NAME ${MAIN_DIR}-${CODEGEN_COMPONENT_NAME})
 
-set(RUNTIME_ROOT_DIR ${RUNTIME_PKG_NAME}/)
-set(CONVERTER_ROOT_DIR ${CONVERTER_PKG_NAME}/)
-set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/lib)
-set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/include)
-set(CONVERTER_LIB_DIR ${CONVERTER_PKG_NAME}/lib)
+set(CODEGEN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/codegen)
+set(CONVERTER_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/converter)
+set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
+set(BENCHMARK_TRAIN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
+set(CROPPER_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/cropper)
 
-set(TURBO_DIR ${RUNTIME_PKG_NAME}/minddata/third_party/libjpeg-turbo)
-
-set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/minddata/include)
-set(MIND_DATA_LIB_DIR ${RUNTIME_PKG_NAME}/minddata/lib)
-
-set(LIB_DIR_RUN_X86 ${RUNTIME_PKG_NAME}/lib)
+if(SUPPORT_TRAIN)
+    set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/train)
+    set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/train/include)
+    set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/train/lib)
+    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/train/minddata/include)
+    set(MIND_DATA_LIB_DIR ${RUNTIME_PKG_NAME}/train/minddata/lib)
+    set(TURBO_DIR ${RUNTIME_PKG_NAME}/train/minddata/third_party/libjpeg-turbo)
+else()
+    set(RUNTIME_DIR ${RUNTIME_PKG_NAME}/inference)
+    set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/inference/include)
+    set(RUNTIME_LIB_DIR ${RUNTIME_PKG_NAME}/inference/lib)
+    set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/inference/minddata/include)
+    set(MIND_DATA_LIB_DIR ${RUNTIME_PKG_NAME}/inference/minddata/lib)
+    set(TURBO_DIR ${RUNTIME_PKG_NAME}/inference/minddata/third_party/libjpeg-turbo)
+endif()
 
 if(BUILD_MINDDATA STREQUAL "full")
     install(DIRECTORY ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/liteapi/include/ DESTINATION
@@ -110,15 +117,21 @@ if(BUILD_MINDDATA STREQUAL "lite_cv")
     endif()
 endif()
 
-if(PLATFORM_ARM64)
+if(WIN32)
+    install(FILES ${TOP_DIR}/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+else()
     install(FILES ${TOP_DIR}/mindspore/lite/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
+endif()
+
+if(PLATFORM_ARM64)
     if(SUPPORT_NPU)
-        install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_PKG_NAME}/third_party/hiai_ddk/lib
+        install(FILES ${DDK_LIB_PATH}/libhiai.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${DDK_LIB_PATH}/libhiai_ir.so DESTINATION ${RUNTIME_PKG_NAME}/third_party/hiai_ddk/lib
+        install(FILES ${DDK_LIB_PATH}/libhiai_ir.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${DDK_LIB_PATH}/libhiai_ir_build.so DESTINATION ${RUNTIME_PKG_NAME}/third_party/hiai_ddk/lib
+        install(FILES ${DDK_LIB_PATH}/libhiai_ir_build.so DESTINATION ${RUNTIME_DIR}/third_party/hiai_ddk/lib
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(SUPPORT_TRAIN)
@@ -136,14 +149,16 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ascend* ops*" EXCLUDE)
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_PKG_NAME}
-            COMPONENT ${CODEGEN_COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_ROOT_DIR}
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(ENABLE_TOOLS)
-        install(TARGETS benchmark RUNTIME DESTINATION ${RUNTIME_PKG_NAME}/benchmark COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS benchmark RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS benchmark_train RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR}
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
 elseif(PLATFORM_ARM32)
-    install(FILES ${TOP_DIR}/mindspore/lite/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
@@ -159,57 +174,53 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ascend*" EXCLUDE)
-    install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_PKG_NAME}
-            COMPONENT ${CODEGEN_COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_ROOT_DIR}
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(ENABLE_TOOLS)
-        install(TARGETS benchmark RUNTIME DESTINATION ${RUNTIME_PKG_NAME}/benchmark COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS benchmark RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS benchmark_train RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR}
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
     endif()
 elseif(WIN32)
-    install(FILES ${TOP_DIR}/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
     get_filename_component(CXX_DIR ${CMAKE_CXX_COMPILER} PATH)
     file(GLOB LIB_LIST ${CXX_DIR}/libstdc++-6.dll ${CXX_DIR}/libwinpthread-1.dll
             ${CXX_DIR}/libssp-0.dll ${CXX_DIR}/libgcc_s_seh-1.dll)
     if(ENABLE_CONVERTER)
-        install(FILES ${TOP_DIR}/build/.commit_id DESTINATION ${CONVERTER_PKG_NAME}
-                COMPONENT ${CONVERTER_COMPONENT_NAME})
-        install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_PKG_NAME}/converter
-                COMPONENT ${CONVERTER_COMPONENT_NAME})
-        install(FILES ${LIB_LIST} DESTINATION ${CONVERTER_PKG_NAME}/converter COMPONENT ${CONVERTER_COMPONENT_NAME})
+        install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${LIB_LIST} DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/build/mindspore/tools/converter/mindspore_core/gvar/libmindspore_gvar.dll
-                DESTINATION ${CONVERTER_PKG_NAME}/converter COMPONENT ${CONVERTER_COMPONENT_NAME})
-        install(FILES ${glog_LIBPATH}/../bin/libglog.dll DESTINATION ${CONVERTER_PKG_NAME}/converter
-                COMPONENT ${CONVERTER_COMPONENT_NAME})
-        install(TARGETS codegen RUNTIME DESTINATION ${CODEGEN_PKG_NAME}/
-                COMPONENT ${CODEGEN_COMPONENT_NAME})
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${glog_LIBPATH}/../bin/libglog.dll DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS codegen RUNTIME DESTINATION ${CODEGEN_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(ENABLE_TOOLS)
-        install(TARGETS benchmark RUNTIME DESTINATION ${RUNTIME_PKG_NAME}/benchmark COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${LIB_LIST} DESTINATION ${RUNTIME_PKG_NAME}/benchmark COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${flatbuffers_INC} DESTINATION ${RUNTIME_PKG_NAME}/third_party/flatbuffers
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        if(SUPPORT_TRAIN)
-            install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
-                    COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-        else()
-            install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
-                    COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE)
-        endif()
-        install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
-                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ascend*" EXCLUDE)
-        set(WIN_LIB_DIR_RUN_X86 ${RUNTIME_PKG_NAME}/benchmark)
-        install(FILES ${TOP_DIR}/build/mindspore/src/libmindspore-lite.a DESTINATION ${WIN_LIB_DIR_RUN_X86}
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/build/mindspore/src/libmindspore-lite.dll.a DESTINATION ${WIN_LIB_DIR_RUN_X86}
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/build/mindspore/src/libmindspore-lite.dll DESTINATION ${WIN_LIB_DIR_RUN_X86}
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS benchmark RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
-else()
-    install(FILES ${TOP_DIR}/mindspore/lite/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}
+    install(FILES ${LIB_LIST} DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(DIRECTORY ${flatbuffers_INC} DESTINATION ${RUNTIME_INC_DIR}/third_party/
             COMPONENT ${RUNTIME_COMPONENT_NAME})
+    if(SUPPORT_TRAIN)
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    else()
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE)
+    endif()
+    install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(DIRECTORY ${TOP_DIR}/include/api/ DESTINATION ${RUNTIME_INC_DIR}/api
+            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ascend*" EXCLUDE)
+    install(FILES ${TOP_DIR}/build/mindspore/src/libmindspore-lite.a DESTINATION ${RUNTIME_LIB_DIR}
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${TOP_DIR}/build/mindspore/src/libmindspore-lite.dll.a DESTINATION ${RUNTIME_LIB_DIR}
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${TOP_DIR}/build/mindspore/src/libmindspore-lite.dll DESTINATION ${RUNTIME_LIB_DIR}
+            COMPONENT ${RUNTIME_COMPONENT_NAME})
+else()
     if(SUPPORT_TRAIN)
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
@@ -226,25 +237,26 @@ else()
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.a DESTINATION ${RUNTIME_LIB_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(ENABLE_CONVERTER)
-        install(FILES ${TOP_DIR}/mindspore/lite/build/.commit_id DESTINATION ${CONVERTER_PKG_NAME}
-                COMPONENT ${CONVERTER_COMPONENT_NAME})
-        install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_PKG_NAME}/converter
-                COMPONENT ${CONVERTER_COMPONENT_NAME})
+        install(TARGETS converter_lite RUNTIME DESTINATION ${CONVERTER_ROOT_DIR}/converter
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/converter/mindspore_core/gvar/libmindspore_gvar.so
-                DESTINATION ${CONVERTER_PKG_NAME}/lib COMPONENT ${CONVERTER_COMPONENT_NAME})
+                DESTINATION ${CONVERTER_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libglog.so.0.4.0
-                DESTINATION ${CONVERTER_PKG_NAME}/third_party/glog/lib RENAME libglog.so.0
-                COMPONENT ${CONVERTER_COMPONENT_NAME})
-        install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_PKG_NAME}
-                COMPONENT ${CODEGEN_COMPONENT_NAME})
-        install(TARGETS codegen RUNTIME DESTINATION ${CODEGEN_PKG_NAME}/
-                COMPONENT ${CODEGEN_COMPONENT_NAME})
+                DESTINATION ${CONVERTER_ROOT_DIR}/third_party/glog/lib RENAME libglog.so.0
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(DIRECTORY ${TOP_DIR}/mindspore/lite/build/operator_library DESTINATION ${CODEGEN_ROOT_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS codegen RUNTIME DESTINATION ${CODEGEN_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(ENABLE_TOOLS)
-        install(TARGETS benchmark RUNTIME DESTINATION ${RUNTIME_PKG_NAME}/benchmark COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(TARGETS cropper RUNTIME DESTINATION ${RUNTIME_PKG_NAME}/cropper COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS benchmark RUNTIME DESTINATION ${BENCHMARK_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(SUPPORT_TRAIN)
+            install(TARGETS benchmark_train RUNTIME DESTINATION ${BENCHMARK_TRAIN_ROOT_DIR}
+                    COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+        install(TARGETS cropper RUNTIME DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/lite/build/tools/cropper/cropper_mapping_cpu.cfg
-                DESTINATION ${RUNTIME_PKG_NAME}/cropper COMPONENT ${RUNTIME_COMPONENT_NAME})
+                DESTINATION ${CROPPER_ROOT_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
 endif()
 
@@ -253,13 +265,11 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
 else()
     set(CPACK_GENERATOR TGZ)
 endif()
+
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-if(PLATFORM_ARM64 OR PLATFORM_ARM32)
-    set(CPACK_COMPONENTS_ALL ${RUNTIME_COMPONENT_NAME} ${CODEGEN_COMPONENT_NAME})
-else()
-    set(CPACK_COMPONENTS_ALL ${RUNTIME_COMPONENT_NAME} ${CONVERTER_COMPONENT_NAME} ${CODEGEN_COMPONENT_NAME})
-endif()
+set(CPACK_COMPONENTS_ALL ${RUNTIME_COMPONENT_NAME})
 set(CPACK_PACKAGE_FILE_NAME ${MAIN_DIR})
+
 if(WIN32)
     set(CPACK_PACKAGE_DIRECTORY ${TOP_DIR}/output)
 else()
