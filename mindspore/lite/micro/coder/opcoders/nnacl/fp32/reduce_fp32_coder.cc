@@ -20,7 +20,7 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 #include "coder/opcoders/file_collector.h"
 
-using mindspore::schema::PrimitiveType_PowFusion;
+using mindspore::schema::PrimitiveType_ReduceFusion;
 
 namespace mindspore::lite::micro::nnacl {
 int ReduceFP32Coder::Prepare(CoderContext *const context) {
@@ -116,6 +116,6 @@ int ReduceFP32Coder::DoCode(CoderContext *const context) {
   return RET_OK;
 }
 
-REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_PowFusion, CPUOpCoderCreator<ReduceFP32Coder>)
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_ReduceFusion, CPUOpCoderCreator<ReduceFP32Coder>)
 
 }  // namespace mindspore::lite::micro::nnacl
