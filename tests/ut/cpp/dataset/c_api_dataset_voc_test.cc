@@ -15,6 +15,7 @@
  */
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/core/tensor.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::DataType;
@@ -47,20 +48,22 @@ TEST_F(MindDataTestPipeline, TestVOCClassIndex) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if VOCOp read correct labels
+  // Check if VOC() read correct labels
   // When we provide class_index, label of ["car","cat","train"] become [0,1,9]
-  // std::shared_ptr<Tensor> expect_label;
-  // Tensor::CreateFromMemory(TensorShape({1, 1}), DataType(DataType::DE_UINT32), nullptr, &expect_label);
+  std::shared_ptr<Tensor> de_expect_label;
+  ASSERT_OK(Tensor::CreateFromMemory(TensorShape({1, 1}), DataType(DataType::DE_UINT32), nullptr, &de_expect_label));
+  uint32_t expect[] = {9, 9, 9, 1, 1, 0};
 
-  // uint32_t expect[] = {9, 9, 9, 1, 1, 0};
   uint64_t i = 0;
   while (row.size() != 0) {
     auto image = row["image"];
     auto label = row["label"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
-    // expect_label->SetItemAt({0, 0}, expect[i]);
-    // EXPECT_EQ(*label, *expect_label);
+
+    ASSERT_OK(de_expect_label->SetItemAt({0, 0}, expect[i]));
+    mindspore::MSTensor expect_label = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_label));
+    EXPECT_MSTENSOR_EQ(label, expect_label);
 
     iter->GetNextRow(&row);
     i++;
@@ -132,9 +135,13 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if VOCOp read correct images/labels
-  // std::string expect_file[] = {"15", "32", "33", "39"};
-  // uint32_t expect_num[] = {5, 5, 4, 3};
+  // Check if VOC() read correct images/labels
+  std::string expect_file[] = {"15", "32", "33", "39"};
+  uint32_t expect_num[] = {5, 5, 4, 3};
+
+  std::shared_ptr<Tensor> de_expect_label;
+  ASSERT_OK(Tensor::CreateFromMemory(TensorShape({1, 1}), DataType(DataType::DE_UINT32), nullptr, &de_expect_label));
+
   uint64_t i = 0;
   while (row.size() != 0) {
     auto image = row["image"];
@@ -142,14 +149,12 @@ TEST_F(MindDataTestPipeline, TestVOCDetection) {
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
 
-    // std::shared_ptr<Tensor> expect_image;
-    // Tensor::CreateFromFile(folder_path + "/JPEGImages/" + expect_file[i] + ".jpg", &expect_image);
-    // EXPECT_EQ(*image, *expect_image);
+    mindspore::MSTensor expect_image = ReadFileToTensor(folder_path + "/JPEGImages/" + expect_file[i] + ".jpg");
+    EXPECT_MSTENSOR_EQ(image, expect_image);
 
-    // std::shared_ptr<Tensor> expect_label;
-    // Tensor::CreateFromMemory(TensorShape({1, 1}), DataType(DataType::DE_UINT32), nullptr, &expect_label);
-    // expect_label->SetItemAt({0, 0}, expect_num[i]);
-    // EXPECT_EQ(*label, *expect_label);
+    ASSERT_OK(de_expect_label->SetItemAt({0, 0}, expect_num[i]));
+    mindspore::MSTensor expect_label = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_label));
+    EXPECT_MSTENSOR_EQ(label, expect_label);
 
     iter->GetNextRow(&row);
     i++;
@@ -205,9 +210,8 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // Check if VOCOp read correct images/targets
-  // using Tensor = mindspore::dataset::Tensor;
-  // std::string expect_file[] = {"32", "33", "39", "32", "33", "39"};
+  // Check if VOC() read correct images/targets
+  std::string expect_file[] = {"32", "33", "39", "32", "33", "39"};
   uint64_t i = 0;
   while (row.size() != 0) {
     auto image = row["image"];
@@ -215,13 +219,11 @@ TEST_F(MindDataTestPipeline, TestVOCSegmentation) {
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     MS_LOG(INFO) << "Tensor target shape: " << target.Shape();
 
-    // std::shared_ptr<Tensor> expect_image;
-    // Tensor::CreateFromFile(folder_path + "/JPEGImages/" + expect_file[i] + ".jpg", &expect_image);
-    // EXPECT_EQ(*image, *expect_image);
+    mindspore::MSTensor expect_image = ReadFileToTensor(folder_path + "/JPEGImages/" + expect_file[i] + ".jpg");
+    EXPECT_MSTENSOR_EQ(image, expect_image);
 
-    // std::shared_ptr<Tensor> expect_target;
-    // Tensor::CreateFromFile(folder_path + "/SegmentationClass/" + expect_file[i] + ".png", &expect_target);
-    // EXPECT_EQ(*target, *expect_target);
+    mindspore::MSTensor expect_target = ReadFileToTensor(folder_path + "/SegmentationClass/" + expect_file[i] + ".png");
+    EXPECT_MSTENSOR_EQ(target, expect_target);
 
     iter->GetNextRow(&row);
     i++;

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TESTS_DATASET_UT_CORE_COMMON_DE_UT_COMMON_H_
-#define TESTS_DATASET_UT_CORE_COMMON_DE_UT_COMMON_H_
+#ifndef TESTS_UT_CPP_DATASET_COMMON_COMMON_H_
+#define TESTS_UT_CPP_DATASET_COMMON_COMMON_H_
 
 #include "gtest/gtest.h"
 #include "include/api/status.h"
@@ -62,6 +62,15 @@ using mindspore::StatusCode;
     }                                          \
   } while (false)
 
+// Macro to compare 2 MSTensors; compare shape-size and data
+#define EXPECT_MSTENSOR_EQ(_mstensor1, _mstensor2)                                                            \
+do {                                                                                                          \
+    EXPECT_EQ(_mstensor1.Shape().size(), _mstensor2.Shape().size());                                          \
+    EXPECT_EQ(_mstensor1.DataSize(), _mstensor2.DataSize());                                                  \
+    EXPECT_EQ(std::memcmp((const void *)_mstensor1.Data().get(), (const void *)_mstensor2.Data().get(),       \
+                          _mstensor2.DataSize()), 0);                                                         \
+} while (false)
+
 namespace UT {
 class Common : public testing::Test {
  public:
@@ -75,9 +84,10 @@ class DatasetOpTesting : public Common {
  public:
   std::vector<mindspore::dataset::TensorShape> ToTensorShapeVec(const std::vector<std::vector<int64_t>> &v);
   std::vector<mindspore::dataset::DataType> ToDETypes(const std::vector<mindspore::DataType> &t);
+  mindspore::MSTensor ReadFileToTensor(const std::string &file);
   std::string datasets_root_path_;
   std::string mindrecord_root_path_;
   void SetUp() override;
 };
 }  // namespace UT
-#endif  // TESTS_DATASET_UT_CORE_COMMON_DE_UT_COMMON_H_
+#endif  // TESTS_UT_CPP_DATASET_COMMON_COMMON_H_

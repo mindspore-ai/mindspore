@@ -142,8 +142,8 @@ TEST_F(MindDataTestPipeline, TestSoftDvppDecodeResizeJpegSuccess1) {
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // std::shared_ptr<TensorTransform> image = row["image"];
-    // MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
     iter->GetNextRow(&row);
   }
 

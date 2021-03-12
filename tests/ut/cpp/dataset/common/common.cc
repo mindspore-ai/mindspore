@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 #include "common.h"
+#include <fstream>
+#include <algorithm>
+#include <string>
+#include <vector>
 
 namespace UT {
 #ifdef __cplusplus
@@ -42,6 +46,34 @@ std::vector<mindspore::dataset::DataType> DatasetOpTesting::ToDETypes(const std:
     return mindspore::dataset::MSTypeToDEType(static_cast<mindspore::TypeId>(t));
   });
   return ret_t;
+}
+
+// Function to read a file into an MSTensor
+// Note: This provides the analogous support for DETensor's CreateFromFile.
+mindspore::MSTensor DatasetOpTesting::ReadFileToTensor(const std::string &file) {
+  if (file.empty()) {
+    MS_LOG(ERROR) << "Pointer file is nullptr; return an empty Tensor.";
+    return mindspore::MSTensor();
+  }
+  std::ifstream ifs(file);
+  if (!ifs.good()) {
+    MS_LOG(ERROR) << "File: " << file << " does not exist; return an empty Tensor.";
+    return mindspore::MSTensor();
+  }
+  if (!ifs.is_open()) {
+    MS_LOG(ERROR) << "File: " << file << " open failed; return an empty Tensor.";
+    return mindspore::MSTensor();
+  }
+
+  ifs.seekg(0, std::ios::end);
+  size_t size = ifs.tellg();
+  mindspore::MSTensor buf("file", mindspore::DataType::kNumberTypeUInt8, {static_cast<int64_t>(size)}, nullptr, size);
+
+  ifs.seekg(0, std::ios::beg);
+  ifs.read(reinterpret_cast<char *>(buf.MutableData()), size);
+  ifs.close();
+
+  return buf;
 }
 
 #ifdef __cplusplus

@@ -48,6 +48,7 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess1) {
     i++;
     // auto image = row["file_name"];
     // MS_LOG(INFO) << "Tensor image file name: " << *image;
+
     iter->GetNextRow(&row);
   }
 
@@ -196,14 +197,16 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess5) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
+  std::shared_ptr<Tensor> de_expect_item;
+  ASSERT_OK(Tensor::CreateScalar((int64_t)0, &de_expect_item));
+  mindspore::MSTensor expect_item = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_item));
+
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto label = row["label"];
+    auto label = row["label"];
 
-    // mindspore::MSTensor expected_item;
-    // Tensor::CreateScalar((int64_t)0, &expected_item);
-    // EXPECT_EQ(*expected_item, *label);
+    EXPECT_MSTENSOR_EQ(label, expect_item);
 
     iter->GetNextRow(&row);
   }
@@ -302,17 +305,19 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess7) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
+  std::shared_ptr<Tensor> de_expect_item;
+  ASSERT_OK(Tensor::CreateScalar((int64_t)999, &de_expect_item));
+  mindspore::MSTensor expect_item = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_item));
+
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     // auto image = row["file_name"];
-    // auto label = row["label"];
+    auto label = row["label"];
     // MS_LOG(INFO) << "Tensor file name: " << *image;
     // MS_LOG(INFO) << "Tensor label: " << *label;
 
-    // mindspore::MSTensor expected_item;
-    // Tensor::CreateScalar((int64_t)999, &expected_item);
-    // EXPECT_EQ(*expected_item, *label);
+    EXPECT_MSTENSOR_EQ(label, expect_item);
 
     iter->GetNextRow(&row);
   }
@@ -339,8 +344,8 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
     MindData(file_list, {"file_name", "label"}, std::make_shared<SequentialSampler>(), pad, 4);
   EXPECT_NE(ds, nullptr);
 
-  std::vector<DataType> types = ToDETypes(ds->GetOutputTypes());
-  std::vector<TensorShape> shapes = ToTensorShapeVec(ds->GetOutputShapes());
+  std::vector<mindspore::dataset::DataType> types = ToDETypes(ds->GetOutputTypes());
+  std::vector<mindspore::dataset::TensorShape> shapes = ToTensorShapeVec(ds->GetOutputShapes());
   std::vector<std::string> column_names = {"file_name", "label"};
   EXPECT_EQ(types.size(), 2);
   EXPECT_EQ(types[0].ToString(), "string");
@@ -371,17 +376,19 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess8) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
+  std::shared_ptr<Tensor> de_expect_item;
+  ASSERT_OK(Tensor::CreateScalar((int64_t)999, &de_expect_item));
+  mindspore::MSTensor expect_item = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_item));
+
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
     // auto image = row["file_name"];
-    // auto label = row["label"];
+    auto label = row["label"];
     // MS_LOG(INFO) << "Tensor file name: " << *image;
     // MS_LOG(INFO) << "Tensor label: " << *label;
 
-    // mindspore::MSTensor expected_item;
-    // Tensor::CreateScalar((int64_t)999, &expected_item);
-    // EXPECT_EQ(*expected_item, *label);
+    EXPECT_MSTENSOR_EQ(label, expect_item);
 
     iter->GetNextRow(&row);
   }
@@ -444,15 +451,17 @@ TEST_F(MindDataTestPipeline, TestMindDataSuccess9) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
+  std::shared_ptr<Tensor> de_expect_item;
+  ASSERT_OK(Tensor::CreateScalar((int64_t)999, &de_expect_item));
+  mindspore::MSTensor expect_item = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expect_item));
+
   uint64_t i = 0;
   while (row.size() != 0) {
     i++;
-    // auto label = row["label"];
+    auto label = row["label"];
     // MS_LOG(INFO) << "Tensor label: " << *label;
 
-    // mindspore::MSTensor expected_item;
-    // Tensor::CreateScalar((int64_t)999, &expected_item);
-    // EXPECT_EQ(*expected_item, *label);
+    EXPECT_MSTENSOR_EQ(label, expect_item);
 
     iter->GetNextRow(&row);
   }
