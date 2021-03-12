@@ -33,23 +33,19 @@ std::string MemInfo2String(const std::string &label, const AddressPtrList &info)
 }
 }  // namespace
 
-void MemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info) {
-  std::lock_guard<std::mutex> lock(mtx_);
-  std::ostringstream mem_info_stream;
-  auto inputs = mem_info.inputs_;
-  mem_info_stream << op_name << std::endl;
-  mem_info_stream << MemInfo2String("kernel_inputs", *inputs);
-  auto workspaces = mem_info.workspaces_;
-  mem_info_stream << MemInfo2String("kernel_workspaces", *workspaces);
-  auto outputs = mem_info.outputs_;
-  mem_info_stream << MemInfo2String("kernel_outputs", *outputs);
-  mem_info_stream << std::endl;
+void GPUMemAddressRecorder::SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info, size_t id) {
+  if (op_names_.size() <= id) {
+    return;
+  }
 
-  std::string mem_info_str = mem_info_stream.str();
-  mem_info_container_[op_name] = mem_info_str;
+  std::lock_guard<std::mutex> lock(mtx_);
+  op_names_[id] = op_name;
+  mem_info_inputs_[id] = *(mem_info.inputs_);
+  mem_info_workspaces_[id] = *(mem_info.workspaces_);
+  mem_info_outputs_[id] = *(mem_info.outputs_);
 }
 
-void MemAddressRecorder::Export() {
+void GPUMemAddressRecorder::Export() {
   auto realpath = GetFileRealPath();
   if (!realpath.has_value()) {
     return;
@@ -62,18 +58,19 @@ void MemAddressRecorder::Export() {
     MS_LOG(WARNING) << "Open file for saving gpu memory information failed. File path: '" << file_path << "'.";
     return;
   }
-  for (auto &info : mem_info_container_) {
-    fout << info.second;
+  std::ostringstream mem_info_stream;
+  for (size_t i = 0; i < op_names_.size(); i++) {
+    mem_info_stream << op_names_[i] << std::endl;
+    auto inputs = mem_info_inputs_[i];
+    mem_info_stream << MemInfo2String("kernel_inputs", inputs);
+    auto workspaces = mem_info_workspaces_[i];
+    mem_info_stream << MemInfo2String("kernel_workspaces", workspaces);
+    auto outputs = mem_info_outputs_[i];
+    mem_info_stream << MemInfo2String("kernel_outputs", outputs);
+    mem_info_stream << std::endl;
   }
+  fout << mem_info_stream.str();
   fout.close();
   ChangeFileMode(file_path, S_IRUSR);
-}
-
-void MemAddressRecorder::UpdateInfo(const BaseRecorder &recorder) {
-  const MemAddressRecorder *mem_recorder = reinterpret_cast<const MemAddressRecorder *>(&recorder);
-  std::map<std::string, std::string> mem_info = mem_recorder->MemInfo();
-  for (const auto &info : mem_info) {
-    mem_info_container_[info.first] = info.second;
-  }
 }
 }  // namespace mindspore

@@ -62,7 +62,8 @@ class RecorderManager {
 
   void UpdateRdrEnable();
   bool RdrEnable() const { return rdr_enable_; }
-  bool RecordObject(const BaseRecorderPtr &recorder, const bool &replace = true);
+  bool RecordObject(const BaseRecorderPtr &recorder);
+  BaseRecorderPtr GetRecorder(std::string module, std::string name);
   void TriggerAll();
   void ClearAll();
 

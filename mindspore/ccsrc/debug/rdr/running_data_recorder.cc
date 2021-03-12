@@ -123,15 +123,30 @@ bool RecordStreamExecOrder(const SubModuleId module, const std::string &name, co
   return ans;
 }
 
-bool RecordMemAddressInfo(const SubModuleId module, const std::string &name, const std::string &op_name,
-                          const GPUMemInfo &mem_info) {
+bool RecordGPUMemAddressInfo(const SubModuleId module, const std::string &name, size_t nsize) {
   if (!mindspore::RecorderManager::Instance().RdrEnable()) {
     return false;
   }
   std::string submodule_name = std::string(GetSubModuleName(module));
-  MemAddressRecorderPtr mem_info_recorder = std::make_shared<MemAddressRecorder>(submodule_name, name);
-  mem_info_recorder->SaveMemInfo(op_name, mem_info);
-  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(mem_info_recorder), false);
+  GPUMemAddressRecorderPtr mem_info_recorder = std::make_shared<GPUMemAddressRecorder>(submodule_name, name);
+  mem_info_recorder->Reset(nsize);
+  bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(mem_info_recorder));
+  return ans;
+}
+
+bool UpdateGPUMemAddressInfo(const SubModuleId module, const std::string &name, const std::string &op_name,
+                             const GPUMemInfo &mem_info, size_t id) {
+  if (!mindspore::RecorderManager::Instance().RdrEnable()) {
+    return false;
+  }
+  std::string submodule_name = std::string(GetSubModuleName(module));
+  auto recorder = mindspore::RecorderManager::Instance().GetRecorder(submodule_name, name);
+  bool ans = false;
+  if (recorder != nullptr) {
+    auto mem_recorder = std::dynamic_pointer_cast<GPUMemAddressRecorder>(recorder);
+    mem_recorder->SaveMemInfo(op_name, mem_info, id);
+    ans = true;
+  }
   return ans;
 }
 

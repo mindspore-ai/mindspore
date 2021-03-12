@@ -34,22 +34,28 @@ struct GPUMemInfo {
   AddressPtrList *workspaces_;
   AddressPtrList *outputs_;
 };
-class MemAddressRecorder : public BaseRecorder {
+class GPUMemAddressRecorder : public BaseRecorder {
  public:
-  MemAddressRecorder() {}
-  MemAddressRecorder(const std::string &module, const std::string &name) : BaseRecorder(module, name) {}
-  ~MemAddressRecorder() {}
+  GPUMemAddressRecorder() {}
+  GPUMemAddressRecorder(const std::string &module, const std::string &name) : BaseRecorder(module, name) {}
+  ~GPUMemAddressRecorder() {}
 
   virtual void Export();
-  void SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info);
-  void UpdateInfo(const BaseRecorder &recorder);
-  std::map<std::string, std::string> MemInfo() const { return mem_info_container_; }
+  void SaveMemInfo(const std::string &op_name, const GPUMemInfo &mem_info, size_t id);
+  void Reset(size_t nsize) {
+    op_names_.resize(nsize);
+    mem_info_inputs_.resize(nsize);
+    mem_info_workspaces_.resize(nsize);
+    mem_info_outputs_.resize(nsize);
+  }
 
  private:
   mutable std::mutex mtx_;
-
-  std::map<std::string, std::string> mem_info_container_;
+  std::vector<std::string> op_names_;
+  std::vector<AddressPtrList> mem_info_inputs_;
+  std::vector<AddressPtrList> mem_info_workspaces_;
+  std::vector<AddressPtrList> mem_info_outputs_;
 };
-using MemAddressRecorderPtr = std::shared_ptr<MemAddressRecorder>;
+using GPUMemAddressRecorderPtr = std::shared_ptr<GPUMemAddressRecorder>;
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_DEBUG_RDR_MEM_ADDRESS_RECORDER_H_
