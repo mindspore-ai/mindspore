@@ -71,6 +71,14 @@ do {                                                                            
                           _mstensor2.DataSize()), 0);                                                         \
 } while (false)
 
+// Macro to invoke MS_LOG for MSTensor
+#define TEST_MS_LOG_MSTENSOR(_loglevel, _msg, _mstensor)           \
+  do {                                                             \
+    std::shared_ptr<Tensor> _de_tensor;                            \
+    ASSERT_OK(Tensor::CreateFromMSTensor(_mstensor, &_de_tensor)); \
+    MS_LOG(_loglevel) << _msg << *_de_tensor;                      \
+  } while (false)
+
 namespace UT {
 class Common : public testing::Test {
  public:

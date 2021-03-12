@@ -148,12 +148,21 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle) {
   iter2->GetNextRow(&row2);
 
   uint64_t i = 0;
-  // int64_t value1 = 0;
-  // int64_t value2 = 0;
+  int64_t value1 = 0;
+  int64_t value2 = 0;
   while (row1.size() != 0 && row2.size() != 0) {
-    // row1["scalars"]->GetItemAt(&value1, {0});
-    // row2["scalars"]->GetItemAt(&value2, {0});
-    // EXPECT_EQ(value1, value2);
+    auto scalars1 = row1["scalars"];
+    std::shared_ptr<Tensor> de_scalars1;
+    ASSERT_OK(Tensor::CreateFromMSTensor(scalars1, &de_scalars1));
+    de_scalars1->GetItemAt(&value1, {0});
+
+    auto scalars2 = row2["scalars"];
+    std::shared_ptr<Tensor> de_scalars2;
+    ASSERT_OK(Tensor::CreateFromMSTensor(scalars2, &de_scalars2));
+    de_scalars2->GetItemAt(&value2, {0});
+
+    EXPECT_EQ(value1, value2);
+
     iter1->GetNextRow(&row1);
     iter2->GetNextRow(&row2);
     i++;
@@ -191,17 +200,21 @@ TEST_F(MindDataTestPipeline, TestTFRecordDatasetShuffle2) {
   std::unordered_map<std::string, mindspore::MSTensor> row;
   iter->GetNextRow(&row);
 
-  // std::vector<int> expect = {9, 3, 4, 7, 2, 1, 6, 8, 10, 5};
-  // std::vector<int> actual = {};
-  // int64_t value = 0;
+  std::vector<int> expect = {9, 3, 4, 7, 2, 1, 6, 8, 10, 5};
+  std::vector<int> actual = {};
+  int64_t value = 0;
   uint64_t i = 0;
   while (row.size() != 0) {
-    // row["scalars"]->GetItemAt(&value, {});
-    // actual.push_back(value);
+    auto scalars = row["scalars"];
+    std::shared_ptr<Tensor> de_scalars;
+    ASSERT_OK(Tensor::CreateFromMSTensor(scalars, &de_scalars));
+    de_scalars->GetItemAt(&value, {0});
+    actual.push_back(value);
+
     iter->GetNextRow(&row);
     i++;
   }
-  // ASSERT_EQ(actual, expect);
+  ASSERT_EQ(actual, expect);
   EXPECT_EQ(i, 10);
   // Manually terminate the pipeline
   iter->Stop();

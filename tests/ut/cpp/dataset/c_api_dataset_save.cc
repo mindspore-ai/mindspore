@@ -46,9 +46,10 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   // Save original data for comparison
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto label = row["label"];
-    // original_data.push_back(label);
-    // MS_LOG(INFO) << "Tensor label: " << *label;
+    auto label = row["label"];
+    original_data.push_back(label);
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
+
     iter->GetNextRow(&row);
     i++;
   }
@@ -97,9 +98,10 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   // Expect the output data is same with original_data
   uint64_t j = 0;
   while (row_minddata.size() != 0) {
-    // auto label = row_minddata["label"];
-    // EXPECT_EQ(*original_data[j], *label);
-    // MS_LOG(INFO) << "Tensor label: " << *label;
+    auto label = row_minddata["label"];
+    EXPECT_MSTENSOR_EQ(original_data[j], label);
+    TEST_MS_LOG_MSTENSOR(INFO, "Tensor label: ", label);
+
     iter_minddata->GetNextRow(&row_minddata);
     j++;
   }

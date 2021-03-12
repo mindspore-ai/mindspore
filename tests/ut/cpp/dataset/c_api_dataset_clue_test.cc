@@ -48,16 +48,18 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  // std::vector<std::string> expected_result = {"蚂蚁借呗等额还款能否换成先息后本", "蚂蚁花呗说我违约了",
-  //                                             "帮我看看本月花呗账单结清了没"};
+  std::vector<std::string> expected_result = {"蚂蚁借呗等额还款能否换成先息后本", "蚂蚁花呗说我违约了",
+                                               "帮我看看本月花呗账单结清了没"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["sentence1"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
@@ -71,7 +73,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
 
   // test
   usage = "test";
-  // expected_result = {"借呗取消的时间", "网商贷用什么方法转变成借呗", "我的借呗为什么开通不了"};
+  expected_result = {"借呗取消的时间", "网商贷用什么方法转变成借呗", "我的借呗为什么开通不了"};
   ds = CLUE({test_file}, task, usage, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
   iter = ds->CreateIterator();
@@ -80,11 +82,13 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   EXPECT_NE(row.find("sentence1"), row.end());
   i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    auto text = row["sentence1"];
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     iter->GetNextRow(&row);
     i++;
   }
@@ -92,7 +96,7 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
 
   // eval
   usage = "eval";
-  // expected_result = {"你有花呗吗", "吃饭能用花呗吗", "蚂蚁花呗支付金额有什么限制"};
+  expected_result = {"你有花呗吗", "吃饭能用花呗吗", "蚂蚁花呗支付金额有什么限制"};
   ds = CLUE({eval_file}, task, usage, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds, nullptr);
   iter = ds->CreateIterator();
@@ -101,11 +105,13 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetAFQMC) {
   EXPECT_NE(row.find("sentence1"), row.end());
   i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    auto text = row["sentence1"];
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     iter->GetNextRow(&row);
     i++;
   }
@@ -238,15 +244,17 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCMNLI) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  // std::vector<std::string> expected_result = {"你应该给这件衣服定一个价格。", "我怎么知道他要说什么", "向左。"};
+  std::vector<std::string> expected_result = {"你应该给这件衣服定一个价格。", "我怎么知道他要说什么", "向左。"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["sentence1"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
@@ -279,15 +287,17 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetCSL) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("abst"), row.end());
-  // std::vector<std::string> expected_result = {"这是一段长文本", "这是一段长文本", "这是一段长文本"};
+  std::vector<std::string> expected_result = {"这是一段长文本", "这是一段长文本", "这是一段长文本"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["abst"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
@@ -420,15 +430,17 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetIFLYTEK) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence"), row.end());
-  // std::vector<std::string> expected_result = {"第一个文本", "第二个文本", "第三个文本"};
+  std::vector<std::string> expected_result = {"第一个文本", "第二个文本", "第三个文本"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["sentence"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
@@ -475,22 +487,24 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesA) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  // std::vector<std::string> expected_result = {"你有花呗吗",
-  //                                             "吃饭能用花呗吗",
-  //                                             "蚂蚁花呗支付金额有什么限制",
-  //                                             "蚂蚁借呗等额还款能否换成先息后本",
-  //                                             "蚂蚁花呗说我违约了",
-  //                                             "帮我看看本月花呗账单结清了没"};
+  std::vector<std::string> expected_result = {"你有花呗吗",
+                                              "吃饭能用花呗吗",
+                                              "蚂蚁花呗支付金额有什么限制",
+                                              "蚂蚁借呗等额还款能否换成先息后本",
+                                              "蚂蚁花呗说我违约了",
+                                              "帮我看看本月花呗账单结清了没"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
-    // // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    auto text = row["sentence1"];
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    MS_LOG(INFO) << "Text length: " << ss.length() << ", Text: " << ss.substr(0, 50);
+    // Compare against expected result
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     i++;
     iter->GetNextRow(&row);
   }
@@ -540,21 +554,23 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleFilesB) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  // std::vector<std::string> expected_result = {"你有花呗吗",
-  //                                             "吃饭能用花呗吗",
-  //                                             "蚂蚁花呗支付金额有什么限制",
-  //                                             "蚂蚁借呗等额还款能否换成先息后本",
-  //                                             "蚂蚁花呗说我违约了",
-  //                                             "帮我看看本月花呗账单结清了没"};
+  std::vector<std::string> expected_result = {"你有花呗吗",
+                                              "吃饭能用花呗吗",
+                                              "蚂蚁花呗支付金额有什么限制",
+                                              "蚂蚁借呗等额还款能否换成先息后本",
+                                              "蚂蚁花呗说我违约了",
+                                              "帮我看看本月花呗账单结清了没"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
-    // auto text = row["sentence1"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
+    auto text = row["sentence1"];
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
     // Compare against expected result
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     i++;
     iter->GetNextRow(&row);
   }
@@ -598,15 +614,17 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetShuffleGlobal) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence1"), row.end());
-  // std::vector<std::string> expected_result = {"蚂蚁花呗说我违约了", "帮我看看本月花呗账单结清了没",
-  //                                             "蚂蚁借呗等额还款能否换成先息后本"};
+  std::vector<std::string> expected_result = {"蚂蚁花呗说我违约了", "帮我看看本月花呗账单结清了没",
+                                              "蚂蚁借呗等额还款能否换成先息后本"};
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["sentence1"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     i++;
     iter->GetNextRow(&row);
@@ -643,15 +661,17 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetTNEWS) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("sentence"), row.end());
-  // std::vector<std::string> expected_result = {"新闻1", "新闻2", "新闻3"};
+  std::vector<std::string> expected_result = {"新闻1", "新闻2", "新闻3"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["sentence"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;
@@ -684,16 +704,18 @@ TEST_F(MindDataTestPipeline, TestCLUEDatasetWSC) {
   iter->GetNextRow(&row);
 
   EXPECT_NE(row.find("text"), row.end());
-  // std::vector<std::string> expected_result = {"小明呢，他在哪？", "小红刚刚看到小明，他在操场",
-  //                                             "等小明回来，小张你叫他交作业"};
+  std::vector<std::string> expected_result = {"小明呢，他在哪？", "小红刚刚看到小明，他在操场",
+                                              "等小明回来，小张你叫他交作业"};
 
   uint64_t i = 0;
   while (row.size() != 0) {
     auto text = row["text"];
-    // std::string_view sv;
-    // text->GetItemAt(&sv, {0});
-    // std::string ss(sv);
-    // EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
+    std::shared_ptr<Tensor> de_text;
+    ASSERT_OK(Tensor::CreateFromMSTensor(text, &de_text));
+    std::string_view sv;
+    de_text->GetItemAt(&sv, {0});
+    std::string ss(sv);
+    EXPECT_STREQ(ss.c_str(), expected_result[i].c_str());
     MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
     iter->GetNextRow(&row);
     i++;

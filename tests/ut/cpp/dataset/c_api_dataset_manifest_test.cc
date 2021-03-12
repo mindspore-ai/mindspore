@@ -238,15 +238,20 @@ TEST_F(MindDataTestPipeline, TestManifestClassIndex) {
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
-  // int32_t label_idx = 0;
+  int32_t label_idx = 0;
   while (row.size() != 0) {
     i++;
     auto image = row["image"];
+    auto label = row["label"];
     MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    // row["label"]->GetItemAt<int32_t>(&label_idx, {});
-    // MS_LOG(INFO) << "Tensor label value: " << label_idx;
-    // auto label_it = std::find(expected_label.begin(), expected_label.end(), label_idx);
-    // EXPECT_NE(label_it, expected_label.end());
+
+    std::shared_ptr<Tensor> de_label;
+    ASSERT_OK(Tensor::CreateFromMSTensor(label, &de_label));
+    de_label->GetItemAt<int32_t>(&label_idx, {});
+    MS_LOG(INFO) << "Tensor label value: " << label_idx;
+    auto label_it = std::find(expected_label.begin(), expected_label.end(), label_idx);
+    EXPECT_NE(label_it, expected_label.end());
+
     iter->GetNextRow(&row);
   }
 

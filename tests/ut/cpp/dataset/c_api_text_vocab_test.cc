@@ -35,6 +35,12 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
  protected:
 };
 
+// Macro to compare 2 MSTensors as not equal; compare datasize only
+#define EXPECT_MSTENSOR_DATA_NE(_mstensor1, _mstensor2)       \
+do {                                                          \
+    EXPECT_NE(_mstensor1.DataSize(), _mstensor2.DataSize());  \
+} while (false)
+
 TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVocabLookupOp.";
 
@@ -67,13 +73,17 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
-  // std::vector<int32_t> expected = {2, 1, 4, 5, 6, 7};
+  std::vector<int32_t> expected = {2, 1, 4, 5, 6, 7};
   while (row.size() != 0) {
-    // auto ind = row["text"];
-    // MS_LOG(INFO) << ind->shape() << " " << *ind;
-    // mindspore::MSTensor expected_item;
-    // Tensor::CreateScalar(expected[i], &expected_item);
-    // EXPECT_EQ(*ind, *expected_item);
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_item;
+    ASSERT_OK(Tensor::CreateScalar(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
     iter->GetNextRow(&row);
     i++;
   }
@@ -111,13 +121,17 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
-  // std::vector<int32_t> expected = {2, 1, 4, 5, 6, 7};
+  std::vector<int32_t> expected = {2, 1, 4, 5, 6, 7};
   while (row.size() != 0) {
-    // auto ind = row["text"];
-    // MS_LOG(INFO) << ind->shape() << " " << *ind;
-    // mindspore::MSTensor expected_item;
-    // Tensor::CreateScalar(expected[i], &expected_item);
-    // EXPECT_EQ(*ind, *expected_item);
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_item;
+    ASSERT_OK(Tensor::CreateScalar(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
     iter->GetNextRow(&row);
     i++;
   }
@@ -207,13 +221,17 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
-  // std::vector<int32_t> expected = {4, 5, 3, 6, 7, 2};
+  std::vector<int32_t> expected = {4, 5, 3, 6, 7, 2};
   while (row.size() != 0) {
-    // auto ind = row["text"];
-    // MS_LOG(INFO) << ind->shape() << " " << *ind;
-    // mindspore::MSTensor expected_item;
-    // Tensor::CreateScalar(expected[i], &expected_item);
-    // EXPECT_EQ(*ind, *expected_item);
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+    std::shared_ptr<Tensor> de_expected_item;
+    ASSERT_OK(Tensor::CreateScalar(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
     iter->GetNextRow(&row);
     i++;
   }
@@ -253,16 +271,25 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetDefault) {
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
-  // std::vector<int32_t> expected = {2, 3, 1, 4, 5, 0};
-  // std::vector<int64_t> not_expected = {2, 3, 1, 4, 5, 0};
+  std::vector<int32_t> expected = {2, 3, 1, 4, 5, 0};
+  std::vector<int64_t> not_expected = {2, 3, 1, 4, 5, 0};
   while (row.size() != 0) {
-    // auto ind = row["text"];
-    // MS_LOG(INFO) << ind->shape() << " " << *ind;
-    // mindspore::MSTensor expected_item, not_expected_item;
-    // Tensor::CreateScalar(expected[i], &expected_item);
-    // Tensor::CreateScalar(not_expected[i], &not_expected_item);
-    // EXPECT_EQ(*ind, *expected_item);
-    // EXPECT_NE(*ind, *not_expected_item);
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+
+    std::shared_ptr<Tensor> de_expected_item;
+    ASSERT_OK(Tensor::CreateScalar(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
+    std::shared_ptr<Tensor> de_not_expected_item;
+    ASSERT_OK(Tensor::CreateScalar(not_expected[i], &de_not_expected_item));
+    mindspore::MSTensor ms_not_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_not_expected_item));
+    EXPECT_MSTENSOR_DATA_NE(ind, ms_not_expected_item);
+
     iter->GetNextRow(&row);
     i++;
   }
@@ -361,16 +388,25 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
   iter->GetNextRow(&row);
 
   uint64_t i = 0;
-  // std::vector<int64_t> expected = {2, 3, 1, 4, 5, 0};
-  // std::vector<int8_t> not_expected = {2, 3, 1, 4, 5, 0};
+  std::vector<int64_t> expected = {2, 3, 1, 4, 5, 0};
+  std::vector<int8_t> not_expected = {2, 3, 1, 4, 5, 0};
   while (row.size() != 0) {
-    // auto ind = row["text"];
-    // MS_LOG(INFO) << ind->shape() << " " << *ind;
-    // mindspore::MSTensor expected_item, not_expected_item;
-    // Tensor::CreateScalar(expected[i], &expected_item);
-    // Tensor::CreateScalar(not_expected[i], &not_expected_item);
-    // EXPECT_EQ(*ind, *expected_item);
-    // EXPECT_NE(*ind, *not_expected_item);
+    auto ind = row["text"];
+    MS_LOG(INFO) << ind.Shape();
+    TEST_MS_LOG_MSTENSOR(INFO, "ind: ", ind);
+
+    std::shared_ptr<Tensor> de_expected_item;
+    ASSERT_OK(Tensor::CreateScalar(expected[i], &de_expected_item));
+    mindspore::MSTensor ms_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_item));
+    EXPECT_MSTENSOR_EQ(ind, ms_expected_item);
+
+    std::shared_ptr<Tensor> de_not_expected_item;
+    ASSERT_OK(Tensor::CreateScalar(not_expected[i], &de_not_expected_item));
+    mindspore::MSTensor ms_not_expected_item =
+      mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_not_expected_item));
+    EXPECT_MSTENSOR_DATA_NE(ind, ms_not_expected_item);
+
     iter->GetNextRow(&row);
     i++;
   }
