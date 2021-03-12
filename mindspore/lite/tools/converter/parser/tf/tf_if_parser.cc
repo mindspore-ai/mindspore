@@ -19,14 +19,14 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "ops/if.h"
+#include "tools/converter/ops/if.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TFIfParser::Parse(const tensorflow::NodeDef &tf_op,
                                    const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                    std::vector<std::string> *inputs, int *output_size) {
-  auto prim = std::make_unique<ops::If>();
+  auto prim = std::make_unique<If>();
 
   *output_size = 1;
   for (int i = 0; i < tf_op.input_size(); i++) {

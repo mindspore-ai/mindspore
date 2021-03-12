@@ -17,12 +17,12 @@
 #include "tools/converter/parser/onnx/onnx_loop_parser.h"
 #include <memory>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
-#include "ops/while.h"
+#include "tools/converter/ops/while.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *OnnxLoopParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::While>();
+  auto prim = std::make_unique<While>();
   return prim.release();
 }
 

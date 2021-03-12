@@ -175,7 +175,6 @@
 #include "ops/unsqueeze.h"
 #include "ops/unsorted_segment_sum.h"
 #include "ops/where.h"
-#include "ops/while.h"
 #include "ops/zeros_like.h"
 #include "ops/grad/activation_grad.h"
 #include "ops/grad/add_grad.h"
@@ -231,7 +230,6 @@
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/topk_fusion.h"
-#include "ops/if.h"
 #include "ops/gru.h"
 #include "ops/non_zero.h"
 #include "ops/invert_permutation.h"
@@ -436,11 +434,9 @@ FUNC_MSOP2SCHEMAOP_DECLARE(Unique);
 FUNC_MSOP2SCHEMAOP_DECLARE(UnsortedSegmentSum);
 FUNC_MSOP2SCHEMAOP_DECLARE(Unsqueeze);
 FUNC_MSOP2SCHEMAOP_DECLARE(Unstack);
-FUNC_MSOP2SCHEMAOP_DECLARE(While);
 FUNC_MSOP2SCHEMAOP_DECLARE(Where);
 FUNC_MSOP2SCHEMAOP_DECLARE(ZerosLike);
 FUNC_MSOP2SCHEMAOP_DECLARE(Select);
-FUNC_MSOP2SCHEMAOP_DECLARE(If);
 FUNC_MSOP2SCHEMAOP_DECLARE(GRU);
 FUNC_MSOP2SCHEMAOP_DECLARE(NonZero);
 FUNC_MSOP2SCHEMAOP_DECLARE(InvertPermutation);

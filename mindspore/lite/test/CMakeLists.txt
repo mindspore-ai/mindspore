@@ -215,6 +215,7 @@ if(ENABLE_CONVERTER)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
             ${TEST_CASE_TFLITE_PARSERS_SRC}
+            ${LITE_DIR}/tools/converter/ops/while.cc
             ${LITE_DIR}/tools/common/protobuf_utils.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc

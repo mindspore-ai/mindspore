@@ -10,7 +10,9 @@ set(CCSRC_SRC
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 
 file(GLOB OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
+        )
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../flag/flag_parser.cc

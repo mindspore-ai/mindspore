@@ -18,13 +18,13 @@
 #include "tools/converter/parser/tflite/tflite_while_parser.h"
 #include <vector>
 #include <memory>
-#include "ops/while.h"
+#include "tools/converter/ops/while.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TfliteWhileParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
                                           const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = std::make_unique<ops::While>();
+  auto prim = std::make_unique<While>();
 
   MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsWhileOptions();

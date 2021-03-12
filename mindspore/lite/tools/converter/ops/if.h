@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-#include <set>
+#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_IF_H_
+#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_IF_H_
 #include <vector>
 #include <memory>
-#include "ops/if.h"
-#include "utils/check_convert_utils.h"
-#include "ops/op_utils.h"
+#include "ops/primitive_c.h"
+
+using mindspore::ops::PrimitiveC;
 
 namespace mindspore {
-namespace ops {
-REGISTER_PRIMITIVE_C(kNameIf, If);
-}  // namespace ops
+namespace lite {
+constexpr auto kNameIf = "If";
+class If : public PrimitiveC {
+ public:
+  If() : PrimitiveC(kNameIf) {}
+  ~If() = default;
+  MS_DECLARE_PARENT(If, PrimitiveC);
+};
+}  // namespace lite
 }  // namespace mindspore
+
+#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_IF_H_

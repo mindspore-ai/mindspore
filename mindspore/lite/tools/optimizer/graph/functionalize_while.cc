@@ -22,11 +22,11 @@
 #include "ops/make_tuple.h"
 #include "ops/return.h"
 #include "ops/tuple_get_item.h"
-#include "ops/while.h"
+#include "tools/converter/ops/while.h"
 
 namespace {
 mindspore::ValueNodePtr GetWhileAnfPrim() {
-  auto while_primc = std::make_shared<mindspore::ops::While>();
+  auto while_primc = std::make_shared<mindspore::lite::While>();
   if (while_primc == nullptr) {
     MS_LOG(ERROR) << "new while_primitive failed";
     return nullptr;
