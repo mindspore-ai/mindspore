@@ -61,6 +61,7 @@ class ProfilingManager {
   void SetMsprofReporterCallback(MsprofReporterCallback func) { prof_cb_.msprofReporterCallback = func; }
   void SetMsprofSetDeviceCallback(MsprofSetDeviceCallback func) { prof_cb_.msprofSetDeviceCallback = func; }
   Status GetProfConf(NotNull<MsprofGeOptions *> prof);
+  void SetHcclEnabledBefProfilingEnabled() { hccl_enabled_bef_profiling_enabled_ = true; }
 
  protected:
   ProfilingManager();
@@ -70,6 +71,7 @@ class ProfilingManager {
   bool ProfStartUp(NotNull<MsprofGeOptions *> prof_conf);
   uint32_t device_id_;
   MsprofCallback prof_cb_;
+  bool hccl_enabled_bef_profiling_enabled_;
 };
 
 Status RegProfCtrlCallback(MsprofCtrlCallback func);

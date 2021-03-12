@@ -62,6 +62,7 @@
 #include "transform/graph_ir/convert.h"
 #include "transform/graph_ir/df_graph_manager.h"
 #include "transform/graph_ir/op_adapter_map.h"
+#include "runtime/device/ascend/profiling/profiling_manager.h"
 #endif
 #ifdef ENABLE_DUMP_IR
 #include "debug/rdr/running_data_recorder.h"
@@ -78,6 +79,10 @@ using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
+
+#if (ENABLE_GE || ENABLE_D)
+using mindspore::device::ascend::ProfilingManager;
+#endif
 
 const char IR_TYPE_ANF[] = "anf_ir";
 const char IR_TYPE_ONNX[] = "onnx_ir";
@@ -1078,6 +1083,11 @@ void InitHccl() {
     }
   } else {
     (void)context::OpenTsd(ms_context);
+  }
+#endif
+#if (ENABLE_GE || ENABLE_D)
+  if (!ProfilingManager::GetInstance().IsProfiling()) {
+    ProfilingManager::GetInstance().SetHcclEnabledBefProfilingEnabled();
   }
 #endif
 }
