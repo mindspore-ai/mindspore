@@ -42,7 +42,7 @@ namespace dataset {
 // Constructor
 SamplerObj::SamplerObj() {}
 
-Status SamplerObj::BuildChildren(std::shared_ptr<SamplerRT> *sampler) {
+Status SamplerObj::BuildChildren(std::shared_ptr<SamplerRT> *const sampler) {
   for (auto child : children_) {
     std::shared_ptr<SamplerRT> sampler_rt = nullptr;
     RETURN_IF_NOT_OK(child->SamplerBuild(&sampler_rt));
@@ -133,7 +133,7 @@ std::shared_ptr<mindrecord::ShardOperator> DistributedSamplerObj::BuildForMindDa
 }
 #endif
 
-Status DistributedSamplerObj::to_json(nlohmann::json *out_json) {
+Status DistributedSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   args["sampler_name"] = "DistributedSampler";
   args["num_shards"] = num_shards_;
@@ -170,7 +170,7 @@ Status PKSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-Status PKSamplerObj::to_json(nlohmann::json *out_json) {
+Status PKSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   args["sampler_name"] = "PKSampler";
   args["num_val"] = num_val_;
@@ -222,13 +222,12 @@ PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator
 
 Status PreBuiltSamplerObj::ValidateParams() { return Status::OK(); }
 
-Status PreBuiltSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *sampler) {
+Status PreBuiltSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *const sampler) {
   Status s = BuildChildren(&sp_);
   if (s.IsOk())
     *sampler = sp_;
   else
     *sampler = nullptr;
-  // FIXME: what to do with sp_ if status is not OK?
   return s;
 }
 
@@ -253,7 +252,7 @@ std::shared_ptr<SamplerObj> PreBuiltSamplerObj::SamplerCopy() {
   return sampler;
 }
 
-Status PreBuiltSamplerObj::to_json(nlohmann::json *out_json) {
+Status PreBuiltSamplerObj::to_json(nlohmann::json *const out_json) {
   RETURN_IF_NOT_OK(sp_->to_json(out_json));
   return Status::OK();
 }
@@ -270,7 +269,7 @@ Status RandomSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-Status RandomSamplerObj::to_json(nlohmann::json *out_json) {
+Status RandomSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   args["sampler_name"] = "RandomSampler";
   args["replacement"] = replacement_;
@@ -325,7 +324,7 @@ Status SequentialSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-Status SequentialSamplerObj::to_json(nlohmann::json *out_json) {
+Status SequentialSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   args["sampler_name"] = "SequentialSampler";
   args["start_index"] = start_index_;
@@ -389,7 +388,7 @@ std::shared_ptr<mindrecord::ShardOperator> SubsetSamplerObj::BuildForMindDataset
   return mind_sampler;
 }
 #endif
-Status SubsetSamplerObj::to_json(nlohmann::json *out_json) {
+Status SubsetSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   args["sampler_name"] = "SubsetSampler";
   args["indices"] = indices_;
@@ -428,7 +427,7 @@ std::shared_ptr<mindrecord::ShardOperator> SubsetRandomSamplerObj::BuildForMindD
 }
 #endif
 
-Status SubsetRandomSamplerObj::to_json(nlohmann::json *out_json) {
+Status SubsetRandomSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   args["sampler_name"] = "SubsetRandomSampler";
   args["indices"] = indices_;
@@ -474,7 +473,7 @@ Status WeightedRandomSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-Status WeightedRandomSamplerObj::to_json(nlohmann::json *out_json) {
+Status WeightedRandomSamplerObj::to_json(nlohmann::json *const out_json) {
   nlohmann::json args;
   args["sampler_name"] = "WeightedRandomSampler";
   args["weights"] = weights_;
