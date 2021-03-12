@@ -243,10 +243,11 @@ void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::
 
   auto *conv_param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node)->GetParameter());
   MS_ASSERT(conv_param);
-  conv_param->pad_u_ += pad_param->paddings_[2];
-  conv_param->pad_d_ += pad_param->paddings_[3];
-  conv_param->pad_l_ += pad_param->paddings_[4];
-  conv_param->pad_r_ += pad_param->paddings_[5];
+  auto paddings = reinterpret_cast<int32_t *>(pad->in_tensors().at(1)->data_c());
+  conv_param->pad_u_ += paddings[2];
+  conv_param->pad_d_ += paddings[3];
+  conv_param->pad_l_ += paddings[4];
+  conv_param->pad_r_ += paddings[5];
   pad->set_in_tensors({pad->in_tensors().front()});
   MergeRemoveA(pad, node, removed_set);
   MS_LOG(DEBUG) << "Merge Pad and " + GetTypeName(node) + " success";

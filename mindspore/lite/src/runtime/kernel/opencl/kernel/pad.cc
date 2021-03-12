@@ -62,6 +62,11 @@ int PadOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Pad only support CONSTANT MODE.";
     return RET_ERROR;
   }
+  auto pad_shape = in_tensors_.at(1)->shape();
+  if (pad_shape.size() != 2 || pad_shape[0] != in_ndim || pad_shape[1] != 2) {
+    MS_LOG(ERROR) << "pad tensor shape invalid.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -86,8 +91,9 @@ void PadOpenCLKernel::SetConstArgs() {
   int ndim = in_tensors_.front()->shape().size();
   std::vector<int> pad_before_ori;
   pad_before_ori.reserve(ndim);
+  auto paddings = reinterpret_cast<int32_t *>(in_tensors_.at(1)->data_c());
   for (size_t i = 0; i < ndim; i++) {
-    pad_before_ori.push_back(param_->paddings_[MAX_PAD_SIZE - 2 * ndim + 2 * i]);
+    pad_before_ori.push_back(paddings[2 * i]);
   }
   cl_int4 pad_before;
   Broadcast2GpuShape(pad_before.s, pad_before_ori.data(), ndim, 0);

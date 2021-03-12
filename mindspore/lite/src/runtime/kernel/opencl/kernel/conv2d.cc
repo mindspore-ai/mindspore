@@ -144,7 +144,9 @@ void Conv2DOpenCLKernel::BuildKernel() {
     kernel_name << "_Img";
   }
   ocl_runtime_->LoadSource(program_name, GetActDefines() + conv2d_source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str());
+  std::string build_option =
+    (OW_ * CO_SLICES_ <= ocl_runtime_->GetMaxImage2DWidth()) ? "" : " -DEXCEDD_MAX_IMAGE2D_WIDTH";
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name.str(), {build_option});
 }
 
 void Conv2DOpenCLKernel::SetBlockSize() {
@@ -436,13 +438,6 @@ OpParameter *CreateFcParam(const ConvParameter *conv_param, const std::vector<li
 
 bool UseWinograd4x4To6x6(const ConvParameter *param, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs) {
-  // not use winograd on adreno gpu
-  lite::opencl::OpenCLRuntimeWrapper runtime_wrap;
-  lite::opencl::OpenCLRuntime *runtime = runtime_wrap.GetInstance();
-  if (runtime->GetGpuInfo().type == lite::opencl::GpuType::ADRENO) {
-    return false;
-  }
-
   if (!(inputs.size() == 2 || inputs.size() == 3) || outputs.empty()) {
     return false;
   }
