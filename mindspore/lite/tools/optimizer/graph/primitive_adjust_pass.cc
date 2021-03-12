@@ -136,6 +136,7 @@ constexpr auto kNameGeluGrad = "GeluGrad";
 constexpr auto kNameSlice = "Slice";
 constexpr auto kNameAvgPoolGradGpu = "AvgPoolGradGpu";
 constexpr auto kNameAvgPoolGradCpu = "AvgPoolGradCpu";
+constexpr auto kNameTanhGrad = "TanhGrad";
 
 std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameElu, mindspore::ELU},
                                                                    {ops::kNameGeLU, mindspore::GELU},
@@ -152,7 +153,8 @@ std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameEl
                                                                    {kNameReLU6Grad, mindspore::RELU6},
                                                                    {kNameSigmoidGrad, mindspore::SIGMOID},
                                                                    {kNameEluGrad, mindspore::ELU},
-                                                                   {kNameGeluGrad, mindspore::GELU}};
+                                                                   {kNameGeluGrad, mindspore::GELU},
+                                                                   {kNameTanhGrad, mindspore::TANH}};
 
 std::map<std::string, mindspore::ReduceMode> reduce_map = {
   {ops::kNameReduceAll, mindspore::Reduce_All}, {ops::kNameReduceASum, mindspore::Reduce_ASum},
@@ -572,6 +574,7 @@ REGIST_PRIMITIVE_ADJUST(kNameReLU, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameReluGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameReLU6, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameReLU6Grad, MoveAttrMapActivationGrad)
+REGIST_PRIMITIVE_ADJUST(kNameTanhGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameResizeBilinear, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighbor, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameScale, MoveAttrMapCommon<ops::ScaleFusion>)
