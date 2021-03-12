@@ -60,6 +60,5 @@ Status DecodeOp::OutputType(const std::vector<DataType> &inputs, std::vector<Dat
   outputs[0] = DataType(DataType::DE_UINT8);
   return Status::OK();
 }
-
 }  // namespace dataset
 }  // namespace mindspore

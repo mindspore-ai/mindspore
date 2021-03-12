@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Helper function to validate probability
 Status ValidateProbability(const std::string &op_name, const float probability);
 

@@ -47,10 +47,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for text.
 namespace text {
-
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
@@ -421,7 +419,6 @@ std::shared_ptr<TensorOp> WhitespaceTokenizerOperation::Build() {
   return tensor_op;
 }
 #endif
-
 }  // namespace text
 }  // namespace dataset
 }  // namespace mindspore

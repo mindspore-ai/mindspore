@@ -1210,6 +1210,8 @@ Status RandomSelectSubpolicyOperation::ValidateParams() {
         std::string err_msg = "RandomSelectSubpolicy: transform in policy" + transform_pos + " must not be null";
         MS_LOG(ERROR) << err_msg;
         RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      } else {
+        RETURN_IF_NOT_OK(policy_[i][j].first->ValidateParams());
       }
       if (policy_[i][j].second < 0.0 || policy_[i][j].second > 1.0) {
         std::string transform_pos = "[" + std::to_string(i) + "]" + "[" + std::to_string(j) + "]";

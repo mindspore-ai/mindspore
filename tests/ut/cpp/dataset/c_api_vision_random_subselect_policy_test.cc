@@ -357,6 +357,5 @@ TEST_F(MindDataTestPipeline, TestRandomSelectSubpolicyFail4) {
   // Create an iterator over the result of the above dataset
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   // Expect failure: Invalid RandomSelectSubpolicy input
-  // EXPECT_EQ(iter, nullptr);
-  // FIXME - Code bug; this case wrongly succeeds.
+  EXPECT_EQ(iter, nullptr);
 }
