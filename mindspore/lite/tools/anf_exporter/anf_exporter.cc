@@ -356,18 +356,16 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
       }
     }
 
-    RemoveIfMakeTuple(cnode);
     RemoveIfDepend(cnode);
-    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameControlDepend) {
+    if (prim->name() == mindspore::ops::kNameDepend || prim->name() == mindspore::ops::kNameControlDepend ||
+        prim->name() == mindspore::ops::kNameTupleGetItem || prim->name() == mindspore::ops::kNameMakeTuple) {
       continue;
     }
     if (prim->name() == "make_tuple") {
       continue;
     }
+    RemoveIfMakeTuple(cnode);
 
-    if (prim->name() == mindspore::ops::kNameTupleGetItem || prim->name() == mindspore::ops::kNameMakeTuple) {
-      continue;
-    }
     auto node = std::make_unique<schema::CNodeT>();
     if (node == nullptr) {
       MS_LOG(ERROR) << "object failed to be constructed";

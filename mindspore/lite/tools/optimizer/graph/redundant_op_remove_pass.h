@@ -29,6 +29,7 @@ class RemoveRedundantOpPass : public Pass {
   RemoveRedundantOpPass() : Pass("remove_redundant_op_pass") {}
   ~RemoveRedundantOpPass() override = default;
   int ReplaceOp(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
+  int ReplaceUpdateStateOp(const FuncGraphPtr &func_graph, const AnfNodePtr &anf_node);
   int ReplaceTupleGetItem(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager);
   bool Run(const FuncGraphPtr &graph) override;
 
