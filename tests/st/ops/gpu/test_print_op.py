@@ -71,6 +71,27 @@ def print_testcase(nptype):
     net_2(x, y)
     net_3(x)
 
+class PrintNetString(nn.Cell):
+    def __init__(self):
+        super(PrintNetString, self).__init__()
+        self.op = P.Print()
+
+    def construct(self, x, y):
+        self.op("The first Tensor is", x)
+        self.op("The second Tensor is", y)
+        self.op("This line only prints string", "Another line")
+        self.op("The first Tensor is", x, y, "is the second Tensor")
+        return x
+
+def print_testcase_string(nptype):
+    x = np.ones(18).astype(nptype)
+    y = np.arange(9).reshape(3, 3).astype(nptype)
+    x = Tensor(x)
+    y = Tensor(y)
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = PrintNetString()
+    net(x, y)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -147,3 +168,10 @@ def test_print_float16():
 @pytest.mark.env_onecard
 def test_print_float32():
     print_testcase(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_print_string():
+    print_testcase_string(np.float32)

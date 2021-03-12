@@ -37,6 +37,7 @@
 #include "backend/optimizer/gpu/insert_format_transform_op.h"
 #include "backend/optimizer/gpu/replace_momentum_cast_fusion.h"
 #include "backend/optimizer/gpu/replace_addn_fusion.h"
+#include "backend/optimizer/gpu/print_reduce_fusion.h"
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
 #include "backend/optimizer/gpu/reduce_precision_fusion.h"
@@ -141,6 +142,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::CombineMomentumFusion>("combine_momentum"));
   pm->AddPass(std::make_shared<opt::ReplaceMomentumCastFusion>());
   pm->AddPass(std::make_shared<opt::ReplaceAddNFusion>());
+  pm->AddPass(std::make_shared<opt::PrintReduceFusion>("print_reduce"));
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
