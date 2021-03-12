@@ -42,6 +42,10 @@ int PoolingOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
   }
+  if (in_tensors_[0]->shape().size() != 4) {
+    MS_LOG(ERROR) << "Only support 4d tensor.";
+    return RET_ERROR;
+  }
   if (parameter_->pool_mode_ != PoolMode_MaxPool && parameter_->pool_mode_ != PoolMode_AvgPool) {
     MS_LOG(ERROR) << "Init `Pooling2d` kernel failed, unsupported pool mode!";
     return RET_ERROR;
@@ -88,7 +92,7 @@ int PoolingOpenCLKernel::Prepare() {
 }
 
 void PoolingOpenCLKernel::SetGlobalLocal() {
-  const size_t global_x = out_tensors_[0]->shape()[1];
+  const size_t global_x = out_tensors_[0]->shape()[1] * out_tensors_[0]->shape()[0];
   const size_t global_y = out_tensors_[0]->shape()[2];
   const size_t global_z = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
   global_size_ = {global_z, global_y, global_x};
@@ -98,8 +102,8 @@ void PoolingOpenCLKernel::SetGlobalLocal() {
 
 void PoolingOpenCLKernel::SetConstArgs() {
   int slices = UP_DIV(out_tensors_[0]->shape()[3], C4NUM);
-  cl_int4 input_shape = {in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], in_tensors_[0]->shape()[3], slices};
-  cl_int4 output_shape = {out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2], out_tensors_[0]->shape()[3],
+  cl_int4 input_shape = {in_tensors_[0]->shape()[0], in_tensors_[0]->shape()[1], in_tensors_[0]->shape()[2], slices};
+  cl_int4 output_shape = {out_tensors_[0]->shape()[0], out_tensors_[0]->shape()[1], out_tensors_[0]->shape()[2],
                           slices};
   cl_int2 stride = {parameter_->stride_h_, parameter_->stride_w_};
   cl_int2 kernel_size = {parameter_->window_h_, parameter_->window_w_};

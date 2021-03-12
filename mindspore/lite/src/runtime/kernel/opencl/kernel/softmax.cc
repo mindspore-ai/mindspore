@@ -54,10 +54,6 @@ int SoftmaxOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Init Softmax kernel failed: Unsupported shape size: " << in_shape.size();
     return RET_ERROR;
   }
-  if (in_shape[0] > 1) {
-    MS_LOG(ERROR) << "Init Softmax kernel failed: Unsupported multi-batch.";
-    return RET_ERROR;
-  }
   if (axis_ < 0) {
     axis_ = in_shape.size() + axis_;
   }
@@ -104,8 +100,8 @@ int SoftmaxOpenCLKernel::Prepare() {
 
 void SoftmaxOpenCLKernel::SetGlobalLocal() {
   if (onexone_flag_) {
-    local_size_ = {32};
-    global_size_ = {32};
+    local_size_ = {32, 1};
+    global_size_ = {32, out_shape_.N};
   } else {
     size_t global_x, global_y;
     if (axis_ == 1) {
@@ -121,7 +117,7 @@ void SoftmaxOpenCLKernel::SetGlobalLocal() {
       global_x = 1;
       global_y = 1;
     }
-    global_size_ = {global_x, global_y};
+    global_size_ = {global_x, global_y, out_shape_.N};
     local_size_ = {};
   }
   AlignGlobalLocal(global_size_, local_size_);

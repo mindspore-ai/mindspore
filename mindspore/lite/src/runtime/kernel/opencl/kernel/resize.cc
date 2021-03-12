@@ -106,7 +106,7 @@ void ResizeOpenCLKernel::SetConstArgs() {
 void ResizeOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
   auto out_shape = GpuTensorInfo(out_tensors_[0]);
-  global_size_ = {out_shape.Slice, out_shape.W, out_shape.H};
+  global_size_ = {out_shape.Slice, out_shape.W, out_shape.H * out_shape.N};
   AlignGlobalLocal(global_size_, local_size_);
 }
 

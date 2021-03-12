@@ -83,4 +83,53 @@ TEST_F(TestOpenCL_Resize, NEAREST) {
   }
 }
 
+TEST_F(TestOpenCL_Resize, BilinearBatch) {
+  schema::ResizeMethod method = schema::ResizeMethod_LINEAR;
+  int oh = 4;
+  int ow = 4;
+  bool align_corners = false;
+
+  std::vector<int> input_shape = {2, 2, 2, 1};
+  std::vector<int> output_shape = {2, oh, ow, 1};
+  float input_data[] = {0, 1, 2, 3, 0, 1, 2, 3};
+  float output_data[] = {0, 0.5, 1, 1, 1, 1.5, 2, 2, 2, 2.5, 3, 3, 2, 2.5, 3, 3,
+                         0, 0.5, 1, 1, 1, 1.5, 2, 2, 2, 2.5, 3, 3, 2, 2.5, 3, 3};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(method, oh, ow, align_corners);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_Resize, Bilinear_AlignCornersBatch) {
+  schema::ResizeMethod method = schema::ResizeMethod_LINEAR;
+  int oh = 3;
+  int ow = 3;
+  bool align_corners = true;
+
+  std::vector<int> input_shape = {2, 2, 2, 1};
+  std::vector<int> output_shape = {2, oh, ow, 1};
+  float input_data[] = {0, 1, 2, 3, 0, 1, 2, 3};
+  float output_data[] = {0, 0.5, 1, 1, 1.5, 2, 2, 2.5, 3, 0, 0.5, 1, 1, 1.5, 2, 2, 2.5, 3};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(method, oh, ow, align_corners);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_Resize, NEARESTBatch) {
+  schema::ResizeMethod method = schema::ResizeMethod_NEAREST;
+  int oh = 4;
+  int ow = 4;
+  bool align_corners = false;
+
+  std::vector<int> input_shape = {2, 2, 2, 1};
+  std::vector<int> output_shape = {2, oh, ow, 1};
+  float input_data[] = {0, 1, 2, 3, 0, 1, 2, 3};
+  float output_data[] = {0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3,
+                         0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 3, 3};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(method, oh, ow, align_corners);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
 }  // namespace mindspore::lite::opencl::test

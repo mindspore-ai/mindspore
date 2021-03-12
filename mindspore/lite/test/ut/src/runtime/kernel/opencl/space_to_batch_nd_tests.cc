@@ -32,6 +32,7 @@ OpParameter *CreateParameter(const std::vector<int> &block_sizes, const std::vec
   for (int i = 0; i < paddings.size(); ++i) {
     param->paddings_[i] = paddings[i];
   }
+  param->m_ = 2;
   return reinterpret_cast<OpParameter *>(param);
 }
 
@@ -77,6 +78,29 @@ TEST_F(TestOpenCL_SpaceToBatch, H2W2Pad2222) {
     132, 105, 42, 65,  231, 169, 57,  174, 82,  91,  128, 0,   0,   0,   0,   0,   0,   0,   0,   85,  48,  49,  69,
     197, 94,  0,  113, 93,  131, 98,  42,  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
     0,   0,   0,  0,   0,   0,   0,   0,   0};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(block_sizes, paddings);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_SpaceToBatch, H2W2Pad2222MultiBatch) {
+  std::vector<int> input_shape{2, 6, 6, 1};
+  std::vector<int> block_sizes = {2, 2};
+  std::vector<int> paddings = {2, 2, 2, 2};
+  auto output_shape = InferShape(input_shape, block_sizes, paddings);
+  float input_data[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                        24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+                        48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71};
+  float output_data[] = {0, 0, 0, 0, 0, 0, 0,  2,  4,  0, 0, 12, 14, 16, 0, 0, 24, 26, 28, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 36, 38, 40, 0, 0, 48, 50, 52, 0, 0, 60, 62, 64, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 1,  3,  5,  0, 0, 13, 15, 17, 0, 0, 25, 27, 29, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 37, 39, 41, 0, 0, 49, 51, 53, 0, 0, 61, 63, 65, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 6,  8,  10, 0, 0, 18, 20, 22, 0, 0, 30, 32, 34, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 42, 44, 46, 0, 0, 54, 56, 58, 0, 0, 66, 68, 70, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 7,  9,  11, 0, 0, 19, 21, 23, 0, 0, 31, 33, 35, 0, 0, 0, 0, 0, 0,
+                         0, 0, 0, 0, 0, 0, 43, 45, 47, 0, 0, 55, 57, 59, 0, 0, 67, 69, 71, 0, 0, 0, 0, 0, 0};
 
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(block_sizes, paddings);
