@@ -495,7 +495,7 @@ def append(arr, values, axis=None):
         >>> a = np.ones((2, 3))
         >>> b = np.ones((2, 1))
         >>> print(np.append(a, b, axis=1).shape)
-        >>> (2, 4)
+        (2, 4)
     """
     _check_input_tensor(arr)
     _check_input_tensor(values)
@@ -1186,6 +1186,7 @@ def moveaxis(a, source, destination):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.zeros((3, 4, 5))
         >>> output = np.moveaxis(x, 0, -1)
         >>> print(output.shape)
@@ -1244,6 +1245,7 @@ def tile(a, reps):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([0, 1, 2])
         >>> output = np.tile(a, 2)
         >>> print(output)
@@ -1298,6 +1300,7 @@ def broadcast_to(array, shape):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import mindspore.numpy as np
         >>> x = np.array([1, 2, 3])
         >>> output = np.broadcast_to(x, (3, 3))
         >>> print(output)
@@ -1333,6 +1336,7 @@ def broadcast_arrays(*args):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import mindspore.numpy as np
         >>> x = np.array([[1,2,3]])
         >>> y = np.array([[4],[5]])
         >>> output = np.broadcast_arrays(x, y)
@@ -1600,6 +1604,7 @@ def flip(m, axis=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import mindspore.numpy as np
         >>> A = np.arange(8.0).reshape((2,2,2))
         >>> output = np.flip(A)
         >>> print(output)
@@ -1653,6 +1658,7 @@ def flipud(m):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import mindspore.numpy as np
         >>> A = np.arange(8.0).reshape((2,2,2))
         >>> output = np.flipud(A)
         >>> print(output)
@@ -1685,6 +1691,7 @@ def fliplr(m):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import mindspore.numpy as np
         >>> A = np.arange(8.0).reshape((2,2,2))
         >>> output = np.fliplr(A)
         >>> print(output)
@@ -1723,6 +1730,7 @@ def take_along_axis(arr, indices, axis):
         ``Ascend`` ``GPU`` ``CPU``
 
     Example:
+        >>> import mindspore.numpy as np
         >>> x = np.arange(12).reshape(3, 4)
         >>> indices = np.arange(3).reshape(1, 3)
         >>> output = np.take_along_axis(x, indices, 1)
@@ -1818,6 +1826,7 @@ def take(a, indices, axis=None, mode='raise'):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.array([4, 3, 5, 7, 6, 8])
         >>> indices = np.array([0, 1, 4])
         >>> output = np.take(a, indices)
@@ -1880,6 +1889,7 @@ def repeat(a, repeats, axis=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.repeat(np.array(3), 4)
         >>> print(output)
         [3 3 3 3]

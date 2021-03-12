@@ -261,6 +261,7 @@ def rad2deg(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.asarray([1, 2, 3, -4, -5])
         >>> output = np.rad2deg(x)
         >>> print(output)
@@ -310,6 +311,7 @@ def add(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.full((3, 2), [1, 2])
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.add(x1, x2)
@@ -363,6 +365,7 @@ def subtract(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.full((3, 2), [1, 2])
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.subtract(x1, x2)
@@ -411,6 +414,7 @@ def multiply(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.full((3, 2), [1, 2])
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.multiply(x1, x2)
@@ -468,6 +472,7 @@ def divide(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.full((3, 2), [1, 2])
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.divide(x1, x2)
@@ -520,6 +525,7 @@ def true_divide(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.full((3, 2), [1, 2])
         >>> x2 = np.full((3, 2), [3, 4])
         >>> output = np.true_divide(x1, x2)
@@ -571,6 +577,7 @@ def power(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.full((3, 2), [1, 2]).astype('float32')
         >>> x2 = np.full((3, 2), [3, 4]).astype('float32')
         >>> output = np.power(x1, x2)
@@ -627,6 +634,7 @@ def float_power(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.arange(6)
         >>> x2 = np.array(3)
         >>> output = np.float_power(x1, x2)
@@ -1007,6 +1015,7 @@ def tensordot(a, b, axes=2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.ones((3, 4, 5))
         >>> b = np.ones((4, 3, 2))
         >>> output = np.tensordot(a, b, axes=([1,0],[0,1]))
@@ -1284,6 +1293,7 @@ def matmul(x1, x2, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x1 = np.arange(2*3*4).reshape(2, 3, 4).astype('float32')
         >>> x2 = np.arange(4*5).reshape(4, 5).astype('float32')
         >>> output = np.matmul(x1, x2)
@@ -1335,6 +1345,7 @@ def square(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.square(np.arange(6).reshape(2, 3).astype('float32'))
         >>> print(x)
         [[ 0.  1.  4.]
@@ -1381,6 +1392,7 @@ def sqrt(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.arange(6).reshape(2, 3).astype('float32')
         >>> x_squared = np.square(x)
         >>> output = np.sqrt(x_squared)
@@ -1430,6 +1442,7 @@ def reciprocal(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.arange(1, 7).reshape(2, 3).astype('float32')
         >>> output = np.reciprocal(x)
         >>> print(output)
@@ -1482,6 +1495,7 @@ def log(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> x = np.array([2, 3, 4]).astype('float32')
         >>> output = np.log(x)
         >>> print(output)
@@ -1534,6 +1548,7 @@ def maximum(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.maximum(np.array([2, 3, 4]), np.array([1, 5, 2]))
         >>> print(output)
         [2 5 4]
@@ -1598,6 +1613,7 @@ def heaviside(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.heaviside(np.array([-1.5, 0, 2.0]), np.array(0.5))
         >>> print(output)
         [0.  0.5 1. ]
@@ -1666,6 +1682,7 @@ def amax(a, axis=None, keepdims=False, initial=None, where=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.arange(4).reshape((2,2)).astype('float32')
         >>> output = np.amax(a)
         >>> print(output)
@@ -1721,6 +1738,7 @@ def amin(a, axis=None, keepdims=False, initial=None, where=True):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.arange(4).reshape((2,2)).astype('float32')
         >>> output = np.amin(a)
         >>> print(output)
@@ -1784,6 +1802,7 @@ def hypot(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.hypot(3*np.ones((3, 3)), 4*np.ones((3, 3)))
         >>> print(output)
         [[5. 5. 5.]
@@ -1847,6 +1866,7 @@ def floor(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.floor(np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0]))
         >>> print(output)
         [-2. -2. -1.  0.  1.  1.  2.]
@@ -1892,6 +1912,7 @@ def floor_divide(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.floor_divide(np.array([1., 2., 3., 4.]), np.array(2.5))
         >>> print(output)
         [0. 0. 1. 1.]
@@ -1964,6 +1985,7 @@ def remainder(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.remainder(np.array([4, 7]), np.array([2, 3]))
         >>> print(output)
         [0 1]
@@ -1997,6 +2019,7 @@ def fix(x):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.fix(np.array([2.1, 2.9, -2.1, -2.9]))
         >>> print(output)
         [ 2.  2. -2. -2.]
@@ -2052,6 +2075,7 @@ def fmod(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.fmod(np.array([-3, -2, -1, 1, 2, 3]), np.array(2))
         >>> print(output)
         [-1  0 -1  1  0  1]
@@ -2099,6 +2123,7 @@ def trunc(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.trunc(np.array([-1.7, -1.5, -0.2, 0.2, 1.5, 1.7, 2.0]))
         >>> print(output)
         [-1. -1. -0.  0.  1.  1.  2.]
@@ -2144,6 +2169,7 @@ def exp(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.exp(np.arange(5).astype(np.float32))
         >>> print(output)
         [ 1.         2.718282   7.3890557 20.085537  54.598145 ]
@@ -2189,9 +2215,10 @@ def expm1(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.expm1(np.arange(5).astype(np.float32))
         >>> print(output)
-       [ 0.         1.7182819  6.389056  19.085537  53.59815  ]
+        [ 0.         1.7182819  6.389056  19.085537  53.59815  ]
     """
     return _apply_tensor_op(F.tensor_expm1, x, out=out, where=where, dtype=dtype)
 
@@ -2377,6 +2404,7 @@ def cumsum(a, axis=None, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> output = np.cumsum(np.ones((3,3)), axis=0)
         >>> print(output)
         [[1. 1. 1.]

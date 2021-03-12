@@ -833,6 +833,8 @@ class MatMul(Cell):
     r"""
     Multiplies matrix `x1` by matrix `x2`.
 
+    nn.MatMul will be deprecated in future versions. Please use ops.matmul instead.
+
     - If both x1 and x2 are 1-dimensional, the dot product is returned.
     - If the dimensions of x1 and x2 are all not greater than 2,  the matrix-matrix product will be returned. Note if
       one of 'x1' and 'x2' is 1-dimensional, the argument will first be expanded to 2 dimension. After the matrix
