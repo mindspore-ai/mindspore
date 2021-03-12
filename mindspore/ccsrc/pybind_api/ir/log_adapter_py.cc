@@ -45,6 +45,9 @@ class PyExceptionInitializer {
     if (exception_type == AttributeError) {
       throw py::attribute_error(str);
     }
+    if (exception_type == NameError) {
+      throw py::name_error(str);
+    }
     py::pybind11_fail(str);
   }
 };

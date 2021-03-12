@@ -60,6 +60,7 @@ enum ExceptionType {
   TypeError,
   KeyError,
   AttributeError,
+  NameError
 };
 
 struct LocationInfo {

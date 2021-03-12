@@ -21,7 +21,7 @@ from .parser import (Parser, create_obj_instance, generate_scope,
                      get_class_member_namespace_symbol, create_slice_obj,
                      get_dataclass_attributes, get_dataclass_methods, get_obj_id,
                      get_module_namespace, get_obj_type, get_object_key,
-                     get_parse_method_of_class, get_scope_name,
+                     get_parse_method_of_class, get_scope_name, expand_expr_statement,
                      is_class_member, parse_cb, resolve_symbol, convert_to_ms_tensor, get_object_description)
 from .serialize import *
 
@@ -30,4 +30,4 @@ __all__ = ['parse_cb', 'get_parse_method_of_class', 'get_bprop_method_of_class',
            'get_obj_type', 'get_obj_id', 'create_obj_instance', 'get_module_namespace',
            'get_class_member_namespace_symbol', 'get_obj_id', 'Parser', 'get_dataclass_attributes',
            'get_dataclass_methods', 'dump_obj', 'load_obj', 'get_dataclass_methods', 'get_scope_name',
-           'create_slice_obj', 'convert_to_ms_tensor', 'get_object_description']
+           'create_slice_obj', 'convert_to_ms_tensor', 'get_object_description', 'expand_expr_statement']

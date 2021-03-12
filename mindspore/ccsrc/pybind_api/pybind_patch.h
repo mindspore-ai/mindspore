@@ -18,6 +18,7 @@
 
 namespace pybind11 {
 PYBIND11_RUNTIME_EXCEPTION(attribute_error, PyExc_AttributeError)
-}
+PYBIND11_RUNTIME_EXCEPTION(name_error, PyExc_NameError)
+}  // namespace pybind11
 
 #endif  // PYBIND_API_PYBIND_PATCH_H_
