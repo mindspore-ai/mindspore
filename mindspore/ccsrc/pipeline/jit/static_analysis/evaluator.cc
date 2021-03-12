@@ -87,7 +87,7 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   }
   const AnfNodePtr &func_node = fg->get_return();
 
-  MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg << "/" << fg->ToString()
+  MS_LOG(DEBUG) << "Analysis FuncGraph begin, func graph: " << fg.get() << "/" << fg->ToString()
                 << ", context: " << graph_context_->ToString() << ", return node: " << func_node->DebugString()
                 << ", current function call depth: " << engine->function_call_depth();
   AbstractBasePtr ret_base = nullptr;
@@ -105,11 +105,11 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   });
   for (const auto &node : all_nodes) {
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, graph_context_);
-    MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
+    MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg.get() << "/" << fg->ToString()
                   << ", node_conf: " << node_conf->ToString();
     auto node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
     ret_base = node_eval_result->abstract();
-    MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg << "/" << fg->ToString()
+    MS_LOG(DEBUG) << "Analysis node end, func graph: " << fg.get() << "/" << fg->ToString()
                   << ", node_conf: " << node_conf->ToString() << ", abstract: " << ret_base->ToString();
   }
   engine->DecreaseFunctionCallDepth();
