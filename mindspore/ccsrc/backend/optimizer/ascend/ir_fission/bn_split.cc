@@ -163,7 +163,7 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
   }
   auto device_num = AnfAlgo::GetNodeAttr<int64_t>(sync_bn_cnode, kDeviceNum);
   MS_LOG(INFO) << "device_num value: " << device_num;
-  float device_num_reciprocal = 1.0 / device_num;
+  const float device_num_reciprocal = 1.0 / device_num;
 
   std::vector<int64_t> device_num_shape = {};
   auto device_num_reciprocal_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, device_num_shape);

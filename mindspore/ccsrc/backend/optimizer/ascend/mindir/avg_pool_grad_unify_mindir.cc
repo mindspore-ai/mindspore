@@ -50,6 +50,10 @@ int64_t windowed_output_size(int64_t input_size, int64_t ksize, int64_t stride, 
   int64_t output = 0;
   *pad_before = 0;
   *pad_after = 0;
+  if (stride == 0) {
+    MS_LOG(EXCEPTION) << "The stride of AvgPoolGrad should not be 0.";
+    return 0;
+  }
   if (pad_mode == PadMode::VALID) {
     output = (input_size - ksize + stride) / stride;
   } else if (pad_mode == PadMode::SAME) {
@@ -120,8 +124,13 @@ ValueNodePtr CreateMeanMatrixValueNode(const FuncGraphPtr &func_graph, const std
   auto output_size = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
   std::vector<float> output(output_size, 0.0);
   for (int64_t i = 0; i < output_shape[0] * output_shape[1]; ++i) {
-    size_t copy_size = hw_output.size() * kFloat32Len;
-    (void)memcpy_s(&output[i * hw_output.size()], copy_size, &hw_output[0], copy_size);
+    size_t src_size = hw_output.size() * kFloat32Len;
+    size_t dst_size = output_shape[2] * output_shape[3] * kFloat32Len;
+    auto ret = memcpy_s(&output[i * hw_output.size()], dst_size, &hw_output[0], src_size);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+      return nullptr;
+    }
   }
   auto output_tensor = std::make_shared<tensor::Tensor>(x_dtype, output_shape, &output[0], kNumberTypeFloat32);
   MS_EXCEPTION_IF_NULL(output_tensor);
