@@ -268,8 +268,8 @@ int AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &m
   for (auto &node : subgraph_input_nodes) {
     for (auto input : node->inputIndex) {
       auto tensor = meta_graphT->allTensors[input].get();
-      if (tensor->nodeType != schema::NodeType_CNode && tensor->data.empty()) {
-        tensor->nodeType = schema::NodeType_ValueNode;
+      if (tensor->nodeType != NodeType_CNode && tensor->data.empty()) {
+        tensor->nodeType = NodeType_ValueNode;
         tensor->format = schema::Format_NHWC;
         if (!IsContain(subgraph->inputIndices, input)) {
           if (subgraph_index == kMainGraphIndex) {
@@ -386,7 +386,6 @@ int AnfExporter::Anf2Fb(const FuncGraphPtr &func_graph, const std::unique_ptr<sc
     if (primT == nullptr) {
       primT = GetPrimitiveT(cnode->input(0));
     }
-    node->nodeType = schema::NodeType_CNode;
     node->name = cnode->fullname_with_scope();
     node->primitive = std::unique_ptr<schema::PrimitiveT>(primT);
     ret = SetOpInputNode(cnode, meta_graphT, node.get());
@@ -622,7 +621,7 @@ int AnfExporter::ProcessTensor(const ValueNodePtr &valueNode, std::unique_ptr<sc
                        [](const int64_t &value) { return static_cast<int32_t>(value); });
   (*paramTensor)->dims = dims;
   if (train_flag && (*paramTensor)->dims.empty()) (*paramTensor)->dims = {1};
-  (*paramTensor)->nodeType = schema::NodeType::NodeType_ValueNode;
+  (*paramTensor)->nodeType = NodeType_ValueNode;
   auto data = value->cast<tensor::TensorPtr>();
   (*paramTensor)->data.resize(data->Size());
   ret = memcpy_s((*paramTensor)->data.data(), data->Size(), data->data_c(), data->Size());
@@ -642,7 +641,7 @@ int AnfExporter::ProcessInt32OrInt64Imm(const ValueNodePtr &valueNode, std::uniq
   // data of int64 is converted to int32 here.
   (*paramTensor)->dataType = kNumberTypeInt32;
   (*paramTensor)->dims = {1};
-  (*paramTensor)->nodeType = schema::NodeType::NodeType_ValueNode;
+  (*paramTensor)->nodeType = NodeType_ValueNode;
   int real_data = opt::CastToInt(value).front();
   (*paramTensor)->data.resize(sizeof(int32_t));
   ret = memcpy_s((*paramTensor)->data.data(), sizeof(int32_t), &real_data, sizeof(int32_t));
@@ -663,7 +662,7 @@ void AnfExporter::ProcessBoolImm(const ValueNodePtr &valueNode, std::unique_ptr<
   auto typePtr = abstractScalar->GetTypeTrack();
   (*paramTensor)->dataType = typePtr->type_id();
   (*paramTensor)->dims = {1};
-  (*paramTensor)->nodeType = schema::NodeType_ValueNode;
+  (*paramTensor)->nodeType = NodeType_ValueNode;
   auto data = value->cast<mindspore::BoolImmPtr>();
   (*paramTensor)->data.emplace_back(data->value());
   node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
@@ -681,7 +680,7 @@ int AnfExporter::ProcessNumber(const ValueNodePtr &valueNode, schema::TensorT *p
   }
   paramTensor->dataType = kNumberTypeInt32;
   paramTensor->dims = {1};
-  paramTensor->nodeType = schema::NodeType_ValueNode;
+  paramTensor->nodeType = NodeType_ValueNode;
   node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
   output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(paramTensor);
@@ -691,7 +690,7 @@ void AnfExporter::ProcessInt(const ValueNodePtr &valueNode, std::unique_ptr<sche
                              schema::CNodeT *output_cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
   (*paramTensor)->dataType = kNumberTypeInt32;
   (*paramTensor)->dims = {1};
-  (*paramTensor)->nodeType = schema::NodeType_ValueNode;
+  (*paramTensor)->nodeType = NodeType_ValueNode;
   (*paramTensor)->data.emplace_back(kNumberTypeInt32);
   node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
   output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
@@ -721,7 +720,7 @@ int AnfExporter::ProcessValueSequence(const ValueNodePtr &valueNode, std::unique
     }
     (*paramTensor)->dataType = kNumberTypeInt32;
     (*paramTensor)->dims = {static_cast<int32_t>(shape.size())};
-    (*paramTensor)->nodeType = schema::NodeType_ValueNode;
+    (*paramTensor)->nodeType = NodeType_ValueNode;
     (*paramTensor)->data.resize(shape.size() * sizeof(int));
     ret = memcpy_s((*paramTensor)->data.data(), shape.size() * sizeof(int32_t), shape.data(),
                    shape.size() * sizeof(int32_t));
@@ -862,7 +861,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         MS_LOG(ERROR) << "new msTensor failed";
         return;
       }
-      msTensor->nodeType = schema::NodeType_CNode;
+      msTensor->nodeType = NodeType_CNode;
       fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
       if (train_flag) {
         std::string name = cnode_name + "_o:" + std::to_string(i);
@@ -912,7 +911,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
       type = typePtr->type_id();
     }
     ms_tensor->dataType = type;
-    ms_tensor->nodeType = schema::NodeType_CNode;
+    ms_tensor->nodeType = NodeType_CNode;
     ms_tensor->name = cnode_name;
     fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
     node_id_map_[cnode_name] = meta_graphT->allTensors.size();

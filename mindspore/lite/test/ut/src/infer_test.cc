@@ -56,7 +56,7 @@ TEST_F(InferTest, TestConvNode) {
   meta_graph->outputIndex = {2};
 
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 28, 28, 3};
@@ -64,7 +64,7 @@ TEST_F(InferTest, TestConvNode) {
   meta_graph->allTensors.emplace_back(std::move(input0));
 
   auto weight = std::make_unique<schema::TensorT>();
-  weight->nodeType = schema::NodeType::NodeType_ValueNode;
+  weight->nodeType = lite::NodeType_ValueNode;
   weight->format = schema::Format_KHWC;
   weight->dataType = TypeId::kNumberTypeFloat32;
   weight->dims = {32, 3, 3, 3};
@@ -85,7 +85,7 @@ TEST_F(InferTest, TestConvNode) {
   meta_graph->allTensors.emplace_back(std::move(weight));
 
   auto output = std::make_unique<schema::TensorT>();
-  output->nodeType = schema::NodeType::NodeType_Parameter;
+  output->nodeType = lite::NodeType_Parameter;
   output->format = schema::Format_NHWC;
   output->dataType = TypeId::kNumberTypeFloat32;
   output->dims = {1, 28, 28, 32};
@@ -169,7 +169,7 @@ TEST_F(InferTest, TestAddNode) {
   meta_graph->outputIndex = {2};
 
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 28, 28, 3};
@@ -177,7 +177,7 @@ TEST_F(InferTest, TestAddNode) {
   meta_graph->allTensors.emplace_back(std::move(input0));
 
   auto weight = std::make_unique<schema::TensorT>();
-  weight->nodeType = schema::NodeType::NodeType_ValueNode;
+  weight->nodeType = lite::NodeType_ValueNode;
   weight->format = schema::Format_KHWC;
   weight->dataType = TypeId::kNumberTypeFloat32;
   weight->dims = {1, 28, 28, 3};
@@ -186,7 +186,7 @@ TEST_F(InferTest, TestAddNode) {
   meta_graph->allTensors.emplace_back(std::move(weight));
 
   auto output = std::make_unique<schema::TensorT>();
-  output->nodeType = schema::NodeType::NodeType_Parameter;
+  output->nodeType = lite::NodeType_Parameter;
   output->format = schema::Format_NHWC;
   output->dataType = TypeId::kNumberTypeFloat32;
   output->offset = -1;
@@ -260,7 +260,7 @@ TEST_F(InferTest, TestParallelExecutor) {
   meta_graph->outputIndex = {2};
 
   auto input0 = std::make_unique<schema::TensorT>();
-  input0->nodeType = schema::NodeType::NodeType_ValueNode;
+  input0->nodeType = lite::NodeType_ValueNode;
   input0->format = schema::Format_NHWC;
   input0->dataType = TypeId::kNumberTypeFloat32;
   input0->dims = {1, 28, 28, 3};
@@ -268,7 +268,7 @@ TEST_F(InferTest, TestParallelExecutor) {
   meta_graph->allTensors.emplace_back(std::move(input0));
 
   auto weight = std::make_unique<schema::TensorT>();
-  weight->nodeType = schema::NodeType::NodeType_ValueNode;
+  weight->nodeType = lite::NodeType_ValueNode;
   weight->format = schema::Format_NHWC;
   weight->dataType = TypeId::kNumberTypeFloat32;
   weight->dims = {1, 28, 28, 3};
@@ -277,7 +277,7 @@ TEST_F(InferTest, TestParallelExecutor) {
   meta_graph->allTensors.emplace_back(std::move(weight));
 
   auto output = std::make_unique<schema::TensorT>();
-  output->nodeType = schema::NodeType::NodeType_Parameter;
+  output->nodeType = lite::NodeType_Parameter;
   output->format = schema::Format_NHWC;
   output->dataType = TypeId::kNumberTypeFloat32;
   output->offset = -1;

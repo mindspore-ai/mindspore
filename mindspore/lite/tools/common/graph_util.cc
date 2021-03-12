@@ -445,7 +445,7 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
       MS_LOG(ERROR) << "Copy Tensor failed";
       return graphT->nodes.end();
     }
-    toAddTensor->nodeType = schema::NodeType_CNode;
+    toAddTensor->nodeType = NodeType_CNode;
     toAddTensor->refCount = 0;
     toAddTensor->data.clear();
     MS_ASSERT(toAddNodeIn->primitive != nullptr);
@@ -517,7 +517,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       *errorCode = RET_NULL_PTR;
       return graphT->nodes.end();
     }
-    toAddTensor->nodeType = schema::NodeType_CNode;
+    toAddTensor->nodeType = NodeType_CNode;
     MS_ASSERT(toAddNodeIn->primitive != nullptr);
     if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
       auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();

@@ -108,7 +108,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   }
   newScaleWeightTensor->dataType = bnMeanTensor->dataType;
   newScaleWeightTensor->format = bnMeanTensor->format;
-  newScaleWeightTensor->refCount = schema::NodeType::NodeType_ValueNode;
+  newScaleWeightTensor->refCount = NodeType_ValueNode;
   newScaleWeightTensor->dims = bnMeanTensor->dims;
   auto weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleWeightTensor->data.resize(weightShapeSize * sizeof(float));
@@ -131,7 +131,7 @@ STATUS BatchNormConvertScalePass::GenNewScaleTensor(MetaGraphT *graph, const std
   newScaleBiasTensor->dataType = bnMeanTensor->dataType;
   newScaleBiasTensor->format = bnMeanTensor->format;
 
-  newScaleBiasTensor->refCount = schema::NodeType::NodeType_ValueNode;
+  newScaleBiasTensor->refCount = NodeType_ValueNode;
   newScaleBiasTensor->dims = bnMeanTensor->dims;
   weightShapeSize = GetShapeSize(*bnMeanTensor);
   newScaleBiasTensor->data.resize(weightShapeSize * sizeof(float));

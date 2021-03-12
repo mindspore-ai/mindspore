@@ -26,6 +26,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "ir/dtype/type_id.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -69,9 +70,9 @@ class TensorCache {
     index++;
     if (Category == CONST || Category == TF_CONST || Category == GRAPH_INPUT) {
       tensor->refCount = 1;
-      tensor->nodeType = schema::NodeType_ValueNode;
+      tensor->nodeType = NodeType_ValueNode;
     } else {
-      tensor->nodeType = schema::NodeType_Parameter;
+      tensor->nodeType = NodeType_Parameter;
     }
     tensor->name = name;
     tensors.push_back(tensor);

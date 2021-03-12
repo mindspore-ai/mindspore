@@ -59,7 +59,7 @@ int CoderGraph::ConvertTensors() {
     MS_CHECK_PTR_WITH_EXE(origin_tensor, clear_tensors());
     // tensor dims
     std::vector<int> shape;
-    if (origin_tensor->nodeType() == schema::NodeType_ValueNode) {
+    if (origin_tensor->nodeType() == NodeType_ValueNode) {
       MS_CHECK_PTR_WITH_EXE(origin_tensor->dims(), clear_tensors());
       for (uint32_t j = 0; j < origin_tensor->dims()->size(); j++) {
         MS_CHECK_PTR(origin_tensor->dims()->data());
@@ -73,7 +73,7 @@ int CoderGraph::ConvertTensors() {
     Tensor *dstTensor = new (std::nothrow)
       lite::Tensor(TypeId(origin_data_type), shape, origin_tensor->format(), TensorCategory(origin_tensor));
     MS_CHECK_PTR(dstTensor);
-    if (origin_tensor->nodeType() == schema::NodeType_ValueNode && origin_tensor->data() != nullptr &&
+    if (origin_tensor->nodeType() == NodeType_ValueNode && origin_tensor->data() != nullptr &&
         origin_tensor->data()->size() > 0) {
       if (shape.empty()) {
         shape.push_back(1);

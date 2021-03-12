@@ -23,12 +23,6 @@ file_identifier "MSL2";
 // File extension of any written files.
 file_extension "ms";
 
-enum NodeType: int {
-    ValueNode,  // const
-    Parameter,  // var
-    CNode       // op
-}
-
 table QuantParam {
     scale: double;
     zeroPoint: int;
@@ -45,7 +39,7 @@ table QuantParam {
 }
 
 table Tensor {
-    nodeType: NodeType;
+    nodeType: int;
     // data type
     dataType: int;
     // shape
@@ -73,7 +67,7 @@ table Primitive {
 
 table CNode {
     name: string;
-    nodeType: NodeType = CNode;
+    nodeType: int (deprecated);
     primitive: Primitive;
     inputIndex: [uint];
     outputIndex: [uint];
