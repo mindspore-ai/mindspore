@@ -320,6 +320,15 @@ The above shell script will run distribute training in the background. You can v
 ...
 ```
 
+### Transfer Training
+
+You can train your own model based on either pretrained classification model or pretrained detection model. You can perform transfer training by following steps.
+
+1. Convert your own dataset to COCO style. Otherwise you have to add your own data preprocess code.
+2. Change config.py according to your own dataset, especially the `num_classes`.
+3. Set argument `filter_weight` to `True` and `pretrained_checkpoint` to pretrained checkpoint while calling `train.py`, this will filter the final detection box weight from the pretrained model.
+4. Build your own bash scripts using new config and arguments for further convenient.
+
 ## [Evaluation Process](#contents)
 
 ### Valid

@@ -430,6 +430,14 @@ epoch: 3 step: 1, loss is 1.5099041
 ...
 ```
 
+#### Transfer Training
+
+You can train your own model based on pretrained model. You can perform transfer training by following steps.
+
+1. Convert your own dataset to Pascal VOC datasets. Otherwise you have to add your own data preprocess code.
+2. Set argument `filter_weight` to `True`, `ckpt_pre_trained` to pretrained checkpoint and `num_classes` to the classes of your dataset while calling `train.py`, this will filter the final conv weight from the pretrained model.
+3. Build your own bash scripts using new config and arguments for further convenient.
+
 ## [Evaluation Process](#contents)
 
 ### Usage

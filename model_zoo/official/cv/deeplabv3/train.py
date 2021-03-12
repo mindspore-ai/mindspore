@@ -16,6 +16,7 @@
 
 import os
 import argparse
+import ast
 from mindspore import context
 from mindspore.train.model import Model
 from mindspore.context import ParallelMode
@@ -73,6 +74,8 @@ def parse_args():
     parser.add_argument('--model', type=str, default='deeplab_v3_s16', help='select model')
     parser.add_argument('--freeze_bn', action='store_true', help='freeze bn')
     parser.add_argument('--ckpt_pre_trained', type=str, default='', help='pretrained model')
+    parser.add_argument("--filter_weight", type=ast.literal_eval, default=False,
+                        help="Filter the last weight parameters, default is False.")
 
     # train
     parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'CPU'],
@@ -137,7 +140,13 @@ def train():
     # load pretrained model
     if args.ckpt_pre_trained:
         param_dict = load_checkpoint(args.ckpt_pre_trained)
+        if args.filter_weight:
+            for key in list(param_dict.keys()):
+                if key in ["network.aspp.conv2.weight", "network.aspp.conv2.bias"]:
+                    print('filter {}'.format(key))
+                    del param_dict[key]
         load_param_into_net(train_net, param_dict)
+        print('load_model {} success'.format(args.ckpt_pre_trained))
 
     # optimizer
     iters_per_epoch = dataset.get_dataset_size()
