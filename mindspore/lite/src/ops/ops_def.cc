@@ -421,6 +421,7 @@ OP_ATTR(group, long)
 OP_ATTR(in_channel, long)
 OP_ATTR(out_channel, long)
 OP_ATTR_ENUM_WITH_VALUE(activation_type, ActivationType, 0)
+OP_ATTR(output_paddings, [long])
 OP_SCHEMA_DEF_END(Conv2dTransposeFusion)
 
 OP_SCHEMA_DEF(Cos)

@@ -27,6 +27,7 @@ ops::PrimitiveC *CaffeDeconvolutionParser::Parse(const caffe::LayerParameter &pr
   prim->set_pad({0, 0, 0, 0});
   prim->set_format(mindspore::Format::NCHW);
   prim->set_pad_mode(mindspore::PadMode::PAD);
+  prim->set_output_paddings({0, 0});
 
   const caffe::ConvolutionParameter &convParam = proto.convolution_param();
   // parse pad

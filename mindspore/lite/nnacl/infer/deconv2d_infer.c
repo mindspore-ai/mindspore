@@ -69,8 +69,8 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
     return NNACL_ERR;
   }
 
-  output_h += param->output_padding_h;
-  output_w += param->output_padding_w;
+  output_h += param->output_padding_h_;
+  output_w += param->output_padding_w_;
 
   output->shape_size_ = 4;
   output->shape_[0] = output_n;

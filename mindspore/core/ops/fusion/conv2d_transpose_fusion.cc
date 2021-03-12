@@ -23,8 +23,7 @@ void Conv2dTransposeFusion::Init(int64_t in_channel, int64_t out_channel, const 
                                  int64_t mode, const PadMode &pad_mode, const std::vector<int64_t> &pad,
                                  const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,
                                  int64_t group, const Format &format, const std::vector<int64_t> &pad_list,
-                                 const std::vector<int64_t> &output_padding_h,
-                                 const std::vector<int64_t> &output_padding_w, const ActivationType activation_type) {
+                                 const std::vector<int64_t> &output_paddings, const ActivationType activation_type) {
   set_in_channel(in_channel);
   set_out_channel(out_channel);
   set_kernel_size(kernel_size);
@@ -36,8 +35,7 @@ void Conv2dTransposeFusion::Init(int64_t in_channel, int64_t out_channel, const 
   set_group(group);
   set_format(format);
   set_pad_list(pad_list);
-  set_output_padding_h(output_padding_h);
-  set_output_padding_w(output_padding_w);
+  set_output_paddings(output_paddings);
   set_activation_type(activation_type);
 }
 
@@ -57,20 +55,12 @@ void Conv2dTransposeFusion::set_dilation(const std::vector<int64_t> &dilation) {
   AddAttr(kDilation, MakeValue(dilation));
 }
 
-void Conv2dTransposeFusion::set_output_padding_h(const std::vector<int64_t> &output_padding_h) {
-  CheckAndConvertUtils::CheckInteger(koutputPaddingH, output_padding_h.size(), kGreaterEqual, 1, name());
-  for (int64_t item : output_padding_h) {
-    CheckAndConvertUtils::CheckInteger(koutputPaddingH, item, kGreaterEqual, 0, name());
+void Conv2dTransposeFusion::set_output_paddings(const std::vector<int64_t> &output_paddings) {
+  CheckAndConvertUtils::CheckInteger(koutputPaddings, output_paddings.size(), kGreaterEqual, 1, name());
+  for (int64_t item : output_paddings) {
+    CheckAndConvertUtils::CheckInteger(koutputPaddings, item, kGreaterEqual, 0, name());
   }
-  AddAttr(kDilation, MakeValue(output_padding_h));
-}
-
-void Conv2dTransposeFusion::set_output_padding_w(const std::vector<int64_t> &output_padding_w) {
-  CheckAndConvertUtils::CheckInteger(koutputPaddingW, output_padding_w.size(), kGreaterEqual, 1, name());
-  for (int64_t item : output_padding_w) {
-    CheckAndConvertUtils::CheckInteger(koutputPaddingW, item, kGreaterEqual, 0, name());
-  }
-  AddAttr(kDilation, MakeValue(output_padding_w));
+  AddAttr(koutputPaddings, MakeValue(output_paddings));
 }
 
 void Conv2dTransposeFusion::set_activation_type(const ActivationType activation_type) {
@@ -78,13 +68,8 @@ void Conv2dTransposeFusion::set_activation_type(const ActivationType activation_
   this->AddAttr(kActivationType, MakeValue(swi));
 }
 
-std::vector<int64_t> Conv2dTransposeFusion::get_output_padding_h() const {
-  auto value_ptr = GetAttr(koutputPaddingH);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
-
-std::vector<int64_t> Conv2dTransposeFusion::get_output_padding_w() const {
-  auto value_ptr = GetAttr(koutputPaddingW);
+std::vector<int64_t> Conv2dTransposeFusion::get_output_paddings() const {
+  auto value_ptr = GetAttr(koutputPaddings);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 

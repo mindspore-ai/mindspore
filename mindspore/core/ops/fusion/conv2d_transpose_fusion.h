@@ -36,16 +36,13 @@ class Conv2dTransposeFusion : public Conv2dTranspose {
             const PadMode &pad_mode = VALID, const std::vector<int64_t> &pad = {0, 0, 0, 0},
             const std::vector<int64_t> &stride = {1, 1}, const std::vector<int64_t> &dilation = {1, 1},
             int64_t group = 1, const Format &format = NCHW, const std::vector<int64_t> &pad_list = {0, 0, 0, 0},
-            const std::vector<int64_t> &output_padding_h = {0}, const std::vector<int64_t> &output_padding_w = {0},
-            const ActivationType activation_type = NO_ACTIVATION);
+            const std::vector<int64_t> &output_paddings = {0}, const ActivationType activation_type = NO_ACTIVATION);
   void set_kernel_size(const std::vector<int64_t> &kernel_size);
   void set_dilation(const std::vector<int64_t> &dilation);
-  void set_output_padding_h(const std::vector<int64_t> &output_padding_h);
-  void set_output_padding_w(const std::vector<int64_t> &output_padding_w);
+  void set_output_paddings(const std::vector<int64_t> &output_paddings);
   void set_activation_type(const ActivationType activation_type);
 
-  std::vector<int64_t> get_output_padding_h() const;
-  std::vector<int64_t> get_output_padding_w() const;
+  std::vector<int64_t> get_output_paddings() const;
   ActivationType get_activation_type() const;
 };
 }  // namespace ops

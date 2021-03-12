@@ -422,6 +422,7 @@ table Conv2dTransposeFusion {
     in_channel: long;
     out_channel: long;
     activation_type: ActivationType = 0;
+    output_paddings: [long];
 }
 
 table Cos {
