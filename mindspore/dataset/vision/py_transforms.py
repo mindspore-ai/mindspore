@@ -1031,7 +1031,7 @@ class RandomErasing:
 
 class Cutout:
     """
-    Randomly cut (mask) out a given number of square patches from the input NumPy image array.
+    Randomly cut (mask) out a given number of square patches from the input NumPy image array of shape (C, H, W).
 
     Terrance DeVries and Graham W. Taylor 'Improved Regularization of Convolutional Neural Networks with Cutout' 2017
     See https://arxiv.org/pdf/1708.04552.pdf
@@ -1068,6 +1068,9 @@ class Cutout:
         """
         if not isinstance(np_img, np.ndarray):
             raise TypeError("img should be NumPy array. Got {}.".format(type(np_img)))
+        if np_img.ndim != 3:
+            raise TypeError('img dimension should be 3. Got {}.'.format(np_img.ndim))
+
         _, image_h, image_w = np_img.shape
         scale = (self.length * self.length) / (image_h * image_w)
         bounded = False
@@ -1426,7 +1429,8 @@ class AutoContrast:
     Automatically maximize the contrast of the input PIL image.
 
     Args:
-        cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
+        cutoff (float, optional): Percent of pixels to cut off from the histogram,
+            the value must be in the range [0.0, 50.0) (default=0.0).
         ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Examples:

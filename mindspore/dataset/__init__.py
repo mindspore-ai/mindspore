@@ -13,9 +13,9 @@
 # limitations under the License.
 """
 This module provides APIs to load and process various common datasets such as MNIST,
-CIFAR-10, CIFAR-100, VOC, ImageNet, CelebA, etc. It also supports datasets in standard
-format, including MindRecord, TFRecord, Manifest, etc. Users can also define their own
-datasets with this module.
+CIFAR-10, CIFAR-100, VOC, COCO, ImageNet, CelebA, CLUE, etc. It also supports datasets
+in standard format, including MindRecord, TFRecord, Manifest, etc. Users can also define
+their owndatasets with this module.
 
 Besides, this module provides APIs to sample data while loading.
 

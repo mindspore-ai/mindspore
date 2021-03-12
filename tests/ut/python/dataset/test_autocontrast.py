@@ -270,7 +270,7 @@ def test_auto_contrast_invalid_cutoff_param_c():
         data_set = data_set.map(operations=C.AutoContrast(cutoff=-10.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)
+        assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         data_set = data_set.map(operations=[C.Decode(),
@@ -280,7 +280,7 @@ def test_auto_contrast_invalid_cutoff_param_c():
         data_set = data_set.map(operations=C.AutoContrast(cutoff=120.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)
+        assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
 
 
 def test_auto_contrast_invalid_ignore_param_py():
@@ -327,7 +327,7 @@ def test_auto_contrast_invalid_cutoff_param_py():
                                 input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)
+        assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         data_set = data_set.map(
@@ -338,7 +338,7 @@ def test_auto_contrast_invalid_cutoff_param_py():
             input_columns=["image"])
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input cutoff is not within the required interval of (0 to 100)." in str(error)
+        assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
 
 
 if __name__ == "__main__":

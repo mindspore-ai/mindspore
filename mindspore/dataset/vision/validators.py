@@ -21,7 +21,7 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
-    check_c_tensor_op, UINT8_MAX, check_value_normalize_std
+    check_c_tensor_op, UINT8_MAX, check_value_normalize_std, check_value_cutoff
 from .utils import Inter, Border, ImageBatchFormat
 
 
@@ -650,7 +650,7 @@ def check_auto_contrast(method):
     def new_method(self, *args, **kwargs):
         [cutoff, ignore], _ = parse_user_args(method, *args, **kwargs)
         type_check(cutoff, (int, float), "cutoff")
-        check_value(cutoff, [0, 100], "cutoff")
+        check_value_cutoff(cutoff, [0, 50], "cutoff")
         if ignore is not None:
             type_check(ignore, (list, tuple, int), "ignore")
         if isinstance(ignore, int):

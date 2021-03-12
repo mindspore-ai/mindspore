@@ -104,7 +104,8 @@ class AutoContrast(ImageTensorOperation):
     Apply automatic contrast on input image.
 
     Args:
-        cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
+        cutoff (float, optional): Percent of pixels to cut off from the histogram,
+            the value must be in the range [0.0, 50.0) (default=0.0).
         ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Examples:
@@ -770,7 +771,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
         if img.ndim != 1 or img.dtype.type is not np.uint8:
             raise TypeError("Input should be an encoded image with uint8 type in 1-D NumPy format, " +
                             "got format:{}, dtype:{}.".format(type(img), img.dtype.type))
-        super().__call__(img=img)
+        return super().__call__(img)
 
 
 class RandomCropWithBBox(ImageTensorOperation):

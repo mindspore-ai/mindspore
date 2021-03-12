@@ -56,12 +56,15 @@ def normalize(img, mean, std, pad_channel=False, dtype="float32"):
     Returns:
         img (numpy.ndarray), Normalized image.
     """
+    if not is_numpy(img):
+        raise TypeError("img should be NumPy image. Got {}.".format(type(img)))
+
+    if img.ndim != 3:
+        raise TypeError('img dimension should be 3. Got {}.'.format(img.ndim))
+
     if np.issubdtype(img.dtype, np.integer):
         raise NotImplementedError("Unsupported image datatype: [{}], pls execute [ToTensor] before [Normalize]."
                                   .format(img.dtype))
-
-    if not is_numpy(img):
-        raise TypeError("img should be NumPy image. Got {}.".format(type(img)))
 
     num_channels = img.shape[0]  # shape is (C, H, W)
 
@@ -119,9 +122,11 @@ def hwc_to_chw(img):
     Returns:
         img (numpy.ndarray), Converted image.
     """
-    if is_numpy(img):
-        return img.transpose(2, 0, 1).copy()
-    raise TypeError('img should be NumPy array. Got {}.'.format(type(img)))
+    if not is_numpy(img):
+        raise TypeError('img should be NumPy array. Got {}.'.format(type(img)))
+    if img.ndim != 3:
+        raise TypeError('img dimension should be 3. Got {}.'.format(img.ndim))
+    return img.transpose(2, 0, 1).copy()
 
 
 def to_tensor(img, output_type):
@@ -140,7 +145,7 @@ def to_tensor(img, output_type):
 
     img = np.asarray(img)
     if img.ndim not in (2, 3):
-        raise ValueError("img dimension should be 2 or 3. Got {}.".format(img.ndim))
+        raise TypeError("img dimension should be 2 or 3. Got {}.".format(img.ndim))
 
     if img.ndim == 2:
         img = img[:, :, None]
@@ -856,8 +861,8 @@ def pad(img, padding, fill_value, padding_mode):
 
     elif isinstance(padding, (tuple, list)):
         if len(padding) == 2:
-            left = right = padding[0]
-            top = bottom = padding[1]
+            left = top = padding[0]
+            right = bottom = padding[1]
         elif len(padding) == 4:
             left = padding[0]
             top = padding[1]
@@ -877,10 +882,10 @@ def pad(img, padding, fill_value, padding_mode):
     if padding_mode == 'constant':
         if img.mode == 'P':
             palette = img.getpalette()
-            image = ImageOps.expand(img, border=padding, fill=fill_value)
+            image = ImageOps.expand(img, border=(left, top, right, bottom), fill=fill_value)
             image.putpalette(palette)
             return image
-        return ImageOps.expand(img, border=padding, fill=fill_value)
+        return ImageOps.expand(img, border=(left, top, right, bottom), fill=fill_value)
 
     if img.mode == 'P':
         palette = img.getpalette()
@@ -1254,6 +1259,9 @@ def rgb_to_hsvs(np_rgb_imgs, is_hwc):
     if not is_numpy(np_rgb_imgs):
         raise TypeError("img should be NumPy image. Got {}".format(type(np_rgb_imgs)))
 
+    if not isinstance(is_hwc, bool):
+        raise TypeError("is_hwc should be bool type. Got {}.".format(type(is_hwc)))
+
     shape_size = len(np_rgb_imgs.shape)
 
     if not shape_size in (3, 4):
@@ -1321,6 +1329,9 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
     """
     if not is_numpy(np_hsv_imgs):
         raise TypeError("img should be NumPy image. Got {}.".format(type(np_hsv_imgs)))
+
+    if not isinstance(is_hwc, bool):
+        raise TypeError("is_hwc should be bool type. Got {}.".format(type(is_hwc)))
 
     shape_size = len(np_hsv_imgs.shape)
 
