@@ -370,7 +370,7 @@ class GradOperation(GradOperation_):
                     self._pynative_forward_run(args, kwargs, fn)
                     _pynative_exec.grad(grad_, fn, weights, *args, **kwargs)
                     out = _pynative_exec(fn, *args, **kwargs)
-                    _pynative_exec.clear()
+                    _pynative_exec.clear_grad(fn, *args, **kwargs)
                     return out
             self.grad_fn = after_grad
             self.fn = fn
