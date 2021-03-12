@@ -501,7 +501,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
         ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
         const std::string &op_type = prim->name();
         if (!IsLite()) {
-          CheckAndConvertUtils::ConvertAttrValueToInt(op_type, attr_name, &res);
+          CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
         }
         prim->AddAttr(attr_name, res);
         break;
