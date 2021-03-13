@@ -34,6 +34,11 @@ class StandardNormal(PrimitiveWithInfer):
     Outputs:
         Tensor. The shape is the same as the input `shape`. The dtype is float32.
 
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `shape` is not a tuple.
+        ValueError: If `shape` is not a constant value.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -85,6 +90,11 @@ class StandardLaplace(PrimitiveWithInfer):
 
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
+
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `shape` is not a tuple.
+        ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
         ``Ascend``
@@ -141,6 +151,11 @@ class Gamma(PrimitiveWithInfer):
     Outputs:
         Tensor. The shape must be the broadcasted shape of Input "shape" and shapes of alpha and beta.
         The dtype is float32.
+
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If neither `alpha` nor `beta` is a Tensor.
+        ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
         ``Ascend``
@@ -202,6 +217,11 @@ class Poisson(PrimitiveWithInfer):
         Tensor. Its shape must be the broadcasted shape of `shape` and the shape of `mean`.
         The dtype is int32.
 
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `shape` is not a tuple.
+        TypeError: If `mean` is not a Tensor whose dtype is not float32.
+
     Supported Platforms:
         ``Ascend``
 
@@ -260,6 +280,12 @@ class UniformInt(PrimitiveWithInfer):
           It defines the minimum possibly generated value, with int32 data type. Only one number is supported.
         - **maxval** (Tensor) - The distribution parameter, b.
           It defines the maximum possibly generated value, with int32 data type. Only one number is supported.
+
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `shape` is not a tuple.
+        TypeError: If neither `minval` nor `maxval` is a Tensor.
+        ValueError: If `shape` is not a constant value.
 
     Outputs:
         Tensor. The shape is the same as the input 'shape', and the data type is int32.
@@ -320,6 +346,11 @@ class UniformReal(PrimitiveWithInfer):
     Outputs:
         Tensor. The shape that the input 'shape' denotes. The dtype is float32.
 
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `shape` is not a tuple.
+        ValueError: If `shape` is not a constant value.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -378,6 +409,11 @@ class RandomChoiceWithMask(PrimitiveWithInfer):
         - **index** (Tensor) - The output shape is 2-D.
         - **mask** (Tensor) - The output shape is 1-D.
 
+    Raises:
+        TypeError: If `count` is not an int.
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `input_x` is not a Tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU``
 
@@ -427,6 +463,11 @@ class RandomCategorical(PrimitiveWithInfer):
 
     Outputs:
         - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+
+    Raises:
+        TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.
+        TypeError: If `logits` is not a Tensor.
+        TypeError: If neither `num_sample` nor `seed` is an int.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -499,6 +540,11 @@ class Multinomial(PrimitiveWithInfer):
     Outputs:
         Tensor with the same rows as input, each row has num_samples sampled indices.
 
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `input` is not a Tensor whose dtype is float32.
+        TypeError: If dtype of `num_samples` is not int32.
+
     Supported Platforms:
         ``GPU``
 
@@ -566,6 +612,12 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
           each of sampled_candidates. Shape: (num_sampled, ).
 
+    Raises:
+        TypeError: If neither `num_true` nor `num_sampled` is an int.
+        TypeError: If neither `unique` nor `remove_accidental_hits` is a bool.
+        TypeError: If neither `range_max` nor `seed` is a int.
+        TypeError: If `true_classes` is not a Tensor.
+
     Supported Platforms:
         ``GPU``
 
@@ -628,6 +680,12 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
         - **sampled_candidates** (Tensor) - A Tensor with shape (num_sampled,) and the same type as `true_classes`.
         - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
         - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
+
+    Raises:
+        TypeError: If neither `num_true` nor `num_sampled` is an int.
+        TypeError: If `unique` is not a bool.
+        TypeError: If neither `range_max` nor `seed` is an int.
+        TypeError: If `true_classes` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``

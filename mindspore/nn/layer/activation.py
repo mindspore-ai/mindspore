@@ -69,7 +69,7 @@ class Softmax(Cell):
         Tensor, which has the same type and shape as `x` with values in the range[0,1].
 
     Raises:
-        TypeError: If `axis` is neither an int not a tuple.
+        TypeError: If `axis` is neither an int nor a tuple.
         TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `axis` is a tuple whose length is less than 1.
         ValueError: If `axis` is a tuple whose elements are not all in range [-len(x), len(x)).
