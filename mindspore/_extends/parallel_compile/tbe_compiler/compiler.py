@@ -114,7 +114,9 @@ def build_op(build_type, json_str, tune_mode=None):
 
         # call function
         if is_dynamic_shape:
-            with te.op.dynamic():
+            # with te.op.dynamic():
+            import tbe.common.context.op_context as op_context
+            with op_context.OpContext("dynamic"):
                 op_func(*inputs_args, *outputs_args, *attrs_args, kernel_name=kernel_name)
                 if tune_mode is not None:
                     return (te.op.get_compile_info()), (inputs_args, outputs_args, attrs_args), op_module_name

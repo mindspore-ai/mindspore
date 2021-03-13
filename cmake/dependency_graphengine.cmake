@@ -30,7 +30,6 @@ if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
         set(GE_PREBUILD_PATH ${GE_SOURCE_DIR}/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR})
         set(ENABLE_MS_TESTCASES TRUE)
         find_submodule_lib(slog libalog.so ${GE_PREBUILD_PATH})
-        find_submodule_lib(error_manager liberror_manager.so ${GE_PREBUILD_PATH})
         find_submodule_lib(static_mmpa libmmpa.a ${GE_PREBUILD_PATH})
     endif()
 
