@@ -275,17 +275,13 @@ class BatchNorm1d(_BatchNorm):
             running_mean and running_var computation. Default: 0.9.
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
             use the mean value and variance value of specified value. If None, the training process will use the mean
             and variance of current batch data and track the running mean and variance, the evaluation process will use
@@ -371,17 +367,13 @@ class BatchNorm2d(_BatchNorm):
             running_mean and running_var computation. Default: 0.9.
         affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_mean_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving mean.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'zeros'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
         moving_var_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the moving variance.
-            The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
-            'he_uniform', etc. Default: 'ones'.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
         use_batch_statistics (bool): If true, use the mean value and variance value of current batch data. If false,
             use the mean value and variance value of specified value. If None, the training process will use the mean
             and variance of current batch data and track the running mean and variance, the evaluation process will use
