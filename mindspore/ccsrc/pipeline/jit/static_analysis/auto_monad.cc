@@ -764,7 +764,7 @@ class SideEffectFinder {
     const int para_index = GetParameterIndex(func_graph, para);
     const size_t input_index = static_cast<size_t>(para_index) + 1;
     // Search user cnodes of the func graph.
-    auto &users = func_graph->func_graph_cnodes_index();
+    const auto &users = func_graph->func_graph_cnodes_index();
     if (users.empty()) {
       MS_LOG(WARNING) << "Unused graph for parameter " << para->DebugString();
     }
@@ -775,7 +775,7 @@ class SideEffectFinder {
         continue;
       }
       // Caller cnode.
-      auto cnode = dyn_cast<CNode>(user.first->first);
+      auto cnode = dyn_cast<CNode>(user.first->first.lock());
       if (cnode && input_index < cnode->size()) {
         handler(cnode->input(input_index));
       }

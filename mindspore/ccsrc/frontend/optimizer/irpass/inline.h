@@ -289,9 +289,9 @@ class InlinerBase : public AnfVisitor {
 };
 
 bool IsUniqueUse(InlinerBase *, const FuncGraphPtr &fg, const AnfNodePtr &) {
-  auto &cnodes = fg->func_graph_cnodes_index();
+  const auto &users = fg->func_graph_cnodes_index();
   int64_t n_use = std::accumulate(
-    cnodes.begin(), cnodes.end(), 0,
+    users.begin(), users.end(), 0,
     [](int64_t sum, const std::pair<const CNodeIndexPairPtr, int64_t> &item) { return sum + item.second; });
   return n_use == 1;
 }

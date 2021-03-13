@@ -474,7 +474,7 @@ bool KPynativeCellImpl::BackPropagate() {
       MS_EXCEPTION_IF_NULL(v_node);
       auto value = v_node->value();
       if (v_node->abstract() == nullptr && value != nullptr && value->ToAbstract() != nullptr) {
-        v_node->set_abstract(value->ToAbstract());
+        v_node->set_abstract(value->ToAbstract()->Broaden());
       }
     }
     // Back propagate process

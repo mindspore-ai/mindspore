@@ -292,6 +292,8 @@ void GPUKernelRuntime::ClearGraphRuntimeResource(uint32_t graph_id, const std::v
   }
   // Clear the output address of graph.
   ClearOutputAddress(inputs, value_nodes, execution_order);
+
+  graph_output_map_.erase(graph_id);
 }
 
 void GPUKernelRuntime::AllocInplaceNodeMemory(const session::KernelGraph *graph) {

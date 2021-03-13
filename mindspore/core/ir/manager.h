@@ -93,8 +93,6 @@ struct Signals {
 
 enum EdgeProcessDirection { kDecEdge = -1, kIncEdge = 1 };
 
-using CNodeIndexPair = std::pair<AnfNodePtr, int>;
-using CNodeIndexPairPtr = std::shared_ptr<CNodeIndexPair>;
 using FuncGraphToFuncGraphSetMap = OrderedMap<FuncGraphPtr, FuncGraphSet>;
 
 // analysis base class, graphs analysis which need dynamic compute by DepCollector in each read

@@ -76,7 +76,7 @@ class KernelInfo : public KernelInfoDevice {
   kernel::KernelBuildInfoPtr select_kernel_build_info_;
   std::vector<std::shared_ptr<DeviceAddress>> output_address_list_;
   std::vector<std::shared_ptr<DeviceAddress>> workspace_address_list_;
-  kernel::KernelModPtr kernel_mod_;
+  kernel::KernelMod *kernel_mod_;
   // stream_id_ is the index of stream object vector
   uint32_t stream_id_;
   // stream_distinction_label_ is used mark different op in different stream
@@ -84,6 +84,12 @@ class KernelInfo : public KernelInfoDevice {
   // record which graph the node belong to
   uint32_t graph_id_;
 };
+
+// a interim memory recycle scheme for share_ptr loop using:CNode->kernel_info->kernel_mod->CNode
+// TODO: after kernel_mod refactoring pls delete this inter face
+extern void clear_step_kernel_mod();
+
+extern void clear_global_kernel_mod();
 }  // namespace device
 }  // namespace mindspore
 #endif  // MINDSPORE_DEVICE_KERNEL_INFO_H_

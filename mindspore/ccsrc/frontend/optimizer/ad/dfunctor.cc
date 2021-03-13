@@ -865,7 +865,8 @@ static std::vector<std::pair<CNodePtr, CNodePtr>> FindPrimalJPair(const FuncGrap
   const auto &node_user_map = manager->node_users();
   // Search primal graph user cnodes.
   for (auto &entry : primal_graph->func_graph_cnodes_index()) {
-    auto cnode = entry.first->first->cast<CNodePtr>();
+    auto anfnode = entry.first->first.lock();
+    auto cnode = anfnode->cast<CNodePtr>();
     auto index = entry.first->second;
     if (index == 0) {
       // To find real calling.

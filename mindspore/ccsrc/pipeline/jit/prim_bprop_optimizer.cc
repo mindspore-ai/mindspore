@@ -22,15 +22,15 @@ namespace mindspore {
 namespace pipeline {
 
 void PrimBpropOptGraphLevel2Info::TryFreeArgsValue(const ValuePtrList &op_args, const ValuePtr &out) {
-  if (args_value_using_info.size() != op_args.size() + 1) {
-    MS_LOG(EXCEPTION) << "param size :" << args_value_using_info.size() << " of bp_graph:"
+  if (args_value_using_info_.size() != op_args.size() + 1) {
+    MS_LOG(EXCEPTION) << "param size :" << args_value_using_info_.size() << " of bp_graph:"
                       << opt_func_graph_->ToString()
                       << " not match input arguments num:" << op_args.size();
   }
 
   ValuePtrList new_args(op_args);
   new_args.emplace_back(out);
-  TryFreeOneValue(new_args, args_value_using_info);
+  TryFreeOneValue(new_args, args_value_using_info_);
 }
 
 void PrimBpropOptGraphLevel2Info::TryFreeOneValue(const ValuePtrList &op_args,
@@ -42,34 +42,34 @@ void PrimBpropOptGraphLevel2Info::TryFreeOneValue(const ValuePtrList &op_args,
   }
 
   for (size_t i = 0; i < op_args.size(); ++i) {
-    if (!param_info_vec[i].using_flg && !param_info_vec[i].tuple_flg &&
+    if (!param_info_vec[i].using_flg_ && !param_info_vec[i].tuple_flg_ &&
         op_args[i]->isa<tensor::Tensor>()) {
       auto value = op_args[i]->cast<tensor::TensorPtr>();
       value->set_device_address(nullptr);
-    } else if (param_info_vec[i].tuple_flg && op_args[i]->isa<ValueTuple>()) {
+    } else if (param_info_vec[i].tuple_flg_ && op_args[i]->isa<ValueTuple>()) {
       auto value = op_args[i]->cast<ValueTuplePtr>();
       MS_EXCEPTION_IF_NULL(value);
-      TryFreeOneValue(value->value(), param_info_vec[i].sub_using_info);
+      TryFreeOneValue(value->value(), param_info_vec[i].sub_using_info_);
     }
   }
 }
 
 void PrimBpropOptGraphLevel2Info::AnalysisArgUsingInfo(FuncGraphManagerPtr &manager) {
-  if (analysis_finish_flg) {
+  if (analysis_finish_flg_) {
     return;
   }
   MS_EXCEPTION_IF_NULL(opt_func_graph_);
   auto &params = opt_func_graph_->parameters();
   auto &node_users = manager->node_users();
-  args_value_using_info.resize(params.size() - 1);
+  args_value_using_info_.resize(params.size() - 1);
   // analysis value using flg except dout
   for (size_t i = 0; i < params.size() - 1; ++i) {
     auto &param = params[i];
-    auto &arg_info = args_value_using_info[i];
+    auto &arg_info = args_value_using_info_[i];
     ArgInfoRefresh(param, arg_info);
     AnalysisNodeUsingInfo(node_users, param, arg_info);
   }
-  analysis_finish_flg = true;
+  analysis_finish_flg_ = true;
 }
 
 void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(
@@ -77,13 +77,13 @@ void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(
   auto iter = node_users.find(param);
 
   if (iter == node_users.end()) {
-    arg_info.using_flg = false;
+    arg_info.using_flg_ = false;
     return;
   }
 
   // tensor return directly
-  if (!arg_info.tuple_flg) {
-    arg_info.using_flg = true;
+  if (!arg_info.tuple_flg_) {
+    arg_info.using_flg_ = true;
     return;
   }
 
@@ -91,7 +91,7 @@ void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(
   auto &users_info = iter->second;
   for (auto &user_info : users_info) {
     auto user_node = user_info.first;
-    arg_info.using_flg = true;
+    arg_info.using_flg_ = true;
     MS_LOG(WARNING) << "param:" << param->ToString() << " used by node:" << user_node->ToString();
     if (!IsPrimitiveCNode(user_node, prim::kPrimTupleGetItem)) {
       MS_LOG(EXCEPTION) << "tuple param:" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
@@ -119,11 +119,11 @@ void PrimBpropOptGraphLevel2Info::AnalysisNodeUsingInfo(
     }
 
     auto idx = value_ptr->cast<Int64ImmPtr>()->value();
-    arg_info.sub_using_info[idx].using_flg = true;
-    ArgInfoRefresh(cnode, arg_info.sub_using_info[idx]);
+    arg_info.sub_using_info_[idx].using_flg_ = true;
+    ArgInfoRefresh(cnode, arg_info.sub_using_info_[idx]);
 
-    if (arg_info.tuple_flg) {
-      AnalysisNodeUsingInfo(node_users, cnode, arg_info.sub_using_info[idx]);
+    if (arg_info.tuple_flg_) {
+      AnalysisNodeUsingInfo(node_users, cnode, arg_info.sub_using_info_[idx]);
     }
   }
 }
@@ -132,14 +132,14 @@ void PrimBpropOptGraphLevel2Info::ArgInfoRefresh(
   const std::shared_ptr<AnfNode> &param, ParamUsingInfo &arg_info) const {
   auto abs = param->abstract();
   if (abs->isa<abstract::AbstractTensor>()) {
-    arg_info.tuple_flg = false;
+    arg_info.tuple_flg_ = false;
     MS_LOG(DEBUG) << "param abstract:" << param->ToString() << " is a AbstractTensor";
   } else if (abs->isa<abstract::AbstractTuple>()) {
     auto abs_tuple = abs->cast<abstract::AbstractTuplePtr>();
     MS_LOG(DEBUG) << "param abstract:" << param->ToString() << " is a AbstractTuple";
-    arg_info.tuple_flg = true;
-    arg_info.tuple_size = abs_tuple->size();
-    arg_info.sub_using_info.resize(abs_tuple->size());
+    arg_info.tuple_flg_ = true;
+    arg_info.tuple_size_ = abs_tuple->size();
+    arg_info.sub_using_info_.resize(abs_tuple->size());
   } else {
     MS_LOG(EXCEPTION) << "param:" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
                       << " not tensor or tuple";
@@ -153,16 +153,12 @@ PrimBpropOptimizer &PrimBpropOptimizer::GetPrimBpropOptimizerInst() {
 }
 
 PrimBpropOptimizer::PrimBpropOptimizer() {
-  prim_bprop_opt_res = std::make_shared<pipeline::Resource>();
-  prim_bprop_opt_manage = prim_bprop_opt_res->manager();
 }
 
 PrimBpropOptimizer::~PrimBpropOptimizer() {}
 
 void PrimBpropOptimizer::Clear() {
-  prim_bprop_cache.clear();
-  prim_bprop_opt_manage = nullptr;
-  prim_bprop_opt_res = nullptr;
+  prim_bprop_cache_.clear();
 }
 
 // bprop_fg has the signature:
@@ -207,24 +203,26 @@ FuncGraphPtr PrimBpropOptimizer::OptimizeBPropFuncGraph(const FuncGraphPtr &bpro
   if (cache_res == E_NOT_FOUND) {
     bprop_fg->debug_info()->set_name(prim->ToString());
     level_1_graph_info = PrimBpropOptStep1(bprop_fg);
-    prim_bprop_cache[prim] = level_1_graph_info;
+    prim_bprop_cache_[prim] = level_1_graph_info;
   }
-  FuncGraphPtr level_1_graph = BasicClone(level_1_graph_info->opt_func_graph);
+  FuncGraphPtr level_1_graph = BasicClone(level_1_graph_info->opt_func_graph_);
 
   // do step2 opt
   auto new_abs_list = AddOutToAbsList(out, abs_list);
   level_2_graph_info = PrimBpropOptStep2(level_1_graph, new_abs_list);
-  level_1_graph_info->graph_level_2_cache[abs_list] = level_2_graph_info;
+  level_1_graph_info->graph_level_2_cache_[abs_list] = level_2_graph_info;
   level_2_graph_info->TryFreeArgsValue(op_args, out);
   return BasicClone(level_2_graph_info->opt_func_graph());
 }
 
 PrimBpropOptGraphInfoPtr PrimBpropOptimizer::PrimBpropOptStep1(const FuncGraphPtr &bprop_fg) {
   auto level_1_graph_info = std::make_shared<PrimBpropOptGraphInfo>();
+  auto prim_bprop_opt_res = std::make_shared<pipeline::Resource>();
+  auto prim_bprop_opt_manage = prim_bprop_opt_res->manager();
   prim_bprop_opt_res->set_func_graph(bprop_fg);
   prim_bprop_opt_manage->AddFuncGraph(bprop_fg);
-  auto opt_bprop_fg = PrimBpOptPassStep1(irpass, prim_bprop_opt_res);
-  level_1_graph_info->opt_func_graph = opt_bprop_fg;
+  auto opt_bprop_fg = PrimBpOptPassStep1(irpass_, prim_bprop_opt_res);
+  level_1_graph_info->opt_func_graph_ = opt_bprop_fg;
   return level_1_graph_info;
 }
 
@@ -247,7 +245,7 @@ PrimBpropOptGraphLevel2InfoPtr PrimBpropOptimizer::PrimBpropOptStep2(const FuncG
   auto manager = resource->manager();
   resource->set_func_graph(bprop_fg);
   manager->AddFuncGraph(bprop_fg);
-  auto opt_bprop_fg = PrimBpOptPassStep2(irpass, resource);
+  auto opt_bprop_fg = PrimBpOptPassStep2(irpass_, resource);
   auto level_2_graph_info = std::make_shared<PrimBpropOptGraphLevel2Info>(opt_bprop_fg);
   level_2_graph_info->AnalysisArgUsingInfo(manager);
   return level_2_graph_info;
@@ -269,14 +267,14 @@ ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(
     MS_LOG(DEBUG) << "prim:" << prim->ToString() << " attr: " << item.first << " value:" << item.second->ToString();
   }
 
-  auto iter = prim_bprop_cache.find(prim);
-  if (iter == prim_bprop_cache.end()) {
+  auto iter = prim_bprop_cache_.find(prim);
+  if (iter == prim_bprop_cache_.end()) {
     return E_NOT_FOUND;
   }
 
   level_1_graph_info = iter->second;
-  auto second_iter = level_1_graph_info->graph_level_2_cache.find(abs_list);
-  if (second_iter == level_1_graph_info->graph_level_2_cache.end()) {
+  auto second_iter = level_1_graph_info->graph_level_2_cache_.find(abs_list);
+  if (second_iter == level_1_graph_info->graph_level_2_cache_.end()) {
     return E_LEVEL_1;
   }
   level_2_graph_info = second_iter->second;

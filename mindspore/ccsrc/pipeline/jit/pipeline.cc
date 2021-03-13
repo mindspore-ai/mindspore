@@ -1166,6 +1166,7 @@ void ClearResAtexit() {
     ps::Worker::GetInstance().Finalize();
   }
 #endif
+  mindspore::device::clear_step_kernel_mod();
   ad::g_k_prims.clear();
   PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
 

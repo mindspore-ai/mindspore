@@ -361,13 +361,14 @@ const FuncGraphSet &FuncGraph::func_graphs_used_total() {
 const CNodeIndexCounterMap &FuncGraph::func_graph_cnodes_index() { return func_graph_cnodes_index_; }
 
 void FuncGraph::CopyFuncGraphCNodesIndex(const FuncGraphPtr &source) {
-  auto &others = source->func_graph_cnodes_index();
-  for (auto it = others.begin(); it != others.end(); it++) {
+  const auto &users = source->func_graph_cnodes_index();
+  for (auto &user :users) {
     // Ignore the user graph who may own itself.
-    auto fg = it->first->first->func_graph();
+    auto anfnode = user.first->first.lock();
+    auto fg = anfnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
     if (fg.get() != this) {
-      AddFuncGraphCNodeIndex(it->first, it->second);
+      AddFuncGraphCNodeIndex(user.first, user.second);
     }
   }
 }
@@ -389,7 +390,7 @@ void FuncGraph::DropFuncGraphCNodeIndex(CNodeIndexPairPtr pair) {
     } else {
       func_graph_cnodes_index_[pair]--;
       if (func_graph_cnodes_index_[pair] < 0) {
-        MS_LOG(EXCEPTION) << "Count of CNode/Index '" << pair->first << "/" << pair->second
+        MS_LOG(EXCEPTION) << "Count of CNode/Index '" << pair->first.lock() << "/" << pair->second
                           << "' dec from 0. NodeInfo: " << trace::GetDebugInfo(debug_info());
       }
     }

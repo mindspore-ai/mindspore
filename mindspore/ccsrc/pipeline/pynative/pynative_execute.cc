@@ -2061,6 +2061,7 @@ void GradExecutor::MakeNestedCnode(const std::string &cell_id, const py::args &a
 }
 
 void GradExecutor::ClearGrad(const py::object &cell, const py::args &args) {
+  MS_LOG(ERROR) << "GradExecutor::ClearGrad ";
   const auto &cell_id = GetCellId(cell, args);
   if (IsTopGraph(cell_id)) {
     ClearCellRes(cell_id);

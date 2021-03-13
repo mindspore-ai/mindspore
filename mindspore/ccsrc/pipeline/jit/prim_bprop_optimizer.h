@@ -55,16 +55,16 @@ enum ECacheQrtRes {
 
 struct PrimBpropOptGraphInfo {
   // the level1 opt func_graph without infer, no shape/type info provide
-  FuncGraphPtr opt_func_graph;
+  FuncGraphPtr opt_func_graph_;
   // the opt func_graph after infer, func_graph level2 cache
-  PrimBpropLevel2Cache graph_level_2_cache;
+  PrimBpropLevel2Cache graph_level_2_cache_;
 };
 
 struct ParamUsingInfo {
-  bool using_flg{false};
-  bool tuple_flg{false};
-  size_t tuple_size;
-  std::vector<ParamUsingInfo> sub_using_info;
+  bool using_flg_{false};
+  bool tuple_flg_{false};
+  size_t tuple_size_;
+  std::vector<ParamUsingInfo> sub_using_info_;
 };
 
 class PrimBpropOptGraphLevel2Info {
@@ -91,8 +91,8 @@ private:
   // the level2 opt func_graph
   FuncGraphPtr opt_func_graph_;
   // to indicate arguments value using or not, if not using should free device memory
-  std::vector<ParamUsingInfo> args_value_using_info;
-  bool analysis_finish_flg{false};
+  std::vector<ParamUsingInfo> args_value_using_info_;
+  bool analysis_finish_flg_{false};
 };
 
 class PrimBpropOptimizer {
@@ -137,11 +137,9 @@ private:
   void BindAbsToParameters(const FuncGraphPtr &bprop_fg, abstract::AbstractBasePtrList &abs_list_input);
 
 private:
-  FuncGraphManagerPtr prim_bprop_opt_manage;
-  ResourcePtr prim_bprop_opt_res;
   // cache optimized bprop graph
-  PrimBpropCache prim_bprop_cache;
-  opt::irpass::OptimizeIRPassLib irpass;
+  PrimBpropCache prim_bprop_cache_;
+  opt::irpass::OptimizeIRPassLib irpass_;
 };
 
 // bprop_fg has the signature:
