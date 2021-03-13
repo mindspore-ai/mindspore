@@ -159,13 +159,13 @@ Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   // else if pass a vector to MindData(), it will be treated as specified files to be read
   if (search_for_pattern_) {
     std::vector<std::string> dataset_file_vec_ = {dataset_file_};
-    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, rows_per_buffer_, dataset_file_vec_,
-                                                   search_for_pattern_, connector_que_size_, columns_list_, operators_,
-                                                   num_padded_, padded_sample_, sample_bytes_);
+    mindrecord_op =
+      std::make_shared<MindRecordOp>(num_workers_, dataset_file_vec_, search_for_pattern_, connector_que_size_,
+                                     columns_list_, operators_, num_padded_, padded_sample_, sample_bytes_);
   } else {
-    mindrecord_op = std::make_shared<MindRecordOp>(num_workers_, rows_per_buffer_, dataset_files_, search_for_pattern_,
-                                                   connector_que_size_, columns_list_, operators_, num_padded_,
-                                                   padded_sample_, sample_bytes_);
+    mindrecord_op =
+      std::make_shared<MindRecordOp>(num_workers_, dataset_files_, search_for_pattern_, connector_que_size_,
+                                     columns_list_, operators_, num_padded_, padded_sample_, sample_bytes_);
   }
 
   RETURN_IF_NOT_OK(mindrecord_op->Init());

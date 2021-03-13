@@ -38,7 +38,7 @@
 namespace mindspore {
 namespace dataset {
 
-TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), tree_state_(kCompileStateInit) {
+TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), tree_state_(kCompileStateInit), launched_(false) {
   optimize_ = common::GetEnv("OPTIMIZE") == "true";
 
   // Initialize profiling parameters
@@ -215,44 +215,24 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   bool isProfilingEnable = tree_->GetProfilingManager()->IsProfilingEnable();
 
   // When cur_db_ is a nullptr, it means this is the first call to get_next, launch ExecutionTree
-  if (cur_db_ == nullptr) {
-    RETURN_IF_NOT_OK(tree_->Launch());
-    // Profiling
-    std::shared_ptr<Tracing> node;
-    Status s = tree_->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
-    if (s.IsOk()) {
-      tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
-      cur_connector_size_ = tree_->root()->ConnectorSize();
-      cur_connector_capacity_ = tree_->root()->ConnectorCapacity();
-    }
-    RETURN_IF_NOT_OK(tree_->root()->GetNextBuffer(&cur_db_));  // first buf can't be eof or empty buf with none flag
-    if (cur_db_->eoe()) {                                      // return empty tensor if 1st buf is a ctrl buf (no rows)
-      MS_LOG(INFO) << "End of data iteration.";
-      if (isProfilingEnable) {
-        tree_->SetEpochEnd();
-      }
-      return Status::OK();
-    }
+  if (!launched_) {
+    RETURN_IF_NOT_OK(Launch());
   }
 
-  CHECK_FAIL_RETURN_UNEXPECTED(!cur_db_->eof(), "EOF has already been reached.");
-
-  if (cur_db_->NumRows() == 0) {  // a new row is fetched if cur buf is empty or a ctrl buf
-    RETURN_IF_NOT_OK(tree_->root()->GetNextBuffer(&cur_db_));
-    if (cur_db_->eoe()) {  // return empty if this new buffer is a ctrl flag
-      MS_LOG(INFO) << "End of data iteration.";
-      if (isProfilingEnable) {
-        tree_->SetEpochEnd();
-      }
-      return Status::OK();
+  RETURN_IF_NOT_OK(tree_->root()->GetNextRow(row));  // first buf can't be eof or empty buf with none flag
+  if (row->eoe()) {                                  // return empty tensor if 1st buf is a ctrl buf (no rows)
+    MS_LOG(INFO) << "End of data iteration.";
+    if (isProfilingEnable) {
+      tree_->SetEpochEnd();
     }
-    if (cur_db_->eof()) {
-      tree_->SetFinished();
-      std::string err = "EOF buffer encountered. Users try to fetch data beyond the specified number of epochs.";
-      RETURN_STATUS_UNEXPECTED(err);
-    }
+    return Status::OK();
   }
-  RETURN_IF_NOT_OK(cur_db_->PopRow(row));
+  if (row->eof()) {
+    tree_->SetFinished();
+    std::string err = "EOF buffer encountered. User tries to fetch data beyond the specified number of epochs.";
+    RETURN_STATUS_UNEXPECTED(err);
+  }
+
   // Record profiling info
   if (tracing_ != nullptr) {
     uint64_t end_time = ProfilingTime::GetCurMilliSecond();
@@ -263,9 +243,19 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   return Status::OK();
 }
 
-Status TreeAdapter::Launch() const {
+Status TreeAdapter::Launch() {
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ != nullptr, "Tree is a nullptr.");
-  return tree_->Launch();
+  RETURN_IF_NOT_OK(tree_->Launch());
+  launched_ = true;
+  // Profiling
+  std::shared_ptr<Tracing> node;
+  Status s = tree_->GetProfilingManager()->GetTracingNode(kDatasetIteratorTracingName, &node);
+  if (s.IsOk()) {
+    tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(node);
+    cur_connector_size_ = tree_->root()->ConnectorSize();
+    cur_connector_capacity_ = tree_->root()->ConnectorCapacity();
+  }
+  return Status::OK();
 }
 
 }  // namespace dataset

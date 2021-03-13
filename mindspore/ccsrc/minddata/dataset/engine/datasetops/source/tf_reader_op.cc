@@ -316,8 +316,6 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
 
   int64_t rows_read = 0;
   int64_t rows_total = 0;
-  std::unique_ptr<DataBuffer> current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-  std::unique_ptr<TensorQTable> new_tensor_table = std::make_unique<TensorQTable>();
 
   while (reader.peek() != EOF) {
     if (!load_jagged_connector_) {
@@ -336,6 +334,10 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
     std::string serialized_example;
     serialized_example.resize(record_length);
     (void)reader.read(&serialized_example[0], static_cast<std::streamsize>(record_length));
+
+    int32_t num_columns = data_schema_->NumColumns();
+    TensorRow newRow(num_columns, nullptr);
+
     if (start_offset == kInvalidOffset || (rows_total >= start_offset && rows_total < end_offset)) {
       dataengine::Example tf_file;
       if (!tf_file.ParseFromString(serialized_example)) {
@@ -343,40 +345,24 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
         MS_LOG(DEBUG) << errMsg + ", details of string: " << serialized_example;
         RETURN_STATUS_UNEXPECTED(errMsg);
       }
-      int32_t num_columns = data_schema_->NumColumns();
-      TensorRow newRow(num_columns, nullptr);
+
       std::vector<std::string> file_path(num_columns, filename);
       newRow.setPath(file_path);
-      new_tensor_table->push_back(std::move(newRow));
-      RETURN_IF_NOT_OK(LoadExample(&tf_file, &new_tensor_table, rows_read));
+      RETURN_IF_NOT_OK(LoadExample(&tf_file, &newRow));
       rows_read++;
+      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(newRow)));
     }
 
     // ignore crc footer
     (void)reader.ignore(static_cast<std::streamsize>(sizeof(int32_t)));
     rows_total++;
-
-    if (rows_read == rows_per_buffer_) {
-      current_buffer->set_tensor_table(std::move(new_tensor_table));
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(current_buffer)));
-
-      current_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-      new_tensor_table = std::make_unique<TensorQTable>();
-      rows_read = 0;
-    }
-  }
-
-  if (rows_read > 0) {
-    current_buffer->set_tensor_table(std::move(new_tensor_table));
-    RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(current_buffer)));
   }
 
   return Status::OK();
 }
 
 // Parses a single row and puts the data into a tensor table.
-Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, std::unique_ptr<TensorQTable> *tensor_table,
-                               int64_t row) {
+Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, TensorRow *out_row) {
   int32_t num_columns = data_schema_->NumColumns();
   for (int32_t col = 0; col < num_columns; ++col) {
     const ColDescriptor current_col = data_schema_->column(col);
@@ -387,16 +373,15 @@ Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, std::unique_p
       RETURN_STATUS_UNEXPECTED("Invalid parameter, column name: " + current_col.name() + " does not exist.");
     }
     const dataengine::Feature &column_values_list = iter_column->second;
-    RETURN_IF_NOT_OK(LoadFeature(tensor_table, column_values_list, current_col, row, col));
+    RETURN_IF_NOT_OK(LoadFeature(out_row, column_values_list, current_col, col));
   }
 
   return Status::OK();
 }
 
 // Parses a single cell and puts the data into a tensor table.
-Status TFReaderOp::LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table,
-                               const dataengine::Feature &column_values_list, const ColDescriptor &current_col,
-                               int64_t row, int32_t col) {
+Status TFReaderOp::LoadFeature(TensorRow *tensor_row, const dataengine::Feature &column_values_list,
+                               const ColDescriptor &current_col, int32_t col) {
   const dataengine::Feature::KindCase column_list_type = column_values_list.kind_case();
   std::unique_ptr<float[]> float_array;     // For staging data from protobuf deserialization
   const unsigned char *data_ptr = nullptr;  // Generic pointer used for populating the Tensor
@@ -444,7 +429,7 @@ Status TFReaderOp::LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table
     }
   }
 
-  (**tensor_table)[row][col] = std::move(ts);
+  (*tensor_row)[col] = std::move(ts);
 
   return Status::OK();
 }

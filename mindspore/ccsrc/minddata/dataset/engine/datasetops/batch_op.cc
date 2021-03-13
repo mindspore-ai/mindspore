@@ -182,24 +182,21 @@ void BatchOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest,
-                          dsize_t batch_size) {
+Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size) {
   if ((*src)->size() != batch_size) {
     RETURN_STATUS_UNEXPECTED("[Internal Batch ERROR] Source table size does not match the batch_size");
   }
 
   if (batch_size == 1) {
-    TensorRow row = std::move((*src)->front());
-    row.setPath({});
+    *dest = std::move((*src)->front());
     (*src)->pop_front();
-    (*dest)->push_back(row);
-    for (const auto &tensor : (*dest)->front()) {
+
+    for (const auto &tensor : (*dest)) {
       RETURN_IF_NOT_OK(tensor->ExpandDim(0));
     }
     return Status::OK();
   }
 
-  TensorRow batched_row;
   auto num_columns = (*src)->front().size();
   for (size_t i = 0; i < num_columns; i++) {
     std::shared_ptr<Tensor> first_tensor = (*src)->at(0).at(i);  // first row, column i
@@ -234,10 +231,8 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, const std::u
       }
       RETURN_IF_NOT_OK(Tensor::CreateFromVector(strings, new_shape, &new_tensor));
     }
-    batched_row.emplace_back(new_tensor);
+    dest->emplace_back(new_tensor);
   }
-
-  (*dest)->emplace_back(batched_row);
 
   return Status::OK();
 }
@@ -248,30 +243,26 @@ Status BatchOp::WorkerEntry(int32_t workerId) {
   RETURN_IF_NOT_OK(worker_queues_[workerId]->PopFront(&table_pair));
   while (table_pair.second.ctrl_ != batchCtrl::kQuit) {
     if (table_pair.second.ctrl_ == batchCtrl::kEOE) {
-      RETURN_IF_NOT_OK(out_connector_->Add(workerId, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOE(workerId));
     } else if (table_pair.second.ctrl_ == batchCtrl::kEOF) {
-      RETURN_IF_NOT_OK(out_connector_->Add(workerId, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOF(workerId));
     } else if (table_pair.second.ctrl_ == batchCtrl::kNoCtrl) {
-      std::unique_ptr<DataBuffer> db = nullptr;
-      RETURN_IF_NOT_OK(MakeBatchedBuffer(std::move(table_pair), &db));
-      RETURN_IF_NOT_OK(out_connector_->Add(workerId, std::move(db)));
+      TensorRow new_row;
+      RETURN_IF_NOT_OK(MakeBatchedBuffer(std::move(table_pair), &new_row));
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row), workerId));
     }
     RETURN_IF_NOT_OK(worker_queues_[workerId]->PopFront(&table_pair));
   }
   return Status::OK();
 }
 
-Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair,
-                                  std::unique_ptr<DataBuffer> *db) {
+Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair, TensorRow *new_row) {
   RETURN_UNEXPECTED_IF_NULL(table_pair.first);
 #ifdef ENABLE_PYTHON
   if (!in_col_names_.empty()) RETURN_IF_NOT_OK(MapColumns(&table_pair));  // pass it through pyfunc
 #endif
   if (pad_) RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));  // do padding if needed
-  (*db) = std::make_unique<DataBuffer>(table_pair.second.batch_num_, DataBuffer::kDeBFlagNone);
-  std::unique_ptr<TensorQTable> dest_table = std::make_unique<TensorQTable>();
-  RETURN_IF_NOT_OK(BatchRows(&table_pair.first, &dest_table, table_pair.first->size()));
-  (*db)->set_tensor_table(std::move(dest_table));
+  RETURN_IF_NOT_OK(BatchRows(&table_pair.first, new_row, table_pair.first->size()));
   return Status::OK();
 }
 
@@ -575,14 +566,14 @@ int64_t BatchOp::GetTreeBatchSize() {
   return start_batch_size_;
 }
 
-Status BatchOp::GetNextRow(TensorRow *row) {
+Status BatchOp::GetNextRowPullMode(TensorRow *row) {
   std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
   child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
   int32_t cur_batch_size = 0;
   RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, batch_num_, batch_cnt_)));
   for (int i = 0; i < cur_batch_size; i++) {
     TensorRow new_row;
-    RETURN_IF_NOT_OK(child_[0]->GetNextRow(&new_row));
+    RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
     if (!new_row.empty()) {
       table->emplace_back(new_row);
       if (table->size() == static_cast<size_t>(cur_batch_size)) break;
@@ -592,13 +583,10 @@ Status BatchOp::GetNextRow(TensorRow *row) {
       }
     }
   }
-  std::unique_ptr<TensorQTable> out = std::make_unique<TensorQTable>();
   RETURN_UNEXPECTED_IF_NULL(table);
   if (pad_) RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));  // do padding if needed
   if (!table->empty()) {
-    RETURN_IF_NOT_OK(BatchRows(&table, &out, table->size()));
-    CHECK_FAIL_RETURN_UNEXPECTED(out->size() == 1, "Batch returned 2 rows while 1 row was expected.");
-    *row = out->back();
+    RETURN_IF_NOT_OK(BatchRows(&table, row, table->size()));
     batch_cnt_++;
     batch_num_++;
   }

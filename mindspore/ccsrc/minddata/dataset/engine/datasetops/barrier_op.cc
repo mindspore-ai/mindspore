@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,9 +71,10 @@ Status BarrierOp::operator()() {
 
   // Loop until eof is true
   while (!eof_) {
-    // Create new table to put the new tensor rows
-    std::unique_ptr<TensorQTable> curr_table = std::make_unique<TensorQTable>();
-    RETURN_IF_NOT_OK(prepare(curr_table.get()));
+    RETURN_IF_NOT_OK(prepare());
+    // read the first row
+    TensorRow new_row;
+    RETURN_IF_NOT_OK(getNextTensorRow(&new_row));
 
     // If an eof got picked up during the above prepare, then we're done
     if (eof_) {
@@ -82,89 +83,33 @@ Status BarrierOp::operator()() {
 
     // we have to output new buffer with possibly different buffer size, possibly one row
     while (!clean_up_) {
-      // 1. If a previous loop iteration sent the current table out, then create a new one.
+      // 2 Block
+      RETURN_IF_NOT_OK(blockCond());
 
-      if (curr_table == nullptr) {
-        curr_table = std::make_unique<TensorQTable>();
-      }
-
-      // 2 fill the table.  Note: clean_up mode might get turned on if epoch is finished
-      RETURN_IF_NOT_OK(fillBuffer(curr_table.get()));
-
-      // 3 create and update buffer and send it to the out connector
-      if (!curr_table->empty()) {
-        std::unique_ptr<DataBuffer> curr_buffer = std::make_unique<DataBuffer>(buffer_id_, DataBuffer::kDeBFlagNone);
-        curr_buffer->set_tensor_table(std::move(curr_table));
-        MS_LOG(DEBUG) << "Barrier operator finished one buffer, pushing, rows " << curr_buffer->NumRows() << ", cols "
-                      << curr_buffer->NumCols() << ", map " << column_name_id_map_.size() << ".";
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
-        buffer_id_++;
-      }
+      MS_LOG(DEBUG) << "Barrier operator finished one row, pushing, cols " << new_row.size() << ", map "
+                    << column_name_id_map_.size() << ".";
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
+      RETURN_IF_NOT_OK(getNextTensorRow(&new_row));
     }
 
-    // 4 handle drain state.
     if (clean_up_) {
       MS_LOG(DEBUG) << "Barrier operator sending epoch ending signal.";
-      // Send the eoe up.
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+      // 3 Send the eoe up.
+      RETURN_IF_NOT_OK(out_connector_->SendEOE());
     }
   }
-  // 5 handle eof
+  // 4 handle eof
   // propagate eof here.
   MS_LOG(INFO) << "Barrier operator got EOF, propagating.";
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }
 
 // Handles preprocessing of the main loop, used when starting new epoch
-Status BarrierOp::prepare(TensorQTable *const table) {
+Status BarrierOp::prepare() {
   MS_LOG(DEBUG) << "Barrier operator prepares for new epoch.";
   clean_up_ = false;
-  buffer_id_ = 0;
-  if (table == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "BarrierOp prepare phase requires a tensor table.");
-  }
-  // fill initial row
-  TensorRow new_row = {};
-  // use iterator to get next row and invoke pyfunc wait
-  RETURN_IF_NOT_OK(getNextTensorRow(&new_row));
-
-  // If the first row fetching resulted in eof, then we are done.
-  if (eof_) {
-    return Status::OK();
-  }
-  if (new_row.empty()) {
-    // This epoch is empty
-    return Status::OK();
-  }
-  // Pack this first row into our tensor table
-  // first row we also have to check if we should block
-  RETURN_IF_NOT_OK(blockCond());
-
-  table->push_back(std::move(new_row));
-
   // the update code below shouldn't do anything bad if the column name already exists.
-  return Status::OK();
-}
-
-// fillBuffer always expects a new table to fill
-Status BarrierOp::fillBuffer(TensorQTable *const table) {
-  if (table == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "BarrierOp fillBuffer null table pointer.");
-  }
-  TensorRow new_row = {};
-  while (table->size() < static_cast<size_t>(rows_per_buffer_)) {
-    RETURN_IF_NOT_OK(getNextTensorRow(&new_row));
-    // Early exit the loop if we got empty row from any of our child iterations
-    if (new_row.empty()) {
-      return Status::OK();
-    }
-    // else we got a row so pack it into the tensor table.
-    RETURN_IF_NOT_OK(blockCond());
-
-    table->push_back(std::move(new_row));
-  }
   return Status::OK();
 }
 

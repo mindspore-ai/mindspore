@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,60 +114,11 @@ Status CacheClient::WriteRow(const TensorRow &row, row_id_type *row_id_from_serv
   return Status::OK();
 }
 
-Status CacheClient::WriteBuffer(std::unique_ptr<DataBuffer> &&in) const {
-  std::unique_ptr<DataBuffer> db_ptr = std::move(in);
-  auto num_rows = db_ptr->NumRows();
-  // We will send the requests async first on all rows and do a final wait.
-  if (num_rows > 0) {
-    auto arr = std::make_unique<std::shared_ptr<CacheRowRequest>[]>(num_rows);
-    for (auto i = 0; i < num_rows; ++i) {
-      TensorRow row;
-      RETURN_IF_NOT_OK(db_ptr->PopRow(&row));
-      arr[i] = std::make_shared<CacheRowRequest>(this);
-      RETURN_IF_NOT_OK(arr[i]->SerializeCacheRowRequest(this, row));
-      RETURN_IF_NOT_OK(PushRequest(arr[i]));
-    }
-    // Now we wait for them to come back
-    for (auto i = 0; i < num_rows; ++i) {
-      RETURN_IF_NOT_OK(arr[i]->Wait());
-    }
-  }
-  return Status::OK();
-}
-
 Status CacheClient::AsyncWriteRow(const TensorRow &row) {
   if (async_buffer_stream_ == nullptr) {
     return Status(StatusCode::kMDNotImplementedYet);
   }
   RETURN_IF_NOT_OK(async_buffer_stream_->AsyncWrite(row));
-  return Status::OK();
-}
-
-Status CacheClient::AsyncWriteBuffer(std::unique_ptr<DataBuffer> &&in) {
-  if (async_buffer_stream_ == nullptr) {
-    return Status(StatusCode::kMDNotImplementedYet);
-  } else {
-    Status rc;
-    std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
-    auto num_rows = in->NumRows();
-    if (num_rows > 0) {
-      for (auto i = 0; i < num_rows; ++i) {
-        TensorRow row;
-        RETURN_IF_NOT_OK(in->PopRow(&row));
-        rc = AsyncWriteRow(row);
-        if (rc.StatusCode() == StatusCode::kMDNotImplementedYet) {
-          tensor_table->push_back(row);
-        } else if (rc.IsError()) {
-          return rc;
-        }
-      }
-    }
-    // If not all of them can be sent async, return what's left back to the caller.
-    if (!tensor_table->empty()) {
-      in->set_tensor_table(std::move(tensor_table));
-      return Status(StatusCode::kMDNotImplementedYet);
-    }
-  }
   return Status::OK();
 }
 

@@ -21,6 +21,7 @@
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
+#include "minddata/dataset/engine/dataset_iterator.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -104,15 +105,16 @@ Status CacheOp::CacheAllRows(int32_t worker_id) {
     }
     MS_LOG(INFO) << "CacheOp first epoch SAVE mode started. Worker: " << worker_id;
     // SAVE mode loop
-    std::unique_ptr<DataBuffer> db_ptr;
-    RETURN_IF_NOT_OK(this->GetNextInput(&db_ptr, worker_id, 0));
-    while (!db_ptr->eof()) {
-      if (!db_ptr->eoe()) {
+    TensorRow row;
+    auto child_iterator = std::make_unique<ChildIterator>(this, worker_id, 0);
+    RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&row));
+    while (!row.eof()) {
+      if (!row.eoe()) {
         Status rc;
         // Do the Async write if we attach to the shared memory.
-        rc = cache_client_->AsyncWriteBuffer(std::move(db_ptr));
+        rc = cache_client_->AsyncWriteRow(row);
         if (rc.StatusCode() == StatusCode::kMDNotImplementedYet) {
-          RETURN_IF_NOT_OK(cache_client_->WriteBuffer(std::move(db_ptr)));
+          RETURN_IF_NOT_OK(cache_client_->WriteRow(row));
         } else if (rc.IsError()) {
           return rc;
         }
@@ -122,12 +124,13 @@ Status CacheOp::CacheAllRows(int32_t worker_id) {
         // the eoe to indicate the end of the epoch, we should next expect to get the eof.
         // Drain this eof so that we don't leave it sitting there on a connector that we'll never fetch
         // from again.
-        RETURN_IF_NOT_OK(this->GetNextInput(&db_ptr, worker_id, 0));
-        if (!db_ptr->eof()) {
+        RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&row));
+        if (!row.eof()) {
           RETURN_STATUS_UNEXPECTED("Cache op expects to get an eof after eoe from child.");
         }
+        break;
       }
-      RETURN_IF_NOT_OK(this->GetNextInput(&db_ptr, worker_id, 0));
+      RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&row));
     }
   }
   // Let the main guy know we are done.

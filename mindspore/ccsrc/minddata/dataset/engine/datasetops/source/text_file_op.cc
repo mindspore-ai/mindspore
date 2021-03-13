@@ -117,10 +117,10 @@ Status TextFileOp::Init() {
   return Status::OK();
 }
 
-Status TextFileOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTable> *tensor_table, int64_t row) {
+Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
   std::shared_ptr<Tensor> tensor;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(line, &tensor));
-  (**tensor_table)[row][0] = std::move(tensor);
+  (*out_row)[0] = std::move(tensor);
   return Status::OK();
 }
 
@@ -130,11 +130,8 @@ Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open file: " + file);
   }
 
-  int64_t rows_each_buffer = 0;
   int64_t rows_total = 0;
   std::string line;
-  std::unique_ptr<DataBuffer> cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-  std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
 
   while (getline(handle, line)) {
     if (line.empty()) {
@@ -152,23 +149,10 @@ Status TextFileOp::LoadFile(const std::string &file, int64_t start_offset, int64
 
     TensorRow tRow(1, nullptr);
     tRow.setPath({file});
-    tensor_table->push_back(std::move(tRow));
-    RETURN_IF_NOT_OK(LoadTensor(line, &tensor_table, rows_each_buffer));
-    rows_each_buffer++;
+    RETURN_IF_NOT_OK(LoadTensor(line, &tRow));
+    RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(tRow)));
+
     rows_total++;
-    if (rows_each_buffer == rows_per_buffer_) {
-      cur_buffer->set_tensor_table(std::move(tensor_table));
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(cur_buffer)));
-
-      cur_buffer = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-      tensor_table = std::make_unique<TensorQTable>();
-      rows_each_buffer = 0;
-    }
-  }
-
-  if (rows_each_buffer > 0) {
-    cur_buffer->set_tensor_table(std::move(tensor_table));
-    RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(cur_buffer)));
   }
 
   return Status::OK();

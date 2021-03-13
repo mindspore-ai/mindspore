@@ -78,9 +78,12 @@ void ConcatOp::Print(std::ostream &out, bool show_all) const {
 
 // Main entry point for Concat
 Status ConcatOp::operator()() {
-  children_num_ = static_cast<int32_t>(child_.size());
   TaskManager::FindMe()->Post();
-  std::unique_ptr<DataBuffer> buf;
+  children_num_ = static_cast<int32_t>(child_.size());
+  for (int32_t i = 0; i < children_num_; i++) {
+    children_iterators_.push_back(std::make_unique<ChildIterator>(this, 0, i));
+  }
+  TensorRow new_row;
   int eof_count = 0;
   int sample_number = 0;
   bool is_not_mappable = true;
@@ -95,26 +98,26 @@ Status ConcatOp::operator()() {
 
   while (eof_count == 0) {
     for (int i = 0; i < children_num_; i++) {
-      // 1. Read the first buffer
-      RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
-      if (buf->eof()) {
+      // 1. Read the first row
+      RETURN_IF_NOT_OK(children_iterators_[i]->FetchNextTensorRow(&new_row));
+      if (new_row.eof()) {
         eof_count++;
         continue;
       }
       // 2. Do verification as for column name, column data type and rank of column data
-      if (!buf->eoe()) {
-        RETURN_IF_NOT_OK(Verify(i, buf));
+      if (!new_row.eoe()) {
+        RETURN_IF_NOT_OK(Verify(i, new_row));
       }
       // 3. Put the data into output_connector
       if (!children_flag_and_nums_.empty()) {
         is_not_mappable = children_flag_and_nums_[i].first;
         is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[i].second);
       }
-      while (!buf->eoe() && !buf->eof()) {
+      while (!new_row.eoe() && !new_row.eof()) {
         // if dataset is not mappable or generator dataset which source is yield, cannot get the number of samples in
         // python layer), we use filtering to get data
         if (sample_number % num_shard == shard_index && is_not_mappable_or_second_ne_zero) {
-          RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
+          RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
         } else if (!is_not_mappable_or_second_ne_zero) {
           // if dataset is mappable or generator dataset which source is not yield,
           // get the start and end subscripts of valid values
@@ -122,7 +125,7 @@ Status ConcatOp::operator()() {
 
           // determine whether the data allocated to the current shard id is false data
           if (f(fv, sv, shard_index)) {
-            RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(buf)));
+            RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
           }
         }
 
@@ -131,7 +134,7 @@ Status ConcatOp::operator()() {
           sample_number++;
         }
 
-        RETURN_IF_NOT_OK(child_[i]->GetNextBuffer(&buf));
+        RETURN_IF_NOT_OK(children_iterators_[i]->FetchNextTensorRow(&new_row));
       }
 
       // if dataset is mappable,We don't use filtering to pick data.
@@ -143,8 +146,7 @@ Status ConcatOp::operator()() {
 
     // 4. Add eoe buffer after get buffer from all child
     if (eof_count == 0) {
-      auto eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
+      RETURN_IF_NOT_OK(out_connector_->SendEOE());
     }
     UpdateRepeatAndEpochCounter();
   }
@@ -152,15 +154,11 @@ Status ConcatOp::operator()() {
                                "Something went wrong, eof count does not match the number of children.");
   // 5. Add eof buffer in the end manually
   MS_LOG(DEBUG) << "Add the eof buffer manually in the end.";
-  auto eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }
 
-Status ConcatOp::Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf) {
-  TensorRow new_row;
-  RETURN_IF_NOT_OK(buf->GetRow(0, &new_row));
-
+Status ConcatOp::Verify(int32_t id, const TensorRow &new_row) {
   if (id == 0) {
     // Obtain the data type and data rank in child[0]
     for (auto item : new_row) {

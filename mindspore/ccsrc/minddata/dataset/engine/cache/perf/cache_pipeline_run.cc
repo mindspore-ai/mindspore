@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,7 +272,6 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
   int64_t min_val = std::numeric_limits<int64_t>::max();
   int64_t max_val = 0;
   int64_t total_val = 0;
-  int64_t cnt = 0;
   std::vector<int64_t> duration;
   duration.reserve(num_rows_ / num_pipelines_ / cfg_.num_parallel_workers());
   bool resource_err = false;
@@ -291,8 +290,6 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
     }
     // Once we hit resource error, we drain the io block. No point to send anything to the server.
     if (!resource_err) {
-      auto buffer = std::make_unique<DataBuffer>(cnt++, DataBuffer::kDeBFlagNone);
-      auto tensor_table = std::make_unique<TensorQTable>();
       for (auto id : keys) {
         TensorRow row;
         std::shared_ptr<Tensor> element;
@@ -305,29 +302,27 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
           *it = i;
         }
         row.push_back(std::move(element));
-        tensor_table->push_back(std::move(row));
-      }
-      buffer->set_tensor_table(std::move(tensor_table));
-      // Measure the time to call WriteBuffer
-      auto start_tick = std::chrono::steady_clock::now();
-      rc = cc_->AsyncWriteBuffer(std::move(buffer));
-      auto end_tick = std::chrono::steady_clock::now();
-      if (rc.IsError()) {
-        if (rc == StatusCode::kMDOutOfMemory || rc == StatusCode::kMDNoSpace) {
-          MS_LOG(WARNING) << "Pipeline number " << my_pipeline_ + 1 << " worker id " << worker_id << ": "
-                          << rc.ToString();
-          resource_err = true;
-          cc_->ServerRunningOutOfResources();
-          continue;
+        // Measure the time to call WriteBuffer
+        auto start_tick = std::chrono::steady_clock::now();
+        rc = cc_->AsyncWriteRow(std::move(row));
+        auto end_tick = std::chrono::steady_clock::now();
+        if (rc.IsError()) {
+          if (rc == StatusCode::kMDOutOfMemory || rc == StatusCode::kMDNoSpace) {
+            MS_LOG(WARNING) << "Pipeline number " << my_pipeline_ + 1 << " worker id " << worker_id << ": "
+                            << rc.ToString();
+            resource_err = true;
+            cc_->ServerRunningOutOfResources();
+            continue;
+          } else {
+            return rc;
+          }
         } else {
-          return rc;
+          int64_t ms = std::chrono::duration_cast<std::chrono::microseconds>(end_tick - start_tick).count();
+          min_val = std::min(min_val, ms);
+          max_val = std::max(max_val, ms);
+          duration.push_back(ms);
+          total_val += ms;
         }
-      } else {
-        int64_t ms = std::chrono::duration_cast<std::chrono::microseconds>(end_tick - start_tick).count();
-        min_val = std::min(min_val, ms);
-        max_val = std::max(max_val, ms);
-        duration.push_back(ms);
-        total_val += ms;
       }
     }
   } while (true);

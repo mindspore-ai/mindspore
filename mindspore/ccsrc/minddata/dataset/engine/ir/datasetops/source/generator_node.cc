@@ -84,7 +84,7 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
   // GeneratorOp's constructor takes in a prefetch_size, which isn't being set by user nor is it being used by
   // GeneratorOp internally. Here it is given a zero which is the default in generator builder
   std::shared_ptr<GeneratorOp> op = std::make_shared<GeneratorOp>(generator_function_, column_names_, column_types_, 0,
-                                                                  rows_per_buffer_, connector_que_size_, sampler_rt);
+                                                                  connector_que_size_, sampler_rt);
   // set the number of rows from source length
   op->SetNumRows(source_len_);
 

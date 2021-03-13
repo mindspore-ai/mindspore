@@ -72,96 +72,43 @@ Status ZipOp::operator()() {
 
   // Loop until eof is true
   while (!eof_) {
-    // Create tensor table and prepare it by fetching and packing the first zipped row into it.
-    std::unique_ptr<TensorQTable> curr_table = std::make_unique<TensorQTable>();
-    RETURN_IF_NOT_OK(prepare(curr_table.get()));
+    // 1 Prepare new epoch
+    RETURN_IF_NOT_OK(prepare());
+    // 2 fetch first row
+    TensorRow row;
+    RETURN_IF_NOT_OK(getNextTensorRow(&row));
 
-    // If an eof got picked up during the above prepare, then we're done
+    // If an eof got picked up, then we're done
     if (eof_) {
       break;
     }
     while (!draining_) {
-      // 1. If a previous loop iteration sent the current table out, then create a new one.
-      if (curr_table == nullptr) {
-        curr_table = std::make_unique<TensorQTable>();
-      }
-
-      // 2 fill the table.  Note: draining mode might get turned on if any of the child inputs were done
-      RETURN_IF_NOT_OK(fillBuffer(curr_table.get()));
-
-      // 3 create and update buffer and send it to the out connector
-      if (!curr_table->empty()) {
-        std::unique_ptr<DataBuffer> curr_buffer = std::make_unique<DataBuffer>(buffer_id_, DataBuffer::kDeBFlagNone);
-        curr_buffer->set_tensor_table(std::move(curr_table));
-        MS_LOG(DEBUG) << "Zip operator finished one buffer, pushing, rows " << curr_buffer->NumRows() << ", cols "
-                      << curr_buffer->NumCols() << ", map " << column_name_id_map_.size() << ".";
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(curr_buffer)));
-        buffer_id_++;
-      }
+      // 3 send new row to the out connector
+      MS_LOG(DEBUG) << "Zip operator finished one row, pushing, cols " << row.size() << ", map "
+                    << column_name_id_map_.size() << ".";
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(row)));
+      // 4 fetch one more row
+      RETURN_IF_NOT_OK(getNextTensorRow(&row));
     }
-
-    // 4 handle drain state.
+    // 5 handle drain state.
     if (draining_) {
       MS_LOG(DEBUG) << "Zip operator is now draining child inputs.";
       RETURN_IF_NOT_OK(drainPipeline());
       // Now that we have drained child inputs, send the eoe up.
-      RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE))));
+      RETURN_IF_NOT_OK(out_connector_->SendEOE());
     }
   }
 
-  // 5 handle eof
-  // propagate eof here.
+  // 6 handle eof
   MS_LOG(DEBUG) << "Zip operator got EOF, propagating.";
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }
 
 // Handles preprocessing of the main loop, used when starting new epoch
-Status ZipOp::prepare(TensorQTable *const table) {
+Status ZipOp::prepare() {
   MS_LOG(DEBUG) << "Zip operator prepares for new epoch.";
   draining_ = false;
-  buffer_id_ = 0;
-  if (table == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid data, ZipOp prepare phase requires a tensor table, but got nullptr.");
-  }
-  // fill initial row
-  TensorRow new_row;
-  RETURN_IF_NOT_OK(getNextTensorRow(&new_row));
-
-  // If the first row fetching resulted in eof, then we are done.
-  if (eof_) {
-    return Status::OK();
-  }
-  // One of our child iterators encounter EOE. Returns and proceed with draining phase.
-  if (new_row.empty()) {
-    return Status::OK();
-  }
-
-  // Pack this first row into our tensor table
-  table->push_back(std::move(new_row));
-
-  return Status::OK();
-}
-
-// fillBuffer always expects a new table to fill
-Status ZipOp::fillBuffer(TensorQTable *const table) {
-  if (table == nullptr) {
-    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
-                  "Invalid data, ZipOp fillBuffer null table pointer.");
-  }
-  TensorRow new_row;
-  while (table->size() < static_cast<size_t>(rows_per_buffer_)) {
-    RETURN_IF_NOT_OK(getNextTensorRow(&new_row));
-    // Early exit the loop if we got empty row from any of our child iterations
-    if (new_row.empty()) {
-      return Status::OK();
-    }
-    // else we got a row so pack it into the tensor table.
-    // Currently we don't support printing error info after zip
-    new_row.setPath({});
-    table->push_back(std::move(new_row));
-  }
   return Status::OK();
 }
 

@@ -107,8 +107,7 @@ Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   }
 
   std::shared_ptr<RandomDataOp> op;
-  op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
-                                      std::move(data_schema_));
+  op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, total_rows_, std::move(data_schema_));
   op->set_total_repeats(GetTotalRepeats());
   op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(op);

@@ -86,7 +86,7 @@ class TakeOp : public PipelineOp {
   int32_t max_takes_;   // The number of takes that the user requested
   int32_t take_count_;  // A counter for the current number of executed takes
 
-  Status FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<DataBuffer> *data_buffer);
+  std::unique_ptr<ChildIterator> child_iterator_;  // An iterator for fetching.
 };
 }  // namespace dataset
 }  // namespace mindspore

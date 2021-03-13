@@ -64,7 +64,7 @@ class TreeAdapter {
   // to be able to launch a thread. BuildAndPrepare needs to be called before this function
   TaskGroup *const AllTasks() const { return tree_ ? tree_->AllTasks() : nullptr; }
 
-  Status Launch() const;
+  Status Launch();
 
   // Set optional optimization pass
   void SetOptimize(bool value) { optimize_ = value; }
@@ -88,7 +88,6 @@ class TreeAdapter {
   // This RECURSIVE function walks the (optimized) IR tree in DFS to build its corresponding Execution tree.
   Status BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
 
-  std::unique_ptr<DataBuffer> cur_db_;
   std::unordered_map<std::string, int32_t> column_name_map_;
   std::shared_ptr<DatasetNode> root_ir_;
   std::unique_ptr<ExecutionTree> tree_;              // current connector capacity of root op, used for profiling
@@ -98,6 +97,7 @@ class TreeAdapter {
   int32_t cur_connector_size_;                       // current connector size of root op, used for profiling
   int32_t cur_connector_capacity_;                   // current connector capacity of root op, used for profiling
   UsageFlag usage_;                                  // usage of this tree adapter (type of consumer)
+  bool launched_;
   // State flags for the lifecycle of the tree
   enum CompileState {
     kCompileStateInit = 0,      // The freshly initialized state

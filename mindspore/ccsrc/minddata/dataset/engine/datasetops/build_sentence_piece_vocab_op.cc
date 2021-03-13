@@ -57,6 +57,7 @@ Status BuildSentencePieceVocabOp::operator()() {
       RETURN_IF_NOT_OK(sentence_queue_->EmplaceBack(new_row));
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
+    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     CHECK_FAIL_RETURN_UNEXPECTED(!eoe_warning, "no op should be after from_dataset (repeat detected)");
     eoe_warning = true;
   }
@@ -91,8 +92,8 @@ Status BuildSentencePieceVocabOp::SentenceThread() {
     }
     vocab_->set_model_proto(model_proto);
   }
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
+  RETURN_IF_NOT_OK(out_connector_->SendEOE());
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
   return Status::OK();
 }
 

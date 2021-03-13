@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,11 +156,6 @@ class CacheClient {
   /// \return return code
   Status WriteRow(const TensorRow &row, row_id_type *row_id_from_server = nullptr) const;
 
-  /// \brief Send a DataBuffer to the cache server
-  /// \param in Unique pointer of the DataBuffer to be cached
-  /// \return return code
-  Status WriteBuffer(std::unique_ptr<DataBuffer> &&in) const;
-
   /// \brief Fetch a list of rows from the cache server. An empty TensorRow will be returned if there is
   /// any cache miss
   /// \param row_id A vector of row id's
@@ -257,6 +252,9 @@ class CacheClient {
     return false;
   }
 
+  /// \brief Serialize a Tensor into the async buffer.
+  Status AsyncWriteRow(const TensorRow &row);
+
   // Default size of the async write buffer
   constexpr static int64_t kAsyncBufferSize = 16 * 1048576L;  // 16M
   constexpr static int32_t kNumAsyncBuffer = 3;
@@ -268,8 +266,6 @@ class CacheClient {
     }
     return Status::OK();
   }
-
-  Status AsyncWriteBuffer(std::unique_ptr<DataBuffer> &&in);
 
  private:
   mutable RWLock mux_;
@@ -354,9 +350,6 @@ class CacheClient {
     std::atomic<int64_t> next_addr_;
   };
   std::shared_ptr<AsyncBufferStream> async_buffer_stream_;
-
-  /// \brief Serialize a Tensor into the async buffer.
-  Status AsyncWriteRow(const TensorRow &row);
 };
 }  // namespace dataset
 }  // namespace mindspore

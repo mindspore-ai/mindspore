@@ -23,6 +23,8 @@
 
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
+#include "minddata/dataset/engine/dataset_iterator.h"
+
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/util/status.h"
 #ifdef ENABLE_DUMP_IR
@@ -182,9 +184,9 @@ class DeviceQueueOp : public PipelineOp {
   std::string Name() const override { return kDeviceQueueOp; }
 
  private:
-  //  Name: checkExceptions(DataBuffer);
-  //  Description: Check whether the dataBuffer meets the condition for performing DeviceQueueOp
-  Status CheckExceptions(const std::unique_ptr<DataBuffer> &buffer) const;
+  //  Name: checkExceptions(TensorRow);
+  //  Description: Check whether the TensorRow meets the condition for performing DeviceQueueOp
+  Status CheckExceptions(const TensorRow &row) const;
 
  private:
 #ifdef ENABLE_TDTQUE
@@ -204,7 +206,7 @@ class DeviceQueueOp : public PipelineOp {
   Status WorkerEntry(int32_t worker_id);
   Status SetThreadDevice();
 
-  QueueList<std::unique_ptr<DataBuffer>> receive_queues_;
+  QueueList<TensorRow> receive_queues_;
   std::vector<std::shared_ptr<MemoryPool>> pool_;
   std::unique_ptr<GpuItemConnector> gpu_item_connector_;
   uint32_t num_workers_;
@@ -216,6 +218,8 @@ class DeviceQueueOp : public PipelineOp {
 #endif
 
   Status SendDataToCPU();
+
+  std::unique_ptr<ChildIterator> child_iterator_;
   std::string channel_name_;
   DeviceType device_type_;
   const int32_t device_id_;

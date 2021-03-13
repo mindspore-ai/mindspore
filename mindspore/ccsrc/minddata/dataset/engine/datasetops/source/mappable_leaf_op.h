@@ -52,53 +52,47 @@ using FolderImagesPair = std::shared_ptr<std::pair<std::string, std::queue<Image
 
 class MappableLeafOp : public ParallelOp, public RandomAccessOp {
  public:
-  // Constructor
-  // @param int32_t num_wkrs - Num of workers reading images in parallel
-  // @param int32_t - rows_per_buffer Number of images (rows) in each buffer
-  // @param std::string - dir directory of ImageNetFolder
-  // @param int32_t queue_size - connector queue size
-  // @param std::set<std::string> exts - set of file extensions to read, if empty, read everything under the dir
-  // @param td::unique_ptr<Sampler> sampler - sampler tells the source what to read
+  /// Constructor
+  /// \param int32_t num_wkrs - Num of workers reading images in parallel
+  /// \param int32_t queue_size - connector queue size
+  /// \param td::unique_ptr<Sampler> sampler - sampler tells the source  what to read
   MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared_ptr<SamplerRT> sampler, int32_t rows_per_buffer);
 
-  // Destructor.
+  /// Destructor.
   ~MappableLeafOp() = default;
 
-  // Main Loop of MappableLeaf
-  // Master thread: Fill IOBlockQueue, then goes to sleep
-  // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status The status code returned
+  /// Main Loop of MappableLeaf
+  /// Master thread: Fill IOBlockQueue, then goes to sleep
+  /// Worker thread: pulls IOBlock from IOBlockQueue, work on it then put row to out_connector_
+  /// \return Status The status code returned
   Status operator()() override;
 
-  // Op name getter
-  // @return Name of the current Op
+  /// Op name getter
+  /// @return Name of the current Op
   std::string Name() const override { return "MappableLeafPp"; }
 
  protected:
-  // Initialize Sampler, calls sampler->Init() within
-  // @return Status The status code returned
+  /// Initialize Sampler, calls sampler->Init() within
+  /// @return Status The status code returned
   Status InitSampler();
 
-  //  // Called first when function is called
-  //  // @return
+  /// Called first when function is called
+  /// \return Status The status code returned
   virtual Status LaunchThreadsAndInitOp() = 0;
 
+  /// Worker thread pulls a number of IOBlock from IOBlock Queue, make a row and push it to Connector
+  /// \param int32_t workerId - id of each worker
+  /// \return Status The status code returned
   Status WorkerEntry(int32_t workerId) override;
 
-  // @param const std::vector<int64_t> &keys - keys in ioblock
-  // @param std::unique_ptr<DataBuffer> db
-  // @return Status The status code returned
-  Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
-
-  // Load a tensor row according to a pair
-  // @param row_id_type row_id - id for this tensor row
-  // @param ImageLabelPair pair - <imagefile,label>
-  // @param TensorRow row - loaded row
-  // @return Status The status code returned
+  /// Virtual function to Load a tensor row at location row_id
+  /// \param row_id_type row_id - id for this tensor row
+  /// \param TensorRow row - loaded row
+  /// \return Status The status code returned
   virtual Status LoadTensorRow(row_id_type row_id, TensorRow *row) = 0;
 
-  // reset Op
-  // @return Status The status code returned
+  /// Reset function to be called after every epoch to reset the source op after
+  /// \return Status The status code returned
   Status Reset() override;
 
   int32_t rows_per_buffer_;

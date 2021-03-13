@@ -173,7 +173,7 @@ class TextFileOp : public NonMappableLeafOp {
   // @param tensor_table - the tensor table to put the parsed data in.
   // @param row - the id of the row filled in the tensor table.
   // @return Status - the error code returned.
-  Status LoadTensor(const std::string &line, std::unique_ptr<TensorQTable> *tensor_table, int64_t row);
+  Status LoadTensor(const std::string &line, TensorRow *out_row);
 
   // Reads a text file and loads the data into multiple buffers.
   // @param file - the file to read.

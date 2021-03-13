@@ -94,7 +94,7 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   };
 
   GeneratorOp(py::function generator_function, std::vector<std::string> column_names,
-              std::vector<DataType> column_types, int32_t prefetch_size, int32_t buffer_size, int32_t connector_size,
+              std::vector<DataType> column_types, int32_t prefetch_size, int32_t connector_size,
               std::shared_ptr<SamplerRT> sampler);
 
   ~GeneratorOp() = default;
@@ -135,7 +135,6 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   std::vector<std::string> column_names_;
   std::vector<DataType> column_types_;
   int32_t prefetch_size_;
-  int32_t buffer_size_;
   int64_t generator_counter_;
 
   py::object generator_;

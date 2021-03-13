@@ -252,45 +252,15 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status DatasetOp::GetNextRow(TensorRow *row) {
+Status DatasetOp::GetNextRowPullMode(TensorRow *row) {
   RETURN_UNEXPECTED_IF_NULL(child_[0]);
-  return child_[0]->GetNextRow(row);
+  return child_[0]->GetNextRowPullMode(row);
 }
 
 // Gets the next buffer from the given child
-Status DatasetOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
+Status DatasetOp::GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) {
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
-  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), p_buffer, retry_if_eoe));
-  return Status::OK();
-}
-
-// Gets the next buffer from the given child .  This function also has built-in eoe and eof
-// message handling so that child classes don't have to manually code pass-through logic when
-// those messages are received.
-Status DatasetOp::GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, int32_t child_index) {
-  if (child_.size() == 0) {
-    return this->GetNextBuffer(p_buffer, worker_id);
-  }
-  CHECK_FAIL_RETURN_UNEXPECTED(child_index < child_.size(),
-                               "Invalid data, child index too big : " + std::to_string(child_index));
-  std::shared_ptr<DatasetOp> child = child_[child_index];
-  std::unique_ptr<DataBuffer> buf;
-  RETURN_IF_NOT_OK(child->GetNextBuffer(&buf, worker_id));
-  // Loop until non EOE is received
-  while (buf->eoe()) {
-    UpdateRepeatAndEpochCounter();
-    RETURN_IF_NOT_OK(EoeReceived(worker_id));
-    if (state_ == OpState::kDeOpIdle) {
-      *p_buffer = std::move(buf);
-      return Status::OK();
-    }
-    RETURN_IF_NOT_OK(child->GetNextBuffer(&buf, worker_id));
-  }
-  // Check if the last buf is next eof
-  if (buf->eof()) {
-    RETURN_IF_NOT_OK(EofReceived(worker_id));
-  }
-  *p_buffer = std::move(buf);
+  RETURN_IF_NOT_OK(out_connector_->PopWithRetry(static_cast<int>(worker_id), row, retry_if_eoe));
   return Status::OK();
 }
 
@@ -328,18 +298,12 @@ Status DatasetOp::GetClassIndexing(std::vector<std::pair<std::string, std::vecto
 // Performs handling for when an eoe message is received.
 // The base class implementation simply flows the eoe message to output. Derived classes
 // may override if they need to perform special eoe handling.
-Status DatasetOp::EoeReceived(int32_t worker_id) {
-  std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-  return (out_connector_->Add(static_cast<int>(worker_id), std::move(eoe_buffer)));
-}
+Status DatasetOp::EoeReceived(int32_t worker_id) { return out_connector_->SendEOE(worker_id); }
 
 // Performs handling for when an eof message is received.
 // The base class implementation simply flows the eof message to output. Derived classes
 // may override if they need to perform special eof handling.
-Status DatasetOp::EofReceived(int32_t worker_id) {
-  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-  return (out_connector_->Add(static_cast<int>(worker_id), std::move(eof_buffer)));
-}
+Status DatasetOp::EofReceived(int32_t worker_id) { return out_connector_->SendEOF(worker_id); }
 
 // During tree prepare phase, operators may have specific post-operations to perform depending on their role.
 Status DatasetOp::PrepareOperator() {

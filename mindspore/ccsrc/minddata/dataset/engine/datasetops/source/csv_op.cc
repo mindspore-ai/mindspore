@@ -101,20 +101,17 @@ CsvOp::CsvParser::CsvParser(int32_t worker_id, JaggedConnector *connector, int64
       file_path_(file_path),
       cur_state_(START_OF_FILE),
       pos_(0),
-      cur_row_(0),
       cur_col_(0),
       total_rows_(0),
       start_offset_(0),
       end_offset_(std::numeric_limits<int64_t>::max()),
       err_message_("unknown") {
-  cur_buffer_ = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
   InitCsvParser();
 }
 
 void CsvOp::CsvParser::Reset() {
   cur_state_ = START_OF_FILE;
   pos_ = 0;
-  cur_row_ = 0;
   cur_col_ = 0;
 }
 
@@ -170,11 +167,11 @@ int CsvOp::CsvParser::PutRecord(int c) {
       Tensor::CreateScalar(s, &t);
       break;
   }
-  if (cur_col_ >= (*tensor_table_)[cur_row_].size()) {
+  if (cur_col_ >= cur_row_.size()) {
     err_message_ = "Number of file columns does not match the tensor table";
     return -1;
   }
-  (*tensor_table_)[cur_row_][cur_col_] = std::move(t);
+  cur_row_[cur_col_] = std::move(t);
   pos_ = 0;
   cur_col_++;
   return 0;
@@ -203,18 +200,10 @@ int CsvOp::CsvParser::PutRow(int c) {
   }
 
   total_rows_++;
-  cur_row_++;
   cur_col_ = 0;
 
-  if (cur_row_ == csv_rows_per_buffer_) {
-    cur_buffer_->set_tensor_table(std::move(tensor_table_));
+  buffer_connector_->Add(worker_id_, std::move(cur_row_));
 
-    buffer_connector_->Add(worker_id_, std::move(cur_buffer_));
-
-    cur_buffer_ = std::make_unique<DataBuffer>(0, DataBuffer::BufferFlags::kDeBFlagNone);
-    tensor_table_ = std::make_unique<TensorQTable>();
-    cur_row_ = 0;
-  }
   return 0;
 }
 
@@ -229,11 +218,6 @@ int CsvOp::CsvParser::EndFile(int c) {
     if (ret < 0) {
       return ret;
     }
-  }
-
-  if (cur_row_ > 0) {
-    cur_buffer_->set_tensor_table(std::move(tensor_table_));
-    buffer_connector_->Add(worker_id_, std::move(cur_buffer_));
   }
   return 0;
 }
@@ -345,8 +329,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
             TensorRow row(column_default_.size(), nullptr);
             std::vector<std::string> file_path(column_default_.size(), file_path_);
             row.setPath(file_path);
-            this->tensor_table_ = std::make_unique<TensorQTable>();
-            this->tensor_table_->push_back(row);
+            this->cur_row_ = std::move(row);
             this->str_buf_[0] = c;
             this->pos_ = 1;
             return 0;
@@ -357,8 +340,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
             TensorRow row(column_default_.size(), nullptr);
             std::vector<std::string> file_path(column_default_.size(), file_path_);
             row.setPath(file_path);
-            this->tensor_table_ = std::make_unique<TensorQTable>();
-            this->tensor_table_->push_back(row);
+            this->cur_row_ = std::move(row);
             return this->PutRecord(c);
           }}},
         {{State::START_OF_FILE, Message::MS_QUOTE},
@@ -367,8 +349,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
             TensorRow row(column_default_.size(), nullptr);
             std::vector<std::string> file_path(column_default_.size(), file_path_);
             row.setPath(file_path);
-            this->tensor_table_ = std::make_unique<TensorQTable>();
-            this->tensor_table_->push_back(row);
+            this->cur_row_ = std::move(row);
             this->pos_ = 0;
             return 0;
           }}},
@@ -454,7 +435,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
               TensorRow row(column_default_.size(), nullptr);
               std::vector<std::string> file_path(column_default_.size(), file_path_);
               row.setPath(file_path);
-              this->tensor_table_->push_back(row);
+              this->cur_row_ = std::move(row);
             }
             this->str_buf_[0] = c;
             this->pos_ = 1;
@@ -467,7 +448,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
               TensorRow row(column_default_.size(), nullptr);
               std::vector<std::string> file_path(column_default_.size(), file_path_);
               row.setPath(file_path);
-              this->tensor_table_->push_back(row);
+              this->cur_row_ = std::move(row);
             }
             return this->PutRecord(c);
           }}},
@@ -478,7 +459,7 @@ Status CsvOp::CsvParser::InitCsvParser() {
               TensorRow row(column_default_.size(), nullptr);
               std::vector<std::string> file_path(column_default_.size(), file_path_);
               row.setPath(file_path);
-              this->tensor_table_->push_back(row);
+              this->cur_row_ = std::move(row);
             }
             return 0;
           }}},

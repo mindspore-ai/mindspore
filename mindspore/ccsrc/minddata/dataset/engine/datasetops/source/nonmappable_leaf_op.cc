@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,6 @@ Status NonMappableLeafOp::operator()() {
 
   NotifyToFillIOBlockQueue();
   while (!finished_reading_dataset_) {
-    int64_t buffer_id = 0;
     int32_t workers_done = 0;
     int64_t rows_read = 0;
     {
@@ -86,22 +85,14 @@ Status NonMappableLeafOp::operator()() {
     }
 
     while (workers_done < num_workers_) {
-      std::unique_ptr<DataBuffer> fetched_buffer;
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Pop(0, &fetched_buffer));
-      if (fetched_buffer->eoe()) {
+      TensorRow fetched_row;
+      RETURN_IF_NOT_OK(jagged_buffer_connector_->Pop(0, &fetched_row));
+      if (fetched_row.eoe()) {
         workers_done++;
       } else if (total_rows_ == 0 || rows_read < total_rows_) {
-        // we need to push a buffer
-        if (total_rows_ > 0 && rows_read + fetched_buffer->NumRows() > total_rows_) {
-          // this is last buffer we need, and we only need a part of it
-          int64_t rowsToRemove = fetched_buffer->NumRows() - (total_rows_ - rows_read);
-          RETURN_IF_NOT_OK(fetched_buffer->SliceOff(rowsToRemove));
-        }
-
-        rows_read += fetched_buffer->NumRows();
-        fetched_buffer->set_id(buffer_id);
-        buffer_id++;
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(fetched_buffer)));
+        // we need to push a row
+        RETURN_IF_NOT_OK(out_connector_->Add(std::move(fetched_row), 0));
+        rows_read++;
       } else {
         // IOBlockQueue thread needs to:
         // -stop pushing stuff to IOBlockQueue
@@ -126,23 +117,20 @@ Status NonMappableLeafOp::operator()() {
     }
 
     // all workers finished reading for this epoch, and we have read all the data from all workers
-    std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
+    RETURN_IF_NOT_OK(out_connector_->SendEOE());
 
     if (IsLastIteration()) {
       finished_reading_dataset_ = true;
       NotifyToFillIOBlockQueue();
     } else {
       jagged_buffer_connector_->DoReset();
-      buffer_id = 0;
       // Self-reset to start a new iteration
       RETURN_IF_NOT_OK(Reset());
     }
     UpdateRepeatAndEpochCounter();
   }
 
-  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
+  RETURN_IF_NOT_OK(out_connector_->SendEOF());
 
   RETURN_IF_NOT_OK(PostEndOfData());
 
@@ -168,8 +156,8 @@ Status NonMappableLeafOp::WorkerEntry(int32_t worker_id) {
         MS_LOG(DEBUG) << Name() << " operator worker " << worker_id << " loaded file " << filename << ".";
       }
     } else {
-      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(eoe_buffer)));
+      TensorRow eoe = TensorRow(TensorRow::kFlagEOE);
+      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(eoe)));
     }
 
     RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));

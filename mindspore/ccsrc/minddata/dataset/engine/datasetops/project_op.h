@@ -81,7 +81,7 @@ class ProjectOp : public PipelineOp {
   // Gets a buffer from the child node and projects that buffer. The caller is typically our parent node.
   // @param p_buffer - output pointer to the projected buffer.
   // @param worker_id - The worker id
-  Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) override;
+  Status GetNextRow(TensorRow *row, int32_t worker_id, bool retry_if_eoe) override;
 
   // Base-class override. Return the number of workers in the first parent.
   // @param workerId - The worker id
@@ -101,7 +101,7 @@ class ProjectOp : public PipelineOp {
   // @return Status The status code returned
   Status EofReceived(int32_t worker_id) override;
 
-  Status GetNextRow(TensorRow *row) override;
+  Status GetNextRowPullMode(TensorRow *row) override;
 
   // Op name getter
   // @return Name of the current Op
@@ -111,7 +111,7 @@ class ProjectOp : public PipelineOp {
   std::vector<std::string> columns_to_project_;
   std::vector<int32_t> projected_column_indices_;
 
-  Status Project(std::unique_ptr<DataBuffer> *data_buffer);
+  TensorRow Project(const TensorRow &row);
 
   // Computing the assignment of the column name map.
   // @return - Status
