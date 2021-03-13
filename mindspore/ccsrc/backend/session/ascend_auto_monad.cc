@@ -673,7 +673,7 @@ class AscendAutoMonadConverter {
         // No assign for single monad argument, return it.
         return value;
       }
-      return Assign(paras.front(), value, true);
+      return AssignAll(paras.front(), value, true);
     }
     // Multi arguments.
     AnfNodePtrList tuple_inputs;
@@ -691,7 +691,7 @@ class AscendAutoMonadConverter {
       if (target == value) {
         continue;
       }
-      tuple_inputs.emplace_back(Assign(target, value, true));
+      tuple_inputs.emplace_back(AssignAll(target, value, true));
     }
     return kernel_graph_->NewCNode(tuple_inputs);
   }
@@ -721,10 +721,10 @@ class AscendAutoMonadConverter {
   }
 
   // AissgnAll support tuple to tuple assign.
-  AnfNodePtr AssignAll(const AnfNodePtr &target, const AnfNodePtr &source) {
+  AnfNodePtr AssignAll(const AnfNodePtr &target, const AnfNodePtr &source, bool is_link = false) {
     if (!AnfAlgo::CheckPrimitiveType(target, prim::kPrimMakeTuple)) {
       // Assign single value.
-      return Assign(target, source);
+      return Assign(target, source, is_link);
     }
     // Assign tuple.
     std::vector<AnfNodePtr> targets = AnfAlgo::GetAllOutput(target, {prim::kPrimTupleGetItem});
@@ -736,7 +736,7 @@ class AscendAutoMonadConverter {
     tuple_inputs.reserve(targets.size() + 1);
     tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 0; i < targets.size(); ++i) {
-      tuple_inputs.emplace_back(Assign(targets[i], sources[i]));
+      tuple_inputs.emplace_back(Assign(targets[i], sources[i], is_link));
     }
     return kernel_graph_->NewCNode(tuple_inputs);
   }
