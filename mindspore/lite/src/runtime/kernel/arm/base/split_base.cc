@@ -46,6 +46,8 @@ int SplitBaseCPUKernel::ReSize() {
 
   MS_ASSERT(param);
   MS_ASSERT(input_shape.size() >= 1 && input_shape.size() <= SPLIT_STRIDES_SIZE);
+  auto split_dim = param->split_dim_;
+  param->split_dim_ = split_dim >= 0 ? split_dim : in_tensors_.front()->shape().size() + split_dim;
   param->strides_[input_shape.size() - 1] = 1;
   for (int i = input_shape.size() - 2; i >= 0; i--) {
     param->strides_[i] = param->strides_[i + 1] * input_shape.at(i + 1);

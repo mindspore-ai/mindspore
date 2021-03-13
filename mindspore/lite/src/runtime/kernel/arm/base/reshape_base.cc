@@ -33,6 +33,13 @@ namespace mindspore::kernel {
 int ReshapeBaseCPUKernel::Init() { return ReSize(); }
 
 int ReshapeBaseCPUKernel::ReSize() {
+  auto out_tensor = out_tensors_.at(kOutputIndex);
+  bool is_next_conv = std::any_of(out_kernels_.begin(), out_kernels_.end(), [](LiteKernel *next_kernel) {
+    return next_kernel->Type() == schema::PrimitiveType_Conv2DFusion;
+  });
+  if (is_next_conv && out_tensor->shape().size() == 4 && out_tensor->format() == schema::Format::Format_NCHW) {
+    out_tensor->set_format(schema::Format::Format_NHWC);
+  }
   int in_data_size = in_tensors_.front()->Size();
   int thread_num = context_->thread_num_;
   cal_max_num_per_thread_ = UP_DIV(in_data_size, thread_num);
