@@ -127,6 +127,7 @@ class TbeProcess:
         self.__failed_tune_task = []
         self.__task_info = {}
         self.__tuner = None
+        self.tune_init = True
         self.tune_process_num = 0
         self.tune_mode = None
         self.offline_tune = False
@@ -175,7 +176,7 @@ class TbeProcess:
         if os.getenv("ENABLE_TUNE_DUMP", "").lower() == "true":
             self.offline_tune = True
             log.info("Tune offline mode is on...")
-        if self.tune_mode == "NO_TUNE" and not self.offline_tune:
+        if self.tune_mode == NO_TUNE and not self.offline_tune:
             log.info("[NO_TUNE] There is no need to initialize auto_tune related variables.")
             return "Success"
 
@@ -301,6 +302,8 @@ class TbeProcess:
         """
         task_id = self.__next_task_id
         error_id = -1
+        if not self.tune_init:
+            return error_id
         self.__next_task_id = self.__next_task_id + 1
         tune_mode = self.select_tune_mode(op_json)
         self.__task_info[task_id] = op_json
@@ -319,7 +322,8 @@ class TbeProcess:
             if not self.__tuner.tune_init:
                 status = self.__tuner.init_tune_interface(op_json, self.tune_process_num)
                 if not status:
-                    log.error("Auto tune init failed!")
+                    log.error("Auto tune init failed, place check your hardware config or go back to normal compile!")
+                    self.tune_init = False
                     return error_id
                 self.__tuner.tune_init = True
             self.__all_tune_tasks.append(task_id)
