@@ -383,7 +383,7 @@ void Worker::UpdateEmbeddingTable(const std::vector<Key> &keys, const std::vecto
       sizes.push_back(kv_data.length());
     }
   }
-  worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, 0);
+  worker_node_.Send(core::NodeRole::SERVER, rank_ids, data, sizes, kUpdateEmbeddingsCmd);
 }
 
 void Worker::Finalize() {
