@@ -15,7 +15,9 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/winograd.h"
+#include <memory>
 #include "src/runtime/kernel/opencl/cl/winograd.cl.inc"
+#include "nnacl/base/minimal_filtering_generator.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -30,13 +32,15 @@ void Align(const std::vector<int> &global, const std::vector<int> &local, cl::ND
     cl::NDRange(UP_ROUND(global[0], local[0]), UP_ROUND(global[1], local[1]), UP_ROUND(global[2], local[2]));
 }
 
+constexpr float Gt[] = {1.0000000000, 1.0000000000, 1.0000000000,  1.0000000000, 1.0000000000,  0.0000000000,
+                        0.0000000000, 0.7071067691, -0.7071067691, 1.4142135382, -1.4142135382, 0.0000000000,
+                        0.0000000000, 0.4999999702, 0.4999999702,  1.9999998808, 1.9999998808,  1.0000000000};
+
+#ifndef ENABLE_ARM64
+constexpr float G[] = {1.0000000000, 0.0000000000,  0.0000000000, 1.0000000000, 0.7071067691, 0.4999999702,
+                       1.0000000000, -0.7071067691, 0.4999999702, 1.0000000000, 1.4142135382, 1.9999998808,
+                       1.0000000000, -1.4142135382, 1.9999998808, 0.0000000000, 0.0000000000, 1.0000000000};
 std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, size_t CI) {
-  constexpr float Gt[] = {1.0000000000, 1.0000000000, 1.0000000000,  1.0000000000, 1.0000000000,  0.0000000000,
-                          0.0000000000, 0.7071067691, -0.7071067691, 1.4142135382, -1.4142135382, 0.0000000000,
-                          0.0000000000, 0.4999999702, 0.4999999702,  1.9999998808, 1.9999998808,  1.0000000000};
-  constexpr float G[] = {1.0000000000, 0.0000000000,  0.0000000000, 1.0000000000, 0.7071067691, 0.4999999702,
-                         1.0000000000, -0.7071067691, 0.4999999702, 1.0000000000, 1.4142135382, 1.9999998808,
-                         1.0000000000, -1.4142135382, 1.9999998808, 0.0000000000, 0.0000000000, 1.0000000000};
   auto src_fp32 = reinterpret_cast<float *>(src);
   auto src_fp16 = reinterpret_cast<float16_t *>(src);
   std::function<float(int)> access_func;
@@ -71,6 +75,8 @@ std::vector<float> GenerateWinogradFilter(void *src, TypeId dtype, size_t CO, si
   }
   return dst;
 }
+#endif
+
 }  // namespace
 
 void WinogradOpenCLKernel::BuildKernel() {
@@ -106,9 +112,17 @@ void WinogradOpenCLKernel::InitFilter() {
 
   // rearrange filter
   auto filter_tensor = in_tensors_.at(1);
+#ifndef ENABLE_ARM64
   auto winograd_filter = GenerateWinogradFilter(filter_tensor->data_c(), filter_tensor->data_type(), CO_, CI_);
-
   void *src_data = winograd_filter.data();
+#else
+  std::unique_ptr<float[]> winograd_filter(new float[CO_ * 6 * 6 * CI_]);
+  WinogradWeightTransform(reinterpret_cast<const float *>(filter_tensor->data_c()),
+                          reinterpret_cast<float *>(winograd_filter.get()), nullptr, Gt, 1, 6, 3, CI_, CO_, false);
+
+  void *src_data = winograd_filter.get();
+#endif
+
   auto src_dtype = kNumberTypeFloat32;
   auto dst_dtype = use_fp16_ ? kNumberTypeFloat16 : kNumberTypeFloat32;
   std::vector<char> tmp(size, 0);
@@ -173,8 +187,8 @@ void WinogradOpenCLKernel::SetConstArgs() {
 
 void WinogradOpenCLKernel::SetGlobalLocal() {
   Align({TILE_HW_, 6, CI_SLICES_}, {8, 6, 4}, &global_4x4to36_, &local_4x4to36_);
-  Align({UP_DIV(TILE_HW_, 2), 36, UP_DIV(CO_SLICES_, 2)}, {8, 6, 2}, &global_range_, &local_range_);
-  Align({TILE_HW_, 4, CO_SLICES_}, {32, 4, 2}, &global_36to4x4_, &local_36to4x4_);
+  Align({UP_DIV(TILE_HW_, 2), 36, UP_DIV(CO_SLICES_, 2)}, {8, 3, 8}, &global_range_, &local_range_);
+  Align({TILE_HW_, 4, CO_SLICES_}, {4, 4, 8}, &global_36to4x4_, &local_36to4x4_);
 }
 
 int WinogradOpenCLKernel::Run() {

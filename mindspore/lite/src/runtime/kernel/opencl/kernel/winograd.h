@@ -29,7 +29,6 @@ class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : Conv2DOpenCLKernel(parameter, inputs, outputs, ctx) {
     use_winograd_ = true;
-    filter_type_ = MemType::BUF;
   }
 
   ~WinogradOpenCLKernel() override = default;
