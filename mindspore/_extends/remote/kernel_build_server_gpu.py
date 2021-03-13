@@ -15,6 +15,7 @@
 """kernel build server for gpu"""
 import os
 import sys
+import warnings
 from mindspore._extends.remote.kernel_build_server import Messager, get_logger, AkgBuilder
 from mindspore._extends.parallel_compile.akg_compiler.compiler import run_compiler as akg_compile_single
 
@@ -78,6 +79,7 @@ class GpuMessager(Messager):
         exit()
 
 if __name__ == '__main__':
+    warnings.simplefilter("ignore")
     if len(sys.argv) != 3:
         raise Exception('Incorrect argv: {}'.format(sys.argv))
     get_logger().debug(f"[TRACE] argv: {str(sys.argv)}")
