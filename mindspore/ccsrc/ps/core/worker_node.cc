@@ -15,6 +15,7 @@
  */
 
 #include "ps/core/worker_node.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace ps {

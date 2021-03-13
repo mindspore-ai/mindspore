@@ -63,7 +63,6 @@
 
 namespace mindspore {
 namespace ps {
-
 class ParameterServer {
  public:
   static ParameterServer &GetInstance() {

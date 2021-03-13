@@ -30,8 +30,6 @@
 #include <string>
 #include <utility>
 
-#include "ps/core/comm_util.h"
-
 namespace mindspore {
 namespace ps {
 namespace core {
@@ -335,7 +333,6 @@ void TcpClient::StartTimer(const uint32_t &time) {
 void TcpClient::set_timer_callback(const OnTimer &timer) { on_timer_callback_ = timer; }
 
 const event_base &TcpClient::eventbase() { return *event_base_; }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include "ps/constants.h"
+#include "ps/core/cluster_metadata.h"
 
 namespace mindspore {
 namespace ps {

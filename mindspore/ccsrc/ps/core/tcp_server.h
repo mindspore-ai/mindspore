@@ -37,6 +37,7 @@
 #include "ps/core/tcp_message_handler.h"
 #include "ps/core/cluster_metadata.h"
 #include "utils/convert_utils_base.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace ps {

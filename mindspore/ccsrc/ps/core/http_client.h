@@ -45,7 +45,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 enum class HttpMethod { HM_GET = 1 << 0, HM_POST = 1 << 1 };
 
 enum class Status : int {

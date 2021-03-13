@@ -52,6 +52,7 @@ void PSContext::SetPSEnable(bool enabled) {
     server_num_ = std::strtol(common::GetEnv(kEnvPServerNum).c_str(), nullptr, 10);
     scheduler_host_ = common::GetEnv(kEnvSchedulerHost);
     scheduler_port_ = std::strtol(common::GetEnv(kEnvSchedulerPort).c_str(), nullptr, 10);
+    core::ClusterMetadata::instance()->Init(worker_num_, server_num_, scheduler_host_, scheduler_port_);
   } else {
     MS_LOG(INFO) << "PS mode is disabled.";
     is_worker_ = false;
