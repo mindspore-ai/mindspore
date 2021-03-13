@@ -96,7 +96,7 @@ def _scalar_add_tensor(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    return F.tensor_add(x, y)
+    return F.add(x, y)
 
 
 @add.register("Tensor", "Number")
@@ -111,7 +111,7 @@ def _tensor_add_scalar(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    return F.tensor_add(x, y)
+    return F.add(x, y)
 
 
 @add.register("Tensor", "Tensor")
@@ -126,7 +126,7 @@ def _tensor_add_tensor(x, y):
     Returns:
         Tensor, has the same dtype as x.
     """
-    return F.tensor_add(x, y)
+    return F.add(x, y)
 
 
 @add.register("RowTensor", "Tensor")
