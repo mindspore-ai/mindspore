@@ -48,7 +48,7 @@ class PrintGpuKernel : public GpuKernel {
     }
     int *output_address = GetDeviceAddress<int>(outputs, 0);
     // host initialization
-    std::vector<std::unique_ptr<T[]> > input_host_data;
+    std::vector<std::unique_ptr<T[]>> input_host_data;
     for (size_t i = 0; i < input_size_.size(); i++) {
       std::unique_ptr<T[]> value = std::make_unique<T[]>(input_size_[i]);
       input_host_data.push_back(std::move(value));
@@ -60,19 +60,25 @@ class PrintGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "GPU print does not support the input type.";
     }
     // print core function
-    for (size_t i = 0; i < input_host_data.size(); i++) {
-      std::string error_msg = "cudaMemcpy print loop failed at input_device_data[";
-      error_msg.append(std::to_string(i));
-      error_msg.append("].");
-      CHECK_CUDA_RET_WITH_EXCEPT(
-        kernel_node_,
-        cudaMemcpy(input_host_data[i].get(), input_device_data_[i], input_size_[i] * sizeof(T), cudaMemcpyDeviceToHost),
-        error_msg);
-      ShapeVector shape;
-      (void)std::transform(input_shape_[i].begin(), input_shape_[i].end(), std::back_inserter(shape),
-                           [](const size_t &value) { return static_cast<int64_t>(value); });
-      Tensor current_tensor(type_id, shape, input_host_data[i].get(), input_size_[i] * sizeof(T));
-      std::cout << current_tensor.ToString() << std::endl;
+    size_t string_idx = 0;
+    for (size_t i = 0; i < input_flag_.size(); i++) {
+      if (input_flag_[i] == -1) {
+        std::cout << string_value_[string_idx] << std::endl;
+        string_idx++;
+      } else {
+        size_t tensor_idx = LongToSize(input_flag_[i]);
+        std::string error_msg = "cudaMemcpyAsync print loop failed at input_device_data[";
+        error_msg.append(std::to_string(tensor_idx));
+        error_msg.append("].");
+        CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                   cudaMemcpyAsync(input_host_data[tensor_idx].get(), input_device_data_[tensor_idx],
+                                                   input_size_[tensor_idx] * sizeof(T), cudaMemcpyDeviceToHost,
+                                                   reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                   error_msg);
+        CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(), "cudaDeviceSyncFailed - Print");
+        auto current_string = GetTensorString(&input_shape_, tensor_idx, type_id, &input_host_data, &input_size_);
+        std::cout << current_string << std::endl;
+      }
     }
     int output = 1;
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
@@ -84,7 +90,12 @@ class PrintGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
+    if (AnfAlgo::HasNodeAttr("string_pos", kernel_node)) {
+      string_value_ = GetAttr<std::vector<std::string>>(kernel_node, "string_value");
+      string_pos_ = GetAttr<std::vector<int64_t>>(kernel_node, "string_pos");
+    }
     size_t input_tensor_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    input_flag_ = SetInputFlag(&string_pos_, input_tensor_num);
     input_device_data_ = std::make_unique<T *[]>(input_tensor_num);
     std::vector<size_t> value_shape;
     for (size_t i = 0; i < input_tensor_num; i++) {
@@ -103,6 +114,9 @@ class PrintGpuKernel : public GpuKernel {
   }
 
   void ResetResource() noexcept override {
+    string_value_.clear();
+    string_pos_.clear();
+    input_flag_.clear();
     input_device_data_ = nullptr;
     input_size_.clear();
     input_shape_.clear();
@@ -146,14 +160,52 @@ class PrintGpuKernel : public GpuKernel {
     return kTypeUnknown;
   }
 
+  std::vector<int64_t> SetInputFlag(std::vector<int64_t> *string_pos, size_t input_tensor_num) {
+    // -1 -> string position
+    // others -> input tensor position
+    std::vector<int64_t> res(string_pos->size() + input_tensor_num);
+    // without string inputs
+    int64_t value = 0;
+    if (res.size() == input_tensor_num) {
+      std::generate(res.begin(), res.end(), [&value]() { return value++; });
+      return res;
+    }
+    for (size_t i = 0; i < string_pos->size(); i++) {
+      if ((*string_pos)[i] < 0) {
+        MS_LOG(EXCEPTION) << "string_pos cannot be a negative value";
+      }
+      auto index = IntToSize((*string_pos)[i]);
+      res[index] = -1;
+    }
+    for (size_t i = 0; i < res.size(); i++) {
+      if (res[i] != -1) {
+        res[i] += value;
+        value++;
+      }
+    }
+    return res;
+  }
+
+  std::string GetTensorString(std::vector<std::vector<size_t>> *input_shape, size_t index, TypeId type_id,
+                              std::vector<std::unique_ptr<T[]>> *input_host_data, std::vector<size_t> *input_size) {
+    ShapeVector shape;
+    (void)std::transform((*input_shape)[index].begin(), (*input_shape)[index].end(), std::back_inserter(shape),
+                         [](const size_t &value) { return static_cast<int64_t>(value); });
+    Tensor current_tensor(type_id, shape, (*input_host_data)[index].get(), (*input_size)[index] * sizeof(T));
+    return current_tensor.ToStringNoLimit();
+  }
+
  private:
+  std::vector<std::string> string_value_;
+  std::vector<int64_t> string_pos_;
+  std::vector<int64_t> input_flag_;
   std::unique_ptr<T *[]> input_device_data_;
   std::vector<size_t> input_size_;
-  std::vector<std::vector<size_t> > input_shape_;
+  std::vector<std::vector<size_t>> input_shape_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-};  // namespace kernel
+};
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_DEBUG_PRINT_GPU_KERNEL_H_

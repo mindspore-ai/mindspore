@@ -346,11 +346,10 @@ class Print(PrimitiveWithInfer):
         In pynative mode, please use python print function.
         In graph mode, the bool, int, float, tuple, and list would be converted into Tensor to print,
         str remains unchanged.
-        In GPU, all input elements should be the same type and string is not supported.
 
     Inputs:
         - **input_x** (Union[Tensor, bool, int, float, str, tuple, list]) - The graph node to attach to.
-          Supports multiple inputs which are separated by ','. GPU does not support string as an input.
+          Supports multiple inputs which are separated by ','.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
