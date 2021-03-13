@@ -40,6 +40,8 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const sessio
     return profiling_trace;
   }
 
+  ProfilingTraceInfo empty_info;
+  profiling_trace = empty_info;
   SetTraceIterEnd(cnode_exec_order);
   SetTraceFpStart(cnode_exec_order);
   SetTraceBpEnd(cnode_exec_order);
@@ -172,8 +174,9 @@ std::string ProfilingUtils::GetGraphSecondLastKernelName(const std::vector<CNode
 
 bool ProfilingUtils::IsFirstStep(const uint32_t graph_id) {
   auto iter = is_first_step_map_.find(graph_id);
-  if (iter != is_first_step_map_.end()) {
-    is_first_step_map_[graph_id] = true;
+  if (iter == is_first_step_map_.end()) {
+    is_first_step_map_[graph_id] = false;
+    return true;
   }
   return is_first_step_map_[graph_id];
 }
