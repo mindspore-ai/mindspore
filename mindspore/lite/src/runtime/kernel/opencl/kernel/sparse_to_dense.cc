@@ -108,10 +108,6 @@ int SparseToDenseOpenCLKernel::CheckSpecs() {
       return ERROR;
     }
   }
-  if (inshapeindex1_dim > 4) {
-    MS_LOG(ERROR) << "Unsupported input_indices[1] > 4: ";
-    return ERROR;
-  }
   auto param = reinterpret_cast<SparseToDenseParameter *>(op_parameter_);
   if (param->validate_indices_) {
     MS_LOG(ERROR) << "Unsupported unordered for in_tensors_indices";

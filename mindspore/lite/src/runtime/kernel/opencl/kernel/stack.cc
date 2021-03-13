@@ -67,8 +67,8 @@ void StackGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *l
 int StackOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<StackParameter *>(this->op_parameter_);
   axis_ = param->axis_;
-  if (in_tensors_.size() != 2 && (axis_ != 0)) {
-    MS_LOG(ERROR) << " only support input size = 2 ";
+  if (in_tensors_.size() != 2 && out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << " only support input size = 2 and output size = 1";
     return RET_ERROR;
   }
   if (in_tensors_[0]->shape().size() > 4 || in_tensors_[0]->shape().size() <= 0) {

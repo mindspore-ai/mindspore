@@ -54,4 +54,24 @@ TEST_F(TestOpenCL_Split, input2_axis3) {
              fp16_enable, fp16_enable ? 1e-3 : 1e-9);
   }
 }
+
+TEST_F(TestOpenCL_Split, input3_axis0) {
+  std::vector<int> input_shape = {8, 1, 1, 1};
+  std::vector<int> output_shape1 = {2, 1, 1, 1};
+  std::vector<int> output_shape2 = {3, 1, 1, 1};
+  std::vector<int> output_shape3 = {3, 1, 1, 1};
+  int split_dim_ = 0;
+  int num_split_ = 3;  // len of split_sizes_
+  std::vector<int> split_sizes_{2, 3, 3};
+  float input_data[] = {0.75, 0.06, 0.74, 0.30, 0.9, 0.59, 0.03, 0.37};
+  float output_data1[] = {0.75, 0.06};
+  float output_data2[] = {0.74, 0.30, 0.9};
+  float output_data3[] = {0.59, 0.03, 0.37};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(split_dim_, num_split_, split_sizes_);
+    TestMain({{input_shape, input_data, VAR}},
+             {{output_shape1, output_data1}, {output_shape2, output_data2}, {output_shape3, output_data3}}, param,
+             fp16_enable, fp16_enable ? 1e-3 : 1e-9);
+  }
+}
 }  // namespace mindspore::lite::opencl::test
