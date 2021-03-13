@@ -81,7 +81,6 @@ bool WorkerNode::Stop() {
 }
 
 bool WorkerNode::Finish(const uint32_t &timeout) {
-  std::lock_guard<std::mutex> lock(finish_mutex_);
   if (is_already_finished_) {
     MS_LOG(INFO) << "Worker node already finish!";
     return true;

@@ -150,7 +150,6 @@ bool ServerNode::Stop() {
 }
 
 bool ServerNode::Finish(const uint32_t &timeout) {
-  std::lock_guard<std::mutex> lock(finish_mutex_);
   if (is_already_finished_) {
     MS_LOG(INFO) << "Server node already finish!";
     return true;
