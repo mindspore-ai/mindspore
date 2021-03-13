@@ -219,7 +219,9 @@ Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   OperatorAttrs attrs = {attr_op};
   AnfNodePtr reduce_op;
   reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), mul});
-  auto make_tuple = gen_g.PushBack({gen_g.NewOpInst(MAKE_TUPLE), tuple_getitem_0, reduce_op});
+  // Use name of make_tuple instance in mindspore.ops.functional, not the Primitive name
+  const std::string &make_tuple_op = "make_tuple";
+  auto make_tuple = gen_g.PushBack({gen_g.NewOpInst(make_tuple_op), tuple_getitem_0, reduce_op});
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub, 1), std::make_pair(unique, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, make_tuple));
