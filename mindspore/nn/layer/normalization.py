@@ -714,7 +714,7 @@ class SyncBatchNorm(_BatchNorm):
         TypeError: If `process_groups` is not a list.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
-        ValueError: If `device_num_each_group` is less than 2.
+        ValueError: If rank_id in `process_groups` is not in range [0, rank_size).
 
     Supported Platforms:
         ``Ascend``
