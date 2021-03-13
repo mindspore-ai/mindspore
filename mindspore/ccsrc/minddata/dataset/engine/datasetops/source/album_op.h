@@ -30,6 +30,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/queue.h"
@@ -47,7 +48,7 @@ class Queue;
 using FolderImages = std::shared_ptr<std::pair<std::string, std::queue<std::string>>>;
 
 /// \class AlbumOp album_op.h
-class AlbumOp : public ParallelOp, public RandomAccessOp {
+class AlbumOp : public MappableLeafOp {
  public:
   class Builder {
    public:
@@ -171,17 +172,6 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \return Status The status code returned
   Status PrescanEntry();
 
-  /// \brief Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
-  /// \param[in] int32_t workerId - id of each worker
-  /// \return Status The status code returned
-  Status WorkerEntry(int32_t worker_id) override;
-
-  /// \brief Main Loop of AlbumOp
-  ///     Master thread: Fill IOBlockQueue, then goes to sleep
-  ///     Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  /// \return Status The status code returned
-  Status operator()() override;
-
   /// \brief A print method typically used for debugging
   /// \param[in] out
   /// \param[in] show_all
@@ -197,10 +187,6 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   std::string Name() const override { return "AlbumOp"; }
 
  private:
-  /// \brief Initialize Sampler, calls sampler->Init() within
-  /// \return Status The status code returned
-  Status InitSampler();
-
   /// \brief Load image to tensor row
   /// \param[in] image_file Image name of file
   /// \param[in] col_num Column num in schema
@@ -265,10 +251,9 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
 
   /// \brief Load a tensor row according to a json file
   /// \param[in] row_id_type row_id - id for this tensor row
-  /// \param[in] ImageColumns file Json file location
   /// \param[in, out] TensorRow row Json content stored into a tensor row
   /// \return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, const std::string &file, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
   /// \brief Load a tensor column according to a json file
   /// \param[in] ImageColumns file Json file location
@@ -278,23 +263,14 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   /// \return Status The status code returned
   Status loadColumnData(const std::string &file, int32_t index, nlohmann::json js, TensorRow *row);
 
-  /// \param[in] const std::vector<int64_t> &keys Keys in ioblock
-  /// \param[in, out] std::unique_ptr<DataBuffer> db Databuffer to push to
-  /// \return Status The status code returned
-  Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
-
   /// \brief Called first when function is called
   /// \return Status The status code returned
-  Status LaunchThreadsAndInitOp();
-
-  /// \brief reset Op
-  /// \return Status The status code returned
-  Status Reset() override;
+  Status LaunchThreadsAndInitOp() override;
 
   Status GetNextRow(TensorRow *row) override;
 
-  // Private function for computing the assignment of the column name map.
-  // @return Status The status code returned
+  /// Private function for computing the assignment of the column name map.
+  /// \return Status The status code returned
   Status ComputeColMap() override;
 
   int32_t rows_per_buffer_;
@@ -303,12 +279,12 @@ class AlbumOp : public ParallelOp, public RandomAccessOp {
   std::set<std::string> extensions_;  // extensions allowed
   std::unordered_map<std::string, int32_t> col_name_map_;
   std::unique_ptr<DataSchema> data_schema_;
-  int64_t row_cnt_;
-  int64_t buf_cnt_;
   int64_t sampler_ind_;
   int64_t dirname_offset_;
   std::vector<std::string> image_rows_;
   TensorPtr sample_ids_;
+
+  int32_t curr_row_;
 };
 }  // namespace dataset
 }  // namespace mindspore

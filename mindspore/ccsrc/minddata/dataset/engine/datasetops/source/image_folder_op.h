@@ -29,6 +29,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -50,7 +51,7 @@ class Queue;
 using ImageLabelPair = std::shared_ptr<std::pair<std::string, int32_t>>;
 using FolderImagesPair = std::shared_ptr<std::pair<std::string, std::queue<ImageLabelPair>>>;
 
-class ImageFolderOp : public ParallelOp, public RandomAccessOp {
+class ImageFolderOp : public MappableLeafOp {
  public:
   class Builder {
    public:
@@ -178,18 +179,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
   // @param int32_t workerId - id of each worker
   // @return Status The status code returned
-  Status WorkerEntry(int32_t worker_id) override;
-
-  // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
-  // @param int32_t workerId - id of each worker
-  // @return Status The status code returned
   Status PrescanWorkerEntry(int32_t worker_id);
-
-  // Main Loop of ImageFolderOp
-  // Master thread: Fill IOBlockQueue, then goes to sleep
-  // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status The status code returned
-  Status operator()() override;
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
@@ -217,21 +207,12 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   Status GetNumClasses(int64_t *num_classes) override;
 
  private:
-  // Initialize Sampler, calls sampler->Init() within
-  // @return Status The status code returned
-  Status InitSampler();
-
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, ImageLabelPair pair, TensorRow *row);
-
-  // @param const std::vector<int64_t> &keys - keys in ioblock
-  // @param std::unique_ptr<DataBuffer> db
-  // @return Status The status code returned
-  Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
   // @param std::string & dir - dir to walk all images
   // @param int64_t * cnt - number of non folder files under the current dir
@@ -244,25 +225,18 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
 
   // Called first when function is called
   // @return
-  Status LaunchThreadsAndInitOp();
-
-  // reset Op
-  // @return Status The status code returned
-  Status Reset() override;
+  Status LaunchThreadsAndInitOp() override;
 
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
 
-  int32_t rows_per_buffer_;
   std::string folder_path_;  // directory of image folder
   bool recursive_;
   bool decode_;
   std::set<std::string> extensions_;  // extensions allowed
   std::map<std::string, int32_t> class_index_;
   std::unique_ptr<DataSchema> data_schema_;
-  int64_t row_cnt_;
-  int64_t buf_cnt_;
   int64_t sampler_ind_;
   int64_t dirname_offset_;
   std::vector<ImageLabelPair> image_label_pairs_;

@@ -28,7 +28,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/data_schema.h"
-#include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/mindrecord/include/shard_column.h"
@@ -50,7 +50,7 @@ using ShardTuple = std::vector<std::tuple<std::vector<uint8_t>, mindrecord::json
 
 const int32_t LOG_INTERVAL = 19;
 
-class MindRecordOp : public ParallelOp {
+class MindRecordOp : public MappableLeafOp {
  public:
   // The nested builder class inside of the MindRecordOp is used to help manage all of the arguments
   // for constructing it.  Use the builder by setting each argument with the provided set methods,
@@ -167,15 +167,9 @@ class MindRecordOp : public ParallelOp {
   // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
 
-  // Class functor operator () override.
-  // All DatasetOps operate by launching a thread (see ExecutionTree). This class functor will
-  // provide the master loop that drives the logic for performing the work.
-  // @return Status The status code returned
-  Status operator()() override;
-
   // Called first when function is called
   // @return
-  Status LaunchThreadAndInitOp();
+  Status LaunchThreadsAndInitOp() override;
 
   // Overrides base class reset method.  When an operator does a reset, it cleans up any state
   // info from it's previous execution and then initializes itself so that it can be executed
@@ -183,14 +177,8 @@ class MindRecordOp : public ParallelOp {
   // @return Status The status code returned
   Status Reset() override;
 
-  // Getter method
-  int32_t num_rows() const { return num_rows_; }
-
   static Status CountTotalRows(const std::vector<std::string> dataset_path, bool load_dataset,
                                const std::shared_ptr<ShardOperator> &op, int64_t *count, int64_t num_padded);
-
-  // Getter method
-  int32_t rows_per_buffer() const { return rows_per_buffer_; }
 
   // Getter method
   std::vector<std::string> dataset_file() const { return dataset_file_; }
@@ -216,19 +204,19 @@ class MindRecordOp : public ParallelOp {
   Status LoadTensorRow(TensorRow *tensor_row, const std::vector<uint8_t> &columns_blob,
                        const mindrecord::json &columns_json, const mindrecord::TaskType task_type);
 
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override {
+    return Status(StatusCode::kMDSyntaxError, "Cannot call this method.");
+  }
   // Private function for computing the assignment of the column name map.
   // @return - Status
   Status ComputeColMap() override;
 
-  int32_t rows_per_buffer_;                                // The number of requested rows per buffer.
   std::vector<std::string> dataset_file_;                  // dataset files
   bool load_dataset_;                                      // load dataset from single file or not
   std::vector<std::string> columns_to_load_;               // Columns to load from dataset
   std::vector<std::shared_ptr<ShardOperator>> operators_;  // ShardOperators to use
   int32_t num_mind_record_workers_;                        // number of workers to be spawned by ShardReader
   int32_t buffers_needed_;                                 // Counter for the buffers that were fetched
-  int64_t buf_cnt_;                                        // Buffer counter
-  int32_t num_rows_;                                       // One more than the last row id in the range for this cache
   std::atomic<int32_t> ended_worker_;
 
   int64_t num_padded_;

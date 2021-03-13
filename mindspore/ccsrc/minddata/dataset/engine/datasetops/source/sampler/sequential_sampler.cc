@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ Status SequentialSamplerRT::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(start_index_ >= 0,
                                "Invalid parameter, start_index must be greater than or equal to 0, but got " +
                                  std::to_string(start_index_) + ".\n");
-  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ < num_rows_,
+  CHECK_FAIL_RETURN_UNEXPECTED(start_index_ < num_rows_ || (num_rows_ == 0 && start_index_ == 0),
                                "Invalid parameter, start_index must be less than num_rows, but got start_index: " +
                                  std::to_string(start_index_) + ", num_rows: " + std::to_string(num_rows_) + ".\n");
   CHECK_FAIL_RETURN_UNEXPECTED(num_samples_ >= 0,
@@ -83,7 +83,7 @@ Status SequentialSamplerRT::InitSampler() {
     num_samples_ = available_row_count;
   }
   CHECK_FAIL_RETURN_UNEXPECTED(
-    num_samples_ > 0 && samples_per_buffer_ > 0,
+    (num_samples_ > 0 && samples_per_buffer_ > 0) || num_samples_ == 0,
     "Invalid parameter, samples_per_buffer must be greater than 0, but got " + std::to_string(samples_per_buffer_));
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
 

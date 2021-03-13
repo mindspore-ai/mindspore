@@ -99,81 +99,14 @@ VOCOp::VOCOp(const TaskType &task_type, const std::string &task_mode, const std:
              const std::map<std::string, int32_t> &class_index, int32_t num_workers, int32_t rows_per_buffer,
              int32_t queue_size, bool decode, std::unique_ptr<DataSchema> data_schema,
              std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_workers, queue_size, std::move(sampler)),
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler), rows_per_buffer),
       decode_(decode),
-      row_cnt_(0),
-      buf_cnt_(0),
       task_type_(task_type),
       usage_(task_mode),
       folder_path_(folder_path),
       class_index_(class_index),
-      rows_per_buffer_(rows_per_buffer),
       data_schema_(std::move(data_schema)) {
   io_block_queues_.Init(num_workers_, queue_size);
-}
-
-Status VOCOp::TraverseSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys) {
-  for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-    if ((*itr) > num_rows_) continue;
-    keys->push_back(*itr);
-    row_cnt_++;
-    if (row_cnt_ % rows_per_buffer_ == 0) {
-      RETURN_IF_NOT_OK(io_block_queues_[buf_cnt_++ % num_workers_]->Add(
-        std::make_unique<IOBlock>(IOBlock(*keys, IOBlock::kDeIoBlockNone))));
-      keys->clear();
-    }
-  }
-  return Status::OK();
-}
-
-Status VOCOp::operator()() {
-  RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
-  std::unique_ptr<DataBuffer> sampler_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-  while (true) {
-    std::vector<int64_t> keys;
-    keys.reserve(rows_per_buffer_);
-    while (sampler_buffer->eoe() == false) {
-      std::shared_ptr<Tensor> sample_ids;
-      RETURN_IF_NOT_OK(sampler_buffer->GetTensor(&sample_ids, 0, 0));
-      if (sample_ids->type() != DataType(DataType::DE_INT64)) {
-        RETURN_STATUS_UNEXPECTED("Invalid parameter, data type of Sampler Tensor isn't int64, got " +
-                                 sample_ids->type().ToString());
-      }
-      RETURN_IF_NOT_OK(TraverseSampleIds(sample_ids, &keys));
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    if (keys.empty() == false) {
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(
-        std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
-    }
-    if (IsLastIteration()) {
-      std::unique_ptr<IOBlock> eoe_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe);
-      std::unique_ptr<IOBlock> eof_block = std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof);
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eoe_block)));
-      RETURN_IF_NOT_OK(io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::move(eof_block)));
-      for (int32_t i = 0; i < num_workers_; i++) {
-        RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      return Status::OK();
-    } else {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) {
-      RETURN_IF_NOT_OK(Reset());
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(&sampler_buffer));
-    }
-    UpdateRepeatAndEpochCounter();
-  }
 }
 
 void VOCOp::Print(std::ostream &out, bool show_all) const {
@@ -191,14 +124,8 @@ void VOCOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status VOCOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  RETURN_IF_NOT_OK(sampler_->ResetSampler());
-  row_cnt_ = 0;
-  return Status::OK();
-}
-
-Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *trow) {
+Status VOCOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
+  std::string image_id = image_ids_[row_id];
   if (task_type_ == TaskType::Segmentation) {
     std::shared_ptr<Tensor> image, target;
     const std::string kImageFile =
@@ -224,48 +151,6 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Ten
     trow->insert(trow->end(), annotation.begin(), annotation.end());
   }
   return Status::OK();
-}
-
-Status VOCOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
-  TensorRow trow;
-  for (const uint64_t &key : keys) {
-    RETURN_IF_NOT_OK(this->LoadTensorRow(key, image_ids_[key], &trow));
-    deq->push_back(std::move(trow));
-  }
-  (*db)->set_tensor_table(std::move(deq));
-  return Status::OK();
-}
-
-Status VOCOp::WorkerEntry(int32_t worker_id) {
-  TaskManager::FindMe()->Post();
-  int64_t buffer_id = worker_id;
-  std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  while (io_block != nullptr) {
-    if (io_block->wait() == true) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (io_block->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-      buffer_id = worker_id;
-    } else if (io_block->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, (std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF))));
-    } else {
-      std::vector<int64_t> keys;
-      RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
-      if (keys.empty() == true) return Status::OK();
-      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-      RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
-      buffer_id += num_workers_;
-    }
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  }
-  RETURN_STATUS_UNEXPECTED("Unexpected nullptr received in worker");
 }
 
 Status VOCOp::ParseImageIds() {
@@ -375,11 +260,6 @@ Status VOCOp::ParseAnnotationBbox(const std::string &path) {
     object = object->NextSiblingElement("object");
   }
   if (annotation.size() > 0) annotation_map_[path] = annotation;
-  return Status::OK();
-}
-
-Status VOCOp::InitSampler() {
-  RETURN_IF_NOT_OK(sampler_->HandshakeRandomAccessOp(this));
   return Status::OK();
 }
 

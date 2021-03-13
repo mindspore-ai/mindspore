@@ -79,8 +79,7 @@ Status CelebAOp::Builder::SanityCheck() {
 CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::string &dir, int32_t queue_size,
                    bool decode, const std::string &usage, const std::set<std::string> &exts,
                    std::unique_ptr<DataSchema> schema, std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_workers, queue_size, std::move(sampler)),
-      rows_per_buffer_(rows_per_buffer),
+    : MappableLeafOp(num_workers, queue_size, std::move(sampler), rows_per_buffer),
       folder_path_(dir),
       decode_(decode),
       extensions_(exts),
@@ -269,121 +268,8 @@ std::vector<std::string> CelebAOp::Split(const std::string &line) {
   return split;
 }
 
-// Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
-Status CelebAOp::operator()() {
-  RETURN_IF_NOT_OK(LaunchThreadsAndInitOp());
-  std::unique_ptr<DataBuffer> data_buffer;
-  RETURN_IF_NOT_OK(sampler_->GetNextSample(&data_buffer));
-  RETURN_IF_NOT_OK(AddIOBlock(&data_buffer));
-  return Status::OK();
-}
-
-Status CelebAOp::AddIOBlock(std::unique_ptr<DataBuffer> *data_buffer) {
-  int64_t buff_count = 0;
-  while (true) {
-    std::vector<int64_t> keys;
-    keys.reserve(rows_per_buffer_);
-    int64_t row_count = 0;
-    while (!(*data_buffer)->eoe()) {
-      TensorRow sample_row;
-      RETURN_IF_NOT_OK((*data_buffer)->PopRow(&sample_row));
-      std::shared_ptr<Tensor> sample_ids = sample_row[0];
-      for (auto itr = sample_ids->begin<int64_t>(); itr != sample_ids->end<int64_t>(); ++itr) {
-        if ((*itr) >= num_rows_) {
-          MS_LOG(WARNING) << "Sample Id (" << *itr << ") is out of bounds, skipping. Max id is " << num_rows_ << ".";
-          continue;
-        }
-        keys.push_back(*itr);
-        row_count++;
-        if (row_count % rows_per_buffer_ == 0) {
-          RETURN_IF_NOT_OK(io_block_queues_[buff_count++ % num_workers_]->Add(
-            std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
-          keys.clear();
-        }
-      }
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(data_buffer));
-    }
-
-    if (!keys.empty()) {
-      RETURN_IF_NOT_OK(io_block_queues_[(buff_count++) % num_workers_]->Add(
-        std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
-    }
-    if (IsLastIteration()) {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
-      for (int32_t i = 0; i < num_workers_; i++) {
-        RETURN_IF_NOT_OK(
-          io_block_queues_[i]->Add(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone)));
-      }
-      return Status::OK();
-    } else {  // not the last repeat.
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buff_count++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) {
-      RETURN_IF_NOT_OK(Reset());
-      RETURN_IF_NOT_OK(sampler_->GetNextSample(data_buffer));
-    }
-    UpdateRepeatAndEpochCounter();
-  }
-}
-
-Status CelebAOp::WorkerEntry(int32_t worker_id) {
-  TaskManager::FindMe()->Post();
-  int64_t buffer_id = worker_id;
-  std::unique_ptr<IOBlock> io_block;
-  RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  while (io_block != nullptr) {
-    if (io_block->wait() == true) {
-      // Sync io_block is a signal that master thread wants us to pause and sync with other workers.
-      // The last guy who comes to this sync point should reset the counter and wake up the master thread.
-      if (++num_workers_paused_ == num_workers_) {
-        wait_for_workers_post_.Set();
-      }
-    } else if (io_block->eoe() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE)));
-      buffer_id = worker_id;
-    } else if (io_block->eof() == true) {
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF)));
-    } else {
-      std::vector<int64_t> keys;
-      RETURN_IF_NOT_OK(io_block->GetKeys(&keys));
-      if (keys.empty()) {
-        return Status::OK();  // empty key is a quit signal for workers
-      }
-      std::unique_ptr<DataBuffer> db = std::make_unique<DataBuffer>(buffer_id, DataBuffer::kDeBFlagNone);
-      RETURN_IF_NOT_OK(LoadBuffer(keys, &db));
-      RETURN_IF_NOT_OK(out_connector_->Add(worker_id, std::move(db)));
-      buffer_id += num_workers_;
-    }
-    RETURN_IF_NOT_OK(io_block_queues_[worker_id]->PopFront(&io_block));
-  }
-  return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Unexpected nullptr received in worker.");
-}
-
-Status CelebAOp::LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db) {
-  std::unique_ptr<TensorQTable> deq = std::make_unique<TensorQTable>();
-  for (const auto &key : keys) {
-    TensorRow row;
-    RETURN_IF_NOT_OK(LoadTensorRow(key, image_labels_vec_[key], &row));
-    deq->push_back(std::move(row));
-  }
-
-  (*db)->set_tensor_table(std::move(deq));
-  return Status::OK();
-}
-
-Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<int32_t>> &image_label,
-                               TensorRow *row) {
+Status CelebAOp::LoadTensorRow(row_id_type row_id, TensorRow *row) {
+  std::pair<std::string, std::vector<int32_t>> &image_label = image_labels_vec_[row_id];
   std::shared_ptr<Tensor> image;
   std::shared_ptr<Tensor> label;
 
@@ -430,13 +316,6 @@ void CelebAOp::Print(std::ostream &out, bool show_all) const {
     out << "\nNumber of rows:" << num_rows_ << "\nceleba dir: " << folder_path_
         << "\nDecode: " << (decode_ ? "yes" : "no") << "\n\n";
   }
-}
-
-// Reset Sampler and wakeup Master thread (functor)
-Status CelebAOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  RETURN_IF_NOT_OK(sampler_->ResetSampler());
-  return Status::OK();
 }
 
 Status CelebAOp::ComputeColMap() {

@@ -27,6 +27,7 @@
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/engine/execution_tree.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -115,16 +116,14 @@ MindRecordOp::MindRecordOp(int32_t num_mind_record_workers, int32_t rows_per_buf
                            const std::vector<std::string> &columns_to_load,
                            const std::vector<std::shared_ptr<ShardOperator>> &operators, int64_t num_padded,
                            const mindrecord::json &sample_json, const std::map<std::string, std::string> &sample_bytes)
-    : ParallelOp(num_mind_record_workers, op_connector_queue_size),
-      rows_per_buffer_(rows_per_buffer),
+    : MappableLeafOp(num_mind_record_workers, op_connector_queue_size, std::make_shared<SequentialSamplerRT>(0, 0),
+                     rows_per_buffer),
       dataset_file_(dataset_file),
       load_dataset_(load_dataset),
       columns_to_load_(columns_to_load),
       operators_(operators),
       num_mind_record_workers_(num_mind_record_workers),
-      num_rows_(0),
       buffers_needed_(0),
-      buf_cnt_(0),
       ended_worker_(0),
       num_padded_(num_padded),
       sample_json_(sample_json),
@@ -379,61 +378,19 @@ Status MindRecordOp::LoadTensorRow(TensorRow *tensor_row, const std::vector<uint
   return Status::OK();
 }
 
-// Class functor operator () override.
-// All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
-// provide the master loop that drives the logic for performing the work
-// Main logic, Register Queue with TaskGroup, launch all threads and do the functor's work
-Status MindRecordOp::operator()() {
-  RETURN_IF_NOT_OK(LaunchThreadAndInitOp());
-  num_rows_ = shard_reader_->GetNumRows();
-  // Compute how many buffers we would need to accomplish rowsPerBuffer
-  buffers_needed_ = (num_rows_ + rows_per_buffer_ - 1) / rows_per_buffer_;
-
-  while (true) {  // each iterator is 1 epoch
-    for (int32_t i = 0; i < buffers_needed_; ++i) {
-      std::vector<int64_t> keys(1, i);
-      RETURN_IF_NOT_OK(io_block_queues_[buf_cnt_++ % num_workers_]->Add(
-        std::make_unique<IOBlock>(IOBlock(keys, IOBlock::kDeIoBlockNone))));
-    }
-    if (IsLastIteration()) {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
-      for (int32_t i = 0; i < num_workers_; i++) {
-        RETURN_IF_NOT_OK(io_block_queues_[i]->Add(
-          std::move(std::make_unique<IOBlock>(std::vector<int64_t>(), IOBlock::kDeIoBlockNone))));
-      }
-      return Status::OK();
-    } else {
-      RETURN_IF_NOT_OK(
-        io_block_queues_[(buf_cnt_++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
-    }
-
-    if (epoch_sync_flag_) {
-      // If epoch_sync_flag_ is set, then master thread sleeps until all the worker threads have finished their job for
-      // the current epoch.
-      RETURN_IF_NOT_OK(WaitForWorkers());
-    }
-    // If not the last repeat, self-reset and go to loop again.
-    if (!IsLastIteration()) RETURN_IF_NOT_OK(Reset());
-    UpdateRepeatAndEpochCounter();
-  }
-}
-
 // Overrides base class reset method.  When an operator does a reset, it cleans up any state
 // info from it's previous execution and then initializes itself so that it can be executed
 // again.
 Status MindRecordOp::Reset() {
   MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  RETURN_IF_NOT_OK(ParallelOp::Reset());  // Call our super class reset first.
+  RETURN_IF_NOT_OK(MappableLeafOp::Reset());  // Call our super class reset first.
 
   shard_reader_->ShuffleTask();
 
   return Status::OK();
 }
 
-Status MindRecordOp::LaunchThreadAndInitOp() {
+Status MindRecordOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
     RETURN_STATUS_UNEXPECTED("Pipeline init failed, Execution tree not set.");
   }
@@ -446,6 +403,8 @@ Status MindRecordOp::LaunchThreadAndInitOp() {
   // Launch main workers that load DataBuffers by reading all images
   RETURN_IF_NOT_OK(
     tree_->LaunchWorkers(num_workers_, std::bind(&MindRecordOp::WorkerEntry, this, std::placeholders::_1), "", id()));
+  num_rows_ = shard_reader_->GetNumRows();
+  RETURN_IF_NOT_OK(this->InitSampler());  // pass numRows to Sampler
   TaskManager::FindMe()->Post();
   return Status::OK();
 }

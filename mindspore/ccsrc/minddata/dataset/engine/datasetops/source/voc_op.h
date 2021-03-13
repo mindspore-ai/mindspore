@@ -27,6 +27,7 @@
 #include "minddata/dataset/engine/data_buffer.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
+#include "minddata/dataset/engine/datasetops/source/mappable_leaf_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/path.h"
@@ -45,7 +46,7 @@ class Queue;
 
 using Annotation = std::vector<std::pair<std::string, std::vector<float>>>;
 
-class VOCOp : public ParallelOp, public RandomAccessOp {
+class VOCOp : public MappableLeafOp {
  public:
   enum class TaskType { Segmentation = 0, Detection = 1 };
 
@@ -175,17 +176,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // Destructor
   ~VOCOp() = default;
 
-  // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
-  // @param int32_t workerId - id of each worker
-  // @return Status The status code returned
-  Status WorkerEntry(int32_t worker_id) override;
-
-  // Main Loop of VOCOp
-  // Master thread: Fill IOBlockQueue, then goes to sleep
-  // Worker thread: pulls IOBlock from IOBlockQueue, work on it the put buffer to mOutConnector
-  // @return Status The status code returned
-  Status operator()() override;
-
   // A print method typically used for debugging
   // @param out
   // @param show_all
@@ -219,16 +209,12 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) override;
 
  private:
-  // Initialize Sampler, calls sampler->Init() within
-  // @return Status The status code returned
-  Status InitSampler();
-
   // Load a tensor row according to image id
   // @param row_id_type row_id - id for this tensor row
   // @param std::string image_id - image id
   // @param TensorRow row - image & target read into this tensor row
   // @return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, const std::string &image_id, TensorRow *row);
+  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
 
   // @param const std::string &path - path to the image file
   // @param const ColDescriptor &col - contains tensor implementation and datatype
@@ -240,11 +226,6 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @param TensorRow *row - return
   // @return Status The status code returned
   Status ReadAnnotationToTensor(const std::string &path, TensorRow *row);
-
-  // @param const std::vector<uint64_t> &keys - keys in ioblock
-  // @param std::unique_ptr<DataBuffer> db
-  // @return Status The status code returned
-  Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
 
   // Read image list from ImageSets
   // @return Status The status code returned
@@ -264,18 +245,9 @@ class VOCOp : public ParallelOp, public RandomAccessOp {
   // @return Status The status code returned
   void ParseNodeValue(XMLElement *bbox_node, const char *name, float *value);
 
-  // @param const std::shared_ptr<Tensor> &sample_ids - sample ids of tensor
-  // @param std::vector<int64_t> *keys - image id
-  // @return Status The status code returned
-  Status TraverseSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys);
-
   // Called first when function is called
   // @return Status The status code returned
-  Status LaunchThreadsAndInitOp();
-
-  // Reset dataset state
-  // @return Status The status code returned
-  Status Reset() override;
+  Status LaunchThreadsAndInitOp() override;
 
   // Private function for computing the assignment of the column name map.
   // @return - Status
