@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_BUCKET_H_
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_BUCKET_H_
 
+#include <memory>
 #include "runtime/device/bucket.h"
 
 namespace mindspore::device::gpu {
@@ -33,7 +34,7 @@ class GPUBucket : public Bucket {
   void FreeDeviceMem(void *dev_ptr) override;
   void CopyTensorToContiguousMemory() override;
   void LaunchAllReduce() override;
-
+  std::shared_ptr<LaunchKernel> CreateLaunchKernel() override;
   const void *collective_handle_;
 };
 }  // namespace mindspore::device::gpu

@@ -26,6 +26,7 @@
 #include "runtime/device/gpu/gpu_device_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "runtime/device/gpu/distribution/collective_init.h"
+#include "runtime/device/gpu/gpu_launch_mul.h"
 #include "backend/kernel_compiler/gpu/nccl/nccl_gpu_kernel.h"
 #include "runtime/device/gpu/gpu_common.h"
 
@@ -52,7 +53,6 @@ void GPUBucket::AllocateAllReduceAddr() {
 
   auto total_size = 0;
   std::vector<size_t> size_list;
-  std::vector<size_t> align_size_list;
   for (auto &tensor : grad_tensor_list_) {
     MS_EXCEPTION_IF_NULL(tensor);
     tensor_type_list_.emplace_back(tensor->data_type());
@@ -61,7 +61,7 @@ void GPUBucket::AllocateAllReduceAddr() {
     auto origin_size = device_address->GetSize();
     auto align_size = AlignMemorySize(origin_size);
     size_list.emplace_back(origin_size);
-    align_size_list.emplace_back(align_size);
+    align_size_list_.emplace_back(align_size);
     total_size += align_size;
     memcpy_input_addrs_.emplace_back(
       std::make_shared<kernel::Address>(static_cast<uint8_t *>(device_address->GetMutablePtr()), origin_size));
@@ -74,13 +74,7 @@ void GPUBucket::AllocateAllReduceAddr() {
   uint8_t *memcpy_output = ar_input_addr_;
   for (size_t i = 0; i < bucket_size_; ++i) {
     memcpy_output_addrs_.emplace_back(std::make_shared<kernel::Address>(memcpy_output, size_list[i]));
-    memcpy_output += align_size_list[i];
-  }
-
-  uint8_t *tensor_output = ar_output_addr_;
-  for (size_t i = 0; i < bucket_size_; ++i) {
-    new_tensor_output_addrs_.emplace_back(tensor_output);
-    tensor_output += align_size_list[i];
+    memcpy_output += align_size_list_[i];
   }
   MS_LOG(INFO) << "end";
 }
@@ -96,6 +90,10 @@ void GPUBucket::FreeAllDeviceMem() {
   if (ar_output_addr_ != nullptr) {
     FreeDeviceMem(ar_output_addr_);
     ar_output_addr_ = nullptr;
+  }
+  // clear launch mul device memory
+  if (launch_kernel != nullptr) {
+    launch_kernel->FreeLaunchDeviceMem();
   }
   MS_LOG(INFO) << "end";
 }
@@ -156,6 +154,15 @@ void GPUBucket::LaunchAllReduce() {
   }
 
   MS_LOG(INFO) << "end";
+}
+
+std::shared_ptr<LaunchKernel> GPUBucket::CreateLaunchKernel() {
+  if (tensor_type_list_.empty()) {
+    MS_LOG(ERROR) << "tensor_type_list_ is empty";
+  }
+  auto launch_mul = std::make_shared<GPULaunchMul>(stream_, tensor_type_list_[0], total_size_, ar_output_addr_);
+  MS_EXCEPTION_IF_NULL(launch_mul);
+  return launch_mul;
 }
 
 void GPUBucket::Init() {

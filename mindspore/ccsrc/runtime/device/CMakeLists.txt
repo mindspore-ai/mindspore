@@ -1,7 +1,7 @@
 file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "common/*.cc"
     "kernel_info.cc" "executor/dynamic_kernel.cc" "executor/executor_callback.cc" "kernel_runtime.cc"
     "memory_manager.cc" "kernel_runtime_manager.cc" "convert_tensor_utils.cc"
-    "bucket.cc"
+    "bucket.cc" "launch_kernel.cc" "launch_mul.cc"
 )
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF")
