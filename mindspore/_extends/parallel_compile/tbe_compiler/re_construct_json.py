@@ -63,7 +63,7 @@ def create_inout_desc(ori_json):
     out_list = []
     for _, item in enumerate(ori_json):
         item[0]["data_type"] = item[0]["dtype"] if "dtype" in item[0] else 0
-        if "ori_format" in item[0] or "ori_shape"in item[0]:
+        if "ori_format" in item[0] or "ori_shape" in item[0]:
             item[0]["L1_addr_offset"] = 0
             item[0]["L1_fusion_type"] = -1
             item[0]["L1_workspace_size"] = -1
@@ -111,6 +111,7 @@ def create_compute_op(ori_json):
         "input_desc": create_inout_desc(ori_json["inputs"]) if "inputs" in ori_json else "null",
         "module_name": ori_json["module_name"],
         "name": full_name,
+        "ori_name": [full_name],
         "output_desc": create_inout_desc(ori_json["outputs"]) if "outputs" in ori_json else "null",
         "output_data_desc": create_inout_desc(ori_json["outputs"]) if "outputs" in ori_json else "null",
         "pattern": pattern,
@@ -147,6 +148,15 @@ def single_to_fusion(json_file, tune_mode):
     return res
 
 
+def add_ori_name_to_fusion(json_info):
+    """Add ori_name to fusion json"""
+    full_name = json_info["fusion_op"]["full_name"]
+    ops = json_info["fusion_op"]["op_list"]
+    for op in ops:
+        if op["type"] != "Data":
+            op["ori_name"] = [full_name]
+
+
 def fusion_to_fusion(json_str, tune_mode):
     """
     Add l1_size for fusion json
@@ -158,6 +168,7 @@ def fusion_to_fusion(json_str, tune_mode):
     json_info = json.loads(json_str)
     json_info["fusion_op"]["l1_size"] = -1
     json_info["SocInfo"]["autoTilingMode"] = tune_mode
+    add_ori_name_to_fusion(json_info)
     end_file = json_info["fusion_op"]
     end_file["SocInfo"] = json_info["SocInfo"]
     res = json.dumps(end_file, ensure_ascii=False)

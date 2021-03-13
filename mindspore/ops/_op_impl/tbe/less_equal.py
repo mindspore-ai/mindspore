@@ -23,8 +23,6 @@ less_equal_op_info = TBERegOp("LessEqual") \
     .compute_cost(10) \
     .kernel_name("less_equal") \
     .partial_flag(True) \
-    .attr("begin_norm_axis", "required", "int", "all") \
-    .attr("begin_params_axis", "required", "int", "all") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
