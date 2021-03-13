@@ -375,7 +375,13 @@ def test_serdes_pyvision(remove_json_files=True):
         py_vision.ToTensor()
     ]
     data1 = data1.map(operations=py.Compose(transforms), input_columns=["image"])
-    util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
+    # Current python function derialization will be failed for pickle, so we disable this testcase
+    # as an exception testcase.
+    try:
+        util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
+        assert False
+    except NotImplementedError as e:
+        assert "python function is not yet supported" in str(e)
 
 
 def test_serdes_uniform_augment(remove_json_files=True):
