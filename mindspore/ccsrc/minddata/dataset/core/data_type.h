@@ -29,7 +29,7 @@ namespace py = pybind11;
 #else
 #include "base/float16.h"
 #endif
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 namespace mindspore {
 namespace dataset {
 

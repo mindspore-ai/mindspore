@@ -22,7 +22,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include "utils/ms_utils.h"
 #include "minddata/dataset/kernels/image/math_utils.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"

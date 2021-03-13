@@ -27,7 +27,7 @@
 #include "minddata/dataset/include/type_id.h"
 
 #include "utils/ms_utils.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"

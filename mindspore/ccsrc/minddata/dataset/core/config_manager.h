@@ -22,7 +22,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 
@@ -148,7 +148,7 @@ class ConfigManager {
   void set_numa_enable(bool numa_enable);
 
   /// getter function
-  /// Now we want to seperate the numa link to _c_dataengine in the CMakeLists,
+  /// Now we want to separate the numa link to _c_dataengine in the CMakeLists,
   /// so we want user to choose whether to open numa switch.
   /// @return Get the current numa switch state.
   bool numa_enable() const { return numa_enable_; }

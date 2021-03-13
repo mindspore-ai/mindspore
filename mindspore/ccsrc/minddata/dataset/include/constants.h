@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONSTANTS_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONSTANTS_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_CONSTANTS_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_CONSTANTS_H_
 
 #include <cstdint>
 #include <limits>
@@ -87,9 +87,10 @@ constexpr int64_t kDeMaxFreq = std::numeric_limits<int64_t>::max();  // 92233720
 constexpr int64_t kDeMaxTopk = std::numeric_limits<int64_t>::max();
 
 constexpr uint32_t kCfgRowsPerBuffer = 1;
-constexpr uint32_t kCfgParallelWorkers = 4;
+constexpr uint32_t kCfgParallelWorkers = 8;
 constexpr uint32_t kCfgWorkerConnectorSize = 16;
 constexpr uint32_t kCfgOpConnectorSize = 16;
+constexpr int32_t kCfgDefaultRankId = -1;
 constexpr uint32_t kCfgDefaultSeed = std::mt19937::default_seed;
 constexpr uint32_t kCfgMonitorSamplingInterval = 10;
 constexpr uint32_t kCfgCallbackTimeout = 60;  // timeout value for callback in seconds
@@ -97,6 +98,7 @@ constexpr int32_t kCfgDefaultCachePort = 50052;
 constexpr char kCfgDefaultCacheHost[] = "127.0.0.1";
 constexpr int32_t kDftPrefetchSize = 20;
 constexpr int32_t kDftNumConnections = 12;
+constexpr int32_t kDftAutoNumWorkers = false;
 
 // Invalid OpenCV type should not be from 0 to 7 (opencv4/opencv2/core/hal/interface.h)
 constexpr uint8_t kCVInvalidType = 255;
@@ -107,4 +109,4 @@ using row_id_type = int64_t;
 }  // namespace dataset
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_CONSTANTS_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_CONSTANTS_H_

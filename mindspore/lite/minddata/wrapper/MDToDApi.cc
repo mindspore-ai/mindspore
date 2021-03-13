@@ -29,7 +29,7 @@
 #include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/include/vision.h"
-#include "minddata/dataset/util/data_helper.h"
+#include "minddata/dataset/include/data_helper.h"
 #include "minddata/dataset/core/de_tensor.h"
 #include "include/api/types.h"
 #if defined(__ANDROID__) || defined(ANDROID)

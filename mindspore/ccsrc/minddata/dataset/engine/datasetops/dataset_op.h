@@ -24,7 +24,7 @@
 #include <utility>
 
 #include "minddata/dataset/callback/callback_manager.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/engine/db_connector.h"
 #include "minddata/dataset/util/status.h"
 

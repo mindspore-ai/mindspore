@@ -19,7 +19,7 @@
 
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/core/global_context.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/include/datasets.h"
 

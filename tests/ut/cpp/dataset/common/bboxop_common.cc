@@ -28,7 +28,7 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/util/path.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
@@ -113,7 +113,7 @@ void BBoxOpCommon::SaveImagesWithAnnotations(BBoxOpCommon::FileType type, const 
     std::shared_ptr<Tensor> row_to_save;
     Status swap_status = SwapRedAndBlue(row[0], &row_to_save);
     if (!swap_status.IsOk()) {
-      MS_LOG(ERROR) << "Swaping red and blue channels failed in SaveImagesWithAnnotations.";
+      MS_LOG(ERROR) << "Swapping red and blue channels failed in SaveImagesWithAnnotations.";
       EXPECT_TRUE(swap_status.IsOk());
     }
     cv::Mat image = std::static_pointer_cast<CVTensor>(row_to_save)->mat();

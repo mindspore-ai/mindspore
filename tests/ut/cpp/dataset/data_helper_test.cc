@@ -30,7 +30,7 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
-#include "minddata/dataset/util/data_helper.h"
+#include "minddata/dataset/include/data_helper.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"

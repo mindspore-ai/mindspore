@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/core/cv_tensor.h"
 #endif

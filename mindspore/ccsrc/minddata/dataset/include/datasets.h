@@ -30,11 +30,10 @@
 #include <utility>
 #include <vector>
 
-#include <nlohmann/json.hpp>
-
 #include "include/api/dual_abi_helper.h"
 #include "include/api/types.h"
 #include "minddata/dataset/include/iterator.h"
+#include "minddata/dataset/include/json_fwd.hpp"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/text.h"
 #include "minddata/dataset/include/type_id.h"

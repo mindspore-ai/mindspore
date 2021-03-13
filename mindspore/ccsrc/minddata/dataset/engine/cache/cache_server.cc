@@ -18,7 +18,7 @@
 #include <functional>
 #include <limits>
 #include <vector>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/engine/cache/cache_ipc.h"
 #include "minddata/dataset/engine/cache/cache_service.h"
 #include "minddata/dataset/engine/cache/cache_request.h"

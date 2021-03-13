@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <vector>
 #include <nlohmann/json.hpp>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/util/status.h"
@@ -65,7 +65,7 @@ class ColDescriptor {
   ///     If there is no starting TensorShape in this column, or if there is a shape but it contains
   ///     an unknown dimension, then the output shape returned shall resolve dimensions as needed.
   /// \param[in] num_elements - The number of elements in the data for a Tensor
-  /// \param[inout] out_shape - The materialized output Tensor shape
+  /// \param[in/out] out_shape - The materialized output Tensor shape
   /// \return Status The status code returned
   Status MaterializeTensorShape(int32_t num_elements, TensorShape *out_shape) const;
 
@@ -168,7 +168,7 @@ class DataSchema {
   static const char DEFAULT_DATA_SCHEMA_FILENAME[];
 
   /// \brief Loops through all columns in the schema and returns a map with the column name to column index number.
-  /// \param[inout] out_column_name_map - The output map of columns names to column index
+  /// \param[in/out] out_column_name_map - The output map of columns names to column index
   /// \return Status The status code returned
   Status GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map);
 

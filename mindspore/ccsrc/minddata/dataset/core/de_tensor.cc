@@ -16,7 +16,7 @@
 
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/core/device_tensor.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/include/type_id.h"
 #include "mindspore/core/ir/dtype/type_id.h"
