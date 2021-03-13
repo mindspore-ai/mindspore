@@ -239,10 +239,11 @@ int OpenCLSubGraph::Init() {
     MS_ASSERT(tensor);
     tensor->set_allocator(allocator_);
   }
-  std::map<std::string, std::function<int(void)>> pass_manager{
+  std::vector<std::pair<std::string, std::function<int(void)>>> pass_manager{
+    {"FusionPass", std::bind(&OpenCLSubGraph::FusionPass, this)},
     {"InsertOpsPass", std::bind(&OpenCLSubGraph::InsertOpsPass, this)},
     {"UpdateTensorDataTypePass", std::bind(&OpenCLSubGraph::UpdateTensorDataTypePass, this)},
-    {"FusionPass", std::bind(&OpenCLSubGraph::FusionPass, this)}};
+  };
   for (auto iv : pass_manager) {
     auto ret = iv.second();
     if (ret != RET_OK) {

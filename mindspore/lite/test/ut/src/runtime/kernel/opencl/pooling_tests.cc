@@ -23,7 +23,7 @@ class TestOpenCL_Pooling : public CommonTest {};
 namespace {
 // PrimitiveType_Pooling: src/ops/populate/pooling_populate.cc
 OpParameter *CreateParameter(PoolMode pool_mode, int window_h, int window_w, int stride_h, int stride_w, int pad_u,
-                             int pad_d, int pad_l, int pad_r, RoundMode round_mode = RoundMode_No,
+                             int pad_d, int pad_l, int pad_r, RoundMode round_mode = RoundMode_Floor,
                              ActType act_type = ActType_No) {
   auto *param = test::CreateParameter<PoolingParameter>(schema::PrimitiveType_MaxPoolFusion);
   param->global_ = false;
@@ -65,4 +65,27 @@ TEST_F(TestOpenCL_Pooling, Max) {
   }
 }
 
+TEST_F(TestOpenCL_Pooling, AvgMultiBatch) {
+  std::vector<int> input_shape = {2, 2, 2, 4};
+  std::vector<int> output_shape = {2, 1, 1, 4};
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  float output_data[] = {6, 7, 8, 9, 6, 7, 8, 9};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(PoolMode_AvgPool, 2, 2, 2, 2, 0, 0, 0, 0);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_Pooling, MaxMultiBatch) {
+  std::vector<int> input_shape = {2, 2, 2, 4};
+  std::vector<int> output_shape = {2, 1, 1, 4};
+  float input_data[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  float output_data[] = {12, 13, 14, 15, 12, 13, 14, 15};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(PoolMode_MaxPool, 2, 2, 2, 2, 0, 0, 0, 0);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
+  }
+}
 }  // namespace mindspore::lite::opencl::test

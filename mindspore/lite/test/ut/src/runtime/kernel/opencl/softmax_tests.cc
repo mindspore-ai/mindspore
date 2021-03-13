@@ -71,4 +71,47 @@ TEST_F(TestOpenCL_SoftMax, 4D_axis1) {
   }
 }
 
+TEST_F(TestOpenCL_SoftMax, 2D_axis1_N) {
+  int axis = 1;
+  std::vector<int> input_shape = {2, 10};
+  std::vector<int> output_shape = input_shape;
+  float input_data[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  float output_data[] = {0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+                         0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(axis);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable,
+             fp16_enable ? 2e-2 : 1e-5);
+  }
+}
+
+TEST_F(TestOpenCL_SoftMax, 4D_axis3_N) {
+  int axis = 3;
+  std::vector<int> input_shape = {2, 2, 1, 5};
+  std::vector<int> output_shape = input_shape;
+  float input_data[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  float output_data[] = {0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2,
+                         0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(axis);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable,
+             fp16_enable ? 2e-2 : 1e-5);
+  }
+}
+
+TEST_F(TestOpenCL_SoftMax, 4D_axis1_N) {
+  int axis = 1;
+  std::vector<int> input_shape = {2, 2, 1, 1};
+  std::vector<int> output_shape = input_shape;
+  float input_data[] = {1, 1, 1, 1};
+  float output_data[] = {0.5, 0.5, 0.5, 0.5};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(axis);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable,
+             fp16_enable ? 2e-2 : 1e-5);
+  }
+}
 }  // namespace mindspore::lite::opencl::test
