@@ -75,6 +75,7 @@ class Tensor(Tensor_):
     """
 
     def __init__(self, input_data=None, dtype=None, shape=None, init=None):
+        self.init_finished = False
         # If input data is numpy number, convert it to np array
         if isinstance(input_data, np_types):
             input_data = np.array(input_data)
@@ -117,6 +118,7 @@ class Tensor(Tensor_):
             Tensor_.__init__(self, dtype, shape)
         self._virtual_flag = False
         self.init = init
+        self.init_finished = True
 
     def __deepcopy__(self, memodict):
         new_obj = Tensor(self)
@@ -125,8 +127,10 @@ class Tensor(Tensor_):
         return new_obj
 
     def __repr__(self):
-        Tensor_.data_sync(self, False)
-        return Tensor_.__repr__(self)
+        if self.init_finished:
+            Tensor_.data_sync(self, False)
+            return Tensor_.__repr__(self)
+        return ''
 
     def __add__(self, other):
         out = tensor_operator_registry.get('__add__')(self, other)
