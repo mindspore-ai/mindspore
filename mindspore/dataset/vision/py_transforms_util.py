@@ -107,9 +107,9 @@ def decode(img):
         img = Image.open(data)
         return img.convert('RGB')
     except IOError as e:
-        raise ValueError("{0}\nWARNING: Failed to decode given image.".format(e))
+        raise ValueError("{0}\n: Failed to decode given image.".format(e))
     except AttributeError as e:
-        raise ValueError("{0}\nWARNING: Failed to decode, Image might already be decoded.".format(e))
+        raise ValueError("{0}\n: Failed to decode, Image might already be decoded.".format(e))
 
 
 def hwc_to_chw(img):

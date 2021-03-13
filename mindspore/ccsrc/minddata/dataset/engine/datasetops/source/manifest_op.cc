@@ -337,7 +337,7 @@ Status ManifestOp::ParseManifestFile() {
       }
     } catch (const std::exception &err) {
       file_handle.close();
-      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse manifest file: " + line);
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse manifest file: " + file_);
     }
   }
   num_classes_ = classes.size();
