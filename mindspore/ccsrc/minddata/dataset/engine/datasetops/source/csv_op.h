@@ -386,6 +386,14 @@ class CsvOp : public ParallelOp {
   // @return - the a string vector
   std::vector<std::string> split(const std::string &s, char delim);
 
+  // Private function for analysing the column name in every CSV file
+  // @return - Status
+  Status ColMapAnalyse(const std::string &csv_file_name);
+
+  // Private function for validating whether the column name set in every CSV file remain the same
+  // @return bool - whether column name identical in all CSV files
+  bool ColumnNameValidate();
+
   int32_t device_id_;
   bool shuffle_files_;
   bool finished_reading_dataset_;
@@ -405,6 +413,7 @@ class CsvOp : public ParallelOp {
   char field_delim_;
   std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_list_;
   std::vector<std::string> column_name_list_;
+  bool check_flag_ = false;
 };
 }  // namespace dataset
 }  // namespace mindspore
