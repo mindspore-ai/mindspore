@@ -175,6 +175,7 @@ class GradExecutor {
   bool grad_flag() const { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   bool in_grad_process() const { return in_grad_process_; }
+  bool in_cell_with_custom_bprop_() const {return custom_bprop_cell_count_ > 0;}
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
   std::string GetCellId(const py::object &obj, const py::args &args);
   std::stack<std::string> &cell_stack() { return cell_stack_; }
@@ -249,6 +250,7 @@ class GradExecutor {
                                 const std::vector<int64_t> &index) {
     top_cell()->graph_info_map()[g]->node_map[id] = std::make_pair(node, index);
   }
+  void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
 
  private:
   size_t grad_order_{0};
@@ -256,6 +258,7 @@ class GradExecutor {
   bool grad_flag_{false};
   bool in_bprop_process_{false};
   bool in_grad_process_{false};
+  int custom_bprop_cell_count_{0};
   bool grad_is_running_{false};
 
   FuncGraphPtr curr_g_{nullptr};
@@ -287,6 +290,8 @@ class ForwardExecutor {
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   std::unordered_map<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
   void ClearRes();
+  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
+                       abstract::AbstractBasePtrList *args_spec_list);
 
  private:
   GradExecutorPtr grad() const;
@@ -296,8 +301,6 @@ class ForwardExecutor {
   py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
   py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
                                     PynativeStatusCode *status);
-  AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
-                       abstract::AbstractBasePtrList *args_spec_list);
   void GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks, std::vector<AnfNodePtr> *inputs,
                    abstract::AbstractBasePtrList *args_spec_list);
   abstract::AbstractBasePtr CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
