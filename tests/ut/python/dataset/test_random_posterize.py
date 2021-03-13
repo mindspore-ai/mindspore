@@ -168,19 +168,19 @@ def test_random_posterize_exception_bit():
         _ = c_vision.RandomPosterize((1, 9))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input is not within the required interval of (1 to 8)."
+        assert str(e) == "Input is not within the required interval of [1, 8]."
     # Test min < 1
     try:
         _ = c_vision.RandomPosterize((0, 7))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input is not within the required interval of (1 to 8)."
+        assert str(e) == "Input is not within the required interval of [1, 8]."
     # Test max < min
     try:
         _ = c_vision.RandomPosterize((8, 1))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "Input is not within the required interval of (1 to 8)."
+        assert str(e) == "Input is not within the required interval of [1, 8]."
     # Test wrong type (not uint8)
     try:
         _ = c_vision.RandomPosterize(1.1)

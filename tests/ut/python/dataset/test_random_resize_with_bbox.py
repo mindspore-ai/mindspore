@@ -160,7 +160,7 @@ def test_random_resize_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not within the required interval of (1 to 16777216)." in str(err)
+        assert "Input is not within the required interval of [1, 16777216]." in str(err)
 
     try:
         # one of the size values is zero
@@ -168,7 +168,7 @@ def test_random_resize_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input size at dim 0 is not within the required interval of (1 to 2147483647)." in str(err)
+        assert "Input size at dim 0 is not within the required interval of [1, 2147483647]." in str(err)
 
     try:
         # negative value for resize
@@ -176,7 +176,7 @@ def test_random_resize_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input is not within the required interval of (1 to 16777216)." in str(err)
+        assert "Input is not within the required interval of [1, 16777216]." in str(err)
 
     try:
         # invalid input shape

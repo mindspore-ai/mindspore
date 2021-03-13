@@ -260,7 +260,7 @@ def test_random_crop_with_bbox_op_bad_padding():
             break
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input padding is not within the required interval of (0 to 2147483647)." in str(err)
+        assert "Input padding is not within the required interval of [0, 2147483647]." in str(err)
 
     try:
         test_op = c_vision.RandomCropWithBBox([512, 512], padding=[16777216, 16777216, 16777216, 16777216])

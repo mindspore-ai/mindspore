@@ -143,7 +143,7 @@ def test_random_horizontal_invalid_prob_c():
         data = data.map(operations=random_horizontal_op, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
 
 
 def test_random_horizontal_invalid_prob_py():
@@ -166,7 +166,7 @@ def test_random_horizontal_invalid_prob_py():
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
 
 
 def test_random_horizontal_comp(plot=False):

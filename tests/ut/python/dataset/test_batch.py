@@ -477,7 +477,7 @@ def test_batch_exception_15():
         _ = data1.batch(batch_size=batch_size, input_columns=input_columns)
     except ValueError as e:
         err_msg = str(e)
-    assert "batch_size is not within the required interval of (1 to 2147483647)" in err_msg
+    assert "batch_size is not within the required interval of [1, 2147483647]" in err_msg
 
 
 if __name__ == '__main__':

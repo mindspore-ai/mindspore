@@ -24,18 +24,16 @@ and use Lookup to find the index of tokens in Vocab.
     class attributes (self.xxx) to support save() and load().
 
 Examples:
-    >>> text_file_dataset_dir = "/path/to/text_file_dataset_file"
+    >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"] # contains 1 or multiple text files
     >>> # Create a dataset for text sentences saved as line data in a file
-    >>> text_file_dataset = ds.TextFileDataset(text_file_dataset_dir, shuffle=False)
+    >>> text_file_dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
     >>> # Tokenize sentences to unicode characters
     >>> tokenizer = text.UnicodeCharTokenizer()
     >>> # Load vocabulary from list
-    >>> vocab = text.Vocab.from_list(['深', '圳', '欢', '迎', '您'])
+    >>> vocab = text.Vocab.from_list(word_list=['深', '圳', '欢', '迎', '您'])
     >>> # Use Lookup operator to map tokens to ids
-    >>> lookup = text.Lookup(vocab)
+    >>> lookup = text.Lookup(vocab=vocab)
     >>> text_file_dataset = text_file_dataset.map(operations=[tokenizer, lookup])
-    >>> for i in text_file_dataset.create_dict_iterator():
-    ...     print(i)
     >>> # if text line in dataset_file is:
     >>> # 深圳欢迎您
     >>> # then the output will be:

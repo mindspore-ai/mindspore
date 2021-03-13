@@ -146,7 +146,7 @@ def test_ten_crop_invalid_size_error_msg():
             vision.TenCrop(0),
             lambda images: np.stack([vision.ToTensor()(image) for image in images])  # 4D stack of 10 images
         ]
-    error_msg = "Input is not within the required interval of (1 to 16777216)."
+    error_msg = "Input is not within the required interval of [1, 16777216]."
     assert error_msg == str(info.value)
 
     with pytest.raises(ValueError) as info:

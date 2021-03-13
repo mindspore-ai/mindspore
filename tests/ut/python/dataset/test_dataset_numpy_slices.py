@@ -181,7 +181,7 @@ def test_numpy_slices_distributed_shard_limit():
     num = sys.maxsize
     with pytest.raises(ValueError) as err:
         de.NumpySlicesDataset(np_data, num_shards=num, shard_id=0, shuffle=False)
-    assert "Input num_shards is not within the required interval of (1 to 2147483647)." in str(err.value)
+    assert "Input num_shards is not within the required interval of [1, 2147483647]." in str(err.value)
 
 
 def test_numpy_slices_distributed_zero_shard():
@@ -190,7 +190,7 @@ def test_numpy_slices_distributed_zero_shard():
     np_data = [1, 2, 3]
     with pytest.raises(ValueError) as err:
         de.NumpySlicesDataset(np_data, num_shards=0, shard_id=0, shuffle=False)
-    assert "Input num_shards is not within the required interval of (1 to 2147483647)." in str(err.value)
+    assert "Input num_shards is not within the required interval of [1, 2147483647]." in str(err.value)
 
 
 def test_numpy_slices_sequential_sampler():

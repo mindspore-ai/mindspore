@@ -187,7 +187,7 @@ def test_random_vertical_flip_with_bbox_op_invalid_c():
 
     except ValueError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "Input prob is not within the required interval of (0.0 to 1.0)." in str(err)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(err)
 
 
 def test_random_vertical_flip_with_bbox_op_bad_c():
