@@ -48,6 +48,10 @@ class Adagrad(Optimizer):
         weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
         on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
 
+        When separating parameter groups, if you want to centralize the gradient, set grad_centralization to True,
+        but the gradient centralization can only be applied to the parameters of the convolution layer.
+        If the parameters of the non convolution layer are set to True, an error will be reported.
+
         To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
@@ -67,8 +71,9 @@ class Adagrad(Optimizer):
               the order will be followed in optimizer. There are no other keys in the `dict` and the parameters which
               in the value of 'order_params' must be in one of group parameters.
 
-            - grad_centralization: Optional. If "grad_centralization" is in the keys, the set value will be used.
-              If not, the `grad_centralization` is False by default. This parameter only works on the convolution layer.
+            - grad_centralization: Optional. The data type of "grad_centralization" is Bool. If "grad_centralization"
+              is in the keys, the set value will be used. If not, the `grad_centralization` is False by default.
+              This parameter only works on the convolution layer.
 
         accum (float): The starting value for accumulators, must be zero or positive values. Default: 0.1.
         learning_rate (Union[float, Tensor, Iterable, LearningRateSchedule]): A value or a graph for the learning rate.

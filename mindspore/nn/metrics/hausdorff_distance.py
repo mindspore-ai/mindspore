@@ -259,17 +259,26 @@ class HausdorffDistance(Metric):
             ValueError: If the number of the inputs is not 3.
         """
         self._is_update = True
+
         if len(inputs) != 3:
             raise ValueError('HausdorffDistance need 3 inputs (y_pred, y, label), but got {}'.format(len(inputs)))
+
         y_pred = self._convert_data(inputs[0])
         y = self._convert_data(inputs[1])
         label_idx = inputs[2]
+
+        if not isinstance(label_idx, (int, float)):
+            raise TypeError("The data type of label_idx must be int or float, but got {}.".format(type(label_idx)))
+
+        if label_idx not in y_pred and label_idx not in y:
+            raise ValueError("The label_idx should be in y_pred or y, but {} is not.".format(label_idx))
 
         if y_pred.size == 0 or y_pred.shape != y.shape:
             raise ValueError("Labelfields should have the same shape, but got {}, {}".format(y_pred.shape, y.shape))
 
         y_pred = (y_pred == label_idx) if y_pred.dtype is not bool else y_pred
         y = (y == label_idx) if y.dtype is not bool else y
+
         self.y_pred_edges, self.y_edges = self._get_mask_edges_distance(y_pred, y)
 
     def eval(self):
