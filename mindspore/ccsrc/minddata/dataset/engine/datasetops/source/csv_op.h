@@ -26,6 +26,8 @@
 #include "minddata/dataset/util/auto_index.h"
 #include "minddata/dataset/engine/datasetops/parallel_op.h"
 #include "minddata/dataset/engine/datasetops/source/io_block.h"
+#include "minddata/dataset/engine/datasetops/source/nonmappable_leaf_op.h"
+#include "minddata/dataset/engine/jagged_connector.h"
 
 namespace mindspore {
 namespace dataset {
@@ -34,7 +36,7 @@ const size_t CSV_BUFFER_SIZE = 4096;
 using StringIndex = AutoIndexObj<std::string>;
 class JaggedConnector;
 
-class CsvOp : public ParallelOp {
+class CsvOp : public NonMappableLeafOp {
  public:
   enum RecordType : uint8_t { INT = 0, FLOAT, STRING };
 
@@ -63,7 +65,7 @@ class CsvOp : public ParallelOp {
    public:
     CsvParser() = delete;
 
-    CsvParser(int32_t worker_id, std::shared_ptr<JaggedConnector> connector, int64_t rows_per_buffer, char field_delim,
+    CsvParser(int32_t worker_id, JaggedConnector *connector, int64_t rows_per_buffer, char field_delim,
               std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default, std::string file_path);
 
     ~CsvParser() = default;
@@ -125,7 +127,7 @@ class CsvOp : public ParallelOp {
     int CatchException(int c);
 
     int32_t worker_id_;
-    std::shared_ptr<JaggedConnector> buffer_connector_;
+    JaggedConnector *buffer_connector_;
     int64_t csv_rows_per_buffer_;
     const char csv_field_delim_;
     std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_;
@@ -274,18 +276,7 @@ class CsvOp : public ParallelOp {
 
   // Instantiates the internal queues and connectors
   // @return Status - the error code returned
-  Status Init();
-
-  // Class functor operator () override.
-  // All dataset operators operate by launching a thread (see ExecutionTree). This class functor will
-  // provide the master loop that drives the logic for performing the work
-  // @return Status - the error code returned.
-  Status operator()() override;
-
-  // Overrides base class reset method. Cleans up any state info from it's previous execution
-  // reinitializes itself so that it can be executed again, as if it was just created.
-  // @return Status - the error code returned.
-  Status Reset() override;
+  Status Init() override;
 
   // Get total rows in files.
   // @param files - all csv files.
@@ -303,11 +294,6 @@ class CsvOp : public ParallelOp {
   std::string Name() const override { return "CsvOp"; }
 
  private:
-  // The entry point for when workers are launched.
-  // @param worker_id - the id of the worker that is executing this function.
-  // @return Status - the error code returned.
-  Status WorkerEntry(int32_t worker_id) override;
-
   // Parses a single row and puts the data into a tensor table.
   // @param line - the content of the row.
   // @param tensor_table - the tensor table to put the parsed data in.
@@ -321,60 +307,21 @@ class CsvOp : public ParallelOp {
   // @param end_offset - the end offset of file.
   // @param worker_id - the id of the worker that is executing this function.
   // @return Status - the error code returned.
-  Status LoadFile(const std::string &file, const int64_t start_offset, const int64_t end_offset,
-                  const int32_t worker_id);
-
-  // Pops an element from a queue in IOBlockQueue.
-  // @param index - the index of the queue to pop from.
-  // @param out_block - the popped element.
-  // @return Status - the error code returned.
-  Status PopIoBlockQueue(int32_t index, std::unique_ptr<FilenameBlock> *out_block);
-
-  // Pushes an element to a queue in IOBlockQueue.
-  // @param index - the index of the queue to push to.
-  // @param io_block - the element to push onto the queue.
-  // @return Status - the error code returned.
-  Status PushIoBlockQueue(int32_t index, std::unique_ptr<FilenameBlock> &&io_block);
-
-  // Called asynchronously by another thread. Will wait until notified to fill the IOBlockQueue.
-  // @return Status - the error code returned.
-  Status WaitToFillIOBlockQueue();
+  Status LoadFile(const std::string &file, int64_t start_offset, int64_t end_offset, int32_t worker_id) override;
 
   // Fill the IOBlockQueue.
   // @para i_keys - keys of file to fill to the IOBlockQueue
   // @return Status - the error code returned.
-  Status FillIOBlockQueue(const std::vector<int64_t> &i_keys);
-
-  // Notifies the thread which called FillIoBlockQueue to resume execution
-  void NotifyToFillIOBlockQueue();
-
-  // Select file and push it to the block queue.
-  // @param file_name - File name.
-  // @param start_offset - If file contains the first sample of data.
-  // @param end_offset - If file contains the end sample of data.
-  // @param pre_count - Total rows of previous files.
-  // @return Status - the error code returned.
-  bool NeedPushFileToBlockQueue(const std::string &file_name, int64_t *start_offset, int64_t *end_offset,
-                                const int64_t &pre_count);
-
-  // Pushes a control indicator onto the IOBlockQueue for each worker to consume. When the worker
-  // pops this control indicator, it will wait until the next epoch starts and then resume execution.
-  // @return Status - the error code returned.
-  Status PostEndOfEpoch(int32_t queue_index);
+  Status FillIOBlockQueue(const std::vector<int64_t> &i_keys) override;
 
   // Calculate number of rows in each shard.
   // @return Status - the error code returned.
-  Status CalculateNumRowsPerShard();
+  Status CalculateNumRowsPerShard() override;
 
   // Count number of rows in each file.
   // @param filename - csv file name.
   // @return int64_t - the total number of rows in file.
   int64_t CountTotalRows(const std::string &file);
-
-  // Pushes a control indicator onto the IOBlockQueue for each worker to consume.
-  // When the worker pops this control indicator, it will shut itself down gracefully.
-  // @return Status - the error code returned.
-  Status PostEndOfData();
 
   // Private function for computing the assignment of the column name map.
   // @return - Status
@@ -394,22 +341,7 @@ class CsvOp : public ParallelOp {
   // @return bool - whether column name identical in all CSV files
   bool ColumnNameValidate();
 
-  int32_t device_id_;
-  bool shuffle_files_;
-  bool finished_reading_dataset_;
-  int32_t num_devices_;
-  int64_t rows_per_buffer_;
-  bool load_io_block_queue_;
-  int64_t num_rows_per_shard_;
-  int64_t all_num_rows_;
-  int64_t num_samples_;
-  std::map<std::string, int64_t> filename_numrows_;
-  std::unique_ptr<StringIndex> filename_index_;
   std::vector<std::string> csv_files_list_;
-  WaitPost io_block_queue_wait_post_;
-  std::shared_ptr<JaggedConnector> jagged_buffer_connector_;
-  QueueList<std::unique_ptr<FilenameBlock>> io_block_queues_;
-  bool load_jagged_connector_;
   char field_delim_;
   std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default_list_;
   std::vector<std::string> column_name_list_;

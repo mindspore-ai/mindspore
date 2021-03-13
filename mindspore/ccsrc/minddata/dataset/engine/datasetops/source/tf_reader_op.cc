@@ -126,26 +126,14 @@ Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op)
 TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64_t rows_per_buffer,
                        int64_t total_num_rows, std::vector<std::string> dataset_files_list,
                        std::unique_ptr<DataSchema> data_schema, int32_t op_connector_size,
-                       std::vector<std::string> columns_to_load, bool shuffle_files, int32_t num_device,
+                       std::vector<std::string> columns_to_load, bool shuffle_files, int32_t num_devices,
                        int32_t device_id, bool equal_rows_per_shard)
-    : ParallelOp(num_workers, op_connector_size),
-      device_id_(device_id),
-      num_devices_(num_device),
-      rows_per_buffer_(rows_per_buffer),
-      total_rows_(total_num_rows),
+    : NonMappableLeafOp(num_workers, worker_connector_size, rows_per_buffer, total_num_rows, op_connector_size,
+                        shuffle_files, num_devices, device_id),
       dataset_files_list_(std::move(dataset_files_list)),
       columns_to_load_(std::move(columns_to_load)),
-      finished_reading_dataset_(false),
-      shuffle_files_(shuffle_files),
       data_schema_(std::move(data_schema)),
-      filename_index_(std::make_unique<StringIndex>()),
-      load_io_block_queue_(true),
-      load_jagged_connector_(true),
-      num_rows_(0),
-      num_rows_per_shard_(0),
-      equal_rows_per_shard_(equal_rows_per_shard) {
-  worker_connector_size_ = worker_connector_size;
-}
+      equal_rows_per_shard_(equal_rows_per_shard) {}
 
 // A print method typically used for debugging
 void TFReaderOp::Print(std::ostream &out, bool show_all) const {
@@ -221,194 +209,6 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
       "Invalid data, no valid data matching the dataset API TFRecordDataset. Please check file path or dataset API.");
   }
   return Status::OK();
-}
-// Class functor operator () override.
-// All dataset operators operate by launching a thread (see ExecutionTree). This class functor will
-// provide the master loop that drives the logic for performing the work
-Status TFReaderOp::operator()() {
-  RETURN_IF_NOT_OK(CalculateNumRowsPerShard());
-
-  // Put here to avoid register failed when Worker_Entry thread exits unexpected
-  RETURN_IF_NOT_OK(io_block_queue_wait_post_.Register(tree_->AllTasks()));
-
-  // launch one thread, responsible for filling mIOBlockQueue
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(1, std::bind(&TFReaderOp::WaitToFillIOBlockQueue, this), "", id()));
-
-  // launch num_workers_ worker threads, responsible for pulling from the IOBlockQueue and reading
-  // data from disk into buffers
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&TFReaderOp::WorkerEntry, this, std::placeholders::_1), "", id()));
-
-  // must be called after launching workers. workers can't be spawned after this post,
-  // so workers have to be kept alive until the end of the program
-  TaskManager::FindMe()->Post();
-
-  NotifyToFillIOBlockQueue();
-  while (!finished_reading_dataset_) {
-    int64_t buffer_id = 0;
-    int32_t workers_done = 0;
-    int64_t rows_read = 0;
-    {
-      std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
-      load_io_block_queue_ = true;
-    }
-
-    while (workers_done < num_workers_) {
-      std::unique_ptr<DataBuffer> fetched_buffer;
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Pop(0, &fetched_buffer));
-      if (fetched_buffer->eoe()) {
-        workers_done++;
-      } else if (total_rows_ == 0 || rows_read < total_rows_) {
-        // we need to push a buffer
-        if (total_rows_ > 0 && rows_read + fetched_buffer->NumRows() > total_rows_) {
-          // this is last buffer we need, and we only need a part of it
-          int64_t rowsToRemove = fetched_buffer->NumRows() - (total_rows_ - rows_read);
-          RETURN_IF_NOT_OK(fetched_buffer->SliceOff(rowsToRemove));
-        }
-
-        rows_read += fetched_buffer->NumRows();
-        fetched_buffer->set_id(buffer_id);
-        buffer_id++;
-        RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(fetched_buffer)));
-      } else {
-        // user specified number of rows they want, and we read enough rows
-        //
-        // IOBlockQueue thread needs to:
-        // -stop pushing stuff to IOBlockQueue
-        // -call PostEndOfEpoch (will send EOE)
-        // -wait for reset
-        //
-        // Worker threads need to:
-        // -stop reading the file they are currently reading and throw it away
-        // -keep pulling, but dont read other files (eventually skips all IOBlocks and will get EOE)
-        //
-        // Master thread needs to:
-        // -tell IOBlockQueue thread to stop pushing
-        // -tell worker threads to stop reading the file tey are currently reading
-        // -keep pulling until EOE
-
-        // don't think we need a lock for now
-        load_jagged_connector_ = false;
-
-        std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
-        load_io_block_queue_ = false;
-      }
-    }
-
-    // all workers finished reading for this epoch, and we have read all the data from all workers
-    std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOE);
-    RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eoe_buffer)));
-
-    if (IsLastIteration()) {
-      finished_reading_dataset_ = true;
-      NotifyToFillIOBlockQueue();
-    } else {
-      jagged_buffer_connector_->DoReset();
-      buffer_id = 0;
-      // Self-reset to start a new iteration
-      RETURN_IF_NOT_OK(Reset());
-    }
-    UpdateRepeatAndEpochCounter();
-  }
-
-  std::unique_ptr<DataBuffer> eof_buffer = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagEOF);
-  RETURN_IF_NOT_OK(out_connector_->Add(0, std::move(eof_buffer)));
-
-  RETURN_IF_NOT_OK(PostEndOfData());
-
-  return Status::OK();
-}
-
-// static local-only helper function
-static void shuffleKeys(std::vector<int64_t> *i_keys, uint32_t seed) {
-  std::mt19937 rng(seed);
-  std::shuffle(i_keys->begin(), i_keys->end(), rng);
-}
-
-// The entry point for when workers are launched.
-Status TFReaderOp::WorkerEntry(int32_t worker_id) {
-  // must be called first if called by worker spawned by taskgroup
-  TaskManager::FindMe()->Post();
-
-  std::unique_ptr<FilenameBlock> io_block;
-  RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));
-
-  while (!io_block->eof()) {
-    if (!io_block->eoe()) {
-      if (load_jagged_connector_) {
-        std::string filename;
-        RETURN_IF_NOT_OK(io_block->GetFilename(&filename, *filename_index_));
-        int64_t start_offset = io_block->GetStartOffset();
-        int64_t end_offset = io_block->GetEndOffset();
-        RETURN_IF_NOT_OK(LoadFile(filename, start_offset, end_offset, worker_id));
-        MS_LOG(DEBUG) << "TFReader operator worker " << worker_id << " loaded file " << filename << ".";
-      }
-    } else {
-      std::unique_ptr<DataBuffer> eoe_buffer = std::make_unique<DataBuffer>(1, DataBuffer::kDeBFlagEOE);
-      RETURN_IF_NOT_OK(jagged_buffer_connector_->Add(worker_id, std::move(eoe_buffer)));
-    }
-
-    RETURN_IF_NOT_OK(PopIoBlockQueue(worker_id, &io_block));
-  }
-
-  return Status::OK();
-}
-
-// Pushes a control indicator onto the IOBlockQueue for each worker to consume.
-// When the worker pops this control indicator, it will shut itself down gracefully.
-Status TFReaderOp::PostEndOfData() {
-  for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eof = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEof);
-    RETURN_IF_NOT_OK(PushIoBlockQueue(i, std::move(eof)));
-  }
-
-  return Status::OK();
-}
-
-// Pushes a control indicator onto the IOBlockQueue for each worker to consume. When the worker
-// pops this control indicator, it will wait until the next epoch starts and then resume execution.
-Status TFReaderOp::PostEndOfEpoch(int32_t queue_index) {
-  for (int i = 0; i < num_workers_; ++i) {
-    std::unique_ptr<FilenameBlock> eoe = std::make_unique<FilenameBlock>(IOBlock::kDeIoBlockFlagEoe);
-    RETURN_IF_NOT_OK(PushIoBlockQueue((queue_index + i) % num_workers_, std::move(eoe)));
-  }
-
-  return Status::OK();
-}
-
-bool TFReaderOp::NeedPushFileToBlockQueue(const std::string &file_name, int64_t *start_offset, int64_t *end_offset,
-                                          const int64_t &pre_count) {
-  *start_offset = 0;
-  *end_offset = 0;
-  bool push = false;
-  int64_t start_index = device_id_ * num_rows_per_shard_;
-  if (device_id_ + 1 < 0) {
-    MS_LOG(ERROR) << "Device id is invalid.";
-    return false;
-  }
-  int64_t end_index = (static_cast<int64_t>(device_id_) + 1) * num_rows_per_shard_;
-
-  if (pre_count <= start_index && pre_count + filename_numrows_[file_name] > start_index) {
-    *start_offset = start_index - pre_count;
-    push = true;
-    if (pre_count < end_index && pre_count + filename_numrows_[file_name] >= end_index) {
-      *end_offset = end_index - pre_count;
-    } else {
-      *end_offset = filename_numrows_[file_name];
-    }
-  }
-
-  if (pre_count >= start_index && pre_count < end_index) {
-    *start_offset = 0;
-    push = true;
-    if (pre_count + filename_numrows_[file_name] >= end_index) {
-      *end_offset = end_index - pre_count;
-    } else {
-      *end_offset = filename_numrows_[file_name];
-    }
-  }
-
-  return push;
 }
 
 Status TFReaderOp::FillIOBlockShuffle(const std::vector<int64_t> &i_keys) {
@@ -506,58 +306,8 @@ Status TFReaderOp::FillIOBlockNoShuffle() {
   return Status::OK();
 }
 
-// Called asynchronously by another thread. Will wait until notified to fill the IOBlockQueue.
-Status TFReaderOp::WaitToFillIOBlockQueue() {
-  // must be called first if called by worker spawned by taskgroup
-  TaskManager::FindMe()->Post();
-
-  std::vector<int64_t> i_keys;
-  // Generate a vector of keys that we can shuffle
-  if (shuffle_files_) {
-    for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
-      i_keys.push_back(it.key());
-    }
-  }
-  uint32_t seed = 0;
-  while (true) {
-    RETURN_IF_NOT_OK(io_block_queue_wait_post_.Wait());
-    io_block_queue_wait_post_.Clear();
-
-    if (finished_reading_dataset_) {
-      break;
-    }
-
-    if (shuffle_files_) {
-      shuffleKeys(&i_keys, num_devices_ == 1 ? GetSeed() : ++seed);
-      RETURN_IF_NOT_OK(FillIOBlockShuffle(i_keys));
-    } else {  // shuffle_files_ == false
-      RETURN_IF_NOT_OK(FillIOBlockNoShuffle());
-    }
-  }
-
-  return Status::OK();
-}
-
-// Notifies the thread which called WaitToFillIOBlockQueue to resume execution.
-void TFReaderOp::NotifyToFillIOBlockQueue() { io_block_queue_wait_post_.Set(); }
-
-// Pops an element from a queue in io_block_queues
-Status TFReaderOp::PopIoBlockQueue(int32_t index, std::unique_ptr<FilenameBlock> *out_block) {
-  RETURN_IF_NOT_OK(io_block_queues_[index]->PopFront(out_block));
-
-  return Status::OK();
-}
-
-// Pushes an element to a queue in io_block_queues
-Status TFReaderOp::PushIoBlockQueue(int32_t index, std::unique_ptr<FilenameBlock> &&io_block) {
-  RETURN_IF_NOT_OK(io_block_queues_[index]->Add(std::move(io_block)));
-
-  return Status::OK();
-}
-
 // Reads a tf_file file and loads the data into multiple buffers.
-Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_offset, const int64_t end_offset,
-                            const int32_t &worker_id) {
+Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, int64_t end_offset, int32_t worker_id) {
   std::ifstream reader;
   reader.open(filename);
   if (!reader) {
@@ -694,24 +444,6 @@ Status TFReaderOp::LoadFeature(const std::unique_ptr<TensorQTable> *tensor_table
   }
 
   (**tensor_table)[row][col] = std::move(ts);
-
-  return Status::OK();
-}
-
-// Overrides base class reset method. Cleans up any state info from it's previous execution and
-// reinitializes itself so that it can be executed again, as if it was just created.
-Status TFReaderOp::Reset() {
-  MS_LOG(DEBUG) << Name() << " performing a self-reset.";
-  // start workers first, otherwise IOBlocks will fall through if workers see it before this is set to true
-  load_jagged_connector_ = true;
-
-  {
-    std::unique_lock<std::mutex> lock(load_io_block_queue_mutex_);
-    load_io_block_queue_ = true;
-  }
-
-  RETURN_IF_NOT_OK(ParallelOp::Reset());
-  NotifyToFillIOBlockQueue();
 
   return Status::OK();
 }
@@ -1028,6 +760,12 @@ Status TFReaderOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
+}
+Status TFReaderOp::FillIOBlockQueue(const std::vector<int64_t> &i_keys) {
+  if (shuffle_files_) {
+    return FillIOBlockShuffle(i_keys);
+  }
+  return FillIOBlockNoShuffle();
 }
 
 }  // namespace dataset
