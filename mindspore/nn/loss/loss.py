@@ -354,8 +354,7 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
           `labels` is int32 or int64. If `sparse` is False, the type of `labels` is the same as the type of `logits`.
 
     Outputs:
-        Tensor, a tensor of the same shape as logits with the component-wise
-        logistic losses.
+        Tensor, a tensor of the same shape and type as logits with the component-wise logistic losses.
 
     Raises:
         TypeError: If `sparse` is not a bool.

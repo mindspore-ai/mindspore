@@ -246,6 +246,7 @@ class Softplus(PrimitiveWithInfer):
     Softplus activation function.
 
     Softplus is a smooth approximation to the ReLU function.
+    It can be used to constrain the output of a machine to always be positive.
     The function is shown as follows:
 
     .. math::
@@ -2018,7 +2019,7 @@ class AvgPool(_Pool):
     Average pooling operation.
 
     Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
-    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool2d outputs
+    Typically the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, AvgPool outputs
     regional average in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
     :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_0, s_1)`, the operation is as follows.
 
@@ -3928,7 +3929,10 @@ class LSTM(PrimitiveWithInfer):
 
 class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
     r"""
-    Uses the given logits to compute sigmoid cross entropy.
+    Uses the given logits to compute sigmoid cross entropy between the target and the output.
+
+    Measures the distribution error in discrete classification tasks where each class is independent
+    and not mutually exclusive using cross entropy loss.
 
     Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
 
