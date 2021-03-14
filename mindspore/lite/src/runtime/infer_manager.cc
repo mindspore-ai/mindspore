@@ -399,7 +399,7 @@ static RegistryInferShape g_PartialInferShape(mindspore::schema::PrimitiveType_P
 static RegistryInferShape g_MergeInferShape(mindspore::schema::PrimitiveType_Merge, MergeInferShape);
 static RegistryInferShape g_SwitchInferShape(mindspore::schema::PrimitiveType_Switch, SwitchInferShape);
 static RegistryInferShape g_AssertOpInferShape(mindspore::schema::PrimitiveType_Assert, AssertOpInferShape);
-static RegistryInferShape g_SparseSoftmaxCrossEntropyInferShape(
+static RegistryInferShape g_SparseSoftmaxCrossEntropyWithLogitsInferShape(
   mindspore::schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogitsInferShape);
 static RegistryInferShape g_DropoutInferShape(mindspore::schema::PrimitiveType_Dropout, DropoutInferShape);
 static RegistryInferShape g_PriorBoxInferShape(mindspore::schema::PrimitiveType_PriorBox, PriorBoxInferShape);

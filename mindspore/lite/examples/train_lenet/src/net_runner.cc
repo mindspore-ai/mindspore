@@ -17,6 +17,7 @@
 #include "src/net_runner.h"
 #include <math.h>
 #include <getopt.h>
+#include <stdio.h>
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -35,7 +36,9 @@
 using mindspore::dataset::Dataset;
 using mindspore::dataset::Mnist;
 using mindspore::dataset::TensorOperation;
+using mindspore::dataset::transforms::TypeCast;
 using mindspore::dataset::vision::Normalize;
+using mindspore::dataset::vision::Resize;
 using mindspore::lite::AccuracyMetrics;
 using mindspore::session::TrainLoopCallBack;
 using mindspore::session::TrainLoopCallBackData;
@@ -96,10 +99,9 @@ void NetRunner::InitAndFigureInputs() {
   context.device_list_[0].device_type_ = mindspore::lite::DT_CPU;
   context.thread_num_ = 2;
 
-  auto session = mindspore::session::TrainSession::CreateSession(ms_file_, &context);
-  loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session, &context);
-  session_ = loop_->train_session();
+  session_ = mindspore::session::TrainSession::CreateSession(ms_file_, &context);
   MS_ASSERT(nullptr != session_);
+  loop_ = mindspore::session::TrainLoop::CreateTrainLoop(session_, &context);
 
   acc_metrics_ = std::shared_ptr<AccuracyMetrics>(new AccuracyMetrics);
 
@@ -111,12 +113,12 @@ void NetRunner::InitAndFigureInputs() {
 
 float NetRunner::CalculateAccuracy(int max_tests) {
   test_ds_ = Mnist(data_dir_ + "/test", "all");
-  std::shared_ptr<TensorOperation> typecast_f = mindspore::dataset::transforms::TypeCast("float32");
-  std::shared_ptr<TensorOperation> resize = mindspore::dataset::vision::Resize({32, 32});
-  test_ds_ = test_ds_->Map({resize, typecast_f}, {"image"});
+  TypeCast typecast_f("float32");
+  Resize resize({32, 32});
+  test_ds_ = test_ds_->Map({&resize, &typecast_f}, {"image"});
 
-  std::shared_ptr<TensorOperation> typecast = mindspore::dataset::transforms::TypeCast("int32");
-  test_ds_ = test_ds_->Map({typecast}, {"label"});
+  TypeCast typecast("int32");
+  test_ds_ = test_ds_->Map({&typecast}, {"label"});
   test_ds_ = test_ds_->Batch(32, true);
 
   Rescaler rescale(255.0);
@@ -130,14 +132,14 @@ float NetRunner::CalculateAccuracy(int max_tests) {
 int NetRunner::InitDB() {
   train_ds_ = Mnist(data_dir_ + "/train", "all");
 
-  std::shared_ptr<TensorOperation> typecast_f = mindspore::dataset::transforms::TypeCast("float32");
-  std::shared_ptr<TensorOperation> resize = mindspore::dataset::vision::Resize({32, 32});
-  // std::shared_ptr<TensorOperation> rescale_op = Normalize({0.0, 0.0, 0.0}, {255.0, 255.0, 255.0});
-  // std::shared_ptr<TensorOperation> rescale_op = mindspore::dataset::vision::Rescale(255.0, 0.0);
-  train_ds_ = train_ds_->Map({resize, typecast_f}, {"image"});
+  TypeCast typecast_f("float32");
+  Resize resize({32, 32});
+  // Normalize rescale_op({0.0, 0.0, 0.0}, {255.0, 255.0, 255.0}); pending on Minddata operator
+  // Rescale rescale_op(255.0, 0.0);
+  train_ds_ = train_ds_->Map({&resize, &typecast_f}, {"image"});
 
-  std::shared_ptr<TensorOperation> typecast = mindspore::dataset::transforms::TypeCast("int32");
-  train_ds_ = train_ds_->Map({typecast}, {"label"});
+  TypeCast typecast("int32");
+  train_ds_ = train_ds_->Map({&typecast}, {"label"});
 
   train_ds_ = train_ds_->Shuffle(2);
   train_ds_ = train_ds_->Batch(32, true);

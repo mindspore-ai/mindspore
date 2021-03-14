@@ -25,12 +25,14 @@
 
 namespace mindspore {
 namespace ops {
-void SparseSoftmaxCrossEntropyWithLogits::Init(const bool grad) { this->set_grad(grad); }
+void SparseSoftmaxCrossEntropyWithLogits::Init(const bool is_grad) { this->set_is_grad(is_grad); }
 
-void SparseSoftmaxCrossEntropyWithLogits::set_grad(const bool grad) { this->AddAttr(kGrad, MakeValue(grad)); }
+void SparseSoftmaxCrossEntropyWithLogits::set_is_grad(const bool is_grad) {
+  this->AddAttr(kIsGrad, MakeValue(is_grad));
+}
 
-bool SparseSoftmaxCrossEntropyWithLogits::get_grad() const {
-  auto value_ptr = GetAttr(kGrad);
+bool SparseSoftmaxCrossEntropyWithLogits::get_is_grad() const {
+  auto value_ptr = GetAttr(kIsGrad);
   return GetValue<bool>(value_ptr);
 }
 
@@ -49,7 +51,7 @@ AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(const abstract::Analysi
   auto input_shape =
     CheckAndConvertUtils::ConvertShapePtrToShape("input_shape", input_args[0]->BuildShape(), prim_name);
   std::vector<int64_t> output_shape;
-  if (sparse_softmax_cross_entropy_prim->get_grad() != 0) {
+  if (sparse_softmax_cross_entropy_prim->get_is_grad() != 0) {
     output_shape = input_shape;
   } else {
     output_shape.push_back(1);
