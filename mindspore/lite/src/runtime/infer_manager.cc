@@ -66,7 +66,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
       }
     }
   } else {
-    TensorC2LiteTensor(out_tensors, outputs);
+    SetOutputTensorAttr(out_tensors, outputs);
   }
 
   FreeAllTensorC(&in_tensors);

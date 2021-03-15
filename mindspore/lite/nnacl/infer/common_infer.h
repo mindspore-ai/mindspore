@@ -134,6 +134,7 @@ typedef struct vvector {
 } vvector;
 
 typedef struct TensorListC {
+  bool is_ready_;
   int data_type_;
   int format_;
 

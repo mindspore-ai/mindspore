@@ -61,11 +61,13 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector
   return RET_OK;
 }
 
-void TensorC2LiteTensor(const std::vector<TensorC *> &tensors_in, std::vector<lite::Tensor *> *tensors_out) {
+void SetOutputTensorAttr(const std::vector<TensorC *> &tensors_in, std::vector<lite::Tensor *> *tensors_out) {
   for (size_t i = 0; i < tensors_in.size(); ++i) {
-    tensors_out->at(i)->set_format(static_cast<schema::Format>(tensors_in[i]->format_));
-    tensors_out->at(i)->set_data_type(static_cast<TypeId>(tensors_in[i]->data_type_));
-    tensors_out->at(i)->set_shape({tensors_in[i]->shape_, tensors_in[i]->shape_ + tensors_in[i]->shape_size_});
+    if (tensors_in[i] != nullptr) {
+      tensors_out->at(i)->set_format(static_cast<schema::Format>(tensors_in[i]->format_));
+      tensors_out->at(i)->set_data_type(static_cast<TypeId>(tensors_in[i]->data_type_));
+      tensors_out->at(i)->set_shape({tensors_in[i]->shape_, tensors_in[i]->shape_ + tensors_in[i]->shape_size_});
+    }
   }
 }
 
@@ -108,6 +110,7 @@ TensorC *NewTensorC() {
 }
 
 void Tensor2TensorC(Tensor *src, TensorC *dst) {
+  dst->is_ready_ = src->IsReady();
   dst->format_ = src->format();
   dst->data_ = src->data_c();
   dst->data_type_ = src->data_type();
@@ -124,6 +127,7 @@ void TensorC2Tensor(TensorC *src, Tensor *dst) {
 }
 
 int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
+  dst->is_ready_ = src->IsReady();
   dst->data_type_ = static_cast<TypeIdC>(src->data_type());
   dst->format_ = src->format();
   dst->element_num_ = src->shape().empty() ? 0 : src->tensors().size();
@@ -165,34 +169,7 @@ int GenerateMergeOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vect
                             std::vector<TensorC *> *out_tensor_c) {
   int ret = RET_OK;
   for (size_t i = 0; i < outputs->size(); i++) {
-    if (inputs.at(i)->data_type() == kObjectTypeTensorType) {
-      auto *output_tensorlist = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
-      if (output_tensorlist == nullptr) {
-        return RET_ERROR;
-      }
-      memset(output_tensorlist, 0, sizeof(TensorListC));
-      output_tensorlist->element_num_ = inputs[i]->shape().empty() ? 0 : inputs[i]->shape().at(0);
-      if (output_tensorlist->element_num_ != 0) {
-        output_tensorlist->tensors_ =
-          reinterpret_cast<TensorC *>(malloc(output_tensorlist->element_num_ * sizeof(TensorC)));
-        if (output_tensorlist->tensors_ == nullptr) {
-          free(output_tensorlist);
-          output_tensorlist = nullptr;
-          return RET_ERROR;
-        }
-        memset(output_tensorlist->tensors_, 0, output_tensorlist->element_num_ * sizeof(TensorC));
-      }
-
-      out_tensor_c->push_back(reinterpret_cast<TensorC *const>(output_tensorlist));
-    } else {
-      auto *output_tensor = NewTensorC();
-      if (output_tensor == nullptr) {
-        MS_LOG(ERROR) << "malloc tensor_c failed";
-        ret = RET_ERROR;
-        break;
-      }
-      out_tensor_c->push_back(reinterpret_cast<TensorC *const>(output_tensor));
-    }
+    out_tensor_c->push_back(nullptr);
   }
   return ret;
 }

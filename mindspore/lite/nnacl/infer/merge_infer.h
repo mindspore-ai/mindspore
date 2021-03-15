@@ -23,8 +23,6 @@
 extern "C" {
 #endif
 
-enum InferStatus { Able, NotAble, HasZeroShape };
-
 int MergeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter);
 
