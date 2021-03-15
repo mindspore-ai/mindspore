@@ -359,7 +359,10 @@ PynativeAdjointPtr KPynativeCellImpl::ForgeCNodeAdjoint(const CNodePtr &cnode) {
   if (index_value == nullptr) {
     MS_LOG(EXCEPTION) << "CNode input 2 should be a Int64Imm, CNode: " << cnode->DebugString();
   }
-  auto index_value_imm = index_value->value();
+  if (index_value->value() < 0) {
+    MS_LOG(EXCEPTION) << "CNode input 2 should not less than 0, CNode: " << cnode->DebugString();
+  }
+  size_t index_value_imm = index_value->value();
   if (index_value_imm < 0 || index_value_imm >= inp_1_out->size()) {
     MS_LOG(EXCEPTION) << "CNode input 2 should be index between [0, " << inp_1_out->size()
                       << ", but: " << index_value->ToString();
