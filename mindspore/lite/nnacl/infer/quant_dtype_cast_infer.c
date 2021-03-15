@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/quant_dtype_cast_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int QuantDtypeCastInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
@@ -40,3 +41,5 @@ int QuantDtypeCastInferShape(const TensorC *const *inputs, size_t inputs_size, T
   SetShapeTensor(output, input);
   return NNACL_OK;
 }
+
+REG_INFER(QuantDTypeCast, PrimType_QuantDTypeCast, QuantDtypeCastInferShape)

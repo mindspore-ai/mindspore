@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/lsh_projection_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int LshProjectionInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
@@ -49,3 +50,5 @@ int LshProjectionInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   SetShapeArray(out_tensor, out_shape, out_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(LshProjection, PrimType_LshProjection, LshProjectionInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/broadcast_to_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
@@ -66,3 +67,5 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   SetShapeArray(outputs[0], shape, shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(BroadcastTo, PrimType_BroadcastTo, BroadcastToInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/arithmetic_compare_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ArithmeticCompareInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
@@ -26,3 +27,10 @@ int ArithmeticCompareInferShape(const TensorC *const *inputs, size_t inputs_size
   output->data_type_ = kNumberTypeBool;
   return res;
 }
+
+REG_INFER(Equal, PrimType_Equal, ArithmeticCompareInferShape)
+REG_INFER(Greater, PrimType_Greater, ArithmeticCompareInferShape)
+REG_INFER(GreaterEqual, PrimType_GreaterEqual, ArithmeticCompareInferShape)
+REG_INFER(Less, PrimType_Less, ArithmeticCompareInferShape)
+REG_INFER(LessEqual, PrimType_LessEqual, ArithmeticCompareInferShape)
+REG_INFER(NotEqual, PrimType_NotEqual, ArithmeticCompareInferShape)

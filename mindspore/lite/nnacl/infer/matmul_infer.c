@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/matmul_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -84,3 +85,5 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   SetShapeArray(output, c_shape, c_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(MatMul, PrimType_MatMul, MatmulInferShape)

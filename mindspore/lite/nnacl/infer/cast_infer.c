@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/cast_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int CastInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -42,3 +43,5 @@ int CastInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   SetShapeTensor(output, input);
   return NNACL_OK;
 }
+
+REG_INFER(Cast, PrimType_Cast, CastInferShape)

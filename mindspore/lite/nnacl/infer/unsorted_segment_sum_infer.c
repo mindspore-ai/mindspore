@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/unsorted_segment_sum_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int UnsortedSegmentSumInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                  size_t outputs_size, OpParameter *parameter) {
@@ -39,3 +40,5 @@ int UnsortedSegmentSumInferShape(const TensorC *const *inputs, size_t inputs_siz
   SetDataTypeFormat(out, x);
   return NNACL_OK;
 }
+
+REG_INFER(UnsortedSegmentSum, PrimType_UnsortedSegmentSum, UnsortedSegmentSumInferShape)

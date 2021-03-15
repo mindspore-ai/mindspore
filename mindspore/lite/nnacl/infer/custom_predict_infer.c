@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/custom_predict_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int CustomPredictInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
@@ -40,3 +41,5 @@ int CustomPredictInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   output1->format_ = input->format_;
   return NNACL_OK;
 }
+
+REG_INFER(CustomPredict, PrimType_CustomPredict, CustomPredictInferShape)

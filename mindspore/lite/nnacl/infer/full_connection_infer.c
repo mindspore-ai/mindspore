@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/full_connection_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
@@ -75,3 +76,5 @@ int FullConnectionInferShape(const TensorC *const *inputs, size_t inputs_size, T
 
   return NNACL_OK;
 }
+
+REG_INFER(FullConnection, PrimType_FullConnection, FullConnectionInferShape)

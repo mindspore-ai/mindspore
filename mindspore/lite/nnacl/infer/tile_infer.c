@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/tile_infer.h"
 #include <limits.h>
+#include "nnacl/infer/infer_register.h"
 
 void TileParamCaffe2Tflite(TileParameter *param, size_t out_shape_size) {
   if (param->dims_size_ != 0) {
@@ -110,3 +111,5 @@ int TileInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   SetShapeArray(output, out_shape, out_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(Tile, PrimType_TileFusion, TileInferShape)

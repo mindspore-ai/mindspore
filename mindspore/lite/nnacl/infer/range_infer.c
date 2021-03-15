@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/range_infer.h"
 #include <math.h>
+#include "nnacl/infer/infer_register.h"
 
 int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
@@ -75,3 +76,5 @@ int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   output->shape_[0] = shape_size;
   return NNACL_OK;
 }
+
+REG_INFER(Range, PrimType_Range, RangeInferShape)

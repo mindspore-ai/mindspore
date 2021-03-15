@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_INFER_INFER_H_
+#define MINDSPORE_LITE_NNACL_INFER_INFER_H_
 
-#include "nnacl/infer/assert_op_infer.h"
-#include "nnacl/infer/infer_register.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/op_base.h"
 
-int AssertOpInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                       OpParameter *parameter) {
-  return NNACL_OK;
+#ifdef __cplusplus
+extern "C" {
+#endif
+typedef int (*InferShape)(const TensorC *const *inputs, size_t input_size, TensorC **outputs, size_t output_size,
+                          OpParameter *parameter);
+
+InferShape GetInferFunc(int prim_type);
+
+#ifdef __cplusplus
 }
-
-REG_INFER(Assert, PrimType_Assert, AssertOpInferShape)
+#endif
+#endif  // MINDSPORE_LITE_NNACL_INFER_INFER_H_

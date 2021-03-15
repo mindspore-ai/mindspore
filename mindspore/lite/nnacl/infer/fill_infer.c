@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/fill_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int FillInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                    OpParameter *parameter) {
@@ -46,3 +47,5 @@ int FillInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(Fill, PrimType_Fill, FillInferShape)

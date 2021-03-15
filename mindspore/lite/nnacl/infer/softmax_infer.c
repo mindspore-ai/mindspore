@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/softmax_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int SoftMaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
@@ -39,3 +40,5 @@ int SoftMaxInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   SetShapeTensor(output, input);
   return NNACL_OK;
 }
+
+REG_INFER(Softmax, PrimType_Softmax, SoftMaxInferShape)

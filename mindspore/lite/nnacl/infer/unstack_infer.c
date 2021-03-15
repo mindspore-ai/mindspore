@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/unstack_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int UnstackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
@@ -53,3 +54,5 @@ int UnstackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   }
   return NNACL_OK;
 }
+
+REG_INFER(Unstack, PrimType_Unstack, UnstackInferShape)

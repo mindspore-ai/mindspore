@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/resize_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int CalculateNewHeightAndWidth(const TensorC *const *inputs, size_t inputs_size, ResizeParameter *param) {
   const TensorC *input = inputs[0];
@@ -138,3 +139,5 @@ int ResizeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   return ret;
 }
+
+REG_INFER(Resize, PrimType_Resize, ResizeInferShape)

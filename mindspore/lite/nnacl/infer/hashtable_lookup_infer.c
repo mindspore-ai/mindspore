@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/hashtable_lookup_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int HashtableLoopupInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
@@ -42,3 +43,5 @@ int HashtableLoopupInferShape(const TensorC *const *inputs, size_t inputs_size, 
   }
   return NNACL_OK;
 }
+
+REG_INFER(HashtableLookup, PrimType_HashtableLookup, HashtableLoopupInferShape)

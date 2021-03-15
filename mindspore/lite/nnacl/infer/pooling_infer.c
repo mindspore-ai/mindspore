@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/pooling_infer.h"
 #include <math.h>
+#include "nnacl/infer/infer_register.h"
 
 int PoolingInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
@@ -81,3 +82,6 @@ int PoolingInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   SetShapeArray(output, input_shape, input_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(MaxPool, PrimType_MaxPoolFusion, PoolingInferShape)
+REG_INFER(AvgPool, PrimType_AvgPoolFusion, PoolingInferShape)

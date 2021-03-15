@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/where_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
@@ -75,3 +76,5 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   output->shape_[axisout] = nummax;
   return NNACL_OK;
 }
+
+REG_INFER(Where, PrimType_Where, WhereInferShape)

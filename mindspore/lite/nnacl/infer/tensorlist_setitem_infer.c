@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/tensorlist_setitem_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int PreJudge(const TensorC *get_index, TensorListC *input0, const TensorC *value_tensor) {
   if (get_index->data_ == NULL || value_tensor->data_ == NULL) {
@@ -117,3 +118,5 @@ int TensorListSetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   free(out_shape.shape_size_);
   return NNACL_OK;
 }
+
+REG_INFER(TensorListSetItem, PrimType_TensorListSetItem, TensorListSetItemInferShape)

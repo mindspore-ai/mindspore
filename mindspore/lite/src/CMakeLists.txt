@@ -149,15 +149,20 @@ endif()
 
 if(SUPPORT_GPU STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
-    target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid
+                          -Wl,--whole-archive nnacl -Wl,--no-whole-archive cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid
+                          -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
 elseif(SUPPORT_GPU STREQUAL cuda)
         add_subdirectory(runtime/kernel/cuda)
-        target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid nnacl cpu_ops_mid)
-        target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
+        target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid
+                              -Wl,--whole-archive nnacl -Wl,--no-whole-archive cpu_ops_mid)
+        target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid
+                              -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive cpu_ops_mid)
 else()
-    target_link_libraries(mindspore-lite cpu_kernel_mid nnacl cpu_ops_mid)
-    target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
+    target_link_libraries(mindspore-lite cpu_kernel_mid -Wl,--whole-archive nnacl -Wl,--no-whole-archive cpu_ops_mid)
+    target_link_libraries(mindspore-lite_static cpu_kernel_mid -Wl,--whole-archive nnacl_mid -Wl,--no-whole-archive
+                          cpu_ops_mid)
 endif()
 if(SUPPORT_NPU)
     add_subdirectory(runtime/agent/npu)

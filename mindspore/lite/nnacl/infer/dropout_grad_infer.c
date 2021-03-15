@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/dropout_grad_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int DropoutGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
@@ -34,3 +35,5 @@ int DropoutGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   SetShapeTensor(output, input);
   return NNACL_OK;
 }
+
+REG_INFER(DropoutGrad, PrimType_DropoutGrad, DropoutGradInferShape)

@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/select_infer.h"
 #include <string.h>
+#include "nnacl/infer/infer_register.h"
 
 int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
@@ -54,3 +55,5 @@ int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   }
   return NNACL_OK;
 }
+
+REG_INFER(Select, PrimType_Select, SelectInferShape)

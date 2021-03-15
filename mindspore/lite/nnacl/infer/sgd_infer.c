@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/sgd_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int SgdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   OpParameter *parameter) {
@@ -38,3 +39,5 @@ int SgdInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **ou
 
   return NNACL_OK;
 }
+
+REG_INFER(SGD, PrimType_SGD, SgdInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/embedding_lookup_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
@@ -59,3 +60,5 @@ int EmbeddingLookupInferShape(const TensorC *const *inputs, size_t inputs_size, 
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(EmbeddingLookup, PrimType_EmbeddingLookupFusion, EmbeddingLookupInferShape)

@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/apply_momentum_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int ApplyMomentumInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
@@ -42,3 +43,5 @@ int ApplyMomentumInferShape(const TensorC *const *inputs, size_t inputs_size, Te
 
   return NNACL_OK;
 }
+
+REG_INFER(ApplyMomentum, PrimType_ApplyMomentum, ApplyMomentumInferShape)

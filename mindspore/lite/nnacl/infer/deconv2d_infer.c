@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/deconv2d_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                        OpParameter *parameter) {
@@ -97,3 +98,5 @@ int Deconv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC
   param->output_channel_ = output_c;
   return NNACL_OK;
 }
+
+REG_INFER(Conv2dTranspose, PrimType_Conv2dTransposeFusion, Deconv2dInferShape)

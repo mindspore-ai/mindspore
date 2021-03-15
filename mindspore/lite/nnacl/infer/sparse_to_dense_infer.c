@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/sparse_to_dense_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int SparseToDenseInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
@@ -41,3 +42,5 @@ int SparseToDenseInferShape(const TensorC *const *inputs, size_t inputs_size, Te
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(SparseToDense, PrimType_SparseToDense, SparseToDenseInferShape)

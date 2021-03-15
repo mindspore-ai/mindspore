@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/uniform_real_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int UniformRealInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
@@ -35,3 +36,5 @@ int UniformRealInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
   outputs[0]->data_type_ = kNumberTypeFloat32;
   return NNACL_OK;
 }
+
+REG_INFER(UniformReal, PrimType_UniformReal, UniformRealInferShape)

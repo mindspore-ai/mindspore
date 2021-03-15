@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/non_max_suppression_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int NonMaxSuppressionInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                 size_t outputs_size, OpParameter *parameter) {
@@ -31,3 +32,5 @@ int NonMaxSuppressionInferShape(const TensorC *const *inputs, size_t inputs_size
   output->format_ = input->format_;
   return NNACL_INFER_INVALID;
 }
+
+REG_INFER(NonMaxSuppression, PrimType_NonMaxSuppression, NonMaxSuppressionInferShape)

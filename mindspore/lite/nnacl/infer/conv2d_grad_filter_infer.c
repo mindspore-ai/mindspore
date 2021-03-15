@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/conv2d_grad_filter_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int Conv2dGradFilterInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                                OpParameter *parameter) {
@@ -33,3 +34,5 @@ int Conv2dGradFilterInferShape(const TensorC *const *inputs, size_t inputs_size,
   SetShapeArray(outputs[0], filter_shape_, filter_shape_size_);
   return NNACL_OK;
 }
+
+REG_INFER(Conv2DBackpropFilterFusion, PrimType_Conv2DBackpropFilterFusion, Conv2dGradFilterInferShape)

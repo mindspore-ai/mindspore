@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/random_standard_normal_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                    size_t outputs_size, OpParameter *parameter) {
@@ -44,3 +45,5 @@ int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_s
   outputs[0]->format_ = inputs[0]->format_;
   return NNACL_OK;
 }
+
+REG_INFER(RandomStandardNormal, PrimType_RandomStandardNormal, RandomStandardNormalInferShape)

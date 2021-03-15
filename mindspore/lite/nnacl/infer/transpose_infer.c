@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/transpose_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 bool CheckPermTransFormat(const int *perm, const int *perm_transformat, const size_t size) {
   for (size_t i = 0; i < size; ++i) {
@@ -84,3 +85,5 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
   SetShapeArray(output, out_shape, output->shape_size_);
   return NNACL_OK;
 }
+
+REG_INFER(Transpose, PrimType_Transpose, TransposeInferShape)

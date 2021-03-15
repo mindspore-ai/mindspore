@@ -15,8 +15,11 @@
  */
 
 #include "nnacl/infer/partial_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int PartialInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
   return NNACL_OK;
 }
+
+REG_INFER(Partial, PrimType_PartialFusion, PartialInferShape)

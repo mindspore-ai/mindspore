@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/fused_batchnorm_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int FusedBatchNormInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                              OpParameter *parameter) {
@@ -32,3 +33,5 @@ int FusedBatchNormInferShape(const TensorC *const *inputs, size_t inputs_size, T
   }
   return 0;
 }
+
+REG_INFER(FusedBatchNorm, PrimType_FusedBatchNorm, FusedBatchNormInferShape)

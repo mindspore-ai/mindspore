@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/tensorlist_stack_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
@@ -69,3 +70,5 @@ int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, 
   SetShapeArray(output, output_shape, output_shape_size);
   return NNACL_OK;
 }
+
+REG_INFER(TensorListStack, PrimType_TensorListStack, TensorListStackInferShape)

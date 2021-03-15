@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/conv2d_grad_input_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {
@@ -39,3 +40,5 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
 
   return NNACL_OK;
 }
+
+REG_INFER(Conv2DBackpropInputFusion, PrimType_Conv2DBackpropInputFusion, Conv2dGradInputInferShape)

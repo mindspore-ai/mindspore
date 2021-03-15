@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/slice_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
@@ -79,3 +80,5 @@ int SliceInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   }
   return NNACL_OK;
 }
+
+REG_INFER(Slice, PrimType_SliceFusion, SliceInferShape)

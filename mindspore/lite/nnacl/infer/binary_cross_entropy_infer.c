@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/infer/binary_cross_entropy_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int BinaryCrossEntropyInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
                                  size_t outputs_size, OpParameter *parameter) {
@@ -31,3 +32,5 @@ int BinaryCrossEntropyInferShape(const TensorC *const *inputs, size_t inputs_siz
   }
   return NNACL_OK;
 }
+
+REG_INFER(BinaryCrossEntropy, PrimType_BinaryCrossEntropy, BinaryCrossEntropyInferShape)

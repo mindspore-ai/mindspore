@@ -16,6 +16,8 @@
 
 #include "nnacl/infer/add_sub_grad_infer.h"
 #include "nnacl/arithmetic.h"
+#include "nnacl/infer/arithmetic_grad_infer.h"
+#include "nnacl/infer/infer_register.h"
 
 int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter) {
@@ -58,3 +60,6 @@ int AddSubGradInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   SetDataTypeFormat(dx2, dy);
   return NNACL_OK;
 }
+
+REG_INFER(AddGrad, PrimType_AddGrad, AddSubGradInferShape)
+REG_INFER(SubGrad, PrimType_SubGrad, AddSubGradInferShape)
