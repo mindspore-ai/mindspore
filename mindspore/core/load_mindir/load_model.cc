@@ -127,7 +127,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
   mind_ir::ModelProto origin_model;
 
   if (!input_graph || !origin_model.ParseFromIstream(&input_graph)) {
-    MS_LOG(ERROR) << "Load MindIR file failed.";
+    MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
     return nullptr;
   }
 
@@ -143,7 +143,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
       string path = abs_path;
       get_all_files(path, &files);
     } else {
-      MS_LOG(ERROR) << "MindIR graph has not variable path, load failed";
+      MS_LOG(ERROR) << "Load graph's variable folder failed, please check the correctness of variable folder.";
       return nullptr;
     }
 
@@ -153,7 +153,7 @@ std::shared_ptr<FuncGraph> LoadMindIR(const std::string &file_name, bool is_lite
       std::fstream input_param(files[file_index], std::ios::in | std::ios::binary);
       mind_ir::GraphProto param_graph;
       if (!input_param || !param_graph.ParseFromIstream(&input_param)) {
-        MS_LOG(ERROR) << "Load param proto file failed.";
+        MS_LOG(ERROR) << "Load variable file failed, please check the correctness of mindir's variable file.";
         return nullptr;
       }
 

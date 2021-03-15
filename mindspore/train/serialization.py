@@ -721,7 +721,7 @@ def _save_mindir(net, file_name, *inputs):
             if data_size > TOTAL_SAVE:
                 data_file_name = data_path + "/" + "data_" + str(index)
                 with open(data_file_name, "ab") as f:
-                    os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
+                    os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
                     f.write(graphproto.SerializeToString())
                 index += 1
                 data_size = 0
@@ -730,7 +730,7 @@ def _save_mindir(net, file_name, *inputs):
         if graphproto.parameter:
             data_file_name = data_path + "/" + "data_" + str(index)
             with open(data_file_name, "ab") as f:
-                os.chmod(file_name, stat.S_IRUSR | stat.S_IWUSR)
+                os.chmod(data_file_name, stat.S_IRUSR | stat.S_IWUSR)
                 f.write(graphproto.SerializeToString())
 
         # save graph
