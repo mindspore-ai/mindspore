@@ -1671,7 +1671,7 @@ def flipud(m):
 
 def fliplr(m):
     """
-    Flip the entries in each row in the left/right direction.
+    Flips the entries in each row in the left/right direction.
     Columns are preserved, but appear in a different order than before.
 
     Note:

@@ -827,7 +827,7 @@ def grayscale(img, num_output_channels):
 
 def pad(img, padding, fill_value, padding_mode):
     """
-    Pads the image according to padding parameters.
+    Pad the image according to padding parameters.
 
     Args:
         img (PIL image): Image to be padded.

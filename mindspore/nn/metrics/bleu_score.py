@@ -21,7 +21,7 @@ from .metric import Metric
 
 class BleuScore(Metric):
     """
-    Calculate BLEU score of machine translated text with one or more references.
+    Calculates BLEU score of machine translated text with one or more references.
 
     Args:
         n_gram (int): The n_gram value ranged from 1 to 4. Default: 4

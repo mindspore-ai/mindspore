@@ -293,7 +293,7 @@ class Tensor(Tensor_):
 
     @property
     def dtype(self):
-        """Returns the dtype of the tensor (:class:`mindspore.dtype`)."""
+        """Return the dtype of the tensor (:class:`mindspore.dtype`)."""
         return self._dtype
 
     @property
@@ -303,7 +303,7 @@ class Tensor(Tensor_):
 
     @property
     def ndim(self):
-        """Returns the number of tensor dimensions."""
+        """Return the number of tensor dimensions."""
         return len(self._shape)
 
     @property
@@ -313,22 +313,22 @@ class Tensor(Tensor_):
 
     @property
     def itemsize(self):
-        """Returns the length of one tensor element in bytes."""
+        """Return the length of one tensor element in bytes."""
         return self._itemsize
 
     @property
     def strides(self):
-        """Returns the tuple of bytes to step in each dimension when traversing a tensor."""
+        """Return the tuple of bytes to step in each dimension when traversing a tensor."""
         return self._strides
 
     @property
     def nbytes(self):
-        """Returns the total number of bytes taken by the tensor."""
+        """Return the total number of bytes taken by the tensor."""
         return self._nbytes
 
     @property
     def T(self):
-        """Returns the transposed tensor."""
+        """Return the transposed tensor."""
         return self.transpose()
 
     @property
@@ -439,7 +439,7 @@ class Tensor(Tensor_):
 
     def mean(self, axis=(), keep_dims=False):
         """
-        Reduces a dimension of a tensor by averaging all elements in the dimension.
+        Reduce a dimension of a tensor by averaging all elements in the dimension.
 
         Args:
             axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
@@ -456,7 +456,7 @@ class Tensor(Tensor_):
 
     def transpose(self, *axes):
         r"""
-        Returns a view of the tensor with axes transposed.
+        Return a view of the tensor with axes transposed.
 
         For a 1-D tensor this has no effect, as a transposed vector is simply the
         same vector. For a 2-D tensor, this is a standard matrix transpose. For a
@@ -480,7 +480,7 @@ class Tensor(Tensor_):
 
     def reshape(self, *shape):
         """
-        Gives a new shape to a tensor without changing its data.
+        Give a new shape to a tensor without changing its data.
 
         Args:
             shape(Union[int, tuple(int), list(int)]): The new shape should be compatible
@@ -497,7 +497,7 @@ class Tensor(Tensor_):
 
     def ravel(self):
         """
-        Returns a contiguous flattened tensor.
+        Return a contiguous flattened tensor.
 
         Returns:
             Tensor, a 1-D tensor, containing the same elements of the input.
@@ -508,7 +508,7 @@ class Tensor(Tensor_):
 
     def flatten(self, order='C'):
         r"""
-        Returns a copy of the tensor collapsed into one dimension.
+        Return a copy of the tensor collapsed into one dimension.
 
         Args:
             order (str, optional): Can choose between 'C' and 'F'. 'C' means to
@@ -531,7 +531,7 @@ class Tensor(Tensor_):
 
     def swapaxes(self, axis1, axis2):
         """
-        Interchanges two axes of a tensor.
+        Interchange two axes of a tensor.
 
         Args:
             axis1 (int): First axis.
@@ -561,7 +561,7 @@ class Tensor(Tensor_):
 
     def squeeze(self, axis=None):
         """
-        Removes single-dimensional entries from the shape of a tensor.
+        Remove single-dimensional entries from the shape of a tensor.
 
         Args:
             axis (Union[None, int, list(int), tuple(int)], optional): Default is None.
@@ -577,7 +577,7 @@ class Tensor(Tensor_):
 
     def astype(self, dtype, copy=True):
         """
-        Returns a copy of the tensor, casted to a specified type.
+        Return a copy of the tensor, casted to a specified type.
 
         Args:
             dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format

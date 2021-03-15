@@ -119,7 +119,7 @@ class CsvToMR:
 
     def run(self):
         """
-        Executes transformation from csv to MindRecord.
+        Execute transformation from csv to MindRecord.
 
         Returns:
             MSRStatus, whether csv is successfully transformed to MindRecord.

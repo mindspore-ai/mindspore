@@ -86,12 +86,12 @@ class _ThreadLocalInfo(threading.local):
 
     @property
     def reserve_class_name_in_scope(self):
-        """Gets whether to save the network class name in the scope."""
+        """Get whether to save the network class name in the scope."""
         return self._reserve_class_name_in_scope
 
     @reserve_class_name_in_scope.setter
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
-        """Sets whether to save the network class name in the scope."""
+        """Set whether to save the network class name in the scope."""
         if not isinstance(reserve_class_name_in_scope, bool):
             raise ValueError(
                 "Set reserve_class_name_in_scope value must be bool!")
@@ -295,12 +295,12 @@ class _Context:
 
     @property
     def reserve_class_name_in_scope(self):
-        """Gets whether to save the network class name in the scope."""
+        """Get whether to save the network class name in the scope."""
         return self._thread_local_info.reserve_class_name_in_scope
 
     @reserve_class_name_in_scope.setter
     def reserve_class_name_in_scope(self, reserve_class_name_in_scope):
-        """Sets whether to save the network class name in the scope."""
+        """Set whether to save the network class name in the scope."""
         self._thread_local_info.reserve_class_name_in_scope = reserve_class_name_in_scope
 
     @property
@@ -444,7 +444,7 @@ def set_auto_parallel_context(**kwargs):
 
 def get_auto_parallel_context(attr_key):
     """
-    Gets auto parallel context attribute value according to the key.
+    Get auto parallel context attribute value according to the key.
 
     Args:
         attr_key (str): The key of the attribute.
@@ -512,7 +512,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_sparse=bool, max_call_depth=int, env_config_path=str)
 def set_context(**kwargs):
     """
-    Sets context for running environment.
+    Set context for running environment.
 
     Context should be configured before running your program. If there is no configuration,
     the "Ascend" device target will be used by default. GRAPH_MODE or
@@ -679,7 +679,7 @@ def set_context(**kwargs):
 
 def get_context(attr_key):
     """
-    Gets context attribute value according to the input key.
+    Get context attribute value according to the input key.
 
     Args:
         attr_key (str): The key of the attribute.

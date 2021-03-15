@@ -126,7 +126,7 @@ class Randperm(PrimitiveWithInfer):
 
 class NoRepeatNGram(PrimitiveWithInfer):
     """
-    Update log_probs with repeat n-grams.
+    Updates log_probs with repeat n-grams.
 
     During beam search, if consecutive `ngram_size` words exist in the generated word sequence,
     the consecutive `ngram_size` words will be avoided during subsequent prediction.
