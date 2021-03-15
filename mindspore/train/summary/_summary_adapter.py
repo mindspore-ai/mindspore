@@ -22,6 +22,7 @@ from PIL import Image
 from mindspore import log as logger
 from mindspore import context
 from mindspore.communication.management import get_rank
+from mindspore.communication.management import GlobalComm
 
 from ..._checkparam import Validator
 from ..anf_ir_pb2 import DataType, ModelProto
@@ -57,7 +58,7 @@ def get_event_file_name(prefix, suffix, time_second):
 
     device_num = context.get_auto_parallel_context('device_num')
     device_id = context.get_context('device_id')
-    if device_num > 1:
+    if device_num > 1 or GlobalComm.WORLD_COMM_GROUP == 'nccl_world_group':
         # Notice:
         # In GPU distribute training scene, get_context('device_id') will not work,
         # so we use get_rank instead of get_context.

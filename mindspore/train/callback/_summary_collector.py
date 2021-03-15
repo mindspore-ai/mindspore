@@ -20,6 +20,7 @@ import json
 from json.decoder import JSONDecodeError
 
 from importlib import import_module
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -842,12 +843,21 @@ class SummaryCollector(Callback):
         dataset_file_set = (dataset_package.MindDataset, dataset_package.ManifestDataset)
         dataset_files_set = (dataset_package.TFRecordDataset, dataset_package.TextFileDataset)
 
+        dataset_path = ''
+
         if isinstance(output_dataset, dataset_file_set):
-            return output_dataset.dataset_file
+            dataset_path = output_dataset.dataset_file
         if isinstance(output_dataset, dataset_dir_set):
-            return output_dataset.dataset_dir
+            dataset_path = output_dataset.dataset_dir
         if isinstance(output_dataset, dataset_files_set):
-            return output_dataset.dataset_files[0]
+            dataset_path = output_dataset.dataset_files[0]
+
+        if dataset_path:
+            if isinstance(dataset_path, str):
+                return dataset_path
+            if isinstance(dataset_path, Iterable):
+                return list(dataset_path)[0]
+
         return self._get_dataset_path(output_dataset.children[0])
 
     @staticmethod
