@@ -101,7 +101,6 @@ PYBIND11_MODULE(_c_expression, m) {
 
   (void)m.def("generate_key", &mindspore::pipeline::GenerateKey, "Generate the function graph key.");
   (void)m.def("real_run_op", &mindspore::pynative::RunOp, "Run op pynatively.");
-  (void)m.def("real_run_op_and_gen_bp", &mindspore::pynative::RunOpAndGenBp, "Run op pynatively and gen bp.");
   (void)m.def("reset_op_id", &mindspore::pipeline::ResetOpId, "Reset Operator Id");
   (void)m.def("init_hccl", &mindspore::pipeline::InitHccl, "Init Hccl");
   (void)m.def("finalize_hccl", &mindspore::pipeline::FinalizeHccl, "Finalize Hccl");
