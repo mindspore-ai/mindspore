@@ -41,7 +41,7 @@ class DynamicAssignCPUKernel : public CPUKernel {
   size_t batch_size_{1};
   TypeId input_x_dtype_{kTypeUnknown};
   size_t input_x_dtype_size_ = 4;
-  CNodePtr node_ = nullptr;
+  CNodeWeakPtr node_wpt_;
 };
 
 MS_REG_CPU_KERNEL(

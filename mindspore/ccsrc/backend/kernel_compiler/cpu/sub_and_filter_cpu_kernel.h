@@ -40,7 +40,7 @@ class SubAndFilterCPUKernel : public CPUKernel {
  private:
   size_t batch_size_{1};
   TypeId input_x_dtype_{kTypeUnknown};
-  CNodePtr node_ = nullptr;
+  CNodeWeakPtr node_wpt_;
 };
 
 MS_REG_CPU_KERNEL(SubAndFilter,

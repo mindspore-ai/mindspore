@@ -24,7 +24,7 @@ namespace mindspore {
 namespace kernel {
 void MapUniformCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  node_ = kernel_node;
+  node_wpt_ = kernel_node;
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
 
@@ -45,6 +45,10 @@ bool MapUniformCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 template <typename T>
 void MapUniformCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
+  auto node_ = node_wpt_.lock();
+  if (!node_) {
+    MS_LOG(EXCEPTION) << "node_wpt_ is expired.";
+  }
   auto input_x_shape = AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   batch_size_ = 1;
   for (size_t i = 0; i < input_x_shape.size(); ++i) {

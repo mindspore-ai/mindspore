@@ -36,7 +36,7 @@ class ConcatCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   int axis_ = 0;
-  CNodePtr node_ = nullptr;
+  CNodeWeakPtr node_wpt_;
 };
 
 MS_REG_CPU_KERNEL_T(
