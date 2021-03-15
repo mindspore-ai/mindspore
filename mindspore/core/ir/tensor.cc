@@ -465,7 +465,9 @@ Tensor::Tensor(const Tensor &tensor)
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()),
-      device_event_(tensor.device_event_) {}
+      device_event_(tensor.device_event_) {
+  CheckShape(tensor.shape_);
+}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
@@ -479,29 +481,43 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
       hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()),
-      device_event_(tensor.device_event_) {}
+      device_event_(tensor.device_event_) {
+  CheckShape(tensor.shape_);
+}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
-    : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
+    : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {
+  CheckShape(shape);
+}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape)
-    : Tensor(data_type, shape, MakeTensorData(data_type, shape)) {}
+    : Tensor(data_type, shape, MakeTensorData(data_type, shape)) {
+  CheckShape(shape);
+}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, void *data, size_t data_len)
-    : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, data_len)) {}
+    : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, data_len)) {
+  CheckShape(shape);
+}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, void *data, TypeId src_data_type)
-    : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, src_data_type)) {}
+    : Tensor(data_type, shape, MakeTensorData(data_type, shape, data, src_data_type)) {
+  CheckShape(shape);
+}
 
 Tensor::Tensor(const std::vector<int64_t> &input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeInt32), {static_cast<int>(input.size())}),
       data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
-      id_(MakeId()) {}
+      id_(MakeId()) {
+  CheckShape(shape_);
+}
 
 Tensor::Tensor(const std::vector<double> &input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {static_cast<int>(input.size())}),
       data_(MakeTensorData(data_type_, shape_, input.data(), input.size())),
-      id_(MakeId()) {}
+      id_(MakeId()) {
+  CheckShape(shape_);
+}
 
 Tensor::Tensor(int64_t input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeInt32), {}),
@@ -604,6 +620,17 @@ std::string Tensor::ToStringRepr() const {
   buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString()
       << ", value=" << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, true) << ')';
   return buf.str();
+}
+
+void Tensor::CheckShape(const ShapeVector &shape) const {
+  // Check tensor's shape, ignore one-dimensional tensor, including empty tensor with shape=(0,).
+  if (shape.size() > 1) {
+    for (const auto &s : shape) {
+      if (s == 0) {
+        MS_EXCEPTION(ValueError) << "Zero is not supported in the shape of Tensor. ";
+      }
+    }
+  }
 }
 
 void Tensor::data_sync(bool need_wait) const {

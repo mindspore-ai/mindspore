@@ -280,6 +280,8 @@ class Tensor : public MetaTensor {
 
   std::string ToStringRepr() const;
 
+  void CheckShape(const ShapeVector &shape) const;
+
   bool is_init() const { return init_flag_; }
   void set_init_flag(bool flag) { init_flag_ = flag; }
 

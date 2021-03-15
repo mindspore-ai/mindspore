@@ -127,30 +127,39 @@ def add(nptype):
     assert (output[2].asnumpy() == expect2).all()
     assert (output[3].asnumpy() == expect3).all()
 
+
+@pytest.mark.skip(reason='0 in shape is not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_float64():
     add(np.float64)
 
+
+@pytest.mark.skip(reason='0 in shape is not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_float32():
     add(np.float32)
 
+
+@pytest.mark.skip(reason='0 in shape is not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_float16():
     add(np.float16)
 
+
+@pytest.mark.skip(reason='0 in shape is not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_add_int64():
     add(np.int64)
 
+@pytest.mark.skip(reason='0 in shape is not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
