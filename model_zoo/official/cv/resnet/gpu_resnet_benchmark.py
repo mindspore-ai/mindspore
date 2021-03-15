@@ -33,6 +33,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 from src.resnet_gpu_benchmark import resnet50 as resnet
 from src.CrossEntropySmooth import CrossEntropySmooth
+from src.momentum import Momentum as MomentumWeightDecay
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--batch_size', type=str, default="256", help='Batch_size: default 256.')
@@ -228,7 +229,10 @@ def train():
     model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
     # Mixed precision
     if compute_type == "fp16":
-        opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, 0.9, 1e-4, 1024)
+        if mode == context.PYNATIVE_MODE:
+            opt = MomentumWeightDecay(filter(lambda x: x.requires_grad, net.get_parameters()), lr, 0.9, 1e-4, 1024)
+        else:
+            opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, 0.9, 1e-4, 1024)
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
                       amp_level="O2", keep_batchnorm_fp32=False)
     # define callbacks
