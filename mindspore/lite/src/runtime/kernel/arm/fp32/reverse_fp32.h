@@ -28,7 +28,7 @@ class ReverseCPUKernel : public LiteKernel {
   ReverseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
-  ~ReverseCPUKernel() {
+  ~ReverseCPUKernel() override {
     if (tmp_ != nullptr) {
       free(tmp_);
       tmp_ = nullptr;
@@ -42,6 +42,7 @@ class ReverseCPUKernel : public LiteKernel {
   int DoReverse(int task_id);
 
  private:
+  void UpdateAxisInfo();
   int thread_sz_count_ = 0;
   int thread_sz_stride_ = 0;
   int data_size_ = 0;
