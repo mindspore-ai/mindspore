@@ -27,13 +27,11 @@
 
 namespace mindspore {
 namespace dataset {
-
 class Vocab;
 class SentencePieceVocab;
 
 // Transform operations for text
 namespace text {
-
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kBasicTokenizerOperation[] = "BasicTokenizer";
 constexpr char kBertTokenizerOperation[] = "BertTokenizer";

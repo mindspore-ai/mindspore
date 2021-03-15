@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Abstract class to represent a dataset in the data pipeline.
 class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
  public:

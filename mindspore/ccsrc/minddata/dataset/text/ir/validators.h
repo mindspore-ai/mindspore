@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Helper function to validate tokenizer directory parameter
 Status ValidateTokenizerDirParam(const std::string &tokenizer_name, const std::string &tokenizer_file);
 

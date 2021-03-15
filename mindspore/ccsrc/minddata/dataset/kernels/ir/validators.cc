@@ -17,7 +17,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 /* ####################################### Validator Functions ############################################ */
 Status ValidateProbability(const std::string &op_name, const float probability) {
   if (probability < 0.0 || probability > 1.0) {

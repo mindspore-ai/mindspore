@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kComposeOperation[] = "Compose";
 constexpr char kDuplicateOperation[] = "Duplicate";

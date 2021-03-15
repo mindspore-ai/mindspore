@@ -36,10 +36,8 @@
 
 namespace mindspore {
 namespace dataset {
-
 // Transform operations for data.
 namespace transforms {
-
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
@@ -157,7 +155,6 @@ Status UniqueOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> UniqueOperation::Build() { return std::make_shared<UniqueOp>(); }
 #endif
-
 }  // namespace transforms
 }  // namespace dataset
 }  // namespace mindspore
