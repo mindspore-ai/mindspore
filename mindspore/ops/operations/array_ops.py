@@ -3380,7 +3380,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
     vectors. For each index vector, there must be a corresponding value in `update`. If
     the depth of each index tensor matches the rank of `input_x`, then each index
     vector corresponds to a scalar in `input_x` and each update updates a scalar. If
-    the depth of each index tensor is less than the rnak of `input_x`, then each index
+    the depth of each index tensor is less than the rank of `input_x`, then each index
     vector corresponds to a slice in `input_x`, and each update updates a slice.
 
     The order in which updates are applied is nondeterministic, meaning that if there
