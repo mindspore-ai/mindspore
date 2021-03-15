@@ -156,7 +156,8 @@ Status MapOp::operator()() {
   }
 
   // The operator class just starts off threads by calling the tree_ function
-  rc = tree_->LaunchWorkers(num_workers_, std::bind(&MapOp::WorkerEntry, this, std::placeholders::_1), NameWithID());
+  rc =
+    tree_->LaunchWorkers(num_workers_, std::bind(&MapOp::WorkerEntry, this, std::placeholders::_1), NameWithID(), id());
   // Synchronize with TaskManager
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(rc);

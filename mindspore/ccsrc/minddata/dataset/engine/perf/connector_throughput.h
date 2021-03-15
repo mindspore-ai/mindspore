@@ -74,6 +74,8 @@ class ConnectorThroughput : public Sampling {
 
   Status ChangeFileMode() override;
 
+  Status Analyze() override;
+
  private:
   ExecutionTree *tree_ = nullptr;  // ExecutionTree pointer
   int64_t max_rows_;
