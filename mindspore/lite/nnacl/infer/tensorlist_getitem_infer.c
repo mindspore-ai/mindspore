@@ -26,9 +26,6 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
   }
 #endif
 
-  if (!parameter->infer_flag_) {
-    return NNACL_INFER_INVALID;
-  }
   TensorListC *input0 = (TensorListC *)(inputs[0]);
   const TensorC *get_index = inputs[1];
   if (GetElementNum(get_index) != 1) {
@@ -42,9 +39,20 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     return NNACL_ERR;
   }
   TensorC *tensor_index = &input0->tensors_[index];
+
   TensorC *output = outputs[0];
   if (tensor_index->data_type_ != kTypeUnknown) {
     output->data_type_ = tensor_index->data_type_;
+  } else {
+    output->data_type_ = input0->tensors_data_type_;
+  }
+  output->format_ = input0->tensors_[index].format_;
+
+  if (!parameter->infer_flag_) {
+    return NNACL_INFER_INVALID;
+  }
+
+  if (tensor_index->data_type_ != kTypeUnknown) {
     ShapeSet(output->shape_, &(output->shape_size_), tensor_index->shape_, tensor_index->shape_size_);
   } else {
     const TensorC *input2 = inputs[2];
@@ -76,10 +84,10 @@ int TensorListGetItemInferShape(const TensorC *const *inputs, size_t inputs_size
     if (!TensorListIsFullyDefined(element_shape, element_shape_size)) {  // the pre is the same judge condition
       return NNACL_ERR;
     }
-    output->data_type_ = input0->tensors_data_type_;
+
     SetShapeArray(output, element_shape, element_shape_size);
   }
-  output->format_ = input0->tensors_[index].format_;
+
   return NNACL_OK;
 }
 

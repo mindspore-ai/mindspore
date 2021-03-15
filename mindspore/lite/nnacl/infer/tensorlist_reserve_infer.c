@@ -31,6 +31,11 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
   if (ele_shape_type != kNumberTypeInt && ele_shape_type != kNumberTypeInt32) {
     return NNACL_ERR;
   }
+
+  TensorListC *output = (TensorListC *)(outputs[0]);
+  output->data_type_ = kObjectTypeTensorType;
+  output->format_ = Format_NHWC;
+
   if (input0->data_ == NULL) {
     return NNACL_INFER_INVALID;
   }
@@ -48,9 +53,6 @@ int TensorListReserveInferShape(const TensorC *const *inputs, size_t inputs_size
     return NNACL_INFER_INVALID;
   }
   int num_elements = ((int *)(input1->data_))[0];
-  TensorListC *output = (TensorListC *)(outputs[0]);
-  output->data_type_ = kObjectTypeTensorType;
-  output->format_ = Format_NHWC;
   ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, GetElementNum(input0));
   output->element_num_ = num_elements;
 

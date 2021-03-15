@@ -25,7 +25,8 @@ int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_s
     return check_ret;
   }
 #endif
-
+  outputs[0]->data_type_ = kNumberTypeFloat32;
+  outputs[0]->format_ = inputs[0]->format_;
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
@@ -41,8 +42,7 @@ int RandomStandardNormalInferShape(const TensorC *const *inputs, size_t inputs_s
     ShapePush(output_shape, &output_shape_size, input_data[i]);
   }
   SetShapeArray(outputs[0], output_shape, output_shape_size);
-  outputs[0]->data_type_ = kNumberTypeFloat32;
-  outputs[0]->format_ = inputs[0]->format_;
+
   return NNACL_OK;
 }
 

@@ -26,6 +26,10 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
   }
 #endif
 
+  TensorListC *output = (TensorListC *)(outputs[0]);
+  output->data_type_ = kObjectTypeTensorType;
+  output->format_ = Format_NHWC;
+
   if (!parameter->infer_flag_) {
     return NNACL_INFER_INVALID;
   }
@@ -43,7 +47,6 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
     return NNACL_NULL_PTR;
   }
   int *ele_shape_ptr = (int *)(input1->data_);
-  TensorListC *output = (TensorListC *)(outputs[0]);
 
   vvector tensor_shape;
   tensor_shape.size_ = dim0;
@@ -64,8 +67,6 @@ int TensorListFromTensorInferShape(const TensorC *const *inputs, size_t inputs_s
 
   ShapeSet(output->element_shape_, &(output->element_shape_size_), ele_shape_ptr, GetElementNum(input1));
   output->element_num_ = dim0;
-  output->data_type_ = kObjectTypeTensorType;
-  output->format_ = Format_NHWC;
   MallocTensorListData(output, input0->data_type_, &tensor_shape);
   free(tensor_shape.shape_);
   free(tensor_shape.shape_size_);
