@@ -177,7 +177,8 @@ bool GenSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph> &
   MS_EXCEPTION_IF_NULL(*recv_node);
 
   cudaEvent_t event = nullptr;
-  CHECK_CUDA_RET_WITH_EXCEPT(*send_node, cudaEventCreate(&event, cudaEventDisableTiming),
+  std::weak_ptr<CNode> send_node_ = *send_node;
+  CHECK_CUDA_RET_WITH_EXCEPT(send_node_, cudaEventCreate(&event, cudaEventDisableTiming),
                              "Creating cuda event failed.");
   AnfAlgo::SetNodeAttr(kAttrRecordEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *send_node);
   AnfAlgo::SetNodeAttr(kAttrWaitEvent, MakeValue(reinterpret_cast<uintptr_t>(event)), *recv_node);

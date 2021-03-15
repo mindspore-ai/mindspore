@@ -73,7 +73,7 @@ class GpuKernel : public KernelMod {
  protected:
   virtual void InitResource() {}
   virtual void InitSizeLists() = 0;
-  CNodePtr kernel_node_;
+  std::weak_ptr<CNode> kernel_node_;
 
   template <typename T>
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
@@ -202,7 +202,7 @@ class GpuKernel : public KernelMod {
 
   // set the tensor descriptor for cudnn/cublas
   void CudnnSetTensorNdDescriptor(const std::vector<size_t> &shape, cudnnTensorDescriptor_t descriptor,
-                                  cudnnDataType_t data_type, const CNodePtr &node) {
+                                  cudnnDataType_t data_type, const std::weak_ptr<CNode> &node) {
     if (shape.size() < 3) {
       MS_EXCEPTION(ValueError) << "cudnnSetTensorNdDescriptor don't support" << shape.size() << "D.";
     }

@@ -53,16 +53,16 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
                                "cudaStreamSynchronized failed");
 
-    std::vector<TypeId> output_types = {AnfAlgo::GetOutputInferDataType(c_node_ptr_, 0)};
+    std::vector<TypeId> output_types = {AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
     std::vector<std::vector<size_t>> output_shapes = {input_shape_};
-    AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, c_node_ptr_.get());
+    AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node_.lock().get());
   }
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(ERROR) << input_count << "inputs were provided, but GpuConvertToDynamicShapeGpuKernel exepects 1.";
+      MS_LOG(ERROR) << input_count << "inputs were provided, but GpuConvertToDynamicShapeGpuKernel expects 1.";
       return false;
     }
 
@@ -71,15 +71,12 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
       input_size_ *= e;
     }
 
-    c_node_ptr_ = kernel_node;
-
     InitSizeLists();
 
     return true;
   }
 
   void ResetResource() noexcept override {
-    c_node_ptr_ = nullptr;
     cuda_stream_ptr_ = nullptr;
     input_shape_.clear();
     input_size_ = 1;
@@ -93,7 +90,6 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
 
  private:
   void *cuda_stream_ptr_;
-  CNodePtr c_node_ptr_;
   std::vector<size_t> input_shape_;
   size_t input_size_;
 
