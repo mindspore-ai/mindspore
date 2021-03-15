@@ -96,6 +96,7 @@ void ProcessThroughPassCNode(std::function<bool(const AnfNodePtr &)> pass_fn,
 }
 
 void ProcessDependCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
+  OrderedSet<AnfNodePtr> to_be_through_pass;
   for (auto &[node, node_rel] : (*node_rels)) {
     if (!IsPrimitiveCNode(node, prim::kPrimDepend) ||
         HasAbstractMonad(node->cast<CNodePtr>()->input(kDependAttachNodeIndex))) {
@@ -113,10 +114,12 @@ void ProcessDependCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {
         cnode_pres.erase(attach_node);
       }
     }
+    to_be_through_pass.insert(node);
   }
 
   // Eliminate depend node of node relations.
-  ProcessThroughPassCNode([](const AnfNodePtr &node) { return IsOneOf(node, {prim::kPrimDepend}); }, node_rels);
+  ProcessThroughPassCNode([&to_be_through_pass](const AnfNodePtr &node) { return to_be_through_pass.count(node) > 0; },
+                          node_rels);
 }
 
 void ProcessTailMakeTupleCNode(OrderedMap<AnfNodePtr, NodeRelation> *node_rels) {

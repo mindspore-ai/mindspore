@@ -135,7 +135,14 @@ bool DependFormater::Run(const FuncGraphPtr &func_graph) {
     }
 
     old_depends.push_back(node);
-    free_nodes.push_back(node->cast<CNodePtr>()->input(kDependAttachNodeIndex));
+    auto cnode = node->cast<CNodePtr>();
+    for (size_t id = kDependAttachNodeIndex; id < cnode->inputs().size(); ++id) {
+      auto attach_node = cnode->input(id);
+      if (!IsPrimitiveCNode(attach_node, prim::kPrimDepend)) {
+        continue;
+      }
+      free_nodes.push_back(attach_node);
+    }
   }
 
   if (old_depends.empty()) {
