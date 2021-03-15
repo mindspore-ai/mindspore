@@ -133,7 +133,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
   }
 
   FreeConstTileBuff();
-  if (in_tensors_[0]->data_c() != nullptr && param_->in_elements_num0_ != param_->out_elements_num_) {
+  if (in_tensors_[0]->IsConst() && param_->in_elements_num0_ != param_->out_elements_num_) {
     input0_ptr_ = malloc(param_->out_elements_num_ * data_type_len_);
     if (input0_ptr_ == nullptr) {
       return RET_ERROR;
@@ -144,7 +144,7 @@ int ArithmeticCPUKernel::ConstTensorBroadCast() {
     param_->in_elements_num0_ = param_->out_elements_num_;
     param_->broadcasting_ = false;
   }
-  if (in_tensors_[1]->data_c() != nullptr && param_->in_elements_num1_ != param_->out_elements_num_) {
+  if (in_tensors_[1]->IsConst() && param_->in_elements_num1_ != param_->out_elements_num_) {
     input1_ptr_ = malloc(param_->out_elements_num_ * data_type_len_);
     if (input1_ptr_ == nullptr) {
       FreeConstTileBuff();

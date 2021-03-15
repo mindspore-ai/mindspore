@@ -122,6 +122,8 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
   int batch = output_shape[0];
   int new_height = output_shape[1];
   int new_width = output_shape[2];
+  float actual_x;
+  float actual_y;
 
   for (int b = 0; b < batch; b++) {
     const float *box = boxes + b * 4;
@@ -140,11 +142,19 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
     int *x_right = x_rights + b * new_width;
     float *x_left_weight = x_left_weights + b * new_width;
     for (int h = 0; h < new_height; h++) {
-      float actual_y = start_h * (in_h - 1) + h * (end_h - start_h) * (in_h - 1) / (new_height - 1);
+      if (new_height > 1) {
+        actual_y = start_h * (in_h - 1) + h * (end_h - start_h) * (in_h - 1) / (new_height - 1);
+      } else {
+        actual_y = 0.5 * (end_h + start_h) * (in_h - 1);
+      }
       CalculateCoordinate(actual_y, in_h, y_bottom + h, y_top + h, y_bottom_weight + h);
     }
     for (int w = 0; w < new_width; w++) {
-      float actual_x = start_w * (in_w - 1) + w * (end_w - start_w) * (in_w - 1) / (new_width - 1);
+      if (new_width > 1) {
+        actual_x = start_w * (in_w - 1) + w * (end_w - start_w) * (in_w - 1) / (new_width - 1);
+      } else {
+        actual_x = 0.5 * (end_w + start_w) * (in_w - 1);
+      }
       CalculateCoordinate(actual_x, in_w, x_left + w, x_right + w, x_left_weight + w);
     }
   }
