@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_WHILE_H_
-#define MINDSPORE_CORE_OPS_WHILE_H_
+#ifndef LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_
+#define LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_
 #include <vector>
 #include <memory>
 
@@ -23,8 +23,10 @@
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
+using mindspore::ops::PrimitiveC;
+
 namespace mindspore {
-namespace ops {
+namespace lite {
 constexpr auto kNameWhile = "While";
 class While : public PrimitiveC {
  public:
@@ -41,7 +43,7 @@ class While : public PrimitiveC {
 AbstractBasePtr WhileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args);
 using PrimWhilePtr = std::shared_ptr<While>;
-}  // namespace ops
+}  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_WHILE_H_
+#endif  // LITE_MINDSPORE_LITE_TOOLS_CONVERTER_OPS_WHILE_H_

@@ -19,14 +19,14 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
-#include "ops/while.h"
+#include "tools/converter/ops/while.h"
 
 namespace mindspore {
 namespace lite {
 ops::PrimitiveC *TFWhileParser::Parse(const tensorflow::NodeDef &tf_op,
                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                                       std::vector<std::string> *inputs, int *output_size) {
-  auto prim = std::make_unique<ops::While>();
+  auto prim = std::make_unique<While>();
 
   *output_size = tf_op.input_size();
   for (int i = 0; i < tf_op.input_size(); i++) {

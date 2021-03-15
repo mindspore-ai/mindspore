@@ -740,10 +740,6 @@ schema::PrimitiveT *ZerosLikePrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::ZerosLike>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
-schema::PrimitiveT *WhilePrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::While>>(node);
-  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
-}
 
 RegistryMSOps g_absPrimitiveCreatorRegistry("Abs", AbsPrimitiveCreator);
 RegistryMSOps g_absGradPrimitiveCreatorRegistry("AbsGrad", AbsGradPrimitiveCreator);
@@ -953,7 +949,6 @@ RegistryMSOps g_unsortedSegmentSumPrimitiveCreatorRegistry("UnsortedSegmentSum",
 RegistryMSOps g_unsqueezePrimitiveCreatorRegistry("Unsqueeze", UnsqueezePrimitiveCreator);
 RegistryMSOps g_wherePrimitiveCreatorRegistry("Where", WherePrimitiveCreator);
 RegistryMSOps g_zerosLikePrimitiveCreatorRegistry("ZerosLike", ZerosLikePrimitiveCreator);
-RegistryMSOps g_whilePrimitiveCreatorRegistry("While", WhilePrimitiveCreator);
 }  // namespace lite
 }  // namespace mindspore
 
