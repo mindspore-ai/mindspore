@@ -397,9 +397,6 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
   }
   // Book-keeping last cnode, as dout of this node will be given from outside;
   last_node_ = cnode;
-  auto cnode_pynative_adjoint =
-    std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, optimized_bprop_fg);
-  anfnode_to_adjoin_.insert(std::make_pair(cnode, cnode_pynative_adjoint));
 
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     auto inp_i = cnode->input(i);
@@ -408,7 +405,7 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
       if (inp_i->isa<CNode>()) {
         auto cnode_inp_i = inp_i->cast<CNodePtr>();
         auto forged_adjoint = ForgeCNodeAdjoint(cnode_inp_i);
-        if (forged_adjoint) {
+        if (forged_adjoint == nullptr) {
           MS_LOG(EXCEPTION) << "Cannot forge adjoint for anfnode: " << inp_i->DebugString();
         }
         forged_adjoint->users().push_back(cnode);
@@ -421,6 +418,10 @@ bool KPynativeCellImpl::BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &
       input_anfnode_adjoint_iter->second->users().push_back(cnode);
     }
   }
+
+  auto cnode_pynative_adjoint =
+    std::make_shared<PynativeAdjoint>(tape_, cloned_op_args, cloned_out, optimized_bprop_fg);
+  anfnode_to_adjoin_.insert(std::make_pair(cnode, cnode_pynative_adjoint));
 
   return true;
 }

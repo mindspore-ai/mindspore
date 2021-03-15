@@ -141,8 +141,7 @@ void PrimBpropOptGraphLevel2Info::ArgInfoRefresh(
     arg_info.tuple_size_ = abs_tuple->size();
     arg_info.sub_using_info_.resize(abs_tuple->size());
   } else {
-    MS_LOG(EXCEPTION) << "param:" << param->ToString() << " of bp_graph:" << opt_func_graph_->ToString()
-                      << " not tensor or tuple";
+    arg_info.tuple_flg_ = false;
   }
 }
 
