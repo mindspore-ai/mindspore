@@ -18,6 +18,22 @@ import shutil
 import subprocess
 import sys
 from multiprocessing import Pool, cpu_count
+import importlib
+
+def get_akg_path():
+    """get akg directory base path"""
+    search_res = importlib.util.find_spec("mindspore")
+    if search_res is None:
+        raise RuntimeError("Cannot find mindspore module!")
+
+    res_path = search_res.origin
+    find_pos = res_path.find("__init__.py")
+    if find_pos == -1:
+        raise RuntimeError("Find module mindspore origin file failed!")
+    akg_path = "{}_akg".format(res_path[:find_pos])
+    if not os.path.isdir(akg_path):
+        raise RuntimeError("Cannot find akg from mindspore module!")
+    return akg_path
 
 def copy_json(pid_path, ppid_path):
     """
@@ -36,7 +52,7 @@ def _compile_akg_task_gpu(*json_strs):
     Parameters:
         json_strs: list. List contains multiple kernel infos, suitable for json compile api.
     """
-
+    sys.path.insert(0, get_akg_path())
     p = __import__("akg", globals(), locals(), ['ms'], 0)
     func = getattr(p.ms, "compilewithjson")
 
