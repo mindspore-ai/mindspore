@@ -406,6 +406,7 @@ class ForwardExecutor {
                                     PynativeStatusCode *status);
   AnfNodePtr MakeCNode(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks,
                        abstract::AbstractBasePtrList *args_spec_list);
+  bool FindOpMask(py::object obj, std::vector<int64_t> *op_masks, std::string id);
   void GetArgsSpec(const OpExecInfoPtr &op_exec_info, std::vector<int64_t> *op_masks, std::vector<AnfNodePtr> *inputs,
                    abstract::AbstractBasePtrList *args_spec_list);
   abstract::AbstractBasePtr CheckConstValue(const PrimitivePyPtr &prim, const py::object &obj,
@@ -420,7 +421,8 @@ class ForwardExecutor {
   py::object DoParamMixPrecisionCast(bool *is_cast, const py::object &obj, const std::string &op_name, size_t index);
   py::object DoParamMixPrecisionCastTuple(bool *is_cast, const py::tuple &tuple, const std::string &op_name,
                                           size_t index);
-  py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index);
+  py::object DoAutoCast(const py::object &arg, const TypeId &type_id, const std::string &op_name, size_t index,
+                        const std::string &obj_id);
   void DoSignatrueCast(const PrimitivePyPtr &prim, const std::map<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
 
@@ -431,6 +433,10 @@ class ForwardExecutor {
   // Used for runop and replace forward result of grad graph
   std::unordered_map<std::string, OpIndexWithTensorId> cell_op_index_with_tensor_id_;
   std::unordered_map<std::string, TensorIdWithTensor> cell_tensor_id_with_tensor_;
+  // Used to cache cast struct
+  std::unordered_map<std::string, OpExecInfoPtr> cast_struct_map_;
+  // Used to cache op_mask
+  std::unordered_map<std::string, int64_t> op_mask_map_;
 };
 
 class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
