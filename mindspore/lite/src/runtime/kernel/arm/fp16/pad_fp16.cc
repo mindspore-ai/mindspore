@@ -66,7 +66,13 @@ int PadFp16CPUKernel::Run() {
       MS_LOG(ERROR) << "BatchnormRun error error_code[" << ret << "]";
     }
   } else {
-    HandleMirrorPad();
+    // mirror pad case
+    ret = HandleMirrorPad();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Handle mirror pad failed, error_code[" << ret << "]";
+      return ret;
+    }
+
     ret = ParallelLaunch(this->context_->thread_pool_, MirrorPadImpl, this, context_->thread_num_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Pad Reflect or Symmetric mode run error, error_code[" << ret << "]";

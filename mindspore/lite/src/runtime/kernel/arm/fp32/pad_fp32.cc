@@ -299,12 +299,12 @@ int PadCPUKernel::CheckPaddings(int *paddings, int length, int *input_shape, int
   for (auto i = 0; i < length; ++i) {
     int max_valid = input_shape[i] - offset;
     if (paddings[i * 2] > max_valid) {
-      MS_LOG(ERROR) << prefix << "paddings " << paddings[i * 2] << "should be less than " << max_valid + 1;
-      return RET_ERROR;
+      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2] << " should be less than " << max_valid + 1;
+      MS_LOG(WARNING) << "Running mirror pad with padding bigger than shape.";
     }
     if (paddings[i * 2 + 1] > max_valid) {
-      MS_LOG(ERROR) << prefix << "paddings " << paddings[i * 2 + 1] << "should be less than " << max_valid + 1;
-      return RET_ERROR;
+      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2 + 1] << " should be less than " << max_valid + 1;
+      MS_LOG(WARNING) << "Running mirror pad with padding bigger than shape.";
     }
   }
   return RET_OK;
@@ -402,7 +402,11 @@ int PadCPUKernel::Run() {
     }
   } else {
     // mirror pad case
-    HandleMirrorPad();
+    error_code = HandleMirrorPad();
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "Handle mirror pad failed, error_code[" << error_code << "]";
+      return error_code;
+    }
 
     error_code = ParallelLaunch(this->context_->thread_pool_, MirrorPadImpl, this, context_->thread_num_);
     if (error_code != RET_OK) {

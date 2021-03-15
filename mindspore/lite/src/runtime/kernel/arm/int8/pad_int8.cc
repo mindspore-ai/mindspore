@@ -274,7 +274,11 @@ int PadInt8CPUKernel::Run() {
     }
   } else {
     // mirror pad case
-    HandleMirrorPad();
+    error_code = HandleMirrorPad();
+    if (error_code != RET_OK) {
+      MS_LOG(ERROR) << "Handle mirror pad failed, error_code[" << error_code << "]";
+      return error_code;
+    }
 
     error_code = ParallelLaunch(this->context_->thread_pool_, MirrorPadImplInt8, this, context_->thread_num_);
     if (error_code != RET_OK) {
