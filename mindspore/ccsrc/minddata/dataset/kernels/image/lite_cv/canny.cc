@@ -32,7 +32,7 @@
 namespace mindspore {
 namespace dataset {
 
-static void GetSobelKernel(float *kernel, int flag, int ksize) {
+static void GetSobelKernel(float *kernel, int flag, int ksize, double scale) {
   std::vector<float> buffer(ksize + 1);
   float *ptr = kernel;
 
@@ -70,12 +70,14 @@ static void GetSobelKernel(float *kernel, int flag, int ksize) {
     }
   }
 
+  scale = flag == 0 ? scale : 1.0;
   for (int i = 0; i < ksize; i++) {
-    ptr[i] = buffer[i];
+    ptr[i] = buffer[i] * scale;
   }
 }
 
-bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, PaddBorderType pad_type) {  // NOLINT
+bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, double scale,  // NOLINT
+           PaddBorderType pad_type) {
   if (src.IsEmpty() || src.data_type_ != LDataType::UINT8) {
     return false;
   }
@@ -92,8 +94,8 @@ bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, 
   kx.Init(ksize, 1, 1, LDataType::FLOAT32);
   ky.Init(1, ksize, 1, LDataType::FLOAT32);
 
-  GetSobelKernel(kx, flag_x, ksize);
-  GetSobelKernel(ky, flag_y, ksize);
+  GetSobelKernel(kx, flag_x, ksize, scale);
+  GetSobelKernel(ky, flag_y, ksize, scale);
 
   return ConvRowCol(src, kx, ky, dst, LDataType::FLOAT32, pad_type);
 }
@@ -106,6 +108,24 @@ static float GetEdge(const std::vector<float> &temp, int width, int height, int 
   }
 }
 
+static float Round(float value) {
+  // rounding if the result is even
+  // eg. 1.5 -> 2, 2.5 -> 2
+  float rnd = round(value);
+  float rnd_l = floor(value);
+  float rnd_h = ceil(value);
+  if (value - rnd_l == 0.5) {
+    if (fmod(rnd, 2) == 0) {
+      return rnd;
+    } else if (value > 0) {
+      return rnd_l;
+    } else {
+      return rnd_h;
+    }
+  }
+  return rnd;
+}
+
 static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat &edges, bool L2gradient) {  // NOLINT
   edges.Init(gx.width_, gx.height_, gx.channel_, gx.data_type_);
 
@@ -116,8 +136,8 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
   int size = gx.height_ * gx.width_;
   std::vector<float> temp(size);
   for (int i = 0; i < size; i++) {
-    float gx_value = gx_ptr[i];
-    float gy_value = gy_ptr[i];
+    float gx_value = Round(gx_ptr[i]);
+    float gy_value = Round(gy_ptr[i]);
     if (L2gradient) {
       temp[i] = sqrt(gx_value * gx_value + gy_value * gy_value);
     } else {
@@ -127,8 +147,8 @@ static void NonMaximumSuppression(const LiteMat &gx, const LiteMat &gy, LiteMat 
 
   for (int y = 0; y < gx.height_; y++) {
     for (int x = 0; x < gx.width_; x++) {
-      float gx_value = gx_ptr[y * gx.width_ + x];
-      float gy_value = gy_ptr[y * gx.width_ + x];
+      float gx_value = Round(gx_ptr[y * gx.width_ + x]);
+      float gy_value = Round(gy_ptr[y * gx.width_ + x]);
 
       float gx_value_abs = std::abs(gx_value);
       float gy_value_abs = std::abs(gy_value);
@@ -242,9 +262,13 @@ bool Canny(const LiteMat &src, LiteMat &dst, double low_thresh, double high_thre
     dst.Init(src.width_, src.height_, src.channel_, src.data_type_);
   }
 
+  double scale = ksize == 7 ? 1 / 16.0 : 1.0;
+  low_thresh *= scale;
+  high_thresh *= scale;
+
   LiteMat gx, gy;
-  Sobel(src, gx, 1, 0, ksize, PaddBorderType::PADD_BORDER_REPLICATE);
-  Sobel(src, gy, 0, 1, ksize, PaddBorderType::PADD_BORDER_REPLICATE);
+  Sobel(src, gx, 1, 0, ksize, scale, PaddBorderType::PADD_BORDER_REPLICATE);
+  Sobel(src, gy, 0, 1, ksize, scale, PaddBorderType::PADD_BORDER_REPLICATE);
 
   LiteMat edges;
   NonMaximumSuppression(gx, gy, edges, L2gradient);

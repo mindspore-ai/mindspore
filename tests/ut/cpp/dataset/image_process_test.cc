@@ -1595,6 +1595,35 @@ TEST_F(MindDataImageProcess, TestCannySize5) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+TEST_F(MindDataImageProcess, TestCannySize7) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Mat gray_image;
+  cv::cvtColor(src_image, gray_image, CV_BGR2GRAY);
+  cv::Mat dst_image;
+  cv::Canny(gray_image, dst_image, 110, 220, 7);
+
+  cv::Mat rgba_mat;
+  cv::cvtColor(src_image, rgba_mat, CV_BGR2RGBA);
+  bool ret = false;
+  LiteMat lite_mat_gray;
+  ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2GRAY, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_gray);
+  ASSERT_TRUE(ret == true);
+
+  LiteMat lite_mat_dst;
+  ret = Canny(lite_mat_gray, lite_mat_dst, 110, 220, 7);
+  ASSERT_TRUE(ret == true);
+
+  int total_size = lite_mat_dst.height_ * lite_mat_dst.width_ * lite_mat_dst.channel_;
+  double distance = 0.0f;
+  for (int i = 0; i < total_size; i++) {
+    distance += pow((uint8_t)dst_image.data[i] - ((uint8_t *)lite_mat_dst)[i], 2);
+  }
+  distance = sqrt(distance / total_size);
+  EXPECT_EQ(distance, 0.0f);
+}
+
 TEST_F(MindDataImageProcess, TestCannyL2) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -1689,8 +1718,8 @@ TEST_F(MindDataImageProcess, TestSobel) {
   ASSERT_TRUE(ret == true);
   LiteMat lite_mat_x;
   LiteMat lite_mat_y;
-  Sobel(lite_mat_gray, lite_mat_x, 1, 0, 3, PaddBorderType::PADD_BORDER_REPLICATE);
-  Sobel(lite_mat_gray, lite_mat_y, 0, 1, 3, PaddBorderType::PADD_BORDER_REPLICATE);
+  Sobel(lite_mat_gray, lite_mat_x, 1, 0, 3, 1, PaddBorderType::PADD_BORDER_REPLICATE);
+  Sobel(lite_mat_gray, lite_mat_y, 0, 1, 3, 1, PaddBorderType::PADD_BORDER_REPLICATE);
   ASSERT_TRUE(ret == true);
 
   cv::Mat dst_imageX(lite_mat_x.height_, lite_mat_x.width_, CV_32FC1, lite_mat_x.data_ptr_);
@@ -1731,7 +1760,7 @@ TEST_F(MindDataImageProcess, TestSobelFlag) {
     InitFromPixel(rgba_mat.data, LPixelType::RGBA2GRAY, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_gray);
   ASSERT_TRUE(ret == true);
   LiteMat lite_mat_x;
-  Sobel(lite_mat_gray, lite_mat_x, 3, 1, 5, PaddBorderType::PADD_BORDER_REPLICATE);
+  Sobel(lite_mat_gray, lite_mat_x, 3, 1, 5, 1, PaddBorderType::PADD_BORDER_REPLICATE);
   ASSERT_TRUE(ret == true);
 
   cv::Mat dst_imageX(lite_mat_x.height_, lite_mat_x.width_, CV_32FC1, lite_mat_x.data_ptr_);
