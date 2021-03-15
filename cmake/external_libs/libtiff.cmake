@@ -16,11 +16,11 @@ endif()
 set(tiff_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 
 if(ENABLE_GITEE)
-    set(REQ_URL "https://gitee.com/mirrors/libtiff/repository/archive/v4.1.0.tar.gz")
-    set(MD5 "76b951159c8bdf47dba4803659c232d1")
+    set(REQ_URL "https://gitee.com/mirrors/libtiff/repository/archive/v4.2.0.tar.gz")
+    set(MD5 "38b7bdd622c554b98967ccf2013b6478")
 else()
-    set(REQ_URL "https://gitlab.com/libtiff/libtiff/-/archive/v4.1.0/libtiff-v4.1.0.tar.gz")
-    set(MD5 "21de8d35c1b21ac82663fa9f56d3350d")
+    set(REQ_URL "http://download.osgeo.org/libtiff/tiff-4.2.0.tar.gz")
+    set(MD5 "2bbf6db1ddc4a59c89d6986b368fc063")
 endif()
 
 mindspore_add_pkg(tiff
