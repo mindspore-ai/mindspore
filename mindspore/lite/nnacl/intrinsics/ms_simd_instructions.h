@@ -32,7 +32,6 @@
 #define MS_ADDQ_EPI32 vaddq_s32
 #define MS_MOVQ_F32 vmovq_n_f32
 #define MS_MOVQ_EPI32 vmovq_n_s32
-#define MS_DUPQ_F32 vdupq_n_f32  // It is recommended to replace with MS_MOVQ_F32.
 #define MS_SUBQ_F32 vsubq_f32
 #define MS_MLAQ_F32(src1, src2, src3) vmlaq_f32(src1, src2, src3)
 #define MS_STQ_F32 vst1q_f32
@@ -76,7 +75,6 @@ inline static float32x4_t vrecp(float32x4_t v) {
 #define MS_ADD256_EPI32 _mm256_add_epi32
 #define MS_MOV256_F32 _mm256_set1_ps
 #define MS_MOV256_EPI32 _mm256_set1_epi32
-#define MS_DUP256_F32 _mm256_load_ps1  // It is recommended to replace with MS_MOV256_F32.
 #define MS_MLA256_F32(src1, src2, src3) _mm256_add_ps(src1, _mm256_mul_ps(src2, src3))
 #define MS_ST256_F32 _mm256_storeu_ps
 #define MS_ST256_EPI32(src1, src2) _mm256_storeu_si256((__m256i *)(src1), src2)
@@ -109,7 +107,6 @@ inline static float32x4_t vrecp(float32x4_t v) {
 #define MS_ADDQ_EPI32 _mm_add_epi32
 #define MS_MOVQ_F32 _mm_set1_ps
 #define MS_MOVQ_EPI32 _mm_set1_epi32
-#define MS_DUPQ_F32 _mm_load_ps1  // It is recommended to replace with MS_MOVQ_F32.
 #define MS_MLAQ_F32(src1, src2, src3) _mm_add_ps(src1, _mm_mul_ps(src2, src3))
 #define MS_STQ_F32 _mm_storeu_ps
 #define MS_STQ_EPI32(src1, src2) _mm_storeu_si128((__m128i *)(src1), src2)

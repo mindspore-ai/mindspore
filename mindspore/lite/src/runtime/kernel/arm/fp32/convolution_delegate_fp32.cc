@@ -21,6 +21,7 @@
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
+#include "src/runtime/kernel/arm/fp32/convolution_depthwise_3x3_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -354,8 +355,13 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
   if (opParameter != nullptr && opParameter->infer_flag_) {
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+    if (CheckConvDw1DWinograd(conv_param, ctx->thread_num_)) {
+      kernel = new (std::nothrow) kernel::ConvolutionDepthwise3x3CPUKernel(opParameter, inputs, outputs, ctx);
+    }
+#endif
 #if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
-    if (CheckConvDwUseIndirectBuffer(conv_param)) {
+    if (kernel == nullptr && CheckConvDwUseIndirectBuffer(conv_param)) {
       kernel = new (std::nothrow) kernel::ConvolutionDepthwiseIndirectCPUKernel(opParameter, inputs, outputs, ctx);
     }
 #endif
@@ -367,7 +373,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
     kernel = new (std::nothrow) kernel::ConvolutionDepthwiseCPUKernel(opParameter, inputs, outputs, ctx);
   }
   return kernel;
-}
+}  // namespace mindspore::kernel
 
 kernel::LiteKernel *CpuConvFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,

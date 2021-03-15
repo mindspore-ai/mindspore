@@ -47,12 +47,6 @@ void ConvDwSWFp32(float *output_data, const float *input_data, const float *weig
 
 bool CheckConvDwUse3X3(const ConvParameter *conv_param);
 
-void ConvDw3x3Pad(float *output_data, const float *input_data, const float *weight_data, const float *bias_data,
-                  const ConvParameter *conv_param, const SlidingWindowParam *sliding);
-
-void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const float *weight_data,
-               const float *bias_data, const ConvParameter *conv_param, const SlidingWindowParam *sliding, int task_id);
-
 bool CheckConvDwUseIndirectBuffer(const ConvParameter *conv_param);
 
 void ConvDwInitIndirection(float **indirect_buffer, float *src, float *zero_ptr, const ConvParameter *conv_param,
@@ -72,6 +66,13 @@ void ConvDwFp32Avx3x3(float *output, float **input, const float *weights, const 
 
 void ConvDwFp32Avx5x5(float *output, float **input, const float *weights, const float *bias, size_t channels,
                       size_t output_width, size_t input_stride, size_t relu, size_t relu6);
+#endif
+
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
+void ConvDw3x3(float *output_data, float *buffer, const float *input_data, const float *weight_data,
+               const float *bias_data, const ConvParameter *conv_param, int start_oh, int end_oh);
+
+bool CheckConvDw1DWinograd(const ConvParameter *conv_param, int thread_num);
 #endif
 
 void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,

@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP32_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP32_H_
 
+#if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
@@ -39,14 +40,11 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
   int Eval() override;
 
  private:
-  void PackWeight();
-  int InitBuffer();
-  SlidingWindowParam *sliding_ = nullptr;
   float *packed_weight_ = nullptr;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;
   float *buffer_ = nullptr;
 };
 }  // namespace mindspore::kernel
-
+#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP32_H_
